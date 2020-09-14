@@ -1,0 +1,24 @@
+{
+    "name": "spiral/goridge",
+    "version": "3.0.0",
+    "require": {
+        "php": ">=7.4",
+        "react/promise": "^2.8",
+        "react/event-loop": "^1.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Spiral\\Goridge\\": "src"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "3.0.x-dev"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
