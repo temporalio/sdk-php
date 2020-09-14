@@ -1,6 +1,6 @@
 # Temporal PHP SDK
 
-Attention, the package is under development.
+**Attention, the package is under development.**
 
 ## Introduction
 
@@ -13,7 +13,7 @@ PHP language.
 
 ## Installation
 
-SDK is available as composer repository and can be installed using the 
+SDK is available as composer package and can be installed using the 
 following command in a root of your project:
 
 ```bash
