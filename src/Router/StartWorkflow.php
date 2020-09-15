@@ -50,10 +50,7 @@ class StartWorkflow extends Route
         try {
             return 'OK';
         } finally {
-            $result = $this->execute($workflow, $request);
-
-            $transport = $this->worker->getTransport();
-            $transport->send(new Request('CompleteWorkflow', ['result' => $result]));
+            $this->execute($workflow, $request);
         }
     }
 
