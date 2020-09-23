@@ -24,11 +24,6 @@ abstract class HandledDeclaration extends Declaration implements HandledDeclarat
     private ?\ReflectionFunctionAbstract $reflection = null;
 
     /**
-     * @var int
-     */
-    private int $mode = self::MODE_AUTO;
-
-    /**
      * @param string $name
      * @param callable $handler
      */
@@ -37,14 +32,6 @@ abstract class HandledDeclaration extends Declaration implements HandledDeclarat
         $this->handler = \Closure::fromCallable($handler);
 
         parent::__construct($name);
-    }
-
-    /**
-     * @return int
-     */
-    public function getHandlerMode(): int
-    {
-        return $this->mode;
     }
 
     /**

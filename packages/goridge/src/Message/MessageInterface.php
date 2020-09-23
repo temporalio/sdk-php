@@ -13,7 +13,6 @@ namespace Spiral\Goridge\Message;
 
 /**
  * @property-read string $body
- * @property-read int $size
  */
 interface MessageInterface extends \Stringable
 {

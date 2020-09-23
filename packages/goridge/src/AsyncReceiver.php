@@ -1,7 +1,7 @@
 <?php
 
 /**
- * This file is part of Goridge package.
+ * This file is part of Temporal package.
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -66,7 +66,7 @@ class AsyncReceiver implements ReceiverInterface
      * @param \Closure $onMessage
      * @return void
      */
-    public function onMessage(\Closure $onMessage): void
+    public function onReceive(\Closure $onMessage): void
     {
         $this->listeners[] = $onMessage;
     }

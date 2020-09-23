@@ -14,26 +14,6 @@ namespace Temporal\Client\Declaration;
 interface HandledDeclarationInterface extends DeclarationInterface
 {
     /**
-     * @var int
-     */
-    public const MODE_AUTO = 0x00;
-
-    /**
-     * @var int
-     */
-    public const MODE_MANUAL = 0x01;
-
-    /**
-     * @var int
-     */
-    public const MODE_GENERATORS = 0x02;
-
-    /**
-     * @return int
-     */
-    public function getHandlerMode(): int;
-
-    /**
      * @return callable
      */
     public function getHandler(): callable;

@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Spiral\Goridge\Protocol;
 
-use Spiral\Goridge\Exception\EncodingException;
+use Spiral\Goridge\Exception\TransportException;
 use Spiral\Goridge\Message\ProceedMessageInterface;
 use Spiral\Goridge\Message\ReceivedMessageInterface;
 
@@ -22,13 +22,15 @@ interface EncoderInterface
      * transfer object instance.
      *
      * <code>
-     *  $message = $encoder->encode('Example');
+     *  [$body, $length] = $encoder->encode('Example');
      * </code>
      *
      * @param string $body The protocol's message body.
      * @param int $flags The message's flags.
      * @return ProceedMessageInterface
-     * @throws EncodingException in case of encoding error.
+     * @throws TransportException in case of decoding error.
+     *
+     * @psalm-param Payload::TYPE_* $flags
      */
     public function encode(string $body, int $flags): ProceedMessageInterface;
 }

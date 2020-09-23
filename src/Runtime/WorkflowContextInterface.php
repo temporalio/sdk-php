@@ -42,9 +42,10 @@ interface WorkflowContextInterface
     public function getPayload();
 
     /**
-     * @return void
+     * @param mixed $result
+     * @return PromiseInterface
      */
-    public function complete(): void;
+    public function complete($result = null): PromiseInterface;
 
     /**
      * @param string $name

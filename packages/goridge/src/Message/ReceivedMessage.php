@@ -11,12 +11,12 @@ declare(strict_types=1);
 
 namespace Spiral\Goridge\Message;
 
-final class ReceivedMessage extends Message implements ReceivedMessageInterface
+class ReceivedMessage extends Message implements ReceivedMessageInterface
 {
     /**
      * @var int
      */
-    public int $flags;
+    public $flags;
 
     /**
      * @param string $body

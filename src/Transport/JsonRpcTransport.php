@@ -52,7 +52,7 @@ class JsonRpcTransport implements RoutableTransportInterface
     {
         $this->responder = $responder;
 
-        $receiver->onMessage(function (ReceivedMessageInterface $message) {
+        $receiver->onReceive(function (ReceivedMessageInterface $message) {
             $this->handle($message);
         });
     }
@@ -63,9 +63,38 @@ class JsonRpcTransport implements RoutableTransportInterface
      */
     public function handle(ReceivedMessageInterface $message): void
     {
-        $data = $this->decode($message);
+        $this->decodeResponse($this->decode($message), function (array $payload) {
+            $this->resolveResponse($payload);
+        });
+    }
 
-        $id = $this->assertGetId($data);
+    /**
+     * @param array $response
+     * @param \Closure $each
+     */
+    private function decodeResponse(array $response, \Closure $each): void
+    {
+        if (isset($response['id'])) {
+            $each($response);
+
+            return;
+        }
+
+        foreach ($response as $batch) {
+            if (! \is_array($batch) || ! isset($batch['id'])) {
+                throw new \LogicException('JSON-RPC protocol error');
+            }
+
+            $this->decodeResponse($batch, $each);
+        }
+    }
+
+    /**
+     * @param array $data
+     */
+    private function resolveResponse(array $data): void
+    {
+        $id = $data['id'];
 
         switch (true) {
             case isset($data['result']):
@@ -158,41 +187,11 @@ class JsonRpcTransport implements RoutableTransportInterface
             throw new \DomainException('Unexpected received command "' . $method . '"');
         }
 
-        $deferred = new Deferred();
+        // TODO add exception handling
+        // TODO add response handling
+        $result = $callback($data['params'] ?? null, $id);
 
-        $deferred
-            ->promise()
-            ->then($this->onResponse($id), $this->onError($id))
-        ;
-
-        try {
-            $callback($data['params'] ?? null, $deferred);
-        } catch (\Throwable $e) {
-            $deferred->reject($e);
-        }
-    }
-
-    /**
-     * @param int $id
-     * @return \Closure
-     */
-    private function onResponse(int $id): \Closure
-    {
-        return function ($result) use ($id) {
-            $this->sendResponse($id, $result);
-        };
-    }
-
-    /**
-     * @param int $id
-     * @return \Closure
-     */
-    private function onError(int $id): \Closure
-    {
-        return function (\Throwable $error) use ($id) {
-            // TODO
-            throw $error;
-        };
+        $this->sendResponse($id, $result);
     }
 
     /**

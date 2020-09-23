@@ -28,7 +28,7 @@ class StartActivity extends Route
 
     /**
      * @param StartActivityRequest|RequestInterface $request
-     * @return mixed|void
+     * @return mixed
      * @throws \ReflectionException
      * @throws \Throwable
      */
@@ -42,6 +42,8 @@ class StartActivity extends Route
     }
 
     /**
+     * TODO It shouldn't be in the router
+     *
      * @param ActivityInterface $activity
      * @param StartActivityRequest $request
      * @return mixed

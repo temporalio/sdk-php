@@ -11,6 +11,21 @@ declare(strict_types=1);
 
 namespace Spiral\Goridge\Message;
 
-final class ProceedMessage extends Message implements ProceedMessageInterface
+class ProceedMessage extends Message implements ProceedMessageInterface
 {
+    /**
+     * @var int
+     */
+    public $size;
+
+    /**
+     * @param string $body
+     * @param int|null $size
+     */
+    public function __construct(string $body, int $size = null)
+    {
+        $this->size = $size ?? \strlen($body);
+
+        parent::__construct($body);
+    }
 }

@@ -11,8 +11,8 @@ declare(strict_types=1);
 
 namespace Spiral\Goridge\Protocol;
 
-use React\Promise\PromiseInterface;
-use Spiral\Goridge\Exception\DecodingException;
+use Spiral\Goridge\Exception\TransportException;
+use Spiral\Goridge\Message\ReceivedMessageInterface;
 
 interface DecoderInterface
 {
@@ -29,11 +29,21 @@ interface DecoderInterface
      * will look like this:
      *
      * <code>
+     *  $stream = $decoder->decode();
+     *
+     *  while ($stream->valid()) {
+     *      $stream->send(
+     *          fread($resource, $stream->current())
+     *      );
+     *  }
+     *
+     *  return $stream->getReturn();
      * </code>
      *
-     * @param resource $stream
-     * @return PromiseInterface
-     * @throws DecodingException in case of decoding error.
+     * @return \Generator|ReceivedMessageInterface
+     * @throws TransportException in case of decoding error.
+     *
+     * @psalm-return \Generator<array-key, int, string, DecodedMessageInterface>
      */
-    public function decode($stream): PromiseInterface;
+    public function decode(): \Generator;
 }

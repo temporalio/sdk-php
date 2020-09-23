@@ -13,10 +13,18 @@ namespace Temporal\Client\Runtime;
 
 use React\Promise\PromiseInterface;
 use Temporal\Client\Transport\Request\InputRequestInterface;
+use Temporal\Client\Transport\Request\Request;
+use Temporal\Client\Transport\Request\RequestInterface;
 use Temporal\Client\Transport\Request\StartWorkflow;
+use Temporal\Client\Transport\TransportInterface;
 
 class WorkflowContext implements WorkflowContextInterface
 {
+    /**
+     * @var TransportInterface
+     */
+    public TransportInterface $transport;
+
     /**
      * @var StartWorkflow
      */
@@ -24,10 +32,12 @@ class WorkflowContext implements WorkflowContextInterface
 
     /**
      * @param StartWorkflow $request
+     * @param TransportInterface $transport
      */
-    public function __construct(StartWorkflow $request)
+    public function __construct(StartWorkflow $request, TransportInterface $transport)
     {
         $this->request = $request;
+        $this->transport = $transport;
     }
 
     /**
@@ -70,13 +80,42 @@ class WorkflowContext implements WorkflowContextInterface
         return $this->request->get('payload');
     }
 
-    public function complete(): void
+    /**
+     * @param RequestInterface $request
+     * @return PromiseInterface
+     */
+    private function send(RequestInterface $request): PromiseInterface
     {
-        throw new \LogicException(__METHOD__ . ' not implemented yet');
+        return $this->transport->send($request);
     }
 
+    /**
+     * @param mixed $result
+     * @return PromiseInterface
+     */
+    public function complete($result = null): PromiseInterface
+    {
+        $request = new Request('CompleteWorkflow', [
+            'rid'    => $this->getRunId(),
+            'result' => $result,
+        ]);
+
+        return $this->send($request);
+    }
+
+    /**
+     * @param string $name
+     * @param array $arguments
+     * @return PromiseInterface
+     */
     public function executeActivity(string $name, array $arguments = []): PromiseInterface
     {
-        throw new \LogicException(__METHOD__ . ' not implemented yet');
+        $request = new Request('ExecuteActivity', [
+            'name'      => $name,
+            'rid'       => $this->getRunId(),
+            'arguments' => $arguments,
+        ]);
+
+        return $this->send($request);
     }
 }

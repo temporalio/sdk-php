@@ -16,21 +16,14 @@ abstract class Message implements MessageInterface
     /**
      * @var string
      */
-    public string $body;
-
-    /**
-     * @var int
-     */
-    public int $size;
+    public $body;
 
     /**
      * @param string $body
-     * @param int|null $size
      */
-    public function __construct(string $body, int $size = null)
+    public function __construct(string $body)
     {
         $this->body = $body;
-        $this->size = $size ?? \strlen($body);
     }
 
     /**
