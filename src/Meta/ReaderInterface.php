@@ -13,5 +13,24 @@ namespace Temporal\Client\Meta;
 
 interface ReaderInterface
 {
-    public function getClassMetadata(): iterable;
+    /**
+     * @param \ReflectionClass $class
+     * @param string|null $name
+     * @return object[]
+     */
+    public function getClassMetadata(\ReflectionClass $class, string $name = null): iterable;
+
+    /**
+     * @param \ReflectionMethod $method
+     * @param string|null $name
+     * @return object[]
+     */
+    public function getMethodMetadata(\ReflectionMethod $method, string $name = null): iterable;
+
+    /**
+     * @param \ReflectionProperty $property
+     * @param string|null $name
+     * @return object[]
+     */
+    public function getPropertyMetadata(\ReflectionProperty $property, string $name = null): iterable;
 }

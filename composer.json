@@ -12,7 +12,7 @@
         "ext-json": "*",
         "psr/log": "^1.1",
         "phpfn/symbol": "^2.0",
-        "spiral/core": "^1.4",
+        "spiral/core": "^2.6",
         "react/promise": "^2.8",
         "react/event-loop": "^1.1",
         "symfony/polyfill-php80": "^1.18",
@@ -24,6 +24,7 @@
         }
     },
     "require-dev": {
+        "doctrine/annotations": "^1.10",
         "react/socket": "^0.8",
         "phpunit/phpunit": "^9.3",
         "vimeo/psalm": "^3.14",
@@ -34,6 +35,9 @@
             "App\\": "example",
             "Temporal\\Tests\\Client\\": "tests"
         }
+    },
+    "suggest": {
+        "doctrine/annotations": "^1.0 for Doctrine metadata driver support"
     },
     "minimum-stability": "dev",
     "prefer-stable": true
