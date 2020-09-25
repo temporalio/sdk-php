@@ -11,8 +11,7 @@ declare(strict_types=1);
 
 namespace App\Workflow;
 
-use Temporal\Client\Declaration\Workflow;
-use Temporal\Client\Declaration\WorkflowInterface;
+use Temporal\Client\Meta\WorkflowMethod;
 use Temporal\Client\Runtime\WorkflowContextInterface;
 
 class PizzaDelivery
@@ -37,21 +36,14 @@ class PizzaDelivery
      *
      * @param WorkflowContextInterface $context
      * @return \Generator
+     *
+     * @WorkflowMethod(name="PizzaDelivery")
      */
+    #[WorkflowMethod(name: 'PizzaDelivery')]
     public function handler(WorkflowContextInterface $context)
     {
         $result = yield $context->executeActivity('ExecuteActivity');
 
-        return [$result];
-    }
-
-    /**
-     * @return WorkflowInterface
-     */
-    public static function toWorkflow(): WorkflowInterface
-    {
-        $handler = [new static(), 'handler'];
-
-        return new Workflow('PizzaDelivery', \Closure::fromCallable($handler));
+        return 42;
     }
 }

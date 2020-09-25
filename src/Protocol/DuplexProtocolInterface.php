@@ -9,8 +9,8 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Runtime;
+namespace Temporal\Client\Protocol;
 
-interface ActivityContextInterface
+interface DuplexProtocolInterface extends ClientInterface, ServerInterface
 {
 }

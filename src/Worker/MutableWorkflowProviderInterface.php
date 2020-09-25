@@ -16,8 +16,14 @@ use Temporal\Client\Declaration\WorkflowInterface;
 interface MutableWorkflowProviderInterface extends WorkflowProviderInterface
 {
     /**
-     * @param WorkflowInterface $workflow
-     * @param bool $override
+     * @param object $workflow
+     * @param bool $overwrite
      */
-    public function addWorkflow(WorkflowInterface $workflow, bool $override = false): void;
+    public function addWorkflow(object $workflow, bool $overwrite = false): void;
+
+    /**
+     * @param WorkflowInterface $workflow
+     * @param bool $overwrite
+     */
+    public function addWorkflowDeclaration(WorkflowInterface $workflow, bool $overwrite = false): void;
 }

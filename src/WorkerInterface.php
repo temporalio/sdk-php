@@ -11,14 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
-use Temporal\Client\Transport\TransportInterface;
 use Temporal\Client\Worker\ActivityProviderInterface;
+use Temporal\Client\Worker\ExecutorInterface;
 use Temporal\Client\Worker\WorkflowProviderInterface;
 
-interface WorkerInterface extends WorkflowProviderInterface, ActivityProviderInterface
+interface WorkerInterface extends WorkflowProviderInterface, ActivityProviderInterface, ExecutorInterface
 {
-    /**
-     * @return TransportInterface
-     */
-    public function getTransport(): TransportInterface;
 }

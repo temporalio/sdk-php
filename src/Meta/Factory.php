@@ -41,6 +41,8 @@ class Factory implements FactoryInterface
     }
 
     /**
+     * @psalm-param FactoryInterface::PREFER_* $type
+     *
      * @param int $type
      * @return ReaderInterface
      */

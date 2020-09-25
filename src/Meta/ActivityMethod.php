@@ -18,10 +18,10 @@ use Doctrine\Common\Annotations\Annotation\Target;
  * @Target({ "METHOD" })
  */
 #[\Attribute(\Attribute::TARGET_METHOD)]
-class WorkflowMethod
+class ActivityMethod
 {
     /**
-     * Name of the workflow type. Default is "{class_name :: method_name}".
+     * Name of the activity type. Default is "{class_name :: method_name}"
      *
      * Be careful about names that contain special characters. These names can
      * be used as metric tags. And systems like prometheus ignore metrics which

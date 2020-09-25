@@ -14,9 +14,18 @@ namespace Temporal\Client;
 use Temporal\Client\Worker\MutableActivityProviderInterface;
 use Temporal\Client\Worker\MutableWorkflowProviderInterface;
 
+/**
+ * @psalm-type ExceptionHandler = \Closure(\Throwable): void
+ */
 interface MutableWorkerInterface extends
     WorkerInterface,
     MutableWorkflowProviderInterface,
     MutableActivityProviderInterface
 {
+    /**
+     * @psalm-param ExceptionHandler
+     *
+     * @param \Closure $then
+     */
+    public function onError(\Closure $then): void;
 }

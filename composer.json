@@ -1,22 +1,14 @@
 {
     "name": "spiral/temporal",
     "license": "MIT",
-    "repositories": [
-        {
-            "type": "path",
-            "url": "packages/goridge"
-        }
-    ],
     "require": {
         "php": ">=7.4",
         "ext-json": "*",
         "psr/log": "^1.1",
-        "phpfn/symbol": "^2.0",
-        "spiral/core": "^2.6",
         "react/promise": "^2.8",
         "react/event-loop": "^1.1",
         "symfony/polyfill-php80": "^1.18",
-        "spiral/goridge": "^3.0"
+        "spiral/goridge": "^2.5"
     },
     "autoload": {
         "psr-4": {
@@ -28,7 +20,8 @@
         "react/socket": "^0.8",
         "phpunit/phpunit": "^9.3",
         "vimeo/psalm": "^3.14",
-        "symfony/var-dumper": "^5.1"
+        "symfony/var-dumper": "^5.1",
+        "illuminate/support": "^7.0"
     },
     "autoload-dev": {
         "psr-4": {
@@ -38,6 +31,9 @@
     },
     "suggest": {
         "doctrine/annotations": "^1.0 for Doctrine metadata driver support"
+    },
+    "scripts": {
+        "check": "psalm"
     },
     "minimum-stability": "dev",
     "prefer-stable": true

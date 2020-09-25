@@ -9,8 +9,12 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Runtime;
+namespace Temporal\Client\Protocol\Message;
 
-interface ActivityContextInterface
+interface SuccessResponseInterface extends ResponseInterface
 {
+    /**
+     * @return mixed
+     */
+    public function getResult();
 }

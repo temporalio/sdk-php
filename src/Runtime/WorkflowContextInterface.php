@@ -12,29 +12,23 @@ declare(strict_types=1);
 namespace Temporal\Client\Runtime;
 
 use React\Promise\PromiseInterface;
-use Temporal\Client\Transport\Request\InputRequestInterface;
 
 interface WorkflowContextInterface
 {
     /**
-     * @return string|int
+     * @return string
      */
-    public function getId();
+    public function getId(): string;
 
     /**
-     * @return string|int
+     * @return string
      */
-    public function getRunId();
+    public function getRunId(): string;
 
     /**
      * @return string
      */
     public function getWorkerId(): string;
-
-    /**
-     * @return InputRequestInterface
-     */
-    public function getRequest(): InputRequestInterface;
 
     /**
      * @return mixed
