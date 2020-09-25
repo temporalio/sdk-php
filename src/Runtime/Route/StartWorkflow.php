@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client\Runtime\Route;
 
 use React\Promise\Deferred;
+use React\Promise\PromiseInterface;
 use Temporal\Client\Declaration\CollectionInterface;
 use Temporal\Client\Declaration\WorkflowInterface;
 use Temporal\Client\Protocol\ClientInterface;
@@ -48,31 +49,6 @@ class StartWorkflow extends Route
     }
 
     /**
-     * @param array $params
-     * @return string|null
-     */
-    private function getErrorMessage(array $params): ?string
-    {
-        if (! isset($params['name']) || ! \is_string($params['name'])) {
-            return 'Required field "name" is missing or contains an invalid type';
-        }
-
-        if (! isset($params['wid']) || ! \is_string($params['wid'])) {
-            return 'Required field "wid" is missing or contains an invalid type';
-        }
-
-        if (! isset($params['rid']) || ! \is_string($params['rid'])) {
-            return 'Required field "wid" is missing or contains an invalid type';
-        }
-
-        if (isset($params['taskQueue']) && ! \is_string($params['taskQueue'])) {
-            return 'Required field "taskQueue" contains an invalid type';
-        }
-
-        return null;
-    }
-
-    /**
      * @psalm-param WorkflowContextParams $params
      *
      * @param array $params
@@ -106,6 +82,74 @@ class StartWorkflow extends Route
     }
 
     /**
+     * @param array $params
+     * @return string|null
+     */
+    private function getErrorMessage(array $params): ?string
+    {
+        if (!isset($params['name']) || !\is_string($params['name'])) {
+            return 'Required field "name" is missing or contains an invalid type';
+        }
+
+        if (!isset($params['wid']) || !\is_string($params['wid'])) {
+            return 'Required field "wid" is missing or contains an invalid type';
+        }
+
+        if (!isset($params['rid']) || !\is_string($params['rid'])) {
+            return 'Required field "wid" is missing or contains an invalid type';
+        }
+
+        if (isset($params['taskQueue']) && !\is_string($params['taskQueue'])) {
+            return 'Required field "taskQueue" contains an invalid type';
+        }
+
+        return null;
+    }
+
+    /**
+     * @param \Generator $generator
+     * @param RequestQueueInterface $queue
+     * @param Deferred $resolver
+     */
+    private function processGenerator(\Generator $generator, RequestQueueInterface $queue, Deferred $resolver): void
+    {
+        if ($generator->valid()) {
+            $promise = $generator->current();
+
+            // TODO assert that it is an instance of PromiseInterface
+            assert($promise instanceof PromiseInterface);
+
+            $promise->then(function ($result) use ($generator, $queue, $resolver) {
+                $generator->send($result);
+
+                $this->processGenerator($generator, $queue, $resolver);
+            }, fn(\Throwable $e) => $generator->throw($e));
+
+            // TODO Check that the $promise is part of the queue
+            // TODO In the case that the request is a "CompleteWorkflow", then $deferred should be resolved
+            $entry = $queue->pull($promise);
+
+            $this->delegate($this->client->request($entry->request), $entry->resolver);
+
+            return;
+        }
+
+        $resolver->resolve($generator->getReturn());
+    }
+
+    /**
+     * @param PromiseInterface $promise
+     * @param Deferred $deferred
+     */
+    private function delegate(PromiseInterface $promise, Deferred $deferred): void
+    {
+        $promise->then(
+            fn($response) => $deferred->resolve($response),
+            fn(\Throwable $error) => $deferred->reject($error),
+        );
+    }
+
+    /**
      * @psalm-suppress UnusedParam
      *
      * @param RequestQueueInterface $queue
@@ -119,37 +163,8 @@ class StartWorkflow extends Route
             $this->client->request($entry->request)
                 ->then(function ($response) use ($entry) {
                     $entry->resolver->resolve($response);
-                });
+                })
+            ;
         }
-    }
-
-    /**
-     * @param \Generator $generator
-     * @param RequestQueueInterface $queue
-     * @param Deferred $resolver
-     */
-    private function processGenerator(\Generator $generator, RequestQueueInterface $queue, Deferred $resolver): void
-    {
-        if ($generator->valid()) {
-            // TODO assert that it is an instance of PromiseInterface
-            $promise = $generator->current();
-
-            // TODO Check that the $promise is part of the queue
-            // TODO In the case that the request is a "CompleteWorkflow", then $deferred should be resolved
-            $entry = $queue->pull($promise);
-
-            $this->client->request($entry->request)
-                ->then(function ($response) use ($entry, $generator, $queue, $resolver) {
-                    $entry->resolver->resolve($response);
-
-                    $generator->send($response);
-
-                    $this->processGenerator($generator, $queue, $resolver);
-                });
-
-            return;
-        }
-
-        $resolver->resolve($generator->getReturn());
     }
 }
