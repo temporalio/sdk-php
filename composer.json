@@ -16,6 +16,7 @@
         }
     },
     "require-dev": {
+        "monolog/monolog": "^2.1",
         "doctrine/annotations": "^1.10",
         "react/socket": "^0.8",
         "phpunit/phpunit": "^9.3",

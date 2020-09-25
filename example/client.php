@@ -2,6 +2,8 @@
 
 use App\Activity\ExampleActivity;
 use App\Workflow\PizzaDelivery;
+use Monolog\Handler\StreamHandler;
+use Monolog\Logger;
 use React\EventLoop\Factory;
 use Spiral\Goridge\Transport\Connector\TcpConnector;
 use Temporal\Client\Protocol\Transport\GoridgeTransport;
@@ -10,6 +12,7 @@ use Temporal\Client\Worker;
 
 require __DIR__ . '/../vendor/autoload.php';
 
+$logger = new Logger('Temporal', [new StreamHandler(\STDOUT)]);
 
 //
 // Creating an EventLoop. Factory will select the most suitable event loop
@@ -29,18 +32,15 @@ $transport = GoridgeTransport::fromDuplexStream($loop, TcpConnector::create('127
 //
 $worker = new Worker($transport, $loop);
 
+$worker->setLogger($logger);
 $worker->addWorkflow(new PizzaDelivery());
 $worker->addActivity(new ExampleActivity());
 
-$worker->onError(function (\Throwable $e) {
-    echo 'Error: ' . $e . "\n";
-});
-
 RestartableExecutor::new($worker)
-    // Restart 2 times
-    ->times(2)
-    // Wait 2.5 seconds before next attempt
-    ->waitForRestart(2.5)
+    // Restart infinite times
+    ->times(\INF)
+    // Wait 5 seconds before next attempt
+    ->waitForRestart(5)
     // Run worker
     ->run()
 ;

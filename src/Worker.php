@@ -11,6 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
+use Psr\Log\LoggerAwareTrait;
+use Psr\Log\LoggerInterface;
+use Psr\Log\LoggerTrait;
 use React\EventLoop\LoopInterface;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
@@ -34,6 +37,8 @@ use Temporal\Client\Runtime\RouterInterface;
 
 class Worker implements MutableWorkerInterface
 {
+    use LoggerAwareTrait;
+
     /**
      * @psalm-var CollectionInterface<WorkflowInterface>
      *
@@ -105,9 +110,11 @@ class Worker implements MutableWorkerInterface
      */
     protected function createClient(TransportInterface $transport): ClientInterface
     {
-        return new JsonRpcProtocol($transport, function (RequestInterface $request, Deferred $resolver): void {
+        $onRequest = function (RequestInterface $request, Deferred $resolver): void {
             $this->router->emit($request, $resolver);
-        });
+        };
+
+        return new JsonRpcProtocol($transport, $onRequest, $this->logger);
     }
 
     /**
@@ -242,6 +249,10 @@ class Worker implements MutableWorkerInterface
         // TODO configure recursive errors depth
         if ($depth > 10) {
             return;
+        }
+
+        if ($this->logger) {
+            $this->logger->error($e);
         }
 
         foreach ($this->errorHandlers as $handler) {

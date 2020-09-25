@@ -44,6 +44,8 @@ class PizzaDelivery
     {
         $result = yield $context->executeActivity('ExecuteActivity');
 
+        var_dump($result);
+
         return 42;
     }
 }

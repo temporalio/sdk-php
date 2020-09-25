@@ -53,7 +53,7 @@ class ServerEmulator
             $connection->on('data', function ($chunk) use ($connection, $addr) {
                 $data = $this->decode($chunk);
 
-                echo "[$addr] Received Data: $chunk\n";
+                echo "[$addr] <<< $chunk\n";
 
                 if (isset($data['method'])) {
                     $this->send($connection, $this->encodeResponse($data['id'], $data['method']));
@@ -183,7 +183,7 @@ class ServerEmulator
     {
         $addr = $connection->getRemoteAddress();
 
-        echo "[$addr] Processed Data: $payload\n";
+        echo "[$addr] >>> $payload\n";
 
         $connection->write($payload);
     }

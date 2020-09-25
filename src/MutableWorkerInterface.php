@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
+use Psr\Log\LoggerAwareInterface;
 use Temporal\Client\Worker\MutableActivityProviderInterface;
 use Temporal\Client\Worker\MutableWorkflowProviderInterface;
 
@@ -19,6 +20,7 @@ use Temporal\Client\Worker\MutableWorkflowProviderInterface;
  */
 interface MutableWorkerInterface extends
     WorkerInterface,
+    LoggerAwareInterface,
     MutableWorkflowProviderInterface,
     MutableActivityProviderInterface
 {

@@ -11,11 +11,15 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Protocol;
 
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
+use Psr\Log\LoggerInterface;
+use Psr\Log\LoggerTrait;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Exception\ProtocolException;
-use Temporal\Client\Protocol\Message\ErrorResponseInterface;
 use Temporal\Client\Protocol\Message\ErrorResponse;
+use Temporal\Client\Protocol\Message\ErrorResponseInterface;
 use Temporal\Client\Protocol\Message\MessageInterface;
 use Temporal\Client\Protocol\Message\Request;
 use Temporal\Client\Protocol\Message\RequestInterface;
@@ -46,8 +50,11 @@ use Temporal\Client\Protocol\Transport\TransportInterface;
  * @psalm-type BatchMessage = non-empty-array<array-key, SingleMessage>
  * @psalm-type RequestSubscription = \Closure(RequestInterface, Deferred): void
  */
-final class JsonRpcProtocol implements DuplexProtocolInterface
+final class JsonRpcProtocol implements DuplexProtocolInterface, LoggerAwareInterface
 {
+    use LoggerAwareTrait;
+    use LoggerTrait;
+
     /**
      * @var string
      */
@@ -60,8 +67,7 @@ final class JsonRpcProtocol implements DuplexProtocolInterface
      */
     private const ERROR_MISSING_REQUEST =
         'The client did not send a request with identifier #%s or the ' .
-        'response with this identifier has already been processed earlier'
-    ;
+        'response with this identifier has already been processed earlier';
 
     /**
      * @var TransportInterface
@@ -79,17 +85,17 @@ final class JsonRpcProtocol implements DuplexProtocolInterface
     private \Closure $onRequest;
 
     /**
-     * @psalm-param RequestSubscription $onRequest
-     *
      * @param TransportInterface $transport
      * @param \Closure $onRequest
+     * @param LoggerInterface|null $logger
      */
-    public function __construct(TransportInterface $transport, \Closure $onRequest)
+    public function __construct(TransportInterface $transport, \Closure $onRequest, LoggerInterface &$logger = null)
     {
-        $this->onRequest = $onRequest;
         $this->transport = $transport;
+        $this->onRequest = $onRequest;
+        $this->logger = &$logger;
 
-        $this->listenIncomeMessages($transport);
+        $this->listenIncomingMessages($transport);
     }
 
     /**
@@ -104,7 +110,7 @@ final class JsonRpcProtocol implements DuplexProtocolInterface
      * @param TransportInterface $transport
      * @return void
      */
-    private function listenIncomeMessages(TransportInterface $transport): void
+    private function listenIncomingMessages(TransportInterface $transport): void
     {
         $transport->onRequest(function (string $data) {
             $result = $this->parse($data);
@@ -117,179 +123,6 @@ final class JsonRpcProtocol implements DuplexProtocolInterface
                 }
             }
         });
-    }
-
-    /**
-     * The method transfers control to the subscriber by calling it
-     * with two arguments:
-     *
-     *  - {@see RequestInterface} as first argument.
-     *  - {@see Deferred} as second argument:
-     *      1) Resolving ({@see Deferred::resolve()}) this instance will send a
-     *      correct successful response ({@see SuccessResponse}) to the server.
-     *      2) Rejecting ({@see Deferred::reject()}) of this instance will send
-     *      an error response ({@see ErrorResponse}) to the server.
-     *
-     * @param RequestInterface $request
-     */
-    private function emitRequest(RequestInterface $request): void
-    {
-        $deferred = new Deferred();
-
-        $id = $request->getId();
-        $completed = false;
-
-        $deferred->promise()
-            ->always(fn () => $completed = true)
-            ->then($this->onFulfilled($id), $this->onRejected($id))
-        ;
-
-        try {
-            ($this->onRequest)($request, $deferred);
-        } catch (\Throwable $e) {
-            // What should we do in the case that the Promise has already been
-            // resolved and then an error has occurred?
-            if (! $completed) {
-                $deferred->reject($e);
-            }
-        }
-    }
-
-    /**
-     * @param string|int $id
-     * @return \Closure
-     */
-    private function onRejected($id): \Closure
-    {
-        return function (\Throwable $error) use ($id) {
-            $wrapped = $this->onError($error);
-
-            $this->reply(new ErrorResponse($wrapped->getMessage(), $wrapped->getCode(), null, $id));
-        };
-    }
-
-    /**
-     * @param string|int $id
-     * @return \Closure
-     */
-    private function onFulfilled($id): \Closure
-    {
-        return function ($data) use ($id): void {
-            $this->reply(new SuccessResponse($data, $id));
-        };
-    }
-
-    /**
-     * @param \Throwable $e
-     * @return \Throwable
-     */
-    private function onError(\Throwable $e): \Throwable
-    {
-        $code = $e->getCode();
-
-        if ($code > -32099 && $code < -32000) {
-            return $e;
-        }
-
-        switch (true) {
-            case $e instanceof \InvalidArgumentException:
-                return $this->wrapErrorWithCode($e, ErrorResponse::CODE_INVALID_PARAMETERS);
-
-            case $e instanceof \BadFunctionCallException:
-                return $this->wrapErrorWithCode($e, ErrorResponse::CODE_METHOD_NOT_FOUND);
-
-            default:
-                return $this->wrapErrorWithCode($e, ErrorResponse::CODE_INTERNAL_ERROR);
-        }
-    }
-
-    /**
-     * @param \Throwable $source
-     * @param int $code
-     * @return \Throwable
-     */
-    private function wrapErrorWithCode(\Throwable $source, int $code): \Throwable
-    {
-        $class = \get_class($source);
-
-        return new $class($source->getMessage(), $code, $source->getPrevious());
-    }
-
-    /**
-     * @param ResponseInterface $response
-     * @throws \JsonException
-     */
-    private function emitResponse(ResponseInterface $response): void
-    {
-        if (! $this->isRegisteredDeferred($response)) {
-            $error = \sprintf(self::ERROR_MISSING_REQUEST, $response->getId());
-
-            $this->reply(new ErrorResponse($error, ErrorResponse::CODE_INVALID_REQUEST));
-
-            return;
-        }
-
-        $deferred = $this->requests[$response->getId()];
-
-        switch (true) {
-            case $response instanceof SuccessResponse:
-                // But what to do when an error occurs during the resolving?
-                $deferred->resolve($response->getId());
-                return;
-
-            case $response instanceof ErrorResponse:
-                $deferred->reject($response->toException());
-                return;
-
-            default:
-                // This kind of situation doesn't seem to happen =)
-                $error = \sprintf('Unrecognized response type %s', \get_class($response));
-                throw new ProtocolException($error, ErrorResponse::CODE_INTERNAL_ERROR);
-        }
-    }
-
-    /**
-     * @param MessageInterface $message
-     * @return bool
-     */
-    private function isRegisteredDeferred(MessageInterface $message): bool
-    {
-        return isset($this->requests[$message->getId()]);
-    }
-
-    /**
-     * @param RequestInterface $request
-     * @return PromiseInterface
-     * @throws \JsonException
-     */
-    public function request(RequestInterface $request): PromiseInterface
-    {
-        if ($this->isRegisteredDeferred($request)) {
-            throw new ProtocolException(\sprintf(self::ERROR_UNIQUE_ID, $request->getId()));
-        }
-
-        $this->requests[$request->getId()] = $deferred = new Deferred();
-
-        $this->transport->send($request->toJson());
-
-        return $deferred->promise();
-    }
-
-    /**
-     * @param ResponseInterface $response
-     * @throws \JsonException
-     */
-    public function reply(ResponseInterface $response): void
-    {
-        $this->transport->send($response->toJson());
-    }
-
-    /**
-     * @param \Closure $then
-     */
-    public function onRequest(\Closure $then): void
-    {
-        $this->onRequest = $then;
     }
 
     /**
@@ -310,25 +143,41 @@ final class JsonRpcProtocol implements DuplexProtocolInterface
     }
 
     /**
-     * @psalm-param BatchMessage $messages
-     * @psalm-return non-empty-array<array-key, MessageInterface>
+     * @psalm-param SingleMessage|BatchMessage $data
+     * @psalm-return iterable<array-key, MessageInterface>|MessageInterface
      *
-     * @param array $messages
-     * @return array
+     * @param array $data
+     * @return MessageInterface|MessageInterface[]
      */
-    private function decodeBatchMessage(array $messages): array
+    private function decode(array $data)
     {
-        $result = [];
+        return isset($data['id'])
+            ? $this->decodeSingleMessage($data)
+            : $this->decodeBatchMessage($data);
+    }
 
-        foreach ($messages as $message) {
-            $result[] = $this->decodeSingleMessage($message);
+    /**
+     * @psalm-param SingleMessage $data
+     *
+     * @param array $data
+     * @return MessageInterface
+     */
+    private function decodeSingleMessage(array $data): MessageInterface
+    {
+        switch (true) {
+            case isset($data['error']) && \is_array($data['error']):
+                return $this->decodeErrorResponseMessage($data);
+
+            case isset($data['result']):
+                return $this->decodeSuccessResponseMessage($data);
+
+            case isset($data['method']):
+                return $this->decodeRequestMessage($data);
+
+            default:
+                $error = 'Unrecognized JSON-RPC message format';
+                throw new ProtocolException($error, ErrorResponse::CODE_INVALID_REQUEST);
         }
-
-        if (! \count($result)) {
-            throw new ProtocolException('An empty batch JSON-RPC request', ErrorResponse::CODE_INVALID_REQUEST);
-        }
-
-        return $result;
     }
 
     /**
@@ -370,7 +219,7 @@ final class JsonRpcProtocol implements DuplexProtocolInterface
 
         $isValid = ($id === null || \is_int($id)) && \is_int($code) && \is_string($message);
 
-        if (! $isValid) {
+        if (!$isValid) {
             $error = 'Invalid JSON-RPC error message format';
 
             throw new ProtocolException($error, ErrorResponse::CODE_INVALID_REQUEST);
@@ -400,7 +249,7 @@ final class JsonRpcProtocol implements DuplexProtocolInterface
             $data['result'] ?? null,
         ];
 
-        if (! \is_int($id)) {
+        if (!\is_int($id)) {
             $error = 'Invalid JSON-RPC response message format';
 
             throw new ProtocolException($error, ErrorResponse::CODE_PARSE_ERROR);
@@ -446,7 +295,7 @@ final class JsonRpcProtocol implements DuplexProtocolInterface
         //
         $isValid = \is_int($id) && \is_string($method) && ($params === null || \is_array($params));
 
-        if (! $isValid) {
+        if (!$isValid) {
             $error = 'Invalid JSON-RPC request message format';
 
             throw new ProtocolException($error, ErrorResponse::CODE_INVALID_REQUEST);
@@ -456,41 +305,217 @@ final class JsonRpcProtocol implements DuplexProtocolInterface
     }
 
     /**
-     * @psalm-param SingleMessage $data
+     * @psalm-param BatchMessage $messages
+     * @psalm-return non-empty-array<array-key, MessageInterface>
      *
-     * @param array $data
-     * @return MessageInterface
+     * @param array $messages
+     * @return array
      */
-    private function decodeSingleMessage(array $data): MessageInterface
+    private function decodeBatchMessage(array $messages): array
     {
-        switch (true) {
-            case isset($data['error']) && \is_array($data['error']):
-                return $this->decodeErrorResponseMessage($data);
+        $result = [];
 
-            case isset($data['result']):
-                return $this->decodeSuccessResponseMessage($data);
+        foreach ($messages as $message) {
+            $result[] = $this->decodeSingleMessage($message);
+        }
 
-            case isset($data['method']):
-                return $this->decodeRequestMessage($data);
+        if (!\count($result)) {
+            throw new ProtocolException('An empty batch JSON-RPC request', ErrorResponse::CODE_INVALID_REQUEST);
+        }
 
-            default:
-                $error = 'Unrecognized JSON-RPC message format';
-                throw new ProtocolException($error, ErrorResponse::CODE_INVALID_REQUEST);
+        return $result;
+    }
+
+    /**
+     * The method transfers control to the subscriber by calling it
+     * with two arguments:
+     *
+     *  - {@see RequestInterface} as first argument.
+     *  - {@see Deferred} as second argument:
+     *      1) Resolving ({@see Deferred::resolve()}) this instance will send a
+     *      correct successful response ({@see SuccessResponse}) to the server.
+     *      2) Rejecting ({@see Deferred::reject()}) of this instance will send
+     *      an error response ({@see ErrorResponse}) to the server.
+     *
+     * @param RequestInterface $request
+     */
+    private function emitRequest(RequestInterface $request): void
+    {
+        $this->debug('  <<< RPC Request', $request->toArray());
+
+        $deferred = new Deferred();
+
+        $id = $request->getId();
+        $completed = false;
+
+        $deferred->promise()
+            ->always(fn() => $completed = true)
+            ->then($this->onFulfilled($id), $this->onRejected($id))
+        ;
+
+        try {
+            ($this->onRequest)($request, $deferred);
+        } catch (\Throwable $e) {
+            // What should we do in the case that the Promise has already been
+            // resolved and then an error has occurred?
+            if (!$completed) {
+                $deferred->reject($e);
+            }
         }
     }
 
     /**
-     * @psalm-param SingleMessage|BatchMessage $data
-     * @psalm-return iterable<array-key, MessageInterface>|MessageInterface
-     *
-     * @param array $data
-     * @return MessageInterface|MessageInterface[]
+     * @param string|int $id
+     * @return \Closure
      */
-    private function decode(array $data)
+    private function onFulfilled($id): \Closure
     {
-        return isset($data['id'])
-            ? $this->decodeSingleMessage($data)
-            : $this->decodeBatchMessage($data)
-        ;
+        return function ($data) use ($id): void {
+            $this->reply(new SuccessResponse($data, $id));
+        };
+    }
+
+    /**
+     * @param ResponseInterface $response
+     * @throws \JsonException
+     */
+    public function reply(ResponseInterface $response): void
+    {
+        $this->debug('>>>   RPC Response', $response->toArray());
+
+        $this->transport->send($response->toJson());
+    }
+
+    /**
+     * @param string|int $id
+     * @return \Closure
+     */
+    private function onRejected($id): \Closure
+    {
+        return function (\Throwable $error) use ($id) {
+            $wrapped = $this->onError($error);
+
+            $this->reply(new ErrorResponse($wrapped->getMessage(), $wrapped->getCode(), null, $id));
+        };
+    }
+
+    /**
+     * @param \Throwable $e
+     * @return \Throwable
+     */
+    private function onError(\Throwable $e): \Throwable
+    {
+        $code = $e->getCode();
+
+        if ($code > -32099 && $code < -32000) {
+            return $e;
+        }
+
+        switch (true) {
+            case $e instanceof \InvalidArgumentException:
+                return $this->wrapErrorWithCode($e, ErrorResponse::CODE_INVALID_PARAMETERS);
+
+            case $e instanceof \BadFunctionCallException:
+                return $this->wrapErrorWithCode($e, ErrorResponse::CODE_METHOD_NOT_FOUND);
+
+            default:
+                return $this->wrapErrorWithCode($e, ErrorResponse::CODE_INTERNAL_ERROR);
+        }
+    }
+
+    /**
+     * @param \Throwable $source
+     * @param int $code
+     * @return \Throwable
+     */
+    private function wrapErrorWithCode(\Throwable $source, int $code): \Throwable
+    {
+        $class = \get_class($source);
+
+        return new $class($source->getMessage(), $code, $source->getPrevious());
+    }
+
+    /**
+     * @param ResponseInterface $response
+     * @throws \JsonException
+     */
+    private function emitResponse(ResponseInterface $response): void
+    {
+        $this->debug('  <<< RPC Response', $response->toArray());
+
+        if (! $this->isRegisteredDeferred($response)) {
+            $error = \sprintf(self::ERROR_MISSING_REQUEST, $response->getId());
+
+            $this->reply(new ErrorResponse($error, ErrorResponse::CODE_INVALID_REQUEST));
+
+            return;
+        }
+
+        $deferred = $this->requests[$response->getId()];
+
+        switch (true) {
+            case $response instanceof SuccessResponse:
+                // But what to do when an error occurs during the resolving?
+                $deferred->resolve($response->getResult());
+
+                return;
+
+            case $response instanceof ErrorResponse:
+                $deferred->reject($response->toException());
+
+                return;
+
+            default:
+                // This kind of situation doesn't seem to happen =)
+                $error = \sprintf('Unrecognized response type %s', \get_class($response));
+                throw new ProtocolException($error, ErrorResponse::CODE_INTERNAL_ERROR);
+        }
+    }
+
+    /**
+     * @param MessageInterface $message
+     * @return bool
+     */
+    private function isRegisteredDeferred(MessageInterface $message): bool
+    {
+        return isset($this->requests[$message->getId()]);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function log($level, $message, array $context = []): void
+    {
+        if ($this->logger !== null) {
+            $this->logger->log($level, $message, $context);
+        }
+    }
+
+    /**
+     * @param RequestInterface $request
+     * @return PromiseInterface
+     * @throws \JsonException
+     */
+    public function request(RequestInterface $request): PromiseInterface
+    {
+        $this->debug('>>>   RPC Request', $request->toArray());
+
+        if ($this->isRegisteredDeferred($request)) {
+            throw new ProtocolException(\sprintf(self::ERROR_UNIQUE_ID, $request->getId()));
+        }
+
+        $this->requests[$request->getId()] = $deferred = new Deferred();
+
+        $this->transport->send($request->toJson());
+
+        return $deferred->promise();
+    }
+
+    /**
+     * @param \Closure $then
+     */
+    public function onRequest(\Closure $then): void
+    {
+        $this->onRequest = $then;
     }
 }
