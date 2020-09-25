@@ -20,6 +20,9 @@ use Temporal\Client\Runtime\Queue\RequestQueue;
 use Temporal\Client\Runtime\Queue\RequestQueueInterface;
 use Temporal\Client\Runtime\WorkflowContext;
 
+/**
+ * @psalm-import-type WorkflowContextParams from WorkflowContext
+ */
 class StartWorkflow extends Route
 {
     /**
@@ -70,7 +73,6 @@ class StartWorkflow extends Route
     }
 
     /**
-     * @psalm-import-type WorkflowContextParams from WorkflowContext
      * @psalm-param WorkflowContextParams $params
      *
      * @param array $params
@@ -104,6 +106,8 @@ class StartWorkflow extends Route
     }
 
     /**
+     * @psalm-suppress UnusedParam
+     *
      * @param RequestQueueInterface $queue
      * @param Deferred $deferred
      */

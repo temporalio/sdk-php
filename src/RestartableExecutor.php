@@ -14,7 +14,7 @@ namespace Temporal\Client;
 use Temporal\Client\Worker\ExecutorInterface;
 
 /**
- * @psalm-type RestartTimes = RestartableWorker::INFINITE | int
+ * @psalm-type RestartTimes = RestartableExecutor::INFINITE | int
  */
 class RestartableExecutor implements ExecutorInterface
 {

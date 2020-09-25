@@ -13,9 +13,6 @@ namespace Temporal\Client\Protocol\Message;
 
 use Spiral\Goridge\Exception\TransportException;
 
-/**
- * @psalm-immutable
- */
 final class ErrorResponse extends Message implements ErrorResponseInterface
 {
     /**

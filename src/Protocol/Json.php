@@ -19,10 +19,12 @@ final class Json
     private const JSON_MAX_DEPTH = 512;
 
     /**
+     * @psalm-pure
      * @throws \JsonException
      */
     private static function handleJsonErrors(): void
     {
+        /** @psalm-suppress ImpureFunctionCall */
         [$code, $message] = [\json_last_error(), \json_last_error_msg()];
 
         if ($code !== \JSON_ERROR_NONE) {
@@ -46,7 +48,6 @@ final class Json
 
         $result = \json_encode($value, $options, self::JSON_MAX_DEPTH);
 
-        /** @psalm-suppress ImpureFunctionCall */
         self::handleJsonErrors();
 
         return $result;
@@ -70,7 +71,6 @@ final class Json
 
         $result = \json_decode($json, (bool)$assoc, self::JSON_MAX_DEPTH, $options);
 
-        /** @psalm-suppress ImpureFunctionCall */
         self::handleJsonErrors();
 
         return $result;
