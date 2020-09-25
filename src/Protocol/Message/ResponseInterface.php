@@ -9,8 +9,8 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Runtime;
+namespace Temporal\Client\Protocol\Message;
 
-interface ActivityContextInterface
+interface ResponseInterface extends MessageInterface
 {
 }

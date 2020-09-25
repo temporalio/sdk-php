@@ -12,56 +12,58 @@ declare(strict_types=1);
 namespace Temporal\Client\Runtime;
 
 use React\Promise\PromiseInterface;
-use Temporal\Client\Transport\Request\InputRequestInterface;
-use Temporal\Client\Transport\Request\Request;
-use Temporal\Client\Transport\Request\RequestInterface;
-use Temporal\Client\Transport\Request\StartWorkflow;
-use Temporal\Client\Transport\TransportInterface;
+use Temporal\Client\Protocol\Message\Request;
+use Temporal\Client\Protocol\Message\RequestInterface;
+use Temporal\Client\Runtime\Queue\RequestQueueInterface;
 
+/**
+ * @psalm-type WorkflowContextParams = array {
+ *      name: string,
+ *      wid: string,
+ *      rid: string,
+ *      taskQueue?: string,
+ *      payload?: mixed,
+ * }
+ */
 class WorkflowContext implements WorkflowContextInterface
 {
     /**
-     * @var TransportInterface
+     * @psalm-var WorkflowContextParams
+     * @var array
      */
-    public TransportInterface $transport;
+    private array $params;
 
     /**
-     * @var StartWorkflow
+     * @var RequestQueueInterface
      */
-    private StartWorkflow $request;
+    private $queue;
 
     /**
-     * @param StartWorkflow $request
-     * @param TransportInterface $transport
+     * @psalm-param WorkflowContextParams $params
+     *
+     * @param array $params
+     * @param RequestQueueInterface $queue
      */
-    public function __construct(StartWorkflow $request, TransportInterface $transport)
+    public function __construct(array $params, RequestQueueInterface $queue)
     {
-        $this->request = $request;
-        $this->transport = $transport;
+        $this->queue = $queue;
+        $this->params = $params;
     }
 
     /**
      * {@inheritDoc}
      */
-    public function getRequest(): InputRequestInterface
+    public function getId(): string
     {
-        return $this->request;
+        return $this->params['wid'] ?? 'unknown';
     }
 
     /**
      * {@inheritDoc}
      */
-    public function getId()
+    public function getRunId(): string
     {
-        return $this->request->get('wid');
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getRunId()
-    {
-        return $this->request->get('rid');
+        return $this->params['rid'] ?? 'unknown';
     }
 
     /**
@@ -69,7 +71,7 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function getWorkerId(): string
     {
-        return $this->request->get('taskQueue');
+        return $this->params['taskQueue'] ?? 'unknown';
     }
 
     /**
@@ -77,16 +79,16 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function getPayload()
     {
-        return $this->request->get('payload');
+        return $this->params['payload'] ?? null;
     }
 
     /**
      * @param RequestInterface $request
      * @return PromiseInterface
      */
-    private function send(RequestInterface $request): PromiseInterface
+    private function persist(RequestInterface $request): PromiseInterface
     {
-        return $this->transport->send($request);
+        return $this->queue->add($request);
     }
 
     /**
@@ -100,7 +102,7 @@ class WorkflowContext implements WorkflowContextInterface
             'result' => $result,
         ]);
 
-        return $this->send($request);
+        return $this->persist($request);
     }
 
     /**
@@ -116,6 +118,6 @@ class WorkflowContext implements WorkflowContextInterface
             'arguments' => $arguments,
         ]);
 
-        return $this->send($request);
+        return $this->persist($request);
     }
 }

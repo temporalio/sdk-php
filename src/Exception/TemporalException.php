@@ -9,8 +9,8 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Runtime;
+namespace Temporal\Client\Exception;
 
-interface ActivityContextInterface
+class TemporalException extends \RuntimeException
 {
 }

@@ -11,23 +11,19 @@ declare(strict_types=1);
 
 namespace App\Activity;
 
-use Temporal\Client\Declaration\Activity;
-use Temporal\Client\Declaration\ActivityInterface;
+use Temporal\Client\Meta\ActivityMethod;
 
 class ExampleActivity
 {
+    /**
+     * @param array $arguments
+     * @return array
+     *
+     * @ActivityMethod(name="ExampleActivity")
+     */
+    #[ActivityMethod(name: 'ExampleActivity')]
     public function handler(array $arguments = [])
     {
         return $arguments;
-    }
-
-    /**
-     * @return ActivityInterface
-     */
-    public static function toActivity(): ActivityInterface
-    {
-        $handler = [new static(), 'handler'];
-
-        return new Activity('ExampleActivity', \Closure::fromCallable($handler));
     }
 }

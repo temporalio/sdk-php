@@ -11,53 +11,52 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
-use Psr\Container\ContainerInterface;
-use React\EventLoop\Factory;
 use React\EventLoop\LoopInterface;
-use Spiral\Core\Container;
-use Spiral\Core\ResolverInterface;
+use React\Promise\Deferred;
+use React\Promise\PromiseInterface;
+use Temporal\Client\Declaration\Activity;
 use Temporal\Client\Declaration\ActivityInterface;
+use Temporal\Client\Declaration\Collection;
+use Temporal\Client\Declaration\CollectionInterface;
+use Temporal\Client\Declaration\Workflow;
 use Temporal\Client\Declaration\WorkflowInterface;
-use Spiral\Goridge\ReceiverInterface;
-use Spiral\Goridge\RelayInterface;
-use Spiral\Goridge\ResponderInterface;
-use Temporal\Client\Transport\JsonRpcTransport;
-use Temporal\Client\Transport\Request\CreateWorker;
-use Temporal\Client\Transport\Request\StartWorker;
-use Temporal\Client\Transport\RoutableTransportInterface;
-use Temporal\Client\Transport\TransportInterface;
+use Temporal\Client\Meta\Factory as MetadataFactory;
+use Temporal\Client\Meta\ReaderInterface;
+use Temporal\Client\Protocol\ClientInterface;
+use Temporal\Client\Protocol\JsonRpcProtocol;
+use Temporal\Client\Protocol\Message\Request;
+use Temporal\Client\Protocol\Message\RequestInterface;
+use Temporal\Client\Protocol\Transport\TransportInterface;
+use Temporal\Client\Runtime\Route\StartActivity;
+use Temporal\Client\Runtime\Route\StartWorkflow;
+use Temporal\Client\Runtime\Router;
+use Temporal\Client\Runtime\RouterInterface;
 
 class Worker implements MutableWorkerInterface
 {
     /**
-     * @var string
+     * @psalm-var CollectionInterface<WorkflowInterface>
+     *
+     * @var CollectionInterface|WorkflowInterface[]
      */
-    public const DEFAULT_WORKER_ID = 'default';
+    private CollectionInterface $workflows;
 
     /**
-     * @var array|WorkflowInterface[]
+     * @psalm-var CollectionInterface<ActivityInterface>
+     *
+     * @var CollectionInterface|ActivityInterface[]
      */
-    private array $workflows = [];
+    private CollectionInterface $activities;
 
     /**
-     * @var array[]
+     * @var ClientInterface
      */
-    private array $workflowOptions = [];
+    private ClientInterface $client;
 
     /**
-     * @var array|ActivityInterface[]
+     * @var RouterInterface
      */
-    private array $activities = [];
-
-    /**
-     * @var array[]
-     */
-    private array $activityOptions = [];
-
-    /**
-     * @var TransportInterface
-     */
-    private TransportInterface $transport;
+    private RouterInterface $router;
 
     /**
      * @var LoopInterface
@@ -65,78 +64,115 @@ class Worker implements MutableWorkerInterface
     private LoopInterface $loop;
 
     /**
-     * @param Container $app
-     * @param RoutableTransportInterface $transport
-     * @param LoopInterface|null $loop
+     * @var ReaderInterface
      */
-    public function __construct(Container $app, RoutableTransportInterface $transport, LoopInterface $loop = null)
+    private ReaderInterface $reader;
+
+    /**
+     * @var array|\Closure[]
+     */
+    private array $errorHandlers = [];
+
+    /**
+     * @param TransportInterface $transport
+     * @param LoopInterface $loop
+     * @throws \Exception
+     */
+    public function __construct(TransportInterface $transport, LoopInterface $loop)
     {
-        $this->loop = $loop ?? Factory::create();
-        $this->transport = new Router($app, $transport, $this);
+        $this->loop = $loop;
+        $this->activities = new Collection();
+        $this->workflows = new Collection();
+        $this->reader = $this->createReader();
+
+        $this->client = $this->createClient($transport);
+        $this->router = new Router($this->client);
+
+        $this->boot();
     }
 
     /**
-     * @return TransportInterface
+     * @return ReaderInterface
      */
-    public function getTransport(): TransportInterface
+    protected function createReader(): ReaderInterface
     {
-        return $this->transport;
+        return (new MetadataFactory())->create();
     }
 
     /**
-     * @param string $name
+     * @param TransportInterface $transport
+     * @return ClientInterface
+     */
+    protected function createClient(TransportInterface $transport): ClientInterface
+    {
+        return new JsonRpcProtocol($transport, function (RequestInterface $request, Deferred $resolver): void {
+            $this->router->emit($request, $resolver);
+        });
+    }
+
+    /**
      * @return void
      */
-    public function run(string $name = self::DEFAULT_WORKER_ID): void
+    private function boot(): void
     {
-        $this->handshake($name);
-
-        $this->loop->run();
+        $this->registerDefaultRoutes();
     }
 
     /**
-     * @param string $name
+     * @return void
      */
-    private function handshake(string $name): void
+    private function registerDefaultRoutes(): void
     {
-        // STEP 1
-        // STEP 2
-        $this->transport->send(new CreateWorker(
-            $this->declarationsToHandshake($this->workflows, $this->workflowOptions),
-            $this->declarationsToHandshake($this->activities, $this->activityOptions),
-            $name
-        ));
-
-        // STEP 3
-        $this->transport->send(new StartWorker());
+        $this->router->add(new StartWorkflow($this->workflows, $this->client));
+        $this->router->add(new StartActivity($this->activities, $this->client));
     }
 
     /**
-     * @param array $declarations
-     * @param array $options
-     * @return array
+     * @param \Closure $then
      */
-    private function declarationsToHandshake(array $declarations, array $options): array
+    public function onError(\Closure $then): void
     {
-        $result = [];
-
-        foreach ($declarations as $name => $_) {
-            $result[] = \array_merge(['name' => $name], $options[$name] ?? []);
-        }
-
-        return $result;
+        $this->errorHandlers[] = $then;
     }
 
     /**
      * {@inheritDoc}
      */
-    public function addWorkflow(WorkflowInterface $workflow, bool $override = false): void
+    public function addActivity(object $activity, bool $overwrite = false): void
     {
-        $this->workflows[$name = $workflow->getName()] = $workflow;
+        $activities = Activity::fromObject($activity, $this->reader);
 
-        if ($override) {
-            $this->workflowOptions[$name] = ['overwrite' => true];
+        foreach ($activities as $declaration) {
+            $this->addActivityDeclaration($declaration, $overwrite);
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function addActivityDeclaration(ActivityInterface $activity, bool $overwrite = false): void
+    {
+        $this->activities->add($activity, $overwrite);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function addWorkflow(object $workflow, bool $overwrite = false): void
+    {
+        $workflows = Workflow::fromObject($workflow, $this->reader);
+
+        foreach ($workflows as $declaration) {
+            $this->addWorkflowDeclaration($declaration, $overwrite);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function addWorkflowDeclaration(WorkflowInterface $workflow, bool $overwrite = false): void
+    {
+        $this->workflows->add($workflow, $overwrite);
     }
 
     /**
@@ -145,19 +181,7 @@ class Worker implements MutableWorkerInterface
      */
     public function findWorkflow(string $name): ?WorkflowInterface
     {
-        return $this->workflows[$name] ?? null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function addActivity(ActivityInterface $activity, bool $override = false): void
-    {
-        $this->activities[$name = $activity->getName()] = $activity;
-
-        if ($override) {
-            $this->activityOptions[$name] = ['overwrite' => true];
-        }
+        return $this->workflows->find($name);
     }
 
     /**
@@ -166,6 +190,104 @@ class Worker implements MutableWorkerInterface
      */
     public function findActivity(string $name): ?ActivityInterface
     {
-        return $this->activities[$name] ?? null;
+        return $this->activities->find($name);
+    }
+
+    /**
+     * @return ClientInterface
+     */
+    public function getClient(): ClientInterface
+    {
+        return $this->client;
+    }
+
+    /**
+     * @return RouterInterface
+     */
+    public function getRouter(): RouterInterface
+    {
+        return $this->router;
+    }
+
+    /**
+     * @param string $name
+     * @return int
+     * @throws \Throwable
+     */
+    public function run(string $name = self::DEFAULT_WORKER_ID): int
+    {
+        try {
+            $this->handshake($name);
+
+            $this->loop->run();
+        } catch (\Throwable $e) {
+            $this->emitError($e);
+
+            try {
+                return $e->getCode() ?: -1;
+            } finally {
+                throw $e;
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * @param \Throwable $e
+     * @param int $depth
+     */
+    private function emitError(\Throwable $e, int $depth = 0): void
+    {
+        // TODO configure recursive errors depth
+        if ($depth > 10) {
+            return;
+        }
+
+        foreach ($this->errorHandlers as $handler) {
+            try {
+                $handler($e);
+            } catch (\Throwable $e) {
+                $this->emitError($e);
+            }
+        }
+    }
+
+    /**
+     * @param string $name
+     */
+    public function handshake(string $name = self::DEFAULT_WORKER_ID): void
+    {
+        $workflows = $activities = [];
+
+        foreach ($this->activities as $options => $activity) {
+            $activities[] = \array_merge($options, [
+                'name' => $activity->getName(),
+            ]);
+        }
+
+        foreach ($this->workflows as $options => $workflow) {
+            $workflows[] = \array_merge($options, [
+                'name' => $workflow->getName(),
+            ]);
+        }
+
+        $this->call('CreateWorker', [
+            'taskQueue'  => $name,
+            'activities' => $activities,
+            'workflows'  => $workflows,
+        ])
+            ->then(fn() => $this->call('StartWorker'))
+        ;
+    }
+
+    /**
+     * @param string $method
+     * @param array $params
+     * @return PromiseInterface
+     */
+    private function call(string $method, array $params = []): PromiseInterface
+    {
+        return $this->client->request(new Request($method, $params));
     }
 }

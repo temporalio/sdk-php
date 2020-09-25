@@ -14,16 +14,20 @@ namespace App;
 use React\EventLoop\LoopInterface;
 use React\Socket\ConnectionInterface;
 use React\Socket\TcpServer;
-use Spiral\Goridge\Message\ProceedMessageInterface;
-use Spiral\Goridge\Protocol\GoridgeV2;
-use Spiral\Goridge\Protocol\Protocol;
-use Spiral\Goridge\Protocol\ProtocolInterface;
+use Spiral\Goridge\Protocol;
+use Spiral\Goridge\Protocol\Stream\Factory;
 
 class ServerEmulator
 {
+    /**
+     * @var LoopInterface
+     */
     private LoopInterface $loop;
 
-    private ProtocolInterface $protocol;
+    /**
+     * @var Protocol
+     */
+    private Protocol $protocol;
 
     /**
      * @param LoopInterface $loop
@@ -31,9 +35,12 @@ class ServerEmulator
     public function __construct(LoopInterface $loop)
     {
         $this->loop = $loop;
-        $this->protocol = new GoridgeV2();
+        $this->protocol = new Protocol();
     }
 
+    /**
+     * @param string|int $uri
+     */
     public function run($uri): void
     {
         $server = new TcpServer($uri, $this->loop);
@@ -49,9 +56,7 @@ class ServerEmulator
                 echo "[$addr] Received Data: $chunk\n";
 
                 if (isset($data['method'])) {
-                    $response = $this->encodeResponse($data['id'], $data['method']);
-
-                    $this->send($connection, $response->body);
+                    $this->send($connection, $this->encodeResponse($data['id'], $data['method']));
                 }
             });
 
@@ -61,15 +66,48 @@ class ServerEmulator
         $this->loop->run();
     }
 
-    private function decode(string $chunk): array
+    /**
+     * @param string $message
+     * @return string
+     */
+    private function encode(string $message): string
     {
-        $stream = $this->stream($chunk);
+        $stream = $this->protocol->encode($message, Protocol\Type::TYPE_MESSAGE);
 
-        $message = Protocol::decodeThrough($this->protocol, fn(int $length) => \fread($stream, $length));
+        $result = '';
 
-        return \json_decode($message->body, true, 512, \JSON_THROW_ON_ERROR);
+        foreach ($stream as $chunk) {
+            $result .= $chunk;
+        }
+
+        return $result;
     }
 
+    /**
+     * @param string $chunk
+     * @return array
+     * @throws \JsonException
+     */
+    private function decode(string $chunk): array
+    {
+        $source = $this->stream($chunk);
+
+        $stream = $this->protocol->decode(new Factory());
+
+        while ($stream->valid()) {
+            $stream->send(\fread($source, $stream->current()));
+        }
+
+        /** @var Protocol\Stream\BufferStream $buffer */
+        [$buffer] = $stream->getReturn();
+
+        return \json_decode($buffer->getContents(), true, 512, \JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * @param string $text
+     * @return false|resource
+     */
     private function stream(string $text)
     {
         $stream = \fopen('php://memory', 'ab+');
@@ -79,13 +117,22 @@ class ServerEmulator
         return $stream;
     }
 
-    private function encodeResponse(int $id, $payload): ProceedMessageInterface
+    /**
+     * @param int $id
+     * @param mixed $payload
+     * @return string
+     * @throws \JsonException
+     */
+    private function encodeResponse(int $id, $payload): string
     {
         $response = \json_encode(['id' => $id, 'result' => $payload], \JSON_THROW_ON_ERROR);
 
-        return $this->protocol->encode($response, 0);
+        return $this->encode($response);
     }
 
+    /**
+     * @param ConnectionInterface $connection
+     */
     private function runTimers(ConnectionInterface $connection): void
     {
         $this->loop->addTimer(1, function () use ($connection) {
@@ -112,16 +159,26 @@ class ServerEmulator
         });
     }
 
-    private function encodeRequest(string $method, $payload): ProceedMessageInterface
+    /**
+     * @param string $method
+     * @param mixed $payload
+     * @return string
+     * @throws \JsonException
+     */
+    private function encodeRequest(string $method, $payload): string
     {
         $response = \json_encode(
             ['id' => \random_int(1, \PHP_INT_MAX), 'method' => $method, 'params' => $payload],
             \JSON_THROW_ON_ERROR
         );
 
-        return $this->protocol->encode($response, 0);
+        return $this->encode($response);
     }
 
+    /**
+     * @param ConnectionInterface $connection
+     * @param $payload
+     */
     private function send(ConnectionInterface $connection, $payload): void
     {
         $addr = $connection->getRemoteAddress();

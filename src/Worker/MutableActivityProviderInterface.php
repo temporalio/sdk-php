@@ -16,8 +16,14 @@ use Temporal\Client\Declaration\ActivityInterface;
 interface MutableActivityProviderInterface extends ActivityProviderInterface
 {
     /**
-     * @param ActivityInterface $activity
-     * @param bool $override
+     * @param object $activity
+     * @param bool $overwrite
      */
-    public function addActivity(ActivityInterface $activity, bool $override = false): void;
+    public function addActivity(object $activity, bool $overwrite = false): void;
+
+    /**
+     * @param ActivityInterface $activity
+     * @param bool $overwrite
+     */
+    public function addActivityDeclaration(ActivityInterface $activity, bool $overwrite = false): void;
 }
