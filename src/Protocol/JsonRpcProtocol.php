@@ -453,6 +453,8 @@ final class JsonRpcProtocol implements DuplexProtocolInterface, LoggerAwareInter
 
         $deferred = $this->requests[$response->getId()];
 
+        unset($this->requests[$response->getId()]);
+
         switch (true) {
             case $response instanceof SuccessResponse:
                 // But what to do when an error occurs during the resolving?
