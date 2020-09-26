@@ -19,6 +19,7 @@ use Temporal\Client\Protocol\ClientInterface;
 use Temporal\Client\Runtime\Queue\EntryInterface;
 use Temporal\Client\Runtime\Queue\RequestQueue;
 use Temporal\Client\Runtime\Queue\RequestQueueInterface;
+use Temporal\Client\Runtime\Workflow\Executor;
 use Temporal\Client\Runtime\WorkflowContext;
 
 /**
@@ -68,17 +69,8 @@ class StartWorkflow extends Route
             throw new \InvalidArgumentException($error);
         }
 
-        $queue = new RequestQueue();
-        $context = new WorkflowContext($params, $queue);
-
-        // TODO auto resolve parameters instead of "$context" passing.
-        $result = ($workflow->getHandler())($context);
-
-        if ($result instanceof \Generator) {
-            $this->processGenerator($result, $queue, $resolver);
-        } else {
-            $this->processResult($queue, $resolver);
-        }
+        $executor = new Executor($this->client, $params, $resolver);
+        $executor->execute($workflow->getHandler());
     }
 
     /**
@@ -104,67 +96,5 @@ class StartWorkflow extends Route
         }
 
         return null;
-    }
-
-    /**
-     * @param \Generator $generator
-     * @param RequestQueueInterface $queue
-     * @param Deferred $resolver
-     */
-    private function processGenerator(\Generator $generator, RequestQueueInterface $queue, Deferred $resolver): void
-    {
-        if ($generator->valid()) {
-            $promise = $generator->current();
-
-            // TODO assert that it is an instance of PromiseInterface
-            assert($promise instanceof PromiseInterface);
-
-            $promise->then(function ($result) use ($generator, $queue, $resolver) {
-                $generator->send($result);
-
-                $this->processGenerator($generator, $queue, $resolver);
-            }, fn(\Throwable $e) => $generator->throw($e));
-
-            // TODO Check that the $promise is part of the queue
-            // TODO In the case that the request is a "CompleteWorkflow", then $deferred should be resolved
-            $entry = $queue->pull($promise);
-
-            $this->delegate($this->client->request($entry->request), $entry->resolver);
-
-            return;
-        }
-
-        $resolver->resolve($generator->getReturn());
-    }
-
-    /**
-     * @param PromiseInterface $promise
-     * @param Deferred $deferred
-     */
-    private function delegate(PromiseInterface $promise, Deferred $deferred): void
-    {
-        $promise->then(
-            fn($response) => $deferred->resolve($response),
-            fn(\Throwable $error) => $deferred->reject($error),
-        );
-    }
-
-    /**
-     * @psalm-suppress UnusedParam
-     *
-     * @param RequestQueueInterface $queue
-     * @param Deferred $deferred
-     */
-    private function processResult(RequestQueueInterface $queue, Deferred $deferred): void
-    {
-        /** @var EntryInterface $entry */
-        foreach ($queue as $entry) {
-            // TODO In the case that the request is a "CompleteWorkflow", then $deferred should be resolved
-            $this->client->request($entry->request)
-                ->then(function ($response) use ($entry) {
-                    $entry->resolver->resolve($response);
-                })
-            ;
-        }
     }
 }

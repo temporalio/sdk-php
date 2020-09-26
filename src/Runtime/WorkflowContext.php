@@ -15,6 +15,8 @@ use React\Promise\PromiseInterface;
 use Temporal\Client\Protocol\Message\Request;
 use Temporal\Client\Protocol\Message\RequestInterface;
 use Temporal\Client\Runtime\Queue\RequestQueueInterface;
+use Temporal\Client\Runtime\Request\CompleteWorkflow;
+use Temporal\Client\Runtime\Request\ExecuteActivity;
 
 /**
  * @psalm-type WorkflowContextParams = array {
@@ -97,12 +99,7 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function complete($result = null): PromiseInterface
     {
-        $request = new Request('CompleteWorkflow', [
-            'rid'    => $this->getRunId(),
-            'result' => $result,
-        ]);
-
-        return $this->persist($request);
+        return $this->persist(new CompleteWorkflow($this, $result));
     }
 
     /**
@@ -112,12 +109,6 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function executeActivity(string $name, array $arguments = []): PromiseInterface
     {
-        $request = new Request('ExecuteActivity', [
-            'name'      => $name,
-            'rid'       => $this->getRunId(),
-            'arguments' => $arguments,
-        ]);
-
-        return $this->persist($request);
+        return $this->persist(new ExecuteActivity($this, $name, $arguments));
     }
 }

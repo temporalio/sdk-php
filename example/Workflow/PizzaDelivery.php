@@ -42,9 +42,10 @@ class PizzaDelivery
     #[WorkflowMethod(name: 'PizzaDelivery')]
     public function handler(WorkflowContextInterface $context)
     {
-        $result = yield $context->executeActivity('ExecuteActivity');
-
-        var_dump($result);
+        $result = yield [
+            $context->executeActivity('A'),
+            $context->executeActivity('B'),
+        ];
 
         return 42;
     }

@@ -21,4 +21,11 @@ interface ClientInterface extends ProtocolInterface
      * @return PromiseInterface
      */
     public function request(RequestInterface $request): PromiseInterface;
+
+    /**
+     * @param RequestInterface $request
+     * @param RequestInterface ...$requests
+     * @return PromiseInterface[]
+     */
+    public function batch(RequestInterface $request, RequestInterface ...$requests): iterable;
 }

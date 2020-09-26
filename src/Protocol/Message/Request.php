@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Protocol\Message;
 
-final class Request extends Message implements RequestInterface
+class Request extends Message implements RequestInterface
 {
     /**
      * @var string

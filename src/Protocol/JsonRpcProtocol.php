@@ -383,7 +383,7 @@ final class JsonRpcProtocol implements DuplexProtocolInterface, LoggerAwareInter
     {
         $this->debug('>>>   RPC Response', $response->toArray());
 
-        $this->transport->send($response->toJson());
+        $this->transport->send($this->toJson($response->toArray()));
     }
 
     /**
@@ -443,7 +443,7 @@ final class JsonRpcProtocol implements DuplexProtocolInterface, LoggerAwareInter
     {
         $this->debug('  <<< RPC Response', $response->toArray());
 
-        if (! $this->isRegisteredDeferred($response)) {
+        if (!$this->isRegisteredDeferred($response)) {
             $error = \sprintf(self::ERROR_MISSING_REQUEST, $response->getId());
 
             $this->reply(new ErrorResponse($error, ErrorResponse::CODE_INVALID_REQUEST));
@@ -482,16 +482,6 @@ final class JsonRpcProtocol implements DuplexProtocolInterface, LoggerAwareInter
     }
 
     /**
-     * {@inheritDoc}
-     */
-    public function log($level, $message, array $context = []): void
-    {
-        if ($this->logger !== null) {
-            $this->logger->log($level, $message, $context);
-        }
-    }
-
-    /**
      * @param RequestInterface $request
      * @return PromiseInterface
      * @throws \JsonException
@@ -500,15 +490,65 @@ final class JsonRpcProtocol implements DuplexProtocolInterface, LoggerAwareInter
     {
         $this->debug('>>>   RPC Request', $request->toArray());
 
+        $data = $this->prepareForRequest($request);
+
+        $this->transport->send($this->toJson($data));
+
+        return $this->requests[$request->getId()]->promise();
+    }
+
+    /**
+     * @param RequestInterface $request
+     * @return array
+     */
+    private function prepareForRequest(RequestInterface $request): array
+    {
         if ($this->isRegisteredDeferred($request)) {
             throw new ProtocolException(\sprintf(self::ERROR_UNIQUE_ID, $request->getId()));
         }
 
-        $this->requests[$request->getId()] = $deferred = new Deferred();
+        $this->requests[$request->getId()] = new Deferred();
 
-        $this->transport->send($request->toJson());
+        return $request->toArray();
+    }
 
-        return $deferred->promise();
+    /**
+     * {@inheritDoc}
+     */
+    public function batch(RequestInterface $request, RequestInterface ...$requests): iterable
+    {
+        $this->debug('>>>   RPC Request [Batch]', $requests);
+
+        $formatted = [];
+
+        foreach ([$request, ...$requests] as $current) {
+            $formatted[] = $this->prepareForRequest($current);
+
+            yield $this->requests[$current->getId()]->promise();
+        }
+
+        $this->transport->send($this->toJson($formatted));
+    }
+
+    /**
+     * @param array $data
+     * @param int $options
+     * @return string
+     * @throws \JsonException
+     */
+    private function toJson(array $data, int $options = 0): string
+    {
+        return Json::encode($data, $options);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function log($level, $message, array $context = []): void
+    {
+        if ($this->logger !== null) {
+            $this->logger->log($level, $message, $context);
+        }
     }
 
     /**
