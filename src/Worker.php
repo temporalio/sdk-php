@@ -12,8 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Client;
 
 use Psr\Log\LoggerAwareTrait;
-use Psr\Log\LoggerInterface;
-use Psr\Log\LoggerTrait;
 use React\EventLoop\LoopInterface;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
@@ -29,6 +27,8 @@ use Temporal\Client\Protocol\ClientInterface;
 use Temporal\Client\Protocol\JsonRpcProtocol;
 use Temporal\Client\Protocol\Message\Request;
 use Temporal\Client\Protocol\Message\RequestInterface;
+use Temporal\Client\Protocol\Request\CreateWorker;
+use Temporal\Client\Protocol\Request\StartWorker;
 use Temporal\Client\Protocol\Transport\TransportInterface;
 use Temporal\Client\Runtime\Route\StartActivity;
 use Temporal\Client\Runtime\Route\StartWorkflow;
@@ -201,22 +201,6 @@ class Worker implements MutableWorkerInterface
     }
 
     /**
-     * @return ClientInterface
-     */
-    public function getClient(): ClientInterface
-    {
-        return $this->client;
-    }
-
-    /**
-     * @return RouterInterface
-     */
-    public function getRouter(): RouterInterface
-    {
-        return $this->router;
-    }
-
-    /**
      * @param string $name
      * @return int
      * @throws \Throwable
@@ -238,6 +222,51 @@ class Worker implements MutableWorkerInterface
         }
 
         return 0;
+    }
+
+    /**
+     * @param string $name
+     * @return PromiseInterface
+     */
+    public function handshake(string $name = self::DEFAULT_WORKER_ID): PromiseInterface
+    {
+        $deferred = new Deferred();
+
+        $request = new CreateWorker($name);
+
+        /** @var array $options */
+        foreach ($this->workflows as $options => $workflow) {
+            $request->addWorkflow($workflow, $options);
+        }
+
+        /** @var array $options */
+        foreach ($this->activities as $options => $activity) {
+            $request->addActivity($activity, $options);
+        }
+
+        $this->client->request($request)
+            ->then(
+                fn() => $this->startWorker($name, $deferred),
+                fn(\Throwable $e) => $deferred->reject($e)
+            )
+        ;
+
+        return $deferred->promise();
+    }
+
+    /**
+     * @param string $name
+     * @param Deferred $deferred
+     * @return PromiseInterface
+     */
+    private function startWorker(string $name, Deferred $deferred): PromiseInterface
+    {
+        return $this->client->request(new StartWorker($name))
+            ->then(
+                fn($data) => $deferred->resolve($data),
+                fn(\Throwable $e) => $deferred->reject($e)
+            )
+        ;
     }
 
     /**
@@ -265,40 +294,18 @@ class Worker implements MutableWorkerInterface
     }
 
     /**
-     * @param string $name
+     * @return ClientInterface
      */
-    public function handshake(string $name = self::DEFAULT_WORKER_ID): void
+    public function getClient(): ClientInterface
     {
-        $workflows = $activities = [];
-
-        foreach ($this->activities as $options => $activity) {
-            $activities[] = \array_merge($options, [
-                'name' => $activity->getName(),
-            ]);
-        }
-
-        foreach ($this->workflows as $options => $workflow) {
-            $workflows[] = \array_merge($options, [
-                'name' => $workflow->getName(),
-            ]);
-        }
-
-        $this->call('CreateWorker', [
-            'taskQueue'  => $name,
-            'activities' => $activities,
-            'workflows'  => $workflows,
-        ])
-            ->then(fn() => $this->call('StartWorker'))
-        ;
+        return $this->client;
     }
 
     /**
-     * @param string $method
-     * @param array $params
-     * @return PromiseInterface
+     * @return RouterInterface
      */
-    private function call(string $method, array $params = []): PromiseInterface
+    public function getRouter(): RouterInterface
     {
-        return $this->client->request(new Request($method, $params));
+        return $this->router;
     }
 }

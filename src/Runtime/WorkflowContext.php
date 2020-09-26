@@ -12,11 +12,10 @@ declare(strict_types=1);
 namespace Temporal\Client\Runtime;
 
 use React\Promise\PromiseInterface;
-use Temporal\Client\Protocol\Message\Request;
 use Temporal\Client\Protocol\Message\RequestInterface;
+use Temporal\Client\Protocol\Request\CompleteWorkflow;
+use Temporal\Client\Protocol\Request\ExecuteActivity;
 use Temporal\Client\Runtime\Queue\RequestQueueInterface;
-use Temporal\Client\Runtime\Request\CompleteWorkflow;
-use Temporal\Client\Runtime\Request\ExecuteActivity;
 
 /**
  * @psalm-type WorkflowContextParams = array {
@@ -105,10 +104,11 @@ class WorkflowContext implements WorkflowContextInterface
     /**
      * @param string $name
      * @param array $arguments
+     * @param ActivityOptions|null $opt
      * @return PromiseInterface
      */
-    public function executeActivity(string $name, array $arguments = []): PromiseInterface
+    public function executeActivity(string $name, array $arguments = [], ActivityOptions $opt = null): PromiseInterface
     {
-        return $this->persist(new ExecuteActivity($this, $name, $arguments));
+        return $this->persist(new ExecuteActivity($this, $name, $arguments, $opt));
     }
 }

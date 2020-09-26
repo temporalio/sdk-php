@@ -11,11 +11,23 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Declaration;
 
+use Temporal\Client\Meta\QueryMethod;
 use Temporal\Client\Meta\ReaderInterface;
+use Temporal\Client\Meta\SignalMethod;
 use Temporal\Client\Meta\WorkflowMethod;
 
 final class Workflow extends HandledDeclaration implements WorkflowInterface
 {
+    /**
+     * @var array|\Closure[]
+     */
+    private array $queryHandlers = [];
+
+    /**
+     * @var array|\Closure[]
+     */
+    private array $signalHandlers = [];
+
     /**
      * @param object $object
      * @param ReaderInterface $reader
@@ -23,14 +35,53 @@ final class Workflow extends HandledDeclaration implements WorkflowInterface
      */
     public static function fromObject(object $object, ReaderInterface $reader): iterable
     {
+        $signalHandlers = $queryHandlers = [];
+
         $reflection = new \ReflectionObject($object);
 
-        foreach ($reflection->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
-            /** @var WorkflowMethod $meta */
-            foreach ($reader->getMethodMetadata($method, WorkflowMethod::class) as $meta) {
-                $name = $meta->name ?? self::createWorkflowName($reflection, $method);
+        /** @var \ReflectionMethod $method */
+        foreach (self::eachMethod($reader, $reflection, QueryMethod::class) as $method => $meta) {
+            $name = $meta->name ?? self::createQueryHandlerName($reflection, $method);
 
-                yield new self($name, $method->getClosure($object));
+            $queryHandlers[$name] = $method->getClosure($object);
+        }
+
+        /** @var \ReflectionMethod $method */
+        foreach (self::eachMethod($reader, $reflection, SignalMethod::class) as $method => $meta) {
+            $name = $meta->name ?? self::createSignalHandlerName($reflection, $method);
+
+            $signalHandlers[$name] = $method->getClosure($object);
+        }
+
+        /** @var \ReflectionMethod $method */
+        foreach (self::eachMethod($reader, $reflection, WorkflowMethod::class) as $method => $meta) {
+            $name = $meta->name ?? self::createWorkflowName($reflection, $method);
+
+            $workflow = new self($name, $method->getClosure($object));
+
+            foreach ($queryHandlers as $name => $callback) {
+                $workflow->addQueryHandler($name, $callback);
+            }
+
+            foreach ($signalHandlers as $name => $callback) {
+                $workflow->addSignalHandler($name, $callback);
+            }
+
+            yield $workflow;
+        }
+    }
+
+    /**
+     * @param ReaderInterface $reader
+     * @param \ReflectionClass $ctx
+     * @param string $attribute
+     * @return iterable
+     */
+    private static function eachMethod(ReaderInterface $reader, \ReflectionClass $ctx, string $attribute): iterable
+    {
+        foreach ($ctx->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
+            foreach ($reader->getMethodMetadata($method, $attribute) as $meta) {
+                yield $method => $meta;
             }
         }
     }
@@ -42,22 +93,70 @@ final class Workflow extends HandledDeclaration implements WorkflowInterface
      */
     private static function createWorkflowName(\ReflectionClass $class, \ReflectionMethod $method): string
     {
+        return self::createDefaultName($class, $method);
+    }
+
+    /**
+     * @param \ReflectionClass $class
+     * @param \ReflectionMethod $method
+     * @return string
+     */
+    private static function createDefaultName(\ReflectionClass $class, \ReflectionMethod $method): string
+    {
         return $class->getName() . '::' . $method->getName();
     }
 
     /**
-     * {@inheritDoc}
+     * @param \ReflectionClass $class
+     * @param \ReflectionMethod $method
+     * @return string
      */
-    public function getQueryHandlers(): iterable
+    private static function createQueryHandlerName(\ReflectionClass $class, \ReflectionMethod $method): string
     {
-        throw new \LogicException(__METHOD__ . ' not implemented yet');
+        return self::createDefaultName($class, $method);
+    }
+
+    /**
+     * @param \ReflectionClass $class
+     * @param \ReflectionMethod $method
+     * @return string
+     */
+    private static function createSignalHandlerName(\ReflectionClass $class, \ReflectionMethod $method): string
+    {
+        return self::createDefaultName($class, $method);
     }
 
     /**
      * {@inheritDoc}
      */
-    public function getSignalHandlers(): iterable
+    public function getQueryHandlers(): array
     {
-        throw new \LogicException(__METHOD__ . ' not implemented yet');
+        return $this->queryHandlers;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function addQueryHandler(string $name, callable $callback): void
+    {
+        // TODO Add exists assertion
+        $this->queryHandlers[$name] = \Closure::fromCallable($callback);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getSignalHandlers(): array
+    {
+        return $this->signalHandlers;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function addSignalHandler(string $name, callable $callback): void
+    {
+        // TODO Add exists assertion
+        $this->signalHandlers[$name] = \Closure::fromCallable($callback);
     }
 }

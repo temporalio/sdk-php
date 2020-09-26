@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Runtime\Request;
+namespace Temporal\Client\Protocol\Request;
 
 use Temporal\Client\Protocol\Message\Request;
 use Temporal\Client\Runtime\WorkflowContextInterface;

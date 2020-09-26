@@ -11,42 +11,40 @@ declare(strict_types=1);
 
 namespace App\Workflow;
 
+use Temporal\Client\Meta\QueryMethod;
+use Temporal\Client\Meta\SignalMethod;
 use Temporal\Client\Meta\WorkflowMethod;
 use Temporal\Client\Runtime\WorkflowContextInterface;
 
 class PizzaDelivery
 {
     /**
-     * Promise-based example:
-     *
-     * <code>
-     *  $context->executeActivity('ExecuteActivity')
-     *      ->then(function ($result) use ($context) {
-     *          $context->complete($result)
-     *      });
-     * </code>
-     *
-     * Coroutine-based example:
-     *
-     * <code>
-     *  $result = yield $context->executeActivity('ExecuteActivity');
-     *
-     *  return $result;
-     * </code>
-     *
-     * @param WorkflowContextInterface $context
-     * @return \Generator
-     *
      * @WorkflowMethod(name="PizzaDelivery")
      */
     #[WorkflowMethod(name: 'PizzaDelivery')]
     public function handler(WorkflowContextInterface $context)
     {
-        $result = yield [
-            $context->executeActivity('A'),
-            $context->executeActivity('B'),
-        ];
+        $a = yield $context->executeActivity('A');
+        $b = yield $context->executeActivity('B');
 
-        return 42;
+        return [$a, $b];
+    }
+
+    /**
+     * @QueryMethod()
+     */
+    #[QueryMethod]
+    public function getStatus(): string
+    {
+        return 'I\'m Ok';
+    }
+
+    /**
+     * @SignalMethod()
+     */
+    #[SignalMethod]
+    public function retryNow(): void
+    {
+        //
     }
 }

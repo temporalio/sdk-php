@@ -19,7 +19,19 @@ interface WorkflowInterface extends HandledDeclarationInterface
     public function getQueryHandlers(): iterable;
 
     /**
+     * @param string $name
+     * @param callable $callback
+     */
+    public function addQueryHandler(string $name, callable $callback): void;
+
+    /**
      * @return iterable|callable[]
      */
     public function getSignalHandlers(): iterable;
+
+    /**
+     * @param string $name
+     * @param callable $callback
+     */
+    public function addSignalHandler(string $name, callable $callback): void;
 }

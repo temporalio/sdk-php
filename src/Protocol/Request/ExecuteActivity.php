@@ -9,9 +9,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Runtime\Request;
+namespace Temporal\Client\Protocol\Request;
 
 use Temporal\Client\Protocol\Message\Request;
+use Temporal\Client\Runtime\ActivityOptions;
 use Temporal\Client\Runtime\WorkflowContextInterface;
 
 final class ExecuteActivity extends Request
@@ -25,13 +26,15 @@ final class ExecuteActivity extends Request
      * @param WorkflowContextInterface $ctx
      * @param string $name
      * @param array $arguments
+     * @param ActivityOptions|null $opt
      */
-    public function __construct(WorkflowContextInterface $ctx, string $name, array $arguments = [])
+    public function __construct(WorkflowContextInterface $ctx, string $name, array $arguments, ?ActivityOptions $opt)
     {
         parent::__construct(self::METHOD_NAME, [
             'name'      => $name,
             'rid'       => $ctx->getRunId(),
             'arguments' => $arguments,
+            'options'   => ($opt ?? new ActivityOptions())->toArray(),
         ]);
     }
 }

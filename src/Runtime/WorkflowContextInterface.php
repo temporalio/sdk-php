@@ -44,7 +44,8 @@ interface WorkflowContextInterface
     /**
      * @param string $name
      * @param array $arguments
+     * @param ActivityOptions|null $opt
      * @return PromiseInterface
      */
-    public function executeActivity(string $name, array $arguments = []): PromiseInterface;
+    public function executeActivity(string $name, array $arguments = [], ActivityOptions $opt = null): PromiseInterface;
 }
