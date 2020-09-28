@@ -84,8 +84,7 @@ abstract class Message implements MessageInterface, \Stringable, \JsonSerializab
     public function toArray(): array
     {
         return [
-            'jsonrpc' => '2.0',
-            'id'      => $this->id,
+            'id' => $this->id,
         ];
     }
 }

@@ -16,8 +16,6 @@ use React\Promise\PromiseInterface;
 use Temporal\Client\Protocol\Message\RequestInterface;
 
 /**
- * @psalm-immutable
- *
  * @property-read RequestInterface $request
  * @property-read Deferred $resolver
  * @property-read PromiseInterface $promise

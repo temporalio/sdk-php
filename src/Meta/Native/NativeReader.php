@@ -22,6 +22,8 @@ class NativeReader implements ReaderInterface
     private const DEFAULT_PROPERTY_NAME = 'value';
 
     /**
+     * @psalm-suppress UndefinedClass
+     *
      * @param \ReflectionAttribute $attribute
      * @return array
      */
@@ -68,6 +70,8 @@ class NativeReader implements ReaderInterface
     }
 
     /**
+     * @psalm-suppress UndefinedClass
+     *
      * @param \ReflectionAttribute $attribute
      * @return object
      * @throws \ReflectionException
@@ -124,6 +128,7 @@ class NativeReader implements ReaderInterface
      */
     public function getClassMetadata(\ReflectionClass $class, string $name = null): iterable
     {
+        /** @psalm-suppress UndefinedClass */
         $result = $class->getAttributes($name, \ReflectionAttribute::IS_INSTANCEOF);
 
         foreach ($result as $attribute) {
@@ -137,6 +142,7 @@ class NativeReader implements ReaderInterface
      */
     public function getMethodMetadata(\ReflectionMethod $method, string $name = null): iterable
     {
+        /** @psalm-suppress UndefinedClass */
         $result = $method->getAttributes($name, \ReflectionAttribute::IS_INSTANCEOF);
 
         foreach ($result as $attribute) {
@@ -150,6 +156,7 @@ class NativeReader implements ReaderInterface
      */
     public function getPropertyMetadata(\ReflectionProperty $property, string $name = null): iterable
     {
+        /** @psalm-suppress UndefinedClass */
         $result = $property->getAttributes($name, \ReflectionAttribute::IS_INSTANCEOF);
 
         foreach ($result as $attribute) {

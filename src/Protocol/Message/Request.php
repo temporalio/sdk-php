@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Protocol\Message;
 
-final class Request extends Message implements RequestInterface
+class Request extends Message implements RequestInterface
 {
     /**
      * @var string
@@ -21,14 +21,14 @@ final class Request extends Message implements RequestInterface
     /**
      * @var array
      */
-    private array $params;
+    protected array $params;
 
     /**
      * @param string $method
      * @param array $params
      * @param string|int|null $id
      */
-    public function __construct(string $method, array $params, $id = null)
+    public function __construct(string $method, array $params = [], $id = null)
     {
         $this->method = $method;
         $this->params = $params;
