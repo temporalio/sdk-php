@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client\Runtime;
 
 use React\Promise\PromiseInterface;
-use Temporal\Client\Protocol\Message\RequestInterface;
+use Temporal\Client\Protocol\Command\RequestInterface;
 use Temporal\Client\Protocol\Request\CompleteWorkflow;
 use Temporal\Client\Protocol\Request\ExecuteActivity;
 use Temporal\Client\Runtime\Queue\RequestQueueInterface;

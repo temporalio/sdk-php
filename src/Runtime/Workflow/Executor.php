@@ -11,17 +11,18 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Runtime\Workflow;
 
+use React\EventLoop\LoopInterface;
 use React\Promise\Deferred;
-use React\Promise\PromiseInterface;
+use React\Promise\ExtendedPromiseInterface;
 use Temporal\Client\Protocol\ClientInterface;
-use Temporal\Client\Protocol\Message\RequestInterface;
-use Temporal\Client\Protocol\Request\CompleteWorkflow;
+use Temporal\Client\Protocol\Command\Request;
 use Temporal\Client\Runtime\Queue\EntryInterface;
 use Temporal\Client\Runtime\Queue\RequestQueue;
 use Temporal\Client\Runtime\Queue\RequestQueueInterface;
+use Temporal\Client\Runtime\Route\StartWorkflow;
 use Temporal\Client\Runtime\WorkflowContext;
 use Temporal\Client\Runtime\WorkflowContextInterface;
-use Temporal\Client\Runtime\Route\StartWorkflow;
+use Temporal\Client\Worker\ExecutorInterface;
 
 /**
  * @psalm-import-type WorkflowContextParams from StartWorkflow
@@ -55,20 +56,28 @@ class Executor
     private ClientInterface $client;
 
     /**
-     * @var bool
+     * @var array
      */
-    private bool $completed = false;
+    private array $entries = [];
 
     /**
+     * @var ExecutorInterface
+     */
+    private ExecutorInterface $executor;
+
+    /**
+     * @param ExecutorInterface $executor
      * @param ClientInterface $client
      * @param array $params
      * @param Deferred $resolver
      */
-    public function __construct(ClientInterface $client, array $params, Deferred $resolver)
+    public function __construct(ExecutorInterface $executor, ClientInterface $client, array $params, Deferred $resolver)
     {
         $this->params = $params;
         $this->client = $client;
         $this->resolver = $resolver;
+        $this->executor = $executor;
+
         $this->queue = new RequestQueue();
         $this->context = new WorkflowContext($params, $this->queue);
     }
@@ -79,173 +88,78 @@ class Executor
     public function execute(\Closure $handler): void
     {
         // TODO auto resolve parameters instead of "$this->context" passing.
-        $response = $handler($this->context);
+        $result = $handler($this->context);
 
-        switch (true) {
-            case $response instanceof \Generator:
-                $this->processCoroutine($response);
-                break;
-
-            default:
-                $this->processResult($response);
+        if ($result instanceof \Generator) {
+            $this->processNextCoroutineTick($result);
         }
+        // If not
     }
 
     /**
      * @param \Generator $coroutine
      */
-    private function processCoroutine(\Generator $coroutine): void
+    private function processNextCoroutineTick(\Generator $coroutine): void
     {
-        if ($coroutine->valid()) {
-            $current = $coroutine->current();
-
-            switch (true) {
-                case $current instanceof PromiseInterface:
-                    $this->processPromise($coroutine, $current);
-                    break;
-
-                case \is_iterable($current):
-                    // TODO process group of promises
-
-                default:
-                    $error = \sprintf('Unsupported coroutine data: %s', \get_debug_type($current));
-                    $coroutine->throw(new \InvalidArgumentException($error));
-            }
+        if (! $coroutine->valid()) {
+            $this->context->complete($coroutine->getReturn())
+                ->then(function ($result) {
+                    $this->resolver->resolve($result);
+                });
 
             return;
         }
 
-        $this->resolver->resolve($coroutine->getReturn());
-    }
+        /** @var ExtendedPromiseInterface $promise */
+        $promise = $coroutine->current();
 
-    /**
-     * @param \Generator $coroutine
-     * @param PromiseInterface $promise
-     */
-    private function processPromise(\Generator $coroutine, PromiseInterface $promise): void
-    {
-        $entry = $this->queue->pull($promise);
-
-        if ($entry === null) {
-            $error = 'The passed Promise object is not part of the workflow executable context';
-            $coroutine->throw(new \InvalidArgumentException($error));
-        }
-
-        //
-        // In the case of a regular request, we should subscribe to the promise
-        // resolving. And after resolving the promise, we should call the next
-        // tick of the coroutine using "send()" with the transfer of the result
-        // of the promise. Thus, go to the next task of the generator.
-        //
-        // In the case of a "CompleteWorkflow" request, we should stop the
-        // generator execution.
-        //
-        if ($this->isCompletion($entry->request)) {
-            $promise->then(
-                fn($result) => $this->resolve($result),
-                fn (\Throwable $e) => $this->reject($e)
-            );
-        } else {
-            $this->nextCoroutineTickAfterResolving($coroutine, $promise);
-        }
-
-        //
-        // Send the request and after the response resolve the Promise from
-        // the requests queue.
-        //
-        $this->client->request($entry->request)
-            ->then(
-                fn($response) => $entry->resolver->resolve($response),
-                fn(\Throwable $error) => $entry->resolver->reject($error),
-            )
-        ;
-    }
-
-    /**
-     * @param \Generator $coroutine
-     * @param PromiseInterface $promise
-     */
-    private function nextCoroutineTickAfterResolving(\Generator $coroutine, PromiseInterface $promise): void
-    {
-        $onFulfilled = function ($result) use ($coroutine) {
+        $promise->then(function ($result) use ($coroutine) {
             $coroutine->send($result);
 
-            $this->processCoroutine($coroutine);
-        };
+            $this->processNextCoroutineTick($coroutine);
+        });
 
-        $onRejected = fn(\Throwable $e) => $coroutine->throw($e);
-
-        $promise->then($onFulfilled, $onRejected);
+        while (! $this->queue->isEmpty()) {
+            $this->sendRequests();
+        }
     }
 
     /**
-     * @param mixed $result
      * @return void
      */
-    private function processResult($result): void
+    private function sendRequests(): void
     {
-        /** @var EntryInterface $entry */
-        foreach ($this->queue as $entry) {
-            $request = $entry->request;
+        /** @var EntryInterface[] $entries */
+        $entries = [...$this->queue];
 
-            $this->client->request($entry->request)
-                ->then(function ($response) use ($entry) {
-                    $entry->resolver->resolve($response);
-                })
-            ;
+        $requests = \array_map(static fn (EntryInterface $e) => $e->request, $entries);
+        $responses = $this->client->request(...$requests);
 
-            //
-            // Do not process the rest of the queue tasks if a
-            // request has arrived for workflow completion.
-            //
-            if ($this->isCompletion($request)) {
-                $this->resolve($this->getCompletionResult($request));
-                break;
-            }
-        }
+        foreach ($responses as $i => $promise) {
+            /** @var EntryInterface $current */
+            $this->entries[] = $current = $entries[$i];
+            $last = \array_key_last($this->entries);
 
-        $this->resolve($result);
-    }
+            $then = function ($result) use ($current, $last) {
+                unset($this->entries[$last]);
 
-    /**
-     * @param RequestInterface $request
-     * @return bool
-     */
-    private function isCompletion(RequestInterface $request): bool
-    {
-        return $request->getMethod() === CompleteWorkflow::METHOD_NAME;
-    }
+                if (\count($this->entries)) {
+                    $this->client->request(new Request('NextTick'));
+                }
 
-    /**
-     * @param mixed $result
-     */
-    private function resolve($result): void
-    {
-        if ($this->completed === false) {
-            $this->completed = true;
-            $this->resolver->resolve($result);
-        }
-    }
+                $current->resolver->resolve($result);
 
-    /**
-     * @param RequestInterface $request
-     * @return mixed|null
-     */
-    private function getCompletionResult(RequestInterface $request)
-    {
-        $params = $request->getParams();
+                while (! $this->queue->isEmpty()) {
+                    $this->sendRequests();
+                }
 
-        return $params[CompleteWorkflow::PARAM_RESULT] ?? null;
-    }
+                return $result;
+            };
 
-    /**
-     * @param \Throwable $e
-     */
-    private function reject(\Throwable $e): void
-    {
-        if ($this->completed === false) {
-            $this->completed = true;
-            $this->resolver->reject($e);
+            $promise->then(
+                $then,
+                fn (\Throwable $e) => $current->resolver->reject($e),
+            );
         }
     }
 }

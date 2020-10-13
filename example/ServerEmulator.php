@@ -11,180 +11,141 @@ declare(strict_types=1);
 
 namespace App;
 
+use App\Server\Connection;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
+use Psr\Log\LoggerInterface;
+use Psr\Log\LoggerTrait;
+use React\EventLoop\Factory;
 use React\EventLoop\LoopInterface;
 use React\Socket\ConnectionInterface;
 use React\Socket\TcpServer;
-use Spiral\Goridge\Protocol;
-use Spiral\Goridge\Protocol\Stream\Factory;
+use Symfony\Component\Console\Helper\ProgressIndicator;
+use Symfony\Component\Console\Logger\ConsoleLogger;
+use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\Console\Output\OutputInterface;
 
-class ServerEmulator
+class ServerEmulator implements LoggerInterface
 {
+    use LoggerTrait;
+
+    /**
+     * @var \SplObjectStorage
+     */
+    private \SplObjectStorage $clients;
+
     /**
      * @var LoopInterface
      */
     private LoopInterface $loop;
 
     /**
-     * @var Protocol
+     * @var ConsoleOutput
      */
-    private Protocol $protocol;
+    private ConsoleOutput $cli;
 
     /**
-     * @param LoopInterface $loop
+     * @var LoggerInterface
      */
-    public function __construct(LoopInterface $loop)
+    private LoggerInterface $logger;
+
+    /**
+     * @var array|string[]
+     */
+    private array $servers = [];
+
+    /**
+     * @param LoopInterface|null $loop
+     */
+    public function __construct(LoopInterface $loop = null)
     {
-        $this->loop = $loop;
-        $this->protocol = new Protocol();
+        $this->clients = new \SplObjectStorage();
+        $this->loop = $loop ?? Factory::create();
+
+        $this->cli = new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG);
+        $this->logger = new ConsoleLogger($this->cli);
+    }
+
+    /**
+     * @param OutputInterface $output
+     * @return ProgressIndicator
+     */
+    private function createProgressIndicator(OutputInterface $output): ProgressIndicator
+    {
+        $interval = 100;
+        $chars = $output->isDecorated() ? ['⣷', '⣯', '⣟', '⡿', '⢿', '⣻', '⣽', '⣾'] : null;
+
+        return new ProgressIndicator($output, null, $interval, $chars);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function log($level, $message, array $context = []): void
+    {
+        if ($this->cli->isDecorated()) {
+            $this->cli->write("\x0D\x1B[2K");
+        } else{
+            $this->cli->writeln('');
+        }
+
+        $this->logger->log($level, $message, $context);
     }
 
     /**
      * @param string|int $uri
+     * @return $this
      */
-    public function run($uri): void
+    public function listen($uri): self
     {
         $server = new TcpServer($uri, $this->loop);
 
-        $server->on('connection', function (ConnectionInterface $connection): void {
-            $addr = $connection->getRemoteAddress();
+        $this->servers[] = $server->getAddress();
 
-            echo "[$addr] Establish Connection\n";
+        $server->on('connection', function (ConnectionInterface $conn) {
+            $this->info($this->format($conn, 'Established'));
+            $this->clients->attach($instance = new Connection($conn, $this));
 
-            $connection->on('data', function ($chunk) use ($connection, $addr) {
-                $data = $this->decode($chunk);
-
-                echo "[$addr] <<< $chunk\n";
-
-                if (isset($data['method'])) {
-                    $this->send($connection, $this->encodeResponse($data['id'], $data['method']));
-                }
+            $conn->on('error', function (\Throwable $e) use ($conn) {
+                $this->error($this->format($conn, \get_class($e) . ': ' . $e->getMessage()));
+                $conn->close();
             });
 
-            $this->runTimers($connection);
+            $conn->on('close', function () use ($instance, $conn) {
+                $this->notice($this->format($conn, 'Closed'));
+                $this->clients->detach($instance);
+            });
+        });
+
+        return $this;
+    }
+
+    /**
+     * @return void
+     */
+    public function run(): void
+    {
+        $progress = $this->createProgressIndicator($this->cli);
+
+        $progress->start('Temporal Server Emulator (' . \implode(', ', $this->servers) . ')');
+
+        $this->loop->addPeriodicTimer(.1, function () use ($progress) {
+            $progress->advance();
         });
 
         $this->loop->run();
     }
 
     /**
+     * @param ConnectionInterface $conn
      * @param string $message
+     * @param mixed ...$args
      * @return string
      */
-    private function encode(string $message): string
+    private function format(ConnectionInterface $conn, string $message, ...$args): string
     {
-        $stream = $this->protocol->encode($message, Protocol\Type::TYPE_MESSAGE);
+        $message = \sprintf($message, ...$args);
 
-        $result = '';
-
-        foreach ($stream as $chunk) {
-            $result .= $chunk;
-        }
-
-        return $result;
-    }
-
-    /**
-     * @param string $chunk
-     * @return array
-     * @throws \JsonException
-     */
-    private function decode(string $chunk): array
-    {
-        $source = $this->stream($chunk);
-
-        $stream = $this->protocol->decode(new Factory());
-
-        while ($stream->valid()) {
-            $stream->send(\fread($source, $stream->current()));
-        }
-
-        /** @var Protocol\Stream\BufferStream $buffer */
-        [$buffer] = $stream->getReturn();
-
-        return \json_decode($buffer->getContents(), true, 512, \JSON_THROW_ON_ERROR);
-    }
-
-    /**
-     * @param string $text
-     * @return false|resource
-     */
-    private function stream(string $text)
-    {
-        $stream = \fopen('php://memory', 'ab+');
-        \fwrite($stream, $text);
-        \fseek($stream, 0);
-
-        return $stream;
-    }
-
-    /**
-     * @param int $id
-     * @param mixed $payload
-     * @return string
-     * @throws \JsonException
-     */
-    private function encodeResponse(int $id, $payload): string
-    {
-        $response = \json_encode(['id' => $id, 'result' => $payload], \JSON_THROW_ON_ERROR);
-
-        return $this->encode($response);
-    }
-
-    /**
-     * @param ConnectionInterface $connection
-     */
-    private function runTimers(ConnectionInterface $connection): void
-    {
-        $this->loop->addTimer(1, function () use ($connection) {
-            $payload = $this->encodeRequest('StartWorkflow', [
-                'name'      => 'PizzaDelivery',
-                'wid'       => 'WORKFLOW_ID',
-                'rid'       => 'WORKFLOW_RUN_ID',
-                'taskQueue' => 'WORKFLOW_TASK_QUEUE',
-                'payload'   => [1, 2, 3],
-            ]);
-
-            $this->send($connection, $payload);
-        });
-
-        $this->loop->addTimer(10, function () use ($connection) {
-            $payload = $this->encodeRequest('StartActivity', [
-                'name'      => 'ExampleActivity',
-                'wid'       => 'WORKFLOW_ID',
-                'rid'       => 'WORKFLOW_RUN_ID',
-                'arguments' => ['name' => 'value', 'some' => 'Hello World!'],
-            ]);
-
-            $this->send($connection, $payload);
-        });
-    }
-
-    /**
-     * @param string $method
-     * @param mixed $payload
-     * @return string
-     * @throws \JsonException
-     */
-    private function encodeRequest(string $method, $payload): string
-    {
-        $response = \json_encode(
-            ['id' => \random_int(1, \PHP_INT_MAX), 'method' => $method, 'params' => $payload],
-            \JSON_THROW_ON_ERROR
-        );
-
-        return $this->encode($response);
-    }
-
-    /**
-     * @param ConnectionInterface $connection
-     * @param $payload
-     */
-    private function send(ConnectionInterface $connection, $payload): void
-    {
-        $addr = $connection->getRemoteAddress();
-
-        echo "[$addr] >>> $payload\n";
-
-        $connection->write($payload);
+        return \sprintf('[%s] %s', $conn->getRemoteAddress(), $message);
     }
 }

@@ -13,8 +13,7 @@ namespace Temporal\Client\Runtime;
 
 use React\Promise\Deferred;
 use Temporal\Client\Protocol\ClientInterface;
-use Temporal\Client\Protocol\Message\ErrorResponse;
-use Temporal\Client\Protocol\Message\RequestInterface;
+use Temporal\Client\Protocol\Command\RequestInterface;
 use Temporal\Client\Runtime\Route\RouteInterface;
 
 final class Router implements RouterInterface
@@ -72,12 +71,12 @@ final class Router implements RouterInterface
      */
     public function emit(RequestInterface $request, Deferred $resolver): void
     {
-        $method = $request->getMethod();
+        $method = $request->getName();
         $route = $this->routes[$method] ?? null;
 
         if ($route === null) {
             $error = \sprintf(self::ERROR_ROUTE_NOT_FOUND, $method);
-            $resolver->reject(new \BadMethodCallException($error, ErrorResponse::CODE_METHOD_NOT_FOUND));
+            $resolver->reject(new \BadMethodCallException($error));
 
             return;
         }

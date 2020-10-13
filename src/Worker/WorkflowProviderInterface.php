@@ -16,6 +16,18 @@ use Temporal\Client\Declaration\WorkflowInterface;
 interface WorkflowProviderInterface
 {
     /**
+     * @param object $workflow
+     * @param bool $overwrite
+     */
+    public function addWorkflow(object $workflow, bool $overwrite = false): void;
+
+    /**
+     * @param WorkflowInterface $workflow
+     * @param bool $overwrite
+     */
+    public function addWorkflowDeclaration(WorkflowInterface $workflow, bool $overwrite = false): void;
+
+    /**
      * @param string $name
      * @return WorkflowInterface|null
      */

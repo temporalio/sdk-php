@@ -11,8 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Runtime\Route;
 
-use Temporal\Client\WorkerInterface;
-
 abstract class Route implements RouteInterface
 {
     /**

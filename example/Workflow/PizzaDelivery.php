@@ -15,6 +15,7 @@ use Temporal\Client\Meta\QueryMethod;
 use Temporal\Client\Meta\SignalMethod;
 use Temporal\Client\Meta\WorkflowMethod;
 use Temporal\Client\Runtime\WorkflowContextInterface;
+use function React\Promise\all;
 
 class PizzaDelivery
 {
@@ -24,10 +25,22 @@ class PizzaDelivery
     #[WorkflowMethod(name: 'PizzaDelivery')]
     public function handler(WorkflowContextInterface $context)
     {
-        $a = yield $context->executeActivity('A');
-        $b = yield $context->executeActivity('B');
+        $result = yield $context->executeActivity('A')
+            ->then(function () use ($context) {
+                return all([
+                    $context->executeActivity('X'),
+                    $context->executeActivity('Y'),
+                ]);
+            })
+        ;
 
-        return [$a, $b];
+        //
+
+        yield $context->executeActivity('Z');
+
+        //
+
+        return 32;
     }
 
     /**

@@ -26,8 +26,6 @@ class WorkflowMethod
      * Be careful about names that contain special characters. These names can
      * be used as metric tags. And systems like prometheus ignore metrics which
      * have tags with unsupported characters.
-     *
-     * @var string|null
      */
     public ?string $name = null;
 }

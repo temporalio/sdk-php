@@ -17,7 +17,7 @@ namespace Temporal\Client\Declaration;
  * }
  *
  * @template T of DeclarationInterface
- * @template-implements \IteratorAggregate<DeclarationOptions, T>
+ * @implements \IteratorAggregate<DeclarationOptions, T>
  */
 interface CollectionInterface extends \IteratorAggregate, \Countable
 {

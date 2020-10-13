@@ -10,9 +10,17 @@
 declare(strict_types=1);
 
 use App\ServerEmulator;
+use Monolog\Handler\StreamHandler;
+use Monolog\Logger;
 use React\EventLoop\Factory;
 
 require __DIR__ . '/../vendor/autoload.php';
 
+$logger = new Logger('Temporal', [
+    new StreamHandler(\STDOUT)
+]);
+
 $server = new ServerEmulator(Factory::create());
-$server->run(8080);
+$server->listen(8080);
+
+$server->run();
