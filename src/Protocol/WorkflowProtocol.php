@@ -17,6 +17,9 @@ use Temporal\Client\Protocol\Command\RequestInterface;
 use Temporal\Client\Protocol\Queue\QueueInterface;
 use Temporal\Client\Protocol\Queue\SplQueue;
 use Temporal\Client\Protocol\WorkflowProtocol\Context;
+use Temporal\Client\Protocol\WorkflowProtocol\Decoder;
+use Temporal\Client\Protocol\WorkflowProtocol\Encoder;
+use Temporal\Client\Protocol\WorkflowProtocol\Parser;
 
 /**
  * @internal WorkflowProtocol is an internal library class, please do not use it in your code.
@@ -40,6 +43,11 @@ final class WorkflowProtocol implements WorkflowProtocolInterface
     private Context $context;
 
     /**
+     * @var Parser
+     */
+    private Parser $parser;
+
+    /**
      * WorkflowProtocol constructor.
      */
     public function __construct()
@@ -60,15 +68,38 @@ final class WorkflowProtocol implements WorkflowProtocolInterface
         return $this->context->promiseForRequest($request);
     }
 
+    /**
+     * @param string $request
+     * @return string
+     * @throws \JsonException
+     */
     public function next(string $request): string
     {
+        $this->parse($request);
 
+        return $this->extractQueue();
     }
 
+    /**
+     * @param string $request
+     * @throws \JsonException
+     */
+    private function parse(string $request): void
+    {
+        $data = Decoder::decode($request, $this->zone);
+
+        $this->context->runId = $data['rid'];
+        $this->context->now = $data['tickTime'];
+    }
+
+    /**
+     * @return string
+     * @throws \JsonException
+     */
     private function extractQueue(): string
     {
-        foreach ($this->queue as $message) {
+        $now = new \DateTime('now', $this->zone);
 
-        }
+        return Encoder::encode($now, $this->queue, $this->context->runId);
     }
 }

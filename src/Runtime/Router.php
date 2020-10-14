@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Client\Runtime;
 
 use React\Promise\Deferred;
-use Temporal\Client\Protocol\ClientInterface;
 use Temporal\Client\Protocol\Command\RequestInterface;
 use Temporal\Client\Runtime\Route\RouteInterface;
 
