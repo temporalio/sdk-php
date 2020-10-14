@@ -68,7 +68,7 @@ class InitWorker extends Route
     private function execute(Process $process): array
     {
         return [
-            'wid'       => $process->getId(),
+            'workerId'  => $process->getId(),
             'taskQueue' => $this->queue,
             'workflows' => $this->workflowsToArray($process->getWorker()),
         ];
