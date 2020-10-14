@@ -111,7 +111,9 @@ final class Decoder
                     break;
 
                 default:
-                    throw new \InvalidArgumentException('Unrecognized command type');
+                    throw new \InvalidArgumentException('Unrecognized command type: ' .
+                        Json::encode($command, \JSON_PRETTY_PRINT)
+                    );
             }
         }
 

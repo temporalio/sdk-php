@@ -13,12 +13,10 @@ namespace Temporal\Client\Worker\Route;
 
 use React\Promise\Deferred;
 use Temporal\Client\Worker\WorkerInterface;
-use Temporal\Client\Worker\Workflow\Pool;
-use Temporal\Client\Worker\Workflow\Process;
 use Temporal\Client\Worker\WorkflowProviderInterface;
 use Temporal\Client\Worker\WorkflowWorkerInterface;
 
-class InitWorker extends Route
+class GetWorkerInfo extends Route
 {
     /**
      * @var WorkerInterface
@@ -26,24 +24,25 @@ class InitWorker extends Route
     private WorkerInterface $context;
 
     /**
-     * @var Pool
-     */
-    private Pool $pool;
-
-    /**
      * @var string
      */
     private string $queue;
 
     /**
+     * @var string
+     */
+    private string $id;
+
+    /**
      * @param WorkflowWorkerInterface $context
-     * @param Pool $pool
+     * @param string $id
      * @param string $queue
      */
-    public function __construct(WorkflowWorkerInterface $context, Pool $pool, string $queue)
+    public function __construct(WorkflowWorkerInterface $context, string $id, string $queue)
     {
         $this->context = $context;
-        $this->pool = $pool;
+
+        $this->id = $id;
         $this->queue = $queue;
     }
 
@@ -54,24 +53,13 @@ class InitWorker extends Route
      */
     public function handle(array $params, Deferred $resolver): void
     {
-        $resolver->resolve(
-            $this->execute(
-                $this->pool->create($this->context)
-            )
-        );
-    }
-
-    /**
-     * @param Process $process
-     * @return array
-     */
-    private function execute(Process $process): array
-    {
-        return [
-            'workerId'  => $process->getId(),
+        $result = [
+            'workerId'  => $this->id,
             'taskQueue' => $this->queue,
-            'workflows' => $this->workflowsToArray($process->getWorker()),
+            'workflows' => $this->workflowsToArray($this->context),
         ];
+
+        $resolver->resolve($result);
     }
 
     /**

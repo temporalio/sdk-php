@@ -43,9 +43,9 @@ abstract class Worker implements WorkerInterface
     protected TransportInterface $transport;
 
     /**
-     * @var Pool
+     * @var Router
      */
-    protected Pool $pool;
+    protected Router $router;
 
     /**
      * @param ReaderInterface $reader
@@ -55,7 +55,8 @@ abstract class Worker implements WorkerInterface
     {
         $this->reader = $reader;
         $this->transport = $transport;
-        $this->pool = new Pool();
+
+        $this->router = new Router();
     }
 
     /**

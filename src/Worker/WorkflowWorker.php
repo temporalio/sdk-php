@@ -19,11 +19,21 @@ use Temporal\Client\Protocol\ProtocolInterface;
 use Temporal\Client\Protocol\WorkflowProtocol;
 use Temporal\Client\Protocol\WorkflowProtocolInterface;
 use Temporal\Client\Transport\TransportInterface;
-use Temporal\Client\Worker\Route\InitWorker;
+use Temporal\Client\Worker\Route\GetWorkerInfo;
 
 class WorkflowWorker extends Worker implements WorkflowWorkerInterface
 {
     use WorkflowProviderTrait;
+
+    /**
+     * @var string
+     */
+    private string $id;
+
+    /**
+     * @var ProtocolInterface|WorkflowProtocolInterface
+     */
+    private ProtocolInterface $protocol;
 
     /**
      * @param ReaderInterface $reader
@@ -33,11 +43,14 @@ class WorkflowWorker extends Worker implements WorkflowWorkerInterface
      */
     public function __construct(ReaderInterface $reader, TransportInterface $transport, iterable $workflows)
     {
-        $this->bootWorkflowProviderTrait();
-
         parent::__construct($reader, $transport);
 
+        $this->id = Uuid4::create();
+
+        $this->bootWorkflowProviderTrait();
         $this->bootWorkflows($workflows);
+
+        $this->protocol = $this->createProtocol($this->router);
     }
 
     /**
@@ -69,15 +82,12 @@ class WorkflowWorker extends Worker implements WorkflowWorkerInterface
      */
     public function run(string $name = self::DEFAULT_WORKER_ID): int
     {
-        $router = new Router();
-        $router->add(new InitWorker($this, $this->pool, $name));
-
-        $protocol = $this->createProtocol($router);
+        $this->router->add(new GetWorkerInfo($this, $this->id, $name), true);
 
         try {
             while ($request = $this->transport->waitForMessage()) {
                 $this->transport->send(
-                    $protocol->next($request)
+                    $this->protocol->next($request)
                 );
             }
         } catch (\Throwable $e) {

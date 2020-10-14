@@ -17,8 +17,9 @@ interface RouterInterface extends DispatcherInterface
 {
     /**
      * @param RouteInterface $route
+     * @param bool $overwrite
      */
-    public function add(RouteInterface $route): void;
+    public function add(RouteInterface $route, bool $overwrite = false): void;
 
     /**
      * @param RouteInterface $route

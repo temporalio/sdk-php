@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace App;
 
-use App\Server\Connection;
+use App\Server\BasicConnection;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
@@ -104,7 +104,7 @@ class ServerEmulator implements LoggerInterface
 
         $server->on('connection', function (ConnectionInterface $conn) {
             $this->info($this->format($conn, 'Established'));
-            $this->clients->attach($instance = new Connection($conn, $this));
+            $this->clients->attach($instance = new BasicConnection($this->loop, $conn, $this));
 
             $conn->on('error', function (\Throwable $e) use ($conn) {
                 $this->error($this->format($conn, \get_class($e) . ': ' . $e->getMessage()));

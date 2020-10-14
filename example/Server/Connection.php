@@ -12,12 +12,13 @@ declare(strict_types=1);
 namespace App\Server;
 
 use Psr\Log\LoggerInterface;
+use React\EventLoop\LoopInterface;
+use React\Promise\Deferred;
+use React\Promise\PromiseInterface;
 use React\Socket\ConnectionInterface;
-use Spiral\Goridge\Protocol;
-use Spiral\Goridge\Protocol\Stream\Factory;
 use Temporal\Client\Protocol\Json;
 
-final class Connection
+abstract class Connection
 {
     /**
      * @var ConnectionInterface
@@ -30,99 +31,190 @@ final class Connection
     private LoggerInterface $logger;
 
     /**
-     * @var Protocol
+     * @var GoRidge
      */
-    private Protocol $protocol;
+    private GoRidge $protocol;
 
     /**
+     * @var string|int|null
+     */
+    private $runId;
+
+    /**
+     * @var int
+     */
+    private int $lastId = 0;
+
+    /**
+     * @var array|Deferred[]
+     */
+    private array $promises = [];
+
+    /**
+     * @var LoopInterface
+     */
+    protected LoopInterface $loop;
+
+    /**
+     * @param LoopInterface $loop
      * @param ConnectionInterface $connection
      * @param LoggerInterface $logger
      */
-    public function __construct(ConnectionInterface $connection, LoggerInterface $logger)
+    public function __construct(LoopInterface $loop, ConnectionInterface $connection, LoggerInterface $logger)
     {
-        $this->protocol = new Protocol();
-
         $this->connection = $connection;
         $this->logger = $logger;
+        $this->loop = $loop;
 
-        $this->listen();
-        $this->start();
-    }
+        $this->protocol = new GoRidge($connection, function (string $message): void {
+            $this->logger->debug($this->format('<<< Received Message ' . $this->json($message)));
 
-    /**
-     * @return void
-     */
-    private function listen(): void
-    {
-        $this->connection->on('data', function (string $chunk) {
-            $source = $this->stream($chunk);
-            $stream = $this->protocol->decode(new Factory());
-
-            while ($stream->valid()) {
-                $stream->send(\fread($source, $stream->current()));
-            }
-
-            /** @var Protocol\Stream\BufferStream $buffer */
-            [$buffer] = $stream->getReturn();
-
-            $this->onMessage($buffer->getContents());
+            $this->onMessage($message);
         });
     }
 
     /**
-     * @param string $text
-     * @return resource
-     */
-    private function stream(string $text)
-    {
-        $stream = \fopen('php://memory', 'ab+');
-        \fwrite($stream, $text);
-        \fseek($stream, 0);
-
-        return $stream;
-    }
-
-    private function onMessage(string $message): void
-    {
-        $this->logger->debug($this->format(' <<<   Received Message: ' . $message));
-    }
-
-    /**
      * @param string $message
-     * @param mixed ...$args
      * @return string
      */
-    private function format(string $message, ...$args): string
+    private function format(string $message): string
     {
-        $message = \sprintf($message, ...$args);
-
         return \sprintf('[%s] %s', $this->connection->getRemoteAddress(), $message);
     }
 
     /**
+     * @param string $data
+     * @return string
      * @throws \JsonException
      */
-    private function start(): void
+    private function json(string $data): string
     {
-        $this->write(Json::encode([
-            'commands' => [
-                [
-                    'id'      => 1,
-                    'command' => 'InitWorker',
-                ],
-            ],
-        ]));
+        return Json::encode(Json::decode($data), \JSON_PRETTY_PRINT);
+    }
+
+    /**
+     * @param string $message
+     * @throws \JsonException
+     */
+    private function onMessage(string $message): void
+    {
+        $data = Json::decode($message, \JSON_OBJECT_AS_ARRAY);
+
+        $this->runId = $data['rid'];
+
+        foreach ($data['commands'] as $command) {
+            $id = $command['id'];
+
+            // Is Request
+            if (isset($command['command'])) {
+                try {
+                    $result = $this->onCommand($command['command']);
+
+                    $this->send(['result' => $result], $id);
+                } catch (\Throwable $e) {
+                    $this->send(['error' => ['code' => $e->getCode(), 'message' => $e->getMessage()]], $id);
+                }
+
+                continue;
+            }
+
+            // Is Response
+            if (isset($command['result'])) {
+                $this->promises[$id]->resolve($command['result']);
+
+                continue;
+            }
+
+            // Is Error
+            if (isset($command['error'])) {
+                $this->promises[$id]->reject(
+                    new \LogicException($command['error']['message'])
+                );
+
+                continue;
+            }
+        }
+    }
+
+    /**
+     * @param string $name
+     * @return mixed
+     */
+    abstract protected function onCommand(string $name);
+
+    /**
+     * @param array $payload
+     * @param int|null $id
+     * @throws \JsonException
+     */
+    private function send(array $payload, int $id = null): void
+    {
+        $payload = \array_merge($payload, ['id' => $id ?? $this->lastId++]);
+
+        $data = Json::encode([
+            'rid'      => $this->runId,
+            'now'      => (new \DateTime('now'))->format(\DateTime::RFC3339),
+            'commands' => [$payload],
+        ]);
+
+        $this->write($data);
     }
 
     /**
      * @param string $data
+     * @throws \JsonException
      */
     private function write(string $data): void
     {
-        $this->logger->debug($this->format('   >>> Proceed Message: ' . $data));
+        $this->logger->debug($this->format('Proceed Message >>> ' . $this->json($data)));
 
-        foreach ($this->protocol->encode($data) as $chunk) {
-            $this->connection->write($chunk);
+        $this->protocol->write($data);
+    }
+
+    /**
+     * @param string $command
+     * @param array $params
+     * @return PromiseInterface
+     * @throws \JsonException
+     */
+    protected function request(string $command, array $params = []): PromiseInterface
+    {
+        $this->promises[$this->lastId] = $deferred = new Deferred();
+
+        $this->send(['command' => $command, 'params' => $params]);
+
+        return $deferred->promise();
+    }
+
+    /**
+     * @param \Closure $callable
+     */
+    protected function process(\Closure $callable): void
+    {
+        /** @var \Generator $stream */
+        $stream = $callable();
+
+        $this->next($stream);
+    }
+
+    /**
+     * @param \Generator $generator
+     */
+    private function next(\Generator $generator): void
+    {
+        if (! $generator->valid()) {
+            return;
         }
+
+        /** @var PromiseInterface $promise */
+        $promise = $generator->current();
+
+        $resolver = function ($result) use ($generator) {
+            $generator->send($result);
+
+            $this->next($generator);
+        };
+
+        $promise->then($resolver, fn (\Throwable $e) => $generator->throw($e));
     }
 }

@@ -35,9 +35,9 @@ final class Router implements RouterInterface
     /**
      * {@inheritDoc}
      */
-    public function add(RouteInterface $route): void
+    public function add(RouteInterface $route, bool $overwrite = false): void
     {
-        if (isset($this->routes[$route->getName()])) {
+        if ($overwrite === false && isset($this->routes[$route->getName()])) {
             throw new \InvalidArgumentException(\sprintf(self::ERROR_ROUTE_UNIQUENESS, $route->getName()));
         }
 
