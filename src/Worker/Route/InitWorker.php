@@ -90,6 +90,13 @@ class InitWorker extends Route
             ];
         }
 
+        if (\count($workflows) === 0) {
+            throw new \OutOfRangeException(
+                'The worker could not be initialized:' .
+                'Worker does not contain any declared workflow'
+            );
+        }
+
         return $workflows;
     }
 
