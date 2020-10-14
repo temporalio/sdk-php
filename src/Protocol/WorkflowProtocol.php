@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Protocol;
 
-use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Protocol\Command\RequestInterface;
 use Temporal\Client\Protocol\Queue\QueueInterface;
@@ -19,7 +18,6 @@ use Temporal\Client\Protocol\Queue\SplQueue;
 use Temporal\Client\Protocol\WorkflowProtocol\Context;
 use Temporal\Client\Protocol\WorkflowProtocol\Decoder;
 use Temporal\Client\Protocol\WorkflowProtocol\Encoder;
-use Temporal\Client\Protocol\WorkflowProtocol\Parser;
 
 /**
  * @internal WorkflowProtocol is an internal library class, please do not use it in your code.
@@ -41,11 +39,6 @@ final class WorkflowProtocol implements WorkflowProtocolInterface
      * @var Context
      */
     private Context $context;
-
-    /**
-     * @var Parser
-     */
-    private Parser $parser;
 
     /**
      * WorkflowProtocol constructor.
