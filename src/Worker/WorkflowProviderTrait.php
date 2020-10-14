@@ -77,4 +77,12 @@ trait WorkflowProviderTrait
     {
         $this->workflows = new Collection();
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getWorkflows(): iterable
+    {
+        return $this->workflows;
+    }
 }

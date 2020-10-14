@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Runtime\Workflow;
 
-use React\EventLoop\LoopInterface;
 use React\Promise\Deferred;
 use React\Promise\ExtendedPromiseInterface;
 use Temporal\Client\Protocol\ClientInterface;
@@ -19,10 +18,10 @@ use Temporal\Client\Protocol\Command\Request;
 use Temporal\Client\Runtime\Queue\EntryInterface;
 use Temporal\Client\Runtime\Queue\RequestQueue;
 use Temporal\Client\Runtime\Queue\RequestQueueInterface;
-use Temporal\Client\Runtime\Route\StartWorkflow;
 use Temporal\Client\Runtime\WorkflowContext;
 use Temporal\Client\Runtime\WorkflowContextInterface;
 use Temporal\Client\Worker\ExecutorInterface;
+use Temporal\Client\Worker\Route\StartWorkflow;
 
 /**
  * @psalm-import-type WorkflowContextParams from StartWorkflow

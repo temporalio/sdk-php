@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Protocol;
 
+use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Protocol\Command\CommandInterface;
 use Temporal\Client\Protocol\Command\ErrorResponse;
@@ -123,12 +124,22 @@ final class WorkflowProtocol implements WorkflowProtocolInterface
      */
     private function dispatchRequest(RequestInterface $request): void
     {
-        try {
-            $result = ($this->onRequest)($request);
+        $deferred = new Deferred();
 
+        $fulfilled = function ($result) use ($request): void {
             $this->sendDefer(new SuccessResponse($result, $request->getId()));
-        } catch (\Throwable $e) {
+        };
+
+        $rejected = function (\Throwable $e) use ($request): void {
             $this->sendDefer(ErrorResponse::fromException($e, $request->getId()));
+        };
+
+        $deferred->promise()->then($fulfilled, $rejected);
+
+        try {
+            ($this->onRequest)($request, $deferred);
+        } catch (\Throwable $e) {
+            $deferred->reject($e);
         }
     }
 

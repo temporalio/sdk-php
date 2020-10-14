@@ -80,6 +80,7 @@ final class Factory
     /**
      * @param iterable|array $workflows
      * @return WorkflowWorkerInterface
+     * @throws \Exception
      */
     public function forWorkflows(iterable $workflows = []): WorkflowWorkerInterface
     {

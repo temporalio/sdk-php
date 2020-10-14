@@ -12,8 +12,8 @@ declare(strict_types=1);
 namespace Temporal\Client\Worker;
 
 use Temporal\Client\Meta\ReaderInterface;
-use Temporal\Client\Transport\SyncTransportInterface;
 use Temporal\Client\Transport\TransportInterface;
+use Temporal\Client\Worker\Workflow\Pool;
 
 /**
  * @internal Worker is an internal library class, please do not use it in your code.
@@ -43,6 +43,11 @@ abstract class Worker implements WorkerInterface
     protected TransportInterface $transport;
 
     /**
+     * @var Pool
+     */
+    protected Pool $pool;
+
+    /**
      * @param ReaderInterface $reader
      * @param TransportInterface $transport
      */
@@ -50,6 +55,7 @@ abstract class Worker implements WorkerInterface
     {
         $this->reader = $reader;
         $this->transport = $transport;
+        $this->pool = new Pool();
     }
 
     /**

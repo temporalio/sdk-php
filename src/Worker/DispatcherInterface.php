@@ -9,20 +9,16 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Runtime\Route;
+namespace Temporal\Client\Worker;
 
 use React\Promise\Deferred;
+use Temporal\Client\Protocol\Command\RequestInterface;
 
-interface RouteInterface
+interface DispatcherInterface
 {
     /**
-     * @return string
-     */
-    public function getName(): string;
-
-    /**
-     * @param array $params
+     * @param RequestInterface $request
      * @param Deferred $resolver
      */
-    public function handle(array $params, Deferred $resolver): void;
+    public function emit(RequestInterface $request, Deferred $resolver): void;
 }

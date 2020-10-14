@@ -9,11 +9,11 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Runtime;
+namespace Temporal\Client\Worker;
 
 use React\Promise\Deferred;
 use Temporal\Client\Protocol\Command\RequestInterface;
-use Temporal\Client\Runtime\Route\RouteInterface;
+use Temporal\Client\Worker\Route\RouteInterface;
 
 final class Router implements RouterInterface
 {
@@ -28,22 +28,9 @@ final class Router implements RouterInterface
     private const ERROR_ROUTE_NOT_FOUND = 'Method "%s" is not registered by the server implementation';
 
     /**
-     * @var ClientInterface
-     */
-    private ClientInterface $client;
-
-    /**
      * @var array|RouteInterface[]
      */
     private array $routes = [];
-
-    /**
-     * @param ClientInterface $client
-     */
-    public function __construct(ClientInterface $client)
-    {
-        $this->client = $client;
-    }
 
     /**
      * {@inheritDoc}

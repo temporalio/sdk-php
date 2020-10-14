@@ -14,6 +14,7 @@ namespace Temporal\Client\Declaration;
 interface WorkflowInterface extends HandledDeclarationInterface
 {
     /**
+     * @psalm-return iterable<string, callable>
      * @return iterable|callable[]
      */
     public function getQueryHandlers(): iterable;
@@ -25,6 +26,7 @@ interface WorkflowInterface extends HandledDeclarationInterface
     public function addQueryHandler(string $name, callable $callback): void;
 
     /**
+     * @psalm-return iterable<string, callable>
      * @return iterable|callable[]
      */
     public function getSignalHandlers(): iterable;

@@ -9,9 +9,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Runtime;
+namespace Temporal\Client\Worker;
 
-use Temporal\Client\Runtime\Route\RouteInterface;
+use Temporal\Client\Worker\Route\RouteInterface;
 
 interface RouterInterface extends DispatcherInterface
 {

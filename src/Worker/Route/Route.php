@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Runtime\Route;
+namespace Temporal\Client\Worker\Route;
 
 abstract class Route implements RouteInterface
 {

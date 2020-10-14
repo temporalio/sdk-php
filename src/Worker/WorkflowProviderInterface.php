@@ -32,4 +32,9 @@ interface WorkflowProviderInterface
      * @return WorkflowInterface|null
      */
     public function findWorkflow(string $name): ?WorkflowInterface;
+
+    /**
+     * @return iterable|WorkflowInterface[]
+     */
+    public function getWorkflows(): iterable;
 }
