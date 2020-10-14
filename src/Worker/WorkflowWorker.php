@@ -13,6 +13,7 @@ namespace Temporal\Client\Worker;
 
 use Temporal\Client\Declaration\WorkflowInterface;
 use Temporal\Client\Meta\ReaderInterface;
+use Temporal\Client\Protocol\Command\RequestInterface;
 use Temporal\Client\Protocol\WorkflowProtocol;
 use Temporal\Client\Protocol\WorkflowProtocolInterface;
 use Temporal\Client\Transport\TransportInterface;
@@ -37,7 +38,9 @@ class WorkflowWorker extends Worker implements WorkflowWorkerInterface
 
         parent::__construct($reader, $transport);
 
-        $this->protocol = new WorkflowProtocol();
+        $this->protocol = new WorkflowProtocol(function (RequestInterface $request) {
+            throw new \LogicException('Not implemented yet');
+        });
 
         foreach ($workflows as $workflow) {
             $this->addWorkflow($workflow);

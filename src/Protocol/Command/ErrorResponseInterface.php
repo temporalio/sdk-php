@@ -27,4 +27,10 @@ interface ErrorResponseInterface extends ResponseInterface
      * @return mixed
      */
     public function getData();
+
+    /**
+     * @param string $class
+     * @return \Throwable
+     */
+    public function toException(string $class = \LogicException::class): \Throwable;
 }

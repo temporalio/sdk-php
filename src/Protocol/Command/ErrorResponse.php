@@ -44,29 +44,64 @@ class ErrorResponse extends Response implements ErrorResponseInterface
     }
 
     /**
-     * @psalm-param class-string<\Throwable>
-     * @param string $class
-     * @return \Throwable
-     */
-    public function toException(string $class): \Throwable
-    {
-        return new $class($this->message, $this->code);
-    }
-
-    /**
      * @param \Throwable $e
      * @param int|null $id
      * @return static
      */
     public static function fromException(\Throwable $e, int $id = null): self
     {
-        $data = [];
-
-        foreach ($e->getTrace() as $item) {
-            $data[] = $item['file'] . ':' . $item['line'];
-        }
+        $data = self::exceptionToArray($e);
 
         return new static($e->getMessage(), $e->getCode(), $data, $id);
+    }
+
+    /**
+     * @param \Throwable $e
+     * @return array
+     */
+    private static function exceptionToArray(\Throwable $e): array
+    {
+        $result = [
+            'type'     => \get_class($e),
+            'message'  => $e->getMessage(),
+            'file'     => $e->getFile(),
+            'line'     => $e->getLine(),
+            'trace'    => self::exceptionTraceToArray($e),
+            'previous' => null,
+        ];
+
+        if ($e->getPrevious()) {
+            $result['previous'] = self::exceptionToArray($e->getPrevious());
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param \Throwable $e
+     * @return array
+     */
+    private static function exceptionTraceToArray(\Throwable $e): array
+    {
+        $trace = [];
+
+        foreach ($e->getTrace() as $item) {
+            if (isset($item['file'], $item['line'])) {
+                $trace[] = $item['file'] . ':' . $item['line'];
+            }
+        }
+
+        return $trace;
+    }
+
+    /**
+     * @psalm-param class-string<\Throwable>
+     * @param string $class
+     * @return \Throwable
+     */
+    public function toException(string $class = \LogicException::class): \Throwable
+    {
+        return new $class($this->message, $this->code);
     }
 
     /**

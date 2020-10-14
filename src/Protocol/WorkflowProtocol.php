@@ -12,7 +12,13 @@ declare(strict_types=1);
 namespace Temporal\Client\Protocol;
 
 use React\Promise\PromiseInterface;
+use Temporal\Client\Protocol\Command\CommandInterface;
+use Temporal\Client\Protocol\Command\ErrorResponse;
+use Temporal\Client\Protocol\Command\ErrorResponseInterface;
 use Temporal\Client\Protocol\Command\RequestInterface;
+use Temporal\Client\Protocol\Command\ResponseInterface;
+use Temporal\Client\Protocol\Command\SuccessResponse;
+use Temporal\Client\Protocol\Command\SuccessResponseInterface;
 use Temporal\Client\Protocol\Queue\QueueInterface;
 use Temporal\Client\Protocol\Queue\SplQueue;
 use Temporal\Client\Protocol\WorkflowProtocol\Context;
@@ -41,10 +47,18 @@ final class WorkflowProtocol implements WorkflowProtocolInterface
     private Context $context;
 
     /**
-     * WorkflowProtocol constructor.
+     * @var \Closure
      */
-    public function __construct()
+    private \Closure $onRequest;
+
+    /**
+     * @param \Closure $onRequest
+     * @throws \Exception
+     */
+    public function __construct(\Closure $onRequest)
     {
+        $this->onRequest = $onRequest;
+
         $this->zone = new \DateTimeZone('UTC');
         $this->queue = new SplQueue();
         $this->context = new Context($this->zone);
@@ -56,15 +70,27 @@ final class WorkflowProtocol implements WorkflowProtocolInterface
      */
     public function request(RequestInterface $request): PromiseInterface
     {
-        $this->queue->push($request);
+        return $this->context->promiseForRequest(
+            $this->sendDefer($request)
+        );
+    }
 
-        return $this->context->promiseForRequest($request);
+    /**
+     * @param CommandInterface|RequestInterface|ResponseInterface $cmd
+     * @return CommandInterface|RequestInterface|ResponseInterface
+     */
+    private function sendDefer(CommandInterface $cmd): CommandInterface
+    {
+        $this->queue->push($cmd);
+
+        return $cmd;
     }
 
     /**
      * @param string $request
      * @return string
      * @throws \JsonException
+     * @throws \Exception
      */
     public function next(string $request): string
     {
@@ -74,23 +100,58 @@ final class WorkflowProtocol implements WorkflowProtocolInterface
     }
 
     /**
+     * @param string $request
+     * @throws \JsonException
+     */
+    private function parse(string $request): void
+    {
+        ['rid' => $rid, 'tickTime' => $tick, 'commands' => $commands] = Decoder::decode($request, $this->zone);
+
+        $this->context->update($rid, $tick);
+
+        foreach ($commands as $command) {
+            if ($command instanceof RequestInterface) {
+                $this->dispatchRequest($command);
+            } else {
+                $this->dispatchResponse($command);
+            }
+        }
+    }
+
+    /**
+     * @param RequestInterface $request
+     */
+    private function dispatchRequest(RequestInterface $request): void
+    {
+        try {
+            $result = ($this->onRequest)($request);
+
+            $this->sendDefer(new SuccessResponse($result, $request->getId()));
+        } catch (\Throwable $e) {
+            $this->sendDefer(ErrorResponse::fromException($e, $request->getId()));
+        }
+    }
+
+    /**
+     * @param ErrorResponseInterface|SuccessResponseInterface|ResponseInterface $response
+     */
+    private function dispatchResponse(ResponseInterface $response): void
+    {
+        $deferred = $this->context->fetch($response->getId());
+
+        if ($response instanceof ErrorResponseInterface) {
+            $deferred->reject($response->toException());
+        } else {
+            $deferred->resolve($response->getResult());
+        }
+    }
+
+    /**
      * @return \DateTimeInterface
      * @throws \Exception
      */
     private function now(): \DateTimeInterface
     {
         return new \DateTime('now', $this->zone);
-    }
-
-    /**
-     * @param string $request
-     * @throws \JsonException
-     */
-    private function parse(string $request): void
-    {
-        $data = Decoder::decode($request, $this->zone);
-
-        $this->context->runId = $data['rid'];
-        $this->context->now = $data['tickTime'];
     }
 }

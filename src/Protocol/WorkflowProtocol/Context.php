@@ -18,16 +18,19 @@ use Temporal\Client\Protocol\Command\RequestInterface;
 class Context
 {
     /**
+     * @readonly
      * @var string|int|null
      */
     public $runId;
 
     /**
-     * @var \DateTimeImmutable
+     * @readonly
+     * @var \DateTimeInterface
      */
-    public \DateTimeImmutable $now;
+    public \DateTimeInterface $now;
 
     /**
+     * @readonly
      * @var array|Deferred[]
      */
     public array $promises = [];
@@ -39,6 +42,33 @@ class Context
     public function __construct(\DateTimeZone $zone)
     {
         $this->now = new \DateTimeImmutable('now', $zone);
+    }
+
+    /**
+     * @param string|int|null $runId
+     * @param \DateTimeInterface $date
+     */
+    public function update($runId, \DateTimeInterface $date): void
+    {
+        $this->runId = $runId;
+        $this->now = $date;
+    }
+
+    /**
+     * @param int $id
+     * @return Deferred
+     */
+    public function fetch(int $id): Deferred
+    {
+        $deferred = $this->promises[$id] ?? null;
+
+        if ($deferred === null) {
+            throw new \OutOfBoundsException('The received response does not match any existing request');
+        }
+
+        unset($this->promises[$id]);
+
+        return $deferred;
     }
 
     /**
