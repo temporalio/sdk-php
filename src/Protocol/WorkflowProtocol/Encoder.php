@@ -24,13 +24,13 @@ use Temporal\Client\Protocol\Json;
 final class Encoder
 {
     /**
-     * @param \DateTime $tick
+     * @param \DateTimeInterface $tick
      * @param iterable|CommandInterface[] $commands
      * @param string|int|null $runId
      * @return string
      * @throws \JsonException
      */
-    public static function encode(\DateTime $tick, iterable $commands, $runId = null): string
+    public static function encode(\DateTimeInterface $tick, iterable $commands, $runId = null): string
     {
         return Json::encode([
             'rid'      => $runId,

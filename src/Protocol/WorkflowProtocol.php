@@ -70,7 +70,16 @@ final class WorkflowProtocol implements WorkflowProtocolInterface
     {
         $this->parse($request);
 
-        return $this->extractQueue();
+        return Encoder::encode($this->now(), $this->queue, $this->context->runId);
+    }
+
+    /**
+     * @return \DateTimeInterface
+     * @throws \Exception
+     */
+    private function now(): \DateTimeInterface
+    {
+        return new \DateTime('now', $this->zone);
     }
 
     /**
@@ -83,16 +92,5 @@ final class WorkflowProtocol implements WorkflowProtocolInterface
 
         $this->context->runId = $data['rid'];
         $this->context->now = $data['tickTime'];
-    }
-
-    /**
-     * @return string
-     * @throws \JsonException
-     */
-    private function extractQueue(): string
-    {
-        $now = new \DateTime('now', $this->zone);
-
-        return Encoder::encode($now, $this->queue, $this->context->runId);
     }
 }
