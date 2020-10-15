@@ -13,28 +13,16 @@ namespace Temporal\Client\Worker;
 
 use Temporal\Client\Meta\Factory as ReaderFactory;
 use Temporal\Client\Meta\ReaderInterface;
-use Temporal\Client\Transport\SyncTransportInterface;
-use Temporal\Client\Transport\TransportInterface;
+use Temporal\Client\Workflow\WorkflowTransportInterface;
+use Temporal\Client\Workflow\WorkflowWorker;
+use Temporal\Client\Workflow\WorkflowWorkerInterface;
 
 final class Factory
 {
     /**
-     * @var TransportInterface
-     */
-    private TransportInterface $transport;
-
-    /**
      * @var ReaderInterface|null
      */
     private ?ReaderInterface $reader = null;
-
-    /**
-     * @param TransportInterface $transport
-     */
-    public function __construct(TransportInterface $transport)
-    {
-        $this->transport = $transport;
-    }
 
     /**
      * @return ReaderInterface
@@ -57,35 +45,14 @@ final class Factory
     }
 
     /**
-     * @param TransportInterface $transport
-     * @return $this
-     */
-    public function over(TransportInterface $transport): self
-    {
-        $self = clone $this;
-        $self->transport = $transport;
-
-        return $self;
-    }
-
-    /**
-     * @param TransportInterface $transport
-     * @return static
-     */
-    public static function create(TransportInterface $transport): self
-    {
-        return new self($transport);
-    }
-
-    /**
-     * @param iterable|array $workflows
+     * @param WorkflowTransportInterface $transport
      * @return WorkflowWorkerInterface
      * @throws \Exception
      */
-    public function forWorkflows(iterable $workflows = []): WorkflowWorkerInterface
+    public function forWorkflows(WorkflowTransportInterface $transport): WorkflowWorkerInterface
     {
         $reader = $this->reader ?? $this->createReader();
 
-        return new WorkflowWorker($reader, $this->transport, $workflows);
+        return new WorkflowWorker($reader, $transport);
     }
 }

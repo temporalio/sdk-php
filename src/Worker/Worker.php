@@ -12,8 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client\Worker;
 
 use Temporal\Client\Meta\ReaderInterface;
-use Temporal\Client\Transport\TransportInterface;
-use Temporal\Client\Worker\Workflow\Pool;
+use Temporal\Client\Protocol\Transport\TransportInterface;
 
 /**
  * @internal Worker is an internal library class, please do not use it in your code.

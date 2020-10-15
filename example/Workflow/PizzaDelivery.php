@@ -11,10 +11,11 @@ declare(strict_types=1);
 
 namespace App\Workflow;
 
-use Temporal\Client\Meta\QueryMethod;
-use Temporal\Client\Meta\SignalMethod;
-use Temporal\Client\Meta\WorkflowMethod;
-use Temporal\Client\Runtime\WorkflowContextInterface;
+use Temporal\Client\Workflow\Meta\QueryMethod;
+use Temporal\Client\Workflow\Meta\SignalMethod;
+use Temporal\Client\Workflow\Meta\WorkflowMethod;
+use Temporal\Client\Workflow\Runtime\WorkflowContextInterface;
+
 use function React\Promise\all;
 
 class PizzaDelivery

@@ -13,8 +13,8 @@ namespace Temporal\Client\Worker\Route;
 
 use React\Promise\Deferred;
 use Temporal\Client\Worker\WorkerInterface;
-use Temporal\Client\Worker\WorkflowProviderInterface;
-use Temporal\Client\Worker\WorkflowWorkerInterface;
+use Temporal\Client\Workflow\WorkflowProviderInterface;
+use Temporal\Client\Workflow\WorkflowWorkerInterface;
 
 class GetWorkerInfo extends Route
 {
@@ -41,7 +41,6 @@ class GetWorkerInfo extends Route
     public function __construct(WorkflowWorkerInterface $context, string $id, string $queue)
     {
         $this->context = $context;
-
         $this->id = $id;
         $this->queue = $queue;
     }

@@ -19,13 +19,13 @@ interface WorkerInterface
     /**
      * @var string
      */
-    public const DEFAULT_WORKER_ID = 'default';
+    public const DEFAULT_TASK_QUEUE = 'default';
 
     /**
      * @param string $name
      * @return int
      */
-    public function run(string $name = self::DEFAULT_WORKER_ID): int;
+    public function run(string $name = self::DEFAULT_TASK_QUEUE): int;
 
     /**
      * @psalm-param ExceptionHandler
