@@ -93,15 +93,23 @@ final class BasicConnection extends Connection
     }
 
     /**
-     * @param string $name
-     * @param Deferred $deferred
-     * @return mixed
+     * {@inheritDoc}
      */
-    protected function onCommand(string $name, Deferred $deferred): void
+    protected function onCommand(string $name, array $params, Deferred $deferred): void
     {
         switch ($name) {
             case 'ExecuteActivity':
                 $this->onExecuteActivity($deferred);
+                break;
+
+            case 'NewTimer':
+                $this->loop->addTimer($params['ms'] / 1000, function () use ($deferred) {
+                    $deferred->resolve((new \DateTime())->format(\DateTime::RFC3339));
+                });
+                break;
+
+            case 'CompleteWorkflow':
+                $deferred->resolve('Okay');
                 break;
 
             default:

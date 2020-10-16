@@ -29,4 +29,10 @@ interface InteractWithQueueInterface
      * @return PromiseInterface
      */
     public function executeActivity(string $name, array $arguments = [], $options = null): PromiseInterface;
+
+    /**
+     * @param string|int $interval
+     * @return PromiseInterface
+     */
+    public function timer($interval): PromiseInterface;
 }

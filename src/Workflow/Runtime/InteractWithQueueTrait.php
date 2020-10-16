@@ -15,6 +15,7 @@ use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Workflow\Command\CompleteWorkflow;
 use Temporal\Client\Workflow\Command\ExecuteActivity;
+use Temporal\Client\Workflow\Command\NewTimer;
 use Temporal\Client\Workflow\Protocol\WorkflowProtocolInterface;
 
 /**
@@ -45,6 +46,42 @@ trait InteractWithQueueTrait
         return $this->protocol->request(
             new ExecuteActivity($name, $arguments, $this->createActivityOptions($options))
         );
+    }
+
+    /**
+     * {@inheritDoc}
+     * @throws \Exception
+     */
+    public function timer($interval): PromiseInterface
+    {
+        return $this->protocol->request(
+            new NewTimer($this->createTimerOption($interval))
+        );
+    }
+
+    /**
+     * @param mixed $interval
+     * @return int
+     * @throws \Exception
+     */
+    private function createTimerOption($interval): int
+    {
+        switch (true) {
+            case \is_string($interval):
+                $interval = new \DateInterval($interval);
+
+            case $interval instanceof \DateInterval:
+                return (int)($interval->f * 1000);
+
+            case \is_int($interval):
+                return $interval * 1000;
+
+            case \is_float($interval):
+                return (int)($interval * 1000);
+
+            default:
+                throw new \InvalidArgumentException('Unrecognized date interval format');
+        }
     }
 
     /**

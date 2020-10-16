@@ -108,25 +108,26 @@ abstract class Connection
             // Is Request
             if (isset($command['command'])) {
                 $deferred = new Deferred();
+
                 $promise = $deferred->promise();
 
+                $onFulfilled = function ($result) use ($id) {
+                    $this->send(['result' => $result], $id);
+                };
+
+                $onRejected = function (\Throwable $e) use ($id) {
+                    $this->send([
+                        'error' => [
+                            'code'    => $e->getCode(),
+                            'message' => $e->getMessage(),
+                        ],
+                    ], $id);
+                };
+
+                $promise->then($onFulfilled, $onRejected);
+
                 try {
-                    $this->onCommand($command['command'], $deferred);
-
-                    $onFulfilled = function ($result) use ($id) {
-                        $this->send(['result' => $result], $id);
-                    };
-
-                    $onRejected = function (\Throwable $e) use ($id) {
-                        $this->send([
-                            'error' => [
-                                'code'    => $e->getCode(),
-                                'message' => $e->getMessage(),
-                            ],
-                        ], $id);
-                    };
-
-                    $promise->then($onFulfilled, $onRejected);
+                    $this->onCommand($command['command'], $command['params'] ?? [], $deferred);
                 } catch (\Throwable $e) {
                     $deferred->reject($e);
                 }
@@ -154,9 +155,10 @@ abstract class Connection
 
     /**
      * @param string $name
+     * @param array $params
      * @param Deferred $deferred
      */
-    abstract protected function onCommand(string $name, Deferred $deferred): void;
+    abstract protected function onCommand(string $name, array $params, Deferred $deferred): void;
 
     /**
      * @param array $payload

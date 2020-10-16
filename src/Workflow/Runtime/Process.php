@@ -11,7 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Workflow\Runtime;
 
+use React\Promise\ExtendedPromiseInterface;
 use React\Promise\PromiseInterface;
+use Temporal\Client\Workflow;
 use Temporal\Client\Workflow\Declaration\WorkflowDeclarationInterface;
 
 final class Process
@@ -82,6 +84,8 @@ final class Process
      */
     public function next(): void
     {
+        Workflow::setCurrentProcess($this);
+
         if ($this->generator === null) {
             throw new \LogicException('Workflow process is not running');
         }
@@ -92,15 +96,19 @@ final class Process
             return;
         }
 
-        /** @var PromiseInterface $promise */
+        /** @var ExtendedPromiseInterface $promise */
         $promise = $this->generator->current();
 
-        $promise->then(function ($result) {
-            $this->generator->next();
+        $promise
+            ->otherwise(function (\Throwable $e) {
+                $this->generator->throw($e);
+            })
+            ->then(function ($result) {
+                $this->generator->send($result);
 
-            $this->next();
+                $this->next();
 
-            return $result;
-        });
+                return $result;
+            });
     }
 }
