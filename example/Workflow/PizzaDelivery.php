@@ -28,10 +28,12 @@ class PizzaDelivery
     #[WorkflowMethod(name: 'PizzaDelivery')]
     public function handler(WorkflowContextInterface $context)
     {
-        yield $context->executeActivity('A');
-        yield $context->executeActivity('B');
+        yield all([
+            $context->executeActivity('A'),
+            $context->executeActivity('B')
+        ]);
 
-        //
+        yield $context->executeActivity('C');
 
         return 32;
     }

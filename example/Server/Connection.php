@@ -24,26 +24,32 @@ abstract class Connection
      * @var LoopInterface
      */
     protected LoopInterface $loop;
+
     /**
      * @var ConnectionInterface
      */
     private ConnectionInterface $connection;
+
     /**
      * @var LoggerInterface
      */
     private LoggerInterface $logger;
+
     /**
      * @var GoRidge
      */
     private GoRidge $protocol;
+
     /**
      * @var string|int|null
      */
     private $runId;
+
     /**
      * @var int
      */
-    private int $lastId = 0;
+    private int $lastId = 1000;
+
     /**
      * @var array|Deferred[]
      */

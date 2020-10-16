@@ -57,18 +57,18 @@ final class BasicConnection extends Connection
         foreach ($result['workflows'] as $workflow) {
             $info = $this->allocateRunId();
 
-            foreach ($workflow['queries'] ?? [] as $query) {
-                $this->request('InvokeQueryMethod', \array_merge($info, [
-                    'name' => $query,
-                ]));
-            }
+            /*   foreach ($workflow['queries'] ?? [] as $query) {
+                   $this->request('InvokeQueryMethod', \array_merge($info, [
+                       'name' => $query,
+                   ]));
+               }
 
-            foreach ($workflow['signals'] ?? [] as $signal) {
-                $this->request('InvokeSignalMethod', \array_merge($info, [
-                    'name'    => $signal,
-                    'payload' => [1, 2, 3],
-                ]));
-            }
+               foreach ($workflow['signals'] ?? [] as $signal) {
+                   $this->request('InvokeSignalMethod', \array_merge($info, [
+                       'name'    => $signal,
+                       'payload' => [1, 2, 3],
+                   ]));
+               }*/
 
             yield $this->request('StartWorkflow', \array_merge($info, [
                 'name'    => $workflow['name'],
@@ -110,18 +110,9 @@ final class BasicConnection extends Connection
 
     /**
      * @param Deferred $deferred
-     * @throws \JsonException
      */
     private function onExecuteActivity(Deferred $deferred): void
     {
-        $fulfilled = function ($result) {
-            dd($result);
-        };
-
-        $rejected = fn(\Throwable $e) => $deferred->reject($e);
-
-        $this->request('StartActivity')
-            ->then($fulfilled, $rejected)
-        ;
+        $deferred->resolve('Activity execution result');
     }
 }

@@ -64,6 +64,8 @@ final class StartWorkflow extends Route
         $this->assertNotRunning($context);
 
         $process = $this->running->run($context, $this->findDeclarationOrFail($context));
+        $resolver->resolve(['wid' => $context->getId(), 'rid' => $context->getRunId()]);
+
         $process->start($context->getPayload());
     }
 

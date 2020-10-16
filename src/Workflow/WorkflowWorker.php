@@ -90,7 +90,6 @@ class WorkflowWorker extends Worker implements WorkflowWorkerInterface
      */
     private function bootGlobalRoutes(): void
     {
-        $this->router->add(new StartActivity());
         $this->router->add(new StartWorkflow($this->workflows, $this->running, $this->protocol));
         $this->router->add(new InvokeQueryMethod($this->workflows, $this->running));
         $this->router->add(new InvokeSignalMethod($this->workflows, $this->running));
