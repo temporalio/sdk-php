@@ -25,6 +25,11 @@ final class Process
     private WorkflowContextInterface $context;
 
     /**
+     * @var \Generator|null
+     */
+    private ?\Generator $generator = null;
+
+    /**
      * @var WorkflowDeclarationInterface
      */
     private WorkflowDeclarationInterface $declaration;
@@ -55,8 +60,35 @@ final class Process
         return $this->declaration;
     }
 
-    public function run(callable $handler)
+    /**
+     * @param array $args
+     */
+    public function start(array $args): void
     {
-        // TODO
+        if ($this->generator !== null) {
+            throw new \LogicException('Workflow already has been started');
+        }
+
+        $handler = $this->declaration->getHandler();
+
+        $result = $handler($this->context, $args);
+
+        if ($result instanceof \Generator) {
+            $this->generator = $result;
+        }
+
+        $this->generator->valid();
+    }
+
+    /**
+     * @return void
+     */
+    public function next(): void
+    {
+        if ($this->generator === null) {
+            throw new \LogicException('Workflow process is not running');
+        }
+
+        $this->generator->valid();
     }
 }

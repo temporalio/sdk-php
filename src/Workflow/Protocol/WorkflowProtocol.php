@@ -21,7 +21,6 @@ use Temporal\Client\Protocol\Command\ResponseInterface;
 use Temporal\Client\Protocol\Command\SuccessResponse;
 use Temporal\Client\Protocol\Command\SuccessResponseInterface;
 use Temporal\Client\Protocol\Queue\QueueInterface;
-use Temporal\Client\Protocol\Queue\SplQueue;
 
 /**
  * @internal WorkflowProtocol is an internal library class, please do not use it in your code.
@@ -50,15 +49,16 @@ final class WorkflowProtocol implements WorkflowProtocolInterface
     private \Closure $onRequest;
 
     /**
+     * @param QueueInterface $queue
      * @param \Closure $onRequest
      * @throws \Exception
      */
-    public function __construct(\Closure $onRequest)
+    public function __construct(QueueInterface $queue, \Closure $onRequest)
     {
         $this->onRequest = $onRequest;
 
+        $this->queue = $queue;
         $this->zone = new \DateTimeZone('UTC');
-        $this->queue = new SplQueue();
         $this->context = new Context($this->zone);
     }
 
@@ -131,7 +131,9 @@ final class WorkflowProtocol implements WorkflowProtocolInterface
             $this->sendDefer(ErrorResponse::fromException($e, $request->getId()));
         };
 
-        $deferred->promise()->then($fulfilled, $rejected);
+        $deferred->promise()
+            ->then($fulfilled, $rejected)
+        ;
 
         try {
             ($this->onRequest)($request, $deferred);

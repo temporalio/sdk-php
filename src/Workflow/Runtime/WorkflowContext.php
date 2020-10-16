@@ -12,7 +12,9 @@ declare(strict_types=1);
 namespace Temporal\Client\Workflow\Runtime;
 
 use React\Promise\PromiseInterface;
+use Temporal\Client\Protocol\Queue\QueueInterface;
 use Temporal\Client\Worker\WorkerInterface;
+use Temporal\Client\Workflow\Protocol\WorkflowProtocolInterface;
 
 /**
  * @psalm-type WorkflowContextParams = array {
@@ -25,6 +27,8 @@ use Temporal\Client\Worker\WorkerInterface;
  */
 final class WorkflowContext implements WorkflowContextInterface
 {
+    use InteractWithQueueTrait;
+
     /**
      * @var string
      */
@@ -57,12 +61,13 @@ final class WorkflowContext implements WorkflowContextInterface
     private array $params;
 
     /**
-     * @psalm-param WorkflowContextParams $params
+     * @param WorkflowProtocolInterface $protocol
      * @param array $params
      */
-    public function __construct(array $params)
+    public function __construct(WorkflowProtocolInterface $protocol, array $params)
     {
         $this->params = $params;
+        $this->protocol = $protocol;
     }
 
     /**
@@ -98,20 +103,10 @@ final class WorkflowContext implements WorkflowContextInterface
     }
 
     /**
-     * @return mixed|null
+     * @return array
      */
-    public function getPayload()
+    public function getPayload(): array
     {
-        return $this->params[self::KEY_PAYLOAD] ?? null;
-    }
-
-    public function complete($result = null): PromiseInterface
-    {
-        throw new \LogicException(__METHOD__ . ' not implemented yet');
-    }
-
-    public function executeActivity(string $name, array $arguments = []): ExecuteActivityPromiseInterface
-    {
-        throw new \LogicException(__METHOD__ . ' not implemented yet');
+        return (array)($this->params[self::KEY_PAYLOAD] ?? []);
     }
 }

@@ -13,19 +13,18 @@ namespace Temporal\Client\Workflow\Runtime;
 
 use React\Promise\PromiseInterface;
 
-interface ExecuteActivityPromiseInterface extends PromiseInterface
+interface InteractWithQueueInterface
 {
     /**
-     * @param string $argument
-     * @param mixed $value
-     * @return $this
+     * @param mixed $result
+     * @return PromiseInterface
      */
-    public function with(string $argument, $value): self;
+    public function complete($result = null): PromiseInterface;
 
     /**
      * @param string $name
-     * @param mixed $value
-     * @return $this
+     * @param array $arguments
+     * @return PromiseInterface
      */
-    public function withOption(string $name, $value): self;
+    public function executeActivity(string $name, array $arguments = []): PromiseInterface;
 }

@@ -15,6 +15,8 @@ use React\Promise\Deferred;
 use Temporal\Client\Meta\ReaderInterface;
 use Temporal\Client\Protocol\Command\RequestInterface;
 use Temporal\Client\Protocol\ProtocolInterface;
+use Temporal\Client\Protocol\Queue\QueueInterface;
+use Temporal\Client\Protocol\Queue\SplQueue;
 use Temporal\Client\Protocol\Transport\TransportInterface;
 use Temporal\Client\Worker\Route\GetWorkerInfo;
 use Temporal\Client\Worker\Route\InvokeQueryMethod;
@@ -47,6 +49,11 @@ class WorkflowWorker extends Worker implements WorkflowWorkerInterface
     private RunningWorkflows $running;
 
     /**
+     * @var QueueInterface
+     */
+    private QueueInterface $queue;
+
+    /**
      * @param ReaderInterface $reader
      * @param TransportInterface $transport
      * @throws \Exception
@@ -56,6 +63,7 @@ class WorkflowWorker extends Worker implements WorkflowWorkerInterface
         parent::__construct($reader, $transport);
 
         $this->id = Uuid4::create();
+        $this->queue = new SplQueue();
         $this->protocol = $this->createProtocol($this->router);
         $this->running = new RunningWorkflows();
 
@@ -68,7 +76,7 @@ class WorkflowWorker extends Worker implements WorkflowWorkerInterface
      */
     private function bootGlobalRoutes(): void
     {
-        $this->router->add(new StartWorkflow($this->workflows, $this->running));
+        $this->router->add(new StartWorkflow($this->workflows, $this->running, $this->protocol));
         $this->router->add(new InvokeQueryMethod($this->workflows, $this->running));
         $this->router->add(new InvokeSignalMethod($this->workflows, $this->running));
     }
@@ -89,9 +97,11 @@ class WorkflowWorker extends Worker implements WorkflowWorkerInterface
      */
     private function createProtocol(RouterInterface $router): WorkflowProtocolInterface
     {
-        return new WorkflowProtocol(function (RequestInterface $request, Deferred $deferred) use ($router) {
+        $handler = function (RequestInterface $request, Deferred $deferred) use ($router): void {
             $router->emit($request, $deferred);
-        });
+        };
+
+        return new WorkflowProtocol($this->queue, $handler);
     }
 
     /**
@@ -108,6 +118,8 @@ class WorkflowWorker extends Worker implements WorkflowWorkerInterface
                 $this->transport->send(
                     $this->protocol->next($request)
                 );
+
+                $this->tick();
             }
         } catch (\Throwable $e) {
             $this->throw($e);

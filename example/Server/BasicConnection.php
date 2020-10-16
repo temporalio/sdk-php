@@ -49,6 +49,7 @@ final class BasicConnection extends Connection
                 'taskQueue' => 'WorkerTaskQueue<' . Uuid4::create() . '>',
             ];
 
+            /*
             foreach ($workflow['queries'] ?? [] as $query) {
                 $this->request('InvokeQueryMethod', \array_merge($info, [
                     'name'      => $query
@@ -61,6 +62,7 @@ final class BasicConnection extends Connection
                     'payload'   => [1, 2, 3],
                 ]));
             }
+            */
 
             $info = yield $this->request('StartWorkflow', \array_merge($info, [
                 'name'      => $workflow['name'],

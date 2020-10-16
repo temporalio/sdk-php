@@ -12,8 +12,10 @@ declare(strict_types=1);
 namespace Temporal\Client\Worker\Route;
 
 use React\Promise\Deferred;
+use Temporal\Client\Protocol\Queue\QueueInterface;
 use Temporal\Client\Worker\Declaration\CollectionInterface;
 use Temporal\Client\Workflow\Declaration\WorkflowDeclarationInterface;
+use Temporal\Client\Workflow\Protocol\WorkflowProtocolInterface;
 use Temporal\Client\Workflow\Runtime\RunningWorkflows;
 use Temporal\Client\Workflow\Runtime\WorkflowContext;
 use Temporal\Client\Workflow\Runtime\WorkflowContextInterface;
@@ -35,15 +37,21 @@ final class StartWorkflow extends Route
      * @var CollectionInterface
      */
     private CollectionInterface $workflows;
+    /**
+     * @var WorkflowProtocolInterface
+     */
+    private WorkflowProtocolInterface $protocol;
 
     /**
      * @param CollectionInterface<WorkflowDeclarationInterface> $workflows
      * @param RunningWorkflows $running
+     * @param WorkflowProtocolInterface $protocol
      */
-    public function __construct(CollectionInterface $workflows, RunningWorkflows $running)
+    public function __construct(CollectionInterface $workflows, RunningWorkflows $running, WorkflowProtocolInterface $protocol)
     {
         $this->running = $running;
         $this->workflows = $workflows;
+        $this->protocol = $protocol;
     }
 
     /**
@@ -84,13 +92,14 @@ final class StartWorkflow extends Route
      */
     public function handle(array $params, Deferred $resolver): void
     {
-        $context = new WorkflowContext($params);
+        $context = new WorkflowContext($this->protocol, $params);
 
         $this->assertNotRunning($context);
 
         $declaration = $this->findDeclarationOrFail($context);
 
         $process = $this->running->run($context, $declaration);
-        $process->run($declaration->getHandler());
+
+        $process->start($context->getPayload());
     }
 }

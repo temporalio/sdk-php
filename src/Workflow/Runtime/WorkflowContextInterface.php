@@ -11,9 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Workflow\Runtime;
 
-use React\Promise\PromiseInterface;
-
-interface WorkflowContextInterface
+interface WorkflowContextInterface extends InteractWithQueueInterface
 {
     /**
      * @return string
@@ -36,20 +34,7 @@ interface WorkflowContextInterface
     public function getTaskQueue(): string;
 
     /**
-     * @return mixed
+     * @return array
      */
-    public function getPayload();
-
-    /**
-     * @param mixed $result
-     * @return PromiseInterface
-     */
-    public function complete($result = null): PromiseInterface;
-
-    /**
-     * @param string $name
-     * @param array $arguments
-     * @return ExecuteActivityPromiseInterface
-     */
-    public function executeActivity(string $name, array $arguments = []): ExecuteActivityPromiseInterface;
+    public function getPayload(): array;
 }
