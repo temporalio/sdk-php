@@ -50,7 +50,7 @@ final class Decoder
             return null;
         }
 
-        if (! \is_string($data['rid']) || ! \is_int($data['rid'])) {
+        if (! \is_string($data['rid']) && ! \is_int($data['rid'])) {
             throw new \InvalidArgumentException('WorkflowDeclaration run id argument contain an invalid type');
         }
 
