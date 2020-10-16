@@ -17,6 +17,8 @@ use Temporal\Client\Protocol\Command\RequestInterface;
 use Temporal\Client\Protocol\ProtocolInterface;
 use Temporal\Client\Protocol\Transport\TransportInterface;
 use Temporal\Client\Worker\Route\GetWorkerInfo;
+use Temporal\Client\Worker\Route\InvokeQueryMethod;
+use Temporal\Client\Worker\Route\InvokeSignalMethod;
 use Temporal\Client\Worker\Route\StartWorkflow;
 use Temporal\Client\Worker\RouterInterface;
 use Temporal\Client\Worker\Uuid4;
@@ -67,6 +69,8 @@ class WorkflowWorker extends Worker implements WorkflowWorkerInterface
     private function bootGlobalRoutes(): void
     {
         $this->router->add(new StartWorkflow($this->workflows, $this->running));
+        $this->router->add(new InvokeQueryMethod($this->workflows, $this->running));
+        $this->router->add(new InvokeSignalMethod($this->workflows, $this->running));
     }
 
     /**

@@ -13,7 +13,6 @@ namespace Temporal\Client\Worker\Route;
 
 use React\Promise\Deferred;
 use Temporal\Client\Worker\Declaration\CollectionInterface;
-use Temporal\Client\Worker\Declaration\DeclarationInterface;
 use Temporal\Client\Workflow\Declaration\WorkflowDeclarationInterface;
 use Temporal\Client\Workflow\Runtime\RunningWorkflows;
 use Temporal\Client\Workflow\Runtime\WorkflowContext;
@@ -52,7 +51,7 @@ final class StartWorkflow extends Route
      */
     private function assertNotRunning(WorkflowContextInterface $context): void
     {
-        $isRunning = $this->running->find($context) !== null;
+        $isRunning = $this->running->find($context->getRunId()) !== null;
 
         if (! $isRunning) {
             return;
@@ -91,7 +90,7 @@ final class StartWorkflow extends Route
 
         $declaration = $this->findDeclarationOrFail($context);
 
-        $process = $this->running->run($context);
+        $process = $this->running->run($context, $declaration);
         $process->run($declaration->getHandler());
     }
 }

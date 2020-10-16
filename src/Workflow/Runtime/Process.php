@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Workflow\Runtime;
 
+use Temporal\Client\Workflow\Declaration\WorkflowDeclarationInterface;
+
 /**
  * @internal Process is an internal library class, please do not use it in your code.
  * @psalm-internal Temporal\Client\Workflow
@@ -23,11 +25,34 @@ final class Process
     private WorkflowContextInterface $context;
 
     /**
-     * @param WorkflowContextInterface $context
+     * @var WorkflowDeclarationInterface
      */
-    public function __construct(WorkflowContextInterface $context)
+    private WorkflowDeclarationInterface $declaration;
+
+    /**
+     * @param WorkflowContextInterface $context
+     * @param WorkflowDeclarationInterface $declaration
+     */
+    public function __construct(WorkflowContextInterface $context, WorkflowDeclarationInterface $declaration)
     {
         $this->context = $context;
+        $this->declaration = clone $declaration;
+    }
+
+    /**
+     * @return WorkflowContextInterface
+     */
+    public function getContext(): WorkflowContextInterface
+    {
+        return $this->context;
+    }
+
+    /**
+     * @return WorkflowDeclarationInterface
+     */
+    public function getDeclaration(): WorkflowDeclarationInterface
+    {
+        return $this->declaration;
     }
 
     public function run(callable $handler)

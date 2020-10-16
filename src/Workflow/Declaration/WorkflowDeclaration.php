@@ -144,6 +144,17 @@ final class WorkflowDeclaration extends HandledDeclaration implements WorkflowDe
         $this->queryHandlers[$name] = \Closure::fromCallable($callback);
     }
 
+    public function findQueryHandler(string $name): ?callable
+    {
+        return $this->queryHandlers[$name] ?? null;
+    }
+
+    public function findSignalHandler(string $name): ?callable
+    {
+        return $this->signalHandlers[$name] ?? null;
+    }
+
+
     /**
      * {@inheritDoc}
      */

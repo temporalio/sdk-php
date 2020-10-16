@@ -28,6 +28,12 @@ interface WorkflowDeclarationInterface extends HandledDeclarationInterface
     public function addQueryHandler(string $name, callable $callback): void;
 
     /**
+     * @param string $name
+     * @return callable|null
+     */
+    public function findQueryHandler(string $name): ?callable;
+
+    /**
      * @psalm-return iterable<string, callable>
      * @return iterable|callable[]
      */
@@ -38,4 +44,10 @@ interface WorkflowDeclarationInterface extends HandledDeclarationInterface
      * @param callable $callback
      */
     public function addSignalHandler(string $name, callable $callback): void;
+
+    /**
+     * @param string $name
+     * @return callable|null
+     */
+    public function findSignalHandler(string $name): ?callable;
 }

@@ -11,6 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Workflow\Runtime;
 
+use Temporal\Client\Worker\Declaration\DeclarationInterface;
+use Temporal\Client\Workflow\Declaration\WorkflowDeclarationInterface;
+
 /**
  * @internal RunningWorkflows is an internal library class, please do not use it in your code.
  * @psalm-internal Temporal\Client\Workflow
@@ -24,19 +27,20 @@ final class RunningWorkflows
 
     /**
      * @param WorkflowContextInterface $context
+     * @param WorkflowDeclarationInterface $declaration
      * @return Process
      */
-    public function run(WorkflowContextInterface $context): Process
+    public function run(WorkflowContextInterface $context, WorkflowDeclarationInterface $declaration): Process
     {
-        return $this->processes[$context->getRunId()] = new Process($context);
+        return $this->processes[$context->getRunId()] = new Process($context, $declaration);
     }
 
     /**
-     * @param WorkflowContextInterface $context
+     * @param string $runId
      * @return Process|null
      */
-    public function find(WorkflowContextInterface $context): ?Process
+    public function find(string $runId): ?Process
     {
-        return $this->processes[$context->getRunId()] ?? null;
+        return $this->processes[$runId] ?? null;
     }
 }

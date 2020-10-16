@@ -20,14 +20,20 @@ use function React\Promise\all;
 
 class PizzaDelivery
 {
+    protected $status;
+
     /**
      * @WorkflowMethod(name="PizzaDelivery")
      */
     #[WorkflowMethod(name: 'PizzaDelivery')]
     public function handler(WorkflowContextInterface $context)
     {
+        $context->registerQueryHandler([$this, 'getStatus']);
+
         $result = yield $context->executeActivity('A')
             ->then(function () use ($context) {
+                $this->status = 'cooking';
+
                 return all([
                     $context->executeActivity('X'),
                     $context->executeActivity('Y'),

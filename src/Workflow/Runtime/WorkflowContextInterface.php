@@ -49,7 +49,7 @@ interface WorkflowContextInterface
     /**
      * @param string $name
      * @param array $arguments
-     * @return PromiseInterface
+     * @return ExecuteActivityPromiseInterface
      */
-    public function executeActivity(string $name, array $arguments = []): PromiseInterface;
+    public function executeActivity(string $name, array $arguments = []): ExecuteActivityPromiseInterface;
 }

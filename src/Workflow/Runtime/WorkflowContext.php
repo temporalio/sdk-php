@@ -57,6 +57,7 @@ final class WorkflowContext implements WorkflowContextInterface
     private array $params;
 
     /**
+     * @psalm-param WorkflowContextParams $params
      * @param array $params
      */
     public function __construct(array $params)
