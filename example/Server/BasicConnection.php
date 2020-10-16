@@ -70,6 +70,8 @@ final class BasicConnection extends Connection
                    ]));
                }*/
 
+            $this->runId = $info['rid'];
+
             yield $this->request('StartWorkflow', \array_merge($info, [
                 'name'    => $workflow['name'],
                 'payload' => [1, 2, 3],
@@ -94,7 +96,6 @@ final class BasicConnection extends Connection
      * @param string $name
      * @param Deferred $deferred
      * @return mixed
-     * @throws \JsonException
      */
     protected function onCommand(string $name, Deferred $deferred): void
     {

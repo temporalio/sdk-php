@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Workflow;
 
+use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Workflow\Meta\QueryMethod;
 use Temporal\Client\Workflow\Meta\SignalMethod;
 use Temporal\Client\Workflow\Meta\WorkflowMethod;
@@ -33,7 +34,7 @@ class PizzaDelivery
             $context->executeActivity('B')
         ]);
 
-        yield $context->executeActivity('C');
+        yield $context->executeActivity('C', []);
 
         return 32;
     }

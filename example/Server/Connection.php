@@ -43,7 +43,7 @@ abstract class Connection
     /**
      * @var string|int|null
      */
-    private $runId;
+    protected $runId;
 
     /**
      * @var int
