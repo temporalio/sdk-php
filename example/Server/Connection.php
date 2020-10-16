@@ -21,39 +21,33 @@ use Temporal\Client\Protocol\Json;
 abstract class Connection
 {
     /**
+     * @var LoopInterface
+     */
+    protected LoopInterface $loop;
+    /**
      * @var ConnectionInterface
      */
     private ConnectionInterface $connection;
-
     /**
      * @var LoggerInterface
      */
     private LoggerInterface $logger;
-
     /**
      * @var GoRidge
      */
     private GoRidge $protocol;
-
     /**
      * @var string|int|null
      */
     private $runId;
-
     /**
      * @var int
      */
     private int $lastId = 0;
-
     /**
      * @var array|Deferred[]
      */
     private array $promises = [];
-
-    /**
-     * @var LoopInterface
-     */
-    protected LoopInterface $loop;
 
     /**
      * @param LoopInterface $loop
@@ -107,12 +101,28 @@ abstract class Connection
 
             // Is Request
             if (isset($command['command'])) {
-                try {
-                    $result = $this->onCommand($command['command']);
+                $deferred = new Deferred();
+                $promise = $deferred->promise();
 
-                    $this->send(['result' => $result], $id);
+                try {
+                    $this->onCommand($command['command'], $deferred);
+
+                    $onFulfilled = function ($result) use ($id) {
+                        $this->send(['result' => $result], $id);
+                    };
+
+                    $onRejected = function (\Throwable $e) use ($id) {
+                        $this->send([
+                            'error' => [
+                                'code'    => $e->getCode(),
+                                'message' => $e->getMessage(),
+                            ],
+                        ], $id);
+                    };
+
+                    $promise->then($onFulfilled, $onRejected);
                 } catch (\Throwable $e) {
-                    $this->send(['error' => ['code' => $e->getCode(), 'message' => $e->getMessage()]], $id);
+                    $deferred->reject($e);
                 }
 
                 continue;
@@ -138,9 +148,9 @@ abstract class Connection
 
     /**
      * @param string $name
-     * @return mixed
+     * @param Deferred $deferred
      */
-    abstract protected function onCommand(string $name);
+    abstract protected function onCommand(string $name, Deferred $deferred): void;
 
     /**
      * @param array $payload
@@ -215,6 +225,6 @@ abstract class Connection
             $this->next($generator);
         };
 
-        $promise->then($resolver, fn (\Throwable $e) => $generator->throw($e));
+        $promise->then($resolver, fn(\Throwable $e) => $generator->throw($e));
     }
 }

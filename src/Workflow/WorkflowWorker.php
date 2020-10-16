@@ -14,13 +14,13 @@ namespace Temporal\Client\Workflow;
 use React\Promise\Deferred;
 use Temporal\Client\Meta\ReaderInterface;
 use Temporal\Client\Protocol\Command\RequestInterface;
-use Temporal\Client\Protocol\ProtocolInterface;
 use Temporal\Client\Protocol\Queue\QueueInterface;
 use Temporal\Client\Protocol\Queue\SplQueue;
 use Temporal\Client\Protocol\Transport\TransportInterface;
 use Temporal\Client\Worker\Route\GetWorkerInfo;
 use Temporal\Client\Worker\Route\InvokeQueryMethod;
 use Temporal\Client\Worker\Route\InvokeSignalMethod;
+use Temporal\Client\Worker\Route\StartActivity;
 use Temporal\Client\Worker\Route\StartWorkflow;
 use Temporal\Client\Worker\RouterInterface;
 use Temporal\Client\Worker\Uuid4;
@@ -39,9 +39,9 @@ class WorkflowWorker extends Worker implements WorkflowWorkerInterface
     private string $id;
 
     /**
-     * @var ProtocolInterface|WorkflowProtocolInterface
+     * @var WorkflowProtocolInterface
      */
-    private ProtocolInterface $protocol;
+    private WorkflowProtocolInterface $protocol;
 
     /**
      * @var RunningWorkflows
@@ -72,25 +72,6 @@ class WorkflowWorker extends Worker implements WorkflowWorkerInterface
     }
 
     /**
-     * @return void
-     */
-    private function bootGlobalRoutes(): void
-    {
-        $this->router->add(new StartWorkflow($this->workflows, $this->running, $this->protocol));
-        $this->router->add(new InvokeQueryMethod($this->workflows, $this->running));
-        $this->router->add(new InvokeSignalMethod($this->workflows, $this->running));
-    }
-
-    /**
-     * @param string $taskQueue
-     * @return void
-     */
-    private function bootExecutorRoutes(string $taskQueue): void
-    {
-        $this->router->add(new GetWorkerInfo($this, $this->id, $taskQueue), true);
-    }
-
-    /**
      * @param RouterInterface $router
      * @return WorkflowProtocolInterface
      * @throws \Exception
@@ -102,6 +83,17 @@ class WorkflowWorker extends Worker implements WorkflowWorkerInterface
         };
 
         return new WorkflowProtocol($this->queue, $handler);
+    }
+
+    /**
+     * @return void
+     */
+    private function bootGlobalRoutes(): void
+    {
+        $this->router->add(new StartActivity());
+        $this->router->add(new StartWorkflow($this->workflows, $this->running, $this->protocol));
+        $this->router->add(new InvokeQueryMethod($this->workflows, $this->running));
+        $this->router->add(new InvokeSignalMethod($this->workflows, $this->running));
     }
 
     /**
@@ -128,5 +120,14 @@ class WorkflowWorker extends Worker implements WorkflowWorkerInterface
         }
 
         return 0;
+    }
+
+    /**
+     * @param string $taskQueue
+     * @return void
+     */
+    private function bootExecutorRoutes(string $taskQueue): void
+    {
+        $this->router->add(new GetWorkerInfo($this, $this->id, $taskQueue), true);
     }
 }

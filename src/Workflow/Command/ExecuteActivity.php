@@ -11,8 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Workflow\Command;
 
+use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Protocol\Command\Request;
-use Temporal\Client\Protocol\Command\RequestInterface;
 
 class ExecuteActivity extends Request
 {
@@ -21,10 +21,17 @@ class ExecuteActivity extends Request
      */
     public const NAME = 'ExecuteActivity';
 
-    public function __construct(string $name, array $arguments = [], array $options = [])
+    /**
+     * @param string $name
+     * @param array $arguments
+     * @param ActivityOptions $options
+     */
+    public function __construct(string $name, array $arguments, ActivityOptions $options)
     {
         parent::__construct(self::NAME, [
-            'name' => $name,
+            'name'      => $name,
+            'arguments' => $arguments,
+            'options'   => $options->toArray(),
         ]);
     }
 }

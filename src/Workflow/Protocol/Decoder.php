@@ -20,10 +20,6 @@ use Temporal\Client\Protocol\Command\SuccessResponse;
 use Temporal\Client\Protocol\Command\SuccessResponseInterface;
 use Temporal\Client\Protocol\Json;
 
-/**
- * @internal Decoder is an internal library class, please do not use it in your code.
- * @psalm-internal Temporal\Client\Protocol
- */
 final class Decoder
 {
     /**

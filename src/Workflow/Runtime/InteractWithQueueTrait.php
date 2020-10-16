@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client\Workflow\Runtime;
 
 use React\Promise\PromiseInterface;
-use Temporal\Client\Protocol\Queue\QueueInterface;
+use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Workflow\Command\CompleteWorkflow;
 use Temporal\Client\Workflow\Command\ExecuteActivity;
 use Temporal\Client\Workflow\Protocol\WorkflowProtocolInterface;
@@ -32,14 +32,39 @@ trait InteractWithQueueTrait
      */
     public function complete($result = null): PromiseInterface
     {
-        return $this->protocol->request(new CompleteWorkflow($result));
+        return $this->protocol->request(
+            new CompleteWorkflow($result)
+        );
     }
 
     /**
      * {@inheritDoc}
      */
-    public function executeActivity(string $name, array $arguments = []): PromiseInterface
+    public function executeActivity(string $name, array $arguments = [], $options = null): PromiseInterface
     {
-        return $this->protocol->request(new ExecuteActivity($name, $arguments));
+        return $this->protocol->request(
+            new ExecuteActivity($name, $arguments, $this->createActivityOptions($options))
+        );
+    }
+
+    /**
+     * @param mixed $options
+     * @return ActivityOptions
+     */
+    private function createActivityOptions($options): ActivityOptions
+    {
+        switch (true) {
+            case $options === null:
+                return new ActivityOptions();
+
+            case \is_array($options):
+                return ActivityOptions::fromArray($options);
+
+            case $options instanceof ActivityOptions:
+                return $options;
+
+            default:
+                throw new \InvalidArgumentException('Invalid options type');
+        }
     }
 }

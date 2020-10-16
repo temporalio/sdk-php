@@ -13,10 +13,6 @@ namespace Temporal\Client\Workflow\Runtime;
 
 use Temporal\Client\Workflow\Declaration\WorkflowDeclarationInterface;
 
-/**
- * @internal Process is an internal library class, please do not use it in your code.
- * @psalm-internal Temporal\Client\Workflow
- */
 final class Process
 {
     /**

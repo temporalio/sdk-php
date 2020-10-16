@@ -16,10 +16,6 @@ use Temporal\Client\Worker\Declaration\CollectionInterface;
 use Temporal\Client\Workflow\Declaration\WorkflowDeclarationInterface;
 use Temporal\Client\Workflow\Runtime\RunningWorkflows;
 
-/**
- * @internal StartWorkflow is an internal library class, please do not use it in your code.
- * @psalm-internal Temporal\Client
- */
 final class InvokeSignalMethod extends Route
 {
     /**

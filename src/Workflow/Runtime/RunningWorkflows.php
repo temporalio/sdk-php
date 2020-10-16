@@ -11,13 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Workflow\Runtime;
 
-use Temporal\Client\Worker\Declaration\DeclarationInterface;
 use Temporal\Client\Workflow\Declaration\WorkflowDeclarationInterface;
 
-/**
- * @internal RunningWorkflows is an internal library class, please do not use it in your code.
- * @psalm-internal Temporal\Client\Workflow
- */
 final class RunningWorkflows
 {
     /**

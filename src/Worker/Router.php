@@ -25,7 +25,7 @@ final class Router implements RouterInterface
     /**
      * @var string
      */
-    private const ERROR_ROUTE_NOT_FOUND = 'Method "%s" is not registered by the server implementation';
+    private const ERROR_ROUTE_NOT_FOUND = 'Method "%s" is not registered';
 
     /**
      * @var array|RouteInterface[]

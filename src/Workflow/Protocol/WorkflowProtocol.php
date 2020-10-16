@@ -22,10 +22,6 @@ use Temporal\Client\Protocol\Command\SuccessResponse;
 use Temporal\Client\Protocol\Command\SuccessResponseInterface;
 use Temporal\Client\Protocol\Queue\QueueInterface;
 
-/**
- * @internal WorkflowProtocol is an internal library class, please do not use it in your code.
- * @psalm-internal Temporal\Client\Workflow
- */
 final class WorkflowProtocol implements WorkflowProtocolInterface
 {
     /**

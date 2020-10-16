@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client\Workflow\Runtime;
 
 use React\Promise\PromiseInterface;
+use Temporal\Client\Activity\ActivityOptions;
 
 interface InteractWithQueueInterface
 {
@@ -24,7 +25,8 @@ interface InteractWithQueueInterface
     /**
      * @param string $name
      * @param array $arguments
+     * @param ActivityOptions|array|null $options
      * @return PromiseInterface
      */
-    public function executeActivity(string $name, array $arguments = []): PromiseInterface;
+    public function executeActivity(string $name, array $arguments = [], $options = null): PromiseInterface;
 }

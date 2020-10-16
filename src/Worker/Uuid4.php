@@ -14,9 +14,6 @@ namespace Temporal\Client\Worker;
 /**
  * A static helper class that implements the logic for generating UUID 4 based
  * on RFC 4122.
- *
- * @internal Uuid4 is an internal library class, please do not use it in your code.
- * @psalm-internal Temporal\Client\Worker
  */
 final class Uuid4
 {

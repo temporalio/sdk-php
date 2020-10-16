@@ -14,10 +14,6 @@ namespace Temporal\Client\Worker;
 use Temporal\Client\Meta\ReaderInterface;
 use Temporal\Client\Protocol\Transport\TransportInterface;
 
-/**
- * @internal Worker is an internal library class, please do not use it in your code.
- * @psalm-internal Temporal\Client\Worker
- */
 abstract class Worker implements WorkerInterface
 {
     /**

@@ -17,10 +17,6 @@ use Temporal\Client\Protocol\Command\RequestInterface;
 use Temporal\Client\Protocol\Command\SuccessResponseInterface;
 use Temporal\Client\Protocol\Json;
 
-/**
- * @internal Encoder is an internal library class, please do not use it in your code.
- * @psalm-internal Temporal\Client\Protocol
- */
 final class Encoder
 {
     /**
