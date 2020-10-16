@@ -14,14 +14,31 @@ namespace Temporal\Client;
 use Temporal\Client\Workflow\Runtime\Process;
 
 /**
- * TODO Static class with current execution workflow context
+ * @mixin Process
  */
 final class Workflow
 {
+    /**
+     * @var Process
+     */
     private static Process $process;
 
+    /**
+     * @param Process $process
+     */
     public static function setCurrentProcess(Process $process): void
     {
+        self::$process = $process;
+    }
 
+    /**
+     * @param string $name
+     * @param array $arguments
+     * @return mixed
+     */
+    public static function __callStatic(string $name, array $arguments)
+    {
+        $context = self::$process->getContext();
+        return $context->$name(...$arguments);
     }
 }

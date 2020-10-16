@@ -28,4 +28,9 @@ interface WorkflowProtocolInterface extends ProtocolInterface
      * @return string
      */
     public function next(string $request): string;
+
+    /**
+     * @return \DateTimeInterface
+     */
+    public function getCurrentTickTime(): \DateTimeInterface;
 }

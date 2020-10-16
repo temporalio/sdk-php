@@ -71,6 +71,14 @@ final class WorkflowContext implements WorkflowContextInterface
     }
 
     /**
+     * @return \DateTimeInterface
+     */
+    public function now(): \DateTimeInterface
+    {
+        return $this->protocol->getCurrentTickTime();
+    }
+
+    /**
      * @return string
      */
     public function getName(): string

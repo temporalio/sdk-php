@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Client\Workflow\Runtime;
 
 use React\Promise\ExtendedPromiseInterface;
-use React\Promise\PromiseInterface;
 use Temporal\Client\Workflow;
 use Temporal\Client\Workflow\Declaration\WorkflowDeclarationInterface;
 

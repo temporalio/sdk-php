@@ -25,6 +25,7 @@ use Temporal\Client\Worker\Route\StartWorkflow;
 use Temporal\Client\Worker\RouterInterface;
 use Temporal\Client\Worker\Uuid4;
 use Temporal\Client\Worker\Worker;
+use Temporal\Client\Workflow\Protocol\Context;
 use Temporal\Client\Workflow\Protocol\WorkflowProtocol;
 use Temporal\Client\Workflow\Protocol\WorkflowProtocolInterface;
 use Temporal\Client\Workflow\Runtime\RunningWorkflows;
@@ -52,6 +53,11 @@ class WorkflowWorker extends Worker implements WorkflowWorkerInterface
      * @var QueueInterface
      */
     private QueueInterface $queue;
+
+    /**
+     * @var Context
+     */
+    private Context $context;
 
     /**
      * @param ReaderInterface $reader

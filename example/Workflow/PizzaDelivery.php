@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Workflow;
 
 use Temporal\Client\Activity\ActivityOptions;
+use Temporal\Client\Workflow;
 use Temporal\Client\Workflow\Meta\QueryMethod;
 use Temporal\Client\Workflow\Meta\SignalMethod;
 use Temporal\Client\Workflow\Meta\WorkflowMethod;
@@ -27,22 +28,27 @@ class PizzaDelivery
      * @WorkflowMethod(name="PizzaDelivery")
      */
     #[WorkflowMethod(name: 'PizzaDelivery')]
-    public function handler(WorkflowContextInterface $context)
+    public function handler()
     {
         [$a, $b] = yield all([
-            $context->executeActivity('A'),
-            $context->executeActivity('B')
+            Workflow::executeActivity('A'),
+            Workflow::executeActivity('B')
         ]);
+
+        echo 'Now: ' . Workflow::now()->format(\DateTime::RFC3339) . "\n";
 
         var_dump('A+B', $a, $b);
 
-        $c = yield $context->timer(5);
+        $c = yield Workflow::timer(5);
+
+        echo 'Now: ' . Workflow::now()->format(\DateTime::RFC3339) . "\n";
 
         var_dump($c);
 
-        $d = yield $context->executeActivity('C', []);
+        $d = yield Workflow::executeActivity('C', []);
 
         var_dump($d);
+
 
         return 32;
     }

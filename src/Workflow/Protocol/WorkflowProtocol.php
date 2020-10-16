@@ -59,6 +59,14 @@ final class WorkflowProtocol implements WorkflowProtocolInterface
     }
 
     /**
+     * @return \DateTimeInterface
+     */
+    public function getCurrentTickTime(): \DateTimeInterface
+    {
+        return $this->context->now;
+    }
+
+    /**
      * @param RequestInterface $request
      * @return PromiseInterface
      */

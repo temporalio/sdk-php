@@ -37,4 +37,9 @@ interface WorkflowContextInterface extends InteractWithQueueInterface
      * @return array
      */
     public function getPayload(): array;
+
+    /**
+     * @return \DateTimeInterface
+     */
+    public function now(): \DateTimeInterface;
 }
