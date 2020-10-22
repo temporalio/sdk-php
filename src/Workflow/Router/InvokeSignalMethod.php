@@ -9,11 +9,11 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Worker\Route;
+namespace Temporal\Client\Workflow\Router;
 
 use React\Promise\Deferred;
 use Temporal\Client\Worker\Declaration\CollectionInterface;
-use Temporal\Client\Workflow\Declaration\WorkflowDeclarationInterface;
+use Temporal\Client\Workflow\WorkflowDeclarationInterface;
 use Temporal\Client\Workflow\Runtime\RunningWorkflows;
 
 final class InvokeSignalMethod extends Route

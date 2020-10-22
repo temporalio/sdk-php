@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Worker\Route;
+namespace Temporal\Client\Workflow\Router;
 
 use React\Promise\Deferred;
 

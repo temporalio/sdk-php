@@ -9,10 +9,8 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Workflow;
+namespace Temporal\Client\Worker\Declaration\Repository;
 
-use Temporal\Client\Worker\WorkerInterface;
-
-interface WorkflowWorkerInterface extends WorkflowProviderInterface, WorkerInterface
+interface RepositoryInterface
 {
 }

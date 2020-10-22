@@ -11,12 +11,14 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Workflow;
 
-use Temporal\Client\Protocol\Transport\TransportInterface;
+use React\Promise\Deferred;
+use Temporal\Client\Protocol\Command\RequestInterface;
 
-interface WorkflowTransportInterface extends TransportInterface
+interface DispatcherInterface
 {
     /**
-     * @return string
+     * @param RequestInterface $request
+     * @param Deferred $resolver
      */
-    public function waitForMessage(): string;
+    public function emit(RequestInterface $request, Deferred $resolver): void;
 }

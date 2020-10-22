@@ -12,8 +12,8 @@ declare(strict_types=1);
 namespace Temporal\Client\Workflow\Runtime;
 
 use React\Promise\ExtendedPromiseInterface;
+use Temporal\Client\Workflow\WorkflowDeclarationInterface;
 use Temporal\Client\Workflow;
-use Temporal\Client\Workflow\Declaration\WorkflowDeclarationInterface;
 
 final class Process
 {

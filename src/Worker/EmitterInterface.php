@@ -9,12 +9,14 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Protocol\Transport;
+namespace Temporal\Client\Worker;
 
-interface TransportInterface
+interface EmitterInterface
 {
     /**
-     * @param string $message
+     * @param string $body
+     * @param array $context
+     * @return string
      */
-    public function send(string $message): void;
+    public function emit(string $body, array $context = []): string;
 }

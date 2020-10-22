@@ -9,9 +9,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Worker;
+namespace Temporal\Client\Workflow;
 
-use Temporal\Client\Worker\Route\RouteInterface;
+use Temporal\Client\Workflow\DispatcherInterface;
+use Temporal\Client\Workflow\Router\RouteInterface;
 
 interface RouterInterface extends DispatcherInterface
 {

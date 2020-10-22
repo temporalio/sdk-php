@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Workflow\Declaration;
+namespace Temporal\Client\Workflow;
 
 use Temporal\Client\Worker\Declaration\HandledDeclarationInterface;
 

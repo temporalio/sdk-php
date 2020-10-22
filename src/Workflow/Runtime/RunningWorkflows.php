@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Workflow\Runtime;
 
-use Temporal\Client\Workflow\Declaration\WorkflowDeclarationInterface;
+use Temporal\Client\Workflow\WorkflowDeclarationInterface;
 
 final class RunningWorkflows
 {

@@ -12,27 +12,32 @@ declare(strict_types=1);
 namespace Temporal\Client\Workflow;
 
 use React\Promise\Deferred;
+use Temporal\Client\Worker\Declaration\Repository\ActivityRepositoryInterface;
+use Temporal\Client\Worker\Declaration\Repository\ActivityRepositoryTrait;
+use Temporal\Client\Worker\Declaration\Repository\WorkflowRepositoryInterface;
+use Temporal\Client\Worker\Declaration\Repository\WorkflowRepositoryTrait;
 use Temporal\Client\Meta\ReaderInterface;
 use Temporal\Client\Protocol\Command\RequestInterface;
 use Temporal\Client\Protocol\Queue\QueueInterface;
 use Temporal\Client\Protocol\Queue\SplQueue;
-use Temporal\Client\Protocol\Transport\TransportInterface;
-use Temporal\Client\Worker\Route\GetWorkerInfo;
-use Temporal\Client\Worker\Route\InvokeQueryMethod;
-use Temporal\Client\Worker\Route\InvokeSignalMethod;
-use Temporal\Client\Worker\Route\StartActivity;
-use Temporal\Client\Worker\Route\StartWorkflow;
-use Temporal\Client\Worker\RouterInterface;
+use Temporal\Client\Worker\EmitterInterface;
+use Temporal\Client\Workflow\Router\InvokeQueryMethod;
+use Temporal\Client\Workflow\Router\InvokeSignalMethod;
+use Temporal\Client\Workflow\Router\StartWorkflow;
+use Temporal\Client\Workflow\Router;
+use Temporal\Client\Workflow\RouterInterface;
 use Temporal\Client\Worker\Uuid4;
-use Temporal\Client\Worker\Worker;
 use Temporal\Client\Workflow\Protocol\Context;
 use Temporal\Client\Workflow\Protocol\WorkflowProtocol;
 use Temporal\Client\Workflow\Protocol\WorkflowProtocolInterface;
 use Temporal\Client\Workflow\Runtime\RunningWorkflows;
 
-class WorkflowWorker extends Worker implements WorkflowWorkerInterface
+/**
+ * @noinspection PhpSuperClassIncompatibleWithInterfaceInspection
+ */
+final class WorkflowWorker implements WorkflowRepositoryInterface, EmitterInterface
 {
-    use WorkflowProviderTrait;
+    use WorkflowRepositoryTrait;
 
     /**
      * @var string
@@ -60,21 +65,54 @@ class WorkflowWorker extends Worker implements WorkflowWorkerInterface
     private Context $context;
 
     /**
+     * @var ReaderInterface
+     */
+    private ReaderInterface $reader;
+
+    /**
+     * @var RouterInterface
+     */
+    private RouterInterface $router;
+
+    /**
      * @param ReaderInterface $reader
-     * @param TransportInterface $transport
+     * @param string $taskQueue
      * @throws \Exception
      */
-    public function __construct(ReaderInterface $reader, TransportInterface $transport)
+    public function __construct(ReaderInterface $reader, string $taskQueue)
     {
-        parent::__construct($reader, $transport);
+        $this->bootWorkflowRepositoryTrait();
 
+        $this->reader = $reader;
         $this->id = Uuid4::create();
         $this->queue = new SplQueue();
-        $this->protocol = $this->createProtocol($this->router);
         $this->running = new RunningWorkflows();
 
-        $this->bootWorkflowProviderTrait();
-        $this->bootGlobalRoutes();
+        $this->router = new Router();
+
+        $this->protocol = $this->createProtocol($this->router);
+        $this->bootRoutes($this->router);
+    }
+
+    /**
+     * @param RouterInterface $router
+     * @return RouterInterface
+     */
+    private function bootRoutes(RouterInterface $router): RouterInterface
+    {
+        $router->add(new StartWorkflow($this->workflows, $this->running, $this->protocol));
+        $router->add(new InvokeQueryMethod($this->workflows, $this->running));
+        $router->add(new InvokeSignalMethod($this->workflows, $this->running));
+
+        return $router;
+    }
+
+    /**
+     * @return ReaderInterface
+     */
+    protected function getReader(): ReaderInterface
+    {
+        return $this->reader;
     }
 
     /**
@@ -92,47 +130,12 @@ class WorkflowWorker extends Worker implements WorkflowWorkerInterface
     }
 
     /**
-     * @return void
+     * @param string $request
+     * @param array $context
+     * @return string
      */
-    private function bootGlobalRoutes(): void
+    public function emit(string $request, array $context = []): string
     {
-        $this->router->add(new StartWorkflow($this->workflows, $this->running, $this->protocol));
-        $this->router->add(new InvokeQueryMethod($this->workflows, $this->running));
-        $this->router->add(new InvokeSignalMethod($this->workflows, $this->running));
-    }
-
-    /**
-     * @param string $name
-     * @return int
-     * @throws \Throwable
-     */
-    public function run(string $name = self::DEFAULT_TASK_QUEUE): int
-    {
-        $this->bootExecutorRoutes($name);
-
-        try {
-            while ($request = $this->transport->waitForMessage()) {
-                $this->transport->send(
-                    $this->protocol->next($request)
-                );
-
-                $this->tick();
-            }
-        } catch (\Throwable $e) {
-            $this->throw($e);
-
-            return $e->getCode() ?: 1;
-        }
-
-        return 0;
-    }
-
-    /**
-     * @param string $taskQueue
-     * @return void
-     */
-    private function bootExecutorRoutes(string $taskQueue): void
-    {
-        $this->router->add(new GetWorkerInfo($this, $this->id, $taskQueue), true);
+        return $this->protocol->next($request);
     }
 }

@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Activity;
+namespace Temporal\Client\Activity\Meta;
 
 use Doctrine\Common\Annotations\Annotation\Target;
 

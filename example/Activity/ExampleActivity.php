@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace App\Activity;
 
-use Temporal\Client\Activity\ActivityMethod;
+use Temporal\Client\Activity\Meta\ActivityMethod;
 
 class ExampleActivity
 {

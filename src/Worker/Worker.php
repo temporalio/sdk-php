@@ -11,109 +11,134 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Worker;
 
+use Temporal\Client\Activity\ActivityWorker;
+use Temporal\Client\Activity\ActivityDeclarationInterface;
+use Temporal\Client\Worker\Env\EnvironmentInterface;
+use Temporal\Client\Workflow\WorkflowDeclarationInterface;
 use Temporal\Client\Meta\ReaderInterface;
-use Temporal\Client\Protocol\Transport\TransportInterface;
+use Temporal\Client\Workflow\WorkflowWorker;
 
-abstract class Worker implements WorkerInterface
+class Worker implements WorkerInterface
 {
     /**
-     * @psalm-var array<array-key, callable(\Throwable): void>
-     * @var array|callable[]
+     * @var WorkflowWorker
      */
-    private array $errors = [];
+    private WorkflowWorker $workflowWorker;
 
     /**
-     * @var array
+     * @var ActivityWorker
      */
-    private array $ticks = [];
+    private ActivityWorker $activityWorker;
 
     /**
-     * @var ReaderInterface
+     * @var string
      */
-    protected ReaderInterface $reader;
+    private string $taskQueue;
 
     /**
-     * @var TransportInterface
+     * @var EnvironmentInterface
      */
-    protected TransportInterface $transport;
+    private EnvironmentInterface $env;
 
     /**
-     * @var Router
+     * @param string $taskQueue
+     * @param ReaderInterface|null $reader
+     * @param EnvironmentInterface $env
+     * @throws \Exception
      */
-    protected Router $router;
-
-    /**
-     * @param ReaderInterface $reader
-     * @param TransportInterface $transport
-     */
-    public function __construct(ReaderInterface $reader, TransportInterface $transport)
+    public function __construct(string $taskQueue, ReaderInterface $reader, EnvironmentInterface $env)
     {
-        $this->reader = $reader;
-        $this->transport = $transport;
+        $this->env = $env;
+        $this->taskQueue = $taskQueue;
 
-        $this->router = new Router();
+        $this->workflowWorker = new WorkflowWorker($reader, $taskQueue);
+        $this->activityWorker = new ActivityWorker($reader, $taskQueue);
     }
 
     /**
-     * @return ReaderInterface
+     * {@inheritDoc}
      */
-    protected function getMetadataReader(): ReaderInterface
+    public function registerWorkflow(object $workflow, bool $overwrite = false): self
     {
-        return $this->reader;
-    }
-
-    /**
-     * @param callable $then
-     * @return $this
-     */
-    public function onError(callable $then): self
-    {
-        $this->errors[] = $then;
+        $this->workflowWorker->registerWorkflow($workflow, $overwrite);
 
         return $this;
     }
 
     /**
-     * @param callable $then
-     * @return $this
+     * {@inheritDoc}
      */
-    public function onTick(callable $then): WorkerInterface
+    public function registerWorkflowDeclaration(WorkflowDeclarationInterface $workflow, bool $overwrite = false): self
     {
-        $this->ticks[] = $then;
+        $this->workflowWorker->registerWorkflowDeclaration($workflow, $overwrite);
 
         return $this;
     }
 
     /**
-     * @return void
+     * {@inheritDoc}
      */
-    protected function tick(): void
+    public function findWorkflow(string $name): ?WorkflowDeclarationInterface
     {
-        foreach ($this->ticks as $tick) {
-            $tick();
-        }
+        return $this->workflowWorker->findWorkflow($name);
     }
 
     /**
-     * @param \Throwable $e
-     * @throws \Throwable
+     * {@inheritDoc}
      */
-    protected function throw(\Throwable $e): void
+    public function getWorkflows(): iterable
     {
-        if (($depth = \func_get_args()[1] ?? 0) > 2) {
-            return;
-        }
+        return $this->workflowWorker->getWorkflows();
+    }
 
-        if (\count($this->errors) === 0) {
-            throw $e;
-        }
+    /**
+     * {@inheritDoc}
+     */
+    public function registerActivity(object $activity, bool $overwrite = false): self
+    {
+        return $this->activityWorker->registerActivity($activity, $overwrite);
+    }
 
-        foreach ($this->errors as $handler) {
-            try {
-                $handler($e);
-            } catch (\Throwable $e) {
-                $this->throw($e, $depth + 1);
-            }
+    /**
+     * {@inheritDoc}
+     */
+    public function registerActivityDeclaration(ActivityDeclarationInterface $activity, bool $overwrite = false): self
+    {
+        return $this->activityWorker->registerActivityDeclaration($activity, $overwrite);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function findActivity(string $name): ?ActivityDeclarationInterface
+    {
+        return $this->activityWorker->findActivity($name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getActivities(): iterable
+    {
+        return $this->activityWorker->getActivities();
+    }
+
+    /**
+     * @param string $body
+     * @param array $context
+     * @return string
+     */
+    public function emit(string $body, array $context = []): string
+    {
+        switch ($this->env->get()) {
+            case EnvironmentInterface::ENV_WORKFLOW:
+                return $this->workflowWorker->emit($body, $context);
+
+            case EnvironmentInterface::ENV_ACTIVITY:
+                return $this->activityWorker->emit($body, $context);
+
+            default:
+                throw new \LogicException('Unsupported environment type');
         }
     }
 }

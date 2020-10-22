@@ -79,6 +79,7 @@ final class Decoder
     /**
      * @param array $data
      * @return array|CommandInterface[]
+     * @throws \JsonException
      */
     private static function parseCommands(array $data): array
     {

@@ -9,11 +9,11 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Worker;
+namespace Temporal\Client\Workflow;
 
 use React\Promise\Deferred;
 use Temporal\Client\Protocol\Command\RequestInterface;
-use Temporal\Client\Worker\Route\RouteInterface;
+use Temporal\Client\Workflow\Router\RouteInterface;
 
 final class Router implements RouterInterface
 {

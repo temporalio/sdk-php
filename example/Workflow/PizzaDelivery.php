@@ -28,27 +28,15 @@ class PizzaDelivery
      * @WorkflowMethod(name="PizzaDelivery")
      */
     #[WorkflowMethod(name: 'PizzaDelivery')]
-    public function handler()
+    public function handler(WorkflowContextInterface $ctx)
     {
         [$a, $b] = yield all([
-            Workflow::executeActivity('A'),
-            Workflow::executeActivity('B')
+            $ctx->executeActivity('A'),
+            $ctx->executeActivity('B')
         ]);
 
-        echo 'Now: ' . Workflow::now()->format(\DateTime::RFC3339) . "\n";
-
-        var_dump('A+B', $a, $b);
-
-        $c = yield Workflow::timer(5);
-
-        echo 'Now: ' . Workflow::now()->format(\DateTime::RFC3339) . "\n";
-
-        var_dump($c);
-
-        $d = yield Workflow::executeActivity('C', []);
-
-        var_dump($d);
-
+        var_dump($ctx->now()->format(\DateTime::RFC3339));
+        sleep(1);
 
         return 32;
     }

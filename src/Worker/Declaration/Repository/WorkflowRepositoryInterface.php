@@ -9,25 +9,25 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Workflow;
+namespace Temporal\Client\Worker\Declaration\Repository;
 
-use Temporal\Client\Workflow\Declaration\WorkflowDeclarationInterface;
+use Temporal\Client\Workflow\WorkflowDeclarationInterface;
 
-interface WorkflowProviderInterface
+interface WorkflowRepositoryInterface extends RepositoryInterface
 {
     /**
      * @param object $workflow
      * @param bool $overwrite
      * @return static
      */
-    public function withWorkflow(object $workflow, bool $overwrite = false): self;
+    public function registerWorkflow(object $workflow, bool $overwrite = false): self;
 
     /**
      * @param WorkflowDeclarationInterface $workflow
      * @param bool $overwrite
      * @return static
      */
-    public function withWorkflowDeclaration(WorkflowDeclarationInterface $workflow, bool $overwrite = false): self;
+    public function registerWorkflowDeclaration(WorkflowDeclarationInterface $workflow, bool $overwrite = false): self;
 
     /**
      * @param string $name
