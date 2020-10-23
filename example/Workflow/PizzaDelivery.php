@@ -11,19 +11,13 @@ declare(strict_types=1);
 
 namespace App\Workflow;
 
-use Temporal\Client\Activity\ActivityOptions;
-use Temporal\Client\Workflow;
 use Temporal\Client\Workflow\Meta\QueryMethod;
 use Temporal\Client\Workflow\Meta\SignalMethod;
 use Temporal\Client\Workflow\Meta\WorkflowMethod;
 use Temporal\Client\Workflow\Runtime\WorkflowContextInterface;
 
-use function React\Promise\all;
-
 class PizzaDelivery
 {
-    protected $status;
-
     /**
      * @WorkflowMethod(name="PizzaDelivery")
      */
