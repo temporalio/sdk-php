@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Workflow\Runtime;
 
-interface WorkflowContextInterface extends WorkflowRequestsInterface
+interface WorkflowContextInterface extends WorkflowRequestsInterface, PromiseAwareInterface
 {
     /**
      * @return string

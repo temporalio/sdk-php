@@ -27,6 +27,7 @@ use Temporal\Client\Workflow\Protocol\WorkflowProtocolInterface;
  */
 final class WorkflowContext implements WorkflowContextInterface
 {
+    use PromiseAwareTrait;
     use WorkflowRequestsTrait;
 
     /**
