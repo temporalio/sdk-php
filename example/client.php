@@ -1,15 +1,17 @@
 <?php
+declare(strict_types=1);
 
-use App\Workflow\PizzaDelivery;
-use Spiral\Goridge\Transport\Connector\TcpConnector;
-use Temporal\Client\Protocol\Transport\GoRidge;
-use Temporal\Client\Worker;
+use Spiral\Goridge\StreamRelay;
+use Spiral\RoadRunner\Worker as RoadRunner;
 
 require __DIR__ . '/../vendor/autoload.php';
 
-$transport = GoRidge::fromDuplexStream(TcpConnector::create('127.0.0.1:8080'));
+$rr = new RoadRunner(new StreamRelay(\STDIN, \STDOUT));
 
-$worker = Worker::forWorkflows($transport)
-    ->withWorkflow(new PizzaDelivery())
-    ->run()
+$factory = new \Temporal\Client\WorkerFactory($rr);
+$factory->create()
+    ->registerWorkflow(new \App\Workflow\PizzaDelivery())
+    ->registerActivity(new \App\Activity\ExampleActivity())
 ;
+
+$factory->start();
