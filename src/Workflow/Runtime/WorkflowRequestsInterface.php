@@ -17,6 +17,16 @@ use Temporal\Client\Activity\ActivityOptions;
 interface WorkflowRequestsInterface
 {
     /**
+     * @template ActivityType
+     * @psalm-param class-string<ActivityType> $name
+     * @psalm-return ActivityType|ActivityStub<ActivityType>
+     *
+     * @param string $name
+     * @return ActivityStub
+     */
+    public function activity(string $name): ActivityStub;
+
+    /**
      * @param mixed $result
      * @return PromiseInterface
      */

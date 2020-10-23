@@ -15,15 +15,15 @@ use Temporal\Client\Activity\Meta\ActivityMethod;
 
 class ExampleActivity
 {
-    /**
-     * @param array $arguments
-     * @return array
-     *
-     * @ActivityMethod(name="ExampleActivity")
-     */
-    #[ActivityMethod(name: 'ExampleActivity')]
-    public function handler(array $arguments = [])
+    #[ActivityMethod]
+    public function doSomething()
     {
-        return $arguments;
+        return 42;
+    }
+
+    #[ActivityMethod]
+    public function doSomethingElse()
+    {
+        return 42;
     }
 }

@@ -17,7 +17,7 @@ interface WorkflowDeclarationInterface extends HandledDeclarationInterface
 {
     /**
      * @psalm-return iterable<string, callable>
-     * @return iterable|callable[]
+     * @return callable[]
      */
     public function getQueryHandlers(): iterable;
 
@@ -35,7 +35,7 @@ interface WorkflowDeclarationInterface extends HandledDeclarationInterface
 
     /**
      * @psalm-return iterable<string, callable>
-     * @return iterable|callable[]
+     * @return callable[]
      */
     public function getSignalHandlers(): iterable;
 

@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Workflow;
 
+use App\Activity\ExampleActivity;
 use Temporal\Client\Workflow\Meta\QueryMethod;
 use Temporal\Client\Workflow\Meta\SignalMethod;
 use Temporal\Client\Workflow\Meta\WorkflowMethod;
@@ -18,35 +19,23 @@ use Temporal\Client\Workflow\Runtime\WorkflowContextInterface;
 
 class PizzaDelivery
 {
-    /**
-     * @WorkflowMethod(name="PizzaDelivery")
-     */
     #[WorkflowMethod(name: 'PizzaDelivery')]
-    public function handler(WorkflowContextInterface $ctx)
+    public function handler(WorkflowContextInterface $ctx): iterable
     {
-        [$a, $b] = yield all([
-            $ctx->executeActivity('A'),
-            $ctx->executeActivity('B')
-        ]);
+        $activity = $ctx->activity(ExampleActivity::class);
 
-        var_dump($ctx->now()->format(\DateTime::RFC3339));
-        sleep(1);
+        $a = yield $activity->doSomething();
+        $b = yield $activity->doSomethingElse();
 
-        return 32;
+        var_dump($a, $b);
     }
 
-    /**
-     * @QueryMethod()
-     */
     #[QueryMethod]
     public function getStatus(): string
     {
         return 'I\'m Ok';
     }
 
-    /**
-     * @SignalMethod()
-     */
     #[SignalMethod]
     public function retryNow(): void
     {

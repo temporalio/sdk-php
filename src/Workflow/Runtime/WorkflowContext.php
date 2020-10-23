@@ -77,6 +77,15 @@ final class WorkflowContext implements WorkflowContextInterface
     }
 
     /**
+     * @param string $name
+     * @return ActivityStub
+     */
+    public function activity(string $name): ActivityStub
+    {
+        return new ActivityStub($name, $this);
+    }
+
+    /**
      * @return \DateTimeInterface
      */
     public function now(): \DateTimeInterface
