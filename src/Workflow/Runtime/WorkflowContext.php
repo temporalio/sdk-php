@@ -12,11 +12,8 @@ declare(strict_types=1);
 namespace Temporal\Client\Workflow\Runtime;
 
 use React\Promise\PromiseInterface;
-use Temporal\Client\Activity\ActivityOptions;
+use Temporal\Client\Protocol\Command\RequestInterface;
 use Temporal\Client\Worker\FactoryInterface;
-use Temporal\Client\Workflow\Command\CompleteWorkflow;
-use Temporal\Client\Workflow\Command\ExecuteActivity;
-use Temporal\Client\Workflow\Command\NewTimer;
 use Temporal\Client\Workflow\Protocol\WorkflowProtocolInterface;
 
 /**
@@ -30,6 +27,8 @@ use Temporal\Client\Workflow\Protocol\WorkflowProtocolInterface;
  */
 final class WorkflowContext implements WorkflowContextInterface
 {
+    use WorkflowRequestsTrait;
+
     /**
      * @var string
      */
@@ -125,33 +124,11 @@ final class WorkflowContext implements WorkflowContextInterface
     }
 
     /**
-     * {@inheritDoc}
+     * @param RequestInterface $request
+     * @return PromiseInterface
      */
-    public function complete($result = null): PromiseInterface
+    protected function request(RequestInterface $request): PromiseInterface
     {
-        return $this->protocol->request(
-            new CompleteWorkflow($result)
-        );
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function executeActivity(string $name, array $arguments = [], $options = null): PromiseInterface
-    {
-        $request = new ExecuteActivity($name, $arguments, ActivityOptions::new($options));
-
-        return $this->protocol->request($request);
-    }
-
-    /**
-     * {@inheritDoc}
-     * @throws \Exception
-     */
-    public function timer($interval): PromiseInterface
-    {
-        $request = new NewTimer(NewTimer::parseInterval($interval));
-
         return $this->protocol->request($request);
     }
 }

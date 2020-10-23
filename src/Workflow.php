@@ -12,16 +12,24 @@ declare(strict_types=1);
 namespace Temporal\Client;
 
 use Temporal\Client\Workflow\Runtime\Process;
+use Temporal\Client\Workflow\Runtime\WorkflowContextInterface;
 
 /**
- * @mixin Process
+ * @method static string getName()
  */
 final class Workflow
 {
     /**
-     * @var Process
+     * @var string
      */
-    private static Process $process;
+    private const ERROR_NO_WORKFLOW_CONTEXT =
+        'Calling workflow methods can only be made from ' .
+        'the currently running workflow process';
+
+    /**
+     * @var Process|null
+     */
+    private static ?Process $process = null;
 
     /**
      * @param Process $process
@@ -32,13 +40,35 @@ final class Workflow
     }
 
     /**
+     * @return Process
+     */
+    private static function getCurrentProcess(): Process
+    {
+        if (self::$process === null) {
+            throw new \RuntimeException(self::ERROR_NO_WORKFLOW_CONTEXT);
+        }
+
+        return self::$process;
+    }
+
+    /**
+     * @return WorkflowContextInterface
+     */
+    private static function getContext(): WorkflowContextInterface
+    {
+        $process = self::getCurrentProcess();
+
+        return $process->getContext();
+    }
+
+    /**
      * @param string $name
      * @param array $arguments
      * @return mixed
      */
     public static function __callStatic(string $name, array $arguments)
     {
-        $context = self::$process->getContext();
+        $context = self::getContext();
 
         return $context->$name(...$arguments);
     }
