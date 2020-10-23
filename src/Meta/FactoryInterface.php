@@ -16,12 +16,17 @@ interface FactoryInterface
     /**
      * @var int
      */
-    public const PREFER_NATIVE = 0x00;
+    public const PREFER_SELECTIVE = 0x00;
 
     /**
      * @var int
      */
-    public const PREFER_DOCTRINE = 0x01;
+    public const PREFER_NATIVE = 0x01;
+
+    /**
+     * @var int
+     */
+    public const PREFER_DOCTRINE = 0x02;
 
     /**
      * @var int

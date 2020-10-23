@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client\Meta;
 
 use Temporal\Client\Meta\Doctrine\DoctrineResolver;
+use Temporal\Client\Meta\Selective\SelectiveResolver;
 use Temporal\Client\Meta\Native\NativeResolver;
 
 class Factory implements FactoryInterface
@@ -26,18 +27,26 @@ class Factory implements FactoryInterface
      */
     public function __construct(array $resolvers = [])
     {
-        $this->resolvers = \array_merge($this->getDefaultResolvers(), $resolvers);
+        $this->resolvers = $this->getDefaultResolvers();
+
+        foreach ($resolvers as $id => $resolver) {
+            $this->resolvers[$id] = $resolver;
+        }
     }
 
     /**
-     * @return array|ResolverInterface[]
+     * @return ResolverInterface[]
      */
     private function getDefaultResolvers(): array
     {
-        return [
-            static::PREFER_NATIVE   => new NativeResolver(),
-            static::PREFER_DOCTRINE => new DoctrineResolver(),
+        $result = [
+            static::PREFER_NATIVE    => new NativeResolver(),
+            static::PREFER_DOCTRINE  => new DoctrineResolver(),
         ];
+
+        $result[static::PREFER_SELECTIVE] = new SelectiveResolver($result);
+
+        return $result;
     }
 
     /**
@@ -46,8 +55,10 @@ class Factory implements FactoryInterface
      * @param int $type
      * @return ReaderInterface
      */
-    public function create(int $type = self::PREFER_NATIVE): ReaderInterface
+    public function create(int $type = self::PREFER_SELECTIVE): ReaderInterface
     {
+        \ksort($this->resolvers);
+
         $resolver = $this->resolvers[$type] ?? null;
 
         if ($resolver === null) {
