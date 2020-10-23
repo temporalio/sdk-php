@@ -31,6 +31,7 @@ trait ActivityRepositoryTrait
 
     /**
      * {@inheritDoc}
+     * @return ActivityRepositoryInterface|$this
      */
     public function registerActivity(object $activity, bool $overwrite = false): self
     {
@@ -49,6 +50,7 @@ trait ActivityRepositoryTrait
 
     /**
      * {@inheritDoc}
+     * @return ActivityRepositoryInterface|$this
      */
     public function registerActivityDeclaration(ActivityDeclarationInterface $activity, bool $overwrite = false): self
     {

@@ -39,6 +39,7 @@ final class Workflow
     public static function __callStatic(string $name, array $arguments)
     {
         $context = self::$process->getContext();
+
         return $context->$name(...$arguments);
     }
 }

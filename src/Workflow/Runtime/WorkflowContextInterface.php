@@ -11,7 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Workflow\Runtime;
 
-interface WorkflowContextInterface extends InteractWithQueueInterface
+use React\Promise\PromiseInterface;
+use Temporal\Client\Activity\ActivityOptions;
+
+interface WorkflowContextInterface
 {
     /**
      * @return string
@@ -42,4 +45,24 @@ interface WorkflowContextInterface extends InteractWithQueueInterface
      * @return \DateTimeInterface
      */
     public function now(): \DateTimeInterface;
+
+    /**
+     * @param mixed $result
+     * @return PromiseInterface
+     */
+    public function complete($result = null): PromiseInterface;
+
+    /**
+     * @param string $name
+     * @param array $arguments
+     * @param ActivityOptions|array|null $options
+     * @return PromiseInterface
+     */
+    public function executeActivity(string $name, array $arguments = [], $options = null): PromiseInterface;
+
+    /**
+     * @param string|int $interval
+     * @return PromiseInterface
+     */
+    public function timer($interval): PromiseInterface;
 }

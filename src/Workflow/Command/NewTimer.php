@@ -29,4 +29,29 @@ class NewTimer extends Request
             'ms' => $microseconds,
         ]);
     }
+
+    /**
+     * @param mixed $interval
+     * @return int
+     * @throws \Exception
+     */
+    public static function parseInterval($interval): int
+    {
+        switch (true) {
+            case \is_string($interval):
+                $interval = new \DateInterval($interval);
+
+            case $interval instanceof \DateInterval:
+                return (int)($interval->f * 1000);
+
+            case \is_int($interval):
+                return $interval * 1000;
+
+            case \is_float($interval):
+                return (int)($interval * 1000);
+
+            default:
+                throw new \InvalidArgumentException('Unrecognized date interval format');
+        }
+    }
 }

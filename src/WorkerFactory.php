@@ -24,6 +24,7 @@ use Temporal\Client\Worker\WorkerInterface;
 /**
  * @noinspection PhpSuperClassIncompatibleWithInterfaceInspection
  */
+
 final class WorkerFactory implements FactoryInterface, ReaderAwareInterface
 {
     use ReaderAwareTrait;
@@ -96,13 +97,14 @@ final class WorkerFactory implements FactoryInterface, ReaderAwareInterface
      * @param string $message
      * @param array $context
      * @return string
+     * @throws \JsonException
      */
     private function emit(string $message, array $context = []): string
     {
         $taskQueue = $context[self::CTX_TASK_QUEUE] ?? null;
 
         if ($taskQueue === null) {
-            return $this->getGetWorkerInfoResponse();
+            return Json::encode($this->getGetWorkerInfoResponse());
         }
 
         $worker = $this->getWorker($taskQueue);
@@ -111,14 +113,11 @@ final class WorkerFactory implements FactoryInterface, ReaderAwareInterface
     }
 
     /**
-     * @return string
-     * @throws \JsonException
+     * @return array
      */
-    private function getGetWorkerInfoResponse(): string
+    private function getGetWorkerInfoResponse(): array
     {
-        return Json::encode([
-            'TODODO',
-        ]);
+        return \array_map(static fn(WorkerInterface $worker): array => $worker->toArray(), $this->workers);
     }
 
     /**

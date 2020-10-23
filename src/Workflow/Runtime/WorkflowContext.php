@@ -12,8 +12,11 @@ declare(strict_types=1);
 namespace Temporal\Client\Workflow\Runtime;
 
 use React\Promise\PromiseInterface;
-use Temporal\Client\Protocol\Queue\QueueInterface;
-use Temporal\Client\Worker\WorkerInterface;
+use Temporal\Client\Activity\ActivityOptions;
+use Temporal\Client\Worker\FactoryInterface;
+use Temporal\Client\Workflow\Command\CompleteWorkflow;
+use Temporal\Client\Workflow\Command\ExecuteActivity;
+use Temporal\Client\Workflow\Command\NewTimer;
 use Temporal\Client\Workflow\Protocol\WorkflowProtocolInterface;
 
 /**
@@ -27,8 +30,6 @@ use Temporal\Client\Workflow\Protocol\WorkflowProtocolInterface;
  */
 final class WorkflowContext implements WorkflowContextInterface
 {
-    use InteractWithQueueTrait;
-
     /**
      * @var string
      */
@@ -59,6 +60,11 @@ final class WorkflowContext implements WorkflowContextInterface
      * @var array
      */
     private array $params;
+
+    /**
+     * @var WorkflowProtocolInterface
+     */
+    private WorkflowProtocolInterface $protocol;
 
     /**
      * @param WorkflowProtocolInterface $protocol
@@ -107,7 +113,7 @@ final class WorkflowContext implements WorkflowContextInterface
      */
     public function getTaskQueue(): string
     {
-        return $this->params[self::KEY_TASK_QUEUE] ?? WorkerInterface::DEFAULT_TASK_QUEUE;
+        return $this->params[self::KEY_TASK_QUEUE] ?? FactoryInterface::DEFAULT_TASK_QUEUE;
     }
 
     /**
@@ -116,5 +122,36 @@ final class WorkflowContext implements WorkflowContextInterface
     public function getPayload(): array
     {
         return (array)($this->params[self::KEY_PAYLOAD] ?? []);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function complete($result = null): PromiseInterface
+    {
+        return $this->protocol->request(
+            new CompleteWorkflow($result)
+        );
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function executeActivity(string $name, array $arguments = [], $options = null): PromiseInterface
+    {
+        $request = new ExecuteActivity($name, $arguments, ActivityOptions::new($options));
+
+        return $this->protocol->request($request);
+    }
+
+    /**
+     * {@inheritDoc}
+     * @throws \Exception
+     */
+    public function timer($interval): PromiseInterface
+    {
+        $request = new NewTimer(NewTimer::parseInterval($interval));
+
+        return $this->protocol->request($request);
     }
 }

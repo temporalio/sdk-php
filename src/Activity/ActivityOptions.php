@@ -61,6 +61,26 @@ final class ActivityOptions
 
     }
 
+    /**
+     * @param mixed $options
+     * @return static
+     */
+    public static function new($options): self
+    {
+        switch (true) {
+            case $options === null:
+                return new self();
+
+            case \is_array($options):
+                return self::fromArray($options);
+
+            case $options instanceof self:
+                return $options;
+
+            default:
+                throw new \InvalidArgumentException(\sprintf('Invalid %s type', self::class));
+        }
+    }
 
     /**
      * @param array $properties

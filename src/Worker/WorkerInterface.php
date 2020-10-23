@@ -16,4 +16,13 @@ use Temporal\Client\Worker\Declaration\Repository\WorkflowRepositoryInterface;
 
 interface WorkerInterface extends WorkflowRepositoryInterface, ActivityRepositoryInterface, EmitterInterface
 {
+    /**
+     * @return string
+     */
+    public function getTaskQueue(): string;
+
+    /**
+     * @return array
+     */
+    public function toArray(): array;
 }

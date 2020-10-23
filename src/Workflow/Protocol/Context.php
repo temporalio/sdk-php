@@ -77,6 +77,8 @@ class Context
      */
     public function promiseForRequest(RequestInterface $request): PromiseInterface
     {
-        return ($this->promises[$request->getId()] = new Deferred())->promise();
+        $this->promises[$request->getId()] = $deferred = new Deferred();
+
+        return $deferred->promise();
     }
 }

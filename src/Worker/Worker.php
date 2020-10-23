@@ -11,11 +11,11 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Worker;
 
-use Temporal\Client\Activity\ActivityWorker;
 use Temporal\Client\Activity\ActivityDeclarationInterface;
+use Temporal\Client\Activity\ActivityWorker;
+use Temporal\Client\Meta\ReaderInterface;
 use Temporal\Client\Worker\Env\EnvironmentInterface;
 use Temporal\Client\Workflow\WorkflowDeclarationInterface;
-use Temporal\Client\Meta\ReaderInterface;
 use Temporal\Client\Workflow\WorkflowWorker;
 
 class Worker implements WorkerInterface
@@ -86,17 +86,11 @@ class Worker implements WorkerInterface
     /**
      * {@inheritDoc}
      */
-    public function getWorkflows(): iterable
-    {
-        return $this->workflowWorker->getWorkflows();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public function registerActivity(object $activity, bool $overwrite = false): self
     {
-        return $this->activityWorker->registerActivity($activity, $overwrite);
+        $this->activityWorker->registerActivity($activity, $overwrite);
+
+        return $this;
     }
 
     /**
@@ -104,7 +98,9 @@ class Worker implements WorkerInterface
      */
     public function registerActivityDeclaration(ActivityDeclarationInterface $activity, bool $overwrite = false): self
     {
-        return $this->activityWorker->registerActivityDeclaration($activity, $overwrite);
+        $this->activityWorker->registerActivityDeclaration($activity, $overwrite);
+
+        return $this;
     }
 
     /**
@@ -113,14 +109,6 @@ class Worker implements WorkerInterface
     public function findActivity(string $name): ?ActivityDeclarationInterface
     {
         return $this->activityWorker->findActivity($name);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getActivities(): iterable
-    {
-        return $this->activityWorker->getActivities();
     }
 
     /**
@@ -140,5 +128,82 @@ class Worker implements WorkerInterface
             default:
                 throw new \LogicException('Unsupported environment type');
         }
+    }
+
+    /**
+     * @return array
+     */
+    public function toArray(): array
+    {
+        return [
+            'taskQueue'  => $this->getTaskQueue(),
+            'workflows'  => $this->map($this->getWorkflows(), function (WorkflowDeclarationInterface $workflow) {
+                return [
+                    'name'    => $workflow->getName(),
+                    'queries' => $this->keys($workflow->getQueryHandlers()),
+                    'signals' => $this->keys($workflow->getSignalHandlers()),
+                ];
+            }),
+            'activities' => $this->map($this->getActivities(), function (ActivityDeclarationInterface $act) {
+                return [
+                    'name' => $act->getName(),
+                ];
+            }),
+        ];
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getTaskQueue(): string
+    {
+        return $this->taskQueue;
+    }
+
+    /**
+     * @param iterable $items
+     * @param \Closure $map
+     * @return array
+     */
+    private function map(iterable $items, \Closure $map): array
+    {
+        $result = [];
+
+        foreach ($items as $key => $value) {
+            $result[] = $map($value, $key);
+        }
+
+        return $result;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getWorkflows(): iterable
+    {
+        return $this->workflowWorker->getWorkflows();
+    }
+
+    /**
+     * @param iterable $items
+     * @return array
+     */
+    private function keys(iterable $items): array
+    {
+        $result = [];
+
+        foreach ($items as $key => $_) {
+            $result[] = $key;
+        }
+
+        return $result;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getActivities(): iterable
+    {
+        return $this->activityWorker->getActivities();
     }
 }
