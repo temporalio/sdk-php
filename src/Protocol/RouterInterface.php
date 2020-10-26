@@ -9,10 +9,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Workflow;
+namespace Temporal\Client\Protocol;
 
-use Temporal\Client\Workflow\DispatcherInterface;
-use Temporal\Client\Workflow\Router\RouteInterface;
+use Temporal\Client\Protocol\Command\RequestInterface;
+use Temporal\Client\Protocol\Router\RouteInterface;
 
 interface RouterInterface extends DispatcherInterface
 {
@@ -26,4 +26,10 @@ interface RouterInterface extends DispatcherInterface
      * @param RouteInterface $route
      */
     public function remove(RouteInterface $route): void;
+
+    /**
+     * @param RequestInterface $request
+     * @return RouteInterface|null
+     */
+    public function match(RequestInterface $request): ?RouteInterface;
 }

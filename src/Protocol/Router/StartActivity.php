@@ -9,13 +9,17 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Workflow\Router;
+namespace Temporal\Client\Protocol\Router;
 
-use React\Promise\Deferred;
+use Temporal\Client\Protocol\Command\RequestInterface;
+use Temporal\Client\Protocol\Command\ResponseInterface;
 
 final class StartActivity extends Route
 {
-    public function handle(array $params, Deferred $resolver): void
+    /**
+     * {@inheritDoc}
+     */
+    public function handle(array $payload, array $headers)
     {
         throw new \LogicException(__METHOD__ . ' not implemented yet');
     }

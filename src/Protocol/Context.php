@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Workflow\Protocol;
+namespace Temporal\Client\Protocol;
 
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
@@ -42,16 +42,6 @@ class Context
     public function __construct(\DateTimeZone $zone)
     {
         $this->now = new \DateTimeImmutable('now', $zone);
-    }
-
-    /**
-     * @param string|int|null $runId
-     * @param \DateTimeInterface $date
-     */
-    public function update($runId, \DateTimeInterface $date): void
-    {
-        $this->runId = $runId;
-        $this->now = $date;
     }
 
     /**

@@ -9,37 +9,21 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Workflow\Protocol;
+namespace Temporal\Client\Protocol;
 
 use Temporal\Client\Protocol\Command\CommandInterface;
 use Temporal\Client\Protocol\Command\ErrorResponseInterface;
 use Temporal\Client\Protocol\Command\RequestInterface;
 use Temporal\Client\Protocol\Command\SuccessResponseInterface;
-use Temporal\Client\Protocol\Json;
 
 final class Encoder
 {
     /**
-     * @param \DateTimeInterface $tick
      * @param iterable|CommandInterface[] $commands
-     * @param string|int|null $runId
      * @return string
      * @throws \JsonException
      */
-    public static function encode(\DateTimeInterface $tick, iterable $commands, $runId = null): string
-    {
-        return Json::encode([
-            'rid'      => $runId,
-            'tickTime' => $tick->format(\DateTime::RFC3339),
-            'commands' => self::encodeCommands($commands),
-        ]);
-    }
-
-    /**
-     * @param iterable|CommandInterface[] $commands
-     * @return array
-     */
-    private static function encodeCommands(iterable $commands): array
+    public static function encode(iterable $commands): string
     {
         $result = [];
 
@@ -51,7 +35,7 @@ final class Encoder
             $result[] = self::encodeCommand($command);
         }
 
-        return $result;
+        return Json::encode($result);
     }
 
     /**

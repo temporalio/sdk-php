@@ -74,8 +74,6 @@ final class Process
         if ($result instanceof \Generator) {
             $this->generator = $result;
         }
-
-        $this->next();
     }
 
     /**

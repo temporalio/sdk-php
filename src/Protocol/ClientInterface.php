@@ -9,28 +9,16 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Workflow\Protocol;
+namespace Temporal\Client\Protocol;
 
 use React\Promise\PromiseInterface;
 use Temporal\Client\Protocol\Command\RequestInterface;
-use Temporal\Client\Protocol\ProtocolInterface;
 
-interface WorkflowProtocolInterface extends ProtocolInterface
+interface ClientInterface
 {
     /**
      * @param RequestInterface $request
      * @return PromiseInterface
      */
     public function request(RequestInterface $request): PromiseInterface;
-
-    /**
-     * @param string $request
-     * @return string
-     */
-    public function next(string $request): string;
-
-    /**
-     * @return \DateTimeInterface
-     */
-    public function getCurrentTickTime(): \DateTimeInterface;
 }

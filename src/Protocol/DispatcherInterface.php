@@ -9,16 +9,17 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Workflow;
+namespace Temporal\Client\Protocol;
 
-use React\Promise\Deferred;
 use Temporal\Client\Protocol\Command\RequestInterface;
+use Temporal\Client\Protocol\Command\ResponseInterface;
 
 interface DispatcherInterface
 {
     /**
      * @param RequestInterface $request
-     * @param Deferred $resolver
+     * @param array $headers
+     * @return ResponseInterface
      */
-    public function emit(RequestInterface $request, Deferred $resolver): void;
+    public function dispatch(RequestInterface $request, array $headers = []): ResponseInterface;
 }

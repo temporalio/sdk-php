@@ -11,15 +11,17 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Activity;
 
+use Temporal\Client\Meta\ReaderInterface;
+use Temporal\Client\Protocol\Command\RequestInterface;
+use Temporal\Client\Protocol\Command\ResponseInterface;
+use Temporal\Client\Protocol\DispatcherInterface;
 use Temporal\Client\Worker\Declaration\Repository\ActivityRepositoryInterface;
 use Temporal\Client\Worker\Declaration\Repository\ActivityRepositoryTrait;
-use Temporal\Client\Meta\ReaderInterface;
-use Temporal\Client\Worker\EmitterInterface;
 
 /**
  * @noinspection PhpSuperClassIncompatibleWithInterfaceInspection
  */
-class ActivityWorker implements ActivityRepositoryInterface, EmitterInterface
+class ActivityWorker implements ActivityRepositoryInterface, DispatcherInterface
 {
     use ActivityRepositoryTrait;
 
@@ -44,9 +46,9 @@ class ActivityWorker implements ActivityRepositoryInterface, EmitterInterface
      *
      * {@inheritDoc}
      */
-    public function emit(string $body, array $context = []): string
+    public function dispatch(RequestInterface $request, array $headers = []): ResponseInterface
     {
-        return '';
+        throw new \LogicException(__METHOD__ . ' not implemented yet');
     }
 
     /**

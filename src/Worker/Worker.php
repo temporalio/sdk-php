@@ -14,6 +14,9 @@ namespace Temporal\Client\Worker;
 use Temporal\Client\Activity\ActivityDeclarationInterface;
 use Temporal\Client\Activity\ActivityWorker;
 use Temporal\Client\Meta\ReaderInterface;
+use Temporal\Client\Protocol\ClientInterface;
+use Temporal\Client\Protocol\Command\RequestInterface;
+use Temporal\Client\Protocol\Command\ResponseInterface;
 use Temporal\Client\Worker\Env\EnvironmentInterface;
 use Temporal\Client\Workflow\WorkflowDeclarationInterface;
 use Temporal\Client\Workflow\WorkflowWorker;
@@ -41,18 +44,19 @@ class Worker implements WorkerInterface
     private EnvironmentInterface $env;
 
     /**
-     * @param string $taskQueue
-     * @param ReaderInterface|null $reader
+     * @param ClientInterface $c
+     * @param ReaderInterface $reader
      * @param EnvironmentInterface $env
+     * @param string $queue
      * @throws \Exception
      */
-    public function __construct(string $taskQueue, ReaderInterface $reader, EnvironmentInterface $env)
+    public function __construct(ClientInterface $c, ReaderInterface $reader, EnvironmentInterface $env, string $queue)
     {
         $this->env = $env;
-        $this->taskQueue = $taskQueue;
+        $this->taskQueue = $queue;
 
-        $this->workflowWorker = new WorkflowWorker($reader, $taskQueue);
-        $this->activityWorker = new ActivityWorker($reader, $taskQueue);
+        $this->workflowWorker = new WorkflowWorker($c, $reader, $queue);
+        $this->activityWorker = new ActivityWorker($reader, $queue);
     }
 
     /**
@@ -112,44 +116,20 @@ class Worker implements WorkerInterface
     }
 
     /**
-     * @param string $body
-     * @param array $context
-     * @return string
+     * {@inheritDoc}
      */
-    public function emit(string $body, array $context = []): string
+    public function dispatch(RequestInterface $request, array $headers = []): ResponseInterface
     {
         switch ($this->env->get()) {
             case EnvironmentInterface::ENV_WORKFLOW:
-                return $this->workflowWorker->emit($body, $context);
+                return $this->workflowWorker->dispatch($request, $headers);
 
             case EnvironmentInterface::ENV_ACTIVITY:
-                return $this->activityWorker->emit($body, $context);
+                return $this->activityWorker->dispatch($request, $headers);
 
             default:
                 throw new \LogicException('Unsupported environment type');
         }
-    }
-
-    /**
-     * @return array
-     */
-    public function toArray(): array
-    {
-        return [
-            'taskQueue'  => $this->getTaskQueue(),
-            'workflows'  => $this->map($this->getWorkflows(), function (WorkflowDeclarationInterface $workflow) {
-                return [
-                    'name'    => $workflow->getName(),
-                    'queries' => $this->keys($workflow->getQueryHandlers()),
-                    'signals' => $this->keys($workflow->getSignalHandlers()),
-                ];
-            }),
-            'activities' => $this->map($this->getActivities(), function (ActivityDeclarationInterface $act) {
-                return [
-                    'name' => $act->getName(),
-                ];
-            }),
-        ];
     }
 
     /**
@@ -161,42 +141,11 @@ class Worker implements WorkerInterface
     }
 
     /**
-     * @param iterable $items
-     * @param \Closure $map
-     * @return array
-     */
-    private function map(iterable $items, \Closure $map): array
-    {
-        $result = [];
-
-        foreach ($items as $key => $value) {
-            $result[] = $map($value, $key);
-        }
-
-        return $result;
-    }
-
-    /**
      * {@inheritDoc}
      */
     public function getWorkflows(): iterable
     {
         return $this->workflowWorker->getWorkflows();
-    }
-
-    /**
-     * @param iterable $items
-     * @return array
-     */
-    private function keys(iterable $items): array
-    {
-        $result = [];
-
-        foreach ($items as $key => $_) {
-            $result[] = $key;
-        }
-
-        return $result;
     }
 
     /**

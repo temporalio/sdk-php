@@ -12,9 +12,10 @@ declare(strict_types=1);
 namespace Temporal\Client\Workflow\Runtime;
 
 use React\Promise\PromiseInterface;
+use Temporal\Client\Protocol\ClientInterface;
 use Temporal\Client\Protocol\Command\RequestInterface;
+use Temporal\Client\Protocol\ProtocolInterface;
 use Temporal\Client\Worker\FactoryInterface;
-use Temporal\Client\Workflow\Protocol\WorkflowProtocolInterface;
 
 /**
  * @psalm-type WorkflowContextParams = array {
@@ -62,18 +63,18 @@ final class WorkflowContext implements WorkflowContextInterface
     private array $params;
 
     /**
-     * @var WorkflowProtocolInterface
+     * @var ClientInterface
      */
-    private WorkflowProtocolInterface $protocol;
+    private ClientInterface $client;
 
     /**
-     * @param WorkflowProtocolInterface $protocol
+     * @param ClientInterface $client
      * @param array $params
      */
-    public function __construct(WorkflowProtocolInterface $protocol, array $params)
+    public function __construct(ClientInterface $client, array $params)
     {
         $this->params = $params;
-        $this->protocol = $protocol;
+        $this->client = $client;
     }
 
     /**
@@ -83,14 +84,6 @@ final class WorkflowContext implements WorkflowContextInterface
     public function activity(string $name): ActivityStub
     {
         return new ActivityStub($name, $this);
-    }
-
-    /**
-     * @return \DateTimeInterface
-     */
-    public function now(): \DateTimeInterface
-    {
-        return $this->protocol->getCurrentTickTime();
     }
 
     /**
@@ -139,6 +132,6 @@ final class WorkflowContext implements WorkflowContextInterface
      */
     protected function request(RequestInterface $request): PromiseInterface
     {
-        return $this->protocol->request($request);
+        return $this->client->request($request);
     }
 }

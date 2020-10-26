@@ -9,15 +9,18 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Workflow\Router;
+namespace Temporal\Client\Protocol\Router;
 
-use React\Promise\Deferred;
+use Temporal\Client\Protocol\ClientInterface;
+use Temporal\Client\Protocol\Command\RequestInterface;
+use Temporal\Client\Protocol\Command\ResponseInterface;
+use Temporal\Client\Protocol\Command\SuccessResponse;
+use Temporal\Client\Protocol\ProtocolInterface;
 use Temporal\Client\Worker\Declaration\CollectionInterface;
-use Temporal\Client\Workflow\WorkflowDeclarationInterface;
-use Temporal\Client\Workflow\Protocol\WorkflowProtocolInterface;
 use Temporal\Client\Workflow\Runtime\RunningWorkflows;
 use Temporal\Client\Workflow\Runtime\WorkflowContext;
 use Temporal\Client\Workflow\Runtime\WorkflowContextInterface;
+use Temporal\Client\Workflow\WorkflowDeclarationInterface;
 
 final class StartWorkflow extends Route
 {
@@ -34,39 +37,42 @@ final class StartWorkflow extends Route
     private CollectionInterface $workflows;
 
     /**
-     * @var WorkflowProtocolInterface
+     * @var ClientInterface
      */
-    private WorkflowProtocolInterface $protocol;
+    private ClientInterface $client;
 
     /**
-     * @param CollectionInterface<WorkflowDeclarationInterface> $workflows
+     * @psalm-param CollectionInterface<WorkflowDeclarationInterface> $workflows
+     *
+     * @param CollectionInterface $workflows
      * @param RunningWorkflows $running
-     * @param WorkflowProtocolInterface $protocol
+     * @param ClientInterface $client
      */
-    public function __construct(
-        CollectionInterface $workflows,
-        RunningWorkflows $running,
-        WorkflowProtocolInterface $protocol
-    ) {
+    public function __construct(CollectionInterface $workflows, RunningWorkflows $running, ClientInterface $client)
+    {
         $this->running = $running;
         $this->workflows = $workflows;
-        $this->protocol = $protocol;
+        $this->client = $client;
     }
 
     /**
-     * @param array $params
-     * @param Deferred $resolver
+     * {@inheritDoc}
      */
-    public function handle(array $params, Deferred $resolver): void
+    public function handle(array $payload, array $headers)
     {
-        $context = new WorkflowContext($this->protocol, $params);
+        $context = new WorkflowContext($this->client, $payload);
 
         $this->assertNotRunning($context);
 
         $process = $this->running->run($context, $this->findDeclarationOrFail($context));
-        $resolver->resolve(['wid' => $context->getId(), 'rid' => $context->getRunId()]);
 
         $process->start($context->getPayload());
+
+        try {
+            return ['wid' => $context->getId(), 'rid' => $context->getRunId()];
+        } finally {
+            $process->next();
+        }
     }
 
     /**

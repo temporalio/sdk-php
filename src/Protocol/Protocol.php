@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Workflow\Protocol;
+namespace Temporal\Client\Protocol;
 
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
@@ -18,26 +18,21 @@ use Temporal\Client\Protocol\Command\ErrorResponse;
 use Temporal\Client\Protocol\Command\ErrorResponseInterface;
 use Temporal\Client\Protocol\Command\RequestInterface;
 use Temporal\Client\Protocol\Command\ResponseInterface;
-use Temporal\Client\Protocol\Command\SuccessResponse;
 use Temporal\Client\Protocol\Command\SuccessResponseInterface;
 use Temporal\Client\Protocol\Queue\QueueInterface;
+use Temporal\Client\Protocol\Queue\SplQueue;
 
-final class WorkflowProtocol implements WorkflowProtocolInterface
+final class Protocol implements ProtocolInterface
 {
-    /**
-     * @var \DateTimeZone
-     */
-    private \DateTimeZone $zone;
-
     /**
      * @var QueueInterface
      */
-    private QueueInterface $queue;
+    private QueueInterface $responses;
 
     /**
-     * @var Context
+     * @var array|Deferred[]
      */
-    private Context $context;
+    private array $requests = [];
 
     /**
      * @var \Closure
@@ -45,25 +40,13 @@ final class WorkflowProtocol implements WorkflowProtocolInterface
     private \Closure $onRequest;
 
     /**
-     * @param QueueInterface $queue
      * @param \Closure $onRequest
      * @throws \Exception
      */
-    public function __construct(QueueInterface $queue, \Closure $onRequest)
+    public function __construct(\Closure $onRequest)
     {
         $this->onRequest = $onRequest;
-
-        $this->queue = $queue;
-        $this->zone = new \DateTimeZone('UTC');
-        $this->context = new Context($this->zone);
-    }
-
-    /**
-     * @return \DateTimeInterface
-     */
-    public function getCurrentTickTime(): \DateTimeInterface
-    {
-        return $this->context->now;
+        $this->responses = new SplQueue();
     }
 
     /**
@@ -72,9 +55,20 @@ final class WorkflowProtocol implements WorkflowProtocolInterface
      */
     public function request(RequestInterface $request): PromiseInterface
     {
-        return $this->context->promiseForRequest(
+        return $this->promiseForRequest(
             $this->sendDefer($request)
         );
+    }
+
+    /**
+     * @param RequestInterface $request
+     * @return PromiseInterface
+     */
+    public function promiseForRequest(RequestInterface $request): PromiseInterface
+    {
+        $this->requests[$request->getId()] = $deferred = new Deferred();
+
+        return $deferred->promise();
     }
 
     /**
@@ -83,37 +77,36 @@ final class WorkflowProtocol implements WorkflowProtocolInterface
      */
     private function sendDefer(CommandInterface $cmd): CommandInterface
     {
-        $this->queue->push($cmd);
+        $this->responses->push($cmd);
 
         return $cmd;
     }
 
     /**
      * @param string $request
+     * @param array $headers
      * @return string
      * @throws \JsonException
-     * @throws \Exception
      */
-    public function next(string $request): string
+    public function next(string $request, array $headers): string
     {
-        $this->parse($request);
+        $this->parse($request, $headers);
 
-        return Encoder::encode($this->now(), $this->queue, $this->context->runId);
+        return Encoder::encode($this->responses);
     }
 
     /**
      * @param string $request
+     * @param array $headers
      * @throws \JsonException
      */
-    private function parse(string $request): void
+    private function parse(string $request, array $headers): void
     {
-        ['rid' => $rid, 'tickTime' => $tick, 'commands' => $commands] = Decoder::decode($request, $this->zone);
-
-        $this->context->update($rid, $tick);
+        $commands = Decoder::decode($request);
 
         foreach ($commands as $command) {
             if ($command instanceof RequestInterface) {
-                $this->dispatchRequest($command);
+                $this->dispatchRequest($command, $headers);
             } else {
                 $this->dispatchResponse($command);
             }
@@ -122,27 +115,14 @@ final class WorkflowProtocol implements WorkflowProtocolInterface
 
     /**
      * @param RequestInterface $request
+     * @param array $headers
      */
-    private function dispatchRequest(RequestInterface $request): void
+    private function dispatchRequest(RequestInterface $request, array $headers): void
     {
-        $deferred = new Deferred();
-
-        $fulfilled = function ($result) use ($request): void {
-            $this->sendDefer(new SuccessResponse($result, $request->getId()));
-        };
-
-        $rejected = function (\Throwable $e) use ($request): void {
-            $this->sendDefer(ErrorResponse::fromException($e, $request->getId()));
-        };
-
-        $deferred->promise()
-            ->then($fulfilled, $rejected)
-        ;
-
         try {
-            ($this->onRequest)($request, $deferred);
+            $this->sendDefer(($this->onRequest)($request, $headers));
         } catch (\Throwable $e) {
-            $deferred->reject($e);
+            $this->sendDefer(ErrorResponse::fromException($e, $request->getId()));
         }
     }
 
@@ -151,7 +131,7 @@ final class WorkflowProtocol implements WorkflowProtocolInterface
      */
     private function dispatchResponse(ResponseInterface $response): void
     {
-        $deferred = $this->context->fetch($response->getId());
+        $deferred = $this->fetchRequestDeferred($response->getId());
 
         if ($response instanceof ErrorResponseInterface) {
             $deferred->reject($response->toException());
@@ -161,11 +141,19 @@ final class WorkflowProtocol implements WorkflowProtocolInterface
     }
 
     /**
-     * @return \DateTimeInterface
-     * @throws \Exception
+     * @param int $id
+     * @return Deferred
      */
-    private function now(): \DateTimeInterface
+    private function fetchRequestDeferred(int $id): Deferred
     {
-        return new \DateTime('now', $this->zone);
+        $deferred = $this->requests[$id] ?? null;
+
+        if ($deferred === null) {
+            throw new \OutOfBoundsException('The received response does not match any existing request');
+        }
+
+        unset($this->requests[$id]);
+
+        return $deferred;
     }
 }

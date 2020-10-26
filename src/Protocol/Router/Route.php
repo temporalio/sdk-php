@@ -9,9 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Workflow\Router;
-
-use Temporal\Client\Workflow\Router\GetWorkerInfo;
+namespace Temporal\Client\Protocol\Router;
 
 abstract class Route implements RouteInterface
 {

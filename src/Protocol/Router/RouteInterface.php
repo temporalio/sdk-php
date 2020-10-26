@@ -9,9 +9,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Workflow\Router;
+namespace Temporal\Client\Protocol\Router;
 
-use React\Promise\Deferred;
+use Temporal\Client\Protocol\DispatcherInterface;
 
 interface RouteInterface
 {
@@ -21,8 +21,9 @@ interface RouteInterface
     public function getName(): string;
 
     /**
-     * @param array $params
-     * @param Deferred $resolver
+     * @param array $payload
+     * @param array $headers
+     * @return mixed
      */
-    public function handle(array $params, Deferred $resolver): void;
+    public function handle(array $payload, array $headers);
 }

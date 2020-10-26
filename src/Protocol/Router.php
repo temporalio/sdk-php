@@ -9,11 +9,13 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Workflow;
+namespace Temporal\Client\Protocol;
 
-use React\Promise\Deferred;
+use Temporal\Client\Protocol\Command\ErrorResponse;
 use Temporal\Client\Protocol\Command\RequestInterface;
-use Temporal\Client\Workflow\Router\RouteInterface;
+use Temporal\Client\Protocol\Command\ResponseInterface;
+use Temporal\Client\Protocol\Command\SuccessResponse;
+use Temporal\Client\Protocol\Router\RouteInterface;
 
 final class Router implements RouterInterface
 {
@@ -53,20 +55,33 @@ final class Router implements RouterInterface
     }
 
     /**
+     * @param RequestInterface $request
+     * @return RouteInterface|null
+     */
+    public function match(RequestInterface $request): ?RouteInterface
+    {
+        return $this->routes[$request->getName()] ?? null;
+    }
+
+    /**
      * {@inheritDoc}
      */
-    public function emit(RequestInterface $request, Deferred $resolver): void
+    public function dispatch(RequestInterface $request, array $headers = []): ResponseInterface
     {
-        $method = $request->getName();
-        $route = $this->routes[$method] ?? null;
+        $route = $this->match($request);
 
         if ($route === null) {
-            $error = \sprintf(self::ERROR_ROUTE_NOT_FOUND, $method);
-            $resolver->reject(new \BadMethodCallException($error));
+            $error = \sprintf(self::ERROR_ROUTE_NOT_FOUND, $request->getName());
 
-            return;
+            return ErrorResponse::fromException(new \BadMethodCallException($error));
         }
 
-        $route->handle($request->getParams(), $resolver);
+        try {
+            $result = $route->handle($request->getParams(), $headers);
+
+            return new SuccessResponse($result, $request->getId());
+        } catch (\Throwable $e) {
+            return ErrorResponse::fromException($e, $request->getId());
+        }
     }
 }

@@ -9,12 +9,14 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Workflow\Router;
+namespace Temporal\Client\Protocol\Router;
 
 use React\Promise\Deferred;
+use Temporal\Client\Protocol\Command\RequestInterface;
+use Temporal\Client\Protocol\Command\ResponseInterface;
 use Temporal\Client\Worker\Declaration\CollectionInterface;
-use Temporal\Client\Workflow\WorkflowDeclarationInterface;
 use Temporal\Client\Workflow\Runtime\RunningWorkflows;
+use Temporal\Client\Workflow\WorkflowDeclarationInterface;
 
 final class InvokeQueryMethod extends Route
 {
@@ -41,10 +43,9 @@ final class InvokeQueryMethod extends Route
     }
 
     /**
-     * @param array $params
-     * @param Deferred $resolver
+     * {@inheritDoc}
      */
-    public function handle(array $params, Deferred $resolver): void
+    public function handle(array $payload, array $headers)
     {
         throw new \LogicException(__METHOD__ . ' not implemented yet');
     }

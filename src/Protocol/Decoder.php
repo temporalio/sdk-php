@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Workflow\Protocol;
+namespace Temporal\Client\Protocol;
 
 use Temporal\Client\Protocol\Command\CommandInterface;
 use Temporal\Client\Protocol\Command\ErrorResponse;
@@ -18,82 +18,22 @@ use Temporal\Client\Protocol\Command\Request;
 use Temporal\Client\Protocol\Command\RequestInterface;
 use Temporal\Client\Protocol\Command\SuccessResponse;
 use Temporal\Client\Protocol\Command\SuccessResponseInterface;
-use Temporal\Client\Protocol\Json;
 
 final class Decoder
 {
     /**
      * @param string $json
-     * @param \DateTimeZone $zone
      * @return array
      * @throws \JsonException
      * @throws \Exception
      */
-    public static function decode(string $json, \DateTimeZone $zone): array
+    public static function decode(string $json): array
     {
         $data = Json::decode($json, \JSON_OBJECT_AS_ARRAY);
 
-        return [
-            'rid'      => self::parseRunId($data),
-            'tickTime' => self::parseTickTime($data, $zone),
-            'commands' => self::parseCommands($data),
-        ];
-    }
-
-    /**
-     * @param array $data
-     * @return int|string|null
-     */
-    private static function parseRunId(array $data)
-    {
-        if (! isset($data['rid'])) {
-            return null;
-        }
-
-        if (! \is_string($data['rid']) && ! \is_int($data['rid'])) {
-            throw new \InvalidArgumentException('WorkflowDeclaration run id argument contain an invalid type');
-        }
-
-        return $data['rid'];
-    }
-
-    /**
-     * @param array $data
-     * @param \DateTimeZone $zone
-     * @return \DateTimeInterface
-     * @throws \Exception
-     */
-    private static function parseTickTime(array $data, \DateTimeZone $zone): \DateTimeInterface
-    {
-        if (! isset($data['tickTime'])) {
-            return new \DateTimeImmutable('now', $zone);
-        }
-
-        try {
-            return new \DateTimeImmutable($data['tickTime'], $zone);
-        } catch (\Throwable $e) {
-            throw new \InvalidArgumentException('Request tick time contain an invalid date time format', 0, $e);
-        }
-    }
-
-    /**
-     * @param array $data
-     * @return array|CommandInterface[]
-     * @throws \JsonException
-     */
-    private static function parseCommands(array $data): array
-    {
-        if (! isset($data['commands'])) {
-            return [];
-        }
-
-        if (! \is_array($data['commands'])) {
-            throw new \InvalidArgumentException('Commands list should be an array');
-        }
-
         $result = [];
 
-        foreach ($data['commands'] as $command) {
+        foreach ($data as $command) {
             switch (true) {
                 case isset($command['command']) || \array_key_exists('command', $command):
                     $result[] = self::parseRequest($command);
