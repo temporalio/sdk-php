@@ -95,15 +95,15 @@ final class Decoder
 
         foreach ($data['commands'] as $command) {
             switch (true) {
-                case isset($command['command']):
+                case isset($command['command']) || \array_key_exists('command', $command):
                     $result[] = self::parseRequest($command);
                     break;
 
-                case isset($command['error']):
+                case isset($command['error']) || \array_key_exists('error', $command):
                     $result[] = self::parseErrorResponse($command);
                     break;
 
-                case isset($command['result']):
+                case isset($command['result']) || \array_key_exists('result', $command):
                     $result[] = self::parseSuccessResponse($command);
                     break;
 
