@@ -33,7 +33,7 @@ final class RoadRunner implements EnvironmentInterface
      */
     public function __construct(string $mode = null)
     {
-        $this->mode = $mode ?? $_ENV[self::ENV_KEY] ?? self::DEFAULT_MODE;
+        $this->mode = $mode ?? $_SERVER[self::ENV_KEY] ?? self::DEFAULT_MODE;
     }
 
     /**
