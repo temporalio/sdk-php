@@ -16,7 +16,7 @@ use Temporal\Client\Activity\ActivityContextInterface;
 use Temporal\Client\Activity\ActivityDeclarationInterface;
 use Temporal\Client\Worker\Declaration\CollectionInterface;
 
-final class StartActivity extends Route
+final class InvokeActivity extends Route
 {
     /**
      * @var CollectionInterface

@@ -48,7 +48,7 @@ class ActivityWorker implements ActivityRepositoryInterface, DispatcherInterface
         $this->bootActivityRepositoryTrait();
 
         $this->router = new Router();
-        $this->router->add(new Router\StartActivity($this->activities));
+        $this->router->add(new Router\InvokeActivity($this->activities));
     }
 
     /**
