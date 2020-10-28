@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Workflow\Runtime;
 
+use JetBrains\PhpStorm\ExpectedValues;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Protocol\Command\RequestInterface;
@@ -96,11 +97,11 @@ final class WorkflowContext implements WorkflowContextInterface
 
     /**
      * @param string $name
-     * @return ActivityStub
+     * @return ActivityProxy
      */
-    public function activity(string $name): ActivityStub
+    public function activity(string $name): ActivityProxy
     {
-        return new ActivityStub($name, $this);
+        return new ActivityProxy($name, $this);
     }
 
     /**
@@ -122,14 +123,6 @@ final class WorkflowContext implements WorkflowContextInterface
     /**
      * {@inheritDoc}
      */
-    public function getRunId(): string
-    {
-        return $this->params[self::KEY_WORKFLOW_RUN_ID] ?? 'unknown';
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public function getTaskQueue(): string
     {
         return $this->params[self::KEY_TASK_QUEUE] ?? FactoryInterface::DEFAULT_TASK_QUEUE;
@@ -141,28 +134,6 @@ final class WorkflowContext implements WorkflowContextInterface
     public function getPayload(): array
     {
         return (array)($this->params[self::KEY_PAYLOAD] ?? []);
-    }
-
-    /**
-     * @param RequestInterface $request
-     * @return PromiseInterface
-     */
-    protected function request(RequestInterface $request): PromiseInterface
-    {
-        $this->requests[] = $request->getId();
-
-        $client = $this->worker->getClient();
-
-        $then = function ($result) use ($request) {
-            $index = \array_search($request->getId(), $this->requests, true);
-            unset($this->requests[$index]);
-
-            return $result;
-        };
-
-        return $client->request($request)
-            ->then($then, $then)
-        ;
     }
 
     /**
@@ -196,14 +167,48 @@ final class WorkflowContext implements WorkflowContextInterface
 
         return $this->request($request)
             ->then($then, $then)
-        ;
+            ;
     }
 
     /**
      * {@inheritDoc}
      */
-    public function executeActivity(string $name, array $arguments = [], $options = null): PromiseInterface
+    public function getRunId(): string
     {
+        return $this->params[self::KEY_WORKFLOW_RUN_ID] ?? 'unknown';
+    }
+
+    /**
+     * @param RequestInterface $request
+     * @return PromiseInterface
+     */
+    protected function request(RequestInterface $request): PromiseInterface
+    {
+        $this->requests[] = $request->getId();
+
+        $client = $this->worker->getClient();
+
+        $then = function ($result) use ($request) {
+            $index = \array_search($request->getId(), $this->requests, true);
+            unset($this->requests[$index]);
+
+            return $result;
+        };
+
+        return $client->request($request)
+            ->then($then, $then)
+            ;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function executeActivity(
+        string $name,
+        array $arguments = [],
+        #[ExpectedValues(values: ActivityOptions::class)]
+        $options = null
+    ): PromiseInterface {
         $request = new ExecuteActivity($name, $arguments, ActivityOptions::new($options));
 
         return $this->request($request);

@@ -13,6 +13,9 @@ namespace Temporal\Client\Workflow\Command;
 
 use Temporal\Client\Protocol\Command\Request;
 
+/**
+ * @psalm-type DateIntervalFormat = string|int|float|\DateInterval
+ */
 class NewTimer extends Request
 {
     /**
@@ -31,6 +34,8 @@ class NewTimer extends Request
     }
 
     /**
+     * @psalm-param DateIntervalFormat $interval
+     *
      * @param mixed $interval
      * @return int
      * @throws \Exception

@@ -12,6 +12,8 @@ declare(strict_types=1);
 namespace Temporal\Client;
 
 use React\Promise\PromiseInterface;
+use Temporal\Client\Activity\ActivityOptions;
+use Temporal\Client\Workflow\Runtime\ActivityProxy;
 use Temporal\Client\Workflow\Runtime\Process;
 use Temporal\Client\Workflow\Runtime\WorkflowContextInterface;
 
@@ -24,6 +26,11 @@ use Temporal\Client\Workflow\Runtime\WorkflowContextInterface;
  *
  * @method static \DateTimeInterface now()
  * @method static int[] getSendRequestIdentifiers()
+ *
+ * @method static ActivityProxy activity(string $class)
+ * @method static PromiseInterface complete(mixed $result = null)
+ * @method static PromiseInterface executeActivity(string $class, array $args, array|ActivityOptions $options = null)
+ * @method static PromiseInterface timer(string|int|float|\DateInterval $interval)
  *
  * @method static PromiseInterface all(PromiseInterface[]|mixed[] $promises)
  * @method static PromiseInterface any(PromiseInterface[]|mixed[] $promises)

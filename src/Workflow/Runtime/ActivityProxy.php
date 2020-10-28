@@ -14,9 +14,9 @@ namespace Temporal\Client\Workflow\Runtime;
 use React\Promise\PromiseInterface;
 
 /**
- * @psalm-template T
+ * @psalm-template Activity of object
  */
-class ActivityStub
+class ActivityProxy
 {
     /**
      * @var string
@@ -29,7 +29,7 @@ class ActivityStub
     private WorkflowContextInterface $protocol;
 
     /**
-     * @psalm-param class-string<T>
+     * @psalm-param class-string<Activity>
      *
      * @param string $class
      * @param WorkflowContextInterface $protocol
@@ -47,6 +47,7 @@ class ActivityStub
      */
     public function call(string $method, array $arguments = []): PromiseInterface
     {
+        // TODO
         $activity = $this->class . '::' . $method;
 
         return $this->protocol->executeActivity($activity, $arguments);
