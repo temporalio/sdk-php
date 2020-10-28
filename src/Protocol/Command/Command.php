@@ -16,7 +16,7 @@ abstract class Command implements CommandInterface
     /**
      * @var int
      */
-    private static int $lastId = 0;
+    private static int $lastId = 9000;
 
     /**
      * @var int

@@ -32,7 +32,7 @@ final class ActivityOptions
      *
      * @var \DateInterval|null
      */
-    public ?\DateInterval $startToCloseTimeout  = null;
+    public ?\DateInterval $startToCloseTimeout = null;
 
     /**
      * @return \DateInterval[]|null[]
@@ -58,7 +58,6 @@ final class ActivityOptions
 
     public function setScheduleToCloseTimeout($interval): void
     {
-
     }
 
     /**
@@ -93,10 +92,9 @@ final class ActivityOptions
         foreach ($properties as $name => $value) {
             $setter = 'set' . \ucfirst($name);
 
-            if (! \method_exists($instance, $setter)) {
+            if (!\method_exists($instance, $setter)) {
                 $error = \sprintf('Property %s not defined in %s', $name, self::class);
                 throw new \InvalidArgumentException($error);
-
             }
 
             $instance->$setter($value);
