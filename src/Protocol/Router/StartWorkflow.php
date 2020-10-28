@@ -40,14 +40,14 @@ final class StartWorkflow extends Route
     /**
      * @var Worker
      */
-    private $worker;
+    private Worker $worker;
 
     /**
      * @psalm-param CollectionInterface<WorkflowDeclarationInterface> $workflows
      *
      * @param CollectionInterface $workflows
      * @param RunningWorkflows $running
-     * @param Worker $worker;
+     * @param Worker $worker
      */
     public function __construct(CollectionInterface $workflows, RunningWorkflows $running, Worker $worker)
     {
