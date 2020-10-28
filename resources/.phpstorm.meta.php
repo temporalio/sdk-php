@@ -2,7 +2,7 @@
 
 namespace PHPSTORM_META {
 
-    override(\Temporal\Client\Workflow\Runtime\WorkflowContextInterface::activity(), map([
+    override(\Temporal\Client\Workflow\Runtime\WorkflowExecutionsInterface::activity(), map([
         '' => type(0),
     ]));
 

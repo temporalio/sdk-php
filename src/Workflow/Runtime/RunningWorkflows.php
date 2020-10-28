@@ -62,7 +62,7 @@ final class RunningWorkflows
 
         $context = $process->getContext();
 
-        $requests = $context->getSendRequests();
+        $requests = $context->getSendRequestIdentifiers();
 
         foreach ($requests as $id) {
             $client->cancel($id);

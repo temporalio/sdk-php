@@ -9,16 +9,22 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Workflow\Runtime;
+namespace Temporal\Client\Worker\Support;
 
-use React\Promise\Exception\LengthException;
+use JetBrains\PhpStorm\Pure;
 use React\Promise\PromiseInterface;
+
+use function React\Promise\all;
+use function React\Promise\any;
+use function React\Promise\map;
+use function React\Promise\reduce;
+use function React\Promise\some;
 
 /**
  * @psalm-type PromiseMapCallback = callable(mixed $value): mixed
  * @psalm-type PromiseReduceCallback = callable(mixed $value): mixed
  */
-interface PromiseAwareInterface
+trait PromiseAwareTrait
 {
     /**
      * Returns a promise that will resolve only once all the items
@@ -26,10 +32,13 @@ interface PromiseAwareInterface
      * promise will be an array containing the resolution values of each of the
      * items in `$promises`.
      *
-     * @param PromiseAwareInterface[] $promises
+     * @param PromiseInterface[]|mixed[] $promises
      * @return PromiseInterface
      */
-    public function all(iterable $promises): PromiseInterface;
+    public function all(iterable $promises): PromiseInterface
+    {
+        return all($this->iterableToArray($promises));
+    }
 
     /**
      * Returns a promise that will resolve when any one of the items in
@@ -42,10 +51,13 @@ interface PromiseAwareInterface
      * The returned promise will also reject with a {@see LengthException} if
      * `$promises` contains 0 items.
      *
-     * @param PromiseAwareInterface[] $promises
+     * @param PromiseInterface[]|mixed[] $promises
      * @return PromiseInterface
      */
-    public function any(iterable $promises): PromiseInterface;
+    public function any(iterable $promises): PromiseInterface
+    {
+        return any($this->iterableToArray($promises));
+    }
 
     /**
      * Returns a promise that will resolve when `$count` of the supplied items
@@ -61,11 +73,14 @@ interface PromiseAwareInterface
      * The returned promise will also reject with a {@see LengthException} if
      * `$promises` contains less items than `$count`.
      *
-     * @param PromiseInterface[] $promises
+     * @param PromiseInterface[]|mixed[] $promises
      * @param int $count
      * @return PromiseInterface
      */
-    public function some(iterable $promises, int $count): PromiseInterface;
+    public function some(iterable $promises, int $count): PromiseInterface
+    {
+        return some($this->iterableToArray($promises), $count);
+    }
 
     /**
      * Traditional map function, similar to `array_map()`, but allows input to
@@ -76,11 +91,14 @@ interface PromiseAwareInterface
      * resolved value of a promise or value in `$promises`.
      *
      * @psalm-param PromiseMapCallback $map
-     * @param PromiseInterface[] $promises
+     * @param PromiseInterface[]|mixed[] $promises
      * @param callable $map
      * @return PromiseInterface
      */
-    public function map(iterable $promises, callable $map): PromiseInterface;
+    public function map(iterable $promises, callable $map): PromiseInterface
+    {
+        return map($this->iterableToArray($promises), $map);
+    }
 
     /**
      * Traditional reduce function, similar to `array_reduce()`, but input may
@@ -89,10 +107,23 @@ interface PromiseAwareInterface
      * starting value.
      *
      * @psalm-param PromiseReduceCallback $reduce
-     * @param PromiseInterface[] $promises
+     * @param PromiseInterface[]|mixed[] $promises
      * @param callable $reduce
      * @param mixed $initial
      * @return PromiseInterface
      */
-    public function reduce(iterable $promises, callable $reduce, $initial = null): PromiseInterface;
+    public function reduce(iterable $promises, callable $reduce, $initial = null): PromiseInterface
+    {
+        return reduce($this->iterableToArray($promises), $reduce, $initial);
+    }
+
+    /**
+     * @param array|\Traversable|iterable $items
+     * @return array
+     */
+    #[Pure]
+    private function iterableToArray(iterable $items): array
+    {
+        return $items instanceof \Traversable ? \iterator_to_array($items, false) : $items;
+    }
 }

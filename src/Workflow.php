@@ -11,11 +11,27 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
+use React\Promise\PromiseInterface;
 use Temporal\Client\Workflow\Runtime\Process;
 use Temporal\Client\Workflow\Runtime\WorkflowContextInterface;
 
 /**
+ * @method static string getId()
  * @method static string getName()
+ * @method static string getRunId()
+ * @method static array getPayload()
+ * @method static string getTaskQueue()
+ *
+ * @method static \DateTimeInterface now()
+ * @method static int[] getSendRequestIdentifiers()
+ *
+ * @method static PromiseInterface all(PromiseInterface[]|mixed[] $promises)
+ * @method static PromiseInterface any(PromiseInterface[]|mixed[] $promises)
+ * @method static PromiseInterface some(PromiseInterface[]|mixed[] $promises, int $count)
+ * @method static PromiseInterface map(PromiseInterface[]|mixed[] $promises, callable $map)
+ * @method static PromiseInterface reduce(PromiseInterface[]|mixed[] $promises, callable $reduce, mixed $initial = null)
+ *
+ * @method static \Generator cooperative(\Generator[]|mixed[] $generators)
  */
 final class Workflow
 {

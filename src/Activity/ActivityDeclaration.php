@@ -13,7 +13,6 @@ namespace Temporal\Client\Activity;
 
 use Temporal\Client\Activity\Meta\ActivityMethod;
 use Temporal\Client\Meta\ReaderInterface;
-use Temporal\Client\Activity\ActivityDeclarationInterface;
 use Temporal\Client\Worker\Declaration\HandledDeclaration;
 
 final class ActivityDeclaration extends HandledDeclaration implements ActivityDeclarationInterface

@@ -14,7 +14,7 @@ namespace Temporal\Client\Workflow\Runtime;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
 
-interface WorkflowRequestsInterface
+interface WorkflowExecutionsInterface
 {
     /**
      * @template ActivityType
@@ -41,7 +41,7 @@ interface WorkflowRequestsInterface
     public function executeActivity(string $name, array $arguments = [], $options = null): PromiseInterface;
 
     /**
-     * @param string|int $interval
+     * @param string|int|\DateInterval $interval
      * @return PromiseInterface
      */
     public function timer($interval): PromiseInterface;

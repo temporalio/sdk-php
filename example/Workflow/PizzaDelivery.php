@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Workflow;
 
 use App\Activity\ExampleActivity;
+use Temporal\Client\Workflow;
 use Temporal\Client\Workflow\Meta\QueryMethod;
 use Temporal\Client\Workflow\Meta\SignalMethod;
 use Temporal\Client\Workflow\Meta\WorkflowMethod;
@@ -24,10 +25,12 @@ class PizzaDelivery
     {
         $activity = $ctx->activity(ExampleActivity::class);
 
-        $a = yield $activity->doSomething();
-        $b = yield $activity->doSomethingElse();
+        yield $activity->doSomething(42);
+        yield $activity->doSomethingElse();
 
-        var_dump($a, $b);
+        dump(Workflow::now()->format(\DateTime::RFC3339));
+
+        return 42;
     }
 
     /** @QueryMethod() */

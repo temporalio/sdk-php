@@ -16,7 +16,7 @@ use Temporal\Client\Activity\Meta\ActivityMethod;
 class ExampleActivity
 {
     /** @ActivityMethod() */
-    public function doSomething()
+    public function doSomething($value)
     {
         return 42;
     }

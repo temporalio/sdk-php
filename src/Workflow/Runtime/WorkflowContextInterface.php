@@ -11,40 +11,20 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Workflow\Runtime;
 
-interface WorkflowContextInterface extends WorkflowRequestsInterface, PromiseAwareInterface
+use JetBrains\PhpStorm\Pure;
+
+interface WorkflowContextInterface extends WorkflowInfoInterface, WorkflowExecutionsInterface
 {
-    /**
-     * @return string
-     */
-    public function getName(): string;
-
-    /**
-     * @return string
-     */
-    public function getId(): string;
-
-    /**
-     * @return string
-     */
-    public function getRunId(): string;
-
-    /**
-     * @return string
-     */
-    public function getTaskQueue(): string;
-
-    /**
-     * @return array
-     */
-    public function getPayload(): array;
-
     /**
      * @return \DateTimeInterface
      */
+    #[Pure]
     public function now(): \DateTimeInterface;
 
     /**
-     * @return array|int[]
+     * @psalm-return
+     * @return int[]
      */
-    public function getSendRequests(): array;
+    #[Pure]
+    public function getSendRequestIdentifiers(): array;
 }

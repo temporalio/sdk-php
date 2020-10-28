@@ -15,6 +15,8 @@ use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Protocol\Command\RequestInterface;
 use Temporal\Client\Worker\FactoryInterface;
+use Temporal\Client\Worker\Support\GeneratorAwareTrait;
+use Temporal\Client\Worker\Support\PromiseAwareTrait;
 use Temporal\Client\Worker\Worker;
 use Temporal\Client\Workflow\Command\CompleteWorkflow;
 use Temporal\Client\Workflow\Command\ExecuteActivity;
@@ -32,6 +34,7 @@ use Temporal\Client\Workflow\Command\NewTimer;
 final class WorkflowContext implements WorkflowContextInterface
 {
     use PromiseAwareTrait;
+    use GeneratorAwareTrait;
 
     /**
      * @var string
@@ -165,7 +168,7 @@ final class WorkflowContext implements WorkflowContextInterface
     /**
      * @return array|int[]
      */
-    public function getSendRequests(): array
+    public function getSendRequestIdentifiers(): array
     {
         return \array_values($this->requests);
     }
