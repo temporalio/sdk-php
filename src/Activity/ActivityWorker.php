@@ -15,6 +15,8 @@ use Temporal\Client\Meta\ReaderInterface;
 use Temporal\Client\Protocol\Command\RequestInterface;
 use Temporal\Client\Protocol\Command\ResponseInterface;
 use Temporal\Client\Protocol\DispatcherInterface;
+use Temporal\Client\Protocol\Router;
+use Temporal\Client\Protocol\RouterInterface;
 use Temporal\Client\Worker\Declaration\Repository\ActivityRepositoryInterface;
 use Temporal\Client\Worker\Declaration\Repository\ActivityRepositoryTrait;
 use Temporal\Client\Worker\Worker;
@@ -32,6 +34,11 @@ class ActivityWorker implements ActivityRepositoryInterface, DispatcherInterface
     private ReaderInterface $reader;
 
     /**
+     * @var RouterInterface
+     */
+    private RouterInterface $router;
+
+    /**
      * @param Worker $worker
      */
     public function __construct(Worker $worker)
@@ -39,16 +46,17 @@ class ActivityWorker implements ActivityRepositoryInterface, DispatcherInterface
         $this->reader = $worker->getReader();
 
         $this->bootActivityRepositoryTrait();
+
+        $this->router = new Router();
+        $this->router->add(new Router\StartActivity($this->activities));
     }
 
     /**
-     * TODO
-     *
      * {@inheritDoc}
      */
     public function dispatch(RequestInterface $request, array $headers = []): ResponseInterface
     {
-        throw new \LogicException(__METHOD__ . ' not implemented yet');
+        return $this->router->dispatch($request, $headers);
     }
 
     /**
