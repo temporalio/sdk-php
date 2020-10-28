@@ -37,4 +37,14 @@ interface WorkflowContextInterface extends WorkflowRequestsInterface, PromiseAwa
      * @return array
      */
     public function getPayload(): array;
+
+    /**
+     * @return \DateTimeInterface
+     */
+    public function now(): \DateTimeInterface;
+
+    /**
+     * @return array|int[]
+     */
+    public function getSendRequests(): array;
 }

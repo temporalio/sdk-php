@@ -22,11 +22,13 @@ class CompleteWorkflow extends Request
 
     /**
      * @param mixed $result
+     * @param array $requests
      */
-    public function __construct($result)
+    public function __construct($result, array $requests)
     {
         parent::__construct(self::NAME, [
-            'result' => $result,
+            'result'         => $result,
+            'cancelRequests' => $requests,
         ]);
     }
 }

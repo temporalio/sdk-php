@@ -25,7 +25,7 @@ class PizzaDelivery
         $activity = $ctx->activity(ExampleActivity::class);
 
         $a = yield $activity->doSomething();
-        $b = yield $activity->doSomethingElse();
+        $b = $activity->doSomethingElse();
 
         var_dump($a, $b);
     }

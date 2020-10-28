@@ -44,6 +44,26 @@ class Worker implements WorkerInterface
     private EnvironmentInterface $env;
 
     /**
+     * @var ClientInterface
+     */
+    private ClientInterface $client;
+
+    /**
+     * @var ReaderInterface
+     */
+    private ReaderInterface $reader;
+
+    /**
+     * @var \DateTimeInterface
+     */
+    private \DateTimeInterface $now;
+
+    /**
+     * @var \DateTimeZone
+     */
+    private \DateTimeZone $zone;
+
+    /**
      * @param ClientInterface $c
      * @param ReaderInterface $reader
      * @param EnvironmentInterface $env
@@ -54,9 +74,45 @@ class Worker implements WorkerInterface
     {
         $this->env = $env;
         $this->taskQueue = $queue;
+        $this->client = $c;
+        $this->reader = $reader;
+        $this->zone = new \DateTimeZone('UTC');
+        $this->now = new \DateTimeImmutable('now', $this->zone);
 
-        $this->workflowWorker = new WorkflowWorker($c, $reader, $queue);
-        $this->activityWorker = new ActivityWorker($reader, $queue);
+        $this->workflowWorker = new WorkflowWorker($this);
+        $this->activityWorker = new ActivityWorker($this);
+    }
+
+    /**
+     * @return \DateTimeInterface
+     */
+    public function now(): \DateTimeInterface
+    {
+        return $this->now;
+    }
+
+    /**
+     * @return \DateTimeInterface
+     */
+    public function getTickTime(): \DateTimeInterface
+    {
+        return $this->now;
+    }
+
+    /**
+     * @return ClientInterface
+     */
+    public function getClient(): ClientInterface
+    {
+        return $this->client;
+    }
+
+    /**
+     * @return ReaderInterface
+     */
+    public function getReader(): ReaderInterface
+    {
+        return $this->reader;
     }
 
     /**
@@ -120,6 +176,11 @@ class Worker implements WorkerInterface
      */
     public function dispatch(RequestInterface $request, array $headers = []): ResponseInterface
     {
+        // Intercept headers
+        if (isset($headers['tickTime'])) {
+            $this->now = new \DateTime($headers['tickTime'], $this->zone);
+        }
+
         switch ($this->env->get()) {
             case EnvironmentInterface::ENV_WORKFLOW:
                 return $this->workflowWorker->dispatch($request, $headers);

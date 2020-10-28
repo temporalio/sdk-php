@@ -17,6 +17,7 @@ use Temporal\Client\Protocol\Command\ResponseInterface;
 use Temporal\Client\Protocol\DispatcherInterface;
 use Temporal\Client\Worker\Declaration\Repository\ActivityRepositoryInterface;
 use Temporal\Client\Worker\Declaration\Repository\ActivityRepositoryTrait;
+use Temporal\Client\Worker\Worker;
 
 /**
  * @noinspection PhpSuperClassIncompatibleWithInterfaceInspection
@@ -31,12 +32,11 @@ class ActivityWorker implements ActivityRepositoryInterface, DispatcherInterface
     private ReaderInterface $reader;
 
     /**
-     * @param ReaderInterface $reader
-     * @param string $taskQueue
+     * @param Worker $worker
      */
-    public function __construct(ReaderInterface $reader, string $taskQueue)
+    public function __construct(Worker $worker)
     {
-        $this->reader = $reader;
+        $this->reader = $worker->getReader();
 
         $this->bootActivityRepositoryTrait();
     }

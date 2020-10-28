@@ -11,12 +11,12 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Protocol;
 
-interface ProtocolInterface extends ClientInterface, ServerInterface
+use Temporal\Client\Protocol\Command\ResponseInterface;
+
+interface ServerInterface
 {
     /**
-     * @param string $request
-     * @param array $headers
-     * @return string
+     * @param ResponseInterface $response
      */
-    public function next(string $request, array $headers): string;
+    public function answer(ResponseInterface $response): void;
 }

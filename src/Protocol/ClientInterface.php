@@ -21,4 +21,10 @@ interface ClientInterface
      * @return PromiseInterface
      */
     public function request(RequestInterface $request): PromiseInterface;
+
+    /**
+     * @param int $id
+     * @return bool
+     */
+    public function cancel(int $id): bool;
 }

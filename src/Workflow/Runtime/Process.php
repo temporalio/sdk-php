@@ -73,6 +73,8 @@ final class Process
 
         if ($result instanceof \Generator) {
             $this->generator = $result;
+        } else {
+            $this->context->complete($result);
         }
     }
 

@@ -17,6 +17,7 @@ use Temporal\Client\Protocol\Command\ResponseInterface;
 use Temporal\Client\Protocol\Command\SuccessResponse;
 use Temporal\Client\Protocol\ProtocolInterface;
 use Temporal\Client\Worker\Declaration\CollectionInterface;
+use Temporal\Client\Worker\Worker;
 use Temporal\Client\Workflow\Runtime\RunningWorkflows;
 use Temporal\Client\Workflow\Runtime\WorkflowContext;
 use Temporal\Client\Workflow\Runtime\WorkflowContextInterface;
@@ -37,30 +38,30 @@ final class StartWorkflow extends Route
     private CollectionInterface $workflows;
 
     /**
-     * @var ClientInterface
+     * @var Worker
      */
-    private ClientInterface $client;
+    private $worker;
 
     /**
      * @psalm-param CollectionInterface<WorkflowDeclarationInterface> $workflows
      *
      * @param CollectionInterface $workflows
      * @param RunningWorkflows $running
-     * @param ClientInterface $client
+     * @param Worker $worker;
      */
-    public function __construct(CollectionInterface $workflows, RunningWorkflows $running, ClientInterface $client)
+    public function __construct(CollectionInterface $workflows, RunningWorkflows $running, Worker $worker)
     {
         $this->running = $running;
         $this->workflows = $workflows;
-        $this->client = $client;
+        $this->worker = $worker;
     }
 
     /**
      * {@inheritDoc}
      */
-    public function handle(array $payload, array $headers)
+    public function handle(array $payload, array $headers): array
     {
-        $context = new WorkflowContext($this->client, $payload);
+        $context = new WorkflowContext($this->worker, $this->running, $payload);
 
         $this->assertNotRunning($context);
 

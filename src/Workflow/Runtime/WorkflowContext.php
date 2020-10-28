@@ -12,10 +12,13 @@ declare(strict_types=1);
 namespace Temporal\Client\Workflow\Runtime;
 
 use React\Promise\PromiseInterface;
-use Temporal\Client\Protocol\ClientInterface;
+use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Protocol\Command\RequestInterface;
-use Temporal\Client\Protocol\ProtocolInterface;
 use Temporal\Client\Worker\FactoryInterface;
+use Temporal\Client\Worker\Worker;
+use Temporal\Client\Workflow\Command\CompleteWorkflow;
+use Temporal\Client\Workflow\Command\ExecuteActivity;
+use Temporal\Client\Workflow\Command\NewTimer;
 
 /**
  * @psalm-type WorkflowContextParams = array {
@@ -29,7 +32,6 @@ use Temporal\Client\Worker\FactoryInterface;
 final class WorkflowContext implements WorkflowContextInterface
 {
     use PromiseAwareTrait;
-    use WorkflowRequestsTrait;
 
     /**
      * @var string
@@ -63,18 +65,30 @@ final class WorkflowContext implements WorkflowContextInterface
     private array $params;
 
     /**
-     * @var ClientInterface
+     * @var Worker
      */
-    private ClientInterface $client;
+    private Worker $worker;
 
     /**
-     * @param ClientInterface $client
+     * @var array|int[]
+     */
+    private array $requests = [];
+
+    /**
+     * @var RunningWorkflows
+     */
+    private RunningWorkflows $running;
+
+    /**
+     * @param Worker $worker
+     * @param RunningWorkflows $running
      * @param array $params
      */
-    public function __construct(ClientInterface $client, array $params)
+    public function __construct(Worker $worker, RunningWorkflows $running, array $params)
     {
         $this->params = $params;
-        $this->client = $client;
+        $this->worker = $worker;
+        $this->running = $running;
     }
 
     /**
@@ -132,6 +146,74 @@ final class WorkflowContext implements WorkflowContextInterface
      */
     protected function request(RequestInterface $request): PromiseInterface
     {
-        return $this->client->request($request);
+        $this->requests[] = $request->getId();
+
+        $client = $this->worker->getClient();
+
+        $then = function ($result) use ($request) {
+            $index = \array_search($request->getId(), $this->requests, true);
+            unset($this->requests[$index]);
+
+            return $result;
+        };
+
+        return $client->request($request)
+            ->then($then, $then)
+        ;
+    }
+
+    /**
+     * @return array|int[]
+     */
+    public function getSendRequests(): array
+    {
+        return \array_values($this->requests);
+    }
+
+    /**
+     * @return \DateTimeInterface
+     */
+    public function now(): \DateTimeInterface
+    {
+        return $this->worker->getTickTime();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function complete($result = null): PromiseInterface
+    {
+        $then = function ($result) {
+            $this->running->kill($this->getRunId(), $this->worker->getClient());
+
+            return $result;
+        };
+
+        $request = new CompleteWorkflow($result, \array_values($this->requests));
+
+        return $this->request($request)
+            ->then($then, $then)
+        ;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function executeActivity(string $name, array $arguments = [], $options = null): PromiseInterface
+    {
+        $request = new ExecuteActivity($name, $arguments, ActivityOptions::new($options));
+
+        return $this->request($request);
+    }
+
+    /**
+     * {@inheritDoc}
+     * @throws \Exception
+     */
+    public function timer($interval): PromiseInterface
+    {
+        $request = new NewTimer(NewTimer::parseInterval($interval));
+
+        return $this->request($request);
     }
 }

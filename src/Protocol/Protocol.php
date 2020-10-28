@@ -13,6 +13,7 @@ namespace Temporal\Client\Protocol;
 
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
+use Temporal\Client\Exception\CancellationException;
 use Temporal\Client\Protocol\Command\CommandInterface;
 use Temporal\Client\Protocol\Command\ErrorResponse;
 use Temporal\Client\Protocol\Command\ErrorResponseInterface;
@@ -61,12 +62,30 @@ final class Protocol implements ProtocolInterface
     }
 
     /**
+     * @param int $id
+     * @return bool
+     */
+    public function cancel(int $id): bool
+    {
+        try {
+            $deferred = $this->fetchRequestDeferred($id);
+            $deferred->reject(new CancellationException('Cancel'));
+
+            return true;
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    /**
      * @param RequestInterface $request
      * @return PromiseInterface
      */
     public function promiseForRequest(RequestInterface $request): PromiseInterface
     {
-        $this->requests[$request->getId()] = $deferred = new Deferred();
+        $id = $request->getId();
+
+        $this->requests[$id] = $deferred = new Deferred();
 
         return $deferred->promise();
     }
@@ -113,6 +132,8 @@ final class Protocol implements ProtocolInterface
         }
     }
 
+
+
     /**
      * @param RequestInterface $request
      * @param array $headers
@@ -127,9 +148,17 @@ final class Protocol implements ProtocolInterface
     }
 
     /**
-     * @param ErrorResponseInterface|SuccessResponseInterface|ResponseInterface $response
+     * @param ResponseInterface $response
      */
     private function dispatchResponse(ResponseInterface $response): void
+    {
+        $this->answer($response);
+    }
+
+    /**
+     * @param ErrorResponseInterface|SuccessResponseInterface|ResponseInterface $response
+     */
+    public function answer(ResponseInterface $response): void
     {
         $deferred = $this->fetchRequestDeferred($response->getId());
 
