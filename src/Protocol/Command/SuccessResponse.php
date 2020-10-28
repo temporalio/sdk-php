@@ -24,9 +24,28 @@ class SuccessResponse extends Response implements SuccessResponseInterface
      */
     public function __construct($result, int $id = null)
     {
-        $this->result = $result;
+        $this->result = $this->isArray($result) ? \array_values($result) : [$result];
 
         parent::__construct($id);
+    }
+
+    /**
+     * @param mixed $result
+     * @return bool
+     */
+    private function isArray($result): bool
+    {
+        if (! \is_array($result)) {
+            return false;
+        }
+
+        foreach ($result as $key => $value) {
+            if (! \is_int($key)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

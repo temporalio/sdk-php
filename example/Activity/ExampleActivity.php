@@ -15,13 +15,13 @@ use Temporal\Client\Activity\Meta\ActivityMethod;
 
 class ExampleActivity
 {
-    #[ActivityMethod]
+    /** @ActivityMethod() */
     public function doSomething()
     {
         return 42;
     }
 
-    #[ActivityMethod]
+    /** @ActivityMethod() */
     public function doSomethingElse()
     {
         return 42;

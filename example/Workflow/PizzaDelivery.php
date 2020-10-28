@@ -19,24 +19,24 @@ use Temporal\Client\Workflow\Runtime\WorkflowContextInterface;
 
 class PizzaDelivery
 {
-    #[WorkflowMethod(name: 'PizzaDelivery')]
+    /** @WorkflowMethod(name="PizzaDelivery") */
     public function handler(WorkflowContextInterface $ctx): iterable
     {
         $activity = $ctx->activity(ExampleActivity::class);
 
         $a = yield $activity->doSomething();
-        $b = $activity->doSomethingElse();
+        $b = yield $activity->doSomethingElse();
 
         var_dump($a, $b);
     }
 
-    #[QueryMethod]
+    /** @QueryMethod() */
     public function getStatus(): string
     {
         return 'I\'m Ok';
     }
 
-    #[SignalMethod]
+    /** @SignalMethod() */
     public function retryNow(): void
     {
         //
