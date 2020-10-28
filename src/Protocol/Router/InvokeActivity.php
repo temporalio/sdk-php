@@ -44,7 +44,7 @@ final class InvokeActivity extends Route
 
         $handler = $declaration->getHandler();
 
-        return $handler($context, ...$context->getArguments());
+        return $handler(...$context->getArguments());
     }
 
     /**

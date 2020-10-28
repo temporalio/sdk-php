@@ -102,11 +102,13 @@ final class Process
             ->otherwise(function (\Throwable $e) {
                 $this->generator->throw($e);
             })
-            ->then(function (array $result) {
-                $this->generator->send($result[0]);
+            ->then(function (array $result = null) {
+                $value = is_array($result) ? $result[0] : null;
+
+                $this->generator->send($value);
                 $this->next();
 
-                return $result[0];
+                return $value;
             });
     }
 }
