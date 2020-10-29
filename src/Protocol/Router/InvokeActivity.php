@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Protocol\Router;
 
-use Temporal\Client\Activity;
 use Temporal\Client\Activity\ActivityContext;
 use Temporal\Client\Activity\ActivityContextInterface;
 use Temporal\Client\Activity\ActivityDeclarationInterface;

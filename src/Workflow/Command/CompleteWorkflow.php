@@ -27,7 +27,7 @@ class CompleteWorkflow extends Request
     public function __construct($result, array $requests)
     {
         parent::__construct(self::NAME, [
-            'result'         => $result,
+            'result'         => [$result],
             'cancelRequests' => $requests,
         ]);
     }
