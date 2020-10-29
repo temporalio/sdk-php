@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Protocol\Router;
 
+use Temporal\Client\Activity;
 use Temporal\Client\Activity\ActivityContext;
 use Temporal\Client\Activity\ActivityContextInterface;
 use Temporal\Client\Activity\ActivityDeclarationInterface;
@@ -42,9 +43,15 @@ final class InvokeActivity extends Route
 
         $declaration = $this->findDeclarationOrFail($context);
 
+        Activity::setCurrentContext($context);
+
         $handler = $declaration->getHandler();
 
-        return $handler($context, ...$context->getArguments());
+        try {
+            return $handler($context, ...$context->getArguments());
+        } finally {
+            Activity::setCurrentContext(null);
+        }
     }
 
     /**

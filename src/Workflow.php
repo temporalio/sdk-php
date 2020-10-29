@@ -50,38 +50,28 @@ final class Workflow
         'the currently running workflow process';
 
     /**
-     * @var Process|null
+     * @var WorkflowContextInterface|null
      */
-    private static ?Process $process = null;
+    private static ?WorkflowContextInterface $ctx = null;
 
     /**
-     * @param Process $process
+     * @param WorkflowContextInterface|null $ctx
      */
-    public static function setCurrentProcess(Process $process): void
+    public static function setCurrentContext(?WorkflowContextInterface $ctx): void
     {
-        self::$process = $process;
-    }
-
-    /**
-     * @return Process
-     */
-    private static function getCurrentProcess(): Process
-    {
-        if (self::$process === null) {
-            throw new \RuntimeException(self::ERROR_NO_WORKFLOW_CONTEXT);
-        }
-
-        return self::$process;
+        self::$ctx = $ctx;
     }
 
     /**
      * @return WorkflowContextInterface
      */
-    private static function getContext(): WorkflowContextInterface
+    private static function getCurrentContext(): WorkflowContextInterface
     {
-        $process = self::getCurrentProcess();
+        if (self::$ctx === null) {
+            throw new \RuntimeException(self::ERROR_NO_WORKFLOW_CONTEXT);
+        }
 
-        return $process->getContext();
+        return self::$ctx;
     }
 
     /**
@@ -91,7 +81,7 @@ final class Workflow
      */
     public static function __callStatic(string $name, array $arguments)
     {
-        $context = self::getContext();
+        $context = self::getCurrentContext();
 
         return $context->$name(...$arguments);
     }

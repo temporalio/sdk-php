@@ -82,7 +82,7 @@ final class StartWorkflow extends Route
             return;
         }
 
-        $error = \sprintf('Workflow with run id #%s has been already started', $context->getRunId());
+        $error = \sprintf('Workflow with run id %s has been already started', $context->getRunId());
         throw new \LogicException($error);
     }
 

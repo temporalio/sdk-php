@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client\Workflow;
 
 use Temporal\Client\Protocol\ClientInterface;
+use Temporal\Client\Workflow;
 
 final class RunningWorkflows
 {
@@ -57,6 +58,7 @@ final class RunningWorkflows
             throw new \InvalidArgumentException(\sprintf(self::ERROR_PROCESS_NOT_DEFINED, $runId));
         }
 
+        Workflow::setCurrentContext(null);
         unset($this->processes[$runId]);
 
         $context = $process->getContext();

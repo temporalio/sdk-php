@@ -82,7 +82,7 @@ final class Process
      */
     public function next(): void
     {
-        Workflow::setCurrentProcess($this);
+        Workflow::setCurrentContext($this->getContext());
 
         if ($this->generator === null) {
             throw new \LogicException('Workflow process is not running');
