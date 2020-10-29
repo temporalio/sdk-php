@@ -69,7 +69,9 @@ final class Client implements ClientInterface
         if ($response instanceof ErrorResponseInterface) {
             $deferred->reject($response->toException());
         } else {
-            $deferred->resolve($response->getResult());
+            $result = $response->getResult();
+
+            $deferred->resolve(\current($result) ?: false);
         }
     }
 

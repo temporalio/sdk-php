@@ -14,7 +14,7 @@ namespace Temporal\Client\Protocol\Command;
 interface SuccessResponseInterface extends ResponseInterface
 {
     /**
-     * @return mixed
+     * @return array
      */
-    public function getResult();
+    public function getResult(): array;
 }

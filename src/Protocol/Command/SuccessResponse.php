@@ -14,9 +14,9 @@ namespace Temporal\Client\Protocol\Command;
 class SuccessResponse extends Response implements SuccessResponseInterface
 {
     /**
-     * @var mixed
+     * @var array
      */
-    protected $result;
+    protected array $result;
 
     /**
      * @param mixed $result
@@ -51,7 +51,7 @@ class SuccessResponse extends Response implements SuccessResponseInterface
     /**
      * {@inheritDoc}
      */
-    public function getResult()
+    public function getResult(): array
     {
         return $this->result;
     }

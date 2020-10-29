@@ -18,12 +18,13 @@ class ExampleActivity
     /** @ActivityMethod() */
     public function a($value)
     {
-        return $value;
+        sleep(5);
+        return $value . ' from ' . __METHOD__;
     }
 
     /** @ActivityMethod() */
     public function b($value)
     {
-        return $value;
+        return strtolower($value) . ' from ' . __METHOD__;
     }
 }

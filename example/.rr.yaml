@@ -1,0 +1,17 @@
+# Application configuration
+rpc:
+    listen: tcp://127.0.0.1:6001
+
+app:
+    command: "php client.php"
+    env:
+        DEBUG: true
+
+# Workflow and activity mesh service
+temporal:
+    address: "localhost:7233"
+    activities:
+      numWorkers: 4
+
+logs:
+    mode: development

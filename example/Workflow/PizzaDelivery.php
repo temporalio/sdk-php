@@ -23,22 +23,44 @@ class PizzaDelivery
     /** @WorkflowMethod(name="PizzaDelivery") */
     public function handler()
     {
-        dump('BEGIN');
         $result = yield from Coroutine::cooperative([
-            $this->test('AAAAAAAA'),
-            $this->test('BBBBBBBB'),
+            $this->test('FIRST','Cyril'),
+            $this->test('SECOND','Antony'),
+            $this->test2('THIRD','Bob'),
         ]);
+
+        dump($result);
+
+        /**
+         * ['FIRST: cyril from a from b', 'SECOND: antony from a from b']
+         */
 
         return 42;
     }
 
-    private function test($value)
+    private function test($index, $value)
     {
-        yield Workflow::activity(ExampleActivity::class)
+        // Cyril from a
+        // Antony from a
+        $a = yield Workflow::activity(ExampleActivity::class)
             ->a($value)
         ;
-        yield Workflow::activity(ExampleActivity::class)
+
+        // cyril from b
+        // antony from b
+        $b = yield Workflow::activity(ExampleActivity::class)
             ->b($value)
+        ;
+
+        // FIRST: cyril from a from b
+        // SECOND: antony from a from b
+        return $index .': '. $a . $b;
+    }
+
+    private function test2($index, $value)
+    {
+        return yield Workflow::activity(ExampleActivity::class)
+            ->a($value)
         ;
     }
 

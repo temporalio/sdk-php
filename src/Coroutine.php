@@ -29,8 +29,9 @@ final class Coroutine
         $result = [];
 
         while (\count($coroutines)) {
-            foreach ($coroutines as $index => $generator) {
+            $promises = [];
 
+            foreach ($coroutines as $index => $generator) {
                 if (! $generator instanceof \Generator) {
                     throw new \InvalidArgumentException(\vsprintf(self::ERROR_INVALID_ARGUMENT, [
                         __METHOD__,
@@ -44,9 +45,15 @@ final class Coroutine
                     continue;
                 }
 
-                $generator->send(yield $generator->key() => $generator->current());
+                $promises[$index] = $generator->current();
+            }
+
+            foreach (yield Promise::all($promises) as $index => $current) {
+                $coroutines[$index]->send($current);
             }
         }
+
+        \ksort($result);
 
         return $result;
     }

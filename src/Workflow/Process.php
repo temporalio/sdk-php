@@ -12,8 +12,8 @@ declare(strict_types=1);
 namespace Temporal\Client\Workflow;
 
 use React\Promise\ExtendedPromiseInterface;
+use React\Promise\PromiseInterface;
 use Temporal\Client\Workflow;
-use Temporal\Client\Workflow\WorkflowDeclarationInterface;
 
 final class Process
 {
@@ -95,20 +95,36 @@ final class Process
             return;
         }
 
-        /** @var ExtendedPromiseInterface $promise */
-        $promise = $this->generator->current();
+        /** @var ExtendedPromiseInterface|\Generator $current */
+        $current = $this->generator->current();
 
+        switch (true) {
+            case $current instanceof PromiseInterface:
+                $this->nextPromise($current);
+                break;
+
+            case $current instanceof \Generator:
+                // TODO: inject coroutine process
+
+            default:
+                $this->generator->send($current);
+        }
+    }
+
+    /**
+     * @param PromiseInterface $promise
+     */
+    private function nextPromise(PromiseInterface $promise): void
+    {
         $promise
             ->otherwise(function (\Throwable $e) {
                 $this->generator->throw($e);
             })
-            ->then(function (array $result = null) {
-                $value = is_array($result) ? $result[0] : null;
-
-                $this->generator->send($value);
+            ->then(function ($result) {
+                $this->generator->send($result);
                 $this->next();
 
-                return $value;
+                return $result;
             });
     }
 }
