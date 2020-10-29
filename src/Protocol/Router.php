@@ -13,11 +13,8 @@ namespace Temporal\Client\Protocol;
 
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
-use React\Promise\RejectedPromise;
 use Temporal\Client\Protocol\Command\ErrorResponse;
 use Temporal\Client\Protocol\Command\RequestInterface;
-use Temporal\Client\Protocol\Command\ResponseInterface;
-use Temporal\Client\Protocol\Command\SuccessResponse;
 use Temporal\Client\Protocol\Router\RouteInterface;
 
 use function React\Promise\reject;
