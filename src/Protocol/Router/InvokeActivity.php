@@ -48,7 +48,7 @@ final class InvokeActivity extends Route
         $handler = $declaration->getHandler();
 
         try {
-            return $handler($context, ...$context->getArguments());
+            return $handler(...$context->getArguments());
         } finally {
             Activity::setCurrentContext(null);
         }

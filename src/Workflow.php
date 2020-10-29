@@ -31,14 +31,6 @@ use Temporal\Client\Workflow\WorkflowContextInterface;
  * @method static PromiseInterface complete(mixed $result = null)
  * @method static PromiseInterface executeActivity(string $class, array $args, array|ActivityOptions $options = null)
  * @method static PromiseInterface timer(string|int|float|\DateInterval $interval)
- *
- * @method static PromiseInterface all(PromiseInterface[]|mixed[] $promises)
- * @method static PromiseInterface any(PromiseInterface[]|mixed[] $promises)
- * @method static PromiseInterface some(PromiseInterface[]|mixed[] $promises, int $count)
- * @method static PromiseInterface map(PromiseInterface[]|mixed[] $promises, callable $map)
- * @method static PromiseInterface reduce(PromiseInterface[]|mixed[] $promises, callable $reduce, mixed $initial = null)
- *
- * @method static \Generator cooperative(\Generator[]|mixed[] $generators)
  */
 final class Workflow
 {

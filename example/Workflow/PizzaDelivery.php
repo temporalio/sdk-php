@@ -12,24 +12,18 @@ declare(strict_types=1);
 namespace App\Workflow;
 
 use App\Activity\ExampleActivity;
+use Temporal\Client\Coroutine;
+use Temporal\Client\Promise;
 use Temporal\Client\Workflow;
 use Temporal\Client\Workflow\Meta\QueryMethod;
 use Temporal\Client\Workflow\Meta\SignalMethod;
 use Temporal\Client\Workflow\Meta\WorkflowMethod;
-use Temporal\Client\Workflow\WorkflowContextInterface;
 
 class PizzaDelivery
 {
     /** @WorkflowMethod(name="PizzaDelivery") */
-    public function handler(WorkflowContextInterface $ctx): iterable
+    public function handler(): iterable
     {
-        $activity = $ctx->activity(ExampleActivity::class);
-
-        yield $activity->doSomething(42);
-        yield $activity->doSomethingElse();
-
-        dump(Workflow::now()->format(\DateTime::RFC3339));
-
         return 42;
     }
 

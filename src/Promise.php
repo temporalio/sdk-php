@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Worker\Support;
+namespace Temporal\Client;
 
 use JetBrains\PhpStorm\Pure;
 use React\Promise\PromiseInterface;
@@ -24,7 +24,7 @@ use function React\Promise\some;
  * @psalm-type PromiseMapCallback = callable(mixed $value): mixed
  * @psalm-type PromiseReduceCallback = callable(mixed $value): mixed
  */
-trait PromiseAwareTrait
+final class Promise
 {
     /**
      * Returns a promise that will resolve only once all the items
@@ -35,9 +35,9 @@ trait PromiseAwareTrait
      * @param PromiseInterface[]|mixed[] $promises
      * @return PromiseInterface
      */
-    public function all(iterable $promises): PromiseInterface
+    public static function all(iterable $promises): PromiseInterface
     {
-        return all($this->iterableToArray($promises));
+        return all([...$promises]);
     }
 
     /**
@@ -54,9 +54,9 @@ trait PromiseAwareTrait
      * @param PromiseInterface[]|mixed[] $promises
      * @return PromiseInterface
      */
-    public function any(iterable $promises): PromiseInterface
+    public static function any(iterable $promises): PromiseInterface
     {
-        return any($this->iterableToArray($promises));
+        return any([...$promises]);
     }
 
     /**
@@ -77,9 +77,9 @@ trait PromiseAwareTrait
      * @param int $count
      * @return PromiseInterface
      */
-    public function some(iterable $promises, int $count): PromiseInterface
+    public static function some(iterable $promises, int $count): PromiseInterface
     {
-        return some($this->iterableToArray($promises), $count);
+        return some([...$promises], $count);
     }
 
     /**
@@ -95,9 +95,9 @@ trait PromiseAwareTrait
      * @param callable $map
      * @return PromiseInterface
      */
-    public function map(iterable $promises, callable $map): PromiseInterface
+    public static function map(iterable $promises, callable $map): PromiseInterface
     {
-        return map($this->iterableToArray($promises), $map);
+        return map([...$promises], $map);
     }
 
     /**
@@ -112,18 +112,8 @@ trait PromiseAwareTrait
      * @param mixed $initial
      * @return PromiseInterface
      */
-    public function reduce(iterable $promises, callable $reduce, $initial = null): PromiseInterface
+    public static function reduce(iterable $promises, callable $reduce, $initial = null): PromiseInterface
     {
-        return reduce($this->iterableToArray($promises), $reduce, $initial);
-    }
-
-    /**
-     * @param array|\Traversable|iterable $items
-     * @return array
-     */
-    #[Pure]
-    private function iterableToArray(iterable $items): array
-    {
-        return $items instanceof \Traversable ? \iterator_to_array($items, false) : $items;
+        return reduce([...$promises], $reduce, $initial);
     }
 }

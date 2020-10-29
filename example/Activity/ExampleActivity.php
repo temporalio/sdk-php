@@ -16,14 +16,14 @@ use Temporal\Client\Activity\Meta\ActivityMethod;
 class ExampleActivity
 {
     /** @ActivityMethod() */
-    public function doSomething($value)
+    public function a($value)
     {
-        return 42;
+        return $value;
     }
 
     /** @ActivityMethod() */
-    public function doSomethingElse()
+    public function b($value)
     {
-        return 42;
+        return $value;
     }
 }
