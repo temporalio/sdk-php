@@ -59,6 +59,7 @@ final class RunningWorkflows
         }
 
         Workflow::setCurrentContext(null);
+
         unset($this->processes[$runId]);
 
         $context = $process->getContext();

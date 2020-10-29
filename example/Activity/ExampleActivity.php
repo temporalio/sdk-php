@@ -18,6 +18,7 @@ class ExampleActivity
     /** @ActivityMethod() */
     public function a($value)
     {
+        sleep(1);
         return $value . ' from ' . __METHOD__;
     }
 

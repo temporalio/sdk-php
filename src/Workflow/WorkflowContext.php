@@ -17,6 +17,7 @@ use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Protocol\Command\RequestInterface;
 use Temporal\Client\Worker\FactoryInterface;
 use Temporal\Client\Worker\Worker;
+use Temporal\Client\Workflow;
 use Temporal\Client\Workflow\Command\CompleteWorkflow;
 use Temporal\Client\Workflow\Command\ExecuteActivity;
 use Temporal\Client\Workflow\Command\NewTimer;
@@ -192,7 +193,7 @@ final class WorkflowContext implements WorkflowContextInterface
 
         return $client->request($request)
             ->then($then, $then)
-            ;
+        ;
     }
 
     /**

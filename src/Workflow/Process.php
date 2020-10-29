@@ -89,7 +89,7 @@ final class Process
             throw new \LogicException('Workflow process is not running');
         }
 
-        if (!$this->generator->valid()) {
+        if (! $this->generator->valid()) {
             $this->context->complete($this->generator->getReturn());
 
             return;
@@ -118,9 +118,11 @@ final class Process
     {
         $promise
             ->otherwise(function (\Throwable $e) {
+                Workflow::setCurrentContext($this->getContext());
                 $this->generator->throw($e);
             })
             ->then(function ($result) {
+                Workflow::setCurrentContext($this->getContext());
                 $this->generator->send($result);
                 $this->next();
 
