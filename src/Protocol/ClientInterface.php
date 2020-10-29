@@ -24,7 +24,7 @@ interface ClientInterface
 
     /**
      * @param int $id
-     * @return bool
+     * @return void
      */
-    public function cancel(int $id): bool;
+    public function cancel(int $id): void;
 }

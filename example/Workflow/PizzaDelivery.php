@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Workflow;
 
 use App\Activity\ExampleActivity;
+use Temporal\Client\Coroutine;
 use Temporal\Client\Workflow;
 use Temporal\Client\Workflow\Meta\QueryMethod;
 use Temporal\Client\Workflow\Meta\SignalMethod;
@@ -22,7 +23,23 @@ class PizzaDelivery
     /** @WorkflowMethod(name="PizzaDelivery") */
     public function handler()
     {
+        dump('BEGIN');
+        $result = yield from Coroutine::cooperative([
+            $this->test('AAAAAAAA'),
+            $this->test('BBBBBBBB'),
+        ]);
+
         return 42;
+    }
+
+    private function test($value)
+    {
+        yield Workflow::activity(ExampleActivity::class)
+            ->a($value)
+        ;
+        yield Workflow::activity(ExampleActivity::class)
+            ->b($value)
+        ;
     }
 
     /** @QueryMethod() */

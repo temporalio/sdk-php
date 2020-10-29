@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Protocol;
 
-interface ProtocolInterface extends ClientInterface, ServerInterface
+interface ProtocolInterface extends ClientInterface
 {
     /**
      * @param string $request

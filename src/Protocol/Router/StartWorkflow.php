@@ -65,11 +65,11 @@ final class StartWorkflow extends Route
 
         $process->start($context->getPayload());
 
-        try {
-            $resolver->resolve(['wid' => $context->getId(), 'rid' => $context->getRunId()]);
-        } finally {
-            $process->next();
-        }
+        dump('STARTED');
+
+        $resolver->resolve(['wid' => $context->getId(), 'rid' => $context->getRunId()]);
+
+        $process->next();
     }
 
     /**
