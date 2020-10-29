@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client;
 
 use React\Promise\Deferred;
+use React\Promise\PromiseInterface;
 use Spiral\RoadRunner\Worker as RoadRunnerWorker;
 use Temporal\Client\Meta\ReaderAwareInterface;
 use Temporal\Client\Meta\ReaderAwareTrait;
@@ -92,9 +93,9 @@ final class WorkerFactory implements FactoryInterface, ReaderAwareInterface
     /**
      * @param RequestInterface $request
      * @param array $headers
-     * @return ResponseInterface
+     * @return PromiseInterface
      */
-    private function dispatch(RequestInterface $request, array $headers): ResponseInterface
+    private function dispatch(RequestInterface $request, array $headers): PromiseInterface
     {
         if (! isset($headers[self::CTX_TASK_QUEUE])) {
             return $this->router->dispatch($request, $headers);

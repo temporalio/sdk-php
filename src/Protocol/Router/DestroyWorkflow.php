@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Protocol\Router;
 
+use React\Promise\Deferred;
 use Temporal\Client\Worker\Worker;
 use Temporal\Client\Workflow\RunningWorkflows;
 
@@ -44,11 +45,9 @@ class DestroyWorkflow extends Route
     }
 
     /**
-     * @param array $payload
-     * @param array $headers
-     * @return array
+     * {@inheritDoc}
      */
-    public function handle(array $payload, array $headers): array
+    public function handle(array $payload, array $headers, Deferred $resolver): void
     {
         $workflowRunId = $payload['rid'] ?? $headers['rid'] ?? null;
 
@@ -58,6 +57,6 @@ class DestroyWorkflow extends Route
 
         $requests = $this->running->kill($workflowRunId, $this->worker->getClient());
 
-        return ['rid' => $workflowRunId, 'cancelRequests' => $requests];
+        $resolver->resolve(['rid' => $workflowRunId, 'cancelRequests' => $requests]);
     }
 }

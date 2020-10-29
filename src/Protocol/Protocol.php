@@ -19,6 +19,7 @@ use Temporal\Client\Protocol\Command\ErrorResponse;
 use Temporal\Client\Protocol\Command\ErrorResponseInterface;
 use Temporal\Client\Protocol\Command\RequestInterface;
 use Temporal\Client\Protocol\Command\ResponseInterface;
+use Temporal\Client\Protocol\Command\SuccessResponse;
 use Temporal\Client\Protocol\Command\SuccessResponseInterface;
 use Temporal\Client\Protocol\Queue\QueueInterface;
 use Temporal\Client\Protocol\Queue\SplQueue;
@@ -132,8 +133,6 @@ final class Protocol implements ProtocolInterface
         }
     }
 
-
-
     /**
      * @param RequestInterface $request
      * @param array $headers
@@ -141,7 +140,16 @@ final class Protocol implements ProtocolInterface
     private function dispatchRequest(RequestInterface $request, array $headers): void
     {
         try {
-            $this->sendDefer(($this->onRequest)($request, $headers));
+            $then = function ($payload) use ($request): void {
+                $this->sendDefer(new SuccessResponse($payload, $request->getId()));
+            };
+
+            $otherwise = function (\Throwable $e) use ($request): void {
+                $this->sendDefer(ErrorResponse::fromException($e, $request->getId()));
+            };
+
+            $promise = ($this->onRequest)($request, $headers);
+            $promise->then($then, $otherwise);
         } catch (\Throwable $e) {
             $this->sendDefer(ErrorResponse::fromException($e, $request->getId()));
         }

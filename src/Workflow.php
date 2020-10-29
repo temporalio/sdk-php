@@ -14,7 +14,6 @@ namespace Temporal\Client;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Workflow\ActivityProxy;
-use Temporal\Client\Workflow\Process;
 use Temporal\Client\Workflow\WorkflowContextInterface;
 
 /**

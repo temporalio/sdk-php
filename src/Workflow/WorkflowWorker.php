@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Workflow;
 
+use React\Promise\PromiseInterface;
 use Temporal\Client\Meta\ReaderInterface;
 use Temporal\Client\Protocol\Command\RequestInterface;
 use Temporal\Client\Protocol\Command\ResponseInterface;
@@ -73,7 +74,7 @@ final class WorkflowWorker implements WorkflowRepositoryInterface, DispatcherInt
     /**
      * {@inheritDoc}
      */
-    public function dispatch(RequestInterface $request, array $headers = []): ResponseInterface
+    public function dispatch(RequestInterface $request, array $headers = []): PromiseInterface
     {
         if (isset($headers['rid'])) {
             $this->runId = $headers['rid'];

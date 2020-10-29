@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Protocol\Router;
 
+use React\Promise\Deferred;
 use Temporal\Client\Workflow\RunningWorkflows;
 
 final class InvokeSignalMethod extends Route
@@ -48,7 +49,7 @@ final class InvokeSignalMethod extends Route
     /**
      * {@inheritDoc}
      */
-    public function handle(array $payload, array $headers)
+    public function handle(array $payload, array $headers, Deferred $resolver): void
     {
         $this->assertArguments($payload);
 
@@ -72,7 +73,9 @@ final class InvokeSignalMethod extends Route
             throw new \LogicException(\sprintf(self::ERROR_SIGNAL_NOT_FOUND, $payload['name']));
         }
 
-        $handler(...($payload['args'] ?? []));
+        $resolver->resolve(
+            $handler(...$payload['args'])
+        );
     }
 
     private function assertArguments(array $payload): void

@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Protocol\Router;
 
+use React\Promise\Deferred;
 use Temporal\Client\Worker\Declaration\CollectionInterface;
 use Temporal\Client\Worker\Worker;
 use Temporal\Client\Workflow\RunningWorkflows;
@@ -54,7 +55,7 @@ final class StartWorkflow extends Route
     /**
      * {@inheritDoc}
      */
-    public function handle(array $payload, array $headers): array
+    public function handle(array $payload, array $headers, Deferred $resolver): void
     {
         $context = new WorkflowContext($this->worker, $this->running, $payload);
 
@@ -65,7 +66,7 @@ final class StartWorkflow extends Route
         $process->start($context->getPayload());
 
         try {
-            return ['wid' => $context->getId(), 'rid' => $context->getRunId()];
+            $resolver->resolve(['wid' => $context->getId(), 'rid' => $context->getRunId()]);
         } finally {
             $process->next();
         }

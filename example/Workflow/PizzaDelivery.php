@@ -12,8 +12,6 @@ declare(strict_types=1);
 namespace App\Workflow;
 
 use App\Activity\ExampleActivity;
-use Temporal\Client\Coroutine;
-use Temporal\Client\Promise;
 use Temporal\Client\Workflow;
 use Temporal\Client\Workflow\Meta\QueryMethod;
 use Temporal\Client\Workflow\Meta\SignalMethod;
@@ -22,7 +20,7 @@ use Temporal\Client\Workflow\Meta\WorkflowMethod;
 class PizzaDelivery
 {
     /** @WorkflowMethod(name="PizzaDelivery") */
-    public function handler(): iterable
+    public function handler()
     {
         return 42;
     }

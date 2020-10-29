@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Protocol\Router;
 
+use React\Promise\Deferred;
 use Temporal\Client\Activity\ActivityDeclarationInterface;
 use Temporal\Client\Worker\PoolInterface;
 use Temporal\Client\Worker\WorkerInterface;
@@ -34,7 +35,7 @@ final class GetWorkerInfo extends Route
     /**
      * {@inheritDoc}
      */
-    public function handle(array $payload, array $headers): array
+    public function handle(array $payload, array $headers, Deferred $resolver): void
     {
         $result = [];
 
@@ -42,7 +43,7 @@ final class GetWorkerInfo extends Route
             $result[] = $this->workerToArray($worker);
         }
 
-        return $result;
+        $resolver->resolve($result);
     }
 
     /**

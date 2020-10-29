@@ -11,15 +11,15 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Protocol;
 
+use React\Promise\PromiseInterface;
 use Temporal\Client\Protocol\Command\RequestInterface;
-use Temporal\Client\Protocol\Command\ResponseInterface;
 
 interface DispatcherInterface
 {
     /**
      * @param RequestInterface $request
      * @param array $headers
-     * @return ResponseInterface
+     * @return PromiseInterface
      */
-    public function dispatch(RequestInterface $request, array $headers = []): ResponseInterface;
+    public function dispatch(RequestInterface $request, array $headers): PromiseInterface;
 }

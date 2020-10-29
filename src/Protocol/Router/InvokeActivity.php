@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Protocol\Router;
 
+use React\Promise\Deferred;
+use Temporal\Client\Activity;
 use Temporal\Client\Activity\ActivityContext;
 use Temporal\Client\Activity\ActivityContextInterface;
 use Temporal\Client\Activity\ActivityDeclarationInterface;
@@ -36,7 +38,7 @@ final class InvokeActivity extends Route
     /**
      * {@inheritDoc}
      */
-    public function handle(array $payload, array $headers)
+    public function handle(array $payload, array $headers, Deferred $resolver): void
     {
         $context = new ActivityContext($payload);
 
@@ -47,7 +49,9 @@ final class InvokeActivity extends Route
         $handler = $declaration->getHandler();
 
         try {
-            return $handler(...$context->getArguments());
+            $resolver->resolve(
+                $handler(...$context->getArguments())
+            );
         } finally {
             Activity::setCurrentContext(null);
         }

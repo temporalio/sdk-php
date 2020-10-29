@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Worker;
 
+use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityDeclarationInterface;
 use Temporal\Client\Activity\ActivityWorker;
 use Temporal\Client\Meta\ReaderInterface;
@@ -174,7 +175,7 @@ class Worker implements WorkerInterface
     /**
      * {@inheritDoc}
      */
-    public function dispatch(RequestInterface $request, array $headers = []): ResponseInterface
+    public function dispatch(RequestInterface $request, array $headers = []): PromiseInterface
     {
         // Intercept headers
         if (isset($headers['tickTime'])) {

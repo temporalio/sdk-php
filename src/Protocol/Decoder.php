@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Protocol;
 
-use Temporal\Client\Protocol\Command\CommandInterface;
 use Temporal\Client\Protocol\Command\ErrorResponse;
 use Temporal\Client\Protocol\Command\ErrorResponseInterface;
 use Temporal\Client\Protocol\Command\Request;
@@ -43,14 +42,8 @@ final class Decoder
                     $result[] = self::parseErrorResponse($command);
                     break;
 
-                case isset($command['result']) || \array_key_exists('result', $command):
-                    $result[] = self::parseSuccessResponse($command);
-                    break;
-
                 default:
-                    throw new \InvalidArgumentException('Unrecognized command type: ' .
-                        Json::encode($command, \JSON_PRETTY_PRINT)
-                    );
+                    $result[] = self::parseSuccessResponse($command);
             }
         }
 

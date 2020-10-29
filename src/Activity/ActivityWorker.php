@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Activity;
 
+use React\Promise\PromiseInterface;
 use Temporal\Client\Meta\ReaderInterface;
 use Temporal\Client\Protocol\Command\RequestInterface;
 use Temporal\Client\Protocol\Command\ResponseInterface;
@@ -54,7 +55,7 @@ class ActivityWorker implements ActivityRepositoryInterface, DispatcherInterface
     /**
      * {@inheritDoc}
      */
-    public function dispatch(RequestInterface $request, array $headers = []): ResponseInterface
+    public function dispatch(RequestInterface $request, array $headers = []): PromiseInterface
     {
         return $this->router->dispatch($request, $headers);
     }

@@ -11,11 +11,16 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Protocol;
 
+use React\Promise\Deferred;
+use React\Promise\PromiseInterface;
+use React\Promise\RejectedPromise;
 use Temporal\Client\Protocol\Command\ErrorResponse;
 use Temporal\Client\Protocol\Command\RequestInterface;
 use Temporal\Client\Protocol\Command\ResponseInterface;
 use Temporal\Client\Protocol\Command\SuccessResponse;
 use Temporal\Client\Protocol\Router\RouteInterface;
+
+use function React\Promise\reject;
 
 final class Router implements RouterInterface
 {
@@ -66,22 +71,24 @@ final class Router implements RouterInterface
     /**
      * {@inheritDoc}
      */
-    public function dispatch(RequestInterface $request, array $headers = []): ResponseInterface
+    public function dispatch(RequestInterface $request, array $headers = []): PromiseInterface
     {
         $route = $this->match($request);
 
         if ($route === null) {
             $error = \sprintf(self::ERROR_ROUTE_NOT_FOUND, $request->getName());
 
-            return ErrorResponse::fromException(new \BadMethodCallException($error));
+            return reject(ErrorResponse::fromException(new \BadMethodCallException($error)));
         }
+
+        $deferred = new Deferred();
 
         try {
-            $result = $route->handle($request->getParams(), $headers);
-
-            return new SuccessResponse($result, $request->getId());
+            $route->handle($request->getParams(), $headers, $deferred);
         } catch (\Throwable $e) {
-            return ErrorResponse::fromException($e, $request->getId());
+            $deferred->reject(ErrorResponse::fromException($e, $request->getId()));
         }
+
+        return $deferred->promise();
     }
 }

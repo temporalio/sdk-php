@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Protocol\Router;
 
-use Temporal\Client\Protocol\DispatcherInterface;
+use React\Promise\Deferred;
 
 interface RouteInterface
 {
@@ -23,7 +23,8 @@ interface RouteInterface
     /**
      * @param array $payload
      * @param array $headers
-     * @return mixed
+     * @param Deferred $resolver
+     * @return void
      */
-    public function handle(array $payload, array $headers);
+    public function handle(array $payload, array $headers, Deferred $resolver): void;
 }
