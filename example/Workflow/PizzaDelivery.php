@@ -21,21 +21,16 @@ use Temporal\Client\Workflow\Meta\WorkflowMethod;
 class PizzaDelivery
 {
     /** @WorkflowMethod(name="PizzaDelivery") */
-    public function handler()
+    public function handler(Workflow\WorkflowContextInterface $ctx, $input)
     {
+
         $result = yield from Coroutine::cooperative([
             $this->test('FIRST','Cyril'),
             $this->test('SECOND','Antony'),
-            $this->test2('THIRD','Bob'),
+            $this->test2('THIRD', $input),
         ]);
 
-        dump($result);
-
-        /**
-         * ['FIRST: cyril from a from b', 'SECOND: antony from a from b']
-         */
-
-        return 42;
+        return $result;
     }
 
     private function test($index, $value)
