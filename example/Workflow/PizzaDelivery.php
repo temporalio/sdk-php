@@ -16,7 +16,7 @@ use Temporal\Client\Workflow;
 use Temporal\Client\Workflow\Meta\QueryMethod;
 use Temporal\Client\Workflow\Meta\SignalMethod;
 use Temporal\Client\Workflow\Meta\WorkflowMethod;
-use Temporal\Client\Workflow\Runtime\WorkflowContextInterface;
+use Temporal\Client\Workflow\WorkflowContextInterface;
 
 class PizzaDelivery
 {

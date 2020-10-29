@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client\Protocol\Router;
 
 use Temporal\Client\Worker\Worker;
-use Temporal\Client\Workflow\Runtime\RunningWorkflows;
+use Temporal\Client\Workflow\RunningWorkflows;
 
 class DestroyWorkflow extends Route
 {

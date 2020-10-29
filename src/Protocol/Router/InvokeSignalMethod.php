@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Protocol\Router;
 
-use Temporal\Client\Workflow\Runtime\RunningWorkflows;
+use Temporal\Client\Workflow\RunningWorkflows;
 
 final class InvokeSignalMethod extends Route
 {

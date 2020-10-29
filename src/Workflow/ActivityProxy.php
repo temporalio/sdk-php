@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Workflow\Runtime;
+namespace Temporal\Client\Workflow;
 
 use React\Promise\PromiseInterface;
 

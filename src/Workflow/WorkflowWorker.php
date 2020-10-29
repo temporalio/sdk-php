@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Client\Workflow;
 
 use Temporal\Client\Meta\ReaderInterface;
-use Temporal\Client\Protocol\ClientInterface;
 use Temporal\Client\Protocol\Command\RequestInterface;
 use Temporal\Client\Protocol\Command\ResponseInterface;
 use Temporal\Client\Protocol\DispatcherInterface;
@@ -20,9 +19,7 @@ use Temporal\Client\Protocol\Router;
 use Temporal\Client\Protocol\RouterInterface;
 use Temporal\Client\Worker\Declaration\Repository\WorkflowRepositoryInterface;
 use Temporal\Client\Worker\Declaration\Repository\WorkflowRepositoryTrait;
-use Temporal\Client\Worker\Uuid4;
 use Temporal\Client\Worker\Worker;
-use Temporal\Client\Workflow\Runtime\RunningWorkflows;
 
 /**
  * @noinspection PhpSuperClassIncompatibleWithInterfaceInspection

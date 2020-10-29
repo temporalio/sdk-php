@@ -17,7 +17,7 @@ parameter to the Activity.
 namespace Example;
 
 use Temporal\Client\Workflow\Meta\WorkflowMethod;
-use Temporal\Client\Workflow\Runtime\WorkflowContextInterface;
+use Temporal\Client\Workflow\WorkflowContextInterface;
 
 final class FileProcessingWorkflow
 {
@@ -126,7 +126,7 @@ namespace Example;
 
 use React\Promise\PromiseInterface;
 use Temporal\Client\Workflow\Meta\WorkflowMethod;
-use Temporal\Client\Workflow\Runtime\WorkflowContextInterface;
+use Temporal\Client\Workflow\WorkflowContextInterface;
 
 final class FileProcessingWorkflow
 {

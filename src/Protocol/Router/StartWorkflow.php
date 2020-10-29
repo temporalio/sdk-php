@@ -11,16 +11,11 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Protocol\Router;
 
-use Temporal\Client\Protocol\ClientInterface;
-use Temporal\Client\Protocol\Command\RequestInterface;
-use Temporal\Client\Protocol\Command\ResponseInterface;
-use Temporal\Client\Protocol\Command\SuccessResponse;
-use Temporal\Client\Protocol\ProtocolInterface;
 use Temporal\Client\Worker\Declaration\CollectionInterface;
 use Temporal\Client\Worker\Worker;
-use Temporal\Client\Workflow\Runtime\RunningWorkflows;
-use Temporal\Client\Workflow\Runtime\WorkflowContext;
-use Temporal\Client\Workflow\Runtime\WorkflowContextInterface;
+use Temporal\Client\Workflow\RunningWorkflows;
+use Temporal\Client\Workflow\WorkflowContext;
+use Temporal\Client\Workflow\WorkflowContextInterface;
 use Temporal\Client\Workflow\WorkflowDeclarationInterface;
 
 final class StartWorkflow extends Route
