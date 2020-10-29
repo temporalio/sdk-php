@@ -69,7 +69,7 @@ final class Process
 
         $handler = $this->declaration->getHandler();
 
-        $result = $handler($this->context, $args);
+        $result = $handler($this->context, ...$args);
 
         if ($result instanceof \Generator) {
             $this->generator = $result;

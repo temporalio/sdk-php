@@ -55,7 +55,7 @@ final class WorkflowContext implements WorkflowContextInterface
     /**
      * @var string
      */
-    private const KEY_PAYLOAD = 'payload';
+    private const KEY_ARGUMENTS = 'args';
 
     /**
      * @psalm-var WorkflowContextParams
@@ -126,9 +126,9 @@ final class WorkflowContext implements WorkflowContextInterface
     /**
      * @return array
      */
-    public function getPayload(): array
+    public function getArguments(): array
     {
-        return (array)($this->params[self::KEY_PAYLOAD] ?? []);
+        return (array)($this->params[self::KEY_ARGUMENTS] ?? []);
     }
 
     /**

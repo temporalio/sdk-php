@@ -63,9 +63,7 @@ final class StartWorkflow extends Route
 
         $process = $this->running->run($context, $this->findDeclarationOrFail($context));
 
-        $process->start($context->getPayload());
-
-        dump('STARTED');
+        $process->start($context->getArguments());
 
         $resolver->resolve(['wid' => $context->getId(), 'rid' => $context->getRunId()]);
 

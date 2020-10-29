@@ -43,5 +43,5 @@ interface WorkflowInfoInterface
      * @return array
      */
     #[Pure]
-    public function getPayload(): array;
+    public function getArguments(): array;
 }
