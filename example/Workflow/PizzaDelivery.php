@@ -23,7 +23,7 @@ class PizzaDelivery
     /** @WorkflowMethod(name="PizzaDelivery") */
     public function handler(Workflow\WorkflowContextInterface $ctx, $input)
     {
-        return yield from Coroutine::cooperative([
+        yield from Coroutine::cooperative([
             $this->test('FIRST','Cyril'),
             $this->test('SECOND','Antony'),
             $this->test2('THIRD', $input),

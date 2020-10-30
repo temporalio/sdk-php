@@ -14,8 +14,8 @@ namespace Temporal\Client\Protocol\Router;
 use React\Promise\Deferred;
 use Temporal\Client\Activity;
 use Temporal\Client\Activity\ActivityContext;
-use Temporal\Client\Activity\ActivityContextInterface;
 use Temporal\Client\Activity\ActivityDeclarationInterface;
+use Temporal\Client\Activity\ActivityInfo;
 use Temporal\Client\Worker\Declaration\CollectionInterface;
 
 final class InvokeActivity extends Route
@@ -40,15 +40,14 @@ final class InvokeActivity extends Route
      */
     public function handle(array $payload, array $headers, Deferred $resolver): void
     {
-        $context = new ActivityContext($payload);
+        $info = ($context = new ActivityContext($payload))->getInfo();
 
-        $declaration = $this->findDeclarationOrFail($context);
-
-        Activity::setCurrentContext($context);
-
-        $handler = $declaration->getHandler();
+        $handler = $this->findDeclarationOrFail($info)
+            ->getHandler()
+        ;
 
         try {
+            Activity::setCurrentContext($context);
             $resolver->resolve(
                 $handler(...$context->getArguments())
             );
@@ -58,16 +57,16 @@ final class InvokeActivity extends Route
     }
 
     /**
-     * @param ActivityContextInterface $context
+     * @param ActivityInfo $info
      * @return ActivityDeclarationInterface
      */
-    private function findDeclarationOrFail(ActivityContextInterface $context): ActivityDeclarationInterface
+    private function findDeclarationOrFail(ActivityInfo $info): ActivityDeclarationInterface
     {
         /** @var ActivityDeclarationInterface $activity */
-        $activity = $this->activities->find($context->getName());
+        $activity = $this->activities->find($info->type->name);
 
         if ($activity === null) {
-            $error = \sprintf('Activity with the specified name %s was not registered', $context->getName());
+            $error = \sprintf('Activity with the specified name %s was not registered', $info->type->name);
             throw new \LogicException($error);
         }
 

@@ -15,13 +15,12 @@ use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Workflow\ActivityProxy;
 use Temporal\Client\Workflow\WorkflowContextInterface;
+use Temporal\Client\Workflow\WorkflowInfo;
 
 /**
- * @method static string getId()
- * @method static string getName()
- * @method static string getRunId()
- * @method static array getPayload()
- * @method static string getTaskQueue()
+ * @method static string getProcessId()
+ * @method static array getArguments()
+ * @method static WorkflowInfo getInfo()
  *
  * @method static \DateTimeInterface now()
  * @method static int[] getSendRequestIdentifiers()
@@ -54,18 +53,6 @@ final class Workflow
     }
 
     /**
-     * @return WorkflowContextInterface
-     */
-    private static function getCurrentContext(): WorkflowContextInterface
-    {
-        if (self::$ctx === null) {
-            throw new \RuntimeException(self::ERROR_NO_WORKFLOW_CONTEXT);
-        }
-
-        return self::$ctx;
-    }
-
-    /**
      * @param string $name
      * @param array $arguments
      * @return mixed
@@ -75,5 +62,17 @@ final class Workflow
         $context = self::getCurrentContext();
 
         return $context->$name(...$arguments);
+    }
+
+    /**
+     * @return WorkflowContextInterface
+     */
+    private static function getCurrentContext(): WorkflowContextInterface
+    {
+        if (self::$ctx === null) {
+            throw new \RuntimeException(self::ERROR_NO_WORKFLOW_CONTEXT);
+        }
+
+        return self::$ctx;
     }
 }

@@ -33,7 +33,9 @@ final class RunningWorkflows
      */
     public function run(WorkflowContextInterface $context, WorkflowDeclarationInterface $declaration): Process
     {
-        return $this->processes[$context->getRunId()] = new Process($context, $declaration);
+        $info = $context->getInfo();
+
+        return $this->processes[$info->processId] = new Process($context, $declaration);
     }
 
     /**
@@ -59,17 +61,13 @@ final class RunningWorkflows
         }
 
         Workflow::setCurrentContext(null);
-
         unset($this->processes[$runId]);
-
         $context = $process->getContext();
 
         $requests = $context->getSendRequestIdentifiers();
-
         foreach ($requests as $id) {
             $client->cancel($id);
         }
-
         return $requests;
     }
 }

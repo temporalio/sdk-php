@@ -13,8 +13,18 @@ namespace Temporal\Client\Workflow;
 
 use JetBrains\PhpStorm\Pure;
 
-interface WorkflowContextInterface extends WorkflowInfoInterface, WorkflowExecutionsInterface
+interface WorkflowContextInterface extends WorkflowExecutionsInterface
 {
+    /**
+     * @return WorkflowInfo
+     */
+    public function getInfo(): WorkflowInfo;
+
+    /**
+     * @return array
+     */
+    public function getArguments(): array;
+
     /**
      * @return \DateTimeInterface
      */

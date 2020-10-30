@@ -13,7 +13,6 @@ namespace Temporal\Client\Workflow;
 
 use Temporal\Client\Meta\ReaderInterface;
 use Temporal\Client\Worker\Declaration\HandledDeclaration;
-use Temporal\Client\Workflow\WorkflowDeclarationInterface;
 use Temporal\Client\Workflow\Meta\QueryMethod;
 use Temporal\Client\Workflow\Meta\SignalMethod;
 use Temporal\Client\Workflow\Meta\WorkflowMethod;

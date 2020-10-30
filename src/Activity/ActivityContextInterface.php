@@ -14,12 +14,12 @@ namespace Temporal\Client\Activity;
 interface ActivityContextInterface
 {
     /**
-     * @return string
-     */
-    public function getName(): string;
-
-    /**
      * @return array
      */
     public function getArguments(): array;
+
+    /**
+     * @return ActivityInfo
+     */
+    public function getInfo(): ActivityInfo;
 }

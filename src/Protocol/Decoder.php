@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Protocol;
 
+use JetBrains\PhpStorm\Pure;
 use Temporal\Client\Protocol\Command\ErrorResponse;
 use Temporal\Client\Protocol\Command\ErrorResponseInterface;
 use Temporal\Client\Protocol\Command\Request;
@@ -87,6 +88,7 @@ final class Decoder
      * @param mixed $value
      * @return bool
      */
+    #[Pure]
     private static function isUInt32($value): bool
     {
         return \is_int($value) && $value >= 0 && $value <= 2_147_483_647;

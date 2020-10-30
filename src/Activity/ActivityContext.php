@@ -14,26 +14,33 @@ namespace Temporal\Client\Activity;
 final class ActivityContext implements ActivityContextInterface
 {
     /**
+     * @var string
+     */
+    private const KEY_ARGUMENTS = 'args';
+
+    /**
+     * @var string
+     */
+    private const KEY_INFO = 'info';
+
+    /**
+     * @var ActivityInfo
+     */
+    private ActivityInfo $info;
+
+    /**
      * @var array
      */
-    private array $params;
+    private $arguments;
 
     /**
      * @param array $params
+     * @throws \Exception
      */
     public function __construct(array $params)
     {
-        $this->assertValid($params);
-
-        $this->params = $params;
-    }
-
-    /**
-     * @return string
-     */
-    public function getName(): string
-    {
-        return $this->params['name'];
+        $this->info = ActivityInfo::fromArray($params[self::KEY_INFO]);
+        $this->arguments = $params[self::KEY_ARGUMENTS] ?? [];
     }
 
     /**
@@ -41,11 +48,14 @@ final class ActivityContext implements ActivityContextInterface
      */
     public function getArguments(): array
     {
-        return $this->params['args'];
+        return $this->arguments;
     }
 
-    private function assertValid(array $params): void
+    /**
+     * @return ActivityInfo
+     */
+    public function getInfo(): ActivityInfo
     {
-        // TODO
+        return $this->info;
     }
 }

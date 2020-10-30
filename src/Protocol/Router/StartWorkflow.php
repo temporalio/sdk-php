@@ -18,6 +18,7 @@ use Temporal\Client\Workflow\RunningWorkflows;
 use Temporal\Client\Workflow\WorkflowContext;
 use Temporal\Client\Workflow\WorkflowContextInterface;
 use Temporal\Client\Workflow\WorkflowDeclarationInterface;
+use Temporal\Client\Workflow\WorkflowInfo;
 
 final class StartWorkflow extends Route
 {
@@ -57,45 +58,42 @@ final class StartWorkflow extends Route
      */
     public function handle(array $payload, array $headers, Deferred $resolver): void
     {
-        $context = new WorkflowContext($this->worker, $this->running, $payload);
+        $info = ($context = new WorkflowContext($this->worker, $this->running, $payload))->getInfo();
 
-        $this->assertNotRunning($context);
-
-        $process = $this->running->run($context, $this->findDeclarationOrFail($context));
+        $this->assertNotRunning($info);
+        $process = $this->running->run($context, $this->findDeclarationOrFail($info));
 
         $process->start($context->getArguments());
-
-        $resolver->resolve(['wid' => $context->getId(), 'rid' => $context->getRunId()]);
-
+        $resolver->resolve($info->execution);
         $process->next();
     }
 
     /**
-     * @param WorkflowContextInterface $context
+     * @param WorkflowInfo $info
      */
-    private function assertNotRunning(WorkflowContextInterface $context): void
+    private function assertNotRunning(WorkflowInfo $info): void
     {
-        $isRunning = $this->running->find($context->getRunId()) !== null;
+        $isRunning = $this->running->find($info->processId) !== null;
 
         if (! $isRunning) {
             return;
         }
 
-        $error = \sprintf('Workflow with run id %s has been already started', $context->getRunId());
+        $error = \sprintf('Workflow with run id %s has been already started', $info->processId);
         throw new \LogicException($error);
     }
 
     /**
-     * @param WorkflowContextInterface $context
+     * @param WorkflowInfo $info
      * @return WorkflowDeclarationInterface
      */
-    private function findDeclarationOrFail(WorkflowContextInterface $context): WorkflowDeclarationInterface
+    private function findDeclarationOrFail(WorkflowInfo $info): WorkflowDeclarationInterface
     {
         /** @var WorkflowDeclarationInterface $workflow */
-        $workflow = $this->workflows->find($context->getName());
+        $workflow = $this->workflows->find($info->type->name);
 
         if ($workflow === null) {
-            $error = \sprintf('Workflow with the specified name %s was not registered', $context->getName());
+            $error = \sprintf('Workflow with the specified name %s was not registered', $info->type->name);
             throw new \LogicException($error);
         }
 

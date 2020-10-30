@@ -11,13 +11,13 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Worker;
 
+use Carbon\Carbon;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityDeclarationInterface;
 use Temporal\Client\Activity\ActivityWorker;
 use Temporal\Client\Meta\ReaderInterface;
 use Temporal\Client\Protocol\ClientInterface;
 use Temporal\Client\Protocol\Command\RequestInterface;
-use Temporal\Client\Protocol\Command\ResponseInterface;
 use Temporal\Client\Worker\Env\EnvironmentInterface;
 use Temporal\Client\Workflow\WorkflowDeclarationInterface;
 use Temporal\Client\Workflow\WorkflowWorker;
@@ -179,7 +179,7 @@ class Worker implements WorkerInterface
     {
         // Intercept headers
         if (isset($headers['tickTime'])) {
-            $this->now = new \DateTime($headers['tickTime'], $this->zone);
+            $this->now = Carbon::parse($headers['tickTime'], $this->zone);
         }
 
         switch ($this->env->get()) {
