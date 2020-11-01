@@ -70,7 +70,7 @@ final class WorkflowContext implements WorkflowContextInterface
         $this->worker = $worker;
         $this->running = $running;
 
-        $this->info = WorkflowInfo::fromArray($params[self::KEY_INFO], $params['processID']);
+        $this->info = WorkflowInfo::fromArray($params[self::KEY_INFO]);
         $this->arguments = $params[self::KEY_ARGUMENTS] ?? [];
     }
 

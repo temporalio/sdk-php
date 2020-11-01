@@ -16,7 +16,6 @@ use Temporal\Client\Worker\Declaration\CollectionInterface;
 use Temporal\Client\Worker\Worker;
 use Temporal\Client\Workflow\RunningWorkflows;
 use Temporal\Client\Workflow\WorkflowContext;
-use Temporal\Client\Workflow\WorkflowContextInterface;
 use Temporal\Client\Workflow\WorkflowDeclarationInterface;
 use Temporal\Client\Workflow\WorkflowInfo;
 
@@ -73,13 +72,13 @@ final class StartWorkflow extends Route
      */
     private function assertNotRunning(WorkflowInfo $info): void
     {
-        $isRunning = $this->running->find($info->processId) !== null;
+        $isRunning = $this->running->find($info->execution->runId) !== null;
 
         if (! $isRunning) {
             return;
         }
 
-        $error = \sprintf('Workflow with run id %s has been already started', $info->processId);
+        $error = \sprintf('Workflow with run id %s has been already started', $info->execution->runId);
         throw new \LogicException($error);
     }
 

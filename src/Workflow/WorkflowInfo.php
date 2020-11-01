@@ -22,13 +22,6 @@ final class WorkflowInfo
     /**
      * @readonly
      * @psalm-allow-private-mutation
-     * @var string
-     */
-    public string $processId;
-
-    /**
-     * @readonly
-     * @psalm-allow-private-mutation
      * @var WorkflowExecution
      */
     public WorkflowExecution $execution;
@@ -130,10 +123,10 @@ final class WorkflowInfo
     /**
      * @param WorkflowExecution $workflowExecution
      * @param WorkflowType $workflowType
+     * @throws \Exception
      */
     public function __construct(WorkflowExecution $workflowExecution, WorkflowType $workflowType)
     {
-        $this->processId = Uuid4::create();
         $this->execution = $workflowExecution;
         $this->type = $workflowType;
 
@@ -146,11 +139,10 @@ final class WorkflowInfo
      * TODO throw exception in case of incorrect data
      *
      * @param array $data
-     * @param string $processId
      * @return WorkflowInfo
      * @throws \Exception
      */
-    public static function fromArray(array $data, string $processId): self
+    public static function fromArray(array $data): self
     {
         $instance = new self(
             WorkflowExecution::fromArray($data['WorkflowExecution']),
@@ -166,7 +158,6 @@ final class WorkflowInfo
         $instance->continuedExecutionRunId = $data['ContinuedExecutionRunID'] ?: null;
         $instance->searchAttributes = $data['SearchAttributes'];
         $instance->binaryChecksum = $data['BinaryChecksum'];
-        $instance->processId = $processId ?? $instance->execution->runId;
 
         if (isset($data['ParentWorkflowExecution'])) {
             $instance->parentNamespace = $data['ParentWorkflowNamespace'] ?: null;

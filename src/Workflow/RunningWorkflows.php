@@ -35,7 +35,7 @@ final class RunningWorkflows
     {
         $info = $context->getInfo();
 
-        return $this->processes[$info->processId] = new Process($context, $declaration);
+        return $this->processes[$info->execution->runId] = new Process($context, $declaration);
     }
 
     /**
