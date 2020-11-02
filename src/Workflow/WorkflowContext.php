@@ -13,6 +13,8 @@ namespace Temporal\Client\Workflow;
 
 use JetBrains\PhpStorm\ExpectedValues;
 use JetBrains\PhpStorm\Pure;
+use React\Promise\Deferred;
+use React\Promise\Promise;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Protocol\Command\RequestInterface;
@@ -60,9 +62,9 @@ final class WorkflowContext implements WorkflowContextInterface
     private array $arguments;
 
     /**
-     * @param Worker $worker
+     * @param Worker           $worker
      * @param RunningWorkflows $running
-     * @param array $params
+     * @param array            $params
      * @throws \Exception
      */
     public function __construct(Worker $worker, RunningWorkflows $running, array $params)
@@ -149,8 +151,7 @@ final class WorkflowContext implements WorkflowContextInterface
         };
 
         return $this->request($request)
-            ->then($onFulfilled, $onRejected)
-        ;
+                    ->then($onFulfilled, $onRejected);
     }
 
     /**
@@ -176,8 +177,7 @@ final class WorkflowContext implements WorkflowContextInterface
         };
 
         return $client->request($request)
-            ->then($then, $otherwise)
-        ;
+                      ->then($then, $otherwise);
     }
 
     /**
@@ -200,6 +200,9 @@ final class WorkflowContext implements WorkflowContextInterface
         $options = null
     ): PromiseInterface {
         $request = new ExecuteActivity($name, $arguments, ActivityOptions::new($options));
+
+        // todo: ????
+        //$d = new Deferred();
 
         return $this->request($request);
     }

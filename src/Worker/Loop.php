@@ -23,7 +23,7 @@ class Loop
      */
     public static function onTick(callable $callable)
     {
-        self::$onTick = $callable;
+        self::$onTick[] = $callable;
     }
 
     /**
@@ -31,10 +31,9 @@ class Loop
      */
     public static function next()
     {
-        foreach (self::$onTick as $item) {
+        while (!empty(self::$onTick)) {
+            $item = array_shift(self::$onTick);
             $item();
         }
-
-        self::$onTick = [];
     }
 }

@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Workflow;
 
+use Temporal\Client\Promise;
 use Temporal\Client\Workflow;
 use Temporal\Client\Workflow\Meta\QueryMethod;
 use Temporal\Client\Workflow\Meta\SignalMethod;
@@ -35,18 +36,18 @@ class PizzaDelivery
     /** @WorkflowMethod(name="PizzaDelivery") */
     public function handler(Workflow\WorkflowContextInterface $ctx, $input)
     {
-        $isComplete = false;
+        // 1. resolve
+        // 2. callbacks ======> [//////////] <=======
+        // 3. loop
 
-        $ctx->executeActivity('App\\Activity\\ExampleActivity::a', ['A'])->then(function () use (&$isComplete) {
-            $isComplete = true;
-        });
-
+        $a = $ctx->executeActivity('App\\Activity\\ExampleActivity::a', ['A']);
         yield $ctx->executeActivity('App\\Activity\\ExampleActivity::b', ['B']);
+        dump($a);
 
-        if ($isComplete) {
+        if (Promise::isResolved($a)) {
             dump('HELLO');
         } else {
-            dump("BAD");
+            dump('BAD');
         }
 
         //        yield Promise::all([
