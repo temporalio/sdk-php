@@ -22,4 +22,20 @@ for ($i = 0; $i < 1; $i++) {
     ]);
     var_dump($i);
 }
+
 var_dump($result);
+sleep(2);
+
+$rpc->call('temporal.SignalWorkflow', [
+    'wid'         => $result['id'],
+    'rid'         => $result['runId'],
+    'signal_name' => 'App\\Workflow\\PizzaDelivery::retryNow',
+    'args'        => "test",
+]);
+
+$rpc->call('temporal.QueryWorkflow', [
+    'wid'        => $result['id'],
+    'rid'        => $result['runId'],
+    'query_type' => 'App\\Workflow\\PizzaDelivery::getStatus',
+    'args'       => ["test", 123],
+]);

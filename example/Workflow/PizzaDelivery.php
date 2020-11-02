@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace App\Workflow;
 
 use App\Activity\ExampleActivity;
-use Temporal\Client\Coroutine;
 use Temporal\Client\Workflow;
 use Temporal\Client\Workflow\Meta\QueryMethod;
 use Temporal\Client\Workflow\Meta\SignalMethod;
@@ -20,6 +19,8 @@ use Temporal\Client\Workflow\Meta\WorkflowMethod;
 
 class PizzaDelivery
 {
+    private $int;
+
     /** @WorkflowMethod(name="PizzaDelivery") */
     public function handler(Workflow\WorkflowContextInterface $ctx, $input)
     {
@@ -36,25 +37,22 @@ class PizzaDelivery
         // Cyril from a
         // Antony from a
         $a = yield Workflow::activity(ExampleActivity::class)
-            ->a($value)
-        ;
+                           ->a($value);
 
         // cyril from b
         // antony from b
         $b = yield Workflow::activity(ExampleActivity::class)
-            ->b($value)
-        ;
+                           ->b($value);
 
         // FIRST: cyril from a from b
         // SECOND: antony from a from b
-        return $index .': '. $a . $b;
+        return $index . ': ' . $a . $b;
     }
 
     private function test2($index, $value)
     {
         return yield Workflow::activity(ExampleActivity::class)
-            ->a($value)
-        ;
+                             ->a($value);
     }
 
     /** @QueryMethod() */
@@ -64,8 +62,10 @@ class PizzaDelivery
     }
 
     /** @SignalMethod() */
-    public function retryNow(): void
+    public function retryNow($i): void
     {
+        dump([$i]);
+        dump("GOT SIGNAL!");
         //
     }
 }
