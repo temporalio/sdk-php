@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Protocol;
 
-use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Protocol\Command\CommandInterface;
 use Temporal\Client\Protocol\Command\ErrorResponse;
@@ -37,6 +36,9 @@ final class Protocol implements ProtocolInterface
      * @var Client
      */
     private Client $client;
+
+    // todo: improve
+    public static $tick = [];
 
     /**
      * @param \Closure $onRequestHandler
@@ -67,7 +69,7 @@ final class Protocol implements ProtocolInterface
 
     /**
      * @param string $request
-     * @param array $headers
+     * @param array  $headers
      * @return string
      * @throws \JsonException
      */
@@ -83,12 +85,17 @@ final class Protocol implements ProtocolInterface
             }
         }
 
+        foreach (self::$tick as $tick) {
+            $tick();
+        }
+        self::$tick = [];
+
         return Encoder::encode($this->responses);
     }
 
     /**
      * @param RequestInterface $request
-     * @param array $headers
+     * @param array            $headers
      */
     private function onRequest(RequestInterface $request, array $headers): void
     {

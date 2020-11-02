@@ -13,6 +13,7 @@ namespace Temporal\Client\Workflow;
 
 use React\Promise\ExtendedPromiseInterface;
 use React\Promise\PromiseInterface;
+use Temporal\Client\Protocol\Protocol;
 use Temporal\Client\Workflow;
 
 final class Process
@@ -89,7 +90,7 @@ final class Process
             throw new \LogicException('Workflow process is not running');
         }
 
-        if (! $this->generator->valid()) {
+        if (!$this->generator->valid()) {
             $this->context->complete($this->generator->getReturn());
 
             return;
@@ -117,16 +118,20 @@ final class Process
     private function nextPromise(PromiseInterface $promise): void
     {
         $onFulfilled = function ($result) {
-            Workflow::setCurrentContext($this->getContext());
-            $this->generator->send($result);
-            $this->next();
+            Protocol::$tick[] = function () use ($result) {
+                Workflow::setCurrentContext($this->getContext());
+                $this->generator->send($result);
+                $this->next();
+            };
 
             return $result;
         };
 
         $onRejected = function (\Throwable $e) {
-            Workflow::setCurrentContext($this->getContext());
-            $this->generator->throw($e);
+            Protocol::$tick[] = function () use ($e) {
+                Workflow::setCurrentContext($this->getContext());
+                $this->generator->throw($e);
+            };
 
             throw $e;
         };
