@@ -93,7 +93,7 @@ final class WorkflowWorker implements WorkflowRepositoryInterface, DispatcherInt
             $this->runId = $headers['rid'];
         }
 
-        $this->isReplaying = isset($headers['isReplaying']) && $headers['isReplaying'] === true;
+        $this->isReplaying = isset($headers['replay']) && $headers['replay'] === true;
 
         return $this->router->dispatch($request, $headers);
     }
