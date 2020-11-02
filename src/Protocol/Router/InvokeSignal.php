@@ -12,7 +12,9 @@ declare(strict_types=1);
 namespace Temporal\Client\Protocol\Router;
 
 use React\Promise\Deferred;
+use Temporal\Client\Worker\Declaration\CollectionInterface;
 use Temporal\Client\Workflow\RunningWorkflows;
+use Temporal\Client\Workflow\WorkflowDeclarationInterface;
 
 final class InvokeSignal extends Route
 {
@@ -31,7 +33,7 @@ final class InvokeSignal extends Route
     /**
      * @var string
      */
-    private const ERROR_SIGNAL_NOT_FOUND = 'Workflow signal handler "%s" not found';
+    private const ERROR_SIGNAL_NOT_FOUND = 'Workflow signal handler "%s" not found, known signals [%s]';
 
     /**
      * @var RunningWorkflows
@@ -39,11 +41,35 @@ final class InvokeSignal extends Route
     private RunningWorkflows $running;
 
     /**
-     * @param RunningWorkflows $running
+     * @psalm-var CollectionInterface<WorkflowDeclarationInterface>
+     *
+     * @var CollectionInterface
      */
-    public function __construct(RunningWorkflows $running)
+    private CollectionInterface $workflows;
+
+    /**
+     * @param CollectionInterface<WorkflowDeclarationInterface>
+     *
+     * @param RunningWorkflows $running
+     * @param CollectionInterface $workflows
+     */
+    public function __construct(CollectionInterface $workflows, RunningWorkflows $running)
     {
         $this->running = $running;
+        $this->workflows = $workflows;
+    }
+
+    /**
+     * @return iterable|string[]
+     */
+    private function getAvailableSignals(): iterable
+    {
+        /** @var WorkflowDeclarationInterface $workflow */
+        foreach ($this->workflows as $workflow) {
+            foreach ($workflow->getSignalHandlers() as $name => $_) {
+                yield $name;
+            }
+        }
     }
 
     /**
@@ -70,7 +96,10 @@ final class InvokeSignal extends Route
         $handler = $declaration->findSignalHandler($payload['name']);
 
         if ($handler === null) {
-            throw new \LogicException(\sprintf(self::ERROR_SIGNAL_NOT_FOUND, $payload['name']));
+            throw new \LogicException(\vsprintf(self::ERROR_SIGNAL_NOT_FOUND, [
+                $payload['name'],
+                \implode(', ', [...$this->getAvailableSignals()])
+            ]));
         }
 
 
