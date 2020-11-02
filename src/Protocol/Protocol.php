@@ -85,6 +85,7 @@ final class Protocol implements ProtocolInterface
             }
         }
 
+        // todo: improve
         foreach (self::$tick as $tick) {
             $tick();
         }
