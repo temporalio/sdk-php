@@ -99,6 +99,8 @@ final class Protocol implements ProtocolInterface
 
             $otherwise = function (\Throwable $e) use ($request): void {
                 $this->sendDefer(ErrorResponse::fromException($e, $request->getId()));
+
+                throw $e;
             };
 
             $promise = ($this->onRequest)($request, $headers);

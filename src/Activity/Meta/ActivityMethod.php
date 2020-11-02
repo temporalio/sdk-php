@@ -18,7 +18,7 @@ use Doctrine\Common\Annotations\Annotation\Target;
  * @Target({ "METHOD" })
  */
 #[\Attribute(\Attribute::TARGET_METHOD)]
-class ActivityMethod
+final class ActivityMethod
 {
     /**
      * Name of the activity type. Default is "{class_name :: method_name}"

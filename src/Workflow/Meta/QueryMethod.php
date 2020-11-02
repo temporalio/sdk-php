@@ -25,7 +25,7 @@ use Doctrine\Common\Annotations\Annotation\Target;
  * @Target({ "METHOD" })
  */
 #[\Attribute(\Attribute::TARGET_METHOD)]
-class QueryMethod
+final class QueryMethod
 {
     /**
      * Name of the query type. Default is method name.

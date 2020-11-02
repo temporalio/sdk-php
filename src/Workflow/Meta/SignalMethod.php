@@ -22,7 +22,7 @@ use Doctrine\Common\Annotations\Annotation\Target;
  * @Target({ "METHOD" })
  */
 #[\Attribute(\Attribute::TARGET_METHOD)]
-class SignalMethod
+final class SignalMethod
 {
     /**
      * Name of the signal type. Default is method name.

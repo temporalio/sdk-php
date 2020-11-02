@@ -14,7 +14,7 @@ namespace Temporal\Client\Protocol\Router;
 use React\Promise\Deferred;
 use Temporal\Client\Workflow\RunningWorkflows;
 
-final class InvokeQueryMethod extends Route
+final class InvokeQuery extends Route
 {
     /**
      * @var string

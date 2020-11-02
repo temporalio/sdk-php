@@ -127,6 +127,8 @@ final class Process
         $onRejected = function (\Throwable $e) {
             Workflow::setCurrentContext($this->getContext());
             $this->generator->throw($e);
+
+            throw $e;
         };
 
         $promise->then($onFulfilled, $onRejected);

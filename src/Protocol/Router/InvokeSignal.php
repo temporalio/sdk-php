@@ -14,7 +14,7 @@ namespace Temporal\Client\Protocol\Router;
 use React\Promise\Deferred;
 use Temporal\Client\Workflow\RunningWorkflows;
 
-final class InvokeSignalMethod extends Route
+final class InvokeSignal extends Route
 {
     /**
      * @var string
@@ -72,6 +72,7 @@ final class InvokeSignalMethod extends Route
         if ($handler === null) {
             throw new \LogicException(\sprintf(self::ERROR_SIGNAL_NOT_FOUND, $payload['name']));
         }
+
 
         $resolver->resolve(
             $handler(...$payload['args'])

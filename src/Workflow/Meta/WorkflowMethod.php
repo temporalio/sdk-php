@@ -18,7 +18,7 @@ use Doctrine\Common\Annotations\Annotation\Target;
  * @Target({ "METHOD" })
  */
 #[\Attribute(\Attribute::TARGET_METHOD)]
-class WorkflowMethod
+final class WorkflowMethod
 {
     /**
      * Name of the workflow type. Default is "{class_name :: method_name}".

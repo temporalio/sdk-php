@@ -79,8 +79,9 @@ final class WorkflowContext implements WorkflowContextInterface
      * @return ActivityProxy
      */
     #[Pure]
-    public function activity(string $name): ActivityProxy
-    {
+    public function activity(
+        string $name
+    ): ActivityProxy {
         return new ActivityProxy($name, $this);
     }
 
@@ -123,17 +124,23 @@ final class WorkflowContext implements WorkflowContextInterface
      */
     public function complete($result = null): PromiseInterface
     {
-        $then = function ($result) {
+        $request = new CompleteWorkflow($result, \array_values($this->requests));
+
+        $onFulfilled = function ($result) {
             $this->running->kill($this->info->execution->runId, $this->worker->getClient());
 
             return $result;
         };
 
-        $request = new CompleteWorkflow($result, \array_values($this->requests));
+        $onRejected = function (\Throwable $e) {
+            $this->running->kill($this->info->execution->runId, $this->worker->getClient());
+
+            throw $e;
+        };
 
         return $this->request($request)
-            ->then($then, $then)
-            ;
+            ->then($onFulfilled, $onRejected)
+        ;
     }
 
     /**
