@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Protocol;
 
-use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Protocol\Command\CommandInterface;
 use Temporal\Client\Protocol\Command\ErrorResponse;
@@ -20,6 +19,7 @@ use Temporal\Client\Protocol\Command\ResponseInterface;
 use Temporal\Client\Protocol\Command\SuccessResponse;
 use Temporal\Client\Protocol\Queue\QueueInterface;
 use Temporal\Client\Protocol\Queue\SplQueue;
+use Temporal\Client\Worker\Loop;
 
 final class Protocol implements ProtocolInterface
 {
@@ -67,7 +67,7 @@ final class Protocol implements ProtocolInterface
 
     /**
      * @param string $request
-     * @param array $headers
+     * @param array  $headers
      * @return string
      * @throws \JsonException
      */
@@ -83,12 +83,14 @@ final class Protocol implements ProtocolInterface
             }
         }
 
+        Loop::next();
+
         return Encoder::encode($this->responses);
     }
 
     /**
      * @param RequestInterface $request
-     * @param array $headers
+     * @param array            $headers
      */
     private function onRequest(RequestInterface $request, array $headers): void
     {

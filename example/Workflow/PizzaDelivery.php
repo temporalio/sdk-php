@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace App\Workflow;
 
-use App\Activity\ExampleActivity;
 use Temporal\Client\Workflow;
 use Temporal\Client\Workflow\Meta\QueryMethod;
 use Temporal\Client\Workflow\Meta\SignalMethod;
@@ -19,57 +18,85 @@ use Temporal\Client\Workflow\Meta\WorkflowMethod;
 
 class PizzaDelivery
 {
-    private $int;
+    private $value = 0;
+
+    /** @QueryMethod() */
+    public function get()
+    {
+        return $this->value;
+    }
+
+    /** @SignalMethod() */
+    public function add(int $value): void
+    {
+        $this->value += $value;
+    }
 
     /** @WorkflowMethod(name="PizzaDelivery") */
     public function handler(Workflow\WorkflowContextInterface $ctx, $input)
     {
-        yield $ctx->activity(ExampleActivity::class)->a('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
-        $this->int += 200;
-        yield $ctx->activity(ExampleActivity::class)->a('BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB');
-        $this->int += 300;
-        yield $ctx->activity(ExampleActivity::class)->a('CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC');
-        $this->int += 400;
-        yield $ctx->activity(ExampleActivity::class)->a('DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD');
-        $this->int += 500;
+        $isComplete = false;
 
-        return 'OOOOOOOOOOOOOOOKKKKK';
+        $ctx->executeActivity('App\\Activity\\ExampleActivity::a', ['A'])->then(function () use (&$isComplete) {
+            $isComplete = true;
+        });
+
+        yield $ctx->executeActivity('App\\Activity\\ExampleActivity::b', ['B']);
+
+        if ($isComplete) {
+            dump('HELLO');
+        } else {
+            dump("BAD");
+        }
+
+        //        yield Promise::all([
+        //            Workflow::activity(ExampleActivity::class)->a(1),
+        //            Workflow::activity(ExampleActivity::class)->a(2)
+        //        ]);
+        //        while (true) {
+        //            yield Workflow::timer(30);
+        //
+        //            if ($this->value > 0) {
+        //                $this->value--;
+        //                if (!Workflow::isReplaying()) {
+        //                    dump('deducted! ' . $this->value);
+        //                }
+        //
+        //                yield Workflow::activity(ExampleActivity::class)->a(1);
+        //            }
+        //        }
+        //        yield $ctx->activity(ExampleActivity::class)->a('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+        //        $this->int += 200;
+        //        yield $ctx->activity(ExampleActivity::class)->a('BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB');
+        //        $this->int += 300;
+        //        yield $ctx->activity(ExampleActivity::class)->a('CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC');
+        //        $this->int += 400;
+        //        yield $ctx->activity(ExampleActivity::class)->a('DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD');
+        //        $this->int += 500;
+        //        return 'OOOOOOOOOOOOOOOKKKKK';
     }
 
-    private function test($index, $value)
-    {
-        // Cyril from a
-        // Antony from a
-        $a = yield Workflow::activity(ExampleActivity::class)
-                           ->a($value);
+//    private function test($index, $value)
+//    {
+//        // Cyril from a
+//        // Antony from a
+//        $a = yield Workflow::activity(ExampleActivity::class)
+//                           ->a($value);
+//
+//        // cyril from b
+//        // antony from b
+//        $b = yield Workflow::activity(ExampleActivity::class)
+//                           ->b($value);
+//
+//        // FIRST: cyril from a from b
+//        // SECOND: antony from a from b
+//        return $index . ': ' . $a . $b;
+//    }
+//
+//    private function test2($index, $value)
+//    {
+//        return yield Workflow::activity(ExampleActivity::class)
+//                             ->a($value);
+//    }
 
-        // cyril from b
-        // antony from b
-        $b = yield Workflow::activity(ExampleActivity::class)
-                           ->b($value);
-
-        // FIRST: cyril from a from b
-        // SECOND: antony from a from b
-        return $index . ': ' . $a . $b;
-    }
-
-    private function test2($index, $value)
-    {
-        return yield Workflow::activity(ExampleActivity::class)
-                             ->a($value);
-    }
-
-    /** @QueryMethod() */
-    public function getStatus(): string
-    {
-        return $this->int;
-    }
-
-    /** @SignalMethod() */
-    public function retryNow($i): void
-    {
-        $this->int += $i;
-        dump([$i]);
-        dump("GOT SIGNAL!");
-    }
 }
