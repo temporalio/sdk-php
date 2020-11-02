@@ -74,7 +74,7 @@ final class InvokeQuery extends Route
         }
 
         $resolver->resolve(
-            $handler(...$payload['args'])
+            $handler(...($payload['args'] ?? []))
         );
     }
 

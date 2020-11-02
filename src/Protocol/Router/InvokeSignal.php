@@ -75,7 +75,7 @@ final class InvokeSignal extends Route
 
 
         $resolver->resolve(
-            $handler(...$payload['args'])
+            $handler(...($payload['args'] ?? []))
         );
     }
 
