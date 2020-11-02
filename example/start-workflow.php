@@ -30,7 +30,7 @@ $rpc->call('temporal.SignalWorkflow', [
     'wid'         => $result['id'],
     'rid'         => $result['runId'],
     'signal_name' => 'App\\Workflow\\PizzaDelivery::retryNow',
-    'args'        => "test",
+    'args'        => 100,
 ]);
 
 $rpc->call('temporal.QueryWorkflow', [

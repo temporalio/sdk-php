@@ -25,9 +25,13 @@ class PizzaDelivery
     public function handler(Workflow\WorkflowContextInterface $ctx, $input)
     {
         yield $ctx->activity(ExampleActivity::class)->a('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+        $this->int += 200;
         yield $ctx->activity(ExampleActivity::class)->a('BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB');
+        $this->int += 300;
         yield $ctx->activity(ExampleActivity::class)->a('CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC');
+        $this->int += 400;
         yield $ctx->activity(ExampleActivity::class)->a('DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD');
+        $this->int += 500;
 
         return 'OOOOOOOOOOOOOOOKKKKK';
     }
@@ -58,14 +62,14 @@ class PizzaDelivery
     /** @QueryMethod() */
     public function getStatus(): string
     {
-        return 'I\'m Ok';
+        return $this->int;
     }
 
     /** @SignalMethod() */
     public function retryNow($i): void
     {
+        $this->int += $i;
         dump([$i]);
         dump("GOT SIGNAL!");
-        //
     }
 }
