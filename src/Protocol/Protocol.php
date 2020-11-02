@@ -19,6 +19,7 @@ use Temporal\Client\Protocol\Command\ResponseInterface;
 use Temporal\Client\Protocol\Command\SuccessResponse;
 use Temporal\Client\Protocol\Queue\QueueInterface;
 use Temporal\Client\Protocol\Queue\SplQueue;
+use Temporal\Client\Worker\Loop;
 
 final class Protocol implements ProtocolInterface
 {
@@ -36,9 +37,6 @@ final class Protocol implements ProtocolInterface
      * @var Client
      */
     private Client $client;
-
-    // todo: improve
-    public static $tick = [];
 
     /**
      * @param \Closure $onRequestHandler
@@ -85,11 +83,7 @@ final class Protocol implements ProtocolInterface
             }
         }
 
-        // todo: improve
-        foreach (self::$tick as $tick) {
-            $tick();
-        }
-        self::$tick = [];
+        Loop::next();
 
         return Encoder::encode($this->responses);
     }

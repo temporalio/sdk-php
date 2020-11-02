@@ -13,7 +13,7 @@ namespace Temporal\Client\Workflow;
 
 use React\Promise\ExtendedPromiseInterface;
 use React\Promise\PromiseInterface;
-use Temporal\Client\Protocol\Protocol;
+use Temporal\Client\Worker\Loop;
 use Temporal\Client\Workflow;
 
 final class Process
@@ -118,20 +118,20 @@ final class Process
     private function nextPromise(PromiseInterface $promise): void
     {
         $onFulfilled = function ($result) {
-            Protocol::$tick[] = function () use ($result) {
+            Loop::onTick(function () use ($result) {
                 Workflow::setCurrentContext($this->getContext());
                 $this->generator->send($result);
                 $this->next();
-            };
+            });
 
             return $result;
         };
 
         $onRejected = function (\Throwable $e) {
-            Protocol::$tick[] = function () use ($e) {
+            Loop::onTick(function () use ($e) {
                 Workflow::setCurrentContext($this->getContext());
                 $this->generator->throw($e);
-            };
+            });
 
             throw $e;
         };
