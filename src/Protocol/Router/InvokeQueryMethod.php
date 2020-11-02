@@ -53,7 +53,7 @@ final class InvokeQueryMethod extends Route
     {
         $this->assertArguments($payload);
 
-        $workflowRunId = $payload['rid'] ?? $headers['rid'] ?? null;
+        $workflowRunId = $payload['runId'] ?? null;
 
         if ($workflowRunId === null) {
             throw new \InvalidArgumentException(self::ERROR_RID_NOT_DEFINED);
