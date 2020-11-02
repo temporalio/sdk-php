@@ -147,15 +147,30 @@ final class WorkflowContext implements WorkflowContextInterface
         $client = $this->worker->getClient();
 
         $then = function ($result) use ($request) {
-            $index = \array_search($request->getId(), $this->requests, true);
-            unset($this->requests[$index]);
+            $this->unload($request);
 
             return $result;
         };
 
+        $otherwise = function (\Throwable $e) use ($request) {
+            $this->unload($request);
+
+            throw $e;
+        };
+
         return $client->request($request)
-            ->then($then, $then)
+            ->then($then, $otherwise)
         ;
+    }
+
+    /**
+     * @param RequestInterface $request
+     */
+    private function unload(RequestInterface $request): void
+    {
+        $index = \array_search($request->getId(), $this->requests, true);
+
+        unset($this->requests[$index]);
     }
 
     /**
