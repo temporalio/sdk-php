@@ -75,6 +75,16 @@ final class WorkflowContext implements WorkflowContextInterface
     }
 
     /**
+     * @return bool
+     */
+    public function isReplaying(): bool
+    {
+        $workflow = $this->worker->getWorkflowWorker();
+
+        return $workflow->isReplaying();
+    }
+
+    /**
      * @param string $name
      * @return ActivityProxy
      */

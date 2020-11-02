@@ -85,6 +85,22 @@ class Worker implements WorkerInterface
     }
 
     /**
+     * @return WorkflowWorker
+     */
+    public function getWorkflowWorker(): WorkflowWorker
+    {
+        return $this->workflowWorker;
+    }
+
+    /**
+     * @return ActivityWorker
+     */
+    public function getActivityWorker(): ActivityWorker
+    {
+        return $this->activityWorker;
+    }
+
+    /**
      * @return \DateTimeInterface
      */
     public function now(): \DateTimeInterface

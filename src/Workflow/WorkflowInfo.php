@@ -13,7 +13,6 @@ namespace Temporal\Client\Workflow;
 
 use Carbon\CarbonInterval;
 use Temporal\Client\Worker\FactoryInterface;
-use Temporal\Client\Worker\Uuid4;
 use Temporal\Client\Workflow\Info\WorkflowExecution;
 use Temporal\Client\Workflow\Info\WorkflowType;
 

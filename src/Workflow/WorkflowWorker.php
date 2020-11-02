@@ -45,6 +45,11 @@ final class WorkflowWorker implements WorkflowRepositoryInterface, DispatcherInt
     private ?string $runId = null;
 
     /**
+     * @var bool
+     */
+    private bool $isReplaying = false;
+
+    /**
      * @param Worker $worker
      * @throws \Exception
      */
@@ -72,6 +77,14 @@ final class WorkflowWorker implements WorkflowRepositoryInterface, DispatcherInt
     }
 
     /**
+     * @return bool
+     */
+    public function isReplaying(): bool
+    {
+        return $this->isReplaying;
+    }
+
+    /**
      * {@inheritDoc}
      */
     public function dispatch(RequestInterface $request, array $headers = []): PromiseInterface
@@ -79,6 +92,8 @@ final class WorkflowWorker implements WorkflowRepositoryInterface, DispatcherInt
         if (isset($headers['rid'])) {
             $this->runId = $headers['rid'];
         }
+
+        $this->isReplaying = isset($headers['isReplaying']) && $headers['isReplaying'] === true;
 
         return $this->router->dispatch($request, $headers);
     }

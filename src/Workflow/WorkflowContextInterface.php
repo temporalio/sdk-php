@@ -32,9 +32,13 @@ interface WorkflowContextInterface extends WorkflowExecutionsInterface
     public function now(): \DateTimeInterface;
 
     /**
-     * @psalm-return
      * @return int[]
      */
     #[Pure]
     public function getSendRequestIdentifiers(): array;
+
+    /**
+     * @return bool
+     */
+    public function isReplaying(): bool;
 }

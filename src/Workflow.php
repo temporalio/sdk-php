@@ -24,6 +24,7 @@ use Temporal\Client\Workflow\WorkflowInfo;
  *
  * @method static \DateTimeInterface now()
  * @method static int[] getSendRequestIdentifiers()
+ * @method static bool isReplaying()
  *
  * @method static ActivityProxy activity(string $class)
  * @method static PromiseInterface complete(mixed $result = null)
