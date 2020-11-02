@@ -49,7 +49,7 @@ class DestroyWorkflow extends Route
      */
     public function handle(array $payload, array $headers, Deferred $resolver): void
     {
-        $workflowRunId = $payload['rid'] ?? $headers['rid'] ?? null;
+        $workflowRunId = $payload['runId'] ?? null;
 
         if ($workflowRunId === null) {
             throw new \InvalidArgumentException(self::ERROR_RID_NOT_DEFINED);

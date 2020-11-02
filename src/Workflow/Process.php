@@ -116,17 +116,19 @@ final class Process
      */
     private function nextPromise(PromiseInterface $promise): void
     {
-        $promise
-            ->otherwise(function (\Throwable $e) {
-                Workflow::setCurrentContext($this->getContext());
-                $this->generator->throw($e);
-            })
-            ->then(function ($result) {
-                Workflow::setCurrentContext($this->getContext());
-                $this->generator->send($result);
-                $this->next();
+        $onFulfilled = function ($result) {
+            Workflow::setCurrentContext($this->getContext());
+            $this->generator->send($result);
+            $this->next();
 
-                return $result;
-            });
+            return $result;
+        };
+
+        $onRejected = function (\Throwable $e) {
+            Workflow::setCurrentContext($this->getContext());
+            $this->generator->throw($e);
+        };
+
+        $promise->then($onFulfilled, $onRejected);
     }
 }

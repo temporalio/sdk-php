@@ -123,7 +123,7 @@ final class ActivityInfo
     public function __construct(
         string $taskToken,
         string $id,
-        ActivityType $type,
+        ActivityType $type
     ) {
         $this->taskToken = $taskToken;
         $this->id = $id;

@@ -23,11 +23,12 @@ class PizzaDelivery
     /** @WorkflowMethod(name="PizzaDelivery") */
     public function handler(Workflow\WorkflowContextInterface $ctx, $input)
     {
-        yield from Coroutine::cooperative([
-            $this->test('FIRST','Cyril'),
-            $this->test('SECOND','Antony'),
-            $this->test2('THIRD', $input),
-        ]);
+        yield $ctx->activity(ExampleActivity::class)->a('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+        yield $ctx->activity(ExampleActivity::class)->a('BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB');
+        yield $ctx->activity(ExampleActivity::class)->a('CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC');
+        yield $ctx->activity(ExampleActivity::class)->a('DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD');
+
+        return 'OOOOOOOOOOOOOOOKKKKK';
     }
 
     private function test($index, $value)
