@@ -36,23 +36,23 @@ class PizzaDelivery
     /** @WorkflowMethod(name="PizzaDelivery") */
     public function handler(Workflow\WorkflowContextInterface $ctx, $input)
     {
-        $t1 = Workflow::timer(1)->onComplete(function (){
+        // YIELD BLOCKED HERE ?
+        $value = yield Workflow::timer(1)->onComplete(function () {
             dump("t1 done");
+
+            // does not work?
+            return Workflow::timer(2)->onComplete(function () {
+                dump("t2 done");
+
+                return Workflow::timer(3)->onComplete(function () {
+                    dump("t3 done");
+
+                    return 'OK';
+                });
+            });
         });
-        $t2 = Workflow::timer(2);
-        $t4 = Workflow::timer(4)->onComplete(function (){
-            dump("t4 done");
-        });
 
-        yield Workflow::timer(3);
-
-        dump([
-            $t1->isComplete(),
-            $t2->isComplete(),
-            $t4->isComplete()
-        ]);
-
-        yield $t4;
+        dump($value);
 
         // 1. resolve
         // 2. invoke callbacks ======> [//////////] <=======

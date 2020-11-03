@@ -15,10 +15,20 @@ use React\Promise\PromiseInterface;
 
 interface FutureInterface
 {
-    public function onComplete(callable $onComplete): FutureInterface;
+    /**
+     * @param callable $onComplete
+     * @return FutureInterface
+     */
+    public function onComplete(callable $onComplete);
 
+    /**
+     * @return bool
+     */
     public function isComplete(): bool;
 
+    /**
+     * @return mixed
+     */
     public function cancel();
 
     /**

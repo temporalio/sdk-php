@@ -106,6 +106,7 @@ final class Process
                 break;
 
             case $current instanceof FutureInterface:
+                // todo: must handle on complete (!)
                 $this->nextPromise($current->promise());
                 break;
 
