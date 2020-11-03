@@ -13,17 +13,24 @@ namespace Temporal\Client\Worker;
 
 class Loop
 {
+    public const ON_SIGNAL   = 0;
+    public const ON_CALLBACK = 1;
+    public const ON_TICK     = 2;
+
     /** @var array */
-    public static $onTick = [];
+    public static $handlers = [
+        self::ON_SIGNAL   => [],
+        self::ON_CALLBACK => [],
+        self::ON_TICK     => [],
+    ];
 
     /**
-     * Register tick handler.
-     *
      * @param callable $callable
+     * @param int      $level
      */
-    public static function onTick(callable $callable)
+    public static function onTick(callable $callable, int $level = self::ON_TICK)
     {
-        self::$onTick[] = $callable;
+        self::$handlers[$level][] = $callable;
     }
 
     /**
@@ -31,8 +38,18 @@ class Loop
      */
     public static function next()
     {
-        while (!empty(self::$onTick)) {
-            $item = array_shift(self::$onTick);
+        while (!empty(self::$handlers[self::ON_SIGNAL])) {
+            $item = array_shift(self::$handlers[self::ON_SIGNAL]);
+            $item();
+        }
+
+        while (!empty(self::$handlers[self::ON_CALLBACK])) {
+            $item = array_shift(self::$handlers[self::ON_CALLBACK]);
+            $item();
+        }
+
+        while (!empty(self::$handlers[self::ON_TICK])) {
+            $item = array_shift(self::$handlers[self::ON_TICK]);
             $item();
         }
     }

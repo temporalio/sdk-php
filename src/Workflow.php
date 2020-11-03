@@ -13,6 +13,7 @@ namespace Temporal\Client;
 
 use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
+use Temporal\Client\Future\FutureInterface;
 use Temporal\Client\Workflow\ActivityProxy;
 use Temporal\Client\Workflow\WorkflowContextInterface;
 use Temporal\Client\Workflow\WorkflowInfo;
@@ -28,8 +29,8 @@ use Temporal\Client\Workflow\WorkflowInfo;
  *
  * @method static ActivityProxy activity(string $class)
  * @method static PromiseInterface complete(mixed $result = null)
- * @method static PromiseInterface executeActivity(string $class, array $args, array|ActivityOptions $options = null)
- * @method static PromiseInterface timer(string|int|float|\DateInterval $interval)
+ * @method static FutureInterface executeActivity(string $class, array $args, array|ActivityOptions $options = null)
+ * @method static FutureInterface timer(string|int|float|\DateInterval $interval)
  */
 final class Workflow
 {

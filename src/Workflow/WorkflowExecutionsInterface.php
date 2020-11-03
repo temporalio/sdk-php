@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client\Workflow;
 
 use JetBrains\PhpStorm\ExpectedValues;
+use React\Promise\CancellablePromiseInterface;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Workflow\Command\NewTimer;
@@ -47,7 +48,7 @@ interface WorkflowExecutionsInterface
         array $arguments = [],
         #[ExpectedValues(values: ActivityOptions::class)]
         $options = null
-    ): PromiseInterface;
+    );//: PromiseInterface;
 
     /**
      * @psalm-import-type DateIntervalFormat from NewTimer
@@ -56,5 +57,5 @@ interface WorkflowExecutionsInterface
      * @return PromiseInterface
      * @see NewTimer
      */
-    public function timer($interval): PromiseInterface;
+    public function timer($interval);//: PromiseInterface;
 }

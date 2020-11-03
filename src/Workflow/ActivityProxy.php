@@ -45,7 +45,7 @@ class ActivityProxy
      * @param array $arguments
      * @return PromiseInterface
      */
-    public function call(string $method, array $arguments = []): PromiseInterface
+    public function call(string $method, array $arguments = [])//: PromiseInterface
     {
         // TODO
         $activity = $this->class . '::' . $method;
@@ -58,7 +58,7 @@ class ActivityProxy
      * @param array $arguments
      * @return PromiseInterface
      */
-    public function __call(string $method, array $arguments = []): PromiseInterface
+    public function __call(string $method, array $arguments = [])//: PromiseInterface
     {
         return $this->call($method, $arguments);
     }

@@ -13,10 +13,9 @@ namespace Temporal\Client\Workflow;
 
 use JetBrains\PhpStorm\ExpectedValues;
 use JetBrains\PhpStorm\Pure;
-use React\Promise\Deferred;
-use React\Promise\Promise;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
+use Temporal\Client\Future\Future;
 use Temporal\Client\Protocol\Command\RequestInterface;
 use Temporal\Client\Worker\Worker;
 use Temporal\Client\Workflow\Command\CompleteWorkflow;
@@ -198,23 +197,24 @@ final class WorkflowContext implements WorkflowContextInterface
         array $arguments = [],
         #[ExpectedValues(values: ActivityOptions::class)]
         $options = null
-    ): PromiseInterface {
+    )//: PromiseInterface
+    {
         $request = new ExecuteActivity($name, $arguments, ActivityOptions::new($options));
 
         // todo: ????
         //$d = new Deferred();
 
-        return $this->request($request);
+        return new Future($this->request($request));
     }
 
     /**
      * {@inheritDoc}
      * @throws \Exception
      */
-    public function timer($interval): PromiseInterface
+    public function timer($interval)//: PromiseInterface
     {
         $request = new NewTimer(NewTimer::parseInterval($interval));
 
-        return $this->request($request);
+        return new Future($this->request($request));
     }
 }

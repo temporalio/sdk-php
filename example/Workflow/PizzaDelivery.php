@@ -11,7 +11,8 @@ declare(strict_types=1);
 
 namespace App\Workflow;
 
-use Temporal\Client\Promise;
+use App\Activity\ExampleActivity;
+use Temporal\Client\FutureInterface;
 use Temporal\Client\Workflow;
 use Temporal\Client\Workflow\Meta\QueryMethod;
 use Temporal\Client\Workflow\Meta\SignalMethod;
@@ -36,24 +37,67 @@ class PizzaDelivery
     /** @WorkflowMethod(name="PizzaDelivery") */
     public function handler(Workflow\WorkflowContextInterface $ctx, $input)
     {
+        /** @var \Temporal\Client\Future\Future $act */
+        $act = Workflow::activity(ExampleActivity::class)->a('test')
+                       ->then(function () {
+
+                           return Workflow::timer(5);
+                       });
+
+        yield Workflow::timer(2);
+        dump('timer_complete');
+
+        dump([
+            $act->isComplete(),
+        ]);
+
+        yield Workflow::timer(2);
+        dump('timer 2 complete');
+
+        dump([
+            $act->isComplete(),
+        ]);
+
         // 1. resolve
-        // 2. callbacks ======> [//////////] <=======
+        // 2. invoke callbacks ======> [DONE] <=======
         // 3. loop
 
-        $a = $ctx->executeActivity('App\\Activity\\ExampleActivity::a', ['A']);
-        yield $ctx->executeActivity('App\\Activity\\ExampleActivity::b', ['B']);
-        dump($a);
+        /**
+         * @var FutureInterface $a
+         */
 
-        if (Promise::isResolved($a)) {
-            dump('HELLO');
-        } else {
-            dump('BAD');
-        }
+//        $a = $ctx->executeActivity('App\\Activity\\ExampleActivity::a', ['A'])  // оплата
+//                 ->then(function () use ($ctx) {
+//                      return $ctx->executeActivity('App\\Activity\\ExampleActivity::b', ['B']); // на счет
+//                 });
+//
+//        $ctx->registerSignalHandler('cancelA', function () use ($a) {  // отменить оплату
+//            if (!$a->isComplete()) {
+//                $a->cancel();
+//            } else {
+//                // TODO: REFUND
+//            }
+//        });
+
+        // BATCH: [A, S]
+
+        //     yield $a;
+
+
+        //yield $ctx->executeActivity('App\\Activity\\ExampleActivity::b', ['B']);
+        //dump($a);
+//
+//        if (Promise::isResolved($a)) {
+//            dump('HELLO');
+//        } else {
+//            dump('BAD');
+//        }
 
         //        yield Promise::all([
         //            Workflow::activity(ExampleActivity::class)->a(1),
         //            Workflow::activity(ExampleActivity::class)->a(2)
         //        ]);
+
         //        while (true) {
         //            yield Workflow::timer(30);
         //
@@ -66,6 +110,7 @@ class PizzaDelivery
         //                yield Workflow::activity(ExampleActivity::class)->a(1);
         //            }
         //        }
+
         //        yield $ctx->activity(ExampleActivity::class)->a('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
         //        $this->int += 200;
         //        yield $ctx->activity(ExampleActivity::class)->a('BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB');
@@ -75,6 +120,7 @@ class PizzaDelivery
         //        yield $ctx->activity(ExampleActivity::class)->a('DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD');
         //        $this->int += 500;
         //        return 'OOOOOOOOOOOOOOOKKKKK';
+        return 'ok';
     }
 
 //    private function test($index, $value)
