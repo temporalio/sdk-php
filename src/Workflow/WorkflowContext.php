@@ -13,15 +13,16 @@ namespace Temporal\Client\Workflow;
 
 use JetBrains\PhpStorm\ExpectedValues;
 use JetBrains\PhpStorm\Pure;
+use React\Promise\CancellablePromiseInterface;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Future\Future;
-use Temporal\Client\Protocol\Command\RequestInterface;
+use Temporal\Client\Future\FutureInterface;
+use Temporal\Client\Transport\Protocol\Command\RequestInterface;
 use Temporal\Client\Worker\Worker;
 use Temporal\Client\Workflow\Command\CompleteWorkflow;
 use Temporal\Client\Workflow\Command\ExecuteActivity;
 use Temporal\Client\Workflow\Command\NewTimer;
-
 
 final class WorkflowContext implements WorkflowContextInterface
 {
@@ -78,6 +79,7 @@ final class WorkflowContext implements WorkflowContextInterface
     /**
      * @return bool
      */
+    #[Pure]
     public function isReplaying(): bool
     {
         $workflow = $this->worker->getWorkflowWorker();
@@ -90,9 +92,8 @@ final class WorkflowContext implements WorkflowContextInterface
      * @return ActivityProxy
      */
     #[Pure]
-    public function activity(
-        string $name
-    ): ActivityProxy {
+    public function newActivityStub(string $name): ActivityProxy
+    {
         return new ActivityProxy($name, $this);
     }
 
@@ -150,14 +151,15 @@ final class WorkflowContext implements WorkflowContextInterface
         };
 
         return $this->request($request)
-                    ->then($onFulfilled, $onRejected);
+            ->then($onFulfilled, $onRejected)
+        ;
     }
 
     /**
      * @param RequestInterface $request
-     * @return PromiseInterface
+     * @return FutureInterface
      */
-    protected function request(RequestInterface $request): PromiseInterface
+    protected function request(RequestInterface $request): FutureInterface
     {
         $this->requests[] = $request->getId();
 
@@ -175,8 +177,12 @@ final class WorkflowContext implements WorkflowContextInterface
             throw $e;
         };
 
-        return $client->request($request)
-                      ->then($then, $otherwise);
+        /** @var CancellablePromiseInterface $result */
+        $result = $client->request($request)
+            ->then($then, $otherwise)
+        ;
+
+        return new Future($result);
     }
 
     /**
@@ -197,7 +203,7 @@ final class WorkflowContext implements WorkflowContextInterface
         array $arguments = [],
         #[ExpectedValues(values: ActivityOptions::class)]
         $options = null
-    )//: PromiseInterface
+    ): FutureInterface
     {
         $request = new ExecuteActivity($name, $arguments, ActivityOptions::new($options));
 
@@ -211,7 +217,7 @@ final class WorkflowContext implements WorkflowContextInterface
      * {@inheritDoc}
      * @throws \Exception
      */
-    public function timer($interval)//: PromiseInterface
+    public function timer($interval): FutureInterface
     {
         $request = new NewTimer(NewTimer::parseInterval($interval));
 

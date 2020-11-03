@@ -11,14 +11,11 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Worker;
 
-use Temporal\Client\Protocol\DispatcherInterface;
+use Temporal\Client\Transport\DispatcherInterface;
 use Temporal\Client\Worker\Declaration\Repository\ActivityRepositoryInterface;
 use Temporal\Client\Worker\Declaration\Repository\WorkflowRepositoryInterface;
 
-interface WorkerInterface extends
-    WorkflowRepositoryInterface,
-    ActivityRepositoryInterface,
-    DispatcherInterface
+interface WorkerInterface extends WorkflowRepositoryInterface, ActivityRepositoryInterface, DispatcherInterface
 {
     /**
      * @return string

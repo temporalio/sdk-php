@@ -18,7 +18,7 @@ use Temporal\Client\Workflow\WorkflowContextInterface;
  * Indicates that an interface is an activity interface. Only interfaces
  * annotated with this annotation can be used as parameters
  * to {@see Workflow::activity()}
- * and {@see WorkflowContextInterface::activity()} methods.
+ * and {@see WorkflowContextInterface::newActivityStub()} methods.
  *
  * Each method of the interface annotated with {@see ActivityInterface}
  * including inherited from interfaces is a separate activity. By default the

@@ -12,12 +12,13 @@ declare(strict_types=1);
 namespace Temporal\Client\Worker;
 
 use Carbon\Carbon;
+use JetBrains\PhpStorm\Pure;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityDeclarationInterface;
 use Temporal\Client\Activity\ActivityWorker;
 use Temporal\Client\Meta\ReaderInterface;
-use Temporal\Client\Protocol\ClientInterface;
-use Temporal\Client\Protocol\Command\RequestInterface;
+use Temporal\Client\Transport\ClientInterface;
+use Temporal\Client\Transport\Protocol\Command\RequestInterface;
 use Temporal\Client\Worker\Env\EnvironmentInterface;
 use Temporal\Client\Workflow\WorkflowDeclarationInterface;
 use Temporal\Client\Workflow\WorkflowWorker;
@@ -221,6 +222,7 @@ class Worker implements WorkerInterface
     /**
      * {@inheritDoc}
      */
+    #[Pure]
     public function getWorkflows(): iterable
     {
         return $this->workflowWorker->getWorkflows();
@@ -229,6 +231,7 @@ class Worker implements WorkerInterface
     /**
      * {@inheritDoc}
      */
+    #[Pure]
     public function getActivities(): iterable
     {
         return $this->activityWorker->getActivities();

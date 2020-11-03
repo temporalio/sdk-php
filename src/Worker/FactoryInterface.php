@@ -11,7 +11,12 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Worker;
 
-interface FactoryInterface
+use Evenement\EventEmitterInterface;
+
+/**
+ * @implements EventEmitterInterface<Event::ON_*>
+ */
+interface FactoryInterface extends EventEmitterInterface
 {
     /**
      * @var string

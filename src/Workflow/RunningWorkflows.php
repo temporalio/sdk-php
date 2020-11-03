@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Workflow;
 
-use Temporal\Client\Protocol\ClientInterface;
+use Temporal\Client\Transport\ClientInterface;
 use Temporal\Client\Workflow;
 
 final class RunningWorkflows

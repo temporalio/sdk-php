@@ -11,14 +11,17 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Worker;
 
+/**
+ * TODO Rewrite me
+ */
 class Loop
 {
-    public const ON_SIGNAL   = 0;
-    public const ON_CALLBACK = 1;
-    public const ON_TICK     = 2;
+    public const ON_SIGNAL   = Event::ON_SIGNAL;
+    public const ON_CALLBACK = Event::ON_CALLBACK;
+    public const ON_TICK     = Event::ON_TICK;
 
     /** @var array */
-    public static $handlers = [
+    public static array $handlers = [
         self::ON_SIGNAL   => [],
         self::ON_CALLBACK => [],
         self::ON_TICK     => [],
@@ -26,9 +29,9 @@ class Loop
 
     /**
      * @param callable $callable
-     * @param int      $level
+     * @param string $level
      */
-    public static function onTick(callable $callable, int $level = self::ON_TICK)
+    public static function onTick(callable $callable, string $level = self::ON_TICK)
     {
         self::$handlers[$level][] = $callable;
     }
@@ -36,19 +39,19 @@ class Loop
     /**
      * Finish tick.
      */
-    public static function next()
+    public static function next(): void
     {
-        while (!empty(self::$handlers[self::ON_SIGNAL])) {
+        while (! empty(self::$handlers[self::ON_SIGNAL])) {
             $item = array_shift(self::$handlers[self::ON_SIGNAL]);
             $item();
         }
 
-        while (!empty(self::$handlers[self::ON_CALLBACK])) {
+        while (! empty(self::$handlers[self::ON_CALLBACK])) {
             $item = array_shift(self::$handlers[self::ON_CALLBACK]);
             $item();
         }
 
-        while (!empty(self::$handlers[self::ON_TICK])) {
+        while (! empty(self::$handlers[self::ON_TICK])) {
             $item = array_shift(self::$handlers[self::ON_TICK]);
             $item();
         }

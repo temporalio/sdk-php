@@ -1,0 +1,52 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Build (PHP ${{ matrix.php }}, OS ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        php: [7.4] # TODO add PHP 8.0
+        os: [ubuntu-latest]
+    steps:
+
+      - name: Set up PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@v1
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: dom
+          coverage: xdebug
+
+      - name: Check Out Code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
+      - name: Show Versions
+        run: php -v ; composer -V
+
+      - name: Syntax Check
+        run: find ./src/ -name "*.php" -print0 | xargs -0 -n1 -P8 php -l
+
+      - name: Get Composer Cache Directory
+        # Docs: <https://github.com/actions/cache/blob/master/examples.md#php---composer>
+        id: composer-cache
+        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+
+      - name: Cache Dependencies
+        # Docs: <https://github.com/actions/cache/blob/master/examples.md#php---composer>
+        uses: actions/cache@v1
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.json') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install Composer Dependencies
+        run: composer install --prefer-dist --no-interaction --no-suggest --ignore-platform-reqs
+
+      - name: Run Tests
+        run: |
+          vendor/bin/phpunit --coverage-clover=coverage.xml

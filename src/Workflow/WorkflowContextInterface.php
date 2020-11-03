@@ -40,5 +40,6 @@ interface WorkflowContextInterface extends WorkflowExecutionsInterface
     /**
      * @return bool
      */
+    #[Pure]
     public function isReplaying(): bool;
 }

@@ -13,10 +13,10 @@ namespace Temporal\Client\Workflow;
 
 use React\Promise\PromiseInterface;
 use Temporal\Client\Meta\ReaderInterface;
-use Temporal\Client\Protocol\Command\RequestInterface;
-use Temporal\Client\Protocol\DispatcherInterface;
-use Temporal\Client\Protocol\Router;
-use Temporal\Client\Protocol\RouterInterface;
+use Temporal\Client\Transport\DispatcherInterface;
+use Temporal\Client\Transport\Protocol\Command\RequestInterface;
+use Temporal\Client\Transport\Router;
+use Temporal\Client\Transport\RouterInterface;
 use Temporal\Client\Worker\Declaration\Repository\WorkflowRepositoryInterface;
 use Temporal\Client\Worker\Declaration\Repository\WorkflowRepositoryTrait;
 use Temporal\Client\Worker\Worker;

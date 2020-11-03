@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client\Workflow\Command;
 
 use Temporal\Client\Activity\ActivityOptions;
-use Temporal\Client\Protocol\Command\Request;
+use Temporal\Client\Transport\Protocol\Command\Request;
 
 class ExecuteActivity extends Request
 {

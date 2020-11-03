@@ -27,7 +27,7 @@ use Temporal\Client\Workflow\WorkflowInfo;
  * @method static int[] getSendRequestIdentifiers()
  * @method static bool isReplaying()
  *
- * @method static ActivityProxy activity(string $class)
+ * @method static ActivityProxy newActivityStub(string $class)
  * @method static PromiseInterface complete(mixed $result = null)
  * @method static FutureInterface executeActivity(string $class, array $args, array|ActivityOptions $options = null)
  * @method static FutureInterface timer(string|int|float|\DateInterval $interval)
