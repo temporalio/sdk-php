@@ -144,7 +144,9 @@ final class WorkerFactory implements FactoryInterface, ReaderAwareInterface
                     throw new \RuntimeException('Invalid received message type');
                 }
 
-                $response = $this->protocol->next($message, $this->parseHeaders($headers));
+                $response = $this->protocol->next($message, $this->parseHeaders($headers), static function () {
+                    Loop::next();
+                });
 
                 $this->rr->send($response);
             } catch (\Throwable $e) {

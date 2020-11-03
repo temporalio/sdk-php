@@ -13,6 +13,7 @@ namespace Temporal\Client\Protocol\Router;
 
 use React\Promise\Deferred;
 use Temporal\Client\Worker\Declaration\CollectionInterface;
+use Temporal\Client\Worker\Loop;
 use Temporal\Client\Workflow\RunningWorkflows;
 use Temporal\Client\Workflow\WorkflowDeclarationInterface;
 
@@ -50,7 +51,7 @@ final class InvokeSignal extends Route
     /**
      * @psalm-param CollectionInterface<WorkflowDeclarationInterface> $workflows
      *
-     * @param RunningWorkflows $running
+     * @param RunningWorkflows    $running
      * @param CollectionInterface $workflows
      */
     public function __construct(CollectionInterface $workflows, RunningWorkflows $running)
@@ -102,10 +103,11 @@ final class InvokeSignal extends Route
             ]));
         }
 
-
-        $resolver->resolve(
-            $handler(...($payload['args'] ?? []))
-        );
+        Loop::onTick(static function () use ($resolver, $handler, $payload) {
+            $resolver->resolve(
+                $handler(...($payload['args'] ?? []))
+            );
+        }, Loop::ON_SIGNAL);
     }
 
     private function assertArguments(array $payload): void
