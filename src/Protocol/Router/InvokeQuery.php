@@ -33,7 +33,7 @@ final class InvokeQuery extends Route
     /**
      * @var string
      */
-    private const ERROR_QUERY_NOT_FOUND = 'Workflow query handler "%s" not found, known signals [%s]';
+    private const ERROR_QUERY_NOT_FOUND = 'Workflow query handler "%s" not found, known queries [%s]';
 
     /**
      * @var RunningWorkflows
