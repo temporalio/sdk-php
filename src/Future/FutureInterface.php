@@ -11,9 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Future;
 
-use React\Promise\PromiseInterface;
+use React\Promise\PromisorInterface;
 
-interface FutureInterface
+interface FutureInterface extends PromisorInterface
 {
     /**
      * @param callable $onComplete
@@ -30,11 +30,4 @@ interface FutureInterface
      * @return mixed
      */
     public function cancel();
-
-    /**
-     * Returns underlying promise. Attention, promises resolved immediately as data arrives.
-     *
-     * @return PromiseInterface
-     */
-    public function promise(): PromiseInterface;
 }

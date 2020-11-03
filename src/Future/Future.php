@@ -14,10 +14,9 @@ namespace Temporal\Client\Future;
 use React\Promise\CancellablePromiseInterface;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
-use React\Promise\PromisorInterface;
 use Temporal\Client\Worker\Loop;
 
-class Future implements FutureInterface, PromisorInterface
+class Future implements FutureInterface
 {
     private $resolved = false;
     private $value;

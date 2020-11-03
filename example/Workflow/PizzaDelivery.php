@@ -40,12 +40,12 @@ class PizzaDelivery
         /** @var \Temporal\Client\Future\Future $act */
         $act = Workflow::activity(ExampleActivity::class)->a('test');
 
-        dump('act done');
-        yield Workflow::timer(2);
+        yield Workflow::timer(2000);
 
         dump([
             $act->isComplete(),
-            $act->getValue()
+            $act->isDone(), // true
+            $act->isTimeouted()
         ]);
 
         // 1. resolve
