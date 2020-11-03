@@ -33,7 +33,6 @@ use Temporal\Client\Worker\WorkerInterface;
 /**
  * @noinspection PhpSuperClassIncompatibleWithInterfaceInspection
  */
-
 final class WorkerFactory implements FactoryInterface, ReaderAwareInterface
 {
     use ReaderAwareTrait;
@@ -69,7 +68,7 @@ final class WorkerFactory implements FactoryInterface, ReaderAwareInterface
     private RouterInterface $router;
 
     /**
-     * @param RoadRunnerWorker          $worker
+     * @param RoadRunnerWorker $worker
      * @param EnvironmentInterface|null $env
      * @throws \Exception
      */
@@ -86,37 +85,6 @@ final class WorkerFactory implements FactoryInterface, ReaderAwareInterface
         $this->protocol = new Protocol(
             \Closure::fromCallable([$this, 'dispatch'])
         );
-    }
-
-    /**
-     * @param RequestInterface $request
-     * @param array            $headers
-     * @return PromiseInterface
-     */
-    private function dispatch(RequestInterface $request, array $headers): PromiseInterface
-    {
-        if (!isset($headers[self::CTX_TASK_QUEUE])) {
-            return $this->router->dispatch($request, $headers);
-        }
-
-        $taskQueue = $headers[self::CTX_TASK_QUEUE];
-
-        if (!\is_string($taskQueue)) {
-            throw new \InvalidArgumentException(
-                \vsprintf('Header "%s" argument type must be a string, but %s given', [
-                    self::CTX_TASK_QUEUE,
-                    \get_debug_type($taskQueue),
-                ])
-            );
-        }
-
-        $worker = $this->workers->find($taskQueue);
-
-        if ($worker === null) {
-            throw new \OutOfRangeException(\sprintf('Cannot find a worker for task queue "%s"', $taskQueue));
-        }
-
-        return $worker->dispatch($request, $headers);
     }
 
     /**
@@ -140,7 +108,7 @@ final class WorkerFactory implements FactoryInterface, ReaderAwareInterface
     {
         while ($message = $this->rr->receive($headers)) {
             try {
-                if (!\is_string($message) || !\is_string($headers)) {
+                if (! \is_string($message) || ! \is_string($headers)) {
                     throw new \RuntimeException('Invalid received message type');
                 }
 
@@ -150,7 +118,7 @@ final class WorkerFactory implements FactoryInterface, ReaderAwareInterface
 
                 $this->rr->send($response);
             } catch (\Throwable $e) {
-                $this->rr->error((string) $e);
+                $this->rr->error((string)$e);
             }
         }
 
@@ -166,10 +134,41 @@ final class WorkerFactory implements FactoryInterface, ReaderAwareInterface
     {
         $result = Json::decode($headers, \JSON_OBJECT_AS_ARRAY);
 
-        if ($result !== null && !\is_array($result)) {
+        if ($result !== null && ! \is_array($result)) {
             throw new \LogicException('Invalid context format');
         }
 
         return $result ?? [];
+    }
+
+    /**
+     * @param RequestInterface $request
+     * @param array $headers
+     * @return PromiseInterface
+     */
+    private function dispatch(RequestInterface $request, array $headers): PromiseInterface
+    {
+        if (! isset($headers[self::CTX_TASK_QUEUE])) {
+            return $this->router->dispatch($request, $headers);
+        }
+
+        $taskQueue = $headers[self::CTX_TASK_QUEUE];
+
+        if (! \is_string($taskQueue)) {
+            throw new \InvalidArgumentException(
+                \vsprintf('Header "%s" argument type must be a string, but %s given', [
+                    self::CTX_TASK_QUEUE,
+                    \get_debug_type($taskQueue),
+                ])
+            );
+        }
+
+        $worker = $this->workers->find($taskQueue);
+
+        if ($worker === null) {
+            throw new \OutOfRangeException(\sprintf('Cannot find a worker for task queue "%s"', $taskQueue));
+        }
+
+        return $worker->dispatch($request, $headers);
     }
 }

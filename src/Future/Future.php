@@ -16,67 +16,117 @@ use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Worker\Loop;
 
-class Future implements FutureInterface, PromiseInterface
+class Future implements FutureInterface
 {
-    private $resolved = false;
+    /**
+     * @var bool
+     */
+    private bool $resolved = false;
+
+    /**
+     * @var mixed
+     */
     private $value;
 
-    /** @var callable|null */
-    private $onComplete;
+    /**
+     * @var CancellablePromiseInterface
+     */
+    private CancellablePromiseInterface $promise;
 
-    /** @var CancellablePromiseInterface */
-    private $promise;
-    private $deferred;
+    /**
+     * @var Deferred
+     */
+    private Deferred $deferred;
 
+    /**
+     * @param CancellablePromiseInterface $promise
+     */
     public function __construct(CancellablePromiseInterface $promise)
     {
-        $this->deferred = new Deferred();
-        $this->promise = $promise->then(function ($result) {
-            $this->resolved = true;
-            $this->value = $result;
-
-            Loop::onTick(function () {
-                if ($this->onComplete !== null) {
-                    $value = ($this->onComplete)($this->value);
-                } else {
-                    $value = $this->value;
-                }
-
-                $this->deferred->resolve($value);
-            }, Loop::ON_CALLBACK);
+        $this->deferred = new Deferred(function () use ($promise) {
+            $promise->cancel();
         });
+
+        /** @var CancellablePromiseInterface $current */
+        $current = $promise->then(
+            \Closure::fromCallable([$this, 'onFulfilled']),
+            \Closure::fromCallable([$this, 'onRejected']),
+        );
+
+        $this->promise = $current;
     }
 
-    public function onComplete(callable $onComplete): PromiseInterface
-    {
-        $this->onComplete = $onComplete;
-
-        return $this->deferred->promise();
-    }
-
+    /**
+     * {@inheritDoc}
+     */
     public function isComplete(): bool
     {
         return $this->resolved;
     }
 
+    /**
+     * @return mixed
+     */
     public function getValue()
     {
         return $this->value;
     }
 
-    public function cancel()
+    /**
+     * {@inheritDoc}
+     */
+    public function cancel(): void
     {
         $this->promise->cancel();
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public function then(
+        callable $onFulfilled = null,
+        callable $onRejected = null,
+        callable $onProgress = null
+    ): FutureInterface {
+        /** @var CancellablePromiseInterface $promise */
+        $promise = $this->promise()
+            ->then($onFulfilled, $onRejected, $onProgress)
+        ;
+
+        return new Future($promise);
+    }
+
+    /**
+     * @return PromiseInterface
+     */
     public function promise(): PromiseInterface
     {
         return $this->deferred->promise();
     }
 
-    // do we need it?
-    public function then(callable $onFulfilled = null, callable $onRejected = null, callable $onProgress = null)
+    /**
+     * @param mixed $result
+     */
+    private function onFulfilled($result): void
     {
-        return new Future($this->promise()->then($onFulfilled, $onRejected, $onProgress));
+        $this->resolved = true;
+        $this->value = $result;
+
+        Loop::onTick(
+            fn() => $this->deferred->resolve($this->value),
+            Loop::ON_CALLBACK
+        );
+    }
+
+    /**
+     * @param \Throwable $e
+     */
+    private function onRejected(\Throwable $e): void
+    {
+        $this->resolved = true;
+
+        Loop::onTick(function () use ($e) {
+            $this->deferred->reject($e);
+        }, Loop::ON_CALLBACK);
     }
 }

@@ -12,12 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client;
 
 use JetBrains\PhpStorm\Pure;
-use React\Promise\FulfilledPromise;
-use React\Promise\LazyPromise;
-use React\Promise\Promise as ReactPromise;
 use React\Promise\PromiseInterface;
-
-use React\Promise\RejectedPromise;
 
 use function React\Promise\all;
 use function React\Promise\any;
@@ -120,26 +115,5 @@ final class Promise
     public static function reduce(iterable $promises, callable $reduce, $initial = null): PromiseInterface
     {
         return reduce([...$promises], $reduce, $initial);
-    }
-
-    /**
-     * @param PromiseInterface $promise
-     * @return bool
-     */
-    public static function isResolved(PromiseInterface $promise): bool
-    {
-        if ($promise instanceof FulfilledPromise || $promise instanceof RejectedPromise) {
-            return true;
-        }
-
-        if ($promise instanceof ReactPromise) {
-            return (fn() => $this->result !== null)->call($promise);
-        }
-
-        if ($promise instanceof LazyPromise) {
-            return self::isResolved($promise->promise());
-        }
-
-        throw new \InvalidArgumentException('Can not detect promise state');
     }
 }
