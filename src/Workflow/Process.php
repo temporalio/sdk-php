@@ -13,6 +13,7 @@ namespace Temporal\Client\Workflow;
 
 use React\Promise\ExtendedPromiseInterface;
 use React\Promise\PromiseInterface;
+use Temporal\Client\Future\FutureInterface;
 use Temporal\Client\Worker\Loop;
 use Temporal\Client\Workflow;
 
@@ -104,6 +105,10 @@ final class Process
                 $this->nextPromise($current);
                 break;
 
+            case $current instanceof FutureInterface:
+                $this->nextPromise($current->promise());
+                break;
+
             case $current instanceof \Generator:
                 // TODO: inject coroutine process
 
@@ -122,7 +127,7 @@ final class Process
                 Workflow::setCurrentContext($this->getContext());
                 $this->generator->send($result);
                 $this->next();
-            });
+            }, Loop::ON_TICK);
 
             return $result;
         };
@@ -131,7 +136,7 @@ final class Process
             Loop::onTick(function () use ($e) {
                 Workflow::setCurrentContext($this->getContext());
                 $this->generator->throw($e);
-            });
+            }, Loop::ON_TICK);
 
             throw $e;
         };

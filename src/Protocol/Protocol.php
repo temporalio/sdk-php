@@ -19,7 +19,6 @@ use Temporal\Client\Protocol\Command\ResponseInterface;
 use Temporal\Client\Protocol\Command\SuccessResponse;
 use Temporal\Client\Protocol\Queue\QueueInterface;
 use Temporal\Client\Protocol\Queue\SplQueue;
-use Temporal\Client\Worker\Loop;
 
 final class Protocol implements ProtocolInterface
 {
@@ -66,12 +65,13 @@ final class Protocol implements ProtocolInterface
     }
 
     /**
-     * @param string $request
-     * @param array  $headers
+     * @param string   $request
+     * @param array    $headers
+     * @param callable $onComplete
      * @return string
      * @throws \JsonException
      */
-    public function next(string $request, array $headers): string
+    public function next(string $request, array $headers, callable $onComplete = null): string
     {
         $commands = Decoder::decode($request);
 
@@ -83,7 +83,9 @@ final class Protocol implements ProtocolInterface
             }
         }
 
-        Loop::next();
+        if ($onComplete !== null) {
+            $onComplete();
+        }
 
         return Encoder::encode($this->responses);
     }
