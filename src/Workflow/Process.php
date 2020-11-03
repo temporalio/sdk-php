@@ -13,7 +13,7 @@ namespace Temporal\Client\Workflow;
 
 use React\Promise\ExtendedPromiseInterface;
 use React\Promise\PromiseInterface;
-use Temporal\Client\Future\FutureInterface;
+use React\Promise\PromisorInterface;
 use Temporal\Client\Worker\Loop;
 use Temporal\Client\Workflow;
 
@@ -105,7 +105,7 @@ final class Process
                 $this->nextPromise($current);
                 break;
 
-            case $current instanceof FutureInterface:
+            case $current instanceof PromisorInterface:
                 // todo: must handle on complete (!)
                 $this->nextPromise($current->promise());
                 break;
