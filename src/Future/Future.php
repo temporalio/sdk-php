@@ -112,10 +112,9 @@ class Future implements FutureInterface
         $this->resolved = true;
         $this->value = $result;
 
-        Loop::onTick(
-            fn() => $this->deferred->resolve($this->value),
-            Loop::ON_CALLBACK
-        );
+        Loop::onTick(function () {
+            $this->deferred->resolve($this->value);
+        }, Loop::ON_CALLBACK);
     }
 
     /**
