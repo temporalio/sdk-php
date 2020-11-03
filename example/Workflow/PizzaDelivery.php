@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Workflow;
 
+use App\Activity\ExampleActivity;
 use Temporal\Client\FutureInterface;
 use Temporal\Client\Workflow;
 use Temporal\Client\Workflow\Meta\QueryMethod;
@@ -36,26 +37,19 @@ class PizzaDelivery
     /** @WorkflowMethod(name="PizzaDelivery") */
     public function handler(Workflow\WorkflowContextInterface $ctx, $input)
     {
-        // YIELD BLOCKED HERE ?
-        $value = yield Workflow::timer(1)->onComplete(function () {
-            dump("t1 done");
+        /** @var \Temporal\Client\Future\Future $act */
+        $act = Workflow::activity(ExampleActivity::class)->a('test');
 
-            // does not work?
-            return Workflow::timer(2)->onComplete(function () {
-                dump("t2 done");
+        dump('act done');
+        yield Workflow::timer(2);
 
-                return Workflow::timer(3)->onComplete(function () {
-                    dump("t3 done");
-
-                    return 'OK';
-                });
-            });
-        });
-
-        dump($value);
+        dump([
+            $act->isComplete(),
+            $act->getValue()
+        ]);
 
         // 1. resolve
-        // 2. invoke callbacks ======> [//////////] <=======
+        // 2. invoke callbacks ======> [DONE] <=======
         // 3. loop
 
         /**

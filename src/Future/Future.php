@@ -42,7 +42,6 @@ class Future implements FutureInterface, PromisorInterface
                 } else {
                     $value = $this->value;
                 }
-                // todo: how to resolve next promise?
 
                 $this->deferred->resolve($value);
             }, Loop::ON_CALLBACK);
@@ -51,8 +50,6 @@ class Future implements FutureInterface, PromisorInterface
 
     public function onComplete(callable $onComplete): PromiseInterface
     {
-        // todo: create new promise which resolved when tick happens?
-
         $this->onComplete = $onComplete;
 
         return $this->deferred->promise();
@@ -63,6 +60,11 @@ class Future implements FutureInterface, PromisorInterface
         return $this->resolved;
     }
 
+    public function getValue()
+    {
+        return $this->value;
+    }
+
     public function cancel()
     {
         $this->promise->cancel();
@@ -70,6 +72,6 @@ class Future implements FutureInterface, PromisorInterface
 
     public function promise(): PromiseInterface
     {
-        return $this->promise;
+        return $this->deferred->promise();
     }
 }
