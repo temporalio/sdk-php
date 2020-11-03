@@ -48,7 +48,7 @@ final class InvokeSignal extends Route
     private CollectionInterface $workflows;
 
     /**
-     * @param CollectionInterface<WorkflowDeclarationInterface>
+     * @psalm-param CollectionInterface<WorkflowDeclarationInterface> $workflows
      *
      * @param RunningWorkflows $running
      * @param CollectionInterface $workflows
@@ -62,7 +62,7 @@ final class InvokeSignal extends Route
     /**
      * @return iterable|string[]
      */
-    private function getAvailableSignals(): iterable
+    private function getAvailableSignalNames(): iterable
     {
         /** @var WorkflowDeclarationInterface $workflow */
         foreach ($this->workflows as $workflow) {
@@ -98,7 +98,7 @@ final class InvokeSignal extends Route
         if ($handler === null) {
             throw new \LogicException(\vsprintf(self::ERROR_SIGNAL_NOT_FOUND, [
                 $payload['name'],
-                \implode(', ', [...$this->getAvailableSignals()])
+                \implode(', ', [...$this->getAvailableSignalNames()])
             ]));
         }
 

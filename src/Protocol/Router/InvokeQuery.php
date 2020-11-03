@@ -12,7 +12,9 @@ declare(strict_types=1);
 namespace Temporal\Client\Protocol\Router;
 
 use React\Promise\Deferred;
+use Temporal\Client\Worker\Declaration\CollectionInterface;
 use Temporal\Client\Workflow\RunningWorkflows;
+use Temporal\Client\Workflow\WorkflowDeclarationInterface;
 
 final class InvokeQuery extends Route
 {
@@ -31,7 +33,7 @@ final class InvokeQuery extends Route
     /**
      * @var string
      */
-    private const ERROR_QUERY_NOT_FOUND = 'Workflow query handler "%s" not found';
+    private const ERROR_QUERY_NOT_FOUND = 'Workflow query handler "%s" not found, known signals [%s]';
 
     /**
      * @var RunningWorkflows
@@ -39,11 +41,35 @@ final class InvokeQuery extends Route
     private RunningWorkflows $running;
 
     /**
+     * @psalm-var CollectionInterface<WorkflowDeclarationInterface>
+     *
+     * @var CollectionInterface
+     */
+    private CollectionInterface $workflows;
+
+    /**
+     * @psalm-param CollectionInterface<WorkflowDeclarationInterface> $workflows
+     *
+     * @param CollectionInterface $workflows
      * @param RunningWorkflows $running
      */
-    public function __construct(RunningWorkflows $running)
+    public function __construct(CollectionInterface $workflows, RunningWorkflows $running)
     {
         $this->running = $running;
+        $this->workflows = $workflows;
+    }
+
+    /**
+     * @return iterable|string[]
+     */
+    private function getAvailableQueryNames(): iterable
+    {
+        /** @var WorkflowDeclarationInterface $workflow */
+        foreach ($this->workflows as $workflow) {
+            foreach ($workflow->getQueryHandlers() as $name => $_) {
+                yield $name;
+            }
+        }
     }
 
     /**
@@ -70,7 +96,10 @@ final class InvokeQuery extends Route
         $handler = $declaration->findQueryHandler($payload['name']);
 
         if ($handler === null) {
-            throw new \LogicException(\sprintf(self::ERROR_QUERY_NOT_FOUND, $payload['name']));
+            throw new \LogicException(\vsprintf(self::ERROR_QUERY_NOT_FOUND, [
+                $payload['name'],
+                \implode(', ', [...$this->getAvailableQueryNames()])
+            ]));
         }
 
         $resolver->resolve(

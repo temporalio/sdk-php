@@ -14,7 +14,6 @@ namespace Temporal\Client\Workflow;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Meta\ReaderInterface;
 use Temporal\Client\Protocol\Command\RequestInterface;
-use Temporal\Client\Protocol\Command\ResponseInterface;
 use Temporal\Client\Protocol\DispatcherInterface;
 use Temporal\Client\Protocol\Router;
 use Temporal\Client\Protocol\RouterInterface;
@@ -63,7 +62,7 @@ final class WorkflowWorker implements WorkflowRepositoryInterface, DispatcherInt
 
         $this->router = new Router();
         $this->router->add(new Router\StartWorkflow($this->workflows, $running, $worker));
-        $this->router->add(new Router\InvokeQuery($running));
+        $this->router->add(new Router\InvokeQuery($this->workflows, $running));
         $this->router->add(new Router\InvokeSignal($this->workflows, $running));
         $this->router->add(new Router\DestroyWorkflow($running, $worker));
     }
