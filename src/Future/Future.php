@@ -16,7 +16,7 @@ use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Worker\Loop;
 
-class Future implements FutureInterface
+class Future implements FutureInterface, PromiseInterface
 {
     private $resolved = false;
     private $value;
@@ -72,5 +72,10 @@ class Future implements FutureInterface
     public function promise(): PromiseInterface
     {
         return $this->deferred->promise();
+    }
+
+    public function then(callable $onFulfilled = null, callable $onRejected = null, callable $onProgress = null)
+    {
+        return new Future($this->promise()->then($onFulfilled, $onRejected, $onProgress));
     }
 }

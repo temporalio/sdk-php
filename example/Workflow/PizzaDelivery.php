@@ -38,14 +38,24 @@ class PizzaDelivery
     public function handler(Workflow\WorkflowContextInterface $ctx, $input)
     {
         /** @var \Temporal\Client\Future\Future $act */
-        $act = Workflow::activity(ExampleActivity::class)->a('test');
+        $act = Workflow::activity(ExampleActivity::class)->a('test')
+                       ->then(function () {
 
-        yield Workflow::timer(2000);
+                           return Workflow::timer(5);
+                       });
+
+        yield Workflow::timer(2);
+        dump('timer_complete');
 
         dump([
             $act->isComplete(),
-            $act->isDone(), // true
-            $act->isTimeouted()
+        ]);
+
+        yield Workflow::timer(2);
+        dump('timer 2 complete');
+
+        dump([
+            $act->isComplete(),
         ]);
 
         // 1. resolve
