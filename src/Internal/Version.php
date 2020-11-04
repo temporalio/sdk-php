@@ -11,19 +11,29 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Internal;
 
-use PackageVersions\Versions;
+use Composer\InstalledVersions;
 
 final class Version
 {
     /**
      * @var string
      */
-    private const VENDOR_NAME = 'temporal/client';
+    private const DEFAULT_FEATURE_VERSION = '1.0.0';
 
     /**
      * @var string
      */
-    private const FEATURE_VERSION = '1.0.0';
+    private const DEFAULT_LIBRARY_VERSION = '1.0.0';
+
+    /**
+     * @var string|null
+     */
+    private static ?string $libraryVersion = null;
+
+    /**
+     * @var string|null
+     */
+    private static ?string $featureVersion = null;
 
     /**
      * Library Version is a semver that represents the version of this Temporal
@@ -37,7 +47,17 @@ final class Version
      */
     public static function getLibraryVersion(): string
     {
-        return Versions::getVersion(self::VENDOR_NAME);
+        if (self::$libraryVersion === null) {
+            $root = InstalledVersions::getRootPackage()['name'];
+
+            try {
+                self::$libraryVersion = InstalledVersions::getPrettyVersion($root);
+            } catch (\OutOfBoundsException $e) {
+                self::$libraryVersion = self::DEFAULT_LIBRARY_VERSION;
+            }
+        }
+
+        return self::$libraryVersion;
     }
 
     /**
@@ -49,6 +69,6 @@ final class Version
      */
     public static function getFeatureVersion(): string
     {
-        return self::FEATURE_VERSION;
+        return self::$featureVersion ??= self::DEFAULT_FEATURE_VERSION;
     }
 }
