@@ -30,4 +30,4 @@ $factory->create()
     ->registerActivity(new \App\Activity\ExampleActivity())
 ;
 
-$factory->start();
+$factory->run();

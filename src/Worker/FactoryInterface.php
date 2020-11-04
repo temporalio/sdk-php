@@ -11,19 +11,14 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Worker;
 
-use Evenement\EventEmitterInterface;
 use Temporal\Client\Transport\ClientProviderInterface;
 
 /**
- * @implements EventEmitterInterface<FactoryInterface::ON_*>
+ * The {@see FactoryInterface} is responsible for providing an interface for
+ * registering all dependencies and creating a global event loop.
  */
-interface FactoryInterface extends EventEmitterInterface, ClientProviderInterface
+interface FactoryInterface extends ClientProviderInterface, LoopInterface
 {
-    /**
-     * @var string
-     */
-    public const ON_TICK = 'tick';
-
     /**
      * @var string
      */
@@ -34,9 +29,4 @@ interface FactoryInterface extends EventEmitterInterface, ClientProviderInterfac
      * @return WorkerInterface
      */
     public function create(string $taskQueue = self::DEFAULT_TASK_QUEUE): WorkerInterface;
-
-    /**
-     * @return int
-     */
-    public function start(): int;
 }

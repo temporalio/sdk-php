@@ -25,9 +25,8 @@ use Temporal\Client\Transport\RouterInterface;
 use Temporal\Client\Transport\Server;
 use Temporal\Client\Worker\Env\EnvironmentInterface;
 use Temporal\Client\Worker\Env\RoadRunner as RoadRunnerEnvironment;
-use Temporal\Client\Worker\Event;
 use Temporal\Client\Worker\FactoryInterface;
-use Temporal\Client\Worker\Loop;
+use Temporal\Client\Worker\LoopInterface;
 use Temporal\Client\Worker\Pool;
 use Temporal\Client\Worker\PoolInterface;
 use Temporal\Client\Worker\Worker;
@@ -241,7 +240,7 @@ final class WorkerFactory implements FactoryInterface, ReaderAwareInterface
     /**
      * @return int
      */
-    public function start(): int
+    public function run(): int
     {
         while ($message = $this->rr->receive($headers)) {
             try {
@@ -298,7 +297,7 @@ final class WorkerFactory implements FactoryInterface, ReaderAwareInterface
             }
         }
 
-        $this->emit(self::ON_TICK);
+        $this->emit(LoopInterface::ON_TICK);
 
         return $this->protocol->encode($this->commands);
     }

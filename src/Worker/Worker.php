@@ -108,7 +108,7 @@ class Worker implements WorkerInterface
      */
     private function attachFactoryListener(): void
     {
-        $this->factory->on(WorkerFactory::ON_TICK, $this->factoryEventListener);
+        $this->factory->on(LoopInterface::ON_TICK, $this->factoryEventListener);
     }
 
     /**
@@ -116,7 +116,7 @@ class Worker implements WorkerInterface
      */
     private function detachFactoryListener(): void
     {
-        $this->factory->removeListener(WorkerFactory::ON_TICK, $this->factoryEventListener);
+        $this->factory->removeListener(LoopInterface::ON_TICK, $this->factoryEventListener);
     }
 
     /**
