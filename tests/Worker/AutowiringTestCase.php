@@ -47,7 +47,7 @@ class AutowiringTestCase extends WorkerTestCase
     }
 
     /**
-     * @testdox checks an attempt to create a new autowiring context from different callable types
+     * @testdox Checks an attempt to create a new autowiring context from different callable types
      *
      * @dataProvider reflectionDataProvider
      */
@@ -59,7 +59,7 @@ class AutowiringTestCase extends WorkerTestCase
     }
 
     /**
-     * @testdox verifies that methods with no arguments return an empty array
+     * @testdox Verifies that methods with no arguments return an empty array
      *
      * @dataProvider reflectionDataProvider
      */
@@ -73,7 +73,7 @@ class AutowiringTestCase extends WorkerTestCase
     }
 
     /**
-     * @testdox checks invocation with an object context or exception otherwise (if static context required)
+     * @testdox Checks invocation with an object context or exception otherwise (if static context required)
      *
      * @dataProvider reflectionDataProvider
      */
@@ -91,7 +91,7 @@ class AutowiringTestCase extends WorkerTestCase
     }
 
     /**
-     * @testdox checks invocation without an object context or exception otherwise (if object context required)
+     * @testdox Checks invocation without an object context or exception otherwise (if object context required)
      *
      * @dataProvider reflectionDataProvider
      */
