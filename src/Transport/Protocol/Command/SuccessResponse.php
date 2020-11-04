@@ -39,7 +39,7 @@ class SuccessResponse extends Response implements SuccessResponseInterface
             return false;
         }
 
-        foreach ($result as $key => $value) {
+        foreach (\array_keys($result) as $key) {
             if (! \is_int($key)) {
                 return false;
             }
