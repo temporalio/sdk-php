@@ -13,7 +13,7 @@ namespace Temporal\Client\Transport\Router;
 
 use React\Promise\Deferred;
 use Temporal\Client\Worker\Declaration\CollectionInterface;
-use Temporal\Client\Worker\Loop;
+use Temporal\Client\Worker\WorkerInterface;
 use Temporal\Client\Workflow\RunningWorkflows;
 use Temporal\Client\Workflow\WorkflowDeclarationInterface;
 
@@ -49,28 +49,22 @@ final class InvokeSignal extends Route
     private CollectionInterface $workflows;
 
     /**
+     * @var WorkerInterface
+     */
+    private WorkerInterface $worker;
+
+    /**
      * @psalm-param CollectionInterface<WorkflowDeclarationInterface> $workflows
      *
-     * @param RunningWorkflows    $running
+     * @param RunningWorkflows $running
      * @param CollectionInterface $workflows
+     * @param WorkerInterface $worker
      */
-    public function __construct(CollectionInterface $workflows, RunningWorkflows $running)
+    public function __construct(CollectionInterface $workflows, RunningWorkflows $running, WorkerInterface $worker)
     {
         $this->running = $running;
         $this->workflows = $workflows;
-    }
-
-    /**
-     * @return iterable|string[]
-     */
-    private function getAvailableSignalNames(): iterable
-    {
-        /** @var WorkflowDeclarationInterface $workflow */
-        foreach ($this->workflows as $workflow) {
-            foreach ($workflow->getSignalHandlers() as $name => $_) {
-                yield $name;
-            }
-        }
+        $this->worker = $worker;
     }
 
     /**
@@ -97,14 +91,27 @@ final class InvokeSignal extends Route
         if ($handler === null) {
             throw new \LogicException(\vsprintf(self::ERROR_SIGNAL_NOT_FOUND, [
                 $payload['name'],
-                \implode(', ', [...$this->getAvailableSignalNames()])
+                \implode(', ', [...$this->getAvailableSignalNames()]),
             ]));
         }
 
-        Loop::onTick(static function () use ($resolver, $handler, $payload) {
-            $resolver->resolve(
-                $handler(...($payload['args'] ?? []))
-            );
-        }, Loop::ON_SIGNAL);
+        $arguments = $payload['args'] ?? [];
+
+        $this->worker->once(WorkerInterface::ON_SIGNAL,
+            static fn() => $resolver->resolve($handler(...$arguments))
+        );
+    }
+
+    /**
+     * @return iterable|string[]
+     */
+    private function getAvailableSignalNames(): iterable
+    {
+        /** @var WorkflowDeclarationInterface $workflow */
+        foreach ($this->workflows as $workflow) {
+            foreach ($workflow->getSignalHandlers() as $name => $_) {
+                yield $name;
+            }
+        }
     }
 }

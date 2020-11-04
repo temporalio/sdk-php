@@ -50,11 +50,11 @@ final class WorkflowWorker implements WorkflowRepositoryInterface, DispatcherInt
 
     /**
      * @param Worker $worker
-     * @throws \Exception
+     * @param ReaderInterface $reader
      */
-    public function __construct(Worker $worker)
+    public function __construct(Worker $worker, ReaderInterface $reader)
     {
-        $this->reader = $worker->getReader();
+        $this->reader = $reader;
 
         $this->bootWorkflowRepositoryTrait();
 
@@ -63,7 +63,7 @@ final class WorkflowWorker implements WorkflowRepositoryInterface, DispatcherInt
         $this->router = new Router();
         $this->router->add(new Router\StartWorkflow($this->workflows, $running, $worker));
         $this->router->add(new Router\InvokeQuery($this->workflows, $running));
-        $this->router->add(new Router\InvokeSignal($this->workflows, $running));
+        $this->router->add(new Router\InvokeSignal($this->workflows, $running, $worker));
         $this->router->add(new Router\DestroyWorkflow($running, $worker));
     }
 

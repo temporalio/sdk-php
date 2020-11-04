@@ -14,7 +14,7 @@ namespace Temporal\Client\Transport;
 use React\Promise\CancellablePromiseInterface;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
-use Temporal\Client\Worker\Loop;
+use Temporal\Client\Worker\WorkerInterface;
 
 class Future implements FutureInterface
 {
@@ -39,10 +39,16 @@ class Future implements FutureInterface
     private Deferred $deferred;
 
     /**
+     * @var WorkerInterface
+     */
+    private WorkerInterface $worker;
+
+    /**
      * @param CancellablePromiseInterface $promise
      */
-    public function __construct(CancellablePromiseInterface $promise)
+    public function __construct(CancellablePromiseInterface $promise, WorkerInterface $worker)
     {
+        $this->worker = $worker;
         $this->deferred = new Deferred(function () use ($promise) {
             $promise->cancel();
         });
@@ -93,7 +99,7 @@ class Future implements FutureInterface
             ->then($onFulfilled, $onRejected, $onProgress)
         ;
 
-        return new Future($promise);
+        return new Future($promise, $this->worker);
     }
 
     /**
@@ -112,9 +118,9 @@ class Future implements FutureInterface
         $this->resolved = true;
         $this->value = $result;
 
-        Loop::onTick(function () {
+        $this->worker->once(WorkerInterface::ON_CALLBACK, function () {
             $this->deferred->resolve($this->value);
-        }, Loop::ON_CALLBACK);
+        });
     }
 
     /**
@@ -124,8 +130,8 @@ class Future implements FutureInterface
     {
         $this->resolved = true;
 
-        Loop::onTick(function () use ($e) {
+        $this->worker->once(WorkerInterface::ON_CALLBACK, function () use ($e) {
             $this->deferred->reject($e);
-        }, Loop::ON_CALLBACK);
+        });
     }
 }

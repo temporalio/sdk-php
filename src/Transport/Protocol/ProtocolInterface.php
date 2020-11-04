@@ -15,10 +15,30 @@ use Evenement\EventEmitterInterface;
 use Temporal\Client\Transport\Protocol\Command\CommandInterface;
 
 /**
- * @implements EventEmitterInterface<Event::ON_*>
+ * @implements EventEmitterInterface<ProtocolInterface::ON_*>
  */
 interface ProtocolInterface extends EventEmitterInterface
 {
+    /**
+     * @var string
+     */
+    public const ON_ENCODING = 'encoding';
+
+    /**
+     * @var string
+     */
+    public const ON_ENCODED = 'encoded';
+
+    /**
+     * @var string
+     */
+    public const ON_DECODING = 'decoding';
+
+    /**
+     * @var string
+     */
+    public const ON_DECODED = 'decoded';
+
     /**
      * TODO specify the type of throwable exception
      *

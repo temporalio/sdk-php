@@ -38,12 +38,12 @@ final class Protocol implements ProtocolInterface
      */
     public function decodeCommands(string $message): iterable
     {
-        $this->emit(Event::ON_DECODING, [$message]);
+        $this->emit(self::ON_DECODING, [$message]);
 
         try {
             return $commands = Decoder::decode($message);
         } finally {
-            $this->emit(Event::ON_DECODED, [$commands ?? []]);
+            $this->emit(self::ON_DECODED, [$commands ?? []]);
         }
     }
 
@@ -52,12 +52,20 @@ final class Protocol implements ProtocolInterface
      */
     public function encode(iterable $commands): string
     {
-        $this->emit(Event::ON_ENCODING, [$commands]);
+        $this->emit(self::ON_ENCODING, [$commands]);
 
         try {
             return $result = Encoder::encode($commands);
         } finally {
-            $this->emit(Event::ON_ENCODED, [$result ?? '']);
+            $this->emit(self::ON_ENCODED, [$result ?? '']);
         }
+    }
+
+    /**
+     * @return void
+     */
+    public function __destruct()
+    {
+        $this->removeAllListeners();
     }
 }

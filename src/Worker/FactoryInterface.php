@@ -12,12 +12,18 @@ declare(strict_types=1);
 namespace Temporal\Client\Worker;
 
 use Evenement\EventEmitterInterface;
+use Temporal\Client\Transport\ClientProviderInterface;
 
 /**
- * @implements EventEmitterInterface<Event::ON_*>
+ * @implements EventEmitterInterface<FactoryInterface::ON_*>
  */
-interface FactoryInterface extends EventEmitterInterface
+interface FactoryInterface extends EventEmitterInterface, ClientProviderInterface
 {
+    /**
+     * @var string
+     */
+    public const ON_TICK = 'tick';
+
     /**
      * @var string
      */

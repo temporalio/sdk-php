@@ -39,11 +39,17 @@ class ActivityWorker implements ActivityRepositoryInterface, DispatcherInterface
     private RouterInterface $router;
 
     /**
-     * @param Worker $worker
+     * @var Worker
      */
-    public function __construct(Worker $worker)
+    private Worker $worker;
+
+    /**
+     * @param ReaderInterface $reader
+     */
+    public function __construct(Worker $worker, ReaderInterface $reader)
     {
-        $this->reader = $worker->getReader();
+        $this->reader = $reader;
+        $this->worker = $worker;
 
         $this->bootActivityRepositoryTrait();
 

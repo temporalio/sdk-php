@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client\Workflow;
 
 use Temporal\Client\Transport\ClientInterface;
+use Temporal\Client\Worker\WorkerInterface;
 use Temporal\Client\Workflow;
 
 final class RunningWorkflows
@@ -27,15 +28,16 @@ final class RunningWorkflows
     private array $processes = [];
 
     /**
-     * @param WorkflowContextInterface $context
-     * @param WorkflowDeclarationInterface $declaration
+     * @param WorkerInterface $worker
+     * @param WorkflowContext $c
+     * @param WorkflowDeclarationInterface $d
      * @return Process
      */
-    public function run(WorkflowContextInterface $context, WorkflowDeclarationInterface $declaration): Process
+    public function run(WorkerInterface $worker, WorkflowContext $c, WorkflowDeclarationInterface $d): Process
     {
-        $info = $context->getInfo();
+        $info = $c->getInfo();
 
-        return $this->processes[$info->execution->runId] = new Process($context, $declaration);
+        return $this->processes[$info->execution->runId] = new Process($worker, $c, $d);
     }
 
     /**
@@ -62,7 +64,7 @@ final class RunningWorkflows
 
         Workflow::setCurrentContext(null);
         unset($this->processes[$runId]);
-        $context = $process->getEnvironment();
+        $context = $process->getContext();
 
         $requests = $context->getRequestIdentifiers();
         foreach ($requests as $id) {

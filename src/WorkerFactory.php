@@ -213,11 +213,6 @@ final class WorkerFactory implements FactoryInterface, ReaderAwareInterface
      */
     private function boot(): void
     {
-        $this->on(Event::ON_PROCEED, function () {
-            Loop::next();
-        });
-
-        // Boot routes
         $this->router->add(new Router\GetWorkerInfo($this->workers));
     }
 
@@ -228,11 +223,19 @@ final class WorkerFactory implements FactoryInterface, ReaderAwareInterface
      */
     public function create(string $taskQueue = self::DEFAULT_TASK_QUEUE): WorkerInterface
     {
-        $worker = new Worker($this->client, $this->getReader(), $this->env, $taskQueue);
+        $worker = new Worker($this, $this->env, $taskQueue);
 
         $this->workers->add($worker);
 
         return $worker;
+    }
+
+    /**
+     * @return Client
+     */
+    public function getClient(): Client
+    {
+        return $this->client;
     }
 
     /**
@@ -287,8 +290,6 @@ final class WorkerFactory implements FactoryInterface, ReaderAwareInterface
         $headers = $this->protocol->decodeHeaders($context);
         $commands = $this->protocol->decodeCommands($message);
 
-        $this->emit(Event::ON_RECEIVED, [$commands, $headers]);
-
         foreach ($commands as $command) {
             if ($command instanceof RequestInterface) {
                 $this->server->dispatch($command, $headers);
@@ -297,11 +298,16 @@ final class WorkerFactory implements FactoryInterface, ReaderAwareInterface
             }
         }
 
-        $this->emit(Event::ON_SIGNAL, [$this->commands, $headers]);
-        $this->emit(Event::ON_CALLBACK, [$this->commands, $headers]);
-        $this->emit(Event::ON_TICK, [$this->commands, $headers]);
-        $this->emit(Event::ON_PROCEED, [$this->commands, $headers]);
+        $this->emit(self::ON_TICK);
 
         return $this->protocol->encode($this->commands);
+    }
+
+    /**
+     * @return void
+     */
+    public function __destruct()
+    {
+        $this->removeAllListeners();
     }
 }

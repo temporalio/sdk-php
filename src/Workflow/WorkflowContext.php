@@ -15,7 +15,6 @@ use JetBrains\PhpStorm\ExpectedValues;
 use React\Promise\CancellablePromiseInterface;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
-use Temporal\Client\Exception\CancellationException;
 use Temporal\Client\Support\DateInterval;
 use Temporal\Client\Transport\Future;
 use Temporal\Client\Transport\FutureInterface;

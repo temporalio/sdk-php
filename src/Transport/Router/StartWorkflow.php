@@ -62,7 +62,7 @@ final class StartWorkflow extends Route
         $info = $env->getInfo();
 
         $this->assertNotRunning($info);
-        $process = $this->running->run($env, $this->findDeclarationOrFail($info));
+        $process = $this->running->run($this->worker, $env, $this->findDeclarationOrFail($info));
 
         $process->start($env->getArguments());
         $resolver->resolve($info->execution);

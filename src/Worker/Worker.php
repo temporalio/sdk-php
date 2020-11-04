@@ -12,19 +12,22 @@ declare(strict_types=1);
 namespace Temporal\Client\Worker;
 
 use Carbon\Carbon;
+use Evenement\EventEmitterTrait;
 use JetBrains\PhpStorm\Pure;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityDeclarationInterface;
 use Temporal\Client\Activity\ActivityWorker;
-use Temporal\Client\Meta\ReaderInterface;
 use Temporal\Client\Transport\ClientInterface;
 use Temporal\Client\Transport\Protocol\Command\RequestInterface;
 use Temporal\Client\Worker\Env\EnvironmentInterface;
+use Temporal\Client\WorkerFactory;
 use Temporal\Client\Workflow\WorkflowDeclarationInterface;
 use Temporal\Client\Workflow\WorkflowWorker;
 
 class Worker implements WorkerInterface
 {
+    use EventEmitterTrait;
+
     /**
      * @var WorkflowWorker
      */
@@ -46,16 +49,6 @@ class Worker implements WorkerInterface
     private EnvironmentInterface $env;
 
     /**
-     * @var ClientInterface
-     */
-    private ClientInterface $client;
-
-    /**
-     * @var ReaderInterface
-     */
-    private ReaderInterface $reader;
-
-    /**
      * @var \DateTimeInterface
      */
     private \DateTimeInterface $now;
@@ -66,23 +59,64 @@ class Worker implements WorkerInterface
     private \DateTimeZone $zone;
 
     /**
-     * @param ClientInterface $c
-     * @param ReaderInterface $reader
+     * @var WorkerFactory
+     */
+    private WorkerFactory $factory;
+
+    /**
+     * @var \Closure
+     */
+    private \Closure $factoryEventListener;
+
+    /**
+     * @param WorkerFactory $factory
      * @param EnvironmentInterface $env
      * @param string $queue
      * @throws \Exception
      */
-    public function __construct(ClientInterface $c, ReaderInterface $reader, EnvironmentInterface $env, string $queue)
+    public function __construct(WorkerFactory $factory, EnvironmentInterface $env, string $queue)
     {
         $this->env = $env;
         $this->taskQueue = $queue;
-        $this->client = $c;
-        $this->reader = $reader;
+        $this->factory = $factory;
         $this->zone = new \DateTimeZone('UTC');
         $this->now = new \DateTimeImmutable('now', $this->zone);
 
-        $this->workflowWorker = new WorkflowWorker($this);
-        $this->activityWorker = new ActivityWorker($this);
+        $this->workflowWorker = new WorkflowWorker($this, $this->factory->getReader());
+        $this->activityWorker = new ActivityWorker($this, $this->factory->getReader());
+
+        $this->factoryEventListener = function () {
+            $this->emit(self::ON_SIGNAL);
+            $this->emit(self::ON_CALLBACK);
+            $this->emit(self::ON_QUERY);
+            $this->emit(self::ON_TICK);
+        };
+
+        $this->boot();
+    }
+
+    /**
+     * @return void
+     */
+    private function boot(): void
+    {
+        $this->attachFactoryListener();
+    }
+
+    /**
+     * @return void
+     */
+    private function attachFactoryListener(): void
+    {
+        $this->factory->on(WorkerFactory::ON_TICK, $this->factoryEventListener);
+    }
+
+    /**
+     * @return void
+     */
+    private function detachFactoryListener(): void
+    {
+        $this->factory->removeListener(WorkerFactory::ON_TICK, $this->factoryEventListener);
     }
 
     /**
@@ -122,15 +156,7 @@ class Worker implements WorkerInterface
      */
     public function getClient(): ClientInterface
     {
-        return $this->client;
-    }
-
-    /**
-     * @return ReaderInterface
-     */
-    public function getReader(): ReaderInterface
-    {
-        return $this->reader;
+        return $this->factory->getClient();
     }
 
     /**
@@ -235,5 +261,14 @@ class Worker implements WorkerInterface
     public function getActivities(): iterable
     {
         return $this->activityWorker->getActivities();
+    }
+
+    /**
+     * @return void
+     */
+    public function __destruct()
+    {
+        $this->detachFactoryListener();
+        $this->removeAllListeners();
     }
 }

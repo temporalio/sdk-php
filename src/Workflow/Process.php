@@ -14,7 +14,7 @@ namespace Temporal\Client\Workflow;
 use React\Promise\ExtendedPromiseInterface;
 use React\Promise\PromiseInterface;
 use React\Promise\PromisorInterface;
-use Temporal\Client\Worker\Loop;
+use Temporal\Client\Worker\WorkerInterface;
 use Temporal\Client\Workflow;
 
 final class Process
@@ -35,13 +35,20 @@ final class Process
     private WorkflowDeclarationInterface $declaration;
 
     /**
-     * @param WorkflowContextInterface $context
-     * @param WorkflowDeclarationInterface $declaration
+     * @var WorkerInterface
      */
-    public function __construct(WorkflowContext $context, WorkflowDeclarationInterface $declaration)
+    private WorkerInterface $worker;
+
+    /**
+     * @param WorkerInterface $worker
+     * @param WorkflowContext $ctx
+     * @param WorkflowDeclarationInterface $decl
+     */
+    public function __construct(WorkerInterface $worker, WorkflowContext $ctx, WorkflowDeclarationInterface $decl)
     {
-        $this->env = $context;
-        $this->declaration = clone $declaration;
+        $this->env = $ctx;
+        $this->worker = $worker;
+        $this->declaration = clone $decl;
     }
 
     /**
@@ -77,7 +84,7 @@ final class Process
      */
     public function next(): void
     {
-        Workflow::setCurrentContext($this->getEnvironment());
+        Workflow::setCurrentContext($this->getContext());
 
         if ($this->generator === null) {
             throw new \LogicException('Workflow process is not running');
@@ -113,7 +120,7 @@ final class Process
     /**
      * @return WorkflowContext
      */
-    public function getEnvironment(): WorkflowContext
+    public function getContext(): WorkflowContext
     {
         return $this->env;
     }
@@ -124,20 +131,22 @@ final class Process
     private function nextPromise(PromiseInterface $promise): void
     {
         $onFulfilled = function ($result) {
-            Loop::onTick(function () use ($result) {
-                Workflow::setCurrentContext($this->getEnvironment());
+            $this->worker->once(WorkerInterface::ON_TICK, function () use ($result) {
+                Workflow::setCurrentContext($this->getContext());
+
                 $this->generator->send($result);
                 $this->next();
-            }, Loop::ON_TICK);
+            });
 
             return $result;
         };
 
         $onRejected = function (\Throwable $e) {
-            Loop::onTick(function () use ($e) {
-                Workflow::setCurrentContext($this->getEnvironment());
+            $this->worker->once(WorkerInterface::ON_TICK, function () use ($e) {
+                Workflow::setCurrentContext($this->getContext());
+
                 $this->generator->throw($e);
-            }, Loop::ON_TICK);
+            });
 
             throw $e;
         };

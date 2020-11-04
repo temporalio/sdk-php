@@ -11,12 +11,42 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Worker;
 
+use Evenement\EventEmitterInterface;
+use Temporal\Client\Transport\ClientProviderInterface;
 use Temporal\Client\Transport\DispatcherInterface;
 use Temporal\Client\Worker\Declaration\Repository\ActivityRepositoryInterface;
 use Temporal\Client\Worker\Declaration\Repository\WorkflowRepositoryInterface;
 
-interface WorkerInterface extends WorkflowRepositoryInterface, ActivityRepositoryInterface, DispatcherInterface
+/**
+ * @implements EventEmitterInterface<WorkerInterface::ON_*>
+ */
+interface WorkerInterface extends
+    DispatcherInterface,
+    EventEmitterInterface,
+    ClientProviderInterface,
+    WorkflowRepositoryInterface,
+    ActivityRepositoryInterface
 {
+    /**
+     * @var string
+     */
+    public const ON_SIGNAL = 'signal';
+
+    /**
+     * @var string
+     */
+    public const ON_QUERY = 'query';
+
+    /**
+     * @var string
+     */
+    public const ON_CALLBACK = 'callback';
+
+    /**
+     * @var string
+     */
+    public const ON_TICK = 'tick';
+
     /**
      * @return string
      */
