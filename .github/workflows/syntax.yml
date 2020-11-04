@@ -1,0 +1,28 @@
+name: Syntax
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Build (PHP ${{ matrix.php }}, OS ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        php: [7.4] # TODO add PHP 8.0
+        os: [ubuntu-latest]
+    steps:
+
+      - name: Set up PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: dom
+
+      - name: Check Out Code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
+      - name: Syntax Check
+        run: find ./src/ -name "*.php" -print0 | xargs -0 -n1 -P8 php -l

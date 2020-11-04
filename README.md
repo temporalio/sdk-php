@@ -1,6 +1,6 @@
 # Temporal PHP SDK
 
-[![CI Status](https://github.com/temporalio/php-sdk/workflows/CI/badge.svg)](https://github.com/temporalio/php-sdk/actions)
+[![CI Status](https://github.com/temporalio/php-sdk/workflows/Unit/badge.svg)](https://github.com/temporalio/php-sdk/actions)
 
 **Attention, the package is under development.**
 
