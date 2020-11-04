@@ -49,11 +49,6 @@ class Worker implements WorkerInterface
     private \DateTimeInterface $now;
 
     /**
-     * @var \DateTimeZone
-     */
-    private \DateTimeZone $zone;
-
-    /**
      * @var WorkerFactory
      */
     private WorkerFactory $factory;
@@ -73,8 +68,7 @@ class Worker implements WorkerInterface
     {
         $this->taskQueue = $queue;
         $this->factory = $factory;
-        $this->zone = new \DateTimeZone('UTC');
-        $this->now = new \DateTimeImmutable('now', $this->zone);
+        $this->now = new \DateTimeImmutable('now', $this->factory->getDateTimeZone());
 
         $this->workflowWorker = new WorkflowWorker($this, $this->factory->getReader());
         $this->activityWorker = new ActivityWorker($this, $this->factory->getReader());
@@ -216,7 +210,7 @@ class Worker implements WorkerInterface
     {
         // Intercept headers
         if (isset($headers['tickTime'])) {
-            $this->now = Carbon::parse($headers['tickTime'], $this->zone);
+            $this->now = Carbon::parse($headers['tickTime'], $this->factory->getDateTimeZone());
         }
 
         $environment = $this->factory->getEnvironment();

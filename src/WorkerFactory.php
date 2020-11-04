@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
+use Carbon\CarbonTimeZone;
 use Evenement\EventEmitterTrait;
 use React\Promise\PromiseInterface;
 use Spiral\RoadRunner\Worker as RoadRunnerWorker;
@@ -96,6 +97,11 @@ final class WorkerFactory implements FactoryInterface, ReaderAwareInterface
     private EnvironmentInterface $env;
 
     /**
+     * @var CarbonTimeZone
+     */
+    private CarbonTimeZone $zone;
+
+    /**
      * @var RouterInterface
      */
     private RouterInterface $router;
@@ -139,6 +145,7 @@ final class WorkerFactory implements FactoryInterface, ReaderAwareInterface
      */
     private function initialize(): void
     {
+        $this->zone = new CarbonTimeZone('UTC');
         $this->workers = new Pool();
         $this->commands = new SplQueue();
         $this->protocol = new Protocol();
@@ -240,6 +247,14 @@ final class WorkerFactory implements FactoryInterface, ReaderAwareInterface
     public function getEnvironment(): EnvironmentInterface
     {
         return $this->env;
+    }
+
+    /**
+     * @return CarbonTimeZone
+     */
+    public function getDateTimeZone(): CarbonTimeZone
+    {
+        return $this->zone;
     }
 
     /**
