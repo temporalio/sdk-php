@@ -42,4 +42,4 @@ jobs:
         run: composer install --prefer-dist --no-interaction --no-suggest --ignore-platform-reqs
 
       - name: Run Tests
-        run: vendor/bin/psalm
+        run: vendor/bin/psalm --show-info=true
