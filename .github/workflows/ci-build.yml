@@ -49,4 +49,4 @@ jobs:
 
       - name: Run Tests
         run: |
-          vendor/bin/phpunit --coverage-clover=coverage.xml
+          vendor/bin/phpunit --coverage-clover=coverage.xml --testdox
