@@ -9,7 +9,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: [7.4] # TODO add PHP 8.0
+        # Note: This workflow requires only the LATEST version of PHP
+        php: [7.4]
         os: [ubuntu-latest]
     steps:
 
