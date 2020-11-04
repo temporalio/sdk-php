@@ -18,27 +18,25 @@ use Evenement\EventEmitterInterface;
  * creating an event loop.
  *
  * Besides defining a few methods, this interface also implements
- * the {@see EventEmitterInterface} which allows you to react to certain events:
- *
- * tick event:
- *      The `tick` event will be emitted whenever all Temporal commands were
- *      processed and the internal state is ready to send new data to the
- *      server.
- *
- *      ```php
- *      $loop->on('tick', function() {
- *          echo 'tick';
- *      });
- *      ```
- *
- *      This event MAY be emitted any number of times, which may be zero times
- *      if this event loop does not send any data at all.
+ * the {@see EventEmitterInterface} which allows you to react to certain events.
  *
  * @implements EventEmitterInterface<FactoryInterface::ON_*>
  */
 interface LoopInterface extends EventEmitterInterface
 {
     /**
+     * The `tick` event will be emitted whenever all Temporal commands were
+     * processed and the internal state is ready to send new data to the server.
+     *
+     * ```php
+     * $loop->on('tick', function() {
+     *     echo 'tick';
+     * });
+     * ```
+     *
+     * This event MAY be emitted any number of times, which may be zero times
+     * if this event loop does not send any data at all.
+     *
      * @var string
      */
     public const ON_TICK = 'tick';

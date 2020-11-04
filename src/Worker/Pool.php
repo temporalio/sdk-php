@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Worker;
 
-
 class Pool implements PoolInterface
 {
     /**

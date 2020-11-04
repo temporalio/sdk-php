@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Client\Worker;
 
 use Evenement\EventEmitterInterface;
-use Temporal\Client\Transport\ClientProviderInterface;
 use Temporal\Client\Transport\DispatcherInterface;
 use Temporal\Client\Worker\Declaration\Repository\ActivityRepositoryInterface;
 use Temporal\Client\Worker\Declaration\Repository\WorkflowRepositoryInterface;
@@ -23,7 +22,6 @@ use Temporal\Client\Worker\Declaration\Repository\WorkflowRepositoryInterface;
 interface WorkerInterface extends
     DispatcherInterface,
     EventEmitterInterface,
-    ClientProviderInterface,
     WorkflowRepositoryInterface,
     ActivityRepositoryInterface
 {

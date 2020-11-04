@@ -32,9 +32,6 @@ use Temporal\Client\Worker\PoolInterface;
 use Temporal\Client\Worker\Worker;
 use Temporal\Client\Worker\WorkerInterface;
 
-/**
- * @noinspection PhpSuperClassIncompatibleWithInterfaceInspection
- */
 final class WorkerFactory implements FactoryInterface, ReaderAwareInterface
 {
     use EventEmitterTrait;

@@ -33,9 +33,9 @@ trait ReaderAwareTrait
 
     /**
      * @param ReaderInterface $reader
-     * @return $this
+     * @return $this|ReaderAwareInterface
      */
-    protected function setReader(ReaderInterface $reader): self
+    protected function setReader(ReaderInterface $reader): ReaderAwareInterface
     {
         $this->reader = $reader;
 
@@ -44,9 +44,9 @@ trait ReaderAwareTrait
 
     /**
      * @param ReaderInterface $reader
-     * @return $this
+     * @return $this|ReaderAwareInterface
      */
-    public function withReader(ReaderInterface $reader): self
+    public function withReader(ReaderInterface $reader): ReaderAwareInterface
     {
         return (clone $this)->setReader($reader);
     }
