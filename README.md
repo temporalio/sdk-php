@@ -1,5 +1,7 @@
 # Temporal PHP SDK
 
+![CI Status](https://github.com/temporalio/php-sdk/workflows/CI/badge.svg)
+
 **Attention, the package is under development.**
 
 ## Introduction
