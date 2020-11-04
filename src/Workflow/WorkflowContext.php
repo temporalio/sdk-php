@@ -173,7 +173,7 @@ final class WorkflowContext implements WorkflowContextInterface
             ->then($then, $otherwise)
         ;
 
-        return new Future($result);
+        return new Future($result, $this->worker);
     }
 
     /**
@@ -221,7 +221,7 @@ final class WorkflowContext implements WorkflowContextInterface
     ): PromiseInterface {
         $request = new ExecuteActivity($name, $arguments, ActivityOptions::new($options));
 
-        return new Future($this->request($request));
+        return new Future($this->request($request), $this->worker);
     }
 
     /**

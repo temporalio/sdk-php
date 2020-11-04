@@ -1,5 +1,5 @@
 {
-    "name": "spiral/temporal",
+    "name": "temporal/client",
     "license": "MIT",
     "require": {
         "php": ">=7.4",
@@ -8,6 +8,7 @@
         "nesbot/carbon": "^2.41",
         "react/promise": "^2.8",
         "evenement/evenement": "*",
+        "ocramius/package-versions": "^2.2",
         "symfony/polyfill-php80": "^1.18",
         "spiral/roadrunner": "^1.8"
     },
