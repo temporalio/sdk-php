@@ -25,6 +25,8 @@ use Temporal\Client\Workflow\Command\ExecuteActivity;
 use Temporal\Client\Workflow\Command\NewTimer;
 use Temporal\Client\Workflow\Command\SideEffect;
 
+use function React\Promise\reject;
+
 final class WorkflowEnvironment implements WorkflowEnvironmentInterface
 {
     /**
