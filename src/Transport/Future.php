@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Future;
+namespace Temporal\Client\Transport;
 
 use React\Promise\CancellablePromiseInterface;
 use React\Promise\Deferred;
