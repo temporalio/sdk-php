@@ -78,8 +78,6 @@ final class InvokeSignal extends Route
      */
     public function handle(array $payload, array $headers, Deferred $resolver): void
     {
-        $this->assertArguments($payload);
-
         $workflowRunId = $payload['runId'] ?? null;
 
         if ($workflowRunId === null) {
@@ -108,10 +106,5 @@ final class InvokeSignal extends Route
                 $handler(...($payload['args'] ?? []))
             );
         }, Loop::ON_SIGNAL);
-    }
-
-    private function assertArguments(array $payload): void
-    {
-        // TODO
     }
 }

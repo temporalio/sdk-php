@@ -77,8 +77,6 @@ final class InvokeQuery extends Route
      */
     public function handle(array $payload, array $headers, Deferred $resolver): void
     {
-        $this->assertArguments($payload);
-
         $workflowRunId = $payload['runId'] ?? null;
 
         if ($workflowRunId === null) {
@@ -105,10 +103,5 @@ final class InvokeQuery extends Route
         $resolver->resolve(
             $handler(...($payload['args'] ?? []))
         );
-    }
-
-    private function assertArguments(array $payload): void
-    {
-        // TODO
     }
 }
