@@ -17,7 +17,7 @@ parameter to the Activity.
 namespace Example;
 
 use Temporal\Client\Workflow\Meta\WorkflowMethod;
-use Temporal\Client\Workflow\WorkflowEnvironmentInterface;
+use Temporal\Client\Workflow\WorkflowContextInterface;
 
 final class FileProcessingWorkflow
 {
@@ -39,37 +39,37 @@ final class FileProcessingWorkflow
      * the Temporal server.
      */
     #[WorkflowMethod]
-    public function process(WorkflowEnvironmentInterface $env, array $arguments)
+    public function process(WorkflowContextInterface $ctx, array $arguments)
     {
         try {
             // We call some action (activity) that downloads a file
             // from the bucket (S3 API specific) by its name.
             //
             // As a result, we get the local name of this file.
-            $this->localName = yield $env->executeActivity('download', [
+            $this->localName = yield $ctx->executeActivity('download', [
                 $arguments['sourceBucket'],
                 $arguments['sourceName']
             ]);
             
             // We do any transformations on this file and get the new file name.
-            $this->processedName = yield $env->executeActivity('processFile', [
+            $this->processedName = yield $ctx->executeActivity('processFile', [
                 $this->localName
             ]);
 
             // Uploading the processed file to the server
             // by its bucket and name.
-            yield $env->executeActivity('upload', [
+            yield $ctx->executeActivity('upload', [
                 $arguments['targetBucket'],
                 $arguments['targetName'],
                 $this->processedName
             ]);
         } finally {
             if ($this->localName !== null) {
-                yield $env->executeActivity('deleteLocalFile', [$this->localName]);
+                yield $ctx->executeActivity('deleteLocalFile', [$this->localName]);
             }
 
             if ($this->processedName !== null) {
-                yield $env->executeActivity('deleteLocalFile', [$this->processedName]);
+                yield $ctx->executeActivity('deleteLocalFile', [$this->processedName]);
             }
         }
     }
@@ -85,11 +85,11 @@ event that it is not required:
 
 ```php
 #[WorkflowMethod]
-public function process(WorkflowContextInterface $env, array $arguments)
+public function process(WorkflowContextInterface $ctx, array $arguments)
 {
-    $env->executeActivity('notify', ['Some kind of Workflow was started']);
+    $ctx->executeActivity('notify', ['Some kind of Workflow was started']);
     
-    $result = yield $env->executeActivity('doSomethingImportant');
+    $result = yield $ctx->executeActivity('doSomethingImportant');
 }
 ```
 
@@ -98,14 +98,14 @@ that the coroutines for some reason do not suit us:
 
 ```php
 #[WorkflowMethod]
-public function process(WorkflowContextInterface $env, array $arguments)
+public function process(WorkflowContextInterface $ctx, array $arguments)
 {
-    $env->executeActivity('notify', ['Some kind of Workflow was started'])
+    $ctx->executeActivity('notify', ['Some kind of Workflow was started'])
         ->then(fn($result) => 
-            $env->executeActivity('notify', ['The notification was sent successfully'])
+            $ctx->executeActivity('notify', ['The notification was sent successfully'])
         )
         ->otherwise(fn($error) => 
-            $env->executeActivity('notify', ['Something went wrong: ' . $error])
+            $ctx->executeActivity('notify', ['Something went wrong: ' . $error])
         )
     ;
     
@@ -126,7 +126,7 @@ namespace Example;
 
 use React\Promise\PromiseInterface;
 use Temporal\Client\Workflow\Meta\WorkflowMethod;
-use Temporal\Client\Workflow\WorkflowEnvironmentInterface;
+use Temporal\Client\Workflow\WorkflowContextInterface;
 
 final class FileProcessingWorkflow
 {
@@ -134,14 +134,14 @@ final class FileProcessingWorkflow
     private array $localNames;
     
     #[WorkflowMethod]
-    public function process(WorkflowEnvironmentInterface $env, array $arguments)
+    public function process(WorkflowContextInterface $ctx, array $arguments)
     {
         // A function that returns a Promise for each passed "$name" argument.
         $map = static fn(string $name): PromiseInterface => 
-            $env->executeActivity('download', [$arguments['sourceBucket'], $name])
+            $ctx->executeActivity('download', [$arguments['sourceBucket'], $name])
         ;
  
-        $this->localNames = yield $env->all(
+        $this->localNames = yield $ctx->all(
             array_map($map, $arguments['sourceNames'])
         );
         

@@ -20,9 +20,9 @@ use Temporal\Client\Workflow;
 final class Process
 {
     /**
-     * @var WorkflowEnvironment
+     * @var WorkflowContext
      */
-    private WorkflowEnvironment $env;
+    private WorkflowContext $env;
 
     /**
      * @var \Generator|null
@@ -35,10 +35,10 @@ final class Process
     private WorkflowDeclarationInterface $declaration;
 
     /**
-     * @param WorkflowEnvironmentInterface $context
+     * @param WorkflowContextInterface $context
      * @param WorkflowDeclarationInterface $declaration
      */
-    public function __construct(WorkflowEnvironment $context, WorkflowDeclarationInterface $declaration)
+    public function __construct(WorkflowContext $context, WorkflowDeclarationInterface $declaration)
     {
         $this->env = $context;
         $this->declaration = clone $declaration;
@@ -77,7 +77,7 @@ final class Process
      */
     public function next(): void
     {
-        Workflow::setCurrentEnvironment($this->getEnvironment());
+        Workflow::setCurrentContext($this->getEnvironment());
 
         if ($this->generator === null) {
             throw new \LogicException('Workflow process is not running');
@@ -111,9 +111,9 @@ final class Process
     }
 
     /**
-     * @return WorkflowEnvironment
+     * @return WorkflowContext
      */
-    public function getEnvironment(): WorkflowEnvironment
+    public function getEnvironment(): WorkflowContext
     {
         return $this->env;
     }
@@ -125,7 +125,7 @@ final class Process
     {
         $onFulfilled = function ($result) {
             Loop::onTick(function () use ($result) {
-                Workflow::setCurrentEnvironment($this->getEnvironment());
+                Workflow::setCurrentContext($this->getEnvironment());
                 $this->generator->send($result);
                 $this->next();
             }, Loop::ON_TICK);
@@ -135,7 +135,7 @@ final class Process
 
         $onRejected = function (\Throwable $e) {
             Loop::onTick(function () use ($e) {
-                Workflow::setCurrentEnvironment($this->getEnvironment());
+                Workflow::setCurrentContext($this->getEnvironment());
                 $this->generator->throw($e);
             }, Loop::ON_TICK);
 

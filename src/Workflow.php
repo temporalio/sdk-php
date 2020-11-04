@@ -15,7 +15,7 @@ use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Transport\FutureInterface;
 use Temporal\Client\Workflow\ActivityProxy;
-use Temporal\Client\Workflow\WorkflowEnvironmentInterface;
+use Temporal\Client\Workflow\WorkflowContextInterface;
 use Temporal\Client\Workflow\WorkflowInfo;
 
 /**
@@ -43,14 +43,14 @@ final class Workflow
         'the currently running workflow process';
 
     /**
-     * @var WorkflowEnvironmentInterface|null
+     * @var WorkflowContextInterface|null
      */
-    private static ?WorkflowEnvironmentInterface $ctx = null;
+    private static ?WorkflowContextInterface $ctx = null;
 
     /**
-     * @param WorkflowEnvironmentInterface|null $ctx
+     * @param WorkflowContextInterface|null $ctx
      */
-    public static function setCurrentEnvironment(?WorkflowEnvironmentInterface $ctx): void
+    public static function setCurrentContext(?WorkflowContextInterface $ctx): void
     {
         self::$ctx = $ctx;
     }
@@ -62,15 +62,15 @@ final class Workflow
      */
     public static function __callStatic(string $name, array $arguments)
     {
-        $context = self::getCurrentEnvironment();
+        $context = self::getCurrentContext();
 
         return $context->$name(...$arguments);
     }
 
     /**
-     * @return WorkflowEnvironmentInterface
+     * @return WorkflowContextInterface
      */
-    private static function getCurrentEnvironment(): WorkflowEnvironmentInterface
+    private static function getCurrentContext(): WorkflowContextInterface
     {
         if (self::$ctx === null) {
             throw new \RuntimeException(self::ERROR_NO_WORKFLOW_CONTEXT);

@@ -15,11 +15,13 @@ use JetBrains\PhpStorm\ExpectedValues;
 use React\Promise\CancellablePromiseInterface;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
+use Temporal\Client\Exception\CancellationException;
 use Temporal\Client\Support\DateInterval;
 use Temporal\Client\Transport\Future;
 use Temporal\Client\Transport\FutureInterface;
 use Temporal\Client\Transport\Protocol\Command\RequestInterface;
 use Temporal\Client\Worker\Worker;
+use Temporal\Client\Workflow;
 use Temporal\Client\Workflow\Command\CompleteWorkflow;
 use Temporal\Client\Workflow\Command\ExecuteActivity;
 use Temporal\Client\Workflow\Command\NewTimer;
@@ -27,7 +29,7 @@ use Temporal\Client\Workflow\Command\SideEffect;
 
 use function React\Promise\reject;
 
-final class WorkflowEnvironment implements WorkflowEnvironmentInterface
+final class WorkflowContext implements WorkflowContextInterface
 {
     /**
      * @var string
@@ -154,12 +156,14 @@ final class WorkflowEnvironment implements WorkflowEnvironmentInterface
         $client = $this->worker->getClient();
 
         $then = function ($result) use ($request) {
+            Workflow::setCurrentContext($this);
             $this->unload($request);
 
             return $result;
         };
 
         $otherwise = function (\Throwable $e) use ($request) {
+            Workflow::setCurrentContext($this);
             $this->unload($request);
 
             throw $e;

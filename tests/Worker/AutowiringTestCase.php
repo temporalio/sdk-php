@@ -29,15 +29,19 @@ class AutowiringTestCase extends WorkerTestCase
     {
         return [
             // Closure
-            'closure'                                 => [new \ReflectionFunction(fn() => $this->instanceMethod())],
+            'closure' => [new \ReflectionFunction(fn() => $this->instanceMethod())],
+
             // Static Closure
-            'static closure'                          => [new \ReflectionFunction(static fn() => global_function())],
+            'static closure' => [new \ReflectionFunction(static fn() => global_function())],
+
             // Instance Method
             static::class . '->instanceMethod' => [new \ReflectionMethod($this, 'instanceMethod')],
+
             // Static Method
-            static::class . '::staticMethod'   => [new \ReflectionMethod(static::class . '::staticMethod')],
+            static::class . '::staticMethod' => [new \ReflectionMethod(static::class . '::staticMethod')],
+
             // Function
-            __NAMESPACE__ . '\\global_function'               => [new \ReflectionFunction(__NAMESPACE__ . '\\global_function')],
+            __NAMESPACE__ . '\\global_function' => [new \ReflectionFunction(__NAMESPACE__ . '\\global_function')],
         ];
     }
 

@@ -2,11 +2,11 @@
 
 namespace PHPSTORM_META {
 
-    override(\Temporal\Client\Workflow\WorkflowEnvironmentInterface::newActivityStub(), map([
+    override(\Temporal\Client\Workflow\WorkflowContextInterface::newActivityStub(), map([
         '' => type(0),
     ]));
 
-    override(\Temporal\Client\Workflow\WorkflowEnvironment::newActivityStub(), map([
+    override(\Temporal\Client\Workflow\WorkflowContext::newActivityStub(), map([
         '' => type(0),
     ]));
 

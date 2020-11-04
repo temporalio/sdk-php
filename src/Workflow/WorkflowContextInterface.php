@@ -16,7 +16,7 @@ use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Support\DateInterval;
 
-interface WorkflowEnvironmentInterface
+interface WorkflowContextInterface
 {
     /**
      * @return WorkflowInfo

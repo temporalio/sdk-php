@@ -123,7 +123,6 @@ class Autowired
                 return $fun->invoke(...$arguments);
             }
 
-
             $closure = $fun->getClosure();
 
             try {
@@ -176,11 +175,6 @@ class Autowired
     public function resolve(array $arguments): array
     {
         return [];
-    }
-
-    public function getClosureThis()
-    {
-        return $this->fun->getClosureThis();
     }
 
     /**
