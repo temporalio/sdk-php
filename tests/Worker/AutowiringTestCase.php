@@ -33,7 +33,7 @@ class AutowiringTestCase extends WorkerTestCase
             // Static Closure
             'static closure'                          => [new \ReflectionFunction(static fn() => global_function())],
             // Instance Method
-            static::class . '::instanceMethod' => [new \ReflectionMethod($this, 'instanceMethod')],
+            static::class . '->instanceMethod' => [new \ReflectionMethod($this, 'instanceMethod')],
             // Static Method
             static::class . '::staticMethod'   => [new \ReflectionMethod(static::class . '::staticMethod')],
             // Function
