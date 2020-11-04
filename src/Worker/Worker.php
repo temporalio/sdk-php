@@ -44,11 +44,6 @@ class Worker implements WorkerInterface
     private string $taskQueue;
 
     /**
-     * @var EnvironmentInterface
-     */
-    private EnvironmentInterface $env;
-
-    /**
      * @var \DateTimeInterface
      */
     private \DateTimeInterface $now;
@@ -74,9 +69,8 @@ class Worker implements WorkerInterface
      * @param string $queue
      * @throws \Exception
      */
-    public function __construct(WorkerFactory $factory, EnvironmentInterface $env, string $queue)
+    public function __construct(WorkerFactory $factory, string $queue)
     {
-        $this->env = $env;
         $this->taskQueue = $queue;
         $this->factory = $factory;
         $this->zone = new \DateTimeZone('UTC');
@@ -225,7 +219,9 @@ class Worker implements WorkerInterface
             $this->now = Carbon::parse($headers['tickTime'], $this->zone);
         }
 
-        switch ($this->env->get()) {
+        $environment = $this->factory->getEnvironment();
+
+        switch ($environment->get()) {
             case EnvironmentInterface::ENV_WORKFLOW:
                 return $this->workflowWorker->dispatch($request, $headers);
 

@@ -219,7 +219,7 @@ final class WorkerFactory implements FactoryInterface, ReaderAwareInterface
      */
     public function create(string $taskQueue = self::DEFAULT_TASK_QUEUE): WorkerInterface
     {
-        $worker = new Worker($this, $this->env, $taskQueue);
+        $worker = new Worker($this, $taskQueue);
 
         $this->workers->add($worker);
 
@@ -232,6 +232,14 @@ final class WorkerFactory implements FactoryInterface, ReaderAwareInterface
     public function getClient(): Client
     {
         return $this->client;
+    }
+
+    /**
+     * @return EnvironmentInterface
+     */
+    public function getEnvironment(): EnvironmentInterface
+    {
+        return $this->env;
     }
 
     /**
