@@ -20,9 +20,9 @@ use Temporal\Client\Workflow;
 final class Process
 {
     /**
-     * @var WorkflowContextInterface
+     * @var WorkflowEnvironment
      */
-    private WorkflowContextInterface $context;
+    private WorkflowEnvironment $env;
 
     /**
      * @var \Generator|null
@@ -35,21 +35,13 @@ final class Process
     private WorkflowDeclarationInterface $declaration;
 
     /**
-     * @param WorkflowContextInterface     $context
+     * @param WorkflowEnvironmentInterface $context
      * @param WorkflowDeclarationInterface $declaration
      */
-    public function __construct(WorkflowContextInterface $context, WorkflowDeclarationInterface $declaration)
+    public function __construct(WorkflowEnvironment $context, WorkflowDeclarationInterface $declaration)
     {
-        $this->context = $context;
+        $this->env = $context;
         $this->declaration = clone $declaration;
-    }
-
-    /**
-     * @return WorkflowContextInterface
-     */
-    public function getContext(): WorkflowContextInterface
-    {
-        return $this->context;
     }
 
     /**
@@ -71,12 +63,12 @@ final class Process
 
         $handler = $this->declaration->getHandler();
 
-        $result = $handler($this->context, ...$args);
+        $result = $handler($this->env, ...$args);
 
         if ($result instanceof \Generator) {
             $this->generator = $result;
         } else {
-            $this->context->complete($result);
+            $this->env->complete($result);
         }
     }
 
@@ -85,14 +77,14 @@ final class Process
      */
     public function next(): void
     {
-        Workflow::setCurrentContext($this->getContext());
+        Workflow::setCurrentEnvironment($this->getEnvironment());
 
         if ($this->generator === null) {
             throw new \LogicException('Workflow process is not running');
         }
 
-        if (!$this->generator->valid()) {
-            $this->context->complete($this->generator->getReturn());
+        if (! $this->generator->valid()) {
+            $this->env->complete($this->generator->getReturn());
 
             return;
         }
@@ -119,13 +111,21 @@ final class Process
     }
 
     /**
+     * @return WorkflowEnvironment
+     */
+    public function getEnvironment(): WorkflowEnvironment
+    {
+        return $this->env;
+    }
+
+    /**
      * @param PromiseInterface $promise
      */
     private function nextPromise(PromiseInterface $promise): void
     {
         $onFulfilled = function ($result) {
             Loop::onTick(function () use ($result) {
-                Workflow::setCurrentContext($this->getContext());
+                Workflow::setCurrentEnvironment($this->getEnvironment());
                 $this->generator->send($result);
                 $this->next();
             }, Loop::ON_TICK);
@@ -135,7 +135,7 @@ final class Process
 
         $onRejected = function (\Throwable $e) {
             Loop::onTick(function () use ($e) {
-                Workflow::setCurrentContext($this->getContext());
+                Workflow::setCurrentEnvironment($this->getEnvironment());
                 $this->generator->throw($e);
             }, Loop::ON_TICK);
 

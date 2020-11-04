@@ -14,7 +14,7 @@ namespace Temporal\Client\Workflow\Command;
 use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Transport\Protocol\Command\Request;
 
-class ExecuteActivity extends Request
+final class ExecuteActivity extends Request
 {
     /**
      * @var string

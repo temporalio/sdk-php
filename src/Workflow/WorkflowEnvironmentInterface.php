@@ -14,10 +14,30 @@ namespace Temporal\Client\Workflow;
 use JetBrains\PhpStorm\ExpectedValues;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
-use Temporal\Client\Workflow\Command\NewTimer;
+use Temporal\Client\Support\DateInterval;
 
-interface WorkflowExecutionsInterface
+interface WorkflowEnvironmentInterface
 {
+    /**
+     * @return WorkflowInfo
+     */
+    public function getInfo(): WorkflowInfo;
+
+    /**
+     * @return array
+     */
+    public function getArguments(): array;
+
+    /**
+     * @return \DateTimeInterface
+     */
+    public function now(): \DateTimeInterface;
+
+    /**
+     * @return bool
+     */
+    public function isReplaying(): bool;
+
     /**
      * @template ActivityType
      * @psalm-param class-string<ActivityType> $name
@@ -27,6 +47,15 @@ interface WorkflowExecutionsInterface
      * @return ActivityProxy
      */
     public function newActivityStub(string $name): ActivityProxy;
+
+    /**
+     * @psalm-type SideEffectCallback = callable(): mixed
+     * @psalm-param SideEffectCallback $cb
+     *
+     * @param callable $cb
+     * @return PromiseInterface
+     */
+    public function sideEffect(callable $cb): PromiseInterface;
 
     /**
      * @param mixed $result
@@ -47,14 +76,14 @@ interface WorkflowExecutionsInterface
         array $arguments = [],
         #[ExpectedValues(values: ActivityOptions::class)]
         $options = null
-    );//: PromiseInterface;
+    ): PromiseInterface;
 
     /**
-     * @psalm-import-type DateIntervalFormat from NewTimer
+     * @psalm-import-type DateIntervalFormat from DateInterval
      *
-     * @param string|int|\DateInterval $interval
+     * @param string|int|float|\DateInterval $interval
      * @return PromiseInterface
-     * @see NewTimer
+     * @see DateInterval
      */
-    public function timer($interval);//: PromiseInterface;
+    public function timer($interval): PromiseInterface;
 }

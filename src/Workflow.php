@@ -15,7 +15,7 @@ use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Future\FutureInterface;
 use Temporal\Client\Workflow\ActivityProxy;
-use Temporal\Client\Workflow\WorkflowContextInterface;
+use Temporal\Client\Workflow\WorkflowEnvironmentInterface;
 use Temporal\Client\Workflow\WorkflowInfo;
 
 /**
@@ -28,6 +28,7 @@ use Temporal\Client\Workflow\WorkflowInfo;
  * @method static bool isReplaying()
  *
  * @method static ActivityProxy newActivityStub(string $class)
+ * @method static PromiseInterface sideEffect(callable $cb)
  * @method static PromiseInterface complete(mixed $result = null)
  * @method static FutureInterface executeActivity(string $class, array $args, array|ActivityOptions $options = null)
  * @method static FutureInterface timer(string|int|float|\DateInterval $interval)
@@ -42,14 +43,14 @@ final class Workflow
         'the currently running workflow process';
 
     /**
-     * @var WorkflowContextInterface|null
+     * @var WorkflowEnvironmentInterface|null
      */
-    private static ?WorkflowContextInterface $ctx = null;
+    private static ?WorkflowEnvironmentInterface $ctx = null;
 
     /**
-     * @param WorkflowContextInterface|null $ctx
+     * @param WorkflowEnvironmentInterface|null $ctx
      */
-    public static function setCurrentContext(?WorkflowContextInterface $ctx): void
+    public static function setCurrentEnvironment(?WorkflowEnvironmentInterface $ctx): void
     {
         self::$ctx = $ctx;
     }
@@ -61,15 +62,15 @@ final class Workflow
      */
     public static function __callStatic(string $name, array $arguments)
     {
-        $context = self::getCurrentContext();
+        $context = self::getCurrentEnvironment();
 
         return $context->$name(...$arguments);
     }
 
     /**
-     * @return WorkflowContextInterface
+     * @return WorkflowEnvironmentInterface
      */
-    private static function getCurrentContext(): WorkflowContextInterface
+    private static function getCurrentEnvironment(): WorkflowEnvironmentInterface
     {
         if (self::$ctx === null) {
             throw new \RuntimeException(self::ERROR_NO_WORKFLOW_CONTEXT);

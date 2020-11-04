@@ -27,11 +27,11 @@ final class RunningWorkflows
     private array $processes = [];
 
     /**
-     * @param WorkflowContextInterface $context
+     * @param WorkflowEnvironmentInterface $context
      * @param WorkflowDeclarationInterface $declaration
      * @return Process
      */
-    public function run(WorkflowContextInterface $context, WorkflowDeclarationInterface $declaration): Process
+    public function run(WorkflowEnvironmentInterface $context, WorkflowDeclarationInterface $declaration): Process
     {
         $info = $context->getInfo();
 
@@ -60,11 +60,11 @@ final class RunningWorkflows
             throw new \InvalidArgumentException(\sprintf(self::ERROR_PROCESS_NOT_DEFINED, $runId));
         }
 
-        Workflow::setCurrentContext(null);
+        Workflow::setCurrentEnvironment(null);
         unset($this->processes[$runId]);
-        $context = $process->getContext();
+        $context = $process->getEnvironment();
 
-        $requests = $context->getSendRequestIdentifiers();
+        $requests = $context->getRequestIdentifiers();
         foreach ($requests as $id) {
             $client->cancel($id);
         }

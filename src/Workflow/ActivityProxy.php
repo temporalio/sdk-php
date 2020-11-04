@@ -24,17 +24,17 @@ class ActivityProxy
     private string $class;
 
     /**
-     * @var WorkflowContextInterface
+     * @var WorkflowEnvironmentInterface
      */
-    private WorkflowContextInterface $protocol;
+    private WorkflowEnvironmentInterface $protocol;
 
     /**
      * @psalm-param class-string<Activity>
      *
      * @param string $class
-     * @param WorkflowContextInterface $protocol
+     * @param WorkflowEnvironmentInterface $protocol
      */
-    public function __construct(string $class, WorkflowContextInterface $protocol)
+    public function __construct(string $class, WorkflowEnvironmentInterface $protocol)
     {
         $this->class = $class;
         $this->protocol = $protocol;

@@ -13,20 +13,20 @@ namespace Temporal\Client\Workflow\Command;
 
 use Temporal\Client\Transport\Protocol\Command\Request;
 
-final class NewTimer extends Request
+final class SideEffect extends Request
 {
     /**
      * @var string
      */
-    public const NAME = 'NewTimer';
+    public const NAME = 'SideEffect';
 
     /**
-     * @param int $microseconds
+     * @param mixed $value
      */
-    public function __construct(int $microseconds)
+    public function __construct($value)
     {
         parent::__construct(self::NAME, [
-            'ms' => $microseconds,
+            'value' => $value,
         ]);
     }
 }

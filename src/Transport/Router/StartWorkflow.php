@@ -15,7 +15,7 @@ use React\Promise\Deferred;
 use Temporal\Client\Worker\Declaration\CollectionInterface;
 use Temporal\Client\Worker\Worker;
 use Temporal\Client\Workflow\RunningWorkflows;
-use Temporal\Client\Workflow\WorkflowContext;
+use Temporal\Client\Workflow\WorkflowEnvironment;
 use Temporal\Client\Workflow\WorkflowDeclarationInterface;
 use Temporal\Client\Workflow\WorkflowInfo;
 
@@ -54,15 +54,17 @@ final class StartWorkflow extends Route
 
     /**
      * {@inheritDoc}
+     * @throws \Throwable
      */
     public function handle(array $payload, array $headers, Deferred $resolver): void
     {
-        $info = ($context = new WorkflowContext($this->worker, $this->running, $payload))->getInfo();
+        $env = new WorkflowEnvironment($this->worker, $this->running, $payload);
+        $info = $env->getInfo();
 
         $this->assertNotRunning($info);
-        $process = $this->running->run($context, $this->findDeclarationOrFail($info));
+        $process = $this->running->run($env, $this->findDeclarationOrFail($info));
 
-        $process->start($context->getArguments());
+        $process->start($env->getArguments());
         $resolver->resolve($info->execution);
         $process->next();
     }

@@ -12,19 +12,20 @@ declare(strict_types=1);
 namespace Temporal\Client\Workflow;
 
 use JetBrains\PhpStorm\ExpectedValues;
-use JetBrains\PhpStorm\Pure;
 use React\Promise\CancellablePromiseInterface;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Future\Future;
 use Temporal\Client\Future\FutureInterface;
+use Temporal\Client\Support\DateInterval;
 use Temporal\Client\Transport\Protocol\Command\RequestInterface;
 use Temporal\Client\Worker\Worker;
 use Temporal\Client\Workflow\Command\CompleteWorkflow;
 use Temporal\Client\Workflow\Command\ExecuteActivity;
 use Temporal\Client\Workflow\Command\NewTimer;
+use Temporal\Client\Workflow\Command\SideEffect;
 
-final class WorkflowContext implements WorkflowContextInterface
+final class WorkflowEnvironment implements WorkflowEnvironmentInterface
 {
     /**
      * @var string
@@ -62,9 +63,9 @@ final class WorkflowContext implements WorkflowContextInterface
     private array $arguments;
 
     /**
-     * @param Worker           $worker
+     * @param Worker $worker
      * @param RunningWorkflows $running
-     * @param array            $params
+     * @param array $params
      * @throws \Exception
      */
     public function __construct(Worker $worker, RunningWorkflows $running, array $params)
@@ -77,9 +78,8 @@ final class WorkflowContext implements WorkflowContextInterface
     }
 
     /**
-     * @return bool
+     * {@inheritDoc}
      */
-    #[Pure]
     public function isReplaying(): bool
     {
         $workflow = $this->worker->getWorkflowWorker();
@@ -88,17 +88,15 @@ final class WorkflowContext implements WorkflowContextInterface
     }
 
     /**
-     * @param string $name
-     * @return ActivityProxy
+     * {@inheritDoc}
      */
-    #[Pure]
     public function newActivityStub(string $name): ActivityProxy
     {
         return new ActivityProxy($name, $this);
     }
 
     /**
-     * @return array
+     * {@inheritDoc}
      */
     public function getArguments(): array
     {
@@ -106,7 +104,7 @@ final class WorkflowContext implements WorkflowContextInterface
     }
 
     /**
-     * @return WorkflowInfo
+     * {@inheritDoc}
      */
     public function getInfo(): WorkflowInfo
     {
@@ -116,16 +114,14 @@ final class WorkflowContext implements WorkflowContextInterface
     /**
      * @return int[]
      */
-    #[Pure]
-    public function getSendRequestIdentifiers(): array
+    public function getRequestIdentifiers(): array
     {
         return \array_values($this->requests);
     }
 
     /**
-     * @return \DateTimeInterface
+     * {@inheritDoc}
      */
-    #[Pure]
     public function now(): \DateTimeInterface
     {
         return $this->worker->getTickTime();
@@ -134,32 +130,22 @@ final class WorkflowContext implements WorkflowContextInterface
     /**
      * {@inheritDoc}
      */
-    public function complete($result = null): PromiseInterface
+    public function sideEffect(callable $cb): PromiseInterface
     {
-        $request = new CompleteWorkflow($result, \array_values($this->requests));
+        try {
+            $request = new SideEffect($cb());
+        } catch (\Throwable $e) {
+            return reject($e);
+        }
 
-        $onFulfilled = function ($result) {
-            $this->running->kill($this->info->execution->runId, $this->worker->getClient());
-
-            return $result;
-        };
-
-        $onRejected = function (\Throwable $e) {
-            $this->running->kill($this->info->execution->runId, $this->worker->getClient());
-
-            throw $e;
-        };
-
-        return $this->request($request)
-            ->then($onFulfilled, $onRejected)
-        ;
+        return $this->request($request);
     }
 
     /**
      * @param RequestInterface $request
      * @return FutureInterface
      */
-    protected function request(RequestInterface $request): FutureInterface
+    private function request(RequestInterface $request): FutureInterface
     {
         $this->requests[] = $request->getId();
 
@@ -198,17 +184,37 @@ final class WorkflowContext implements WorkflowContextInterface
     /**
      * {@inheritDoc}
      */
+    public function complete($result = null): PromiseInterface
+    {
+        $request = new CompleteWorkflow($result, \array_values($this->requests));
+
+        $onFulfilled = function ($result) {
+            $this->running->kill($this->info->execution->runId, $this->worker->getClient());
+
+            return $result;
+        };
+
+        $onRejected = function (\Throwable $e) {
+            $this->running->kill($this->info->execution->runId, $this->worker->getClient());
+
+            throw $e;
+        };
+
+        return $this->request($request)
+            ->then($onFulfilled, $onRejected)
+        ;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function executeActivity(
         string $name,
         array $arguments = [],
         #[ExpectedValues(values: ActivityOptions::class)]
         $options = null
-    ): FutureInterface
-    {
+    ): PromiseInterface {
         $request = new ExecuteActivity($name, $arguments, ActivityOptions::new($options));
-
-        // todo: ????
-        //$d = new Deferred();
 
         return new Future($this->request($request));
     }
@@ -217,10 +223,10 @@ final class WorkflowContext implements WorkflowContextInterface
      * {@inheritDoc}
      * @throws \Exception
      */
-    public function timer($interval): FutureInterface
+    public function timer($interval): PromiseInterface
     {
-        $request = new NewTimer(NewTimer::parseInterval($interval));
+        $request = new NewTimer(DateInterval::parse($interval));
 
-        return new Future($this->request($request));
+        return $this->request($request);
     }
 }

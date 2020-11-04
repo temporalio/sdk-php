@@ -13,7 +13,7 @@ namespace Temporal\Client\Workflow\Command;
 
 use Temporal\Client\Transport\Protocol\Command\Request;
 
-class CompleteWorkflow extends Request
+final class CompleteWorkflow extends Request
 {
     /**
      * @var string

@@ -33,10 +33,8 @@ final class Coroutine
 
             foreach ($coroutines as $index => $generator) {
                 if (! $generator instanceof \Generator) {
-                    throw new \InvalidArgumentException(\vsprintf(self::ERROR_INVALID_ARGUMENT, [
-                        __METHOD__,
-                        \get_debug_type($generator),
-                    ]));
+                    $error = \sprintf(self::ERROR_INVALID_ARGUMENT, __METHOD__, \get_debug_type($generator));
+                    throw new \InvalidArgumentException($error);
                 }
 
                 if (! $generator->valid()) {

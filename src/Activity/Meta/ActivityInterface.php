@@ -12,13 +12,13 @@ declare(strict_types=1);
 namespace Temporal\Client\Activity\Meta;
 
 use Doctrine\Common\Annotations\Annotation\Target;
-use Temporal\Client\Workflow\WorkflowContextInterface;
+use Temporal\Client\Workflow\WorkflowEnvironmentInterface;
 
 /**
  * Indicates that an interface is an activity interface. Only interfaces
  * annotated with this annotation can be used as parameters
  * to {@see Workflow::activity()}
- * and {@see WorkflowContextInterface::newActivityStub()} methods.
+ * and {@see WorkflowEnvironmentInterface::newActivityStub()} methods.
  *
  * Each method of the interface annotated with {@see ActivityInterface}
  * including inherited from interfaces is a separate activity. By default the
