@@ -18,7 +18,6 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           extensions: dom
-          coverage: xdebug
 
       - name: Check Out Code
         uses: actions/checkout@v2
@@ -48,5 +47,4 @@ jobs:
         run: composer install --prefer-dist --no-interaction --no-suggest --ignore-platform-reqs
 
       - name: Run Tests
-        run: |
-          vendor/bin/phpunit --coverage-clover=coverage.xml --testdox
+        run: vendor/bin/phpunit --testdox
