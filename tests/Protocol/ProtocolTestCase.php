@@ -11,11 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Client\Protocol;
 
-class DecodingCommandsTestCase extends ProtocolTestCase
+use Temporal\Tests\Client\TestCase;
+
+abstract class ProtocolTestCase extends TestCase
 {
-    /** @test */
-    public function todo(): void
-    {
-        $this->expectNotToPerformAssertions();
-    }
 }

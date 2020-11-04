@@ -11,8 +11,11 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Client\Protocol;
 
-use Temporal\Tests\Client\TestCase;
-
-class DecodingHeadersTestCase extends TestCase
+class DecodingHeadersTestCase extends ProtocolTestCase
 {
+    /** @test */
+    public function todo(): void
+    {
+        $this->expectNotToPerformAssertions();
+    }
 }
