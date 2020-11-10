@@ -23,14 +23,14 @@ for ($i = 0; $i < 1; $i++) {
 }
 
 var_dump($result);
-sleep(5);
-
-$rpc->call('temporal.SignalWorkflow', [
-    'wid'         => $result['id'],
-    'rid'         => $result['runId'],
-    'signal_name' => 'add',
-    'args'        => 10,
-]);
+//sleep(5);
+//
+//$rpc->call('temporal.SignalWorkflow', [
+//    'wid'         => $result['id'],
+//    'rid'         => $result['runId'],
+//    'signal_name' => 'add',
+//    'args'        => 10,
+//]);
 
 //dump(($rpc->call('temporal.QueryWorkflow', [
 //    'wid'        => $result['id'],

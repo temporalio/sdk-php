@@ -66,9 +66,14 @@ final class WorkflowContext implements WorkflowContextInterface
     private array $arguments;
 
     /**
-     * @param Worker $worker
+     * @var array
+     */
+    private array $lastStacktrace;
+
+    /**
+     * @param Worker           $worker
      * @param RunningWorkflows $running
-     * @param array $params
+     * @param array            $params
      * @throws \Exception
      */
     public function __construct(Worker $worker, RunningWorkflows $running, array $params)
@@ -85,6 +90,7 @@ final class WorkflowContext implements WorkflowContextInterface
      */
     public function isReplaying(): bool
     {
+        $this->recordStacktrace();
         $workflow = $this->worker->getWorkflowWorker();
 
         return $workflow->isReplaying();
@@ -95,6 +101,7 @@ final class WorkflowContext implements WorkflowContextInterface
      */
     public function newActivityStub(string $name): ActivityProxy
     {
+        $this->recordStacktrace();
         return new ActivityProxy($name, $this);
     }
 
@@ -111,7 +118,16 @@ final class WorkflowContext implements WorkflowContextInterface
      */
     public function getInfo(): WorkflowInfo
     {
+        $this->recordStacktrace();
         return $this->info;
+    }
+
+    /**
+     * @return array
+     */
+    public function getDebugBacktrace(): array
+    {
+        return $this->lastStacktrace;
     }
 
     /**
@@ -127,6 +143,7 @@ final class WorkflowContext implements WorkflowContextInterface
      */
     public function now(): \DateTimeInterface
     {
+        $this->recordStacktrace();
         return $this->worker->getTickTime();
     }
 
@@ -150,11 +167,14 @@ final class WorkflowContext implements WorkflowContextInterface
      */
     private function request(RequestInterface $request): FutureInterface
     {
+        $this->recordStacktrace();
+
         $this->requests[] = $request->getId();
 
         $client = $this->worker->getClient();
 
         $then = function ($result) use ($request) {
+            $this->recordStacktrace();
             Workflow::setCurrentContext($this);
             $this->unload($request);
 
@@ -162,6 +182,7 @@ final class WorkflowContext implements WorkflowContextInterface
         };
 
         $otherwise = function (\Throwable $e) use ($request) {
+            $this->recordStacktrace();
             Workflow::setCurrentContext($this);
             $this->unload($request);
 
@@ -170,8 +191,7 @@ final class WorkflowContext implements WorkflowContextInterface
 
         /** @var CancellablePromiseInterface $result */
         $result = $client->request($request)
-            ->then($then, $otherwise)
-        ;
+                         ->then($then, $otherwise);
 
         return new Future($result, $this->worker);
     }
@@ -206,8 +226,7 @@ final class WorkflowContext implements WorkflowContextInterface
         };
 
         return $this->request($request)
-            ->then($onFulfilled, $onRejected)
-        ;
+                    ->then($onFulfilled, $onRejected);
     }
 
     /**
@@ -233,5 +252,14 @@ final class WorkflowContext implements WorkflowContextInterface
         $request = new NewTimer(DateInterval::parse($interval));
 
         return $this->request($request);
+    }
+
+    /**
+     * Record last stack trace of the call.
+     */
+    private function recordStacktrace()
+    {
+        // raw information
+        $this->lastStacktrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
     }
 }
