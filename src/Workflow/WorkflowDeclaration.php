@@ -114,7 +114,7 @@ final class WorkflowDeclaration extends HandledDeclaration implements WorkflowDe
      */
     private static function createQueryHandlerName(\ReflectionClass $class, \ReflectionMethod $method): string
     {
-        return self::createDefaultName($class, $method);
+        return $method->getShortName();
     }
 
     /**
@@ -124,7 +124,7 @@ final class WorkflowDeclaration extends HandledDeclaration implements WorkflowDe
      */
     private static function createSignalHandlerName(\ReflectionClass $class, \ReflectionMethod $method): string
     {
-        return self::createDefaultName($class, $method);
+        return $method->getShortName();
     }
 
     /**

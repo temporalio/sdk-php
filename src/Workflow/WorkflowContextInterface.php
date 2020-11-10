@@ -26,6 +26,11 @@ interface WorkflowContextInterface
     /**
      * @return array
      */
+    public function getDebugBacktrace(): array;
+
+    /**
+     * @return array
+     */
     public function getArguments(): array;
 
     /**
@@ -39,8 +44,8 @@ interface WorkflowContextInterface
     public function isReplaying(): bool;
 
     /**
-     * @template ActivityType
-     * @psalm-param class-string<ActivityType> $name
+     * @template     ActivityType
+     * @psalm-param  class-string<ActivityType> $name
      * @psalm-return ActivityType|ActivityProxy<ActivityType>
      *
      * @param string $name
@@ -49,7 +54,7 @@ interface WorkflowContextInterface
     public function newActivityStub(string $name): ActivityProxy;
 
     /**
-     * @psalm-type SideEffectCallback = callable(): mixed
+     * @psalm-type  SideEffectCallback = callable(): mixed
      * @psalm-param SideEffectCallback $cb
      *
      * @param callable $cb
@@ -66,8 +71,8 @@ interface WorkflowContextInterface
     /**
      * @psalm-param class-string|string $name
      *
-     * @param string $name
-     * @param array $arguments
+     * @param string                     $name
+     * @param array                      $arguments
      * @param ActivityOptions|array|null $options
      * @return PromiseInterface
      */
@@ -83,7 +88,7 @@ interface WorkflowContextInterface
      *
      * @param string|int|float|\DateInterval $interval
      * @return PromiseInterface
-     * @see DateInterval
+     * @see               DateInterval
      */
     public function timer($interval): PromiseInterface;
 }

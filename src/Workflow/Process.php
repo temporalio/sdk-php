@@ -40,8 +40,8 @@ final class Process
     private WorkerInterface $worker;
 
     /**
-     * @param WorkerInterface $worker
-     * @param WorkflowContext $ctx
+     * @param WorkerInterface              $worker
+     * @param WorkflowContext              $ctx
      * @param WorkflowDeclarationInterface $decl
      */
     public function __construct(WorkerInterface $worker, WorkflowContext $ctx, WorkflowDeclarationInterface $decl)
@@ -90,7 +90,7 @@ final class Process
             throw new \LogicException('Workflow process is not running');
         }
 
-        if (! $this->generator->valid()) {
+        if (!$this->generator->valid()) {
             $this->env->complete($this->generator->getReturn());
 
             return;
