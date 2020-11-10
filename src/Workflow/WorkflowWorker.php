@@ -65,7 +65,7 @@ final class WorkflowWorker implements WorkflowRepositoryInterface, DispatcherInt
         $this->router->add(new Router\InvokeQuery($this->workflows, $running));
         $this->router->add(new Router\InvokeSignal($this->workflows, $running, $worker));
         $this->router->add(new Router\DestroyWorkflow($running, $worker));
-        $this->router->add(new Router\GetStacktrace($this->workflows, $running));
+        $this->router->add(new Router\StackTrace($this->workflows, $running));
     }
 
     /**

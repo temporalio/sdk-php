@@ -15,7 +15,7 @@ use React\Promise\Deferred;
 use Temporal\Client\Worker\Declaration\CollectionInterface;
 use Temporal\Client\Workflow\RunningWorkflows;
 
-class GetStacktrace extends Route
+class StackTrace extends Route
 {
     /**
      * @var string
@@ -76,10 +76,10 @@ class GetStacktrace extends Route
 
     /**
      * @param array $backtrace
-     * @return array
+     * @return string
      */
-    private function prepareBackTrace(array $backtrace)
+    private function prepareBackTrace(array $backtrace): string
     {
-        return $backtrace;
+        return json_encode($backtrace, JSON_PRETTY_PRINT);
     }
 }
