@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace App\Workflow;
 
 use App\Activity\ExampleActivity;
-use React\Promise\PromiseInterface;
 use Temporal\Client\Workflow;
 use Temporal\Client\Workflow\Meta\QueryMethod;
 use Temporal\Client\Workflow\Meta\SignalMethod;
@@ -39,15 +38,22 @@ class PizzaDelivery
     {
         $activity = Workflow::newActivityStub(ExampleActivity::class);
 
-        /** @var PromiseInterface $promise */
         $value = yield $activity->a('test');
 
-//        ->then(function ($v) {
-//            error_log("hello world");
-//            return strtoupper($v);
-//        });
+        $value .= ' => ' . yield Workflow::sideEffect(function () {
+                return mt_rand(0, 1000);
+            });
+
+        yield Workflow::timer(10);
 
         return $value;
+
+//        $activity = Workflow::newActivityStub(ExampleActivity::class);
+//
+//        /** @var PromiseInterface $promise */
+//        $value = yield $activity->a('test');
+//
+//        return $value;
 
 //        $promise->then(function () {
 //            dump(1);
