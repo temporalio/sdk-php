@@ -13,5 +13,5 @@ temporal:
     activities:
       numWorkers: 4
 
-logs:
-    mode: development
+#logs:
+#    mode: development

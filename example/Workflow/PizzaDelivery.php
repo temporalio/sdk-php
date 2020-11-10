@@ -40,15 +40,22 @@ class PizzaDelivery
         $activity = Workflow::newActivityStub(ExampleActivity::class);
 
         /** @var PromiseInterface $promise */
-        $promise = $activity->a('test');
+        $value = yield $activity->a('test');
 
-        $promise->then(function () {
-            dump(1);
-        });
+//        ->then(function ($v) {
+//            error_log("hello world");
+//            return strtoupper($v);
+//        });
 
-        yield Workflow::timer(1)
-            ->then(function () {
-                dump(2);
-            });
+        return $value;
+
+//        $promise->then(function () {
+//            dump(1);
+//        });
+//
+//        yield Workflow::timer(1)
+//            ->then(function () {
+//                dump(2);
+//            });
     }
 }

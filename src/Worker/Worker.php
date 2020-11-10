@@ -12,11 +12,11 @@ declare(strict_types=1);
 namespace Temporal\Client\Worker;
 
 use Carbon\Carbon;
-use Evenement\EventEmitterTrait;
 use JetBrains\PhpStorm\Pure;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityDeclarationInterface;
 use Temporal\Client\Activity\ActivityWorker;
+use Temporal\Client\Internal\Events\EventEmitterTrait;
 use Temporal\Client\Transport\ClientInterface;
 use Temporal\Client\Transport\Protocol\Command\RequestInterface;
 use Temporal\Client\Worker\Env\EnvironmentInterface;

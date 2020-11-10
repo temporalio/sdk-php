@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Transport\Protocol;
 
-use Evenement\EventEmitterTrait;
+use Temporal\Client\Internal\Events\EventEmitterTrait;
 
 final class Protocol implements ProtocolInterface
 {

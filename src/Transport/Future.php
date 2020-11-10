@@ -44,7 +44,10 @@ class Future implements FutureInterface
     private WorkerInterface $worker;
 
     /**
+     * Future constructor.
+     *
      * @param CancellablePromiseInterface $promise
+     * @param WorkerInterface             $worker
      */
     public function __construct(CancellablePromiseInterface $promise, WorkerInterface $worker)
     {
@@ -93,13 +96,13 @@ class Future implements FutureInterface
         callable $onFulfilled = null,
         callable $onRejected = null,
         callable $onProgress = null
-    ): FutureInterface {
+    ): PromiseInterface {
         /** @var CancellablePromiseInterface $promise */
         $promise = $this->promise()
-            ->then($onFulfilled, $onRejected, $onProgress)
-        ;
+                        ->then($onFulfilled, $onRejected, $onProgress);
 
-        return new Future($promise, $this->worker);
+        return $promise;
+        //return new Future($promise, $this->worker);
     }
 
     /**

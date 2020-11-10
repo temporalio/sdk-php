@@ -12,9 +12,9 @@ declare(strict_types=1);
 namespace Temporal\Client;
 
 use Carbon\CarbonTimeZone;
-use Evenement\EventEmitterTrait;
 use React\Promise\PromiseInterface;
 use Spiral\RoadRunner\Worker as RoadRunnerWorker;
+use Temporal\Client\Internal\Events\EventEmitterTrait;
 use Temporal\Client\Internal\Meta\ReaderAwareInterface;
 use Temporal\Client\Internal\Meta\ReaderAwareTrait;
 use Temporal\Client\Transport\Client;
