@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Workflow;
 
-use Temporal\Client\Meta\ReaderInterface;
+use Temporal\Client\Internal\Meta\ReaderInterface;
 use Temporal\Client\Worker\Declaration\HandledDeclaration;
 use Temporal\Client\Workflow\Meta\QueryMethod;
 use Temporal\Client\Workflow\Meta\SignalMethod;
