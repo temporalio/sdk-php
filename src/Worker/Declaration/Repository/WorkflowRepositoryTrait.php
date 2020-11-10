@@ -15,7 +15,7 @@ use Temporal\Client\Worker\Declaration\Collection;
 use Temporal\Client\Worker\Declaration\CollectionInterface;
 use Temporal\Client\Workflow\WorkflowDeclaration;
 use Temporal\Client\Workflow\WorkflowDeclarationInterface;
-use Temporal\Client\Meta\ReaderInterface;
+use Temporal\Client\Internal\Meta\ReaderInterface;
 
 /**
  * @mixin WorkflowRepositoryInterface

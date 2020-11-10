@@ -15,7 +15,7 @@ use Temporal\Client\Activity\ActivityDeclaration;
 use Temporal\Client\Activity\ActivityDeclarationInterface;
 use Temporal\Client\Worker\Declaration\Collection;
 use Temporal\Client\Worker\Declaration\CollectionInterface;
-use Temporal\Client\Meta\ReaderInterface;
+use Temporal\Client\Internal\Meta\ReaderInterface;
 
 /**
  * @mixin ActivityRepositoryInterface
