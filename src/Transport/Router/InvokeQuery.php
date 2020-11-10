@@ -33,7 +33,7 @@ final class InvokeQuery extends Route
     /**
      * @var string
      */
-    private const ERROR_QUERY_NOT_FOUND = 'Workflow query handler "%s" not found, known queries [%s]';
+    private const ERROR_QUERY_NOT_FOUND = 'unknown queryType %s. KnownQueryTypes=[%s]';
 
     /**
      * @var RunningWorkflows
@@ -96,7 +96,7 @@ final class InvokeQuery extends Route
         if ($handler === null) {
             throw new \LogicException(\vsprintf(self::ERROR_QUERY_NOT_FOUND, [
                 $payload['name'],
-                \implode(', ', [...$this->getAvailableQueryNames()])
+                \implode(' ', [...$this->getAvailableQueryNames()])
             ]));
         }
 

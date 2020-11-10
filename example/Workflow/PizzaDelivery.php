@@ -44,8 +44,9 @@ class PizzaDelivery
                 return mt_rand(0, 1000);
             });
 
-        yield Workflow::timer(10);
+        yield Workflow::timer(100);
 
+        dump($this->value);
         return $value;
 
 //        $activity = Workflow::newActivityStub(ExampleActivity::class);
