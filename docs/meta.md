@@ -9,7 +9,7 @@ First you need to create a metadata reader object. To do this, you need to
 create a factory and call the `create()` method.
 
 ```php
-use Temporal\Client\Meta\Factory;
+use Temporal\Client\Internal\Meta\Factory;
 
 $reader = (new Factory())->create();
 ```
@@ -30,7 +30,7 @@ The Native Reader only supports PHP 8.0+ attributes. All metadata using other fo
 ```php
 <?php
 
-use Temporal\Client\Meta\Factory;
+use Temporal\Client\Internal\Meta\Factory;
 
 $reader = (new Factory())->create(Factory::PREFER_NATIVE);
 
@@ -74,7 +74,7 @@ This reader only supports Doctrine annotations. All metadata using other formats
 ```php
 <?php
 
-use Temporal\Client\Meta\Factory;
+use Temporal\Client\Internal\Meta\Factory;
 
 $reader = (new Factory())->create(Factory::PREFER_DOCTRINE);
 
@@ -116,7 +116,7 @@ does not know in advance what format of attributes/annotations will be used, or 
 ```php
 <?php
 
-use Temporal\Client\Meta\Factory;
+use Temporal\Client\Internal\Meta\Factory;
 
 $reader = (new Factory())->create(Factory::PREFER_SELECTIVE);
 
@@ -185,7 +185,7 @@ In the case that you need to add your own reader, just add it to the factory's
 constructor:
 
 ```php
-use Temporal\Client\Meta\Factory;
+use Temporal\Client\Internal\Meta\Factory;
 
 const MY_READER = Factory::CUSTOM_READER + 1; 
 
