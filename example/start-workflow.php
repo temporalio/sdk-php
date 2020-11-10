@@ -20,25 +20,18 @@ for ($i = 0; $i < 1; $i++) {
             'workflowTaskTimeout'      => '60s',
         ],
     ]);
-    var_dump($i);
 }
 
 var_dump($result);
-//sleep(2);
+sleep(5);
 
-//$result = [
-//    "id"    => "425f0f46-3bb6-4b8d-8ee0-1b713c4710f5",
-//    "runId" => "8719cd99-80e3-4910-9ad9-4fce8fd8c26d"
-//];
+$rpc->call('temporal.SignalWorkflow', [
+    'wid'         => $result['id'],
+    'rid'         => $result['runId'],
+    'signal_name' => 'add',
+    'args'        => 10,
+]);
 
-////
-//$rpc->call('temporal.SignalWorkflow', [
-//    'wid'         => $result['id'],
-//    'rid'         => $result['runId'],
-//    'signal_name' => 'App\\Workflow\\PizzaDelivery::add',
-//    'args'        => 10,
-//]);
-//
 //dump(($rpc->call('temporal.QueryWorkflow', [
 //    'wid'        => $result['id'],
 //    'rid'        => $result['runId'],

@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace App\Workflow;
 
-use App\Activity\ExampleActivity;
 use Temporal\Client\Workflow;
 use Temporal\Client\Workflow\Meta\QueryMethod;
 use Temporal\Client\Workflow\Meta\SignalMethod;
@@ -27,42 +26,26 @@ class PizzaDelivery
         return $this->value;
     }
 
+    /** @WorkflowMethod(name="PizzaDelivery") */
+    public function handler(): iterable
+    {
+        $expire = Workflow::timer(60);
+
+        while (true) {
+            if ($expire->isComplete()) {
+                break;
+            }
+
+            $this->value++;
+            yield Workflow::timer(1);
+        }
+
+        return $this->value;
+    }
+
     /** @SignalMethod() */
     public function add(int $value): void
     {
         $this->value += $value;
-    }
-
-    /** @WorkflowMethod(name="PizzaDelivery") */
-    public function handler(): iterable
-    {
-        $activity = Workflow::newActivityStub(ExampleActivity::class);
-
-        $value = yield $activity->a('test');
-
-        $value .= ' => ' . yield Workflow::sideEffect(function () {
-                return mt_rand(0, 1000);
-            });
-
-        yield Workflow::timer(100);
-
-        dump($this->value);
-        return $value;
-
-//        $activity = Workflow::newActivityStub(ExampleActivity::class);
-//
-//        /** @var PromiseInterface $promise */
-//        $value = yield $activity->a('test');
-//
-//        return $value;
-
-//        $promise->then(function () {
-//            dump(1);
-//        });
-//
-//        yield Workflow::timer(1)
-//            ->then(function () {
-//                dump(2);
-//            });
     }
 }
