@@ -29,18 +29,24 @@ class PizzaDelivery
     /** @WorkflowMethod(name="PizzaDelivery") */
     public function handler(): iterable
     {
-        $expire = Workflow::timer(60);
+        $value = yield Workflow::sideEffect(function () {
+            return mt_rand(0, 1000);
+        });
 
-        while (true) {
-            if ($expire->isComplete()) {
-                break;
-            }
+        yield Workflow::timer(10);
 
-            $this->value++;
-            yield Workflow::timer(1);
-        }
-
-        return $this->value;
+        return $value;
+//        $expire = Workflow::timer(60);
+//
+//        while (true) {
+//            if ($expire->isComplete()) {
+//                break;
+//            }
+//
+//            $this->value++;
+//            yield Workflow::timer(1);
+//        }
+        //return $this->value;
     }
 
     /** @SignalMethod() */

@@ -153,7 +153,13 @@ final class WorkflowContext implements WorkflowContextInterface
     public function sideEffect(callable $cb): PromiseInterface
     {
         try {
-            $request = new SideEffect($cb());
+            if ($this->isReplaying()) {
+                $value = null;
+            } else {
+                $value = $cb();
+            }
+
+            $request = new SideEffect($value);
         } catch (\Throwable $e) {
             return reject($e);
         }
