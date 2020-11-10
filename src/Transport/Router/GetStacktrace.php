@@ -69,6 +69,17 @@ class GetStacktrace extends Route
             throw new \LogicException(\sprintf(self::ERROR_PROCESS_NOT_FOUND, $workflowRunId));
         }
 
-        $resolver->resolve($workflow->getContext()->getDebugBacktrace());
+        $resolver->resolve(
+            $this->prepareBackTrace($workflow->getContext()->getDebugBacktrace())
+        );
+    }
+
+    /**
+     * @param array $backtrace
+     * @return array
+     */
+    private function prepareBackTrace(array $backtrace)
+    {
+        return $backtrace;
     }
 }
