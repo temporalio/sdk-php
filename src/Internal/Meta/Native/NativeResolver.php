@@ -9,10 +9,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Meta\Native;
+namespace Temporal\Client\Internal\Meta\Native;
 
-use Temporal\Client\Meta\ReaderInterface;
-use Temporal\Client\Meta\ResolverInterface;
+use Temporal\Client\Internal\Meta\ReaderInterface;
+use Temporal\Client\Internal\Meta\ResolverInterface;
 
 class NativeResolver implements ResolverInterface
 {

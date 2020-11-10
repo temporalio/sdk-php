@@ -9,11 +9,11 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Meta\Doctrine;
+namespace Temporal\Client\Internal\Meta\Doctrine;
 
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\Reader;
-use Temporal\Client\Meta\ReaderInterface;
+use Temporal\Client\Internal\Meta\ReaderInterface;
 
 class DoctrineReader implements ReaderInterface
 {

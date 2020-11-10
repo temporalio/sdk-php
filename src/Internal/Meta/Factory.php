@@ -9,11 +9,11 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Meta;
+namespace Temporal\Client\Internal\Meta;
 
-use Temporal\Client\Meta\Doctrine\DoctrineResolver;
-use Temporal\Client\Meta\Selective\SelectiveResolver;
-use Temporal\Client\Meta\Native\NativeResolver;
+use Temporal\Client\Internal\Meta\Doctrine\DoctrineResolver;
+use Temporal\Client\Internal\Meta\Native\NativeResolver;
+use Temporal\Client\Internal\Meta\Selective\SelectiveResolver;
 
 class Factory implements FactoryInterface
 {

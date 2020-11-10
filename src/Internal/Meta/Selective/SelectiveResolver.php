@@ -9,12 +9,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Meta\Selective;
+namespace Temporal\Client\Internal\Meta\Selective;
 
-use Temporal\Client\Meta\Doctrine\DoctrineResolver;
-use Temporal\Client\Meta\Native\NativeResolver;
-use Temporal\Client\Meta\ReaderInterface;
-use Temporal\Client\Meta\ResolverInterface;
+use Temporal\Client\Internal\Meta\ReaderInterface;
+use Temporal\Client\Internal\Meta\ResolverInterface;
 
 class SelectiveResolver implements ResolverInterface
 {

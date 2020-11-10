@@ -9,9 +9,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Meta\Selective;
+namespace Temporal\Client\Internal\Meta\Selective;
 
-use Temporal\Client\Meta\ReaderInterface;
+use Temporal\Client\Internal\Meta\ReaderInterface;
 
 class SelectiveReader implements ReaderInterface
 {

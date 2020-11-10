@@ -9,9 +9,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Meta;
+namespace Temporal\Client\Internal\Meta;
 
-use Temporal\Client\Meta\Factory as ReaderFactory;
+use Temporal\Client\Internal\Meta\Factory as ReaderFactory;
 
 /**
  * @mixin ReaderAwareInterface

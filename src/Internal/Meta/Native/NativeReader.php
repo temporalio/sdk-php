@@ -9,10 +9,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Meta\Native;
+namespace Temporal\Client\Internal\Meta\Native;
 
 use Symfony\Component\Console\Exception\LogicException;
-use Temporal\Client\Meta\ReaderInterface;
+use Temporal\Client\Internal\Meta\ReaderInterface;
 
 class NativeReader implements ReaderInterface
 {

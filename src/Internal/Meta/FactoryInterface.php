@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Meta;
+namespace Temporal\Client\Internal\Meta;
 
 interface FactoryInterface
 {
