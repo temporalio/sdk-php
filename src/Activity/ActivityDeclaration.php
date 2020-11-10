@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client\Activity;
 
 use Temporal\Client\Activity\Meta\ActivityMethod;
-use Temporal\Client\Meta\ReaderInterface;
+use Temporal\Client\Internal\Meta\ReaderInterface;
 use Temporal\Client\Worker\Declaration\HandledDeclaration;
 
 final class ActivityDeclaration extends HandledDeclaration implements ActivityDeclarationInterface

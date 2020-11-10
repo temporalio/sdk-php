@@ -21,7 +21,7 @@ use Doctrine\Common\Annotations\Annotation\Target;
 final class ActivityMethod
 {
     /**
-     * Name of the activity type. Default is "{class_name :: method_name}"
+     * Name of the activity type.
      *
      * Be careful about names that contain special characters. These names can
      * be used as metric tags. And systems like prometheus ignore metrics which

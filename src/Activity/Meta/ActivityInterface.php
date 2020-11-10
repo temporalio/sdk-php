@@ -30,7 +30,7 @@ use Temporal\Client\Workflow\WorkflowContextInterface;
  * @Annotation
  * @Target({ "CLASS" })
  */
-#[\Attribute(\Attribute::\TARGET_CLASS)]
+#[\Attribute(\Attribute::TARGET_CLASS)]
 final class ActivityInterface
 {
     /**

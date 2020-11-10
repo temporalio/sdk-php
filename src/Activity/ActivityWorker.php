@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client\Activity;
 
 use React\Promise\PromiseInterface;
-use Temporal\Client\Meta\ReaderInterface;
+use Temporal\Client\Internal\Meta\ReaderInterface;
 use Temporal\Client\Transport\DispatcherInterface;
 use Temporal\Client\Transport\Protocol\Command\RequestInterface;
 use Temporal\Client\Transport\Router;
