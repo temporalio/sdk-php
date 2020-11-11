@@ -25,6 +25,7 @@ for ($i = 0; $i < 1; $i++) {
 }
 
 var_dump($result);
+
 //sleep(5);
 //
 //$rpc->call('temporal.SignalWorkflow', [
