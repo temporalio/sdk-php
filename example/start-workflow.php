@@ -9,6 +9,8 @@ require __DIR__ . '/../vendor/autoload.php';
 
 $rpc = new RPC(new SocketRelay('localhost', 6001));
 
+dump($rpc->call('resetter.Reset', 'workflows'));
+
 for ($i = 0; $i < 1; $i++) {
     $result = $rpc->call('temporal.ExecuteWorkflow', [
         'name'    => 'PizzaDelivery',

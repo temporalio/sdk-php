@@ -18,6 +18,8 @@ use Temporal\Client\Workflow\Meta\WorkflowMethod;
 
 class PizzaDelivery
 {
+    private const DEFAULT_VERSION = 0;
+
     private int $value = 0;
 
     /** @QueryMethod() */
@@ -32,6 +34,9 @@ class PizzaDelivery
         $value = yield Workflow::sideEffect(function () {
             return mt_rand(0, 1000);
         });
+
+        $version = yield Workflow::getVersion("test", self::DEFAULT_VERSION, 2);
+        dump($version);
 
         yield Workflow::timer(10);
 
