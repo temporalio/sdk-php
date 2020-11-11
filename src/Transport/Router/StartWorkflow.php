@@ -12,26 +12,34 @@ declare(strict_types=1);
 namespace Temporal\Client\Transport\Router;
 
 use React\Promise\Deferred;
-use Temporal\Client\Worker\Declaration\CollectionInterface;
+use Temporal\Client\Internal\Declaration\Prototype\Collection;
+use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Client\Worker\Worker;
 use Temporal\Client\Workflow\RunningWorkflows;
 use Temporal\Client\Workflow\WorkflowContext;
-use Temporal\Client\Workflow\WorkflowDeclarationInterface;
 use Temporal\Client\Workflow\WorkflowInfo;
 
 final class StartWorkflow extends Route
 {
+    /**
+     * @var string
+     */
+    private const ERROR_NOT_FOUND = 'Workflow with the specified name "%s" was not registered';
+
+    /**
+     * @var string
+     */
+    private const ERROR_ALREADY_RUNNING = 'Workflow "%s" with run id "%s" has been already started';
+
     /**
      * @var RunningWorkflows
      */
     private RunningWorkflows $running;
 
     /**
-     * @psalm-var CollectionInterface<WorkflowDeclarationInterface>
-     *
-     * @var CollectionInterface
+     * @var Collection<WorkflowPrototype>
      */
-    private CollectionInterface $workflows;
+    private Collection $workflows;
 
     /**
      * @var Worker
@@ -39,13 +47,11 @@ final class StartWorkflow extends Route
     private Worker $worker;
 
     /**
-     * @psalm-param CollectionInterface<WorkflowDeclarationInterface> $workflows
-     *
-     * @param CollectionInterface $workflows
+     * @param Collection<WorkflowPrototype> $workflows
      * @param RunningWorkflows $running
      * @param Worker $worker
      */
-    public function __construct(CollectionInterface $workflows, RunningWorkflows $running, Worker $worker)
+    public function __construct(Collection $workflows, RunningWorkflows $running, Worker $worker)
     {
         $this->running = $running;
         $this->workflows = $workflows;
@@ -58,44 +64,44 @@ final class StartWorkflow extends Route
      */
     public function handle(array $payload, array $headers, Deferred $resolver): void
     {
-        $env = new WorkflowContext($this->worker, $this->running, $payload);
-        $info = $env->getInfo();
+        $context = $this->createContext($payload);
+        $info = $context->getInfo();
 
-        $this->assertNotRunning($info);
-        $process = $this->running->run($this->worker, $env, $this->findDeclarationOrFail($info));
+        $process = $this->running->run($this->worker, $context, $this->findWorkflowOrFail($info));
 
-        $process->start($env->getArguments());
-        $resolver->resolve($info->execution);
+        $resolver->resolve([
+            'WorkflowExecution' => $info->execution,
+        ]);
+
         $process->next();
     }
 
     /**
-     * @param WorkflowInfo $info
+     * @param array $payload
+     * @return WorkflowContext
+     * @throws \Exception
      */
-    private function assertNotRunning(WorkflowInfo $info): void
+    private function createContext(array $payload): WorkflowContext
     {
-        $isRunning = $this->running->find($info->execution->runId) !== null;
-
-        if (! $isRunning) {
-            return;
-        }
-
-        $error = \sprintf('Workflow with run id %s has been already started', $info->execution->runId);
-        throw new \LogicException($error);
+        return new WorkflowContext($this->worker, $this->running, $payload);
     }
 
     /**
      * @param WorkflowInfo $info
-     * @return WorkflowDeclarationInterface
+     * @return WorkflowPrototype
      */
-    private function findDeclarationOrFail(WorkflowInfo $info): WorkflowDeclarationInterface
+    private function findWorkflowOrFail(WorkflowInfo $info): WorkflowPrototype
     {
-        /** @var WorkflowDeclarationInterface $workflow */
         $workflow = $this->workflows->find($info->type->name);
 
         if ($workflow === null) {
-            $error = \sprintf('Workflow with the specified name %s was not registered', $info->type->name);
-            throw new \LogicException($error);
+            throw new \OutOfRangeException(\sprintf(self::ERROR_NOT_FOUND, $info->type->name));
+        }
+
+        if ($this->running->find($info->execution->runId) !== null) {
+            $message = \sprintf(self::ERROR_ALREADY_RUNNING, $info->type->name, $info->execution->runId);
+
+            throw new \LogicException($message);
         }
 
         return $workflow;

@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Client\Worker;
 
-use Temporal\Client\Internal\Instance\Dispatcher\Autowired;
+use Temporal\Client\Internal\Declaration\Dispatcher\Autowired;
 
 function global_function(): int
 {

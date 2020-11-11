@@ -14,25 +14,35 @@ namespace Temporal\Client\Transport\Router;
 use React\Promise\Deferred;
 use Temporal\Client\Activity;
 use Temporal\Client\Activity\ActivityContext;
-use Temporal\Client\Activity\ActivityDeclarationInterface;
 use Temporal\Client\Activity\ActivityInfo;
-use Temporal\Client\Worker\Declaration\CollectionInterface;
+use Temporal\Client\Internal\Declaration\Instantiator\ActivityInstantiator;
+use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
+use Temporal\Client\Internal\Declaration\Prototype\Collection;
 
 final class InvokeActivity extends Route
 {
     /**
-     * @var CollectionInterface
+     * @var string
      */
-    private CollectionInterface $activities;
+    private const ERROR_NOT_FOUND = 'Activity with the specified name "%s" was not registered';
 
     /**
-     * @psalm-param CollectionInterface<ActivityDeclarationInterface> $activities
-     *
-     * @param CollectionInterface $activities
+     * @var Collection<ActivityPrototype>
      */
-    public function __construct(CollectionInterface $activities)
+    private Collection $activities;
+
+    /**
+     * @var ActivityInstantiator
+     */
+    private ActivityInstantiator $instantiator;
+
+    /**
+     * @param Collection<ActivityPrototype> $activities
+     */
+    public function __construct(Collection $activities)
     {
         $this->activities = $activities;
+        $this->instantiator = new ActivityInstantiator();
     }
 
     /**
@@ -40,34 +50,46 @@ final class InvokeActivity extends Route
      */
     public function handle(array $payload, array $headers, Deferred $resolver): void
     {
-        $info = ($context = new ActivityContext($payload))->getInfo();
+        $context = new ActivityContext($payload);
 
-        $handler = $this->findDeclarationOrFail($info)
-            ->getHandler()
-        ;
+        $prototype = $this->findDeclarationOrFail($context->getInfo());
+        $instance = $this->instantiator->instantiate($prototype);
 
         try {
             Activity::setCurrentContext($context);
-            $resolver->resolve(
-                $handler(...$context->getArguments())
-            );
+
+            $handler = $instance->getHandler();
+            $result = $handler($this->getArguments($context));
+
+            $resolver->resolve($result);
         } finally {
             Activity::setCurrentContext(null);
         }
     }
 
     /**
-     * @param ActivityInfo $info
-     * @return ActivityDeclarationInterface
+     * @param ActivityContext $context
+     * @return array
      */
-    private function findDeclarationOrFail(ActivityInfo $info): ActivityDeclarationInterface
+    private function getArguments(ActivityContext $context): array
     {
-        /** @var ActivityDeclarationInterface $activity */
+        $arguments = [
+            Activity\ActivityContextInterface::class => $context,
+        ];
+
+        return \array_merge($arguments, $context->getArguments());
+    }
+
+    /**
+     * @param ActivityInfo $info
+     * @return ActivityPrototype
+     */
+    private function findDeclarationOrFail(ActivityInfo $info): ActivityPrototype
+    {
         $activity = $this->activities->find($info->type->name);
 
         if ($activity === null) {
-            $error = \sprintf('Activity with the specified name %s was not registered', $info->type->name);
-            throw new \LogicException($error);
+            throw new \LogicException(\sprintf(self::ERROR_NOT_FOUND, $info->type->name));
         }
 
         return $activity;

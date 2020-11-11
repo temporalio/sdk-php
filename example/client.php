@@ -26,8 +26,8 @@ $rr = new RoadRunner(new StreamRelay(\STDIN, \STDOUT));
 
 $factory = new \Temporal\Client\WorkerFactory($rr);
 $factory->create()
-    ->registerWorkflow(new \App\Workflow\PizzaDelivery())
-    ->registerActivity(new \App\Activity\ExampleActivity())
+    ->registerWorkflow(\App\Workflow\PizzaDelivery::class)
+    ->registerActivity(\App\Activity\ExampleActivity::class)
 ;
 
 $factory->run();

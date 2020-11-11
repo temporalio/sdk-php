@@ -14,6 +14,7 @@ namespace Temporal\Client\Workflow;
 use React\Promise\ExtendedPromiseInterface;
 use React\Promise\PromiseInterface;
 use React\Promise\PromisorInterface;
+use Temporal\Client\Internal\Declaration\WorkflowInstance;
 use Temporal\Client\Worker\WorkerInterface;
 use Temporal\Client\Workflow;
 
@@ -22,17 +23,17 @@ final class Process
     /**
      * @var WorkflowContext
      */
-    private WorkflowContext $env;
+    private WorkflowContext $context;
 
     /**
-     * @var \Generator|null
+     * @var \Generator
      */
-    private ?\Generator $generator = null;
+    private \Generator $generator;
 
     /**
-     * @var WorkflowDeclarationInterface
+     * @var WorkflowInstance
      */
-    private WorkflowDeclarationInterface $declaration;
+    private WorkflowInstance $instance;
 
     /**
      * @var WorkerInterface
@@ -40,43 +41,54 @@ final class Process
     private WorkerInterface $worker;
 
     /**
-     * @param WorkerInterface              $worker
-     * @param WorkflowContext              $ctx
-     * @param WorkflowDeclarationInterface $decl
+     * @param WorkerInterface $worker
+     * @param WorkflowContext $ctx
+     * @param WorkflowInstance $instance
      */
-    public function __construct(WorkerInterface $worker, WorkflowContext $ctx, WorkflowDeclarationInterface $decl)
+    public function __construct(WorkerInterface $worker, WorkflowContext $ctx, WorkflowInstance $instance)
     {
-        $this->env = $ctx;
         $this->worker = $worker;
-        $this->declaration = clone $decl;
+        $this->context = $ctx;
+        $this->instance = $instance;
+
+        $this->generator = $this->start();
     }
 
     /**
-     * @return WorkflowDeclarationInterface
+     * @return \Generator
      */
-    public function getDeclaration(): WorkflowDeclarationInterface
+    private function start(): \Generator
     {
-        return $this->declaration;
-    }
-
-    /**
-     * @param array $args
-     */
-    public function start(array $args): void
-    {
-        if ($this->generator !== null) {
-            throw new \LogicException('Workflow already has been started');
-        }
-
-        $handler = $this->declaration->getHandler();
-
-        $result = $handler($this->env, ...$args);
+        $handler = $this->instance->getHandler();
+        $result = $handler($this->getArguments());
 
         if ($result instanceof \Generator) {
-            $this->generator = $result;
-        } else {
-            $this->env->complete($result);
+            yield from $result;
+
+            return $result->getReturn();
         }
+
+        return $result;
+    }
+
+    /**
+     * @return array
+     */
+    private function getArguments(): array
+    {
+        $arguments = [
+            WorkflowContextInterface::class => $this->context,
+        ];
+
+        return \array_merge($arguments, $this->context->getArguments());
+    }
+
+    /**
+     * @return WorkflowInstance
+     */
+    public function getInstance(): WorkflowInstance
+    {
+        return $this->instance;
     }
 
     /**
@@ -90,8 +102,8 @@ final class Process
             throw new \LogicException('Workflow process is not running');
         }
 
-        if (!$this->generator->valid()) {
-            $this->env->complete($this->generator->getReturn());
+        if (! $this->generator->valid()) {
+            $this->context->complete($this->generator->getReturn());
 
             return;
         }
@@ -122,7 +134,7 @@ final class Process
      */
     public function getContext(): WorkflowContext
     {
-        return $this->env;
+        return $this->context;
     }
 
     /**

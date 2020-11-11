@@ -12,16 +12,18 @@ declare(strict_types=1);
 namespace Temporal\Client\Worker;
 
 use Carbon\Carbon;
-use JetBrains\PhpStorm\Pure;
 use React\Promise\PromiseInterface;
-use Temporal\Client\Activity\ActivityDeclarationInterface;
 use Temporal\Client\Activity\ActivityWorker;
+use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
+use Temporal\Client\Internal\Declaration\Prototype\Collection;
+use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Client\Internal\Declaration\Reader\ActivityReader;
+use Temporal\Client\Internal\Declaration\Reader\WorkflowReader;
 use Temporal\Client\Internal\Events\EventEmitterTrait;
 use Temporal\Client\Transport\ClientInterface;
 use Temporal\Client\Transport\Protocol\Command\RequestInterface;
 use Temporal\Client\Worker\Env\EnvironmentInterface;
 use Temporal\Client\WorkerFactory;
-use Temporal\Client\Workflow\WorkflowDeclarationInterface;
 use Temporal\Client\Workflow\WorkflowWorker;
 
 class Worker implements WorkerInterface
@@ -59,6 +61,26 @@ class Worker implements WorkerInterface
     private \Closure $factoryEventListener;
 
     /**
+     * @var Collection<ActivityPrototype>
+     */
+    private Collection $activities;
+
+    /**
+     * @var ActivityReader
+     */
+    private ActivityReader $activityReader;
+
+    /**
+     * @var Collection<WorkflowPrototype>
+     */
+    private Collection $workflows;
+
+    /**
+     * @var WorkflowReader
+     */
+    private WorkflowReader $workflowReader;
+
+    /**
      * @param WorkerFactory $factory
      * @param EnvironmentInterface $env
      * @param string $queue
@@ -70,8 +92,13 @@ class Worker implements WorkerInterface
         $this->factory = $factory;
         $this->now = new \DateTimeImmutable('now', $this->factory->getDateTimeZone());
 
-        $this->workflowWorker = new WorkflowWorker($this, $this->factory->getReader());
-        $this->activityWorker = new ActivityWorker($this, $this->factory->getReader());
+        $this->workflows = new Collection();
+        $this->workflowReader = new WorkflowReader($this->factory->getReader());
+        $this->workflowWorker = new WorkflowWorker($this->workflows, $this);
+
+        $this->activities = new Collection();
+        $this->activityReader = new ActivityReader($this->factory->getReader());
+        $this->activityWorker = new ActivityWorker($this->activities, $this);
 
         $this->factoryEventListener = function () {
             $this->emit(self::ON_SIGNAL);
@@ -81,6 +108,50 @@ class Worker implements WorkerInterface
         };
 
         $this->boot();
+    }
+
+    /**
+     * @param class-string $class
+     * @param bool $overwrite
+     * @return $this
+     */
+    public function registerWorkflow(string $class, bool $overwrite = false): self
+    {
+        foreach ($this->workflowReader->fromClass($class) as $workflow) {
+            $this->workflows->add($workflow, $overwrite);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return WorkflowPrototype[]
+     */
+    public function getWorkflows(): iterable
+    {
+        return $this->workflows;
+    }
+
+    /**
+     * @param class-string $class
+     * @param bool $overwrite
+     * @return $this
+     */
+    public function registerActivity(string $class, bool $overwrite = false): self
+    {
+        foreach ($this->activityReader->fromClass($class) as $activity) {
+            $this->activities->add($activity, $overwrite);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return ActivityPrototype[]
+     */
+    public function getActivities(): iterable
+    {
+        return $this->activities;
     }
 
     /**
@@ -150,62 +221,6 @@ class Worker implements WorkerInterface
     /**
      * {@inheritDoc}
      */
-    public function registerWorkflow(object $workflow, bool $overwrite = false): self
-    {
-        $this->workflowWorker->registerWorkflow($workflow, $overwrite);
-
-        return $this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function registerWorkflowDeclaration(WorkflowDeclarationInterface $workflow, bool $overwrite = false): self
-    {
-        $this->workflowWorker->registerWorkflowDeclaration($workflow, $overwrite);
-
-        return $this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function findWorkflow(string $name): ?WorkflowDeclarationInterface
-    {
-        return $this->workflowWorker->findWorkflow($name);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function registerActivity(object $activity, bool $overwrite = false): self
-    {
-        $this->activityWorker->registerActivity($activity, $overwrite);
-
-        return $this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function registerActivityDeclaration(ActivityDeclarationInterface $activity, bool $overwrite = false): self
-    {
-        $this->activityWorker->registerActivityDeclaration($activity, $overwrite);
-
-        return $this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function findActivity(string $name): ?ActivityDeclarationInterface
-    {
-        return $this->activityWorker->findActivity($name);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public function dispatch(RequestInterface $request, array $headers = []): PromiseInterface
     {
         // Intercept headers
@@ -233,24 +248,6 @@ class Worker implements WorkerInterface
     public function getTaskQueue(): string
     {
         return $this->taskQueue;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    #[Pure]
-    public function getWorkflows(): iterable
-    {
-        return $this->workflowWorker->getWorkflows();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    #[Pure]
-    public function getActivities(): iterable
-    {
-        return $this->activityWorker->getActivities();
     }
 
     /**

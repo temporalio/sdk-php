@@ -12,9 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client\Transport\Router;
 
 use React\Promise\Deferred;
-use Temporal\Client\Worker\Declaration\CollectionInterface;
 use Temporal\Client\Workflow\RunningWorkflows;
-use Temporal\Client\Workflow\WorkflowDeclarationInterface;
 
 class StackTrace extends Route
 {
@@ -35,22 +33,11 @@ class StackTrace extends Route
     private RunningWorkflows $running;
 
     /**
-     * @psalm-var CollectionInterface<WorkflowDeclarationInterface>
-     *
-     * @var CollectionInterface<WorkflowDeclarationInterface>
+     * @param RunningWorkflows $running
      */
-    private CollectionInterface $workflows;
-
-    /**
-     * @psalm-param CollectionInterface<WorkflowDeclarationInterface> $workflows
-     *
-     * @param CollectionInterface $workflows
-     * @param RunningWorkflows    $running
-     */
-    public function __construct(CollectionInterface $workflows, RunningWorkflows $running)
+    public function __construct(RunningWorkflows $running)
     {
         $this->running = $running;
-        $this->workflows = $workflows;
     }
 
     /**

@@ -12,10 +12,10 @@ declare(strict_types=1);
 namespace Temporal\Client\Transport\Router;
 
 use React\Promise\Deferred;
-use Temporal\Client\Activity\ActivityDeclarationInterface;
+use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
+use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Client\Worker\PoolInterface;
 use Temporal\Client\Worker\WorkerInterface;
-use Temporal\Client\Workflow\WorkflowDeclarationInterface;
 
 final class GetWorkerInfo extends Route
 {
@@ -54,34 +54,19 @@ final class GetWorkerInfo extends Route
     {
         return [
             'taskQueue'  => $worker->getTaskQueue(),
-            'workflows'  => $this->map($worker->getWorkflows(), function (WorkflowDeclarationInterface $workflow) {
+            'workflows'  => $this->map($worker->getWorkflows(), function (WorkflowPrototype $workflow) {
                 return [
                     'name'    => $workflow->getName(),
                     'queries' => $this->keys($workflow->getQueryHandlers()),
                     'signals' => $this->keys($workflow->getSignalHandlers()),
                 ];
             }),
-            'activities' => $this->map($worker->getActivities(), function (ActivityDeclarationInterface $act) {
+            'activities' => $this->map($worker->getActivities(), function (ActivityPrototype $activity) {
                 return [
-                    'name' => $act->getName(),
+                    'name' => $activity->getName(),
                 ];
             }),
         ];
-    }
-
-    /**
-     * @param iterable $items
-     * @return array
-     */
-    private function keys(iterable $items): array
-    {
-        $result = [];
-
-        foreach ($items as $key => $_) {
-            $result[] = $key;
-        }
-
-        return $result;
     }
 
     /**
@@ -95,6 +80,21 @@ final class GetWorkerInfo extends Route
 
         foreach ($items as $key => $value) {
             $result[] = $map($value, $key);
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param iterable $items
+     * @return array
+     */
+    private function keys(iterable $items): array
+    {
+        $result = [];
+
+        foreach ($items as $key => $_) {
+            $result[] = $key;
         }
 
         return $result;

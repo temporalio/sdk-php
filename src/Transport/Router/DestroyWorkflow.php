@@ -13,9 +13,11 @@ namespace Temporal\Client\Transport\Router;
 
 use React\Promise\Deferred;
 use Temporal\Client\Worker\Worker;
+use Temporal\Client\Workflow\Info\WorkflowExecution;
+use Temporal\Client\Workflow\Process;
 use Temporal\Client\Workflow\RunningWorkflows;
 
-class DestroyWorkflow extends Route
+class DestroyWorkflow extends WorkflowProcessAwareRoute
 {
     /**
      * @var string
@@ -23,11 +25,6 @@ class DestroyWorkflow extends Route
     private const ERROR_RID_NOT_DEFINED =
         'Killing a workflow requires the id (rid argument) ' .
         'of the running workflow process';
-
-    /**
-     * @var RunningWorkflows
-     */
-    private RunningWorkflows $running;
 
     /**
      * @var Worker
@@ -40,8 +37,9 @@ class DestroyWorkflow extends Route
      */
     public function __construct(RunningWorkflows $running, Worker $worker)
     {
-        $this->running = $running;
         $this->worker = $worker;
+
+        parent::__construct($running);
     }
 
     /**
@@ -49,14 +47,17 @@ class DestroyWorkflow extends Route
      */
     public function handle(array $payload, array $headers, Deferred $resolver): void
     {
-        $workflowRunId = $payload['runId'] ?? null;
+        ['runId' => $runId] = $payload;
 
-        if ($workflowRunId === null) {
-            throw new \InvalidArgumentException(self::ERROR_RID_NOT_DEFINED);
-        }
+        $process = $this->findProcessOrFail($runId);
 
-        $requests = $this->running->kill($workflowRunId, $this->worker->getClient());
+        $requests = $this->running->kill($runId, $this->worker->getClient());
 
-        $resolver->resolve(['rid' => $workflowRunId, 'cancelRequests' => $requests]);
+        $info = $process->getContext()->getInfo();
+
+        $resolver->resolve([
+            'WorkflowExecution' => $info->execution,
+            'CancelRequests'    => $requests,
+        ]);
     }
 }

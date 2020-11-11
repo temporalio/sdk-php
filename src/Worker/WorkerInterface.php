@@ -13,17 +13,11 @@ namespace Temporal\Client\Worker;
 
 use Evenement\EventEmitterInterface;
 use Temporal\Client\Transport\DispatcherInterface;
-use Temporal\Client\Worker\Declaration\Repository\ActivityRepositoryInterface;
-use Temporal\Client\Worker\Declaration\Repository\WorkflowRepositoryInterface;
 
 /**
  * @implements EventEmitterInterface<WorkerInterface::ON_*>
  */
-interface WorkerInterface extends
-    DispatcherInterface,
-    EventEmitterInterface,
-    WorkflowRepositoryInterface,
-    ActivityRepositoryInterface
+interface WorkerInterface extends DispatcherInterface, EventEmitterInterface
 {
     /**
      * @var string
@@ -49,4 +43,18 @@ interface WorkerInterface extends
      * @return string
      */
     public function getTaskQueue(): string;
+
+    /**
+     * @param class-string $class
+     * @param bool $overwrite
+     * @return $this
+     */
+    public function registerWorkflow(string $class, bool $overwrite = false): self;
+
+    /**
+     * @param class-string $class
+     * @param bool $overwrite
+     * @return $this
+     */
+    public function registerActivity(string $class, bool $overwrite = false): self;
 }

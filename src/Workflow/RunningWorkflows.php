@@ -11,6 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Workflow;
 
+use Temporal\Client\Internal\Declaration\Instantiator\WorkflowInstantiator;
+use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Client\Internal\Declaration\WorkflowInstance;
 use Temporal\Client\Transport\ClientInterface;
 use Temporal\Client\Worker\WorkerInterface;
 use Temporal\Client\Workflow;
@@ -28,16 +31,31 @@ final class RunningWorkflows
     private array $processes = [];
 
     /**
+     * @var WorkflowInstantiator
+     */
+    private WorkflowInstantiator $instantiator;
+
+    /**
+     * RunningWorkflows constructor.
+     */
+    public function __construct()
+    {
+        $this->instantiator = new WorkflowInstantiator();
+    }
+
+    /**
      * @param WorkerInterface $worker
-     * @param WorkflowContext $c
-     * @param WorkflowDeclarationInterface $d
+     * @param WorkflowContext $ctx
+     * @param WorkflowPrototype $prototype
      * @return Process
      */
-    public function run(WorkerInterface $worker, WorkflowContext $c, WorkflowDeclarationInterface $d): Process
+    public function run(WorkerInterface $worker, WorkflowContext $ctx, WorkflowPrototype $prototype): Process
     {
-        $info = $c->getInfo();
+        $info = $ctx->getInfo();
 
-        return $this->processes[$info->execution->runId] = new Process($worker, $c, $d);
+        $instance = $this->instantiator->instantiate($prototype);
+
+        return $this->processes[$info->execution->runId] = new Process($worker, $ctx, $instance);
     }
 
     /**

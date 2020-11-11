@@ -12,51 +12,32 @@ declare(strict_types=1);
 namespace Temporal\Client\Transport\Router;
 
 use React\Promise\Deferred;
-use Temporal\Client\Worker\Declaration\CollectionInterface;
+use Temporal\Client\Internal\Declaration\Prototype\Collection;
+use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Client\Internal\Declaration\WorkflowInstance;
 use Temporal\Client\Workflow\RunningWorkflows;
-use Temporal\Client\Workflow\WorkflowDeclarationInterface;
 
-final class InvokeQuery extends Route
+final class InvokeQuery extends WorkflowProcessAwareRoute
 {
-    /**
-     * @var string
-     */
-    private const ERROR_RID_NOT_DEFINED =
-        'Invoking query of a workflow requires the id (rid argument) ' .
-        'of the running workflow process';
-
-    /**
-     * @var string
-     */
-    private const ERROR_PROCESS_NOT_FOUND = 'Workflow with the specified run id %s not found';
-
     /**
      * @var string
      */
     private const ERROR_QUERY_NOT_FOUND = 'unknown queryType %s. KnownQueryTypes=[%s]';
 
     /**
-     * @var RunningWorkflows
+     * @var Collection<WorkflowPrototype>
      */
-    private RunningWorkflows $running;
+    private Collection $workflows;
 
     /**
-     * @psalm-var CollectionInterface<WorkflowDeclarationInterface>
-     *
-     * @var CollectionInterface
-     */
-    private CollectionInterface $workflows;
-
-    /**
-     * @psalm-param CollectionInterface<WorkflowDeclarationInterface> $workflows
-     *
-     * @param CollectionInterface $workflows
+     * @param Collection<WorkflowPrototype> $workflows
      * @param RunningWorkflows $running
      */
-    public function __construct(CollectionInterface $workflows, RunningWorkflows $running)
+    public function __construct(Collection $workflows, RunningWorkflows $running)
     {
-        $this->running = $running;
         $this->workflows = $workflows;
+
+        parent::__construct($running);
     }
 
     /**
@@ -64,7 +45,6 @@ final class InvokeQuery extends Route
      */
     private function getAvailableQueryNames(): iterable
     {
-        /** @var WorkflowDeclarationInterface $workflow */
         foreach ($this->workflows as $workflow) {
             foreach ($workflow->getQueryHandlers() as $name => $_) {
                 yield $name;
@@ -77,31 +57,29 @@ final class InvokeQuery extends Route
      */
     public function handle(array $payload, array $headers, Deferred $resolver): void
     {
-        $workflowRunId = $payload['runId'] ?? null;
+        ['runId' => $runId, 'name' => $name] = $payload;
 
-        if ($workflowRunId === null) {
-            throw new \InvalidArgumentException(self::ERROR_RID_NOT_DEFINED);
-        }
+        $instance = $this->findInstanceOrFail($runId);
+        $handler = $this->findQueryHandlerOrFail($instance, $name);
 
-        $workflow = $this->running->find($workflowRunId);
+        $resolver->resolve($handler($payload['args'] ?? []));
+    }
 
-        if ($workflow === null) {
-            throw new \LogicException(\sprintf(self::ERROR_PROCESS_NOT_FOUND, $workflowRunId));
-        }
-
-        $declaration = $workflow->getDeclaration();
-
-        $handler = $declaration->findQueryHandler($payload['name']);
+    /**
+     * @param WorkflowInstance $instance
+     * @param string $name
+     * @return \Closure|null
+     */
+    private function findQueryHandlerOrFail(WorkflowInstance $instance, string $name): ?\Closure
+    {
+        $handler = $instance->findQueryHandler($name);
 
         if ($handler === null) {
-            throw new \LogicException(\vsprintf(self::ERROR_QUERY_NOT_FOUND, [
-                $payload['name'],
-                \implode(' ', [...$this->getAvailableQueryNames()])
-            ]));
+            $available = \implode(' ', [...$this->getAvailableQueryNames()]);
+
+            throw new \LogicException(\sprintf(self::ERROR_QUERY_NOT_FOUND, $name, $available));
         }
 
-        $resolver->resolve(
-            $handler(...($payload['args'] ?? []))
-        );
+        return $handler;
     }
 }

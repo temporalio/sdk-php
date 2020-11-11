@@ -12,27 +12,16 @@ declare(strict_types=1);
 namespace Temporal\Client\Workflow;
 
 use React\Promise\PromiseInterface;
-use Temporal\Client\Internal\Meta\ReaderInterface;
+use Temporal\Client\Internal\Declaration\Prototype\Collection;
+use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Client\Transport\DispatcherInterface;
 use Temporal\Client\Transport\Protocol\Command\RequestInterface;
 use Temporal\Client\Transport\Router;
 use Temporal\Client\Transport\RouterInterface;
-use Temporal\Client\Worker\Declaration\Repository\WorkflowRepositoryInterface;
-use Temporal\Client\Worker\Declaration\Repository\WorkflowRepositoryTrait;
 use Temporal\Client\Worker\Worker;
 
-/**
- * @noinspection PhpSuperClassIncompatibleWithInterfaceInspection
- */
-final class WorkflowWorker implements WorkflowRepositoryInterface, DispatcherInterface
+final class WorkflowWorker implements DispatcherInterface
 {
-    use WorkflowRepositoryTrait;
-
-    /**
-     * @var ReaderInterface
-     */
-    private ReaderInterface $reader;
-
     /**
      * @var RouterInterface
      */
@@ -49,23 +38,19 @@ final class WorkflowWorker implements WorkflowRepositoryInterface, DispatcherInt
     private bool $isReplaying = false;
 
     /**
+     * @param Collection<WorkflowPrototype> $workflows
      * @param Worker $worker
-     * @param ReaderInterface $reader
      */
-    public function __construct(Worker $worker, ReaderInterface $reader)
+    public function __construct(Collection $workflows, Worker $worker)
     {
-        $this->reader = $reader;
-
-        $this->bootWorkflowRepositoryTrait();
-
         $running = new RunningWorkflows();
 
         $this->router = new Router();
-        $this->router->add(new Router\StartWorkflow($this->workflows, $running, $worker));
-        $this->router->add(new Router\InvokeQuery($this->workflows, $running));
-        $this->router->add(new Router\InvokeSignal($this->workflows, $running, $worker));
+        $this->router->add(new Router\StartWorkflow($workflows, $running, $worker));
+        $this->router->add(new Router\InvokeQuery($workflows, $running));
+        $this->router->add(new Router\InvokeSignal($workflows, $running, $worker));
         $this->router->add(new Router\DestroyWorkflow($running, $worker));
-        $this->router->add(new Router\StackTrace($this->workflows, $running));
+        $this->router->add(new Router\StackTrace($running));
     }
 
     /**
@@ -96,13 +81,5 @@ final class WorkflowWorker implements WorkflowRepositoryInterface, DispatcherInt
         $this->isReplaying = isset($headers['replay']) && $headers['replay'] === true;
 
         return $this->router->dispatch($request, $headers);
-    }
-
-    /**
-     * @return ReaderInterface
-     */
-    protected function getReader(): ReaderInterface
-    {
-        return $this->reader;
     }
 }

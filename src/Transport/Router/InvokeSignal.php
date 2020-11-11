@@ -12,41 +12,23 @@ declare(strict_types=1);
 namespace Temporal\Client\Transport\Router;
 
 use React\Promise\Deferred;
-use Temporal\Client\Worker\Declaration\CollectionInterface;
+use Temporal\Client\Internal\Declaration\Prototype\Collection;
+use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Client\Internal\Declaration\WorkflowInstance;
 use Temporal\Client\Worker\WorkerInterface;
 use Temporal\Client\Workflow\RunningWorkflows;
-use Temporal\Client\Workflow\WorkflowDeclarationInterface;
 
-final class InvokeSignal extends Route
+final class InvokeSignal extends WorkflowProcessAwareRoute
 {
     /**
      * @var string
      */
-    private const ERROR_RID_NOT_DEFINED =
-        'Invoking query of a workflow requires the id (rid argument) ' .
-        'of the running workflow process';
+    private const ERROR_SIGNAL_NOT_FOUND = 'unknown signalType %s. KnownSignalTypes=[%s]';
 
     /**
-     * @var string
+     * @var Collection<WorkflowPrototype>
      */
-    private const ERROR_PROCESS_NOT_FOUND = 'Workflow with the specified run id %s not found';
-
-    /**
-     * @var string
-     */
-    private const ERROR_SIGNAL_NOT_FOUND = 'Workflow signal handler "%s" not found, known signals [%s]';
-
-    /**
-     * @var RunningWorkflows
-     */
-    private RunningWorkflows $running;
-
-    /**
-     * @psalm-var CollectionInterface<WorkflowDeclarationInterface>
-     *
-     * @var CollectionInterface
-     */
-    private CollectionInterface $workflows;
+    private Collection $workflows;
 
     /**
      * @var WorkerInterface
@@ -54,52 +36,16 @@ final class InvokeSignal extends Route
     private WorkerInterface $worker;
 
     /**
-     * @psalm-param CollectionInterface<WorkflowDeclarationInterface> $workflows
-     *
+     * @param Collection<WorkflowPrototype> $workflows
      * @param RunningWorkflows $running
-     * @param CollectionInterface $workflows
      * @param WorkerInterface $worker
      */
-    public function __construct(CollectionInterface $workflows, RunningWorkflows $running, WorkerInterface $worker)
+    public function __construct(Collection $workflows, RunningWorkflows $running, WorkerInterface $worker)
     {
-        $this->running = $running;
         $this->workflows = $workflows;
         $this->worker = $worker;
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function handle(array $payload, array $headers, Deferred $resolver): void
-    {
-        $workflowRunId = $payload['runId'] ?? null;
-
-        if ($workflowRunId === null) {
-            throw new \InvalidArgumentException(self::ERROR_RID_NOT_DEFINED);
-        }
-
-        $workflow = $this->running->find($workflowRunId);
-
-        if ($workflow === null) {
-            throw new \LogicException(\sprintf(self::ERROR_PROCESS_NOT_FOUND, $workflowRunId));
-        }
-
-        $declaration = $workflow->getDeclaration();
-
-        $handler = $declaration->findSignalHandler($payload['name']);
-
-        if ($handler === null) {
-            throw new \LogicException(\vsprintf(self::ERROR_SIGNAL_NOT_FOUND, [
-                $payload['name'],
-                \implode(', ', [...$this->getAvailableSignalNames()]),
-            ]));
-        }
-
-        $arguments = $payload['args'] ?? [];
-
-        $this->worker->once(WorkerInterface::ON_SIGNAL,
-            static fn() => $resolver->resolve($handler(...$arguments))
-        );
+        parent::__construct($running);
     }
 
     /**
@@ -107,11 +53,42 @@ final class InvokeSignal extends Route
      */
     private function getAvailableSignalNames(): iterable
     {
-        /** @var WorkflowDeclarationInterface $workflow */
         foreach ($this->workflows as $workflow) {
             foreach ($workflow->getSignalHandlers() as $name => $_) {
                 yield $name;
             }
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function handle(array $payload, array $headers, Deferred $resolver): void
+    {
+        ['runId' => $runId, 'name' => $name] = $payload;
+
+        $instance = $this->findInstanceOrFail($runId);
+        $handler = $this->findSignalHandlerOrFail($instance, $name);
+
+        $executor = static fn() => $resolver->resolve($handler($payload['args'] ?? []));
+        $this->worker->once(WorkerInterface::ON_SIGNAL, $executor);
+    }
+
+    /**
+     * @param WorkflowInstance $instance
+     * @param string $name
+     * @return \Closure|null
+     */
+    private function findSignalHandlerOrFail(WorkflowInstance $instance, string $name): ?\Closure
+    {
+        $handler = $instance->findQueryHandler($name);
+
+        if ($handler === null) {
+            $available = \implode(' ', [...$this->getAvailableSignalNames()]);
+
+            throw new \LogicException(\sprintf(self::ERROR_SIGNAL_NOT_FOUND, $name, $available));
+        }
+
+        return $handler;
     }
 }
