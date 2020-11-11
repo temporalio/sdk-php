@@ -54,6 +54,14 @@ interface WorkflowContextInterface
     public function newActivityStub(string $name): ActivityProxy;
 
     /**
+     * @param string $changeID
+     * @param int    $minSupported
+     * @param int    $maxSupported
+     * @return PromiseInterface
+     */
+    public function getVersion(string $changeID, int $minSupported, int $maxSupported): PromiseInterface;
+
+    /**
      * @psalm-type  SideEffectCallback = callable(): mixed
      * @psalm-param SideEffectCallback $cb
      *

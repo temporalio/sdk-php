@@ -23,6 +23,7 @@ use Temporal\Client\Worker\Worker;
 use Temporal\Client\Workflow;
 use Temporal\Client\Workflow\Command\CompleteWorkflow;
 use Temporal\Client\Workflow\Command\ExecuteActivity;
+use Temporal\Client\Workflow\Command\GetVersion;
 use Temporal\Client\Workflow\Command\NewTimer;
 use Temporal\Client\Workflow\Command\SideEffect;
 
@@ -149,6 +150,23 @@ final class WorkflowContext implements WorkflowContextInterface
     }
 
     /**
+     * @param string $changeID
+     * @param int    $minSupported
+     * @param int    $maxSupported
+     * @return PromiseInterface
+     */
+    public function getVersion(string $changeID, int $minSupported, int $maxSupported): PromiseInterface
+    {
+        try {
+            $request = new GetVersion($changeID, $minSupported, $maxSupported);
+        } catch (\Throwable $e) {
+            return reject($e);
+        }
+
+        return $this->request($request);
+    }
+
+    /**
      * {@inheritDoc}
      */
     public function sideEffect(callable $cb): PromiseInterface
@@ -261,7 +279,7 @@ final class WorkflowContext implements WorkflowContextInterface
     ): PromiseInterface {
         $request = new ExecuteActivity($name, $arguments, ActivityOptions::new($options));
 
-        return new Future($this->request($request), $this->worker);
+        return $this->request($request);
     }
 
     /**

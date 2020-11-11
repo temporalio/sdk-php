@@ -16,6 +16,7 @@ use Temporal\Client\Worker\FactoryInterface;
 use Temporal\Client\Workflow\Info\WorkflowExecution;
 use Temporal\Client\Workflow\Info\WorkflowType;
 
+// todo: previous execution result
 final class WorkflowInfo
 {
     /**
