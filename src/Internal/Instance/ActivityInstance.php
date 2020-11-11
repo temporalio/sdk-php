@@ -9,25 +9,25 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Declaration;
+namespace Temporal\Client\Internal\Instance;
 
 use Temporal\Client\Activity\Meta\ActivityInterface;
 use Temporal\Client\Activity\Meta\ActivityMethod;
+use Temporal\Client\Internal\Prototype\ActivityPrototypeInterface;
 
-class ActivityDeclaration extends Declaration implements ActivityDeclarationInterface
+final class ActivityInstance extends Instance implements ActivityInstanceInterface
 {
     /**
-     * @param ActivityInterface $meta
-     * @param ActivityMethod $method
-     * @param \ReflectionFunctionAbstract $handler
+     * @param ActivityPrototypeInterface $prototype
+     * @param object $context
      */
-    public function __construct(ActivityInterface $meta, ActivityMethod $method, \ReflectionFunctionAbstract $handler)
+    public function __construct(ActivityPrototypeInterface $prototype, object $context)
     {
-        parent::__construct($meta, $method, $handler);
+        parent::__construct($prototype, $context);
     }
 
     /**
-     * {@inheritDoc}
+     * @return ActivityInterface
      */
     public function getMetadata(): ActivityInterface
     {
@@ -39,7 +39,7 @@ class ActivityDeclaration extends Declaration implements ActivityDeclarationInte
     }
 
     /**
-     * {@inheritDoc}
+     * @return ActivityMethod
      */
     public function getMethod(): ActivityMethod
     {

@@ -9,14 +9,14 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Declaration;
+namespace Temporal\Client\Internal\Prototype;
 
 use Temporal\Client\Workflow\Meta\QueryMethod;
 use Temporal\Client\Workflow\Meta\SignalMethod;
 use Temporal\Client\Workflow\Meta\WorkflowInterface;
 use Temporal\Client\Workflow\Meta\WorkflowMethod;
 
-final class WorkflowDeclaration extends Declaration implements WorkflowDeclarationInterface
+final class WorkflowPrototype extends Prototype implements WorkflowPrototypeInterface
 {
     /**
      * @var int

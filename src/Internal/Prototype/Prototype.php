@@ -9,9 +9,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Declaration;
+namespace Temporal\Client\Internal\Prototype;
 
-abstract class Declaration implements DeclarationInterface
+abstract class Prototype implements PrototypeInterface
 {
     /**
      * @var object

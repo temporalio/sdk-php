@@ -9,12 +9,11 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Declaration;
+namespace Temporal\Client\Internal\Prototype\Reader;
 
-use Temporal\Client\Internal\Declaration\ReaderInterface as DeclarationReaderInterface;
 use Temporal\Client\Internal\Meta\Factory;
 use Temporal\Client\Internal\Meta\ReaderInterface as MetadataReaderInterface;
-use Temporal\Client\Internal\Meta\Selective\SelectiveReader;
+use Temporal\Client\Internal\Prototype\Reader\ReaderInterface as DeclarationReaderInterface;
 
 abstract class Reader implements DeclarationReaderInterface
 {

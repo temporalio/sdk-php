@@ -9,13 +9,13 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Declaration;
+namespace Temporal\Client\Internal\Prototype;
 
 /**
  * @template-covariant MetadataAttribute of object
  * @template-covariant MethodAttribute of object
  */
-interface DeclarationInterface
+interface PrototypeInterface
 {
     /**
      * @psalm-return MethodAttribute

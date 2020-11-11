@@ -9,10 +9,12 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Declaration;
+namespace Temporal\Client\Internal\Prototype\Reader;
+
+use Temporal\Client\Internal\Prototype\PrototypeInterface;
 
 /**
- * @template-covariant T of DeclarationInterface
+ * @template-covariant T of PrototypeInterface
  */
 interface ReaderInterface
 {
@@ -20,7 +22,7 @@ interface ReaderInterface
      * @psalm-return iterable<int, T>
      *
      * @param string $class
-     * @return DeclarationInterface[]
+     * @return PrototypeInterface[]
      */
     public function fromClass(string $class): iterable;
 }

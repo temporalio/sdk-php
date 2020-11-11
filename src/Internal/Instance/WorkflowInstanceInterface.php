@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Declaration;
+namespace Temporal\Client\Internal\Instance;
 
 use Temporal\Client\Workflow\Meta\QueryMethod;
 use Temporal\Client\Workflow\Meta\SignalMethod;
@@ -17,9 +17,11 @@ use Temporal\Client\Workflow\Meta\WorkflowInterface;
 use Temporal\Client\Workflow\Meta\WorkflowMethod;
 
 /**
- * @template-implements HandledDeclarationInterface<WorkflowInterface, WorkflowMethod>
+ * @template-implements InstanceInterface<WorkflowInterface, WorkflowMethod>
+ *
+ * @psalm-import-type DispatchableHandler from InstanceInterface
  */
-interface WorkflowDeclarationInterface extends DeclarationInterface
+interface WorkflowInstanceInterface extends InstanceInterface
 {
     /**
      * @return WorkflowInterface
@@ -32,16 +34,16 @@ interface WorkflowDeclarationInterface extends DeclarationInterface
     public function getMethod(): WorkflowMethod;
 
     /**
-     * @psalm-return iterable<QueryMethod, \ReflectionFunctionAbstract>
+     * @psalm-return iterable<QueryMethod, DispatchableHandler>
      *
-     * @return \ReflectionFunctionAbstract[]
+     * @return callable[]
      */
     public function getQueryHandlers(): iterable;
 
     /**
-     * @psalm-return iterable<SignalMethod, \ReflectionFunctionAbstract>
+     * @psalm-return iterable<SignalMethod, DispatchableHandler>
      *
-     * @return \ReflectionFunctionAbstract[]
+     * @return callable[]
      */
     public function getSignalHandlers(): iterable;
 }

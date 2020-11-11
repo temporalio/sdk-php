@@ -9,15 +9,15 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Declaration;
+namespace Temporal\Client\Internal\Prototype;
 
 use Temporal\Client\Activity\Meta\ActivityInterface;
 use Temporal\Client\Activity\Meta\ActivityMethod;
 
 /**
- * @template-implements HandledDeclarationInterface<ActivityInterface, ActivityMethod>
+ * @template-implements PrototypeInterface<ActivityInterface, ActivityMethod>
  */
-interface ActivityDeclarationInterface extends DeclarationInterface
+interface ActivityPrototypeInterface extends PrototypeInterface
 {
     /**
      * @return ActivityInterface

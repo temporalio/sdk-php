@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Client\Worker;
 
-use Temporal\Client\Worker\Autowired;
+use Temporal\Client\Internal\Instance\Dispatcher\Autowired;
 
 function global_function(): int
 {
@@ -91,7 +91,7 @@ class AutowiringTestCase extends WorkerTestCase
             $this->expectException(\BadMethodCallException::class);
         }
 
-        $this->assertSame(0xDEAD_BEEF, $handler->call($this, []));
+        $this->assertSame(0xDEAD_BEEF, $handler->dispatch($this, []));
     }
 
     /**
@@ -109,6 +109,6 @@ class AutowiringTestCase extends WorkerTestCase
             $this->expectException(\BadMethodCallException::class);
         }
 
-        $this->assertSame(0xDEAD_BEEF, $handler->call(null, []));
+        $this->assertSame(0xDEAD_BEEF, $handler->dispatch(null, []));
     }
 }

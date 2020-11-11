@@ -9,23 +9,21 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Declaration;
+namespace Temporal\Client\Internal\Prototype\Reader;
 
 use Temporal\Client\Activity\Meta\ActivityInterface;
 use Temporal\Client\Activity\Meta\ActivityMethod;
-use Temporal\Client\Workflow\Meta\QueryMethod;
-use Temporal\Client\Workflow\Meta\SignalMethod;
-use Temporal\Client\Workflow\Meta\WorkflowInterface;
-use Temporal\Client\Workflow\Meta\WorkflowMethod;
+use Temporal\Client\Internal\Prototype\ActivityPrototype;
+use Temporal\Client\Internal\Prototype\ActivityPrototypeInterface;
 
 /**
- * @template-implements ReaderInterface<ActivityDeclarationInterface>
+ * @template-implements ReaderInterface<ActivityPrototypeInterface>
  */
 class ActivityReader extends Reader
 {
     /**
      * @param string $class
-     * @return ActivityDeclarationInterface[]
+     * @return ActivityPrototypeInterface[]
      * @throws \ReflectionException
      */
     public function fromClass(string $class): iterable
@@ -36,7 +34,7 @@ class ActivityReader extends Reader
         foreach ($this->annotatedMethods($reflection, ActivityMethod::class) as $method => $handler) {
             $method->name ??= $handler->getName();
 
-            yield new ActivityDeclaration($interface, $method, $handler);
+            yield new ActivityPrototype($interface, $method, $handler);
         }
     }
 

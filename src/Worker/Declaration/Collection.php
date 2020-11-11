@@ -16,7 +16,7 @@ class Collection implements CollectionInterface
     /**
      * @var string
      */
-    private const ERROR_ALREADY_EXISTS = 'Declaration with same name "%s" already has been registered';
+    private const ERROR_ALREADY_EXISTS = 'Prototype with same name "%s" already has been registered';
 
     /**
      * @psalm-var array<string, DeclarationInterface>

@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client\Worker\Declaration;
 
 /**
- * @template T of DeclarationInterface
+ * @template T of PrototypeInterface
  */
 interface CollectionInterface extends \IteratorAggregate, \Countable
 {

@@ -9,21 +9,23 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Declaration;
+namespace Temporal\Client\Internal\Prototype\Reader;
 
+use Temporal\Client\Internal\Prototype\WorkflowPrototype;
+use Temporal\Client\Internal\Prototype\WorkflowPrototypeInterface;
 use Temporal\Client\Workflow\Meta\QueryMethod;
 use Temporal\Client\Workflow\Meta\SignalMethod;
 use Temporal\Client\Workflow\Meta\WorkflowInterface;
 use Temporal\Client\Workflow\Meta\WorkflowMethod;
 
 /**
- * @template-implements ReaderInterface<WorkflowDeclarationInterface>
+ * @template-implements ReaderInterface<WorkflowPrototypeInterface>
  */
 class WorkflowReader extends Reader
 {
     /**
      * @param string $class
-     * @return WorkflowDeclarationInterface[]
+     * @return WorkflowPrototypeInterface[]
      * @throws \ReflectionException
      */
     public function fromClass(string $class): iterable
@@ -35,7 +37,7 @@ class WorkflowReader extends Reader
         foreach ($this->annotatedMethods($reflection, WorkflowMethod::class) as $method => $handler) {
             $method->name ??= $handler->getName();
 
-            $declarations[] = new WorkflowDeclaration($interface, $method, $handler);
+            $declarations[] = new WorkflowPrototype($interface, $method, $handler);
         }
 
         foreach ($this->annotatedMethods($reflection, SignalMethod::class) as $signal => $handler) {
