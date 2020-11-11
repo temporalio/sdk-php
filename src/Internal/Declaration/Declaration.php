@@ -19,11 +19,42 @@ abstract class Declaration implements DeclarationInterface
     protected object $meta;
 
     /**
-     * @param object $meta
+     * @var object
      */
-    public function __construct(object $meta)
+    protected object $method;
+
+    /**
+     * @var \ReflectionFunctionAbstract
+     */
+    protected \ReflectionFunctionAbstract $handler;
+
+    /**
+     * @param object $ctx
+     * @param object $meta
+     * @param object $method
+     * @param \ReflectionFunctionAbstract $handler
+     */
+    public function __construct(object $meta, object $method, \ReflectionFunctionAbstract $handler)
     {
         $this->meta = $meta;
+        $this->method = $method;
+        $this->handler = $handler;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getMethod(): object
+    {
+        return $this->method;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getHandler(): \ReflectionFunctionAbstract
+    {
+        return $this->handler;
     }
 
     /**

@@ -17,7 +17,7 @@ use Temporal\Client\Activity\Meta\ActivityMethod;
 /**
  * @template-implements HandledDeclarationInterface<ActivityInterface, ActivityMethod>
  */
-interface ActivityDeclarationInterface extends HandledDeclarationInterface
+interface ActivityDeclarationInterface extends DeclarationInterface
 {
     /**
      * @return ActivityInterface

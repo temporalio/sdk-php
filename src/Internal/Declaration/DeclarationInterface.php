@@ -13,9 +13,22 @@ namespace Temporal\Client\Internal\Declaration;
 
 /**
  * @template-covariant MetadataAttribute of object
+ * @template-covariant MethodAttribute of object
  */
 interface DeclarationInterface
 {
+    /**
+     * @psalm-return MethodAttribute
+     *
+     * @return object
+     */
+    public function getMethod(): object;
+
+    /**
+     * @return \ReflectionFunctionAbstract
+     */
+    public function getHandler(): \ReflectionFunctionAbstract;
+
     /**
      * @psalm-return MetadataAttribute
      *

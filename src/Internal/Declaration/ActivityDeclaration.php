@@ -13,10 +13,8 @@ namespace Temporal\Client\Internal\Declaration;
 
 use Temporal\Client\Activity\Meta\ActivityInterface;
 use Temporal\Client\Activity\Meta\ActivityMethod;
-use Temporal\Client\Workflow\Meta\WorkflowInterface;
-use Temporal\Client\Workflow\Meta\WorkflowMethod;
 
-class ActivityDeclaration extends HandledDeclaration
+class ActivityDeclaration extends Declaration implements ActivityDeclarationInterface
 {
     /**
      * @param ActivityInterface $meta

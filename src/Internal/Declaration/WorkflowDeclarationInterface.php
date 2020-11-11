@@ -19,7 +19,7 @@ use Temporal\Client\Workflow\Meta\WorkflowMethod;
 /**
  * @template-implements HandledDeclarationInterface<WorkflowInterface, WorkflowMethod>
  */
-interface WorkflowDeclarationInterface extends HandledDeclarationInterface
+interface WorkflowDeclarationInterface extends DeclarationInterface
 {
     /**
      * @return WorkflowInterface

@@ -16,7 +16,7 @@ use Temporal\Client\Workflow\Meta\SignalMethod;
 use Temporal\Client\Workflow\Meta\WorkflowInterface;
 use Temporal\Client\Workflow\Meta\WorkflowMethod;
 
-final class WorkflowDeclaration extends HandledDeclaration implements WorkflowDeclarationInterface
+final class WorkflowDeclaration extends Declaration implements WorkflowDeclarationInterface
 {
     /**
      * @var int
