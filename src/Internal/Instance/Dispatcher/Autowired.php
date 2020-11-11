@@ -9,12 +9,12 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Worker;
+namespace Temporal\Client\Internal\Instance\Dispatcher;
 
 /**
  * @psalm-type FunctionExecutor = \Closure(object|null, array): mixed
  */
-class Autowired
+class Autowired implements DispatcherInterface
 {
     /**
      * @var int
@@ -182,7 +182,7 @@ class Autowired
      * @param array $arguments
      * @return mixed
      */
-    public function call(?object $ctx, array $arguments)
+    public function dispatch(?object $ctx, array $arguments)
     {
         $params = $this->resolve($arguments);
 
