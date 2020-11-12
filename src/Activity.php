@@ -18,6 +18,7 @@ use Temporal\Client\Activity\ActivityInfo;
  * Class Activity
  *
  * @method static ActivityInfo getInfo()
+ * @method static void doNotCompleteOnReturn()
  */
 final class Activity
 {

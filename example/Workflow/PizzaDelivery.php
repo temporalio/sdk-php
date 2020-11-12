@@ -34,7 +34,7 @@ class PizzaDelivery
     {
         $a = Workflow::newActivityStub(ExampleActivity::class);
 
-        return yield $a->a('test');
+        return yield $a->async('test');
 
 
 //        $value = yield Workflow::sideEffect(function () {

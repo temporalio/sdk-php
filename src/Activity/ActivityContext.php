@@ -33,6 +33,9 @@ final class ActivityContext implements ActivityContextInterface
      */
     private $arguments;
 
+    /** @var bool */
+    private $doNotCompleteOnReturn = false;
+
     /**
      * @param array $params
      * @throws \Exception
@@ -57,5 +60,22 @@ final class ActivityContext implements ActivityContextInterface
     public function getInfo(): ActivityInfo
     {
         return $this->info;
+    }
+
+    /**
+     * Call given method to enable external activity completion using activity ID or task token.
+     */
+    public function doNotCompleteOnReturn(): void
+    {
+        $this->doNotCompleteOnReturn = true;
+    }
+
+    /**
+     * @return bool
+     * @internal
+     */
+    public function isDoNotCompleteOnReturn(): bool
+    {
+        return $this->doNotCompleteOnReturn;
     }
 }

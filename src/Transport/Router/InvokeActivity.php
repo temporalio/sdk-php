@@ -15,6 +15,7 @@ use React\Promise\Deferred;
 use Temporal\Client\Activity;
 use Temporal\Client\Activity\ActivityContext;
 use Temporal\Client\Activity\ActivityInfo;
+use Temporal\Client\Exception\Activity\DoNotCompleteOnResultException;
 use Temporal\Client\Internal\Declaration\Instantiator\ActivityInstantiator;
 use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Client\Internal\Declaration\Prototype\Collection;
@@ -61,7 +62,11 @@ final class InvokeActivity extends Route
             $handler = $instance->getHandler();
             $result = $handler($this->getArguments($context));
 
-            $resolver->resolve($result);
+            if ($context->isDoNotCompleteOnReturn()) {
+                $resolver->reject(new DoNotCompleteOnResultException());
+            } else {
+                $resolver->resolve($result);
+            }
         } finally {
             Activity::setCurrentContext(null);
         }
