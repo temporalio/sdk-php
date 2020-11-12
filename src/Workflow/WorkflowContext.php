@@ -265,7 +265,7 @@ final class WorkflowContext implements WorkflowContextInterface
 
         return $this->request($request)
             ->then($onFulfilled, $onRejected)
-            ;
+        ;
     }
 
     /**

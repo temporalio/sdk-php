@@ -60,7 +60,7 @@ final class InvokeActivity extends Route
             Activity::setCurrentContext($context);
 
             $handler = $instance->getHandler();
-            $result = $handler($this->getArguments($context));
+            $result = $handler($context->getArguments());
 
             if ($context->isDoNotCompleteOnReturn()) {
                 $resolver->reject(new DoNotCompleteOnResultException());
@@ -70,19 +70,6 @@ final class InvokeActivity extends Route
         } finally {
             Activity::setCurrentContext(null);
         }
-    }
-
-    /**
-     * @param ActivityContext $context
-     * @return array
-     */
-    private function getArguments(ActivityContext $context): array
-    {
-        $arguments = [
-            Activity\ActivityContextInterface::class => $context,
-        ];
-
-        return \array_merge($arguments, $context->getArguments());
     }
 
     /**

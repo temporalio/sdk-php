@@ -60,7 +60,7 @@ final class Process
     private function start(): \Generator
     {
         $handler = $this->instance->getHandler();
-        $result = $handler($this->getArguments());
+        $result = $handler($this->context->getArguments());
 
         if ($result instanceof \Generator) {
             yield from $result;
@@ -69,18 +69,6 @@ final class Process
         }
 
         return $result;
-    }
-
-    /**
-     * @return array
-     */
-    private function getArguments(): array
-    {
-        $arguments = [
-            WorkflowContextInterface::class => $this->context,
-        ];
-
-        return \array_merge($arguments, $this->context->getArguments());
     }
 
     /**
