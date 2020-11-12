@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client\Transport\Protocol;
 
 use Temporal\Client\Internal\Events\EventEmitterTrait;
+use Temporal\Client\Internal\Support\Json;
 
 final class Protocol implements ProtocolInterface
 {

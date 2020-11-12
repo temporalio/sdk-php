@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Workflow;
 
 use App\Activity\ExampleActivity;
+use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Workflow;
 use Temporal\Client\Workflow\Meta\QueryMethod;
 use Temporal\Client\Workflow\Meta\SignalMethod;
@@ -32,10 +33,12 @@ class PizzaDelivery
     /** @WorkflowMethod(name="PizzaDelivery") */
     public function handler(): iterable
     {
-        $a = Workflow::newActivityStub(ExampleActivity::class);
+        $a = Workflow::newActivityStub(ExampleActivity::class, [
+            'scheduleToCloseTimeout' => '3h 42s'
+        ]);
 
-        return yield $a->async('test');
-
+        yield $a->a('test');
+        yield $a->b('asdasd');
 
 //        $value = yield Workflow::sideEffect(function () {
 //            return mt_rand(0, 1000);

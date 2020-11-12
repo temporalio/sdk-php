@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Workflow\Command;
 
+use Carbon\CarbonInterval;
 use Temporal\Client\Transport\Protocol\Command\Request;
 
 final class NewTimer extends Request
@@ -21,12 +22,12 @@ final class NewTimer extends Request
     public const NAME = 'NewTimer';
 
     /**
-     * @param int $microseconds
+     * @param \DateInterval $interval
      */
-    public function __construct(int $microseconds)
+    public function __construct(\DateInterval $interval)
     {
         parent::__construct(self::NAME, [
-            'ms' => $microseconds,
+            'ms' => CarbonInterval::make($interval)->milliseconds,
         ]);
     }
 }

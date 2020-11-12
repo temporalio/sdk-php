@@ -22,7 +22,7 @@ class Autowired extends Dispatcher
      */
     public function resolve(array $arguments): array
     {
-        return [$arguments[0]];
+        return $arguments;
     }
 
     /**

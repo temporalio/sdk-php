@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client\Transport\Protocol;
 
 use JetBrains\PhpStorm\Pure;
+use Temporal\Client\Internal\Support\Json;
 use Temporal\Client\Transport\Protocol\Command\ErrorResponse;
 use Temporal\Client\Transport\Protocol\Command\ErrorResponseInterface;
 use Temporal\Client\Transport\Protocol\Command\Request;

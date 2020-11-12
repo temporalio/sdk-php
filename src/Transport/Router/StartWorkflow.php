@@ -69,11 +69,8 @@ final class StartWorkflow extends Route
 
         $process = $this->running->run($this->worker, $context, $this->findWorkflowOrFail($info));
 
-        $resolver->resolve([
-            'WorkflowExecution' => $info->execution,
-        ]);
-
         $process->next();
+        $resolver->resolve(['WorkflowExecution' => $info->execution]);
     }
 
     /**

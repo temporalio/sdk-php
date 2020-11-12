@@ -14,6 +14,7 @@ namespace Temporal\Client;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Transport\FutureInterface;
+use Temporal\Client\Workflow\ActivityProxy;
 use Temporal\Client\Workflow\WorkflowContextInterface;
 use Temporal\Client\Workflow\WorkflowInfo;
 
@@ -26,9 +27,9 @@ use Temporal\Client\Workflow\WorkflowInfo;
  * @method static int[] getSendRequestIdentifiers()
  * @method static bool isReplaying()
  *
- * @method static object newActivityStub(string $class)
- * @method static PromiseInterface sideEffect(callable $cb)
- * @method static PromiseInterface complete(mixed $result = null)
+ * @method static ActivityProxy|object newActivityStub(string $class, array|ActivityOptions $options = null)
+ * @method static FutureInterface sideEffect(callable $cb)
+ * @method static FutureInterface complete(mixed $result = null)
  * @method static FutureInterface executeActivity(string $class, array $args, array|ActivityOptions $options = null)
  * @method static FutureInterface timer(string|int|float|\DateInterval $interval)
  * @method static FutureInterface getVersion(string $changeID, int $minSupported, int $maxSupported)

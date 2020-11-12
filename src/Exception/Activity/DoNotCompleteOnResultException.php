@@ -11,13 +11,21 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Exception\Activity;
 
+use Temporal\Client\Exception\NonThrowableExceptionInterface;
 use Temporal\Client\Exception\TemporalException;
-use Throwable;
 
-class DoNotCompleteOnResultException extends TemporalException
+class DoNotCompleteOnResultException extends TemporalException implements NonThrowableExceptionInterface
 {
-    public function __construct($code = 0, Throwable $previous = null)
+    /**
+     * @var string
+     */
+    protected const DEFAULT_ERROR_MESSAGE = 'doNotCompleteOnReturn';
+
+    /**
+     * @return static
+     */
+    public static function create(): self
     {
-        parent::__construct("doNotCompleteOnReturn", $code, $previous);
+        return new static(static::DEFAULT_ERROR_MESSAGE);
     }
 }

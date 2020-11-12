@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Transport\Protocol;
+namespace Temporal\Client\Internal\Support;
 
 final class Json
 {

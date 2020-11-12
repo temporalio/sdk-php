@@ -14,7 +14,7 @@ namespace Temporal\Client\Workflow;
 use JetBrains\PhpStorm\ExpectedValues;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
-use Temporal\Client\Support\DateInterval;
+use Temporal\Client\Internal\Support\DateInterval;
 
 interface WorkflowContextInterface
 {

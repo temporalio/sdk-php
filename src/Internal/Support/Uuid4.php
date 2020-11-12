@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Support;
+namespace Temporal\Client\Internal\Support;
 
 /**
  * A static helper class that implements the logic for generating UUID 4 based

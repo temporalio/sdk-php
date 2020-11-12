@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client\Workflow;
 
 use React\Promise\PromiseInterface;
+use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Client\Internal\Declaration\Prototype\Collection;
 
@@ -36,14 +37,21 @@ class ActivityProxy
     private iterable $activities;
 
     /**
+     * @var ActivityOptions
+     */
+    private ActivityOptions $options;
+
+    /**
      * @param class-string<Activity> $class
+     * @param ActivityOptions|array|null $options
      * @param WorkflowContextInterface $protocol
      * @param Collection<ActivityPrototype> $activities
      */
-    public function __construct(string $class, WorkflowContextInterface $protocol, Collection $activities)
+    public function __construct(string $class, $options, WorkflowContextInterface $protocol, Collection $activities)
     {
         $this->class = $class;
         $this->protocol = $protocol;
+        $this->options = ActivityOptions::new($options);
 
         $this->activities = [...$this->filterActivities($activities, $class)];
     }
@@ -67,7 +75,7 @@ class ActivityProxy
      * @param array $arguments
      * @return PromiseInterface
      */
-    public function __call(string $method, array $arguments = [])//: PromiseInterface
+    public function __call(string $method, array $arguments = []): PromiseInterface
     {
         return $this->call($method, $arguments);
     }
@@ -77,13 +85,13 @@ class ActivityProxy
      * @param array $arguments
      * @return PromiseInterface
      */
-    public function call(string $method, array $arguments = [])//: PromiseInterface
+    public function call(string $method, array $arguments = []): PromiseInterface
     {
         $activity = $this->findActivityPrototype($method);
 
         $method = $activity ? $activity->getName() : $method;
 
-        return $this->protocol->executeActivity($method, $arguments);
+        return $this->protocol->executeActivity($method, $arguments, $this->options);
     }
 
     /**

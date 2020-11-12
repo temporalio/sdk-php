@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Workflow\Info;
 
-use Temporal\Client\Support\Uuid4;
+use Temporal\Client\Internal\Support\Uuid4;
 
 final class WorkflowExecution
 {

@@ -11,6 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Exception;
 
-class CancellationException extends TemporalException implements NonThrowableExceptionInterface
+/**
+ * This interface marks an exception that is part of correct work and must be
+ * explicitly handled.
+ */
+interface NonThrowableExceptionInterface extends \Throwable
 {
 }

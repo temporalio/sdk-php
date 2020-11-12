@@ -63,7 +63,7 @@ final class InvokeActivity extends Route
             $result = $handler($context->getArguments());
 
             if ($context->isDoNotCompleteOnReturn()) {
-                $resolver->reject(new DoNotCompleteOnResultException());
+                $resolver->reject(DoNotCompleteOnResultException::create());
             } else {
                 $resolver->resolve($result);
             }

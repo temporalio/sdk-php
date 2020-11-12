@@ -9,12 +9,12 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Support;
+namespace Temporal\Client\Internal\Support;
 
 use Carbon\CarbonInterval;
 
 /**
- * @psalm-type DateIntervalFormat = string|int|float|\DateInterval
+ * @psalm-type DateIntervalFormat = string | int | float | \DateInterval
  */
 final class DateInterval
 {
@@ -24,29 +24,36 @@ final class DateInterval
     private const ERROR_UNRECOGNIZED_TYPE = 'Unrecognized date time interval format';
 
     /**
-     * @psalm-param DateIntervalFormat $interval
-     *
-     * @param string|int|float|\DateInterval $interval
-     * @return int
+     * @param DateIntervalFormat $interval
+     * @return \DateInterval
      * @throws \Exception
      */
-    public static function parse($interval): int
+    public static function parse($interval): \DateInterval
     {
         switch (true) {
             case \is_string($interval):
-                $interval = CarbonInterval::fromString($interval);
+                return CarbonInterval::fromString($interval);
 
             case $interval instanceof \DateInterval:
-                return (int)($interval->f * 1000);
+                return $interval;
 
             case \is_int($interval):
-                return $interval * 1000;
-
             case \is_float($interval):
-                return (int)($interval * 1000);
+                return CarbonInterval::milliseconds($interval);
 
             default:
                 throw new \InvalidArgumentException(self::ERROR_UNRECOGNIZED_TYPE);
         }
+    }
+
+    /**
+     * @param DateIntervalFormat $interval
+     * @return bool
+     */
+    public static function assert($interval): bool
+    {
+        $isParsable = \is_string($interval) || \is_int($interval) || \is_float($interval);
+
+        return $isParsable || $interval instanceof \DateInterval;
     }
 }

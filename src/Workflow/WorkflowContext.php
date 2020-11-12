@@ -15,7 +15,7 @@ use JetBrains\PhpStorm\ExpectedValues;
 use React\Promise\CancellablePromiseInterface;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
-use Temporal\Client\Support\DateInterval;
+use Temporal\Client\Internal\Support\DateInterval;
 use Temporal\Client\Transport\Future;
 use Temporal\Client\Transport\FutureInterface;
 use Temporal\Client\Transport\Protocol\Command\RequestInterface;
@@ -89,11 +89,15 @@ final class WorkflowContext implements WorkflowContextInterface
     /**
      * {@inheritDoc}
      */
-    public function newActivityStub(string $name): ActivityProxy
+    public function newActivityStub(
+        string $name,
+        #[ExpectedValues(values: ActivityOptions::class)]
+        $options = null
+    ): ActivityProxy
     {
         $this->recordStacktrace();
 
-        return new ActivityProxy($name, $this, $this->worker->getActivities());
+        return new ActivityProxy($name, $options, $this, $this->worker->getActivities());
     }
 
     /**
@@ -151,8 +155,8 @@ final class WorkflowContext implements WorkflowContextInterface
 
     /**
      * @param string $changeID
-     * @param int    $minSupported
-     * @param int    $maxSupported
+     * @param int $minSupported
+     * @param int $maxSupported
      * @return PromiseInterface
      */
     public function getVersion(string $changeID, int $minSupported, int $maxSupported): PromiseInterface
@@ -164,38 +168,6 @@ final class WorkflowContext implements WorkflowContextInterface
         }
 
         return $this->request($request);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function sideEffect(callable $cb): PromiseInterface
-    {
-        try {
-            if ($this->isReplaying()) {
-                $value = null;
-            } else {
-                $value = $cb();
-            }
-
-            $request = new SideEffect($value);
-        } catch (\Throwable $e) {
-            return reject($e);
-        }
-
-        return $this->request($request);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function isReplaying(): bool
-    {
-        $this->recordStacktrace();
-
-        $workflow = $this->worker->getWorkflowWorker();
-
-        return $workflow->isReplaying();
     }
 
     /**
@@ -247,6 +219,38 @@ final class WorkflowContext implements WorkflowContextInterface
     /**
      * {@inheritDoc}
      */
+    public function sideEffect(callable $cb): PromiseInterface
+    {
+        try {
+            if ($this->isReplaying()) {
+                $value = null;
+            } else {
+                $value = $cb();
+            }
+
+            $request = new SideEffect($value);
+        } catch (\Throwable $e) {
+            return reject($e);
+        }
+
+        return $this->request($request);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function isReplaying(): bool
+    {
+        $this->recordStacktrace();
+
+        $workflow = $this->worker->getWorkflowWorker();
+
+        return $workflow->isReplaying();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function complete($result = null): PromiseInterface
     {
         $request = new CompleteWorkflow($result, \array_values($this->requests));
@@ -265,7 +269,7 @@ final class WorkflowContext implements WorkflowContextInterface
 
         return $this->request($request)
             ->then($onFulfilled, $onRejected)
-        ;
+            ;
     }
 
     /**
