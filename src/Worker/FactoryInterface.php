@@ -33,11 +33,11 @@ interface FactoryInterface extends LoopInterface
      * Create a new Temporal Worker with the name of the task queue.
      *
      * Note: When starting the global event loop ({@see LoopInterface::run()}),
-     * all workers created with this method ({@see FactoryInterface::create()})
+     * all workers created with this method ({@see FactoryInterface::createWorker()})
      * will be launched.
      *
      * @param string $taskQueue
      * @return WorkerInterface
      */
-    public function create(string $taskQueue = self::DEFAULT_TASK_QUEUE): WorkerInterface;
+    public function createWorker(string $taskQueue = self::DEFAULT_TASK_QUEUE): WorkerInterface;
 }

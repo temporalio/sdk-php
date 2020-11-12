@@ -28,7 +28,7 @@ final class ActivityType
     }
 
     /**
-     * TODO throw exception in case of incorrect data
+     * TODO throw exception in case of incorrect data, not really since it driven by the server
      *
      * @param array $data
      * @return static
