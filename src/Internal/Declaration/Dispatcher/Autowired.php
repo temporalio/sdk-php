@@ -103,7 +103,7 @@ class Autowired implements DispatcherInterface
     {
         return static function (?object $ctx, array $arguments) use ($fun) {
             try {
-                return $fun->invoke($ctx, $arguments);
+                return $fun->invokeArgs($ctx, $arguments);
             } catch (\ReflectionException $e) {
                 throw new \BadMethodCallException($e->getMessage(), $e->getCode(), $e);
             }
@@ -174,7 +174,7 @@ class Autowired implements DispatcherInterface
 
     public function resolve(array $arguments): array
     {
-        return [];
+        return [$arguments[0]];
     }
 
     /**

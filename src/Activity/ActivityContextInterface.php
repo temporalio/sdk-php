@@ -19,6 +19,11 @@ interface ActivityContextInterface
     public function getArguments(): array;
 
     /**
+     * Call given method to enable external activity completion using activity ID or task token.
+     */
+    public function doNotCompleteOnReturn(): void;
+
+    /**
      * @return ActivityInfo
      */
     public function getInfo(): ActivityInfo;

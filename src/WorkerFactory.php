@@ -224,7 +224,7 @@ final class WorkerFactory implements FactoryInterface, ReaderAwareInterface
      * @return WorkerInterface
      * @throws \Exception
      */
-    public function create(string $taskQueue = self::DEFAULT_TASK_QUEUE): WorkerInterface
+    public function createWorker(string $taskQueue = self::DEFAULT_TASK_QUEUE): WorkerInterface
     {
         $worker = new Worker($this, $taskQueue);
 

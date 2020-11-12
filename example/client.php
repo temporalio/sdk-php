@@ -23,9 +23,10 @@ if (\class_exists(CliDumper::class)) {
 //
 
 $rr = new RoadRunner(new StreamRelay(\STDIN, \STDOUT));
+$rpc = new \Spiral\Goridge\RPC(new \Spiral\Goridge\SocketRelay('localhost', 6001));
 
 $factory = new \Temporal\Client\WorkerFactory($rr);
-$factory->create()
+$factory->createWorker()
     ->registerWorkflow(\App\Workflow\PizzaDelivery::class)
     ->registerActivity(\App\Activity\ExampleActivity::class)
 ;

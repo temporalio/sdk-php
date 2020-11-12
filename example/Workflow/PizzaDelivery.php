@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Workflow;
 
+use App\Activity\ExampleActivity;
 use Temporal\Client\Workflow;
 use Temporal\Client\Workflow\Meta\QueryMethod;
 use Temporal\Client\Workflow\Meta\SignalMethod;
@@ -31,16 +32,21 @@ class PizzaDelivery
     /** @WorkflowMethod(name="PizzaDelivery") */
     public function handler(): iterable
     {
-        $value = yield Workflow::sideEffect(function () {
-            return mt_rand(0, 1000);
-        });
+        $a = Workflow::newActivityStub(ExampleActivity::class);
 
-        $version = yield Workflow::getVersion("test", self::DEFAULT_VERSION, 2);
-        dump($version);
+        return yield $a->async('test');
 
-        yield Workflow::timer(10);
 
-        return $value;
+//        $value = yield Workflow::sideEffect(function () {
+//            return mt_rand(0, 1000);
+//        });
+//
+//        $version = yield Workflow::getVersion("test", self::DEFAULT_VERSION, 2);
+//        dump($version);
+//
+//        yield Workflow::timer(10);
+//
+//        return $value;
 //        $expire = Workflow::timer(60);
 //
 //        while (true) {
