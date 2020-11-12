@@ -37,11 +37,11 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
         parent::__construct($prototype, $context);
 
         foreach ($prototype->getSignalHandlers() as $method => $reflection) {
-            $this->queryHandlers[$method] = $this->createHandler($reflection);
+            $this->signalHandlers[$method] = $this->createHandler($reflection);
         }
 
         foreach ($prototype->getQueryHandlers() as $method => $reflection) {
-            $this->signalHandlers[$method] = $this->createHandler($reflection);
+            $this->queryHandlers[$method] = $this->createHandler($reflection);
         }
     }
 
