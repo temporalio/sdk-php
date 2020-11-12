@@ -31,7 +31,7 @@ class ActivityProxy
     /**
      * @psalm-param class-string<Activity>
      *
-     * @param string $class
+     * @param string                   $class
      * @param WorkflowContextInterface $protocol
      */
     public function __construct(string $class, WorkflowContextInterface $protocol)
@@ -42,20 +42,20 @@ class ActivityProxy
 
     /**
      * @param string $method
-     * @param array $arguments
+     * @param array  $arguments
      * @return PromiseInterface
      */
     public function call(string $method, array $arguments = [])//: PromiseInterface
     {
-        // TODO
-        $activity = $this->class . '::' . $method;
+        // TODO: improve naming
+        $activity = $method;
 
         return $this->protocol->executeActivity($activity, $arguments);
     }
 
     /**
      * @param string $method
-     * @param array $arguments
+     * @param array  $arguments
      * @return PromiseInterface
      */
     public function __call(string $method, array $arguments = [])//: PromiseInterface

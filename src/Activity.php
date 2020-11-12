@@ -12,7 +12,13 @@ declare(strict_types=1);
 namespace Temporal\Client;
 
 use Temporal\Client\Activity\ActivityContextInterface;
+use Temporal\Client\Activity\ActivityInfo;
 
+/**
+ * Class Activity
+ *
+ * @method static ActivityInfo getInfo()
+ */
 final class Activity
 {
     /**
@@ -49,7 +55,7 @@ final class Activity
 
     /**
      * @param string $name
-     * @param array $arguments
+     * @param array  $arguments
      * @return mixed
      */
     public static function __callStatic(string $name, array $arguments)

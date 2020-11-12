@@ -18,6 +18,7 @@ class ExampleActivity
     /** @ActivityMethod() */
     public function a($value)
     {
+        dump($value);
         usleep(10000);
        // sleep(1);
         return $value . ' from ' . __METHOD__;
