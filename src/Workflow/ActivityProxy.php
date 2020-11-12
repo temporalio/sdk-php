@@ -12,6 +12,8 @@ declare(strict_types=1);
 namespace Temporal\Client\Workflow;
 
 use React\Promise\PromiseInterface;
+use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
+use Temporal\Client\Internal\Declaration\Prototype\Collection;
 
 /**
  * @psalm-template Activity of object
@@ -29,37 +31,97 @@ class ActivityProxy
     private WorkflowContextInterface $protocol;
 
     /**
-     * @psalm-param class-string<Activity>
-     *
-     * @param string                   $class
-     * @param WorkflowContextInterface $protocol
+     * @var ActivityPrototype[]
      */
-    public function __construct(string $class, WorkflowContextInterface $protocol)
+    private iterable $activities;
+
+    /**
+     * @param class-string<Activity> $class
+     * @param WorkflowContextInterface $protocol
+     * @param Collection<ActivityPrototype> $activities
+     */
+    public function __construct(string $class, WorkflowContextInterface $protocol, Collection $activities)
     {
         $this->class = $class;
         $this->protocol = $protocol;
+
+        $this->activities = [...$this->filterActivities($activities, $class)];
     }
 
     /**
-     * @param string $method
-     * @param array  $arguments
-     * @return PromiseInterface
+     * @param ActivityPrototype[] $activities
+     * @param string $class
+     * @return iterable
      */
-    public function call(string $method, array $arguments = [])//: PromiseInterface
+    private function filterActivities(iterable $activities, string $class): iterable
     {
-        // TODO: improve naming
-        $activity = $method;
-
-        return $this->protocol->executeActivity($activity, $arguments);
+        foreach ($activities as $activity) {
+            if ($this->matchClass($activity, $class)) {
+                yield $activity;
+            }
+        }
     }
 
     /**
      * @param string $method
-     * @param array  $arguments
+     * @param array $arguments
      * @return PromiseInterface
      */
     public function __call(string $method, array $arguments = [])//: PromiseInterface
     {
         return $this->call($method, $arguments);
+    }
+
+    /**
+     * @param string $method
+     * @param array $arguments
+     * @return PromiseInterface
+     */
+    public function call(string $method, array $arguments = [])//: PromiseInterface
+    {
+        $activity = $this->findActivityPrototype($method);
+
+        $method = $activity ? $activity->getName() : $method;
+
+        return $this->protocol->executeActivity($method, $arguments);
+    }
+
+    /**
+     * @param string $method
+     * @return ActivityPrototype|null
+     */
+    private function findActivityPrototype(string $method): ?ActivityPrototype
+    {
+        foreach ($this->activities as $activity) {
+            if ($this->matchMethod($activity, $method)) {
+                return $activity;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param ActivityPrototype $prototype
+     * @param string $needle
+     * @return bool
+     */
+    private function matchClass(ActivityPrototype $prototype, string $needle): bool
+    {
+        $reflection = $prototype->getClass();
+
+        return $reflection && $reflection->getName() === \trim($needle, '\\');
+    }
+
+    /**
+     * @param ActivityPrototype $prototype
+     * @param string $needle
+     * @return bool
+     */
+    private function matchMethod(ActivityPrototype $prototype, string $needle): bool
+    {
+        $handler = $prototype->getHandler();
+
+        return $handler->getName() === $needle;
     }
 }

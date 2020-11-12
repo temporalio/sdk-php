@@ -93,7 +93,7 @@ final class WorkflowContext implements WorkflowContextInterface
     {
         $this->recordStacktrace();
 
-        return new ActivityProxy($name, $this);
+        return new ActivityProxy($name, $this, $this->worker->getActivities());
     }
 
     /**

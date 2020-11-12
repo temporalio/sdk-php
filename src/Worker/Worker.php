@@ -125,9 +125,9 @@ class Worker implements WorkerInterface
     }
 
     /**
-     * @return WorkflowPrototype[]
+     * @return Collection<WorkflowPrototype>
      */
-    public function getWorkflows(): iterable
+    public function getWorkflows(): Collection
     {
         return $this->workflows;
     }
@@ -147,9 +147,9 @@ class Worker implements WorkerInterface
     }
 
     /**
-     * @return ActivityPrototype[]
+     * @return Collection<WorkflowPrototype>
      */
-    public function getActivities(): iterable
+    public function getActivities(): Collection
     {
         return $this->activities;
     }
