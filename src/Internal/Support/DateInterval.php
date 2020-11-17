@@ -39,7 +39,7 @@ final class DateInterval
 
             case \is_int($interval):
             case \is_float($interval):
-                return CarbonInterval::milliseconds($interval);
+                return CarbonInterval::seconds($interval);
 
             default:
                 throw new \InvalidArgumentException(self::ERROR_UNRECOGNIZED_TYPE);

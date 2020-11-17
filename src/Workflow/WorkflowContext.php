@@ -18,6 +18,7 @@ use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Internal\Support\DateInterval;
 use Temporal\Client\Transport\Future;
 use Temporal\Client\Transport\FutureInterface;
+use Temporal\Client\Transport\Protocol\Command\Request;
 use Temporal\Client\Transport\Protocol\Command\RequestInterface;
 use Temporal\Client\Worker\Worker;
 use Temporal\Client\Workflow;
@@ -246,6 +247,54 @@ final class WorkflowContext implements WorkflowContextInterface
         $workflow = $this->worker->getWorkflowWorker();
 
         return $workflow->isReplaying();
+    }
+
+    /**
+     * @param string $queryType
+     * @param callable $handler
+     * @return $this
+     */
+    public function registerQuery(string $queryType, callable $handler): self
+    {
+        $this->findCurrentProcessOrFail()
+            ->getInstance()
+            ->addQueryHandler($queryType, $handler)
+        ;
+
+        return $this;
+    }
+
+    /**
+     * @param string $queryType
+     * @param callable $handler
+     * @return $this
+     */
+    public function registerSignal(string $signalType, callable $handler): self
+    {
+        $this->findCurrentProcessOrFail()
+            ->getInstance()
+            ->addSignalHandler($signalType, $handler)
+        ;
+
+        return $this;
+    }
+
+    /**
+     * @return Process
+     */
+    private function findCurrentProcessOrFail(): Process
+    {
+        $process = $this->worker
+            ->getWorkflowWorker()
+            ->getRunningWorkflows()
+            ->find($this->info->execution->runId)
+        ;
+
+        if ($process === null) {
+            throw new \DomainException('Process has been destroyed');
+        }
+
+        return $process;
     }
 
     /**

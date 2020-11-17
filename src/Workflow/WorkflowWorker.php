@@ -38,19 +38,32 @@ final class WorkflowWorker implements DispatcherInterface
     private bool $isReplaying = false;
 
     /**
+     * @var RunningWorkflows
+     */
+    private RunningWorkflows $workflows;
+
+    /**
      * @param Collection<WorkflowPrototype> $workflows
      * @param Worker $worker
      */
     public function __construct(Collection $workflows, Worker $worker)
     {
-        $running = new RunningWorkflows();
+        $this->workflows = new RunningWorkflows();
 
         $this->router = new Router();
-        $this->router->add(new Router\StartWorkflow($workflows, $running, $worker));
-        $this->router->add(new Router\InvokeQuery($workflows, $running));
-        $this->router->add(new Router\InvokeSignal($workflows, $running, $worker));
-        $this->router->add(new Router\DestroyWorkflow($running, $worker));
-        $this->router->add(new Router\StackTrace($running));
+        $this->router->add(new Router\StartWorkflow($workflows, $this->workflows, $worker));
+        $this->router->add(new Router\InvokeQuery($this->workflows));
+        $this->router->add(new Router\InvokeSignal($this->workflows, $worker));
+        $this->router->add(new Router\DestroyWorkflow($this->workflows, $worker));
+        $this->router->add(new Router\StackTrace($this->workflows));
+    }
+
+    /**
+     * @return RunningWorkflows
+     */
+    public function getRunningWorkflows(): RunningWorkflows
+    {
+        return $this->workflows;
     }
 
     /**

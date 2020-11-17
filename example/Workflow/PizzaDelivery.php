@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace App\Workflow;
 
 use App\Activity\ExampleActivity;
-use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Workflow;
 use Temporal\Client\Workflow\Meta\QueryMethod;
 use Temporal\Client\Workflow\Meta\SignalMethod;
@@ -20,9 +19,7 @@ use Temporal\Client\Workflow\Meta\WorkflowMethod;
 
 class PizzaDelivery
 {
-    private const DEFAULT_VERSION = 0;
-
-    private int $value = 0;
+    private int $value = 0xDEAD_BEEF;
 
     /** @QueryMethod() */
     public function get(): int
@@ -33,6 +30,10 @@ class PizzaDelivery
     /** @WorkflowMethod(name="PizzaDelivery") */
     public function handler(): iterable
     {
+        Workflow::registerQuery('get_dynamic', fn () => $this->value);
+
+        yield Workflow::timer(40);
+
         $a = Workflow::newActivityStub(ExampleActivity::class, [
             'scheduleToCloseTimeout' => '3h 42s'
         ]);

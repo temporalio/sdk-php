@@ -26,7 +26,7 @@ final class Process
     private WorkflowContext $context;
 
     /**
-     * @var \Generator
+     * @var \Generator|null
      */
     private \Generator $generator;
 

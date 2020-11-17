@@ -33,6 +33,9 @@ use Temporal\Client\Workflow\WorkflowInfo;
  * @method static FutureInterface executeActivity(string $class, array $args, array|ActivityOptions $options = null)
  * @method static FutureInterface timer(string|int|float|\DateInterval $interval)
  * @method static FutureInterface getVersion(string $changeID, int $minSupported, int $maxSupported)
+ *
+ * @method static WorkflowContextInterface registerQuery(string $queryType, callable $handler)
+ * @method static WorkflowContextInterface registerSignal(string $signalType, callable $handler)
  */
 final class Workflow
 {

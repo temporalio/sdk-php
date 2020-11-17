@@ -56,10 +56,44 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
 
     /**
      * @param string $name
+     * @param callable $handler
+     */
+    public function addQueryHandler(string $name, callable $handler): void
+    {
+        $this->queryHandlers[$name] = \Closure::fromCallable($handler);
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getQueryHandlerNames(): array
+    {
+        return \array_keys($this->queryHandlers);
+    }
+
+    /**
+     * @param string $name
      * @return \Closure|null
      */
     public function findSignalHandler(string $name): ?\Closure
     {
         return $this->signalHandlers[$name] ?? null;
+    }
+
+    /**
+     * @param string $name
+     * @param callable $handler
+     */
+    public function addSignalHandler(string $name, callable $handler): void
+    {
+        $this->signalHandlers[$name] = \Closure::fromCallable($handler);
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getSignalHandlerNames(): array
+    {
+        return \array_keys($this->signalHandlers);
     }
 }
