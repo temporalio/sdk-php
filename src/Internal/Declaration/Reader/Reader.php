@@ -11,8 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Internal\Declaration\Reader;
 
-use Temporal\Client\Internal\Meta\Factory;
-use Temporal\Client\Internal\Meta\ReaderInterface as MetadataReaderInterface;
+use Spiral\Attributes\ReaderInterface;
 
 /**
  * @psalm-template T of object
@@ -20,16 +19,16 @@ use Temporal\Client\Internal\Meta\ReaderInterface as MetadataReaderInterface;
 abstract class Reader
 {
     /**
-     * @var MetadataReaderInterface
+     * @var ReaderInterface
      */
-    protected MetadataReaderInterface $reader;
+    protected ReaderInterface $reader;
 
     /**
-     * @param MetadataReaderInterface|null $reader
+     * @param ReaderInterface $reader
      */
-    public function __construct(MetadataReaderInterface $reader = null)
+    public function __construct(ReaderInterface $reader)
     {
-        $this->reader = $reader ?? (new Factory())->create();
+        $this->reader = $reader;
     }
 
     /**
@@ -48,7 +47,7 @@ abstract class Reader
     protected function annotatedMethods(\ReflectionClass $ctx, string $attribute): iterable
     {
         foreach ($ctx->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
-            foreach ($this->reader->getMethodMetadata($method, $attribute) as $meta) {
+            foreach ($this->reader->getFunctionMetadata($method, $attribute) as $meta) {
                 yield $meta => $method;
             }
         }

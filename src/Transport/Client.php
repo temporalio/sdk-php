@@ -79,7 +79,7 @@ final class Client implements ClientInterface
      * @param RequestInterface $request
      * @return PromiseInterface
      */
-    public function promise(RequestInterface $request): PromiseInterface
+    private function promise(RequestInterface $request): PromiseInterface
     {
         $id = $request->getId();
 

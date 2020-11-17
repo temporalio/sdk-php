@@ -12,11 +12,16 @@ declare(strict_types=1);
 namespace Temporal\Client;
 
 use Carbon\CarbonTimeZone;
+use Doctrine\Common\Annotations\Reader;
 use React\Promise\PromiseInterface;
+use Spiral\Attributes\AnnotationReader;
+use Spiral\Attributes\AttributeReader;
+use Spiral\Attributes\Composite\SelectiveReader;
+use Spiral\Attributes\ReaderAwareInterface;
+use Spiral\Attributes\ReaderAwareTrait;
+use Spiral\Attributes\ReaderInterface;
 use Spiral\RoadRunner\Worker as RoadRunnerWorker;
 use Temporal\Client\Internal\Events\EventEmitterTrait;
-use Temporal\Client\Internal\Meta\ReaderAwareInterface;
-use Temporal\Client\Internal\Meta\ReaderAwareTrait;
 use Temporal\Client\Transport\Client;
 use Temporal\Client\Transport\Protocol\Command\RequestInterface;
 use Temporal\Client\Transport\Protocol\Protocol;
@@ -141,10 +146,26 @@ final class WorkerFactory implements FactoryInterface, ReaderAwareInterface
     }
 
     /**
+     * @return ReaderInterface
+     */
+    private function initializeReader(): ReaderInterface
+    {
+        if (\interface_exists(Reader::class)) {
+            return new SelectiveReader([
+                new AnnotationReader(),
+                new AttributeReader()
+            ]);
+        }
+
+        return new AttributeReader();
+    }
+
+    /**
      * @return void
      */
     private function initialize(): void
     {
+        $this->reader = $this->initializeReader();
         $this->zone = new CarbonTimeZone('UTC');
         $this->workers = new Pool();
         $this->commands = new SplQueue();
