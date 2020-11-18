@@ -11,19 +11,30 @@ declare(strict_types=1);
 
 namespace App\Activity;
 
-use Temporal\Client\Meta\ActivityMethod;
+use Temporal\Client\Activity;
+use Temporal\Client\Activity\Meta\ActivityMethod;
 
 class ExampleActivity
 {
-    /**
-     * @param array $arguments
-     * @return array
-     *
-     * @ActivityMethod(name="ExampleActivity")
-     */
-    #[ActivityMethod(name: 'ExampleActivity')]
-    public function handler(array $arguments = [])
+    /** @ActivityMethod() */
+    public function a($value)
     {
-        return $arguments;
+        return strtoupper($value) . ' from ' . __METHOD__;
+    }
+
+    /** @ActivityMethod() */
+    public function b($value)
+    {
+        return strtolower($value) . ' from ' . __METHOD__;
+    }
+
+    /** @ActivityMethod() */
+    public function async($value)
+    {
+        Activity::doNotCompleteOnReturn();
+
+        dump(Activity::getInfo()->taskToken);
+
+        return "ignored";
     }
 }

@@ -1,0 +1,67 @@
+[
+    {
+        "ctx": null,
+        "body": [
+            {"command": "GetWorkerInfo", "id": 42}
+        ]
+    },
+    {
+        "ctx": {
+            "taskQueue": "default",
+            "replay": true
+        },
+        "body": [
+            {
+                "id": 2,
+                "command": "StartWorkflow",
+                "params": {
+                    "name": "PizzaDelivery",
+                    "wid": "WORKFLOW_ID",
+                    "rid": "f96bd88a-a319-4501-bdde-92ddfde546e5",
+                    "taskQueue": "WORKFLOW_TASK_QUEUE",
+                    "payload": [1, 2, 3]
+                }
+            }
+        ]
+    },
+    {
+        "ctx": {
+            "taskQueue": "default",
+            "replay": true,
+            "tickTime": "2019-10-22T18:08:53+00:00"
+        },
+        "body": [
+            {
+                "id": 1,
+                "result": ["Hello"]
+            }
+        ]
+    },
+    {
+        "ctx": {
+            "taskQueue": "default",
+            "tickTime":"2019-10-22T18:08:53+00:00"
+        },
+        "body": [
+            {
+                "id": 2,
+                "result": "World"
+            }
+        ]
+    },
+    {
+        "ctx": {
+            "taskQueue": "default",
+            "tickTime":"2019-10-22T18:08:53+00:00"
+        },
+        "body": [
+            {
+                "id": 3,
+                "command": "DestroyWorkflow",
+                "params": {
+                    "rid": "f96bd88a-a319-4501-bdde-92ddfde546e5"
+                }
+            }
+        ]
+    }
+]

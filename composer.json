@@ -1,14 +1,17 @@
 {
-    "name": "spiral/temporal",
+    "name": "temporal/client",
     "license": "MIT",
     "require": {
         "php": ">=7.4",
         "ext-json": "*",
         "psr/log": "^1.1",
+        "nesbot/carbon": "^2.41",
         "react/promise": "^2.8",
-        "react/event-loop": "^1.1",
+        "evenement/evenement": "^3.0",
+        "spiral/attributes": "^2.7",
+        "composer-runtime-api": "^2.0",
         "symfony/polyfill-php80": "^1.18",
-        "spiral/goridge": "^2.5"
+        "spiral/roadrunner": "^1.8"
     },
     "autoload": {
         "psr-4": {
@@ -16,11 +19,12 @@
         }
     },
     "require-dev": {
+        "composer/composer": "^2.0",
         "monolog/monolog": "^2.1",
         "doctrine/annotations": "^1.10",
         "react/socket": "^0.8",
         "phpunit/phpunit": "^9.3",
-        "vimeo/psalm": "^3.14",
+        "vimeo/psalm": "^4.1",
         "symfony/var-dumper": "^5.1",
         "illuminate/support": "^7.0"
     },
