@@ -17,8 +17,6 @@ use Temporal\Client\Internal\Marshaller\Meta\Scope;
 use Temporal\Client\Internal\Marshaller\Type\Factory;
 use Temporal\Client\Internal\Marshaller\Type\TypeInterface;
 
-use function Amp\call;
-
 /**
  * @psalm-import-type Getter from MapperInterface
  * @psalm-import-type Setter from MapperInterface
