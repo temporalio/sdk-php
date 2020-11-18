@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Internal\Marshaller;
 
+use Temporal\Client\Internal\Marshaller\Type\TypeInterface;
+
 interface MarshallerInterface
 {
     /**
@@ -25,4 +27,11 @@ interface MarshallerInterface
      * @return object
      */
     public function unmarshal(array $from, object $to): object;
+
+    /**
+     * @param class-string<TypeInterface> $type
+     * @param array $args
+     * @return TypeInterface|null
+     */
+    public function typeOf(string $type, array $args): ?TypeInterface;
 }

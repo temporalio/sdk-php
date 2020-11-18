@@ -11,27 +11,18 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Internal\Marshaller\Meta;
 
+use Temporal\Client\Internal\Marshaller\Type\ArrayType;
 use Temporal\Client\Internal\Marshaller\Type\TypeInterface;
 
 /**
  * @Annotation
  * @Target({ "PROPERTY", "METHOD" })
  */
-#[\Attribute(\Attribute::TARGET_PROPERTY | \Attribute::TARGET_METHOD)]
-class MarshalAs
+#[\Attribute(\Attribute::TARGET_PROPERTY)]
+class MarshalArray extends Marshal
 {
-    /**
-     * @var string|null
-     */
-    public ?string $name = null;
-
     /**
      * @var class-string<TypeInterface>|null
      */
-    public ?string $type = null;
-
-    /**
-     * @var array
-     */
-    public array $options = [];
+    public ?string $type = ArrayType::class;
 }

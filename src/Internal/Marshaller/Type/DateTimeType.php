@@ -12,8 +12,10 @@ declare(strict_types=1);
 namespace Temporal\Client\Internal\Marshaller\Type;
 
 use Carbon\Carbon;
+use Temporal\Client\Internal\Marshaller\MarshallerInterface;
+use Temporal\Client\Internal\Support\Inheritance;
 
-class DateTimeType implements TypeInterface
+class DateTimeType extends Type implements DetectableTypeInterface
 {
     /**
      * @var string
@@ -23,15 +25,25 @@ class DateTimeType implements TypeInterface
     /**
      * @param string $format
      */
-    public function __construct(string $format = \DateTimeInterface::RFC3339)
+    public function __construct(MarshallerInterface $marshaller, string $format = \DateTimeInterface::RFC3339)
     {
         $this->format = $format;
+
+        parent::__construct($marshaller);
     }
 
     /**
      * {@inheritDoc}
      */
-    public function parse($value): \DateTimeInterface
+    public static function match(\ReflectionNamedType $type): bool
+    {
+        return ! $type->isBuiltin() && Inheritance::implements($type->getName(), \DateTimeInterface::class);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function parse($value, $current): \DateTimeInterface
     {
         return Carbon::parse($value);
     }
@@ -41,6 +53,8 @@ class DateTimeType implements TypeInterface
      */
     public function serialize($value): string
     {
-        return Carbon::parse($value)->format($this->format);
+        return Carbon::parse($value)
+            ->format($this->format)
+        ;
     }
 }

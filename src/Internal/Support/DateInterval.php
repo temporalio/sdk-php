@@ -14,22 +14,103 @@ namespace Temporal\Client\Internal\Support;
 use Carbon\CarbonInterval;
 
 /**
- * @psalm-type DateIntervalFormat = string | int | float | \DateInterval
+ * @psalm-type DateIntervalValue = string | int | float | \DateInterval
+ * @psalm-type DateIntervalFormat = DateIntervalType::FORMAT_*
  */
 final class DateInterval
 {
     /**
      * @var string
      */
-    private const ERROR_UNRECOGNIZED_TYPE = 'Unrecognized date time interval format';
+    private const ERROR_INVALID_DATETIME = 'Unrecognized date time interval format';
 
     /**
-     * @param DateIntervalFormat $interval
-     * @return CarbonInterval
-     * @throws \Exception
+     * @var string
      */
-    public static function parse($interval): CarbonInterval
+    private const ERROR_INVALID_FORMAT = 'Invalid date interval format "%s", available formats: %s';
+
+    /**
+     * @var string
+     */
+    public const FORMAT_YEARS = 'y';
+
+    /**
+     * @var string
+     */
+    public const FORMAT_MONTHS = 'm';
+
+    /**
+     * @var string
+     */
+    public const FORMAT_WEEKS = 'weeks';
+
+    /**
+     * @var string
+     */
+    public const FORMAT_DAYS = 'days';
+
+    /**
+     * @var string
+     */
+    public const FORMAT_HOURS = 'hours';
+
+    /**
+     * @var string
+     */
+    public const FORMAT_MINUTES  = 'minutes';
+
+    /**
+     * @var string
+     */
+    public const FORMAT_SECONDS  = 'seconds';
+
+    /**
+     * @var string
+     */
+    public const FORMAT_MILLISECONDS = 'milliseconds';
+
+    /**
+     * @var string
+     */
+    public const FORMAT_MICROSECONDS = 'microseconds';
+
+    /**
+     * @var DateIntervalFormat[]
+     */
+    private const AVAILABLE_FORMATS = [
+        self::FORMAT_YEARS,
+        self::FORMAT_MONTHS,
+        self::FORMAT_WEEKS,
+        self::FORMAT_DAYS,
+        self::FORMAT_HOURS,
+        self::FORMAT_MINUTES,
+        self::FORMAT_SECONDS,
+        self::FORMAT_MILLISECONDS,
+        self::FORMAT_MICROSECONDS,
+    ];
+
+    /**
+     * @param string $format
+     * @return string
+     */
+    private static function validateFormat(string $format): void
     {
+        if (! isset(self::AVAILABLE_FORMATS[$format])) {
+            $message = \sprintf(self::ERROR_INVALID_FORMAT, $format, \implode(', ', self::AVAILABLE_FORMATS));
+
+            throw new \InvalidArgumentException($message);
+        }
+    }
+
+    /**
+     * @param DateIntervalValue $interval
+     * @param string $format
+     * @return CarbonInterval
+     */
+    public static function parse($interval, string $format = self::FORMAT_MILLISECONDS): CarbonInterval
+    {
+        self::validateFormat($format);
+
         switch (true) {
             case \is_string($interval):
                 return CarbonInterval::fromString($interval);
@@ -39,15 +120,15 @@ final class DateInterval
 
             case \is_int($interval):
             case \is_float($interval):
-                return CarbonInterval::seconds($interval);
+                return CarbonInterval::$format($interval);
 
             default:
-                throw new \InvalidArgumentException(self::ERROR_UNRECOGNIZED_TYPE);
+                throw new \InvalidArgumentException(self::ERROR_INVALID_DATETIME);
         }
     }
 
     /**
-     * @param DateIntervalFormat $interval
+     * @param DateIntervalValue $interval
      * @return bool
      */
     public static function assert($interval): bool

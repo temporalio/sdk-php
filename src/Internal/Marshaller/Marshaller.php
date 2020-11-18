@@ -12,7 +12,12 @@ declare(strict_types=1);
 namespace Temporal\Client\Internal\Marshaller;
 
 use Spiral\Attributes\ReaderInterface;
+use Temporal\Client\Internal\Marshaller\Type\Factory;
+use Temporal\Client\Internal\Marshaller\Type\TypeInterface;
 
+/**
+ * @psalm-import-type TypeMatcher from Factory
+ */
 class Marshaller implements MarshallerInterface
 {
     /**
@@ -26,11 +31,28 @@ class Marshaller implements MarshallerInterface
     private array $mappers = [];
 
     /**
-     * @param ReaderInterface $reader
+     * @var Factory
      */
-    public function __construct(ReaderInterface $reader)
+    private Factory $factory;
+
+    /**
+     * @param ReaderInterface $reader
+     * @param array<TypeMatcher> $matchers
+     */
+    public function __construct(ReaderInterface $reader, array $matchers = [])
     {
         $this->reader = $reader;
+        $this->factory = new Factory($this, $matchers);
+    }
+
+    /**
+     * @param string $type
+     * @param array $args
+     * @return TypeInterface|null
+     */
+    public function typeOf(string $type, array $args): ?TypeInterface
+    {
+        return $this->factory->create($type, $args);
     }
 
     /**
@@ -40,7 +62,9 @@ class Marshaller implements MarshallerInterface
      */
     private function factory(string $class): MapperInterface
     {
-        return AttributeMapper::fromClass($class, $this->reader);
+        $reflection = new \ReflectionClass($class);
+
+        return new AttributeMapper($reflection, $this->factory, $this->reader);
     }
 
     /**
@@ -65,7 +89,7 @@ class Marshaller implements MarshallerInterface
         $result = [];
 
         foreach ($mapper->getGetters() as $field => $getter) {
-            $result[$field] = $getter($from);
+            $result[$field] = $getter->call($from);
         }
 
         return $result;
@@ -87,7 +111,7 @@ class Marshaller implements MarshallerInterface
                 continue;
             }
 
-            $setter($result, $from[$field] ?? null);
+            $setter->call($result, $from[$field] ?? null);
         }
 
         return $result;

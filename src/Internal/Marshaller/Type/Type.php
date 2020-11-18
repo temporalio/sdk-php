@@ -13,23 +13,18 @@ namespace Temporal\Client\Internal\Marshaller\Type;
 
 use Temporal\Client\Internal\Marshaller\MarshallerInterface;
 
-interface TypeInterface
+abstract class Type implements TypeInterface
 {
+    /**
+     * @var MarshallerInterface
+     */
+    protected MarshallerInterface $marshaller;
+
     /**
      * @param MarshallerInterface $marshaller
      */
-    public function __construct(MarshallerInterface $marshaller);
-
-    /**
-     * @param mixed $value
-     * @param mixed $current
-     * @return mixed
-     */
-    public function parse($value, $current);
-
-    /**
-     * @param mixed $value
-     * @return mixed
-     */
-    public function serialize($value);
+    public function __construct(MarshallerInterface $marshaller)
+    {
+        $this->marshaller = $marshaller;
+    }
 }
