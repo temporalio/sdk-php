@@ -106,12 +106,14 @@ class AttributeMapper implements MapperInterface
 
             // Has marshal attribute
             if ($marshal !== null || $this->isValidScope($property, $scope)) {
-                yield $name => $marshal->name;
+                yield $name => $marshal->name ?? $name;
             }
         }
     }
 
     /**
+     * TODO Optimise it
+     *
      * @param \ReflectionProperty $property
      * @param Scope $scope
      * @return bool

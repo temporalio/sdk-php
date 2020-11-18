@@ -74,7 +74,6 @@ class Marshaller implements MarshallerInterface
     /**
      * {@inheritDoc}
      *
-     * @param UnmarshalConfig|array $config
      * @throws \ReflectionException
      */
     public function unmarshal(array $from, object $to): object
