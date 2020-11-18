@@ -63,20 +63,6 @@ class AutowiringTestCase extends WorkerTestCase
     }
 
     /**
-     * @testdox Verifies that methods with no arguments return an empty array
-     *
-     * @dataProvider reflectionDataProvider
-     */
-    public function testResolvingMethodWithoutArgumentsInvocation(\ReflectionFunctionAbstract $fn): void
-    {
-        $handler = new Autowired($fn);
-
-        for ($i = 0; $i < 2; ++$i) {
-            $this->assertSame([], $handler->resolve(range(0, $i)));
-        }
-    }
-
-    /**
      * @testdox Checks invocation with an object context or exception otherwise (if static context required)
      *
      * @dataProvider reflectionDataProvider
