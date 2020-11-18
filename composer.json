@@ -1,6 +1,16 @@
 {
-    "name": "temporal/client",
+    "name": "temporal/sdk",
     "license": "MIT",
+    "type": "library",
+    "description": "Temporal SDK",
+    "homepage": "https://temporal.io",
+    "keywords": ["sdk", "api", "library", "temporal", "event-sourcing", "workflow", "activity","service-bus"],
+    "support": {
+        "forum": "https://community.temporal.io",
+        "docs": "https://docs.temporal.io/docs",
+        "issues": "https://github.com/temporalio/sdk-php/issues",
+        "source": "https://github.com/temporalio/sdk-php"
+    },
     "require": {
         "php": ">=7.4",
         "ext-json": "*",
@@ -39,6 +49,14 @@
     },
     "scripts": {
         "check": "psalm"
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0.x-dev"
+        }
+    },
+    "config": {
+        "sort-packages": true
     },
     "minimum-stability": "dev",
     "prefer-stable": true
