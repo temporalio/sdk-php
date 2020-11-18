@@ -4,31 +4,29 @@ declare(strict_types=1);
 
 use Spiral\Goridge\StreamRelay;
 use Spiral\RoadRunner\Worker as RoadRunner;
-use Symfony\Component\VarDumper\Dumper\CliDumper;
+use Temporal\Client\WorkerFactory;
 
 require __DIR__ . '/../vendor/autoload.php';
 
 //
 // Exception Handling
 //
-if (\class_exists(CliDumper::class)) {
-    CliDumper::$defaultOutput = 'php://stderr';
-}
-\set_exception_handler(fn (\Throwable $e) => \file_put_contents('php://stderr', (string)$e));
-\set_error_handler(fn(...$args) => \file_put_contents('php://stderr', \json_encode($args, \JSON_PRETTY_PRINT)));
+WorkerFactory::debug();
 
+//
+// Create RoadRunner Connection
+//
+$rr = new RoadRunner(new StreamRelay(\STDIN, \STDOUT));
 
 //
 // Start Workflow and Activities
 //
+$factory = new WorkerFactory($rr);
 
-$rr = new RoadRunner(new StreamRelay(\STDIN, \STDOUT));
-$rpc = new \Spiral\Goridge\RPC(new \Spiral\Goridge\SocketRelay('localhost', 6001));
-
-$factory = new \Temporal\Client\WorkerFactory($rr);
 $factory->createWorker()
-    ->registerWorkflow(\App\Workflow\PizzaDelivery::class)
-    ->registerActivity(\App\Activity\ExampleActivity::class)
+    ->registerWorkflow(\App\CounterWorkflow::class)
+    ->registerWorkflow(\App\SimpleWorkflow::class)
+    ->registerActivity(\App\SimpleActivity::class)
 ;
 
 $factory->run();

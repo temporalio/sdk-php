@@ -21,6 +21,7 @@ use Spiral\Attributes\ReaderAwareInterface;
 use Spiral\Attributes\ReaderAwareTrait;
 use Spiral\Attributes\ReaderInterface;
 use Spiral\RoadRunner\Worker as RoadRunnerWorker;
+use Symfony\Component\VarDumper\Dumper\CliDumper;
 use Temporal\Client\Internal\Events\EventEmitterTrait;
 use Temporal\Client\Transport\Client;
 use Temporal\Client\Transport\Protocol\Command\RequestInterface;
@@ -143,6 +144,25 @@ final class WorkerFactory implements FactoryInterface, ReaderAwareInterface
 
         $this->initialize();
         $this->boot();
+    }
+
+    /**
+     * @return void
+     */
+    public static function debug(): void
+    {
+        if (\class_exists(CliDumper::class)) {
+            CliDumper::$defaultOutput = 'php://stderr';
+        }
+
+        $handler = static function (\Throwable $e): void {
+            \file_put_contents('php://stderr', (string)$e);
+        };
+
+        \set_exception_handler($handler);
+        \set_error_handler(static function (int $code, string $message, string $file, int $line) use ($handler) {
+            $handler(new \ErrorException($message, $code, $code, $file, $line));
+        });
     }
 
     /**
