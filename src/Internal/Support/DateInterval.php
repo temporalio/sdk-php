@@ -25,17 +25,17 @@ final class DateInterval
 
     /**
      * @param DateIntervalFormat $interval
-     * @return \DateInterval
+     * @return CarbonInterval
      * @throws \Exception
      */
-    public static function parse($interval): \DateInterval
+    public static function parse($interval): CarbonInterval
     {
         switch (true) {
             case \is_string($interval):
                 return CarbonInterval::fromString($interval);
 
             case $interval instanceof \DateInterval:
-                return $interval;
+                return CarbonInterval::instance($interval);
 
             case \is_int($interval):
             case \is_float($interval):

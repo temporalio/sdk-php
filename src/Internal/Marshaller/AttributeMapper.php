@@ -14,6 +14,7 @@ namespace Temporal\Client\Internal\Marshaller;
 use Spiral\Attributes\ReaderInterface;
 use Temporal\Client\Internal\Marshaller\Meta\MarshalAs;
 use Temporal\Client\Internal\Marshaller\Meta\Scope;
+use Temporal\Client\Internal\Marshaller\Type\TypeInterface;
 
 /**
  * @psalm-import-type Getter from MapperInterface
@@ -21,6 +22,11 @@ use Temporal\Client\Internal\Marshaller\Meta\Scope;
  */
 class AttributeMapper implements MapperInterface
 {
+    /**
+     * @var string
+     */
+    private const ERROR_INVALID_TYPE = 'Mapping type must implement %s';
+
     /**
      * @var \ReflectionClass
      */
@@ -57,15 +63,64 @@ class AttributeMapper implements MapperInterface
 
         $this->scope = $this->getScope();
 
-        foreach ($this->getPropertyMappings($this->scope) as $property => $out) {
-            $this->getters[$out] = function (object $context) use ($property) {
-                return (fn() => $this->$property)->call($context);
-            };
+        foreach ($this->getPropertyMappings($this->scope) as $property => $marshal) {
+            $this->getters[$marshal->name] = $this->createGetter($property, $marshal);
+            $this->setters[$marshal->name] = $this->createSetter($property, $marshal);
+        }
+    }
 
-            $this->setters[$out] = function (object $context, $value) use ($property) {
-                (fn() => $this->$property = $value)->call($context);
+    /**
+     * @param class-string<TypeInterface> $type
+     * @param array $args
+     * @return TypeInterface
+     */
+    private function type(string $type, array $args = []): TypeInterface
+    {
+        if (! \is_subclass_of($type, TypeInterface::class)) {
+            throw new \InvalidArgumentException(\sprintf(self::ERROR_INVALID_TYPE, TypeInterface::class));
+        }
+
+        return new $type(...$args);
+    }
+
+    /**
+     * @param string $name
+     * @param MarshalAs $meta
+     * @return \Closure
+     */
+    private function createGetter(string $name, MarshalAs $meta): \Closure
+    {
+        if ($meta->type === null) {
+            return static function (object $context) use ($name) {
+                return (fn() => $this->$name)->call($context);
             };
         }
+
+        $type = $this->type($meta->type, $meta->options);
+
+        return static function (object $context) use ($name, $type) {
+            return (fn() => $type->serialize($this->$name))->call($context);
+        };
+    }
+
+    /**
+     * @param string $name
+     * @param MarshalAs $meta
+     * @return \Closure
+     */
+    private function createSetter(string $name, MarshalAs $meta): \Closure
+    {
+        if ($meta->type === null) {
+            return static function (object $context, $value) use ($name) {
+                return (fn() => $this->$name = $value)->call($context);
+            };
+        }
+
+        $type = $this->type($meta->type, $meta->options);
+
+        return static function (object $context, $value) use ($name, $type) {
+            (fn() => $this->$name = $type->parse($value))->call($context);
+        };
     }
 
     /**
@@ -92,7 +147,6 @@ class AttributeMapper implements MapperInterface
         return $this->setters;
     }
 
-
     /**
      * @return iterable
      */
@@ -105,27 +159,25 @@ class AttributeMapper implements MapperInterface
             $name = $property->getName();
 
             // Has marshal attribute
-            if ($marshal !== null || $this->isValidScope($property, $scope)) {
-                yield $name => $marshal->name ?? $name;
+            if ($marshal === null && ! $this->isValidScope($property, $scope)) {
+                continue;
             }
+
+            $marshal ??= new MarshalAs();
+            $marshal->name ??= $name;
+
+            yield $name => $marshal;
         }
     }
 
     /**
-     * TODO Optimise it
-     *
      * @param \ReflectionProperty $property
      * @param Scope $scope
      * @return bool
      */
     private function isValidScope(\ReflectionProperty $property, Scope $scope): bool
     {
-        $current = $scope->properties;
-
-        return ($property->isPublic() && ($current & Scope::PROPERTY_PUBLIC) === Scope::PROPERTY_PUBLIC)
-            || ($property->isProtected() && ($current & Scope::PROPERTY_PROTECTED) === Scope::PROPERTY_PROTECTED)
-            || ($property->isPrivate() && ($current & Scope::PROPERTY_PRIVATE) === Scope::PROPERTY_PRIVATE)
-        ;
+        return ($property->getModifiers() & $scope->properties) === $scope->properties;
     }
 
     /**
@@ -145,15 +197,5 @@ class AttributeMapper implements MapperInterface
     public static function fromClass(string $class, ReaderInterface $reader): self
     {
         return new self(new \ReflectionClass($class), $reader);
-    }
-
-    /**
-     * @param object $object
-     * @param ReaderInterface $reader
-     * @return static
-     */
-    public static function fromObject(object $object, ReaderInterface $reader): self
-    {
-        return new self(new \ReflectionObject($object), $reader);
     }
 }
