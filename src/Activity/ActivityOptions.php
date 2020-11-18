@@ -25,7 +25,7 @@ use Temporal\Client\Internal\Support\DateInterval;
  * @psalm-import-type DateIntervalFormat from DateInterval
  * @psalm-import-type RetryOptionsArray from RetryOptions
  *
- * @psalm-type ActivityOptionsArray = {
+ * @psalm-type ActivityOptionsArray = ({
  *      taskQueue: string|null,
  *      scheduleToCloseTimeout: DateIntervalFormat|null,
  *      scheduleToStartTimeout: DateIntervalFormat|null,
@@ -34,7 +34,7 @@ use Temporal\Client\Internal\Support\DateInterval;
  *      waitForCancellation: bool,
  *      activityId: string,
  *      retryOptions: RetryOptionsArray|RetryOptions,
- * }
+ * })
  */
 final class ActivityOptions extends DataTransferObject
 {

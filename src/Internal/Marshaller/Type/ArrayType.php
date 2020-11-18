@@ -86,7 +86,7 @@ class ArrayType extends Type implements DetectableTypeInterface
             $result = [];
 
             foreach ($value as $i => $item) {
-                $result[] = $this->type->serialize($item);
+                $result[$i] = $this->type->serialize($item);
             }
 
             return $result;

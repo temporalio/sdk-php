@@ -14,8 +14,8 @@ namespace Temporal\Client\Internal\Support;
 use Carbon\CarbonInterval;
 
 /**
+ * @psalm-type DateIntervalFormat = DateInterval::FORMAT_*
  * @psalm-type DateIntervalValue = string | int | float | \DateInterval
- * @psalm-type DateIntervalFormat = DateIntervalType::FORMAT_*
  */
 final class DateInterval
 {
@@ -75,7 +75,7 @@ final class DateInterval
     public const FORMAT_MICROSECONDS = 'microseconds';
 
     /**
-     * @var DateIntervalFormat[]
+     * @var array<positive-int, DateIntervalFormat>
      */
     private const AVAILABLE_FORMATS = [
         self::FORMAT_YEARS,

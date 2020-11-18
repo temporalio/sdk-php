@@ -191,12 +191,13 @@ final class WorkflowContext implements WorkflowContextInterface
             return $result;
         };
 
-        $otherwise = function (\Throwable $e) use ($request) {
+        /** @psalm-suppress UnusedClosureParam */
+        $otherwise = function (\Throwable $exception) use ($request) {
             $this->recordStacktrace();
             Workflow::setCurrentContext($this);
             $this->unload($request);
 
-            throw $e;
+            throw $exception;
         };
 
         /** @var CancellablePromiseInterface $result */
@@ -310,10 +311,11 @@ final class WorkflowContext implements WorkflowContextInterface
             return $result;
         };
 
-        $onRejected = function (\Throwable $e) {
+        /** @psalm-suppress UnusedClosureParam */
+        $onRejected = function (\Throwable $exception) {
             $this->running->kill($this->info->execution->runId, $this->worker->getClient());
 
-            throw $e;
+            throw $exception;
         };
 
         return $this->request($request)

@@ -17,7 +17,7 @@ use Temporal\Client\Internal\Support\DateInterval;
 use Temporal\Client\Internal\Support\Inheritance;
 
 /**
- * @psalm-type DateIntervalFormat = DateIntervalType::FORMAT_*
+ * @psalm-import-type DateIntervalFormat from DateInterval
  */
 class DateIntervalType extends Type implements DetectableTypeInterface
 {
