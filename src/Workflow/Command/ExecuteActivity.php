@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Workflow\Command;
 
-use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Transport\Protocol\Command\Request;
 
 final class ExecuteActivity extends Request
@@ -24,14 +23,14 @@ final class ExecuteActivity extends Request
     /**
      * @param string $name
      * @param array $arguments
-     * @param ActivityOptions $options
+     * @param array $options
      */
-    public function __construct(string $name, array $arguments, ActivityOptions $options)
+    public function __construct(string $name, array $arguments, array $options)
     {
         parent::__construct(self::NAME, [
             'name'      => $name,
             'arguments' => $arguments,
-            'options'   => $options->toArray(),
+            'options'   => $options,
         ]);
     }
 }

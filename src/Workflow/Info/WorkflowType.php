@@ -11,35 +11,18 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Workflow\Info;
 
-use JetBrains\PhpStorm\Pure;
+use Temporal\Client\Internal\Marshaller\Meta\Marshal;
 
-final class WorkflowType
+/**
+ * WorkflowType identifies a workflow type.
+ */
+class WorkflowType
 {
     /**
+     * @psalm-allow-private-mutation
      * @readonly
      * @var string
      */
-    public string $name;
-
-    /**
-     * @param string $name
-     */
-    public function __construct(string $name)
-    {
-        $this->name = $name;
-    }
-
-    /**
-     * @psalm-param array {Name: string} $data
-     *
-     * @param array $data
-     * @return static
-     */
-    #[Pure]
-    public static function fromArray(array $data): self
-    {
-        assert(isset($data['Name']) && \is_string($data['Name']));
-
-        return new self($data['Name']);
-    }
+    #[Marshal(name: 'Name')]
+    public string $name = '';
 }

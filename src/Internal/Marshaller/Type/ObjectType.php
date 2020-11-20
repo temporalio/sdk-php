@@ -21,17 +21,11 @@ class ObjectType extends Type implements DetectableTypeInterface
     private \ReflectionClass $reflection;
 
     /**
-     * @var class-string|null
-     */
-    private ?string $class;
-
-    /**
      * @param MarshallerInterface $marshaller
      * @throws \ReflectionException
      */
     public function __construct(MarshallerInterface $marshaller, string $class = null)
     {
-        $this->class = $class;
         $this->reflection = new \ReflectionClass($class ?? \stdClass::class);
 
         parent::__construct($marshaller);

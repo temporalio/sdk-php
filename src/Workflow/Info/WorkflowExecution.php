@@ -11,20 +11,25 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Workflow\Info;
 
-use Temporal\Client\Internal\Support\Uuid4;
+use Temporal\Client\Internal\Marshaller\Meta\Marshal;
+use Temporal\Client\Internal\Support\Uuid;
 
-final class WorkflowExecution
+class WorkflowExecution
 {
     /**
      * @readonly
+     * @psalm-allow-private-mutation
      * @var string
      */
+    #[Marshal(name: 'ID')]
     public string $id;
 
     /**
      * @readonly
+     * @psalm-allow-private-mutation
      * @var string
      */
+    #[Marshal(name: 'RunID')]
     public string $runId;
 
     /**
@@ -34,19 +39,7 @@ final class WorkflowExecution
      */
     public function __construct(string $id = null, string $runId = null)
     {
-        $this->id = $id ?? Uuid4::create();
-        $this->runId = $runId ?? Uuid4::create();
-    }
-
-    /**
-     * TODO throw exception in case of incorrect data
-     *
-     * @param array $data
-     * @return static
-     * @throws \Exception
-     */
-    public static function fromArray(array $data): self
-    {
-        return new self($data['ID'], $data['RunID']);
+        $this->id = $id ?? Uuid::nil();
+        $this->runId = $runId ?? Uuid::nil();
     }
 }

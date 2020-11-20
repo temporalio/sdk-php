@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client;
 
 use Carbon\CarbonTimeZone;
+use Doctrine\Common\Annotations\AnnotationReader as DoctrineReader;
 use Doctrine\Common\Annotations\Reader;
 use React\Promise\PromiseInterface;
 use Spiral\Attributes\AnnotationReader;
@@ -23,6 +24,8 @@ use Spiral\Attributes\ReaderInterface;
 use Spiral\RoadRunner\Worker as RoadRunnerWorker;
 use Symfony\Component\VarDumper\Dumper\CliDumper;
 use Temporal\Client\Internal\Events\EventEmitterTrait;
+use Temporal\Client\Internal\Marshaller\Marshaller;
+use Temporal\Client\Internal\Marshaller\MarshallerInterface;
 use Temporal\Client\Transport\Client;
 use Temporal\Client\Transport\Protocol\Command\RequestInterface;
 use Temporal\Client\Transport\Protocol\Protocol;
@@ -133,6 +136,11 @@ final class WorkerFactory implements FactoryInterface, ReaderAwareInterface
     private Protocol $protocol;
 
     /**
+     * @var Marshaller
+     */
+    private Marshaller $marshaller;
+
+    /**
      * @param RoadRunnerWorker $worker
      * @param EnvironmentInterface|null $env
      * @throws \Exception
@@ -171,6 +179,8 @@ final class WorkerFactory implements FactoryInterface, ReaderAwareInterface
     private function initializeReader(): ReaderInterface
     {
         if (\interface_exists(Reader::class)) {
+            DoctrineReader::addGlobalIgnoredName('readonly');
+
             return new SelectiveReader([
                 new AnnotationReader(),
                 new AttributeReader()
@@ -186,6 +196,7 @@ final class WorkerFactory implements FactoryInterface, ReaderAwareInterface
     private function initialize(): void
     {
         $this->reader = $this->initializeReader();
+        $this->marshaller = new Marshaller($this->reader);
         $this->zone = new CarbonTimeZone('UTC');
         $this->workers = new Pool();
         $this->commands = new SplQueue();
@@ -296,6 +307,14 @@ final class WorkerFactory implements FactoryInterface, ReaderAwareInterface
     public function getDateTimeZone(): CarbonTimeZone
     {
         return $this->zone;
+    }
+
+    /**
+     * @return MarshallerInterface
+     */
+    public function getMarshaller(): MarshallerInterface
+    {
+        return $this->marshaller;
     }
 
     /**

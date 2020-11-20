@@ -19,6 +19,7 @@ use Temporal\Client\Exception\Activity\DoNotCompleteOnResultException;
 use Temporal\Client\Internal\Declaration\Instantiator\ActivityInstantiator;
 use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Client\Internal\Declaration\Prototype\Collection;
+use Temporal\Client\Worker\Worker;
 
 final class InvokeActivity extends Route
 {
@@ -38,10 +39,17 @@ final class InvokeActivity extends Route
     private ActivityInstantiator $instantiator;
 
     /**
+     * @var Worker
+     */
+    private Worker $worker;
+
+    /**
+     * @param Worker $worker
      * @param Collection<ActivityPrototype> $activities
      */
-    public function __construct(Collection $activities)
+    public function __construct(Worker $worker, Collection $activities)
     {
+        $this->worker = $worker;
         $this->activities = $activities;
         $this->instantiator = new ActivityInstantiator();
     }
@@ -51,7 +59,7 @@ final class InvokeActivity extends Route
      */
     public function handle(array $payload, array $headers, Deferred $resolver): void
     {
-        $context = new ActivityContext($payload);
+        $context = new ActivityContext($this->worker, $payload);
 
         $prototype = $this->findDeclarationOrFail($context->getInfo());
         $instance = $this->instantiator->instantiate($prototype);

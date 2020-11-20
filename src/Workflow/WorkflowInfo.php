@@ -12,11 +12,19 @@ declare(strict_types=1);
 namespace Temporal\Client\Workflow;
 
 use Carbon\CarbonInterval;
+use Spiral\Attributes\AttributeReader;
+use Temporal\Client\Internal\Marshaller\Marshaller;
+use Temporal\Client\Internal\Marshaller\Meta\Marshal;
+use Temporal\Client\Internal\Marshaller\Type\DateIntervalType;
+use Temporal\Client\Internal\Marshaller\Type\NullableType;
+use Temporal\Client\Internal\Marshaller\Type\ObjectType;
 use Temporal\Client\Worker\FactoryInterface;
 use Temporal\Client\Workflow\Info\WorkflowExecution;
 use Temporal\Client\Workflow\Info\WorkflowType;
 
-// todo: previous execution result
+/**
+ * TODO Previous execution result
+ */
 final class WorkflowInfo
 {
     /**
@@ -24,6 +32,7 @@ final class WorkflowInfo
      * @psalm-allow-private-mutation
      * @var WorkflowExecution
      */
+    #[Marshal(name: 'WorkflowExecution', type: ObjectType::class, of: WorkflowExecution::class)]
     public WorkflowExecution $execution;
 
     /**
@@ -31,6 +40,7 @@ final class WorkflowInfo
      * @psalm-allow-private-mutation
      * @var WorkflowType
      */
+    #[Marshal(name: 'WorkflowType', type: ObjectType::class, of: WorkflowType::class)]
     public WorkflowType $type;
 
     /**
@@ -38,6 +48,7 @@ final class WorkflowInfo
      * @psalm-allow-private-mutation
      * @var string
      */
+    #[Marshal(name: 'TaskQueueName')]
     public string $taskQueue = FactoryInterface::DEFAULT_TASK_QUEUE;
 
     /**
@@ -45,6 +56,7 @@ final class WorkflowInfo
      * @psalm-allow-private-mutation
      * @var \DateInterval
      */
+    #[Marshal(name: 'WorkflowExecutionTimeout', type: DateIntervalType::class)]
     public \DateInterval $executionTimeout;
 
     /**
@@ -52,6 +64,7 @@ final class WorkflowInfo
      * @psalm-allow-private-mutation
      * @var \DateInterval
      */
+    #[Marshal(name: 'WorkflowRunTimeout', type: DateIntervalType::class)]
     public \DateInterval $runTimeout;
 
     /**
@@ -59,6 +72,7 @@ final class WorkflowInfo
      * @psalm-allow-private-mutation
      * @var \DateInterval
      */
+    #[Marshal(name: 'WorkflowTaskTimeout', type: DateIntervalType::class)]
     public \DateInterval $taskTimeout;
 
     /**
@@ -66,6 +80,7 @@ final class WorkflowInfo
      * @psalm-allow-private-mutation
      * @var string
      */
+    #[Marshal(name: 'Namespace')]
     public string $namespace = 'default';
 
     /**
@@ -74,8 +89,9 @@ final class WorkflowInfo
      *
      * @readonly
      * @psalm-allow-private-mutation
-     * @var int
+     * @var positive-int
      */
+    #[Marshal(name: 'Attempt')]
     public int $attempt = 1;
 
     /**
@@ -83,6 +99,7 @@ final class WorkflowInfo
      * @psalm-allow-private-mutation
      * @var string|null
      */
+    #[Marshal(name: 'CronSchedule')]
     public ?string $cronSchedule = null;
 
     /**
@@ -90,6 +107,7 @@ final class WorkflowInfo
      * @psalm-allow-private-mutation
      * @var string|null
      */
+    #[Marshal(name: 'ContinuedExecutionRunID')]
     public ?string $continuedExecutionRunId = null;
 
     /**
@@ -97,6 +115,7 @@ final class WorkflowInfo
      * @psalm-allow-private-mutation
      * @var string|null
      */
+    #[Marshal(name: 'ParentWorkflowNamespace')]
     public ?string $parentNamespace = null;
 
     /**
@@ -104,6 +123,7 @@ final class WorkflowInfo
      * @psalm-allow-private-mutation
      * @var WorkflowExecution|null
      */
+    #[Marshal(name: 'ParentWorkflowExecution', type: NullableType::class, of: WorkflowExecution::class)]
     public ?WorkflowExecution $parentExecution = null;
 
     /**
@@ -111,13 +131,23 @@ final class WorkflowInfo
      * @psalm-allow-private-mutation
      * @var mixed
      */
+    #[Marshal(name: 'SearchAttributes')]
     public $searchAttributes;
+
+    /**
+     * @readonly
+     * @psalm-allow-private-mutation
+     * @var mixed
+     */
+    #[Marshal(name: 'Memo')]
+    public $memo;
 
     /**
      * @readonly
      * @psalm-allow-private-mutation
      * @var string
      */
+    #[Marshal(name: 'BinaryChecksum')]
     public string $binaryChecksum = '';
 
     /**
@@ -125,45 +155,13 @@ final class WorkflowInfo
      * @param WorkflowType $workflowType
      * @throws \Exception
      */
-    public function __construct(WorkflowExecution $workflowExecution, WorkflowType $workflowType)
+    public function __construct()
     {
-        $this->execution = $workflowExecution;
-        $this->type = $workflowType;
+        $this->execution = new WorkflowExecution();
+        $this->type = new WorkflowType();
 
         $this->executionTimeout = CarbonInterval::years(10);
         $this->runTimeout = CarbonInterval::years(10);
         $this->taskTimeout = CarbonInterval::years(10);
-    }
-
-    /**
-     * TODO throw exception in case of incorrect data
-     *
-     * @param array $data
-     * @return WorkflowInfo
-     * @throws \Exception
-     */
-    public static function fromArray(array $data): self
-    {
-        $instance = new self(
-            WorkflowExecution::fromArray($data['WorkflowExecution']),
-            WorkflowType::fromArray($data['WorkflowType'])
-        );
-
-        $instance->taskQueue = $data['TaskQueueName'];
-        $instance->executionTimeout = CarbonInterval::microseconds($data['WorkflowExecutionTimeout']);
-        $instance->runTimeout = CarbonInterval::microseconds($data['WorkflowRunTimeout']);
-        $instance->taskTimeout = CarbonInterval::microseconds($data['WorkflowTaskTimeout']);
-        $instance->attempt = $data['Attempt'];
-        $instance->cronSchedule = $data['CronSchedule'] ?: null;
-        $instance->continuedExecutionRunId = $data['ContinuedExecutionRunID'] ?: null;
-        $instance->searchAttributes = $data['SearchAttributes'];
-        $instance->binaryChecksum = $data['BinaryChecksum'];
-
-        if (isset($data['ParentWorkflowExecution'])) {
-            $instance->parentNamespace = $data['ParentWorkflowNamespace'] ?: null;
-            $instance->parentExecution = WorkflowExecution::fromArray($data['ParentWorkflowExecution']);
-        }
-
-        return $instance;
     }
 }

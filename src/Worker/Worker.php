@@ -20,6 +20,7 @@ use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Client\Internal\Declaration\Reader\ActivityReader;
 use Temporal\Client\Internal\Declaration\Reader\WorkflowReader;
 use Temporal\Client\Internal\Events\EventEmitterTrait;
+use Temporal\Client\Internal\Marshaller\MarshallerInterface;
 use Temporal\Client\Transport\ClientInterface;
 use Temporal\Client\Transport\Protocol\Command\RequestInterface;
 use Temporal\Client\Worker\Env\EnvironmentInterface;
@@ -108,6 +109,14 @@ class Worker implements WorkerInterface
         };
 
         $this->boot();
+    }
+
+    /**
+     * @return MarshallerInterface
+     */
+    public function getMarshaller(): MarshallerInterface
+    {
+        return $this->factory->getMarshaller();
     }
 
     /**

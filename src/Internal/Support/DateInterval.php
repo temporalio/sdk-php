@@ -32,12 +32,12 @@ final class DateInterval
     /**
      * @var string
      */
-    public const FORMAT_YEARS = 'y';
+    public const FORMAT_YEARS = 'years';
 
     /**
      * @var string
      */
-    public const FORMAT_MONTHS = 'm';
+    public const FORMAT_MONTHS = 'months';
 
     /**
      * @var string
@@ -95,7 +95,7 @@ final class DateInterval
      */
     private static function validateFormat(string $format): void
     {
-        if (! isset(self::AVAILABLE_FORMATS[$format])) {
+        if (! \in_array($format, self::AVAILABLE_FORMATS, true)) {
             $message = \sprintf(self::ERROR_INVALID_FORMAT, $format, \implode(', ', self::AVAILABLE_FORMATS));
 
             throw new \InvalidArgumentException($message);

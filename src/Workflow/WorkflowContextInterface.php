@@ -55,8 +55,8 @@ interface WorkflowContextInterface
 
     /**
      * @param string $changeID
-     * @param int    $minSupported
-     * @param int    $maxSupported
+     * @param int $minSupported
+     * @param int $maxSupported
      * @return PromiseInterface
      */
     public function getVersion(string $changeID, int $minSupported, int $maxSupported): PromiseInterface;
@@ -79,8 +79,8 @@ interface WorkflowContextInterface
     /**
      * @psalm-param class-string|string $name
      *
-     * @param string                     $name
-     * @param array                      $arguments
+     * @param string $name
+     * @param array $arguments
      * @param ActivityOptions|array|null $options
      * @return PromiseInterface
      */

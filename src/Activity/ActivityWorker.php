@@ -41,7 +41,7 @@ class ActivityWorker implements DispatcherInterface
         $this->worker = $worker;
 
         $this->router = new Router();
-        $this->router->add(new Router\InvokeActivity($activities));
+        $this->router->add(new Router\InvokeActivity($worker, $activities));
     }
 
     /**

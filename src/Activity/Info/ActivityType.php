@@ -11,30 +11,18 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Activity\Info;
 
-final class ActivityType
+use Temporal\Client\Internal\Marshaller\Meta\Marshal;
+
+/**
+ * ActivityType identifies a activity type.
+ */
+class ActivityType
 {
     /**
      * @readonly
+     * @psalm-allow-private-mutation
      * @var string
      */
-    public string $name;
-
-    /**
-     * @param string $name
-     */
-    public function __construct(string $name)
-    {
-        $this->name = $name;
-    }
-
-    /**
-     * TODO throw exception in case of incorrect data, not really since it driven by the server
-     *
-     * @param array $data
-     * @return static
-     */
-    public static function fromArray(array $data): self
-    {
-        return new self($data['Name']);
-    }
+    #[Marshal(name: 'Name')]
+    public string $name = '';
 }

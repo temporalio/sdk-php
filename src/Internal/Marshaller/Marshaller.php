@@ -46,16 +46,6 @@ class Marshaller implements MarshallerInterface
     }
 
     /**
-     * @param string $type
-     * @param array $args
-     * @return TypeInterface|null
-     */
-    public function typeOf(string $type, array $args): ?TypeInterface
-    {
-        return $this->factory->create($type, $args);
-    }
-
-    /**
      * @param class-string $class
      * @return MapperInterface
      * @throws \ReflectionException

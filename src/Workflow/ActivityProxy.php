@@ -22,11 +22,6 @@ use Temporal\Client\Internal\Declaration\Prototype\Collection;
 class ActivityProxy
 {
     /**
-     * @var string
-     */
-    private string $class;
-
-    /**
      * @var WorkflowContextInterface
      */
     private WorkflowContextInterface $protocol;
@@ -43,15 +38,18 @@ class ActivityProxy
 
     /**
      * @param class-string<Activity> $class
-     * @param ActivityOptions|array|null $options
+     * @param ActivityOptions $options
      * @param WorkflowContextInterface $protocol
      * @param Collection<ActivityPrototype> $activities
      */
-    public function __construct(string $class, $options, WorkflowContextInterface $protocol, Collection $activities)
-    {
-        $this->class = $class;
+    public function __construct(
+        string $class,
+        ActivityOptions $options,
+        WorkflowContextInterface $protocol,
+        Collection $activities
+    ) {
         $this->protocol = $protocol;
-        $this->options = ActivityOptions::new($options);
+        $this->options = $options;
 
         $this->activities = [...$this->filterActivities($activities, $class)];
     }
@@ -68,6 +66,18 @@ class ActivityProxy
                 yield $activity;
             }
         }
+    }
+
+    /**
+     * @param ActivityPrototype $prototype
+     * @param string $needle
+     * @return bool
+     */
+    private function matchClass(ActivityPrototype $prototype, string $needle): bool
+    {
+        $reflection = $prototype->getClass();
+
+        return $reflection && $reflection->getName() === \trim($needle, '\\');
     }
 
     /**
@@ -107,18 +117,6 @@ class ActivityProxy
         }
 
         return null;
-    }
-
-    /**
-     * @param ActivityPrototype $prototype
-     * @param string $needle
-     * @return bool
-     */
-    private function matchClass(ActivityPrototype $prototype, string $needle): bool
-    {
-        $reflection = $prototype->getClass();
-
-        return $reflection && $reflection->getName() === \trim($needle, '\\');
     }
 
     /**

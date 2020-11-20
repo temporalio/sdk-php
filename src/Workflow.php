@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
-use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Transport\FutureInterface;
 use Temporal\Client\Workflow\ActivityProxy;

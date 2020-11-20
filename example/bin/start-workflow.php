@@ -18,8 +18,8 @@ $rpc->call('resetter.Reset', 'workflows');
 $rpc->call('resetter.Reset', 'activities');
 
 $result = $rpc->call('temporal.ExecuteWorkflow', [
-    'name'    => 'PizzaDelivery',
-    'input'   => ['Argument'],
+    'name'    => 'SimpleWorkflow',
+    'input'   => [],
     'options' => [
         'taskQueue'                => 'default',
         'workflowExecutionTimeout' => '60s',

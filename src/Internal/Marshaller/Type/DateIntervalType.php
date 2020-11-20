@@ -48,7 +48,7 @@ class DateIntervalType extends Type implements DetectableTypeInterface
     /**
      * {@inheritDoc}
      */
-    public function serialize($value): string
+    public function serialize($value): int
     {
         $method = 'total' . \ucfirst($this->format);
 

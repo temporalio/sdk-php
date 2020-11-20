@@ -31,7 +31,7 @@ class CounterWorkflow
      */
     private int $value = 0;
 
-    #[Workflow\Meta\WorkflowMethod]
+    #[Workflow\Meta\WorkflowMethod(name: 'CounterWorkflow')]
     public function handle(): iterable
     {
         while ($this->value++ < self::MAX_VALUE) {

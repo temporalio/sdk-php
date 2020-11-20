@@ -21,7 +21,7 @@ class Factory
     /**
      * @var string
      */
-    private const ERROR_INVALID_TYPE = 'Mapping type must implement %s';
+    private const ERROR_INVALID_TYPE = 'Mapping type must implement %s, but %s given';
 
     /**
      * @var array<CallableTypeMatcher>
@@ -87,7 +87,7 @@ class Factory
     public function create(string $type, array $args): ?TypeInterface
     {
         if (! \is_subclass_of($type, TypeInterface::class)) {
-            throw new \InvalidArgumentException(\sprintf(self::ERROR_INVALID_TYPE, TypeInterface::class));
+            throw new \InvalidArgumentException(\sprintf(self::ERROR_INVALID_TYPE, TypeInterface::class, $type));
         }
 
         return new $type($this->marshaller, ...$args);

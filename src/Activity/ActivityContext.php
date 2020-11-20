@@ -11,6 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Activity;
 
+use Temporal\Client\Internal\Marshaller\MarshallerInterface;
+use Temporal\Client\Worker\Worker;
+
 final class ActivityContext implements ActivityContextInterface
 {
     /**
@@ -31,19 +34,28 @@ final class ActivityContext implements ActivityContextInterface
     /**
      * @var array
      */
-    private $arguments;
+    private array $arguments;
 
-    /** @var bool */
-    private $doNotCompleteOnReturn = false;
+    /**
+     * @var bool
+     */
+    private bool $doNotCompleteOnReturn = false;
+
+    /**
+     * @var MarshallerInterface
+     */
+    private MarshallerInterface $marshaller;
 
     /**
      * @param array $params
      * @throws \Exception
      */
-    public function __construct(array $params)
+    public function __construct(Worker $worker, array $params)
     {
-        $this->info = ActivityInfo::fromArray($params[self::KEY_INFO]);
-        $this->arguments = $params[self::KEY_ARGUMENTS] ?? [];
+        $this->marshaller = $worker->getMarshaller();
+
+        $this->info = $this->marshaller->unmarshal((array)($params[self::KEY_INFO] ?? []), new ActivityInfo());
+        $this->arguments = (array)($params[self::KEY_ARGUMENTS] ?? []);
     }
 
     /**

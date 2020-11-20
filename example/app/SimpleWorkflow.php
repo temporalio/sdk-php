@@ -11,17 +11,17 @@ declare(strict_types=1);
 
 namespace App;
 
-use Temporal\Client\Internal\Support\Uuid4;
+use Temporal\Client\Internal\Support\Uuid;
 use Temporal\Client\Workflow;
 
 class SimpleWorkflow
 {
-    #[Workflow\Meta\WorkflowMethod(name: )]
+    #[Workflow\Meta\WorkflowMethod(name: 'SimpleWorkflow')]
     public function handler(): iterable
     {
-        $activities = Workflow::newActivityStub(EchoActivity::class);
+        $activities = Workflow::newActivityStub(SimpleActivity::class);
 
-        $actual = Workflow::sideEffect(fn() => Uuid4::create());
+        $actual = yield Workflow::sideEffect(fn() => Uuid::v4());
 
         dump('Actual UUID: ' . $actual);
 

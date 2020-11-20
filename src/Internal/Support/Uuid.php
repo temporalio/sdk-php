@@ -15,17 +15,34 @@ namespace Temporal\Client\Internal\Support;
  * A static helper class that implements the logic for generating UUID 4 based
  * on RFC 4122.
  */
-final class Uuid4
+final class Uuid
 {
+    /**
+     * The nil UUID is a special form of UUID that is specified to have all 128
+     * bits set to zero
+     *
+     * @link http://tools.ietf.org/html/rfc4122#section-4.1.7
+     */
+    public const NIL = '00000000-0000-0000-0000-000000000000';
+
+    /**
+     * @return string
+     */
+    public static function nil(): string
+    {
+        return self::NIL;
+    }
+
     /**
      * Returns an RFC 4122 variant Uuid, created from the provided bytes and
      * version.
      *
-     * @see http://tools.ietf.org/html/rfc4122
+     * @link http://tools.ietf.org/html/rfc4122
+     *
      * @return string
      * @throws \Exception
      */
-    public static function create(): string
+    public static function v4(): string
     {
         $uuid = \bin2hex(self::bytes());
 

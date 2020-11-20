@@ -15,10 +15,10 @@ use JetBrains\PhpStorm\ExpectedValues;
 use React\Promise\CancellablePromiseInterface;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
+use Temporal\Client\Internal\Marshaller\MarshallerInterface;
 use Temporal\Client\Internal\Support\DateInterval;
 use Temporal\Client\Transport\Future;
 use Temporal\Client\Transport\FutureInterface;
-use Temporal\Client\Transport\Protocol\Command\Request;
 use Temporal\Client\Transport\Protocol\Command\RequestInterface;
 use Temporal\Client\Worker\Worker;
 use Temporal\Client\Workflow;
@@ -73,6 +73,11 @@ final class WorkflowContext implements WorkflowContextInterface
     private array $lastStacktrace;
 
     /**
+     * @var MarshallerInterface
+     */
+    private MarshallerInterface $marshaller;
+
+    /**
      * @param Worker $worker
      * @param RunningWorkflows $running
      * @param array $params
@@ -82,8 +87,9 @@ final class WorkflowContext implements WorkflowContextInterface
     {
         $this->worker = $worker;
         $this->running = $running;
+        $this->marshaller = $worker->getMarshaller();
 
-        $this->info = WorkflowInfo::fromArray($params[self::KEY_INFO]);
+        $this->info = $this->marshaller->unmarshal($params[self::KEY_INFO], new WorkflowInfo());
         $this->arguments = $params[self::KEY_ARGUMENTS] ?? [];
     }
 
@@ -94,9 +100,13 @@ final class WorkflowContext implements WorkflowContextInterface
         string $name,
         #[ExpectedValues(values: ActivityOptions::class)]
         $options = null
-    ): ActivityProxy
-    {
+    ): ActivityProxy {
         $this->recordStacktrace();
+
+        // Create defaults if options not created
+        if ($options === null || \is_array($options)) {
+            $options = $this->marshaller->unmarshal((array)$options, new ActivityOptions());
+        }
 
         return new ActivityProxy($name, $options, $this, $this->worker->getActivities());
     }
@@ -104,10 +114,10 @@ final class WorkflowContext implements WorkflowContextInterface
     /**
      * Record last stack trace of the call.
      */
-    private function recordStacktrace()
+    private function recordStacktrace(): void
     {
         // raw information
-        $this->lastStacktrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+        $this->lastStacktrace = \debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
     }
 
     /**
@@ -266,21 +276,6 @@ final class WorkflowContext implements WorkflowContextInterface
     }
 
     /**
-     * @param string $queryType
-     * @param callable $handler
-     * @return $this
-     */
-    public function registerSignal(string $signalType, callable $handler): self
-    {
-        $this->findCurrentProcessOrFail()
-            ->getInstance()
-            ->addSignalHandler($signalType, $handler)
-        ;
-
-        return $this;
-    }
-
-    /**
      * @return Process
      */
     private function findCurrentProcessOrFail(): Process
@@ -296,6 +291,21 @@ final class WorkflowContext implements WorkflowContextInterface
         }
 
         return $process;
+    }
+
+    /**
+     * @param string $queryType
+     * @param callable $handler
+     * @return $this
+     */
+    public function registerSignal(string $signalType, callable $handler): self
+    {
+        $this->findCurrentProcessOrFail()
+            ->getInstance()
+            ->addSignalHandler($signalType, $handler)
+        ;
+
+        return $this;
     }
 
     /**
@@ -320,7 +330,7 @@ final class WorkflowContext implements WorkflowContextInterface
 
         return $this->request($request)
             ->then($onFulfilled, $onRejected)
-            ;
+        ;
     }
 
     /**
@@ -332,7 +342,12 @@ final class WorkflowContext implements WorkflowContextInterface
         #[ExpectedValues(values: ActivityOptions::class)]
         $options = null
     ): PromiseInterface {
-        $request = new ExecuteActivity($name, $arguments, ActivityOptions::new($options));
+        // Create defaults if options object not created
+        if ($options === null || \is_array($options)) {
+            $options = $this->marshaller->unmarshal((array)$options, new ActivityOptions());
+        }
+
+        $request = new ExecuteActivity($name, $arguments, $this->marshaller->marshal($options));
 
         return $this->request($request);
     }
