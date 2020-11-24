@@ -58,4 +58,4 @@ then execute `composer update` command:
 
 See [example](/example) to get started.
 
-No documentation available at this time.
+No documentation available at this time. 1
