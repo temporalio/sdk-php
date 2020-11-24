@@ -13,8 +13,10 @@ namespace Temporal\Client\Workflow;
 
 use JetBrains\PhpStorm\ExpectedValues;
 use React\Promise\CancellablePromiseInterface;
+use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
+use Temporal\Client\Internal\Coroutine\CoroutineInterface;
 use Temporal\Client\Internal\Marshaller\MarshallerInterface;
 use Temporal\Client\Internal\Support\DateInterval;
 use Temporal\Client\Transport\Future;
@@ -361,5 +363,16 @@ final class WorkflowContext implements WorkflowContextInterface
         $request = new NewTimer(DateInterval::parse($interval));
 
         return $this->request($request);
+    }
+
+    /**
+     * @param callable $handler
+     * @return CancellationScope
+     */
+    public function newCancellationScope(callable $handler): CancellationScope
+    {
+        $process = $this->findCurrentProcessOrFail();
+
+        return new CancellationScope($process, $handler);
     }
 }

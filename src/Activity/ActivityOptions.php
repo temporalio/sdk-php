@@ -11,13 +11,11 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Activity;
 
-use Carbon\CarbonInterval;
 use Temporal\Client\Common\RetryOptions;
 use Temporal\Client\Internal\Marshaller\Meta\Marshal;
 use Temporal\Client\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Client\Internal\Marshaller\Type\NullableType;
 use Temporal\Client\Internal\Marshaller\Type\ObjectType;
-use Temporal\Client\Internal\Support\DateInterval;
 
 /**
  * ActivityOptions stores all activity-specific parameters that will be stored

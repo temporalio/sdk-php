@@ -14,6 +14,7 @@ namespace Temporal\Client;
 use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Transport\FutureInterface;
 use Temporal\Client\Workflow\ActivityProxy;
+use Temporal\Client\Workflow\CancellationScope;
 use Temporal\Client\Workflow\WorkflowContextInterface;
 use Temporal\Client\Workflow\WorkflowInfo;
 
@@ -27,6 +28,7 @@ use Temporal\Client\Workflow\WorkflowInfo;
  * @method static bool isReplaying()
  *
  * @method static ActivityProxy|object newActivityStub(string $class, array|ActivityOptions $options = null)
+ * @method static CancellationScope|object newCancellationScope(callable $handler)
  * @method static FutureInterface sideEffect(callable $cb)
  * @method static FutureInterface complete(mixed $result = null)
  * @method static FutureInterface executeActivity(string $class, array $args, array|ActivityOptions $options = null)

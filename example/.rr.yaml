@@ -3,7 +3,7 @@ rpc:
     listen: tcp://127.0.0.1:6001
 
 app:
-    command: "php client.php"
+    command: "C:\\Development\\php\\7.4\\php.exe client.php"
     env:
         DEBUG: true
 

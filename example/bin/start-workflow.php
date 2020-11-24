@@ -18,7 +18,7 @@ $rpc->call('resetter.Reset', 'workflows');
 $rpc->call('resetter.Reset', 'activities');
 
 $result = $rpc->call('temporal.ExecuteWorkflow', [
-    'name'    => 'SimpleWorkflow',
+    'name'    => 'CancellableWorkflow',
     'input'   => [],
     'options' => [
         'taskQueue'                => 'default',

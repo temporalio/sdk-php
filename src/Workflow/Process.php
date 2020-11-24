@@ -14,6 +14,9 @@ namespace Temporal\Client\Workflow;
 use React\Promise\ExtendedPromiseInterface;
 use React\Promise\PromiseInterface;
 use React\Promise\PromisorInterface;
+use Temporal\Client\Internal\Coroutine\Coroutine;
+use Temporal\Client\Internal\Coroutine\CoroutineInterface;
+use Temporal\Client\Internal\Coroutine\Queue;
 use Temporal\Client\Internal\Declaration\WorkflowInstance;
 use Temporal\Client\Worker\WorkerInterface;
 use Temporal\Client\Workflow;
@@ -26,9 +29,9 @@ final class Process
     private WorkflowContext $context;
 
     /**
-     * @var \Generator|null
+     * @var Queue
      */
-    private \Generator $generator;
+    private Queue $coroutine;
 
     /**
      * @var WorkflowInstance
@@ -51,7 +54,7 @@ final class Process
         $this->context = $ctx;
         $this->instance = $instance;
 
-        $this->generator = $this->start();
+        $this->coroutine = new Queue($this->start());
     }
 
     /**
@@ -62,13 +65,25 @@ final class Process
         $handler = $this->instance->getHandler();
         $result = $handler($this->context->getArguments());
 
-        if ($result instanceof \Generator) {
+        if ($result instanceof \Generator || $result instanceof CoroutineInterface) {
             yield from $result;
 
             return $result->getReturn();
         }
 
         return $result;
+    }
+
+    /**
+     * @param CoroutineInterface $coroutine
+     * @param \Closure|null $onComplete
+     * @return $this
+     */
+    public function attach(CoroutineInterface $coroutine, \Closure $onComplete = null): self
+    {
+        $this->coroutine->push($coroutine, $onComplete);
+
+        return $this;
     }
 
     /**
@@ -86,18 +101,18 @@ final class Process
     {
         Workflow::setCurrentContext($this->getContext());
 
-        if ($this->generator === null) {
+        if ($this->coroutine === null) {
             throw new \LogicException('Workflow process is not running');
         }
 
-        if (! $this->generator->valid()) {
-            $this->context->complete($this->generator->getReturn());
+        if (! $this->coroutine->valid()) {
+            $this->context->complete($this->coroutine->getReturn());
 
             return;
         }
 
         /** @var ExtendedPromiseInterface|\Generator $current */
-        $current = $this->generator->current();
+        $current = $this->coroutine->current();
 
         switch (true) {
             case $current instanceof PromiseInterface:
@@ -110,10 +125,11 @@ final class Process
                 break;
 
             case $current instanceof \Generator:
-                // TODO: inject coroutine process
+                $this->coroutine->push($current);
+                break;
 
             default:
-                $this->generator->send($current);
+                $this->coroutine->send($current);
         }
     }
 
@@ -134,7 +150,7 @@ final class Process
             $this->worker->once(WorkerInterface::ON_TICK, function () use ($result) {
                 Workflow::setCurrentContext($this->getContext());
 
-                $this->generator->send($result);
+                $this->coroutine->send($result);
                 $this->next();
             });
 
@@ -145,7 +161,7 @@ final class Process
             $this->worker->once(WorkerInterface::ON_TICK, function () use ($e) {
                 Workflow::setCurrentContext($this->getContext());
 
-                $this->generator->throw($e);
+                $this->coroutine->throw($e);
             });
 
             throw $e;

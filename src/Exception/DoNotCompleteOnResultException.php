@@ -9,10 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Exception\Activity;
-
-use Temporal\Client\Exception\NonThrowableExceptionInterface;
-use Temporal\Client\Exception\TemporalException;
+namespace Temporal\Client\Exception;
 
 class DoNotCompleteOnResultException extends TemporalException implements NonThrowableExceptionInterface
 {

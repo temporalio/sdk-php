@@ -92,11 +92,17 @@ interface WorkflowContextInterface
     ): PromiseInterface;
 
     /**
-     * @psalm-import-type DateIntervalFormat from DateInterval
+     * @see DateInterval
      *
+     * @psalm-import-type DateIntervalFormat from DateInterval
      * @param string|int|float|\DateInterval $interval
      * @return PromiseInterface
-     * @see               DateInterval
      */
     public function timer($interval): PromiseInterface;
+
+    /**
+     * @param callable $handler
+     * @return CancellationScope
+     */
+    public function newCancellationScope(callable $handler): CancellationScope;
 }

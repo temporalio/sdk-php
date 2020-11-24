@@ -15,7 +15,7 @@ use React\Promise\Deferred;
 use Temporal\Client\Activity;
 use Temporal\Client\Activity\ActivityContext;
 use Temporal\Client\Activity\ActivityInfo;
-use Temporal\Client\Exception\Activity\DoNotCompleteOnResultException;
+use Temporal\Client\Exception\DoNotCompleteOnResultException;
 use Temporal\Client\Internal\Declaration\Instantiator\ActivityInstantiator;
 use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Client\Internal\Declaration\Prototype\Collection;

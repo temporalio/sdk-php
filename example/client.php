@@ -26,6 +26,8 @@ $factory = new WorkerFactory($rr);
 $factory->createWorker()
     ->registerWorkflow(\App\CounterWorkflow::class)
     ->registerWorkflow(\App\SimpleWorkflow::class)
+    ->registerWorkflow(\App\CancellableWorkflow::class)
+
     ->registerActivity(\App\SimpleActivity::class)
 ;
 
