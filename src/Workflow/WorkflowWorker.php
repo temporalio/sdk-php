@@ -14,10 +14,10 @@ namespace Temporal\Client\Workflow;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Internal\Declaration\Prototype\Collection;
 use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
-use Temporal\Client\Transport\DispatcherInterface;
-use Temporal\Client\Transport\Protocol\Command\RequestInterface;
-use Temporal\Client\Transport\Router;
-use Temporal\Client\Transport\RouterInterface;
+use Temporal\Client\Internal\Transport\DispatcherInterface;
+use Temporal\Client\Internal\Transport\Protocol\Command\RequestInterface;
+use Temporal\Client\Internal\Transport\Router;
+use Temporal\Client\Internal\Transport\RouterInterface;
 use Temporal\Client\Worker\Worker;
 
 final class WorkflowWorker implements DispatcherInterface

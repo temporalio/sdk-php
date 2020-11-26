@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client\Worker;
 
 use Evenement\EventEmitterInterface;
-use Temporal\Client\Transport\DispatcherInterface;
+use Temporal\Client\Internal\Transport\DispatcherInterface;
 
 /**
  * @implements EventEmitterInterface<WorkerInterface::ON_*>

@@ -13,8 +13,7 @@ namespace Temporal\Client\Workflow;
 
 use Temporal\Client\Internal\Declaration\Instantiator\WorkflowInstantiator;
 use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
-use Temporal\Client\Internal\Declaration\WorkflowInstance;
-use Temporal\Client\Transport\ClientInterface;
+use Temporal\Client\Internal\Transport\ClientInterface;
 use Temporal\Client\Worker\WorkerInterface;
 use Temporal\Client\Workflow;
 

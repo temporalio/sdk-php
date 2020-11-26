@@ -13,22 +13,20 @@ namespace Temporal\Client\Workflow;
 
 use JetBrains\PhpStorm\ExpectedValues;
 use React\Promise\CancellablePromiseInterface;
-use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
-use Temporal\Client\Internal\Coroutine\CoroutineInterface;
 use Temporal\Client\Internal\Marshaller\MarshallerInterface;
 use Temporal\Client\Internal\Support\DateInterval;
-use Temporal\Client\Transport\Future;
-use Temporal\Client\Transport\FutureInterface;
-use Temporal\Client\Transport\Protocol\Command\RequestInterface;
+use Temporal\Client\Internal\Transport\Command\CompleteWorkflow;
+use Temporal\Client\Internal\Transport\Command\ExecuteActivity;
+use Temporal\Client\Internal\Transport\Command\GetVersion;
+use Temporal\Client\Internal\Transport\Command\NewTimer;
+use Temporal\Client\Internal\Transport\Command\SideEffect;
+use Temporal\Client\Internal\Transport\Future;
+use Temporal\Client\Internal\Transport\FutureInterface;
+use Temporal\Client\Internal\Transport\Protocol\Command\RequestInterface;
 use Temporal\Client\Worker\Worker;
 use Temporal\Client\Workflow;
-use Temporal\Client\Workflow\Command\CompleteWorkflow;
-use Temporal\Client\Workflow\Command\ExecuteActivity;
-use Temporal\Client\Workflow\Command\GetVersion;
-use Temporal\Client\Workflow\Command\NewTimer;
-use Temporal\Client\Workflow\Command\SideEffect;
 
 use function React\Promise\reject;
 

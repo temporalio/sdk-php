@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client;
 
 use Temporal\Client\Activity\ActivityOptions;
-use Temporal\Client\Transport\FutureInterface;
+use Temporal\Client\Internal\Transport\FutureInterface;
 use Temporal\Client\Workflow\ActivityProxy;
 use Temporal\Client\Workflow\CancellationScope;
 use Temporal\Client\Workflow\WorkflowContextInterface;

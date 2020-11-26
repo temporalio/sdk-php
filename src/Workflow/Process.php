@@ -14,9 +14,8 @@ namespace Temporal\Client\Workflow;
 use React\Promise\ExtendedPromiseInterface;
 use React\Promise\PromiseInterface;
 use React\Promise\PromisorInterface;
-use Temporal\Client\Internal\Coroutine\Coroutine;
 use Temporal\Client\Internal\Coroutine\CoroutineInterface;
-use Temporal\Client\Internal\Coroutine\Queue;
+use Temporal\Client\Internal\Coroutine\Stack;
 use Temporal\Client\Internal\Declaration\WorkflowInstance;
 use Temporal\Client\Worker\WorkerInterface;
 use Temporal\Client\Workflow;
@@ -29,9 +28,9 @@ final class Process
     private WorkflowContext $context;
 
     /**
-     * @var Queue
+     * @var Stack
      */
-    private Queue $coroutine;
+    private Stack $coroutine;
 
     /**
      * @var WorkflowInstance
@@ -54,7 +53,7 @@ final class Process
         $this->context = $ctx;
         $this->instance = $instance;
 
-        $this->coroutine = new Queue($this->start());
+        $this->coroutine = new Stack($this->start());
     }
 
     /**

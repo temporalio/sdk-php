@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Client\Coroutine;
 
-use Temporal\Client\Internal\Coroutine\Queue;
+use Temporal\Client\Internal\Coroutine\Stack;
 
 class StackTestCase extends CoroutineTestCase
 {
@@ -20,7 +20,7 @@ class StackTestCase extends CoroutineTestCase
      */
     public function testStackInjectable(): void
     {
-        $stack = new Queue([5, 6, 7], [1, 4]);
+        $stack = new Stack([5, 6, 7], [1, 4]);
 
         $this->assertSame($stack->current(), 1);
 
