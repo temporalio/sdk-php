@@ -15,4 +15,4 @@ Thumbs.db
 .phpunit.result.cache
 
 # Other
-sdk-*
+*.exe
