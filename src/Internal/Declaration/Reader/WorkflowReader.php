@@ -13,10 +13,10 @@ namespace Temporal\Client\Internal\Declaration\Reader;
 
 use ReflectionFunctionAbstract as ReflectionFunction;
 use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
-use Temporal\Client\Workflow\Meta\QueryMethod;
-use Temporal\Client\Workflow\Meta\SignalMethod;
-use Temporal\Client\Workflow\Meta\WorkflowInterface;
-use Temporal\Client\Workflow\Meta\WorkflowMethod;
+use Temporal\Client\Workflow\QueryMethod;
+use Temporal\Client\Workflow\SignalMethod;
+use Temporal\Client\Workflow\WorkflowInterface;
+use Temporal\Client\Workflow\WorkflowMethod;
 
 /**
  * @template-extends Reader<WorkflowPrototype>

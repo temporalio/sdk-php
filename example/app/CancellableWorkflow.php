@@ -12,9 +12,8 @@ declare(strict_types=1);
 namespace App;
 
 use Temporal\Client\Promise;
-use Temporal\Client\Workflow;
-use Temporal\Client\Workflow\Meta\WorkflowInterface;
-use Temporal\Client\Workflow\Meta\WorkflowMethod;
+use Temporal\Client\Workflow\WorkflowInterface;
+use Temporal\Client\Workflow\WorkflowMethod;
 
 #[WorkflowInterface]
 class CancellableWorkflow

@@ -13,8 +13,8 @@ namespace Temporal\Client\Internal\Transport;
 
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
-use Temporal\Client\Internal\Transport\Protocol\Command\RequestInterface;
 use Temporal\Client\Internal\Transport\Router\RouteInterface;
+use Temporal\Client\Worker\Command\RequestInterface;
 
 use function React\Promise\reject;
 

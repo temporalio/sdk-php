@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Internal\Marshaller\Meta;
 
+use Spiral\Attributes\NamedArgumentConstructorAttribute;
 use Temporal\Client\Internal\Marshaller\Type\TypeInterface;
 
 /**
@@ -18,7 +19,7 @@ use Temporal\Client\Internal\Marshaller\Type\TypeInterface;
  * @Target({ "PROPERTY" })
  */
 #[\Attribute(\Attribute::TARGET_PROPERTY)]
-class Marshal
+class Marshal implements NamedArgumentConstructorAttribute
 {
     /**
      * @var string|null
@@ -31,7 +32,22 @@ class Marshal
     public ?string $type = null;
 
     /**
-     * @var mixed
+     * @var class-string<TypeInterface>|string|null
      */
-    public $of;
+    public ?string $of = null;
+
+    /**
+     * @param string|null $name
+     * @param class-string<TypeInterface>|null $type
+     * @param class-string<TypeInterface>|string|null $of
+     */
+    public function __construct(
+        string $name = null,
+        string $type = null,
+        string $of = null
+    ) {
+        $this->name = $name;
+        $this->type = $type;
+        $this->of = $of;
+    }
 }

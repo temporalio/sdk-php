@@ -19,7 +19,7 @@ use Temporal\Client\Exception\DoNotCompleteOnResultException;
 use Temporal\Client\Internal\Declaration\Instantiator\ActivityInstantiator;
 use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Client\Internal\Declaration\Prototype\Collection;
-use Temporal\Client\Worker\Worker;
+use Temporal\Client\Internal\Marshaller\MarshallerInterface;
 
 final class InvokeActivity extends Route
 {
@@ -39,17 +39,17 @@ final class InvokeActivity extends Route
     private ActivityInstantiator $instantiator;
 
     /**
-     * @var Worker
+     * @var MarshallerInterface
      */
-    private Worker $worker;
+    private MarshallerInterface $marshaller;
 
     /**
-     * @param Worker $worker
+     * @param MarshallerInterface $marshaller
      * @param Collection<ActivityPrototype> $activities
      */
-    public function __construct(Worker $worker, Collection $activities)
+    public function __construct(MarshallerInterface $marshaller, Collection $activities)
     {
-        $this->worker = $worker;
+        $this->marshaller = $marshaller;
         $this->activities = $activities;
         $this->instantiator = new ActivityInstantiator();
     }
@@ -59,7 +59,7 @@ final class InvokeActivity extends Route
      */
     public function handle(array $payload, array $headers, Deferred $resolver): void
     {
-        $context = new ActivityContext($this->worker, $payload);
+        $context = $this->marshaller->unmarshal($payload, new ActivityContext());
 
         $prototype = $this->findDeclarationOrFail($context->getInfo());
         $instance = $this->instantiator->instantiate($prototype);

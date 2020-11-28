@@ -12,8 +12,8 @@ declare(strict_types=1);
 namespace Temporal\Client\Internal\Declaration\Reader;
 
 use ReflectionFunctionAbstract as ReflectionFunction;
-use Temporal\Client\Activity\Meta\ActivityInterface;
-use Temporal\Client\Activity\Meta\ActivityMethod;
+use Temporal\Client\Activity\ActivityInterface;
+use Temporal\Client\Activity\ActivityMethod;
 use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
 
 /**

@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client\Internal\Transport;
 
 use React\Promise\PromiseInterface;
-use Temporal\Client\Internal\Transport\Protocol\Command\RequestInterface;
+use Temporal\Client\Worker\Command\RequestInterface;
 
 interface ClientInterface
 {

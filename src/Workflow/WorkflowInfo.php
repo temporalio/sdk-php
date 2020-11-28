@@ -12,15 +12,11 @@ declare(strict_types=1);
 namespace Temporal\Client\Workflow;
 
 use Carbon\CarbonInterval;
-use Spiral\Attributes\AttributeReader;
-use Temporal\Client\Internal\Marshaller\Marshaller;
 use Temporal\Client\Internal\Marshaller\Meta\Marshal;
 use Temporal\Client\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Client\Internal\Marshaller\Type\NullableType;
 use Temporal\Client\Internal\Marshaller\Type\ObjectType;
 use Temporal\Client\Worker\FactoryInterface;
-use Temporal\Client\Workflow\Info\WorkflowExecution;
-use Temporal\Client\Workflow\Info\WorkflowType;
 
 /**
  * TODO Previous execution result
@@ -151,9 +147,7 @@ final class WorkflowInfo
     public string $binaryChecksum = '';
 
     /**
-     * @param WorkflowExecution $workflowExecution
-     * @param WorkflowType $workflowType
-     * @throws \Exception
+     * WorkflowInfo constructor.
      */
     public function __construct()
     {

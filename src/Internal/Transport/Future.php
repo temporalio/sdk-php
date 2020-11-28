@@ -14,7 +14,7 @@ namespace Temporal\Client\Internal\Transport;
 use React\Promise\CancellablePromiseInterface;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
-use Temporal\Client\Worker\WorkerInterface;
+use Temporal\Client\Worker\TaskQueueInterface;
 
 class Future implements FutureInterface
 {
@@ -39,17 +39,15 @@ class Future implements FutureInterface
     private Deferred $deferred;
 
     /**
-     * @var WorkerInterface
+     * @var TaskQueueInterface
      */
-    private WorkerInterface $worker;
+    private TaskQueueInterface $worker;
 
     /**
-     * Future constructor.
-     *
      * @param CancellablePromiseInterface $promise
-     * @param WorkerInterface             $worker
+     * @param TaskQueueInterface $worker
      */
-    public function __construct(CancellablePromiseInterface $promise, WorkerInterface $worker)
+    public function __construct(CancellablePromiseInterface $promise, TaskQueueInterface $worker)
     {
         $this->worker = $worker;
         $this->deferred = new Deferred(function () use ($promise) {
@@ -99,7 +97,8 @@ class Future implements FutureInterface
     ): PromiseInterface {
         /** @var CancellablePromiseInterface $promise */
         $promise = $this->promise()
-                        ->then($onFulfilled, $onRejected, $onProgress);
+            ->then($onFulfilled, $onRejected, $onProgress)
+        ;
 
         return $promise;
         //return new Future($promise, $this->worker);
@@ -121,7 +120,7 @@ class Future implements FutureInterface
         $this->resolved = true;
         $this->value = $result;
 
-        $this->worker->once(WorkerInterface::ON_CALLBACK, function () {
+        $this->worker->once(TaskQueueInterface::ON_CALLBACK, function () {
             $this->deferred->resolve($this->value);
         });
     }
@@ -133,7 +132,7 @@ class Future implements FutureInterface
     {
         $this->resolved = true;
 
-        $this->worker->once(WorkerInterface::ON_CALLBACK, function () use ($e) {
+        $this->worker->once(TaskQueueInterface::ON_CALLBACK, function () use ($e) {
             $this->deferred->reject($e);
         });
     }

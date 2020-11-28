@@ -11,38 +11,37 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Internal\Marshaller;
 
-use Spiral\Attributes\ReaderInterface;
-use Temporal\Client\Internal\Marshaller\Type\Factory;
-use Temporal\Client\Internal\Marshaller\Type\TypeInterface;
+use Temporal\Client\Internal\Marshaller\Mapper\MapperFactoryInterface;
+use Temporal\Client\Internal\Marshaller\Mapper\MapperInterface;
 
 /**
- * @psalm-import-type TypeMatcher from Factory
+ * @psalm-import-type TypeMatcher from TypeFactory
  */
 class Marshaller implements MarshallerInterface
 {
-    /**
-     * @var ReaderInterface
-     */
-    private ReaderInterface $reader;
-
     /**
      * @var array<string, MapperInterface>
      */
     private array $mappers = [];
 
     /**
-     * @var Factory
+     * @var TypeFactory
      */
-    private Factory $factory;
+    private TypeFactory $type;
 
     /**
-     * @param ReaderInterface $reader
+     * @var MapperFactoryInterface
+     */
+    private MapperFactoryInterface $mapper;
+
+    /**
+     * @param MapperFactoryInterface $mapper
      * @param array<TypeMatcher> $matchers
      */
-    public function __construct(ReaderInterface $reader, array $matchers = [])
+    public function __construct(MapperFactoryInterface $mapper, array $matchers = [])
     {
-        $this->reader = $reader;
-        $this->factory = new Factory($this, $matchers);
+        $this->mapper = $mapper;
+        $this->type = new TypeFactory($this, $matchers);
     }
 
     /**
@@ -54,7 +53,7 @@ class Marshaller implements MarshallerInterface
     {
         $reflection = new \ReflectionClass($class);
 
-        return new AttributeMapper($reflection, $this->factory, $this->reader);
+        return $this->mapper->create($reflection, $this->type);
     }
 
     /**

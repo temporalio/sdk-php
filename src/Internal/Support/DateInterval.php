@@ -104,7 +104,7 @@ final class DateInterval
 
     /**
      * @param DateIntervalValue $interval
-     * @param string $format
+     * @param DateIntervalFormat $format
      * @return CarbonInterval
      */
     public static function parse($interval, string $format = self::FORMAT_MILLISECONDS): CarbonInterval
@@ -125,6 +125,20 @@ final class DateInterval
             default:
                 throw new \InvalidArgumentException(self::ERROR_INVALID_DATETIME);
         }
+    }
+
+    /**
+     * @param DateIntervalValue|null $interval
+     * @param DateIntervalFormat $format
+     * @return CarbonInterval|null
+     */
+    public static function parseOrNull($interval, string $format = self::FORMAT_MILLISECONDS): ?CarbonInterval
+    {
+        if ($interval === null) {
+            return null;
+        }
+
+        return self::parse($interval, $format);
     }
 
     /**

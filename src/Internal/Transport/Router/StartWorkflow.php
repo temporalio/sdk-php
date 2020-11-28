@@ -14,9 +14,9 @@ namespace Temporal\Client\Internal\Transport\Router;
 use React\Promise\Deferred;
 use Temporal\Client\Internal\Declaration\Prototype\Collection;
 use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
-use Temporal\Client\Worker\Worker;
-use Temporal\Client\Workflow\RunningWorkflows;
-use Temporal\Client\Workflow\WorkflowContext;
+use Temporal\Client\Internal\Worker\OldTaskQueue;
+use Temporal\Client\Internal\Workflow\RunningWorkflows;
+use Temporal\Client\Internal\Workflow\WorkflowContext;
 use Temporal\Client\Workflow\WorkflowInfo;
 
 final class StartWorkflow extends Route
@@ -42,16 +42,16 @@ final class StartWorkflow extends Route
     private Collection $workflows;
 
     /**
-     * @var Worker
+     * @var OldTaskQueue
      */
-    private Worker $worker;
+    private OldTaskQueue $worker;
 
     /**
      * @param Collection<WorkflowPrototype> $workflows
      * @param RunningWorkflows $running
-     * @param Worker $worker
+     * @param OldTaskQueue $worker
      */
-    public function __construct(Collection $workflows, RunningWorkflows $running, Worker $worker)
+    public function __construct(Collection $workflows, RunningWorkflows $running, OldTaskQueue $worker)
     {
         $this->running = $running;
         $this->workflows = $workflows;

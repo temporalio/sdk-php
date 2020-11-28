@@ -12,8 +12,8 @@ declare(strict_types=1);
 namespace Temporal\Client\Internal\Transport\Router;
 
 use Temporal\Client\Internal\Declaration\WorkflowInstance;
-use Temporal\Client\Workflow\Process;
-use Temporal\Client\Workflow\RunningWorkflows;
+use Temporal\Client\Internal\Workflow\Process;
+use Temporal\Client\Internal\Workflow\RunningWorkflows;
 
 abstract class WorkflowProcessAwareRoute extends Route
 {

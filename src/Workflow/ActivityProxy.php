@@ -15,6 +15,7 @@ use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Client\Internal\Declaration\Prototype\Collection;
+use Temporal\Client\Internal\Workflow\WorkflowContextInterface;
 
 /**
  * @psalm-template Activity of object
@@ -24,7 +25,7 @@ class ActivityProxy
     /**
      * @var WorkflowContextInterface
      */
-    private WorkflowContextInterface $protocol;
+    private WorkflowContextInterface $context;
 
     /**
      * @var ActivityPrototype[]
@@ -39,16 +40,16 @@ class ActivityProxy
     /**
      * @param class-string<Activity> $class
      * @param ActivityOptions $options
-     * @param WorkflowContextInterface $protocol
+     * @param WorkflowContextInterface $context
      * @param Collection<ActivityPrototype> $activities
      */
     public function __construct(
         string $class,
         ActivityOptions $options,
-        WorkflowContextInterface $protocol,
+        WorkflowContextInterface $context,
         Collection $activities
     ) {
-        $this->protocol = $protocol;
+        $this->context = $context;
         $this->options = $options;
 
         $this->activities = [...$this->filterActivities($activities, $class)];
@@ -101,7 +102,7 @@ class ActivityProxy
 
         $method = $activity ? $activity->getName() : $method;
 
-        return $this->protocol->executeActivity($method, $arguments, $this->options);
+        return $this->context->executeActivity($method, $arguments, $this->options);
     }
 
     /**

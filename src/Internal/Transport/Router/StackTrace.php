@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client\Internal\Transport\Router;
 
 use React\Promise\Deferred;
-use Temporal\Client\Workflow\RunningWorkflows;
+use Temporal\Client\Internal\Workflow\RunningWorkflows;
 
 class StackTrace extends Route
 {

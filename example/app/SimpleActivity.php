@@ -11,17 +11,15 @@ declare(strict_types=1);
 
 namespace App;
 
-use Temporal\Client\Activity;
-
 class SimpleActivity
 {
-    #[Activity\Meta\ActivityMethod]
+    #[\Temporal\Client\Activity\ActivityMethod]
     public function echo($value)
     {
         return $value;
     }
 
-    #[Activity\Meta\ActivityMethod]
+    #[\Temporal\Client\Activity\ActivityMethod]
     public function asyncActivity(): int
     {
         Activity::doNotCompleteOnReturn();

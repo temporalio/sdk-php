@@ -12,8 +12,8 @@ declare(strict_types=1);
 namespace Temporal\Client\Internal\Transport\Router;
 
 use React\Promise\Deferred;
-use Temporal\Client\Worker\Worker;
-use Temporal\Client\Workflow\RunningWorkflows;
+use Temporal\Client\Internal\Worker\OldTaskQueue;
+use Temporal\Client\Internal\Workflow\RunningWorkflows;
 
 class DestroyWorkflow extends WorkflowProcessAwareRoute
 {
@@ -25,15 +25,15 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
         'of the running workflow process';
 
     /**
-     * @var Worker
+     * @var OldTaskQueue
      */
-    private Worker $worker;
+    private OldTaskQueue $worker;
 
     /**
      * @param RunningWorkflows $running
-     * @param Worker $worker
+     * @param OldTaskQueue $worker
      */
-    public function __construct(RunningWorkflows $running, Worker $worker)
+    public function __construct(RunningWorkflows $running, OldTaskQueue $worker)
     {
         $this->worker = $worker;
 

@@ -13,8 +13,8 @@ namespace Temporal\Client\Internal\Transport\Router;
 
 use React\Promise\Deferred;
 use Temporal\Client\Internal\Declaration\WorkflowInstance;
-use Temporal\Client\Worker\WorkerInterface;
-use Temporal\Client\Workflow\RunningWorkflows;
+use Temporal\Client\Internal\Workflow\RunningWorkflows;
+use Temporal\Client\Worker\TaskQueueInterface;
 
 final class InvokeSignal extends WorkflowProcessAwareRoute
 {
@@ -24,15 +24,15 @@ final class InvokeSignal extends WorkflowProcessAwareRoute
     private const ERROR_SIGNAL_NOT_FOUND = 'unknown signalType %s. KnownSignalTypes=[%s]';
 
     /**
-     * @var WorkerInterface
+     * @var TaskQueueInterface
      */
-    private WorkerInterface $worker;
+    private TaskQueueInterface $worker;
 
     /**
      * @param RunningWorkflows $running
-     * @param WorkerInterface $worker
+     * @param TaskQueueInterface $worker
      */
-    public function __construct(RunningWorkflows $running, WorkerInterface $worker)
+    public function __construct(RunningWorkflows $running, TaskQueueInterface $worker)
     {
         $this->worker = $worker;
 
@@ -50,7 +50,7 @@ final class InvokeSignal extends WorkflowProcessAwareRoute
         $handler = $this->findSignalHandlerOrFail($instance, $name);
 
         $executor = static fn() => $resolver->resolve($handler($payload['args'] ?? []));
-        $this->worker->once(WorkerInterface::ON_SIGNAL, $executor);
+        $this->worker->once(TaskQueueInterface::ON_SIGNAL, $executor);
     }
 
     /**

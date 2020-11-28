@@ -14,9 +14,10 @@ namespace Temporal\Client\Workflow;
 use JetBrains\PhpStorm\ExpectedValues;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
-use Temporal\Client\Internal\Support\DateInterval;
+use Temporal\Client\Worker\EnvironmentInterface;
+use Temporal\Client\Workflow\Execution\ExecutionContext;
 
-interface WorkflowContextInterface
+interface WorkflowContextInterface extends EnvironmentInterface
 {
     /**
      * @return WorkflowInfo
@@ -26,26 +27,11 @@ interface WorkflowContextInterface
     /**
      * @return array
      */
-    public function getDebugBacktrace(): array;
-
-    /**
-     * @return array
-     */
     public function getArguments(): array;
 
     /**
-     * @return \DateTimeInterface
-     */
-    public function now(): \DateTimeInterface;
-
-    /**
-     * @return bool
-     */
-    public function isReplaying(): bool;
-
-    /**
-     * @template     ActivityType
-     * @psalm-param  class-string<ActivityType> $name
+     * @template ActivityType
+     * @psalm-param class-string<ActivityType> $name
      * @psalm-return ActivityType|ActivityProxy<ActivityType>
      *
      * @param string $name
@@ -54,15 +40,15 @@ interface WorkflowContextInterface
     public function newActivityStub(string $name): ActivityProxy;
 
     /**
-     * @param string $changeID
+     * @param string $changeId
      * @param int $minSupported
      * @param int $maxSupported
      * @return PromiseInterface
      */
-    public function getVersion(string $changeID, int $minSupported, int $maxSupported): PromiseInterface;
+    public function getVersion(string $changeId, int $minSupported, int $maxSupported): PromiseInterface;
 
     /**
-     * @psalm-type  SideEffectCallback = callable(): mixed
+     * @psalm-type SideEffectCallback = callable(): mixed
      * @psalm-param SideEffectCallback $cb
      *
      * @param callable $cb
@@ -92,17 +78,22 @@ interface WorkflowContextInterface
     ): PromiseInterface;
 
     /**
+     * @param string|int|float|\DateInterval $interval
+     * @return PromiseInterface
      * @see DateInterval
      *
      * @psalm-import-type DateIntervalFormat from DateInterval
-     * @param string|int|float|\DateInterval $interval
-     * @return PromiseInterface
      */
     public function timer($interval): PromiseInterface;
 
     /**
-     * @param callable $handler
-     * @return CancellationScope
+     * @return array
      */
-    public function newCancellationScope(callable $handler): CancellationScope;
+    public function getDebugBacktrace(): array;
+
+    /**
+     * @param callable $handler
+     * @return ExecutionContext
+     */
+    public function newCancellationScope(callable $handler): ExecutionContext;
 }

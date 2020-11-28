@@ -12,10 +12,11 @@ declare(strict_types=1);
 namespace Temporal\Client;
 
 use Temporal\Client\Activity\ActivityOptions;
+use Temporal\Client\Internal\Support\Facade;
 use Temporal\Client\Internal\Transport\FutureInterface;
+use Temporal\Client\Internal\Workflow\CancellationScope;
+use Temporal\Client\Internal\Workflow\WorkflowContextInterface;
 use Temporal\Client\Workflow\ActivityProxy;
-use Temporal\Client\Workflow\CancellationScope;
-use Temporal\Client\Workflow\WorkflowContextInterface;
 use Temporal\Client\Workflow\WorkflowInfo;
 
 /**
@@ -38,49 +39,6 @@ use Temporal\Client\Workflow\WorkflowInfo;
  * @method static WorkflowContextInterface registerQuery(string $queryType, callable $handler)
  * @method static WorkflowContextInterface registerSignal(string $signalType, callable $handler)
  */
-final class Workflow
+final class Workflow extends Facade
 {
-    /**
-     * @var string
-     */
-    private const ERROR_NO_WORKFLOW_CONTEXT =
-        'Calling workflow methods can only be made from ' .
-        'the currently running workflow process';
-
-    /**
-     * @var WorkflowContextInterface|null
-     */
-    private static ?WorkflowContextInterface $ctx = null;
-
-    /**
-     * @param WorkflowContextInterface|null $ctx
-     */
-    public static function setCurrentContext(?WorkflowContextInterface $ctx): void
-    {
-        self::$ctx = $ctx;
-    }
-
-    /**
-     * @param string $name
-     * @param array $arguments
-     * @return mixed
-     */
-    public static function __callStatic(string $name, array $arguments)
-    {
-        $context = self::getCurrentContext();
-
-        return $context->$name(...$arguments);
-    }
-
-    /**
-     * @return WorkflowContextInterface
-     */
-    private static function getCurrentContext(): WorkflowContextInterface
-    {
-        if (self::$ctx === null) {
-            throw new \RuntimeException(self::ERROR_NO_WORKFLOW_CONTEXT);
-        }
-
-        return self::$ctx;
-    }
 }

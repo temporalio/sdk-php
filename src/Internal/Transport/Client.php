@@ -14,11 +14,11 @@ namespace Temporal\Client\Internal\Transport;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Exception\CancellationException;
-use Temporal\Client\Internal\Transport\Protocol\Command\ErrorResponseInterface;
-use Temporal\Client\Internal\Transport\Protocol\Command\RequestInterface;
-use Temporal\Client\Internal\Transport\Protocol\Command\ResponseInterface;
-use Temporal\Client\Internal\Transport\Protocol\Command\SuccessResponseInterface;
-use Temporal\Client\Internal\Transport\Queue\QueueInterface;
+use Temporal\Client\Internal\Queue\QueueInterface;
+use Temporal\Client\Worker\Command\ErrorResponseInterface;
+use Temporal\Client\Worker\Command\RequestInterface;
+use Temporal\Client\Worker\Command\ResponseInterface;
+use Temporal\Client\Worker\Command\SuccessResponseInterface;
 
 /**
  * @internal Client is an internal library class, please do not use it in your code.

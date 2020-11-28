@@ -9,14 +9,13 @@
 
 declare(strict_types=1);
 
-use Spiral\Goridge\RPC;
+use Temporal\Client\Client;
+use Temporal\Client\Worker\Transport\RoadRunner;
 
-/** @var RPC $rpc */
-$rpc = require __DIR__ . '/connection.php';
+require __DIR__ . '/../../vendor/autoload.php';
 
-$result = $rpc->call('temporal.CompleteActivity', [
-    'taskToken' => 'ACTIVITY_TASK_TOKEN',
-    'result'    => 'Nice!'
-]);
+$client = Client::using(RoadRunner::socket(6001));
+
+$result = $client->completeActivity('ACTIVITY_TASK_TOKEN', 'Custom Activity Result');
 
 dump($result);
