@@ -14,22 +14,22 @@ namespace Temporal\Client\Internal\Transport\Router;
 use React\Promise\Deferred;
 use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
-use Temporal\Client\Worker\Pool\PoolInterface;
+use Temporal\Client\Internal\Repository\RepositoryInterface;
 use Temporal\Client\Worker\TaskQueueInterface;
 
 final class GetWorkerInfo extends Route
 {
     /**
-     * @var PoolInterface
+     * @var RepositoryInterface<TaskQueueInterface>
      */
-    private PoolInterface $taskQueues;
+    private RepositoryInterface $queues;
 
     /**
-     * @param PoolInterface $taskQueues
+     * @param RepositoryInterface<TaskQueueInterface> $queues
      */
-    public function __construct(PoolInterface $taskQueues)
+    public function __construct(RepositoryInterface $queues)
     {
-        $this->taskQueues = $taskQueues;
+        $this->queues = $queues;
     }
 
     /**
@@ -39,7 +39,7 @@ final class GetWorkerInfo extends Route
     {
         $result = [];
 
-        foreach ($this->taskQueues as $taskQueue) {
+        foreach ($this->queues as $taskQueue) {
             $result[] = $this->workerToArray($taskQueue);
         }
 
@@ -53,17 +53,17 @@ final class GetWorkerInfo extends Route
     private function workerToArray(TaskQueueInterface $taskQueue): array
     {
         return [
-            'taskQueue'  => $taskQueue->getName(),
+            'taskQueue'  => $taskQueue->getId(),
             'workflows'  => $this->map($taskQueue->getWorkflows(), function (WorkflowPrototype $workflow) {
                 return [
-                    'name'    => $workflow->getName(),
+                    'name'    => $workflow->getId(),
                     'queries' => $this->keys($workflow->getQueryHandlers()),
                     'signals' => $this->keys($workflow->getSignalHandlers()),
                 ];
             }),
             'activities' => $this->map($taskQueue->getActivities(), function (ActivityPrototype $activity) {
                 return [
-                    'name' => $activity->getName(),
+                    'name' => $activity->getId(),
                 ];
             }),
         ];

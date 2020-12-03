@@ -229,7 +229,8 @@ class ProcessTestCase extends WorkflowTestCase
     public function testCancellationScope(): void
     {
         $this->workflow(function () {
-            $this->assertSame($id = Workflow::getContextId(), Workflow::getContextId());
+            $id = Workflow::getContextId();
+
             yield new Request('First Request');
             $this->assertSame($id, Workflow::getContextId());
 
@@ -278,7 +279,7 @@ class ProcessTestCase extends WorkflowTestCase
         $this->successResponseAndNext($request, 'Second Scoped Request');
 
 
-        $this->queue->assertCount(2);
+        $this->queue->assertCount(1);
 
         $request = $this->queue
             ->pop()
@@ -287,9 +288,10 @@ class ProcessTestCase extends WorkflowTestCase
 
         $this->successResponseAndNext($request, 'Second Request');
 
-        $this->queue->pop()
-            ->assertName(CompleteWorkflow::NAME)
-            ->assertParamsKeySame('result', [42])
+        $this->queue->assertCount(1)
+            ->pop()
+                ->assertName(CompleteWorkflow::NAME)
+                ->assertParamsKeySame('result', [42])
         ;
     }
 

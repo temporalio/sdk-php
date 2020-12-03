@@ -11,8 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Internal\Workflow\Process;
 
-use Temporal\Client\Worker\LoopInterface;
-use Temporal\Client\Workflow\ContextInterface;
 
 /**
  * @internal CancellationScope is an internal library class, please do not use it in your code.
@@ -20,4 +18,11 @@ use Temporal\Client\Workflow\ContextInterface;
  */
 class CancellationScope extends Scope
 {
+    /**
+     * @param mixed $result
+     */
+    protected function onComplete($result): void
+    {
+        //
+    }
 }

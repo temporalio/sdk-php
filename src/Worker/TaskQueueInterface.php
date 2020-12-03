@@ -15,6 +15,7 @@ use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Client\Internal\Events\EventEmitterInterface;
 use Temporal\Client\Internal\Events\EventListenerInterface;
+use Temporal\Client\Internal\Repository\Identifiable;
 
 /**
  * @implements EventEmitterInterface<TaskQueueInterface::ON_*>
@@ -22,7 +23,8 @@ use Temporal\Client\Internal\Events\EventListenerInterface;
 interface TaskQueueInterface extends
     EventListenerInterface,
     DispatcherInterface,
-    EventEmitterInterface
+    EventEmitterInterface,
+    Identifiable
 {
     /**
      * @var string
@@ -47,7 +49,7 @@ interface TaskQueueInterface extends
     /**
      * @return string
      */
-    public function getName(): string;
+    public function getId(): string;
 
     /**
      * @param class-string $class

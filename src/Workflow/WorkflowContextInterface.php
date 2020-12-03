@@ -15,7 +15,7 @@ use Temporal\Client\Workflow\Context\InputInterface;
 use Temporal\Client\Workflow\Context\RequestsInterface;
 use Temporal\Client\Worker\Environment\EnvironmentInterface;
 
-interface ContextInterface extends
+interface WorkflowContextInterface extends
     EnvironmentInterface,
     RequestsInterface,
     InputInterface

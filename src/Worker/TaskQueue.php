@@ -22,12 +22,15 @@ use Temporal\Client\Internal\Events\EventEmitterTrait;
 use Temporal\Client\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Client\Internal\Marshaller\Marshaller;
 use Temporal\Client\Internal\Marshaller\MarshallerInterface;
+use Temporal\Client\Internal\Repository\ArrayRepository;
+use Temporal\Client\Internal\Repository\RepositoryInterface;
 use Temporal\Client\Internal\Transport\ClientInterface;
 use Temporal\Client\Internal\Transport\Router;
 use Temporal\Client\Internal\Transport\RouterInterface;
 use Temporal\Client\Worker\Command\RequestInterface;
 use Temporal\Client\Worker\Environment\Environment;
 use Temporal\Client\Worker\Environment\EnvironmentInterface;
+use Temporal\Client\Workflow\ProcessInterface;
 
 class TaskQueue implements TaskQueueInterface
 {
@@ -84,6 +87,11 @@ class TaskQueue implements TaskQueueInterface
     private EnvironmentInterface $env;
 
     /**
+     * @var RepositoryInterface<ProcessInterface>
+     */
+    private RepositoryInterface $processes;
+
+    /**
      * @param string $name
      * @param ReaderInterface $reader
      */
@@ -106,31 +114,12 @@ class TaskQueue implements TaskQueueInterface
 
         $this->workflows = new Collection();
         $this->activities = new Collection();
+        $this->processes = new ArrayRepository();
 
         $this->workflowReader = new WorkflowReader($this->reader);
         $this->activityReader = new ActivityReader($this->reader);
 
         $this->router = $this->createRouter();
-    }
-
-    /**
-     * @return RouterInterface
-     */
-    protected function createRouter(): RouterInterface
-    {
-        $router = new Router();
-
-        // Activity routes
-        $router->add(new Router\InvokeActivity($this->marshaller, $this->activities));
-
-        // Workflow routes
-        // $router->add(new Router\StartWorkflow($workflows, $this->workflows, $worker));
-        // $router->add(new Router\InvokeQuery($this->workflows));
-        // $router->add(new Router\InvokeSignal($this->workflows, $worker));
-        // $router->add(new Router\DestroyWorkflow($this->workflows, $worker));
-        // $router->add(new Router\StackTrace($this->workflows));
-
-        return $router;
     }
 
     /**
@@ -152,6 +141,26 @@ class TaskQueue implements TaskQueueInterface
     }
 
     /**
+     * @return RouterInterface
+     */
+    protected function createRouter(): RouterInterface
+    {
+        $router = new Router();
+
+        // Activity routes
+        $router->add(new Router\InvokeActivity($this->marshaller, $this->activities));
+
+        // Workflow routes
+        $router->add(new Router\StartWorkflow($this->workflows, $this->processes, $this));
+        // $router->add(new Router\InvokeQuery($this->workflows));
+        // $router->add(new Router\InvokeSignal($this->workflows, $worker));
+        // $router->add(new Router\DestroyWorkflow($this->workflows, $worker));
+        // $router->add(new Router\StackTrace($this->workflows));
+
+        return $router;
+    }
+
+    /**
      * @param RequestInterface $request
      * @param array $headers
      * @return PromiseInterface
@@ -166,7 +175,7 @@ class TaskQueue implements TaskQueueInterface
     /**
      * {@inheritDoc}
      */
-    public function getName(): string
+    public function getId(): string
     {
         return $this->name;
     }

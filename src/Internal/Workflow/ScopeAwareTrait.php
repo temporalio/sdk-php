@@ -12,14 +12,14 @@ declare(strict_types=1);
 namespace Temporal\Client\Internal\Workflow;
 
 use Temporal\Client\Internal\Coroutine\CoroutineInterface;
-use Temporal\Client\Workflow\ContextInterface;
+use Temporal\Client\Workflow\WorkflowContextInterface;
 
 trait ScopeAwareTrait
 {
     /**
-     * @var ContextInterface
+     * @var WorkflowContextInterface
      */
-    protected ContextInterface $context;
+    protected WorkflowContextInterface $context;
 
     /**
      * @param \Closure $handler

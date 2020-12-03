@@ -103,7 +103,7 @@ class ActivityProxy
     {
         $activity = $this->findActivityPrototype($method);
 
-        $method = $activity ? $activity->getName() : $method;
+        $method = $activity ? $activity->getId() : $method;
 
         return $this->requests->executeActivity($method, $arguments, $this->options);
     }

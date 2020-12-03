@@ -18,7 +18,6 @@ use Temporal\Client\Internal\Declaration\Prototype\Collection;
 use Temporal\Client\Internal\Transport\CapturedClientInterface;
 use Temporal\Client\Internal\Workflow\InputAwareTrait;
 use Temporal\Client\Internal\Workflow\Process\CancellationScope;
-use Temporal\Client\Internal\Workflow\Process\CoroutineAwareInterface;
 use Temporal\Client\Internal\Workflow\Requests;
 use Temporal\Client\Internal\Workflow\RequestsAwareTrait;
 use Temporal\Client\Worker\Environment\EnvironmentAwareTrait;
@@ -26,7 +25,7 @@ use Temporal\Client\Worker\Environment\EnvironmentInterface;
 use Temporal\Client\Worker\LoopInterface;
 use Temporal\Client\Workflow\Context\InputInterface;
 
-class WorkflowContext implements ContextInterface
+class WorkflowContext implements WorkflowContextInterface
 {
     use InputAwareTrait;
     use RequestsAwareTrait;

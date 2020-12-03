@@ -19,7 +19,7 @@ use Temporal\Client\Internal\Workflow\Process\Process;
 use Temporal\Client\Internal\Workflow\Process\CoroutineAwareInterface;
 use Temporal\Client\Internal\Workflow\Requests;
 use Temporal\Client\Worker\Environment\EnvironmentInterface;
-use Temporal\Client\Workflow\ContextInterface;
+use Temporal\Client\Workflow\WorkflowContextInterface;
 use Temporal\Client\Workflow\WorkflowContext;
 use Temporal\Client\Workflow\WorkflowInfo;
 use Temporal\Tests\Client\Testing\TestingEnvironment;
@@ -28,9 +28,9 @@ class ContextEnvironmentTestCase extends WorkflowTestCase
 {
     /**
      * @param EnvironmentInterface $env
-     * @return ContextInterface
+     * @return WorkflowContextInterface
      */
-    public function context(EnvironmentInterface $env): ContextInterface
+    public function context(EnvironmentInterface $env): WorkflowContextInterface
     {
         $input = new Input(new WorkflowInfo());
 

@@ -24,6 +24,8 @@ use Temporal\Client\Internal\Codec\JsonCodec;
 use Temporal\Client\Internal\Events\EventEmitterTrait;
 use Temporal\Client\Internal\Queue\QueueInterface;
 use Temporal\Client\Internal\Queue\SplQueue;
+use Temporal\Client\Internal\Repository\ArrayRepository;
+use Temporal\Client\Internal\Repository\RepositoryInterface;
 use Temporal\Client\Internal\Transport\Client;
 use Temporal\Client\Internal\Transport\ClientInterface;
 use Temporal\Client\Internal\Transport\Router;
@@ -33,8 +35,6 @@ use Temporal\Client\Internal\Transport\ServerInterface;
 use Temporal\Client\Worker\Command\RequestInterface;
 use Temporal\Client\Worker\FactoryInterface;
 use Temporal\Client\Worker\LoopInterface;
-use Temporal\Client\Worker\Pool\ArrayPool;
-use Temporal\Client\Worker\Pool\PoolInterface;
 use Temporal\Client\Worker\TaskQueue;
 use Temporal\Client\Worker\TaskQueueInterface;
 use Temporal\Client\Worker\Transport\ConnectionInterface;
@@ -72,7 +72,7 @@ final class Worker implements FactoryInterface
      * @var string
      */
     private const RESERVED_ANNOTATIONS = [
-        'readonly'
+        'readonly',
     ];
 
     /**
@@ -91,9 +91,9 @@ final class Worker implements FactoryInterface
     private RouterInterface $router;
 
     /**
-     * @var PoolInterface<TaskQueueInterface>
+     * @var RepositoryInterface<TaskQueueInterface>
      */
-    private PoolInterface $queues;
+    private RepositoryInterface $queues;
 
     /**
      * @var CodecInterface
@@ -141,30 +141,6 @@ final class Worker implements FactoryInterface
     }
 
     /**
-     * @return void
-     */
-    private function bootEvents(): void
-    {
-        $this->on(self::ON_TICK, function () {
-            foreach ($this->queues as $queue) {
-                $queue->emit(TaskQueueInterface::ON_SIGNAL);
-            }
-
-            foreach ($this->queues as $queue) {
-                $queue->emit(TaskQueueInterface::ON_CALLBACK);
-            }
-
-            foreach ($this->queues as $queue) {
-                $queue->emit(TaskQueueInterface::ON_QUERY);
-            }
-
-            foreach ($this->queues as $queue) {
-                $queue->emit(TaskQueueInterface::ON_TICK);
-            }
-        });
-    }
-
-    /**
      * @return ReaderInterface
      */
     private function createReader(): ReaderInterface
@@ -184,12 +160,12 @@ final class Worker implements FactoryInterface
     }
 
     /**
-     * @return PoolInterface
+     * @return RepositoryInterface<TaskQueueInterface>
      */
     #[Pure]
-    private function createTaskQueue(): PoolInterface
+    private function createTaskQueue(): RepositoryInterface
     {
-        return new ArrayPool();
+        return new ArrayRepository();
     }
 
     /**
@@ -234,6 +210,30 @@ final class Worker implements FactoryInterface
     private function createServer(): ServerInterface
     {
         return new Server($this->responses, \Closure::fromCallable([$this, 'onRequest']));
+    }
+
+    /**
+     * @return void
+     */
+    private function bootEvents(): void
+    {
+        $this->on(self::ON_TICK, function () {
+            foreach ($this->queues as $queue) {
+                $queue->emit(TaskQueueInterface::ON_SIGNAL);
+            }
+
+            foreach ($this->queues as $queue) {
+                $queue->emit(TaskQueueInterface::ON_CALLBACK);
+            }
+
+            foreach ($this->queues as $queue) {
+                $queue->emit(TaskQueueInterface::ON_QUERY);
+            }
+
+            foreach ($this->queues as $queue) {
+                $queue->emit(TaskQueueInterface::ON_TICK);
+            }
+        });
     }
 
     /**

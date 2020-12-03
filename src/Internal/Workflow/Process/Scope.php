@@ -20,7 +20,7 @@ use Temporal\Client\Worker\Command\RequestInterface;
 use Temporal\Client\Worker\LoopInterface;
 use Temporal\Client\Workflow;
 use Temporal\Client\Workflow\CancellationScopeInterface;
-use Temporal\Client\Workflow\ContextInterface;
+use Temporal\Client\Workflow\WorkflowContextInterface;
 
 /**
  * @internal Scope is an internal library class, please do not use it in your code.
@@ -29,14 +29,14 @@ use Temporal\Client\Workflow\ContextInterface;
 abstract class Scope implements CancellationScopeInterface
 {
     /**
-     * @var ContextInterface
+     * @var WorkflowContextInterface
      */
-    private ContextInterface $context;
+    protected WorkflowContextInterface $context;
 
     /**
      * @var CoroutineInterface
      */
-    private CoroutineInterface $process;
+    protected CoroutineInterface $process;
 
     /**
      * @var LoopInterface
@@ -49,13 +49,13 @@ abstract class Scope implements CancellationScopeInterface
     private Deferred $deferred;
 
     /**
-     * @param ContextInterface $context
+     * @param WorkflowContextInterface $ctx
      * @param callable $handler
      * @param array $arguments
      */
-    public function __construct(ContextInterface $context, LoopInterface $loop, callable $handler, array $args = [])
+    public function __construct(WorkflowContextInterface $ctx, LoopInterface $loop, callable $handler, array $args = [])
     {
-        $this->context = $context;
+        $this->context = $ctx;
         $this->loop = $loop;
 
         $this->deferred = new Deferred($this->canceller());
@@ -111,6 +111,11 @@ abstract class Scope implements CancellationScopeInterface
     }
 
     /**
+     * @param mixed $result
+     */
+    abstract protected function onComplete($result): void;
+
+    /**
      * @return void
      */
     protected function next(): void
@@ -118,7 +123,7 @@ abstract class Scope implements CancellationScopeInterface
         $this->makeCurrent();
 
         if (! $this->process->valid()) {
-            $this->context->complete($this->process->getReturn());
+            $this->onComplete($this->process->getReturn());
 
             return;
         }
