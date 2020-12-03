@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App;
 
+use Temporal\Client\Workflow;
 use Temporal\Client\Workflow\QueryMethod;
 use Temporal\Client\Workflow\SignalMethod;
 use Temporal\Client\Workflow\WorkflowInterface;
