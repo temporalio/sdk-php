@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace App;
 
+use Temporal\Client\Activity;
+
 class SimpleActivity
 {
     #[\Temporal\Client\Activity\ActivityMethod]

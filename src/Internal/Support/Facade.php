@@ -60,12 +60,24 @@ abstract class Facade
     /**
      * @return object<T>
      */
-    private static function getCurrentContext(): object
+    protected static function getCurrentContext(): object
     {
         if (self::$ctx === null) {
             throw new \RuntimeException(self::ERROR_NO_CONTEXT);
         }
 
         return self::$ctx;
+    }
+
+    /**
+     * @return int
+     */
+    public static function getContextId(): int
+    {
+        if (self::$ctx === null) {
+            throw new \RuntimeException(self::ERROR_NO_CONTEXT);
+        }
+
+        return \spl_object_id(self::$ctx);
     }
 }

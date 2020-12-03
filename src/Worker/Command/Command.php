@@ -16,7 +16,7 @@ abstract class Command implements CommandInterface
     /**
      * @var int
      */
-    private static int $lastId = 9000;
+    protected static int $lastId = 9000;
 
     /**
      * @var int
@@ -36,10 +36,10 @@ abstract class Command implements CommandInterface
      */
     private function getNextId(): int
     {
-        $next = ++self::$lastId;
+        $next = ++static::$lastId;
 
         if ($next >= \PHP_INT_MAX) {
-            $next = self::$lastId = 1;
+            $next = static::$lastId = 1;
         }
 
         return $next;

@@ -14,7 +14,7 @@ namespace Temporal\Client\Internal\Transport\Router;
 use React\Promise\Deferred;
 use Temporal\Client\Internal\Workflow\RunningWorkflows;
 
-class StackTrace extends Route
+final class StackTrace extends Route
 {
     /**
      * @var string

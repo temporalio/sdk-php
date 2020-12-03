@@ -11,9 +11,11 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Workflow;
 
-use Temporal\Client\Workflow\Execution\ExecutionContext;
+use React\Promise\CancellablePromiseInterface;
+use React\Promise\PromiseInterface;
 
-class Process extends ExecutionContext
+interface CancellationScopeInterface extends
+    PromiseInterface,
+    CancellablePromiseInterface
 {
-
 }

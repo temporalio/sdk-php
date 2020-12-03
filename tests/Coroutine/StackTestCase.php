@@ -20,7 +20,8 @@ class StackTestCase extends CoroutineTestCase
      */
     public function testStackInjectable(): void
     {
-        $stack = new Stack([5, 6, 7], [1, 4]);
+        $stack = new Stack([5, 6, 7]);
+        $stack->push([1, 4]);
 
         $this->assertSame($stack->current(), 1);
 

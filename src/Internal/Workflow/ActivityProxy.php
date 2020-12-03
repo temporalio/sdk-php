@@ -9,24 +9,22 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Workflow;
+namespace Temporal\Client\Internal\Workflow;
 
 use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Client\Internal\Declaration\Prototype\Collection;
-use Temporal\Client\Internal\Workflow\WorkflowContextInterface;
+use Temporal\Client\Workflow\Context\RequestsInterface;
 
 /**
+ * @internal ActivityProxy is an internal library class, please do not use it in your code.
+ * @psalm-internal Temporal\Client
+ *
  * @psalm-template Activity of object
  */
 class ActivityProxy
 {
-    /**
-     * @var WorkflowContextInterface
-     */
-    private WorkflowContextInterface $context;
-
     /**
      * @var ActivityPrototype[]
      */
@@ -38,19 +36,24 @@ class ActivityProxy
     private ActivityOptions $options;
 
     /**
+     * @var RequestsInterface
+     */
+    private RequestsInterface $requests;
+
+    /**
      * @param class-string<Activity> $class
      * @param ActivityOptions $options
-     * @param WorkflowContextInterface $context
+     * @param RequestsInterface $requests
      * @param Collection<ActivityPrototype> $activities
      */
     public function __construct(
         string $class,
         ActivityOptions $options,
-        WorkflowContextInterface $context,
+        RequestsInterface $requests,
         Collection $activities
     ) {
-        $this->context = $context;
         $this->options = $options;
+        $this->requests = $requests;
 
         $this->activities = [...$this->filterActivities($activities, $class)];
     }
@@ -102,7 +105,7 @@ class ActivityProxy
 
         $method = $activity ? $activity->getName() : $method;
 
-        return $this->context->executeActivity($method, $arguments, $this->options);
+        return $this->requests->executeActivity($method, $arguments, $this->options);
     }
 
     /**

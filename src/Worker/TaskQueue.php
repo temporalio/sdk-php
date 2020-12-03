@@ -26,6 +26,8 @@ use Temporal\Client\Internal\Transport\ClientInterface;
 use Temporal\Client\Internal\Transport\Router;
 use Temporal\Client\Internal\Transport\RouterInterface;
 use Temporal\Client\Worker\Command\RequestInterface;
+use Temporal\Client\Worker\Environment\Environment;
+use Temporal\Client\Worker\Environment\EnvironmentInterface;
 
 class TaskQueue implements TaskQueueInterface
 {

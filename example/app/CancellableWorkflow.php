@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App;
 
 use Temporal\Client\Promise;
+use Temporal\Client\Workflow;
 use Temporal\Client\Workflow\WorkflowInterface;
 use Temporal\Client\Workflow\WorkflowMethod;
 
@@ -21,7 +22,7 @@ class CancellableWorkflow
     #[WorkflowMethod(name: 'CancellableWorkflow')]
     public function handle()
     {
-        $first = Workflow::newCancellationScope(function () {
+        $first = yield Workflow::newCancellationScope(function () {
             $activities = Workflow::newActivityStub(SimpleActivity::class);
 
             return $activities->echo(42);

@@ -9,36 +9,19 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Workflow;
+namespace Temporal\Client\Workflow\Context;
 
 use JetBrains\PhpStorm\ExpectedValues;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
-use Temporal\Client\Worker\EnvironmentInterface;
-use Temporal\Client\Workflow\Execution\ExecutionContext;
+use Temporal\Client\Internal\Support\DateInterval;
+use Temporal\Client\Internal\Transport\ClientInterface;
 
-interface WorkflowContextInterface extends EnvironmentInterface
+/**
+ * @psalm-import-type DateIntervalFormat from DateInterval
+ */
+interface RequestsInterface extends ClientInterface
 {
-    /**
-     * @return WorkflowInfo
-     */
-    public function getInfo(): WorkflowInfo;
-
-    /**
-     * @return array
-     */
-    public function getArguments(): array;
-
-    /**
-     * @template ActivityType
-     * @psalm-param class-string<ActivityType> $name
-     * @psalm-return ActivityType|ActivityProxy<ActivityType>
-     *
-     * @param string $name
-     * @return ActivityProxy
-     */
-    public function newActivityStub(string $name): ActivityProxy;
-
     /**
      * @param string $changeId
      * @param int $minSupported
@@ -49,12 +32,12 @@ interface WorkflowContextInterface extends EnvironmentInterface
 
     /**
      * @psalm-type SideEffectCallback = callable(): mixed
-     * @psalm-param SideEffectCallback $cb
+     * @psalm-param SideEffectCallback $context
      *
-     * @param callable $cb
+     * @param callable $context
      * @return PromiseInterface
      */
-    public function sideEffect(callable $cb): PromiseInterface;
+    public function sideEffect(callable $context): PromiseInterface;
 
     /**
      * @param mixed $result
@@ -78,22 +61,23 @@ interface WorkflowContextInterface extends EnvironmentInterface
     ): PromiseInterface;
 
     /**
-     * @param string|int|float|\DateInterval $interval
+     * @psalm-template ActivityType
+     * @psalm-param class-string<ActivityType> $name
+     * @psalm-return ActivityType
+     *
+     * @param string $name
+     * @return object
+     */
+    public function newActivityStub(
+        string $name,
+        #[ExpectedValues(values: ActivityOptions::class)]
+        $options = null
+    ): object;
+
+    /**
+     * @param DateIntervalFormat $interval
      * @return PromiseInterface
      * @see DateInterval
-     *
-     * @psalm-import-type DateIntervalFormat from DateInterval
      */
     public function timer($interval): PromiseInterface;
-
-    /**
-     * @return array
-     */
-    public function getDebugBacktrace(): array;
-
-    /**
-     * @param callable $handler
-     * @return ExecutionContext
-     */
-    public function newCancellationScope(callable $handler): ExecutionContext;
 }

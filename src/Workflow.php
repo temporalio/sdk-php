@@ -11,25 +11,26 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
+use Carbon\CarbonTimeZone;
 use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Internal\Support\Facade;
 use Temporal\Client\Internal\Transport\FutureInterface;
-use Temporal\Client\Internal\Workflow\CancellationScope;
-use Temporal\Client\Internal\Workflow\WorkflowContextInterface;
-use Temporal\Client\Workflow\ActivityProxy;
+use Temporal\Client\Internal\Workflow\ActivityProxy;
+use Temporal\Client\Workflow\CancellationScopeInterface;
 use Temporal\Client\Workflow\WorkflowInfo;
 
 /**
- * @method static string getProcessId()
  * @method static array getArguments()
  * @method static WorkflowInfo getInfo()
  *
+ * @method static CarbonTimeZone getTimeZone()
  * @method static \DateTimeInterface now()
- * @method static int[] getSendRequestIdentifiers()
+ * @method static string|null getRunId()
  * @method static bool isReplaying()
  *
+ * @method static CancellationScopeInterface newCancellationScope(callable $handler)
+ *
  * @method static ActivityProxy|object newActivityStub(string $class, array|ActivityOptions $options = null)
- * @method static CancellationScope|object newCancellationScope(callable $handler)
  * @method static FutureInterface sideEffect(callable $cb)
  * @method static FutureInterface complete(mixed $result = null)
  * @method static FutureInterface executeActivity(string $class, array $args, array|ActivityOptions $options = null)

@@ -23,7 +23,6 @@ use Temporal\Client\Internal\Marshaller\Type\ObjectType;
  * seconds and uses `ceil($interval->s)` as the duration. But is subjected to
  * change in the future.
  *
- * @psalm-import-type DateIntervalFormat from DateInterval
  * @psalm-import-type RetryOptionsArray from RetryOptions
  */
 class ActivityOptions

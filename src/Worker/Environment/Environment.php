@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Worker;
+namespace Temporal\Client\Worker\Environment;
 
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
@@ -35,22 +35,22 @@ class Environment implements EnvironmentInterface
     /**
      * @var CarbonTimeZone
      */
-    private CarbonTimeZone $zone;
+    protected CarbonTimeZone $zone;
 
     /**
      * @var CarbonInterface
      */
-    private CarbonInterface $tickTime;
+    protected CarbonInterface $tickTime;
 
     /**
      * @var string|null
      */
-    private ?string $runId = null;
+    protected ?string $runId = null;
 
     /**
      * @var bool
      */
-    private bool $isReplaying = false;
+    protected bool $isReplaying = false;
 
     /**
      * Environment constructor.
