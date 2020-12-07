@@ -12,13 +12,18 @@ declare(strict_types=1);
 namespace Temporal\Client\Internal\Transport\Router;
 
 use React\Promise\Deferred;
-use Temporal\Client\Internal\Declaration\Prototype\Collection;
+use Temporal\Client\Internal\Declaration\Instantiator\WorkflowInstantiator;
 use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Client\Internal\Marshaller\MarshallerInterface;
 use Temporal\Client\Internal\Repository\RepositoryInterface;
-use Temporal\Client\Internal\Worker\OldTaskQueue;
-use Temporal\Client\Internal\Workflow\RunningWorkflows;
-use Temporal\Client\Internal\Workflow\WorkflowContext;
+use Temporal\Client\Internal\ServiceContainer;
+use Temporal\Client\Internal\Workflow\Input;
+use Temporal\Client\Internal\Workflow\Process\Process;
+use Temporal\Client\Internal\Workflow\ProcessCollection;
+use Temporal\Client\Internal\Workflow\Requests;
+use Temporal\Client\Worker\TaskQueue;
 use Temporal\Client\Workflow\ProcessInterface;
+use Temporal\Client\Workflow\WorkflowContext;
 use Temporal\Client\Workflow\WorkflowInfo;
 
 final class StartWorkflow extends Route
@@ -34,30 +39,32 @@ final class StartWorkflow extends Route
     private const ERROR_ALREADY_RUNNING = 'Workflow "%s" with run id "%s" has been already started';
 
     /**
-     * @var RunningWorkflows
+     * @var RepositoryInterface
      */
-    private RunningWorkflows $running;
+    private RepositoryInterface $running;
 
     /**
-     * @var Collection<WorkflowPrototype>
+     * @var ServiceContainer
      */
-    private Collection $workflows;
+    private ServiceContainer $services;
 
     /**
-     * @var OldTaskQueue
+     * @var WorkflowInstantiator
      */
-    private OldTaskQueue $worker;
+    private WorkflowInstantiator $instantiator;
 
     /**
-     * @param RepositoryInterface<WorkflowPrototype> $workflows
-     * @param RepositoryInterface<ProcessInterface> $running
-     * @param OldTaskQueue $worker
+     * @param ServiceContainer $services
+     * @param RepositoryInterface $running
      */
-    public function __construct(RepositoryInterface $workflows, RepositoryInterface $running, OldTaskQueue $worker)
-    {
+    public function __construct(
+        ServiceContainer $services,
+        RepositoryInterface $running
+    ) {
+        $this->instantiator = new WorkflowInstantiator();
+
         $this->running = $running;
-        $this->workflows = $workflows;
-        $this->worker = $worker;
+        $this->services = $services;
     }
 
     /**
@@ -66,23 +73,29 @@ final class StartWorkflow extends Route
      */
     public function handle(array $payload, array $headers, Deferred $resolver): void
     {
-        $context = $this->createContext($payload);
-        $info = $context->getInfo();
+        /** @var Input $input */
+        $input = $this->services->marshaller->unmarshal($payload, new Input());
 
-        $process = $this->running->run($this->worker, $context, $this->findWorkflowOrFail($info));
+        $instance = $this->instantiator->instantiate(
+            $this->findWorkflowOrFail($input->getInfo())
+        );
 
-        $process->next();
-        $resolver->resolve(['WorkflowExecution' => $info->execution]);
-    }
+        $requests = new Requests(
+            $this->services->marshaller,
+            $this->services->env,
+            $this->services->client,
+            $this->services->activities,
+        );
 
-    /**
-     * @param array $payload
-     * @return WorkflowContext
-     * @throws \Exception
-     */
-    private function createContext(array $payload): WorkflowContext
-    {
-        return new WorkflowContext($this->worker, $this->running, $payload);
+        $process = new Process(
+            $this->services->loop,
+            $this->services->env,
+            $input,
+            $requests,
+            $instance
+        );
+
+        $this->running->add($process);
     }
 
     /**
@@ -91,7 +104,7 @@ final class StartWorkflow extends Route
      */
     private function findWorkflowOrFail(WorkflowInfo $info): WorkflowPrototype
     {
-        $workflow = $this->workflows->find($info->type->name);
+        $workflow = $this->services->workflows->find($info->type->name);
 
         if ($workflow === null) {
             throw new \OutOfRangeException(\sprintf(self::ERROR_NOT_FOUND, $info->type->name));

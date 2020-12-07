@@ -11,9 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Internal\Transport\Router;
 
-use Temporal\Client\Internal\Declaration\WorkflowInstance;
+use Temporal\Client\Internal\Declaration\WorkflowInstanceInterface;
+use Temporal\Client\Internal\Repository\RepositoryInterface;
 use Temporal\Client\Internal\Workflow\Process\Process;
-use Temporal\Client\Internal\Workflow\RunningWorkflows;
 
 abstract class WorkflowProcessAwareRoute extends Route
 {
@@ -23,27 +23,27 @@ abstract class WorkflowProcessAwareRoute extends Route
     private const ERROR_PROCESS_NOT_FOUND = 'Workflow with the specified run identifier "%s" not found';
 
     /**
-     * @var RunningWorkflows
+     * @var RepositoryInterface
      */
-    protected RunningWorkflows $running;
+    protected RepositoryInterface $running;
 
     /**
-     * @param RunningWorkflows $running
+     * @param RepositoryInterface $running
      */
-    public function __construct(RunningWorkflows $running)
+    public function __construct(RepositoryInterface $running)
     {
         $this->running = $running;
     }
 
     /**
      * @param string $runId
-     * @return WorkflowInstance
+     * @return WorkflowInstanceInterface
      */
-    protected function findInstanceOrFail(string $runId): WorkflowInstance
+    protected function findInstanceOrFail(string $runId): WorkflowInstanceInterface
     {
         $process = $this->findProcessOrFail($runId);
 
-        return $process->getInstance();
+        return $process->getWorkflowInstance();
     }
 
     /**

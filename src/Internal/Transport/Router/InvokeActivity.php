@@ -18,8 +18,7 @@ use Temporal\Client\Activity\ActivityInfo;
 use Temporal\Client\Exception\DoNotCompleteOnResultException;
 use Temporal\Client\Internal\Declaration\Instantiator\ActivityInstantiator;
 use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
-use Temporal\Client\Internal\Declaration\Prototype\Collection;
-use Temporal\Client\Internal\Marshaller\MarshallerInterface;
+use Temporal\Client\Internal\ServiceContainer;
 
 final class InvokeActivity extends Route
 {
@@ -29,28 +28,21 @@ final class InvokeActivity extends Route
     private const ERROR_NOT_FOUND = 'Activity with the specified name "%s" was not registered';
 
     /**
-     * @var Collection<ActivityPrototype>
-     */
-    private Collection $activities;
-
-    /**
      * @var ActivityInstantiator
      */
     private ActivityInstantiator $instantiator;
 
     /**
-     * @var MarshallerInterface
+     * @var ServiceContainer
      */
-    private MarshallerInterface $marshaller;
+    private ServiceContainer $services;
 
     /**
-     * @param MarshallerInterface $marshaller
-     * @param Collection<ActivityPrototype> $activities
+     * @param ServiceContainer $services
      */
-    public function __construct(MarshallerInterface $marshaller, Collection $activities)
+    public function __construct(ServiceContainer $services)
     {
-        $this->marshaller = $marshaller;
-        $this->activities = $activities;
+        $this->services = $services;
         $this->instantiator = new ActivityInstantiator();
     }
 
@@ -59,7 +51,7 @@ final class InvokeActivity extends Route
      */
     public function handle(array $payload, array $headers, Deferred $resolver): void
     {
-        $context = $this->marshaller->unmarshal($payload, new ActivityContext());
+        $context = $this->services->marshaller->unmarshal($payload, new ActivityContext());
 
         $prototype = $this->findDeclarationOrFail($context->getInfo());
         $instance = $this->instantiator->instantiate($prototype);
@@ -86,7 +78,7 @@ final class InvokeActivity extends Route
      */
     private function findDeclarationOrFail(ActivityInfo $info): ActivityPrototype
     {
-        $activity = $this->activities->find($info->type->name);
+        $activity = $this->services->activities->find($info->type->name);
 
         if ($activity === null) {
             throw new \LogicException(\sprintf(self::ERROR_NOT_FOUND, $info->type->name));

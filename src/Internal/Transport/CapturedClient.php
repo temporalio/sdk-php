@@ -17,7 +17,7 @@ use Temporal\Client\Worker\Command\RequestInterface;
 class CapturedClient implements CapturedClientInterface
 {
     /**
-     * @var array<positive-int, RequestInterface>
+     * @var array<positive-int, PromiseInterface>
      */
     private array $requests = [];
 
@@ -40,9 +40,7 @@ class CapturedClient implements CapturedClientInterface
      */
     public function request(RequestInterface $request): PromiseInterface
     {
-        $this->requests[$request->getId()] = $request;
-
-        return $this->parent->request($request)
+        return $this->requests[$request->getId()] = $this->parent->request($request)
             ->then($this->onFulfilled($request), $this->onRejected($request))
         ;
     }
@@ -76,18 +74,10 @@ class CapturedClient implements CapturedClientInterface
     /**
      * {@inheritDoc}
      */
-    public function getUnresolvedRequests(): array
-    {
-        return $this->requests;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public function fetchUnresolvedRequests(): array
     {
         try {
-            return $this->getUnresolvedRequests();
+            return $this->requests;
         } finally {
             $this->requests = [];
         }

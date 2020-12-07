@@ -11,17 +11,12 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Internal\Transport;
 
-use Temporal\Client\Worker\Command\RequestInterface;
+use React\Promise\PromiseInterface;
 
 interface CapturedClientInterface extends ClientInterface, \Countable, \IteratorAggregate
 {
     /**
-     * @return array<RequestInterface>
-     */
-    public function getUnresolvedRequests(): array;
-
-    /**
-     * @return array<RequestInterface>
+     * @return array<PromiseInterface>
      */
     public function fetchUnresolvedRequests(): array;
 }

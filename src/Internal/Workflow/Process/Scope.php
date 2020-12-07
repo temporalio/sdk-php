@@ -14,6 +14,7 @@ namespace Temporal\Client\Internal\Workflow\Process;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use React\Promise\PromisorInterface;
+use Temporal\Client\Exception\CancellationException;
 use Temporal\Client\Internal\Coroutine\CoroutineInterface;
 use Temporal\Client\Internal\Coroutine\Stack;
 use Temporal\Client\Worker\Command\RequestInterface;
@@ -76,9 +77,8 @@ abstract class Scope implements CancellationScopeInterface
      */
     private function canceller(): \Closure
     {
-        return function () {
-            //
-            \error_log('CANCEL!!!!!!!!!!!!!!!!!!!!!!');
+        return static function () {
+            throw new CancellationException('Workflow request has been cancelled');
         };
     }
 

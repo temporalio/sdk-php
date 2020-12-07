@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Internal\Workflow\Process;
 
-
 /**
  * @internal CancellationScope is an internal library class, please do not use it in your code.
  * @psalm-internal Temporal\Client

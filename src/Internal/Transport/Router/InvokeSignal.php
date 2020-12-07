@@ -12,8 +12,9 @@ declare(strict_types=1);
 namespace Temporal\Client\Internal\Transport\Router;
 
 use React\Promise\Deferred;
-use Temporal\Client\Internal\Declaration\WorkflowInstance;
-use Temporal\Client\Internal\Workflow\RunningWorkflows;
+use Temporal\Client\Internal\Declaration\WorkflowInstanceInterface;
+use Temporal\Client\Internal\Repository\RepositoryInterface;
+use Temporal\Client\Worker\LoopInterface;
 use Temporal\Client\Worker\TaskQueueInterface;
 
 final class InvokeSignal extends WorkflowProcessAwareRoute
@@ -24,17 +25,17 @@ final class InvokeSignal extends WorkflowProcessAwareRoute
     private const ERROR_SIGNAL_NOT_FOUND = 'unknown signalType %s. KnownSignalTypes=[%s]';
 
     /**
-     * @var TaskQueueInterface
+     * @var LoopInterface
      */
-    private TaskQueueInterface $worker;
+    private LoopInterface $loop;
 
     /**
-     * @param RunningWorkflows $running
-     * @param TaskQueueInterface $worker
+     * @param RepositoryInterface $running
+     * @param LoopInterface $loop
      */
-    public function __construct(RunningWorkflows $running, TaskQueueInterface $worker)
+    public function __construct(RepositoryInterface $running, LoopInterface $loop)
     {
-        $this->worker = $worker;
+        $this->loop = $loop;
 
         parent::__construct($running);
     }
@@ -50,15 +51,15 @@ final class InvokeSignal extends WorkflowProcessAwareRoute
         $handler = $this->findSignalHandlerOrFail($instance, $name);
 
         $executor = static fn() => $resolver->resolve($handler($payload['args'] ?? []));
-        $this->worker->once(TaskQueueInterface::ON_SIGNAL, $executor);
+        $this->loop->once(TaskQueueInterface::ON_SIGNAL, $executor);
     }
 
     /**
-     * @param WorkflowInstance $instance
+     * @param WorkflowInstanceInterface $instance
      * @param string $name
      * @return \Closure|null
      */
-    private function findSignalHandlerOrFail(WorkflowInstance $instance, string $name): ?\Closure
+    private function findSignalHandlerOrFail(WorkflowInstanceInterface $instance, string $name): ?\Closure
     {
         $handler = $instance->findQueryHandler($name);
 

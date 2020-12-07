@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client\Internal\Transport\Router;
 
 use React\Promise\Deferred;
-use Temporal\Client\Internal\Declaration\WorkflowInstance;
+use Temporal\Client\Internal\Declaration\WorkflowInstanceInterface;
 
 final class InvokeQuery extends WorkflowProcessAwareRoute
 {
@@ -35,11 +35,11 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
     }
 
     /**
-     * @param WorkflowInstance $instance
+     * @param WorkflowInstanceInterface $instance
      * @param string $name
      * @return \Closure|null
      */
-    private function findQueryHandlerOrFail(WorkflowInstance $instance, string $name): ?\Closure
+    private function findQueryHandlerOrFail(WorkflowInstanceInterface $instance, string $name): ?\Closure
     {
         $handler = $instance->findQueryHandler($name);
 

@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Client\Worker;
 
 use React\Promise\PromiseInterface;
-use Spiral\Attributes\ReaderInterface;
 use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Client\Internal\Declaration\Prototype\Collection;
 use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
@@ -24,9 +23,12 @@ use Temporal\Client\Internal\Marshaller\Marshaller;
 use Temporal\Client\Internal\Marshaller\MarshallerInterface;
 use Temporal\Client\Internal\Repository\ArrayRepository;
 use Temporal\Client\Internal\Repository\RepositoryInterface;
+use Temporal\Client\Internal\ServiceContainer;
 use Temporal\Client\Internal\Transport\ClientInterface;
 use Temporal\Client\Internal\Transport\Router;
 use Temporal\Client\Internal\Transport\RouterInterface;
+use Temporal\Client\Internal\Workflow\ProcessCollection;
+use Temporal\Client\Worker;
 use Temporal\Client\Worker\Command\RequestInterface;
 use Temporal\Client\Worker\Environment\Environment;
 use Temporal\Client\Worker\Environment\EnvironmentInterface;
@@ -42,29 +44,9 @@ class TaskQueue implements TaskQueueInterface
     private string $name;
 
     /**
-     * @var ReaderInterface
-     */
-    private ReaderInterface $reader;
-
-    /**
-     * @var MarshallerInterface
-     */
-    private MarshallerInterface $marshaller;
-
-    /**
-     * @var Collection<WorkflowPrototype>
-     */
-    private Collection $workflows;
-
-    /**
      * @var WorkflowReader
      */
     private WorkflowReader $workflowReader;
-
-    /**
-     * @var Collection<ActivityPrototype>
-     */
-    private Collection $activities;
 
     /**
      * @var ActivityReader
@@ -72,34 +54,28 @@ class TaskQueue implements TaskQueueInterface
     private ActivityReader $activityReader;
 
     /**
-     * @var ClientInterface
-     */
-    private ClientInterface $client;
-
-    /**
      * @var RouterInterface
      */
     private RouterInterface $router;
 
     /**
-     * @var EnvironmentInterface
-     */
-    private EnvironmentInterface $env;
-
-    /**
-     * @var RepositoryInterface<ProcessInterface>
+     * @var RepositoryInterface
      */
     private RepositoryInterface $processes;
 
     /**
-     * @param string $name
-     * @param ReaderInterface $reader
+     * @var ServiceContainer
      */
-    public function __construct(string $name, ReaderInterface $reader, ClientInterface $client)
+    private ServiceContainer $services;
+
+    /**
+     * @param string $name
+     * @param Worker $worker
+     */
+    public function __construct(string $name, Worker $worker)
     {
         $this->name = $name;
-        $this->reader = $reader;
-        $this->client = $client;
+        $this->services = new ServiceContainer($worker);
 
         $this->boot();
     }
@@ -109,35 +85,12 @@ class TaskQueue implements TaskQueueInterface
      */
     private function boot(): void
     {
-        $this->env = $this->createEnvironment();
-        $this->marshaller = $this->createMarshaller();
-
-        $this->workflows = new Collection();
-        $this->activities = new Collection();
         $this->processes = new ArrayRepository();
 
-        $this->workflowReader = new WorkflowReader($this->reader);
-        $this->activityReader = new ActivityReader($this->reader);
+        $this->workflowReader = new WorkflowReader($this->services->reader);
+        $this->activityReader = new ActivityReader($this->services->reader);
 
         $this->router = $this->createRouter();
-    }
-
-    /**
-     * @return EnvironmentInterface
-     */
-    protected function createEnvironment(): EnvironmentInterface
-    {
-        return new Environment();
-    }
-
-    /**
-     * @return MarshallerInterface
-     */
-    protected function createMarshaller(): MarshallerInterface
-    {
-        $factory = new AttributeMapperFactory($this->reader);
-
-        return new Marshaller($factory);
     }
 
     /**
@@ -148,13 +101,13 @@ class TaskQueue implements TaskQueueInterface
         $router = new Router();
 
         // Activity routes
-        $router->add(new Router\InvokeActivity($this->marshaller, $this->activities));
+        $router->add(new Router\InvokeActivity($this->services));
 
         // Workflow routes
-        $router->add(new Router\StartWorkflow($this->workflows, $this->processes, $this));
-        // $router->add(new Router\InvokeQuery($this->workflows));
-        // $router->add(new Router\InvokeSignal($this->workflows, $worker));
-        // $router->add(new Router\DestroyWorkflow($this->workflows, $worker));
+        $router->add(new Router\StartWorkflow($this->services, $this->processes));
+        $router->add(new Router\InvokeQuery($this->processes));
+        $router->add(new Router\InvokeSignal($this->processes, $this->services->loop));
+        $router->add(new Router\DestroyWorkflow($this->processes, $this->services->client));
         // $router->add(new Router\StackTrace($this->workflows));
 
         return $router;
@@ -167,7 +120,7 @@ class TaskQueue implements TaskQueueInterface
      */
     public function dispatch(RequestInterface $request, array $headers): PromiseInterface
     {
-        $this->env->update($headers);
+        $this->services->env->update($headers);
 
         return $this->router->dispatch($request, $headers);
     }
@@ -186,7 +139,7 @@ class TaskQueue implements TaskQueueInterface
     public function addWorkflow(string $class, bool $overwrite = false): TaskQueueInterface
     {
         foreach ($this->workflowReader->fromClass($class) as $workflow) {
-            $this->workflows->add($workflow, $overwrite);
+            $this->services->workflows->add($workflow, $overwrite);
         }
 
         return $this;
@@ -195,9 +148,9 @@ class TaskQueue implements TaskQueueInterface
     /**
      * {@inheritDoc}
      */
-    public function getWorkflows(): iterable
+    public function getWorkflows(): RepositoryInterface
     {
-        return $this->workflows;
+        return $this->services->workflows;
     }
 
     /**
@@ -206,7 +159,7 @@ class TaskQueue implements TaskQueueInterface
     public function addActivity(string $class, bool $overwrite = false): TaskQueueInterface
     {
         foreach ($this->activityReader->fromClass($class) as $activity) {
-            $this->activities->add($activity, $overwrite);
+            $this->services->activities->add($activity, $overwrite);
         }
 
         return $this;
@@ -215,8 +168,8 @@ class TaskQueue implements TaskQueueInterface
     /**
      * {@inheritDoc}
      */
-    public function getActivities(): iterable
+    public function getActivities(): RepositoryInterface
     {
-        return $this->activities;
+        return $this->services->activities;
     }
 }

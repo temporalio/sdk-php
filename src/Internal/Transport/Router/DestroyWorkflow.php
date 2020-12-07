@@ -12,11 +12,17 @@ declare(strict_types=1);
 namespace Temporal\Client\Internal\Transport\Router;
 
 use React\Promise\Deferred;
-use Temporal\Client\Internal\Worker\OldTaskQueue;
-use Temporal\Client\Internal\Workflow\RunningWorkflows;
+use Temporal\Client\Internal\Repository\RepositoryInterface;
+use Temporal\Client\Internal\Transport\CapturedClientInterface;
+use Temporal\Client\Workflow;
 
 class DestroyWorkflow extends WorkflowProcessAwareRoute
 {
+    /**
+     * @var string
+     */
+    private const ERROR_PROCESS_NOT_DEFINED = 'Unable to kill workflow because workflow process #%s was not found';
+
     /**
      * @var string
      */
@@ -25,17 +31,17 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
         'of the running workflow process';
 
     /**
-     * @var OldTaskQueue
+     * @var CapturedClientInterface
      */
-    private OldTaskQueue $worker;
+    private CapturedClientInterface $client;
 
     /**
-     * @param RunningWorkflows $running
-     * @param OldTaskQueue $worker
+     * @param RepositoryInterface $running
+     * @param CapturedClientInterface $client
      */
-    public function __construct(RunningWorkflows $running, OldTaskQueue $worker)
+    public function __construct(RepositoryInterface $running, CapturedClientInterface $client)
     {
-        $this->worker = $worker;
+        $this->client = $client;
 
         parent::__construct($running);
     }
@@ -49,7 +55,7 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
 
         $process = $this->findProcessOrFail($runId);
 
-        $requests = $this->running->kill($runId, $this->worker->getClient());
+        $requests = $this->kill($runId);
 
         $info = $process->getContext()->getInfo();
 
@@ -57,5 +63,30 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
             'WorkflowExecution' => $info->execution,
             'CancelRequests'    => $requests,
         ]);
+    }
+
+    /**
+     * @param string $runId
+     * @return array
+     */
+    public function kill(string $runId): array
+    {
+        $process = $this->running->find($runId);
+
+        if ($process === null) {
+            throw new \InvalidArgumentException(\sprintf(self::ERROR_PROCESS_NOT_DEFINED, $runId));
+        }
+
+        Workflow::setCurrentContext(null);
+        $this->running->remove($runId);
+
+        $result = [];
+
+        foreach ($this->client->fetchUnresolvedRequests() as $id => $promise) {
+            $result[] = $id;
+            $promise->cancel();
+        }
+
+        return $result;
     }
 }

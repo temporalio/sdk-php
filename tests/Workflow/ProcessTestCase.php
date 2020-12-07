@@ -13,6 +13,8 @@ namespace Temporal\Tests\Client\Workflow;
 
 use Carbon\CarbonInterval;
 use Temporal\Client\Activity\ActivityOptions;
+use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Client\Internal\Declaration\WorkflowInstance;
 use Temporal\Client\Internal\Transport\Request\CompleteWorkflow;
 use Temporal\Client\Internal\Transport\Request\ExecuteActivity;
 use Temporal\Client\Internal\Transport\Request\GetVersion;
@@ -56,11 +58,19 @@ class ProcessTestCase extends WorkflowTestCase
     /**
      * @param \Closure $handler
      * @return Process
+     * @throws \ReflectionException
      */
     protected function workflow(\Closure $handler): Process
     {
         try {
-            return new Process($this->loop, $this->env, $this->input, $this->requests, $handler);
+            $prototype = new WorkflowPrototype(static::class,
+                new \ReflectionFunction($handler),
+                new \ReflectionObject($this)
+            );
+
+            $instance = new WorkflowInstance($prototype, $this);
+
+            return new Process($this->loop, $this->env, $this->input, $this->requests, $instance);
         } finally {
             $this->loop->tick();
         }

@@ -26,6 +26,8 @@ use Temporal\Client\Internal\Queue\QueueInterface;
 use Temporal\Client\Internal\Queue\SplQueue;
 use Temporal\Client\Internal\Repository\ArrayRepository;
 use Temporal\Client\Internal\Repository\RepositoryInterface;
+use Temporal\Client\Internal\Transport\CapturedClient;
+use Temporal\Client\Internal\Transport\CapturedClientInterface;
 use Temporal\Client\Internal\Transport\Client;
 use Temporal\Client\Internal\Transport\ClientInterface;
 use Temporal\Client\Internal\Transport\Router;
@@ -101,9 +103,9 @@ final class Worker implements FactoryInterface
     private CodecInterface $codec;
 
     /**
-     * @var ClientInterface
+     * @var CapturedClientInterface
      */
-    private ClientInterface $client;
+    private CapturedClientInterface $client;
 
     /**
      * @var ServerInterface
@@ -196,12 +198,14 @@ final class Worker implements FactoryInterface
     }
 
     /**
-     * @return ClientInterface
+     * @return CapturedClientInterface
      */
     #[Pure]
-    private function createClient(): ClientInterface
+    private function createClient(): CapturedClientInterface
     {
-        return new Client($this->responses);
+        return new CapturedClient(
+            new Client($this->responses)
+        );
     }
 
     /**
@@ -254,7 +258,23 @@ final class Worker implements FactoryInterface
      */
     public function create(string $taskQueue = self::DEFAULT_TASK_QUEUE): TaskQueueInterface
     {
-        return new TaskQueue($taskQueue, $this->reader, $this->client);
+        return new TaskQueue($taskQueue, $this);
+    }
+
+    /**
+     * @return ReaderInterface
+     */
+    public function getReader(): ReaderInterface
+    {
+        return $this->reader;
+    }
+
+    /**
+     * @return CapturedClientInterface
+     */
+    public function getClient(): CapturedClientInterface
+    {
+        return $this->client;
     }
 
     /**

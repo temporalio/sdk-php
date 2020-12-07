@@ -14,7 +14,7 @@ namespace Temporal\Client\Internal\Workflow;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
-use Temporal\Client\Internal\Declaration\Prototype\Collection;
+use Temporal\Client\Internal\Repository\RepositoryInterface;
 use Temporal\Client\Workflow\Context\RequestsInterface;
 
 /**
@@ -28,7 +28,7 @@ class ActivityProxy
     /**
      * @var ActivityPrototype[]
      */
-    private iterable $activities;
+    private array $activities;
 
     /**
      * @var ActivityOptions
@@ -44,26 +44,28 @@ class ActivityProxy
      * @param class-string<Activity> $class
      * @param ActivityOptions $options
      * @param RequestsInterface $requests
-     * @param Collection<ActivityPrototype> $activities
+     * @param RepositoryInterface<ActivityPrototype> $activities
      */
     public function __construct(
         string $class,
         ActivityOptions $options,
         RequestsInterface $requests,
-        Collection $activities
+        RepositoryInterface $activities
     ) {
         $this->options = $options;
         $this->requests = $requests;
 
-        $this->activities = [...$this->filterActivities($activities, $class)];
+        $this->activities = [
+            ...$this->filterActivities($activities, $class)
+        ];
     }
 
     /**
      * @param ActivityPrototype[] $activities
      * @param string $class
-     * @return iterable
+     * @return \Traversable
      */
-    private function filterActivities(iterable $activities, string $class): iterable
+    private function filterActivities(iterable $activities, string $class): \Traversable
     {
         foreach ($activities as $activity) {
             if ($this->matchClass($activity, $class)) {

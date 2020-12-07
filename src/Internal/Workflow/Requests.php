@@ -17,9 +17,11 @@ use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Client\Internal\Declaration\Prototype\Collection;
 use Temporal\Client\Internal\Marshaller\MarshallerInterface;
+use Temporal\Client\Internal\Repository\RepositoryInterface;
 use Temporal\Client\Internal\Support\DateInterval;
 use Temporal\Client\Internal\Transport\CapturedClient;
 use Temporal\Client\Internal\Transport\CapturedClientInterface;
+use Temporal\Client\Internal\Transport\ClientInterface;
 use Temporal\Client\Internal\Transport\Request\CompleteWorkflow;
 use Temporal\Client\Internal\Transport\Request\ExecuteActivity;
 use Temporal\Client\Internal\Transport\Request\GetVersion;
@@ -53,25 +55,25 @@ final class Requests implements RequestsInterface
     private EnvironmentInterface $env;
 
     /**
-     * @var Collection<ActivityPrototype>
+     * @var RepositoryInterface<ActivityPrototype>
      */
-    private Collection $activities;
+    private RepositoryInterface $activities;
 
     /**
      * @param MarshallerInterface $marshaller
      * @param EnvironmentInterface $env
-     * @param CapturedClientInterface $client
-     * @param Collection<ActivityPrototype>
+     * @param ClientInterface $client
+     * @param RepositoryInterface<ActivityPrototype>
      */
     public function __construct(
         MarshallerInterface $marshaller,
         EnvironmentInterface $env,
-        CapturedClientInterface $client,
-        Collection $activities
+        ClientInterface $client,
+        RepositoryInterface $activities
     ) {
         $this->marshaller = $marshaller;
         $this->env = $env;
-        $this->client = $client;
+        $this->client = new CapturedClient($client);
         $this->activities = $activities;
     }
 
