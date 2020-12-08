@@ -59,9 +59,9 @@ class TaskQueue implements TaskQueueInterface
     private RouterInterface $router;
 
     /**
-     * @var RepositoryInterface
+     * @var ProcessCollection
      */
-    private RepositoryInterface $processes;
+    private ProcessCollection $processes;
 
     /**
      * @var ServiceContainer
@@ -85,7 +85,7 @@ class TaskQueue implements TaskQueueInterface
      */
     private function boot(): void
     {
-        $this->processes = new ArrayRepository();
+        $this->processes = new ProcessCollection($this->services->client);
 
         $this->workflowReader = new WorkflowReader($this->services->reader);
         $this->activityReader = new ActivityReader($this->services->reader);
@@ -107,7 +107,7 @@ class TaskQueue implements TaskQueueInterface
         $router->add(new Router\StartWorkflow($this->services, $this->processes));
         $router->add(new Router\InvokeQuery($this->processes));
         $router->add(new Router\InvokeSignal($this->processes, $this->services->loop));
-        $router->add(new Router\DestroyWorkflow($this->processes, $this->services->client));
+        //$router->add(new Router\DestroyWorkflow($this->processes, $this->services->client));
         // $router->add(new Router\StackTrace($this->workflows));
 
         return $router;

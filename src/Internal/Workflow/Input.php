@@ -13,23 +13,24 @@ namespace Temporal\Client\Internal\Workflow;
 
 use JetBrains\PhpStorm\Immutable;
 use Temporal\Client\Internal\Marshaller\Meta\Marshal;
-use Temporal\Client\Workflow\Context\InputInterface;
 use Temporal\Client\Workflow\WorkflowInfo;
 
 #[Immutable]
-final class Input implements InputInterface
+final class Input
 {
     /**
      * @var WorkflowInfo
      */
     #[Marshal(name: 'info')]
-    private WorkflowInfo $info;
+    #[Immutable]
+    public WorkflowInfo $info;
 
     /**
      * @var array
      */
     #[Marshal(name: 'args')]
-    private array $args;
+    #[Immutable]
+    public array $args;
 
     /**
      * @param WorkflowInfo $info
@@ -39,21 +40,5 @@ final class Input implements InputInterface
     {
         $this->info = $info ?? new WorkflowInfo();
         $this->args = $args;
-    }
-
-    /**
-     * @return WorkflowInfo
-     */
-    public function getInfo(): WorkflowInfo
-    {
-        return $this->info;
-    }
-
-    /**
-     * @return array
-     */
-    public function getArguments(): array
-    {
-        return $this->args;
     }
 }

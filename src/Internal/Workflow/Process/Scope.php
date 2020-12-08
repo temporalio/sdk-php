@@ -17,11 +17,15 @@ use React\Promise\PromisorInterface;
 use Temporal\Client\Exception\CancellationException;
 use Temporal\Client\Internal\Coroutine\CoroutineInterface;
 use Temporal\Client\Internal\Coroutine\Stack;
+use Temporal\Client\Internal\Transport\Request\Cancel;
+use Temporal\Client\Worker\Command\Request;
 use Temporal\Client\Worker\Command\RequestInterface;
 use Temporal\Client\Worker\LoopInterface;
 use Temporal\Client\Workflow;
 use Temporal\Client\Workflow\CancellationScopeInterface;
-use Temporal\Client\Workflow\WorkflowContextInterface;
+use Temporal\Client\Workflow\WorkflowContext;
+
+use function React\Promise\resolve;
 
 /**
  * @internal Scope is an internal library class, please do not use it in your code.
@@ -30,9 +34,9 @@ use Temporal\Client\Workflow\WorkflowContextInterface;
 abstract class Scope implements CancellationScopeInterface
 {
     /**
-     * @var WorkflowContextInterface
+     * @var WorkflowContext
      */
-    protected WorkflowContextInterface $context;
+    protected WorkflowContext $context;
 
     /**
      * @var CoroutineInterface
@@ -50,11 +54,11 @@ abstract class Scope implements CancellationScopeInterface
     private Deferred $deferred;
 
     /**
-     * @param WorkflowContextInterface $ctx
+     * @param WorkflowContext $ctx
      * @param callable $handler
      * @param array $arguments
      */
-    public function __construct(WorkflowContextInterface $ctx, LoopInterface $loop, callable $handler, array $args = [])
+    public function __construct(WorkflowContext $ctx, LoopInterface $loop, callable $handler, array $args = [])
     {
         $this->context = $ctx;
         $this->loop = $loop;
@@ -77,8 +81,8 @@ abstract class Scope implements CancellationScopeInterface
      */
     private function canceller(): \Closure
     {
-        return static function () {
-            throw new CancellationException('Workflow request has been cancelled');
+        return function () {
+            $this->cancel();
         };
     }
 
@@ -111,11 +115,6 @@ abstract class Scope implements CancellationScopeInterface
     }
 
     /**
-     * @param mixed $result
-     */
-    abstract protected function onComplete($result): void;
-
-    /**
      * @return void
      */
     protected function next(): void
@@ -128,7 +127,11 @@ abstract class Scope implements CancellationScopeInterface
             return;
         }
 
-        $current = $this->process->current();
+        try {
+            $current = $this->process->current();
+        } catch (CancellationException $_) {
+            $this->cancel();
+        }
 
         switch (true) {
             case $current instanceof PromiseInterface:
@@ -152,6 +155,11 @@ abstract class Scope implements CancellationScopeInterface
                 $this->process->send($current);
         }
     }
+
+    /**
+     * @param mixed $result
+     */
+    abstract protected function onComplete($result): void;
 
     /**
      * @param PromiseInterface $promise
@@ -181,12 +189,31 @@ abstract class Scope implements CancellationScopeInterface
     }
 
     /**
-     * {@inheritDoc}
+     * @return array<positive-int, PromiseInterface>
      */
-    public function cancel(): void
+    public function fetchUnresolvedRequests(): array
     {
-        $promise = $this->deferred->promise();
-        $promise->cancel();
+        $client = $this->context->getClient();
+
+        return $client->fetchUnresolvedRequests();
+    }
+
+    /**
+     * @return PromiseInterface
+     */
+    public function cancel(): PromiseInterface
+    {
+        $requests = [];
+
+        foreach ($this->fetchUnresolvedRequests() as $id => $_) {
+            $requests[] = $id;
+        }
+
+        if (\count($requests)) {
+            return $this->context->request(new Cancel($requests));
+        }
+
+        return resolve();
     }
 
     /**

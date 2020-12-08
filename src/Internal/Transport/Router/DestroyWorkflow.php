@@ -13,7 +13,8 @@ namespace Temporal\Client\Internal\Transport\Router;
 
 use React\Promise\Deferred;
 use Temporal\Client\Internal\Repository\RepositoryInterface;
-use Temporal\Client\Internal\Transport\CapturedClientInterface;
+use Temporal\Client\Internal\Transport\ClientInterface;
+use Temporal\Client\Internal\Workflow\Process\Process;
 use Temporal\Client\Workflow;
 
 class DestroyWorkflow extends WorkflowProcessAwareRoute
@@ -24,22 +25,15 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
     private const ERROR_PROCESS_NOT_DEFINED = 'Unable to kill workflow because workflow process #%s was not found';
 
     /**
-     * @var string
+     * @var ClientInterface
      */
-    private const ERROR_RID_NOT_DEFINED =
-        'Killing a workflow requires the id (rid argument) ' .
-        'of the running workflow process';
-
-    /**
-     * @var CapturedClientInterface
-     */
-    private CapturedClientInterface $client;
+    private ClientInterface $client;
 
     /**
      * @param RepositoryInterface $running
-     * @param CapturedClientInterface $client
+     * @param ClientInterface $client
      */
-    public function __construct(RepositoryInterface $running, CapturedClientInterface $client)
+    public function __construct(RepositoryInterface $running, ClientInterface $client)
     {
         $this->client = $client;
 
@@ -71,6 +65,7 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
      */
     public function kill(string $runId): array
     {
+        /** @var Process $process */
         $process = $this->running->find($runId);
 
         if ($process === null) {
@@ -80,13 +75,8 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
         Workflow::setCurrentContext(null);
         $this->running->remove($runId);
 
-        $result = [];
+        $process->cancel();
 
-        foreach ($this->client->fetchUnresolvedRequests() as $id => $promise) {
-            $result[] = $id;
-            $promise->cancel();
-        }
-
-        return $result;
+        return [];
     }
 }

@@ -16,7 +16,7 @@ use React\Promise\PromiseInterface;
 interface CapturedClientInterface extends ClientInterface, \Countable, \IteratorAggregate
 {
     /**
-     * @return array<PromiseInterface>
+     * @return array<positive-int, PromiseInterface>
      */
     public function fetchUnresolvedRequests(): array;
 }

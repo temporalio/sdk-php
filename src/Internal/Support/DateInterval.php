@@ -75,6 +75,11 @@ final class DateInterval
     public const FORMAT_MICROSECONDS = 'microseconds';
 
     /**
+     * @var string
+     */
+    public const FORMAT_NANOSECONDS = 'nanoseconds';
+
+    /**
      * @var array<positive-int, DateIntervalFormat>
      */
     private const AVAILABLE_FORMATS = [
@@ -87,6 +92,7 @@ final class DateInterval
         self::FORMAT_SECONDS,
         self::FORMAT_MILLISECONDS,
         self::FORMAT_MICROSECONDS,
+        self::FORMAT_NANOSECONDS,
     ];
 
     /**
@@ -120,6 +126,10 @@ final class DateInterval
 
             case \is_int($interval):
             case \is_float($interval):
+                if ($format === self::FORMAT_NANOSECONDS) {
+                    return CarbonInterval::microseconds($interval / 1000);
+                }
+
                 return CarbonInterval::$format($interval);
 
             default:

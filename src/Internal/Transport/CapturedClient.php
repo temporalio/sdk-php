@@ -19,7 +19,7 @@ class CapturedClient implements CapturedClientInterface
     /**
      * @var array<positive-int, PromiseInterface>
      */
-    private array $requests = [];
+    public array $requests = [];
 
     /**
      * @var ClientInterface

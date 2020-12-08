@@ -12,11 +12,9 @@ declare(strict_types=1);
 namespace Temporal\Client\Internal\Workflow\Process;
 
 use Temporal\Client\Internal\Declaration\WorkflowInstanceInterface;
-use Temporal\Client\Internal\Repository\Identifiable;
-use Temporal\Client\Internal\Workflow\Requests;
-use Temporal\Client\Worker\Environment\EnvironmentInterface;
-use Temporal\Client\Worker\LoopInterface;
-use Temporal\Client\Workflow\Context\InputInterface;
+use Temporal\Client\Internal\ServiceContainer;
+use Temporal\Client\Internal\Workflow\Input;
+use Temporal\Client\Internal\Workflow\ProcessCollection;
 use Temporal\Client\Workflow\ProcessInterface;
 use Temporal\Client\Workflow\WorkflowContext;
 use Temporal\Client\Workflow\WorkflowContextInterface;
@@ -29,24 +27,20 @@ class Process extends Scope implements ProcessInterface
     private WorkflowInstanceInterface $instance;
 
     /**
-     * @param LoopInterface $loop
-     * @param EnvironmentInterface $env
-     * @param InputInterface $input
-     * @param Requests $requests
-     * @param callable $handler
+     * @param ServiceContainer $services
+     * @param WorkflowInstanceInterface $instance
      */
     public function __construct(
-        LoopInterface $loop,
-        EnvironmentInterface $env,
-        InputInterface $input,
-        Requests $requests,
+        Input $input,
+        ProcessCollection $running,
+        ServiceContainer $services,
         WorkflowInstanceInterface $instance
     ) {
         $this->instance = $instance;
 
-        $context = new WorkflowContext($loop, $env, $input, $requests);
+        $context = new WorkflowContext($this, $running, $services, $input);
 
-        parent::__construct($context, $loop, $instance->getHandler(), $context->getArguments());
+        parent::__construct($context, $services->loop, $instance->getHandler(), $context->getArguments());
     }
 
     /**

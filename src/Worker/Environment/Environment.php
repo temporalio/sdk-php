@@ -20,11 +20,6 @@ class Environment implements EnvironmentInterface
     /**
      * @var string
      */
-    private const HEADER_RUN_ID = 'rid';
-
-    /**
-     * @var string
-     */
     private const HEADER_REPLAY = 'replay';
 
     /**
@@ -41,11 +36,6 @@ class Environment implements EnvironmentInterface
      * @var CarbonInterface
      */
     protected CarbonInterface $tickTime;
-
-    /**
-     * @var string|null
-     */
-    protected ?string $runId = null;
 
     /**
      * @var bool
@@ -78,14 +68,6 @@ class Environment implements EnvironmentInterface
     }
 
     /**
-     * @return string|null
-     */
-    public function getRunId(): ?string
-    {
-        return $this->runId;
-    }
-
-    /**
      * @return bool
      */
     public function isReplaying(): bool
@@ -98,7 +80,6 @@ class Environment implements EnvironmentInterface
      */
     public function update(array $headers): void
     {
-        $this->runId = $headers[self::HEADER_RUN_ID] ?? null;
         $this->isReplaying = isset($headers[self::HEADER_REPLAY]) && $headers[self::HEADER_REPLAY] === true;
 
         // Intercept headers

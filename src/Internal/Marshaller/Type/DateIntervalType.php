@@ -30,7 +30,7 @@ class DateIntervalType extends Type implements DetectableTypeInterface
      * @param MarshallerInterface $marshaller
      * @param string $format
      */
-    public function __construct(MarshallerInterface $marshaller, string $format = DateInterval::FORMAT_MILLISECONDS)
+    public function __construct(MarshallerInterface $marshaller, string $format = DateInterval::FORMAT_NANOSECONDS)
     {
         $this->format = $format;
 
@@ -51,6 +51,10 @@ class DateIntervalType extends Type implements DetectableTypeInterface
     public function serialize($value): int
     {
         $method = 'total' . \ucfirst($this->format);
+
+        if ($this->format === DateInterval::FORMAT_NANOSECONDS) {
+            return DateInterval::parse($value, $this->format)->totalMicroseconds * 1000;
+        }
 
         return DateInterval::parse($value, $this->format)->$method;
     }

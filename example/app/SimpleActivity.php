@@ -18,6 +18,7 @@ class SimpleActivity
     #[\Temporal\Client\Activity\ActivityMethod]
     public function echo($value)
     {
+        \sleep(\random_int(1, 3));
         return $value;
     }
 

@@ -25,14 +25,6 @@ trait EnvironmentAwareTrait
     protected EnvironmentInterface $env;
 
     /**
-     * @param EnvironmentInterface $env
-     */
-    protected function setEnvironment(EnvironmentInterface $env)
-    {
-        $this->env = $env;
-    }
-
-    /**
      * {@inheritDoc}
      */
     public function getTimeZone(): CarbonTimeZone
@@ -46,14 +38,6 @@ trait EnvironmentAwareTrait
     public function now(): CarbonInterface
     {
         return $this->env->now();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getRunId(): ?string
-    {
-        return $this->env->getRunId();
     }
 
     /**

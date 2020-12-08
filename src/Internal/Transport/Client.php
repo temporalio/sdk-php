@@ -15,6 +15,7 @@ use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Exception\CancellationException;
 use Temporal\Client\Internal\Queue\QueueInterface;
+use Temporal\Client\Internal\Transport\Request\Cancel;
 use Temporal\Client\Worker\Command\ErrorResponseInterface;
 use Temporal\Client\Worker\Command\RequestInterface;
 use Temporal\Client\Worker\Command\ResponseInterface;
@@ -84,11 +85,14 @@ final class Client implements ClientInterface
         $id = $request->getId();
 
         if (isset($this->requests[$id])) {
-            throw new \LogicException(\sprintf(self::ERROR_REQUEST_ID_DUPLICATION, $id));
+            throw new \OutOfBoundsException(\sprintf(self::ERROR_REQUEST_ID_DUPLICATION, $id));
         }
 
         $this->requests[$id] = $deferred = new Deferred(function () use ($id) {
-            throw new CancellationException("Request with id ${id} was canceled");
+            $this->request(new Cancel([$id]))
+                ->then(function () use ($id) {
+                    $this->fetch($id);
+                });
         });
 
         return $deferred->promise();
@@ -101,7 +105,7 @@ final class Client implements ClientInterface
     private function fetch(int $id): Deferred
     {
         if (! isset($this->requests[$id])) {
-            throw new \LogicException(\sprintf(self::ERROR_REQUEST_NOT_FOUND, $id));
+            throw new \UnderflowException(\sprintf(self::ERROR_REQUEST_NOT_FOUND, $id));
         }
 
         try {
@@ -120,16 +124,5 @@ final class Client implements ClientInterface
         $this->queue->push($request);
 
         return $this->promise($request);
-    }
-
-    /**
-     * @param int $id
-     */
-    public function cancel(int $id): void
-    {
-        $exception = new CancellationException("Request with id ${id} was canceled");
-
-        $deferred = $this->fetch($id);
-        $deferred->reject($exception);
     }
 }

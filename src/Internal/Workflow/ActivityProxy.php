@@ -16,6 +16,7 @@ use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Client\Internal\Repository\RepositoryInterface;
 use Temporal\Client\Workflow\Context\RequestsInterface;
+use Temporal\Client\Workflow\WorkflowContextInterface;
 
 /**
  * @internal ActivityProxy is an internal library class, please do not use it in your code.
@@ -36,24 +37,24 @@ class ActivityProxy
     private ActivityOptions $options;
 
     /**
-     * @var RequestsInterface
+     * @var WorkflowContextInterface
      */
-    private RequestsInterface $requests;
+    private WorkflowContextInterface $context;
 
     /**
      * @param class-string<Activity> $class
      * @param ActivityOptions $options
-     * @param RequestsInterface $requests
+     * @param WorkflowContextInterface $context
      * @param RepositoryInterface<ActivityPrototype> $activities
      */
     public function __construct(
         string $class,
         ActivityOptions $options,
-        RequestsInterface $requests,
+        WorkflowContextInterface $context,
         RepositoryInterface $activities
     ) {
         $this->options = $options;
-        $this->requests = $requests;
+        $this->context = $context;
 
         $this->activities = [
             ...$this->filterActivities($activities, $class)
@@ -107,7 +108,7 @@ class ActivityProxy
 
         $method = $activity ? $activity->getId() : $method;
 
-        return $this->requests->executeActivity($method, $arguments, $this->options);
+        return $this->context->executeActivity($method, $arguments, $this->options);
     }
 
     /**

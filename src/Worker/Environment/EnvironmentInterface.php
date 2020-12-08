@@ -27,11 +27,6 @@ interface EnvironmentInterface
     public function now(): CarbonInterface;
 
     /**
-     * @return string|null
-     */
-    public function getRunId(): ?string;
-
-    /**
      * @return bool
      */
     public function isReplaying(): bool;

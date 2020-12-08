@@ -175,12 +175,16 @@ final class RoadRunner implements ConnectionInterface
     }
 
     /**
-     * @param JsonHeaders $headers
+     * @param JsonHeaders|null $headers
      * @return Headers
      * @throws ProtocolException
      */
-    private function decodeHeaders(string $headers): array
+    private function decodeHeaders(string $headers = null): array
     {
+        if ($headers === null) {
+            return [];
+        }
+
         try {
             $result = \json_decode($headers, true, 4, \JSON_THROW_ON_ERROR);
         } catch (\JsonException $e) {

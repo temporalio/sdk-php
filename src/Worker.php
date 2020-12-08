@@ -103,9 +103,9 @@ final class Worker implements FactoryInterface
     private CodecInterface $codec;
 
     /**
-     * @var CapturedClientInterface
+     * @var ClientInterface
      */
-    private CapturedClientInterface $client;
+    private ClientInterface $client;
 
     /**
      * @var ServerInterface
@@ -201,11 +201,9 @@ final class Worker implements FactoryInterface
      * @return CapturedClientInterface
      */
     #[Pure]
-    private function createClient(): CapturedClientInterface
+    private function createClient(): ClientInterface
     {
-        return new CapturedClient(
-            new Client($this->responses)
-        );
+        return new Client($this->responses);
     }
 
     /**
@@ -270,9 +268,9 @@ final class Worker implements FactoryInterface
     }
 
     /**
-     * @return CapturedClientInterface
+     * @return ClientInterface
      */
-    public function getClient(): CapturedClientInterface
+    public function getClient(): ClientInterface
     {
         return $this->client;
     }

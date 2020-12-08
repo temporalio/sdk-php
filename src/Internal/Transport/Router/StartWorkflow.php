@@ -39,9 +39,9 @@ final class StartWorkflow extends Route
     private const ERROR_ALREADY_RUNNING = 'Workflow "%s" with run id "%s" has been already started';
 
     /**
-     * @var RepositoryInterface
+     * @var ProcessCollection
      */
-    private RepositoryInterface $running;
+    private ProcessCollection $running;
 
     /**
      * @var ServiceContainer
@@ -59,7 +59,7 @@ final class StartWorkflow extends Route
      */
     public function __construct(
         ServiceContainer $services,
-        RepositoryInterface $running
+        ProcessCollection $running
     ) {
         $this->instantiator = new WorkflowInstantiator();
 
@@ -77,23 +77,10 @@ final class StartWorkflow extends Route
         $input = $this->services->marshaller->unmarshal($payload, new Input());
 
         $instance = $this->instantiator->instantiate(
-            $this->findWorkflowOrFail($input->getInfo())
+            $this->findWorkflowOrFail($input->info)
         );
 
-        $requests = new Requests(
-            $this->services->marshaller,
-            $this->services->env,
-            $this->services->client,
-            $this->services->activities,
-        );
-
-        $process = new Process(
-            $this->services->loop,
-            $this->services->env,
-            $input,
-            $requests,
-            $instance
-        );
+        $process = new Process($input, $this->running, $this->services, $instance);
 
         $this->running->add($process);
     }

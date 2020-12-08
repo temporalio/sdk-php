@@ -20,7 +20,6 @@ use Temporal\Client\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Client\Internal\Marshaller\Marshaller;
 use Temporal\Client\Internal\Marshaller\MarshallerInterface;
 use Temporal\Client\Internal\Repository\RepositoryInterface;
-use Temporal\Client\Internal\Transport\CapturedClientInterface;
 use Temporal\Client\Internal\Transport\ClientInterface;
 use Temporal\Client\Worker;
 use Temporal\Client\Worker\Environment\Environment;
@@ -37,10 +36,10 @@ final class ServiceContainer
     public LoopInterface $loop;
 
     /**
-     * @var CapturedClientInterface
+     * @var ClientInterface
      */
     #[Immutable]
-    public CapturedClientInterface $client;
+    public ClientInterface $client;
 
     /**
      * @var ReaderInterface

@@ -11,61 +11,96 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Workflow;
 
-use JetBrains\PhpStorm\Pure;
 use React\Promise\PromiseInterface;
-use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
-use Temporal\Client\Internal\Declaration\Prototype\Collection;
+use Temporal\Client\Activity\ActivityOptions;
+use Temporal\Client\Internal\Repository\RepositoryInterface;
+use Temporal\Client\Internal\ServiceContainer;
+use Temporal\Client\Internal\Support\DateInterval;
+use Temporal\Client\Internal\Transport\CapturedClient;
 use Temporal\Client\Internal\Transport\CapturedClientInterface;
-use Temporal\Client\Internal\Workflow\InputAwareTrait;
+use Temporal\Client\Internal\Transport\ClientInterface;
+use Temporal\Client\Internal\Transport\Request\CompleteWorkflow;
+use Temporal\Client\Internal\Transport\Request\ExecuteActivity;
+use Temporal\Client\Internal\Transport\Request\GetVersion;
+use Temporal\Client\Internal\Transport\Request\NewTimer;
+use Temporal\Client\Internal\Transport\Request\SideEffect;
+use Temporal\Client\Internal\Workflow\ActivityProxy;
+use Temporal\Client\Internal\Workflow\Input;
 use Temporal\Client\Internal\Workflow\Process\CancellationScope;
-use Temporal\Client\Internal\Workflow\Requests;
-use Temporal\Client\Internal\Workflow\RequestsAwareTrait;
+use Temporal\Client\Internal\Workflow\Process\Process;
+use Temporal\Client\Internal\Workflow\ProcessCollection;
+use Temporal\Client\Worker\Command\RequestInterface;
 use Temporal\Client\Worker\Environment\EnvironmentAwareTrait;
-use Temporal\Client\Worker\Environment\EnvironmentInterface;
-use Temporal\Client\Worker\LoopInterface;
-use Temporal\Client\Workflow\Context\InputInterface;
 
-class WorkflowContext implements WorkflowContextInterface
+use function React\Promise\reject;
+
+class WorkflowContext implements WorkflowContextInterface, ClientInterface
 {
-    use InputAwareTrait;
-    use RequestsAwareTrait;
     use EnvironmentAwareTrait;
 
     /**
-     * @var Collection<ActivityPrototype>
+     * @var ServiceContainer
      */
-    private Collection $activities;
+    protected ServiceContainer $services;
 
     /**
-     * @var LoopInterface
+     * @var CapturedClientInterface
      */
-    private LoopInterface $loop;
+    protected CapturedClientInterface $client;
 
     /**
-     * @param LoopInterface $loop
-     * @param EnvironmentInterface $env
-     * @param InputInterface $input
-     * @param Requests $requests
+     * @var Input
      */
-    public function __construct(
-        LoopInterface $loop,
-        EnvironmentInterface $env,
-        InputInterface $input,
-        Requests $requests
-    ) {
-        $this->env = $env;
+    private Input $input;
+
+    /**
+     * @var ProcessCollection
+     */
+    private ProcessCollection $running;
+
+    /**
+     * @var Process
+     */
+    private Process $current;
+
+    /**
+     * @param RepositoryInterface $running
+     * @param ServiceContainer $services
+     * @param Input $input
+     */
+    public function __construct(Process $current, ProcessCollection $running, ServiceContainer $services, Input $input)
+    {
+        $this->current = $current;
+        $this->running = $running;
         $this->input = $input;
-        $this->requests = $requests;
-        $this->loop = $loop;
+        $this->services = $services;
+
+        $this->env = $services->env;
+        $this->client = new CapturedClient($services->client);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getInfo(): WorkflowInfo
+    {
+        return $this->input->info;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getArguments(): array
+    {
+        return $this->input->args;
     }
 
     /**
      * @return CapturedClientInterface
      */
-    #[Pure]
     public function getClient(): CapturedClientInterface
     {
-        return $this->requests->getClient();
+        return $this->client;
     }
 
     /**
@@ -74,18 +109,86 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function newCancellationScope(callable $handler): CancellationScope
     {
-        return new CancellationScope($this->withNewScope(), $this->loop, \Closure::fromCallable($handler));
+        $self = clone $this;
+        $self->client = new CapturedClient($this->client);
+
+        return new CancellationScope($self, $this->services->loop, \Closure::fromCallable($handler));
     }
 
     /**
-     * @return $this
+     * {@inheritDoc}
      */
-    #[Pure]
-    public function withNewScope(): self
+    public function getVersion(string $changeId, int $minSupported, int $maxSupported): PromiseInterface
     {
-        $self = clone $this;
-        $self->requests = $this->requests->withNewScope();
+        return $this->request(
+            new GetVersion($changeId, $minSupported, $maxSupported)
+        );
+    }
 
-        return $self;
+    /**
+     * {@inheritDoc}
+     */
+    public function request(RequestInterface $request): PromiseInterface
+    {
+        return $this->client->request($request);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function sideEffect(callable $context): PromiseInterface
+    {
+        $isReplaying = $this->env->isReplaying();
+
+        try {
+            $value = $isReplaying ? null : $context();
+        } catch (\Throwable $e) {
+            return reject($e);
+        }
+
+        return $this->request(new SideEffect($value));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function complete($result = null): PromiseInterface
+    {
+        return $this->current->cancel()
+            ->then(function () use ($result) {
+                return $this->request(new CompleteWorkflow($result));
+            });
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function executeActivity(string $name, array $args = [], ActivityOptions $options = null): PromiseInterface
+    {
+        $options ??= new ActivityOptions();
+
+        return $this->request(
+            new ExecuteActivity($name, $args, $this->services->marshaller->marshal($options))
+        );
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function newActivityStub(string $name, ActivityOptions $options = null): object
+    {
+        $options ??= new ActivityOptions();
+
+        return new ActivityProxy($name, $options, $this, $this->services->activities);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function timer($interval): PromiseInterface
+    {
+        return $this->request(
+            new NewTimer(DateInterval::parse($interval, DateInterval::FORMAT_SECONDS))
+        );
     }
 }

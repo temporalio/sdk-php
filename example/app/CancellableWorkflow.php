@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace App;
 
+use Temporal\Client\Activity\ActivityOptions;
+use Temporal\Client\Internal\Support\DateInterval;
 use Temporal\Client\Promise;
 use Temporal\Client\Workflow;
 use Temporal\Client\Workflow\WorkflowInterface;
@@ -19,27 +21,33 @@ use Temporal\Client\Workflow\WorkflowMethod;
 #[WorkflowInterface]
 class CancellableWorkflow
 {
+    private ActivityOptions $options;
+
+    public function __construct()
+    {
+        $this->options = new ActivityOptions();
+        $this->options->startToCloseTimeout = DateInterval::parse('10s');
+    }
+
     #[WorkflowMethod(name: 'CancellableWorkflow')]
     public function handle()
     {
-        $first = yield Workflow::newCancellationScope(function () {
-            $activities = Workflow::newActivityStub(SimpleActivity::class);
+        $first = Workflow::newCancellationScope(function () {
+            $activities = Workflow::newActivityStub(SimpleActivity::class, $this->options);
 
-            return $activities->echo(42);
+            return yield $activities->echo(42);
         });
 
         $second = Workflow::newCancellationScope(function () {
-            $activities = Workflow::newActivityStub(SimpleActivity::class);
+            $activities = Workflow::newActivityStub(SimpleActivity::class, $this->options);
 
-            return $activities->echo(23);
+            return yield $activities->echo(23);
         });
 
         $result = yield Promise::any([$first, $second]);
 
         $first->cancel();
         $second->cancel();
-
-        dump($result);
 
         return 0xDEAD_BEEF;
     }
