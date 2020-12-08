@@ -59,26 +59,4 @@ class ProcessCollection extends ArrayRepository
 
         return $process;
     }
-
-    /**
-     * @param string $runId
-     * @return PromiseInterface
-     */
-    public function kill(string $runId): PromiseInterface
-    {
-        $process = $this->pull($runId);
-
-        $ids = [];
-
-        foreach ($process->fetchUnresolvedRequests() as $id => $promise) {
-            $ids[] = $id;
-            $promise->cancel();
-        }
-
-        if (\count($ids)) {
-            return $this->client->request(new Cancel($ids));
-        }
-
-        return resolve();
-    }
 }

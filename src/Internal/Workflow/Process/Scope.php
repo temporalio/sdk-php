@@ -17,8 +17,9 @@ use React\Promise\PromisorInterface;
 use Temporal\Client\Exception\CancellationException;
 use Temporal\Client\Internal\Coroutine\CoroutineInterface;
 use Temporal\Client\Internal\Coroutine\Stack;
+use Temporal\Client\Internal\ServiceContainer;
+use Temporal\Client\Internal\Transport\ClientInterface;
 use Temporal\Client\Internal\Transport\Request\Cancel;
-use Temporal\Client\Worker\Command\Request;
 use Temporal\Client\Worker\Command\RequestInterface;
 use Temporal\Client\Worker\LoopInterface;
 use Temporal\Client\Workflow;
@@ -44,25 +45,28 @@ abstract class Scope implements CancellationScopeInterface
     protected CoroutineInterface $process;
 
     /**
-     * @var LoopInterface
-     */
-    private LoopInterface $loop;
-
-    /**
      * @var Deferred
      */
     private Deferred $deferred;
+
+    /**
+     * @var ServiceContainer
+     */
+    protected ServiceContainer $services;
 
     /**
      * @param WorkflowContext $ctx
      * @param callable $handler
      * @param array $arguments
      */
-    public function __construct(WorkflowContext $ctx, LoopInterface $loop, callable $handler, array $args = [])
-    {
+    public function __construct(
+        WorkflowContext $ctx,
+        ServiceContainer $services,
+        callable $handler,
+        array $args = []
+    ) {
         $this->context = $ctx;
-        $this->loop = $loop;
-
+        $this->services = $services;
         $this->deferred = new Deferred($this->canceller());
 
         try {
@@ -84,6 +88,28 @@ abstract class Scope implements CancellationScopeInterface
         return function () {
             $this->cancel();
         };
+    }
+
+    /**
+     * @return void
+     */
+    public function cancel(): void
+    {
+        foreach ($this->fetchUnresolvedRequests() as $promise) {
+            $promise->cancel();
+        }
+
+        $this->deferred->reject(CancellationException::fromScope($this));
+    }
+
+    /**
+     * @return array<positive-int, PromiseInterface>
+     */
+    public function fetchUnresolvedRequests(): array
+    {
+        $client = $this->context->getClient();
+
+        return $client->fetchUnresolvedRequests();
     }
 
     /**
@@ -127,11 +153,7 @@ abstract class Scope implements CancellationScopeInterface
             return;
         }
 
-        try {
-            $current = $this->process->current();
-        } catch (CancellationException $_) {
-            $this->cancel();
-        }
+        $current = $this->process->current();
 
         switch (true) {
             case $current instanceof PromiseInterface:
@@ -167,7 +189,7 @@ abstract class Scope implements CancellationScopeInterface
     private function nextPromise(PromiseInterface $promise): void
     {
         $onFulfilled = function ($result) {
-            $this->loop->once(LoopInterface::ON_TICK, function () use ($result) {
+            $this->services->loop->once(LoopInterface::ON_TICK, function () use ($result) {
                 $this->makeCurrent();
                 $this->process->send($result);
                 $this->next();
@@ -177,7 +199,7 @@ abstract class Scope implements CancellationScopeInterface
         };
 
         $onRejected = function (\Throwable $e) {
-            $this->loop->once(LoopInterface::ON_TICK, function () use ($e) {
+            $this->services->loop->once(LoopInterface::ON_TICK, function () use ($e) {
                 $this->makeCurrent();
                 $this->process->throw($e);
             });
@@ -186,34 +208,6 @@ abstract class Scope implements CancellationScopeInterface
         };
 
         $promise->then($onFulfilled, $onRejected);
-    }
-
-    /**
-     * @return array<positive-int, PromiseInterface>
-     */
-    public function fetchUnresolvedRequests(): array
-    {
-        $client = $this->context->getClient();
-
-        return $client->fetchUnresolvedRequests();
-    }
-
-    /**
-     * @return PromiseInterface
-     */
-    public function cancel(): PromiseInterface
-    {
-        $requests = [];
-
-        foreach ($this->fetchUnresolvedRequests() as $id => $_) {
-            $requests[] = $id;
-        }
-
-        if (\count($requests)) {
-            return $this->context->request(new Cancel($requests));
-        }
-
-        return resolve();
     }
 
     /**

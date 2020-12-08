@@ -89,9 +89,11 @@ final class Client implements ClientInterface
         }
 
         $this->requests[$id] = $deferred = new Deferred(function () use ($id) {
-            $this->request(new Cancel([$id]))
+            return $this->request(new Cancel([$id]))
                 ->then(function () use ($id) {
-                    $this->fetch($id);
+                    $this->fetch($id)
+                        ->reject(CancellationException::fromRequestId($id))
+                    ;
                 });
         });
 

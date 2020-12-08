@@ -112,7 +112,7 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
         $self = clone $this;
         $self->client = new CapturedClient($this->client);
 
-        return new CancellationScope($self, $this->services->loop, \Closure::fromCallable($handler));
+        return new CancellationScope($self, $this->services, \Closure::fromCallable($handler));
     }
 
     /**
@@ -154,10 +154,9 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
      */
     public function complete($result = null): PromiseInterface
     {
-        return $this->current->cancel()
-            ->then(function () use ($result) {
-                return $this->request(new CompleteWorkflow($result));
-            });
+        $this->current->cancel();
+
+        return $this->request(new CompleteWorkflow($result));
     }
 
     /**

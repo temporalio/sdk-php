@@ -40,7 +40,7 @@ class Process extends Scope implements ProcessInterface
 
         $context = new WorkflowContext($this, $running, $services, $input);
 
-        parent::__construct($context, $services->loop, $instance->getHandler(), $context->getArguments());
+        parent::__construct($context, $services, $instance->getHandler(), $context->getArguments());
     }
 
     /**

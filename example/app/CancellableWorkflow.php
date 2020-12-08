@@ -35,13 +35,13 @@ class CancellableWorkflow
         $first = Workflow::newCancellationScope(function () {
             $activities = Workflow::newActivityStub(SimpleActivity::class, $this->options);
 
-            return yield $activities->echo(42);
+            return yield $activities->echo('First Scope');
         });
 
         $second = Workflow::newCancellationScope(function () {
             $activities = Workflow::newActivityStub(SimpleActivity::class, $this->options);
 
-            return yield $activities->echo(23);
+            return yield $activities->echo('Second Scope');
         });
 
         $result = yield Promise::any([$first, $second]);
@@ -49,6 +49,6 @@ class CancellableWorkflow
         $first->cancel();
         $second->cancel();
 
-        return 0xDEAD_BEEF;
+        return $result;
     }
 }

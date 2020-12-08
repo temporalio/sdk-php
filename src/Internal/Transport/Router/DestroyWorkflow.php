@@ -49,13 +49,12 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
 
         $process = $this->findProcessOrFail($runId);
 
-        $requests = $this->kill($runId);
+        $this->kill($runId);
 
         $info = $process->getContext()->getInfo();
 
         $resolver->resolve([
-            'WorkflowExecution' => $info->execution,
-            'CancelRequests'    => $requests,
+            'WorkflowExecution' => $info->execution
         ]);
     }
 
