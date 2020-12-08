@@ -70,14 +70,15 @@ class ProcessTestCase extends WorkflowTestCase
 
             $instance = new WorkflowInstance($prototype, $this);
 
-            return new Process($this->loop, $this->env, $this->input, $this->requests, $instance);
+            return new Process(new Input(), $this->services, $instance);
         } finally {
-            $this->loop->tick();
+            $this->services->loop->tick();
         }
     }
 
     /**
      * @return void
+     * @throws \ReflectionException
      */
     public function testExecuteActivity(): void
     {
@@ -122,9 +123,7 @@ class ProcessTestCase extends WorkflowTestCase
         $options->taskQueue = \random_bytes(42);
 
         $this->workflow(function () use ($options) {
-            yield Workflow::executeActivity('ExampleActivity', [], [
-                'TaskQueue' => $options->taskQueue,
-            ]);
+            yield Workflow::executeActivity('ExampleActivity', [], $options);
         });
 
         /** @var TestingRequest $request */
@@ -179,7 +178,7 @@ class ProcessTestCase extends WorkflowTestCase
     {
         $value = \random_bytes(42);
 
-        $this->env->setIsReplaying(false);
+        $this->services->env->setIsReplaying(false);
 
         $this->workflow(function () use ($value) {
             yield Workflow::sideEffect(fn() => $value);
@@ -200,7 +199,7 @@ class ProcessTestCase extends WorkflowTestCase
     {
         $value = \random_bytes(42);
 
-        $this->env->setIsReplaying(true);
+        $this->services->env->setIsReplaying(true);
 
         $this->workflow(function () use ($value) {
             yield Workflow::sideEffect(fn() => $value);

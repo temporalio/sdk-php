@@ -121,4 +121,12 @@ class ActivityOptions
     {
         $this->retryOptions = new RetryOptions();
     }
+
+    /**
+     * @return static
+     */
+    public static function new(): self
+    {
+        return new static();
+    }
 }

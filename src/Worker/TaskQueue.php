@@ -75,7 +75,7 @@ class TaskQueue implements TaskQueueInterface
     public function __construct(string $name, Worker $worker)
     {
         $this->name = $name;
-        $this->services = new ServiceContainer($worker);
+        $this->services = new ServiceContainer($worker, $worker->getClient(), $worker->getReader());
 
         $this->boot();
     }

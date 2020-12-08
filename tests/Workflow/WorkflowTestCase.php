@@ -11,10 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Client\Workflow;
 
-use Temporal\Client\Internal\Declaration\Prototype\Collection;
-use Temporal\Client\Internal\Marshaller\MarshallerInterface;
-use Temporal\Client\Internal\Transport\ClientInterface;
-use Temporal\Client\Internal\Workflow\Requests;
+use Spiral\Attributes\AttributeReader;
+use Temporal\Client\Internal\ServiceContainer;
 use Temporal\Client\Worker\Command\ErrorResponseInterface;
 use Temporal\Client\Worker\Command\RequestInterface;
 use Temporal\Client\Worker\Command\SuccessResponseInterface;
@@ -28,48 +26,33 @@ use Temporal\Tests\Client\Testing\TestingQueue;
 abstract class WorkflowTestCase extends TestCase
 {
     /**
-     * @var TestingLoop
-     */
-    protected TestingLoop $loop;
-
-    /**
-     * @var MarshallerInterface
-     */
-    protected MarshallerInterface $marshaller;
-
-    /**
-     * @var ClientInterface
-     */
-    protected ClientInterface $client;
-
-    /**
      * @var TestingQueue
      */
     protected TestingQueue $queue;
 
     /**
-     * @var TestingEnvironment
+     * @var ServiceContainer
      */
-    protected TestingEnvironment $env;
-
-    /**
-     * @var Requests
-     */
-    protected Requests $requests;
+    protected ServiceContainer $services;
 
     /**
      * @return void
+     * @noinspection PhpImmutablePropertyIsWrittenInspection
      */
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->loop = new TestingLoop();
         $this->queue = new TestingQueue();
-        $this->env = new TestingEnvironment();
-        $this->marshaller = new TestingMarshaller();
-        $this->client = new TestingClient($this->queue);
-        $this->requests = new Requests($this->marshaller, $this->env, $this->client, new Collection());
+
+        $this->services = new ServiceContainer(
+            new TestingLoop(),
+            new TestingClient($this->queue),
+            new AttributeReader()
+        );
+
+        $this->services->env = new TestingEnvironment();
+        $this->services->marshaller = new TestingMarshaller();
     }
 
     /**
@@ -80,9 +63,9 @@ abstract class WorkflowTestCase extends TestCase
     protected function successResponseAndNext(RequestInterface $request, $response = null): SuccessResponseInterface
     {
         try {
-            return $this->client->success($request, $response);
+            return $this->services->client->success($request, $response);
         } finally {
-            $this->loop->tick();
+            $this->services->loop->tick();
         }
     }
 
@@ -94,9 +77,9 @@ abstract class WorkflowTestCase extends TestCase
     protected function errorResponseAndNext(RequestInterface $request, \Throwable $error): ErrorResponseInterface
     {
         try {
-            return $this->client->error($request, $error);
+            return $this->services->client->error($request, $error);
         } finally {
-            $this->loop->tick();
+            $this->services->loop->tick();
         }
     }
 
@@ -107,6 +90,6 @@ abstract class WorkflowTestCase extends TestCase
      */
     protected function marshal(object $context): array
     {
-        return $this->marshaller->marshal($context);
+        return $this->services->marshaller->marshal($context);
     }
 }

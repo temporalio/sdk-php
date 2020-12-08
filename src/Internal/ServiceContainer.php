@@ -21,7 +21,6 @@ use Temporal\Client\Internal\Marshaller\Marshaller;
 use Temporal\Client\Internal\Marshaller\MarshallerInterface;
 use Temporal\Client\Internal\Repository\RepositoryInterface;
 use Temporal\Client\Internal\Transport\ClientInterface;
-use Temporal\Client\Worker;
 use Temporal\Client\Worker\Environment\Environment;
 use Temporal\Client\Worker\Environment\EnvironmentInterface;
 use Temporal\Client\Worker\LoopInterface;
@@ -72,13 +71,15 @@ final class ServiceContainer
     public RepositoryInterface $activities;
 
     /**
-     * @param Worker $worker
+     * @param LoopInterface $loop
+     * @param ClientInterface $client
+     * @param ReaderInterface $reader
      */
-    public function __construct(Worker $worker)
+    public function __construct(LoopInterface $loop, ClientInterface $client, ReaderInterface $reader)
     {
-        $this->loop = $worker;
-        $this->client = $worker->getClient();
-        $this->reader = $worker->getReader();
+        $this->loop = $loop;
+        $this->client = $client;
+        $this->reader = $reader;
 
         $this->workflows = new Collection();
         $this->activities = new Collection();
