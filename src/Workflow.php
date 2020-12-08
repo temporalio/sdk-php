@@ -17,20 +17,22 @@ use Temporal\Client\Internal\Support\Facade;
 use Temporal\Client\Internal\Transport\FutureInterface;
 use Temporal\Client\Internal\Workflow\ActivityProxy;
 use Temporal\Client\Workflow\CancellationScopeInterface;
+use Temporal\Client\Workflow\WorkflowContextInterface;
 use Temporal\Client\Workflow\WorkflowInfo;
 
 /**
  * @method static array getArguments()
  * @method static WorkflowInfo getInfo()
  *
+ * @method static string getRunId()
+ *
  * @method static CarbonTimeZone getTimeZone()
  * @method static \DateTimeInterface now()
- * @method static string|null getRunId()
  * @method static bool isReplaying()
  *
  * @method static CancellationScopeInterface newCancellationScope(callable $handler)
- *
  * @method static ActivityProxy|object newActivityStub(string $class, array|ActivityOptions $options = null)
+ *
  * @method static FutureInterface sideEffect(callable $cb)
  * @method static FutureInterface complete(mixed $result = null)
  * @method static FutureInterface executeActivity(string $class, array $args, array|ActivityOptions $options = null)

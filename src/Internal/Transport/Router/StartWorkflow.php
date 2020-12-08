@@ -80,7 +80,7 @@ final class StartWorkflow extends Route
             $this->findWorkflowOrFail($input->info)
         );
 
-        $process = new Process($input, $this->running, $this->services, $instance);
+        $process = new Process($input, $this->services, $instance);
 
         $this->running->add($process);
     }

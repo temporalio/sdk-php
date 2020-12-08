@@ -61,22 +61,29 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
     /**
      * @var Process
      */
-    private Process $current;
+    private Process $process;
 
     /**
-     * @param RepositoryInterface $running
+     * @param Process $process
      * @param ServiceContainer $services
      * @param Input $input
      */
-    public function __construct(Process $current, ProcessCollection $running, ServiceContainer $services, Input $input)
+    public function __construct(Process $process, ServiceContainer $services, Input $input)
     {
-        $this->current = $current;
-        $this->running = $running;
+        $this->process = $process;
         $this->input = $input;
         $this->services = $services;
 
         $this->env = $services->env;
         $this->client = new CapturedClient($services->client);
+    }
+
+    /**
+     * @return string
+     */
+    public function getRunId(): string
+    {
+        return $this->input->info->execution->runId;
     }
 
     /**
@@ -101,6 +108,28 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
     public function getClient(): CapturedClientInterface
     {
         return $this->client;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function registerQuery(string $queryType, callable $handler): WorkflowContextInterface
+    {
+        $instance = $this->process->getWorkflowInstance();
+        $instance->addQueryHandler($queryType, $handler);
+
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function registerSignal(string $queryType, callable $handler): WorkflowContextInterface
+    {
+        $instance = $this->process->getWorkflowInstance();
+        $instance->addSignalHandler($queryType, $handler);
+
+        return $this;
     }
 
     /**
@@ -154,7 +183,7 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
      */
     public function complete($result = null): PromiseInterface
     {
-        $this->current->cancel();
+        $this->process->cancel();
 
         return $this->request(new CompleteWorkflow($result));
     }

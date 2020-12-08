@@ -42,7 +42,7 @@ abstract class Scope implements CancellationScopeInterface
     /**
      * @var CoroutineInterface
      */
-    protected CoroutineInterface $process;
+    protected CoroutineInterface $coroutine;
 
     /**
      * @var Deferred
@@ -70,7 +70,7 @@ abstract class Scope implements CancellationScopeInterface
         $this->deferred = new Deferred($this->canceller());
 
         try {
-            $this->process = new Stack($this->call($handler, $args), function ($result) {
+            $this->coroutine = new Stack($this->call($handler, $args), function ($result) {
                 $this->deferred->resolve($result);
             });
         } catch (\Throwable $e) {
@@ -147,13 +147,13 @@ abstract class Scope implements CancellationScopeInterface
     {
         $this->makeCurrent();
 
-        if (! $this->process->valid()) {
-            $this->onComplete($this->process->getReturn());
+        if (! $this->coroutine->valid()) {
+            $this->onComplete($this->coroutine->getReturn());
 
             return;
         }
 
-        $current = $this->process->current();
+        $current = $this->coroutine->current();
 
         switch (true) {
             case $current instanceof PromiseInterface:
@@ -170,11 +170,11 @@ abstract class Scope implements CancellationScopeInterface
 
             case $current instanceof \Generator:
             case $current instanceof CoroutineInterface:
-                $this->process->push($current);
+                $this->coroutine->push($current);
                 break;
 
             default:
-                $this->process->send($current);
+                $this->coroutine->send($current);
         }
     }
 
@@ -191,7 +191,7 @@ abstract class Scope implements CancellationScopeInterface
         $onFulfilled = function ($result) {
             $this->services->loop->once(LoopInterface::ON_TICK, function () use ($result) {
                 $this->makeCurrent();
-                $this->process->send($result);
+                $this->coroutine->send($result);
                 $this->next();
             });
 
@@ -201,7 +201,7 @@ abstract class Scope implements CancellationScopeInterface
         $onRejected = function (\Throwable $e) {
             $this->services->loop->once(LoopInterface::ON_TICK, function () use ($e) {
                 $this->makeCurrent();
-                $this->process->throw($e);
+                $this->coroutine->throw($e);
             });
 
             throw $e;

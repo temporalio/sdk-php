@@ -11,10 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Internal\Workflow\Process;
 
+use JetBrains\PhpStorm\Pure;
 use Temporal\Client\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Client\Internal\ServiceContainer;
 use Temporal\Client\Internal\Workflow\Input;
-use Temporal\Client\Internal\Workflow\ProcessCollection;
 use Temporal\Client\Workflow\ProcessInterface;
 use Temporal\Client\Workflow\WorkflowContext;
 use Temporal\Client\Workflow\WorkflowContextInterface;
@@ -27,18 +27,15 @@ class Process extends Scope implements ProcessInterface
     private WorkflowInstanceInterface $instance;
 
     /**
+     * @param Input $input
      * @param ServiceContainer $services
      * @param WorkflowInstanceInterface $instance
      */
-    public function __construct(
-        Input $input,
-        ProcessCollection $running,
-        ServiceContainer $services,
-        WorkflowInstanceInterface $instance
-    ) {
+    public function __construct(Input $input, ServiceContainer $services, WorkflowInstanceInterface $instance)
+    {
         $this->instance = $instance;
 
-        $context = new WorkflowContext($this, $running, $services, $input);
+        $context = new WorkflowContext($this, $services, $input);
 
         parent::__construct($context, $services, $instance->getHandler(), $context->getArguments());
     }
@@ -52,14 +49,6 @@ class Process extends Scope implements ProcessInterface
     }
 
     /**
-     * @param mixed $result
-     */
-    protected function onComplete($result): void
-    {
-        $this->context->complete($this->process->getReturn());
-    }
-
-    /**
      * @return WorkflowContextInterface
      */
     public function getContext(): WorkflowContextInterface
@@ -70,10 +59,19 @@ class Process extends Scope implements ProcessInterface
     /**
      * @return string
      */
+    #[Pure]
     public function getId(): string
     {
         $info = $this->context->getInfo();
 
         return $info->execution->runId;
+    }
+
+    /**
+     * @param mixed $result
+     */
+    protected function onComplete($result): void
+    {
+        $this->context->complete($result ?? $this->coroutine->getReturn());
     }
 }

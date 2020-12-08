@@ -32,6 +32,20 @@ interface WorkflowContextInterface extends EnvironmentInterface
     public function getArguments(): array;
 
     /**
+     * @param string $queryType
+     * @param callable $handler
+     * @return $this
+     */
+    public function registerQuery(string $queryType, callable $handler): self;
+
+    /**
+     * @param string $queryType
+     * @param callable $handler
+     * @return $this
+     */
+    public function registerSignal(string $queryType, callable $handler): self;
+
+    /**
      * @param callable $handler
      * @return CancellationScopeInterface
      */
