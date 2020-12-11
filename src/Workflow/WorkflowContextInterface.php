@@ -101,4 +101,9 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @see DateInterval
      */
     public function timer($interval): PromiseInterface;
+
+    /**
+     * @return array
+     */
+    public function getTrace(): array;
 }

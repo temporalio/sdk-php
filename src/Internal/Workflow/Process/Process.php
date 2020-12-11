@@ -59,7 +59,6 @@ class Process extends Scope implements ProcessInterface
     /**
      * @return string
      */
-    #[Pure]
     public function getId(): string
     {
         $info = $this->context->getInfo();

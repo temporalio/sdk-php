@@ -11,13 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Internal\Workflow;
 
-use React\Promise\PromiseInterface;
 use Temporal\Client\Internal\Repository\ArrayRepository;
 use Temporal\Client\Internal\Transport\ClientInterface;
-use Temporal\Client\Internal\Transport\Request\Cancel;
 use Temporal\Client\Internal\Workflow\Process\Process;
-
-use function React\Promise\resolve;
 
 /**
  * @template-extends ArrayRepository<Process>

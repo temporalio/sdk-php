@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Workflow;
 
+use Carbon\CarbonInterface;
+use Carbon\CarbonTimeZone;
 use JetBrains\PhpStorm\Pure;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
@@ -33,12 +35,12 @@ use Temporal\Client\Internal\Workflow\ProcessCollection;
 use Temporal\Client\Worker\Command\RequestInterface;
 use Temporal\Client\Worker\Environment\EnvironmentAwareTrait;
 
+use Temporal\Client\Worker\Environment\EnvironmentInterface;
+
 use function React\Promise\reject;
 
 class WorkflowContext implements WorkflowContextInterface, ClientInterface
 {
-    use EnvironmentAwareTrait;
-
     /**
      * @var ServiceContainer
      */
@@ -55,14 +57,14 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
     private Input $input;
 
     /**
-     * @var ProcessCollection
-     */
-    private ProcessCollection $running;
-
-    /**
      * @var Process
      */
     private Process $process;
+
+    /**
+     * @var array
+     */
+    private array $trace = [];
 
     /**
      * @param Process $process
@@ -75,16 +77,58 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
         $this->input = $input;
         $this->services = $services;
 
-        $this->env = $services->env;
         $this->client = new CapturedClient($services->client);
+    }
+
+    /**
+     * Record last stack trace of the call.
+     *
+     * @return void
+     */
+    private function recordTrace(): void
+    {
+        $this->trace = \debug_backtrace(
+            \DEBUG_BACKTRACE_IGNORE_ARGS
+        );
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getTimeZone(): CarbonTimeZone
+    {
+        $this->recordTrace();
+
+        return $this->services->env->getTimeZone();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function now(): CarbonInterface
+    {
+        $this->recordTrace();
+
+        return $this->services->env->now();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function isReplaying(): bool
+    {
+        $this->recordTrace();
+
+        return $this->services->env->isReplaying();
     }
 
     /**
      * @return string
      */
-    #[Pure]
     public function getRunId(): string
     {
+        $this->recordTrace();
+
         return $this->input->info->execution->runId;
     }
 
@@ -93,6 +137,8 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
      */
     public function getInfo(): WorkflowInfo
     {
+        $this->recordTrace();
+
         return $this->input->info;
     }
 
@@ -101,6 +147,8 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
      */
     public function getArguments(): array
     {
+        $this->recordTrace();
+
         return $this->input->args;
     }
 
@@ -117,6 +165,8 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
      */
     public function registerQuery(string $queryType, callable $handler): WorkflowContextInterface
     {
+        $this->recordTrace();
+
         $instance = $this->process->getWorkflowInstance();
         $instance->addQueryHandler($queryType, $handler);
 
@@ -128,6 +178,8 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
      */
     public function registerSignal(string $queryType, callable $handler): WorkflowContextInterface
     {
+        $this->recordTrace();
+
         $instance = $this->process->getWorkflowInstance();
         $instance->addSignalHandler($queryType, $handler);
 
@@ -140,6 +192,8 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
      */
     public function newCancellationScope(callable $handler): CancellationScope
     {
+        $this->recordTrace();
+
         $self = clone $this;
         $self->client = new CapturedClient($this->client);
 
@@ -151,6 +205,8 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
      */
     public function getVersion(string $changeId, int $minSupported, int $maxSupported): PromiseInterface
     {
+        $this->recordTrace();
+
         return $this->request(
             new GetVersion($changeId, $minSupported, $maxSupported)
         );
@@ -161,6 +217,8 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
      */
     public function request(RequestInterface $request): PromiseInterface
     {
+        $this->recordTrace();
+
         return $this->client->request($request);
     }
 
@@ -169,10 +227,10 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
      */
     public function sideEffect(callable $context): PromiseInterface
     {
-        $isReplaying = $this->env->isReplaying();
+        $this->recordTrace();
 
         try {
-            $value = $isReplaying ? null : $context();
+            $value = $this->isReplaying() ? null : $context();
         } catch (\Throwable $e) {
             return reject($e);
         }
@@ -185,6 +243,8 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
      */
     public function complete($result = null): PromiseInterface
     {
+        $this->recordTrace();
+
         $this->process->cancel();
 
         return $this->request(new CompleteWorkflow($result));
@@ -195,6 +255,8 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
      */
     public function executeActivity(string $name, array $args = [], ActivityOptions $options = null): PromiseInterface
     {
+        $this->recordTrace();
+
         $options ??= new ActivityOptions();
 
         return $this->request(
@@ -207,6 +269,8 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
      */
     public function newActivityStub(string $name, ActivityOptions $options = null): object
     {
+        $this->recordTrace();
+
         $options ??= new ActivityOptions();
 
         return new ActivityProxy($name, $options, $this, $this->services->activities);
@@ -217,8 +281,18 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
      */
     public function timer($interval): PromiseInterface
     {
+        $this->recordTrace();
+
         return $this->request(
             new NewTimer(DateInterval::parse($interval, DateInterval::FORMAT_SECONDS))
         );
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getTrace(): array
+    {
+        return $this->trace;
     }
 }

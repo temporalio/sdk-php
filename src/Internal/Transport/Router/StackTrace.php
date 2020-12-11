@@ -12,62 +12,33 @@ declare(strict_types=1);
 namespace Temporal\Client\Internal\Transport\Router;
 
 use React\Promise\Deferred;
-use Temporal\Client\Internal\Workflow\RunningWorkflows;
 
-final class StackTrace extends Route
+final class StackTrace extends WorkflowProcessAwareRoute
 {
     /**
-     * @var string
-     */
-    private const ERROR_RID_NOT_DEFINED =
-        'Invoking a workflow stack trace requires the id (rid argument) of the running workflow process';
-
-    /**
-     * @var string
-     */
-    private const ERROR_PROCESS_NOT_FOUND = 'Workflow with the specified run id %s not found';
-
-    /**
-     * @var RunningWorkflows
-     */
-    private RunningWorkflows $running;
-
-    /**
-     * @param RunningWorkflows $running
-     */
-    public function __construct(RunningWorkflows $running)
-    {
-        $this->running = $running;
-    }
-
-    /**
      * {@inheritDoc}
+     * @throws \JsonException
      */
     public function handle(array $payload, array $headers, Deferred $resolver): void
     {
-        $workflowRunId = $payload['runId'] ?? null;
+        $process = $this->findProcessOrFail($payload['runId'] ?? null);
 
-        if ($workflowRunId === null) {
-            throw new \InvalidArgumentException(self::ERROR_RID_NOT_DEFINED);
-        }
-
-        $workflow = $this->running->find($workflowRunId);
-
-        if ($workflow === null) {
-            throw new \LogicException(\sprintf(self::ERROR_PROCESS_NOT_FOUND, $workflowRunId));
-        }
+        $context = $process->getContext();
 
         $resolver->resolve(
-            $this->prepareBackTrace($workflow->getContext()->getDebugBacktrace())
+            $this->traceToJson(
+                $context->getTrace()
+            )
         );
     }
 
     /**
      * @param array $backtrace
      * @return string
+     * @throws \JsonException
      */
-    private function prepareBackTrace(array $backtrace): string
+    private function traceToJson(array $backtrace): string
     {
-        return json_encode($backtrace, JSON_PRETTY_PRINT);
+        return \json_encode($backtrace, \JSON_PRETTY_PRINT | \JSON_THROW_ON_ERROR);
     }
 }
