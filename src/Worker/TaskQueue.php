@@ -12,27 +12,15 @@ declare(strict_types=1);
 namespace Temporal\Client\Worker;
 
 use React\Promise\PromiseInterface;
-use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
-use Temporal\Client\Internal\Declaration\Prototype\Collection;
-use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Client\Internal\Declaration\Reader\ActivityReader;
 use Temporal\Client\Internal\Declaration\Reader\WorkflowReader;
 use Temporal\Client\Internal\Events\EventEmitterTrait;
-use Temporal\Client\Internal\Marshaller\Mapper\AttributeMapperFactory;
-use Temporal\Client\Internal\Marshaller\Marshaller;
-use Temporal\Client\Internal\Marshaller\MarshallerInterface;
-use Temporal\Client\Internal\Repository\ArrayRepository;
 use Temporal\Client\Internal\Repository\RepositoryInterface;
 use Temporal\Client\Internal\ServiceContainer;
-use Temporal\Client\Internal\Transport\ClientInterface;
 use Temporal\Client\Internal\Transport\Router;
 use Temporal\Client\Internal\Transport\RouterInterface;
-use Temporal\Client\Internal\Workflow\ProcessCollection;
 use Temporal\Client\Worker;
 use Temporal\Client\Worker\Command\RequestInterface;
-use Temporal\Client\Worker\Environment\Environment;
-use Temporal\Client\Worker\Environment\EnvironmentInterface;
-use Temporal\Client\Workflow\ProcessInterface;
 
 class TaskQueue implements TaskQueueInterface
 {
@@ -59,11 +47,6 @@ class TaskQueue implements TaskQueueInterface
     private RouterInterface $router;
 
     /**
-     * @var ProcessCollection
-     */
-    private ProcessCollection $processes;
-
-    /**
      * @var ServiceContainer
      */
     private ServiceContainer $services;
@@ -75,7 +58,7 @@ class TaskQueue implements TaskQueueInterface
     public function __construct(string $name, Worker $worker)
     {
         $this->name = $name;
-        $this->services = new ServiceContainer($worker, $worker->getClient(), $worker->getReader());
+        $this->services = ServiceContainer::fromWorker($worker);
 
         $this->boot();
     }
@@ -85,8 +68,6 @@ class TaskQueue implements TaskQueueInterface
      */
     private function boot(): void
     {
-        $this->processes = new ProcessCollection($this->services->client);
-
         $this->workflowReader = new WorkflowReader($this->services->reader);
         $this->activityReader = new ActivityReader($this->services->reader);
 
@@ -104,10 +85,10 @@ class TaskQueue implements TaskQueueInterface
         $router->add(new Router\InvokeActivity($this->services));
 
         // Workflow routes
-        $router->add(new Router\StartWorkflow($this->services, $this->processes));
-        $router->add(new Router\InvokeQuery($this->processes));
-        $router->add(new Router\InvokeSignal($this->processes, $this->services->loop));
-        $router->add(new Router\DestroyWorkflow($this->processes, $this->services->client));
+        $router->add(new Router\StartWorkflow($this->services));
+        $router->add(new Router\InvokeQuery($this->services->running));
+        $router->add(new Router\InvokeSignal($this->services->running, $this->services->loop));
+        $router->add(new Router\DestroyWorkflow($this->services->running, $this->services->client));
         // $router->add(new Router\StackTrace($this->workflows));
 
         return $router;

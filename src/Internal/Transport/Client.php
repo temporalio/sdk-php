@@ -16,10 +16,12 @@ use React\Promise\PromiseInterface;
 use Temporal\Client\Exception\CancellationException;
 use Temporal\Client\Internal\Queue\QueueInterface;
 use Temporal\Client\Internal\Transport\Request\Cancel;
+use Temporal\Client\Worker\Command\CommandInterface;
 use Temporal\Client\Worker\Command\ErrorResponseInterface;
 use Temporal\Client\Worker\Command\RequestInterface;
 use Temporal\Client\Worker\Command\ResponseInterface;
 use Temporal\Client\Worker\Command\SuccessResponseInterface;
+use Temporal\Client\Worker\LoopInterface;
 
 /**
  * @internal Client is an internal library class, please do not use it in your code.
@@ -52,11 +54,17 @@ final class Client implements ClientInterface
     private array $requests = [];
 
     /**
+     * @var LoopInterface
+     */
+    private LoopInterface $loop;
+
+    /**
      * @param QueueInterface $queue
      */
-    public function __construct(QueueInterface $queue)
+    public function __construct(QueueInterface $queue, LoopInterface $loop)
     {
         $this->queue = $queue;
+        $this->loop = $loop;
     }
 
     /**
@@ -89,11 +97,35 @@ final class Client implements ClientInterface
         }
 
         $this->requests[$id] = $deferred = new Deferred(function () use ($id) {
-            return $this->request(new Cancel([$id]))
-                ->then(function () use ($id) {
-                    $this->fetch($id)
-                        ->reject(CancellationException::fromRequestId($id))
-                    ;
+            $request = $this->fetch($id);
+
+            $command = $this->queue->pull($id);
+
+            // In the case that the command is in the queue for sending,
+            // then we take it out of the queue and cancel the request.
+            if ($command !== null) {
+                $request->reject(CancellationException::fromRequestId($id));
+
+                // In the case that after the local promise rejection we have
+                // nothing to send, then we independently execute the next
+                // tick of the event loop.
+                if ($this->queue->count() === 0) {
+                    $this->loop->tick();
+                }
+
+                return;
+            }
+
+            // Otherwise, we send a Cancel request to the server to cancel
+            // the previously sent command by its ID.
+            $this->request(new Cancel([$id]))
+                ->then(function () use ($id, $request): void {
+                    $request->reject(CancellationException::fromRequestId($id));
+                }, function (\Throwable $e) use ($request): void {
+                    // In case of an error from the server when canceling the
+                    // request, we forward it to the promise and the exception
+                    // should occur inside the process generator/coroutine.
+                    $request->reject($e);
                 });
         });
 

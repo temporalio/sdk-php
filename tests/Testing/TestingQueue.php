@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Client\Testing;
 
 use PHPUnit\Framework\Assert;
+use Temporal\Client\Internal\Queue\ArrayQueue;
 use Temporal\Client\Internal\Queue\QueueInterface;
 use Temporal\Client\Worker\Command\CommandInterface;
 use Temporal\Client\Worker\Command\ErrorResponseInterface;
@@ -20,13 +21,8 @@ use Temporal\Client\Worker\Command\RequestInterface;
 use Temporal\Client\Worker\Command\ResponseInterface;
 use Temporal\Client\Worker\Command\SuccessResponseInterface;
 
-class TestingQueue implements QueueInterface
+class TestingQueue extends ArrayQueue
 {
-    /**
-     * @var array<CommandInterface>
-     */
-    private array $commands = [];
-
     /**
      * {@inheritDoc}
      */
@@ -46,11 +42,11 @@ class TestingQueue implements QueueInterface
     }
 
     /**
-     * {@inheritDoc}
+     * @return TestingRequest|TestingSuccessResponse|TestingErrorResponse
      */
-    public function count(): int
+    public function shift(): CommandInterface
     {
-        return \count($this->commands);
+        return \array_shift($this->commands);
     }
 
     /**

@@ -11,7 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Worker\Command;
 
-interface CommandInterface
+use Temporal\Client\Internal\Repository\Identifiable;
+
+interface CommandInterface extends Identifiable
 {
     /**
      * @return int

@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Internal\Coroutine;
 
-class Stack implements CoroutineInterface
+class Stack implements AppendableInterface, \OuterIterator
 {
     /**
      * @var int
@@ -21,68 +21,35 @@ class Stack implements CoroutineInterface
     /**
      * @var int
      */
-    public const KEY_RESOLVER = 0x01;
+    public const KEY_ON_COMPLETE = 0x01;
 
     /**
-     * @var array{0: CoroutineInterface, 1: \Closure}
+     * @var array { 0: CoroutineInterface, 1: \Closure }
      */
     private array $stack = [];
 
     /**
-     * @var bool
+     * @var \Generator|null
      */
-    private bool $running = false;
+    private ?\Generator $current = null;
 
     /**
      * @param iterable $iterator
      * @param \Closure|null $then
      */
-    public function __construct(iterable $iterator, \Closure $then = null)
+    public function __construct(iterable $iterator = [], \Closure $then = null)
     {
-        $this->push($iterator, $then);
-    }
-
-    /**
-     * @return CoroutineInterface|null
-     */
-    private function top(): ?CoroutineInterface
-    {
-        $last = \end($this->stack);
-
-        if ($last === false) {
-            return null;
+        if ($iterator !== [] || $then !== null) {
+            $this->push($iterator, $then);
         }
-
-        return $last[self::KEY_COROUTINE];
     }
 
     /**
-     * @param iterable $iter
+     * @throws \Exception
      */
-    public function push(iterable $iter, \Closure $then = null): void
+    private function iterator(): \Generator
     {
-        $this->stack[] = [
-            self::KEY_COROUTINE => Coroutine::create($iter),
-            self::KEY_RESOLVER  => $then ?? $this->emptyCb(),
-        ];
-    }
-
-    /**
-     * @return \Closure
-     */
-    private function emptyCb(): \Closure
-    {
-        return (static fn() => null);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function rewind(): void
-    {
-        if ($this->running) {
-            throw new \LogicException('Cannot rewind a generator that was already run');
-        }
+        return $this->current ??= $this->getInnerIterator();
     }
 
     /**
@@ -90,11 +57,7 @@ class Stack implements CoroutineInterface
      */
     public function current()
     {
-        $current = $this->top();
-
-        if ($current === null) {
-            return null;
-        }
+        $current = $this->iterator();
 
         return $current->current();
     }
@@ -102,13 +65,19 @@ class Stack implements CoroutineInterface
     /**
      * {@inheritDoc}
      */
+    public function next()
+    {
+        $current = $this->iterator();
+
+        $current->next();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function key()
     {
-        $current = $this->top();
-
-        if ($current === null) {
-            return null;
-        }
+        $current = $this->iterator();
 
         return $current->key();
     }
@@ -118,13 +87,19 @@ class Stack implements CoroutineInterface
      */
     public function valid(): bool
     {
-        $current = $this->top();
+        $current = $this->iterator();
 
-        if ($current === null) {
-            return false;
-        }
+        return $current->valid();
+    }
 
-        return $current->valid() || \count($this->stack) > 1;
+    /**
+     * {@inheritDoc}
+     */
+    public function rewind()
+    {
+        $current = $this->iterator();
+
+        $current->rewind();
     }
 
     /**
@@ -132,11 +107,7 @@ class Stack implements CoroutineInterface
      */
     public function getReturn()
     {
-        $current = $this->top();
-
-        if ($current === null) {
-            return null;
-        }
+        $current = $this->iterator();
 
         return $current->getReturn();
     }
@@ -144,56 +115,11 @@ class Stack implements CoroutineInterface
     /**
      * {@inheritDoc}
      */
-    public function next(): void
-    {
-        $this->send(null);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public function send($value)
     {
-        if (\count($this->stack) === 0) {
-            return null;
-        }
+        $current = $this->iterator();
 
-        $this->running = true;
-        $current = $this->top();
-
-        if ($current === null) {
-            return null;
-        }
-
-        try {
-            return $current->send($value);
-        } finally {
-            if (! $current->valid()) {
-                $this->pop();
-            }
-        }
-    }
-
-    /**
-     * @return void
-     */
-    private function pop(): void
-    {
-        [$coroutine, $callback] = \end($this->stack);
-
-        if (\count($this->stack) > 1) {
-            try {
-                \array_pop($this->stack);
-            } finally {
-                $callback($coroutine->getReturn());
-            }
-
-            return;
-        }
-
-        $callback($coroutine->getReturn());
-        // Avoid callback evaluation duplication
-        $this->stack[\array_key_last($this->stack)][self::KEY_RESOLVER] = $this->emptyCb();
+        return $current->send($value);
     }
 
     /**
@@ -201,12 +127,42 @@ class Stack implements CoroutineInterface
      */
     public function throw(\Throwable $exception)
     {
-        $current = $this->top();
-
-        if ($current === null) {
-            throw $exception;
-        }
+        $current = $this->iterator();
 
         return $current->throw($exception);
+    }
+
+    /**
+     * @param iterable $iterator
+     * @param \Closure|null $then
+     */
+    public function push(iterable $iterator, \Closure $then = null): void
+    {
+        $this->stack[] = [
+            self::KEY_COROUTINE   => Coroutine::create($iterator),
+            self::KEY_ON_COMPLETE => $then ?? (static fn() => null),
+        ];
+    }
+
+    public function getInnerIterator(): \Generator
+    {
+        $result = null;
+
+        while ($this->stack) {
+            /** @var \Generator $coroutine */
+            [$coroutine] = \end($this->stack);
+
+            if ($coroutine->valid()) {
+                $coroutine->send(
+                    yield $coroutine->key() => $coroutine->current()
+                );
+            } else {
+                [$last, $then] = \array_pop($this->stack);
+
+                $then($result = $last->getReturn());
+            }
+        }
+
+        return $result;
     }
 }

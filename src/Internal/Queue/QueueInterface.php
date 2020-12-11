@@ -22,4 +22,10 @@ interface QueueInterface extends \IteratorAggregate, \Countable
      * @param CommandInterface $command
      */
     public function push(CommandInterface $command): void;
+
+    /**
+     * @param int $commandId
+     * @return CommandInterface|null
+     */
+    public function pull(int $commandId): ?CommandInterface;
 }

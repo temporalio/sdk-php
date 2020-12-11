@@ -57,6 +57,15 @@ class TestingRequest extends TestingCommand implements RequestInterface
     }
 
     /**
+     * @param string $key
+     * @return mixed
+     */
+    public function getParam(string $key)
+    {
+        return Arr::get($this->getParams(), $key);
+    }
+
+    /**
      * @param string $expected
      * @param string $message
      * @return $this
@@ -92,7 +101,20 @@ class TestingRequest extends TestingCommand implements RequestInterface
             $this->assertParamsHasKey($key, $message);
         }
 
-        Assert::assertSame($expected, Arr::get($this->getParams(), $key), $message);
+        Assert::assertEquals($expected, Arr::get($this->getParams(), $key), $message);
+
+        return $this;
+    }
+
+    /**
+     * @param string $key
+     * @param class-string $expected
+     * @param string $message
+     * @return $this
+     */
+    public function assertParamsKeyInstanceOf(string $key, string $expected, string $message = ''): self
+    {
+        Assert::assertInstanceOf($expected, Arr::get($this->getParams(), $key), $message);
 
         return $this;
     }

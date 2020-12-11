@@ -22,11 +22,10 @@ use Spiral\Attributes\ReaderInterface;
 use Temporal\Client\Internal\Codec\CodecInterface;
 use Temporal\Client\Internal\Codec\JsonCodec;
 use Temporal\Client\Internal\Events\EventEmitterTrait;
+use Temporal\Client\Internal\Queue\ArrayQueue;
 use Temporal\Client\Internal\Queue\QueueInterface;
-use Temporal\Client\Internal\Queue\SplQueue;
 use Temporal\Client\Internal\Repository\ArrayRepository;
 use Temporal\Client\Internal\Repository\RepositoryInterface;
-use Temporal\Client\Internal\Transport\CapturedClient;
 use Temporal\Client\Internal\Transport\CapturedClientInterface;
 use Temporal\Client\Internal\Transport\Client;
 use Temporal\Client\Internal\Transport\ClientInterface;
@@ -194,7 +193,7 @@ final class Worker implements FactoryInterface
      */
     private function createQueue(): QueueInterface
     {
-        return new SplQueue();
+        return new ArrayQueue();
     }
 
     /**
@@ -203,7 +202,7 @@ final class Worker implements FactoryInterface
     #[Pure]
     private function createClient(): ClientInterface
     {
-        return new Client($this->responses);
+        return new Client($this->responses, $this);
     }
 
     /**
@@ -260,6 +259,14 @@ final class Worker implements FactoryInterface
     }
 
     /**
+     * {@inheritDoc}
+     */
+    public function register(TaskQueueInterface $queue): void
+    {
+        $this->queues->add($queue);
+    }
+
+    /**
      * @return ReaderInterface
      */
     public function getReader(): ReaderInterface
@@ -276,11 +283,11 @@ final class Worker implements FactoryInterface
     }
 
     /**
-     * {@inheritDoc}
+     * @return QueueInterface
      */
-    public function register(TaskQueueInterface $queue): void
+    public function getQueue(): QueueInterface
     {
-        $this->queues->add($queue);
+        return $this->responses;
     }
 
     /**
@@ -316,9 +323,17 @@ final class Worker implements FactoryInterface
             }
         }
 
-        $this->emit(LoopInterface::ON_TICK);
+        $this->tick();
 
         return $this->codec->encode($this->responses);
+    }
+
+    /**
+     * @return void
+     */
+    public function tick(): void
+    {
+        $this->emit(LoopInterface::ON_TICK);
     }
 
     /**

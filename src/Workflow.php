@@ -35,7 +35,7 @@ use Temporal\Client\Workflow\WorkflowInfo;
  *
  * @method static FutureInterface sideEffect(callable $cb)
  * @method static FutureInterface complete(mixed $result = null)
- * @method static FutureInterface executeActivity(string $class, array $args, array|ActivityOptions $options = null)
+ * @method static FutureInterface executeActivity(string $class, array $args = [], array|ActivityOptions $options = null)
  * @method static FutureInterface timer(string|int|float|\DateInterval $interval)
  * @method static FutureInterface getVersion(string $changeID, int $minSupported, int $maxSupported)
  *

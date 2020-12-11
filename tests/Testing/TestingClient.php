@@ -14,14 +14,12 @@ namespace Temporal\Tests\Client\Testing;
 use JetBrains\PhpStorm\Immutable;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Internal\Queue\QueueInterface;
-use Temporal\Client\Internal\Transport\Client;
 use Temporal\Client\Internal\Transport\CapturedClient;
+use Temporal\Client\Internal\Transport\Client;
 use Temporal\Client\Worker\Command\ErrorResponse;
-use Temporal\Client\Worker\Command\ErrorResponseInterface;
 use Temporal\Client\Worker\Command\RequestInterface;
-use Temporal\Client\Worker\Command\ResponseInterface;
 use Temporal\Client\Worker\Command\SuccessResponse;
-use Temporal\Client\Worker\Command\SuccessResponseInterface;
+use Temporal\Client\Worker\LoopInterface;
 
 class TestingClient extends CapturedClient
 {
@@ -34,11 +32,11 @@ class TestingClient extends CapturedClient
     /**
      * @param QueueInterface|null $queue
      */
-    public function __construct(QueueInterface $queue = null)
+    public function __construct(LoopInterface $loop, QueueInterface $queue = null)
     {
         $this->queue = $queue ?? new TestingQueue();
 
-        parent::__construct(new Client($this->queue));
+        parent::__construct(new Client($this->queue, $loop));
     }
 
     /**

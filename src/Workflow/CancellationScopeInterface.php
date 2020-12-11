@@ -13,9 +13,21 @@ namespace Temporal\Client\Workflow;
 
 use React\Promise\CancellablePromiseInterface;
 use React\Promise\PromiseInterface;
+use Temporal\Client\Internal\Repository\Identifiable;
 
 interface CancellationScopeInterface extends
+    Identifiable,
     PromiseInterface,
     CancellablePromiseInterface
 {
+    /**
+     * @return string
+     */
+    public function getId(): string;
+
+    /**
+     * @param callable $then
+     * @return $this
+     */
+    public function onCancel(callable $then): self;
 }

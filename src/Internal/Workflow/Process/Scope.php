@@ -15,18 +15,15 @@ use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use React\Promise\PromisorInterface;
 use Temporal\Client\Exception\CancellationException;
+use Temporal\Client\Exception\NonThrowableExceptionInterface;
 use Temporal\Client\Internal\Coroutine\CoroutineInterface;
 use Temporal\Client\Internal\Coroutine\Stack;
 use Temporal\Client\Internal\ServiceContainer;
-use Temporal\Client\Internal\Transport\ClientInterface;
-use Temporal\Client\Internal\Transport\Request\Cancel;
 use Temporal\Client\Worker\Command\RequestInterface;
 use Temporal\Client\Worker\LoopInterface;
 use Temporal\Client\Workflow;
 use Temporal\Client\Workflow\CancellationScopeInterface;
 use Temporal\Client\Workflow\WorkflowContext;
-
-use function React\Promise\resolve;
 
 /**
  * @internal Scope is an internal library class, please do not use it in your code.
@@ -55,6 +52,11 @@ abstract class Scope implements CancellationScopeInterface
     protected ServiceContainer $services;
 
     /**
+     * @var array<callable>
+     */
+    protected array $cancelHandlers = [];
+
+    /**
      * @param WorkflowContext $ctx
      * @param callable $handler
      * @param array $arguments
@@ -81,12 +83,26 @@ abstract class Scope implements CancellationScopeInterface
     }
 
     /**
+     * {@inheritDoc}
+     */
+    public function onCancel(callable $then): self
+    {
+        $this->cancelHandlers[] = $then;
+
+        return $this;
+    }
+
+    /**
      * @return \Closure
      */
-    private function canceller(): \Closure
+    protected function canceller(): \Closure
     {
         return function () {
             $this->cancel();
+
+            foreach ($this->cancelHandlers as $handler) {
+                $handler($this);
+            }
         };
     }
 
@@ -189,7 +205,7 @@ abstract class Scope implements CancellationScopeInterface
     private function nextPromise(PromiseInterface $promise): void
     {
         $onFulfilled = function ($result) {
-            $this->services->loop->once(LoopInterface::ON_TICK, function () use ($result) {
+            $this->defer(function () use ($result) {
                 $this->makeCurrent();
                 $this->coroutine->send($result);
                 $this->next();
@@ -199,15 +215,38 @@ abstract class Scope implements CancellationScopeInterface
         };
 
         $onRejected = function (\Throwable $e) {
-            $this->services->loop->once(LoopInterface::ON_TICK, function () use ($e) {
+            $this->defer(function () use ($e) {
                 $this->makeCurrent();
-                $this->coroutine->throw($e);
+
+                // In the case that it is not a blocking exception. For
+                // example, a CancellationException.
+                if (! $e instanceof NonThrowableExceptionInterface) {
+                    $this->coroutine->throw($e);
+
+                    return;
+                }
+
+                $this->coroutine->send($e);
+                $this->next();
             });
 
             throw $e;
         };
 
         $promise->then($onFulfilled, $onRejected);
+    }
+
+    /**
+     * @param \Closure $tick
+     * @return mixed
+     */
+    private function defer(\Closure $tick)
+    {
+        if ($this->services->queue->count() === 0) {
+            return $tick();
+        }
+
+        return $this->services->loop->once(LoopInterface::ON_TICK, $tick);
     }
 
     /**

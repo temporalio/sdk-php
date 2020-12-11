@@ -42,6 +42,11 @@ interface LoopInterface extends EventListenerInterface
     public const ON_TICK = 'tick';
 
     /**
+     * @return void
+     */
+    public function tick(): void;
+
+    /**
      * Run the event loop until there are no more tasks to perform.
      *
      * For many applications, this method is the only directly visible

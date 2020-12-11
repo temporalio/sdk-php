@@ -18,7 +18,7 @@ class ArrayQueue implements QueueInterface
     /**
      * @psalm-var list<array-key, CommandInterface>
      */
-    private array $queue = [];
+    protected array $commands = [];
 
     /**
      * Queue constructor.
@@ -28,12 +28,29 @@ class ArrayQueue implements QueueInterface
     }
 
     /**
+     * @param int $commandId
+     * @return CommandInterface|null
+     */
+    public function pull(int $commandId): ?CommandInterface
+    {
+        foreach ($this->commands as $i => $command) {
+            if ($command->getId() === $commandId) {
+                unset($this->commands[$i]);
+
+                break;
+            }
+        }
+
+        return $command ?? null;
+    }
+
+    /**
      * {@inheritDoc}
      */
     public function getIterator(): \Traversable
     {
-        while (\count($this->queue)) {
-            yield \array_shift($this->queue);
+        while (\count($this->commands)) {
+            yield \array_shift($this->commands);
         }
     }
 
@@ -42,7 +59,7 @@ class ArrayQueue implements QueueInterface
      */
     public function count(): int
     {
-        return \count($this->queue);
+        return \count($this->commands);
     }
 
     /**
@@ -50,6 +67,6 @@ class ArrayQueue implements QueueInterface
      */
     public function push(CommandInterface $command): void
     {
-        $this->queue[] = $command;
+        $this->commands[] = $command;
     }
 }

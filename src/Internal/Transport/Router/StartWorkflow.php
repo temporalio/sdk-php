@@ -39,11 +39,6 @@ final class StartWorkflow extends Route
     private const ERROR_ALREADY_RUNNING = 'Workflow "%s" with run id "%s" has been already started';
 
     /**
-     * @var ProcessCollection
-     */
-    private ProcessCollection $running;
-
-    /**
      * @var ServiceContainer
      */
     private ServiceContainer $services;
@@ -58,12 +53,9 @@ final class StartWorkflow extends Route
      * @param RepositoryInterface $running
      */
     public function __construct(
-        ServiceContainer $services,
-        ProcessCollection $running
+        ServiceContainer $services
     ) {
         $this->instantiator = new WorkflowInstantiator();
-
-        $this->running = $running;
         $this->services = $services;
     }
 
@@ -82,7 +74,7 @@ final class StartWorkflow extends Route
 
         $process = new Process($input, $this->services, $instance);
 
-        $this->running->add($process);
+        $this->services->running->add($process);
     }
 
     /**
@@ -97,7 +89,7 @@ final class StartWorkflow extends Route
             throw new \OutOfRangeException(\sprintf(self::ERROR_NOT_FOUND, $info->type->name));
         }
 
-        if ($this->running->find($info->execution->runId) !== null) {
+        if ($this->services->running->find($info->execution->runId) !== null) {
             $message = \sprintf(self::ERROR_ALREADY_RUNNING, $info->type->name, $info->execution->runId);
 
             throw new \LogicException($message);

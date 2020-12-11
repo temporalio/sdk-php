@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Workflow;
 
+use JetBrains\PhpStorm\Pure;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Internal\Repository\RepositoryInterface;
@@ -81,6 +82,7 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
     /**
      * @return string
      */
+    #[Pure]
     public function getRunId(): string
     {
         return $this->input->info->execution->runId;

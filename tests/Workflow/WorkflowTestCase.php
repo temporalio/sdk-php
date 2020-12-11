@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Client\Workflow;
 
 use Spiral\Attributes\AttributeReader;
+use Temporal\Client\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Client\Internal\ServiceContainer;
 use Temporal\Client\Worker\Command\ErrorResponseInterface;
 use Temporal\Client\Worker\Command\RequestInterface;
@@ -31,6 +32,26 @@ abstract class WorkflowTestCase extends TestCase
     protected TestingQueue $queue;
 
     /**
+     * @var TestingLoop
+     */
+    protected TestingLoop $loop;
+
+    /**
+     * @var TestingClient
+     */
+    protected TestingClient $client;
+
+    /**
+     * @var TestingEnvironment
+     */
+    protected TestingEnvironment $env;
+
+    /**
+     * @var TestingMarshaller
+     */
+    protected TestingMarshaller $marshaller;
+
+    /**
      * @var ServiceContainer
      */
     protected ServiceContainer $services;
@@ -43,16 +64,17 @@ abstract class WorkflowTestCase extends TestCase
     {
         parent::setUp();
 
+        $reader = new AttributeReader();
+
         $this->queue = new TestingQueue();
+        $this->loop = new TestingLoop();
+        $this->client = new TestingClient($this->loop, $this->queue);
+        $this->env = new TestingEnvironment();
+        $this->marshaller = new TestingMarshaller(new AttributeMapperFactory($reader));
 
-        $this->services = new ServiceContainer(
-            new TestingLoop(),
-            new TestingClient($this->queue),
-            new AttributeReader()
-        );
-
-        $this->services->env = new TestingEnvironment();
-        $this->services->marshaller = new TestingMarshaller();
+        $this->services = new ServiceContainer($this->loop, $this->client, $reader, $this->queue);
+        $this->services->env = $this->env;
+        $this->services->marshaller = $this->marshaller;
     }
 
     /**
@@ -63,10 +85,19 @@ abstract class WorkflowTestCase extends TestCase
     protected function successResponseAndNext(RequestInterface $request, $response = null): SuccessResponseInterface
     {
         try {
-            return $this->services->client->success($request, $response);
+            return $this->client->success($request, $response);
         } finally {
-            $this->services->loop->tick();
+            $this->loop->tick();
         }
+    }
+
+    /**
+     * @return void
+     */
+    protected function tick(): void
+    {
+        $this->queue->clear();
+        $this->loop->tick();
     }
 
     /**
@@ -77,9 +108,9 @@ abstract class WorkflowTestCase extends TestCase
     protected function errorResponseAndNext(RequestInterface $request, \Throwable $error): ErrorResponseInterface
     {
         try {
-            return $this->services->client->error($request, $error);
+            return $this->client->error($request, $error);
         } finally {
-            $this->services->loop->tick();
+            $this->loop->tick();
         }
     }
 
@@ -90,6 +121,6 @@ abstract class WorkflowTestCase extends TestCase
      */
     protected function marshal(object $context): array
     {
-        return $this->services->marshaller->marshal($context);
+        return $this->marshaller->marshal($context);
     }
 }

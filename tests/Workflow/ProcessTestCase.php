@@ -72,7 +72,7 @@ class ProcessTestCase extends WorkflowTestCase
 
             return new Process(new Input(), $this->services, $instance);
         } finally {
-            $this->services->loop->tick();
+            $this->loop->tick();
         }
     }
 
@@ -178,7 +178,7 @@ class ProcessTestCase extends WorkflowTestCase
     {
         $value = \random_bytes(42);
 
-        $this->services->env->setIsReplaying(false);
+        $this->env->setIsReplaying(false);
 
         $this->workflow(function () use ($value) {
             yield Workflow::sideEffect(fn() => $value);
@@ -199,7 +199,7 @@ class ProcessTestCase extends WorkflowTestCase
     {
         $value = \random_bytes(42);
 
-        $this->services->env->setIsReplaying(true);
+        $this->env->setIsReplaying(true);
 
         $this->workflow(function () use ($value) {
             yield Workflow::sideEffect(fn() => $value);

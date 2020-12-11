@@ -11,9 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Workflow;
 
-use Temporal\Client\Internal\Repository\Identifiable;
-
-interface ProcessInterface extends Identifiable, CancellationScopeInterface
+interface ProcessInterface extends CancellationScopeInterface
 {
     /**
      * @return WorkflowContextInterface

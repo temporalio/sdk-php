@@ -11,26 +11,42 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Client\Coroutine;
 
+use Temporal\Client\Internal\Coroutine\AppendableInterface;
 use Temporal\Client\Internal\Coroutine\Stack;
 
 class StackTestCase extends CoroutineTestCase
 {
-    /**
-     * @return void
-     */
-    public function testStackInjectable(): void
+    public function testStackCallable(): void
     {
-        $stack = new Stack([5, 6, 7]);
-        $stack->push([1, 4]);
+        $first = $second = false;
 
-        $this->assertSame($stack->current(), 1);
+        $stack = $this->create([3, 4, 5], function () use (&$first) { $first = true; });
+        $stack->push([1, 2], function () use (&$second) { $second = true; });
 
-        $stack->next();
-        $stack->push([2, 3]);
+        $this->assertSame([1, 2, 3, 4, 5], \iterator_to_array($stack, false));
+        $this->assertTrue($first, 'Root generator should be completed');
+        $this->assertTrue($second, 'Child generator should be completed');
+    }
 
-        foreach (\range(2, 7) as $i) {
-            $this->assertSame($i, $stack->current());
-            $stack->next();
-        }
+    public function testEmptyStackCallable(): void
+    {
+        $first = $second = false;
+
+        $stack = $this->create([], function () use (&$first) { $first = true; });
+        $stack->push([], function () use (&$second) { $second = true; });
+
+        $this->assertSame([], \iterator_to_array($stack, false));
+        $this->assertTrue($first, 'Root generator should be completed');
+        $this->assertTrue($second, 'Child generator should be completed');
+    }
+
+    /**
+     * @param iterable|array $values
+     * @param \Closure|null $then
+     * @return AppendableInterface
+     */
+    private function create(iterable $values = [], \Closure $then = null): AppendableInterface
+    {
+        return new Stack($values, $then);
     }
 }
