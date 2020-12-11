@@ -57,7 +57,7 @@ trait EventEmitterTrait
      */
     public function emit(string $event, array $arguments = []): void
     {
-        foreach ($this->events[$event] ?? [] as $index => $callback) {
+        foreach ($this->events[$event] ?? [] as $callback) {
             $callback(...$arguments);
         }
 

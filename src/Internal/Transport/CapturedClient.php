@@ -61,6 +61,7 @@ class CapturedClient implements CapturedClientInterface
     /**
      * @param RequestInterface $request
      * @return \Closure
+     * @psalm-suppress UnusedClosureParam
      */
     private function onRejected(RequestInterface $request): \Closure
     {

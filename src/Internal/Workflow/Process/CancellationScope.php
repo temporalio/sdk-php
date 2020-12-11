@@ -44,7 +44,6 @@ class CancellationScope extends Scope
     /**
      * @return string
      */
-    #[Pure]
     public function getRunId(): string
     {
         return $this->context->getRunId();

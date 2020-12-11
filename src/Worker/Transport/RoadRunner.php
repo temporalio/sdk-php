@@ -23,7 +23,6 @@ use Temporal\Client\Exception\TransportException;
 
 /**
  * @psalm-type JsonHeaders = string
- * @psalm-import-type Headers from ClientInterface
  */
 final class RoadRunner implements ConnectionInterface
 {
@@ -176,7 +175,7 @@ final class RoadRunner implements ConnectionInterface
 
     /**
      * @param JsonHeaders|null $headers
-     * @return Headers
+     * @return array<string, string>
      * @throws ProtocolException
      */
     private function decodeHeaders(string $headers = null): array
@@ -200,7 +199,7 @@ final class RoadRunner implements ConnectionInterface
     }
 
     /**
-     * @param Headers $headers
+     * @param array<string, string> $headers
      * @return JsonHeaders|null
      */
     private function encodeHeaders(array $headers): ?string

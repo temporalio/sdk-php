@@ -14,16 +14,10 @@ namespace Temporal\Client\Internal\Transport\Router;
 use React\Promise\Deferred;
 use Temporal\Client\Internal\Declaration\Instantiator\WorkflowInstantiator;
 use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
-use Temporal\Client\Internal\Marshaller\MarshallerInterface;
 use Temporal\Client\Internal\Repository\RepositoryInterface;
 use Temporal\Client\Internal\ServiceContainer;
 use Temporal\Client\Internal\Workflow\Input;
 use Temporal\Client\Internal\Workflow\Process\Process;
-use Temporal\Client\Internal\Workflow\ProcessCollection;
-use Temporal\Client\Internal\Workflow\Requests;
-use Temporal\Client\Worker\TaskQueue;
-use Temporal\Client\Workflow\ProcessInterface;
-use Temporal\Client\Workflow\WorkflowContext;
 use Temporal\Client\Workflow\WorkflowInfo;
 
 final class StartWorkflow extends Route
@@ -52,9 +46,8 @@ final class StartWorkflow extends Route
      * @param ServiceContainer $services
      * @param RepositoryInterface $running
      */
-    public function __construct(
-        ServiceContainer $services
-    ) {
+    public function __construct(ServiceContainer $services)
+    {
         $this->instantiator = new WorkflowInstantiator();
         $this->services = $services;
     }
@@ -65,7 +58,6 @@ final class StartWorkflow extends Route
      */
     public function handle(array $payload, array $headers, Deferred $resolver): void
     {
-        /** @var Input $input */
         $input = $this->services->marshaller->unmarshal($payload, new Input());
 
         $instance = $this->instantiator->instantiate(

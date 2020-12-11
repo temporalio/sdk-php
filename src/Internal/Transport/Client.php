@@ -16,7 +16,6 @@ use React\Promise\PromiseInterface;
 use Temporal\Client\Exception\CancellationException;
 use Temporal\Client\Internal\Queue\QueueInterface;
 use Temporal\Client\Internal\Transport\Request\Cancel;
-use Temporal\Client\Worker\Command\CommandInterface;
 use Temporal\Client\Worker\Command\ErrorResponseInterface;
 use Temporal\Client\Worker\Command\RequestInterface;
 use Temporal\Client\Worker\Command\ResponseInterface;
@@ -25,7 +24,7 @@ use Temporal\Client\Worker\LoopInterface;
 
 /**
  * @internal Client is an internal library class, please do not use it in your code.
- * @psalm-internal Temporal\Client\Transport
+ * @psalm-internal Temporal\Client\Internal\Transport
  */
 final class Client implements ClientInterface
 {

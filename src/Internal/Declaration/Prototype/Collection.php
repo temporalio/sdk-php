@@ -15,7 +15,7 @@ use Temporal\Client\Internal\Repository\ArrayRepository;
 
 /**
  * @template-covariant T of Prototype
- * @template-implements ArrayRepository<T>
+ * @template-extends ArrayRepository<T>
  */
 final class Collection extends ArrayRepository
 {
