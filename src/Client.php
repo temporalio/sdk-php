@@ -13,29 +13,29 @@ namespace Temporal\Client;
 
 use Temporal\Client\Client\ClientConnection;
 use Temporal\Client\Client\ClientInterface;
-use Temporal\Client\Worker\Transport\ConnectionInterface;
+use Temporal\Client\Worker\Transport\RpcConnectionInterface;
 
 final class Client extends ClientConnection
 {
     /**
-     * @param ConnectionInterface $default
+     * @param RpcConnectionInterface $rpc
      */
-    private function __construct(ConnectionInterface $default)
+    private function __construct(RpcConnectionInterface $rpc)
     {
-        parent::__construct($default);
+        parent::__construct($rpc);
     }
 
     /**
-     * @param ConnectionInterface $connection
+     * @param RpcConnectionInterface $rpc
      * @return static
      */
-    public static function using(ConnectionInterface $connection): self
+    public static function using(RpcConnectionInterface $rpc): self
     {
-        return new self($connection);
+        return new self($rpc);
     }
 
     /**
-     * @param non-empty-array<ConnectionInterface> $connections
+     * @param non-empty-array<RpcConnectionInterface> $connections
      * @param callable(ClientInterface)|null $then
      * @return iterable<ClientInterface>
      */

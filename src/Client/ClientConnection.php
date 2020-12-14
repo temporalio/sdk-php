@@ -11,22 +11,18 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Client;
 
-use JetBrains\PhpStorm\ArrayShape;
 use Spiral\Attributes\AttributeReader;
 use Temporal\Client\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Client\Internal\Marshaller\Marshaller;
 use Temporal\Client\Internal\Marshaller\MarshallerInterface;
-use Temporal\Client\Internal\Marshaller\Meta\Marshal;
-use Temporal\Client\Internal\Marshaller\Type\DateIntervalType;
-use Temporal\Client\Worker\FactoryInterface;
-use Temporal\Client\Worker\Transport\ConnectionInterface;
+use Temporal\Client\Worker\Transport\RpcConnectionInterface;
 
 class ClientConnection implements ClientInterface
 {
     /**
-     * @var ConnectionInterface
+     * @var RpcConnectionInterface
      */
-    private ConnectionInterface $connection;
+    private RpcConnectionInterface $rpc;
 
     /**
      * @var MarshallerInterface
@@ -34,11 +30,11 @@ class ClientConnection implements ClientInterface
     private MarshallerInterface $marshaller;
 
     /**
-     * @param ConnectionInterface $connection
+     * @param RpcConnectionInterface $rpc
      */
-    public function __construct(ConnectionInterface $connection)
+    public function __construct(RpcConnectionInterface $rpc)
     {
-        $this->connection = $connection;
+        $this->rpc = $rpc;
 
         $this->marshaller = new Marshaller(
             new AttributeMapperFactory(
@@ -56,14 +52,12 @@ class ClientConnection implements ClientInterface
 
         if (($group & ReloadGroup::GROUP_ACTIVITIES) === ReloadGroup::GROUP_ACTIVITIES) {
             $result[ReloadGroup::GROUP_ACTIVITIES] =
-                $this->connection->call('resetter.Reset', 'activities')
-            ;
+                $this->rpc->call('resetter.Reset', 'activities');
         }
 
         if (($group & ReloadGroup::GROUP_WORKFLOWS) === ReloadGroup::GROUP_WORKFLOWS) {
             $result[ReloadGroup::GROUP_WORKFLOWS] =
-                $this->connection->call('resetter.Reset', 'workflows')
-            ;
+                $this->rpc->call('resetter.Reset', 'workflows');
         }
 
         return $result;
@@ -74,7 +68,7 @@ class ClientConnection implements ClientInterface
      */
     public function completeActivity(string $taskToken, $result = null)
     {
-        return $this->connection->call('temporal.CompleteActivity', [
+        return $this->rpc->call('temporal.CompleteActivity', [
             'taskToken' => $taskToken,
             'result'    => $result,
         ]);
@@ -87,10 +81,12 @@ class ClientConnection implements ClientInterface
      * @return array
      * @throws \ReflectionException
      */
-    #[ArrayShape(['taskQueue' => 'string', 'executionTimeout' => 'int', 'runTimeout' => 'int', 'taskTimeout' => 'int', 'namespace' => 'string', 'attempt' => 'int'])]
-    public function executeWorkflow(string $name, array $arguments = [], $options = null): array
-    {
-        return $this->connection->call('temporal.ExecuteWorkflow', [
+    public function executeWorkflow(
+        string $name,
+        array $arguments = [],
+        $options = null
+    ): array {
+        return $this->rpc->call('temporal.ExecuteWorkflow', [
             'name'    => $name,
             'input'   => $arguments,
             'options' => $this->marshaller->marshal(

@@ -21,6 +21,7 @@ use Temporal\Client\Internal\Transport\Router;
 use Temporal\Client\Internal\Transport\RouterInterface;
 use Temporal\Client\Worker;
 use Temporal\Client\Worker\Command\RequestInterface;
+use Temporal\Client\Worker\Transport\RpcConnectionInterface;
 
 class TaskQueue implements TaskQueueInterface
 {
@@ -52,11 +53,17 @@ class TaskQueue implements TaskQueueInterface
     private ServiceContainer $services;
 
     /**
+     * @var RpcConnectionInterface
+     */
+    private RpcConnectionInterface $rpc;
+
+    /**
      * @param string $name
      * @param Worker $worker
      */
-    public function __construct(string $name, Worker $worker)
+    public function __construct(string $name, Worker $worker, RpcConnectionInterface $rpc)
     {
+        $this->rpc = $rpc;
         $this->name = $name;
         $this->services = ServiceContainer::fromWorker($worker);
 
@@ -82,7 +89,7 @@ class TaskQueue implements TaskQueueInterface
         $router = new Router();
 
         // Activity routes
-        $router->add(new Router\InvokeActivity($this->services));
+        $router->add(new Router\InvokeActivity($this->services, $this->rpc));
 
         // Workflow routes
         $router->add(new Router\StartWorkflow($this->services));

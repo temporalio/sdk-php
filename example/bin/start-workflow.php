@@ -16,7 +16,7 @@ require __DIR__ . '/../../vendor/autoload.php';
 
 $client = Client::using(RoadRunner::socket(6001));
 
-//$client->reload();
+$client->reload();
 
 $result = $client->executeWorkflow('CancellableWorkflow');
 

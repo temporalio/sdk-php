@@ -24,7 +24,9 @@ use Temporal\Client\Exception\TransportException;
 /**
  * @psalm-type JsonHeaders = string
  */
-final class RoadRunner implements ConnectionInterface
+final class RoadRunner implements
+    RpcConnectionInterface,
+    RelayConnectionInterface
 {
     /**
      * @var string
@@ -47,8 +49,9 @@ final class RoadRunner implements ConnectionInterface
      * @param RelayInterface $relay
      */
     #[Pure]
-    private function __construct(RelayInterface $relay)
-    {
+    private function __construct(
+        RelayInterface $relay
+    ) {
         $this->rpc = new RPC($relay);
         $this->worker = new Worker($relay);
 
@@ -66,10 +69,10 @@ final class RoadRunner implements ConnectionInterface
         }
 
         // Intercept all output messages
-        \ob_start(fn (string $chunk) => $this->write($chunk));
+        \ob_start(fn(string $chunk) => $this->write($chunk));
 
         // Intercept all exceptions
-        \set_exception_handler(fn (\Throwable $e) => $this->writeException($e));
+        \set_exception_handler(fn(\Throwable $e) => $this->writeException($e));
 
         // Intercept all errors
         \set_error_handler(function (int $code, string $message, string $file, int $line) {
@@ -82,19 +85,19 @@ final class RoadRunner implements ConnectionInterface
     }
 
     /**
-     * @param \Throwable $e
-     */
-    private function writeException(\Throwable $e): void
-    {
-        $this->write((string)$e);
-    }
-
-    /**
      * @param string $message
      */
     private function write(string $message): void
     {
         \file_put_contents('php://stderr', $message);
+    }
+
+    /**
+     * @param \Throwable $e
+     */
+    private function writeException(\Throwable $e): void
+    {
+        $this->write((string)$e);
     }
 
     /**
@@ -199,6 +202,20 @@ final class RoadRunner implements ConnectionInterface
     }
 
     /**
+     * {@inheritDoc}
+     */
+    public function send(string $message, array $headers = []): void
+    {
+        $json = $this->encodeHeaders($headers);
+
+        try {
+            $this->worker->send($message, $json);
+        } catch (\Throwable $e) {
+            throw new TransportException($e->getMessage(), $e->getCode(), $e);
+        }
+    }
+
+    /**
      * @param array<string, string> $headers
      * @return JsonHeaders|null
      */
@@ -212,20 +229,6 @@ final class RoadRunner implements ConnectionInterface
             return \json_encode($headers, \JSON_THROW_ON_ERROR);
         } catch (\JsonException $e) {
             throw new ProtocolException($e->getMessage(), $e->getCode(), $e);
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function send(string $message, array $headers = []): void
-    {
-        $json = $this->encodeHeaders($headers);
-
-        try {
-            $this->worker->send($message, $json);
-        } catch (\Throwable $e) {
-            throw new TransportException($e->getMessage(), $e->getCode(), $e);
         }
     }
 

@@ -11,14 +11,13 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Worker\Transport;
 
-use JetBrains\PhpStorm\ArrayShape;
 use Temporal\Client\Exception\TransportException;
 
 /**
  * @psalm-type Headers = array<string, mixed>
  * @psalm-type Message = array { 0: string, 1: Headers }
  */
-interface ConnectionInterface
+interface RelayConnectionInterface
 {
     /**
      * @var positive-int
@@ -29,14 +28,6 @@ interface ConnectionInterface
      * @var positive-int
      */
     public const MESSAGE_HEADERS = 0x01;
-
-    /**
-     * @param string $method
-     * @param mixed $payload
-     * @return mixed
-     * @throws TransportException
-     */
-    public function call(string $method, $payload);
 
     /**
      * @return Message

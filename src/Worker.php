@@ -38,7 +38,9 @@ use Temporal\Client\Worker\FactoryInterface;
 use Temporal\Client\Worker\LoopInterface;
 use Temporal\Client\Worker\TaskQueue;
 use Temporal\Client\Worker\TaskQueueInterface;
-use Temporal\Client\Worker\Transport\ConnectionInterface;
+use Temporal\Client\Worker\Transport\RelayConnectionInterface;
+use Temporal\Client\Worker\Transport\RoadRunner;
+use Temporal\Client\Worker\Transport\RpcConnectionInterface;
 
 final class Worker implements FactoryInterface
 {
@@ -77,9 +79,9 @@ final class Worker implements FactoryInterface
     ];
 
     /**
-     * @var ConnectionInterface
+     * @var RelayConnectionInterface
      */
-    private ConnectionInterface $connection;
+    private RelayConnectionInterface $relay;
 
     /**
      * @var ReaderInterface
@@ -117,11 +119,18 @@ final class Worker implements FactoryInterface
     private QueueInterface $responses;
 
     /**
-     * @param ConnectionInterface $connection
+     * @var RpcConnectionInterface
      */
-    public function __construct(ConnectionInterface $connection)
+    private RpcConnectionInterface $rpc;
+
+    /**
+     * @param RelayConnectionInterface|null $relay
+     * @param RpcConnectionInterface|null $rpc
+     */
+    public function __construct(RelayConnectionInterface $relay = null, RpcConnectionInterface $rpc = null)
     {
-        $this->connection = $connection;
+        $this->relay = $relay ?? RoadRunner::pipes();
+        $this->rpc = $rpc ?? RoadRunner::socket(6001);
 
         $this->boot();
         $this->bootEvents();
@@ -255,7 +264,7 @@ final class Worker implements FactoryInterface
      */
     public function create(string $taskQueue = self::DEFAULT_TASK_QUEUE): TaskQueueInterface
     {
-        return new TaskQueue($taskQueue, $this);
+        return new TaskQueue($taskQueue, $this, $this->rpc);
     }
 
     /**
@@ -295,11 +304,11 @@ final class Worker implements FactoryInterface
      */
     public function run(): int
     {
-        while ([$messages, $headers] = $this->connection->await()) {
+        while ([$messages, $headers] = $this->relay->await()) {
             try {
-                $this->connection->send($this->dispatch($messages, $headers));
+                $this->relay->send($this->dispatch($messages, $headers));
             } catch (\Throwable $e) {
-                $this->connection->error($e);
+                $this->relay->error($e);
             }
         }
 

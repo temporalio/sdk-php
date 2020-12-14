@@ -19,6 +19,7 @@ use Temporal\Client\Exception\DoNotCompleteOnResultException;
 use Temporal\Client\Internal\Declaration\Instantiator\ActivityInstantiator;
 use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Client\Internal\ServiceContainer;
+use Temporal\Client\Worker\Transport\RpcConnectionInterface;
 
 final class InvokeActivity extends Route
 {
@@ -38,10 +39,17 @@ final class InvokeActivity extends Route
     private ServiceContainer $services;
 
     /**
-     * @param ServiceContainer $services
+     * @var RpcConnectionInterface
      */
-    public function __construct(ServiceContainer $services)
+    private RpcConnectionInterface $rpc;
+
+    /**
+     * @param ServiceContainer $services
+     * @param RpcConnectionInterface $rpc
+     */
+    public function __construct(ServiceContainer $services, RpcConnectionInterface $rpc)
     {
+        $this->rpc = $rpc;
         $this->services = $services;
         $this->instantiator = new ActivityInstantiator();
     }
@@ -51,7 +59,7 @@ final class InvokeActivity extends Route
      */
     public function handle(array $payload, array $headers, Deferred $resolver): void
     {
-        $context = $this->services->marshaller->unmarshal($payload, new ActivityContext());
+        $context = $this->services->marshaller->unmarshal($payload, new ActivityContext($this->rpc));
 
         $prototype = $this->findDeclarationOrFail($context->getInfo());
         $instance = $this->instantiator->instantiate($prototype);

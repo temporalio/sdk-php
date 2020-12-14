@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Activity;
 
+use Temporal\Client\Worker\Transport\RpcConnectionInterface;
+
 interface ActivityContextInterface
 {
     /**
@@ -30,7 +32,7 @@ interface ActivityContextInterface
     /**
      * If this method is called during an activity execution then activity is
      * not going to complete when its method returns. It is expected to be
-     * completed asynchronously using {@see ConnectionInterface::call()}.
+     * completed asynchronously using {@see RpcConnectionInterface::call()}.
      *
      * @return void
      */
@@ -40,4 +42,14 @@ interface ActivityContextInterface
      * @return bool
      */
     public function isDoNotCompleteOnReturn(): bool;
+
+    /**
+     * Use to notify Simple Workflow that activity execution is alive.
+     *
+     * @param mixed $details In case of activity timeout details are returned
+     *  as a field of the exception thrown.
+     *
+     * @return mixed
+     */
+    public function heartbeat($details);
 }

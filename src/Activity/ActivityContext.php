@@ -13,6 +13,7 @@ namespace Temporal\Client\Activity;
 
 use Temporal\Client\Internal\Marshaller\Meta\Marshal;
 use Temporal\Client\Internal\Marshaller\Meta\MarshalArray;
+use Temporal\Client\Worker\Transport\RpcConnectionInterface;
 
 final class ActivityContext implements ActivityContextInterface
 {
@@ -34,11 +35,17 @@ final class ActivityContext implements ActivityContextInterface
     private bool $doNotCompleteOnReturn = false;
 
     /**
-     * ActivityContext constructor.
+     * @var RpcConnectionInterface
      */
-    public function __construct()
+    private RpcConnectionInterface $rpc;
+
+    /**
+     * @param RpcConnectionInterface $rpc
+     */
+    public function __construct(RpcConnectionInterface $rpc)
     {
         $this->info = new ActivityInfo();
+        $this->rpc = $rpc;
     }
 
     /**
@@ -71,5 +78,16 @@ final class ActivityContext implements ActivityContextInterface
     public function isDoNotCompleteOnReturn(): bool
     {
         return $this->doNotCompleteOnReturn;
+    }
+
+    /**
+     * @param mixed $details
+     * @return mixed
+     */
+    public function heartbeat($details)
+    {
+        return $this->rpc->call('activity.heartbeat', [
+            'details' => $details,
+        ]);
     }
 }
