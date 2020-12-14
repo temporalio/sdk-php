@@ -24,7 +24,19 @@ interface WorkflowInstanceInterface extends InstanceInterface
 
     /**
      * @param string $name
+     * @param callable $handler
+     */
+    public function addQueryHandler(string $name, callable $handler): void;
+
+    /**
+     * @param string $name
      * @return \Closure|null
      */
     public function findSignalHandler(string $name): ?\Closure;
+
+    /**
+     * @param string $name
+     * @param callable $handler
+     */
+    public function addSignalHandler(string $name, callable $handler): void;
 }

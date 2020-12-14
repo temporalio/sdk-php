@@ -11,12 +11,15 @@ declare(strict_types=1);
 
 namespace App;
 
-use Temporal\Client\Internal\Support\Uuid;
+use Temporal\Client\Common\MethodRetry;
+use Temporal\Client\Common\Uuid;
 use Temporal\Client\Workflow;
+use Temporal\Client\Workflow\WorkflowMethod;
 
 class SimpleWorkflow
 {
-    #[Workflow\Meta\WorkflowMethod(name: 'SimpleWorkflow')]
+    #[WorkflowMethod(name: 'SimpleWorkflow')]
+    #[MethodRetry(initialInterval: '10s')]
     public function handler(): iterable
     {
         $activities = Workflow::newActivityStub(SimpleActivity::class);

@@ -93,7 +93,11 @@ class Decorator implements CoroutineInterface
     public function getReturn()
     {
         if ($this->iterator instanceof \Generator || $this->iterator instanceof CoroutineInterface) {
-            return $this->iterator->getReturn();
+            try {
+                return $this->iterator->getReturn();
+            } catch (\Exception $_) {
+                return null;
+            }
         }
 
         if ($this->iterator->valid()) {

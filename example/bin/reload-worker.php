@@ -9,10 +9,13 @@
 
 declare(strict_types=1);
 
-use Spiral\Goridge\RPC;
+use Temporal\Client\Client;
+use Temporal\Client\Worker\Transport\RoadRunner;
 
-/** @var RPC $rpc */
-$rpc = require __DIR__ . '/connection.php';
+require __DIR__ . '/../../vendor/autoload.php';
 
-$rpc->call('resetter.Reset', 'workflows');
-$rpc->call('resetter.Reset', 'activities');
+$client = Client::using(RoadRunner::socket(6001));
+
+foreach ($client->reload(Client\ReloadGroup::GROUP_ALL) as $response) {
+    dump($response);
+}

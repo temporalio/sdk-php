@@ -14,17 +14,30 @@ namespace Temporal\Client\Activity;
 interface ActivityContextInterface
 {
     /**
+     * Information about activity invocation and the caller workflow.
+     *
+     * @return ActivityInfo
+     */
+    public function getInfo(): ActivityInfo;
+
+    /**
+     * Returns the arguments passed to the activity.
+     *
      * @return array
      */
     public function getArguments(): array;
 
     /**
-     * Call given method to enable external activity completion using activity ID or task token.
+     * If this method is called during an activity execution then activity is
+     * not going to complete when its method returns. It is expected to be
+     * completed asynchronously using {@see ConnectionInterface::call()}.
+     *
+     * @return void
      */
     public function doNotCompleteOnReturn(): void;
 
     /**
-     * @return ActivityInfo
+     * @return bool
      */
-    public function getInfo(): ActivityInfo;
+    public function isDoNotCompleteOnReturn(): bool;
 }

@@ -11,12 +11,15 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Workflow;
 
-use JetBrains\PhpStorm\ExpectedValues;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Internal\Support\DateInterval;
+use Temporal\Client\Worker\Environment\EnvironmentInterface;
 
-interface WorkflowContextInterface
+/**
+ * @psalm-import-type DateIntervalFormat from DateInterval
+ */
+interface WorkflowContextInterface extends EnvironmentInterface
 {
     /**
      * @return WorkflowInfo
@@ -26,49 +29,44 @@ interface WorkflowContextInterface
     /**
      * @return array
      */
-    public function getDebugBacktrace(): array;
-
-    /**
-     * @return array
-     */
     public function getArguments(): array;
 
     /**
-     * @return \DateTimeInterface
+     * @param string $queryType
+     * @param callable $handler
+     * @return $this
      */
-    public function now(): \DateTimeInterface;
+    public function registerQuery(string $queryType, callable $handler): self;
 
     /**
-     * @return bool
+     * @param string $queryType
+     * @param callable $handler
+     * @return $this
      */
-    public function isReplaying(): bool;
+    public function registerSignal(string $queryType, callable $handler): self;
 
     /**
-     * @template     ActivityType
-     * @psalm-param  class-string<ActivityType> $name
-     * @psalm-return ActivityType|ActivityProxy<ActivityType>
-     *
-     * @param string $name
-     * @return ActivityProxy
+     * @param callable $handler
+     * @return CancellationScopeInterface
      */
-    public function newActivityStub(string $name): ActivityProxy;
+    public function newCancellationScope(callable $handler): CancellationScopeInterface;
 
     /**
-     * @param string $changeID
+     * @param string $changeId
      * @param int $minSupported
      * @param int $maxSupported
      * @return PromiseInterface
      */
-    public function getVersion(string $changeID, int $minSupported, int $maxSupported): PromiseInterface;
+    public function getVersion(string $changeId, int $minSupported, int $maxSupported): PromiseInterface;
 
     /**
-     * @psalm-type  SideEffectCallback = callable(): mixed
-     * @psalm-param SideEffectCallback $cb
+     * @psalm-type SideEffectCallback = callable(): mixed
+     * @psalm-param SideEffectCallback $context
      *
-     * @param callable $cb
+     * @param callable $context
      * @return PromiseInterface
      */
-    public function sideEffect(callable $cb): PromiseInterface;
+    public function sideEffect(callable $context): PromiseInterface;
 
     /**
      * @param mixed $result
@@ -80,29 +78,32 @@ interface WorkflowContextInterface
      * @psalm-param class-string|string $name
      *
      * @param string $name
-     * @param array $arguments
-     * @param ActivityOptions|array|null $options
+     * @param array $args
+     * @param ActivityOptions|null $options
      * @return PromiseInterface
      */
-    public function executeActivity(
-        string $name,
-        array $arguments = [],
-        #[ExpectedValues(values: ActivityOptions::class)]
-        $options = null
-    ): PromiseInterface;
+    public function executeActivity(string $name, array $args = [], ActivityOptions $options = null): PromiseInterface;
 
     /**
-     * @see DateInterval
+     * @psalm-template ActivityType
+     * @psalm-param class-string<ActivityType> $name
+     * @psalm-return ActivityType
      *
-     * @psalm-import-type DateIntervalFormat from DateInterval
-     * @param string|int|float|\DateInterval $interval
+     * @param string $name
+     * @param ActivityOptions|null $options
+     * @return object
+     */
+    public function newActivityStub(string $name, ActivityOptions $options = null): object;
+
+    /**
+     * @param DateIntervalFormat $interval
      * @return PromiseInterface
+     * @see DateInterval
      */
     public function timer($interval): PromiseInterface;
 
     /**
-     * @param callable $handler
-     * @return CancellationScope
+     * @return array
      */
-    public function newCancellationScope(callable $handler): CancellationScope;
+    public function getTrace(): array;
 }

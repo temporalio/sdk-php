@@ -16,8 +16,7 @@ parameter to the Activity.
 ```php
 namespace Example;
 
-use Temporal\Client\Workflow\Meta\WorkflowMethod;
-use Temporal\Client\Workflow\WorkflowContextInterface;
+use Temporal\Client\Internal\Workflow\WorkflowContextInterface;use Temporal\Client\Workflow\WorkflowMethod;
 
 final class FileProcessingWorkflow
 {
@@ -124,9 +123,7 @@ method which is an implementation of the popular `Promise.all()` function:
 ```php
 namespace Example;
 
-use React\Promise\PromiseInterface;
-use Temporal\Client\Workflow\Meta\WorkflowMethod;
-use Temporal\Client\Workflow\WorkflowContextInterface;
+use React\Promise\PromiseInterface;use Temporal\Client\Internal\Workflow\WorkflowContextInterface;use Temporal\Client\Workflow\WorkflowMethod;
 
 final class FileProcessingWorkflow
 {

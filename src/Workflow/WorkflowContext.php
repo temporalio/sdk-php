@@ -11,243 +11,105 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Workflow;
 
-use JetBrains\PhpStorm\ExpectedValues;
-use React\Promise\CancellablePromiseInterface;
-use React\Promise\Deferred;
+use Carbon\CarbonInterface;
+use Carbon\CarbonTimeZone;
+use JetBrains\PhpStorm\Pure;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
-use Temporal\Client\Internal\Coroutine\CoroutineInterface;
-use Temporal\Client\Internal\Marshaller\MarshallerInterface;
+use Temporal\Client\Internal\Repository\RepositoryInterface;
+use Temporal\Client\Internal\ServiceContainer;
 use Temporal\Client\Internal\Support\DateInterval;
-use Temporal\Client\Transport\Future;
-use Temporal\Client\Transport\FutureInterface;
-use Temporal\Client\Transport\Protocol\Command\RequestInterface;
-use Temporal\Client\Worker\Worker;
-use Temporal\Client\Workflow;
-use Temporal\Client\Workflow\Command\CompleteWorkflow;
-use Temporal\Client\Workflow\Command\ExecuteActivity;
-use Temporal\Client\Workflow\Command\GetVersion;
-use Temporal\Client\Workflow\Command\NewTimer;
-use Temporal\Client\Workflow\Command\SideEffect;
+use Temporal\Client\Internal\Transport\CapturedClient;
+use Temporal\Client\Internal\Transport\CapturedClientInterface;
+use Temporal\Client\Internal\Transport\ClientInterface;
+use Temporal\Client\Internal\Transport\Request\CompleteWorkflow;
+use Temporal\Client\Internal\Transport\Request\ExecuteActivity;
+use Temporal\Client\Internal\Transport\Request\GetVersion;
+use Temporal\Client\Internal\Transport\Request\NewTimer;
+use Temporal\Client\Internal\Transport\Request\SideEffect;
+use Temporal\Client\Internal\Workflow\ActivityProxy;
+use Temporal\Client\Internal\Workflow\Input;
+use Temporal\Client\Internal\Workflow\Process\CancellationScope;
+use Temporal\Client\Internal\Workflow\Process\Process;
+use Temporal\Client\Internal\Workflow\ProcessCollection;
+use Temporal\Client\Worker\Command\RequestInterface;
+use Temporal\Client\Worker\Environment\EnvironmentAwareTrait;
+
+use Temporal\Client\Worker\Environment\EnvironmentInterface;
 
 use function React\Promise\reject;
 
-final class WorkflowContext implements WorkflowContextInterface
+class WorkflowContext implements WorkflowContextInterface, ClientInterface
 {
     /**
-     * @var string
+     * @var ServiceContainer
      */
-    private const KEY_INFO = 'info';
+    protected ServiceContainer $services;
 
     /**
-     * @var string
+     * @var CapturedClientInterface
      */
-    private const KEY_ARGUMENTS = 'args';
+    protected CapturedClientInterface $client;
 
     /**
-     * @var Worker
+     * @var Input
      */
-    private Worker $worker;
+    private Input $input;
 
     /**
-     * @var array|int[]
+     * @var Process
      */
-    private array $requests = [];
-
-    /**
-     * @var RunningWorkflows
-     */
-    private RunningWorkflows $running;
-
-    /**
-     * @var WorkflowInfo
-     */
-    private WorkflowInfo $info;
-
-    /**
-     * @var string[]
-     */
-    private array $arguments;
+    private Process $process;
 
     /**
      * @var array
      */
-    private array $lastStacktrace;
+    private array $trace = [];
 
     /**
-     * @var MarshallerInterface
+     * @param Process $process
+     * @param ServiceContainer $services
+     * @param Input $input
      */
-    private MarshallerInterface $marshaller;
-
-    /**
-     * @param Worker $worker
-     * @param RunningWorkflows $running
-     * @param array $params
-     * @throws \Exception
-     */
-    public function __construct(Worker $worker, RunningWorkflows $running, array $params)
+    public function __construct(Process $process, ServiceContainer $services, Input $input)
     {
-        $this->worker = $worker;
-        $this->running = $running;
-        $this->marshaller = $worker->getMarshaller();
+        $this->process = $process;
+        $this->input = $input;
+        $this->services = $services;
 
-        $this->info = $this->marshaller->unmarshal($params[self::KEY_INFO], new WorkflowInfo());
-        $this->arguments = $params[self::KEY_ARGUMENTS] ?? [];
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function newActivityStub(
-        string $name,
-        #[ExpectedValues(values: ActivityOptions::class)]
-        $options = null
-    ): ActivityProxy {
-        $this->recordStacktrace();
-
-        // Create defaults if options not created
-        if ($options === null || \is_array($options)) {
-            $options = $this->marshaller->unmarshal((array)$options, new ActivityOptions());
-        }
-
-        return new ActivityProxy($name, $options, $this, $this->worker->getActivities());
+        $this->client = new CapturedClient($services->client);
     }
 
     /**
      * Record last stack trace of the call.
+     *
+     * @return void
      */
-    private function recordStacktrace(): void
+    private function recordTrace(): void
     {
-        // raw information
-        $this->lastStacktrace = \debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+        $this->trace = \debug_backtrace(
+            \DEBUG_BACKTRACE_IGNORE_ARGS
+        );
     }
 
     /**
      * {@inheritDoc}
      */
-    public function getArguments(): array
+    public function getTimeZone(): CarbonTimeZone
     {
-        return $this->arguments;
+        $this->recordTrace();
+
+        return $this->services->env->getTimeZone();
     }
 
     /**
      * {@inheritDoc}
      */
-    public function getInfo(): WorkflowInfo
+    public function now(): CarbonInterface
     {
-        $this->recordStacktrace();
+        $this->recordTrace();
 
-        return $this->info;
-    }
-
-    /**
-     * @return array
-     */
-    public function getDebugBacktrace(): array
-    {
-        return $this->lastStacktrace;
-    }
-
-    /**
-     * @return int[]
-     */
-    public function getRequestIdentifiers(): array
-    {
-        return \array_values($this->requests);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function now(): \DateTimeInterface
-    {
-        $this->recordStacktrace();
-
-        return $this->worker->getTickTime();
-    }
-
-    /**
-     * @param string $changeID
-     * @param int $minSupported
-     * @param int $maxSupported
-     * @return PromiseInterface
-     */
-    public function getVersion(string $changeID, int $minSupported, int $maxSupported): PromiseInterface
-    {
-        try {
-            $request = new GetVersion($changeID, $minSupported, $maxSupported);
-        } catch (\Throwable $e) {
-            return reject($e);
-        }
-
-        return $this->request($request);
-    }
-
-    /**
-     * @param RequestInterface $request
-     * @return FutureInterface
-     */
-    private function request(RequestInterface $request): FutureInterface
-    {
-        $this->recordStacktrace();
-
-        $this->requests[] = $request->getId();
-
-        $client = $this->worker->getClient();
-
-        $then = function ($result) use ($request) {
-            $this->recordStacktrace();
-            Workflow::setCurrentContext($this);
-            $this->unload($request);
-
-            return $result;
-        };
-
-        /** @psalm-suppress UnusedClosureParam */
-        $otherwise = function (\Throwable $exception) use ($request) {
-            $this->recordStacktrace();
-            Workflow::setCurrentContext($this);
-            $this->unload($request);
-
-            throw $exception;
-        };
-
-        /** @var CancellablePromiseInterface $result */
-        $result = $client->request($request)
-            ->then($then, $otherwise)
-        ;
-
-        return new Future($result, $this->worker);
-    }
-
-    /**
-     * @param RequestInterface $request
-     */
-    private function unload(RequestInterface $request): void
-    {
-        $index = \array_search($request->getId(), $this->requests, true);
-
-        unset($this->requests[$index]);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function sideEffect(callable $cb): PromiseInterface
-    {
-        try {
-            if ($this->isReplaying()) {
-                $value = null;
-            } else {
-                $value = $cb();
-            }
-
-            $request = new SideEffect($value);
-        } catch (\Throwable $e) {
-            return reject($e);
-        }
-
-        return $this->request($request);
+        return $this->services->env->now();
     }
 
     /**
@@ -255,59 +117,125 @@ final class WorkflowContext implements WorkflowContextInterface
      */
     public function isReplaying(): bool
     {
-        $this->recordStacktrace();
+        $this->recordTrace();
 
-        $workflow = $this->worker->getWorkflowWorker();
-
-        return $workflow->isReplaying();
+        return $this->services->env->isReplaying();
     }
 
     /**
-     * @param string $queryType
-     * @param callable $handler
-     * @return $this
+     * @return string
      */
-    public function registerQuery(string $queryType, callable $handler): self
+    public function getRunId(): string
     {
-        $this->findCurrentProcessOrFail()
-            ->getInstance()
-            ->addQueryHandler($queryType, $handler)
-        ;
+        $this->recordTrace();
+
+        return $this->input->info->execution->runId;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getInfo(): WorkflowInfo
+    {
+        $this->recordTrace();
+
+        return $this->input->info;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getArguments(): array
+    {
+        $this->recordTrace();
+
+        return $this->input->args;
+    }
+
+    /**
+     * @return CapturedClientInterface
+     */
+    public function getClient(): CapturedClientInterface
+    {
+        return $this->client;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function registerQuery(string $queryType, callable $handler): WorkflowContextInterface
+    {
+        $this->recordTrace();
+
+        $instance = $this->process->getWorkflowInstance();
+        $instance->addQueryHandler($queryType, $handler);
 
         return $this;
     }
 
     /**
-     * @return Process
+     * {@inheritDoc}
      */
-    private function findCurrentProcessOrFail(): Process
+    public function registerSignal(string $queryType, callable $handler): WorkflowContextInterface
     {
-        $process = $this->worker
-            ->getWorkflowWorker()
-            ->getRunningWorkflows()
-            ->find($this->info->execution->runId)
-        ;
+        $this->recordTrace();
 
-        if ($process === null) {
-            throw new \DomainException('Process has been destroyed');
+        $instance = $this->process->getWorkflowInstance();
+        $instance->addSignalHandler($queryType, $handler);
+
+        return $this;
+    }
+
+    /**
+     * @param callable $handler
+     * @return PromiseInterface
+     */
+    public function newCancellationScope(callable $handler): CancellationScope
+    {
+        $this->recordTrace();
+
+        $self = clone $this;
+        $self->client = new CapturedClient($this->client);
+
+        return new CancellationScope($self, $this->services, \Closure::fromCallable($handler));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getVersion(string $changeId, int $minSupported, int $maxSupported): PromiseInterface
+    {
+        $this->recordTrace();
+
+        return $this->request(
+            new GetVersion($changeId, $minSupported, $maxSupported)
+        );
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function request(RequestInterface $request): PromiseInterface
+    {
+        $this->recordTrace();
+
+        return $this->client->request($request);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function sideEffect(callable $context): PromiseInterface
+    {
+        $this->recordTrace();
+
+        try {
+            $value = $this->isReplaying() ? null : $context();
+        } catch (\Throwable $e) {
+            return reject($e);
         }
 
-        return $process;
-    }
-
-    /**
-     * @param string $queryType
-     * @param callable $handler
-     * @return $this
-     */
-    public function registerSignal(string $signalType, callable $handler): self
-    {
-        $this->findCurrentProcessOrFail()
-            ->getInstance()
-            ->addSignalHandler($signalType, $handler)
-        ;
-
-        return $this;
+        return $this->request(new SideEffect($value));
     }
 
     /**
@@ -315,64 +243,56 @@ final class WorkflowContext implements WorkflowContextInterface
      */
     public function complete($result = null): PromiseInterface
     {
-        $request = new CompleteWorkflow($result, \array_values($this->requests));
+        $this->recordTrace();
 
-        $onFulfilled = function ($result) {
-            $this->running->kill($this->info->execution->runId, $this->worker->getClient());
+        $this->process->cancel();
 
-            return $result;
-        };
-
-        /** @psalm-suppress UnusedClosureParam */
-        $onRejected = function (\Throwable $exception) {
-            $this->running->kill($this->info->execution->runId, $this->worker->getClient());
-
-            throw $exception;
-        };
-
-        return $this->request($request)
-            ->then($onFulfilled, $onRejected)
-        ;
+        return $this->request(new CompleteWorkflow($result));
     }
 
     /**
      * {@inheritDoc}
      */
-    public function executeActivity(
-        string $name,
-        array $arguments = [],
-        #[ExpectedValues(values: ActivityOptions::class)]
-        $options = null
-    ): PromiseInterface {
-        // Create defaults if options object not created
-        if ($options === null || \is_array($options)) {
-            $options = $this->marshaller->unmarshal((array)$options, new ActivityOptions());
-        }
+    public function executeActivity(string $name, array $args = [], ActivityOptions $options = null): PromiseInterface
+    {
+        $this->recordTrace();
 
-        $request = new ExecuteActivity($name, $arguments, $this->marshaller->marshal($options));
+        $options ??= new ActivityOptions();
 
-        return $this->request($request);
+        return $this->request(
+            new ExecuteActivity($name, $args, $this->services->marshaller->marshal($options))
+        );
     }
 
     /**
      * {@inheritDoc}
-     * @throws \Exception
+     */
+    public function newActivityStub(string $name, ActivityOptions $options = null): object
+    {
+        $this->recordTrace();
+
+        $options ??= new ActivityOptions();
+
+        return new ActivityProxy($name, $options, $this, $this->services->activities);
+    }
+
+    /**
+     * {@inheritDoc}
      */
     public function timer($interval): PromiseInterface
     {
-        $request = new NewTimer(DateInterval::parse($interval));
+        $this->recordTrace();
 
-        return $this->request($request);
+        return $this->request(
+            new NewTimer(DateInterval::parse($interval, DateInterval::FORMAT_SECONDS))
+        );
     }
 
     /**
-     * @param callable $handler
-     * @return CancellationScope
+     * {@inheritDoc}
      */
-    public function newCancellationScope(callable $handler): CancellationScope
+    public function getTrace(): array
     {
-        $process = $this->findCurrentProcessOrFail();
-
-        return new CancellationScope($process, $handler);
+        return $this->trace;
     }
 }

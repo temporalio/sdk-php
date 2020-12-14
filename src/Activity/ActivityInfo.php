@@ -13,16 +13,15 @@ namespace Temporal\Client\Activity;
 
 use Carbon\Carbon;
 use Carbon\CarbonInterval;
-use Temporal\Client\Activity\Info\ActivityType;
+use Temporal\Client\Common\Uuid;
 use Temporal\Client\Internal\Marshaller\Meta\Marshal;
 use Temporal\Client\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Client\Internal\Marshaller\Type\DateTimeType;
 use Temporal\Client\Internal\Marshaller\Type\NullableType;
 use Temporal\Client\Internal\Marshaller\Type\ObjectType;
-use Temporal\Client\Internal\Support\Uuid;
 use Temporal\Client\Worker\FactoryInterface;
-use Temporal\Client\Workflow\Info\WorkflowExecution;
-use Temporal\Client\Workflow\Info\WorkflowType;
+use Temporal\Client\Workflow\WorkflowExecution;
+use Temporal\Client\Workflow\WorkflowType;
 
 /**
  * ActivityInfo contains information about currently executing activity.

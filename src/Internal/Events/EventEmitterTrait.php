@@ -1,142 +1,71 @@
-<?php declare(strict_types=1);
+<?php
 
-/*
- * This file is part of Evenement.
- *
- * (c) Igor Wiedler <igor@wiedler.ch>
+/**
+ * This file is part of Temporal package.
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace Temporal\Client\Internal\Events;
 
-use InvalidArgumentException;
-
+/**
+ * @mixin EventEmitterInterface
+ * @mixin EventListenerInterface
+ *
+ * @template-covariant T of string
+ *
+ * @template-implements EventEmitterInterface<T>
+ * @template-implements EventListenerInterface<T>
+ */
 trait EventEmitterTrait
 {
-    protected $listeners     = [];
-    protected $onceListeners = [];
+    /**
+     * @var array<string, array<callable>>
+     */
+    protected array $events = [];
 
-    public function on($event, callable $listener)
+    /**
+     * @var array<string, array<callable>>
+     */
+    protected array $once = [];
+
+    /**
+     * {@inheritDoc}
+     */
+    public function on(string $event, callable $then): self
     {
-        if ($event === null) {
-            throw new InvalidArgumentException('event name must not be null');
-        }
-
-        if (!isset($this->listeners[$event])) {
-            $this->listeners[$event] = [];
-        }
-
-        $this->listeners[$event][] = $listener;
+        $this->events[$event][] = $then;
 
         return $this;
     }
 
     /**
-     * Once event handler can register more event handlers on the same event, the processing is done until no handlers
-     * left.
-     *
-     * @param          $event
-     * @param callable $listener
-     * @return $this
+     * {@inheritDoc}
      */
-    public function once($event, callable $listener)
+    public function once(string $event, callable $then): self
     {
-        if ($event === null) {
-            throw new InvalidArgumentException('event name must not be null');
-        }
-
-        if (!isset($this->onceListeners[$event])) {
-            $this->onceListeners[$event] = [];
-        }
-
-        $this->onceListeners[$event][] = $listener;
+        $this->once[$event][] = $then;
 
         return $this;
     }
 
-    public function removeListener($event, callable $listener)
+    /**
+     * {@inheritDoc}
+     */
+    public function emit(string $event, array $arguments = []): void
     {
-        if ($event === null) {
-            throw new InvalidArgumentException('event name must not be null');
+        foreach ($this->events[$event] ?? [] as $callback) {
+            $callback(...$arguments);
         }
 
-        if (isset($this->listeners[$event])) {
-            $index = \array_search($listener, $this->listeners[$event], true);
-            if (false !== $index) {
-                unset($this->listeners[$event][$index]);
-                if (\count($this->listeners[$event]) === 0) {
-                    unset($this->listeners[$event]);
-                }
-            }
+        while (($this->once[$event] ?? []) !== []) {
+            $callback = \array_shift($this->once[$event]);
+            $callback(...$arguments);
         }
 
-        if (isset($this->onceListeners[$event])) {
-            $index = \array_search($listener, $this->onceListeners[$event], true);
-            if (false !== $index) {
-                unset($this->onceListeners[$event][$index]);
-                if (\count($this->onceListeners[$event]) === 0) {
-                    unset($this->onceListeners[$event]);
-                }
-            }
-        }
-    }
-
-    public function removeAllListeners($event = null)
-    {
-        if ($event !== null) {
-            unset($this->listeners[$event]);
-        } else {
-            $this->listeners = [];
-        }
-
-        if ($event !== null) {
-            unset($this->onceListeners[$event]);
-        } else {
-            $this->onceListeners = [];
-        }
-    }
-
-    public function listeners($event = null): array
-    {
-        if ($event === null) {
-            $events = [];
-            $eventNames = \array_unique(
-                \array_merge(\array_keys($this->listeners), \array_keys($this->onceListeners))
-            );
-            foreach ($eventNames as $eventName) {
-                $events[$eventName] = \array_merge(
-                    isset($this->listeners[$eventName]) ? $this->listeners[$eventName] : [],
-                    isset($this->onceListeners[$eventName]) ? $this->onceListeners[$eventName] : []
-                );
-            }
-            return $events;
-        }
-
-        return \array_merge(
-            isset($this->listeners[$event]) ? $this->listeners[$event] : [],
-            isset($this->onceListeners[$event]) ? $this->onceListeners[$event] : []
-        );
-    }
-
-    public function emit($event, array $arguments = [])
-    {
-        if ($event === null) {
-            throw new InvalidArgumentException('event name must not be null');
-        }
-
-        if (isset($this->listeners[$event])) {
-            foreach ($this->listeners[$event] as $listener) {
-                $listener(...$arguments);
-            }
-        }
-
-        if (isset($this->onceListeners[$event])) {
-            while (count($this->onceListeners[$event]) !== 0) {
-                $listener = array_shift($this->onceListeners[$event]);
-                $listener(...$arguments);
-            }
-        }
+        unset($this->once[$event]);
     }
 }

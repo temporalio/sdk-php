@@ -11,30 +11,22 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Activity;
 
-use Temporal\Client\Internal\Marshaller\MarshallerInterface;
-use Temporal\Client\Worker\Worker;
+use Temporal\Client\Internal\Marshaller\Meta\Marshal;
+use Temporal\Client\Internal\Marshaller\Meta\MarshalArray;
 
 final class ActivityContext implements ActivityContextInterface
 {
     /**
-     * @var string
-     */
-    private const KEY_ARGUMENTS = 'args';
-
-    /**
-     * @var string
-     */
-    private const KEY_INFO = 'info';
-
-    /**
      * @var ActivityInfo
      */
+    #[Marshal(name: 'info')]
     private ActivityInfo $info;
 
     /**
      * @var array
      */
-    private array $arguments;
+    #[MarshalArray(name: 'args')]
+    private array $arguments = [];
 
     /**
      * @var bool
@@ -42,24 +34,15 @@ final class ActivityContext implements ActivityContextInterface
     private bool $doNotCompleteOnReturn = false;
 
     /**
-     * @var MarshallerInterface
+     * ActivityContext constructor.
      */
-    private MarshallerInterface $marshaller;
-
-    /**
-     * @param array $params
-     * @throws \Exception
-     */
-    public function __construct(Worker $worker, array $params)
+    public function __construct()
     {
-        $this->marshaller = $worker->getMarshaller();
-
-        $this->info = $this->marshaller->unmarshal((array)($params[self::KEY_INFO] ?? []), new ActivityInfo());
-        $this->arguments = (array)($params[self::KEY_ARGUMENTS] ?? []);
+        $this->info = new ActivityInfo();
     }
 
     /**
-     * @return array
+     * {@inheritDoc}
      */
     public function getArguments(): array
     {
@@ -67,7 +50,7 @@ final class ActivityContext implements ActivityContextInterface
     }
 
     /**
-     * @return ActivityInfo
+     * {@inheritDoc}
      */
     public function getInfo(): ActivityInfo
     {
@@ -75,7 +58,7 @@ final class ActivityContext implements ActivityContextInterface
     }
 
     /**
-     * Call given method to enable external activity completion using activity ID or task token.
+     * {@inheritDoc}
      */
     public function doNotCompleteOnReturn(): void
     {
@@ -83,8 +66,7 @@ final class ActivityContext implements ActivityContextInterface
     }
 
     /**
-     * @return bool
-     * @internal
+     * {@inheritDoc}
      */
     public function isDoNotCompleteOnReturn(): bool
     {

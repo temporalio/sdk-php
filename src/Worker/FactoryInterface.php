@@ -17,7 +17,7 @@ namespace Temporal\Client\Worker;
  * event loop ({@see LoopInterface}).
  *
  * In addition, implementation of this interface is responsible for delegating
- * events that came from the Temporal server to a specific Worker.
+ * events that came from the Temporal server to a specific TaskQueue.
  */
 interface FactoryInterface extends LoopInterface
 {
@@ -30,14 +30,30 @@ interface FactoryInterface extends LoopInterface
     public const DEFAULT_TASK_QUEUE = 'default';
 
     /**
-     * Create a new Temporal Worker with the name of the task queue.
+     * Create a new Temporal QueueWorker with the name of the task queue.
      *
      * Note: When starting the global event loop ({@see LoopInterface::run()}),
      * all workers created with this method ({@see FactoryInterface::createWorker()})
      * will be launched.
      *
      * @param string $taskQueue
-     * @return WorkerInterface
+     * @return TaskQueueInterface
      */
-    public function createWorker(string $taskQueue = self::DEFAULT_TASK_QUEUE): WorkerInterface;
+    public function create(string $taskQueue = self::DEFAULT_TASK_QUEUE): TaskQueueInterface;
+
+    /**
+     * Create a new Temporal QueueWorker with the name of the task queue and
+     * register in worker.
+     *
+     * @param string $taskQueue
+     * @return TaskQueueInterface
+     */
+    public function createAndRegister(string $taskQueue = self::DEFAULT_TASK_QUEUE): TaskQueueInterface;
+
+    /**
+     * Register Temporal QueueWorker in worker.
+     *
+     * @param TaskQueueInterface $queue
+     */
+    public function register(TaskQueueInterface $queue): void;
 }

@@ -15,9 +15,9 @@
         "php": ">=7.4",
         "ext-json": "*",
         "psr/log": "^1.1",
+        "nikic/iter": "^2.1",
         "nesbot/carbon": "^2.41",
         "react/promise": "^2.8",
-        "evenement/evenement": "^3.0",
         "spiral/attributes": "^2.7",
         "composer-runtime-api": "^2.0",
         "symfony/polyfill-php80": "^1.18",
@@ -29,10 +29,10 @@
         }
     },
     "require-dev": {
+        "jetbrains/phpstorm-attributes": "dev-master@dev",
         "composer/composer": "^2.0",
         "monolog/monolog": "^2.1",
         "doctrine/annotations": "^1.10",
-        "react/socket": "^0.8",
         "phpunit/phpunit": "^9.3",
         "vimeo/psalm": "^4.1",
         "symfony/var-dumper": "^5.1",

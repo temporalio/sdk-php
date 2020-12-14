@@ -11,12 +11,14 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Internal\Declaration\Prototype;
 
-interface PrototypeInterface
+use Temporal\Client\Internal\Repository\Identifiable;
+
+interface PrototypeInterface extends Identifiable
 {
     /**
      * @return string
      */
-    public function getName(): string;
+    public function getId(): string;
 
     /**
      * @return \ReflectionClass|null

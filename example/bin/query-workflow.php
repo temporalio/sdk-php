@@ -9,12 +9,13 @@
 
 declare(strict_types=1);
 
-use Spiral\Goridge\RPC;
+use Temporal\Client\Worker\Transport\RoadRunner;
 
-/** @var RPC $rpc */
-$rpc = require __DIR__ . '/connection.php';
+require __DIR__ . '/../../vendor/autoload.php';
 
-$result = $rpc->call('temporal.QueryWorkflow', [
+$connection = RoadRunner::socket(6001);
+
+$result = $connection->call('temporal.QueryWorkflow', [
     'wid'        => 'WORKFLOW_ID',
     'rid'        => 'WORKFLOW_RUN_ID',
     'query_type' => 'QUERY_NAME',

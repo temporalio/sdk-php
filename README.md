@@ -22,40 +22,10 @@ following command in a root of your project:
 $ composer require temporal/sdk
 ```
 
-> Please note that this installation method is currently NOT AVAILABLE, please 
-> use the follow way instead
-
-### Temporary Installation Way
-
-Add the following lines to your `composer.json` file and 
-then execute `composer update` command:
-
-```json5
-{
-    "repositories": [
-        // Add git repository as "temporal/sdk" dependency
-        {
-            "type":"package",
-            "package": {
-              "name": "temporal/sdk",
-              "version": "0.1",
-              "source": {
-                  "url": "https://github.com/temporalio/php-sdk.git",
-                  "type": "git",
-                  "reference":"master"
-                }
-            }
-        }
-    ],
-    "require": {
-        // Add dependency on SDK
-        "temporal/sdk": "^0.1"
-    }
-}
-```
-
 ## Usage
 
 See [example](/example) to get started.
+
+
 
 No documentation available at this time.
