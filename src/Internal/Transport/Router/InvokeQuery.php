@@ -13,6 +13,8 @@ namespace Temporal\Client\Internal\Transport\Router;
 
 use React\Promise\Deferred;
 use Temporal\Client\Internal\Declaration\WorkflowInstanceInterface;
+use Temporal\Client\Internal\Repository\RepositoryInterface;
+use Temporal\Client\Worker\TaskQueueInterface;
 
 final class InvokeQuery extends WorkflowProcessAwareRoute
 {
@@ -20,6 +22,22 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
      * @var string
      */
     private const ERROR_QUERY_NOT_FOUND = 'unknown queryType %s. KnownQueryTypes=[%s]';
+
+    /**
+     * @var TaskQueueInterface
+     */
+    private TaskQueueInterface $taskQueue;
+
+    /**
+     * @param RepositoryInterface $running
+     * @param TaskQueueInterface $taskQueue
+     */
+    public function __construct(RepositoryInterface $running, TaskQueueInterface $taskQueue)
+    {
+        $this->taskQueue = $taskQueue;
+
+        parent::__construct($running);
+    }
 
     /**
      * {@inheritDoc}
@@ -31,7 +49,8 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
         $instance = $this->findInstanceOrFail($runId);
         $handler = $this->findQueryHandlerOrFail($instance, $name);
 
-        $resolver->resolve($handler($payload['args'] ?? []));
+        $executor = static fn() => $resolver->resolve($handler($payload['args'] ?? []));
+        $this->taskQueue->once(TaskQueueInterface::ON_QUERY, $executor);
     }
 
     /**

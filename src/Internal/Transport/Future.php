@@ -41,15 +41,15 @@ class Future implements FutureInterface
     /**
      * @var TaskQueueInterface
      */
-    private TaskQueueInterface $worker;
+    private TaskQueueInterface $taskQueue;
 
     /**
      * @param CancellablePromiseInterface $promise
-     * @param TaskQueueInterface $worker
+     * @param TaskQueueInterface $taskQueue
      */
-    public function __construct(CancellablePromiseInterface $promise, TaskQueueInterface $worker)
+    public function __construct(CancellablePromiseInterface $promise, TaskQueueInterface $taskQueue)
     {
-        $this->worker = $worker;
+        $this->taskQueue = $taskQueue;
         $this->deferred = new Deferred(function () use ($promise) {
             $promise->cancel();
         });
@@ -120,7 +120,7 @@ class Future implements FutureInterface
         $this->resolved = true;
         $this->value = $result;
 
-        $this->worker->once(TaskQueueInterface::ON_CALLBACK, function () {
+        $this->taskQueue->once(TaskQueueInterface::ON_CALLBACK, function () {
             $this->deferred->resolve($this->value);
         });
     }
@@ -132,7 +132,7 @@ class Future implements FutureInterface
     {
         $this->resolved = true;
 
-        $this->worker->once(TaskQueueInterface::ON_CALLBACK, function () use ($e) {
+        $this->taskQueue->once(TaskQueueInterface::ON_CALLBACK, function () use ($e) {
             $this->deferred->reject($e);
         });
     }
