@@ -11,11 +11,14 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Activity;
 
+use JetBrains\PhpStorm\Pure;
 use Temporal\Client\Common\RetryOptions;
+use Temporal\Client\Internal\Assert;
 use Temporal\Client\Internal\Marshaller\Meta\Marshal;
 use Temporal\Client\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Client\Internal\Marshaller\Type\NullableType;
 use Temporal\Client\Internal\Marshaller\Type\ObjectType;
+use Temporal\Client\Internal\Support\DateInterval;
 
 /**
  * ActivityOptions stores all activity-specific parameters that will be stored
@@ -24,6 +27,7 @@ use Temporal\Client\Internal\Marshaller\Type\ObjectType;
  * change in the future.
  *
  * @psalm-import-type RetryOptionsArray from RetryOptions
+ * @psalm-import-type DateIntervalValue from DateInterval
  */
 class ActivityOptions
 {
@@ -32,8 +36,6 @@ class ActivityOptions
      *
      * Optional: The default task queue with the same name as the workflow task
      * queue.
-     *
-     * @var string|null
      */
     #[Marshal(name: 'TaskQueue')]
     public ?string $taskQueue = null;
@@ -44,24 +46,18 @@ class ActivityOptions
      *
      * Optional: The default value is the sum of {@see $scheduleToStartTimeout}
      * and {@see $startToCloseTimeout}.
-     *
-     * @var \DateInterval|null
      */
     #[Marshal(name: 'ScheduleToCloseTimeout', type: NullableType::class, of: DateIntervalType::class)]
     public ?\DateInterval $scheduleToCloseTimeout = null;
 
     /**
      * The queue timeout before the activity starts executed.
-     *
-     * @var \DateInterval|null
      */
     #[Marshal(name: 'ScheduleToStartTimeout', type: NullableType::class, of: DateIntervalType::class)]
     public ?\DateInterval $scheduleToStartTimeout = null;
 
     /**
      * The timeout from the start of execution to end of it.
-     *
-     * @var \DateInterval|null
      */
     #[Marshal(name: 'StartToCloseTimeout', type: NullableType::class, of: DateIntervalType::class)]
     public ?\DateInterval $startToCloseTimeout = null;
@@ -69,8 +65,6 @@ class ActivityOptions
     /**
      * The periodic timeout while the activity is in execution. This is the max
      * interval the server needs to hear at-least one ping from the activity.
-     *
-     * @var \DateInterval|null
      */
     #[Marshal(name: 'HeartbeatTimeout', type: NullableType::class, of: DateIntervalType::class)]
     public ?\DateInterval $heartbeatTimeout = null;
@@ -79,17 +73,15 @@ class ActivityOptions
      * Whether to wait for canceled activity to be completed(activity can be
      * failed, completed, cancel accepted).
      *
-     * @var bool
+     * @psalm-var ActivityCancellationType::*
      */
-    #[Marshal(name: 'WaitForCancellation')]
-    public bool $waitForCancellation = false;
+    #[Marshal(name: 'WaitForCancellation', type: ActivityCancellationType::class)]
+    public int $cancellationType = ActivityCancellationType::TRY_CANCEL;
 
     /**
      * Business level activity ID, this is not needed for most of the cases if
      * you have to specify this then talk to temporal team. This is something
      * will be done in future.
-     *
-     * @var string
      */
     #[Marshal(name: 'ActivityID')]
     public string $activityId = '';
@@ -108,8 +100,6 @@ class ActivityOptions
      *
      * To disable retries set MaximumAttempts to 1. The default RetryPolicy
      * provided by the server can be overridden by the dynamic config.
-     *
-     * @var RetryOptions
      */
     #[Marshal(name: 'RetryPolicy', type: ObjectType::class, of: RetryOptions::class)]
     public RetryOptions $retryOptions;
@@ -117,6 +107,7 @@ class ActivityOptions
     /**
      * ActivityOptions constructor.
      */
+    #[Pure]
     public function __construct()
     {
         $this->retryOptions = new RetryOptions();
@@ -125,6 +116,7 @@ class ActivityOptions
     /**
      * @return static
      */
+    #[Pure]
     public static function new(): self
     {
         return new static();
@@ -132,89 +124,91 @@ class ActivityOptions
 
     /**
      * @param string|null $taskQueue
-     * @return ActivityOptions
+     * @return $this
      */
     public function withTaskQueue(?string $taskQueue): self
     {
-        $this->taskQueue = $taskQueue;
-
-        return $this;
+        return immutable(fn() => $this->taskQueue = $taskQueue);
     }
 
     /**
-     * @param \DateInterval|null $scheduleToCloseTimeout
-     * @return ActivityOptions
+     * @param DateIntervalValue|null $timeout
+     * @return $this
      */
-    public function withScheduleToCloseTimeout(?\DateInterval $scheduleToCloseTimeout): self
+    public function withScheduleToCloseTimeout($timeout): self
     {
-        $this->scheduleToCloseTimeout = $scheduleToCloseTimeout;
+        assert(DateInterval::assert($timeout) || $timeout === null);
 
-        return $this;
+        return immutable(fn() =>
+            $this->scheduleToCloseTimeout = DateInterval::parseOrNull($timeout, DateInterval::FORMAT_SECONDS)
+        );
     }
 
     /**
-     * @param \DateInterval|null $scheduleToStartTimeout
-     * @return ActivityOptions
+     * @param DateIntervalValue|null $timeout
+     * @return $this
      */
-    public function withScheduleToStartTimeout(?\DateInterval $scheduleToStartTimeout): self
+    public function withScheduleToStartTimeout($timeout): self
     {
-        $this->scheduleToStartTimeout = $scheduleToStartTimeout;
+        assert(DateInterval::assert($timeout) || $timeout === null);
 
-        return $this;
+        return immutable(fn() =>
+            $this->scheduleToStartTimeout = DateInterval::parseOrNull($timeout, DateInterval::FORMAT_SECONDS)
+        );
     }
 
     /**
-     * @param \DateInterval|null $startToCloseTimeout
-     * @return ActivityOptions
+     * @param DateIntervalValue|null $timeout
+     * @return $this
      */
-    public function withStartToCloseTimeout(?\DateInterval $startToCloseTimeout): self
+    public function withStartToCloseTimeout($timeout): self
     {
-        $this->startToCloseTimeout = $startToCloseTimeout;
+        assert(DateInterval::assert($timeout) || $timeout === null);
 
-        return $this;
+        return immutable(fn() =>
+            $this->startToCloseTimeout = DateInterval::parseOrNull($timeout, DateInterval::FORMAT_SECONDS)
+        );
     }
 
     /**
-     * @param \DateInterval|null $heartbeatTimeout
-     * @return ActivityOptions
+     * @param DateIntervalValue|null $timeout
+     * @return $this
      */
-    public function withHeartbeatTimeout(?\DateInterval $heartbeatTimeout): self
+    public function withHeartbeatTimeout($timeout): self
     {
-        $this->heartbeatTimeout = $heartbeatTimeout;
+        assert(DateInterval::assert($timeout) || $timeout === null);
 
-        return $this;
+        return immutable(fn() =>
+            $this->heartbeatTimeout = DateInterval::parseOrNull($timeout, DateInterval::FORMAT_SECONDS)
+        );
     }
 
     /**
-     * @param bool $waitForCancellation
-     * @return ActivityOptions
+     * @param int $type
+     * @return $this
      */
-    public function withWaitForCancellation(bool $waitForCancellation): self
+    public function withCancellationType(int $type): self
     {
-        $this->waitForCancellation = $waitForCancellation;
+        assert(Assert::enum($type, ActivityCancellationType::class));
 
-        return $this;
+        return immutable(fn() => $this->cancellationType = $type);
     }
 
     /**
      * @param string $activityId
-     * @return ActivityOptions
+     * @return $this
      */
     public function withActivityId(string $activityId): self
     {
-        $this->activityId = $activityId;
-
-        return $this;
+        return immutable(fn() => $this->activityId = $activityId);
     }
 
     /**
-     * @param RetryOptions $retryOptions
-     * @return ActivityOptions
+     * @param RetryOptions|null $options
+     * @return $this
      */
-    public function withRetryOptions(RetryOptions $retryOptions): self
+    public function withRetryOptions(?RetryOptions $options): self
     {
-        $this->retryOptions = $retryOptions;
-
-        return $this;
+        return immutable(fn() => $this->retryOptions = $options ?? new RetryOptions());
     }
 }

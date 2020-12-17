@@ -15,7 +15,7 @@
         "php": ">=7.4",
         "ext-json": "*",
         "psr/log": "^1.1",
-        "nikic/iter": "^2.1",
+        "phpfn/immutable": "^2.0",
         "nesbot/carbon": "^2.41",
         "react/promise": "^2.8",
         "spiral/attributes": "^2.7",
