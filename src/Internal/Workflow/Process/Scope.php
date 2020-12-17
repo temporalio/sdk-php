@@ -78,8 +78,6 @@ abstract class Scope implements CancellationScopeInterface
         } catch (\Throwable $e) {
             $this->deferred->reject($e);
         }
-
-        $this->next();
     }
 
     /**

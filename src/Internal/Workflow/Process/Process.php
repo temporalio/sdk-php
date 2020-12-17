@@ -34,10 +34,12 @@ class Process extends Scope implements ProcessInterface
     public function __construct(Input $input, ServiceContainer $services, WorkflowInstanceInterface $instance)
     {
         $this->instance = $instance;
-
         $context = new WorkflowContext($this, $services, $input);
 
         parent::__construct($context, $services, $instance->getHandler(), $context->getArguments());
+
+        $services->running->add($this);
+        $this->next();
     }
 
     /**

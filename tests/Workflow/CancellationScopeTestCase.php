@@ -42,11 +42,8 @@ class CancellationScopeTestCase extends WorkflowTestCase
     private function createProcess(string $class, string $fun, WorkflowInfo $info = null, array $args = []): Process
     {
         $input = new Input($info, $args);
-        $process = new Process($input, $this->services, $this->createInstance($class, $fun));
 
-        $this->services->running->add($process);
-
-        return $process;
+        return new Process($input, $this->services, $this->createInstance($class, $fun));
     }
 
     /**

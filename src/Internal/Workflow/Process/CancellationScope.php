@@ -39,6 +39,8 @@ class CancellationScope extends Scope
         $this->id = Uuid::v4();
 
         parent::__construct($ctx, $services, $handler, $args);
+
+        $this->next();
     }
 
     /**
