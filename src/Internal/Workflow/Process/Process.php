@@ -73,4 +73,14 @@ class Process extends Scope implements ProcessInterface
     {
         $this->context->complete($result ?? $this->coroutine->getReturn());
     }
+
+    /**
+     * @return void
+     */
+    public function cancel(): void
+    {
+        $this->services->running->pull($this->getId());
+
+        parent::cancel();
+    }
 }
