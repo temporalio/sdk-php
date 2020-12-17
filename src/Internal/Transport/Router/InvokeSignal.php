@@ -61,7 +61,7 @@ final class InvokeSignal extends WorkflowProcessAwareRoute
      */
     private function findSignalHandlerOrFail(WorkflowInstanceInterface $instance, string $name): ?\Closure
     {
-        $handler = $instance->findQueryHandler($name);
+        $handler = $instance->findSignalHandler($name);
 
         if ($handler === null) {
             $available = \implode(' ', $instance->getSignalHandlerNames());
