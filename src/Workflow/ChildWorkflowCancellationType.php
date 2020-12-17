@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Activity;
+namespace Temporal\Client\Workflow;
 
 use Temporal\Client\Exception\FailedCancellationException;
 use Temporal\Client\Internal\Marshaller\Type\Type;
@@ -20,27 +20,33 @@ use Temporal\Client\Internal\Marshaller\Type\Type;
  * cancellation independently of the type is a {@see FailedCancellationException}
  * thrown from the child workflow method.
  */
-final class ActivityCancellationType extends Type
+final class ChildWorkflowCancellationType extends Type
 {
     /**
-     * Wait for activity cancellation completion. Note that activity must
-     * heartbeat to receive a cancellation notification. This can block the
-     * cancellation for a long time if activity doesn't heartbeat or chooses to
-     * ignore the cancellation request.
+     * Wait for child cancellation completion.
      */
     public const WAIT_CANCELLATION_COMPLETED = 0x00;
 
     /**
-     * Initiate a cancellation request and immediately report cancellation to
-     * the workflow.
+     * Request cancellation of the child and wait for confirmation that the
+     * request was received.
+     *
+     * Doesn't wait for actual cancellation.
      */
-    public const TRY_CANCEL = 0x01;
+    public const WAIT_CANCELLATION_REQUESTED = 0x01;
 
     /**
-     * Do not request cancellation of the activity and immediately report
-     * cancellation to the workflow.
+     * Initiate a cancellation request and immediately report cancellation to
+     * the parent. Note that it doesn't guarantee that cancellation is delivered
+     * to the child if parent exits before the delivery is done. It can be
+     * mitigated by setting to {@see ParentClosePolicy::POLICY_REQUEST_CANCEL}
      */
-    public const ABANDON = 0x02;
+    public const TRY_CANCEL = 0x02;
+
+    /**
+     * Do not request cancellation of the child workflow.
+     */
+    public const ABANDON  = 0x03;
 
     /**
      * {@inheritDoc}

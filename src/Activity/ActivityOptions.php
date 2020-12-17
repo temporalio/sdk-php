@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Activity;
 
+use Carbon\CarbonInterval;
 use JetBrains\PhpStorm\Pure;
 use Temporal\Client\Common\RetryOptions;
 use Temporal\Client\Internal\Assert;
@@ -19,6 +20,7 @@ use Temporal\Client\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Client\Internal\Marshaller\Type\NullableType;
 use Temporal\Client\Internal\Marshaller\Type\ObjectType;
 use Temporal\Client\Internal\Support\DateInterval;
+use Temporal\Client\Worker\FactoryInterface;
 
 /**
  * ActivityOptions stores all activity-specific parameters that will be stored
@@ -38,7 +40,7 @@ class ActivityOptions
      * queue.
      */
     #[Marshal(name: 'TaskQueue')]
-    public ?string $taskQueue = null;
+    public string $taskQueue = FactoryInterface::DEFAULT_TASK_QUEUE;
 
     /**
      * The end to end timeout for the activity needed. The zero value of this
@@ -47,27 +49,27 @@ class ActivityOptions
      * Optional: The default value is the sum of {@see $scheduleToStartTimeout}
      * and {@see $startToCloseTimeout}.
      */
-    #[Marshal(name: 'ScheduleToCloseTimeout', type: NullableType::class, of: DateIntervalType::class)]
-    public ?\DateInterval $scheduleToCloseTimeout = null;
+    #[Marshal(name: 'ScheduleToCloseTimeout', type: DateIntervalType::class)]
+    public \DateInterval $scheduleToCloseTimeout;
 
     /**
      * The queue timeout before the activity starts executed.
      */
-    #[Marshal(name: 'ScheduleToStartTimeout', type: NullableType::class, of: DateIntervalType::class)]
-    public ?\DateInterval $scheduleToStartTimeout = null;
+    #[Marshal(name: 'ScheduleToStartTimeout', type: DateIntervalType::class)]
+    public \DateInterval $scheduleToStartTimeout;
 
     /**
      * The timeout from the start of execution to end of it.
      */
-    #[Marshal(name: 'StartToCloseTimeout', type: NullableType::class, of: DateIntervalType::class)]
-    public ?\DateInterval $startToCloseTimeout = null;
+    #[Marshal(name: 'StartToCloseTimeout', type: DateIntervalType::class)]
+    public \DateInterval $startToCloseTimeout;
 
     /**
      * The periodic timeout while the activity is in execution. This is the max
      * interval the server needs to hear at-least one ping from the activity.
      */
-    #[Marshal(name: 'HeartbeatTimeout', type: NullableType::class, of: DateIntervalType::class)]
-    public ?\DateInterval $heartbeatTimeout = null;
+    #[Marshal(name: 'HeartbeatTimeout', type: DateIntervalType::class)]
+    public \DateInterval $heartbeatTimeout;
 
     /**
      * Whether to wait for canceled activity to be completed(activity can be
@@ -110,6 +112,10 @@ class ActivityOptions
     #[Pure]
     public function __construct()
     {
+        $this->scheduleToStartTimeout = CarbonInterval::seconds(0);
+        $this->scheduleToCloseTimeout = CarbonInterval::seconds(0);
+        $this->startToCloseTimeout = CarbonInterval::seconds(0);
+        $this->heartbeatTimeout = CarbonInterval::seconds(0);
         $this->retryOptions = new RetryOptions();
     }
 
@@ -132,54 +138,54 @@ class ActivityOptions
     }
 
     /**
-     * @param DateIntervalValue|null $timeout
+     * @param DateIntervalValue $timeout
      * @return $this
      */
     public function withScheduleToCloseTimeout($timeout): self
     {
-        assert(DateInterval::assert($timeout) || $timeout === null);
+        assert(DateInterval::assert($timeout));
 
         return immutable(fn() =>
-            $this->scheduleToCloseTimeout = DateInterval::parseOrNull($timeout, DateInterval::FORMAT_SECONDS)
+            $this->scheduleToCloseTimeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS)
         );
     }
 
     /**
-     * @param DateIntervalValue|null $timeout
+     * @param DateIntervalValue $timeout
      * @return $this
      */
     public function withScheduleToStartTimeout($timeout): self
     {
-        assert(DateInterval::assert($timeout) || $timeout === null);
+        assert(DateInterval::assert($timeout));
 
         return immutable(fn() =>
-            $this->scheduleToStartTimeout = DateInterval::parseOrNull($timeout, DateInterval::FORMAT_SECONDS)
+            $this->scheduleToStartTimeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS)
         );
     }
 
     /**
-     * @param DateIntervalValue|null $timeout
+     * @param DateIntervalValue $timeout
      * @return $this
      */
     public function withStartToCloseTimeout($timeout): self
     {
-        assert(DateInterval::assert($timeout) || $timeout === null);
+        assert(DateInterval::assert($timeout));
 
         return immutable(fn() =>
-            $this->startToCloseTimeout = DateInterval::parseOrNull($timeout, DateInterval::FORMAT_SECONDS)
+            $this->startToCloseTimeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS)
         );
     }
 
     /**
-     * @param DateIntervalValue|null $timeout
+     * @param DateIntervalValue $timeout
      * @return $this
      */
     public function withHeartbeatTimeout($timeout): self
     {
-        assert(DateInterval::assert($timeout) || $timeout === null);
+        assert(DateInterval::assert($timeout));
 
         return immutable(fn() =>
-            $this->heartbeatTimeout = DateInterval::parseOrNull($timeout, DateInterval::FORMAT_SECONDS)
+            $this->heartbeatTimeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS)
         );
     }
 
