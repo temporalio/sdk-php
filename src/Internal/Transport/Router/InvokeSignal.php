@@ -15,7 +15,6 @@ use React\Promise\Deferred;
 use Temporal\Client\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Client\Internal\Repository\RepositoryInterface;
 use Temporal\Client\Worker\LoopInterface;
-use Temporal\Client\Worker\TaskQueueInterface;
 
 final class InvokeSignal extends WorkflowProcessAwareRoute
 {
@@ -51,7 +50,7 @@ final class InvokeSignal extends WorkflowProcessAwareRoute
         $handler = $this->findSignalHandlerOrFail($instance, $name);
 
         $executor = static fn() => $resolver->resolve($handler($payload['args'] ?? []));
-        $this->loop->once(TaskQueueInterface::ON_SIGNAL, $executor);
+        $this->loop->once(LoopInterface::ON_SIGNAL, $executor);
     }
 
     /**
