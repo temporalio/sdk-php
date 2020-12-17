@@ -12,11 +12,15 @@ declare(strict_types=1);
 namespace Temporal\Client\Workflow;
 
 use Carbon\CarbonInterval;
+use Temporal\Client\Internal\Marshaller\Meta\Marshal;
+use Temporal\Client\Internal\Marshaller\Type\DateIntervalType;
+use Temporal\Client\Internal\Marshaller\Type\NullableType;
+use Temporal\Client\Internal\Marshaller\Type\ObjectType;
 use Temporal\Client\Worker\FactoryInterface;
-use Temporal\Client\Workflow\Info\WorkflowExecution;
-use Temporal\Client\Workflow\Info\WorkflowType;
 
-// todo: previous execution result
+/**
+ * TODO Previous execution result
+ */
 final class WorkflowInfo
 {
     /**
@@ -24,6 +28,7 @@ final class WorkflowInfo
      * @psalm-allow-private-mutation
      * @var WorkflowExecution
      */
+    #[Marshal(name: 'WorkflowExecution', type: ObjectType::class, of: WorkflowExecution::class)]
     public WorkflowExecution $execution;
 
     /**
@@ -31,6 +36,7 @@ final class WorkflowInfo
      * @psalm-allow-private-mutation
      * @var WorkflowType
      */
+    #[Marshal(name: 'WorkflowType', type: ObjectType::class, of: WorkflowType::class)]
     public WorkflowType $type;
 
     /**
@@ -38,6 +44,7 @@ final class WorkflowInfo
      * @psalm-allow-private-mutation
      * @var string
      */
+    #[Marshal(name: 'TaskQueueName')]
     public string $taskQueue = FactoryInterface::DEFAULT_TASK_QUEUE;
 
     /**
@@ -45,6 +52,7 @@ final class WorkflowInfo
      * @psalm-allow-private-mutation
      * @var \DateInterval
      */
+    #[Marshal(name: 'WorkflowExecutionTimeout', type: DateIntervalType::class)]
     public \DateInterval $executionTimeout;
 
     /**
@@ -52,6 +60,7 @@ final class WorkflowInfo
      * @psalm-allow-private-mutation
      * @var \DateInterval
      */
+    #[Marshal(name: 'WorkflowRunTimeout', type: DateIntervalType::class)]
     public \DateInterval $runTimeout;
 
     /**
@@ -59,6 +68,7 @@ final class WorkflowInfo
      * @psalm-allow-private-mutation
      * @var \DateInterval
      */
+    #[Marshal(name: 'WorkflowTaskTimeout', type: DateIntervalType::class)]
     public \DateInterval $taskTimeout;
 
     /**
@@ -66,6 +76,7 @@ final class WorkflowInfo
      * @psalm-allow-private-mutation
      * @var string
      */
+    #[Marshal(name: 'Namespace')]
     public string $namespace = 'default';
 
     /**
@@ -74,8 +85,9 @@ final class WorkflowInfo
      *
      * @readonly
      * @psalm-allow-private-mutation
-     * @var int
+     * @var positive-int
      */
+    #[Marshal(name: 'Attempt')]
     public int $attempt = 1;
 
     /**
@@ -83,6 +95,7 @@ final class WorkflowInfo
      * @psalm-allow-private-mutation
      * @var string|null
      */
+    #[Marshal(name: 'CronSchedule')]
     public ?string $cronSchedule = null;
 
     /**
@@ -90,6 +103,7 @@ final class WorkflowInfo
      * @psalm-allow-private-mutation
      * @var string|null
      */
+    #[Marshal(name: 'ContinuedExecutionRunID')]
     public ?string $continuedExecutionRunId = null;
 
     /**
@@ -97,6 +111,7 @@ final class WorkflowInfo
      * @psalm-allow-private-mutation
      * @var string|null
      */
+    #[Marshal(name: 'ParentWorkflowNamespace')]
     public ?string $parentNamespace = null;
 
     /**
@@ -104,31 +119,40 @@ final class WorkflowInfo
      * @psalm-allow-private-mutation
      * @var WorkflowExecution|null
      */
+    #[Marshal(name: 'ParentWorkflowExecution', type: NullableType::class, of: WorkflowExecution::class)]
     public ?WorkflowExecution $parentExecution = null;
 
     /**
      * @readonly
      * @psalm-allow-private-mutation
-     * @var mixed
+     * @var array
      */
-    public $searchAttributes;
+    #[Marshal(name: 'SearchAttributes')]
+    public array $searchAttributes;
+
+    /**
+     * @readonly
+     * @psalm-allow-private-mutation
+     * @var array
+     */
+    #[Marshal(name: 'Memo')]
+    public array $memo;
 
     /**
      * @readonly
      * @psalm-allow-private-mutation
      * @var string
      */
+    #[Marshal(name: 'BinaryChecksum')]
     public string $binaryChecksum = '';
 
     /**
-     * @param WorkflowExecution $workflowExecution
-     * @param WorkflowType $workflowType
-     * @throws \Exception
+     * WorkflowInfo constructor.
      */
-    public function __construct(WorkflowExecution $workflowExecution, WorkflowType $workflowType)
+    public function __construct()
     {
-        $this->execution = $workflowExecution;
-        $this->type = $workflowType;
+        $this->execution = new WorkflowExecution();
+        $this->type = new WorkflowType();
 
         $this->executionTimeout = CarbonInterval::years(10);
         $this->runTimeout = CarbonInterval::years(10);
@@ -136,34 +160,167 @@ final class WorkflowInfo
     }
 
     /**
-     * TODO throw exception in case of incorrect data
-     *
-     * @param array $data
+     * @param WorkflowExecution $execution
      * @return WorkflowInfo
-     * @throws \Exception
      */
-    public static function fromArray(array $data): self
+    public function withExecution(WorkflowExecution $execution): self
     {
-        $instance = new self(
-            WorkflowExecution::fromArray($data['WorkflowExecution']),
-            WorkflowType::fromArray($data['WorkflowType'])
-        );
+        $this->execution = $execution;
 
-        $instance->taskQueue = $data['TaskQueueName'];
-        $instance->executionTimeout = CarbonInterval::microseconds($data['WorkflowExecutionTimeout']);
-        $instance->runTimeout = CarbonInterval::microseconds($data['WorkflowRunTimeout']);
-        $instance->taskTimeout = CarbonInterval::microseconds($data['WorkflowTaskTimeout']);
-        $instance->attempt = $data['Attempt'];
-        $instance->cronSchedule = $data['CronSchedule'] ?: null;
-        $instance->continuedExecutionRunId = $data['ContinuedExecutionRunID'] ?: null;
-        $instance->searchAttributes = $data['SearchAttributes'];
-        $instance->binaryChecksum = $data['BinaryChecksum'];
+        return $this;
+    }
 
-        if (isset($data['ParentWorkflowExecution'])) {
-            $instance->parentNamespace = $data['ParentWorkflowNamespace'] ?: null;
-            $instance->parentExecution = WorkflowExecution::fromArray($data['ParentWorkflowExecution']);
-        }
+    /**
+     * @param WorkflowType $type
+     * @return WorkflowInfo
+     */
+    public function withType(WorkflowType $type): self
+    {
+        $this->type = $type;
 
-        return $instance;
+        return $this;
+    }
+
+    /**
+     * @param string $taskQueue
+     * @return WorkflowInfo
+     */
+    public function withTaskQueue(string $taskQueue): self
+    {
+        $this->taskQueue = $taskQueue;
+
+        return $this;
+    }
+
+    /**
+     * @param \DateInterval $executionTimeout
+     * @return WorkflowInfo
+     */
+    public function withExecutionTimeout($executionTimeout): self
+    {
+        $this->executionTimeout = $executionTimeout;
+
+        return $this;
+    }
+
+    /**
+     * @param \DateInterval $runTimeout
+     * @return WorkflowInfo
+     */
+    public function withRunTimeout($runTimeout): self
+    {
+        $this->runTimeout = $runTimeout;
+
+        return $this;
+    }
+
+    /**
+     * @param \DateInterval $taskTimeout
+     * @return WorkflowInfo
+     */
+    public function withTaskTimeout($taskTimeout): self
+    {
+        $this->taskTimeout = $taskTimeout;
+
+        return $this;
+    }
+
+    /**
+     * @param string $namespace
+     * @return WorkflowInfo
+     */
+    public function withNamespace(string $namespace): self
+    {
+        $this->namespace = $namespace;
+
+        return $this;
+    }
+
+    /**
+     * @param int $attempt
+     * @return WorkflowInfo
+     */
+    public function withAttempt(int $attempt): self
+    {
+        $this->attempt = $attempt;
+
+        return $this;
+    }
+
+    /**
+     * @param string|null $cronSchedule
+     * @return WorkflowInfo
+     */
+    public function withCronSchedule(?string $cronSchedule): self
+    {
+        $this->cronSchedule = $cronSchedule;
+
+        return $this;
+    }
+
+    /**
+     * @param string|null $continuedExecutionRunId
+     * @return WorkflowInfo
+     */
+    public function withContinuedExecutionRunId(?string $continuedExecutionRunId): self
+    {
+        $this->continuedExecutionRunId = $continuedExecutionRunId;
+
+        return $this;
+    }
+
+    /**
+     * @param string|null $parentNamespace
+     * @return WorkflowInfo
+     */
+    public function withParentNamespace(?string $parentNamespace): self
+    {
+        $this->parentNamespace = $parentNamespace;
+
+        return $this;
+    }
+
+    /**
+     * @param WorkflowExecution|null $parentExecution
+     * @return WorkflowInfo
+     */
+    public function withParentExecution(?WorkflowExecution $parentExecution): self
+    {
+        $this->parentExecution = $parentExecution;
+
+        return $this;
+    }
+
+    /**
+     * @param array $searchAttributes
+     * @return WorkflowInfo
+     */
+    public function withSearchAttributes(array $searchAttributes): self
+    {
+        $this->searchAttributes = $searchAttributes;
+
+        return $this;
+    }
+
+    /**
+     * @param array $memo
+     * @return WorkflowInfo
+     */
+    public function withMemo(array $memo): self
+    {
+        $this->memo = $memo;
+
+        return $this;
+    }
+
+    /**
+     * @param string $binaryChecksum
+     * @return $this
+     */
+    public function withBinaryChecksum(string $binaryChecksum): self
+    {
+        $this->binaryChecksum = $binaryChecksum;
+
+        return $this;
     }
 }

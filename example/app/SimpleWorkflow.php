@@ -11,17 +11,20 @@ declare(strict_types=1);
 
 namespace App;
 
-use Temporal\Client\Internal\Support\Uuid4;
+use Temporal\Client\Common\MethodRetry;
+use Temporal\Client\Common\Uuid;
 use Temporal\Client\Workflow;
+use Temporal\Client\Workflow\WorkflowMethod;
 
 class SimpleWorkflow
 {
-    #[Workflow\Meta\WorkflowMethod(name: )]
+    #[WorkflowMethod(name: 'SimpleWorkflow')]
+    #[MethodRetry(initialInterval: '10s')]
     public function handler(): iterable
     {
-        $activities = Workflow::newActivityStub(EchoActivity::class);
+        $activities = Workflow::newActivityStub(SimpleActivity::class);
 
-        $actual = Workflow::sideEffect(fn() => Uuid4::create());
+        $actual = yield Workflow::sideEffect(fn() => Uuid::v4());
 
         dump('Actual UUID: ' . $actual);
 

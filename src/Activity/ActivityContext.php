@@ -11,43 +11,45 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Activity;
 
+use Temporal\Client\Internal\Marshaller\Meta\Marshal;
+use Temporal\Client\Internal\Marshaller\Meta\MarshalArray;
+use Temporal\Client\Worker\Transport\RpcConnectionInterface;
+
 final class ActivityContext implements ActivityContextInterface
 {
     /**
-     * @var string
-     */
-    private const KEY_ARGUMENTS = 'args';
-
-    /**
-     * @var string
-     */
-    private const KEY_INFO = 'info';
-
-    /**
      * @var ActivityInfo
      */
+    #[Marshal(name: 'info')]
     private ActivityInfo $info;
 
     /**
      * @var array
      */
-    private $arguments;
-
-    /** @var bool */
-    private $doNotCompleteOnReturn = false;
+    #[MarshalArray(name: 'args')]
+    private array $arguments = [];
 
     /**
-     * @param array $params
-     * @throws \Exception
+     * @var bool
      */
-    public function __construct(array $params)
+    private bool $doNotCompleteOnReturn = false;
+
+    /**
+     * @var RpcConnectionInterface
+     */
+    private RpcConnectionInterface $rpc;
+
+    /**
+     * @param RpcConnectionInterface $rpc
+     */
+    public function __construct(RpcConnectionInterface $rpc)
     {
-        $this->info = ActivityInfo::fromArray($params[self::KEY_INFO]);
-        $this->arguments = $params[self::KEY_ARGUMENTS] ?? [];
+        $this->info = new ActivityInfo();
+        $this->rpc = $rpc;
     }
 
     /**
-     * @return array
+     * {@inheritDoc}
      */
     public function getArguments(): array
     {
@@ -55,7 +57,7 @@ final class ActivityContext implements ActivityContextInterface
     }
 
     /**
-     * @return ActivityInfo
+     * {@inheritDoc}
      */
     public function getInfo(): ActivityInfo
     {
@@ -63,7 +65,7 @@ final class ActivityContext implements ActivityContextInterface
     }
 
     /**
-     * Call given method to enable external activity completion using activity ID or task token.
+     * {@inheritDoc}
      */
     public function doNotCompleteOnReturn(): void
     {
@@ -71,11 +73,22 @@ final class ActivityContext implements ActivityContextInterface
     }
 
     /**
-     * @return bool
-     * @internal
+     * {@inheritDoc}
      */
     public function isDoNotCompleteOnReturn(): bool
     {
         return $this->doNotCompleteOnReturn;
+    }
+
+    /**
+     * @param mixed $details
+     * @return mixed
+     */
+    public function heartbeat($details)
+    {
+        return $this->rpc->call('activity.heartbeat', [
+            'taskToken' => $this->info->taskToken,
+            'details'   => $details,
+        ]);
     }
 }

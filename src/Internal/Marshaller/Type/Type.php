@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client\Internal\Marshaller\Type;
 
 use Temporal\Client\Internal\Marshaller\MarshallerInterface;
+use Temporal\Client\Internal\Support\Inheritance;
 
 abstract class Type implements TypeInterface
 {
@@ -26,5 +27,19 @@ abstract class Type implements TypeInterface
     public function __construct(MarshallerInterface $marshaller)
     {
         $this->marshaller = $marshaller;
+    }
+
+    /**
+     * @param MarshallerInterface $marshaller
+     * @param string $name
+     * @return TypeInterface|null
+     * @throws \ReflectionException
+     */
+    protected function ofType(MarshallerInterface $marshaller, string $name): ?TypeInterface
+    {
+        return Inheritance::implements($name, TypeInterface::class)
+            ? new $name($marshaller)
+            : new ObjectType($marshaller, $name)
+        ;
     }
 }

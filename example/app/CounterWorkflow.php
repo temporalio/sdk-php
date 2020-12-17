@@ -12,8 +12,12 @@ declare(strict_types=1);
 namespace App;
 
 use Temporal\Client\Workflow;
+use Temporal\Client\Workflow\QueryMethod;
+use Temporal\Client\Workflow\SignalMethod;
+use Temporal\Client\Workflow\WorkflowInterface;
+use Temporal\Client\Workflow\WorkflowMethod;
 
-#[Workflow\Meta\WorkflowInterface]
+#[WorkflowInterface]
 class CounterWorkflow
 {
     /**
@@ -31,7 +35,7 @@ class CounterWorkflow
      */
     private int $value = 0;
 
-    #[Workflow\Meta\WorkflowMethod]
+    #[WorkflowMethod(name: 'CounterWorkflow')]
     public function handle(): iterable
     {
         while ($this->value++ < self::MAX_VALUE) {
@@ -39,25 +43,26 @@ class CounterWorkflow
         }
     }
 
-    #[Workflow\Meta\QueryMethod]
+    #[QueryMethod]
     public function getValue(): int
     {
         return $this->value;
     }
 
-    #[Workflow\Meta\QueryMethod]
+    #[SignalMethod]
+    public function setValue(
+        int $value
+    ): void {
+        $this->value = $value;
+    }
+
+    #[QueryMethod]
     public function getServerTime(): \DateTimeInterface
     {
         return Workflow::now();
     }
 
-    #[Workflow\Meta\SignalMethod]
-    public function setValue(int $value): void
-    {
-        $this->value = $value;
-    }
-
-    #[Workflow\Meta\SignalMethod]
+    #[SignalMethod]
     public function nextValue(): void
     {
         $this->value++;

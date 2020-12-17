@@ -11,11 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Common;
 
-use Carbon\CarbonInterval;
 use Temporal\Client\Activity\ActivityOptions;
-use Temporal\Client\Internal\Support\DataTransferObject;
-use Temporal\Client\Internal\Support\DateInterval;
-use Temporal\Client\Internal\Support\Iter;
+use Temporal\Client\Internal\Marshaller\Meta\Marshal;
+use Temporal\Client\Internal\Marshaller\Type\DateIntervalType;
+use Temporal\Client\Internal\Marshaller\Type\NullableType;
 
 /**
  * Note that the history of activity with retry policy will be different:
@@ -27,43 +26,65 @@ use Temporal\Client\Internal\Support\Iter;
  * the workflow to see the status of the activity:
  *     temporal --do <namespace> wf desc -w <wf-id>
  *
- * @psalm-import-type DateIntervalFormat from DateInterval
- *
- * @psalm-type RetryOptionsArray = {
- *      initialInterval: DateIntervalFormat|null,
- *      backoffCoefficient: float,
- *      maximumInterval: DateIntervalFormat|null,
- *      maximumAttempts: positive-int,
- *      nonRetryableErrorTypes: iterable<string>,
- * }
+ * @psalm-type ExceptionsList = array<class-string<\Throwable>>
  */
-final class RetryOptions extends DataTransferObject
+class RetryOptions
 {
+    /**
+     * @var null
+     */
+    public const DEFAULT_INITIAL_INTERVAL = null;
+
+    /**
+     * @var float
+     */
+    public const DEFAULT_BACKOFF_COEFFICIENT = 2.0;
+
+    /**
+     * @var null
+     */
+    public const DEFAULT_MAXIMUM_INTERVAL = null;
+
+    /**
+     * @var positive-int
+     */
+    public const DEFAULT_MAXIMUM_ATTEMPTS = 1;
+
+    /**
+     * @var array<string>
+     */
+    public const DEFAULT_NON_RETRYABLE_EXCEPTIONS = [];
+
     /**
      * Backoff interval for the first retry. If {@see RetryOptions::$backoffCoefficient}
      * is 1.0 then it is used for all retries.
      *
-     * @var \DateInterval|CarbonInterval|null
+     * @var \DateInterval|null
      */
-    protected ?\DateInterval $initialInterval = null;
+    #[Marshal(name: 'InitialInterval', type: NullableType::class, of: DateIntervalType::class)]
+    public ?\DateInterval $initialInterval = self::DEFAULT_INITIAL_INTERVAL;
 
     /**
      * Coefficient used to calculate the next retry backoff interval. The next
      * retry interval is previous interval multiplied by this coefficient.
      *
      * Note: Must be greater than 1.0
+     *
+     * @var float
      */
-    protected float $backoffCoefficient = 2.0;
+    #[Marshal(name: 'BackoffCoefficient')]
+    public float $backoffCoefficient = self::DEFAULT_BACKOFF_COEFFICIENT;
 
     /**
      * Maximum backoff interval between retries. Exponential backoff leads to
      * interval increase. This value is the cap of the interval.
      *
-     * Default is 100x of initial interval.
+     * Default is 100x of {@see $initialInterval}.
      *
-     * @var \DateInterval|CarbonInterval|null
+     * @var \DateInterval|null
      */
-    protected ?\DateInterval $maximumInterval = null;
+    #[Marshal(name: 'MaximumInterval', type: NullableType::class, of: DateIntervalType::class)]
+    public ?\DateInterval $maximumInterval = self::DEFAULT_MAXIMUM_INTERVAL;
 
     /**
      * Maximum number of attempts. When exceeded the retries stop even if not
@@ -72,134 +93,70 @@ final class RetryOptions extends DataTransferObject
      *
      * @var positive-int
      */
-    protected int $maximumAttempts = 0;
+    #[Marshal(name: 'MaximumAttempts')]
+    public int $maximumAttempts = self::DEFAULT_MAXIMUM_ATTEMPTS;
 
     /**
      * Non-Retriable errors. This is optional. Temporal server will stop retry
      * if error type matches this list.
      *
-     * @var string[]
+     * @var ExceptionsList
      */
-    protected array $nonRetryableErrorTypes = [];
+    #[Marshal(name: 'NonRetryableErrorTypes')]
+    public array $nonRetryableExceptions = self::DEFAULT_NON_RETRYABLE_EXCEPTIONS;
 
     /**
-     * @param DateIntervalFormat|null $interval
-     * @return $this
-     * @throws \Exception
+     * @param \DateInterval|null $initialInterval
+     * @return RetryOptions
      */
-    public function setInitialInterval($interval): self
+    public function withInitialInterval(?\DateInterval $initialInterval): self
     {
-        assert($interval === null || DateInterval::assert($interval), 'Precondition failed');
-
-        $this->initialInterval = $interval !== null ? DateInterval::parse($interval) : null;
+        $this->initialInterval = $initialInterval;
 
         return $this;
     }
 
     /**
-     * @return int|null
+     * @param float $backoffCoefficient
+     * @return RetryOptions
      */
-    public function getInitialInterval(): ?int
+    public function withBackoffCoefficient(float $backoffCoefficient): self
     {
-        if ($this->initialInterval === null) {
-            return null;
-        }
-
-        return CarbonInterval::make($this->initialInterval)->milliseconds;
-    }
-
-    /**
-     * @param int|float $value
-     * @return $this
-     */
-    public function setBackoffCoefficient(float $value): self
-    {
-        assert($value >= 1.0, 'Precondition failed');
-
-        $this->backoffCoefficient = $value;
+        $this->backoffCoefficient = $backoffCoefficient;
 
         return $this;
     }
 
     /**
-     * @return float
+     * @param \DateInterval|null $maximumInterval
+     * @return RetryOptions
      */
-    public function getBackoffCoefficient(): float
+    public function withMaximumInterval(?\DateInterval $maximumInterval): self
     {
-        return $this->backoffCoefficient;
-    }
-
-    /**
-     * @param DateIntervalFormat|null $interval
-     * @return $this
-     * @throws \Exception
-     */
-    public function setMaximumInterval($interval): self
-    {
-        assert($interval === null || DateInterval::assert($interval), 'Precondition failed');
-
-        $this->maximumInterval = $interval !== null ? DateInterval::parse($interval) : null;
+        $this->maximumInterval = $maximumInterval;
 
         return $this;
     }
 
     /**
-     * @return int|null
+     * @param int $maximumAttempts
+     * @return RetryOptions
      */
-    public function getMaximumInterval(): ?int
+    public function withMaximumAttempts(int $maximumAttempts): self
     {
-        if ($this->maximumInterval === null) {
-            return null;
-        }
-
-        return CarbonInterval::make($this->maximumInterval)->milliseconds;
-    }
-
-    /**
-     * @param int $attempts
-     * @return $this
-     */
-    public function setMaximumAttempts(int $attempts): self
-    {
-        assert($attempts >= 0, 'Precondition failed');
-
-        $this->maximumAttempts = $attempts;
+        $this->maximumAttempts = $maximumAttempts;
 
         return $this;
     }
 
     /**
-     * @return int
+     * @param mixed $nonRetryableExceptions
+     * @return RetryOptions
      */
-    public function getMaximumAttempts(): int
+    public function withNonRetryableExceptions(array $nonRetryableExceptions): self
     {
-        return $this->maximumAttempts;
-    }
-
-    /**
-     * @param string[] $exceptions
-     * @return $this
-     */
-    public function setNonRetryableErrorTypes(iterable $exceptions = []): self
-    {
-        $this->nonRetryableErrorTypes = Iter::toArray($exceptions);
+        $this->nonRetryableExceptions = $nonRetryableExceptions;
 
         return $this;
-    }
-
-    /**
-     * @return string[]
-     */
-    public function getNonRetryableErrorTypes(): array
-    {
-        return $this->nonRetryableErrorTypes;
-    }
-
-    /**
-     * @return array
-     */
-    public function toArray(): array
-    {
-        return $this->arrayKeysToUpper(parent::toArray());
     }
 }

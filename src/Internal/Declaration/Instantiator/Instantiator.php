@@ -32,7 +32,7 @@ abstract class Instantiator implements InstantiatorInterface
     protected function getInstance(PrototypeInterface $prototype): ?object
     {
         if ($class = $this->getClass($prototype)) {
-            return $class->newInstanceWithoutConstructor();
+            return $class->newInstance();
         }
 
         return null;

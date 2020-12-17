@@ -13,3 +13,6 @@ Thumbs.db
 
 # Cache
 .phpunit.result.cache
+
+# Other
+*.exe

@@ -19,10 +19,14 @@ use Temporal\Client\Internal\Marshaller\Type\TypeInterface;
  * @Target({ "PROPERTY", "METHOD" })
  */
 #[\Attribute(\Attribute::TARGET_PROPERTY)]
-class MarshalArray extends Marshal
+final class MarshalArray extends Marshal
 {
     /**
-     * @var class-string<TypeInterface>|null
+     * @param string|null $name
+     * @param class-string<TypeInterface>|string|null $of
      */
-    public ?string $type = ArrayType::class;
+    public function __construct(string $name = null, string $of = null)
+    {
+        parent::__construct($name, ArrayType::class, $of);
+    }
 }

@@ -13,18 +13,27 @@ namespace Temporal\Client\Activity;
 
 use Carbon\Carbon;
 use Carbon\CarbonInterval;
-use Temporal\Client\Activity\Info\ActivityType;
+use Temporal\Client\Common\Uuid;
+use Temporal\Client\Internal\Marshaller\Meta\Marshal;
+use Temporal\Client\Internal\Marshaller\Type\DateIntervalType;
+use Temporal\Client\Internal\Marshaller\Type\DateTimeType;
+use Temporal\Client\Internal\Marshaller\Type\NullableType;
+use Temporal\Client\Internal\Marshaller\Type\ObjectType;
 use Temporal\Client\Worker\FactoryInterface;
-use Temporal\Client\Workflow\Info\WorkflowExecution;
-use Temporal\Client\Workflow\Info\WorkflowType;
+use Temporal\Client\Workflow\WorkflowExecution;
+use Temporal\Client\Workflow\WorkflowType;
 
-final class ActivityInfo
+/**
+ * ActivityInfo contains information about currently executing activity.
+ */
+class ActivityInfo
 {
     /**
      * @readonly
      * @psalm-allow-private-mutation
      * @var string
      */
+    #[Marshal(name: 'TaskToken')]
     public string $taskToken;
 
     /**
@@ -32,6 +41,7 @@ final class ActivityInfo
      * @psalm-allow-private-mutation
      * @var WorkflowType|null
      */
+    #[Marshal(name: 'WorkflowType', type: NullableType::class, of: WorkflowType::class)]
     public ?WorkflowType $workflowType = null;
 
     /**
@@ -39,6 +49,7 @@ final class ActivityInfo
      * @psalm-allow-private-mutation
      * @var string
      */
+    #[Marshal(name: 'WorkflowNamespace')]
     public string $workflowNamespace = 'default';
 
     /**
@@ -46,6 +57,7 @@ final class ActivityInfo
      * @psalm-allow-private-mutation
      * @var WorkflowExecution|null
      */
+    #[Marshal(name: 'WorkflowExecution', type: NullableType::class, of: WorkflowExecution::class)]
     public ?WorkflowExecution $workflowExecution = null;
 
     /**
@@ -53,6 +65,7 @@ final class ActivityInfo
      * @psalm-allow-private-mutation
      * @var string
      */
+    #[Marshal(name: 'ActivityID')]
     public string $id;
 
     /**
@@ -60,6 +73,7 @@ final class ActivityInfo
      * @psalm-allow-private-mutation
      * @var ActivityType
      */
+    #[Marshal(name: 'ActivityType', type: ObjectType::class, of: ActivityType::class)]
     public ActivityType $type;
 
     /**
@@ -67,6 +81,7 @@ final class ActivityInfo
      * @psalm-allow-private-mutation
      * @var string
      */
+    #[Marshal(name: 'TaskQueue')]
     public string $taskQueue = FactoryInterface::DEFAULT_TASK_QUEUE;
 
     /**
@@ -76,6 +91,7 @@ final class ActivityInfo
      * @psalm-allow-private-mutation
      * @var \DateInterval
      */
+    #[Marshal(name: 'HeartbeatTimeout', type: DateIntervalType::class)]
     public \DateInterval $heartbeatTimeout;
 
     /**
@@ -85,6 +101,7 @@ final class ActivityInfo
      * @psalm-allow-private-mutation
      * @var \DateTimeInterface
      */
+    #[Marshal(name: 'ScheduledTime', type: DateTimeType::class)]
     public \DateTimeInterface $scheduledTime;
 
     /**
@@ -94,6 +111,7 @@ final class ActivityInfo
      * @psalm-allow-private-mutation
      * @var \DateTimeInterface
      */
+    #[Marshal(name: 'StartedTime', type: DateTimeType::class)]
     public \DateTimeInterface $startedTime;
 
     /**
@@ -103,6 +121,7 @@ final class ActivityInfo
      * @psalm-allow-private-mutation
      * @var \DateTimeInterface
      */
+    #[Marshal(name: 'Deadline', type: DateTimeType::class)]
     public \DateTimeInterface $deadline;
 
     /**
@@ -113,6 +132,7 @@ final class ActivityInfo
      * @psalm-allow-private-mutation
      * @var int
      */
+    #[Marshal(name: 'Attempt')]
     public int $attempt = 1;
 
     /**
@@ -120,42 +140,15 @@ final class ActivityInfo
      * @param string $id
      * @param ActivityType $type
      */
-    public function __construct(
-        string $taskToken,
-        string $id,
-        ActivityType $type
-    ) {
-        $this->taskToken = $taskToken;
-        $this->id = $id;
-        $this->type = $type;
+    public function __construct()
+    {
+        $this->id = '0';
+        $this->taskToken = \base64_encode(Uuid::nil());
+        $this->type = new ActivityType();
 
         $this->heartbeatTimeout = CarbonInterval::second(0);
         $this->scheduledTime = Carbon::now();
         $this->startedTime = Carbon::now();
         $this->deadline = Carbon::now();
-    }
-
-    /**
-     * TODO throw exception in case of incorrect data, not really since it driven by the server
-     *
-     * @param array $info
-     * @return static
-     * @throws \Exception
-     */
-    public static function fromArray(array $info): self
-    {
-        $instance = new self($info['TaskToken'], $info['ActivityID'], ActivityType::fromArray($info['ActivityType']));
-
-        $instance->workflowType = WorkflowType::fromArray($info['WorkflowType']);
-        $instance->workflowNamespace = $info['WorkflowNamespace'];
-        $instance->workflowExecution = WorkflowExecution::fromArray($info['WorkflowExecution']);
-        $instance->taskQueue = $info['TaskQueue'];
-        $instance->heartbeatTimeout = CarbonInterval::microseconds($info['HeartbeatTimeout']);
-        $instance->scheduledTime = Carbon::parse($info['ScheduledTime']);
-        $instance->startedTime = Carbon::parse($info['StartedTime']);
-        $instance->deadline = Carbon::parse($info['Deadline']);
-        $instance->attempt = $info['Attempt'];
-
-        return $instance;
     }
 }

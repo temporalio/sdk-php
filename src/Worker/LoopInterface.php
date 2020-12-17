@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Worker;
 
-use Evenement\EventEmitterInterface;
+use Temporal\Client\Internal\Events\EventListenerInterface;
 
 /**
  * The {@see LoopInterface} is responsible for providing an interface for
@@ -22,7 +22,7 @@ use Evenement\EventEmitterInterface;
  *
  * @implements EventEmitterInterface<FactoryInterface::ON_*>
  */
-interface LoopInterface extends EventEmitterInterface
+interface LoopInterface extends EventListenerInterface
 {
     /**
      * The `tick` event will be emitted whenever all Temporal commands were
@@ -40,6 +40,11 @@ interface LoopInterface extends EventEmitterInterface
      * @var string
      */
     public const ON_TICK = 'tick';
+
+    /**
+     * @return void
+     */
+    public function tick(): void;
 
     /**
      * Run the event loop until there are no more tasks to perform.

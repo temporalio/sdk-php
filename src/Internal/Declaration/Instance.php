@@ -55,7 +55,7 @@ abstract class Instance implements InstanceInterface
     {
         $dispatcher = new Autowired($fun);
 
-        return function (array $arguments) use ($dispatcher) {
+        return function (array $arguments = []) use ($dispatcher) {
             return $dispatcher->dispatch($this->context, $arguments);
         };
     }

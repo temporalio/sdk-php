@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client\Internal\Marshaller\Meta;
 
 use JetBrains\PhpStorm\ExpectedValues;
+use Spiral\Attributes\NamedArgumentConstructorAttribute;
 
 /**
  * @psalm-type ExportScope = Scope::VISIBILITY_*
@@ -20,7 +21,7 @@ use JetBrains\PhpStorm\ExpectedValues;
  * @Target({ "CLASS" })
  */
 #[\Attribute(\Attribute::TARGET_CLASS)]
-class Scope
+class Scope implements NamedArgumentConstructorAttribute
 {
     /**
      * @var int
@@ -47,11 +48,23 @@ class Scope
     /**
      * @var ExportScope
      */
-    #[ExpectedValues(Scope::class)]
-    public int $properties = self::VISIBILITY_PUBLIC;
+    #[ExpectedValues(valuesFromClass: Scope::class)]
+    public int $properties;
 
     /**
      * @var bool
      */
-    public bool $copyOnWrite = false;
+    public bool $copyOnWrite;
+
+    /**
+     * @param ExportScope $properties
+     * @param bool $copyOnWrite
+     */
+    public function __construct(
+        int $properties = self::VISIBILITY_PUBLIC,
+        bool $copyOnWrite = false
+    ) {
+        $this->properties = $properties;
+        $this->copyOnWrite = $copyOnWrite;
+    }
 }

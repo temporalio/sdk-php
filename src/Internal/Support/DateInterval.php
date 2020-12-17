@@ -32,12 +32,12 @@ final class DateInterval
     /**
      * @var string
      */
-    public const FORMAT_YEARS = 'y';
+    public const FORMAT_YEARS = 'years';
 
     /**
      * @var string
      */
-    public const FORMAT_MONTHS = 'm';
+    public const FORMAT_MONTHS = 'months';
 
     /**
      * @var string
@@ -75,6 +75,11 @@ final class DateInterval
     public const FORMAT_MICROSECONDS = 'microseconds';
 
     /**
+     * @var string
+     */
+    public const FORMAT_NANOSECONDS = 'nanoseconds';
+
+    /**
      * @var array<positive-int, DateIntervalFormat>
      */
     private const AVAILABLE_FORMATS = [
@@ -87,6 +92,7 @@ final class DateInterval
         self::FORMAT_SECONDS,
         self::FORMAT_MILLISECONDS,
         self::FORMAT_MICROSECONDS,
+        self::FORMAT_NANOSECONDS,
     ];
 
     /**
@@ -95,7 +101,7 @@ final class DateInterval
      */
     private static function validateFormat(string $format): void
     {
-        if (! isset(self::AVAILABLE_FORMATS[$format])) {
+        if (! \in_array($format, self::AVAILABLE_FORMATS, true)) {
             $message = \sprintf(self::ERROR_INVALID_FORMAT, $format, \implode(', ', self::AVAILABLE_FORMATS));
 
             throw new \InvalidArgumentException($message);
@@ -104,7 +110,7 @@ final class DateInterval
 
     /**
      * @param DateIntervalValue $interval
-     * @param string $format
+     * @param DateIntervalFormat $format
      * @return CarbonInterval
      */
     public static function parse($interval, string $format = self::FORMAT_MILLISECONDS): CarbonInterval
@@ -120,11 +126,29 @@ final class DateInterval
 
             case \is_int($interval):
             case \is_float($interval):
+                if ($format === self::FORMAT_NANOSECONDS) {
+                    return CarbonInterval::microseconds($interval / 1000);
+                }
+
                 return CarbonInterval::$format($interval);
 
             default:
                 throw new \InvalidArgumentException(self::ERROR_INVALID_DATETIME);
         }
+    }
+
+    /**
+     * @param DateIntervalValue|null $interval
+     * @param DateIntervalFormat $format
+     * @return CarbonInterval|null
+     */
+    public static function parseOrNull($interval, string $format = self::FORMAT_MILLISECONDS): ?CarbonInterval
+    {
+        if ($interval === null) {
+            return null;
+        }
+
+        return self::parse($interval, $format);
     }
 
     /**

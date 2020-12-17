@@ -15,13 +15,14 @@ use Temporal\Client\Activity;
 
 class SimpleActivity
 {
-    #[Activity\Meta\ActivityMethod]
+    #[\Temporal\Client\Activity\ActivityMethod]
     public function echo($value)
     {
+        \sleep(\random_int(1, 3));
         return $value;
     }
 
-    #[Activity\Meta\ActivityMethod]
+    #[\Temporal\Client\Activity\ActivityMethod]
     public function asyncActivity(): int
     {
         Activity::doNotCompleteOnReturn();

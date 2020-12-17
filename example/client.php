@@ -2,31 +2,25 @@
 
 declare(strict_types=1);
 
-use Spiral\Goridge\StreamRelay;
-use Spiral\RoadRunner\Worker as RoadRunner;
-use Temporal\Client\WorkerFactory;
+
+use App\CancellableWorkflow;
+use App\CounterWorkflow;
+use App\HeartbeatActivity;
+use App\SimpleActivity;
+use App\SimpleWorkflow;
+use Temporal\Client\Worker;
+use Temporal\Client\Worker\Transport\RoadRunner;
 
 require __DIR__ . '/../vendor/autoload.php';
 
-//
-// Exception Handling
-//
-WorkerFactory::debug();
+$worker = new Worker(RoadRunner::pipes(), RoadRunner::socket(6001));
 
-//
-// Create RoadRunner Connection
-//
-$rr = new RoadRunner(new StreamRelay(\STDIN, \STDOUT));
-
-//
-// Start Workflow and Activities
-//
-$factory = new WorkerFactory($rr);
-
-$factory->createWorker()
-    ->registerWorkflow(\App\CounterWorkflow::class)
-    ->registerWorkflow(\App\SimpleWorkflow::class)
-    ->registerActivity(\App\SimpleActivity::class)
+$worker->createAndRegister()
+    ->addWorkflow(CounterWorkflow::class)
+    ->addWorkflow(SimpleWorkflow::class)
+    ->addWorkflow(CancellableWorkflow::class)
+    ->addActivity(SimpleActivity::class)
+    ->addActivity(HeartbeatActivity::class)
 ;
 
-$factory->run();
+$worker->run();
