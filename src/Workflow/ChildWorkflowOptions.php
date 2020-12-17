@@ -12,8 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Client\Workflow;
 
 use Carbon\CarbonInterval;
-use JetBrains\PhpStorm\Pure;
-use Temporal\Client\Common\CronSchedule;
 use Temporal\Client\Common\RetryOptions;
 use Temporal\Client\Common\Uuid;
 use Temporal\Client\Exception\FailedCancellationException;
@@ -271,7 +269,7 @@ final class ChildWorkflowOptions
     {
         assert(Assert::enum($type, ChildWorkflowCancellationType::class));
 
-        return immutable(fn () => $this->cancellationType = $type);
+        return immutable(fn() => $this->cancellationType = $type);
     }
 
     /**
@@ -317,7 +315,7 @@ final class ChildWorkflowOptions
      */
     public function withCronSchedule(?string $cronSchedule): self
     {
-        return immutable(fn () => $this->cronSchedule = $cronSchedule);
+        return immutable(fn() => $this->cronSchedule = $cronSchedule);
     }
 
     /**
@@ -328,7 +326,7 @@ final class ChildWorkflowOptions
      */
     public function withMemo(?array $memo): self
     {
-        return immutable(fn () => $this->memo = $memo);
+        return immutable(fn() => $this->memo = $memo);
     }
 
     /**
@@ -339,7 +337,7 @@ final class ChildWorkflowOptions
      */
     public function withSearchAttributes(?array $searchAttributes): self
     {
-        return immutable(fn () => $this->searchAttributes = $searchAttributes);
+        return immutable(fn() => $this->searchAttributes = $searchAttributes);
     }
 
     /**
@@ -352,6 +350,6 @@ final class ChildWorkflowOptions
     {
         assert(Assert::enum($policy, ParentClosePolicy::class));
 
-        return immutable(fn () => $this->parentClosePolicy = $policy);
+        return immutable(fn() => $this->parentClosePolicy = $policy);
     }
 }

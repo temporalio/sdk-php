@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Internal\Declaration;
 
+use JetBrains\PhpStorm\Pure;
 use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
 
 /**
@@ -66,6 +67,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     /**
      * @return string[]
      */
+    #[Pure]
     public function getQueryHandlerNames(): array
     {
         return \array_keys($this->queryHandlers);
@@ -92,6 +94,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     /**
      * @return string[]
      */
+    #[Pure]
     public function getSignalHandlerNames(): array
     {
         return \array_keys($this->signalHandlers);

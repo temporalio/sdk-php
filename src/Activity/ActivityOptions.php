@@ -17,7 +17,6 @@ use Temporal\Client\Common\RetryOptions;
 use Temporal\Client\Internal\Assert;
 use Temporal\Client\Internal\Marshaller\Meta\Marshal;
 use Temporal\Client\Internal\Marshaller\Type\DateIntervalType;
-use Temporal\Client\Internal\Marshaller\Type\NullableType;
 use Temporal\Client\Internal\Marshaller\Type\ObjectType;
 use Temporal\Client\Internal\Support\DateInterval;
 use Temporal\Client\Worker\FactoryInterface;
@@ -129,6 +128,9 @@ class ActivityOptions
     }
 
     /**
+     * Task queue to use when dispatching activity task to a worker. By default
+     * it is the same task list name the workflow was started with.
+     *
      * @param string|null $taskQueue
      * @return $this
      */
@@ -138,6 +140,18 @@ class ActivityOptions
     }
 
     /**
+     * Overall timeout workflow is willing to wait for activity to complete.
+     * It includes time in a task queue:
+     *
+     * - Use {@see ActivityOptions::withScheduleToStartTimeout($timeout)} to limit it.
+     *
+     * Plus activity execution time:
+     *
+     * - Use {@see ActivityOptions::withStartToCloseTimeout($timeout)} to limit it.
+     *
+     * Either this option or both schedule to start and start to close are
+     * required.
+     *
      * @param DateIntervalValue $timeout
      * @return $this
      */
@@ -153,6 +167,10 @@ class ActivityOptions
     }
 
     /**
+     * Time activity can stay in task queue before it is picked up by a worker.
+     * If schedule to close is not provided then both this and start to close
+     * are required.
+     *
      * @param DateIntervalValue $timeout
      * @return $this
      */
@@ -168,6 +186,10 @@ class ActivityOptions
     }
 
     /**
+     * Maximum activity execution time after it was sent to a worker. If
+     * schedule to close is not provided then both this and schedule to start
+     * are required.
+     *
      * @param DateIntervalValue $timeout
      * @return $this
      */
@@ -183,6 +205,9 @@ class ActivityOptions
     }
 
     /**
+     * Heartbeat interval. Activity must heartbeat before this interval passes
+     * after a last heartbeat or activity start.
+     *
      * @param DateIntervalValue $timeout
      * @return $this
      */
