@@ -218,8 +218,10 @@ abstract class Scope implements CancellationScopeInterface
             $this->defer(function () use ($e) {
                 $this->makeCurrent();
 
-                // In the case that it is not a blocking exception. For
-                // example, a CancellationException.
+                /**
+                 * In the case that it is not a blocking exception. For
+                 * example, a {@see CancellationException}.
+                 */
                 if (! $e instanceof NonThrowableExceptionInterface) {
                     $this->coroutine->throw($e);
 
