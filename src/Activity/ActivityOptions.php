@@ -145,9 +145,11 @@ class ActivityOptions
     {
         assert(DateInterval::assert($timeout));
 
-        return immutable(fn() =>
-            $this->scheduleToCloseTimeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS)
-        );
+        $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
+
+        assert($timeout->totalMicroseconds >= 0);
+
+        return immutable(fn() => $this->scheduleToCloseTimeout = $timeout);
     }
 
     /**
@@ -158,9 +160,11 @@ class ActivityOptions
     {
         assert(DateInterval::assert($timeout));
 
-        return immutable(fn() =>
-            $this->scheduleToStartTimeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS)
-        );
+        $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
+
+        assert($timeout->totalMicroseconds >= 0);
+
+        return immutable(fn() => $this->scheduleToStartTimeout = $timeout);
     }
 
     /**
@@ -171,9 +175,11 @@ class ActivityOptions
     {
         assert(DateInterval::assert($timeout));
 
-        return immutable(fn() =>
-            $this->startToCloseTimeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS)
-        );
+        $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
+
+        assert($timeout->totalMicroseconds >= 0);
+
+        return immutable(fn() => $this->startToCloseTimeout = $timeout);
     }
 
     /**
@@ -184,9 +190,11 @@ class ActivityOptions
     {
         assert(DateInterval::assert($timeout));
 
-        return immutable(fn() =>
-            $this->heartbeatTimeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS)
-        );
+        $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
+
+        assert($timeout->totalMicroseconds >= 0);
+
+        return immutable(fn() => $this->heartbeatTimeout = $timeout);
     }
 
     /**

@@ -213,6 +213,8 @@ final class ChildWorkflowOptions
      */
     public function withWorkflowExecutionTimeout($timeout): self
     {
+        assert(DateInterval::assert($timeout));
+
         $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
 
         assert($timeout->totalMicroseconds >= 0);
@@ -230,6 +232,8 @@ final class ChildWorkflowOptions
      */
     public function withWorkflowRunTimeout($timeout): self
     {
+        assert(DateInterval::assert($timeout));
+
         $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
 
         assert($timeout->totalMicroseconds >= 0);
@@ -246,6 +250,8 @@ final class ChildWorkflowOptions
      */
     public function withWorkflowTaskTimeout($timeout): self
     {
+        assert(DateInterval::assert($timeout));
+
         $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
 
         assert($timeout->totalMicroseconds >= 0 && $timeout->totalSeconds <= 60);
