@@ -104,4 +104,59 @@ class RetryOptions
      */
     #[Marshal(name: 'NonRetryableErrorTypes')]
     public array $nonRetryableExceptions = self::DEFAULT_NON_RETRYABLE_EXCEPTIONS;
+
+    /**
+     * @param \DateInterval|null $initialInterval
+     * @return RetryOptions
+     */
+    public function withInitialInterval(?\DateInterval $initialInterval): self
+    {
+        $this->initialInterval = $initialInterval;
+
+        return $this;
+    }
+
+    /**
+     * @param float $backoffCoefficient
+     * @return RetryOptions
+     */
+    public function withBackoffCoefficient(float $backoffCoefficient): self
+    {
+        $this->backoffCoefficient = $backoffCoefficient;
+
+        return $this;
+    }
+
+    /**
+     * @param \DateInterval|null $maximumInterval
+     * @return RetryOptions
+     */
+    public function withMaximumInterval(?\DateInterval $maximumInterval): self
+    {
+        $this->maximumInterval = $maximumInterval;
+
+        return $this;
+    }
+
+    /**
+     * @param int $maximumAttempts
+     * @return RetryOptions
+     */
+    public function withMaximumAttempts(int $maximumAttempts): self
+    {
+        $this->maximumAttempts = $maximumAttempts;
+
+        return $this;
+    }
+
+    /**
+     * @param mixed $nonRetryableExceptions
+     * @return RetryOptions
+     */
+    public function withNonRetryableExceptions(array $nonRetryableExceptions): self
+    {
+        $this->nonRetryableExceptions = $nonRetryableExceptions;
+
+        return $this;
+    }
 }

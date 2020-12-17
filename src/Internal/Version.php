@@ -48,10 +48,8 @@ final class Version
     public static function getLibraryVersion(): string
     {
         if (self::$libraryVersion === null) {
-            $root = InstalledVersions::getRootPackage()['name'];
-
             try {
-                self::$libraryVersion = InstalledVersions::getPrettyVersion($root);
+                self::$libraryVersion = InstalledVersions::getRootPackage()['reference'];
             } catch (\OutOfBoundsException $e) {
                 self::$libraryVersion = self::DEFAULT_LIBRARY_VERSION;
             }

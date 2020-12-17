@@ -129,4 +129,92 @@ class ActivityOptions
     {
         return new static();
     }
+
+    /**
+     * @param string|null $taskQueue
+     * @return ActivityOptions
+     */
+    public function withTaskQueue(?string $taskQueue): self
+    {
+        $this->taskQueue = $taskQueue;
+
+        return $this;
+    }
+
+    /**
+     * @param \DateInterval|null $scheduleToCloseTimeout
+     * @return ActivityOptions
+     */
+    public function withScheduleToCloseTimeout(?\DateInterval $scheduleToCloseTimeout): self
+    {
+        $this->scheduleToCloseTimeout = $scheduleToCloseTimeout;
+
+        return $this;
+    }
+
+    /**
+     * @param \DateInterval|null $scheduleToStartTimeout
+     * @return ActivityOptions
+     */
+    public function withScheduleToStartTimeout(?\DateInterval $scheduleToStartTimeout): self
+    {
+        $this->scheduleToStartTimeout = $scheduleToStartTimeout;
+
+        return $this;
+    }
+
+    /**
+     * @param \DateInterval|null $startToCloseTimeout
+     * @return ActivityOptions
+     */
+    public function withStartToCloseTimeout(?\DateInterval $startToCloseTimeout): self
+    {
+        $this->startToCloseTimeout = $startToCloseTimeout;
+
+        return $this;
+    }
+
+    /**
+     * @param \DateInterval|null $heartbeatTimeout
+     * @return ActivityOptions
+     */
+    public function withHeartbeatTimeout(?\DateInterval $heartbeatTimeout): self
+    {
+        $this->heartbeatTimeout = $heartbeatTimeout;
+
+        return $this;
+    }
+
+    /**
+     * @param bool $waitForCancellation
+     * @return ActivityOptions
+     */
+    public function withWaitForCancellation(bool $waitForCancellation): self
+    {
+        $this->waitForCancellation = $waitForCancellation;
+
+        return $this;
+    }
+
+    /**
+     * @param string $activityId
+     * @return ActivityOptions
+     */
+    public function withActivityId(string $activityId): self
+    {
+        $this->activityId = $activityId;
+
+        return $this;
+    }
+
+    /**
+     * @param RetryOptions $retryOptions
+     * @return ActivityOptions
+     */
+    public function withRetryOptions(RetryOptions $retryOptions): self
+    {
+        $this->retryOptions = $retryOptions;
+
+        return $this;
+    }
 }
