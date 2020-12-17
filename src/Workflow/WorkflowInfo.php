@@ -13,6 +13,7 @@ namespace Temporal\Client\Workflow;
 
 use Carbon\CarbonInterval;
 use Temporal\Client\Internal\Marshaller\Meta\Marshal;
+use Temporal\Client\Internal\Marshaller\Type\ArrayType;
 use Temporal\Client\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Client\Internal\Marshaller\Type\NullableType;
 use Temporal\Client\Internal\Marshaller\Type\ObjectType;
@@ -125,18 +126,18 @@ final class WorkflowInfo
     /**
      * @readonly
      * @psalm-allow-private-mutation
-     * @var array
+     * @var array|null
      */
-    #[Marshal(name: 'SearchAttributes')]
-    public array $searchAttributes;
+    #[Marshal(name: 'SearchAttributes', type: NullableType::class, of: ArrayType::class)]
+    public ?array $searchAttributes = null;
 
     /**
      * @readonly
      * @psalm-allow-private-mutation
-     * @var array
+     * @var array|null
      */
-    #[Marshal(name: 'Memo')]
-    public array $memo;
+    #[Marshal(name: 'SearchAttributes', type: NullableType::class, of: ArrayType::class)]
+    public ?array $memo = null;
 
     /**
      * @readonly
