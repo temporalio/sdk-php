@@ -17,35 +17,11 @@ use Temporal\Client\Internal\Events\EventEmitterInterface;
 use Temporal\Client\Internal\Events\EventListenerInterface;
 use Temporal\Client\Internal\Repository\Identifiable;
 
-/**
- * @implements EventEmitterInterface<TaskQueueInterface::ON_*>
- */
 interface TaskQueueInterface extends
     EventListenerInterface,
     DispatcherInterface,
-    EventEmitterInterface,
     Identifiable
 {
-    /**
-     * @var string
-     */
-    public const ON_SIGNAL = 'signal';
-
-    /**
-     * @var string
-     */
-    public const ON_QUERY = 'query';
-
-    /**
-     * @var string
-     */
-    public const ON_CALLBACK = 'callback';
-
-    /**
-     * @var string
-     */
-    public const ON_TICK = 'tick';
-
     /**
      * @return string
      */

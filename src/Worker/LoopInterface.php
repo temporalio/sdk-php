@@ -42,6 +42,21 @@ interface LoopInterface extends EventListenerInterface
     public const ON_TICK = 'tick';
 
     /**
+     * @var string
+     */
+    public const ON_SIGNAL = 'signal';
+
+    /**
+     * @var string
+     */
+    public const ON_QUERY = 'query';
+
+    /**
+     * @var string
+     */
+    public const ON_CALLBACK = 'callback';
+
+    /**
      * @return void
      */
     public function tick(): void;

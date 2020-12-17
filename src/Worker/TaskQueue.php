@@ -93,8 +93,8 @@ class TaskQueue implements TaskQueueInterface
 
         // Workflow routes
         $router->add(new Router\StartWorkflow($this->services));
-        $router->add(new Router\InvokeQuery($this->services->running, $this));
-        $router->add(new Router\InvokeSignal($this->services->running, $this));
+        $router->add(new Router\InvokeQuery($this->services->running, $this->services->loop));
+        $router->add(new Router\InvokeSignal($this->services->running, $this->services->loop));
         $router->add(new Router\DestroyWorkflow($this->services->running, $this->services->client));
         $router->add(new Router\StackTrace($this->services->running));
 

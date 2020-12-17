@@ -133,7 +133,6 @@ final class Worker implements FactoryInterface
         $this->rpc = $rpc ?? RoadRunner::socket(6001);
 
         $this->boot();
-        $this->bootEvents();
     }
 
     /**
@@ -220,30 +219,6 @@ final class Worker implements FactoryInterface
     private function createServer(): ServerInterface
     {
         return new Server($this->responses, \Closure::fromCallable([$this, 'onRequest']));
-    }
-
-    /**
-     * @return void
-     */
-    private function bootEvents(): void
-    {
-        $this->on(self::ON_TICK, function () {
-            foreach ($this->queues as $queue) {
-                $queue->emit(TaskQueueInterface::ON_SIGNAL);
-            }
-
-            foreach ($this->queues as $queue) {
-                $queue->emit(TaskQueueInterface::ON_CALLBACK);
-            }
-
-            foreach ($this->queues as $queue) {
-                $queue->emit(TaskQueueInterface::ON_QUERY);
-            }
-
-            foreach ($this->queues as $queue) {
-                $queue->emit(TaskQueueInterface::ON_TICK);
-            }
-        });
     }
 
     /**
@@ -342,6 +317,9 @@ final class Worker implements FactoryInterface
      */
     public function tick(): void
     {
+        $this->emit(LoopInterface::ON_SIGNAL);
+        $this->emit(LoopInterface::ON_CALLBACK);
+        $this->emit(LoopInterface::ON_QUERY);
         $this->emit(LoopInterface::ON_TICK);
     }
 
