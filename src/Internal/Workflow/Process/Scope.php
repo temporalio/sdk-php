@@ -137,7 +137,7 @@ abstract class Scope implements CancellationScopeInterface
     {
         $this->makeCurrent();
 
-        $result = $handler(...$args);
+        $result = $handler($args);
 
         if ($result instanceof \Generator || $result instanceof CoroutineInterface) {
             yield from $result;
