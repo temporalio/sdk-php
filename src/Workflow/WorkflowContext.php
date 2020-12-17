@@ -13,10 +13,8 @@ namespace Temporal\Client\Workflow;
 
 use Carbon\CarbonInterface;
 use Carbon\CarbonTimeZone;
-use JetBrains\PhpStorm\Pure;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
-use Temporal\Client\Internal\Repository\RepositoryInterface;
 use Temporal\Client\Internal\ServiceContainer;
 use Temporal\Client\Internal\Support\DateInterval;
 use Temporal\Client\Internal\Transport\CapturedClient;
@@ -31,11 +29,7 @@ use Temporal\Client\Internal\Workflow\ActivityProxy;
 use Temporal\Client\Internal\Workflow\Input;
 use Temporal\Client\Internal\Workflow\Process\CancellationScope;
 use Temporal\Client\Internal\Workflow\Process\Process;
-use Temporal\Client\Internal\Workflow\ProcessCollection;
 use Temporal\Client\Worker\Command\RequestInterface;
-use Temporal\Client\Worker\Environment\EnvironmentAwareTrait;
-
-use Temporal\Client\Worker\Environment\EnvironmentInterface;
 
 use function React\Promise\reject;
 
@@ -81,6 +75,16 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
     }
 
     /**
+     * {@inheritDoc}
+     */
+    public function getTimeZone(): CarbonTimeZone
+    {
+        $this->recordTrace();
+
+        return $this->services->env->getTimeZone();
+    }
+
+    /**
      * Record last stack trace of the call.
      *
      * @return void
@@ -95,31 +99,11 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
     /**
      * {@inheritDoc}
      */
-    public function getTimeZone(): CarbonTimeZone
-    {
-        $this->recordTrace();
-
-        return $this->services->env->getTimeZone();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public function now(): CarbonInterface
     {
         $this->recordTrace();
 
         return $this->services->env->now();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function isReplaying(): bool
-    {
-        $this->recordTrace();
-
-        return $this->services->env->isReplaying();
     }
 
     /**
@@ -236,6 +220,16 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
         }
 
         return $this->request(new SideEffect($value));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function isReplaying(): bool
+    {
+        $this->recordTrace();
+
+        return $this->services->env->isReplaying();
     }
 
     /**
