@@ -178,8 +178,7 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
     {
         $this->recordTrace();
 
-        $self = clone $this;
-        $self->client = new CapturedClient($this->client);
+        $self = immutable(fn() => $this->client = new CapturedClient($this->client));
 
         return new CancellationScope($self, $this->services, \Closure::fromCallable($handler));
     }
