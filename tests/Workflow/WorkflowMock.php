@@ -9,16 +9,16 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Client\Workflow\CancellationScopeTestCase;
+namespace Temporal\Tests\Client\Workflow;
 
 use Temporal\Client\Promise;
 use Temporal\Client\Workflow;
 
-class WorkflowMock
+final class WorkflowMock
 {
     private $data;
 
-    public function first()
+    public function workflow1()
     {
         $scope = Workflow::newCancellationScope(function () {
             yield Workflow::executeActivity('activity');
@@ -31,7 +31,7 @@ class WorkflowMock
         return 0xDEAD_BEEF;
     }
 
-    public function second()
+    public function workflow2()
     {
         $cs1 = Workflow::newCancellationScope(function() {
             return yield Workflow::executeActivity('a');
@@ -49,7 +49,7 @@ class WorkflowMock
         return $result;
     }
 
-    public function simpleNested()
+    public function workflow3()
     {
         return yield Workflow::newCancellationScope(function() {
             return yield Workflow::newCancellationScope(function () {
@@ -58,7 +58,20 @@ class WorkflowMock
         });
     }
 
-    public function race()
+    public function workflow4()
+    {
+        $scope = Workflow::newCancellationScope(function() {
+            $this->data = Workflow::executeActivity('example');
+
+            return 42;
+        });
+
+        $scope->cancel();
+
+        return yield $this->data;
+    }
+
+    public function workflow5()
     {
         $promise = Workflow::executeActivity('first');
 
@@ -67,7 +80,7 @@ class WorkflowMock
         return yield $promise;
     }
 
-    public function simpleNestingScopeCancelled()
+    public function workflow6()
     {
         return yield Workflow::newCancellationScope(function() {
             $result = Workflow::newCancellationScope(function () {
@@ -80,18 +93,5 @@ class WorkflowMock
 
             return yield $result;
         });
-    }
-
-    public function memoizedPromise()
-    {
-        $scope = Workflow::newCancellationScope(function() {
-            $this->data = Workflow::executeActivity('example');
-
-            return 42;
-        });
-
-        $scope->cancel();
-
-        return yield $this->data;
     }
 }

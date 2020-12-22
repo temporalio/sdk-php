@@ -12,11 +12,16 @@ declare(strict_types=1);
 namespace Temporal\Tests\Client\Workflow;
 
 use Spiral\Attributes\AttributeReader;
+use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Client\Internal\Declaration\WorkflowInstance;
 use Temporal\Client\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Client\Internal\ServiceContainer;
+use Temporal\Client\Internal\Workflow\Input;
+use Temporal\Client\Internal\Workflow\Process\Process;
 use Temporal\Client\Worker\Command\ErrorResponseInterface;
 use Temporal\Client\Worker\Command\RequestInterface;
 use Temporal\Client\Worker\Command\SuccessResponseInterface;
+use Temporal\Client\Workflow\WorkflowInfo;
 use Temporal\Tests\Client\TestCase;
 use Temporal\Tests\Client\Testing\TestingClient;
 use Temporal\Tests\Client\Testing\TestingEnvironment;
@@ -75,6 +80,39 @@ abstract class WorkflowTestCase extends TestCase
         $this->services = new ServiceContainer($this->loop, $this->client, $reader, $this->queue);
         $this->services->env = $this->env;
         $this->services->marshaller = $this->marshaller;
+    }
+
+
+    /**
+     * @param string $class
+     * @param string $fun
+     * @param WorkflowInfo|null $info
+     * @param array $args
+     * @return Process
+     * @throws \ReflectionException
+     */
+    protected function createProcess(string $class, string $fun, WorkflowInfo $info = null, array $args = []): Process
+    {
+        $input = new Input($info, $args);
+
+        return new Process($input, $this->services, $this->createInstance($class, $fun));
+    }
+
+    /**
+     * @param string $class
+     * @param string $function
+     * @return WorkflowInstance
+     * @throws \ReflectionException
+     */
+    protected function createInstance(string $class, string $function): WorkflowInstance
+    {
+        $reflectionClass = new \ReflectionClass($class);
+
+        $reflectionFunction = $reflectionClass->getMethod($function);
+
+        $prototype = new WorkflowPrototype($reflectionFunction->getName(), $reflectionFunction, $reflectionClass);
+
+        return new WorkflowInstance($prototype, new $class());
     }
 
     /**

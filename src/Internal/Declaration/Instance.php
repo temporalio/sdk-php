@@ -46,6 +46,14 @@ abstract class Instance implements InstanceInterface
     }
 
     /**
+     * @return object|null
+     */
+    public function getContext(): ?object
+    {
+        return $this->context;
+    }
+
+    /**
      * @psalm-return DispatchableHandler
      *
      * @param \ReflectionFunctionAbstract $fun

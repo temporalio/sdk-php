@@ -12,21 +12,12 @@ declare(strict_types=1);
 namespace Temporal\Tests\Client\Workflow;
 
 use Temporal\Client\Exception\CancellationException;
-use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
-use Temporal\Client\Internal\Declaration\WorkflowInstance;
-use Temporal\Client\Internal\Workflow\Input;
-use Temporal\Client\Internal\Workflow\Process\Process;
-use Temporal\Client\Workflow\WorkflowInfo;
-use Temporal\Tests\Client\Workflow\CancellationScopeTestCase\WorkflowMock;
 
 class CancellationScopeTestCase extends WorkflowTestCase
 {
-    /**
-     * @return void
-     */
     public function testFirst(): void
     {
-        $this->createProcess(WorkflowMock::class, 'first');
+        $this->createProcess(WorkflowMock::class, 'workflow1');
 
         $this->queue
             ->assertRequestsCount(1)
@@ -39,36 +30,9 @@ class CancellationScopeTestCase extends WorkflowTestCase
         ;
     }
 
-    private function createProcess(string $class, string $fun, WorkflowInfo $info = null, array $args = []): Process
-    {
-        $input = new Input($info, $args);
-
-        return new Process($input, $this->services, $this->createInstance($class, $fun));
-    }
-
-    /**
-     * @param string $class
-     * @param string $function
-     * @return WorkflowInstance
-     * @throws \ReflectionException
-     */
-    private function createInstance(string $class, string $function): WorkflowInstance
-    {
-        $reflectionClass = new \ReflectionClass($class);
-
-        $reflectionFunction = $reflectionClass->getMethod($function);
-
-        $prototype = new WorkflowPrototype($reflectionFunction->getName(), $reflectionFunction, $reflectionClass);
-
-        return new WorkflowInstance($prototype, new $class());
-    }
-
-    /**
-     * @return void
-     */
     public function testSecondWithFirstPromise(): void
     {
-        $this->createProcess(WorkflowMock::class, 'second');
+        $this->createProcess(WorkflowMock::class, 'workflow2');
 
         $this->queue
             ->assertRequestsCount(2)
@@ -103,12 +67,9 @@ class CancellationScopeTestCase extends WorkflowTestCase
         ;
     }
 
-    /**
-     * @return void
-     */
     public function testSecondWithSecondPromise(): void
     {
-        $this->createProcess(WorkflowMock::class, 'second');
+        $this->createProcess(WorkflowMock::class, 'workflow2');
 
         $this->queue
             ->assertRequestsCount(2)
@@ -145,7 +106,7 @@ class CancellationScopeTestCase extends WorkflowTestCase
 
     public function testNested(): void
     {
-        $this->createProcess(WorkflowMock::class, 'simpleNested');
+        $this->createProcess(WorkflowMock::class, 'workflow3');
 
         $this->queue
             ->assertRequestsCount(1)
@@ -158,7 +119,7 @@ class CancellationScopeTestCase extends WorkflowTestCase
 
     public function testMemoizePromise(): void
     {
-        $this->createProcess(WorkflowMock::class, 'memoizedPromise');
+        $this->createProcess(WorkflowMock::class, 'workflow4');
 
         $result = $this->queue
             ->assertRequestsCount(1)
@@ -173,7 +134,7 @@ class CancellationScopeTestCase extends WorkflowTestCase
 
     public function testRace(): void
     {
-        $this->createProcess(WorkflowMock::class, 'race');
+        $this->createProcess(WorkflowMock::class, 'workflow5');
 
         $this->queue
             ->assertRequestsCount(2)
@@ -207,7 +168,7 @@ class CancellationScopeTestCase extends WorkflowTestCase
 
     public function testNestedCancelled(): void
     {
-        $this->createProcess(WorkflowMock::class, 'simpleNestingScopeCancelled');
+        $this->createProcess(WorkflowMock::class, 'workflow6');
 
         $this->queue
             ->assertRequestsCount(1)

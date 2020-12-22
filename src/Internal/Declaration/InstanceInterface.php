@@ -20,4 +20,9 @@ interface InstanceInterface
      * @return DispatchableHandler
      */
     public function getHandler(): callable;
+
+    /**
+     * @return object|null
+     */
+    public function getContext(): ?object;
 }

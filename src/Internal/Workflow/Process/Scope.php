@@ -242,11 +242,13 @@ abstract class Scope implements CancellationScopeInterface
      */
     private function defer(\Closure $tick)
     {
+        $listener = $this->services->loop->once(LoopInterface::ON_TICK, $tick);
+
         if ($this->services->queue->count() === 0) {
-            return $tick();
+            $this->services->loop->tick();
         }
 
-        return $this->services->loop->once(LoopInterface::ON_TICK, $tick);
+        return $listener;
     }
 
     /**
