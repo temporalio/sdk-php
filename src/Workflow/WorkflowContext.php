@@ -238,9 +238,21 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
     {
         $this->recordTrace();
 
-        $this->process->cancel();
+        $then = function ($result) {
+            $this->process->cancel();
 
-        return $this->request(new CompleteWorkflow($result));
+            return $result;
+        };
+
+        $otherwise = function (\Throwable $error): void {
+            $this->process->cancel();
+
+            throw $error;
+        };
+
+        return $this->request(new CompleteWorkflow($result))
+            ->then($then, $otherwise)
+        ;
     }
 
     /**
