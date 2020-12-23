@@ -365,7 +365,11 @@ final class Worker implements FactoryInterface
         $taskQueue = $headers[self::HEADER_TASK_QUEUE];
 
         if (! \is_string($taskQueue)) {
-            $error = \sprintf(self::ERROR_HEADER_NOT_STRING_TYPE, self::HEADER_TASK_QUEUE, \get_debug_type($taskQueue));
+            $error = \vsprintf(self::ERROR_HEADER_NOT_STRING_TYPE, [
+                self::HEADER_TASK_QUEUE,
+                \get_debug_type($taskQueue)
+            ]);
+
             throw new \InvalidArgumentException($error);
         }
 

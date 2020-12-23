@@ -96,13 +96,12 @@ final class Client implements ClientInterface
         }
 
         $this->requests[$id] = $deferred = new Deferred(function () use ($id) {
-            $request = $this->fetch($id);
-
             $command = $this->queue->pull($id);
 
             // In the case that the command is in the queue for sending,
             // then we take it out of the queue and cancel the request.
             if ($command !== null) {
+                $request = $this->fetch($id);
                 $request->reject(CancellationException::fromRequestId($id));
 
                 // In the case that after the local promise rejection we have
@@ -117,15 +116,7 @@ final class Client implements ClientInterface
 
             // Otherwise, we send a Cancel request to the server to cancel
             // the previously sent command by its ID.
-            $this->request(new Cancel([$id]))
-                ->then(function () use ($id, $request): void {
-                    $request->reject(CancellationException::fromRequestId($id));
-                }, function (\Throwable $e) use ($request): void {
-                    // In case of an error from the server when canceling the
-                    // request, we forward it to the promise and the exception
-                    // should occur inside the process generator/coroutine.
-                    $request->reject($e);
-                });
+            $this->request(new Cancel([$id]));
         });
 
         return $deferred->promise();
@@ -137,15 +128,26 @@ final class Client implements ClientInterface
      */
     private function fetch(int $id): Deferred
     {
+        $request = $this->get($id);
+
+        try {
+            return $request;
+        } finally {
+            unset($this->requests[$id]);
+        }
+    }
+
+    /**
+     * @param int $id
+     * @return Deferred
+     */
+    private function get(int $id): Deferred
+    {
         if (! isset($this->requests[$id])) {
             throw new \UnderflowException(\sprintf(self::ERROR_REQUEST_NOT_FOUND, $id));
         }
 
-        try {
-            return $this->requests[$id];
-        } finally {
-            unset($this->requests[$id]);
-        }
+        return $this->requests[$id];
     }
 
     /**

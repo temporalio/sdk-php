@@ -58,8 +58,9 @@ abstract class Scope implements CancellationScopeInterface
 
     /**
      * @param WorkflowContext $ctx
+     * @param ServiceContainer $services
      * @param callable $handler
-     * @param array $arguments
+     * @param array $args
      */
     public function __construct(
         WorkflowContext $ctx,
