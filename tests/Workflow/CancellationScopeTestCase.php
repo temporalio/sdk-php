@@ -178,4 +178,16 @@ class CancellationScopeTestCase extends WorkflowTestCase
                 ->assertParamsKeySame('result', [42])
         ;
     }
+
+    public function testCancellationEvent(): void
+    {
+        $this->createProcess(WorkflowMock::class, 'workflow7');
+
+        $this->queue
+            ->assertRequestsCount(1)
+            ->shift()
+                ->assertName('CompleteWorkflow')
+                ->assertParamsKeySame('result', [true])
+        ;
+    }
 }

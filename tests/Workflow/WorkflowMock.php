@@ -94,4 +94,20 @@ final class WorkflowMock
             return yield $result;
         });
     }
+
+    public function workflow7()
+    {
+        $result = false;
+
+        $scope = Workflow::newCancellationScope(function () {
+            yield Workflow::executeActivity('example');
+        })
+            ->onCancel(function () use (&$result) {
+                $result = true;
+            });
+
+        $scope->cancel();
+
+        return $result;
+    }
 }
