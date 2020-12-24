@@ -16,6 +16,7 @@ use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Internal\Support\Facade;
 use Temporal\Client\Internal\Transport\FutureInterface;
 use Temporal\Client\Internal\Workflow\ActivityProxy;
+use Temporal\Client\Internal\Workflow\ChildWorkflowProxy;
 use Temporal\Client\Workflow\CancellationScopeInterface;
 use Temporal\Client\Workflow\ChildWorkflowOptions;
 use Temporal\Client\Workflow\WorkflowContextInterface;
@@ -32,12 +33,15 @@ use Temporal\Client\Workflow\WorkflowInfo;
  * @method static bool isReplaying()
  *
  * @method static CancellationScopeInterface newCancellationScope(callable $handler)
+ *
+ * @method static FutureInterface executeActivity(string $class, array $args = [], array|ActivityOptions $options = null)
  * @method static ActivityProxy|object newActivityStub(string $class, array|ActivityOptions $options = null)
  *
  * @method static FutureInterface executeChildWorkflow(string $type, array $args = [], ChildWorkflowOptions $options = null)
+ * @method static ChildWorkflowProxy|object newChildWorkflowStub(string $class, array|ChildWorkflowOptions $options = null)
+ *
  * @method static FutureInterface sideEffect(callable $cb)
  * @method static FutureInterface complete(mixed $result = null)
- * @method static FutureInterface executeActivity(string $class, array $args = [], array|ActivityOptions $options = null)
  * @method static FutureInterface timer(string|int|float|\DateInterval $interval)
  * @method static FutureInterface getVersion(string $changeID, int $minSupported, int $maxSupported)
  *

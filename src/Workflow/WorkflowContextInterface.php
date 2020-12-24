@@ -52,18 +52,6 @@ interface WorkflowContextInterface extends EnvironmentInterface
     public function newCancellationScope(callable $handler): CancellationScopeInterface;
 
     /**
-     * @param string $type
-     * @param array $args
-     * @param ChildWorkflowOptions|null $options
-     * @return PromiseInterface
-     */
-    public function executeChildWorkflow(
-        string $type,
-        array $args = [],
-        ChildWorkflowOptions $options = null
-    ): PromiseInterface;
-
-    /**
      * @param string $changeId
      * @param int $minSupported
      * @param int $maxSupported
@@ -87,25 +75,48 @@ interface WorkflowContextInterface extends EnvironmentInterface
     public function complete($result = null): PromiseInterface;
 
     /**
-     * @psalm-param class-string|string $name
+     * @param class-string|string $type
+     * @param array $args
+     * @param ChildWorkflowOptions|null $options
+     * @return PromiseInterface
+     */
+    public function executeChildWorkflow(
+        string $type,
+        array $args = [],
+        ChildWorkflowOptions $options = null
+    ): PromiseInterface;
+
+    /**
+     * @psalm-template WorkflowType
+     * @psalm-param class-string<WorkflowType> $class
+     * @psalm-return WorkflowType
      *
-     * @param string $name
+     * @param string $class
+     * @param ChildWorkflowOptions|null $options
+     * @return object
+     */
+    public function newChildWorkflowStub(string $class, ChildWorkflowOptions $options = null): object;
+
+    /**
+     * @psalm-param class-string|string $type
+     *
+     * @param string $type
      * @param array $args
      * @param ActivityOptions|null $options
      * @return PromiseInterface
      */
-    public function executeActivity(string $name, array $args = [], ActivityOptions $options = null): PromiseInterface;
+    public function executeActivity(string $type, array $args = [], ActivityOptions $options = null): PromiseInterface;
 
     /**
      * @psalm-template ActivityType
-     * @psalm-param class-string<ActivityType> $name
+     * @psalm-param class-string<ActivityType> $class
      * @psalm-return ActivityType
      *
-     * @param string $name
-     * @param ActivityOptions|null $options
+     * @param string $class
+     * @param ChildWorkflowOptions|null $options
      * @return object
      */
-    public function newActivityStub(string $name, ActivityOptions $options = null): object;
+    public function newActivityStub(string $class, ActivityOptions $options = null): object;
 
     /**
      * @param DateIntervalFormat $interval

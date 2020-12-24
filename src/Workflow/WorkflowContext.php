@@ -27,6 +27,7 @@ use Temporal\Client\Internal\Transport\Request\GetVersion;
 use Temporal\Client\Internal\Transport\Request\NewTimer;
 use Temporal\Client\Internal\Transport\Request\SideEffect;
 use Temporal\Client\Internal\Workflow\ActivityProxy;
+use Temporal\Client\Internal\Workflow\ChildWorkflowProxy;
 use Temporal\Client\Internal\Workflow\Input;
 use Temporal\Client\Internal\Workflow\Process\CancellationScope;
 use Temporal\Client\Internal\Workflow\Process\Process;
@@ -173,7 +174,7 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
 
     /**
      * @param callable $handler
-     * @return PromiseInterface
+     * @return CancellationScope
      */
     public function newCancellationScope(callable $handler): CancellationScope
     {
@@ -182,25 +183,6 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
         $self = immutable(fn() => $this->client = new CapturedClient($this->client));
 
         return new CancellationScope($self, $this->services, \Closure::fromCallable($handler));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function executeChildWorkflow(
-        string $type,
-        array $args = [],
-        ChildWorkflowOptions $options = null
-    ): PromiseInterface {
-        $this->recordTrace();
-
-        $options = $this->services->marshaller->marshal(
-            $options ?? new ChildWorkflowOptions()
-        );
-
-        return $this->request(
-            new ExecuteChildWorkflow($type, $args, $options)
-        );
     }
 
     /**
@@ -278,7 +260,38 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
     /**
      * {@inheritDoc}
      */
-    public function executeActivity(string $name, array $args = [], ActivityOptions $options = null): PromiseInterface
+    public function executeChildWorkflow(
+        string $type,
+        array $args = [],
+        ChildWorkflowOptions $options = null
+    ): PromiseInterface {
+        $this->recordTrace();
+
+        $options = $this->services->marshaller->marshal(
+            $options ?? new ChildWorkflowOptions()
+        );
+
+        return $this->request(
+            new ExecuteChildWorkflow($type, $args, $options)
+        );
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function newChildWorkflowStub(string $class, ChildWorkflowOptions $options = null): object
+    {
+        $this->recordTrace();
+
+        $options ??= new ChildWorkflowOptions();
+
+        return new ChildWorkflowProxy($class, $options, $this, $this->services->workflows);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function executeActivity(string $type, array $args = [], ActivityOptions $options = null): PromiseInterface
     {
         $this->recordTrace();
 
@@ -287,20 +300,20 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
         );
 
         return $this->request(
-            new ExecuteActivity($name, $args, $options)
+            new ExecuteActivity($type, $args, $options)
         );
     }
 
     /**
      * {@inheritDoc}
      */
-    public function newActivityStub(string $name, ActivityOptions $options = null): object
+    public function newActivityStub(string $class, ActivityOptions $options = null): object
     {
         $this->recordTrace();
 
         $options ??= new ActivityOptions();
 
-        return new ActivityProxy($name, $options, $this, $this->services->activities);
+        return new ActivityProxy($class, $options, $this, $this->services->activities);
     }
 
     /**

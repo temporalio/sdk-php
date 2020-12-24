@@ -12,28 +12,29 @@ declare(strict_types=1);
 namespace Temporal\Client\Internal\Workflow;
 
 use React\Promise\PromiseInterface;
-use Temporal\Client\Activity\ActivityOptions;
-use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
+use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Client\Internal\Repository\RepositoryInterface;
+use Temporal\Client\Workflow;
+use Temporal\Client\Workflow\ChildWorkflowOptions;
 use Temporal\Client\Workflow\WorkflowContextInterface;
 
 /**
- * @internal ActivityProxy is an internal library class, please do not use it in your code.
+ * @internal ChildWorkflowProxy is an internal library class, please do not use it in your code.
  * @psalm-internal Temporal\Client
  *
- * @psalm-template Activity of object
+ * @psalm-template Workflow of object
  */
-class ActivityProxy
+class ChildWorkflowProxy
 {
     /**
-     * @var ActivityPrototype[]
+     * @var WorkflowPrototype[]
      */
-    private array $activities;
+    private array $workflows;
 
     /**
-     * @var ActivityOptions
+     * @var ChildWorkflowOptions
      */
-    private ActivityOptions $options;
+    private ChildWorkflowOptions $options;
 
     /**
      * @var WorkflowContextInterface
@@ -41,45 +42,45 @@ class ActivityProxy
     private WorkflowContextInterface $context;
 
     /**
-     * @param class-string<Activity> $class
-     * @param ActivityOptions $options
+     * @param class-string<Workflow> $class
+     * @param ChildWorkflowOptions $options
      * @param WorkflowContextInterface $context
-     * @param RepositoryInterface<ActivityPrototype> $activities
+     * @param RepositoryInterface<WorkflowPrototype> $workflows
      */
     public function __construct(
         string $class,
-        ActivityOptions $options,
+        ChildWorkflowOptions $options,
         WorkflowContextInterface $context,
-        RepositoryInterface $activities
+        RepositoryInterface $workflows
     ) {
         $this->options = $options;
         $this->context = $context;
 
-        $this->activities = [
-            ...$this->filterActivities($activities, $class)
+        $this->workflows = [
+            ...$this->filterWorkflows($workflows, $class)
         ];
     }
 
     /**
-     * @param ActivityPrototype[] $activities
+     * @param WorkflowPrototype[] $workflows
      * @param string $class
      * @return \Traversable
      */
-    private function filterActivities(iterable $activities, string $class): \Traversable
+    private function filterWorkflows(iterable $workflows, string $class): \Traversable
     {
-        foreach ($activities as $activity) {
-            if ($this->matchClass($activity, $class)) {
-                yield $activity;
+        foreach ($workflows as $workflow) {
+            if ($this->matchClass($workflow, $class)) {
+                yield $workflow;
             }
         }
     }
 
     /**
-     * @param ActivityPrototype $prototype
+     * @param WorkflowPrototype $prototype
      * @param string $needle
      * @return bool
      */
-    private function matchClass(ActivityPrototype $prototype, string $needle): bool
+    private function matchClass(WorkflowPrototype $prototype, string $needle): bool
     {
         $reflection = $prototype->getClass();
 
@@ -103,22 +104,22 @@ class ActivityProxy
      */
     public function call(string $method, array $arguments = []): PromiseInterface
     {
-        $activity = $this->findActivityPrototype($method);
+        $activity = $this->findWorkflowPrototype($method);
 
         $method = $activity ? $activity->getId() : $method;
 
-        return $this->context->executeActivity($method, $arguments, $this->options);
+        return $this->context->executeChildWorkflow($method, $arguments, $this->options);
     }
 
     /**
-     * @param string $method
-     * @return ActivityPrototype|null
+     * @param string $name
+     * @return WorkflowPrototype|null
      */
-    private function findActivityPrototype(string $method): ?ActivityPrototype
+    private function findWorkflowPrototype(string $name): ?WorkflowPrototype
     {
-        foreach ($this->activities as $activity) {
-            if ($this->matchMethod($activity, $method)) {
-                return $activity;
+        foreach ($this->workflows as $workflow) {
+            if ($this->matchMethod($workflow, $name)) {
+                return $workflow;
             }
         }
 
@@ -126,11 +127,11 @@ class ActivityProxy
     }
 
     /**
-     * @param ActivityPrototype $prototype
+     * @param WorkflowPrototype $prototype
      * @param string $needle
      * @return bool
      */
-    private function matchMethod(ActivityPrototype $prototype, string $needle): bool
+    private function matchMethod(WorkflowPrototype $prototype, string $needle): bool
     {
         $handler = $prototype->getHandler();
 
