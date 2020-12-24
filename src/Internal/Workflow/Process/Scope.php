@@ -29,7 +29,7 @@ use Temporal\Client\Workflow\WorkflowContext;
  * @internal Scope is an internal library class, please do not use it in your code.
  * @psalm-internal Temporal\Client
  */
-abstract class Scope implements CancellationScopeInterface
+abstract class Scope implements CancellationScopeInterface, PromisorInterface
 {
     /**
      * @var WorkflowContext
@@ -70,7 +70,13 @@ abstract class Scope implements CancellationScopeInterface
     ) {
         $this->context = $ctx;
         $this->services = $services;
-        $this->deferred = new Deferred($this->canceller());
+        $this->deferred = new Deferred(function () {
+            foreach ($this->cancelHandlers as $handler) {
+                $handler($this);
+            }
+
+            $this->deferred->reject(CancellationException::fromScope($this));
+        });
 
         try {
             $this->coroutine = new Stack($this->call($handler, $args), function ($result) {
@@ -84,6 +90,14 @@ abstract class Scope implements CancellationScopeInterface
     /**
      * {@inheritDoc}
      */
+    public function promise(): PromiseInterface
+    {
+        return $this->deferred->promise();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function onCancel(callable $then): self
     {
         $this->cancelHandlers[] = $then;
@@ -92,29 +106,19 @@ abstract class Scope implements CancellationScopeInterface
     }
 
     /**
-     * @return \Closure
-     */
-    protected function canceller(): \Closure
-    {
-        return function () {
-            $this->cancel();
-
-            foreach ($this->cancelHandlers as $handler) {
-                $handler($this);
-            }
-        };
-    }
-
-    /**
      * @return void
      */
     public function cancel(): void
     {
-        foreach ($this->fetchUnresolvedRequests() as $promise) {
-            $promise->cancel();
+        try {
+            $this->promise()
+                ->cancel()
+            ;
+        } finally {
+            foreach ($this->fetchUnresolvedRequests() as $promise) {
+                $promise->cancel();
+            }
         }
-
-        $this->deferred->reject(CancellationException::fromScope($this));
     }
 
     /**
