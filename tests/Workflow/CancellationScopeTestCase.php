@@ -195,4 +195,39 @@ class CancellationScopeTestCase extends WorkflowTestCase
                 ->assertParamsKeySame('result', [true])
         ;
     }
+
+    public function testChainedWorkflow(): void
+    {
+        $this->createProcess(WorkflowMock::class, 'workflow8');
+
+        $request = $this->queue
+            ->assertRequestsCount(1)
+            ->shift()
+        ;
+
+        $request->assertName('ExecuteActivity')
+            ->assertParamsKeySame('name', 'first')
+        ;
+
+        $this->successResponseAndNext($request, 'FIRST_COMPLETED');
+
+        $request = $this->queue
+            ->assertRequestsCount(1)
+            ->shift()
+        ;
+
+        $request->assertName('ExecuteActivity')
+            ->assertParamsKeySame('name', 'second')
+            ->assertParamsKeySame('arguments', ['Result:FIRST_COMPLETED'])
+        ;
+
+        $this->successResponseAndNext($request, 0xDEAD_BEEF);
+
+        $this->queue
+            ->assertRequestsCount(1)
+            ->shift()
+                ->assertName('CompleteWorkflow')
+                ->assertParamsKeySame('result', [0xDEAD_BEEF])
+        ;
+    }
 }

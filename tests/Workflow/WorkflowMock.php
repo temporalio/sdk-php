@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Client\Workflow;
 
+use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Promise;
 use Temporal\Client\Workflow;
 
@@ -109,5 +110,21 @@ final class WorkflowMock
         $scope->cancel();
 
         return $result;
+    }
+
+    public function workflow8()
+    {
+        $options = ActivityOptions::new()
+            ->withStartToCloseTimeout(5)
+        ;
+
+        return yield Workflow::executeActivity('first', [], $options)
+            ->then(function ($result) use ($options) {
+                return Workflow::executeActivity(
+                    'second',
+                    ['Result:' . $result],
+                    $options
+                );
+            });
     }
 }
