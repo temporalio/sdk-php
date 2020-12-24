@@ -41,6 +41,8 @@ class CounterWorkflow
         while ($this->value++ < self::MAX_VALUE) {
             yield Workflow::timer(self::DELAY_SECONDS);
         }
+
+        return $this->value;
     }
 
     #[QueryMethod]

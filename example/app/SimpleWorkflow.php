@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App;
 
+use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\Common\MethodRetry;
 use Temporal\Client\Common\Uuid;
 use Temporal\Client\Workflow;
@@ -20,9 +21,12 @@ class SimpleWorkflow
 {
     #[WorkflowMethod(name: 'SimpleWorkflow')]
     #[MethodRetry(initialInterval: '10s')]
-    public function handler(): iterable
+    public function handler(string $input): iterable
     {
-        $activities = Workflow::newActivityStub(SimpleActivity::class);
+        $activities = Workflow::newActivityStub(SimpleActivity::class,
+            ActivityOptions::new()
+                ->withStartToCloseTimeout(10)
+        );
 
         $actual = yield Workflow::sideEffect(fn() => Uuid::v4());
 
@@ -31,5 +35,17 @@ class SimpleWorkflow
         $result = yield $activities->echo($actual);
 
         dump('Returned UUID: ' . $result);
+
+        return $input;
+    }
+
+    #[WorkflowMethod(name: 'ChildWorkflow')]
+    public function child(): iterable
+    {
+        $result = yield Workflow::executeChildWorkflow('SimpleWorkflow', [
+            'hell or world'
+        ]);
+
+        dump('CHILD Workflow Returned: ' . $result);
     }
 }
