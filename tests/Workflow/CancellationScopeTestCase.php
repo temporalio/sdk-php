@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Client\Workflow;
 
 use Temporal\Client\Exception\CancellationException;
+use Temporal\Tests\Client\Testing\TestingRequest;
 
 class CancellationScopeTestCase extends WorkflowTestCase
 {
@@ -170,13 +171,17 @@ class CancellationScopeTestCase extends WorkflowTestCase
     {
         $this->createProcess(WorkflowMock::class, 'workflow6');
 
-        $this->queue
+        /** @var TestingRequest $request */
+        $request = $this->queue
             ->assertRequestsCount(1)
             ->assertResponsesCount(0)
-            ->shift()
-                ->assertName('CompleteWorkflow')
-                ->assertParamsKeySame('result', [42])
-        ;
+            ->shift();
+
+        $request->assertName('CompleteWorkflow');
+
+        $result = $request->getParam('result');
+        $this->assertIsArray($result);
+        $this->assertInstanceOf(CancellationException::class, $result[0]);
     }
 
     public function testCancellationEvent(): void
