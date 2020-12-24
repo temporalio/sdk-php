@@ -52,6 +52,18 @@ interface WorkflowContextInterface extends EnvironmentInterface
     public function newCancellationScope(callable $handler): CancellationScopeInterface;
 
     /**
+     * @param string $type
+     * @param array $args
+     * @param ChildWorkflowOptions|null $options
+     * @return PromiseInterface
+     */
+    public function executeChildWorkflow(
+        string $type,
+        array $args = [],
+        ChildWorkflowOptions $options = null
+    ): PromiseInterface;
+
+    /**
      * @param string $changeId
      * @param int $minSupported
      * @param int $maxSupported

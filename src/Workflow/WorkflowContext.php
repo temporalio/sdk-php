@@ -22,6 +22,7 @@ use Temporal\Client\Internal\Transport\CapturedClientInterface;
 use Temporal\Client\Internal\Transport\ClientInterface;
 use Temporal\Client\Internal\Transport\Request\CompleteWorkflow;
 use Temporal\Client\Internal\Transport\Request\ExecuteActivity;
+use Temporal\Client\Internal\Transport\Request\ExecuteChildWorkflow;
 use Temporal\Client\Internal\Transport\Request\GetVersion;
 use Temporal\Client\Internal\Transport\Request\NewTimer;
 use Temporal\Client\Internal\Transport\Request\SideEffect;
@@ -186,6 +187,25 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
     /**
      * {@inheritDoc}
      */
+    public function executeChildWorkflow(
+        string $type,
+        array $args = [],
+        ChildWorkflowOptions $options = null
+    ): PromiseInterface {
+        $this->recordTrace();
+
+        $options = $this->services->marshaller->marshal(
+            $options ?? new ChildWorkflowOptions()
+        );
+
+        return $this->request(
+            new ExecuteChildWorkflow($type, $args, $options)
+        );
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function getVersion(string $changeId, int $minSupported, int $maxSupported): PromiseInterface
     {
         $this->recordTrace();
@@ -262,10 +282,12 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
     {
         $this->recordTrace();
 
-        $options ??= new ActivityOptions();
+        $options = $this->services->marshaller->marshal(
+            $options ?? new ActivityOptions()
+        );
 
         return $this->request(
-            new ExecuteActivity($name, $args, $this->services->marshaller->marshal($options))
+            new ExecuteActivity($name, $args, $options)
         );
     }
 
