@@ -86,9 +86,9 @@ final class ActivityContext implements ActivityContextInterface
      */
     public function heartbeat($details)
     {
-        return $this->rpc->call('activity.heartbeat', [
-            'taskToken' => $this->info->taskToken,
-            'details'   => $details,
+        return $this->rpc->call('temporal.RecordActivityHeartbeat', [
+            'TaskToken' => $this->info->taskToken,
+            'Details'   => $details,
         ]);
     }
 }
