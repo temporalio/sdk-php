@@ -12,7 +12,7 @@
         "source": "https://github.com/temporalio/sdk-php"
     },
     "require": {
-        "php": ">=8.0",
+        "php": ">=7.4",
         "ext-json": "*",
         "psr/log": "^1.1",
         "phpfn/immutable": "^2.0",

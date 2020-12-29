@@ -20,10 +20,10 @@ use Temporal\Client\Exception\TransportException;
 interface RelayConnectionInterface
 {
     /**
-     * @return Message
+     * @return Message|null
      * @throws TransportException
      */
-    public function await(): Message;
+    public function await(): ?Message;
 
     /**
      * @param string $message

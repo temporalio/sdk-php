@@ -132,7 +132,7 @@ final class Worker implements FactoryInterface
     public function __construct(RelayConnectionInterface $relay = null, RpcConnectionInterface $rpc = null)
     {
         // todo: remove defaults here
-        $this->relay = $relay ?? new RoadRunner(Relay::create(Relay::STREAM));
+        $this->relay = $relay ?? new RoadRunner(Relay::create(Relay::PIPES));
         $this->rpc = $rpc ?? new Goridge(Relay::create('tcp://127.0.0.1:6001'));
 
         $this->boot();

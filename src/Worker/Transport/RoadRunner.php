@@ -13,9 +13,6 @@ namespace Temporal\Client\Worker\Transport;
 
 use JetBrains\PhpStorm\Pure;
 use Spiral\Goridge\RelayInterface;
-use Spiral\Goridge\RPC\RPCInterface;
-use Spiral\Goridge\SocketRelay;
-use Spiral\Goridge\StreamRelay;
 use Spiral\RoadRunner\Payload;
 use Spiral\RoadRunner\Worker;
 use Symfony\Component\VarDumper\Dumper\CliDumper;
@@ -115,12 +112,16 @@ final class RoadRunner implements RelayConnectionInterface
     /**
      * {@inheritDoc}
      */
-    public function await(): Message
+    public function await(): ?Message
     {
         /** @var Payload $payload */
         $payload = $this->interceptErrors(function () {
             return $this->worker->waitPayload();
         });
+
+        if ($payload === null) {
+            return null;
+        }
 
         return new Message($payload->body, $this->decodeHeaders($payload->header));
     }
