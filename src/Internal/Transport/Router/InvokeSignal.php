@@ -19,11 +19,6 @@ use Temporal\Client\Worker\LoopInterface;
 final class InvokeSignal extends WorkflowProcessAwareRoute
 {
     /**
-     * @var string
-     */
-    private const ERROR_SIGNAL_NOT_FOUND = 'unknown signalType %s. KnownSignalTypes=[%s]';
-
-    /**
      * @var LoopInterface
      */
     private LoopInterface $loop;
@@ -44,30 +39,10 @@ final class InvokeSignal extends WorkflowProcessAwareRoute
      */
     public function handle(array $payload, array $headers, Deferred $resolver): void
     {
-        ['runId' => $runId, 'name' => $name] = $payload;
-
-        $instance = $this->findInstanceOrFail($runId);
-        $handler = $this->findSignalHandlerOrFail($instance, $name);
+        $instance = $this->findInstanceOrFail($payload['runId']);
+        $handler = $instance->getSignalHandler($payload['name']);
 
         $executor = static fn() => $resolver->resolve($handler($payload['args'] ?? []));
         $this->loop->once(LoopInterface::ON_SIGNAL, $executor);
-    }
-
-    /**
-     * @param WorkflowInstanceInterface $instance
-     * @param string $name
-     * @return \Closure|null
-     */
-    private function findSignalHandlerOrFail(WorkflowInstanceInterface $instance, string $name): ?\Closure
-    {
-        $handler = $instance->findSignalHandler($name);
-
-        if ($handler === null) {
-            $available = \implode(' ', $instance->getSignalHandlerNames());
-
-            throw new \LogicException(\sprintf(self::ERROR_SIGNAL_NOT_FOUND, $name, $available));
-        }
-
-        return $handler;
     }
 }
