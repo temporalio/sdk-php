@@ -13,9 +13,10 @@ namespace Temporal\Client\Worker\Transport;
 
 use JetBrains\PhpStorm\Pure;
 use Spiral\Goridge\RelayInterface;
-use Spiral\Goridge\RPC;
+use Spiral\Goridge\RPC\RPCInterface;
 use Spiral\Goridge\SocketRelay;
 use Spiral\Goridge\StreamRelay;
+use Spiral\RoadRunner\Payload;
 use Spiral\RoadRunner\Worker;
 use Symfony\Component\VarDumper\Dumper\CliDumper;
 use Temporal\Client\Exception\ProtocolException;
@@ -24,9 +25,7 @@ use Temporal\Client\Exception\TransportException;
 /**
  * @psalm-type JsonHeaders = string
  */
-final class RoadRunner implements
-    RpcConnectionInterface,
-    RelayConnectionInterface
+final class RoadRunner implements RelayConnectionInterface
 {
     /**
      * @var string
@@ -41,20 +40,12 @@ final class RoadRunner implements
     private Worker $worker;
 
     /**
-     * @var RPC
-     */
-    private RPC $rpc;
-
-    /**
      * @param RelayInterface $relay
      */
     #[Pure]
-    private function __construct(
-        RelayInterface $relay
-    ) {
-        $this->rpc = new RPC($relay);
+    public function __construct(RelayInterface $relay)
+    {
         $this->worker = new Worker($relay);
-
         $this->bootStdoutHandlers();
     }
 
@@ -101,47 +92,6 @@ final class RoadRunner implements
     }
 
     /**
-     * @return static
-     */
-    public static function pipes(): self
-    {
-        return new self(new StreamRelay(\STDIN, \STDOUT));
-    }
-
-    /**
-     * @param int $port
-     * @param string $host
-     * @return static
-     */
-    public static function socket(int $port, string $host = '127.0.0.1'): self
-    {
-        return new self(new SocketRelay($host, $port));
-    }
-
-    /**
-     * @param string $sock
-     * @return static
-     */
-    public static function unix(string $sock): self
-    {
-        return new self(new SocketRelay($sock, null, SocketRelay::SOCK_UNIX));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function call(string $method, $payload)
-    {
-        try {
-            return $this->interceptErrors(fn() => $this->rpc->call($method, $payload));
-        } catch (TransportException $e) {
-            throw $e;
-        } catch (\Throwable $e) {
-            throw new TransportException($e->getMessage(), $e->getCode(), $e);
-        }
-    }
-
-    /**
      * @param \Closure $expr
      * @return mixed
      */
@@ -165,15 +115,14 @@ final class RoadRunner implements
     /**
      * {@inheritDoc}
      */
-    public function await(): array
+    public function await(): Message
     {
-        [$body, $json] = $this->interceptErrors(function () {
-            $body = $this->worker->receive($json);
-
-            return [$body, $json];
+        /** @var Payload $payload */
+        $payload = $this->interceptErrors(function () {
+            return $this->worker->waitPayload();
         });
 
-        return [$body, $this->decodeHeaders($json)];
+        return new Message($payload->body, $this->decodeHeaders($payload->header));
     }
 
     /**
@@ -193,7 +142,7 @@ final class RoadRunner implements
             throw new ProtocolException($e->getMessage(), $e->getCode(), $e);
         }
 
-        if (! \is_array($result)) {
+        if (!\is_array($result)) {
             $message = \sprintf(self::ERROR_HEADERS_FORMAT, \get_debug_type($result), $headers);
             throw new ProtocolException($message);
         }

@@ -20,28 +20,16 @@ use Temporal\Client\Exception\TransportException;
 interface RelayConnectionInterface
 {
     /**
-     * @var positive-int
-     */
-    public const MESSAGE_BODY = 0x00;
-
-    /**
-     * @var positive-int
-     */
-    public const MESSAGE_HEADERS = 0x01;
-
-    /**
      * @return Message
      * @throws TransportException
      */
-    #[ArrayShape([self::MESSAGE_BODY => 'string', self::MESSAGE_HEADERS => 'array'])]
-    public function await(): array;
+    public function await(): Message;
 
     /**
      * @param string $message
-     * @param Headers $headers
      * @throws TransportException
      */
-    public function send(string $message, array $headers = []): void;
+    public function send(string $message): void;
 
     /**
      * @param \Throwable $error

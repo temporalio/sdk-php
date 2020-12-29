@@ -19,6 +19,7 @@ use Spiral\Attributes\AnnotationReader;
 use Spiral\Attributes\AttributeReader;
 use Spiral\Attributes\Composite\SelectiveReader;
 use Spiral\Attributes\ReaderInterface;
+use Spiral\Goridge\Relay;
 use Temporal\Client\Internal\Codec\CodecInterface;
 use Temporal\Client\Internal\Codec\JsonCodec;
 use Temporal\Client\Internal\Events\EventEmitterTrait;
@@ -38,6 +39,7 @@ use Temporal\Client\Worker\FactoryInterface;
 use Temporal\Client\Worker\LoopInterface;
 use Temporal\Client\Worker\TaskQueue;
 use Temporal\Client\Worker\TaskQueueInterface;
+use Temporal\Client\Worker\Transport\Goridge;
 use Temporal\Client\Worker\Transport\RelayConnectionInterface;
 use Temporal\Client\Worker\Transport\RoadRunner;
 use Temporal\Client\Worker\Transport\RpcConnectionInterface;
@@ -129,8 +131,9 @@ final class Worker implements FactoryInterface
      */
     public function __construct(RelayConnectionInterface $relay = null, RpcConnectionInterface $rpc = null)
     {
-        $this->relay = $relay ?? RoadRunner::pipes();
-        $this->rpc = $rpc ?? RoadRunner::socket(6001);
+        // todo: remove defaults here
+        $this->relay = $relay ?? new RoadRunner(Relay::create(Relay::STREAM));
+        $this->rpc = $rpc ?? new Goridge(Relay::create('tcp://127.0.0.1:6001'));
 
         $this->boot();
     }
@@ -279,9 +282,9 @@ final class Worker implements FactoryInterface
      */
     public function run(): int
     {
-        while ([$messages, $headers] = $this->relay->await()) {
+        while ($msg = $this->relay->await()) {
             try {
-                $this->relay->send($this->dispatch($messages, $headers));
+                $this->relay->send($this->dispatch($msg->messages, $msg->context));
             } catch (\Throwable $e) {
                 $this->relay->error($e);
             }
@@ -330,7 +333,7 @@ final class Worker implements FactoryInterface
      */
     private function onRequest(RequestInterface $request, array $headers): PromiseInterface
     {
-        if (! isset($headers[self::HEADER_TASK_QUEUE])) {
+        if (!isset($headers[self::HEADER_TASK_QUEUE])) {
             return $this->router->dispatch($request, $headers);
         }
 
@@ -364,7 +367,7 @@ final class Worker implements FactoryInterface
     {
         $taskQueue = $headers[self::HEADER_TASK_QUEUE];
 
-        if (! \is_string($taskQueue)) {
+        if (!\is_string($taskQueue)) {
             $error = \vsprintf(self::ERROR_HEADER_NOT_STRING_TYPE, [
                 self::HEADER_TASK_QUEUE,
                 \get_debug_type($taskQueue)

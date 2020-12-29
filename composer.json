@@ -12,7 +12,7 @@
         "source": "https://github.com/temporalio/sdk-php"
     },
     "require": {
-        "php": ">=7.4",
+        "php": ">=8.0",
         "ext-json": "*",
         "psr/log": "^1.1",
         "phpfn/immutable": "^2.0",
@@ -21,7 +21,7 @@
         "spiral/attributes": "^2.7",
         "composer-runtime-api": "^2.0",
         "symfony/polyfill-php80": "^1.18",
-        "spiral/roadrunner": "^1.8"
+        "spiral/roadrunner": "^2.0"
     },
     "autoload": {
         "psr-4": {
