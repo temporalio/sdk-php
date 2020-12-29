@@ -16,7 +16,7 @@ require __DIR__ . '/../vendor/autoload.php';
 
 // todo: wait for variables and use global constructors based on ENV
 $worker = new Worker(
-    new RoadRunner(Relay::create(Relay::STREAM)),
+    new RoadRunner(Relay::create(Relay::PIPES)),
     new Goridge(Relay::create('tcp://127.0.0.1:6001'))
 );
 
