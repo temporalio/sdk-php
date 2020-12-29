@@ -18,13 +18,8 @@ final class SignalQueue
             return;
         }
 
-        if (!isset($this->queue[$signal])) {
-            $this->queue[$signal] = [];
-            $this->queue[$signal][] = $args;
-        } else {
-            $this->queue[$signal][] = $args;
-            $this->flush($signal);
-        }
+        $this->queue[$signal][] = $args;
+        $this->flush($signal);
     }
 
     /**
