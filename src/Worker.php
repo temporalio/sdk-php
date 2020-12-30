@@ -22,6 +22,7 @@ use Spiral\Attributes\ReaderInterface;
 use Spiral\Goridge\Relay;
 use Temporal\Client\Internal\Codec\CodecInterface;
 use Temporal\Client\Internal\Codec\JsonCodec;
+use Temporal\Client\Internal\Codec\MsgpackCodec;
 use Temporal\Client\Internal\Events\EventEmitterTrait;
 use Temporal\Client\Internal\Queue\ArrayQueue;
 use Temporal\Client\Internal\Queue\QueueInterface;
@@ -196,7 +197,8 @@ final class Worker implements FactoryInterface
      */
     private function createCodec(): CodecInterface
     {
-        return new JsonCodec();
+        return new MsgpackCodec();
+        //return new JsonCodec();
     }
 
     /**

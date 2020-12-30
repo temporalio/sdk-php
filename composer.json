@@ -14,14 +14,15 @@
     "require": {
         "php": ">=7.4",
         "ext-json": "*",
-        "psr/log": "^1.1",
-        "phpfn/immutable": "^2.0",
-        "nesbot/carbon": "^2.41",
-        "react/promise": "^2.8",
-        "spiral/attributes": "^2.7",
         "composer-runtime-api": "^2.0",
-        "symfony/polyfill-php80": "^1.18",
-        "spiral/roadrunner": "^2.0"
+        "nesbot/carbon": "^2.41",
+        "phpfn/immutable": "^2.0",
+        "psr/log": "^1.1",
+        "react/promise": "^2.8",
+        "rybakit/msgpack": "^0.7.2",
+        "spiral/attributes": "^2.7",
+        "spiral/roadrunner": "^2.0",
+        "symfony/polyfill-php80": "^1.18"
     },
     "autoload": {
         "psr-4": {
