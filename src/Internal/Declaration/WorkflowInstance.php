@@ -12,8 +12,8 @@ declare(strict_types=1);
 namespace Temporal\Internal\Declaration;
 
 use JetBrains\PhpStorm\Pure;
-use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
-use Temporal\Client\Internal\Queue\SignalQueue;
+use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Internal\Declaration\WorkflowInstance\SignalQueue;
 
 /**
  * @psalm-import-type DispatchableHandler from WorkflowInstanceInterface
@@ -30,7 +30,9 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
      */
     private array $signalHandlers = [];
 
-    /** @var SignalQueue */
+    /**
+     * @var SignalQueue
+     */
     private SignalQueue $signalQueue;
 
     /**
@@ -40,6 +42,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     public function __construct(WorkflowPrototype $prototype, object $context)
     {
         parent::__construct($prototype, $context);
+
         $this->signalQueue = new SignalQueue();
 
         foreach ($prototype->getSignalHandlers() as $method => $reflection) {
