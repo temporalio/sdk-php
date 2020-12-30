@@ -13,6 +13,7 @@ namespace Temporal\Tests\Client\Workflow;
 
 use Spiral\Attributes\AttributeReader;
 use Temporal\Client\Internal\DataConverter\DataConverter;
+use Temporal\Client\Internal\DataConverter\ScalarJsonConverter;
 use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Client\Internal\Declaration\WorkflowInstance;
 use Temporal\Client\Internal\Marshaller\Mapper\AttributeMapperFactory;
@@ -113,7 +114,7 @@ abstract class WorkflowTestCase extends TestCase
 
         $prototype = new WorkflowPrototype($reflectionFunction->getName(), $reflectionFunction, $reflectionClass);
 
-        return new WorkflowInstance($prototype, new DataConverter(), new $class());
+        return new WorkflowInstance($prototype, new DataConverter(new ScalarJsonConverter()), new $class());
     }
 
     /**

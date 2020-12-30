@@ -29,7 +29,7 @@ class CancellationScopeTestCase extends WorkflowTestCase
 
         $this->queue->shift()
             ->assertName('CompleteWorkflow')
-            ->assertParamsKeySame('result', [$this->convertValue(0xDEAD_BEEF)]);
+            ->assertParamsKeySamePayload('result', [0xDEAD_BEEF]);
     }
 
     public function testSecondWithFirstPromise(): void
@@ -103,7 +103,7 @@ class CancellationScopeTestCase extends WorkflowTestCase
             ->assertResponsesCount(0)
             ->shift()
             ->assertName('CompleteWorkflow')
-            ->assertParamsKeySame('result', [42]);
+            ->assertParamsKeySamePayload('result', [42]);
     }
 
     public function testMemoizePromise(): void
@@ -175,7 +175,7 @@ class CancellationScopeTestCase extends WorkflowTestCase
             ->assertRequestsCount(1)
             ->shift()
             ->assertName('CompleteWorkflow')
-            ->assertParamsKeySame('result', [true]);
+            ->assertParamsKeySamePayload('result', [true]);
     }
 
     public function testChainedWorkflow(): void
@@ -206,12 +206,5 @@ class CancellationScopeTestCase extends WorkflowTestCase
             ->shift()
             ->assertName('CompleteWorkflow')
             ->assertParamsKeySame('result', [0xDEAD_BEEF]);
-    }
-
-    private function convertValue($value)
-    {
-        $dc = new DataConverter(new ScalarJsonConverter());
-
-        return $dc->toPayloads([$value])[0];
     }
 }

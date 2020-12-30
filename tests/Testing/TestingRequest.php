@@ -13,6 +13,9 @@ namespace Temporal\Tests\Client\Testing;
 
 use Illuminate\Support\Arr;
 use PHPUnit\Framework\Assert;
+use Temporal\Client\Internal\DataConverter\DataConverter;
+use Temporal\Client\Internal\DataConverter\NullConverter;
+use Temporal\Client\Internal\DataConverter\ScalarJsonConverter;
 use Temporal\Client\Worker\Command\RequestInterface;
 
 /**
@@ -108,6 +111,29 @@ class TestingRequest extends TestingCommand implements RequestInterface
 
     /**
      * @param string $key
+     * @param mixed $expected
+     * @param string $message
+     * @return $this
+     */
+    public function assertParamsKeySamePayload(string $key, $expected, string $message = ''): self
+    {
+        if ($expected === null) {
+            $this->assertParamsHasKey($key, $message);
+        }
+
+        if (is_array($expected)) {
+            $expected = array_map([$this, 'convertValue'], $expected);
+        } else {
+            $expected = $this->convertValue($expected);
+        }
+
+        Assert::assertEquals($expected, Arr::get($this->getParams(), $key), $message);
+
+        return $this;
+    }
+
+    /**
+     * @param string $key
      * @param class-string $expected
      * @param string $message
      * @return $this
@@ -132,5 +158,12 @@ class TestingRequest extends TestingCommand implements RequestInterface
         Assert::assertNotSame($expected, Arr::get($this->getParams(), $key), $message);
 
         return $this;
+    }
+
+    private function convertValue($value)
+    {
+        $dc = new DataConverter(new NullConverter(), new ScalarJsonConverter());
+
+        return $dc->toPayloads([$value])[0];
     }
 }
