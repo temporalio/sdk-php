@@ -47,6 +47,8 @@ use Temporal\Client\Workflow\WorkflowInfo;
  *
  * @method static WorkflowContextInterface registerQuery(string $queryType, callable $handler)
  * @method static WorkflowContextInterface registerSignal(string $signalType, callable $handler)
+ *
+ * @method static FutureInterface continueAsNew(string $name, ...$input)
  */
 final class Workflow extends Facade
 {

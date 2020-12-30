@@ -21,6 +21,7 @@ use Temporal\Client\Internal\Transport\CapturedClient;
 use Temporal\Client\Internal\Transport\CapturedClientInterface;
 use Temporal\Client\Internal\Transport\ClientInterface;
 use Temporal\Client\Internal\Transport\Request\CompleteWorkflow;
+use Temporal\Client\Internal\Transport\Request\ContinueAsNew;
 use Temporal\Client\Internal\Transport\Request\ExecuteActivity;
 use Temporal\Client\Internal\Transport\Request\ExecuteChildWorkflow;
 use Temporal\Client\Internal\Transport\Request\GetVersion;
@@ -61,6 +62,11 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
      * @var array
      */
     private array $trace = [];
+
+    /**
+     * @var bool
+     */
+    private bool $continueAsNew = false;
 
     /**
      * @param Process $process
@@ -253,8 +259,39 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
         };
 
         return $this->request(new CompleteWorkflow($result))
-            ->then($then, $otherwise)
-        ;
+            ->then($then, $otherwise);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function continueAsNew(string $name, ...$input): PromiseInterface
+    {
+        $this->continueAsNew = true;
+        $this->recordTrace();
+
+        $then = function ($result) {
+            $this->process->cancel();
+
+            return $result;
+        };
+
+        $otherwise = function (\Throwable $error): void {
+            $this->process->cancel();
+
+            throw $error;
+        };
+
+        return $this->request(new ContinueAsNew($name, $input))
+            ->then($then, $otherwise);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isContinuedAsNew(): bool
+    {
+        return $this->continueAsNew;
     }
 
     /**
@@ -264,7 +301,8 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
         string $type,
         array $args = [],
         ChildWorkflowOptions $options = null
-    ): PromiseInterface {
+    ): PromiseInterface
+    {
         $this->recordTrace();
 
         $options = $this->services->marshaller->marshal(

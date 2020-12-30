@@ -14,6 +14,7 @@ namespace Temporal\Client\Internal\Workflow\Process;
 use JetBrains\PhpStorm\Pure;
 use Temporal\Client\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Client\Internal\ServiceContainer;
+use Temporal\Client\Internal\Transport\Request\ContinueAsNew;
 use Temporal\Client\Internal\Workflow\Input;
 use Temporal\Client\Workflow\ProcessInterface;
 use Temporal\Client\Workflow\WorkflowContext;
@@ -73,6 +74,10 @@ class Process extends Scope implements ProcessInterface
      */
     protected function onComplete($result): void
     {
+        if ($this->context->isContinuedAsNew()) {
+            return;
+        }
+
         $this->context->complete($result ?? $this->coroutine->getReturn());
     }
 

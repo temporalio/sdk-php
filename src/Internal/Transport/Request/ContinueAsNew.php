@@ -13,20 +13,22 @@ namespace Temporal\Client\Internal\Transport\Request;
 
 use Temporal\Client\Worker\Command\Request;
 
-final class CompleteWorkflow extends Request
+final class ContinueAsNew extends Request
 {
     /**
      * @var string
      */
-    public const NAME = 'CompleteWorkflow';
+    public const NAME = 'ContinueAsNew';
 
     /**
-     * @param $input
+     * @param string $name
+     * @param array $input
      */
-    public function __construct($input)
+    public function __construct(string $name, array $input)
     {
         parent::__construct(self::NAME, [
-            'result' => [$input],
+            'name' => $name,
+            'result' => $input,
         ]);
     }
 }

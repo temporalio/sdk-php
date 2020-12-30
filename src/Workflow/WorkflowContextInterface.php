@@ -75,6 +75,13 @@ interface WorkflowContextInterface extends EnvironmentInterface
     public function complete($result = null): PromiseInterface;
 
     /**
+     * @param string $name
+     * @param mixed $input
+     * @return PromiseInterface
+     */
+    public function continueAsNew(string $name, ...$input): PromiseInterface;
+
+    /**
      * @param class-string|string $type
      * @param array $args
      * @param ChildWorkflowOptions|null $options
