@@ -30,9 +30,9 @@ interface WorkflowInstanceInterface extends InstanceInterface
 
     /**
      * @param string $name
-     * @return \Closure|null
+     * @return \Closure
      */
-    public function findSignalHandler(string $name): ?\Closure;
+    public function getSignalHandler(string $name): \Closure;
 
     /**
      * @param string $name
