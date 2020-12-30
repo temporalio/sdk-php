@@ -197,7 +197,7 @@ class CancellationScopeTestCase extends WorkflowTestCase
 
         $request->assertName('ExecuteActivity')
             ->assertParamsKeySame('name', 'second')
-            ->assertParamsKeySame('arguments', ['Result:FIRST_COMPLETED']);
+            ->assertParamsKeySamePayload('arguments', ['Result:FIRST_COMPLETED']);
 
         $this->successResponseAndNext($request, 0xDEAD_BEEF);
 
@@ -205,6 +205,6 @@ class CancellationScopeTestCase extends WorkflowTestCase
             ->assertRequestsCount(1)
             ->shift()
             ->assertName('CompleteWorkflow')
-            ->assertParamsKeySame('result', [0xDEAD_BEEF]);
+            ->assertParamsKeySamePayload('result', [0xDEAD_BEEF]);
     }
 }

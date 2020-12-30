@@ -366,6 +366,7 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
     private function toResponse(PromiseInterface $promise, \ReflectionType $returnType = null)
     {
         return $promise->then(function ($value) use ($returnType) {
+            // todo: improve it?
             if (!$value instanceof Payload || $value instanceof \Throwable) {
                 return $value;
             }
