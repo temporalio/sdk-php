@@ -16,6 +16,7 @@ use Carbon\CarbonTimeZone;
 use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
 use Temporal\Client\DataConverter\DataConverterInterface;
+use Temporal\Client\DataConverter\Payload;
 use Temporal\Client\Internal\ServiceContainer;
 use Temporal\Client\Internal\Support\DateInterval;
 use Temporal\Client\Internal\Transport\CapturedClient;
@@ -231,11 +232,7 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
 
         $value = current($this->getDataConverter()->toPayloads([$value]));
 
-        return $this->request(new SideEffect($value))
-            ->then(function ($value) {
-                // todo: detect return type
-                return $this->getDataConverter()->fromPayloads([$value], [])[0];
-            });
+        return $this->toResponse($this->request(new SideEffect($value)));
     }
 
     /**
@@ -291,11 +288,9 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
             $options ?? new ChildWorkflowOptions()
         );
 
-        return $this->request(
+        return $this->toResponse($this->request(
             new ExecuteChildWorkflow($type, $args, $options)
-        )->then(function ($value) use ($returnType) {
-            return $this->getDataConverter()->fromPayloads([$value], $returnType ? [$returnType] : [])[0];
-        });
+        ));
     }
 
     /**
@@ -326,11 +321,9 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
             $options ?? new ActivityOptions()
         );
 
-        return $this->request(
+        return $this->toResponse($this->request(
             new ExecuteActivity($type, $this->getDataConverter()->toPayloads($args), $options)
-        )->then(function ($value) use ($returnType) {
-            return $this->getDataConverter()->fromPayloads([$value], $returnType ? [$returnType] : [])[0];
-        });
+        ));
     }
 
     /**
@@ -363,5 +356,21 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
     public function getTrace(): array
     {
         return $this->trace;
+    }
+
+    /**
+     * @param PromiseInterface $promise
+     * @param \ReflectionType|null $returnType
+     * @return PromiseInterface
+     */
+    private function toResponse(PromiseInterface $promise, \ReflectionType $returnType = null)
+    {
+        return $promise->then(function ($value) use ($returnType) {
+            if (!$value instanceof Payload || $value instanceof \Throwable) {
+                return $value;
+            }
+
+            return $this->getDataConverter()->fromPayloads([$value], $returnType ? [$returnType] : [])[0];
+        });
     }
 }
