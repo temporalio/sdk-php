@@ -11,7 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Internal\Declaration;
 
-use Temporal\Client\Internal\Declaration\Dispatcher\Autowired;
+use Temporal\Client\DataConverter\DataConverterInterface;
+use Temporal\Client\Internal\Declaration\Dispatcher\AutowiredPayloads;
 use Temporal\Client\Internal\Declaration\Prototype\Prototype;
 
 /**
@@ -35,13 +36,20 @@ abstract class Instance implements InstanceInterface
     private \Closure $handler;
 
     /**
+     * @var DataConverterInterface
+     */
+    private DataConverterInterface $dataConverter;
+
+    /**
      * @param Prototype $prototype
+     * @param DataConverterInterface $dataConverter
      * @param object|null $context
      */
-    public function __construct(Prototype $prototype, ?object $context)
+    public function __construct(Prototype $prototype, DataConverterInterface $dataConverter, ?object $context)
     {
         $this->prototype = $prototype;
         $this->context = $context;
+        $this->dataConverter = $dataConverter;
         $this->handler = $this->createHandler($prototype->getHandler());
     }
 
@@ -54,6 +62,14 @@ abstract class Instance implements InstanceInterface
     }
 
     /**
+     * @return DataConverterInterface
+     */
+    public function getDataConverter(): DataConverterInterface
+    {
+        return $this->dataConverter;
+    }
+
+    /**
      * @psalm-return DispatchableHandler
      *
      * @param \ReflectionFunctionAbstract $fun
@@ -61,11 +77,20 @@ abstract class Instance implements InstanceInterface
      */
     protected function createHandler(\ReflectionFunctionAbstract $fun): \Closure
     {
-        $dispatcher = new Autowired($fun);
+        $dispatcher = new AutowiredPayloads($fun, $this->dataConverter);
 
         return function (array $arguments = []) use ($dispatcher) {
             return $dispatcher->dispatch($this->context, $arguments);
         };
+    }
+
+    /**
+     * @param callable $callable
+     * @return \Closure
+     */
+    protected function createCallableHandler(callable $handler): \Closure
+    {
+        return $this->createHandler(new \ReflectionFunction($handler));
     }
 
     /**

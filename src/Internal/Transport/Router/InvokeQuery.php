@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client\Internal\Transport\Router;
 
 use React\Promise\Deferred;
+use Temporal\Client\DataConverter\Payload;
 use Temporal\Client\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Client\Internal\Repository\RepositoryInterface;
 use Temporal\Client\Worker\LoopInterface;
@@ -47,10 +48,23 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
     {
         ['runId' => $runId, 'name' => $name] = $payload;
 
+        // todo: handle on protobuf level
+        foreach ($payload['args'] as &$arg) {
+            $arg = Payload::createRaw($arg['metadata'], $arg['data'] ?? null);
+            unset($arg);
+        }
+
         $instance = $this->findInstanceOrFail($runId);
         $handler = $this->findQueryHandlerOrFail($instance, $name);
 
-        $executor = static fn() => $resolver->resolve($handler($payload['args'] ?? []));
+        $executor = static function () use ($payload, $resolver, $handler, $instance) {
+
+            $result = $handler($payload['args'] ?? []);
+            $result = $instance->getDataConverter()->toPayloads([$result]);
+
+            $resolver->resolve($result);
+        };
+
         $this->loop->once(LoopInterface::ON_QUERY, $executor);
     }
 

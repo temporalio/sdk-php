@@ -12,6 +12,8 @@ declare(strict_types=1);
 namespace Temporal\Client\Internal\Declaration;
 
 use JetBrains\PhpStorm\Pure;
+use Temporal\Client\DataConverter\DataConverterInterface;
+use Temporal\Client\Internal\Declaration\Dispatcher\AutowiredPayloads;
 use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Client\Internal\Queue\SignalQueue;
 
@@ -35,11 +37,12 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
 
     /**
      * @param WorkflowPrototype $prototype
+     * @param DataConverterInterface $dataConverter
      * @param object $context
      */
-    public function __construct(WorkflowPrototype $prototype, object $context)
+    public function __construct(WorkflowPrototype $prototype, DataConverterInterface $dataConverter, object $context)
     {
-        parent::__construct($prototype, $context);
+        parent::__construct($prototype, $dataConverter, $context);
         $this->signalQueue = new SignalQueue();
 
         foreach ($prototype->getSignalHandlers() as $method => $reflection) {
@@ -67,7 +70,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
      */
     public function addQueryHandler(string $name, callable $handler): void
     {
-        $this->queryHandlers[$name] = \Closure::fromCallable($handler);
+        $this->queryHandlers[$name] =  $this->createCallableHandler($handler);
     }
 
     /**
@@ -94,7 +97,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
      */
     public function addSignalHandler(string $name, callable $handler): void
     {
-        $this->signalHandlers[$name] = \Closure::fromCallable($handler);
+        $this->signalHandlers[$name] = $this->createCallableHandler($handler);
         $this->signalQueue->attach($name, $this->signalHandlers[$name]);
     }
 

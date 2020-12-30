@@ -13,6 +13,7 @@ namespace Temporal\Client\Workflow;
 
 use React\Promise\PromiseInterface;
 use Temporal\Client\Activity\ActivityOptions;
+use Temporal\Client\DataConverter\DataConverterInterface;
 use Temporal\Client\Internal\Support\DateInterval;
 use Temporal\Client\Worker\Environment\EnvironmentInterface;
 
@@ -30,6 +31,11 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @return array
      */
     public function getArguments(): array;
+
+    /**
+     * @return DataConverterInterface
+     */
+    public function getDataConverter(): DataConverterInterface;
 
     /**
      * @param string $queryType

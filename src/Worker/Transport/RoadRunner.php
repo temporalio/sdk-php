@@ -13,6 +13,9 @@ namespace Temporal\Client\Worker\Transport;
 
 use JetBrains\PhpStorm\Pure;
 use Spiral\Goridge\RelayInterface;
+use Spiral\Goridge\RPC\Codec\JsonCodec;
+use Spiral\Goridge\RPC\Codec\MsgpackCodec;
+use Spiral\Goridge\RPC\CodecInterface;
 use Spiral\RoadRunner\Payload;
 use Spiral\RoadRunner\Worker;
 use Symfony\Component\VarDumper\Dumper\CliDumper;
@@ -37,12 +40,18 @@ final class RoadRunner implements RelayConnectionInterface
     private Worker $worker;
 
     /**
+     * @var CodecInterface
+     */
+    private CodecInterface  $codec;
+
+    /**
      * @param RelayInterface $relay
      */
     #[Pure]
     public function __construct(RelayInterface $relay)
     {
         $this->worker = new Worker($relay);
+        $this->codec = new JsonCodec();
         $this->bootStdoutHandlers();
     }
 
@@ -138,7 +147,7 @@ final class RoadRunner implements RelayConnectionInterface
         }
 
         try {
-            $result = \json_decode($headers, true, 4, \JSON_THROW_ON_ERROR);
+            $result = $this->codec->decode($headers);
         } catch (\JsonException $e) {
             throw new ProtocolException($e->getMessage(), $e->getCode(), $e);
         }
@@ -176,7 +185,7 @@ final class RoadRunner implements RelayConnectionInterface
         }
 
         try {
-            return \json_encode($headers, \JSON_THROW_ON_ERROR);
+            return $this->codec->encode($headers, \JSON_THROW_ON_ERROR);
         } catch (\JsonException $e) {
             throw new ProtocolException($e->getMessage(), $e->getCode(), $e);
         }

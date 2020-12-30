@@ -3,8 +3,9 @@
 namespace Temporal\Client\DataConverter;
 
 use Temporal\Client\Exception\DataConverterException;
+use ReflectionType;
 
-interface PayloadConverter
+interface PayloadConverterInterface
 {
     /**
      * Returns associated encoding type.
@@ -14,21 +15,21 @@ interface PayloadConverter
     public function getEncodingType(): string;
 
     /**
-     * Implements conversion of a single value to Payload.
+     * Implements conversion of a single value to Payload. Must return null if value can't be encoded.
      *
      * @param mixed $value
-     * @return Payload
+     * @return Payload|null
      *
      * @throws DataConverterException
      */
-    public function toData($value): Payload;
+    public function toPayload($value): ?Payload;
 
     /**
      * @param Payload $payload
-     * @param \ReflectionParameter $type
+     * @param ReflectionType|null $type
      * @return mixed
      *
      * @throws DataConverterException
      */
-    public function fromData(Payload $payload, \ReflectionParameter $type);
+    public function fromPayload(Payload $payload, ?ReflectionType $type);
 }

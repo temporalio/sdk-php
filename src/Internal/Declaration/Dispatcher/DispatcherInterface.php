@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Internal\Declaration\Dispatcher;
 
+use ReflectionType;
+
 interface DispatcherInterface
 {
     /**
@@ -19,4 +21,9 @@ interface DispatcherInterface
      * @return mixed
      */
     public function dispatch(?object $ctx, array $arguments);
+
+    /**
+     * @return array<ReflectionType>
+     */
+    public function getArgumentTypes(): array;
 }

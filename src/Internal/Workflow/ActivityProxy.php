@@ -51,7 +51,8 @@ class ActivityProxy
         ActivityOptions $options,
         WorkflowContextInterface $context,
         RepositoryInterface $activities
-    ) {
+    )
+    {
         $this->options = $options;
         $this->context = $context;
 
@@ -107,7 +108,12 @@ class ActivityProxy
 
         $method = $activity ? $activity->getId() : $method;
 
-        return $this->context->executeActivity($method, $arguments, $this->options);
+        return $this->context->executeActivity(
+            $method,
+            $arguments,
+            $this->options,
+            $activity ? $activity->getHandler()->getReturnType() : null
+        );
     }
 
     /**

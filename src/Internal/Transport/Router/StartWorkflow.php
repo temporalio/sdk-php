@@ -44,11 +44,10 @@ final class StartWorkflow extends Route
 
     /**
      * @param ServiceContainer $services
-     * @param RepositoryInterface $running
      */
     public function __construct(ServiceContainer $services)
     {
-        $this->instantiator = new WorkflowInstantiator();
+        $this->instantiator = new WorkflowInstantiator($services->dataConverter);
         $this->services = $services;
     }
 

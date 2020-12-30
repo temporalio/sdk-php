@@ -13,6 +13,11 @@ namespace Temporal\Client\Internal;
 
 use JetBrains\PhpStorm\Immutable;
 use Spiral\Attributes\ReaderInterface;
+use Temporal\Client\Internal\DataConverter\BinaryConverter;
+use Temporal\Client\Internal\DataConverter\DataConverter;
+use Temporal\Client\DataConverter\DataConverterInterface;
+use Temporal\Client\Internal\DataConverter\JsonConverter;
+use Temporal\Client\Internal\DataConverter\NullConverter;
 use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Client\Internal\Declaration\Prototype\Collection;
 use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
@@ -86,6 +91,12 @@ final class ServiceContainer
     public QueueInterface $queue;
 
     /**
+     * @var DataConverterInterface
+     */
+    #[Immutable]
+    public DataConverterInterface $dataConverter;
+
+    /**
      * @param LoopInterface $loop
      * @param ClientInterface $client
      * @param ReaderInterface $reader
@@ -95,7 +106,8 @@ final class ServiceContainer
         ClientInterface $client,
         ReaderInterface $reader,
         QueueInterface $queue
-    ) {
+    )
+    {
         $this->loop = $loop;
         $this->client = $client;
         $this->reader = $reader;
@@ -108,10 +120,18 @@ final class ServiceContainer
 
         $this->env = new Environment();
 
+        // todo: ?
         $this->marshaller = new Marshaller(
             new AttributeMapperFactory($this->reader)
         );
         $this->queue = $queue;
+
+        // todo: pass via constructor
+        $this->dataConverter = new DataConverter(
+            new NullConverter(),
+            new BinaryConverter(),
+            new JsonConverter($this->marshaller)
+        );
     }
 
     /**

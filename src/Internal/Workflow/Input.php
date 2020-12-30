@@ -12,7 +12,9 @@ declare(strict_types=1);
 namespace Temporal\Client\Internal\Workflow;
 
 use JetBrains\PhpStorm\Immutable;
+use Temporal\Client\DataConverter\Payload;
 use Temporal\Client\Internal\Marshaller\Meta\Marshal;
+use Temporal\Client\Internal\Marshaller\Meta\MarshalArray;
 use Temporal\Client\Workflow\WorkflowInfo;
 
 #[Immutable]
@@ -28,13 +30,13 @@ final class Input
     /**
      * @var array
      */
-    #[Marshal(name: 'args')]
+    #[MarshalArray(name: 'args', of: Payload::class)]
     #[Immutable]
     public array $args;
 
     /**
      * @param WorkflowInfo $info
-     * @param array $args
+     * @param array<Payload> $args
      */
     public function __construct(WorkflowInfo $info = null, array $args = [])
     {

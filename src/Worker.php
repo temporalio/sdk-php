@@ -23,6 +23,9 @@ use Spiral\Goridge\Relay;
 use Temporal\Client\Internal\Codec\CodecInterface;
 use Temporal\Client\Internal\Codec\JsonCodec;
 use Temporal\Client\Internal\Codec\MsgpackCodec;
+use Temporal\Client\Internal\DataConverter\DataConverter;
+use Temporal\Client\Internal\DataConverter\JsonConverter;
+use Temporal\Client\Internal\DataConverter\ScalarJsonConverter;
 use Temporal\Client\Internal\Events\EventEmitterTrait;
 use Temporal\Client\Internal\Queue\ArrayQueue;
 use Temporal\Client\Internal\Queue\QueueInterface;
@@ -187,7 +190,10 @@ final class Worker implements FactoryInterface
     private function createRouter(): RouterInterface
     {
         $router = new Router();
-        $router->add(new Router\GetWorkerInfo($this->queues));
+        $router->add(new Router\GetWorkerInfo(
+            $this->queues,
+            new DataConverter(new ScalarJsonConverter())
+        ));
 
         return $router;
     }
@@ -197,8 +203,7 @@ final class Worker implements FactoryInterface
      */
     private function createCodec(): CodecInterface
     {
-        return new MsgpackCodec();
-        //return new JsonCodec();
+        return new JsonCodec();
     }
 
     /**

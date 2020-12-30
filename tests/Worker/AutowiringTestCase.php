@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Client\Worker;
 
-use Temporal\Client\Internal\Declaration\Dispatcher\Autowired;
+use Temporal\Client\Internal\Declaration\Dispatcher\AutowiredPayloads;
 
 function global_function(): int
 {
@@ -59,7 +59,7 @@ class AutowiringTestCase extends WorkerTestCase
     {
         $this->expectNotToPerformAssertions();
 
-        new Autowired($fn);
+        new AutowiredPayloads($fn);
     }
 
     /**
@@ -69,7 +69,7 @@ class AutowiringTestCase extends WorkerTestCase
      */
     public function testInstanceCallMethodInvocation(\ReflectionFunctionAbstract $fn): void
     {
-        $handler = new Autowired($fn);
+        $handler = new AutowiredPayloads($fn);
 
         // If the static context is required, then the method invocation with
         // "this" context should return an BadMethodCallException error.
@@ -87,7 +87,7 @@ class AutowiringTestCase extends WorkerTestCase
      */
     public function testStaticCallMethodInvocation(\ReflectionFunctionAbstract $fn): void
     {
-        $handler = new Autowired($fn);
+        $handler = new AutowiredPayloads($fn);
 
         // If the object context is required, then the method invocation without
         // "this" context should return an BadMethodCallException error.

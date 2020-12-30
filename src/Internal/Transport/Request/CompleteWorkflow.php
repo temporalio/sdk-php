@@ -26,7 +26,7 @@ final class CompleteWorkflow extends Request
     public function __construct($result)
     {
         parent::__construct(self::NAME, [
-            'result' => [$result],
+            'result' => $result,
         ]);
     }
 }

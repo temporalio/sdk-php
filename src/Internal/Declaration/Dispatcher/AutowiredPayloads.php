@@ -11,18 +11,34 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Internal\Declaration\Dispatcher;
 
+use Temporal\Client\DataConverter\DataConverterInterface;
+
 /**
  * @psalm-type FunctionExecutor = \Closure(object|null, array): mixed
  */
-class Autowired extends Dispatcher
+class AutowiredPayloads extends Dispatcher
 {
+    /**
+     * @var DataConverterInterface
+     */
+    private DataConverterInterface $dataConverter;
+
+    /**
+     * @param \ReflectionFunctionAbstract $fun
+     */
+    public function __construct(\ReflectionFunctionAbstract $fun, DataConverterInterface $dataConverter)
+    {
+        $this->dataConverter = $dataConverter;
+        parent::__construct($fun);
+    }
+
     /**
      * @param array $arguments
      * @return array
      */
     public function resolve(array $arguments): array
     {
-        return $arguments;
+        return $this->dataConverter->fromPayloads($arguments, $this->getArgumentTypes());
     }
 
     /**
