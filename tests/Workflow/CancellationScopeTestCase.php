@@ -12,6 +12,9 @@ declare(strict_types=1);
 namespace Temporal\Tests\Client\Workflow;
 
 use Temporal\Client\Exception\CancellationException;
+use Temporal\Client\Internal\DataConverter\DataConverter;
+use Temporal\Client\Internal\DataConverter\JsonConverter;
+use Temporal\Client\Internal\DataConverter\ScalarJsonConverter;
 use Temporal\Tests\Client\Testing\TestingRequest;
 
 class CancellationScopeTestCase extends WorkflowTestCase
@@ -22,13 +25,11 @@ class CancellationScopeTestCase extends WorkflowTestCase
 
         $this->queue
             ->assertRequestsCount(1)
-            ->assertResponsesCount(0)
-        ;
+            ->assertResponsesCount(0);
 
         $this->queue->shift()
             ->assertName('CompleteWorkflow')
-            ->assertParamsKeySame('result', [0xDEAD_BEEF])
-        ;
+            ->assertParamsKeySame('result', [$this->convertValue(0xDEAD_BEEF)]);
     }
 
     public function testSecondWithFirstPromise(): void
@@ -37,35 +38,29 @@ class CancellationScopeTestCase extends WorkflowTestCase
 
         $this->queue
             ->assertRequestsCount(2)
-            ->assertResponsesCount(0)
-        ;
+            ->assertResponsesCount(0);
 
         $first = $this->queue->shift()
             ->assertName('ExecuteActivity')
-            ->assertParamsKeySame('name', 'a')
-        ;
+            ->assertParamsKeySame('name', 'a');
 
         $second = $this->queue->shift()
             ->assertName('ExecuteActivity')
-            ->assertParamsKeySame('name', 'b')
-        ;
+            ->assertParamsKeySame('name', 'b');
 
         $this->successResponseAndNext($first, $first->getId());
 
         $this->queue
             ->assertRequestsCount(2)
-            ->assertResponsesCount(0)
-        ;
+            ->assertResponsesCount(0);
 
         $this->queue->shift()
             ->assertName('Cancel')
-            ->assertParamsKeySame('ids', [$second->getId()])
-        ;
+            ->assertParamsKeySame('ids', [$second->getId()]);
 
         $this->queue->shift()
             ->assertName('CompleteWorkflow')
-            ->assertParamsKeySame('result', [$first->getId()])
-        ;
+            ->assertParamsKeySame('result', [$first->getId()]);
     }
 
     public function testSecondWithSecondPromise(): void
@@ -74,35 +69,29 @@ class CancellationScopeTestCase extends WorkflowTestCase
 
         $this->queue
             ->assertRequestsCount(2)
-            ->assertResponsesCount(0)
-        ;
+            ->assertResponsesCount(0);
 
         $first = $this->queue->shift()
             ->assertName('ExecuteActivity')
-            ->assertParamsKeySame('name', 'a')
-        ;
+            ->assertParamsKeySame('name', 'a');
 
         $second = $this->queue->shift()
             ->assertName('ExecuteActivity')
-            ->assertParamsKeySame('name', 'b')
-        ;
+            ->assertParamsKeySame('name', 'b');
 
         $this->successResponseAndNext($second, $second->getId());
 
         $this->queue
             ->assertRequestsCount(2)
-            ->assertResponsesCount(0)
-        ;
+            ->assertResponsesCount(0);
 
         $this->queue->shift()
             ->assertName('Cancel')
-            ->assertParamsKeySame('ids', [$first->getId()])
-        ;
+            ->assertParamsKeySame('ids', [$first->getId()]);
 
         $this->queue->shift()
             ->assertName('CompleteWorkflow')
-            ->assertParamsKeySame('result', [$second->getId()])
-        ;
+            ->assertParamsKeySame('result', [$second->getId()]);
     }
 
     public function testNested(): void
@@ -113,9 +102,8 @@ class CancellationScopeTestCase extends WorkflowTestCase
             ->assertRequestsCount(1)
             ->assertResponsesCount(0)
             ->shift()
-                ->assertName('CompleteWorkflow')
-                ->assertParamsKeySame('result', [42])
-        ;
+            ->assertName('CompleteWorkflow')
+            ->assertParamsKeySame('result', [42]);
     }
 
     public function testMemoizePromise(): void
@@ -126,9 +114,8 @@ class CancellationScopeTestCase extends WorkflowTestCase
             ->assertRequestsCount(1)
             ->assertResponsesCount(0)
             ->shift()
-                ->assertName('CompleteWorkflow')
-                ->getParam('result.0')
-        ;
+            ->assertName('CompleteWorkflow')
+            ->getParam('result.0');
 
         $this->assertInstanceOf(CancellationException::class, $result);
     }
@@ -139,18 +126,15 @@ class CancellationScopeTestCase extends WorkflowTestCase
 
         $this->queue
             ->assertRequestsCount(2)
-            ->assertResponsesCount(0)
-        ;
+            ->assertResponsesCount(0);
 
         $first = $this->queue->shift()
             ->assertName('ExecuteActivity')
-            ->assertParamsKeySame('name', 'first')
-        ;
+            ->assertParamsKeySame('name', 'first');
 
         $second = $this->queue->shift()
             ->assertName('ExecuteActivity')
-            ->assertParamsKeySame('name', 'second')
-        ;
+            ->assertParamsKeySame('name', 'second');
 
         $this->successResponseAndNext($first, 'RESULT');
 
@@ -162,9 +146,8 @@ class CancellationScopeTestCase extends WorkflowTestCase
             ->assertRequestsCount(1)
             ->assertResponsesCount(0)
             ->shift()
-                ->assertName('CompleteWorkflow')
-                ->assertParamsKeySame('result', ['RESULT'])
-        ;
+            ->assertName('CompleteWorkflow')
+            ->assertParamsKeySame('result', ['RESULT']);
     }
 
     public function testNestedCancelled(): void
@@ -191,9 +174,8 @@ class CancellationScopeTestCase extends WorkflowTestCase
         $this->queue
             ->assertRequestsCount(1)
             ->shift()
-                ->assertName('CompleteWorkflow')
-                ->assertParamsKeySame('result', [true])
-        ;
+            ->assertName('CompleteWorkflow')
+            ->assertParamsKeySame('result', [true]);
     }
 
     public function testChainedWorkflow(): void
@@ -202,32 +184,34 @@ class CancellationScopeTestCase extends WorkflowTestCase
 
         $request = $this->queue
             ->assertRequestsCount(1)
-            ->shift()
-        ;
+            ->shift();
 
         $request->assertName('ExecuteActivity')
-            ->assertParamsKeySame('name', 'first')
-        ;
+            ->assertParamsKeySame('name', 'first');
 
         $this->successResponseAndNext($request, 'FIRST_COMPLETED');
 
         $request = $this->queue
             ->assertRequestsCount(1)
-            ->shift()
-        ;
+            ->shift();
 
         $request->assertName('ExecuteActivity')
             ->assertParamsKeySame('name', 'second')
-            ->assertParamsKeySame('arguments', ['Result:FIRST_COMPLETED'])
-        ;
+            ->assertParamsKeySame('arguments', ['Result:FIRST_COMPLETED']);
 
         $this->successResponseAndNext($request, 0xDEAD_BEEF);
 
         $this->queue
             ->assertRequestsCount(1)
             ->shift()
-                ->assertName('CompleteWorkflow')
-                ->assertParamsKeySame('result', [0xDEAD_BEEF])
-        ;
+            ->assertName('CompleteWorkflow')
+            ->assertParamsKeySame('result', [0xDEAD_BEEF]);
+    }
+
+    private function convertValue($value)
+    {
+        $dc = new DataConverter(new ScalarJsonConverter());
+
+        return $dc->toPayloads([$value])[0];
     }
 }

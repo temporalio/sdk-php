@@ -13,6 +13,7 @@ namespace Temporal\Tests\Client\Workflow;
 
 use Carbon\CarbonInterval;
 use Temporal\Client\Activity\ActivityOptions;
+use Temporal\Client\Internal\DataConverter\DataConverter;
 use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Client\Internal\Declaration\WorkflowInstance;
 use Temporal\Client\Internal\Transport\Request\CompleteWorkflow;
@@ -68,7 +69,7 @@ class ProcessTestCase extends WorkflowTestCase
                 new \ReflectionObject($this)
             );
 
-            $instance = new WorkflowInstance($prototype, $this);
+            $instance = new WorkflowInstance($prototype, new DataConverter(), $this);
 
             return new Process(new Input(), $this->services, $instance);
         } finally {
@@ -267,24 +268,21 @@ class ProcessTestCase extends WorkflowTestCase
         /** @var TestingRequest $request */
         $request = $this->queue->assertCount(1)
             ->pop()
-                ->assertName('First Request')
-        ;
+            ->assertName('First Request');
         $this->successResponseAndNext($request, 'First Request');
 
 
         /** @var TestingRequest $request */
         $request = $this->queue->assertCount(1)
             ->pop()
-                ->assertName('First Scoped Request')
-        ;
+            ->assertName('First Scoped Request');
         $this->successResponseAndNext($request, 'First Scoped Request');
 
 
         /** @var TestingRequest $request */
         $request = $this->queue->assertCount(1)
             ->pop()
-                ->assertName('Second Scoped Request')
-        ;
+            ->assertName('Second Scoped Request');
         $this->successResponseAndNext($request, 'Second Scoped Request');
 
 
@@ -292,16 +290,14 @@ class ProcessTestCase extends WorkflowTestCase
 
         $request = $this->queue
             ->pop()
-                ->assertName('Second Request')
-        ;
+            ->assertName('Second Request');
 
         $this->successResponseAndNext($request, 'Second Request');
 
         $this->queue->assertCount(1)
             ->pop()
-                ->assertName(CompleteWorkflow::NAME)
-                ->assertParamsKeySame('result', [42])
-        ;
+            ->assertName(CompleteWorkflow::NAME)
+            ->assertParamsKeySame('result', [42]);
     }
 
 
