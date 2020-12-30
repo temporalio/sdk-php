@@ -9,10 +9,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Declaration;
+namespace Temporal\Internal\Declaration;
 
 use JetBrains\PhpStorm\Pure;
-use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 
 /**
  * @psalm-import-type DispatchableHandler from WorkflowInstanceInterface

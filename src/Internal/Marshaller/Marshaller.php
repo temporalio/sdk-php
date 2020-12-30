@@ -9,10 +9,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Marshaller;
+namespace Temporal\Internal\Marshaller;
 
-use Temporal\Client\Internal\Marshaller\Mapper\MapperFactoryInterface;
-use Temporal\Client\Internal\Marshaller\Mapper\MapperInterface;
+use Temporal\Internal\Marshaller\Mapper\MapperFactoryInterface;
+use Temporal\Internal\Marshaller\Mapper\MapperInterface;
 
 /**
  * @psalm-import-type TypeMatcher from TypeFactory

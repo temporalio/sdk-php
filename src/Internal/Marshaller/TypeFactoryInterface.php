@@ -9,9 +9,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Marshaller;
+namespace Temporal\Internal\Marshaller;
 
-use Temporal\Client\Internal\Marshaller\Type\TypeInterface;
+use Temporal\Internal\Marshaller\Type\TypeInterface;
 
 interface TypeFactoryInterface
 {

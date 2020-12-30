@@ -9,17 +9,17 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Transport\Router;
+namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
-use Temporal\Client\Activity;
-use Temporal\Client\Activity\ActivityContext;
-use Temporal\Client\Activity\ActivityInfo;
-use Temporal\Client\Exception\DoNotCompleteOnResultException;
-use Temporal\Client\Internal\Declaration\Instantiator\ActivityInstantiator;
-use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
-use Temporal\Client\Internal\ServiceContainer;
-use Temporal\Client\Worker\Transport\RpcConnectionInterface;
+use Temporal\Activity;
+use Temporal\Activity\ActivityContext;
+use Temporal\Activity\ActivityInfo;
+use Temporal\Exception\DoNotCompleteOnResultException;
+use Temporal\Internal\Declaration\Instantiator\ActivityInstantiator;
+use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
+use Temporal\Internal\ServiceContainer;
+use Temporal\Worker\Transport\RpcConnectionInterface;
 
 final class InvokeActivity extends Route
 {

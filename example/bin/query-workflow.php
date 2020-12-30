@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-use Temporal\Client\Worker\Transport\RoadRunner;
+use Temporal\Worker\Transport\RoadRunner;
 
 require __DIR__ . '/../../vendor/autoload.php';
 

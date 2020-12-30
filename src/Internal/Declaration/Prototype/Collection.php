@@ -9,9 +9,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Declaration\Prototype;
+namespace Temporal\Internal\Declaration\Prototype;
 
-use Temporal\Client\Internal\Repository\ArrayRepository;
+use Temporal\Internal\Repository\ArrayRepository;
 
 /**
  * @template-covariant T of Prototype

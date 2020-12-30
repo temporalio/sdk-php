@@ -9,17 +9,17 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Activity;
+namespace Temporal\Activity;
 
 use Carbon\CarbonInterval;
 use JetBrains\PhpStorm\Pure;
-use Temporal\Client\Common\RetryOptions;
-use Temporal\Client\Internal\Assert;
-use Temporal\Client\Internal\Marshaller\Meta\Marshal;
-use Temporal\Client\Internal\Marshaller\Type\DateIntervalType;
-use Temporal\Client\Internal\Marshaller\Type\ObjectType;
-use Temporal\Client\Internal\Support\DateInterval;
-use Temporal\Client\Worker\FactoryInterface;
+use Temporal\Common\RetryOptions;
+use Temporal\Internal\Assert;
+use Temporal\Internal\Marshaller\Meta\Marshal;
+use Temporal\Internal\Marshaller\Type\DateIntervalType;
+use Temporal\Internal\Marshaller\Type\ObjectType;
+use Temporal\Internal\Support\DateInterval;
+use Temporal\Worker\FactoryInterface;
 
 /**
  * ActivityOptions stores all activity-specific parameters that will be stored

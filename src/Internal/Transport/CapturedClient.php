@@ -9,10 +9,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Transport;
+namespace Temporal\Internal\Transport;
 
 use React\Promise\PromiseInterface;
-use Temporal\Client\Worker\Command\RequestInterface;
+use Temporal\Worker\Command\RequestInterface;
 
 class CapturedClient implements CapturedClientInterface
 {

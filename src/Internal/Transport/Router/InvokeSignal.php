@@ -9,12 +9,12 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Transport\Router;
+namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
-use Temporal\Client\Internal\Declaration\WorkflowInstanceInterface;
-use Temporal\Client\Internal\Repository\RepositoryInterface;
-use Temporal\Client\Worker\LoopInterface;
+use Temporal\Internal\Declaration\WorkflowInstanceInterface;
+use Temporal\Internal\Repository\RepositoryInterface;
+use Temporal\Worker\LoopInterface;
 
 final class InvokeSignal extends WorkflowProcessAwareRoute
 {

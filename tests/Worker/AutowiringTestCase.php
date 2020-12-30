@@ -9,9 +9,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Client\Worker;
+namespace Temporal\Tests\Worker;
 
-use Temporal\Client\Internal\Declaration\Dispatcher\Autowired;
+use Temporal\Internal\Declaration\Dispatcher\Autowired;
 
 function global_function(): int
 {

@@ -9,10 +9,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Transport\Request;
+namespace Temporal\Internal\Transport\Request;
 
-use Temporal\Client\Worker\Command\Request;
-use Temporal\Client\Workflow\ChildWorkflowOptions;
+use Temporal\Worker\Command\Request;
 
 final class ExecuteChildWorkflow extends Request
 {

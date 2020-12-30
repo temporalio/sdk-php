@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal;
+namespace Temporal\Internal;
 
 final class Assert
 {

@@ -9,9 +9,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Client\Coroutine;
+namespace Temporal\Tests\Coroutine;
 
-use Temporal\Tests\Client\TestCase;
+use Temporal\Tests\TestCase;
 
 abstract class CoroutineTestCase extends TestCase
 {

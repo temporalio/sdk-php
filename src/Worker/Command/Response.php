@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Worker\Command;
+namespace Temporal\Worker\Command;
 
 abstract class Response extends Command implements ResponseInterface
 {

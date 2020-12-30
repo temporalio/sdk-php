@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Worker\Command;
+namespace Temporal\Worker\Command;
 
 interface RequestInterface extends CommandInterface
 {

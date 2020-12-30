@@ -9,9 +9,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Worker;
+namespace Temporal\Worker;
 
-use Temporal\Client\Internal\Events\EventListenerInterface;
+use Temporal\Internal\Events\EventListenerInterface;
 
 /**
  * The {@see LoopInterface} is responsible for providing an interface for

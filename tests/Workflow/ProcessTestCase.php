@@ -9,24 +9,24 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Client\Workflow;
+namespace Temporal\Tests\Workflow;
 
 use Carbon\CarbonInterval;
-use Temporal\Client\Activity\ActivityOptions;
-use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
-use Temporal\Client\Internal\Declaration\WorkflowInstance;
-use Temporal\Client\Internal\Transport\Request\CompleteWorkflow;
-use Temporal\Client\Internal\Transport\Request\ExecuteActivity;
-use Temporal\Client\Internal\Transport\Request\GetVersion;
-use Temporal\Client\Internal\Transport\Request\NewTimer;
-use Temporal\Client\Internal\Transport\Request\SideEffect;
-use Temporal\Client\Internal\Workflow\Input;
-use Temporal\Client\Internal\Workflow\Process\Process;
-use Temporal\Client\Worker\Command\Request;
-use Temporal\Client\Worker\Command\RequestInterface;
-use Temporal\Client\Workflow;
-use Temporal\Client\Workflow\WorkflowInfo;
-use Temporal\Tests\Client\Testing\TestingRequest;
+use Temporal\Activity\ActivityOptions;
+use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Internal\Declaration\WorkflowInstance;
+use Temporal\Internal\Transport\Request\CompleteWorkflow;
+use Temporal\Internal\Transport\Request\ExecuteActivity;
+use Temporal\Internal\Transport\Request\GetVersion;
+use Temporal\Internal\Transport\Request\NewTimer;
+use Temporal\Internal\Transport\Request\SideEffect;
+use Temporal\Internal\Workflow\Input;
+use Temporal\Internal\Workflow\Process\Process;
+use Temporal\Tests\Testing\TestingRequest;
+use Temporal\Worker\Command\Request;
+use Temporal\Worker\Command\RequestInterface;
+use Temporal\Workflow;
+use Temporal\Workflow\WorkflowInfo;
 
 class ProcessTestCase extends WorkflowTestCase
 {

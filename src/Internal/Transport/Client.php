@@ -9,18 +9,18 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Transport;
+namespace Temporal\Internal\Transport;
 
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
-use Temporal\Client\Exception\CancellationException;
-use Temporal\Client\Internal\Queue\QueueInterface;
-use Temporal\Client\Internal\Transport\Request\Cancel;
-use Temporal\Client\Worker\Command\ErrorResponseInterface;
-use Temporal\Client\Worker\Command\RequestInterface;
-use Temporal\Client\Worker\Command\ResponseInterface;
-use Temporal\Client\Worker\Command\SuccessResponseInterface;
-use Temporal\Client\Worker\LoopInterface;
+use Temporal\Exception\CancellationException;
+use Temporal\Internal\Queue\QueueInterface;
+use Temporal\Internal\Transport\Request\Cancel;
+use Temporal\Worker\Command\ErrorResponseInterface;
+use Temporal\Worker\Command\RequestInterface;
+use Temporal\Worker\Command\ResponseInterface;
+use Temporal\Worker\Command\SuccessResponseInterface;
+use Temporal\Worker\LoopInterface;
 
 /**
  * @internal Client is an internal library class, please do not use it in your code.
@@ -59,6 +59,7 @@ final class Client implements ClientInterface
 
     /**
      * @param QueueInterface $queue
+     * @param LoopInterface $loop
      */
     public function __construct(QueueInterface $queue, LoopInterface $loop)
     {

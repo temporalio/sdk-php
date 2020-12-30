@@ -9,15 +9,14 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Workflow\Process;
+namespace Temporal\Internal\Workflow\Process;
 
-use JetBrains\PhpStorm\Pure;
-use Temporal\Client\Internal\Declaration\WorkflowInstanceInterface;
-use Temporal\Client\Internal\ServiceContainer;
-use Temporal\Client\Internal\Workflow\Input;
-use Temporal\Client\Workflow\ProcessInterface;
-use Temporal\Client\Workflow\WorkflowContext;
-use Temporal\Client\Workflow\WorkflowContextInterface;
+use Temporal\Internal\Declaration\WorkflowInstanceInterface;
+use Temporal\Internal\ServiceContainer;
+use Temporal\Internal\Workflow\Input;
+use Temporal\Workflow\ProcessInterface;
+use Temporal\Workflow\WorkflowContext;
+use Temporal\Workflow\WorkflowContextInterface;
 
 class Process extends Scope implements ProcessInterface
 {

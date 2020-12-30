@@ -9,12 +9,11 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Workflow\Process;
+namespace Temporal\Internal\Workflow\Process;
 
-use JetBrains\PhpStorm\Pure;
-use Temporal\Client\Common\Uuid;
-use Temporal\Client\Internal\ServiceContainer;
-use Temporal\Client\Workflow\WorkflowContext;
+use Temporal\Common\Uuid;
+use Temporal\Internal\ServiceContainer;
+use Temporal\Workflow\WorkflowContext;
 
 /**
  * @internal CancellationScope is an internal library class, please do not use it in your code.

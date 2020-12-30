@@ -9,9 +9,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Queue;
+namespace Temporal\Internal\Queue;
 
-use Temporal\Client\Worker\Command\CommandInterface;
+use Temporal\Worker\Command\CommandInterface;
 
 class ArrayQueue implements QueueInterface
 {

@@ -9,24 +9,29 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Workflow;
+namespace Temporal\Workflow;
 
 use Carbon\CarbonInterval;
-use Temporal\Client\Common\RetryOptions;
-use Temporal\Client\Common\Uuid;
-use Temporal\Client\Exception\FailedCancellationException;
-use Temporal\Client\Internal\Assert;
-use Temporal\Client\Internal\Marshaller\Meta\Marshal;
-use Temporal\Client\Internal\Marshaller\Type\ArrayType;
-use Temporal\Client\Internal\Marshaller\Type\DateIntervalType;
-use Temporal\Client\Internal\Marshaller\Type\NullableType;
-use Temporal\Client\Internal\Marshaller\Type\ObjectType;
-use Temporal\Client\Internal\Support\DateInterval;
-use Temporal\Client\Worker;
-use Temporal\Client\Worker\FactoryInterface;
+use Temporal\Client\ClientOptions;
+use Temporal\Common\IdReusePolicy;
+use Temporal\Common\RetryOptions;
+use Temporal\Common\Uuid;
+use Temporal\Exception\FailedCancellationException;
+use Temporal\Internal\Assert;
+use Temporal\Internal\Marshaller\Meta\Marshal;
+use Temporal\Internal\Marshaller\Type\ArrayType;
+use Temporal\Internal\Marshaller\Type\DateIntervalType;
+use Temporal\Internal\Marshaller\Type\NullableType;
+use Temporal\Internal\Marshaller\Type\ObjectType;
+use Temporal\Internal\Support\DateInterval;
+use Temporal\Worker;
+use Temporal\Worker\FactoryInterface;
 
 /**
  * @psalm-import-type DateIntervalValue from DateInterval
+ *
+ * @psalm-import-type IdReusePolicyEnum from IdReusePolicy
+ * @psalm-import-type ChildWorkflowCancellationEnum from ChildWorkflowCancellationType
  */
 final class ChildWorkflowOptions
 {
@@ -37,7 +42,7 @@ final class ChildWorkflowOptions
      * is not provided.
      */
     #[Marshal(name: 'Namespace')]
-    public string $namespace = 'default';
+    public string $namespace = ClientOptions::DEFAULT_NAMESPACE;
 
     /**
      * WorkflowID of the child workflow to be scheduled.
@@ -68,11 +73,11 @@ final class ChildWorkflowOptions
 
     /**
      * The timeout for a single run of the child workflow execution. Each retry
-     * or continue as new should obey this timeout. Use WorkflowExecutionTimeout
-     * to specify how long the parent is willing to wait for the child
-     * completion.
+     * or continue as new should obey this timeout.
+     * Use {@see $workflowExecutionTimeout} to specify how long the parent is
+     * willing to wait for the child completion.
      *
-     * Optional: defaults to WorkflowExecutionTimeout
+     * Optional: defaults to {@see $workflowExecutionTimeout}
      */
     #[Marshal(name: 'WorkflowRunTimeout', type: DateIntervalType::class)]
     public \DateInterval $workflowRunTimeout;
@@ -90,7 +95,7 @@ final class ChildWorkflowOptions
      * a {@see FailedCancellationException}. The type defines at which point
      * the exception is thrown.
      *
-     * @psalm-var ChildWorkflowCancellationType::*
+     * @psalm-var ChildWorkflowCancellationEnum
      */
     #[Marshal(name: 'WaitForCancellation', type: ChildWorkflowCancellationType::class)]
     public int $cancellationType = ChildWorkflowCancellationType::TRY_CANCEL;
@@ -99,7 +104,7 @@ final class ChildWorkflowOptions
      * Whether server allow reuse of workflow ID, can be useful for dedup
      * logic if set to {@see IdReusePolicy::POLICY_REJECT_DUPLICATE}.
      *
-     * @psalm-var IdReusePolicy::POLICY_*
+     * @psalm-var IdReusePolicyEnum
      */
     #[Marshal(name: 'WorkflowIDReusePolicy')]
     public int $workflowIdReusePolicy = IdReusePolicy::POLICY_ALLOW_DUPLICATE_FAILED_ONLY;
@@ -114,6 +119,7 @@ final class ChildWorkflowOptions
 
     /**
      * Optional cron schedule for workflow.
+     * @see CronSchedule
      */
     #[Marshal(name: 'CronSchedule')]
     public ?string $cronSchedule = null;
@@ -130,6 +136,8 @@ final class ChildWorkflowOptions
 
     /**
      * Optional non-indexed info that will be shown in list workflow.
+     *
+     * @psalm-var array<string, mixed>|null
      */
     #[Marshal(name: 'Memo', type: NullableType::class, of: ArrayType::class)]
     public ?array $memo = null;
@@ -139,6 +147,8 @@ final class ChildWorkflowOptions
      * workflow APIs (only supported when Temporal server is using
      * ElasticSearch). The key and value type must be registered on Temporal
      * server side.
+     *
+     * @psalm-var array<string, mixed>|null
      */
     #[Marshal(name: 'SearchAttributes', type: NullableType::class, of: ArrayType::class)]
     public ?array $searchAttributes = null;
@@ -149,8 +159,8 @@ final class ChildWorkflowOptions
     public function __construct()
     {
         $this->workflowId = Uuid::v4();
-        $this->workflowExecutionTimeout = $this->workflowRunTimeout =
-            CarbonInterval::years(10);
+        $this->workflowExecutionTimeout = CarbonInterval::years(10);
+        $this->workflowRunTimeout = CarbonInterval::years(10);
         $this->workflowTaskTimeout = CarbonInterval::seconds(10);
         $this->retryOptions = new RetryOptions();
     }
@@ -160,7 +170,7 @@ final class ChildWorkflowOptions
      */
     public static function new(): self
     {
-        return new static();
+        return new self();
     }
 
     /**
@@ -262,7 +272,7 @@ final class ChildWorkflowOptions
      * a {@see FailedCancellationException}. The type defines at which point
      * the exception is thrown.
      *
-     * @param ChildWorkflowCancellationType::* $type
+     * @param ChildWorkflowCancellationEnum $type
      * @return $this
      */
     public function withChildWorkflowCancellationType(int $type): self
@@ -287,7 +297,7 @@ final class ChildWorkflowOptions
      * - {@see IdReusePolicy::POLICY_REJECT_DUPLICATE}: Doesn't allow new run
      *  independently of the previous run closure status.
      *
-     * @param IdReusePolicy::* $policy
+     * @param IdReusePolicyEnum $policy
      * @return $this
      */
     public function withWorkflowIdReusePolicy(int $policy): self
@@ -343,7 +353,7 @@ final class ChildWorkflowOptions
     /**
      * Specifies how this workflow reacts to the death of the parent workflow.
      *
-     * @param ParentClosePolicy::* $policy
+     * @param ParentClosePolicy::POLICY_* $policy
      * @return $this
      */
     public function withParentClosePolicy(int $policy): self

@@ -9,12 +9,12 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Codec\JsonCodec;
+namespace Temporal\Internal\Codec\JsonCodec;
 
-use Temporal\Client\Worker\Command\CommandInterface;
-use Temporal\Client\Worker\Command\ErrorResponseInterface;
-use Temporal\Client\Worker\Command\RequestInterface;
-use Temporal\Client\Worker\Command\SuccessResponseInterface;
+use Temporal\Worker\Command\CommandInterface;
+use Temporal\Worker\Command\ErrorResponseInterface;
+use Temporal\Worker\Command\RequestInterface;
+use Temporal\Worker\Command\SuccessResponseInterface;
 
 class Serializer
 {

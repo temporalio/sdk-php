@@ -11,11 +11,12 @@ declare(strict_types=1);
 
 namespace App;
 
-use Temporal\Client\Activity\ActivityOptions;
-use Temporal\Client\Common\MethodRetry;
-use Temporal\Client\Common\Uuid;
-use Temporal\Client\Workflow;
-use Temporal\Client\Workflow\WorkflowMethod;
+use Temporal\Activity\ActivityOptions;
+use Temporal\Common\MethodRetry;
+use Temporal\Common\Uuid;
+use Temporal\Workflow;
+use Temporal\Workflow\SignalMethod;
+use Temporal\Workflow\WorkflowMethod;
 
 class SimpleWorkflow
 {
@@ -37,6 +38,12 @@ class SimpleWorkflow
         dump('Returned UUID: ' . $result);
 
         return $input;
+    }
+
+    #[SignalMethod(name: 'query')]
+    public function query()
+    {
+        return 42;
     }
 
     #[WorkflowMethod(name: 'ChildWorkflow')]

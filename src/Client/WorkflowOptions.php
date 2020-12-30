@@ -9,81 +9,287 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Client;
+namespace Temporal\Client;
 
 use Carbon\CarbonInterval;
-use Temporal\Client\Internal\Marshaller\Meta\Marshal;
-use Temporal\Client\Internal\Marshaller\Type\DateIntervalType;
-use Temporal\Client\Worker\FactoryInterface;
+use Temporal\Common\CronSchedule;
+use Temporal\Common\IdReusePolicy;
+use Temporal\Common\RetryOptions;
+use Temporal\Common\Uuid;
+use Temporal\Internal\Assert;
+use Temporal\Internal\Marshaller\Meta\Marshal;
+use Temporal\Internal\Marshaller\Type\ArrayType;
+use Temporal\Internal\Marshaller\Type\DateIntervalType;
+use Temporal\Internal\Marshaller\Type\NullableType;
+use Temporal\Internal\Marshaller\Type\ObjectType;
+use Temporal\Internal\Support\DateInterval;
+use Temporal\Worker\FactoryInterface;
+use Temporal\Worker\TaskQueue;
 
+/**
+ * WorkflowOptions configuration parameters for starting a workflow execution.
+ *
+ * @psalm-import-type DateIntervalValue from DateInterval
+ * @psalm-import-type IdReusePolicyEnum from IdReusePolicy
+ */
 final class WorkflowOptions
 {
     /**
-     * TODO rename "taskQueue" to "TaskQueueName"
-     *
-     * @readonly
-     * @psalm-allow-private-mutation
-     * @var string
+     * The business identifier of the workflow execution.
      */
-    #[Marshal(name: 'taskQueue')]
+    #[Marshal(name: 'WorkflowID')]
+    public string $workflowId;
+
+    /**
+     * The workflow tasks of the workflow are scheduled on the queue with this
+     * name. This is also the name of the activity task queue on which
+     * activities are scheduled.
+     *
+     * The workflow author can choose to override this using activity options.
+     */
+    #[Marshal(name: 'TaskQueue')]
     public string $taskQueue = FactoryInterface::DEFAULT_TASK_QUEUE;
 
     /**
-     * TODO rename "workflowExecutionTimeout" to "WorkflowExecutionTimeout"
+     * The timeout for duration of workflow execution.
      *
-     * @readonly
-     * @psalm-allow-private-mutation
-     * @var \DateInterval
-     */
-    #[Marshal(name: 'workflowExecutionTimeout', type: DateIntervalType::class)]
-    public \DateInterval $executionTimeout;
-
-    /**
-     * TODO rename "workflowRunTimeout" to "WorkflowRunTimeout"
+     * It includes retries and continue as new. Use {@see $workflowRunTimeout}
+     * to limit execution time of a single workflow run.
      *
-     * @readonly
-     * @psalm-allow-private-mutation
-     * @var \DateInterval
+     * Optional: defaulted to 10 years.
      */
-    #[Marshal(name: 'workflowRunTimeout', type: DateIntervalType::class)]
-    public \DateInterval $runTimeout;
+    #[Marshal(name: 'WorkflowExecutionTimeout', type: DateIntervalType::class)]
+    public \DateInterval $workflowExecutionTimeout;
 
     /**
-     * TODO rename "workflowTaskTimeout" to "WorkflowTaskTimeout"
+     * The timeout for duration of a single workflow run.
      *
-     * @readonly
-     * @psalm-allow-private-mutation
-     * @var \DateInterval
+     * Optional: defaulted to {@see $workflowExecutionTimeout}.
      */
-    #[Marshal(name: 'workflowTaskTimeout', type: DateIntervalType::class)]
-    public \DateInterval $taskTimeout;
+    #[Marshal(name: 'WorkflowRunTimeout', type: DateIntervalType::class)]
+    public \DateInterval $workflowRunTimeout;
 
     /**
-     * @readonly
-     * @psalm-allow-private-mutation
-     * @var string
-     */
-    #[Marshal(name: 'Namespace')]
-    public string $namespace = 'default';
-
-    /**
-     * Attempt starts from 1 and increased by 1 for every retry
-     * if retry policy is specified.
+     * The timeout for processing workflow task from the time the worker pulled
+     * this task. If a workflow task is lost, it is retried after this timeout.
      *
-     * @readonly
-     * @psalm-allow-private-mutation
-     * @var positive-int
+     * Optional: defaulted to 10 secs.
      */
-    #[Marshal(name: 'Attempt')]
-    public int $attempt = 1;
+    #[Marshal(name: 'WorkflowTaskTimeout', type: DateIntervalType::class)]
+    public \DateInterval $workflowTaskTimeout;
 
     /**
-     * WorkflowOptions constructor.
+     * Whether server allow reuse of workflow ID, can be useful for dedup logic
+     * if set to {@see IdReusePolicy::POLICY_REJECT_DUPLICATE}.
+     *
+     * @psalm-var IdReusePolicyEnum
+     */
+    #[Marshal(name: 'WorkflowIDReusePolicy')]
+    public int $workflowIdReusePolicy = IdReusePolicy::POLICY_ALLOW_DUPLICATE_FAILED_ONLY;
+
+    /**
+     * Optional retry policy for workflow. If a retry policy is specified, in
+     * case of workflow failure server will start new workflow execution if
+     * needed based on the retry policy.
+     */
+    #[Marshal(name: 'RetryPolicy', type: ObjectType::class, of: RetryOptions::class)]
+    public RetryOptions $retryOptions;
+
+    /**
+     * Optional cron schedule for workflow.
+     *
+     * @see CronSchedule
+     */
+    #[Marshal(name: 'CronSchedule')]
+    public ?string $cronSchedule = null;
+
+    /**
+     * Optional non-indexed info that will be shown in list workflow.
+     *
+     * @psalm-var array<string, mixed>|null
+     */
+    #[Marshal(name: 'Memo', type: NullableType::class, of: ArrayType::class)]
+    public ?array $memo = null;
+
+    /**
+     * Optional indexed info that can be used in query of List/Scan/Count
+     * workflow APIs (only supported when Temporal server is using
+     * ElasticSearch). The key and value type must be registered on Temporal
+     * server side.
+     *
+     * @psalm-var array<string, mixed>|null
+     */
+    #[Marshal(name: 'SearchAttributes', type: NullableType::class, of: ArrayType::class)]
+    public ?array $searchAttributes = null;
+
+    /**
+     * @throws \Exception
      */
     public function __construct()
     {
-        $this->executionTimeout = CarbonInterval::years(10);
-        $this->runTimeout = CarbonInterval::years(10);
-        $this->taskTimeout = CarbonInterval::years(10);
+        $this->workflowId = Uuid::v4();
+        $this->workflowExecutionTimeout = CarbonInterval::years(10);
+        $this->workflowRunTimeout = CarbonInterval::years(10);
+        $this->workflowTaskTimeout = CarbonInterval::seconds(10);
+        $this->retryOptions = new RetryOptions();
+    }
+
+    /**
+     * @return static
+     */
+    public static function new(): self
+    {
+        return new self();
+    }
+
+    /**
+     * Workflow id to use when starting. If not specified a UUID is generated.
+     * Note that it is dangerous as in case of client side retries no
+     * deduplication will happen based on the generated id. So prefer assigning
+     * business meaningful ids if possible.
+     *
+     * @param string $workflowId
+     * @return $this
+     */
+    public function withWorkflowId(string $workflowId): self
+    {
+        return immutable(fn() => $this->workflowId = $workflowId);
+    }
+
+    /**
+     * Task queue to use for workflow tasks. It should match a task queue
+     * specified when creating a {@see TaskQueue} that hosts the
+     * workflow code.
+     *
+     * @param string $taskQueue
+     * @return $this
+     */
+    public function withTaskQueue(string $taskQueue): self
+    {
+        return immutable(fn() => $this->taskQueue = $taskQueue);
+    }
+
+    /**
+     * The maximum time that parent workflow is willing to wait for a child
+     * execution (which includes retries and continue as new calls). If exceeded
+     * the child is automatically terminated by the Temporal service.
+     *
+     * @param DateIntervalValue $timeout
+     * @return $this
+     */
+    public function withWorkflowExecutionTimeout($timeout): self
+    {
+        assert(DateInterval::assert($timeout));
+
+        $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
+
+        assert($timeout->totalMicroseconds >= 0);
+
+        return immutable(fn() => $this->workflowExecutionTimeout = $timeout);
+    }
+
+    /**
+     * The time after which workflow run is automatically terminated by the
+     * Temporal service. Do not rely on the run timeout for business level
+     * timeouts. It is preferred to use in workflow timers for this purpose.
+     *
+     * @param DateIntervalValue $timeout
+     * @return $this
+     */
+    public function withWorkflowRunTimeout($timeout): self
+    {
+        assert(DateInterval::assert($timeout));
+
+        $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
+
+        assert($timeout->totalMicroseconds >= 0);
+
+        return immutable(fn() => $this->workflowRunTimeout = $timeout);
+    }
+
+    /**
+     * Maximum execution time of a single workflow task. Default is 10 seconds.
+     * Maximum accepted value is 60 seconds.
+     *
+     * @param DateIntervalValue $timeout
+     * @return $this
+     */
+    public function withWorkflowTaskTimeout($timeout): self
+    {
+        assert(DateInterval::assert($timeout));
+
+        $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
+
+        assert($timeout->totalMicroseconds >= 0 && $timeout->totalSeconds <= 60);
+
+        return immutable(fn() => $this->workflowTaskTimeout = $timeout);
+    }
+
+    /**
+     * Specifies server behavior if a completed workflow with the same id
+     * exists. Note that under no conditions Temporal allows two workflows
+     * with the same namespace and workflow id run simultaneously.
+     *
+     * - {@see IdReusePolicy::POLICY_ALLOW_DUPLICATE_FAILED_ONLY}: Is a default
+     *  value. It means that workflow can start if previous run failed or was
+     *  canceled or terminated.
+     *
+     * - {@see IdReusePolicy::POLICY_ALLOW_DUPLICATE}: Allows new run
+     *  independently of the previous run closure status.
+     *
+     * - {@see IdReusePolicy::POLICY_REJECT_DUPLICATE}: Doesn't allow new run
+     *  independently of the previous run closure status.
+     *
+     * @param IdReusePolicyEnum $policy
+     * @return $this
+     */
+    public function withWorkflowIdReusePolicy(int $policy): self
+    {
+        assert(Assert::enum($policy, IdReusePolicy::class));
+
+        return immutable(fn() => $this->workflowIdReusePolicy = $policy);
+    }
+
+    /**
+     * RetryOptions that define how child workflow is retried in case of
+     * failure. Default is null which is no reties.
+     *
+     * @param RetryOptions|null $options
+     * @return $this
+     */
+    public function withRetryOptions(?RetryOptions $options): self
+    {
+        return immutable(fn() => $this->retryOptions = $options ?? new RetryOptions());
+    }
+
+    /**
+     * @param string|null $cronSchedule
+     * @return $this
+     */
+    public function withCronSchedule(?string $cronSchedule): self
+    {
+        return immutable(fn() => $this->cronSchedule = $cronSchedule);
+    }
+
+    /**
+     * Specifies additional non-indexed information in result of list workflow.
+     *
+     * @param array|null $memo
+     * @return $this
+     */
+    public function withMemo(?array $memo): self
+    {
+        return immutable(fn() => $this->memo = $memo);
+    }
+
+    /**
+     * Specifies additional indexed information in result of list workflow.
+     *
+     * @param array|null $searchAttributes
+     * @return $this
+     */
+    public function withSearchAttributes(?array $searchAttributes): self
+    {
+        return immutable(fn() => $this->searchAttributes = $searchAttributes);
     }
 }

@@ -9,8 +9,11 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Workflow;
+namespace Temporal\Common;
 
+/**
+ * @psalm-type IdReusePolicyEnum = IdReusePolicy::POLICY_*
+ */
 final class IdReusePolicy
 {
     /**

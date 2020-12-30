@@ -9,11 +9,11 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Codec;
+namespace Temporal\Internal\Codec;
 
-use Temporal\Client\Exception\ProtocolException;
-use Temporal\Client\Internal\Events\EventListenerInterface;
-use Temporal\Client\Worker\Command\CommandInterface;
+use Temporal\Exception\ProtocolException;
+use Temporal\Internal\Events\EventListenerInterface;
+use Temporal\Worker\Command\CommandInterface;
 
 /**
  * @template-implements EventListenerInterface<CodecInterface::ON_*>

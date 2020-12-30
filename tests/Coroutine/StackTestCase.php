@@ -9,10 +9,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Client\Coroutine;
+namespace Temporal\Tests\Coroutine;
 
-use Temporal\Client\Internal\Coroutine\AppendableInterface;
-use Temporal\Client\Internal\Coroutine\Stack;
+use Temporal\Internal\Coroutine\AppendableInterface;
+use Temporal\Internal\Coroutine\Stack;
 
 class StackTestCase extends CoroutineTestCase
 {

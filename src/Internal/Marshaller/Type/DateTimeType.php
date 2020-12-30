@@ -9,11 +9,11 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Marshaller\Type;
+namespace Temporal\Internal\Marshaller\Type;
 
 use Carbon\Carbon;
-use Temporal\Client\Internal\Marshaller\MarshallerInterface;
-use Temporal\Client\Internal\Support\Inheritance;
+use Temporal\Internal\Marshaller\MarshallerInterface;
+use Temporal\Internal\Support\Inheritance;
 
 class DateTimeType extends Type implements DetectableTypeInterface
 {

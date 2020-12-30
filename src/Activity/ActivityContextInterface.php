@@ -9,9 +9,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Activity;
+namespace Temporal\Activity;
 
-use Temporal\Client\Worker\Transport\RpcConnectionInterface;
+use Temporal\Worker\Transport\RpcConnectionInterface;
 
 interface ActivityContextInterface
 {

@@ -9,15 +9,16 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Workflow;
+namespace Temporal\Workflow;
 
 use Carbon\CarbonInterval;
-use Temporal\Client\Internal\Marshaller\Meta\Marshal;
-use Temporal\Client\Internal\Marshaller\Type\ArrayType;
-use Temporal\Client\Internal\Marshaller\Type\DateIntervalType;
-use Temporal\Client\Internal\Marshaller\Type\NullableType;
-use Temporal\Client\Internal\Marshaller\Type\ObjectType;
-use Temporal\Client\Worker\FactoryInterface;
+use Temporal\Client\ClientOptions;
+use Temporal\Internal\Marshaller\Meta\Marshal;
+use Temporal\Internal\Marshaller\Type\ArrayType;
+use Temporal\Internal\Marshaller\Type\DateIntervalType;
+use Temporal\Internal\Marshaller\Type\NullableType;
+use Temporal\Internal\Marshaller\Type\ObjectType;
+use Temporal\Worker\FactoryInterface;
 
 /**
  * TODO Previous execution result
@@ -78,7 +79,7 @@ final class WorkflowInfo
      * @var string
      */
     #[Marshal(name: 'Namespace')]
-    public string $namespace = 'default';
+    public string $namespace = ClientOptions::DEFAULT_NAMESPACE;
 
     /**
      * Attempt starts from 1 and increased by 1 for every retry

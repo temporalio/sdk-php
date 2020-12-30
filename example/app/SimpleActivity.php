@@ -11,18 +11,18 @@ declare(strict_types=1);
 
 namespace App;
 
-use Temporal\Client\Activity;
+use Temporal\Activity;
 
 class SimpleActivity
 {
-    #[\Temporal\Client\Activity\ActivityMethod]
+    #[\Temporal\Activity\ActivityMethod]
     public function echo($value)
     {
         \sleep(\random_int(1, 3));
         return $value;
     }
 
-    #[\Temporal\Client\Activity\ActivityMethod]
+    #[\Temporal\Activity\ActivityMethod]
     public function asyncActivity(): int
     {
         Activity::doNotCompleteOnReturn();

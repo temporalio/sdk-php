@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Client;
+namespace Temporal\Client;
 
 /**
  * @psalm-type ReloadGroupFlags = ReloadGroup::RELOAD_GROUP_*
@@ -17,17 +17,17 @@ namespace Temporal\Client\Client;
 final class ReloadGroup
 {
     /**
-     * @var positive-int
+     * @var int
      */
     public const GROUP_ACTIVITIES = 0x01;
 
     /**
-     * @var positive-int
+     * @var int
      */
     public const GROUP_WORKFLOWS = 0x02;
 
     /**
-     * @var positive-int
+     * @var int
      */
     public const GROUP_ALL = self::GROUP_ACTIVITIES
                            | self::GROUP_WORKFLOWS

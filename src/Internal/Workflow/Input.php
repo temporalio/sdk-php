@@ -9,11 +9,11 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Workflow;
+namespace Temporal\Internal\Workflow;
 
 use JetBrains\PhpStorm\Immutable;
-use Temporal\Client\Internal\Marshaller\Meta\Marshal;
-use Temporal\Client\Workflow\WorkflowInfo;
+use Temporal\Internal\Marshaller\Meta\Marshal;
+use Temporal\Workflow\WorkflowInfo;
 
 #[Immutable]
 final class Input

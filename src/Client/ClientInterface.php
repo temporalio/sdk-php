@@ -9,9 +9,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Client;
+namespace Temporal\Client;
 
 use JetBrains\PhpStorm\ExpectedValues;
+use Temporal\Workflow\WorkflowExecution;
 
 /**
  * @psalm-import-type ReloadGroupFlags from ReloadGroup
@@ -19,24 +20,29 @@ use JetBrains\PhpStorm\ExpectedValues;
 interface ClientInterface
 {
     /**
-     * @param ReloadGroup $group
+     * @param ReloadGroupFlags $group
      * @return iterable
      */
     #[ExpectedValues(flagsFromClass: ReloadGroup::class)]
     public function reload(int $group = ReloadGroup::GROUP_ALL): iterable;
 
     /**
-     * @param string $taskToken
-     * @param mixed $result
-     * @return mixed
+     * @psalm-template T of object
+     * @param class-string<T> $class
+     * @param WorkflowOptions|null $options
+     * @return object<T>|T
      */
-    public function completeActivity(string $taskToken, $result = null);
+    public function newWorkflowStub(string $class, WorkflowOptions $options = null): object;
 
     /**
      * @param string $name
-     * @param array $arguments
-     * @param array|WorkflowOptions|null $options
-     * @return array
+     * @param WorkflowOptions|null $options
+     * @return WorkflowStubInterface
      */
-    public function executeWorkflow(string $name, array $arguments = [], $options = null): array;
+    public function newUntypedWorkflowStub(string $name, WorkflowOptions $options = null): WorkflowStubInterface;
+
+    /**
+     * @return ActivityCompletionClientInterface
+     */
+    public function newActivityClient(): ActivityCompletionClientInterface;
 }

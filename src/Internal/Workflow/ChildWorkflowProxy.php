@@ -9,14 +9,15 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Workflow;
+namespace Temporal\Internal\Workflow;
 
 use React\Promise\PromiseInterface;
-use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
-use Temporal\Client\Internal\Repository\RepositoryInterface;
-use Temporal\Client\Workflow;
-use Temporal\Client\Workflow\ChildWorkflowOptions;
-use Temporal\Client\Workflow\WorkflowContextInterface;
+use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Internal\Repository\RepositoryInterface;
+use Temporal\Internal\Transport\Request\SignalExternalWorkflow;
+use Temporal\Workflow;
+use Temporal\Workflow\ChildWorkflowOptions;
+use Temporal\Workflow\WorkflowContextInterface;
 
 /**
  * @internal ChildWorkflowProxy is an internal library class, please do not use it in your code.

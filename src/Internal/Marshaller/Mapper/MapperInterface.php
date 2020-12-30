@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Marshaller\Mapper;
+namespace Temporal\Internal\Marshaller\Mapper;
 
 /**
  * @psalm-type Getter = \Closure(): mixed

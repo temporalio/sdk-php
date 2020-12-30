@@ -9,17 +9,18 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Workflow;
+namespace Temporal\Workflow;
 
 use React\Promise\PromiseInterface;
-use Temporal\Client\Activity\ActivityOptions;
-use Temporal\Client\Internal\Support\DateInterval;
-use Temporal\Client\Worker\Environment\EnvironmentInterface;
+use Temporal\Activity\ActivityOptions;
+use Temporal\Internal\Support\DateInterval;
+use Temporal\Internal\Transport\ClientInterface;
+use Temporal\Worker\Environment\EnvironmentInterface;
 
 /**
  * @psalm-import-type DateIntervalFormat from DateInterval
  */
-interface WorkflowContextInterface extends EnvironmentInterface
+interface WorkflowContextInterface extends EnvironmentInterface, ClientInterface
 {
     /**
      * @return WorkflowInfo

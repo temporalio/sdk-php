@@ -9,11 +9,11 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Declaration\Instantiator;
+namespace Temporal\Internal\Declaration\Instantiator;
 
-use Temporal\Client\Internal\Declaration\ActivityInstance;
-use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
-use Temporal\Client\Internal\Declaration\Prototype\PrototypeInterface;
+use Temporal\Internal\Declaration\ActivityInstance;
+use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
+use Temporal\Internal\Declaration\Prototype\PrototypeInterface;
 
 /**
  * @template-implements InstantiatorInterface<ActivityPrototype, ActivityInstance>

@@ -9,17 +9,16 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Client\Testing;
+namespace Temporal\Tests\Testing;
 
 use PHPUnit\Framework\Assert;
-use Temporal\Client\Internal\Queue\ArrayQueue;
-use Temporal\Client\Internal\Queue\QueueInterface;
-use Temporal\Client\Worker\Command\CommandInterface;
-use Temporal\Client\Worker\Command\ErrorResponseInterface;
-use Temporal\Client\Worker\Command\Request;
-use Temporal\Client\Worker\Command\RequestInterface;
-use Temporal\Client\Worker\Command\ResponseInterface;
-use Temporal\Client\Worker\Command\SuccessResponseInterface;
+use Temporal\Internal\Queue\ArrayQueue;
+use Temporal\Worker\Command\CommandInterface;
+use Temporal\Worker\Command\ErrorResponseInterface;
+use Temporal\Worker\Command\Request;
+use Temporal\Worker\Command\RequestInterface;
+use Temporal\Worker\Command\ResponseInterface;
+use Temporal\Worker\Command\SuccessResponseInterface;
 
 class TestingQueue extends ArrayQueue
 {

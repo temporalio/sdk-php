@@ -9,11 +9,11 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Declaration\Instantiator;
+namespace Temporal\Internal\Declaration\Instantiator;
 
-use Temporal\Client\Internal\Declaration\Prototype\PrototypeInterface;
-use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
-use Temporal\Client\Internal\Declaration\WorkflowInstance;
+use Temporal\Internal\Declaration\Prototype\PrototypeInterface;
+use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Internal\Declaration\WorkflowInstance;
 
 /**
  * @template-implements InstantiatorInterface<WorkflowPrototype, WorkflowInstance>

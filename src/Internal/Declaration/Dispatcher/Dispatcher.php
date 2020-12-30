@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Declaration\Dispatcher;
+namespace Temporal\Internal\Declaration\Dispatcher;
 
 /**
  * @psalm-type FunctionExecutor = \Closure(object|null, array): mixed

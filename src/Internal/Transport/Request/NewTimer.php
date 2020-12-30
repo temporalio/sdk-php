@@ -9,10 +9,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Transport\Request;
+namespace Temporal\Internal\Transport\Request;
 
 use Carbon\CarbonInterval;
-use Temporal\Client\Worker\Command\Request;
+use Temporal\Worker\Command\Request;
 
 final class NewTimer extends Request
 {

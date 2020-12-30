@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client;
+namespace Temporal;
 
 final class Coroutine
 {

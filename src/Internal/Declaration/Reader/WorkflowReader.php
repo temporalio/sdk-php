@@ -9,14 +9,14 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Declaration\Reader;
+namespace Temporal\Internal\Declaration\Reader;
 
 use ReflectionFunctionAbstract as ReflectionFunction;
-use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
-use Temporal\Client\Workflow\QueryMethod;
-use Temporal\Client\Workflow\SignalMethod;
-use Temporal\Client\Workflow\WorkflowInterface;
-use Temporal\Client\Workflow\WorkflowMethod;
+use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Workflow\QueryMethod;
+use Temporal\Workflow\SignalMethod;
+use Temporal\Workflow\WorkflowInterface;
+use Temporal\Workflow\WorkflowMethod;
 
 /**
  * @template-extends Reader<WorkflowPrototype>

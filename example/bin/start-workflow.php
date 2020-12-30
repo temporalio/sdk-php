@@ -9,15 +9,12 @@
 
 declare(strict_types=1);
 
-use Temporal\Client\Client;
-use Temporal\Client\Worker\Transport\RoadRunner;
+use Spiral\Goridge\Relay;
+use Temporal\Client;
+use Temporal\Worker\Transport\Goridge;
 
 require __DIR__ . '/../../vendor/autoload.php';
 
-$client = Client::using(RoadRunner::socket(6001));
+$client = Client::create(new Goridge(Relay::create('tcp://127.0.0.1:6001')));
 
 $client->reload();
-
-$result = $client->executeWorkflow('CancellableWorkflow');
-
-dump($result);

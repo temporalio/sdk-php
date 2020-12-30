@@ -9,16 +9,18 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Workflow;
+namespace Temporal\Workflow;
 
-use Temporal\Client\Exception\FailedCancellationException;
-use Temporal\Client\Internal\Marshaller\Type\Type;
+use Temporal\Exception\FailedCancellationException;
+use Temporal\Internal\Marshaller\Type\Type;
 
 /**
  * Defines behaviour of the parent workflow when {@see CancellationScope} that
  * wraps child workflow execution request is canceled. The result of the
  * cancellation independently of the type is a {@see FailedCancellationException}
  * thrown from the child workflow method.
+ *
+ * @psalm-type ChildWorkflowCancellationEnum = ChildWorkflowCancellationType::*
  */
 final class ChildWorkflowCancellationType extends Type
 {

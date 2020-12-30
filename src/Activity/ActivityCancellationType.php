@@ -9,10 +9,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Activity;
+namespace Temporal\Activity;
 
-use Temporal\Client\Exception\FailedCancellationException;
-use Temporal\Client\Internal\Marshaller\Type\Type;
+use Temporal\Exception\FailedCancellationException;
+use Temporal\Internal\Marshaller\Type\Type;
 
 /**
  * Defines behaviour of the parent workflow when {@see CancellationScope} that

@@ -9,25 +9,25 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Client\Workflow;
+namespace Temporal\Tests\Workflow;
 
 use Spiral\Attributes\AttributeReader;
-use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
-use Temporal\Client\Internal\Declaration\WorkflowInstance;
-use Temporal\Client\Internal\Marshaller\Mapper\AttributeMapperFactory;
-use Temporal\Client\Internal\ServiceContainer;
-use Temporal\Client\Internal\Workflow\Input;
-use Temporal\Client\Internal\Workflow\Process\Process;
-use Temporal\Client\Worker\Command\ErrorResponseInterface;
-use Temporal\Client\Worker\Command\RequestInterface;
-use Temporal\Client\Worker\Command\SuccessResponseInterface;
-use Temporal\Client\Workflow\WorkflowInfo;
-use Temporal\Tests\Client\TestCase;
-use Temporal\Tests\Client\Testing\TestingClient;
-use Temporal\Tests\Client\Testing\TestingEnvironment;
-use Temporal\Tests\Client\Testing\TestingLoop;
-use Temporal\Tests\Client\Testing\TestingMarshaller;
-use Temporal\Tests\Client\Testing\TestingQueue;
+use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Internal\Declaration\WorkflowInstance;
+use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
+use Temporal\Internal\ServiceContainer;
+use Temporal\Internal\Workflow\Input;
+use Temporal\Internal\Workflow\Process\Process;
+use Temporal\Tests\TestCase;
+use Temporal\Tests\Testing\TestingClient;
+use Temporal\Tests\Testing\TestingEnvironment;
+use Temporal\Tests\Testing\TestingLoop;
+use Temporal\Tests\Testing\TestingMarshaller;
+use Temporal\Tests\Testing\TestingQueue;
+use Temporal\Worker\Command\ErrorResponseInterface;
+use Temporal\Worker\Command\RequestInterface;
+use Temporal\Worker\Command\SuccessResponseInterface;
+use Temporal\Workflow\WorkflowInfo;
 
 abstract class WorkflowTestCase extends TestCase
 {

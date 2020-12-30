@@ -9,12 +9,12 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Transport;
+namespace Temporal\Internal\Transport;
 
 use React\Promise\CancellablePromiseInterface;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
-use Temporal\Client\Worker\TaskQueueInterface;
+use Temporal\Worker\TaskQueueInterface;
 
 class Future implements FutureInterface
 {

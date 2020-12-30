@@ -9,10 +9,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Workflow;
+namespace Temporal\Internal\Workflow;
 
-use Temporal\Client\Internal\Coroutine\CoroutineInterface;
-use Temporal\Client\Workflow\WorkflowContextInterface;
+use Temporal\Internal\Coroutine\CoroutineInterface;
+use Temporal\Workflow\WorkflowContextInterface;
 
 trait ScopeAwareTrait
 {

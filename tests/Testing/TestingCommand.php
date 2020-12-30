@@ -9,10 +9,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Client\Testing;
+namespace Temporal\Tests\Testing;
 
 use PHPUnit\Framework\Assert;
-use Temporal\Client\Worker\Command\CommandInterface;
+use Temporal\Worker\Command\CommandInterface;
 
 /**
  * @template-covariant T of CommandInterface

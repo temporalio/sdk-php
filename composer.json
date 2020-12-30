@@ -25,7 +25,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Temporal\\Client\\": "src"
+            "Temporal\\": "src"
         }
     },
     "require-dev": {
@@ -41,7 +41,7 @@
     "autoload-dev": {
         "psr-4": {
             "App\\": "example/app",
-            "Temporal\\Tests\\Client\\": "tests"
+            "Temporal\\Tests\\": "tests"
         }
     },
     "suggest": {

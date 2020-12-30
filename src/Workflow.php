@@ -9,18 +9,18 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client;
+namespace Temporal;
 
 use Carbon\CarbonTimeZone;
-use Temporal\Client\Activity\ActivityOptions;
-use Temporal\Client\Internal\Support\Facade;
-use Temporal\Client\Internal\Transport\FutureInterface;
-use Temporal\Client\Internal\Workflow\ActivityProxy;
-use Temporal\Client\Internal\Workflow\ChildWorkflowProxy;
-use Temporal\Client\Workflow\CancellationScopeInterface;
-use Temporal\Client\Workflow\ChildWorkflowOptions;
-use Temporal\Client\Workflow\WorkflowContextInterface;
-use Temporal\Client\Workflow\WorkflowInfo;
+use Temporal\Activity\ActivityOptions;
+use Temporal\Internal\Support\Facade;
+use Temporal\Internal\Transport\FutureInterface;
+use Temporal\Internal\Workflow\ActivityProxy;
+use Temporal\Internal\Workflow\ChildWorkflowProxy;
+use Temporal\Workflow\CancellationScopeInterface;
+use Temporal\Workflow\ChildWorkflowOptions;
+use Temporal\Workflow\WorkflowContextInterface;
+use Temporal\Workflow\WorkflowInfo;
 
 /**
  * @method static array getArguments()

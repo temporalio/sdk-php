@@ -1,12 +1,12 @@
 <?php
 
-namespace Temporal\Client\Worker\Transport;
+namespace Temporal\Worker\Transport;
 
 use Spiral\Goridge\RelayInterface;
 use Spiral\Goridge\RPC\Exception\RPCException;
 use Spiral\Goridge\RPC\RPC;
 use Spiral\Goridge\RPC\RPCInterface;
-use Temporal\Client\Exception\TransportException;
+use Temporal\Exception\TransportException;
 
 final class Goridge implements RpcConnectionInterface
 {

@@ -8,9 +8,9 @@ use App\HeartbeatActivity;
 use App\SimpleActivity;
 use App\SimpleWorkflow;
 use Spiral\Goridge\Relay;
-use Temporal\Client\Worker;
-use Temporal\Client\Worker\Transport\Goridge;
-use Temporal\Client\Worker\Transport\RoadRunner;
+use Temporal\Worker;
+use Temporal\Worker\Transport\Goridge;
+use Temporal\Worker\Transport\RoadRunner;
 
 require __DIR__ . '/../vendor/autoload.php';
 

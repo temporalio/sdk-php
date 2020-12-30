@@ -9,12 +9,12 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Transport;
+namespace Temporal\Internal\Transport;
 
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
-use Temporal\Client\Internal\Transport\Router\RouteInterface;
-use Temporal\Client\Worker\Command\RequestInterface;
+use Temporal\Internal\Transport\Router\RouteInterface;
+use Temporal\Worker\Command\RequestInterface;
 
 use function React\Promise\reject;
 

@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Temporal\Client\Worker\Transport;
+namespace Temporal\Worker\Transport;
 
 final class Message
 {

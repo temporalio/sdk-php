@@ -9,11 +9,11 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Workflow;
+namespace Temporal\Workflow;
 
 use React\Promise\CancellablePromiseInterface;
 use React\Promise\PromiseInterface;
-use Temporal\Client\Internal\Repository\Identifiable;
+use Temporal\Internal\Repository\Identifiable;
 
 interface CancellationScopeInterface extends
     Identifiable,

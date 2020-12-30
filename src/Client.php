@@ -9,45 +9,22 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client;
+namespace Temporal;
 
-use Temporal\Client\Client\ClientConnection;
-use Temporal\Client\Client\ClientInterface;
-use Temporal\Client\Worker\Transport\RpcConnectionInterface;
+use Temporal\Client\ClientConnection;
+use Temporal\Client\ClientInterface;
+use Temporal\Client\ClientOptions;
+use Temporal\Worker\Transport\RpcConnectionInterface;
 
-final class Client extends ClientConnection
+final class Client
 {
     /**
      * @param RpcConnectionInterface $rpc
+     * @param ClientOptions|null $options
+     * @return ClientInterface
      */
-    private function __construct(RpcConnectionInterface $rpc)
+    public static function create(RpcConnectionInterface $rpc, ClientOptions $options = null): ClientInterface
     {
-        parent::__construct($rpc);
-    }
-
-    /**
-     * @param RpcConnectionInterface $rpc
-     * @return static
-     */
-    public static function using(RpcConnectionInterface $rpc): self
-    {
-        return new self($rpc);
-    }
-
-    /**
-     * @param non-empty-array<RpcConnectionInterface> $connections
-     * @param callable(ClientInterface)|null $then
-     * @return iterable<ClientInterface>
-     */
-    public static function on(array $connections, callable $then = null): iterable
-    {
-        $then ??= static fn (ClientInterface $_) => null;
-
-        foreach ($connections as $connection) {
-            $client = new self($connection);
-            $then($client);
-
-            yield $client;
-        }
+        return new ClientConnection($rpc, $options ?? new ClientOptions());
     }
 }

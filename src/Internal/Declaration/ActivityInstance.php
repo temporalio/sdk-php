@@ -9,9 +9,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Declaration;
+namespace Temporal\Internal\Declaration;
 
-use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
+use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 
 final class ActivityInstance extends Instance implements ActivityInstanceInterface
 {

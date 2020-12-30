@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Worker;
+namespace Temporal\Worker;
 
 /**
  * Defines behaviour of the parent workflow when {@see CancellationScope}

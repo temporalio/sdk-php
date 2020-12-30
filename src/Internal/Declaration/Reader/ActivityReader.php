@@ -9,12 +9,12 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Declaration\Reader;
+namespace Temporal\Internal\Declaration\Reader;
 
 use ReflectionFunctionAbstract as ReflectionFunction;
-use Temporal\Client\Activity\ActivityInterface;
-use Temporal\Client\Activity\ActivityMethod;
-use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
+use Temporal\Activity\ActivityInterface;
+use Temporal\Activity\ActivityMethod;
+use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 
 /**
  * @template-extends Reader<ActivityPrototype>

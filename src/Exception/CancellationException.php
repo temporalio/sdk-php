@@ -9,10 +9,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Exception;
+namespace Temporal\Exception;
 
-use Temporal\Client\Internal\Workflow\Process\CancellationScope;
-use Temporal\Client\Internal\Workflow\Process\Scope;
+use Temporal\Internal\Workflow\Process\CancellationScope;
+use Temporal\Internal\Workflow\Process\Scope;
 
 class CancellationException extends TemporalException implements NonThrowableExceptionInterface
 {

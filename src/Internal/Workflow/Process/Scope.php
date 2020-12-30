@@ -9,21 +9,21 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Workflow\Process;
+namespace Temporal\Internal\Workflow\Process;
 
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use React\Promise\PromisorInterface;
-use Temporal\Client\Exception\CancellationException;
-use Temporal\Client\Exception\NonThrowableExceptionInterface;
-use Temporal\Client\Internal\Coroutine\CoroutineInterface;
-use Temporal\Client\Internal\Coroutine\Stack;
-use Temporal\Client\Internal\ServiceContainer;
-use Temporal\Client\Worker\Command\RequestInterface;
-use Temporal\Client\Worker\LoopInterface;
-use Temporal\Client\Workflow;
-use Temporal\Client\Workflow\CancellationScopeInterface;
-use Temporal\Client\Workflow\WorkflowContext;
+use Temporal\Exception\CancellationException;
+use Temporal\Exception\NonThrowableExceptionInterface;
+use Temporal\Internal\Coroutine\CoroutineInterface;
+use Temporal\Internal\Coroutine\Stack;
+use Temporal\Internal\ServiceContainer;
+use Temporal\Worker\Command\RequestInterface;
+use Temporal\Worker\LoopInterface;
+use Temporal\Workflow;
+use Temporal\Workflow\CancellationScopeInterface;
+use Temporal\Workflow\WorkflowContext;
 
 /**
  * @internal Scope is an internal library class, please do not use it in your code.

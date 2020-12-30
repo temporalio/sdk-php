@@ -9,9 +9,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Client\Testing;
+namespace Temporal\Tests\Testing;
 
-use Temporal\Client\Worker\Command\SuccessResponseInterface;
+use Temporal\Worker\Command\SuccessResponseInterface;
 
 /**
  * @template-extends TestingCommand<SuccessResponseInterface>

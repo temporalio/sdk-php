@@ -9,13 +9,13 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Transport;
+namespace Temporal\Internal\Transport;
 
 use React\Promise\PromiseInterface;
-use Temporal\Client\Internal\Queue\QueueInterface;
-use Temporal\Client\Worker\Command\ErrorResponse;
-use Temporal\Client\Worker\Command\RequestInterface;
-use Temporal\Client\Worker\Command\SuccessResponse;
+use Temporal\Internal\Queue\QueueInterface;
+use Temporal\Worker\Command\ErrorResponse;
+use Temporal\Worker\Command\RequestInterface;
+use Temporal\Worker\Command\SuccessResponse;
 
 /**
  * @psalm-import-type OnMessageHandler from ServerInterface

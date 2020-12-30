@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Declaration\Reader;
+namespace Temporal\Internal\Declaration\Reader;
 
 use Spiral\Attributes\ReaderInterface;
 

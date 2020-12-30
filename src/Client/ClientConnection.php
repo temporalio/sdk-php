@@ -9,13 +9,18 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Client;
+namespace Temporal\Client;
 
+use JetBrains\PhpStorm\ExpectedValues;
 use Spiral\Attributes\AttributeReader;
-use Temporal\Client\Internal\Marshaller\Mapper\AttributeMapperFactory;
-use Temporal\Client\Internal\Marshaller\Marshaller;
-use Temporal\Client\Internal\Marshaller\MarshallerInterface;
-use Temporal\Client\Worker\Transport\RpcConnectionInterface;
+use Spiral\Attributes\ReaderInterface;
+use Temporal\Internal\Declaration\Reader\WorkflowReader;
+use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
+use Temporal\Internal\Marshaller\Marshaller;
+use Temporal\Internal\Marshaller\MarshallerInterface;
+use Temporal\Internal\Workflow\WorkflowProxy;
+use Temporal\Internal\Workflow\WorkflowStub;
+use Temporal\Worker\Transport\RpcConnectionInterface;
 
 class ClientConnection implements ClientInterface
 {
@@ -30,22 +35,34 @@ class ClientConnection implements ClientInterface
     private MarshallerInterface $marshaller;
 
     /**
-     * @param RpcConnectionInterface $rpc
+     * @var ReaderInterface
      */
-    public function __construct(RpcConnectionInterface $rpc)
+    private ReaderInterface $reader;
+
+    /**
+     * @var ClientOptions
+     */
+    private ClientOptions $options;
+
+    /**
+     * @param RpcConnectionInterface $rpc
+     * @param ClientOptions $options
+     */
+    public function __construct(RpcConnectionInterface $rpc, ClientOptions $options)
     {
         $this->rpc = $rpc;
+        $this->options = $options;
+        $this->reader = new AttributeReader();
 
         $this->marshaller = new Marshaller(
-            new AttributeMapperFactory(
-                new AttributeReader()
-            )
+            new AttributeMapperFactory($this->reader)
         );
     }
 
     /**
      * {@inheritDoc}
      */
+    #[ExpectedValues(flagsFromClass: ReloadGroup::class)]
     public function reload(int $group = ReloadGroup::GROUP_ALL): iterable
     {
         $result = [];
@@ -66,57 +83,30 @@ class ClientConnection implements ClientInterface
     /**
      * {@inheritDoc}
      */
-    public function completeActivity(string $taskToken, $result = null)
+    public function newWorkflowStub(string $class, WorkflowOptions $options = null): WorkflowProxy
     {
-        return $this->rpc->call('temporal.CompleteActivity', [
-            'taskToken' => $taskToken,
-            'result'    => $result,
-        ]);
+        $workflows = (new WorkflowReader($this->reader))->fromClass($class);
+
+        $options ??= new WorkflowOptions();
+
+        return new WorkflowProxy($this->rpc, $this->marshaller, $class, $workflows, $options);
     }
 
     /**
-     * @param string $name
-     * @param array $arguments
-     * @param array|WorkflowOptions|null $options
-     * @return array
-     * @throws \ReflectionException
+     * {@inheritDoc}
      */
-    public function executeWorkflow(
-        string $name,
-        array $arguments = [],
-        $options = null
-    ): array {
-        return $this->rpc->call('temporal.ExecuteWorkflow', [
-            'name'    => $name,
-            'input'   => $arguments,
-            'options' => $this->marshaller->marshal(
-                $this->options($options, WorkflowOptions::class)
-            ),
-        ]);
+    public function newUntypedWorkflowStub(string $name, WorkflowOptions $options = null): WorkflowStubInterface
+    {
+        $options ??= new WorkflowOptions();
+
+        return new WorkflowStub($this->rpc, $this->marshaller, $name, $options);
     }
 
     /**
-     * @psalm-template T of object
-     *
-     * @param T|array|null $options
-     * @param class-string<T> $class
-     * @return T
-     * @throws \ReflectionException
+     * {@inheritDoc}
      */
-    private function options($options, string $class): object
+    public function newActivityClient(): ActivityCompletionClientInterface
     {
-        switch (true) {
-            case $options === null:
-                return new $class();
-
-            case \is_array($options):
-                return $this->marshaller->unmarshal($options, new $class());
-
-            case $options instanceof $class:
-                return $options;
-
-            default:
-                throw new \InvalidArgumentException('Invalid options argument');
-        }
+        return new ActivityCompletionClient($this->rpc, $this->options->namespace);
     }
 }

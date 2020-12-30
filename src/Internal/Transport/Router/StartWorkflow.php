@@ -9,16 +9,16 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Transport\Router;
+namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
-use Temporal\Client\Internal\Declaration\Instantiator\WorkflowInstantiator;
-use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
-use Temporal\Client\Internal\Repository\RepositoryInterface;
-use Temporal\Client\Internal\ServiceContainer;
-use Temporal\Client\Internal\Workflow\Input;
-use Temporal\Client\Internal\Workflow\Process\Process;
-use Temporal\Client\Workflow\WorkflowInfo;
+use Temporal\Internal\Declaration\Instantiator\WorkflowInstantiator;
+use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Internal\Repository\RepositoryInterface;
+use Temporal\Internal\ServiceContainer;
+use Temporal\Internal\Workflow\Input;
+use Temporal\Internal\Workflow\Process\Process;
+use Temporal\Workflow\WorkflowInfo;
 
 final class StartWorkflow extends Route
 {

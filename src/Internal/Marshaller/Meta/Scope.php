@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Marshaller\Meta;
+namespace Temporal\Internal\Marshaller\Meta;
 
 use JetBrains\PhpStorm\ExpectedValues;
 use Spiral\Attributes\NamedArgumentConstructorAttribute;

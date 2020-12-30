@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Worker\Command;
+namespace Temporal\Worker\Command;
 
 class ErrorResponse extends Response implements ErrorResponseInterface
 {
@@ -59,7 +59,7 @@ class ErrorResponse extends Response implements ErrorResponseInterface
      * @param \Throwable $e
      * @return array
      */
-    private static function exceptionToArray(\Throwable $e): array
+    public static function exceptionToArray(\Throwable $e): array
     {
         $result = [
             'type'     => \get_class($e),

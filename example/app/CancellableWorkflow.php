@@ -11,12 +11,12 @@ declare(strict_types=1);
 
 namespace App;
 
-use Temporal\Client\Activity\ActivityOptions;
-use Temporal\Client\Internal\Support\DateInterval;
-use Temporal\Client\Promise;
-use Temporal\Client\Workflow;
-use Temporal\Client\Workflow\WorkflowInterface;
-use Temporal\Client\Workflow\WorkflowMethod;
+use Temporal\Activity\ActivityOptions;
+use Temporal\Internal\Support\DateInterval;
+use Temporal\Promise;
+use Temporal\Workflow;
+use Temporal\Workflow\WorkflowInterface;
+use Temporal\Workflow\WorkflowMethod;
 
 #[WorkflowInterface]
 class CancellableWorkflow
@@ -27,6 +27,17 @@ class CancellableWorkflow
     {
         $this->options = new ActivityOptions();
         $this->options->startToCloseTimeout = DateInterval::parse('10s');
+    }
+
+    #[Workflow\SignalMethod(name: 'signal')]
+    public function signal()
+    {
+    }
+
+    #[Workflow\QueryMethod(name: 'query')]
+    public function query()
+    {
+        return 42;
     }
 
     #[WorkflowMethod(name: 'CancellableWorkflow')]

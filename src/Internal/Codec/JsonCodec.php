@@ -9,12 +9,12 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Codec;
+namespace Temporal\Internal\Codec;
 
-use Temporal\Client\Exception\ProtocolException;
-use Temporal\Client\Internal\Codec\JsonCodec\Parser;
-use Temporal\Client\Internal\Codec\JsonCodec\Serializer;
-use Temporal\Client\Worker\Command\CommandInterface;
+use Temporal\Exception\ProtocolException;
+use Temporal\Internal\Codec\JsonCodec\Parser;
+use Temporal\Internal\Codec\JsonCodec\Serializer;
+use Temporal\Worker\Command\CommandInterface;
 
 final class JsonCodec extends Codec
 {

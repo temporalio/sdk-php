@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Exception;
+namespace Temporal\Exception;
 
 class TransportException extends TemporalException
 {

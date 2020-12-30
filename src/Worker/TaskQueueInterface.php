@@ -9,13 +9,12 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Worker;
+namespace Temporal\Worker;
 
-use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
-use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
-use Temporal\Client\Internal\Events\EventEmitterInterface;
-use Temporal\Client\Internal\Events\EventListenerInterface;
-use Temporal\Client\Internal\Repository\Identifiable;
+use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
+use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Internal\Events\EventListenerInterface;
+use Temporal\Internal\Repository\Identifiable;
 
 interface TaskQueueInterface extends
     EventListenerInterface,

@@ -9,33 +9,33 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Workflow;
+namespace Temporal\Workflow;
 
 use Carbon\CarbonInterface;
 use Carbon\CarbonTimeZone;
 use React\Promise\PromiseInterface;
-use Temporal\Client\Activity\ActivityOptions;
-use Temporal\Client\Internal\ServiceContainer;
-use Temporal\Client\Internal\Support\DateInterval;
-use Temporal\Client\Internal\Transport\CapturedClient;
-use Temporal\Client\Internal\Transport\CapturedClientInterface;
-use Temporal\Client\Internal\Transport\ClientInterface;
-use Temporal\Client\Internal\Transport\Request\CompleteWorkflow;
-use Temporal\Client\Internal\Transport\Request\ExecuteActivity;
-use Temporal\Client\Internal\Transport\Request\ExecuteChildWorkflow;
-use Temporal\Client\Internal\Transport\Request\GetVersion;
-use Temporal\Client\Internal\Transport\Request\NewTimer;
-use Temporal\Client\Internal\Transport\Request\SideEffect;
-use Temporal\Client\Internal\Workflow\ActivityProxy;
-use Temporal\Client\Internal\Workflow\ChildWorkflowProxy;
-use Temporal\Client\Internal\Workflow\Input;
-use Temporal\Client\Internal\Workflow\Process\CancellationScope;
-use Temporal\Client\Internal\Workflow\Process\Process;
-use Temporal\Client\Worker\Command\RequestInterface;
+use Temporal\Activity\ActivityOptions;
+use Temporal\Internal\ServiceContainer;
+use Temporal\Internal\Support\DateInterval;
+use Temporal\Internal\Transport\CapturedClient;
+use Temporal\Internal\Transport\CapturedClientInterface;
+use Temporal\Internal\Transport\ClientInterface;
+use Temporal\Internal\Transport\Request\CompleteWorkflow;
+use Temporal\Internal\Transport\Request\ExecuteActivity;
+use Temporal\Internal\Transport\Request\ExecuteChildWorkflow;
+use Temporal\Internal\Transport\Request\GetVersion;
+use Temporal\Internal\Transport\Request\NewTimer;
+use Temporal\Internal\Transport\Request\SideEffect;
+use Temporal\Internal\Workflow\ActivityProxy;
+use Temporal\Internal\Workflow\ChildWorkflowProxy;
+use Temporal\Internal\Workflow\Input;
+use Temporal\Internal\Workflow\Process\CancellationScope;
+use Temporal\Internal\Workflow\Process\Process;
+use Temporal\Worker\Command\RequestInterface;
 
 use function React\Promise\reject;
 
-class WorkflowContext implements WorkflowContextInterface, ClientInterface
+class WorkflowContext implements WorkflowContextInterface
 {
     /**
      * @var ServiceContainer

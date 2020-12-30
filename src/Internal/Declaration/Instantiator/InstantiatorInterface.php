@@ -9,10 +9,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Declaration\Instantiator;
+namespace Temporal\Internal\Declaration\Instantiator;
 
-use Temporal\Client\Internal\Declaration\InstanceInterface;
-use Temporal\Client\Internal\Declaration\Prototype\PrototypeInterface;
+use Temporal\Internal\Declaration\InstanceInterface;
+use Temporal\Internal\Declaration\Prototype\PrototypeInterface;
 
 /**
  * @template-covariant TPrototype of PrototypeInterface

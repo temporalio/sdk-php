@@ -9,9 +9,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Worker\Command;
+namespace Temporal\Worker\Command;
 
-use Temporal\Client\Internal\Repository\Identifiable;
+use Temporal\Internal\Repository\Identifiable;
 
 interface CommandInterface extends Identifiable
 {

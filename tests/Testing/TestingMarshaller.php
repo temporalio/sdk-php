@@ -9,13 +9,13 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Client\Testing;
+namespace Temporal\Tests\Testing;
 
 use Spiral\Attributes\AttributeReader;
-use Temporal\Client\Internal\Marshaller\Mapper\AttributeMapperFactory;
-use Temporal\Client\Internal\Marshaller\Mapper\MapperFactoryInterface;
-use Temporal\Client\Internal\Marshaller\Marshaller;
-use Temporal\Client\Internal\Marshaller\MarshallerInterface;
+use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
+use Temporal\Internal\Marshaller\Mapper\MapperFactoryInterface;
+use Temporal\Internal\Marshaller\Marshaller;
+use Temporal\Internal\Marshaller\MarshallerInterface;
 
 class TestingMarshaller implements MarshallerInterface
 {

@@ -9,10 +9,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Common;
+namespace Temporal\Common;
 
 use Spiral\Attributes\NamedArgumentConstructorAttribute;
-use Temporal\Client\Internal\Support\DateInterval;
+use Temporal\Internal\Support\DateInterval;
 
 /**
  * Specifies a retry policy for a workflow or activity method. This annotation

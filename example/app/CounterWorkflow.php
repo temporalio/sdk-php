@@ -11,11 +11,11 @@ declare(strict_types=1);
 
 namespace App;
 
-use Temporal\Client\Workflow;
-use Temporal\Client\Workflow\QueryMethod;
-use Temporal\Client\Workflow\SignalMethod;
-use Temporal\Client\Workflow\WorkflowInterface;
-use Temporal\Client\Workflow\WorkflowMethod;
+use Temporal\Workflow;
+use Temporal\Workflow\QueryMethod;
+use Temporal\Workflow\SignalMethod;
+use Temporal\Workflow\WorkflowInterface;
+use Temporal\Workflow\WorkflowMethod;
 
 #[WorkflowInterface]
 class CounterWorkflow

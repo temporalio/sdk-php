@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Client\Protocol;
+namespace Temporal\Tests\Protocol;
 
 class DecodingCommandsTestCase extends ProtocolTestCase
 {

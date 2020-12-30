@@ -9,11 +9,11 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Client\Workflow;
+namespace Temporal\Tests\Workflow;
 
-use Temporal\Client\Activity\ActivityOptions;
-use Temporal\Client\Promise;
-use Temporal\Client\Workflow;
+use Temporal\Activity\ActivityOptions;
+use Temporal\Promise;
+use Temporal\Workflow;
 
 final class WorkflowMock
 {

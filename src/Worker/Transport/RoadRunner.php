@@ -9,15 +9,15 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Worker\Transport;
+namespace Temporal\Worker\Transport;
 
 use JetBrains\PhpStorm\Pure;
 use Spiral\Goridge\RelayInterface;
 use Spiral\RoadRunner\Payload;
 use Spiral\RoadRunner\Worker;
 use Symfony\Component\VarDumper\Dumper\CliDumper;
-use Temporal\Client\Exception\ProtocolException;
-use Temporal\Client\Exception\TransportException;
+use Temporal\Exception\ProtocolException;
+use Temporal\Exception\TransportException;
 
 /**
  * @psalm-type JsonHeaders = string

@@ -9,9 +9,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Codec;
+namespace Temporal\Internal\Codec;
 
-use Temporal\Client\Internal\Events\EventEmitterTrait;
+use Temporal\Internal\Events\EventEmitterTrait;
 
 abstract class Codec implements CodecInterface
 {

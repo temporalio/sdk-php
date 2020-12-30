@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Repository;
+namespace Temporal\Internal\Repository;
 
 /**
  * @template-covariant TEntry of Identifiable
@@ -28,6 +28,17 @@ class ArrayRepository implements RepositoryInterface
      * @var array<Identifier, Identifiable>
      */
     private array $entries = [];
+
+    /**
+     * @param iterable<Identifiable> $entries
+     * @param bool $overwrite
+     */
+    public function __construct(iterable $entries = [], bool $overwrite = false)
+    {
+        foreach ($entries as $entry) {
+            $this->add($entry, $overwrite);
+        }
+    }
 
     /**
      * {@inheritDoc}

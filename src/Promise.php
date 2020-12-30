@@ -9,9 +9,8 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client;
+namespace Temporal;
 
-use JetBrains\PhpStorm\Pure;
 use React\Promise\PromiseInterface;
 
 use function React\Promise\all;

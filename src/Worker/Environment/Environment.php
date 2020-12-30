@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Worker\Environment;
+namespace Temporal\Worker\Environment;
 
 use Carbon\Carbon;
 use Carbon\CarbonInterface;

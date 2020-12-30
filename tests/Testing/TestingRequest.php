@@ -9,11 +9,11 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Client\Testing;
+namespace Temporal\Tests\Testing;
 
 use Illuminate\Support\Arr;
 use PHPUnit\Framework\Assert;
-use Temporal\Client\Worker\Command\RequestInterface;
+use Temporal\Worker\Command\RequestInterface;
 
 /**
  * @template-extends TestingCommand<RequestInterface>

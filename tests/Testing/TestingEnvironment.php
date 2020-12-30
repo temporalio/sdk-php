@@ -9,11 +9,11 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Client\Testing;
+namespace Temporal\Tests\Testing;
 
 use Carbon\CarbonInterface;
 use Carbon\CarbonTimeZone;
-use Temporal\Client\Worker\Environment\Environment;
+use Temporal\Worker\Environment\Environment;
 
 class TestingEnvironment extends Environment
 {

@@ -9,10 +9,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Client\Workflow;
+namespace Temporal\Tests\Workflow;
 
-use Temporal\Client\Exception\CancellationException;
-use Temporal\Tests\Client\Testing\TestingRequest;
+use Temporal\Exception\CancellationException;
+use Temporal\Tests\Testing\TestingRequest;
 
 class CancellationScopeTestCase extends WorkflowTestCase
 {

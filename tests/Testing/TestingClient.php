@@ -9,17 +9,17 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Client\Testing;
+namespace Temporal\Tests\Testing;
 
 use JetBrains\PhpStorm\Immutable;
 use React\Promise\PromiseInterface;
-use Temporal\Client\Internal\Queue\QueueInterface;
-use Temporal\Client\Internal\Transport\CapturedClient;
-use Temporal\Client\Internal\Transport\Client;
-use Temporal\Client\Worker\Command\ErrorResponse;
-use Temporal\Client\Worker\Command\RequestInterface;
-use Temporal\Client\Worker\Command\SuccessResponse;
-use Temporal\Client\Worker\LoopInterface;
+use Temporal\Internal\Queue\QueueInterface;
+use Temporal\Internal\Transport\CapturedClient;
+use Temporal\Internal\Transport\Client;
+use Temporal\Worker\Command\ErrorResponse;
+use Temporal\Worker\Command\RequestInterface;
+use Temporal\Worker\Command\SuccessResponse;
+use Temporal\Worker\LoopInterface;
 
 class TestingClient extends CapturedClient
 {

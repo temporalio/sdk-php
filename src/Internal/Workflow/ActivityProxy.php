@@ -9,16 +9,16 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Workflow;
+namespace Temporal\Internal\Workflow;
 
 use React\Promise\PromiseInterface;
-use Temporal\Client\Activity\ActivityOptions;
-use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
-use Temporal\Client\Internal\Repository\RepositoryInterface;
-use Temporal\Client\Workflow\WorkflowContextInterface;
+use Temporal\Activity\ActivityOptions;
+use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
+use Temporal\Internal\Repository\RepositoryInterface;
+use Temporal\Workflow\WorkflowContextInterface;
 
 /**
- * @internal ActivityProxy is an internal library class, please do not use it in your code.
+ * @internal AsyncActivityProxy is an internal library class, please do not use it in your code.
  * @psalm-internal Temporal\Client
  *
  * @psalm-template Activity of object

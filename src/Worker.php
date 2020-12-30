@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client;
+namespace Temporal;
 
 use Doctrine\Common\Annotations\AnnotationReader as DoctrineReader;
 use Doctrine\Common\Annotations\Reader;
@@ -20,29 +20,29 @@ use Spiral\Attributes\AttributeReader;
 use Spiral\Attributes\Composite\SelectiveReader;
 use Spiral\Attributes\ReaderInterface;
 use Spiral\Goridge\Relay;
-use Temporal\Client\Internal\Codec\CodecInterface;
-use Temporal\Client\Internal\Codec\JsonCodec;
-use Temporal\Client\Internal\Events\EventEmitterTrait;
-use Temporal\Client\Internal\Queue\ArrayQueue;
-use Temporal\Client\Internal\Queue\QueueInterface;
-use Temporal\Client\Internal\Repository\ArrayRepository;
-use Temporal\Client\Internal\Repository\RepositoryInterface;
-use Temporal\Client\Internal\Transport\CapturedClientInterface;
-use Temporal\Client\Internal\Transport\Client;
-use Temporal\Client\Internal\Transport\ClientInterface;
-use Temporal\Client\Internal\Transport\Router;
-use Temporal\Client\Internal\Transport\RouterInterface;
-use Temporal\Client\Internal\Transport\Server;
-use Temporal\Client\Internal\Transport\ServerInterface;
-use Temporal\Client\Worker\Command\RequestInterface;
-use Temporal\Client\Worker\FactoryInterface;
-use Temporal\Client\Worker\LoopInterface;
-use Temporal\Client\Worker\TaskQueue;
-use Temporal\Client\Worker\TaskQueueInterface;
-use Temporal\Client\Worker\Transport\Goridge;
-use Temporal\Client\Worker\Transport\RelayConnectionInterface;
-use Temporal\Client\Worker\Transport\RoadRunner;
-use Temporal\Client\Worker\Transport\RpcConnectionInterface;
+use Temporal\Internal\Codec\CodecInterface;
+use Temporal\Internal\Codec\JsonCodec;
+use Temporal\Internal\Events\EventEmitterTrait;
+use Temporal\Internal\Queue\ArrayQueue;
+use Temporal\Internal\Queue\QueueInterface;
+use Temporal\Internal\Repository\ArrayRepository;
+use Temporal\Internal\Repository\RepositoryInterface;
+use Temporal\Internal\Transport\CapturedClientInterface;
+use Temporal\Internal\Transport\Client;
+use Temporal\Internal\Transport\ClientInterface;
+use Temporal\Internal\Transport\Router;
+use Temporal\Internal\Transport\RouterInterface;
+use Temporal\Internal\Transport\Server;
+use Temporal\Internal\Transport\ServerInterface;
+use Temporal\Worker\Command\RequestInterface;
+use Temporal\Worker\FactoryInterface;
+use Temporal\Worker\LoopInterface;
+use Temporal\Worker\TaskQueue;
+use Temporal\Worker\TaskQueueInterface;
+use Temporal\Worker\Transport\Goridge;
+use Temporal\Worker\Transport\RelayConnectionInterface;
+use Temporal\Worker\Transport\RoadRunner;
+use Temporal\Worker\Transport\RpcConnectionInterface;
 
 final class Worker implements FactoryInterface
 {

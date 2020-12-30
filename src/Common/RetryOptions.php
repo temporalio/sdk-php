@@ -9,14 +9,14 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Common;
+namespace Temporal\Common;
 
-use Temporal\Client\Activity\ActivityOptions;
-use Temporal\Client\Internal\Assert;
-use Temporal\Client\Internal\Marshaller\Meta\Marshal;
-use Temporal\Client\Internal\Marshaller\Type\DateIntervalType;
-use Temporal\Client\Internal\Marshaller\Type\NullableType;
-use Temporal\Client\Internal\Support\DateInterval;
+use Temporal\Activity\ActivityOptions;
+use Temporal\Internal\Assert;
+use Temporal\Internal\Marshaller\Meta\Marshal;
+use Temporal\Internal\Marshaller\Type\DateIntervalType;
+use Temporal\Internal\Marshaller\Type\NullableType;
+use Temporal\Internal\Support\DateInterval;
 
 /**
  * Note that the history of activity with retry policy will be different:

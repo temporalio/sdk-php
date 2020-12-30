@@ -9,9 +9,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Client\Worker;
+namespace Temporal\Tests\Worker;
 
-use Temporal\Tests\Client\TestCase;
+use Temporal\Tests\TestCase;
 
 abstract class WorkerTestCase extends TestCase
 {

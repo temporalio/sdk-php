@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Support;
+namespace Temporal\Internal\Support;
 
 /**
  * @template T of object

@@ -9,12 +9,12 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Common;
+namespace Temporal\Common;
 
 use Carbon\CarbonInterval;
 use JetBrains\PhpStorm\Pure;
 use Spiral\Attributes\NamedArgumentConstructorAttribute;
-use Temporal\Client\Internal\Support\DateInterval;
+use Temporal\Internal\Support\DateInterval;
 
 /**
  * CronSchedule - Optional cron schedule for workflow. If a cron schedule is

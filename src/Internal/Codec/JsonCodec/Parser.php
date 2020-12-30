@@ -9,16 +9,16 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Codec\JsonCodec;
+namespace Temporal\Internal\Codec\JsonCodec;
 
 use JetBrains\PhpStorm\Pure;
-use Temporal\Client\Worker\Command\CommandInterface;
-use Temporal\Client\Worker\Command\ErrorResponse;
-use Temporal\Client\Worker\Command\ErrorResponseInterface;
-use Temporal\Client\Worker\Command\Request;
-use Temporal\Client\Worker\Command\RequestInterface;
-use Temporal\Client\Worker\Command\SuccessResponse;
-use Temporal\Client\Worker\Command\SuccessResponseInterface;
+use Temporal\Worker\Command\CommandInterface;
+use Temporal\Worker\Command\ErrorResponse;
+use Temporal\Worker\Command\ErrorResponseInterface;
+use Temporal\Worker\Command\Request;
+use Temporal\Worker\Command\RequestInterface;
+use Temporal\Worker\Command\SuccessResponse;
+use Temporal\Worker\Command\SuccessResponseInterface;
 
 class Parser
 {

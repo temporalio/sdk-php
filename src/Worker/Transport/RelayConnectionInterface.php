@@ -9,9 +9,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Worker\Transport;
+namespace Temporal\Worker\Transport;
 
-use Temporal\Client\Exception\TransportException;
+use Temporal\Exception\TransportException;
 
 /**
  * @psalm-type Headers = array<string, mixed>

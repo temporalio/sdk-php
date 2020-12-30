@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Events;
+namespace Temporal\Internal\Events;
 
 /**
  * @template-covariant T of string

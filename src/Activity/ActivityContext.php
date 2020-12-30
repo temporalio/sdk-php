@@ -9,11 +9,11 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Activity;
+namespace Temporal\Activity;
 
-use Temporal\Client\Internal\Marshaller\Meta\Marshal;
-use Temporal\Client\Internal\Marshaller\Meta\MarshalArray;
-use Temporal\Client\Worker\Transport\RpcConnectionInterface;
+use Temporal\Internal\Marshaller\Meta\Marshal;
+use Temporal\Internal\Marshaller\Meta\MarshalArray;
+use Temporal\Worker\Transport\RpcConnectionInterface;
 
 final class ActivityContext implements ActivityContextInterface
 {

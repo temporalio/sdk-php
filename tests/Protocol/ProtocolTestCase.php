@@ -9,9 +9,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Client\Protocol;
+namespace Temporal\Tests\Protocol;
 
-use Temporal\Tests\Client\TestCase;
+use Temporal\Tests\TestCase;
 
 abstract class ProtocolTestCase extends TestCase
 {

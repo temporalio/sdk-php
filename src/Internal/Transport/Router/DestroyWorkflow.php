@@ -9,13 +9,13 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Transport\Router;
+namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
-use Temporal\Client\Internal\Repository\RepositoryInterface;
-use Temporal\Client\Internal\Transport\ClientInterface;
-use Temporal\Client\Internal\Workflow\Process\Process;
-use Temporal\Client\Workflow;
+use Temporal\Internal\Repository\RepositoryInterface;
+use Temporal\Internal\Transport\ClientInterface;
+use Temporal\Internal\Workflow\Process\Process;
+use Temporal\Workflow;
 
 class DestroyWorkflow extends WorkflowProcessAwareRoute
 {

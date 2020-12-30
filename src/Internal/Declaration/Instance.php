@@ -9,10 +9,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Declaration;
+namespace Temporal\Internal\Declaration;
 
-use Temporal\Client\Internal\Declaration\Dispatcher\Autowired;
-use Temporal\Client\Internal\Declaration\Prototype\Prototype;
+use Temporal\Internal\Declaration\Dispatcher\Autowired;
+use Temporal\Internal\Declaration\Prototype\Prototype;
 
 /**
  * @psalm-import-type DispatchableHandler from InstanceInterface

@@ -9,10 +9,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Client\Testing;
+namespace Temporal\Tests\Testing;
 
-use Temporal\Client\Internal\Events\EventEmitterTrait;
-use Temporal\Client\Worker\LoopInterface;
+use Temporal\Internal\Events\EventEmitterTrait;
+use Temporal\Worker\LoopInterface;
 
 final class TestingLoop implements LoopInterface
 {

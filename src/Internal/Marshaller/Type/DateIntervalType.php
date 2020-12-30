@@ -9,12 +9,12 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Marshaller\Type;
+namespace Temporal\Internal\Marshaller\Type;
 
 use Carbon\CarbonInterval;
-use Temporal\Client\Internal\Marshaller\MarshallerInterface;
-use Temporal\Client\Internal\Support\DateInterval;
-use Temporal\Client\Internal\Support\Inheritance;
+use Temporal\Internal\Marshaller\MarshallerInterface;
+use Temporal\Internal\Support\DateInterval;
+use Temporal\Internal\Support\Inheritance;
 
 /**
  * @psalm-import-type DateIntervalFormat from DateInterval
