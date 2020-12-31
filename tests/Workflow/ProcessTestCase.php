@@ -178,7 +178,7 @@ class ProcessTestCase extends WorkflowTestCase
      */
     public function testSideEffectDuringFirstWorkflowExecution(): void
     {
-        $value = \random_bytes(42);
+        $value = \base64_encode(\random_bytes(42));
 
         $this->env->setIsReplaying(false);
 
