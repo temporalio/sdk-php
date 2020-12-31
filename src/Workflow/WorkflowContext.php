@@ -15,11 +15,12 @@ use Carbon\CarbonInterface;
 use Carbon\CarbonTimeZone;
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
+use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\Payload;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Transport\CapturedClient;
 use Temporal\Internal\Transport\CapturedClientInterface;
-use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Transport\Request\CompleteWorkflow;
 use Temporal\Internal\Transport\Request\ExecuteActivity;
 use Temporal\Internal\Transport\Request\ExecuteChildWorkflow;
@@ -139,6 +140,14 @@ class WorkflowContext implements WorkflowContextInterface
     }
 
     /**
+     * @return DataConverterInterface
+     */
+    public function getDataConverter(): DataConverterInterface
+    {
+        return $this->services->dataConverter;
+    }
+
+    /**
      * @return CapturedClientInterface
      */
     public function getClient(): CapturedClientInterface
@@ -220,7 +229,9 @@ class WorkflowContext implements WorkflowContextInterface
             return reject($e);
         }
 
-        return $this->request(new SideEffect($value));
+        $value = \current($this->getDataConverter()->toPayloads([$value]));
+
+        return $this->toResponse($this->request(new SideEffect($value)));
     }
 
     /**
@@ -238,6 +249,12 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function complete($result = null): PromiseInterface
     {
+        if (! $result instanceof Payload && ! $result instanceof \Throwable) {
+            [$result] = $this->getDataConverter()
+                ->toPayloads([$result])
+            ;
+        }
+
         $this->recordTrace();
 
         $then = function ($result) {
@@ -253,8 +270,7 @@ class WorkflowContext implements WorkflowContextInterface
         };
 
         return $this->request(new CompleteWorkflow($result))
-            ->then($then, $otherwise)
-        ;
+            ->then($then, $otherwise);
     }
 
     /**
@@ -263,17 +279,21 @@ class WorkflowContext implements WorkflowContextInterface
     public function executeChildWorkflow(
         string $type,
         array $args = [],
-        ChildWorkflowOptions $options = null
-    ): PromiseInterface {
+        ChildWorkflowOptions $options = null,
+        \ReflectionType $returnType = null
+    ): PromiseInterface
+    {
+        $args = $this->getDataConverter()->toPayloads($args);
+
         $this->recordTrace();
 
         $options = $this->services->marshaller->marshal(
             $options ?? new ChildWorkflowOptions()
         );
 
-        return $this->request(
+        return $this->toResponse($this->request(
             new ExecuteChildWorkflow($type, $args, $options)
-        );
+        ));
     }
 
     /**
@@ -299,9 +319,9 @@ class WorkflowContext implements WorkflowContextInterface
             $options ?? new ActivityOptions()
         );
 
-        return $this->request(
-            new ExecuteActivity($type, $args, $options)
-        );
+        return $this->toResponse($this->request(
+            new ExecuteActivity($type, $this->getDataConverter()->toPayloads($args), $options)
+        ));
     }
 
     /**
@@ -334,5 +354,22 @@ class WorkflowContext implements WorkflowContextInterface
     public function getTrace(): array
     {
         return $this->trace;
+    }
+
+    /**
+     * @param PromiseInterface $promise
+     * @param \ReflectionType|null $returnType
+     * @return PromiseInterface
+     */
+    private function toResponse(PromiseInterface $promise, \ReflectionType $returnType = null)
+    {
+        return $promise->then(function ($value) use ($returnType) {
+            // todo: improve it?
+            if (!$value instanceof Payload || $value instanceof \Throwable) {
+                return $value;
+            }
+
+            return $this->getDataConverter()->fromPayloads([$value], $returnType ? [$returnType] : [])[0];
+        });
     }
 }

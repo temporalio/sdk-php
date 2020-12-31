@@ -108,7 +108,6 @@ class ActivityOptions
     /**
      * ActivityOptions constructor.
      */
-    #[Pure]
     public function __construct()
     {
         $this->scheduleToStartTimeout = CarbonInterval::seconds(0);

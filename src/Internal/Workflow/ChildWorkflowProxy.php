@@ -14,7 +14,6 @@ namespace Temporal\Internal\Workflow;
 use React\Promise\PromiseInterface;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Repository\RepositoryInterface;
-use Temporal\Internal\Transport\Request\SignalExternalWorkflow;
 use Temporal\Workflow;
 use Temporal\Workflow\ChildWorkflowOptions;
 use Temporal\Workflow\WorkflowContextInterface;
@@ -58,7 +57,7 @@ class ChildWorkflowProxy
         $this->context = $context;
 
         $this->workflows = [
-            ...$this->filterWorkflows($workflows, $class)
+            ...$this->filterWorkflows($workflows, $class),
         ];
     }
 

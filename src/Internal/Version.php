@@ -50,7 +50,7 @@ final class Version
         if (self::$libraryVersion === null) {
             try {
                 self::$libraryVersion = InstalledVersions::getRootPackage()['reference'];
-            } catch (\OutOfBoundsException $e) {
+            } catch (\OutOfBoundsException $_) {
                 self::$libraryVersion = self::DEFAULT_LIBRARY_VERSION;
             }
         }
@@ -60,7 +60,7 @@ final class Version
 
     /**
      * Feature Version is a semver that represents the feature set of this
-     * Temporal client library support. This can be used for client capibility
+     * Temporal client library support. This can be used for client capability
      * check, on Temporal server, for backward compatibility.
      *
      * @return string

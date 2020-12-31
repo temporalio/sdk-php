@@ -42,7 +42,7 @@ class NullableType extends Type
     public function parse($value, $current)
     {
         if ($value === null) {
-            return $value;
+            return null;
         }
 
         if ($this->type) {
@@ -59,7 +59,7 @@ class NullableType extends Type
     public function serialize($value)
     {
         if ($value === null) {
-            return $value;
+            return null;
         }
 
         if ($this->type) {

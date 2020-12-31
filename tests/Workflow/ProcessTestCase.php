@@ -13,6 +13,8 @@ namespace Temporal\Tests\Workflow;
 
 use Carbon\CarbonInterval;
 use Temporal\Activity\ActivityOptions;
+use Temporal\Internal\DataConverter\DataConverter;
+use Temporal\Internal\DataConverter\ScalarJsonConverter;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\WorkflowInstance;
 use Temporal\Internal\Transport\Request\CompleteWorkflow;
@@ -22,11 +24,11 @@ use Temporal\Internal\Transport\Request\NewTimer;
 use Temporal\Internal\Transport\Request\SideEffect;
 use Temporal\Internal\Workflow\Input;
 use Temporal\Internal\Workflow\Process\Process;
-use Temporal\Tests\Testing\TestingRequest;
 use Temporal\Worker\Command\Request;
 use Temporal\Worker\Command\RequestInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInfo;
+use Temporal\Tests\Testing\TestingRequest;
 
 class ProcessTestCase extends WorkflowTestCase
 {
@@ -68,7 +70,7 @@ class ProcessTestCase extends WorkflowTestCase
                 new \ReflectionObject($this)
             );
 
-            $instance = new WorkflowInstance($prototype, $this);
+            $instance = new WorkflowInstance($prototype, new DataConverter(new ScalarJsonConverter()), $this);
 
             return new Process(new Input(), $this->services, $instance);
         } finally {
@@ -92,7 +94,7 @@ class ProcessTestCase extends WorkflowTestCase
         $request->assertName(ExecuteActivity::NAME);
 
         $request->assertParamsKeySame('name', 'ExampleActivity');
-        $request->assertParamsKeySame('arguments', [0xDEAD_BEEF]);
+        $request->assertParamsKeySamePayload('arguments', [0xDEAD_BEEF]);
     }
 
     /**
@@ -176,7 +178,7 @@ class ProcessTestCase extends WorkflowTestCase
      */
     public function testSideEffectDuringFirstWorkflowExecution(): void
     {
-        $value = \random_bytes(42);
+        $value = \base64_encode(\random_bytes(42));
 
         $this->env->setIsReplaying(false);
 
@@ -188,7 +190,7 @@ class ProcessTestCase extends WorkflowTestCase
         $request = $this->queue->first();
 
         $request->assertName(SideEffect::NAME);
-        $request->assertParamsKeySame('value', $value);
+        $request->assertParamsKeySamePayload('value', $value);
     }
 
     /**
@@ -209,7 +211,7 @@ class ProcessTestCase extends WorkflowTestCase
         $request = $this->queue->first();
 
         $request->assertName(SideEffect::NAME);
-        $request->assertParamsKeySame('value', null);
+        $request->assertParamsKeySamePayload('value', null);
     }
 
     /**
@@ -267,24 +269,21 @@ class ProcessTestCase extends WorkflowTestCase
         /** @var TestingRequest $request */
         $request = $this->queue->assertCount(1)
             ->pop()
-                ->assertName('First Request')
-        ;
+                ->assertName('First Request');
         $this->successResponseAndNext($request, 'First Request');
 
 
         /** @var TestingRequest $request */
         $request = $this->queue->assertCount(1)
             ->pop()
-                ->assertName('First Scoped Request')
-        ;
+                ->assertName('First Scoped Request');
         $this->successResponseAndNext($request, 'First Scoped Request');
 
 
         /** @var TestingRequest $request */
         $request = $this->queue->assertCount(1)
             ->pop()
-                ->assertName('Second Scoped Request')
-        ;
+                ->assertName('Second Scoped Request');
         $this->successResponseAndNext($request, 'Second Scoped Request');
 
 
@@ -292,16 +291,14 @@ class ProcessTestCase extends WorkflowTestCase
 
         $request = $this->queue
             ->pop()
-                ->assertName('Second Request')
-        ;
+                ->assertName('Second Request');
 
         $this->successResponseAndNext($request, 'Second Request');
 
         $this->queue->assertCount(1)
             ->pop()
                 ->assertName(CompleteWorkflow::NAME)
-                ->assertParamsKeySame('result', [42])
-        ;
+                ->assertParamsKeySamePayload('result', [42]);
     }
 
 

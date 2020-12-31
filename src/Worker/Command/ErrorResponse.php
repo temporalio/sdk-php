@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Command;
 
+use JetBrains\PhpStorm\ArrayShape;
+
 class ErrorResponse extends Response implements ErrorResponseInterface
 {
     /**

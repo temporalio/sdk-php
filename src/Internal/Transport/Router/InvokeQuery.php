@@ -11,7 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport\Router;
 
+use JetBrains\PhpStorm\Pure;
 use React\Promise\Deferred;
+use Temporal\DataConverter\Payload;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Worker\LoopInterface;
@@ -32,6 +34,7 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
      * @param RepositoryInterface $running
      * @param LoopInterface $loop
      */
+    #[Pure]
     public function __construct(RepositoryInterface $running, LoopInterface $loop)
     {
         $this->loop = $loop;
@@ -46,10 +49,24 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
     {
         ['runId' => $runId, 'name' => $name] = $payload;
 
+        // TODO: handle on protobuf level
+        // TODO: reduce side-effect (do not use references!!11)
+        foreach ($payload['args'] as &$arg) {
+            $arg = Payload::createRaw($arg['metadata'], $arg['data'] ?? null);
+            unset($arg);
+        }
+
         $instance = $this->findInstanceOrFail($runId);
         $handler = $this->findQueryHandlerOrFail($instance, $name);
 
-        $executor = static fn() => $resolver->resolve($handler($payload['args'] ?? []));
+        $executor = static function () use ($payload, $resolver, $handler, $instance) {
+
+            $result = $handler($payload['args'] ?? []);
+            $result = $instance->getDataConverter()->toPayloads([$result]);
+
+            $resolver->resolve($result);
+        };
+
         $this->loop->once(LoopInterface::ON_QUERY, $executor);
     }
 

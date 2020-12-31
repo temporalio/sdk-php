@@ -11,11 +11,18 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration;
 
+use Temporal\DataConverter\DataConverterInterface;
+
 /**
  * @psalm-import-type DispatchableHandler from InstanceInterface
  */
 interface WorkflowInstanceInterface extends InstanceInterface
 {
+    /**
+     * @return DataConverterInterface
+     */
+    public function getDataConverter(): DataConverterInterface;
+
     /**
      * @param string $name
      * @return \Closure|null

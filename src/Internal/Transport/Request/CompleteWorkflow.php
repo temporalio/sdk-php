@@ -21,7 +21,7 @@ final class CompleteWorkflow extends Request
     public const NAME = 'CompleteWorkflow';
 
     /**
-     * @param $result
+     * @param mixed $result
      */
     public function __construct($result)
     {
