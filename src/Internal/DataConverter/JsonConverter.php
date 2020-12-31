@@ -7,13 +7,13 @@
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
 
 namespace Temporal\Client\Internal\DataConverter;
 
 use Temporal\Client\DataConverter\EncodingKeys;
 use Temporal\Client\DataConverter\Payload;
 use Temporal\Client\DataConverter\PayloadConverterInterface;
-use ReflectionType;
 use Temporal\Client\Exception\DataConverterException;
 use Temporal\Client\Internal\Marshaller\MarshallerInterface;
 
@@ -43,38 +43,35 @@ class JsonConverter implements PayloadConverterInterface
     /**
      * @param mixed $value
      * @return Payload|null
+     * @throws \JsonException
      */
     public function toPayload($value): ?Payload
     {
-        if (is_object($value)) {
+        if (\is_object($value)) {
             $value = $this->marshaller->marshal($value);
         }
 
         return Payload::create(
             [EncodingKeys::METADATA_ENCODING_KEY => EncodingKeys::METADATA_ENCODING_JSON],
-            json_encode($value)
+            \json_encode($value, \JSON_THROW_ON_ERROR)
         );
     }
 
     /**
      * @param Payload $payload
-     * @param ReflectionType|null $type
+     * @param \ReflectionType|null $type
      * @return mixed|void
+     * @throws \ReflectionException
      */
-    public function fromPayload(Payload $payload, ?ReflectionType $type)
+    public function fromPayload(Payload $payload, ?\ReflectionType $type)
     {
         try {
-            $data = json_decode($payload->getData(), true, JSON_THROW_ON_ERROR);
+            $data = \json_decode($payload->getData(), true, 512, \JSON_THROW_ON_ERROR);
         } catch (\Throwable $e) {
             throw new DataConverterException($e->getMessage(), $e->getCode(), $e);
         }
 
-        if (
-            $type !== null
-            && is_array($data)
-            && $type instanceof \ReflectionNamedType
-            && class_exists($type->getName())
-        ) {
+        if (\is_array($data) && $type instanceof \ReflectionNamedType && ! $type->isBuiltin()) {
             $obj = new \ReflectionClass($type->getName());
 
             return $this->marshaller->unmarshal($data, $obj->newInstanceWithoutConstructor());

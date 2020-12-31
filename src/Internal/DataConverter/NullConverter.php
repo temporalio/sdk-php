@@ -7,9 +7,10 @@
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace Temporal\Client\Internal\DataConverter;
 
-use ReflectionType;
 use Temporal\Client\DataConverter\EncodingKeys;
 use Temporal\Client\DataConverter\Payload;
 use Temporal\Client\DataConverter\PayloadConverterInterface;
@@ -43,13 +44,13 @@ class NullConverter implements PayloadConverterInterface
 
     /**
      * @param Payload $payload
-     * @param ReflectionType|null $type
+     * @param \ReflectionType|null $type
      * @return null
      */
-    public function fromPayload(Payload $payload, ?ReflectionType $type)
+    public function fromPayload(Payload $payload, ?\ReflectionType $type)
     {
-        if ($type !== null && !$type->allowsNull()) {
-            throw new DataConverterException("Unable to convert null to non nullable type");
+        if ($type !== null && ! $type->allowsNull()) {
+            throw new DataConverterException('Unable to convert null to non nullable type');
         }
 
         return null;

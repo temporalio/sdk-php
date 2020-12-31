@@ -7,6 +7,8 @@
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace Temporal\Client\Internal\DataConverter;
 
 use Temporal\Client\DataConverter\DataConverterInterface;
@@ -14,7 +16,6 @@ use Temporal\Client\DataConverter\EncodingKeys;
 use Temporal\Client\DataConverter\Payload;
 use Temporal\Client\DataConverter\PayloadConverterInterface;
 use Temporal\Client\Exception\DataConverterException;
-use ReflectionType;
 
 class DataConverter implements DataConverterInterface
 {
@@ -35,7 +36,7 @@ class DataConverter implements DataConverterInterface
 
     /**
      * @param array<Payload> $payloads
-     * @param array<ReflectionType> $types
+     * @param array<\ReflectionType> $types
      * @return array
      */
     public function fromPayloads(array $payloads, array $types): array
@@ -45,7 +46,7 @@ class DataConverter implements DataConverterInterface
             $encoding = $payload->getMetadata()[EncodingKeys::METADATA_ENCODING_KEY];
 
             if (!isset($this->converters[$encoding])) {
-                throw new DataConverterException(sprintf("Undefined payload encoding %s", $encoding));
+                throw new DataConverterException(sprintf('Undefined payload encoding %s', $encoding));
             }
 
             $values[] = $this->converters[$encoding]->fromPayload($payload, $types[$i] ?? null);
@@ -61,9 +62,11 @@ class DataConverter implements DataConverterInterface
     public function toPayloads(array $values): array
     {
         $payloads = [];
+
         foreach ($values as $value) {
             foreach ($this->converters as $converter) {
                 $payload = $converter->toPayload($value);
+
                 if ($payload !== null) {
                     $payloads[] = $payload;
                     continue 2;
@@ -71,7 +74,7 @@ class DataConverter implements DataConverterInterface
             }
 
             throw new DataConverterException(
-                sprintf("Unable to convert value of type %s to Payload", gettype($value))
+                \sprintf('Unable to convert value of type %s to Payload', \get_debug_type($value))
             );
         }
 

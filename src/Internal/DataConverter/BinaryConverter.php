@@ -7,13 +7,14 @@
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace Temporal\Client\Internal\DataConverter;
 
 use Temporal\Client\DataConverter\Bytes;
 use Temporal\Client\DataConverter\EncodingKeys;
 use Temporal\Client\DataConverter\Payload;
 use Temporal\Client\DataConverter\PayloadConverterInterface;
-use ReflectionType;
 use Temporal\Client\Exception\DataConverterException;
 
 class BinaryConverter implements PayloadConverterInterface
@@ -44,17 +45,17 @@ class BinaryConverter implements PayloadConverterInterface
 
     /**
      * @param Payload $payload
-     * @param ReflectionType|null $type
+     * @param \ReflectionType|null $type
      * @return Bytes
      */
-    public function fromPayload(Payload $payload, ?ReflectionType $type)
+    public function fromPayload(Payload $payload, ?\ReflectionType $type)
     {
         if ($type === null || !$type instanceof \ReflectionNamedType) {
-            throw new DataConverterException("Unable to convert raw data to non Bytes type");
+            throw new DataConverterException('Unable to convert raw data to non Bytes type');
         }
 
         if ($type->getName() !== Bytes::class) {
-            throw new DataConverterException("Unable to convert raw data to non Bytes type");
+            throw new DataConverterException('Unable to convert raw data to non Bytes type');
         }
 
         return new Bytes($payload->getData());
