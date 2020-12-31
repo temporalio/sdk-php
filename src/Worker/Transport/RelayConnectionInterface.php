@@ -15,7 +15,6 @@ use Temporal\Exception\TransportException;
 
 /**
  * @psalm-type Headers = array<string, mixed>
- * @psalm-type Message = array { 0: string, 1: Headers }
  */
 interface RelayConnectionInterface
 {
