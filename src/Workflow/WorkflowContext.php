@@ -263,6 +263,7 @@ class WorkflowContext implements WorkflowContextInterface
             return $result;
         };
 
+        /** @psalm-suppress UnusedClosureParam */
         $otherwise = function (\Throwable $error): void {
             $this->process->cancel();
 

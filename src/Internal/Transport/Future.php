@@ -14,6 +14,7 @@ namespace Temporal\Internal\Transport;
 use React\Promise\CancellablePromiseInterface;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
+use Temporal\Worker\LoopInterface;
 use Temporal\Worker\TaskQueueInterface;
 
 class Future implements FutureInterface
@@ -120,7 +121,7 @@ class Future implements FutureInterface
         $this->resolved = true;
         $this->value = $result;
 
-        $this->taskQueue->once(TaskQueueInterface::ON_CALLBACK, function () {
+        $this->taskQueue->once(LoopInterface::ON_CALLBACK, function () {
             $this->deferred->resolve($this->value);
         });
     }
@@ -132,7 +133,7 @@ class Future implements FutureInterface
     {
         $this->resolved = true;
 
-        $this->taskQueue->once(TaskQueueInterface::ON_CALLBACK, function () use ($e) {
+        $this->taskQueue->once(LoopInterface::ON_CALLBACK, function () use ($e) {
             $this->deferred->reject($e);
         });
     }

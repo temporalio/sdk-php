@@ -158,10 +158,8 @@ final class WorkflowProxy
      * @param string $name
      * @return WorkflowPrototype|null
      */
-    #[Pure]
-    private function findPrototypeByHandlerName(
-        string $name
-    ): ?WorkflowPrototype {
+    private function findPrototypeByHandlerName(string $name): ?WorkflowPrototype
+    {
         foreach ($this->workflows as $prototype) {
             $handler = $prototype->getHandler();
 

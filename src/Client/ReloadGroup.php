@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client;
 
 /**
- * @psalm-type ReloadGroupFlags = ReloadGroup::RELOAD_GROUP_*
+ * @psalm-type ReloadGroupFlags = ReloadGroup::GROUP_*
  */
 final class ReloadGroup
 {
