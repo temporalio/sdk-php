@@ -250,7 +250,11 @@ class WorkflowContext implements WorkflowContextInterface, ClientInterface
      */
     public function complete($result = null): PromiseInterface
     {
-        $result = $this->getDataConverter()->toPayloads([$result]);
+        if (! $result instanceof Payload && ! $result instanceof \Throwable) {
+            [$result] = $this->getDataConverter()
+                ->toPayloads([$result])
+            ;
+        }
 
         $this->recordTrace();
 

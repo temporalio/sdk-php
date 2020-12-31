@@ -111,9 +111,8 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
     public function cancel(): void
     {
         try {
-            $this->promise()
-                ->cancel()
-            ;
+            $promise = $this->promise();
+            $promise->cancel();
         } finally {
             foreach ($this->fetchUnresolvedRequests() as $promise) {
                 $promise->cancel();

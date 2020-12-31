@@ -12,9 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Tests\Client\Workflow;
 
 use Temporal\Client\Exception\CancellationException;
-use Temporal\Client\Internal\DataConverter\DataConverter;
-use Temporal\Client\Internal\DataConverter\JsonConverter;
-use Temporal\Client\Internal\DataConverter\ScalarJsonConverter;
 use Temporal\Tests\Client\Testing\TestingRequest;
 
 class CancellationScopeTestCase extends WorkflowTestCase
@@ -102,8 +99,8 @@ class CancellationScopeTestCase extends WorkflowTestCase
             ->assertRequestsCount(1)
             ->assertResponsesCount(0)
             ->shift()
-            ->assertName('CompleteWorkflow')
-            ->assertParamsKeySamePayload('result', [42]);
+                ->assertName('CompleteWorkflow')
+                ->assertParamsKeySamePayload('result', [42]);
     }
 
     public function testMemoizePromise(): void
@@ -114,8 +111,8 @@ class CancellationScopeTestCase extends WorkflowTestCase
             ->assertRequestsCount(1)
             ->assertResponsesCount(0)
             ->shift()
-            ->assertName('CompleteWorkflow')
-            ->getParam('result.0');
+                ->assertName('CompleteWorkflow')
+                ->getParam('result.0');
 
         $this->assertInstanceOf(CancellationException::class, $result);
     }
@@ -146,8 +143,8 @@ class CancellationScopeTestCase extends WorkflowTestCase
             ->assertRequestsCount(1)
             ->assertResponsesCount(0)
             ->shift()
-            ->assertName('CompleteWorkflow')
-            ->assertParamsKeySamePayload('result', ['RESULT']);
+                ->assertName('CompleteWorkflow')
+                ->assertParamsKeySamePayload('result', ['RESULT']);
     }
 
     public function testNestedCancelled(): void
@@ -174,8 +171,8 @@ class CancellationScopeTestCase extends WorkflowTestCase
         $this->queue
             ->assertRequestsCount(1)
             ->shift()
-            ->assertName('CompleteWorkflow')
-            ->assertParamsKeySamePayload('result', [true]);
+                ->assertName('CompleteWorkflow')
+                ->assertParamsKeySamePayload('result', [true]);
     }
 
     public function testChainedWorkflow(): void
@@ -204,7 +201,7 @@ class CancellationScopeTestCase extends WorkflowTestCase
         $this->queue
             ->assertRequestsCount(1)
             ->shift()
-            ->assertName('CompleteWorkflow')
-            ->assertParamsKeySamePayload('result', [0xDEAD_BEEF]);
+                ->assertName('CompleteWorkflow')
+                ->assertParamsKeySamePayload('result', [0xDEAD_BEEF]);
     }
 }
