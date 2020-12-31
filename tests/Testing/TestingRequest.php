@@ -13,6 +13,10 @@ namespace Temporal\Tests\Testing;
 
 use Illuminate\Support\Arr;
 use PHPUnit\Framework\Assert;
+use Temporal\DataConverter\Payload;
+use Temporal\Internal\DataConverter\DataConverter;
+use Temporal\Internal\DataConverter\NullConverter;
+use Temporal\Internal\DataConverter\ScalarJsonConverter;
 use Temporal\Worker\Command\RequestInterface;
 
 /**
@@ -26,14 +30,6 @@ class TestingRequest extends TestingCommand implements RequestInterface
     public function __construct(RequestInterface $request)
     {
         parent::__construct($request);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getName(): string
-    {
-        return $this->command->getName();
     }
 
     /**
@@ -51,9 +47,9 @@ class TestingRequest extends TestingCommand implements RequestInterface
     /**
      * {@inheritDoc}
      */
-    public function getParams(): array
+    public function getName(): string
     {
-        return $this->command->getParams();
+        return $this->command->getName();
     }
 
     /**
@@ -66,6 +62,14 @@ class TestingRequest extends TestingCommand implements RequestInterface
     }
 
     /**
+     * {@inheritDoc}
+     */
+    public function getParams(): array
+    {
+        return $this->command->getParams();
+    }
+
+    /**
      * @param string $expected
      * @param string $message
      * @return $this
@@ -73,6 +77,23 @@ class TestingRequest extends TestingCommand implements RequestInterface
     public function assertParamsSame(array $expected, string $message = ''): self
     {
         Assert::assertSame($expected, $this->getParams(), $message);
+
+        return $this;
+    }
+
+    /**
+     * @param string $key
+     * @param mixed $expected
+     * @param string $message
+     * @return $this
+     */
+    public function assertParamsKeySame(string $key, $expected, string $message = ''): self
+    {
+        if ($expected === null) {
+            $this->assertParamsHasKey($key, $message);
+        }
+
+        Assert::assertEquals($expected, Arr::get($this->getParams(), $key), $message);
 
         return $this;
     }
@@ -95,15 +116,28 @@ class TestingRequest extends TestingCommand implements RequestInterface
      * @param string $message
      * @return $this
      */
-    public function assertParamsKeySame(string $key, $expected, string $message = ''): self
+    public function assertParamsKeySamePayload(string $key, $expected, string $message = ''): self
     {
         if ($expected === null) {
             $this->assertParamsHasKey($key, $message);
         }
 
+        if (is_array($expected)) {
+            $expected = array_map([$this, 'convertValue'], $expected);
+        } else {
+            $expected = $this->convertValue($expected);
+        }
+
         Assert::assertEquals($expected, Arr::get($this->getParams(), $key), $message);
 
         return $this;
+    }
+
+    private function convertValue($value): Payload
+    {
+        $dc = new DataConverter(new NullConverter(), new ScalarJsonConverter());
+
+        return $dc->toPayloads([$value])[0];
     }
 
     /**

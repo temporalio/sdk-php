@@ -23,7 +23,7 @@ final class Assert
         try {
             $constants = (new \ReflectionClass($enum))
                 ->getConstants(\ReflectionClassConstant::IS_PUBLIC);
-        } catch (\ReflectionException $e) {
+        } catch (\ReflectionException $_) {
             return false;
         }
 

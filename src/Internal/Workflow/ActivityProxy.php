@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Workflow;
 
+use JetBrains\PhpStorm\Pure;
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
@@ -51,7 +52,8 @@ class ActivityProxy
         ActivityOptions $options,
         WorkflowContextInterface $context,
         RepositoryInterface $activities
-    ) {
+    )
+    {
         $this->options = $options;
         $this->context = $context;
 
@@ -105,9 +107,11 @@ class ActivityProxy
     {
         $activity = $this->findActivityPrototype($method);
 
-        $method = $activity ? $activity->getId() : $method;
-
-        return $this->context->executeActivity($method, $arguments, $this->options);
+        return $this->context->executeActivity(
+            $activity ? $activity->getId() : $method,
+            $arguments,
+            $this->options
+        );
     }
 
     /**

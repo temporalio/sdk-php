@@ -37,7 +37,7 @@ class SimpleWorkflow
 
         dump('Returned UUID: ' . $result);
 
-        return $input;
+       return $input;
     }
 
     #[SignalMethod(name: 'query')]

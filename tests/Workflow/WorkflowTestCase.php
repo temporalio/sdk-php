@@ -12,22 +12,24 @@ declare(strict_types=1);
 namespace Temporal\Tests\Workflow;
 
 use Spiral\Attributes\AttributeReader;
+use Temporal\Internal\DataConverter\DataConverter;
+use Temporal\Internal\DataConverter\ScalarJsonConverter;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\WorkflowInstance;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Workflow\Input;
 use Temporal\Internal\Workflow\Process\Process;
+use Temporal\Worker\Command\ErrorResponseInterface;
+use Temporal\Worker\Command\RequestInterface;
+use Temporal\Worker\Command\SuccessResponseInterface;
+use Temporal\Workflow\WorkflowInfo;
 use Temporal\Tests\TestCase;
 use Temporal\Tests\Testing\TestingClient;
 use Temporal\Tests\Testing\TestingEnvironment;
 use Temporal\Tests\Testing\TestingLoop;
 use Temporal\Tests\Testing\TestingMarshaller;
 use Temporal\Tests\Testing\TestingQueue;
-use Temporal\Worker\Command\ErrorResponseInterface;
-use Temporal\Worker\Command\RequestInterface;
-use Temporal\Worker\Command\SuccessResponseInterface;
-use Temporal\Workflow\WorkflowInfo;
 
 abstract class WorkflowTestCase extends TestCase
 {
@@ -112,7 +114,7 @@ abstract class WorkflowTestCase extends TestCase
 
         $prototype = new WorkflowPrototype($reflectionFunction->getName(), $reflectionFunction, $reflectionClass);
 
-        return new WorkflowInstance($prototype, new $class());
+        return new WorkflowInstance($prototype, new DataConverter(new ScalarJsonConverter()), new $class());
     }
 
     /**

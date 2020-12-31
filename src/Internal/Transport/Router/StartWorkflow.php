@@ -14,7 +14,6 @@ namespace Temporal\Internal\Transport\Router;
 use React\Promise\Deferred;
 use Temporal\Internal\Declaration\Instantiator\WorkflowInstantiator;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
-use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Workflow\Input;
 use Temporal\Internal\Workflow\Process\Process;
@@ -44,11 +43,10 @@ final class StartWorkflow extends Route
 
     /**
      * @param ServiceContainer $services
-     * @param RepositoryInterface $running
      */
     public function __construct(ServiceContainer $services)
     {
-        $this->instantiator = new WorkflowInstantiator();
+        $this->instantiator = new WorkflowInstantiator($services->dataConverter);
         $this->services = $services;
     }
 

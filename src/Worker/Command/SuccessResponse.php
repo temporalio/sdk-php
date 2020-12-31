@@ -11,10 +11,12 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Command;
 
+use Temporal\DataConverter\Payload;
+
 class SuccessResponse extends Response implements SuccessResponseInterface
 {
     /**
-     * @var array
+     * @var array<Payload>
      */
     protected array $result;
 

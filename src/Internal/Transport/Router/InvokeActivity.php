@@ -51,7 +51,7 @@ final class InvokeActivity extends Route
     {
         $this->rpc = $rpc;
         $this->services = $services;
-        $this->instantiator = new ActivityInstantiator();
+        $this->instantiator = new ActivityInstantiator($services->dataConverter);
     }
 
     /**
@@ -59,9 +59,12 @@ final class InvokeActivity extends Route
      */
     public function handle(array $payload, array $headers, Deferred $resolver): void
     {
-        $context = $this->services->marshaller->unmarshal($payload, new ActivityContext($this->rpc));
+        $context = new ActivityContext($this->rpc, $this->services->dataConverter);
+        $context = $this->services->marshaller->unmarshal($payload, $context);
 
         $prototype = $this->findDeclarationOrFail($context->getInfo());
+
+        // todo: get from container
         $instance = $this->instantiator->instantiate($prototype);
 
         try {
@@ -69,6 +72,8 @@ final class InvokeActivity extends Route
 
             $handler = $instance->getHandler();
             $result = $handler($context->getArguments());
+
+            $result = $this->services->dataConverter->toPayloads([$result]);
 
             if ($context->isDoNotCompleteOnReturn()) {
                 $resolver->reject(DoNotCompleteOnResultException::create());

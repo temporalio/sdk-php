@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Codec\JsonCodec;
 
 use JetBrains\PhpStorm\Pure;
+use Temporal\DataConverter\Payload;
 use Temporal\Worker\Command\CommandInterface;
 use Temporal\Worker\Command\ErrorResponse;
 use Temporal\Worker\Command\ErrorResponseInterface;
@@ -48,11 +49,11 @@ class Parser
     {
         $this->assertCommandId($data);
 
-        if (! \is_string($data['command']) || $data['command'] === '') {
+        if (!\is_string($data['command']) || $data['command'] === '') {
             throw new \InvalidArgumentException('Request command must be a non-empty string');
         }
 
-        if (isset($data['params']) && ! \is_array($data['params'])) {
+        if (isset($data['params']) && !\is_array($data['params'])) {
             throw new \InvalidArgumentException('Request params must be an object');
         }
 
@@ -64,11 +65,11 @@ class Parser
      */
     private function assertCommandId(array $data): void
     {
-        if (! isset($data['id'])) {
+        if (!isset($data['id'])) {
             throw new \InvalidArgumentException('An "id" command argument required');
         }
 
-        if (! $this->isUInt32($data['id'])) {
+        if (!$this->isUInt32($data['id'])) {
             throw new \OutOfBoundsException('Command identifier must be a type of uint32');
         }
     }
@@ -91,17 +92,17 @@ class Parser
     {
         $this->assertCommandId($data);
 
-        if (! isset($data['error']) || ! \is_array($data['error'])) {
+        if (!isset($data['error']) || !\is_array($data['error'])) {
             throw new \InvalidArgumentException('An error response must contain an object "error" field');
         }
 
         $error = $data['error'];
 
-        if (! isset($error['code']) || ! $this->isUInt32($error['code'])) {
+        if (!isset($error['code']) || !$this->isUInt32($error['code'])) {
             throw new \InvalidArgumentException('Error code must contain a valid uint32 value');
         }
 
-        if (! isset($error['message']) || ! \is_string($error['message']) || $error['message'] === '') {
+        if (!isset($error['message']) || !\is_string($error['message']) || $error['message'] === '') {
             throw new \InvalidArgumentException('Error message must contain a valid non-empty string value');
         }
 
@@ -115,6 +116,12 @@ class Parser
     private function parseSuccessResponse(array $data): SuccessResponseInterface
     {
         $this->assertCommandId($data);
+
+        if (isset($data['result'])) {
+            $data['result'] = array_map(static function ($value) {
+                return Payload::createRaw($value['metadata'], $value['data']);
+            }, $data['result']);
+        }
 
         return new SuccessResponse($data['result'] ?? null, $data['id']);
     }

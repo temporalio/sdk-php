@@ -13,6 +13,7 @@ namespace Temporal\Workflow;
 
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
+use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Worker\Environment\EnvironmentInterface;
@@ -31,6 +32,11 @@ interface WorkflowContextInterface extends EnvironmentInterface, ClientInterface
      * @return array
      */
     public function getArguments(): array;
+
+    /**
+     * @return DataConverterInterface
+     */
+    public function getDataConverter(): DataConverterInterface;
 
     /**
      * @param string $queryType
@@ -99,8 +105,6 @@ interface WorkflowContextInterface extends EnvironmentInterface, ClientInterface
     public function newChildWorkflowStub(string $class, ChildWorkflowOptions $options = null): object;
 
     /**
-     * @psalm-param class-string|string $type
-     *
      * @param string $type
      * @param array $args
      * @param ActivityOptions|null $options

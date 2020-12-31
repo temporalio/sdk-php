@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Client;
 
 use JetBrains\PhpStorm\ExpectedValues;
-use Temporal\Workflow\WorkflowExecution;
 
 /**
  * @psalm-import-type ReloadGroupFlags from ReloadGroup
@@ -24,7 +23,9 @@ interface ClientInterface
      * @return iterable
      */
     #[ExpectedValues(flagsFromClass: ReloadGroup::class)]
-    public function reload(int $group = ReloadGroup::GROUP_ALL): iterable;
+    public function reload(
+        int $group = ReloadGroup::GROUP_ALL
+    ): iterable;
 
     /**
      * @psalm-template T of object

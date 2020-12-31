@@ -22,6 +22,8 @@ use Spiral\Attributes\ReaderInterface;
 use Spiral\Goridge\Relay;
 use Temporal\Internal\Codec\CodecInterface;
 use Temporal\Internal\Codec\JsonCodec;
+use Temporal\Internal\DataConverter\DataConverter;
+use Temporal\Internal\DataConverter\ScalarJsonConverter;
 use Temporal\Internal\Events\EventEmitterTrait;
 use Temporal\Internal\Queue\ArrayQueue;
 use Temporal\Internal\Queue\QueueInterface;
@@ -174,7 +176,6 @@ final class Worker implements FactoryInterface
     /**
      * @return RepositoryInterface<TaskQueueInterface>
      */
-    #[Pure]
     private function createTaskQueue(): RepositoryInterface
     {
         return new ArrayRepository();
@@ -186,7 +187,10 @@ final class Worker implements FactoryInterface
     private function createRouter(): RouterInterface
     {
         $router = new Router();
-        $router->add(new Router\GetWorkerInfo($this->queues));
+        $router->add(new Router\GetWorkerInfo(
+            $this->queues,
+            new DataConverter(new ScalarJsonConverter())
+        ));
 
         return $router;
     }

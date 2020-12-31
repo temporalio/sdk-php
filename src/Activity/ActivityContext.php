@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Activity;
 
+use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\Payload;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Meta\MarshalArray;
 use Temporal\Worker\Transport\RpcConnectionInterface;
@@ -26,7 +28,7 @@ final class ActivityContext implements ActivityContextInterface
     /**
      * @var array
      */
-    #[MarshalArray(name: 'args')]
+    #[MarshalArray(name: 'args', of: Payload::class)]
     private array $arguments = [];
 
     /**
@@ -40,12 +42,19 @@ final class ActivityContext implements ActivityContextInterface
     private RpcConnectionInterface $rpc;
 
     /**
-     * @param RpcConnectionInterface $rpc
+     * @var DataConverterInterface
      */
-    public function __construct(RpcConnectionInterface $rpc)
+    private DataConverterInterface $dataConverter;
+
+    /**
+     * @param RpcConnectionInterface $rpc
+     * @param DataConverterInterface $dataConverter
+     */
+    public function __construct(RpcConnectionInterface $rpc, DataConverterInterface $dataConverter)
     {
         $this->info = new ActivityInfo();
         $this->rpc = $rpc;
+        $this->dataConverter = $dataConverter;
     }
 
     /**
@@ -62,6 +71,14 @@ final class ActivityContext implements ActivityContextInterface
     public function getInfo(): ActivityInfo
     {
         return $this->info;
+    }
+
+    /**
+     * @return DataConverterInterface
+     */
+    public function getDataConverter(): DataConverterInterface
+    {
+        return $this->dataConverter;
     }
 
     /**
@@ -88,7 +105,7 @@ final class ActivityContext implements ActivityContextInterface
     {
         return $this->rpc->call('temporal.RecordActivityHeartbeat', [
             'TaskToken' => $this->info->taskToken,
-            'Details'   => $details,
+            'Details' => $details,
         ]);
     }
 }

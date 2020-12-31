@@ -101,7 +101,7 @@ class Decorator implements CoroutineInterface
         }
 
         if ($this->iterator->valid()) {
-            throw new \LogicException('Cannot get return value of an iterator that hasn\'t returned');
+            throw new \LogicException('Cannot get return value of an iterator that has not returned');
         }
 
         return null;

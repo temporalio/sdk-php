@@ -62,7 +62,6 @@ final class CronSchedule implements NamedArgumentConstructorAttribute, \Stringab
      *
      * @return string
      */
-    #[Pure]
     public function toCron(): string
     {
         return \vsprintf('%s %s %s %s *', [
