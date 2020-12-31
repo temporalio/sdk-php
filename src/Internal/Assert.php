@@ -21,13 +21,18 @@ final class Assert
     public static function enum($value, string $enum): bool
     {
         try {
-            $constants = (new \ReflectionClass($enum))
-                ->getConstants(\ReflectionClassConstant::IS_PUBLIC);
+            $constants = (new \ReflectionClass($enum))->getReflectionConstants();
         } catch (\ReflectionException $_) {
             return false;
         }
 
-        return \in_array($value, $constants, true);
+        foreach ($constants as $constant) {
+            if ($constant->isPublic() && $value === $constant->getValue()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
