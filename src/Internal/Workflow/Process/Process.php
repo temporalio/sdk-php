@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Workflow\Process;
 
+use Temporal\Exception\CancellationException;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Workflow\Input;
@@ -78,10 +79,21 @@ class Process extends Scope implements ProcessInterface
     /**
      * @return void
      */
-    public function cancel(): void
+    public function kill(): void
     {
         $this->services->running->pull($this->getId());
 
         parent::cancel();
+    }
+
+    /**
+     * @return void
+     */
+    public function sendCancel(): void
+    {
+        // todo: improve
+        $this->makeCurrent();
+        $this->coroutine->throw(new CancellationException());
+        $this->next();
     }
 }

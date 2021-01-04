@@ -15,14 +15,13 @@ use React\Promise\Deferred;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Workflow\Process\Process;
-use Temporal\Workflow;
 
-class DestroyWorkflow extends WorkflowProcessAwareRoute
+class CancelWorkflow extends WorkflowProcessAwareRoute
 {
     /**
      * @var string
      */
-    private const ERROR_PROCESS_NOT_DEFINED = 'Unable to kill workflow because workflow process #%s was not found';
+    private const ERROR_PROCESS_NOT_DEFINED = 'Unable to cancel workflow because workflow process #%s was not found';
 
     /**
      * @var ClientInterface
@@ -49,7 +48,7 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
 
         $process = $this->findProcessOrFail($runId);
 
-        $this->kill($runId);
+        $this->cancel($runId);
 
         $info = $process->getContext()->getInfo();
 
@@ -62,7 +61,7 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
      * @param string $runId
      * @return array
      */
-    public function kill(string $runId): array
+    public function cancel(string $runId): array
     {
         /** @var Process $process */
         $process = $this->running->find($runId);
@@ -71,10 +70,7 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
             throw new \InvalidArgumentException(\sprintf(self::ERROR_PROCESS_NOT_DEFINED, $runId));
         }
 
-        Workflow::setCurrentContext(null);
-        $this->running->remove($runId);
-
-        $process->kill();
+        $process->sendCancel();
 
         return [];
     }
