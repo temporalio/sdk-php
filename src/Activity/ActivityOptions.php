@@ -27,7 +27,6 @@ use Temporal\Worker\FactoryInterface;
  * seconds and uses `ceil($interval->s)` as the duration. But is subjected to
  * change in the future.
  *
- * @psalm-import-type RetryOptionsArray from RetryOptions
  * @psalm-import-type DateIntervalValue from DateInterval
  */
 class ActivityOptions

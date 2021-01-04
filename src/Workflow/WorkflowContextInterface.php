@@ -96,9 +96,9 @@ interface WorkflowContextInterface extends EnvironmentInterface, ClientInterface
     ): PromiseInterface;
 
     /**
-     * @psalm-template WorkflowType
-     * @psalm-param class-string<WorkflowType> $class
-     * @psalm-return WorkflowType
+     * @psalm-template TWorkflow
+     * @psalm-param class-string<TWorkflow> $class
+     * @psalm-return TWorkflow
      *
      * @param string $class
      * @param ChildWorkflowOptions|null $options
@@ -116,12 +116,12 @@ interface WorkflowContextInterface extends EnvironmentInterface, ClientInterface
     public function executeActivity(string $type, array $args = [], ActivityOptions $options = null, \ReflectionType $returnType = null): PromiseInterface;
 
     /**
-     * @psalm-template ActivityType
-     * @psalm-param class-string<ActivityType> $class
-     * @psalm-return ActivityType
+     * @psalm-template TActivity
+     * @psalm-param class-string<TActivity> $class
+     * @psalm-return TActivity
      *
      * @param string $class
-     * @param ChildWorkflowOptions|null $options
+     * @param ActivityOptions|null $options
      * @return object
      */
     public function newActivityStub(string $class, ActivityOptions $options = null): object;

@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Workflow;
 
+use JetBrains\PhpStorm\Pure;
 use React\Promise\PromiseInterface;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Repository\RepositoryInterface;
@@ -22,7 +23,7 @@ use Temporal\Workflow\WorkflowContextInterface;
  * @internal ChildWorkflowProxy is an internal library class, please do not use it in your code.
  * @psalm-internal Temporal\Client
  *
- * @psalm-template Workflow of object
+ * @psalm-template TWorkflow of object
  */
 class ChildWorkflowProxy
 {
@@ -42,7 +43,7 @@ class ChildWorkflowProxy
     private WorkflowContextInterface $context;
 
     /**
-     * @param class-string<Workflow> $class
+     * @param class-string<TWorkflow> $class
      * @param ChildWorkflowOptions $options
      * @param WorkflowContextInterface $context
      * @param RepositoryInterface<WorkflowPrototype> $workflows
