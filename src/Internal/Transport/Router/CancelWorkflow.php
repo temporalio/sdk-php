@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
+use Temporal\Exception\CancellationException;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Workflow\Process\Process;
@@ -48,9 +49,7 @@ class CancelWorkflow extends WorkflowProcessAwareRoute
 
         $this->cancel($runId);
 
-        $resolver->resolve([
-            'Cancelled' => true
-        ]);
+        $resolver->resolve(['Cancelled' => true]);
     }
 
     /**
@@ -66,7 +65,7 @@ class CancelWorkflow extends WorkflowProcessAwareRoute
             throw new \InvalidArgumentException(\sprintf(self::ERROR_PROCESS_NOT_DEFINED, $runId));
         }
 
-        $process->sendCancel();
+        $process->throw(new CancellationException('External cancellation request'));
 
         return [];
     }
