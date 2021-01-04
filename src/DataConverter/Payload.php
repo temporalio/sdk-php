@@ -20,7 +20,7 @@ final class Payload implements \JsonSerializable
     private array $metadata;
 
     #[Marshal(name: 'data')]
-    private string $data;
+    private string $data = '';
 
     /**
      * @param array $metadata
