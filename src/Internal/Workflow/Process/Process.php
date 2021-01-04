@@ -91,9 +91,19 @@ class Process extends Scope implements ProcessInterface
      */
     public function sendCancel(): void
     {
-        // todo: improve
-        $this->makeCurrent();
-        $this->coroutine->throw(new CancellationException());
-        $this->next();
+        $this->nextStep->reject(new CancellationException());
+    }
+
+    /**
+     * @param \Throwable $e
+     */
+    protected function onException(\Throwable $e)
+    {
+        if ($e instanceof CancellationException) {
+            $this->cancel();
+        }
+
+        // todo: complete with error
+        $this->context->complete($e);
     }
 }

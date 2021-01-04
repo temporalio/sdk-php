@@ -72,7 +72,6 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
         }
 
         Workflow::setCurrentContext(null);
-        $this->running->remove($runId);
 
         $process->kill();
 

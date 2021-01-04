@@ -46,14 +46,10 @@ class CancelWorkflow extends WorkflowProcessAwareRoute
     {
         ['runId' => $runId] = $payload;
 
-        $process = $this->findProcessOrFail($runId);
-
         $this->cancel($runId);
 
-        $info = $process->getContext()->getInfo();
-
         $resolver->resolve([
-            'WorkflowExecution' => $info->execution
+            'Cancelled' => true
         ]);
     }
 
