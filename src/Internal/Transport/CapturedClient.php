@@ -41,7 +41,8 @@ class CapturedClient implements CapturedClientInterface
     public function request(RequestInterface $request): PromiseInterface
     {
         return $this->requests[$request->getId()] = $this->parent->request($request)
-            ->then($this->onFulfilled($request), $this->onRejected($request));
+            ->then($this->onFulfilled($request), $this->onRejected($request))
+        ;
     }
 
     /**
