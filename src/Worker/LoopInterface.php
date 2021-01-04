@@ -18,7 +18,7 @@ use Temporal\Internal\Events\EventListenerInterface;
  * creating an event loop.
  *
  * Besides defining a few methods, this interface also implements
- * the {@see EventEmitterInterface} which allows you to react to certain events.
+ * the {@see EventListenerInterface} which allows you to react to certain events.
  *
  * @implements EventEmitterInterface<FactoryInterface::ON_*>
  */

@@ -11,8 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Worker;
 
-use Temporal\Internal\DataConverter\DataConverter;
-use Temporal\Internal\DataConverter\ScalarJsonConverter;
+use Temporal\DataConverter\DataConverter;
+use Temporal\DataConverter\JsonConverter;
 use Temporal\Internal\Declaration\Dispatcher\AutowiredPayloads;
 
 function global_function(): int
@@ -71,7 +71,7 @@ class AutowiringTestCase extends WorkerTestCase
      */
     public function testInstanceCallMethodInvocation(\ReflectionFunctionAbstract $fn): void
     {
-        $handler = new AutowiredPayloads($fn, new DataConverter(new ScalarJsonConverter()));
+        $handler = new AutowiredPayloads($fn, new DataConverter(new JsonConverter()));
 
         // If the static context is required, then the method invocation with
         // "this" context should return an BadMethodCallException error.
@@ -89,7 +89,7 @@ class AutowiringTestCase extends WorkerTestCase
      */
     public function testStaticCallMethodInvocation(\ReflectionFunctionAbstract $fn): void
     {
-        $handler = new AutowiredPayloads($fn, new DataConverter(new ScalarJsonConverter()));
+        $handler = new AutowiredPayloads($fn, new DataConverter(new JsonConverter()));
 
         // If the object context is required, then the method invocation without
         // "this" context should return an BadMethodCallException error.

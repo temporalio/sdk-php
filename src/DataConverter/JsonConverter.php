@@ -9,50 +9,44 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Internal\DataConverter;
+namespace Temporal\DataConverter;
 
-use Temporal\DataConverter\EncodingKeys;
-use Temporal\DataConverter\Payload;
-use Temporal\DataConverter\PayloadConverterInterface;
 use Temporal\Exception\DataConverterException;
 
-class NullConverter implements PayloadConverterInterface
+class JsonConverter implements PayloadConverterInterface
 {
     /**
      * @return string
      */
     public function getEncodingType(): string
     {
-        return EncodingKeys::METADATA_ENCODING_NULL;
+        return EncodingKeys::METADATA_ENCODING_JSON;
     }
 
     /**
      * @param mixed $value
      * @return Payload|null
+     * @throws \JsonException
      */
     public function toPayload($value): ?Payload
     {
-        if ($value !== null) {
-            return null;
-        }
-
         return Payload::create(
-            [EncodingKeys::METADATA_ENCODING_KEY => EncodingKeys::METADATA_ENCODING_NULL],
-            ''
+            [EncodingKeys::METADATA_ENCODING_KEY => EncodingKeys::METADATA_ENCODING_JSON],
+            \json_encode($value, \JSON_THROW_ON_ERROR)
         );
     }
 
     /**
      * @param Payload $payload
      * @param \ReflectionType|null $type
-     * @return null
+     * @return mixed|void
      */
     public function fromPayload(Payload $payload, ?\ReflectionType $type)
     {
-        if ($type !== null && ! $type->allowsNull()) {
-            throw new DataConverterException('Unable to convert null to non nullable type');
+        try {
+            return \json_decode($payload->getData(), true, 512, \JSON_THROW_ON_ERROR);
+        } catch (\Throwable $e) {
+            throw new DataConverterException($e->getMessage(), $e->getCode(), $e);
         }
-
-        return null;
     }
 }

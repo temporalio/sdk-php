@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Internal\DataConverter;
+namespace Temporal\DataConverter;
 
 use Temporal\DataConverter\Bytes;
 use Temporal\DataConverter\EncodingKeys;

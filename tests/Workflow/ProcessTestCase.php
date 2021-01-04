@@ -13,8 +13,7 @@ namespace Temporal\Tests\Workflow;
 
 use Carbon\CarbonInterval;
 use Temporal\Activity\ActivityOptions;
-use Temporal\Internal\DataConverter\DataConverter;
-use Temporal\Internal\DataConverter\ScalarJsonConverter;
+use Temporal\DataConverter\DataConverter;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\WorkflowInstance;
 use Temporal\Internal\Transport\Request\CompleteWorkflow;
@@ -70,7 +69,7 @@ class ProcessTestCase extends WorkflowTestCase
                 new \ReflectionObject($this)
             );
 
-            $instance = new WorkflowInstance($prototype, new DataConverter(new ScalarJsonConverter()), $this);
+            $instance = new WorkflowInstance($prototype, DataConverter::createDefault(), $this);
 
             return new Process(new Input(), $this->services, $instance);
         } finally {
@@ -94,7 +93,7 @@ class ProcessTestCase extends WorkflowTestCase
         $request->assertName(ExecuteActivity::NAME);
 
         $request->assertParamsKeySame('name', 'ExampleActivity');
-        $request->assertParamsKeySamePayload('arguments', [0xDEAD_BEEF]);
+        $request->assertParamsKeySame('arguments', [0xDEAD_BEEF]);
     }
 
     /**
@@ -190,7 +189,7 @@ class ProcessTestCase extends WorkflowTestCase
         $request = $this->queue->first();
 
         $request->assertName(SideEffect::NAME);
-        $request->assertParamsKeySamePayload('value', $value);
+        $request->assertParamsKeySame('value', $value);
     }
 
     /**
@@ -211,7 +210,7 @@ class ProcessTestCase extends WorkflowTestCase
         $request = $this->queue->first();
 
         $request->assertName(SideEffect::NAME);
-        $request->assertParamsKeySamePayload('value', null);
+        $request->assertParamsKeySame('value', null);
     }
 
     /**
@@ -298,9 +297,8 @@ class ProcessTestCase extends WorkflowTestCase
         $this->queue->assertCount(1)
             ->pop()
                 ->assertName(CompleteWorkflow::NAME)
-                ->assertParamsKeySamePayload('result', [42]);
+                ->assertParamsKeySame('result', [42]);
     }
-
 
     /**
      * @return void

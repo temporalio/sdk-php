@@ -9,9 +9,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Internal\Codec\JsonCodec;
+namespace Temporal\Worker\Codec\JsonCodec;
 
 use JetBrains\PhpStorm\Pure;
+use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\Payload;
 use Temporal\Worker\Command\CommandInterface;
 use Temporal\Worker\Command\ErrorResponse;
@@ -23,6 +24,19 @@ use Temporal\Worker\Command\SuccessResponseInterface;
 
 class Parser
 {
+    /**
+     * @var DataConverterInterface
+     */
+    private DataConverterInterface $dataConverter;
+
+    /**
+     * @param DataConverterInterface $dataConverter
+     */
+    public function __construct(DataConverterInterface $dataConverter)
+    {
+        $this->dataConverter = $dataConverter;
+    }
+
     /**
      * @param array $command
      * @return CommandInterface
@@ -117,6 +131,7 @@ class Parser
     {
         $this->assertCommandId($data);
 
+        // todo: do we need data encoder here?
         if (isset($data['result'])) {
             $data['result'] = array_map(static function ($value) {
                 return Payload::createRaw($value['metadata'], $value['data']);

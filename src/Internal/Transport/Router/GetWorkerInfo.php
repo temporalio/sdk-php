@@ -26,18 +26,11 @@ final class GetWorkerInfo extends Route
     private RepositoryInterface $queues;
 
     /**
-     * @var DataConverterInterface
-     */
-    private DataConverterInterface $dataConverter;
-
-    /**
      * @param RepositoryInterface $queues
-     * @param DataConverterInterface $dataConverter
      */
-    public function __construct(RepositoryInterface $queues, DataConverterInterface $dataConverter)
+    public function __construct(RepositoryInterface $queues)
     {
         $this->queues = $queues;
-        $this->dataConverter = $dataConverter;
     }
 
     /**
@@ -51,7 +44,7 @@ final class GetWorkerInfo extends Route
             $result[] = $this->workerToArray($taskQueue);
         }
 
-        $resolver->resolve($this->dataConverter->toPayloads($result));
+        $resolver->resolve($result);
     }
 
     /**
@@ -61,10 +54,10 @@ final class GetWorkerInfo extends Route
     private function workerToArray(TaskQueueInterface $taskQueue): array
     {
         return [
-            'TaskQueue'  => $taskQueue->getId(),
-            'Workflows'  => $this->map($taskQueue->getWorkflows(), function (WorkflowPrototype $workflow) {
+            'TaskQueue' => $taskQueue->getId(),
+            'Workflows' => $this->map($taskQueue->getWorkflows(), function (WorkflowPrototype $workflow) {
                 return [
-                    'Name'    => $workflow->getId(),
+                    'Name' => $workflow->getId(),
                     'Queries' => $this->keys($workflow->getQueryHandlers()),
                     'Signals' => $this->keys($workflow->getSignalHandlers()),
                 ];
@@ -73,8 +66,7 @@ final class GetWorkerInfo extends Route
                 return [
                     'Name' => $activity->getId(),
                 ];
-            })
-            ,
+            }),
         ];
     }
 

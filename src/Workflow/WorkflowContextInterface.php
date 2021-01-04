@@ -85,12 +85,14 @@ interface WorkflowContextInterface extends EnvironmentInterface, ClientInterface
      * @param class-string|string $type
      * @param array $args
      * @param ChildWorkflowOptions|null $options
+     * @param \ReflectionType|null $returnType
      * @return PromiseInterface
      */
     public function executeChildWorkflow(
         string $type,
         array $args = [],
-        ChildWorkflowOptions $options = null
+        ChildWorkflowOptions $options = null,
+        \ReflectionType $returnType = null
     ): PromiseInterface;
 
     /**
@@ -108,9 +110,10 @@ interface WorkflowContextInterface extends EnvironmentInterface, ClientInterface
      * @param string $type
      * @param array $args
      * @param ActivityOptions|null $options
+     * @param \ReflectionType|null $returnType
      * @return PromiseInterface
      */
-    public function executeActivity(string $type, array $args = [], ActivityOptions $options = null): PromiseInterface;
+    public function executeActivity(string $type, array $args = [], ActivityOptions $options = null, \ReflectionType $returnType = null): PromiseInterface;
 
     /**
      * @psalm-template ActivityType
