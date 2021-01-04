@@ -104,6 +104,6 @@ class Process extends Scope implements ProcessInterface
         }
 
         // todo: complete with error
-        $this->context->complete((string)$e);
+        $this->context->complete($e);
     }
 }
