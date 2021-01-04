@@ -139,7 +139,7 @@ class Stack implements AppendableInterface, \OuterIterator
     public function push(iterable $iterator, \Closure $then = null): void
     {
         $this->stack[] = [
-            self::KEY_COROUTINE   => Coroutine::create($iterator),
+            self::KEY_COROUTINE => Coroutine::create($iterator),
             self::KEY_ON_COMPLETE => $then ?? (static fn() => null),
         ];
     }
@@ -153,9 +153,13 @@ class Stack implements AppendableInterface, \OuterIterator
             [$coroutine] = \end($this->stack);
 
             if ($coroutine->valid()) {
-                $coroutine->send(
-                    yield $coroutine->key() => $coroutine->current()
-                );
+                try {
+                    $coroutine->send(
+                        yield $coroutine->key() => $coroutine->current()
+                    );
+                } catch (\Throwable $e) {
+                    $coroutine->throw($e);
+                }
             } else {
                 [$last, $then] = \array_pop($this->stack);
 

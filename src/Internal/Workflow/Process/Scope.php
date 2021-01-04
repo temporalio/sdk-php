@@ -52,6 +52,11 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
     protected ServiceContainer $services;
 
     /**
+     * @var Deferred
+     */
+    protected Deferred $lastWait;
+
+    /**
      * @var array<callable>
      */
     protected array $cancelHandlers = [];
@@ -67,7 +72,8 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
         ServiceContainer $services,
         callable $handler,
         array $args = []
-    ) {
+    )
+    {
         $this->context = $ctx;
         $this->services = $services;
         $this->deferred = new Deferred(function () {
@@ -165,7 +171,7 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
     {
         $this->makeCurrent();
 
-        if (! $this->coroutine->valid()) {
+        if (!$this->coroutine->valid()) {
             $this->onComplete($this->coroutine->getReturn());
 
             return;
@@ -220,24 +226,34 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
             $this->defer(function () use ($e) {
                 $this->makeCurrent();
 
-                /**
-                 * In the case that it is not a blocking exception. For
-                 * example, a {@see CancellationException}.
-                 */
-                if (! $e instanceof NonThrowableExceptionInterface) {
+                try {
                     $this->coroutine->throw($e);
-
+                } catch (\Throwable $e) {
+                    $this->onException($e);
                     return;
                 }
 
-                $this->coroutine->send($e);
                 $this->next();
             });
 
             throw $e;
         };
 
-        $promise->then($onFulfilled, $onRejected);
+        $this->lastWait = new Deferred();
+        $this->lastWait->promise()->then($onFulfilled, $onRejected);
+
+        $promise->then([$this->lastWait, 'resolve'], [$this->lastWait, 'reject']);
+    }
+
+    /**
+     * @param \Throwable $e
+     */
+    protected function onException(\Throwable $e)
+    {
+        if ($e instanceof CancellationException) {
+            $this->cancel();
+        }
+        $this->next();
     }
 
     /**
@@ -262,7 +278,8 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
         callable $onFulfilled = null,
         callable $onRejected = null,
         callable $onProgress = null
-    ): PromiseInterface {
+    ): PromiseInterface
+    {
         $promise = $this->deferred->promise();
 
         return $promise->then($onFulfilled, $onRejected, $onProgress);
