@@ -73,6 +73,12 @@ final class Client implements ClientInterface
      */
     public function dispatch(ResponseInterface $response): void
     {
+        if (!isset($this->requests[$response->getId()])) {
+            // data on cancelled request
+            error_log("DATA ON CANCELLED REQUEST");
+            return;
+        }
+
         $deferred = $this->fetch($response->getId());
 
         if ($response instanceof ErrorResponseInterface) {
@@ -96,35 +102,39 @@ final class Client implements ClientInterface
             throw new \OutOfBoundsException(\sprintf(self::ERROR_REQUEST_ID_DUPLICATION, $id));
         }
 
-        $this->requests[$id] = $deferred = new Deferred(function () use ($id) {
-            $command = $this->queue->pull($id);
+        $this->requests[$id] = $deferred = new Deferred(
+            function () use ($id) {
+                $command = $this->queue->pull($id);
 
-            // In the case that the command is in the queue for sending,
-            // then we take it out of the queue and cancel the request.
-            if ($command !== null) {
-                $request = $this->fetch($id);
-                $request->reject(CancellationException::fromRequestId($id));
+                // In the case that the command is in the queue for sending,
+                // then we take it out of the queue and cancel the request.
+                if ($command !== null) {
+                    $request = $this->fetch($id);
+                    $request->reject(CancellationException::fromRequestId($id));
 
-                // In the case that after the local promise rejection we have
-                // nothing to send, then we independently execute the next
-                // tick of the event loop.
-                if ($this->queue->count() === 0) {
-                    $this->loop->tick();
+                    // In the case that after the local promise rejection we have
+                    // nothing to send, then we independently execute the next
+                    // tick of the event loop.
+                    if ($this->queue->count() === 0) {
+                        $this->loop->tick();
+                    }
+
+                    return;
                 }
 
-                return;
+                // Otherwise, we send a Cancel request to the server to cancel
+                // the previously sent command by its ID.
+                $this->request(new Cancel([$id]));
+
+                $request = $this->get($id);
+                $request->promise()
+                    ->then(
+                        function () use ($id, $request) {
+                            $request->reject(CancellationException::fromRequestId($id));
+                        }
+                    );
             }
-
-            // Otherwise, we send a Cancel request to the server to cancel
-            // the previously sent command by its ID.
-            $this->request(new Cancel([$id]));
-
-            $request = $this->get($id);
-            $request->promise()
-                ->then(function () use ($id, $request) {
-                    $request->reject(CancellationException::fromRequestId($id));
-                });
-        });
+        );
 
         return $deferred->promise();
     }
@@ -150,7 +160,7 @@ final class Client implements ClientInterface
      */
     private function get(int $id): Deferred
     {
-        if (! isset($this->requests[$id])) {
+        if (!isset($this->requests[$id])) {
             throw new \UnderflowException(\sprintf(self::ERROR_REQUEST_NOT_FOUND, $id));
         }
 

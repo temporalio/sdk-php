@@ -71,22 +71,25 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
         ServiceContainer $services,
         callable $handler,
         array $args = []
-    )
-    {
+    ) {
         $this->context = $ctx;
         $this->services = $services;
-        $this->deferred = new Deferred(function () {
-            foreach ($this->cancelHandlers as $handler) {
-                $handler($this);
-            }
+        $this->deferred = new Deferred(
+            function () {
+                foreach ($this->cancelHandlers as $handler) {
+                    $handler($this);
+                }
 
-            $this->deferred->reject(CancellationException::fromScope($this));
-        });
+                $this->deferred->reject(CancellationException::fromScope($this));
+            }
+        );
 
         try {
-            $this->coroutine = new Stack($this->call($handler, $args), function ($result) {
+            $this->coroutine = new Stack(
+                $this->call($handler, $args), function ($result) {
                 $this->deferred->resolve($result);
-            });
+            }
+            );
         } catch (\Throwable $e) {
             $this->deferred->reject($e);
         }
@@ -212,28 +215,32 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
     private function nextPromise(PromiseInterface $promise): void
     {
         $onFulfilled = function ($result) {
-            $this->defer(function () use ($result) {
-                $this->makeCurrent();
-                $this->coroutine->send($result);
-                $this->next();
-            });
+            $this->defer(
+                function () use ($result) {
+                    $this->makeCurrent();
+                    $this->coroutine->send($result);
+                    $this->next();
+                }
+            );
 
             return $result;
         };
 
         $onRejected = function (\Throwable $e) {
-            $this->defer(function () use ($e) {
-                $this->makeCurrent();
+            $this->defer(
+                function () use ($e) {
+                    $this->makeCurrent();
 
-                try {
-                    $this->coroutine->throw($e);
-                } catch (\Throwable $e) {
-                    $this->onException($e);
-                    return;
+                    try {
+                        $this->coroutine->throw($e);
+                    } catch (\Throwable $e) {
+                        $this->onException($e);
+                        return;
+                    }
+
+                    $this->next();
                 }
-
-                $this->next();
-            });
+            );
 
             throw $e;
         };
