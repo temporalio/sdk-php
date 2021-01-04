@@ -65,7 +65,7 @@ class CancelWorkflow extends WorkflowProcessAwareRoute
             throw new \InvalidArgumentException(\sprintf(self::ERROR_PROCESS_NOT_DEFINED, $runId));
         }
 
-        $process->throw(new CancellationException('External cancellation request'));
+        $process->cancel();
 
         return [];
     }
