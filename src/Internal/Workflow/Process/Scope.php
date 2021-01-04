@@ -278,8 +278,7 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
         callable $onFulfilled = null,
         callable $onRejected = null,
         callable $onProgress = null
-    ): PromiseInterface
-    {
+    ): PromiseInterface {
         $promise = $this->deferred->promise();
 
         return $promise->then($onFulfilled, $onRejected, $onProgress);
