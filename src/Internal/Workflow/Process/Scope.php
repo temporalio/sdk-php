@@ -54,7 +54,7 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
     /**
      * @var Deferred
      */
-    protected Deferred $lastWait;
+    protected Deferred $nextStep;
 
     /**
      * @var array<callable>
@@ -239,10 +239,10 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
             throw $e;
         };
 
-        $this->lastWait = new Deferred();
-        $this->lastWait->promise()->then($onFulfilled, $onRejected);
+        $this->nextStep = new Deferred();
+        $this->nextStep->promise()->then($onFulfilled, $onRejected);
 
-        $promise->then([$this->lastWait, 'resolve'], [$this->lastWait, 'reject']);
+        $promise->then([$this->nextStep, 'resolve'], [$this->nextStep, 'reject']);
     }
 
     /**

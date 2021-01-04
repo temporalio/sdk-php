@@ -91,7 +91,7 @@ class Process extends Scope implements ProcessInterface
      */
     public function sendCancel(): void
     {
-        $this->lastWait->reject(new CancellationException());
+        $this->nextStep->reject(new CancellationException());
     }
 
     /**
