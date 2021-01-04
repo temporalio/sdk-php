@@ -15,7 +15,7 @@ use Temporal\Internal\Marshaller\Mapper\MapperFactoryInterface;
 use Temporal\Internal\Marshaller\Mapper\MapperInterface;
 
 /**
- * @psalm-import-type TypeMatcher from TypeFactory
+ * @psalm-import-type CallableTypeMatcher from TypeFactory
  */
 class Marshaller implements MarshallerInterface
 {
@@ -36,7 +36,7 @@ class Marshaller implements MarshallerInterface
 
     /**
      * @param MapperFactoryInterface $mapper
-     * @param array<TypeMatcher> $matchers
+     * @param array<CallableTypeMatcher> $matchers
      */
     public function __construct(MapperFactoryInterface $mapper, array $matchers = [])
     {

@@ -61,7 +61,7 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
         $instance = $this->findInstanceOrFail($runId);
         $handler = $this->findQueryHandlerOrFail($instance, $name);
 
-        $executor = static function () use ($payload, $resolver, $handler, $instance) {
+        $executor = static function () use ($payload, $resolver, $handler) {
             $resolver->resolve($handler($payload['args'] ?? []));
         };
 

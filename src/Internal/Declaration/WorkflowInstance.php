@@ -17,7 +17,7 @@ use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\WorkflowInstance\SignalQueue;
 
 /**
- * @psalm-import-type DispatchableHandler from WorkflowInstanceInterface
+ * @psalm-import-type DispatchableHandler from InstanceInterface
  */
 final class WorkflowInstance extends Instance implements WorkflowInstanceInterface
 {
@@ -105,6 +105,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     /**
      * @return string[]
      */
+    #[Pure]
     public function getSignalHandlerNames(): array
     {
         return \array_keys($this->signalHandlers);
