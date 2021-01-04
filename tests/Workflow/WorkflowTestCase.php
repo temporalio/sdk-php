@@ -12,8 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Workflow;
 
 use Spiral\Attributes\AttributeReader;
-use Temporal\Internal\DataConverter\DataConverter;
-use Temporal\Internal\DataConverter\ScalarJsonConverter;
+use Temporal\DataConverter\DataConverter;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\WorkflowInstance;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
@@ -79,7 +78,14 @@ abstract class WorkflowTestCase extends TestCase
         $this->env = new TestingEnvironment();
         $this->marshaller = new TestingMarshaller(new AttributeMapperFactory($reader));
 
-        $this->services = new ServiceContainer($this->loop, $this->client, $reader, $this->queue);
+        $this->services = new ServiceContainer(
+            $this->loop,
+            $this->client,
+            $reader,
+            $this->queue,
+            DataConverter::createDefault()
+        );
+
         $this->services->env = $this->env;
         $this->services->marshaller = $this->marshaller;
     }
@@ -114,7 +120,7 @@ abstract class WorkflowTestCase extends TestCase
 
         $prototype = new WorkflowPrototype($reflectionFunction->getName(), $reflectionFunction, $reflectionClass);
 
-        return new WorkflowInstance($prototype, new DataConverter(new ScalarJsonConverter()), new $class());
+        return new WorkflowInstance($prototype, DataConverter::createDefault(), new $class());
     }
 
     /**

@@ -49,6 +49,8 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
     {
         ['runId' => $runId, 'name' => $name] = $payload;
 
+        // todo: need data converter
+
         // TODO: handle on protobuf level
         // TODO: reduce side-effect (do not use references!!11)
         foreach ($payload['args'] as &$arg) {
@@ -60,11 +62,7 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
         $handler = $this->findQueryHandlerOrFail($instance, $name);
 
         $executor = static function () use ($payload, $resolver, $handler, $instance) {
-
-            $result = $handler($payload['args'] ?? []);
-            $result = $instance->getDataConverter()->toPayloads([$result]);
-
-            $resolver->resolve($result);
+            $resolver->resolve($handler($payload['args'] ?? []));
         };
 
         $this->loop->once(LoopInterface::ON_QUERY, $executor);

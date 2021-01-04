@@ -20,10 +20,10 @@ use Spiral\Attributes\AttributeReader;
 use Spiral\Attributes\Composite\SelectiveReader;
 use Spiral\Attributes\ReaderInterface;
 use Spiral\Goridge\Relay;
-use Temporal\Internal\Codec\CodecInterface;
-use Temporal\Internal\Codec\JsonCodec;
-use Temporal\Internal\DataConverter\DataConverter;
-use Temporal\Internal\DataConverter\ScalarJsonConverter;
+use Temporal\DataConverter\DataConverter;
+use Temporal\DataConverter\DataConverterInterface;
+use Temporal\Worker\Codec\CodecInterface;
+use Temporal\Worker\Codec\JsonCodec;
 use Temporal\Internal\Events\EventEmitterTrait;
 use Temporal\Internal\Queue\ArrayQueue;
 use Temporal\Internal\Queue\QueueInterface;
@@ -83,6 +83,11 @@ final class Worker implements FactoryInterface
     ];
 
     /**
+     * @var DataConverterInterface
+     */
+    private DataConverterInterface $dataConverter;
+
+    /**
      * @var RelayConnectionInterface
      */
     private RelayConnectionInterface $relay;
@@ -128,12 +133,18 @@ final class Worker implements FactoryInterface
     private RpcConnectionInterface $rpc;
 
     /**
+     * @param DataConverterInterface|null $dataConverter
      * @param RelayConnectionInterface|null $relay
      * @param RpcConnectionInterface|null $rpc
      */
-    public function __construct(RelayConnectionInterface $relay = null, RpcConnectionInterface $rpc = null)
+    public function __construct(
+        DataConverterInterface $dataConverter = null,
+        RelayConnectionInterface $relay = null,
+        RpcConnectionInterface $rpc = null
+    )
     {
-        // todo: remove defaults here
+        $this->dataConverter = $dataConverter ?? DataConverter::createDefault();
+
         $this->relay = $relay ?? new RoadRunner(Relay::create(Relay::PIPES));
         $this->rpc = $rpc ?? new Goridge(Relay::create('tcp://127.0.0.1:6001'));
 
@@ -187,10 +198,7 @@ final class Worker implements FactoryInterface
     private function createRouter(): RouterInterface
     {
         $router = new Router();
-        $router->add(new Router\GetWorkerInfo(
-            $this->queues,
-            new DataConverter(new ScalarJsonConverter())
-        ));
+        $router->add(new Router\GetWorkerInfo($this->queues));
 
         return $router;
     }
@@ -200,7 +208,7 @@ final class Worker implements FactoryInterface
      */
     private function createCodec(): CodecInterface
     {
-        return new JsonCodec();
+        return new JsonCodec($this->dataConverter);
     }
 
     /**
@@ -279,6 +287,14 @@ final class Worker implements FactoryInterface
     public function getQueue(): QueueInterface
     {
         return $this->responses;
+    }
+
+    /**
+     * @return DataConverterInterface
+     */
+    public function getDataConverter(): DataConverterInterface
+    {
+        return $this->dataConverter;
     }
 
     /**

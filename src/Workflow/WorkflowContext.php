@@ -229,8 +229,7 @@ class WorkflowContext implements WorkflowContextInterface
             return reject($e);
         }
 
-        $value = \current($this->getDataConverter()->toPayloads([$value]));
-
+        // todo: get return type from context (is it possible?)
         return $this->toResponse($this->request(new SideEffect($value)));
     }
 
@@ -249,12 +248,6 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function complete($result = null): PromiseInterface
     {
-        if (! $result instanceof Payload && ! $result instanceof \Throwable) {
-            [$result] = $this->getDataConverter()
-                ->toPayloads([$result])
-            ;
-        }
-
         $this->recordTrace();
 
         $then = function ($result) {
@@ -284,17 +277,16 @@ class WorkflowContext implements WorkflowContextInterface
         \ReflectionType $returnType = null
     ): PromiseInterface
     {
-        $args = $this->getDataConverter()->toPayloads($args);
-
         $this->recordTrace();
 
         $options = $this->services->marshaller->marshal(
             $options ?? new ChildWorkflowOptions()
         );
 
-        return $this->toResponse($this->request(
-            new ExecuteChildWorkflow($type, $args, $options)
-        ));
+        return $this->toResponse(
+            $this->request(new ExecuteChildWorkflow($type, $args, $options)),
+            $returnType
+        );
     }
 
     /**
@@ -312,7 +304,12 @@ class WorkflowContext implements WorkflowContextInterface
     /**
      * {@inheritDoc}
      */
-    public function executeActivity(string $type, array $args = [], ActivityOptions $options = null): PromiseInterface
+    public function executeActivity(
+        string $type,
+        array $args = [],
+        ActivityOptions $options = null,
+        \ReflectionType $returnType = null
+    ): PromiseInterface
     {
         $this->recordTrace();
 
@@ -320,9 +317,10 @@ class WorkflowContext implements WorkflowContextInterface
             $options ?? new ActivityOptions()
         );
 
-        return $this->toResponse($this->request(
-            new ExecuteActivity($type, $this->getDataConverter()->toPayloads($args), $options)
-        ));
+        return $this->toResponse(
+            $this->request(new ExecuteActivity($type, $args, $options)),
+            $returnType
+        );
     }
 
     /**
@@ -358,6 +356,8 @@ class WorkflowContext implements WorkflowContextInterface
     }
 
     /**
+     * Unpack the server response into internal format based on return or argument type.
+     *
      * @param PromiseInterface $promise
      * @param \ReflectionType|null $returnType
      * @return PromiseInterface
@@ -365,12 +365,11 @@ class WorkflowContext implements WorkflowContextInterface
     private function toResponse(PromiseInterface $promise, \ReflectionType $returnType = null)
     {
         return $promise->then(function ($value) use ($returnType) {
-            // todo: improve it?
             if (!$value instanceof Payload || $value instanceof \Throwable) {
                 return $value;
             }
 
-            return $this->getDataConverter()->fromPayloads([$value], $returnType ? [$returnType] : [])[0];
+            return $this->getDataConverter()->fromPayload($value, $returnType);
         });
     }
 }

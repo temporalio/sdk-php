@@ -9,37 +9,13 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Internal\Codec;
+namespace Temporal\Worker\Codec;
 
 use Temporal\Exception\ProtocolException;
-use Temporal\Internal\Events\EventListenerInterface;
 use Temporal\Worker\Command\CommandInterface;
 
-/**
- * @template-implements EventListenerInterface<CodecInterface::ON_*>
- */
-interface CodecInterface extends EventListenerInterface
+interface CodecInterface
 {
-    /**
-     * @var string
-     */
-    public const ON_ENCODING = 'encoding';
-
-    /**
-     * @var string
-     */
-    public const ON_ENCODED = 'encoded';
-
-    /**
-     * @var string
-     */
-    public const ON_DECODING = 'decoding';
-
-    /**
-     * @var string
-     */
-    public const ON_DECODED = 'decoded';
-
     /**
      * @param iterable<CommandInterface> $commands
      * @return string

@@ -25,10 +25,27 @@ interface DataConverterInterface
     public function fromPayloads(array $payloads, array $types): array;
 
     /**
+     * @param Payload $payload
+     * @param \ReflectionType|null $type
+     * @return mixed
+     *
+     * @throws DataConverterException
+     */
+    public function fromPayload(Payload $payload, ?\ReflectionType $type);
+
+    /**
      * @param array $values
      * @return array<Payload>
      *
      * @throws DataConverterException
      */
     public function toPayloads(array $values): array;
+
+    /**
+     * @param mixed $value
+     * @return Payload
+     *
+     * @throws DataConverterException
+     */
+    public function toPayload($value): Payload;
 }

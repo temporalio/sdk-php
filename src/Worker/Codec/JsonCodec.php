@@ -9,14 +9,15 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Internal\Codec;
+namespace Temporal\Worker\Codec;
 
+use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\ProtocolException;
-use Temporal\Internal\Codec\JsonCodec\Parser;
-use Temporal\Internal\Codec\JsonCodec\Serializer;
+use Temporal\Worker\Codec\JsonCodec\Parser;
+use Temporal\Worker\Codec\JsonCodec\Serializer;
 use Temporal\Worker\Command\CommandInterface;
 
-final class JsonCodec extends Codec
+final class JsonCodec implements CodecInterface
 {
     /**
      * @var int
@@ -34,14 +35,15 @@ final class JsonCodec extends Codec
     private Serializer $serializer;
 
     /**
-     * JsonCodec constructor.
+     * @param DataConverterInterface $dataConverter
+     * @param int $depth
      */
-    public function __construct(int $depth = 64)
+    public function __construct(DataConverterInterface $dataConverter, int $depth = 64)
     {
         $this->depth = $depth;
 
-        $this->parser = new Parser();
-        $this->serializer = new Serializer();
+        $this->parser = new Parser($dataConverter);
+        $this->serializer = new Serializer($dataConverter);
     }
 
     /**
@@ -49,8 +51,6 @@ final class JsonCodec extends Codec
      */
     public function encode(iterable $commands): string
     {
-        $this->emit(self::ON_ENCODING);
-
         try {
             $result = [];
 
@@ -63,8 +63,6 @@ final class JsonCodec extends Codec
             return \json_encode($result, \JSON_THROW_ON_ERROR, $this->depth);
         } catch (\Throwable $e) {
             throw new ProtocolException($e->getMessage(), $e->getCode(), $e);
-        } finally {
-            $this->emit(self::ON_ENCODED);
         }
     }
 
@@ -73,8 +71,6 @@ final class JsonCodec extends Codec
      */
     public function decode(string $message): iterable
     {
-        $this->emit(self::ON_DECODING);
-
         try {
             $commands = \json_decode($message, true, $this->depth, \JSON_THROW_ON_ERROR);
 
@@ -85,8 +81,6 @@ final class JsonCodec extends Codec
             }
         } catch (\Throwable $e) {
             throw new ProtocolException($e->getMessage(), $e->getCode(), $e);
-        } finally {
-            $this->emit(self::ON_DECODED);
         }
     }
 }

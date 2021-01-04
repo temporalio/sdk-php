@@ -13,11 +13,7 @@ namespace Temporal\Internal;
 
 use JetBrains\PhpStorm\Immutable;
 use Spiral\Attributes\ReaderInterface;
-use Temporal\Internal\DataConverter\BinaryConverter;
-use Temporal\Internal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
-use Temporal\Internal\DataConverter\JsonConverter;
-use Temporal\Internal\DataConverter\NullConverter;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Declaration\Prototype\Collection;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
@@ -101,13 +97,16 @@ final class ServiceContainer
      * @param ClientInterface $client
      * @param ReaderInterface $reader
      * @param QueueInterface $queue
+     * @param DataConverterInterface $dataConverter
      */
     public function __construct(
         LoopInterface $loop,
         ClientInterface $client,
         ReaderInterface $reader,
-        QueueInterface $queue
-    ) {
+        QueueInterface $queue,
+        DataConverterInterface $dataConverter
+    )
+    {
         $this->loop = $loop;
         $this->client = $client;
         $this->reader = $reader;
@@ -120,18 +119,14 @@ final class ServiceContainer
 
         $this->env = new Environment();
 
+        $this->dataConverter = $dataConverter;
+
         // todo: ?
         $this->marshaller = new Marshaller(
             new AttributeMapperFactory($this->reader)
         );
-        $this->queue = $queue;
 
-        // todo: pass via constructor
-        $this->dataConverter = new DataConverter(
-            new NullConverter(),
-            new BinaryConverter(),
-            new JsonConverter($this->marshaller)
-        );
+        $this->queue = $queue;
     }
 
     /**
@@ -144,7 +139,8 @@ final class ServiceContainer
             $worker,
             $worker->getClient(),
             $worker->getReader(),
-            $worker->getQueue()
+            $worker->getQueue(),
+            $worker->getDataConverter()
         );
     }
 }

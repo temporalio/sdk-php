@@ -73,8 +73,6 @@ final class InvokeActivity extends Route
             $handler = $instance->getHandler();
             $result = $handler($context->getArguments());
 
-            $result = $this->services->dataConverter->toPayloads([$result]);
-
             if ($context->isDoNotCompleteOnReturn()) {
                 $resolver->reject(DoNotCompleteOnResultException::create());
             } else {

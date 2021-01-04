@@ -9,12 +9,8 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Internal\DataConverter;
+namespace Temporal\DataConverter;
 
-use Temporal\DataConverter\DataConverterInterface;
-use Temporal\DataConverter\EncodingKeys;
-use Temporal\DataConverter\Payload;
-use Temporal\DataConverter\PayloadConverterInterface;
 use Temporal\Exception\DataConverterException;
 
 class DataConverter implements DataConverterInterface
@@ -43,16 +39,26 @@ class DataConverter implements DataConverterInterface
     {
         $values = [];
         foreach ($payloads as $i => $payload) {
-            $encoding = $payload->getMetadata()[EncodingKeys::METADATA_ENCODING_KEY];
-
-            if (!isset($this->converters[$encoding])) {
-                throw new DataConverterException(sprintf('Undefined payload encoding %s', $encoding));
-            }
-
-            $values[] = $this->converters[$encoding]->fromPayload($payload, $types[$i] ?? null);
+            $values[] = $this->fromPayload($payload, $types[$i] ?? null);
         }
 
         return $values;
+    }
+
+    /**
+     * @param Payload $payload
+     * @param \ReflectionType|null $type
+     * @return mixed
+     */
+    public function fromPayload(Payload $payload, ?\ReflectionType $type)
+    {
+        $encoding = $payload->getMetadata()[EncodingKeys::METADATA_ENCODING_KEY];
+
+        if (!isset($this->converters[$encoding])) {
+            throw new DataConverterException(sprintf('Undefined payload encoding %s', $encoding));
+        }
+
+        return $this->converters[$encoding]->fromPayload($payload, $type);
     }
 
     /**
@@ -79,5 +85,38 @@ class DataConverter implements DataConverterInterface
         }
 
         return $payloads;
+    }
+
+    /**
+     * @param mixed $value
+     * @return Payload
+     *
+     * @throws DataConverterException
+     */
+    public function toPayload($value): Payload
+    {
+        foreach ($this->converters as $converter) {
+            $payload = $converter->toPayload($value);
+
+            if ($payload !== null) {
+                return $payload;
+            }
+        }
+
+        throw new DataConverterException(
+            \sprintf('Unable to convert value of type %s to Payload', \get_debug_type($value))
+        );
+    }
+
+    /**
+     * @return DataConverterInterface
+     */
+    public static function createDefault(): DataConverterInterface
+    {
+        return new DataConverter(
+            new NullConverter(),
+            new BinaryConverter(),
+            new JsonDTOConverter()
+        );
     }
 }

@@ -14,9 +14,7 @@ namespace Temporal\Tests\Testing;
 use Illuminate\Support\Arr;
 use PHPUnit\Framework\Assert;
 use Temporal\DataConverter\Payload;
-use Temporal\Internal\DataConverter\DataConverter;
-use Temporal\Internal\DataConverter\NullConverter;
-use Temporal\Internal\DataConverter\ScalarJsonConverter;
+use Temporal\DataConverter\DataConverter;
 use Temporal\Worker\Command\RequestInterface;
 
 /**
@@ -135,7 +133,7 @@ class TestingRequest extends TestingCommand implements RequestInterface
 
     private function convertValue($value): Payload
     {
-        $dc = new DataConverter(new NullConverter(), new ScalarJsonConverter());
+        $dc = DataConverter::createDefault();
 
         return $dc->toPayloads([$value])[0];
     }

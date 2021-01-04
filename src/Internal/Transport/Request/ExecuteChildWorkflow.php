@@ -11,9 +11,11 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport\Request;
 
+use Temporal\DataConverter\DataConverterInterface;
+use Temporal\Worker\Command\PayloadAwareRequest;
 use Temporal\Worker\Command\Request;
 
-final class ExecuteChildWorkflow extends Request
+final class ExecuteChildWorkflow extends Request implements PayloadAwareRequest
 {
     /**
      * @var string
@@ -28,9 +30,22 @@ final class ExecuteChildWorkflow extends Request
     public function __construct(string $name, array $args, array $options)
     {
         parent::__construct(self::NAME, [
-            'name'    => $name,
-            'input'   => $args,
+            'name' => $name,
+            'input' => $args,
             'options' => $options,
         ]);
+    }
+
+    /**
+     * @param DataConverterInterface $dataConverter
+     * @return array
+     */
+    public function getMappedParams(DataConverterInterface $dataConverter): array
+    {
+        return [
+            'name' => $this->params['name'],
+            'input' => $dataConverter->toPayloads($this->params['input']),
+            'options' => $this->params['options'],
+        ];
     }
 }

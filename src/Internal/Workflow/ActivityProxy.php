@@ -110,7 +110,8 @@ class ActivityProxy
         return $this->context->executeActivity(
             $activity ? $activity->getId() : $method,
             $arguments,
-            $this->options
+            $this->options,
+            $activity->getHandler()->getReturnType()
         );
     }
 
