@@ -17,4 +17,11 @@ interface ProcessInterface extends CancellationScopeInterface
      * @return WorkflowContextInterface
      */
     public function getContext(): WorkflowContextInterface;
+
+    /**
+     * Throw exception to the workflow.
+     *
+     * @param \Throwable $e
+     */
+    public function throw(\Throwable $e): void;
 }

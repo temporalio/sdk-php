@@ -15,7 +15,6 @@ use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use React\Promise\PromisorInterface;
 use Temporal\Exception\CancellationException;
-use Temporal\Exception\NonThrowableExceptionInterface;
 use Temporal\Internal\Coroutine\CoroutineInterface;
 use Temporal\Internal\Coroutine\Stack;
 use Temporal\Internal\ServiceContainer;

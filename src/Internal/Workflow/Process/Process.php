@@ -87,11 +87,11 @@ class Process extends Scope implements ProcessInterface
     }
 
     /**
-     * @return void
+     * @param \Throwable $e
      */
-    public function sendCancel(): void
+    public function throw(\Throwable $e): void
     {
-        $this->nextStep->reject(new CancellationException());
+        $this->nextStep->reject($e);
     }
 
     /**
