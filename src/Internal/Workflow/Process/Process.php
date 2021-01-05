@@ -99,8 +99,8 @@ class Process extends Scope implements ProcessInterface
      */
     public function throw(\Throwable $e): void
     {
-        $this->coroutine->throw($e);
-        //$this->cancel();
+        $this->nextStep->reject($e);
+        // $this->cancel(); // todo: must invalidate cancels without triggering loop (DETACH)
     }
 
     /**
