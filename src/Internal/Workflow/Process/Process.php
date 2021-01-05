@@ -73,6 +73,10 @@ class Process extends Scope implements ProcessInterface
      */
     protected function onComplete($result): void
     {
+        if ($this->context->isContinuedAsNew()) {
+            return;
+        }
+
         $this->context->complete($result ?? $this->coroutine->getReturn());
     }
 

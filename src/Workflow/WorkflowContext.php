@@ -64,6 +64,11 @@ class WorkflowContext implements WorkflowContextInterface
     private array $trace = [];
 
     /**
+     * @var bool
+     */
+    private bool $continueAsNew = false;
+
+    /**
      * @param Process $process
      * @param ServiceContainer $services
      * @param Input $input
@@ -265,6 +270,38 @@ class WorkflowContext implements WorkflowContextInterface
 
         return $this->request(new CompleteWorkflow($result))
             ->then($then, $otherwise);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function continueAsNew(string $name, ...$input): PromiseInterface
+    {
+        $this->continueAsNew = true;
+        $this->recordTrace();
+
+        $then = function ($result) {
+            $this->process->cancel();
+
+            return $result;
+        };
+
+        $otherwise = function (\Throwable $error): void {
+            $this->process->cancel();
+
+            throw $error;
+        };
+
+        return $this->request(new ContinueAsNew($name, $input))
+            ->then($then, $otherwise);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isContinuedAsNew(): bool
+    {
+        return $this->continueAsNew;
     }
 
     /**
