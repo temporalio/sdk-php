@@ -51,14 +51,14 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
     protected ServiceContainer $services;
 
     /**
-     * @var Deferred
-     */
-    protected Deferred $nextStep;
-
-    /**
      * @var array<callable>
      */
     protected array $cancelHandlers = [];
+
+    /**
+     * @var bool
+     */
+    private bool $cancelled = false;
 
     /**
      * @param WorkflowContext $ctx
@@ -118,10 +118,13 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
      */
     public function cancel(): void
     {
-        // todo: DOES IT MAKE SENSE?
+        if ($this->cancelled) {
+            return;
+        }
 
+        $this->cancelled = true;
         try {
-            // todo: ???
+            // improve hieharhy
             $this->context->invalidate();
 
             $promise = $this->promise();
@@ -250,10 +253,7 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
             throw $e;
         };
 
-        $this->nextStep = new Deferred();
-        $this->nextStep->promise()->then($onFulfilled, $onRejected);
-
-        $promise->then([$this->nextStep, 'resolve'], [$this->nextStep, 'reject']);
+        $promise->then($onFulfilled, $onRejected);
     }
 
     /**

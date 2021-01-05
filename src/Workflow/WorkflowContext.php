@@ -34,6 +34,7 @@ use Temporal\Internal\Workflow\ChildWorkflowProxy;
 use Temporal\Internal\Workflow\Input;
 use Temporal\Internal\Workflow\Process\CancellationScope;
 use Temporal\Internal\Workflow\Process\Process;
+use Temporal\Internal\Workflow\Process\Scope;
 use Temporal\Worker\Command\RequestInterface;
 
 use function React\Promise\reject;
@@ -61,6 +62,11 @@ class WorkflowContext implements WorkflowContextInterface
     private Process $process;
 
     /**
+     * @var Scope
+     */
+    private Scope $lastScope;
+
+    /**
      * @var array
      */
     private array $trace = [];
@@ -85,6 +91,7 @@ class WorkflowContext implements WorkflowContextInterface
     public function __construct(Process $process, ServiceContainer $services, Input $input)
     {
         $this->process = $process;
+        $this->lastScope = $process;
         $this->input = $input;
         $this->services = $services;
 
@@ -213,7 +220,12 @@ class WorkflowContext implements WorkflowContextInterface
 
         $self = immutable(fn() => $this->client = new CapturedClient($this->client));
 
-        return new CancellationScope($self, $this->services, \Closure::fromCallable($handler));
+        $scope = new CancellationScope($self, $this->services, \Closure::fromCallable($handler));
+        $self->lastScope = $scope;
+
+        $this->lastScope->onCancel([$scope, 'cancel']);
+
+        return $scope;
     }
 
     /**
@@ -305,7 +317,8 @@ class WorkflowContext implements WorkflowContextInterface
             throw $error;
         };
 
-        return $this->client->request(new CompleteWorkflow($result))
+        // must not be captured
+        return $this->services->client->request(new CompleteWorkflow($result))
             ->then($then, $otherwise);
     }
 
@@ -329,7 +342,8 @@ class WorkflowContext implements WorkflowContextInterface
             throw $error;
         };
 
-        return $this->client->request(new ContinueAsNew($name, $input))->then($then, $otherwise);
+        // must not be captured
+        return $this->services->client->request(new ContinueAsNew($name, $input))->then($then, $otherwise);
     }
 
     /**

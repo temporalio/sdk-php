@@ -11,10 +11,12 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Workflow\Process;
 
+use Amp\Loop;
 use Temporal\Exception\CancellationException;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Workflow\Input;
+use Temporal\Worker;
 use Temporal\Workflow\ProcessInterface;
 use Temporal\Workflow\WorkflowContext;
 use Temporal\Workflow\WorkflowContextInterface;
