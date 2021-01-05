@@ -222,7 +222,7 @@ class WorkflowContext implements WorkflowContextInterface
         }
 
         // todo: get return type from context (is it possible?)
-        return $this->toResponse($this->request(new SideEffect($value)));
+        return Payload::fromPromise($this->services->dataConverter, $this->request(new SideEffect($value)));
     }
 
     /**
@@ -233,26 +233,6 @@ class WorkflowContext implements WorkflowContextInterface
         $this->recordTrace();
 
         return $this->services->env->isReplaying();
-    }
-
-    /**
-     * Unpack the server response into internal format based on return or argument type.
-     *
-     * @param PromiseInterface $promise
-     * @param \ReflectionType|null $returnType
-     * @return PromiseInterface
-     */
-    private function toResponse(PromiseInterface $promise, \ReflectionType $returnType = null)
-    {
-        return $promise->then(function ($value) use ($returnType) {
-            if (! $value instanceof Payload || $value instanceof \Throwable) {
-                return $value;
-            }
-
-            return $this->getDataConverter()
-                ->fromPayload($value, $returnType)
-                ;
-        });
     }
 
     /**

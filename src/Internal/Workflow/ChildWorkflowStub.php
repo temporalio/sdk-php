@@ -117,9 +117,7 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface, ClientInter
                 return $execution;
             });
 
-        return $promise->then(function (Payload $payload) use ($returnType) {
-            return $this->converter->fromPayload($payload, $returnType);
-        });
+        return Payload::fromPromise($this->converter, $promise, $returnType);
     }
 
     /**

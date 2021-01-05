@@ -92,10 +92,7 @@ final class ActivityStub implements ActivityStubInterface, ClientInterface
     {
         $request = new ExecuteActivity($name, $args, $this->getOptionsArray());
 
-        return $this->request($request)
-            ->then(function (Payload $payload): array {
-                return $this->converter->fromPayload($payload, null);
-            });
+        return Payload::fromPromise($this->converter, $this->request($request), $returnType);
     }
 }
 
