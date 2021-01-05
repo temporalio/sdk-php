@@ -30,22 +30,19 @@ final class ExecuteChildWorkflow extends Request implements PayloadAwareRequest
     public function __construct(string $name, array $args, array $options)
     {
         parent::__construct(self::NAME, [
-            'name' => $name,
-            'input' => $args,
+            'name'    => $name,
+            'input'   => $args,
             'options' => $options,
         ]);
     }
 
     /**
-     * @param DataConverterInterface $dataConverter
-     * @return array
+     * {@inheritDoc}
      */
     public function getMappedParams(DataConverterInterface $dataConverter): array
     {
-        return [
-            'name' => $this->params['name'],
+        return \array_merge($this->params, [
             'input' => $dataConverter->toPayloads($this->params['input']),
-            'options' => $this->params['options'],
-        ];
+        ]);
     }
 }

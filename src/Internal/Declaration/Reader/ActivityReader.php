@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration\Reader;
 
+use JetBrains\PhpStorm\Pure;
 use ReflectionFunctionAbstract as ReflectionFunction;
 use Temporal\Activity\ActivityInterface;
 use Temporal\Activity\ActivityMethod;
@@ -22,18 +23,24 @@ use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 class ActivityReader extends Reader
 {
     /**
-     * {@inheritDoc}
+     * @param string $class
+     * @return ActivityPrototype[]
+     * @throws \ReflectionException
      */
-    public function fromClass(string $class): iterable
+    public function fromClass(string $class): array
     {
+        $result = [];
+
         $reflection = new \ReflectionClass($class);
         $interface = $this->getActivityInterface($reflection);
 
         foreach ($this->annotatedMethods($reflection, ActivityMethod::class) as $method => $handler) {
             $name = $this->createActivityName($handler, $method, $interface);
 
-            yield new ActivityPrototype($name, $handler, $reflection);
+            $result[] = new ActivityPrototype($name, $handler, $reflection);
         }
+
+        return $result;
     }
 
     /**
@@ -42,6 +49,7 @@ class ActivityReader extends Reader
      * @param ActivityInterface $interface
      * @return string
      */
+    #[Pure]
     private function createActivityName(ReflectionFunction $fn, ActivityMethod $m, ActivityInterface $interface): string
     {
         return $interface->prefix . ($m->name ?? $fn->getName());

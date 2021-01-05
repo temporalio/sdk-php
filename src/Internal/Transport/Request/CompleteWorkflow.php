@@ -38,8 +38,8 @@ final class CompleteWorkflow extends Request implements PayloadAwareRequest
      */
     public function getMappedParams(DataConverterInterface $dataConverter): array
     {
-        return [
-            'result' => $dataConverter->toPayloads($this->params['result'])
-        ];
+        return \array_merge($this->params, [
+            'result' => $dataConverter->toPayloads($this->params['result']),
+        ]);
     }
 }
