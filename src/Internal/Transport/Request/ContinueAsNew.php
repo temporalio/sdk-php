@@ -9,11 +9,13 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Transport\Request;
+namespace Temporal\Internal\Transport\Request;
 
-use Temporal\Client\Worker\Command\Request;
+use Temporal\DataConverter\DataConverterInterface;
+use Temporal\Worker\Command\PayloadAwareRequest;
+use Temporal\Worker\Command\Request;
 
-final class ContinueAsNew extends Request
+final class ContinueAsNew extends Request implements PayloadAwareRequest
 {
     /**
      * @var string
@@ -26,9 +28,20 @@ final class ContinueAsNew extends Request
      */
     public function __construct(string $name, array $input)
     {
-        parent::__construct(self::NAME, [
-            'name' => $name,
-            'result' => $input,
-        ]);
+        parent::__construct(
+            self::NAME,
+            [
+                'name' => $name,
+                'result' => $input,
+            ]
+        );
+    }
+
+    public function getMappedParams(DataConverterInterface $dataConverter): array
+    {
+        return [
+            'name' => $this->params['name'],
+            'result' => $dataConverter->toPayloads($this->params['result'])
+        ];
     }
 }

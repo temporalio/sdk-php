@@ -15,6 +15,7 @@ use Carbon\CarbonInterface;
 use Carbon\CarbonTimeZone;
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
+use Temporal\Internal\Transport\Request\ContinueAsNew;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\Payload;
 use Temporal\Internal\ServiceContainer;
@@ -292,8 +293,7 @@ class WorkflowContext implements WorkflowContextInterface
             throw $error;
         };
 
-        return $this->request(new ContinueAsNew($name, $input))
-            ->then($then, $otherwise);
+        return $this->request(new ContinueAsNew($name, $input))->then($then, $otherwise);
     }
 
     /**
@@ -312,8 +312,7 @@ class WorkflowContext implements WorkflowContextInterface
         array $args = [],
         ChildWorkflowOptions $options = null,
         \ReflectionType $returnType = null
-    ): PromiseInterface
-    {
+    ): PromiseInterface {
         $this->recordTrace();
 
         $options = $this->services->marshaller->marshal(
@@ -346,8 +345,7 @@ class WorkflowContext implements WorkflowContextInterface
         array $args = [],
         ActivityOptions $options = null,
         \ReflectionType $returnType = null
-    ): PromiseInterface
-    {
+    ): PromiseInterface {
         $this->recordTrace();
 
         $options = $this->services->marshaller->marshal(
@@ -401,12 +399,14 @@ class WorkflowContext implements WorkflowContextInterface
      */
     private function toResponse(PromiseInterface $promise, \ReflectionType $returnType = null)
     {
-        return $promise->then(function ($value) use ($returnType) {
-            if (!$value instanceof Payload || $value instanceof \Throwable) {
-                return $value;
-            }
+        return $promise->then(
+            function ($value) use ($returnType) {
+                if (!$value instanceof Payload || $value instanceof \Throwable) {
+                    return $value;
+                }
 
-            return $this->getDataConverter()->fromPayload($value, $returnType);
-        });
+                return $this->getDataConverter()->fromPayload($value, $returnType);
+            }
+        );
     }
 }
