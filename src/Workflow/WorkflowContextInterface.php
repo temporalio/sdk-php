@@ -59,6 +59,14 @@ interface WorkflowContextInterface extends EnvironmentInterface, ClientInterface
     public function newCancellationScope(callable $handler): CancellationScopeInterface;
 
     /**
+     * Cancellation scope which does not react to parent cancel and completes in background.
+     *
+     * @param callable $handler
+     * @return CancellationScopeInterface
+     */
+    public function newDetachedCancellationScope(callable $handler): CancellationScopeInterface;
+
+    /**
      * @param string $changeId
      * @param int $minSupported
      * @param int $maxSupported

@@ -16,6 +16,7 @@ use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Repository\RepositoryInterface;
+use Temporal\Workflow;
 use Temporal\Workflow\WorkflowContextInterface;
 
 /**
@@ -107,7 +108,8 @@ class ActivityProxy
     {
         $activity = $this->findActivityPrototype($method);
 
-        return $this->context->executeActivity(
+        // always use active scope
+        return Workflow::executeActivity(
             $activity ? $activity->getId() : $method,
             $arguments,
             $this->options,

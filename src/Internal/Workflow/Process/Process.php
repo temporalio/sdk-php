@@ -91,23 +91,6 @@ class Process extends Scope implements ProcessInterface
     }
 
     /**
-     * Cancels the workflow scope but allows detached scopes to complete computation.
-     */
-    public function throwCancel()
-    {
-        $this->throw(new CancellationException("External cancel signal"));
-    }
-
-    /**
-     * @param \Throwable $e
-     */
-    public function throw(\Throwable $e): void
-    {
-        $this->nextStep->reject($e);
-        // $this->cancel(); // todo: must invalidate cancels without triggering loop (DETACH)
-    }
-
-    /**
      * @param \Throwable $e
      */
     protected function onException(\Throwable $e)
@@ -116,6 +99,7 @@ class Process extends Scope implements ProcessInterface
             $this->cancel();
         }
 
+        // todo: complete with error (!)
         $this->context->complete($e);
     }
 }

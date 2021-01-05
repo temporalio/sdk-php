@@ -33,11 +33,12 @@ use Temporal\Workflow\WorkflowInfo;
  * @method static bool isReplaying()
  *
  * @method static CancellationScopeInterface newCancellationScope(callable $handler)
- *
- * @method static FutureInterface executeActivity(string $class, array $args = [], array|ActivityOptions $options = null)
+ * @method static CancellationScopeInterface newDetachedCancellationScope(callable $handler)
+
+ * @method static FutureInterface executeActivity(string $class, array $args = [], array|ActivityOptions $options = null, \ReflectionType $returnType=null)
  * @method static ActivityProxy|object newActivityStub(string $class, array|ActivityOptions $options = null)
  *
- * @method static FutureInterface executeChildWorkflow(string $type, array $args = [], ChildWorkflowOptions $options = null)
+ * @method static FutureInterface executeChildWorkflow(string $type, array $args = [], ChildWorkflowOptions $options = null, \ReflectionType $returnType=null)
  * @method static ChildWorkflowProxy|object newChildWorkflowStub(string $class, array|ChildWorkflowOptions $options = null)
  *
  * @method static FutureInterface sideEffect(callable $cb)

@@ -105,11 +105,16 @@ class ChildWorkflowProxy
      */
     public function call(string $method, array $arguments = []): PromiseInterface
     {
-        $activity = $this->findWorkflowPrototype($method);
+        $workflowPrototype = $this->findWorkflowPrototype($method);
 
-        $method = $activity ? $activity->getId() : $method;
+        $method = $workflowPrototype ? $workflowPrototype->getId() : $method;
 
-        return $this->context->executeChildWorkflow($method, $arguments, $this->options);
+        return Workflow::executeChildWorkflow(
+            $method,
+            $arguments,
+            $this->options,
+            $workflowPrototype->getHandler()->getReturnType()
+        );
     }
 
     /**

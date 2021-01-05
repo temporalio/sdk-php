@@ -15,6 +15,7 @@ use Carbon\CarbonInterface;
 use Carbon\CarbonTimeZone;
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
+use Temporal\Exception\CancellationException;
 use Temporal\Internal\Transport\Request\ContinueAsNew;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\Payload;
@@ -70,6 +71,13 @@ class WorkflowContext implements WorkflowContextInterface
     private bool $continueAsNew = false;
 
     /**
+     * When marked as cancelled requests are forbidden.
+     *
+     * @var bool
+     */
+    private bool $cancelled = false;
+
+    /**
      * @param Process $process
      * @param ServiceContainer $services
      * @param Input $input
@@ -81,6 +89,14 @@ class WorkflowContext implements WorkflowContextInterface
         $this->services = $services;
 
         $this->client = new CapturedClient($services->client);
+    }
+
+    /**
+     * Invalidate context (no longer accept any requests).
+     */
+    public function invalidate()
+    {
+        $this->cancelled = true;
     }
 
     /**
@@ -201,6 +217,22 @@ class WorkflowContext implements WorkflowContextInterface
     }
 
     /**
+     * Cancellation scope which does not react to parent cancel and completes in background.
+     *
+     * @param callable $handler
+     * @return CancellationScopeInterface
+     */
+    public function newDetachedCancellationScope(callable $handler): CancellationScopeInterface
+    {
+        $this->recordTrace();
+
+        $self = immutable(fn() => $this->client = new CapturedClient($this->client));
+        $self->cancelled = false;
+
+        return new CancellationScope($self, $this->services, \Closure::fromCallable($handler));
+    }
+
+    /**
      * {@inheritDoc}
      */
     public function getVersion(string $changeId, int $minSupported, int $maxSupported): PromiseInterface
@@ -218,6 +250,10 @@ class WorkflowContext implements WorkflowContextInterface
     public function request(RequestInterface $request): PromiseInterface
     {
         $this->recordTrace();
+
+        if ($this->cancelled) {
+            throw new CancellationException("Attempt to send request to cancelled context");
+        }
 
         return $this->client->request($request);
     }
@@ -269,7 +305,7 @@ class WorkflowContext implements WorkflowContextInterface
             throw $error;
         };
 
-        return $this->request(new CompleteWorkflow($result))
+        return $this->client->request(new CompleteWorkflow($result))
             ->then($then, $otherwise);
     }
 
@@ -293,7 +329,7 @@ class WorkflowContext implements WorkflowContextInterface
             throw $error;
         };
 
-        return $this->request(new ContinueAsNew($name, $input))->then($then, $otherwise);
+        return $this->client->request(new ContinueAsNew($name, $input))->then($then, $otherwise);
     }
 
     /**
