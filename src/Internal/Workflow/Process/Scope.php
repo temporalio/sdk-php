@@ -95,6 +95,16 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
         }
     }
 
+    private array $child = [];
+
+    /**
+     * @param Scope $scope
+     */
+    public function linkChild(Scope $scope)
+    {
+        $this->child[] = $scope;
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -126,6 +136,10 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
         try {
             // improve hieharhy
             $this->context->invalidate();
+
+            foreach ($this->child as $child) {
+                $child->cancel();
+            }
 
             $promise = $this->promise();
             $promise->cancel();

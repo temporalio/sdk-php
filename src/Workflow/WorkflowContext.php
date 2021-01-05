@@ -221,9 +221,9 @@ class WorkflowContext implements WorkflowContextInterface
         $self = immutable(fn() => $this->client = new CapturedClient($this->client));
 
         $scope = new CancellationScope($self, $this->services, \Closure::fromCallable($handler));
-        $self->lastScope = $scope;
+        $this->lastScope->linkChild($scope);
 
-        $this->lastScope->onCancel([$scope, 'cancel']);
+        $self->lastScope = $scope;
 
         return $scope;
     }
