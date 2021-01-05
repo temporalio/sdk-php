@@ -75,7 +75,6 @@ final class Client implements ClientInterface
     {
         if (!isset($this->requests[$response->getId()])) {
             // data on cancelled request
-            error_log("DATA ON CANCELLED REQUEST");
             return;
         }
 
