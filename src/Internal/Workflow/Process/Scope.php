@@ -132,11 +132,10 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
             return;
         }
 
+        $this->context->invalidate();
         $this->cancelled = true;
-        try {
-            // improve hieharhy
-            $this->context->invalidate();
 
+        try {
             foreach ($this->child as $child) {
                 $child->cancel();
             }

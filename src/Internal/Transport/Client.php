@@ -126,14 +126,17 @@ final class Client implements ClientInterface
                     return;
                 }
 
+                $request = $this->get($id);
+                $request->reject(CancellationException::fromRequestId($id));
+
                 // Otherwise, we send a Cancel request to the server to cancel
                 // the previously sent command by its ID.
-                $this->request(new Cancel([$id]))->then(
-                    function () use ($id) {
-                        $request = $this->get($id);
-                        $request->reject(CancellationException::fromRequestId($id));
-                    }
-                );
+//                $this->request(new Cancel([$id]))->then(
+//                    function () use ($id) {
+//                        $request = $this->get($id);
+//                        $request->reject(CancellationException::fromRequestId($id));
+//                    }
+//                );
             }
         );
 

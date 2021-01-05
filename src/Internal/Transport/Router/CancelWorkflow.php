@@ -65,6 +65,7 @@ class CancelWorkflow extends WorkflowProcessAwareRoute
             throw new \InvalidArgumentException(\sprintf(self::ERROR_PROCESS_NOT_DEFINED, $runId));
         }
 
+        // todo: need wait?
         $process->cancel();
 
         return [];
