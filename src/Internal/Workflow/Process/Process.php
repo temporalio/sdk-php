@@ -83,16 +83,6 @@ class Process extends Scope implements ProcessInterface
     }
 
     /**
-     * @return void
-     */
-    public function kill(): void
-    {
-        $this->services->running->pull($this->getId());
-
-        parent::cancel();
-    }
-
-    /**
      * @param \Throwable $e
      */
     protected function onException(\Throwable $e)
