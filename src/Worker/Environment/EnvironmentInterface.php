@@ -17,11 +17,6 @@ use Carbon\CarbonTimeZone;
 interface EnvironmentInterface
 {
     /**
-     * @return CarbonTimeZone
-     */
-    public function getTimeZone(): CarbonTimeZone;
-
-    /**
      * @return CarbonInterface
      */
     public function now(): CarbonInterface;

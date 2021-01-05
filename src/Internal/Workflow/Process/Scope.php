@@ -132,6 +132,7 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
             return;
         }
 
+        // todo: can be ommited later
         $this->context->invalidate();
         $this->cancelled = true;
 
