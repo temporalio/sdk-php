@@ -264,7 +264,6 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
         if ($e instanceof CancellationException) {
             $this->cancel();
         }
-        $this->next();
     }
 
     /**
