@@ -32,7 +32,7 @@ final class ContinueAsNew extends Request implements PayloadAwareRequest
             self::NAME,
             [
                 'name' => $name,
-                'result' => $input,
+                'input' => $input,
             ]
         );
     }
@@ -41,7 +41,7 @@ final class ContinueAsNew extends Request implements PayloadAwareRequest
     {
         return [
             'name' => $this->params['name'],
-            'result' => $dataConverter->toPayloads($this->params['result'])
+            'input' => $dataConverter->toPayloads($this->params['input'])
         ];
     }
 }

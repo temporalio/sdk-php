@@ -23,7 +23,7 @@ use Temporal\Workflow\WorkflowContextInterface;
 use Temporal\Workflow\WorkflowInfo;
 
 /**
- * @method static array getArguments()
+ * @method static array<Payload> getArguments()
  * @method static WorkflowInfo getInfo()
  *
  * @method static string getRunId()
