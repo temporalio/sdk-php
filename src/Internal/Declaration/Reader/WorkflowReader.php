@@ -66,7 +66,6 @@ class WorkflowReader extends Reader
      * @param WorkflowMethod $method
      * @return string
      */
-    #[Pure]
     private function createWorkflowName(ReflectionFunction $fun, WorkflowMethod $method): string
     {
         return $method->name ?? $fun->getName();
@@ -77,7 +76,6 @@ class WorkflowReader extends Reader
      * @param QueryMethod $method
      * @return string
      */
-    #[Pure]
     private function createWorkflowQueryName(ReflectionFunction $fun, QueryMethod $method): string
     {
         return $method->name ?? $fun->getName();
@@ -88,7 +86,6 @@ class WorkflowReader extends Reader
      * @param SignalMethod $method
      * @return string
      */
-    #[Pure]
     private function createWorkflowSignalName(ReflectionFunction $fun, SignalMethod $method): string
     {
         return $method->name ?? $fun->getName();

@@ -19,13 +19,11 @@ namespace Temporal\Internal\Repository;
  *
  * @psalm-import-type Identifier from Identifiable
  * @implements \IteratorAggregate<Identifier, TEntry>
- *
- * @psalm-type FilterType = callable(TEntry): bool
  */
 interface RepositoryInterface extends \IteratorAggregate, \Countable
 {
     /**
-     * @param FilterType $filter
+     * @param callable(TEntry): bool $filter
      * @return $this
      */
     public function filter(callable $filter): self;

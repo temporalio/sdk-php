@@ -49,7 +49,6 @@ class ActivityReader extends Reader
      * @param ActivityInterface $interface
      * @return string
      */
-    #[Pure]
     private function createActivityName(ReflectionFunction $fn, ActivityMethod $m, ActivityInterface $interface): string
     {
         return $interface->prefix . ($m->name ?? $fn->getName());
