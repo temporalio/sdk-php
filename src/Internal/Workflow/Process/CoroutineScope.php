@@ -16,6 +16,7 @@ use React\Promise\PromiseInterface;
 use React\Promise\PromisorInterface;
 use Temporal\Internal\Coroutine\CoroutineInterface;
 use Temporal\Internal\Coroutine\Stack;
+use Temporal\Internal\Queue\ArrayQueue;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Request\Cancel;
 use Temporal\Internal\Workflow\ScopeContext;
@@ -80,6 +81,13 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
      * @var callable
      */
     private $unlock;
+
+    /**
+     * Each onCancel receives unique ID.
+     *
+     * @var int
+     */
+    private int $cancelID = 0;
 
     /**
      * @var array<callable>
@@ -159,7 +167,7 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
      */
     public function onCancel(callable $then): self
     {
-        $this->onCancel[] = $then;
+        $this->onCancel[++$this->cancelID] = $then;
         return $this;
     }
 
@@ -169,12 +177,13 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
     public function cancel(): void
     {
         if ($this->cancelled) {
-            throw new \LogicException("Unable to cancel already cancelled scope");
+            return;
         }
         $this->cancelled = true;
 
-        foreach ($this->onCancel as $handler) {
+        foreach ($this->onCancel as $i => $handler) {
             $handler();
+            unset($this->onCancel[$i]);
         }
     }
 
@@ -246,7 +255,7 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
      */
     protected function onRequest(RequestInterface $request, PromiseInterface $promise)
     {
-        $this->onCancel[$request->getId()] = function () use ($request, $promise) {
+        $this->onCancel[++$this->cancelID] = function () use ($request, $promise) {
             if ($this->services->queue->has($request->getId())) {
                 // todo: need a way to
                 error_log("FOUND NON SEND PROMISE !!!!");
@@ -259,9 +268,11 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
             $this->context->request(new Cancel($request->getId()))->then($this->unlock, $this->unlock);
         };
 
+        $cancelID = $this->cancelID;
+
         // do not cancel already complete promises
-        $cleanup = function () use ($request) {
-            unset($this->onCancel[$request->getId()]);
+        $cleanup = function () use ($cancelID) {
+            unset($this->onCancel[$cancelID]);
         };
 
         $promise->then($cleanup, $cleanup);
@@ -289,8 +300,7 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
         $this->makeCurrent();
 
         if (!$this->coroutine->valid()) {
-            $this->result = $this->coroutine->getReturn();
-            $this->unlock();
+            $this->onResult($this->coroutine->getReturn());
 
             return;
         }
@@ -345,8 +355,7 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
                     try {
                         $this->coroutine->throw($e);
                     } catch (\Throwable $e) {
-                        $this->exception = $e;
-                        $this->unlock();
+                        $this->onException($e);
                         return;
                     }
 
@@ -361,6 +370,24 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
     }
 
     /**
+     * @param \Throwable $e
+     */
+    private function onException(\Throwable $e): void
+    {
+        $this->exception = $e;
+        $this->unlock();
+    }
+
+    /**
+     * @param mixed $result
+     */
+    private function onResult($result): void
+    {
+        $this->result = $result;
+        $this->unlock();
+    }
+
+    /**
      * Unlocks scope and pushes the result to the parent.
      */
     private function unlock(): void
@@ -370,7 +397,7 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
             throw new \LogicException("Undefined wait lock removed");
         }
 
-        if ($this->awaitLock > 0) {
+        if ($this->awaitLock !== 0) {
             // not ready yes
             return;
         }
