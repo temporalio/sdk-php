@@ -16,6 +16,8 @@ use Temporal\Worker\Command\Request;
 
 final class NewTimer extends Request
 {
+    protected const CANCELLABLE = true;
+
     /**
      * @var string
      */
@@ -26,8 +28,11 @@ final class NewTimer extends Request
      */
     public function __construct(\DateInterval $interval)
     {
-        parent::__construct(self::NAME, [
-            'ms' => CarbonInterval::make($interval)->totalMilliseconds,
-        ]);
+        parent::__construct(
+            self::NAME,
+            [
+                'ms' => CarbonInterval::make($interval)->totalMilliseconds,
+            ]
+        );
     }
 }

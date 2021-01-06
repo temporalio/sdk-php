@@ -13,6 +13,8 @@ namespace Temporal\Worker\Command;
 
 class Request extends Command implements RequestInterface
 {
+    protected const CANCELLABLE = false;
+
     /**
      * @var string
      */
@@ -50,5 +52,13 @@ class Request extends Command implements RequestInterface
     public function getParams(): array
     {
         return $this->params;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isCancellable(): bool
+    {
+        return static::CANCELLABLE;
     }
 }

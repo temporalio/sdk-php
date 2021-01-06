@@ -16,7 +16,6 @@ use React\Promise\PromiseInterface;
 use React\Promise\PromisorInterface;
 use Temporal\Internal\Coroutine\CoroutineInterface;
 use Temporal\Internal\Coroutine\Stack;
-use Temporal\Internal\Queue\ArrayQueue;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Request\Cancel;
 use Temporal\Internal\Workflow\ScopeContext;
@@ -255,6 +254,10 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
      */
     protected function onRequest(RequestInterface $request, PromiseInterface $promise)
     {
+        if (!$request->isCancellable()) {
+            return;
+        }
+
         $this->onCancel[++$this->cancelID] = function () use ($request, $promise) {
             if ($this->services->queue->has($request->getId())) {
                 // todo: need a way to
@@ -374,6 +377,7 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
      */
     private function onException(\Throwable $e): void
     {
+        error_log("GOT SCOPE EXCEPTION " . $e);
         $this->exception = $e;
         $this->unlock();
     }
@@ -383,6 +387,8 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
      */
     private function onResult($result): void
     {
+        error_log("GOT SCOPE RESULT" . print_r($result, true));
+
         $this->result = $result;
         $this->unlock();
     }
