@@ -16,6 +16,7 @@ use React\Promise\PromiseInterface;
 use Temporal\Exception\CancellationException;
 use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Internal\Transport\Request\Cancel;
+use Temporal\Worker\Command\CommandInterface;
 use Temporal\Worker\Command\ErrorResponseInterface;
 use Temporal\Worker\Command\RequestInterface;
 use Temporal\Worker\Command\ResponseInterface;
@@ -74,7 +75,7 @@ final class Client implements ClientInterface
     public function dispatch(ResponseInterface $response): void
     {
         if (!isset($this->requests[$response->getId()])) {
-            // data on cancelled request
+            error_log(sprintf("Got the response to undefined request %s", $response->getId()));
             return;
         }
 
@@ -90,6 +91,7 @@ final class Client implements ClientInterface
         } else {
             $result = $response->getResult();
 
+            // todo: make sure this is correct with arrays
             $deferred->resolve(\current($result) ?: false);
         }
     }
@@ -98,8 +100,10 @@ final class Client implements ClientInterface
      * @param RequestInterface $request
      * @return PromiseInterface
      */
-    private function promise(RequestInterface $request): PromiseInterface
+    public function request(RequestInterface $request): PromiseInterface
     {
+        $this->queue->push($request);
+
         $id = $request->getId();
 
         if (isset($this->requests[$id])) {
@@ -108,39 +112,46 @@ final class Client implements ClientInterface
 
         $this->requests[$id] = $deferred = new Deferred(
             function () use ($id) {
-                $command = $this->queue->pull($id);
+                // todo: remove it
+//                // In the case that the command is in the queue for sending,
+//                // then we take it out of the queue and cancel the request.
+//                if ($command !== null) {
+//                    $request = $this->fetch($id);
+//                    $request->reject(CancellationException::fromRequestId($id));
+//
+//                    // In the case that after the local promise rejection we have
+//                    // nothing to send, then we independently execute the next
+//                    // tick of the event loop.
+//                    if ($this->queue->count() === 0) {
+//                        $this->loop->tick();
+//                    }
+//                    return;
+//                }
 
-                // In the case that the command is in the queue for sending,
-                // then we take it out of the queue and cancel the request.
-                if ($command !== null) {
-                    $request = $this->fetch($id);
-                    $request->reject(CancellationException::fromRequestId($id));
-
-                    // In the case that after the local promise rejection we have
-                    // nothing to send, then we independently execute the next
-                    // tick of the event loop.
-                    if ($this->queue->count() === 0) {
-                        $this->loop->tick();
-                    }
-
-                    return;
-                }
-
-                $request = $this->get($id);
+                $request = $this->queue->pull($id) ?? $this->fetch($id);
                 $request->reject(CancellationException::fromRequestId($id));
 
-                // Otherwise, we send a Cancel request to the server to cancel
-                // the previously sent command by its ID.
-//                $this->request(new Cancel([$id]))->then(
-//                    function () use ($id) {
-//                        $request = $this->get($id);
-//                        $request->reject(CancellationException::fromRequestId($id));
-//                    }
-//                );
+                // In the case that after the local promise rejection we have
+                // nothing to send, then we independently execute the next
+                // tick of the event loop.
+                if ($this->queue->count() === 0) {
+                    $this->loop->tick();
+                }
             }
         );
 
         return $deferred->promise();
+    }
+
+    /**
+     * Check if command still in sending queue.
+     *
+     * @param CommandInterface $command
+     * @return bool
+     */
+    public function isQueued(CommandInterface $command): bool
+    {
+        return $this->queue->has($command->getId());
     }
 
     /**
@@ -169,16 +180,5 @@ final class Client implements ClientInterface
         }
 
         return $this->requests[$id];
-    }
-
-    /**
-     * @param RequestInterface $request
-     * @return PromiseInterface
-     */
-    public function request(RequestInterface $request): PromiseInterface
-    {
-        $this->queue->push($request);
-
-        return $this->promise($request);
     }
 }

@@ -54,12 +54,12 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
     /**
      * @var array<Scope>
      */
-    private array $childScopes = [];
+    private array $child = [];
 
     /**
      * @var array<callable>
      */
-    protected array $onCancel = [];
+    private array $onCancel = [];
 
     /**
      * @var bool
@@ -74,36 +74,12 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
     /**
      * @param WorkflowContext $ctx
      * @param ServiceContainer $services
-     * @param callable $handler
-     * @param array $args
      */
-    public function __construct(
-        ServiceContainer $services,
-        WorkflowContext $ctx,
-        callable $handler,
-        array $args = []
-    ) {
+    public function __construct(ServiceContainer $services, WorkflowContext $ctx)
+    {
         $this->context = $ctx;
         $this->services = $services;
-        $this->deferred = new Deferred(
-        // todo: we do not need it anymore
-        //            function () {
-        //                foreach ($this->onCancel as $handler) {
-        //                    $handler($this);
-        //                }
-        //$this->deferred->reject(CancellationException::fromScope($this));
-        //          }
-        );
-
-        try {
-            $this->coroutine = new Stack(
-                $this->call($handler, $args), function ($result) {
-                $this->deferred->resolve($result);
-            }
-            );
-        } catch (\Throwable $e) {
-            $this->deferred->reject($e);
-        }
+        $this->deferred = new Deferred();
     }
 
     /**
@@ -142,9 +118,39 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
     /**
      * Start the scope.
      */
-    public function start()
+    public function start(callable $handler, array $args)
     {
+        try {
+            $this->coroutine = new Stack(
+                $this->call($handler, $args), function ($result) {
+                $this->deferred->resolve($result);
+            }
+            );
+        } catch (\Throwable $e) {
+            $this->deferred->reject($e);
+        }
+
         $this->next();
+    }
+
+    /**
+     * @param callable $handler
+     * @param array $args
+     * @return \Generator
+     */
+    protected function call(callable $handler, array $args): \Generator
+    {
+        $this->makeCurrent();
+
+        $result = $handler($args);
+
+        if ($result instanceof \Generator || $result instanceof CoroutineInterface) {
+            yield from $result;
+
+            return $result->getReturn();
+        }
+
+        return $result;
     }
 
     /**
@@ -153,11 +159,6 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
      * @return CancellationScopeInterface
      */
     abstract public function createScope(callable $handler, bool $detached): CancellationScopeInterface;
-
-
-
-
-
 
     /**
      * @return void
@@ -194,33 +195,33 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
     }
 
     /**
-     * @return array<positive-int, PromiseInterface>
+     * @param mixed $result
      */
-    public function fetchUnresolvedRequests(): array
-    {
-        $client = $this->context->getClient();
-
-        return $client->fetchUnresolvedRequests();
-    }
+    abstract protected function onComplete($result): void;
 
     /**
-     * @param callable $handler
-     * @param array $args
-     * @return \Generator
+     * @param \Throwable $e
      */
-    protected function call(callable $handler, array $args): \Generator
+    abstract protected function onException(\Throwable $e);
+
+    /**
+     * Collect all requests created within the scope to later cancel them.
+     *
+     * @param RequestInterface $request
+     */
+    protected function onRequest(RequestInterface $request)
     {
-        $this->makeCurrent();
+        // todo: filter requests
+        error_log("GOT REQUEST!!!" . get_class($request));
 
-        $result = $handler($args);
-
-        if ($result instanceof \Generator || $result instanceof CoroutineInterface) {
-            yield from $result;
-
-            return $result->getReturn();
-        }
-
-        return $result;
+        // Otherwise, we send a Cancel request to the server to cancel
+        // the previously sent command by its ID.
+//                $this->request(new Cancel([$id]))->then(
+//                    function () use ($id) {
+//                        $request = $this->get($id);
+//                        $request->reject(CancellationException::fromRequestId($id));
+//                    }
+//                );
     }
 
     /**
@@ -235,17 +236,6 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
                 \Closure::fromCallable([$this, 'onRequest'])
             )
         );
-    }
-
-    /**
-     * Collect all requests created within the scope to later cancel them.
-     *
-     * @param RequestInterface $request
-     */
-    protected function onRequest(RequestInterface $request)
-    {
-        // todo: filter requests
-        error_log("GOT REQUEST!!!" . get_class($request));
     }
 
     /**
@@ -283,21 +273,6 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
 
             default:
                 $this->coroutine->send($current);
-        }
-    }
-
-    /**
-     * @param mixed $result
-     */
-    abstract protected function onComplete($result): void;
-
-    /**
-     * @param \Throwable $e
-     */
-    protected function onException(\Throwable $e)
-    {
-        if ($e instanceof CancellationException) {
-            $this->cancel();
         }
     }
 
@@ -348,10 +323,10 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
     {
         $listener = $this->services->loop->once(LoopInterface::ON_TICK, $tick);
 
-        if ($this->services->queue->count() === 0) {
-            // todo: what is that?
-            $this->services->loop->tick();
-        }
+//        if ($this->services->queue->count() === 0) {
+//            // todo: what is that?
+//            $this->services->loop->tick();
+//        }
 
         return $listener;
     }

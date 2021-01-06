@@ -73,7 +73,7 @@ final class StartWorkflow extends Route
         $process = new Process($this->services, $context);
         $this->services->running->add($process);
 
-        $process->start();
+        $process->start($instance->getHandler(), $context->getArguments());
     }
 
     /**

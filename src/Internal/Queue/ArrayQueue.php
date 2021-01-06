@@ -44,6 +44,22 @@ class ArrayQueue implements QueueInterface
     }
 
     /**
+     * @param int $commandId
+     * @return bool
+     */
+    public function has(int $commandId): bool
+    {
+        // todo: optimize?
+        foreach ($this->commands as $i => $command) {
+            if ($command->getId() === $commandId) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * {@inheritDoc}
      */
     public function getIterator(): \Traversable

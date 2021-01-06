@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Workflow\Process;
 
 use Temporal\Common\Uuid;
+use Temporal\Exception\CancellationException;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\WorkflowContext;
@@ -67,6 +68,16 @@ class CancellationScope extends Scope
     {
         // todo: trigger parent
         //
+    }
+
+    /**
+     * @param \Throwable $e
+     */
+    protected function onException(\Throwable $e)
+    {
+        if ($e instanceof CancellationException) {
+            $this->cancel();
+        }
     }
 
     public function createScope(callable $handler, bool $detached): CancellationScopeInterface

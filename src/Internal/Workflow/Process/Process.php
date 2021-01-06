@@ -14,30 +14,11 @@ namespace Temporal\Internal\Workflow\Process;
 use JetBrains\PhpStorm\Pure;
 use Temporal\Exception\CancellationException;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
-use Temporal\Internal\ServiceContainer;
 use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\ProcessInterface;
-use Temporal\Workflow\WorkflowContext;
 
 class Process extends Scope implements ProcessInterface
 {
-    /**
-     * Process constructor.
-     * @param ServiceContainer $services
-     * @param WorkflowContext $context
-     */
-    public function __construct(
-        ServiceContainer $services,
-        WorkflowContext $context
-    ) {
-        parent::__construct(
-            $services,
-            $context,
-            $context->getWorkflowInstance()->getHandler(),
-            $context->getArguments()
-        );
-    }
-
     /**
      * @return WorkflowInstanceInterface
      */
@@ -62,7 +43,6 @@ class Process extends Scope implements ProcessInterface
      */
     public function createScope(callable $handler, bool $detached): CancellationScopeInterface
     {
-
     }
 
     /**
