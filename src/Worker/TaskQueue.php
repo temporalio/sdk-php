@@ -12,8 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Worker;
 
 use React\Promise\PromiseInterface;
-use Temporal\Internal\Declaration\Reader\ActivityReader;
-use Temporal\Internal\Declaration\Reader\WorkflowReader;
 use Temporal\Internal\Events\EventEmitterTrait;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Internal\ServiceContainer;

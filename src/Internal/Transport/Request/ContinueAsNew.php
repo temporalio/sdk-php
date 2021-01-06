@@ -15,43 +15,33 @@ use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Worker\Command\PayloadAwareRequest;
 use Temporal\Worker\Command\Request;
 
-final class ExecuteActivity extends Request implements PayloadAwareRequest
+final class ContinueAsNew extends Request implements PayloadAwareRequest
 {
-    protected const CANCELLABLE = true;
-
     /**
      * @var string
      */
-    public const NAME = 'ExecuteActivity';
+    public const NAME = 'ContinueAsNew';
 
     /**
      * @param string $name
-     * @param array $arguments
-     * @param array $options
+     * @param array $input
      */
-    public function __construct(string $name, array $arguments, array $options)
+    public function __construct(string $name, array $input)
     {
         parent::__construct(
             self::NAME,
             [
                 'name' => $name,
-                'arguments' => $arguments,
-                'options' => $options,
+                'input' => $input,
             ]
         );
     }
 
-    /**
-     * @param DataConverterInterface $dataConverter
-     * @return array
-     */
     public function getMappedParams(DataConverterInterface $dataConverter): array
     {
-        return \array_merge(
-            $this->params,
-            [
-                'arguments' => $dataConverter->toPayloads($this->params['arguments']),
-            ]
-        );
+        return [
+            'name' => $this->params['name'],
+            'input' => $dataConverter->toPayloads($this->params['input'])
+        ];
     }
 }

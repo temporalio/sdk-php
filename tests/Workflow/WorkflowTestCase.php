@@ -22,6 +22,7 @@ use Temporal\Internal\Workflow\Process\Process;
 use Temporal\Worker\Command\ErrorResponseInterface;
 use Temporal\Worker\Command\RequestInterface;
 use Temporal\Worker\Command\SuccessResponseInterface;
+use Temporal\Workflow\WorkflowContext;
 use Temporal\Workflow\WorkflowInfo;
 use Temporal\Tests\TestCase;
 use Temporal\Tests\Testing\TestingClient;
@@ -103,7 +104,17 @@ abstract class WorkflowTestCase extends TestCase
     {
         $input = new Input($info, $args);
 
-        return new Process($input, $this->services, $this->createInstance($class, $fun));
+        $context = new WorkflowContext(
+            $this->services,
+            $this->services->client,
+            $i = $this->createInstance($class, $fun),
+            $input
+        );
+
+        $p = new Process($this->services, $context);
+        $p->start($i->getHandler(), $context->getArguments());
+
+        return $p;
     }
 
     /**

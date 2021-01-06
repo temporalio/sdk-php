@@ -21,12 +21,12 @@ class SuccessResponse extends Response implements SuccessResponseInterface
     protected array $result;
 
     /**
-     * @param mixed $result
+     * @param mixed $input
      * @param int|null $id
      */
-    public function __construct($result, int $id = null)
+    public function __construct($input, int $id = null)
     {
-        $this->result = $this->isArray($result) ? \array_values($result) : [$result];
+        $this->result = $this->isArray($input) ? \array_values($input) : [$input];
 
         parent::__construct($id);
     }

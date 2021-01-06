@@ -15,12 +15,14 @@ use Carbon\CarbonInterface;
 use Carbon\CarbonTimeZone;
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
+use Temporal\Exception\CancellationException;
+use Temporal\Internal\Declaration\WorkflowInstanceInterface;
+use Temporal\Internal\Transport\ClientInterface;
+use Temporal\Internal\Transport\Request\ContinueAsNew;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\Payload;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Support\DateInterval;
-use Temporal\Internal\Transport\CapturedClient;
-use Temporal\Internal\Transport\CapturedClientInterface;
 use Temporal\Internal\Transport\Request\CompleteWorkflow;
 use Temporal\Internal\Transport\Request\GetVersion;
 use Temporal\Internal\Transport\Request\NewTimer;
@@ -30,8 +32,6 @@ use Temporal\Internal\Workflow\ActivityStub;
 use Temporal\Internal\Workflow\ChildWorkflowProxy;
 use Temporal\Internal\Workflow\ChildWorkflowStub;
 use Temporal\Internal\Workflow\Input;
-use Temporal\Internal\Workflow\Process\CancellationScope;
-use Temporal\Internal\Workflow\Process\Process;
 use Temporal\Worker\Command\RequestInterface;
 
 use function React\Promise\reject;
@@ -44,19 +44,19 @@ class WorkflowContext implements WorkflowContextInterface
     protected ServiceContainer $services;
 
     /**
-     * @var CapturedClientInterface
+     * @var ClientInterface
      */
-    protected CapturedClientInterface $client;
+    protected ClientInterface $client;
 
     /**
      * @var Input
      */
-    private Input $input;
+    protected Input $input;
 
     /**
-     * @var Process
+     * @var WorkflowInstanceInterface
      */
-    private Process $process;
+    protected WorkflowInstanceInterface $workflowInstance;
 
     /**
      * @var array
@@ -64,17 +64,34 @@ class WorkflowContext implements WorkflowContextInterface
     private array $trace = [];
 
     /**
-     * @param Process $process
+     * @var bool
+     */
+    private bool $continueAsNew = false;
+
+    /**
      * @param ServiceContainer $services
+     * @param ClientInterface $client
+     * @param WorkflowInstanceInterface $workflowInstance
      * @param Input $input
      */
-    public function __construct(Process $process, ServiceContainer $services, Input $input)
-    {
-        $this->process = $process;
-        $this->input = $input;
+    public function __construct(
+        ServiceContainer $services,
+        ClientInterface $client,
+        WorkflowInstanceInterface $workflowInstance,
+        Input $input
+    ) {
         $this->services = $services;
+        $this->client = $client;
+        $this->workflowInstance = $workflowInstance;
+        $this->input = $input;
+    }
 
-        $this->client = new CapturedClient($services->client);
+    /**
+     * @return WorkflowInstanceInterface
+     */
+    public function getWorkflowInstance(): WorkflowInstanceInterface
+    {
+        return $this->workflowInstance;
     }
 
     /**
@@ -92,7 +109,7 @@ class WorkflowContext implements WorkflowContextInterface
      *
      * @return void
      */
-    private function recordTrace(): void
+    protected function recordTrace(): void
     {
         $this->trace = \debug_backtrace(
             \DEBUG_BACKTRACE_IGNORE_ARGS
@@ -140,9 +157,17 @@ class WorkflowContext implements WorkflowContextInterface
     }
 
     /**
-     * @return CapturedClientInterface
+     * @return DataConverterInterface
      */
-    public function getClient(): CapturedClientInterface
+    public function getDataConverter(): DataConverterInterface
+    {
+        return $this->services->dataConverter;
+    }
+
+    /**
+     * @return ClientInterface
+     */
+    public function getClient(): ClientInterface
     {
         return $this->client;
     }
@@ -153,9 +178,7 @@ class WorkflowContext implements WorkflowContextInterface
     public function registerQuery(string $queryType, callable $handler): WorkflowContextInterface
     {
         $this->recordTrace();
-
-        $instance = $this->process->getWorkflowInstance();
-        $instance->addQueryHandler($queryType, $handler);
+        $this->getWorkflowInstance()->addQueryHandler($queryType, $handler);
 
         return $this;
     }
@@ -166,24 +189,9 @@ class WorkflowContext implements WorkflowContextInterface
     public function registerSignal(string $queryType, callable $handler): WorkflowContextInterface
     {
         $this->recordTrace();
-
-        $instance = $this->process->getWorkflowInstance();
-        $instance->addSignalHandler($queryType, $handler);
+        $this->getWorkflowInstance()->addSignalHandler($queryType, $handler);
 
         return $this;
-    }
-
-    /**
-     * @param callable $handler
-     * @return CancellationScope
-     */
-    public function newCancellationScope(callable $handler): CancellationScope
-    {
-        $this->recordTrace();
-
-        $self = immutable(fn() => $this->client = new CapturedClient($this->client));
-
-        return new CancellationScope($self, $this->services, \Closure::fromCallable($handler));
     }
 
     /**
@@ -204,7 +212,6 @@ class WorkflowContext implements WorkflowContextInterface
     public function request(RequestInterface $request): PromiseInterface
     {
         $this->recordTrace();
-
         return $this->client->request($request);
     }
 
@@ -236,36 +243,34 @@ class WorkflowContext implements WorkflowContextInterface
     }
 
     /**
-     * @return DataConverterInterface
-     */
-    public function getDataConverter(): DataConverterInterface
-    {
-        return $this->services->dataConverter;
-    }
-
-    /**
      * {@inheritDoc}
      */
     public function complete($result = null): PromiseInterface
     {
         $this->recordTrace();
 
-        $then = function ($result) {
-            $this->process->cancel();
+        // must not be captured
+        return $this->services->client->request(new CompleteWorkflow($result));
+    }
 
-            return $result;
-        };
+    /**
+     * {@inheritDoc}
+     */
+    public function continueAsNew(string $name, ...$input): PromiseInterface
+    {
+        $this->recordTrace();
+        $this->continueAsNew = true;
 
-        /** @psalm-suppress UnusedClosureParam */
-        $otherwise = function (\Throwable $error): void {
-            $this->process->cancel();
+        // must not be captured
+        return $this->services->client->request(new ContinueAsNew($name, $input));
+    }
 
-            throw $error;
-        };
-
-        return $this->request(new CompleteWorkflow($result))
-            ->then($then, $otherwise)
-        ;
+    /**
+     * @return bool
+     */
+    public function isContinuedAsNew(): bool
+    {
+        return $this->continueAsNew;
     }
 
     /**
@@ -280,8 +285,7 @@ class WorkflowContext implements WorkflowContextInterface
         $this->recordTrace();
 
         return $this->newUntypedChildWorkflowStub($type, $options)
-            ->execute($args, $returnType)
-        ;
+            ->execute($args, $returnType);
     }
 
     /**
@@ -330,8 +334,7 @@ class WorkflowContext implements WorkflowContextInterface
         $this->recordTrace();
 
         return $this->newUntypedActivityStub($options)
-            ->execute($type, $args, $returnType)
-        ;
+            ->execute($type, $args, $returnType);
     }
 
     /**

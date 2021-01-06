@@ -26,6 +26,7 @@ use Temporal\Internal\Workflow\Process\Process;
 use Temporal\Worker\Command\Request;
 use Temporal\Worker\Command\RequestInterface;
 use Temporal\Workflow;
+use Temporal\Workflow\WorkflowContext;
 use Temporal\Workflow\WorkflowInfo;
 use Temporal\Tests\Testing\TestingRequest;
 
@@ -71,7 +72,17 @@ class ProcessTestCase extends WorkflowTestCase
 
             $instance = new WorkflowInstance($prototype, DataConverter::createDefault(), $this);
 
-            return new Process(new Input(), $this->services, $instance);
+            $context = new WorkflowContext(
+                $this->services,
+                $this->services->client,
+                $instance,
+                new Input()
+            );
+
+            $p = new Process($this->services, $context);
+            $p->start($instance->getHandler(), []);
+
+            return $p;
         } finally {
             $this->loop->tick();
         }

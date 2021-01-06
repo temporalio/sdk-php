@@ -35,8 +35,10 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
      * @param LoopInterface $loop
      */
     #[Pure]
-    public function __construct(RepositoryInterface $running, LoopInterface $loop)
-    {
+    public function __construct(
+        RepositoryInterface $running,
+        LoopInterface $loop
+    ) {
         $this->loop = $loop;
 
         parent::__construct($running);
@@ -49,20 +51,19 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
     {
         ['runId' => $runId, 'name' => $name] = $payload;
 
-        // todo: need data converter
-
-        // TODO: handle on protobuf level
-        // TODO: reduce side-effect (do not use references!!11)
-        foreach ($payload['args'] as &$arg) {
-            $arg = Payload::createRaw($arg['metadata'], $arg['data'] ?? null);
-            unset($arg);
+        $args = $payload['args'] ?? [];
+        if ($args !== []) {
+            foreach ($payload['args'] as $i => $arg) {
+                $args[$i] = Payload::createRaw($arg['metadata'], $arg['data'] ?? null);
+            }
         }
 
         $instance = $this->findInstanceOrFail($runId);
         $handler = $this->findQueryHandlerOrFail($instance, $name);
 
-        $executor = static function () use ($payload, $resolver, $handler) {
-            $resolver->resolve($handler($payload['args'] ?? []));
+        $executor = static function () use ($args, $resolver, $handler) {
+            $result = $handler($args ?? []);
+            $resolver->resolve([$result]);
         };
 
         $this->loop->once(LoopInterface::ON_QUERY, $executor);

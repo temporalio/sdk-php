@@ -36,12 +36,27 @@ class ArrayQueue implements QueueInterface
         foreach ($this->commands as $i => $command) {
             if ($command->getId() === $commandId) {
                 unset($this->commands[$i]);
-
-                break;
+                return $command;
             }
         }
 
-        return $command ?? null;
+        return null;
+    }
+
+    /**
+     * @param int $commandId
+     * @return bool
+     */
+    public function has(int $commandId): bool
+    {
+        // todo: optimize?
+        foreach ($this->commands as $command) {
+            if ($command->getId() === $commandId) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

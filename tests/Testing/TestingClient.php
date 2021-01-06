@@ -14,7 +14,6 @@ namespace Temporal\Tests\Testing;
 use JetBrains\PhpStorm\Immutable;
 use React\Promise\PromiseInterface;
 use Temporal\Internal\Queue\QueueInterface;
-use Temporal\Internal\Transport\CapturedClient;
 use Temporal\Internal\Transport\Client;
 use Temporal\Worker\Command\ErrorResponse;
 use Temporal\Worker\Command\RequestInterface;

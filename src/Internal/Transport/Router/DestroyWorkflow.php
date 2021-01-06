@@ -71,9 +71,10 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
             throw new \InvalidArgumentException(\sprintf(self::ERROR_PROCESS_NOT_DEFINED, $runId));
         }
 
-        Workflow::setCurrentContext(null);
+        $this->running->pull($runId);
 
-        $process->kill();
+        // todo: DESTROY!!!
+        $process->cancel();
 
         return [];
     }

@@ -18,7 +18,6 @@ use Temporal\Internal\Support\Facade;
 use Temporal\Internal\Transport\FutureInterface;
 use Temporal\Internal\Workflow\ActivityProxy;
 use Temporal\Internal\Workflow\ChildWorkflowProxy;
-use Temporal\Worker\Command\RequestInterface;
 use Temporal\Workflow\ActivityStubInterface;
 use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\ChildWorkflowOptions;
@@ -37,6 +36,7 @@ use Temporal\Workflow\WorkflowInfo;
  * @method static bool isReplaying()
  *
  * @method static CancellationScopeInterface newCancellationScope(callable $handler)
+ * @method static CancellationScopeInterface newDetachedCancellationScope(callable $handler)
  *
  * @method static PromiseInterface sideEffect(callable $cb)
  * @method static PromiseInterface complete(mixed $result = null)
@@ -45,6 +45,8 @@ use Temporal\Workflow\WorkflowInfo;
  *
  * @method static WorkflowContextInterface registerQuery(string $queryType, callable $handler)
  * @method static WorkflowContextInterface registerSignal(string $signalType, callable $handler)
+ *
+ * @method static FutureInterface continueAsNew(string $name, ...$input)
  *
  * @method static PromiseInterface executeActivity(string $name, array $args = [], ActivityOptions $options = null, \ReflectionType $returnType = null)
  * @method static ActivityProxy|object newActivityStub(string $class, ActivityOptions $options = null)

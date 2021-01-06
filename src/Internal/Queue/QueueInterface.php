@@ -28,4 +28,10 @@ interface QueueInterface extends \IteratorAggregate, \Countable
      * @return CommandInterface|null
      */
     public function pull(int $commandId): ?CommandInterface;
+
+    /**
+     * @param int $commandId
+     * @return bool
+     */
+    public function has(int $commandId): bool;
 }

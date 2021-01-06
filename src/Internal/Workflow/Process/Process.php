@@ -11,99 +11,61 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Workflow\Process;
 
-use Temporal\Exception\CancellationException;
+use JetBrains\PhpStorm\Pure;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\ServiceContainer;
-use Temporal\Internal\Workflow\Input;
 use Temporal\Workflow\ProcessInterface;
 use Temporal\Workflow\WorkflowContext;
-use Temporal\Workflow\WorkflowContextInterface;
 
-class Process extends Scope implements ProcessInterface
+class Process extends CoroutineScope implements ProcessInterface
 {
     /**
-     * @var WorkflowInstanceInterface
+     * Process constructor.
+     * @param ServiceContainer $services
+     * @param WorkflowContext $ctx
      */
-    private WorkflowInstanceInterface $instance;
+    public function __construct(ServiceContainer $services, WorkflowContext $ctx)
+    {
+        parent::__construct($services, $ctx);
+
+        // unlike other scopes Process will notify the server when complete instead of pushing the result
+        // to parent scope (there are no parent scope)
+        $this->promise()->then(
+            function ($result) {
+                $this->complete([$result]);
+            },
+            function (\Throwable $e) {
+                $this->complete($e);
+            }
+        );
+    }
 
     /**
-     * @param Input $input
-     * @param ServiceContainer $services
-     * @param WorkflowInstanceInterface $instance
+     * @return mixed|string
      */
-    public function __construct(Input $input, ServiceContainer $services, WorkflowInstanceInterface $instance)
+    public function getId()
     {
-        $this->instance = $instance;
-        $context = new WorkflowContext($this, $services, $input);
-
-        parent::__construct($context, $services, $instance->getHandler(), $context->getArguments());
-
-        $services->running->add($this);
-        $this->next();
+        return $this->context->getRunId();
     }
 
     /**
      * @return WorkflowInstanceInterface
      */
+    #[Pure]
     public function getWorkflowInstance(): WorkflowInstanceInterface
     {
-        return $this->instance;
+        return $this->getContext()->getWorkflowInstance();
     }
 
     /**
-     * @return WorkflowContextInterface
+     * @param $result
      */
-    public function getContext(): WorkflowContextInterface
+    protected function complete($result)
     {
-        return $this->context;
-    }
-
-    /**
-     * @return string
-     */
-    public function getId(): string
-    {
-        $info = $this->context->getInfo();
-
-        return $info->execution->runId;
-    }
-
-    /**
-     * @param mixed $result
-     */
-    protected function onComplete($result): void
-    {
-        $this->context->complete($result ?? $this->coroutine->getReturn());
-    }
-
-    /**
-     * @return void
-     */
-    public function kill(): void
-    {
-        $this->services->running->pull($this->getId());
-
-        parent::cancel();
-    }
-
-    /**
-     * @param \Throwable $e
-     */
-    public function throw(\Throwable $e): void
-    {
-        $this->nextStep->reject($e);
-    }
-
-    /**
-     * @param \Throwable $e
-     */
-    protected function onException(\Throwable $e)
-    {
-        if ($e instanceof CancellationException) {
-            $this->cancel();
+        if ($this->context->isContinuedAsNew()) {
+            return;
         }
 
-        // todo: complete with error
-        $this->context->complete($e);
+        $this->context->complete($result);
     }
 }

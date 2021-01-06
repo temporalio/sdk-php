@@ -29,7 +29,6 @@ use Temporal\Internal\Queue\ArrayQueue;
 use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Internal\Repository\ArrayRepository;
 use Temporal\Internal\Repository\RepositoryInterface;
-use Temporal\Internal\Transport\CapturedClientInterface;
 use Temporal\Internal\Transport\Client;
 use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Transport\Router;
@@ -220,7 +219,7 @@ final class Worker implements FactoryInterface
     }
 
     /**
-     * @return CapturedClientInterface
+     * @return ClientInterface
      */
     #[Pure]
     private function createClient(): ClientInterface

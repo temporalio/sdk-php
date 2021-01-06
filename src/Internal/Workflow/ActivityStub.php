@@ -22,7 +22,7 @@ use Temporal\Worker\Command\RequestInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\ActivityStubInterface;
 
-final class ActivityStub implements ActivityStubInterface, ClientInterface
+final class ActivityStub implements ActivityStubInterface
 {
     /**
      * @var DataConverterInterface
@@ -71,18 +71,6 @@ final class ActivityStub implements ActivityStubInterface, ClientInterface
     }
 
     /**
-     * @param RequestInterface $request
-     * @return PromiseInterface
-     */
-    public function request(RequestInterface $request): PromiseInterface
-    {
-        /** @var Workflow\WorkflowContextInterface $context */
-        $context = Workflow::getCurrentContext();
-
-        return $context->request($request);
-    }
-
-    /**
      * @param string $name
      * @param array $args
      * @param \ReflectionType|null $returnType
@@ -93,6 +81,18 @@ final class ActivityStub implements ActivityStubInterface, ClientInterface
         $request = new ExecuteActivity($name, $args, $this->getOptionsArray());
 
         return Payload::fromPromise($this->converter, $this->request($request), $returnType);
+    }
+
+    /**
+     * @param RequestInterface $request
+     * @return PromiseInterface
+     */
+    protected function request(RequestInterface $request): PromiseInterface
+    {
+        /** @var Workflow\WorkflowContextInterface $context */
+        $context = Workflow::getCurrentContext();
+
+        return $context->request($request);
     }
 }
 
