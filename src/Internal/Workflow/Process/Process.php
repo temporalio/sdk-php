@@ -18,7 +18,7 @@ use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\ProcessInterface;
 use Temporal\Workflow\WorkflowContext;
 
-class Process extends Scope implements ProcessInterface
+class Process extends CoroutineScope implements ProcessInterface
 {
     /**
      * Process constructor.

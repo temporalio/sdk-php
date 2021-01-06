@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Exception;
 
-use Temporal\Internal\Workflow\Process\Scope;
+use Temporal\Internal\Workflow\Process\CoroutineScope;
 
 class CancellationException extends TemporalException implements NonThrowableExceptionInterface
 {
@@ -40,10 +40,10 @@ class CancellationException extends TemporalException implements NonThrowableExc
     }
 
     /**
-     * @param Scope $scope
+     * @param CoroutineScope $scope
      * @return static
      */
-    public static function fromScope(Scope $scope): self
+    public static function fromScope(CoroutineScope $scope): self
     {
         return new static(\sprintf(self::ERROR_WORKFLOW, $scope->getContext()->getRunId()()));
     }

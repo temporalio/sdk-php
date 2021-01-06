@@ -4,7 +4,7 @@ namespace Temporal\Internal\Workflow;
 
 use React\Promise\PromiseInterface;
 use Temporal\Exception\CancellationException;
-use Temporal\Internal\Workflow\Process\Scope;
+use Temporal\Internal\Workflow\Process\CoroutineScope;
 use Temporal\Worker\Command\RequestInterface;
 use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\ScopedContextInterface;
@@ -14,9 +14,9 @@ use Temporal\Workflow\WorkflowContextInterface;
 class ScopeContext extends WorkflowContext implements ScopedContextInterface
 {
     /**
-     * @var Scope
+     * @var CoroutineScope
      */
-    private Scope $scope;
+    private CoroutineScope $scope;
 
     /**
      * @var callable
@@ -27,14 +27,14 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
      * Creates scope specific context.
      *
      * @param WorkflowContext $context
-     * @param Scope $scope
+     * @param CoroutineScope $scope
      * @param callable $onRequest
      *
      * @return WorkflowContextInterface
      */
     public static function fromWorkflowContext(
         WorkflowContext $context,
-        Scope $scope,
+        CoroutineScope $scope,
         callable $onRequest
     ): WorkflowContextInterface {
         $ctx = new self($context->services, $context->client, $context->workflowInstance, $context->input);

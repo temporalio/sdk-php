@@ -26,10 +26,12 @@ use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\WorkflowContext;
 
 /**
- * @internal Scope is an internal library class, please do not use it in your code.
+ * Unlike Java implementation, PHP merged coroutine and cancellation scope into single instance.
+ *
+ * @internal CoroutineScope is an internal library class, please do not use it in your code.
  * @psalm-internal Temporal\Client
  */
-class Scope implements CancellationScopeInterface, PromisorInterface
+class CoroutineScope implements CancellationScopeInterface, PromisorInterface
 {
     /**
      * @var ServiceContainer
@@ -52,11 +54,6 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     protected CoroutineInterface $coroutine;
 
     /**
-     * @var array<Scope>
-     */
-    private array $child = [];
-
-    /**
      * Due nature of PHP generators the result of coroutine can be available before all child coroutines complete.
      * This property will hold this result until all the inner coroutines resolve.
      *
@@ -77,7 +74,12 @@ class Scope implements CancellationScopeInterface, PromisorInterface
      *
      * @var int
      */
-    private int $awaitLock = 0;
+    private int $awaitLock;
+
+    /**
+     * @var callable
+     */
+    private $unlock;
 
     /**
      * @var array<callable>
@@ -103,6 +105,11 @@ class Scope implements CancellationScopeInterface, PromisorInterface
         $this->context = $ctx;
         $this->services = $services;
         $this->deferred = new Deferred();
+
+        $this->awaitLock = 0;
+        $this->unlock = function () {
+            $this->unlock();
+        };
     }
 
     /**
@@ -135,7 +142,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
      * @param callable $handler
      * @param array $args
      */
-    public function start(callable $handler, array $args)
+    public function start(callable $handler, array $args = [])
     {
         try {
             $this->awaitLock++;
@@ -178,6 +185,19 @@ class Scope implements CancellationScopeInterface, PromisorInterface
      */
     public function createScope(callable $handler, bool $detached): CancellationScopeInterface
     {
+        $scope = new CoroutineScope($this->services, $this->context);
+
+        // do not return parent scope result until inner scope complete
+        $this->awaitLock++;
+        $scope->promise()->then($this->unlock, $this->unlock);
+
+        if (!$detached) {
+            $this->onCancel(\Closure::fromCallable([$scope, 'cancel']));
+        }
+
+        $scope->start($handler);
+
+        return $scope;
     }
 
     /**
@@ -230,14 +250,13 @@ class Scope implements CancellationScopeInterface, PromisorInterface
             if ($this->services->queue->has($request->getId())) {
                 // todo: need a way to
                 error_log("FOUND NON SEND PROMISE !!!!");
+
+                // todo: how to cancel this promise?
                 return;
             }
 
             $this->awaitLock++;
-            $this->context->request(new Cancel($request->getId()))->then(
-                \Closure::fromCallable([$this, 'unlock']),
-                \Closure::fromCallable([$this, 'unlock']),
-            );
+            $this->context->request(new Cancel($request->getId()))->then($this->unlock, $this->unlock);
         };
 
         // do not cancel already complete promises
@@ -371,6 +390,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     {
         $listener = $this->services->loop->once(LoopInterface::ON_TICK, $tick);
 
+        // todo: REMOVE IT if not needed
 //        if ($this->services->queue->count() === 0) {
 //            // todo: what is that?
 //            $this->services->loop->tick();
