@@ -415,6 +415,12 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
      */
     private function defer(\Closure $tick)
     {
-        return $this->services->loop->once(LoopInterface::ON_TICK, $tick);
+        $listener = $this->services->loop->once(LoopInterface::ON_TICK, $tick);
+
+        if ($this->services->queue->count() === 0) {
+            $this->services->loop->tick();
+        }
+
+        return $listener;
     }
 }

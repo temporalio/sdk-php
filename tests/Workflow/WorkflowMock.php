@@ -21,11 +21,13 @@ final class WorkflowMock
 
     public function workflow1()
     {
-        $scope = Workflow::newCancellationScope(function () {
-            yield Workflow::executeActivity('activity');
+        $scope = Workflow::newCancellationScope(
+            function () {
+                yield Workflow::executeActivity('activity');
 
-            return 42;
-        });
+                return 42;
+            }
+        );
 
         $scope->cancel();
 
@@ -34,13 +36,17 @@ final class WorkflowMock
 
     public function workflow2()
     {
-        $cs1 = Workflow::newCancellationScope(function() {
-            return yield Workflow::executeActivity('a');
-        });
+        $cs1 = Workflow::newCancellationScope(
+            function () {
+                return yield Workflow::executeActivity('a');
+            }
+        );
 
-        $cs2 = Workflow::newCancellationScope(function() {
-            return yield Workflow::executeActivity('b');
-        });
+        $cs2 = Workflow::newCancellationScope(
+            function () {
+                return yield Workflow::executeActivity('b');
+            }
+        );
 
         $result = yield Promise::any([$cs1, $cs2]);
 
@@ -52,20 +58,26 @@ final class WorkflowMock
 
     public function workflow3()
     {
-        return yield Workflow::newCancellationScope(function() {
-            return yield Workflow::newCancellationScope(function () {
-                return 42;
-            });
-        });
+        return yield Workflow::newCancellationScope(
+            function () {
+                return yield Workflow::newCancellationScope(
+                    function () {
+                        return 42;
+                    }
+                );
+            }
+        );
     }
 
     public function workflow4()
     {
-        $scope = Workflow::newCancellationScope(function() {
-            $this->data = Workflow::executeActivity('example');
+        $scope = Workflow::newCancellationScope(
+            function () {
+                $this->data = Workflow::executeActivity('example');
 
-            return 42;
-        });
+                return 42;
+            }
+        );
 
         $scope->cancel();
 
@@ -83,29 +95,37 @@ final class WorkflowMock
 
     public function workflow6()
     {
-        return yield Workflow::newCancellationScope(function() {
-            $result = Workflow::newCancellationScope(function () {
-                yield Workflow::executeActivity('example');
+        return yield Workflow::newCancellationScope(
+            function () {
+                $result = Workflow::newCancellationScope(
+                    function () {
+                        yield Workflow::executeActivity('example');
 
-                return 42;
-            });
+                        return 42;
+                    }
+                );
 
-            $result->cancel();
+                $result->cancel();
 
-            return yield $result;
-        });
+                return yield $result;
+            }
+        );
     }
 
     public function workflow7()
     {
         $result = false;
 
-        $scope = Workflow::newCancellationScope(function () {
-            yield Workflow::executeActivity('example');
-        })
-            ->onCancel(function () use (&$result) {
-                $result = true;
-            });
+        $scope = Workflow::newCancellationScope(
+            function () {
+                yield Workflow::executeActivity('example');
+            }
+        )
+            ->onCancel(
+                function () use (&$result) {
+                    $result = true;
+                }
+            );
 
         $scope->cancel();
 
@@ -115,16 +135,17 @@ final class WorkflowMock
     public function workflow8()
     {
         $options = ActivityOptions::new()
-            ->withStartToCloseTimeout(5)
-        ;
+            ->withStartToCloseTimeout(5);
 
         return yield Workflow::executeActivity('first', [], $options)
-            ->then(function ($result) use ($options) {
-                return Workflow::executeActivity(
-                    'second',
-                    ['Result:' . $result],
-                    $options
-                );
-            });
+            ->then(
+                function ($result) use ($options) {
+                    return Workflow::executeActivity(
+                        'second',
+                        ['Result:' . $result],
+                        $options
+                    );
+                }
+            );
     }
 }

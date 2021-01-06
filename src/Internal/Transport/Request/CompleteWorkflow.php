@@ -24,17 +24,12 @@ final class CompleteWorkflow extends Request implements PayloadAwareRequest
     public const NAME = 'CompleteWorkflow';
 
     /**
-     * @var mixed
+     * @param array $result
      */
-    private $result;
-
-    /**
-     * @param mixed $result
-     */
-    public function __construct($result)
+    public function __construct(array $result)
     {
         parent::__construct(self::NAME);
-        $this->result = $result;
+        $this->params['result'] = $result;
     }
 
     /**
@@ -43,14 +38,14 @@ final class CompleteWorkflow extends Request implements PayloadAwareRequest
      */
     public function getMappedParams(DataConverterInterface $dataConverter): array
     {
-        if ($this->result instanceof \Throwable) {
+        if ($this->params['result'] instanceof \Throwable) {
             return [
-                'error' => ErrorResponse::exceptionToArray($this->result),
+                'error' => ErrorResponse::exceptionToArray($this->params['result']),
             ];
         }
 
         return [
-            'result' => $dataConverter->toPayloads($this->result),
+            'result' => $dataConverter->toPayloads($this->params['result']),
         ];
     }
 }
