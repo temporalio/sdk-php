@@ -43,6 +43,14 @@ class ArrayRepository implements RepositoryInterface
     /**
      * {@inheritDoc}
      */
+    public function filter(callable $filter): RepositoryInterface
+    {
+        return new static(\array_filter($this->entries, $filter));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function getIterator(): \Traversable
     {
         return new \ArrayIterator($this->entries);

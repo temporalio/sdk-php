@@ -24,13 +24,13 @@ use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Transport\CapturedClient;
 use Temporal\Internal\Transport\CapturedClientInterface;
 use Temporal\Internal\Transport\Request\CompleteWorkflow;
-use Temporal\Internal\Transport\Request\ExecuteActivity;
-use Temporal\Internal\Transport\Request\ExecuteChildWorkflow;
 use Temporal\Internal\Transport\Request\GetVersion;
 use Temporal\Internal\Transport\Request\NewTimer;
 use Temporal\Internal\Transport\Request\SideEffect;
 use Temporal\Internal\Workflow\ActivityProxy;
+use Temporal\Internal\Workflow\ActivityStub;
 use Temporal\Internal\Workflow\ChildWorkflowProxy;
+use Temporal\Internal\Workflow\ChildWorkflowStub;
 use Temporal\Internal\Workflow\Input;
 use Temporal\Internal\Workflow\Process\CancellationScope;
 use Temporal\Internal\Workflow\Process\Process;
@@ -284,7 +284,7 @@ class WorkflowContext implements WorkflowContextInterface
         }
 
         // todo: get return type from context (is it possible?)
-        return $this->toResponse($this->request(new SideEffect($value)));
+        return Payload::fromPromise($this->services->dataConverter, $this->request(new SideEffect($value)));
     }
 
     /**
@@ -365,13 +365,26 @@ class WorkflowContext implements WorkflowContextInterface
     ): PromiseInterface {
         $this->recordTrace();
 
-        $options = $this->services->marshaller->marshal(
-            $options ?? new ChildWorkflowOptions()
-        );
+        return $this->newUntypedChildWorkflowStub($type, $options)
+            ->execute($args, $returnType)
+        ;
+    }
 
-        return $this->toResponse(
-            $this->request(new ExecuteChildWorkflow($type, $args, $options)),
-            $returnType
+    /**
+     * {@inheritDoc}
+     */
+    public function newUntypedChildWorkflowStub(
+        string $name,
+        ChildWorkflowOptions $options = null
+    ): ChildWorkflowStubInterface {
+        $this->recordTrace();
+        $options ??= new ChildWorkflowOptions();
+
+        return new ChildWorkflowStub(
+            $this->services->dataConverter,
+            $this->services->marshaller,
+            $name,
+            $options
         );
     }
 
@@ -381,10 +394,14 @@ class WorkflowContext implements WorkflowContextInterface
     public function newChildWorkflowStub(string $class, ChildWorkflowOptions $options = null): object
     {
         $this->recordTrace();
+        $workflows = $this->services->workflowsReader->fromClass($class);
 
-        $options ??= new ChildWorkflowOptions();
-
-        return new ChildWorkflowProxy($class, $options, $this, $this->services->workflows);
+        return new ChildWorkflowProxy(
+            $class,
+            $workflows,
+            $options ?? new ChildWorkflowOptions(),
+            $this
+        );
     }
 
     /**
@@ -398,13 +415,23 @@ class WorkflowContext implements WorkflowContextInterface
     ): PromiseInterface {
         $this->recordTrace();
 
-        $options = $this->services->marshaller->marshal(
-            $options ?? new ActivityOptions()
-        );
+        return $this->newUntypedActivityStub($options)
+            ->execute($type, $args, $returnType)
+        ;
+    }
 
-        return $this->toResponse(
-            $this->request(new ExecuteActivity($type, $args, $options)),
-            $returnType
+    /**
+     * {@inheritDoc}
+     */
+    public function newUntypedActivityStub(ActivityOptions $options = null): ActivityStubInterface
+    {
+        $this->recordTrace();
+        $options ??= new ActivityOptions();
+
+        return new ActivityStub(
+            $this->services->dataConverter,
+            $this->services->marshaller,
+            $options
         );
     }
 
@@ -414,10 +441,13 @@ class WorkflowContext implements WorkflowContextInterface
     public function newActivityStub(string $class, ActivityOptions $options = null): object
     {
         $this->recordTrace();
+        $activities = $this->services->activitiesReader->fromClass($class);
 
-        $options ??= new ActivityOptions();
-
-        return new ActivityProxy($class, $options, $this, $this->services->activities);
+        return new ActivityProxy(
+            $class,
+            $activities,
+            $this->newUntypedActivityStub($options)
+        );
     }
 
     /**

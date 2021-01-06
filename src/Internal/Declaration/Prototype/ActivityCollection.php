@@ -14,9 +14,8 @@ namespace Temporal\Internal\Declaration\Prototype;
 use Temporal\Internal\Repository\ArrayRepository;
 
 /**
- * @template-covariant T of Prototype
- * @template-extends ArrayRepository<T>
+ * @template-extends ArrayRepository<ActivityPrototype>
  */
-final class Collection extends ArrayRepository
+final class ActivityCollection extends ArrayRepository
 {
 }
