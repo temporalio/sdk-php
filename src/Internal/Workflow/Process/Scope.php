@@ -14,10 +14,10 @@ namespace Temporal\Internal\Workflow\Process;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use React\Promise\PromisorInterface;
-use Temporal\Exception\CancellationException;
 use Temporal\Internal\Coroutine\CoroutineInterface;
 use Temporal\Internal\Coroutine\Stack;
 use Temporal\Internal\ServiceContainer;
+use Temporal\Internal\Transport\Request\Cancel;
 use Temporal\Internal\Workflow\ScopeContext;
 use Temporal\Worker\Command\RequestInterface;
 use Temporal\Worker\LoopInterface;
@@ -29,7 +29,7 @@ use Temporal\Workflow\WorkflowContext;
  * @internal Scope is an internal library class, please do not use it in your code.
  * @psalm-internal Temporal\Client
  */
-abstract class Scope implements CancellationScopeInterface, PromisorInterface
+class Scope implements CancellationScopeInterface, PromisorInterface
 {
     /**
      * @var ServiceContainer
@@ -42,19 +42,42 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
     protected WorkflowContext $context;
 
     /**
+     * @var Deferred
+     */
+    protected Deferred $deferred;
+
+    /**
      * @var CoroutineInterface
      */
     protected CoroutineInterface $coroutine;
 
     /**
-     * @var Deferred
-     */
-    private Deferred $deferred;
-
-    /**
      * @var array<Scope>
      */
     private array $child = [];
+
+    /**
+     * Due nature of PHP generators the result of coroutine can be available before all child coroutines complete.
+     * This property will hold this result until all the inner coroutines resolve.
+     *
+     * @var mixed
+     */
+    private $result;
+
+    /**
+     * When scope completes with exception.
+     *
+     * @var \Throwable|null
+     */
+    private ?\Throwable $exception = null;
+
+    /**
+     * When wait complete reaches 0 the result (or exception) will be resolved to parent scope. Waits for inner coroutines
+     * and confirmations of Cancel commands. Internal coroutine creates single lock as well.
+     *
+     * @var int
+     */
+    private int $awaitLock = 0;
 
     /**
      * @var array<callable>
@@ -107,6 +130,24 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
     }
 
     /**
+     * Start the scope coroutine.
+     *
+     * @param callable $handler
+     * @param array $args
+     */
+    public function start(callable $handler, array $args)
+    {
+        try {
+            $this->awaitLock++;
+            $this->coroutine = new Stack($this->call($handler, $args));
+        } catch (\Throwable $e) {
+            $this->deferred->reject($e);
+        }
+
+        $this->next();
+    }
+
+    /**
      * {@inheritDoc}
      */
     public function onCancel(callable $then): self
@@ -116,21 +157,48 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
     }
 
     /**
-     * Start the scope.
+     * @return void
      */
-    public function start(callable $handler, array $args)
+    public function cancel(): void
     {
-        try {
-            $this->coroutine = new Stack(
-                $this->call($handler, $args), function ($result) {
-                $this->deferred->resolve($result);
-            }
-            );
-        } catch (\Throwable $e) {
-            $this->deferred->reject($e);
+        if ($this->cancelled) {
+            throw new \LogicException("Unable to cancel already cancelled scope");
         }
+        $this->cancelled = true;
 
-        $this->next();
+        foreach ($this->onCancel as $handler) {
+            $handler();
+        }
+    }
+
+    /**
+     * @param callable $handler
+     * @param bool $detached
+     * @return CancellationScopeInterface
+     */
+    public function createScope(callable $handler, bool $detached): CancellationScopeInterface
+    {
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function promise(): PromiseInterface
+    {
+        return $this->deferred->promise();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function then(
+        callable $onFulfilled = null,
+        callable $onRejected = null,
+        callable $onProgress = null
+    ): PromiseInterface {
+        $promise = $this->deferred->promise();
+
+        return $promise->then($onFulfilled, $onRejected, $onProgress);
     }
 
     /**
@@ -141,7 +209,6 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
     protected function call(callable $handler, array $args): \Generator
     {
         $this->makeCurrent();
-
         $result = $handler($args);
 
         if ($result instanceof \Generator || $result instanceof CoroutineInterface) {
@@ -154,74 +221,31 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
     }
 
     /**
-     * @param callable $handler
-     * @param bool $detached
-     * @return CancellationScopeInterface
-     */
-    abstract public function createScope(callable $handler, bool $detached): CancellationScopeInterface;
-
-    /**
-     * @return void
-     */
-    public function cancel(): void
-    {
-        if ($this->cancelled) {
-            throw new \LogicException("Unable to cancel already cancelled scope");
-        }
-        $this->cancelled = true;
-
-        foreach ($this->onCancel as $trigger) {
-            $trigger();
-        }
-
-        // todo: simple trigger
-
-        // todo: can be ommited later
-
-
-//        try {
-//            foreach ($this->childScopes as $child) {
-//                $child->cancel();
-//            }
-//
-//            // todo: called in finalize (!!!!!!)
-//            $promise = $this->promise();
-//            $promise->cancel();
-//        } finally {
-//            foreach ($this->fetchUnresolvedRequests() as $promise) {
-//                $promise->cancel();
-//            }
-//        }
-    }
-
-    /**
-     * @param mixed $result
-     */
-    abstract protected function onComplete($result): void;
-
-    /**
-     * @param \Throwable $e
-     */
-    abstract protected function onException(\Throwable $e);
-
-    /**
-     * Collect all requests created within the scope to later cancel them.
-     *
      * @param RequestInterface $request
+     * @param PromiseInterface $promise
      */
-    protected function onRequest(RequestInterface $request)
+    protected function onRequest(RequestInterface $request, PromiseInterface $promise)
     {
-        // todo: filter requests
-        error_log("GOT REQUEST!!!" . get_class($request));
+        $this->onCancel[$request->getId()] = function () use ($request, $promise) {
+            if ($this->services->queue->has($request->getId())) {
+                // todo: need a way to
+                error_log("FOUND NON SEND PROMISE !!!!");
+                return;
+            }
 
-        // Otherwise, we send a Cancel request to the server to cancel
-        // the previously sent command by its ID.
-//                $this->request(new Cancel([$id]))->then(
-//                    function () use ($id) {
-//                        $request = $this->get($id);
-//                        $request->reject(CancellationException::fromRequestId($id));
-//                    }
-//                );
+            $this->awaitLock++;
+            $this->context->request(new Cancel($request->getId()))->then(
+                \Closure::fromCallable([$this, 'unlock']),
+                \Closure::fromCallable([$this, 'unlock']),
+            );
+        };
+
+        // do not cancel already complete promises
+        $cleanup = function () use ($request) {
+            unset($this->onCancel[$request->getId()]);
+        };
+
+        $promise->then($cleanup, $cleanup);
     }
 
     /**
@@ -246,7 +270,8 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
         $this->makeCurrent();
 
         if (!$this->coroutine->valid()) {
-            $this->onComplete($this->coroutine->getReturn());
+            $this->result = $this->coroutine->getReturn();
+            $this->unlock();
 
             return;
         }
@@ -301,7 +326,8 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
                     try {
                         $this->coroutine->throw($e);
                     } catch (\Throwable $e) {
-                        $this->onException($e);
+                        $this->exception = $e;
+                        $this->unlock();
                         return;
                     }
 
@@ -313,6 +339,28 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
         };
 
         $promise->then($onFulfilled, $onRejected);
+    }
+
+    /**
+     * Unlocks scope and pushes the result to the parent.
+     */
+    private function unlock(): void
+    {
+        $this->awaitLock--;
+        if ($this->awaitLock < 0) {
+            throw new \LogicException("Undefined wait lock removed");
+        }
+
+        if ($this->awaitLock > 0) {
+            // not ready yes
+            return;
+        }
+
+        if ($this->exception !== null) {
+            $this->deferred->reject($this->exception);
+        } else {
+            $this->deferred->resolve($this->result);
+        }
     }
 
     /**
@@ -329,26 +377,5 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
 //        }
 
         return $listener;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function promise(): PromiseInterface
-    {
-        return $this->deferred->promise();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function then(
-        callable $onFulfilled = null,
-        callable $onRejected = null,
-        callable $onProgress = null
-    ): PromiseInterface {
-        $promise = $this->deferred->promise();
-
-        return $promise->then($onFulfilled, $onRejected, $onProgress);
     }
 }

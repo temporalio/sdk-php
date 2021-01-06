@@ -15,7 +15,6 @@ use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\Exception\CancellationException;
 use Temporal\Internal\Queue\QueueInterface;
-use Temporal\Internal\Transport\Request\Cancel;
 use Temporal\Worker\Command\CommandInterface;
 use Temporal\Worker\Command\ErrorResponseInterface;
 use Temporal\Worker\Command\RequestInterface;

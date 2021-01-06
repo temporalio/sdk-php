@@ -12,13 +12,43 @@ declare(strict_types=1);
 namespace Temporal\Internal\Workflow\Process;
 
 use JetBrains\PhpStorm\Pure;
-use Temporal\Exception\CancellationException;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
+use Temporal\Internal\ServiceContainer;
 use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\ProcessInterface;
+use Temporal\Workflow\WorkflowContext;
 
 class Process extends Scope implements ProcessInterface
 {
+    /**
+     * Process constructor.
+     * @param ServiceContainer $services
+     * @param WorkflowContext $ctx
+     */
+    public function __construct(ServiceContainer $services, WorkflowContext $ctx)
+    {
+        parent::__construct($services, $ctx);
+
+        // unlike other scopes Process will notify the server when complete instead of pushing the result
+        // to parent scope (there are no parent scope)
+        $this->promise()->then(
+            function ($result) {
+                $this->complete([$result]);
+            },
+            function (\Throwable $e) {
+                $this->complete($e);
+            }
+        );
+    }
+
+    /**
+     * @return mixed|string
+     */
+    public function getId()
+    {
+        return $this->context->getRunId();
+    }
+
     /**
      * @return WorkflowInstanceInterface
      */
@@ -29,44 +59,14 @@ class Process extends Scope implements ProcessInterface
     }
 
     /**
-     * @return string
+     * @param $result
      */
-    public function getId(): string
-    {
-        return $this->context->getInfo()->execution->runId;
-    }
-
-    /**
-     * @param callable $handler
-     * @param bool $detached
-     * @return CancellationScopeInterface
-     */
-    public function createScope(callable $handler, bool $detached): CancellationScopeInterface
-    {
-    }
-
-    /**
-     * @param mixed $result
-     */
-    protected function onComplete($result): void
+    protected function complete($result)
     {
         if ($this->context->isContinuedAsNew()) {
             return;
         }
 
-        $this->context->complete($result ?? $this->coroutine->getReturn());
-    }
-
-    /**
-     * @param \Throwable $e
-     */
-    protected function onException(\Throwable $e)
-    {
-        if ($e instanceof CancellationException) {
-            $this->cancel();
-        }
-
-        // todo: complete with error (!)
-        $this->context->complete($e);
+        $this->context->complete($result);
     }
 }
