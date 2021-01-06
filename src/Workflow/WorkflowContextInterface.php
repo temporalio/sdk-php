@@ -15,13 +15,13 @@ use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Internal\Support\DateInterval;
-use Temporal\Internal\Transport\ClientInterface;
+use Temporal\Worker\Command\RequestInterface;
 use Temporal\Worker\Environment\EnvironmentInterface;
 
 /**
  * @psalm-import-type DateIntervalFormat from DateInterval
  */
-interface WorkflowContextInterface extends EnvironmentInterface, ClientInterface
+interface WorkflowContextInterface extends EnvironmentInterface
 {
     /**
      * @return WorkflowInfo
@@ -53,20 +53,6 @@ interface WorkflowContextInterface extends EnvironmentInterface, ClientInterface
     public function registerSignal(string $queryType, callable $handler): self;
 
     /**
-     * @param callable $handler
-     * @return CancellationScopeInterface
-     */
-    public function newCancellationScope(callable $handler): CancellationScopeInterface;
-
-    /**
-     * Cancellation scope which does not react to parent cancel and completes in background.
-     *
-     * @param callable $handler
-     * @return CancellationScopeInterface
-     */
-    public function newDetachedCancellationScope(callable $handler): CancellationScopeInterface;
-
-    /**
      * @param string $changeId
      * @param int $minSupported
      * @param int $maxSupported
@@ -90,7 +76,7 @@ interface WorkflowContextInterface extends EnvironmentInterface, ClientInterface
     public function complete($result = null): PromiseInterface;
 
     /**
-     * @param DateIntervalFormat $interval
+     * @param DateIntervalFormat|int $interval
      * @return PromiseInterface
      * @see DateInterval
      */
@@ -166,4 +152,9 @@ interface WorkflowContextInterface extends EnvironmentInterface, ClientInterface
      * @return ActivityStubInterface
      */
     public function newUntypedActivityStub(ActivityOptions $options = null): ActivityStubInterface;
+
+    /**
+     * {@inheritDoc}
+     */
+    public function request(RequestInterface $request): PromiseInterface;
 }

@@ -9,12 +9,14 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Internal\Transport;
+namespace Temporal\Tests\Testing;
 
 use React\Promise\PromiseInterface;
+use Temporal\Internal\Transport\ClientInterface;
+use Temporal\Worker\Command\CommandInterface;
 use Temporal\Worker\Command\RequestInterface;
 
-class CapturedClient implements CapturedClientInterface
+class CapturedClient implements ClientInterface
 {
     /**
      * @var array<positive-int, PromiseInterface>
@@ -41,8 +43,7 @@ class CapturedClient implements CapturedClientInterface
     public function request(RequestInterface $request): PromiseInterface
     {
         return $this->requests[$request->getId()] = $this->parent->request($request)
-            ->then($this->onFulfilled($request), $this->onRejected($request))
-        ;
+            ->then($this->onFulfilled($request), $this->onRejected($request));
     }
 
     /**
@@ -98,5 +99,15 @@ class CapturedClient implements CapturedClientInterface
     public function count(): int
     {
         return \count($this->requests);
+    }
+
+    public function isQueued(CommandInterface $command): bool
+    {
+        return $this->parent->isQueued($command);
+    }
+
+    public function cancel(CommandInterface $command): void
+    {
+        $this->parent->cancel($command);
     }
 }

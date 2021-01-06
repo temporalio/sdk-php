@@ -17,6 +17,8 @@ use Temporal\Worker\Command\Request;
 
 final class ExecuteActivity extends Request implements PayloadAwareRequest
 {
+    protected const CANCELLABLE = true;
+
     /**
      * @var string
      */
@@ -29,11 +31,14 @@ final class ExecuteActivity extends Request implements PayloadAwareRequest
      */
     public function __construct(string $name, array $arguments, array $options)
     {
-        parent::__construct(self::NAME, [
-            'name'      => $name,
-            'arguments' => $arguments,
-            'options'   => $options,
-        ]);
+        parent::__construct(
+            self::NAME,
+            [
+                'name' => $name,
+                'arguments' => $arguments,
+                'options' => $options,
+            ]
+        );
     }
 
     /**
@@ -42,8 +47,11 @@ final class ExecuteActivity extends Request implements PayloadAwareRequest
      */
     public function getMappedParams(DataConverterInterface $dataConverter): array
     {
-        return \array_merge($this->params, [
-            'arguments' => $dataConverter->toPayloads($this->params['arguments']),
-        ]);
+        return \array_merge(
+            $this->params,
+            [
+                'arguments' => $dataConverter->toPayloads($this->params['arguments']),
+            ]
+        );
     }
 }

@@ -36,6 +36,7 @@ use Temporal\Workflow\WorkflowInfo;
  * @method static bool isReplaying()
  *
  * @method static CancellationScopeInterface newCancellationScope(callable $handler)
+ * @method static CancellationScopeInterface newDetachedCancellationScope(callable $handler)
  *
  * @method static PromiseInterface sideEffect(callable $cb)
  * @method static PromiseInterface complete(mixed $result = null)

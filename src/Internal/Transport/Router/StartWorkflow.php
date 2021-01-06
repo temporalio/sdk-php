@@ -17,6 +17,7 @@ use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Workflow\Input;
 use Temporal\Internal\Workflow\Process\Process;
+use Temporal\Workflow\WorkflowContext;
 use Temporal\Workflow\WorkflowInfo;
 
 final class StartWorkflow extends Route
@@ -62,8 +63,17 @@ final class StartWorkflow extends Route
             $this->findWorkflowOrFail($input->info)
         );
 
-        // TODO: rewrite scopes
-        new Process($input, $this->services, $instance);
+        $context = new WorkflowContext(
+            $this->services,
+            $this->services->client,
+            $instance,
+            $input
+        );
+
+        $process = new Process($this->services, $context);
+        $this->services->running->add($process);
+
+        $process->start($instance->getHandler(), $context->getArguments());
     }
 
     /**

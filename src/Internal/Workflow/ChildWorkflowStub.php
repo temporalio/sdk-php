@@ -26,7 +26,7 @@ use Temporal\Workflow\ChildWorkflowOptions;
 use Temporal\Workflow\ChildWorkflowStubInterface;
 use Temporal\Workflow\WorkflowExecution;
 
-final class ChildWorkflowStub implements ChildWorkflowStubInterface, ClientInterface
+final class ChildWorkflowStub implements ChildWorkflowStubInterface
 {
     /**
      * @var string
@@ -133,18 +133,6 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface, ClientInter
     }
 
     /**
-     * @param RequestInterface $request
-     * @return PromiseInterface
-     */
-    public function request(RequestInterface $request): PromiseInterface
-    {
-        /** @var Workflow\WorkflowContextInterface $context */
-        $context = Workflow::getCurrentContext();
-
-        return $context->request($request);
-    }
-
-    /**
      * @return array
      */
     private function getOptionsArray(): array
@@ -172,5 +160,17 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface, ClientInter
 
             return $this->request($request);
         });
+    }
+
+    /**
+     * @param RequestInterface $request
+     * @return PromiseInterface
+     */
+    protected function request(RequestInterface $request): PromiseInterface
+    {
+        /** @var Workflow\WorkflowContextInterface $context */
+        $context = Workflow::getCurrentContext();
+
+        return $context->request($request);
     }
 }

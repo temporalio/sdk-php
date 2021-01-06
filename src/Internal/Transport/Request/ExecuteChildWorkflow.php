@@ -17,6 +17,8 @@ use Temporal\Worker\Command\Request;
 
 final class ExecuteChildWorkflow extends Request implements PayloadAwareRequest
 {
+    protected const CANCELLABLE = true;
+
     /**
      * @var string
      */
@@ -29,11 +31,14 @@ final class ExecuteChildWorkflow extends Request implements PayloadAwareRequest
      */
     public function __construct(string $name, array $args, array $options)
     {
-        parent::__construct(self::NAME, [
-            'name'    => $name,
-            'input'   => $args,
-            'options' => $options,
-        ]);
+        parent::__construct(
+            self::NAME,
+            [
+                'name' => $name,
+                'input' => $args,
+                'options' => $options,
+            ]
+        );
     }
 
     /**
@@ -41,8 +46,11 @@ final class ExecuteChildWorkflow extends Request implements PayloadAwareRequest
      */
     public function getMappedParams(DataConverterInterface $dataConverter): array
     {
-        return \array_merge($this->params, [
-            'input' => $dataConverter->toPayloads($this->params['input']),
-        ]);
+        return \array_merge(
+            $this->params,
+            [
+                'input' => $dataConverter->toPayloads($this->params['input']),
+            ]
+        );
     }
 }

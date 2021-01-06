@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Transport\Request;
 
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\Worker\Command\ErrorResponse;
 use Temporal\Worker\Command\PayloadAwareRequest;
 use Temporal\Worker\Command\Request;
 
@@ -23,13 +24,12 @@ final class CompleteWorkflow extends Request implements PayloadAwareRequest
     public const NAME = 'CompleteWorkflow';
 
     /**
-     * @param mixed $result
+     * @param array $result
      */
-    public function __construct($result)
+    public function __construct(array $result)
     {
-        parent::__construct(self::NAME, [
-            'result' => [$result],
-        ]);
+        parent::__construct(self::NAME);
+        $this->params['result'] = $result;
     }
 
     /**
@@ -38,8 +38,14 @@ final class CompleteWorkflow extends Request implements PayloadAwareRequest
      */
     public function getMappedParams(DataConverterInterface $dataConverter): array
     {
-        return \array_merge($this->params, [
+        if ($this->params['result'] instanceof \Throwable) {
+            return [
+                'error' => ErrorResponse::exceptionToArray($this->params['result']),
+            ];
+        }
+
+        return [
             'result' => $dataConverter->toPayloads($this->params['result']),
-        ]);
+        ];
     }
 }

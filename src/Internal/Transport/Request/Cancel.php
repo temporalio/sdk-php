@@ -21,12 +21,15 @@ final class Cancel extends Request
     public const NAME = 'Cancel';
 
     /**
-     * @param array<int> $requestIdentifiers
+     * @param ...int $requestId
      */
-    public function __construct(array $requestIdentifiers)
+    public function __construct(int ...$requestId)
     {
-        parent::__construct(self::NAME, [
-            'ids' => $requestIdentifiers,
-        ]);
+        parent::__construct(
+            self::NAME,
+            [
+                'ids' => $requestId,
+            ]
+        );
     }
 }
