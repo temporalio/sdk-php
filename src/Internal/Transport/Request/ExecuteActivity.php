@@ -30,9 +30,9 @@ final class ExecuteActivity extends Request implements PayloadAwareRequest
     public function __construct(string $name, array $arguments, array $options)
     {
         parent::__construct(self::NAME, [
-            'name' => $name,
+            'name'      => $name,
             'arguments' => $arguments,
-            'options' => $options,
+            'options'   => $options,
         ]);
     }
 
@@ -42,10 +42,8 @@ final class ExecuteActivity extends Request implements PayloadAwareRequest
      */
     public function getMappedParams(DataConverterInterface $dataConverter): array
     {
-        return [
-            'name' => $this->params['name'],
+        return \array_merge($this->params, [
             'arguments' => $dataConverter->toPayloads($this->params['arguments']),
-            'options' => $this->params['options'],
-        ];
+        ]);
     }
 }

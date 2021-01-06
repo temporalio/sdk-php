@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Workflow;
 
-use JetBrains\PhpStorm\Pure;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
@@ -21,19 +20,21 @@ use Temporal\Worker\Transport\RpcConnectionInterface;
 /**
  * @template-covariant T of object
  */
-final class WorkflowProxy
+final class WorkflowProxy extends Proxy
 {
     /**
      * @var string
      */
     private const ERROR_UNDEFINED_WORKFLOW_METHOD =
-        'The given stub class "%s" does not contain a workflow method named "%s"';
+        'The given stub class "%s" does not contain a workflow method named "%s"'
+    ;
 
     /**
      * @var string
      */
     private const ERROR_UNDEFINED_METHOD =
-        'The given stub class "%s" does not contain a workflow, query or signal method named "%s"';
+        'The given stub class "%s" does not contain a workflow, query or signal method named "%s"'
+    ;
 
     /**
      * @var WorkflowStubInterface|null
@@ -143,7 +144,7 @@ final class WorkflowProxy
      */
     private function findPrototypeByHandlerNameOrFail(string $name): WorkflowPrototype
     {
-        $prototype = $this->findPrototypeByHandlerName($name);
+        $prototype = $this->findPrototypeByHandlerName($this->workflows, $name);
 
         if ($prototype === null) {
             throw new \BadMethodCallException(
@@ -152,22 +153,5 @@ final class WorkflowProxy
         }
 
         return $prototype;
-    }
-
-    /**
-     * @param string $name
-     * @return WorkflowPrototype|null
-     */
-    private function findPrototypeByHandlerName(string $name): ?WorkflowPrototype
-    {
-        foreach ($this->workflows as $prototype) {
-            $handler = $prototype->getHandler();
-
-            if ($handler->getName() === $name) {
-                return $prototype;
-            }
-        }
-
-        return null;
     }
 }

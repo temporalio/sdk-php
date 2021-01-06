@@ -18,7 +18,7 @@ use Temporal\Internal\Support\DateInterval;
 use Temporal\Worker\Transport\RpcConnectionInterface;
 use Temporal\Workflow\WorkflowExecution;
 
-class WorkflowStub implements WorkflowStubInterface
+final class WorkflowStub implements WorkflowStubInterface
 {
     /**
      * @var string
@@ -215,9 +215,9 @@ class WorkflowStub implements WorkflowStubInterface
     {
         $this->assertWorkflowShouldBeStarted(__FUNCTION__);
 
-        assert(DateInterval::assert($timeout));
+        assert($timeout === null || DateInterval::assert($timeout));
         $timeout = DateInterval::parseOrNull($timeout, DateInterval::FORMAT_SECONDS);
-        assert($timeout->totalMicroseconds >= 0);
+        assert($timeout === null || $timeout->totalMicroseconds >= 0);
 
         return $this->rpc->call('temporal.GetWorkflow', [
             'wid'     => $this->execution->id,

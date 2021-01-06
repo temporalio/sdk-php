@@ -22,15 +22,21 @@ interface ChildWorkflowStubInterface
     public function getExecution(): PromiseInterface;
 
     /**
+     * @return string
+     */
+    public function getChildWorkflowType(): string;
+
+    /**
      * @return ChildWorkflowOptions
      */
     public function getOptions(): ChildWorkflowOptions;
 
     /**
      * @param array $args
+     * @param \ReflectionType|null $returnType
      * @return PromiseInterface
      */
-    public function execute(array $args): PromiseInterface;
+    public function execute(array $args = [], \ReflectionType $returnType = null): PromiseInterface;
 
     /**
      * @param string $name
@@ -38,5 +44,5 @@ interface ChildWorkflowStubInterface
      * @return PromiseInterface
      * @throws \LogicException
      */
-    public function signal(string $name, array $args): PromiseInterface;
+    public function signal(string $name, array $args = []): PromiseInterface;
 }

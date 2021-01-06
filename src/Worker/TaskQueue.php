@@ -33,16 +33,6 @@ class TaskQueue implements TaskQueueInterface
     private string $name;
 
     /**
-     * @var WorkflowReader
-     */
-    private WorkflowReader $workflowReader;
-
-    /**
-     * @var ActivityReader
-     */
-    private ActivityReader $activityReader;
-
-    /**
      * @var RouterInterface
      */
     private RouterInterface $router;
@@ -66,19 +56,8 @@ class TaskQueue implements TaskQueueInterface
     {
         $this->rpc = $rpc;
         $this->name = $name;
+
         $this->services = ServiceContainer::fromWorker($worker);
-
-        $this->boot();
-    }
-
-    /**
-     * @return void
-     */
-    private function boot(): void
-    {
-        $this->workflowReader = new WorkflowReader($this->services->reader);
-        $this->activityReader = new ActivityReader($this->services->reader);
-
         $this->router = $this->createRouter();
     }
 
@@ -128,7 +107,7 @@ class TaskQueue implements TaskQueueInterface
      */
     public function addWorkflow(string $class, bool $overwrite = false): TaskQueueInterface
     {
-        foreach ($this->workflowReader->fromClass($class) as $workflow) {
+        foreach ($this->services->workflowsReader->fromClass($class) as $workflow) {
             $this->services->workflows->add($workflow, $overwrite);
         }
 
@@ -148,7 +127,7 @@ class TaskQueue implements TaskQueueInterface
      */
     public function addActivity(string $class, bool $overwrite = false): TaskQueueInterface
     {
-        foreach ($this->activityReader->fromClass($class) as $activity) {
+        foreach ($this->services->activitiesReader->fromClass($class) as $activity) {
             $this->services->activities->add($activity, $overwrite);
         }
 

@@ -60,7 +60,7 @@ abstract class Facade
     /**
      * @return object<T>
      */
-    protected static function getCurrentContext(): object
+    public static function getCurrentContext(): object
     {
         if (self::$ctx === null) {
             throw new \RuntimeException(self::ERROR_NO_CONTEXT);

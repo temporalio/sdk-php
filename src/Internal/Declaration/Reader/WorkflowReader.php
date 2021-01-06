@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration\Reader;
 
+use JetBrains\PhpStorm\Pure;
 use ReflectionFunctionAbstract as ReflectionFunction;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Workflow\QueryMethod;
@@ -24,9 +25,11 @@ use Temporal\Workflow\WorkflowMethod;
 class WorkflowReader extends Reader
 {
     /**
-     * {@inheritDoc}
+     * @param string $class
+     * @return WorkflowPrototype[]
+     * @throws \ReflectionException
      */
-    public function fromClass(string $class): iterable
+    public function fromClass(string $class): array
     {
         $declarations = [];
         $reflection = new \ReflectionClass($class);

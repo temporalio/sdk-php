@@ -15,8 +15,11 @@ use JetBrains\PhpStorm\Immutable;
 use Spiral\Attributes\ReaderInterface;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
-use Temporal\Internal\Declaration\Prototype\Collection;
+use Temporal\Internal\Declaration\Prototype\ActivityCollection;
+use Temporal\Internal\Declaration\Prototype\WorkflowCollection;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Internal\Declaration\Reader\ActivityReader;
+use Temporal\Internal\Declaration\Reader\WorkflowReader;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Marshaller\MarshallerInterface;
@@ -93,6 +96,18 @@ final class ServiceContainer
     public DataConverterInterface $dataConverter;
 
     /**
+     * @var WorkflowReader
+     */
+    #[Immutable]
+    public WorkflowReader $workflowsReader;
+
+    /**
+     * @var ActivityReader
+     */
+    #[Immutable]
+    public ActivityReader $activitiesReader;
+
+    /**
      * @param LoopInterface $loop
      * @param ClientInterface $client
      * @param ReaderInterface $reader
@@ -112,21 +127,18 @@ final class ServiceContainer
         $this->reader = $reader;
         $this->queue = $queue;
 
-        $this->workflows = new Collection();
-        $this->activities = new Collection();
-
+        $this->env = new Environment();
+        $this->workflows = new WorkflowCollection();
+        $this->activities = new ActivityCollection();
         $this->running = new ProcessCollection($client);
 
-        $this->env = new Environment();
-
         $this->dataConverter = $dataConverter;
-
         // todo: ?
-        $this->marshaller = new Marshaller(
-            new AttributeMapperFactory($this->reader)
-        );
+        $mapper = new AttributeMapperFactory($this->reader);
+        $this->marshaller = new Marshaller($mapper);
 
-        $this->queue = $queue;
+        $this->workflowsReader = new WorkflowReader($this->reader);
+        $this->activitiesReader = new ActivityReader($this->reader);
     }
 
     /**

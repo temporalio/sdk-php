@@ -82,6 +82,18 @@ interface WorkflowContextInterface extends EnvironmentInterface, ClientInterface
     public function complete($result = null): PromiseInterface;
 
     /**
+     * @param DateIntervalFormat $interval
+     * @return PromiseInterface
+     * @see DateInterval
+     */
+    public function timer($interval): PromiseInterface;
+
+    /**
+     * @return array
+     */
+    public function getTrace(): array;
+
+    /**
      * @param class-string|string $type
      * @param array $args
      * @param ChildWorkflowOptions|null $options
@@ -96,9 +108,9 @@ interface WorkflowContextInterface extends EnvironmentInterface, ClientInterface
     ): PromiseInterface;
 
     /**
-     * @psalm-template TWorkflow
-     * @psalm-param class-string<TWorkflow> $class
-     * @psalm-return TWorkflow
+     * @psalm-template T of object
+     * @psalm-param class-string<T> $class
+     * @psalm-return object<T>|T
      *
      * @param string $class
      * @param ChildWorkflowOptions|null $options
@@ -107,13 +119,28 @@ interface WorkflowContextInterface extends EnvironmentInterface, ClientInterface
     public function newChildWorkflowStub(string $class, ChildWorkflowOptions $options = null): object;
 
     /**
+     * @param string $name
+     * @param ChildWorkflowOptions|null $options
+     * @return ChildWorkflowStubInterface
+     */
+    public function newUntypedChildWorkflowStub(
+        string $name,
+        ChildWorkflowOptions $options = null
+    ): ChildWorkflowStubInterface;
+
+    /**
      * @param string $type
      * @param array $args
      * @param ActivityOptions|null $options
      * @param \ReflectionType|null $returnType
      * @return PromiseInterface
      */
-    public function executeActivity(string $type, array $args = [], ActivityOptions $options = null, \ReflectionType $returnType = null): PromiseInterface;
+    public function executeActivity(
+        string $type,
+        array $args = [],
+        ActivityOptions $options = null,
+        \ReflectionType $returnType = null
+    ): PromiseInterface;
 
     /**
      * @psalm-template TActivity
@@ -127,14 +154,8 @@ interface WorkflowContextInterface extends EnvironmentInterface, ClientInterface
     public function newActivityStub(string $class, ActivityOptions $options = null): object;
 
     /**
-     * @param DateIntervalFormat $interval
-     * @return PromiseInterface
-     * @see DateInterval
+     * @param ActivityOptions|null $options
+     * @return ActivityStubInterface
      */
-    public function timer($interval): PromiseInterface;
-
-    /**
-     * @return array
-     */
-    public function getTrace(): array;
+    public function newUntypedActivityStub(ActivityOptions $options = null): ActivityStubInterface;
 }

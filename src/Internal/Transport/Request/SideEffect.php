@@ -38,8 +38,8 @@ final class SideEffect extends Request implements PayloadAwareRequest
      */
     public function getMappedParams(DataConverterInterface $dataConverter): array
     {
-        return [
-            'value' => $dataConverter->toPayload($this->params['value']),
-        ];
+        return \array_merge($this->params, [
+            'value' => $dataConverter->toPayloads($this->params['value']),
+        ]);
     }
 }
