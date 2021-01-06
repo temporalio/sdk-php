@@ -260,7 +260,6 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
 
         $this->onCancel[++$this->cancelID] = function () use ($request, $promise) {
             if ($this->context->getClient()->isQueued($request)) {
-                error_log("FOUND NON SEND PROMISE !!!!");
                 $this->context->getClient()->cancel($request);
                 return;
             }
