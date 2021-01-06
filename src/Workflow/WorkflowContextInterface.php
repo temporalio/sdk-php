@@ -15,13 +15,13 @@ use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Internal\Support\DateInterval;
-use Temporal\Internal\Transport\ClientInterface;
+use Temporal\Worker\Command\RequestInterface;
 use Temporal\Worker\Environment\EnvironmentInterface;
 
 /**
  * @psalm-import-type DateIntervalFormat from DateInterval
  */
-interface WorkflowContextInterface extends EnvironmentInterface, ClientInterface
+interface WorkflowContextInterface extends EnvironmentInterface
 {
     /**
      * @return WorkflowInfo
@@ -152,4 +152,9 @@ interface WorkflowContextInterface extends EnvironmentInterface, ClientInterface
      * @return ActivityStubInterface
      */
     public function newUntypedActivityStub(ActivityOptions $options = null): ActivityStubInterface;
+
+    /**
+     * {@inheritDoc}
+     */
+    public function request(RequestInterface $request): PromiseInterface;
 }

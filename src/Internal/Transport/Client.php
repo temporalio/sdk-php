@@ -111,23 +111,7 @@ final class Client implements ClientInterface
 
         $this->requests[$id] = $deferred = new Deferred(
             function () use ($id) {
-                // todo: remove it
-//                // In the case that the command is in the queue for sending,
-//                // then we take it out of the queue and cancel the request.
-//                if ($command !== null) {
-//                    $request = $this->fetch($id);
-//                    $request->reject(CancellationException::fromRequestId($id));
-//
-//                    // In the case that after the local promise rejection we have
-//                    // nothing to send, then we independently execute the next
-//                    // tick of the event loop.
-//                    if ($this->queue->count() === 0) {
-//                        $this->loop->tick();
-//                    }
-//                    return;
-//                }
-
-                $request = $this->queue->pull($id) ?? $this->fetch($id);
+                $request = $this->fetch($id);
                 $request->reject(CancellationException::fromRequestId($id));
 
                 // In the case that after the local promise rejection we have
@@ -151,6 +135,16 @@ final class Client implements ClientInterface
     public function isQueued(CommandInterface $command): bool
     {
         return $this->queue->has($command->getId());
+    }
+
+    /**
+     * @param CommandInterface $command
+     */
+    public function cancel(CommandInterface $command): void
+    {
+        // remove from queue
+        $this->queue->pull($command->getId());
+        $this->fetch($command->getId())->promise()->cancel();
     }
 
     /**

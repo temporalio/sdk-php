@@ -12,7 +12,7 @@ namespace Temporal\Workflow;
 /**
  * Handles scope creation.
  */
-interface ScopedContextInterface
+interface ScopedContextInterface extends WorkflowContextInterface
 {
     /**
      * @param callable $handler

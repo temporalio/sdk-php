@@ -259,16 +259,14 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
         }
 
         $this->onCancel[++$this->cancelID] = function () use ($request, $promise) {
-            if ($this->services->queue->has($request->getId())) {
-                // todo: need a way to
+            if ($this->context->getClient()->isQueued($request)) {
                 error_log("FOUND NON SEND PROMISE !!!!");
-
-                // todo: how to cancel this promise?
+                $this->context->getClient()->cancel($request);
                 return;
             }
 
             $this->awaitLock++;
-            $this->context->request(new Cancel($request->getId()))->then($this->unlock, $this->unlock);
+            $this->context->getClient()->request(new Cancel($request->getId()))->then($this->unlock, $this->unlock);
         };
 
         $cancelID = $this->cancelID;
@@ -320,7 +318,7 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
                 break;
 
             case $current instanceof RequestInterface:
-                $this->nextPromise($this->context->request($current));
+                $this->nextPromise($this->context->getClient()->request($current));
                 break;
 
             case $current instanceof \Generator:
@@ -377,7 +375,6 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
      */
     private function onException(\Throwable $e): void
     {
-        error_log("GOT SCOPE EXCEPTION " . $e);
         $this->exception = $e;
         $this->unlock();
     }
@@ -387,8 +384,6 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
      */
     private function onResult($result): void
     {
-        error_log("GOT SCOPE RESULT" . print_r($result, true));
-
         $this->result = $result;
         $this->unlock();
     }
@@ -423,11 +418,9 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
     {
         $listener = $this->services->loop->once(LoopInterface::ON_TICK, $tick);
 
-        // todo: REMOVE IT if not needed
-//        if ($this->services->queue->count() === 0) {
-//            // todo: what is that?
-//            $this->services->loop->tick();
-//        }
+        //if ($this->services->queue->count() === 0) {
+        //    $this->services->loop->tick();
+        //}
 
         return $listener;
     }
