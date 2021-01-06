@@ -20,6 +20,10 @@ interface CancellationScopeInterface extends
     PromiseInterface,
     CancellablePromiseInterface
 {
+    public function isDetached(): bool;
+
+    public function isCancelled(): bool;
+
     /**
      * @return string
      */

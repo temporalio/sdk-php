@@ -18,6 +18,7 @@ use Temporal\Exception\CancellationException;
 use Temporal\Internal\Coroutine\CoroutineInterface;
 use Temporal\Internal\Coroutine\Stack;
 use Temporal\Internal\ServiceContainer;
+use Temporal\Internal\Workflow\ScopeContext;
 use Temporal\Worker\Command\RequestInterface;
 use Temporal\Worker\LoopInterface;
 use Temporal\Workflow;
@@ -30,6 +31,11 @@ use Temporal\Workflow\WorkflowContext;
  */
 abstract class Scope implements CancellationScopeInterface, PromisorInterface
 {
+    /**
+     * @var ServiceContainer
+     */
+    protected ServiceContainer $services;
+
     /**
      * @var WorkflowContext
      */
@@ -46,14 +52,19 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
     private Deferred $deferred;
 
     /**
-     * @var ServiceContainer
+     * @var array<Scope>
      */
-    protected ServiceContainer $services;
+    private array $childScopes = [];
 
     /**
      * @var array<callable>
      */
-    protected array $cancelHandlers = [];
+    protected array $onCancel = [];
+
+    /**
+     * @var bool
+     */
+    private bool $detached = false;
 
     /**
      * @var bool
@@ -67,21 +78,21 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
      * @param array $args
      */
     public function __construct(
-        WorkflowContext $ctx,
         ServiceContainer $services,
+        WorkflowContext $ctx,
         callable $handler,
         array $args = []
     ) {
         $this->context = $ctx;
         $this->services = $services;
         $this->deferred = new Deferred(
-            function () {
-                foreach ($this->cancelHandlers as $handler) {
-                    $handler($this);
-                }
-
-                $this->deferred->reject(CancellationException::fromScope($this));
-            }
+        // todo: we do not need it anymore
+        //            function () {
+        //                foreach ($this->onCancel as $handler) {
+        //                    $handler($this);
+        //                }
+        //$this->deferred->reject(CancellationException::fromScope($this));
+        //          }
         );
 
         try {
@@ -95,22 +106,28 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
         }
     }
 
-    private array $child = [];
-
     /**
-     * @param Scope $scope
+     * @return bool
      */
-    public function linkChild(Scope $scope)
+    public function isDetached(): bool
     {
-        $this->child[] = $scope;
+        return $this->detached;
     }
 
     /**
-     * {@inheritDoc}
+     * @return bool
      */
-    public function promise(): PromiseInterface
+    public function isCancelled(): bool
     {
-        return $this->deferred->promise();
+        return $this->cancelled;
+    }
+
+    /**
+     * @return WorkflowContext
+     */
+    public function getContext(): WorkflowContext
+    {
+        return $this->context;
     }
 
     /**
@@ -118,10 +135,29 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
      */
     public function onCancel(callable $then): self
     {
-        $this->cancelHandlers[] = $then;
-
+        $this->onCancel[] = $then;
         return $this;
     }
+
+    /**
+     * Start the scope.
+     */
+    public function start()
+    {
+        $this->next();
+    }
+
+    /**
+     * @param callable $handler
+     * @param bool $detached
+     * @return CancellationScopeInterface
+     */
+    abstract public function createScope(callable $handler, bool $detached): CancellationScopeInterface;
+
+
+
+
+
 
     /**
      * @return void
@@ -129,25 +165,32 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
     public function cancel(): void
     {
         if ($this->cancelled) {
-            return;
+            throw new \LogicException("Unable to cancel already cancelled scope");
         }
-
-        // todo: can be ommited later
-        $this->context->invalidate();
         $this->cancelled = true;
 
-        try {
-            foreach ($this->child as $child) {
-                $child->cancel();
-            }
-
-            $promise = $this->promise();
-            $promise->cancel();
-        } finally {
-            foreach ($this->fetchUnresolvedRequests() as $promise) {
-                $promise->cancel();
-            }
+        foreach ($this->onCancel as $trigger) {
+            $trigger();
         }
+
+        // todo: simple trigger
+
+        // todo: can be ommited later
+
+
+//        try {
+//            foreach ($this->childScopes as $child) {
+//                $child->cancel();
+//            }
+//
+//            // todo: called in finalize (!!!!!!)
+//            $promise = $this->promise();
+//            $promise->cancel();
+//        } finally {
+//            foreach ($this->fetchUnresolvedRequests() as $promise) {
+//                $promise->cancel();
+//            }
+//        }
     }
 
     /**
@@ -185,7 +228,24 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
      */
     protected function makeCurrent(): void
     {
-        Workflow::setCurrentContext($this->context);
+        Workflow::setCurrentContext(
+            ScopeContext::fromWorkflowContext(
+                $this->context,
+                $this,
+                \Closure::fromCallable([$this, 'onRequest'])
+            )
+        );
+    }
+
+    /**
+     * Collect all requests created within the scope to later cancel them.
+     *
+     * @param RequestInterface $request
+     */
+    protected function onRequest(RequestInterface $request)
+    {
+        // todo: filter requests
+        error_log("GOT REQUEST!!!" . get_class($request));
     }
 
     /**
@@ -232,6 +292,16 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
     abstract protected function onComplete($result): void;
 
     /**
+     * @param \Throwable $e
+     */
+    protected function onException(\Throwable $e)
+    {
+        if ($e instanceof CancellationException) {
+            $this->cancel();
+        }
+    }
+
+    /**
      * @param PromiseInterface $promise
      */
     private function nextPromise(PromiseInterface $promise): void
@@ -271,16 +341,6 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
     }
 
     /**
-     * @param \Throwable $e
-     */
-    protected function onException(\Throwable $e)
-    {
-        if ($e instanceof CancellationException) {
-            $this->cancel();
-        }
-    }
-
-    /**
      * @param \Closure $tick
      * @return mixed
      */
@@ -289,10 +349,19 @@ abstract class Scope implements CancellationScopeInterface, PromisorInterface
         $listener = $this->services->loop->once(LoopInterface::ON_TICK, $tick);
 
         if ($this->services->queue->count() === 0) {
+            // todo: what is that?
             $this->services->loop->tick();
         }
 
         return $listener;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function promise(): PromiseInterface
+    {
+        return $this->deferred->promise();
     }
 
     /**

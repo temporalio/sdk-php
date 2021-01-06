@@ -11,53 +11,40 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Workflow\Process;
 
-use Amp\Loop;
+use JetBrains\PhpStorm\Pure;
 use Temporal\Exception\CancellationException;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\ServiceContainer;
-use Temporal\Internal\Workflow\Input;
-use Temporal\Worker;
+use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\ProcessInterface;
 use Temporal\Workflow\WorkflowContext;
-use Temporal\Workflow\WorkflowContextInterface;
 
 class Process extends Scope implements ProcessInterface
 {
     /**
-     * @var WorkflowInstanceInterface
-     */
-    private WorkflowInstanceInterface $instance;
-
-    /**
-     * @param Input $input
+     * Process constructor.
      * @param ServiceContainer $services
-     * @param WorkflowInstanceInterface $instance
+     * @param WorkflowContext $context
      */
-    public function __construct(Input $input, ServiceContainer $services, WorkflowInstanceInterface $instance)
-    {
-        $this->instance = $instance;
-        $context = new WorkflowContext($this, $services, $input);
-
-        parent::__construct($context, $services, $instance->getHandler(), $context->getArguments());
-
-        $services->running->add($this);
-        $this->next();
+    public function __construct(
+        ServiceContainer $services,
+        WorkflowContext $context
+    ) {
+        parent::__construct(
+            $services,
+            $context,
+            $context->getWorkflowInstance()->getHandler(),
+            $context->getArguments()
+        );
     }
 
     /**
      * @return WorkflowInstanceInterface
      */
+    #[Pure]
     public function getWorkflowInstance(): WorkflowInstanceInterface
     {
-        return $this->instance;
-    }
-
-    /**
-     * @return WorkflowContextInterface
-     */
-    public function getContext(): WorkflowContextInterface
-    {
-        return $this->context;
+        return $this->getContext()->getWorkflowInstance();
     }
 
     /**
@@ -65,9 +52,17 @@ class Process extends Scope implements ProcessInterface
      */
     public function getId(): string
     {
-        $info = $this->context->getInfo();
+        return $this->context->getInfo()->execution->runId;
+    }
 
-        return $info->execution->runId;
+    /**
+     * @param callable $handler
+     * @param bool $detached
+     * @return CancellationScopeInterface
+     */
+    public function createScope(callable $handler, bool $detached): CancellationScopeInterface
+    {
+
     }
 
     /**

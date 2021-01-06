@@ -13,6 +13,7 @@ namespace Temporal\Internal\Workflow\Process;
 
 use Temporal\Common\Uuid;
 use Temporal\Internal\ServiceContainer;
+use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\WorkflowContext;
 
 /**
@@ -55,6 +56,7 @@ class CancellationScope extends Scope
      */
     public function getId(): string
     {
+        // todo: get from parent
         return $this->id;
     }
 
@@ -63,6 +65,12 @@ class CancellationScope extends Scope
      */
     protected function onComplete($result): void
     {
+        // todo: trigger parent
         //
+    }
+
+    public function createScope(callable $handler, bool $detached): CancellationScopeInterface
+    {
+        // TODO: Implement createScope() method.
     }
 }
