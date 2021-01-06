@@ -258,7 +258,7 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
             return;
         }
 
-        $this->onCancel[++$this->cancelID] = function () use ($request, $promise) {
+        $this->onCancel[++$this->cancelID] = function () use ($request) {
             if ($this->context->getClient()->isQueued($request)) {
                 $this->context->getClient()->cancel($request);
                 return;
@@ -415,12 +415,6 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
      */
     private function defer(\Closure $tick)
     {
-        $listener = $this->services->loop->once(LoopInterface::ON_TICK, $tick);
-
-        //if ($this->services->queue->count() === 0) {
-        //    $this->services->loop->tick();
-        //}
-
-        return $listener;
+        return $this->services->loop->once(LoopInterface::ON_TICK, $tick);
     }
 }

@@ -165,4 +165,9 @@ class TestingRequest extends TestingCommand implements RequestInterface
 
         return $this;
     }
+
+    public function isCancellable(): bool
+    {
+        return true;
+    }
 }

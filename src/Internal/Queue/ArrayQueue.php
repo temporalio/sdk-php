@@ -50,7 +50,7 @@ class ArrayQueue implements QueueInterface
     public function has(int $commandId): bool
     {
         // todo: optimize?
-        foreach ($this->commands as $i => $command) {
+        foreach ($this->commands as $command) {
             if ($command->getId() === $commandId) {
                 return true;
             }
