@@ -158,7 +158,6 @@ final class ChildWorkflowOptions
      */
     public function __construct()
     {
-        $this->workflowId = Uuid::v4();
         $this->workflowExecutionTimeout = CarbonInterval::years(10);
         $this->workflowRunTimeout = CarbonInterval::years(10);
         $this->workflowTaskTimeout = CarbonInterval::seconds(10);
