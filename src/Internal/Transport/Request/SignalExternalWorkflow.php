@@ -24,23 +24,30 @@ final class SignalExternalWorkflow extends Request implements PayloadAwareReques
     public const NAME = 'SignalExternalWorkflow';
 
     /**
-     * SignalExternalWorkflow constructor.
-     *
-     * @param ChildWorkflowOptions $options
+     * @param string $namespace
+     * @param string $workflowId
      * @param string $runId
      * @param string $signal
      * @param array $args
      */
-    public function __construct(ChildWorkflowOptions $options, string $runId, string $signal, array $args = [])
-    {
-        parent::__construct(self::NAME, [
-            'namespace'         => $options->namespace,
-            'workflowID'        => $options->workflowId,
-            'runID'             => $runId,
-            'signal'            => $signal,
-            'childWorkflowOnly' => true,
-            'args'              => $args,
-        ]);
+    public function __construct(
+        string $namespace,
+        string $workflowId,
+        string $runId,
+        string $signal,
+        array $args = []
+    ) {
+        parent::__construct(
+            self::NAME,
+            [
+                'namespace' => $namespace,
+                'workflowID' => $workflowId,
+                'runID' => $runId,
+                'signal' => $signal,
+                'childWorkflowOnly' => true,
+                'args' => $args,
+            ]
+        );
     }
 
     /**
@@ -48,8 +55,11 @@ final class SignalExternalWorkflow extends Request implements PayloadAwareReques
      */
     public function getMappedParams(DataConverterInterface $dataConverter): array
     {
-        return \array_merge($this->params, [
-            'args' => $dataConverter->toPayload($this->params['args'])
-        ]);
+        return \array_merge(
+            $this->params,
+            [
+                'args' => $dataConverter->toPayloads($this->params['args'])
+            ]
+        );
     }
 }

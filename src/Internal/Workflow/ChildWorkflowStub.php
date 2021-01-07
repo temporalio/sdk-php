@@ -156,7 +156,13 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
         $execution = $this->execution->promise();
 
         return $execution->then(function (WorkflowExecution $execution) use ($name, $args) {
-            $request = new SignalExternalWorkflow($this->getOptions(), $execution->runId, $name, $args);
+            $request = new SignalExternalWorkflow(
+                $this->getOptions()->namespace,
+                $execution->id,
+                $execution->runId,
+                $name,
+                $args
+            );
 
             return $this->request($request);
         });
