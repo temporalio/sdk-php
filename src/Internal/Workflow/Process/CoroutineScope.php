@@ -44,6 +44,11 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
     protected WorkflowContext $context;
 
     /**
+     * @var Workflow\WorkflowContextInterface
+     */
+    protected Workflow\WorkflowContextInterface $scopeContext;
+
+    /**
      * @var Deferred
      */
     protected Deferred $deferred;
@@ -110,6 +115,12 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
     public function __construct(ServiceContainer $services, WorkflowContext $ctx)
     {
         $this->context = $ctx;
+        $this->scopeContext = ScopeContext::fromWorkflowContext(
+            $this->context,
+            $this,
+            \Closure::fromCallable([$this, 'onRequest'])
+        );
+
         $this->services = $services;
         $this->deferred = new Deferred();
 
@@ -181,6 +192,7 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
         $this->cancelled = true;
 
         foreach ($this->onCancel as $i => $handler) {
+            $this->makeCurrent();
             $handler();
             unset($this->onCancel[$i]);
         }
@@ -283,13 +295,7 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
      */
     protected function makeCurrent(): void
     {
-        Workflow::setCurrentContext(
-            ScopeContext::fromWorkflowContext(
-                $this->context,
-                $this,
-                \Closure::fromCallable([$this, 'onRequest'])
-            )
-        );
+        Workflow::setCurrentContext($this->scopeContext);
     }
 
     /**
