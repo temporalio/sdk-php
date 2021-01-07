@@ -66,6 +66,10 @@ class Process extends CoroutineScope implements ProcessInterface
             return;
         }
 
-        $this->context->complete($result);
+        if ($result instanceof \Throwable) {
+            $this->context->complete([], $result);
+        } else {
+            $this->context->complete($result);
+        }
     }
 }

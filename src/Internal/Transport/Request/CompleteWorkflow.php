@@ -25,11 +25,13 @@ final class CompleteWorkflow extends Request implements PayloadAwareRequest
 
     /**
      * @param array $result
+     * @param \Throwable|null $error
      */
-    public function __construct(array $result)
+    public function __construct(array $result, \Throwable $error = null)
     {
         parent::__construct(self::NAME);
         $this->params['result'] = $result;
+        $this->params['error'] = $error;
     }
 
     /**
@@ -38,9 +40,9 @@ final class CompleteWorkflow extends Request implements PayloadAwareRequest
      */
     public function getMappedParams(DataConverterInterface $dataConverter): array
     {
-        if ($this->params['result'] instanceof \Throwable) {
+        if ($this->params['error'] instanceof \Throwable) {
             return [
-                'error' => ErrorResponse::exceptionToArray($this->params['result']),
+                'error' => ErrorResponse::exceptionToArray($this->params['error']),
             ];
         }
 
