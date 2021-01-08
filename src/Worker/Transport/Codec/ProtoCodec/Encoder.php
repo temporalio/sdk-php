@@ -69,6 +69,8 @@ class Encoder
                 $error->setCode($command->getCode());
                 $error->setData(json_encode($command->getData()));
 
+                $msg->setError($error);
+
                 return $msg;
 
             case $command instanceof SuccessResponseInterface:

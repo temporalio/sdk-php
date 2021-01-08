@@ -209,9 +209,12 @@ final class Worker implements FactoryInterface
      */
     private function createCodec(): CodecInterface
     {
-        // todo: switch using ENV variable
-        return new ProtoCodec($this->dataConverter);
-        //return new JsonCodec($this->dataConverter);
+        switch ($_SERVER['RR_CODEC'] ?? null) {
+            case 'protobuf':
+                return new ProtoCodec($this->dataConverter);
+            default:
+                return new JsonCodec($this->dataConverter);
+        }
     }
 
     /**
