@@ -120,7 +120,7 @@ final class RoadRunner implements RelayConnectionInterface
     /**
      * {@inheritDoc}
      */
-    public function await(): ?MessageBatch
+    public function await(): ?Frame
     {
         /** @var Payload $payload */
         $payload = $this->interceptErrors(
@@ -133,7 +133,7 @@ final class RoadRunner implements RelayConnectionInterface
             return null;
         }
 
-        return new MessageBatch(
+        return new Frame(
             $payload->body,
             $this->decodeHeaders($payload->header)
         );

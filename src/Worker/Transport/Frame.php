@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Transport;
 
-final class MessageBatch
+final class Frame
 {
     /**
      * @var string|null

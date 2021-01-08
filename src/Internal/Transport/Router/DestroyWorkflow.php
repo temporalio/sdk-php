@@ -15,6 +15,7 @@ use React\Promise\Deferred;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Workflow\Process\Process;
+use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow;
 
 class DestroyWorkflow extends WorkflowProcessAwareRoute
@@ -43,21 +44,13 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
     /**
      * {@inheritDoc}
      */
-    public function handle(array $payload, array $headers, Deferred $resolver): void
+    public function handle(RequestInterface $request, array $headers, Deferred $resolver): void
     {
-        ['runId' => $runId] = $payload;
-
-        $process = $this->findProcessOrFail($runId);
+        ['runId' => $runId] = $request->getOptions();
 
         $this->kill($runId);
 
-        $info = $process->getContext()->getInfo();
-
-        $resolver->resolve(
-            [
-                'WorkflowExecution' => $info->execution
-            ]
-        );
+        $resolver->resolve(['OK']);
     }
 
     /**

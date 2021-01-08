@@ -17,6 +17,7 @@ use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Worker\TaskQueueInterface;
+use Temporal\Worker\Transport\Command\RequestInterface;
 
 final class GetWorkerInfo extends Route
 {
@@ -36,7 +37,7 @@ final class GetWorkerInfo extends Route
     /**
      * {@inheritDoc}
      */
-    public function handle(array $payload, array $headers, Deferred $resolver): void
+    public function handle(RequestInterface $request, array $headers, Deferred $resolver): void
     {
         $result = [];
 

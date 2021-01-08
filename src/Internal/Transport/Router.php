@@ -80,7 +80,7 @@ final class Router implements RouterInterface
         $deferred = new Deferred();
 
         try {
-            $route->handle($request->getOptions(), $headers, $deferred);
+            $route->handle($request, $headers, $deferred);
         } catch (\Throwable $e) {
             $deferred->reject($e);
         }

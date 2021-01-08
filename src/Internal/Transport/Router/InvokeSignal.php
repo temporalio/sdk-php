@@ -15,6 +15,7 @@ use React\Promise\Deferred;
 use Temporal\DataConverter\Payload;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Worker\LoopInterface;
+use Temporal\Worker\Transport\Command\RequestInterface;
 
 final class InvokeSignal extends WorkflowProcessAwareRoute
 {
@@ -37,8 +38,10 @@ final class InvokeSignal extends WorkflowProcessAwareRoute
     /**
      * {@inheritDoc}
      */
-    public function handle(array $payload, array $headers, Deferred $resolver): void
+    public function handle(RequestInterface $request, array $headers, Deferred $resolver): void
     {
+        $payload = $request->getOptions();
+
         $instance = $this->findInstanceOrFail($payload['runId']);
         $handler = $instance->getSignalHandler($payload['name']);
         $args = $payload['args'] ?? [];

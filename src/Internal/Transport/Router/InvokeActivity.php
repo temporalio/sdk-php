@@ -19,6 +19,7 @@ use Temporal\Exception\DoNotCompleteOnResultException;
 use Temporal\Internal\Declaration\Instantiator\ActivityInstantiator;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\ServiceContainer;
+use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\RpcConnectionInterface;
 
 use function Amp\call;
@@ -59,19 +60,11 @@ final class InvokeActivity extends Route
     /**
      * {@inheritDoc}
      */
-    public function handle(array $payload, array $headers, Deferred $resolver): void
+    public function handle(RequestInterface $request, array $headers, Deferred $resolver): void
     {
         $context = new ActivityContext($this->rpc, $this->services->dataConverter);
 
-        try {
-            $context = $this->services->marshaller->unmarshal($payload, $context);
-        } catch (\Throwable $e) {
-            error_log(print_r($payload, true));
-            error_log((string)$e);
-
-            sleep(2);
-            throw $e;
-        }
+        $context = $this->services->marshaller->unmarshal($request->getOptions(), $context);
 
         $prototype = $this->findDeclarationOrFail($context->getInfo());
 

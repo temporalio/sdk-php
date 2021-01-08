@@ -17,6 +17,7 @@ use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Workflow\Input;
 use Temporal\Internal\Workflow\Process\Process;
+use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow\WorkflowContext;
 use Temporal\Workflow\WorkflowInfo;
 
@@ -55,9 +56,10 @@ final class StartWorkflow extends Route
      * {@inheritDoc}
      * @throws \Throwable
      */
-    public function handle(array $payload, array $headers, Deferred $resolver): void
+    public function handle(RequestInterface $request, array $headers, Deferred $resolver): void
     {
-        $input = $this->services->marshaller->unmarshal($payload, new Input());
+        // todo: get payload from another thing
+        $input = $this->services->marshaller->unmarshal($request->getOptions(), new Input());
 
         $instance = $this->instantiator->instantiate(
             $this->findWorkflowOrFail($input->info)

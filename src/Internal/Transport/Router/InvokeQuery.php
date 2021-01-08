@@ -17,6 +17,7 @@ use Temporal\DataConverter\Payload;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Worker\LoopInterface;
+use Temporal\Worker\Transport\Command\RequestInterface;
 
 final class InvokeQuery extends WorkflowProcessAwareRoute
 {
@@ -47,10 +48,9 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
     /**
      * {@inheritDoc}
      */
-    public function handle(array $payload, array $headers, Deferred $resolver): void
+    public function handle(RequestInterface $request, array $headers, Deferred $resolver): void
     {
-        ['runId' => $runId, 'name' => $name] = $payload;
-
+        ['runId' => $runId, 'name' => $name] = $request->getOptions();
 
         $instance = $this->findInstanceOrFail($runId);
         $handler = $this->findQueryHandlerOrFail($instance, $name);
