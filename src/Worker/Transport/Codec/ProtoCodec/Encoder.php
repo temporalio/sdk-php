@@ -75,6 +75,7 @@ class Encoder
                 $msg->setPayloads($this->encodePayloads($command->getPayloads()));
 
                 return $msg;
+
             default:
                 throw new \InvalidArgumentException(\sprintf(self::ERROR_INVALID_COMMAND, \get_class($command)));
         }
@@ -88,7 +89,7 @@ class Encoder
      */
     private function encodePayloads(array $values): Payloads
     {
-        $values = [];
+        $payloadValues = [];
 
         /** @var Payload $payload */
         foreach ($values as $value) {
@@ -98,11 +99,12 @@ class Encoder
             $value->setMetadata($encoded->getMetadata());
             $value->setData($encoded->getData());
 
-            $values[] = $value;
+            $payloadValues[] = $value;
         }
 
         $payloads = new Payloads();
-        $payloads->setPayloads($values);
+        $payloads->setPayloads($payloadValues);
+
         return $payloads;
     }
 }
