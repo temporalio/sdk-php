@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Transport;
 
 use Temporal\Internal\Transport\Router\RouteInterface;
-use Temporal\Worker\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\DispatcherInterface;
 
 interface RouterInterface extends DispatcherInterface

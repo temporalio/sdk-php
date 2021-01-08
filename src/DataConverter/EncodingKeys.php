@@ -19,7 +19,6 @@ final class EncodingKeys
     public const METADATA_ENCODING_RAW = 'binary/plain';
     public const METADATA_ENCODING_JSON = 'json/plain';
 
-    // todo: requires later implementation
     public const METADATA_ENCODING_PROTOBUF_JSON = 'json/protobuf';
     public const METADATA_ENCODING_PROTOBUF = 'binary/protobuf';
 }

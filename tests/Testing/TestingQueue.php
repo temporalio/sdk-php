@@ -13,12 +13,12 @@ namespace Temporal\Tests\Testing;
 
 use PHPUnit\Framework\Assert;
 use Temporal\Internal\Queue\ArrayQueue;
-use Temporal\Worker\Command\CommandInterface;
-use Temporal\Worker\Command\ErrorResponseInterface;
-use Temporal\Worker\Command\Request;
-use Temporal\Worker\Command\RequestInterface;
-use Temporal\Worker\Command\ResponseInterface;
-use Temporal\Worker\Command\SuccessResponseInterface;
+use Temporal\Worker\Transport\Command\CommandInterface;
+use Temporal\Worker\Transport\Command\ErrorResponseInterface;
+use Temporal\Worker\Transport\Command\Request;
+use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\ResponseInterface;
+use Temporal\Worker\Transport\Command\SuccessResponseInterface;
 
 class TestingQueue extends ArrayQueue
 {

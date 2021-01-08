@@ -19,7 +19,10 @@ use Temporal\Exception\DoNotCompleteOnResultException;
 use Temporal\Internal\Declaration\Instantiator\ActivityInstantiator;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\ServiceContainer;
+use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\RpcConnectionInterface;
+
+use function Amp\call;
 
 final class InvokeActivity extends Route
 {
@@ -57,10 +60,11 @@ final class InvokeActivity extends Route
     /**
      * {@inheritDoc}
      */
-    public function handle(array $payload, array $headers, Deferred $resolver): void
+    public function handle(RequestInterface $request, array $headers, Deferred $resolver): void
     {
         $context = new ActivityContext($this->rpc, $this->services->dataConverter);
-        $context = $this->services->marshaller->unmarshal($payload, $context);
+
+        $context = $this->services->marshaller->unmarshal($request->getOptions(), $context);
 
         $prototype = $this->findDeclarationOrFail($context->getInfo());
 
@@ -71,13 +75,16 @@ final class InvokeActivity extends Route
             Activity::setCurrentContext($context);
 
             $handler = $instance->getHandler();
-            $result = $handler($context->getArguments());
+            $result = $handler($request->getPayloads());
 
             if ($context->isDoNotCompleteOnReturn()) {
                 $resolver->reject(DoNotCompleteOnResultException::create());
             } else {
-                $resolver->resolve($result);
+                $resolver->resolve([$result]);
             }
+        } catch (\Throwable $e) {
+            // todo: improve exception handling
+            $resolver->reject($e);
         } finally {
             Activity::setCurrentContext(null);
         }

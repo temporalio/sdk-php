@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Testing;
 
-use Temporal\Worker\Command\SuccessResponseInterface;
+use Temporal\Worker\Transport\Command\SuccessResponseInterface;
 
 /**
  * @template-extends TestingCommand<SuccessResponseInterface>
@@ -29,8 +29,8 @@ class TestingSuccessResponse extends TestingCommand implements SuccessResponseIn
     /**
      * {@inheritDoc}
      */
-    public function getResult(): array
+    public function getPayloads(): array
     {
-        return $this->command->getResult();
+        return $this->command->getPayloads();
     }
 }

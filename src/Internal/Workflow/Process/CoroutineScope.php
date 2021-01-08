@@ -14,12 +14,13 @@ namespace Temporal\Internal\Workflow\Process;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use React\Promise\PromisorInterface;
+use Temporal\Exception\OffloadFromMemoryException;
 use Temporal\Internal\Coroutine\CoroutineInterface;
 use Temporal\Internal\Coroutine\Stack;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Request\Cancel;
 use Temporal\Internal\Workflow\ScopeContext;
-use Temporal\Worker\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\LoopInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\CancellationScopeInterface;
@@ -42,6 +43,11 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
      * @var WorkflowContext
      */
     protected WorkflowContext $context;
+
+    /**
+     * @var Workflow\WorkflowContextInterface
+     */
+    protected Workflow\WorkflowContextInterface $scopeContext;
 
     /**
      * @var Deferred
@@ -110,6 +116,12 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
     public function __construct(ServiceContainer $services, WorkflowContext $ctx)
     {
         $this->context = $ctx;
+        $this->scopeContext = ScopeContext::fromWorkflowContext(
+            $this->context,
+            $this,
+            \Closure::fromCallable([$this, 'onRequest'])
+        );
+
         $this->services = $services;
         $this->deferred = new Deferred();
 
@@ -171,17 +183,23 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
     }
 
     /**
-     * @return void
+     * @param \Throwable|null $reason
      */
-    public function cancel(): void
+    public function cancel(\Throwable $reason = null): void
     {
+        if ($this->detached && !$reason instanceof OffloadFromMemoryException) {
+            // detaches scopes can be offload via memory flush
+            return;
+        }
+
         if ($this->cancelled) {
             return;
         }
         $this->cancelled = true;
 
         foreach ($this->onCancel as $i => $handler) {
-            $handler();
+            $this->makeCurrent();
+            $handler($reason);
             unset($this->onCancel[$i]);
         }
     }
@@ -194,14 +212,13 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
     public function createScope(callable $handler, bool $detached): CancellationScopeInterface
     {
         $scope = new CoroutineScope($this->services, $this->context);
+        $scope->detached = $detached;
 
         // do not return parent scope result until inner scope complete
         $this->awaitLock++;
         $scope->promise()->then($this->unlock, $this->unlock);
 
-        if (!$detached) {
-            $this->onCancel(\Closure::fromCallable([$scope, 'cancel']));
-        }
+        $this->onCancel(\Closure::fromCallable([$scope, 'cancel']));
 
         $scope->start($handler);
 
@@ -258,14 +275,20 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
             return;
         }
 
-        $this->onCancel[++$this->cancelID] = function () use ($request) {
+        $this->onCancel[++$this->cancelID] = function (\Throwable $reason = null) use ($request) {
+            if ($reason instanceof OffloadFromMemoryException) {
+                // memory flush
+                $this->context->getClient()->reject($request, $reason);
+                return;
+            }
+
             if ($this->context->getClient()->isQueued($request)) {
                 $this->context->getClient()->cancel($request);
                 return;
             }
 
             $this->awaitLock++;
-            $this->context->getClient()->request(new Cancel($request->getId()))->then($this->unlock, $this->unlock);
+            $this->context->getClient()->request(new Cancel($request->getID()))->then($this->unlock, $this->unlock);
         };
 
         $cancelID = $this->cancelID;
@@ -283,13 +306,7 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
      */
     protected function makeCurrent(): void
     {
-        Workflow::setCurrentContext(
-            ScopeContext::fromWorkflowContext(
-                $this->context,
-                $this,
-                \Closure::fromCallable([$this, 'onRequest'])
-            )
-        );
+        Workflow::setCurrentContext($this->scopeContext);
     }
 
     /**

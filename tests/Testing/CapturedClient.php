@@ -13,8 +13,8 @@ namespace Temporal\Tests\Testing;
 
 use React\Promise\PromiseInterface;
 use Temporal\Internal\Transport\ClientInterface;
-use Temporal\Worker\Command\CommandInterface;
-use Temporal\Worker\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\CommandInterface;
+use Temporal\Worker\Transport\Command\RequestInterface;
 
 class CapturedClient implements ClientInterface
 {
@@ -42,7 +42,7 @@ class CapturedClient implements ClientInterface
      */
     public function request(RequestInterface $request): PromiseInterface
     {
-        return $this->requests[$request->getId()] = $this->parent->request($request)
+        return $this->requests[$request->getID()] = $this->parent->request($request)
             ->then($this->onFulfilled($request), $this->onRejected($request));
     }
 
@@ -53,7 +53,7 @@ class CapturedClient implements ClientInterface
     private function onFulfilled(RequestInterface $request): \Closure
     {
         return function ($response) use ($request) {
-            unset($this->requests[$request->getId()]);
+            unset($this->requests[$request->getID()]);
 
             return $response;
         };
@@ -67,7 +67,7 @@ class CapturedClient implements ClientInterface
     private function onRejected(RequestInterface $request): \Closure
     {
         return function (\Throwable $error) use ($request) {
-            unset($this->requests[$request->getId()]);
+            unset($this->requests[$request->getID()]);
 
             throw $error;
         };
@@ -109,5 +109,10 @@ class CapturedClient implements ClientInterface
     public function cancel(CommandInterface $command): void
     {
         $this->parent->cancel($command);
+    }
+
+    public function reject(CommandInterface $command, \Throwable $reason): void
+    {
+        $this->parent->reject($command, $reason);
     }
 }

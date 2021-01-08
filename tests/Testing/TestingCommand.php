@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Testing;
 
 use PHPUnit\Framework\Assert;
-use Temporal\Worker\Command\CommandInterface;
+use Temporal\Worker\Transport\Command\CommandInterface;
 
 /**
  * @template-covariant T of CommandInterface
@@ -43,9 +43,9 @@ abstract class TestingCommand implements CommandInterface
     /**
      * {@inheritDoc}
      */
-    public function getId(): int
+    public function getID(): int
     {
-        return $this->command->getId();
+        return $this->command->getID();
     }
 
     /**
@@ -55,7 +55,7 @@ abstract class TestingCommand implements CommandInterface
      */
     public function assertId(int $expected, string $message = ''): self
     {
-        Assert::assertSame($expected, $this->getId(), $message);
+        Assert::assertSame($expected, $this->getID(), $message);
 
         return $this;
     }

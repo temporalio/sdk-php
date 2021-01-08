@@ -37,7 +37,7 @@ class DateTimeType extends Type implements DetectableTypeInterface
      */
     public static function match(\ReflectionNamedType $type): bool
     {
-        return ! $type->isBuiltin() && Inheritance::implements($type->getName(), \DateTimeInterface::class);
+        return !$type->isBuiltin() && Inheritance::implements($type->getName(), \DateTimeInterface::class);
     }
 
     /**
@@ -54,7 +54,6 @@ class DateTimeType extends Type implements DetectableTypeInterface
     public function serialize($value): string
     {
         return Carbon::parse($value)
-            ->format($this->format)
-        ;
+            ->format($this->format);
     }
 }

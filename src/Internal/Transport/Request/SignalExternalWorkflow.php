@@ -11,16 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport\Request;
 
-use Temporal\DataConverter\DataConverterInterface;
-use Temporal\Worker\Command\PayloadAwareRequest;
-use Temporal\Worker\Command\Request;
-use Temporal\Workflow\ChildWorkflowOptions;
+use Temporal\Worker\Transport\Command\Request;
 
-final class SignalExternalWorkflow extends Request implements PayloadAwareRequest
+final class SignalExternalWorkflow extends Request
 {
-    /**
-     * @var string
-     */
     public const NAME = 'SignalExternalWorkflow';
 
     /**
@@ -45,21 +39,8 @@ final class SignalExternalWorkflow extends Request implements PayloadAwareReques
                 'runID' => $runId,
                 'signal' => $signal,
                 'childWorkflowOnly' => true,
-                'args' => $args,
-            ]
-        );
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getMappedParams(DataConverterInterface $dataConverter): array
-    {
-        return \array_merge(
-            $this->params,
-            [
-                'args' => $dataConverter->toPayloads($this->params['args'])
-            ]
+            ],
+            $args
         );
     }
 }

@@ -15,6 +15,7 @@ use React\Promise\Deferred;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Workflow\Process\Process;
+use Temporal\Worker\Transport\Command\RequestInterface;
 
 class CancelWorkflow extends WorkflowProcessAwareRoute
 {
@@ -42,13 +43,13 @@ class CancelWorkflow extends WorkflowProcessAwareRoute
     /**
      * {@inheritDoc}
      */
-    public function handle(array $payload, array $headers, Deferred $resolver): void
+    public function handle(RequestInterface $request, array $headers, Deferred $resolver): void
     {
-        ['runId' => $runId] = $payload;
+        ['runId' => $runId] = $request->getOptions();
 
         $this->cancel($runId);
 
-        $resolver->resolve(['Cancelled' => true]);
+        $resolver->resolve(['OK']);
     }
 
     /**
@@ -64,7 +65,6 @@ class CancelWorkflow extends WorkflowProcessAwareRoute
             throw new \InvalidArgumentException(\sprintf(self::ERROR_PROCESS_NOT_DEFINED, $runId));
         }
 
-        // todo: need wait?
         $process->cancel();
 
         return [];

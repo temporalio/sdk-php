@@ -15,7 +15,7 @@ use Illuminate\Support\Arr;
 use PHPUnit\Framework\Assert;
 use Temporal\DataConverter\Payload;
 use Temporal\DataConverter\DataConverter;
-use Temporal\Worker\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\RequestInterface;
 
 /**
  * @template-extends TestingCommand<RequestInterface>
@@ -56,15 +56,20 @@ class TestingRequest extends TestingCommand implements RequestInterface
      */
     public function getParam(string $key)
     {
-        return Arr::get($this->getParams(), $key);
+        return Arr::get($this->getOptions(), $key);
     }
 
     /**
      * {@inheritDoc}
      */
-    public function getParams(): array
+    public function getOptions(): array
     {
-        return $this->command->getParams();
+        return $this->command->getOptions();
+    }
+
+    public function getPayloads(): array
+    {
+        return $this->command->getPayloads();
     }
 
     /**
@@ -74,7 +79,7 @@ class TestingRequest extends TestingCommand implements RequestInterface
      */
     public function assertParamsSame(array $expected, string $message = ''): self
     {
-        Assert::assertSame($expected, $this->getParams(), $message);
+        Assert::assertSame($expected, $this->getOptions(), $message);
 
         return $this;
     }
@@ -91,7 +96,7 @@ class TestingRequest extends TestingCommand implements RequestInterface
             $this->assertParamsHasKey($key, $message);
         }
 
-        Assert::assertEquals($expected, Arr::get($this->getParams(), $key), $message);
+        Assert::assertEquals($expected, Arr::get($this->getOptions(), $key), $message);
 
         return $this;
     }
@@ -103,7 +108,7 @@ class TestingRequest extends TestingCommand implements RequestInterface
      */
     public function assertParamsHasKey(string $key, string $message = ''): self
     {
-        Assert::assertTrue(Arr::has($this->getParams(), $key), $message);
+        Assert::assertTrue(Arr::has($this->getOptions(), $key), $message);
 
         return $this;
     }
@@ -126,7 +131,7 @@ class TestingRequest extends TestingCommand implements RequestInterface
             $expected = $this->convertValue($expected);
         }
 
-        Assert::assertEquals($expected, Arr::get($this->getParams(), $key), $message);
+        Assert::assertEquals($expected, Arr::get($this->getOptions(), $key), $message);
 
         return $this;
     }
@@ -146,7 +151,7 @@ class TestingRequest extends TestingCommand implements RequestInterface
      */
     public function assertParamsKeyInstanceOf(string $key, string $expected, string $message = ''): self
     {
-        Assert::assertInstanceOf($expected, Arr::get($this->getParams(), $key), $message);
+        Assert::assertInstanceOf($expected, Arr::get($this->getOptions(), $key), $message);
 
         return $this;
     }
@@ -161,7 +166,7 @@ class TestingRequest extends TestingCommand implements RequestInterface
     {
         $this->assertParamsHasKey($key, $message);
 
-        Assert::assertNotSame($expected, Arr::get($this->getParams(), $key), $message);
+        Assert::assertNotSame($expected, Arr::get($this->getOptions(), $key), $message);
 
         return $this;
     }

@@ -14,41 +14,42 @@ namespace Temporal\DataConverter;
 use React\Promise\PromiseInterface;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 
-// todo: migrate to protobuf
-final class Payload implements \JsonSerializable
+final class Payload
 {
-    #[Marshal(name: 'metadata')]
+    #[Marshal(name: 'Metadata')]
     private array $metadata;
 
-    #[Marshal(name: 'data')]
+    #[Marshal(name: 'Data')]
     private string $data = '';
-
-    /**
-     * @param array $metadata
-     * @param string $data
-     * @return Payload
-     */
-    public static function create(array $metadata, string $data): Payload
-    {
-        $payload = new self();
-        $payload->metadata = \array_map('\\base64_encode', $metadata);
-        $payload->data = \base64_encode($data);
-
-        return $payload;
-    }
 
     /**
      * @param array $metadata
      * @param string|null $data
      * @return Payload
      */
-    public static function createRaw(array $metadata, string $data = null): Payload
+    public static function create(array $metadata, string $data = null): Payload
     {
         $payload = new self();
         $payload->metadata = $metadata;
         $payload->data = $data ?? '';
 
         return $payload;
+    }
+
+    /**
+     * @return array
+     */
+    public function getMetadata(): array
+    {
+        return $this->metadata;
+    }
+
+    /**
+     * @return string
+     */
+    public function getData(): string
+    {
+        return $this->data;
     }
 
     /**
@@ -64,40 +65,14 @@ final class Payload implements \JsonSerializable
         PromiseInterface $promise,
         \ReflectionType $type = null
     ): PromiseInterface {
-        return $promise->then(function ($value) use ($converter, $type) {
-            if (! $value instanceof Payload || $value instanceof \Throwable) {
-                return $value;
+        return $promise->then(
+            function ($value) use ($converter, $type) {
+                if (!$value instanceof Payload || $value instanceof \Throwable) {
+                    return $value;
+                }
+
+                return $converter->fromPayload($value, $type);
             }
-
-            return $converter->fromPayload($value, $type);
-        });
-    }
-
-    /**
-     * @return array
-     */
-    public function getMetadata(): array
-    {
-        return \array_map('\\base64_decode', $this->metadata);
-    }
-
-    /**
-     * @return string
-     */
-    public function getData(): string
-    {
-        return \base64_decode($this->data);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function jsonSerialize(): array
-    {
-        // todo: check if needed double encoding
-        return [
-            'Metadata' => $this->metadata,
-            'Data'     => $this->data,
-        ];
+        );
     }
 }

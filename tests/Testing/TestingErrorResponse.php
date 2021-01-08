@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Testing;
 
-use Temporal\Worker\Command\ErrorResponseInterface;
+use Temporal\Worker\Transport\Command\ErrorResponseInterface;
 
 /**
  * @template-extends TestingCommand<ErrorResponseInterface>

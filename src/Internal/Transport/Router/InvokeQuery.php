@@ -17,6 +17,7 @@ use Temporal\DataConverter\Payload;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Worker\LoopInterface;
+use Temporal\Worker\Transport\Command\RequestInterface;
 
 final class InvokeQuery extends WorkflowProcessAwareRoute
 {
@@ -47,26 +48,20 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
     /**
      * {@inheritDoc}
      */
-    public function handle(array $payload, array $headers, Deferred $resolver): void
+    public function handle(RequestInterface $request, array $headers, Deferred $resolver): void
     {
-        ['runId' => $runId, 'name' => $name] = $payload;
-
-        $args = $payload['args'] ?? [];
-        if ($args !== []) {
-            foreach ($payload['args'] as $i => $arg) {
-                $args[$i] = Payload::createRaw($arg['metadata'], $arg['data'] ?? null);
-            }
-        }
+        ['runId' => $runId, 'name' => $name] = $request->getOptions();
 
         $instance = $this->findInstanceOrFail($runId);
         $handler = $this->findQueryHandlerOrFail($instance, $name);
 
-        $executor = static function () use ($args, $resolver, $handler) {
-            $result = $handler($args ?? []);
-            $resolver->resolve([$result]);
-        };
-
-        $this->loop->once(LoopInterface::ON_QUERY, $executor);
+        $this->loop->once(
+            LoopInterface::ON_QUERY,
+            static function () use ($request, $resolver, $handler) {
+                $result = $handler($request->getPayloads());
+                $resolver->resolve([$result]);
+            }
+        );
     }
 
     /**

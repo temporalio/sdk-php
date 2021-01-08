@@ -26,12 +26,6 @@ final class ActivityContext implements ActivityContextInterface
     private ActivityInfo $info;
 
     /**
-     * @var array
-     */
-    #[MarshalArray(name: 'args', of: Payload::class)]
-    private array $arguments = [];
-
-    /**
      * @var bool
      */
     private bool $doNotCompleteOnReturn = false;
@@ -55,14 +49,6 @@ final class ActivityContext implements ActivityContextInterface
         $this->info = new ActivityInfo();
         $this->rpc = $rpc;
         $this->dataConverter = $dataConverter;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getArguments(): array
-    {
-        return $this->arguments;
     }
 
     /**
@@ -103,9 +89,12 @@ final class ActivityContext implements ActivityContextInterface
      */
     public function heartbeat($details)
     {
-        return $this->rpc->call('temporal.RecordActivityHeartbeat', [
-            'TaskToken' => $this->info->taskToken,
-            'Details' => $details,
-        ]);
+        return $this->rpc->call(
+            'temporal.RecordActivityHeartbeat',
+            [
+                'TaskToken' => $this->info->taskToken,
+                'Details' => $details,
+            ]
+        );
     }
 }

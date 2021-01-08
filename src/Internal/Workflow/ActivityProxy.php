@@ -60,7 +60,7 @@ final class ActivityProxy extends Proxy
     {
         $handler = $this->findPrototypeByHandlerNameOrFail($method);
 
-        return $this->stub->execute($handler->getId(), $args, $handler->getHandler()->getReturnType());
+        return $this->stub->execute($handler->getID(), $args, $handler->getHandler()->getReturnType());
     }
 
     /**

@@ -18,7 +18,7 @@ interface PrototypeInterface extends Identifiable
     /**
      * @return string
      */
-    public function getId(): string;
+    public function getID(): string;
 
     /**
      * @return \ReflectionClass|null

@@ -11,26 +11,26 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport\Request;
 
-use Temporal\Worker\Command\Request;
+use Temporal\Worker\Transport\Command\Request;
 
 final class GetVersion extends Request
 {
-    /**
-     * @var string
-     */
     public const NAME = 'GetVersion';
 
     /**
-     * @param string $changeId
+     * @param string $changeID
      * @param positive-int $minSupported
      * @param positive-int $maxSupported
      */
-    public function __construct(string $changeId, int $minSupported, int $maxSupported)
+    public function __construct(string $changeID, int $minSupported, int $maxSupported)
     {
-        parent::__construct(self::NAME, [
-            'changeID'     => $changeId,
-            'minSupported' => $minSupported,
-            'maxSupported' => $maxSupported,
-        ]);
+        parent::__construct(
+            self::NAME,
+            [
+                'changeID' => $changeID,
+                'minSupported' => $minSupported,
+                'maxSupported' => $maxSupported,
+            ]
+        );
     }
 }

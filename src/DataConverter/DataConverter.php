@@ -13,7 +13,7 @@ namespace Temporal\DataConverter;
 
 use Temporal\Exception\DataConverterException;
 
-class DataConverter implements DataConverterInterface
+final class DataConverter implements DataConverterInterface
 {
     /**
      * @var array<PayloadConverterInterface>
@@ -116,6 +116,7 @@ class DataConverter implements DataConverterInterface
         return new DataConverter(
             new NullConverter(),
             new BinaryConverter(),
+            new ProtoJsonConverter(),
             new JsonDTOConverter()
         );
     }

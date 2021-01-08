@@ -18,7 +18,7 @@ use Temporal\DataConverter\Payload;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Transport\Request\ExecuteActivity;
-use Temporal\Worker\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\ActivityStubInterface;
 

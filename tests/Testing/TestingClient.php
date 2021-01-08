@@ -15,9 +15,10 @@ use JetBrains\PhpStorm\Immutable;
 use React\Promise\PromiseInterface;
 use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Internal\Transport\Client;
-use Temporal\Worker\Command\ErrorResponse;
-use Temporal\Worker\Command\RequestInterface;
-use Temporal\Worker\Command\SuccessResponse;
+use Temporal\Worker\Transport\Command\CommandInterface;
+use Temporal\Worker\Transport\Command\ErrorResponse;
+use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\SuccessResponse;
 use Temporal\Worker\LoopInterface;
 
 class TestingClient extends CapturedClient
@@ -45,7 +46,7 @@ class TestingClient extends CapturedClient
      */
     public function success(RequestInterface $request, $payload = null): TestingSuccessResponse
     {
-        $response = new SuccessResponse($payload, $request->getId());
+        $response = new SuccessResponse($payload, $request->getID());
 
         $this->parent->dispatch($response);
 
@@ -59,7 +60,7 @@ class TestingClient extends CapturedClient
      */
     public function error(RequestInterface $request, \Throwable $error): TestingErrorResponse
     {
-        $response = ErrorResponse::fromException($error, $request->getId());
+        $response = ErrorResponse::fromException($error, $request->getID());
 
         $this->parent->dispatch($response);
 
@@ -71,7 +72,7 @@ class TestingClient extends CapturedClient
      */
     public function request(RequestInterface $request): PromiseInterface
     {
-        if (! $request instanceof TestingRequest) {
+        if (!$request instanceof TestingRequest) {
             $request = new TestingRequest($request);
         }
 

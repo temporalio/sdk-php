@@ -19,5 +19,5 @@ interface Identifiable
     /**
      * @return Identifier
      */
-    public function getId();
+    public function getID();
 }

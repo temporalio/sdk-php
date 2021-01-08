@@ -13,9 +13,9 @@ namespace Temporal\Internal\Transport;
 
 use React\Promise\PromiseInterface;
 use Temporal\Internal\Queue\QueueInterface;
-use Temporal\Worker\Command\ErrorResponse;
-use Temporal\Worker\Command\RequestInterface;
-use Temporal\Worker\Command\SuccessResponse;
+use Temporal\Worker\Transport\Command\ErrorResponse;
+use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\SuccessResponse;
 
 /**
  * @psalm-import-type OnMessageHandler from ServerInterface
@@ -74,7 +74,7 @@ final class Server implements ServerInterface
         try {
             $result = ($this->onMessage)($request, $headers);
         } catch (\Throwable $e) {
-            $this->queue->push(ErrorResponse::fromException($e, $request->getId()));
+            $this->queue->push(ErrorResponse::fromException($e, $request->getID()));
 
             return;
         }
@@ -94,7 +94,7 @@ final class Server implements ServerInterface
     private function onFulfilled(RequestInterface $request): \Closure
     {
         return function ($result) use ($request) {
-            $response = new SuccessResponse($result, $request->getId());
+            $response = new SuccessResponse($result, $request->getID());
 
             $this->queue->push($response);
 
@@ -115,7 +115,7 @@ final class Server implements ServerInterface
                 );
             }
 
-            $response = ErrorResponse::fromException($result, $request->getId());
+            $response = ErrorResponse::fromException($result, $request->getID());
 
             $this->queue->push($response);
 

@@ -104,7 +104,7 @@ final class WorkflowProxy extends Proxy
         // the workflow.
         if (! $this->isRunning()) {
             $this->prototype = $this->findPrototypeByHandlerNameOrFail($method);
-            $this->stub = new WorkflowStub($this->rpc, $this->marshaller, $this->prototype->getId(), $this->options);
+            $this->stub = new WorkflowStub($this->rpc, $this->marshaller, $this->prototype->getID(), $this->options);
 
             return $this->stub->start(...$args);
         }

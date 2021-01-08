@@ -12,27 +12,18 @@ declare(strict_types=1);
 namespace Temporal\Internal\Transport\Request;
 
 use Carbon\CarbonInterval;
-use Temporal\Worker\Command\Request;
+use Temporal\Worker\Transport\Command\Request;
 
 final class NewTimer extends Request
 {
-    protected const CANCELLABLE = true;
-
-    /**
-     * @var string
-     */
     public const NAME = 'NewTimer';
+    protected const CANCELLABLE = true;
 
     /**
      * @param \DateInterval $interval
      */
     public function __construct(\DateInterval $interval)
     {
-        parent::__construct(
-            self::NAME,
-            [
-                'ms' => CarbonInterval::make($interval)->totalMilliseconds,
-            ]
-        );
+        parent::__construct(self::NAME, ['ms' => CarbonInterval::make($interval)->totalMilliseconds]);
     }
 }

@@ -89,7 +89,7 @@ abstract class Prototype implements PrototypeInterface
     /**
      * @return string
      */
-    public function getId(): string
+    public function getID(): string
     {
         return $this->name;
     }

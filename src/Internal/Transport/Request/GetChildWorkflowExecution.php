@@ -11,13 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport\Request;
 
-use Temporal\Worker\Command\Request;
+use Temporal\Worker\Transport\Command\Request;
 
 final class GetChildWorkflowExecution extends Request
 {
-    /**
-     * @var string
-     */
     public const NAME = 'GetChildWorkflowExecution';
 
     /**
@@ -25,8 +22,6 @@ final class GetChildWorkflowExecution extends Request
      */
     public function __construct(ExecuteChildWorkflow $execution)
     {
-        parent::__construct(self::NAME, [
-            'id' => $execution->getId(),
-        ]);
+        parent::__construct(self::NAME, ['id' => $execution->getID()]);
     }
 }

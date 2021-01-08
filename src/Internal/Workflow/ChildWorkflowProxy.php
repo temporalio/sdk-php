@@ -99,7 +99,7 @@ final class ChildWorkflowProxy extends Proxy
         if (! $this->isRunning()) {
             $this->prototype = $this->findPrototypeByHandlerNameOrFail($method);
 
-            $this->stub = $this->context->newUntypedChildWorkflowStub($this->prototype->getId(), $this->options);
+            $this->stub = $this->context->newUntypedChildWorkflowStub($this->prototype->getID(), $this->options);
 
             return $this->stub->execute($args);
         }

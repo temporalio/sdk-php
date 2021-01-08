@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Queue;
 
-use Temporal\Worker\Command\CommandInterface;
+use Temporal\Worker\Transport\Command\CommandInterface;
 
 class ArrayQueue implements QueueInterface
 {
@@ -34,7 +34,7 @@ class ArrayQueue implements QueueInterface
     public function pull(int $commandId): ?CommandInterface
     {
         foreach ($this->commands as $i => $command) {
-            if ($command->getId() === $commandId) {
+            if ($command->getID() === $commandId) {
                 unset($this->commands[$i]);
                 return $command;
             }
@@ -49,9 +49,8 @@ class ArrayQueue implements QueueInterface
      */
     public function has(int $commandId): bool
     {
-        // todo: optimize?
         foreach ($this->commands as $command) {
-            if ($command->getId() === $commandId) {
+            if ($command->getID() === $commandId) {
                 return true;
             }
         }

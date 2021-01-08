@@ -17,6 +17,7 @@ use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Worker\TaskQueueInterface;
+use Temporal\Worker\Transport\Command\RequestInterface;
 
 final class GetWorkerInfo extends Route
 {
@@ -36,7 +37,7 @@ final class GetWorkerInfo extends Route
     /**
      * {@inheritDoc}
      */
-    public function handle(array $payload, array $headers, Deferred $resolver): void
+    public function handle(RequestInterface $request, array $headers, Deferred $resolver): void
     {
         $result = [];
 
@@ -54,19 +55,25 @@ final class GetWorkerInfo extends Route
     private function workerToArray(TaskQueueInterface $taskQueue): array
     {
         return [
-            'TaskQueue' => $taskQueue->getId(),
-            'Workflows' => $this->map($taskQueue->getWorkflows(), function (WorkflowPrototype $workflow) {
-                return [
-                    'Name' => $workflow->getId(),
-                    'Queries' => $this->keys($workflow->getQueryHandlers()),
-                    'Signals' => $this->keys($workflow->getSignalHandlers()),
-                ];
-            }),
-            'Activities' => $this->map($taskQueue->getActivities(), function (ActivityPrototype $activity) {
-                return [
-                    'Name' => $activity->getId(),
-                ];
-            }),
+            'TaskQueue' => $taskQueue->getID(),
+            'Workflows' => $this->map(
+                $taskQueue->getWorkflows(),
+                function (WorkflowPrototype $workflow) {
+                    return [
+                        'Name' => $workflow->getID(),
+                        'Queries' => $this->keys($workflow->getQueryHandlers()),
+                        'Signals' => $this->keys($workflow->getSignalHandlers()),
+                    ];
+                }
+            ),
+            'Activities' => $this->map(
+                $taskQueue->getActivities(),
+                function (ActivityPrototype $activity) {
+                    return [
+                        'Name' => $activity->getID(),
+                    ];
+                }
+            ),
         ];
     }
 

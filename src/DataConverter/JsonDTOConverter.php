@@ -91,7 +91,6 @@ class JsonDTOConverter implements PayloadConverterInterface
         }
 
         if (\is_array($data) && $type instanceof \ReflectionNamedType && !$type->isBuiltin()) {
-
             try {
                 $obj = new \ReflectionClass($type->getName());
             } catch (\ReflectionException $e) {

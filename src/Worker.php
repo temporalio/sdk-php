@@ -22,8 +22,7 @@ use Spiral\Attributes\ReaderInterface;
 use Spiral\Goridge\Relay;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
-use Temporal\Worker\Codec\CodecInterface;
-use Temporal\Worker\Codec\JsonCodec;
+use Temporal\Worker\Transport\Codec\CodecInterface;
 use Temporal\Internal\Events\EventEmitterTrait;
 use Temporal\Internal\Queue\ArrayQueue;
 use Temporal\Internal\Queue\QueueInterface;
@@ -35,7 +34,9 @@ use Temporal\Internal\Transport\Router;
 use Temporal\Internal\Transport\RouterInterface;
 use Temporal\Internal\Transport\Server;
 use Temporal\Internal\Transport\ServerInterface;
-use Temporal\Worker\Command\RequestInterface;
+use Temporal\Worker\Transport\Codec\JsonCodec;
+use Temporal\Worker\Transport\Codec\ProtoCodec;
+use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\FactoryInterface;
 use Temporal\Worker\LoopInterface;
 use Temporal\Worker\TaskQueue;
@@ -140,8 +141,7 @@ final class Worker implements FactoryInterface
         DataConverterInterface $dataConverter = null,
         RelayConnectionInterface $relay = null,
         RpcConnectionInterface $rpc = null
-    )
-    {
+    ) {
         $this->dataConverter = $dataConverter ?? DataConverter::createDefault();
 
         $this->relay = $relay ?? new RoadRunner(Relay::create(Relay::PIPES));
@@ -174,10 +174,12 @@ final class Worker implements FactoryInterface
                 DoctrineReader::addGlobalIgnoredName($annotation);
             }
 
-            return new SelectiveReader([
-                new AnnotationReader(),
-                new AttributeReader(),
-            ]);
+            return new SelectiveReader(
+                [
+                    new AnnotationReader(),
+                    new AttributeReader(),
+                ]
+            );
         }
 
         return new AttributeReader();
@@ -207,7 +209,12 @@ final class Worker implements FactoryInterface
      */
     private function createCodec(): CodecInterface
     {
-        return new JsonCodec($this->dataConverter);
+        switch ($_SERVER['RR_CODEC'] ?? null) {
+            case 'protobuf':
+                return new ProtoCodec($this->dataConverter);
+            default:
+                return new JsonCodec($this->dataConverter);
+        }
     }
 
     /**
@@ -387,10 +394,13 @@ final class Worker implements FactoryInterface
         $taskQueue = $headers[self::HEADER_TASK_QUEUE];
 
         if (!\is_string($taskQueue)) {
-            $error = \vsprintf(self::ERROR_HEADER_NOT_STRING_TYPE, [
-                self::HEADER_TASK_QUEUE,
-                \get_debug_type($taskQueue)
-            ]);
+            $error = \vsprintf(
+                self::ERROR_HEADER_NOT_STRING_TYPE,
+                [
+                    self::HEADER_TASK_QUEUE,
+                    \get_debug_type($taskQueue)
+                ]
+            );
 
             throw new \InvalidArgumentException($error);
         }

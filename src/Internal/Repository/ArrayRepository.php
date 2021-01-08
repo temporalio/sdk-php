@@ -69,7 +69,7 @@ class ArrayRepository implements RepositoryInterface
      */
     public function add(Identifiable $entry, bool $overwrite = false): void
     {
-        $name = $entry->getId();
+        $name = $entry->getID();
 
         if ($overwrite === false && isset($this->prototypes[$name])) {
             throw new \OutOfBoundsException(\sprintf(self::ERROR_ALREADY_EXISTS, $name));

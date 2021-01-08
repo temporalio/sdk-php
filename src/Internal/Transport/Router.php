@@ -14,7 +14,7 @@ namespace Temporal\Internal\Transport;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\Internal\Transport\Router\RouteInterface;
-use Temporal\Worker\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\RequestInterface;
 
 use function React\Promise\reject;
 
@@ -80,7 +80,7 @@ final class Router implements RouterInterface
         $deferred = new Deferred();
 
         try {
-            $route->handle($request->getParams(), $headers, $deferred);
+            $route->handle($request, $headers, $deferred);
         } catch (\Throwable $e) {
             $deferred->reject($e);
         }
