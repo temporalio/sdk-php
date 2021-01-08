@@ -13,9 +13,9 @@ namespace Temporal\Internal\Transport;
 
 use React\Promise\PromiseInterface;
 use Temporal\Internal\Queue\QueueInterface;
-use Temporal\Worker\Command\ErrorResponse;
-use Temporal\Worker\Command\RequestInterface;
-use Temporal\Worker\Command\SuccessResponse;
+use Temporal\Worker\Transport\Command\ErrorResponse;
+use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\SuccessResponse;
 
 /**
  * @psalm-import-type OnMessageHandler from ServerInterface

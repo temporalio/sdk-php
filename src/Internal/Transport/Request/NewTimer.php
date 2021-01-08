@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Transport\Request;
 
 use Carbon\CarbonInterval;
-use Temporal\Worker\Command\Request;
+use Temporal\Worker\Transport\Command\Request;
 
 final class NewTimer extends Request
 {

@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
-use Temporal\Worker\Command\ErrorResponse;
+use Temporal\Worker\Transport\Command\ErrorResponse;
 use Temporal\Worker\Transport\RpcConnectionInterface;
 
 class ActivityCompletionClient implements ActivityCompletionClientInterface

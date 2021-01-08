@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Transport;
 
 use React\Promise\PromiseInterface;
-use Temporal\Worker\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\RequestInterface;
 
 /**
  * @psalm-type OnMessageHandler = callable(RequestInterface, array): PromiseInterface

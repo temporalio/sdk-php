@@ -18,7 +18,7 @@ use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Router;
 use Temporal\Internal\Transport\RouterInterface;
 use Temporal\Worker;
-use Temporal\Worker\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\RpcConnectionInterface;
 
 class TaskQueue implements TaskQueueInterface

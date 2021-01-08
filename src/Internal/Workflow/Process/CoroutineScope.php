@@ -19,7 +19,7 @@ use Temporal\Internal\Coroutine\Stack;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Request\Cancel;
 use Temporal\Internal\Workflow\ScopeContext;
-use Temporal\Worker\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\LoopInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\CancellationScopeInterface;

@@ -9,13 +9,13 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Worker\Codec;
+namespace Temporal\Worker\Transport\Codec;
 
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\ProtocolException;
-use Temporal\Worker\Codec\JsonCodec\Decoder;
-use Temporal\Worker\Codec\JsonCodec\Encoder;
-use Temporal\Worker\Command\CommandInterface;
+use Temporal\Worker\Transport\Codec\JsonCodec\Decoder;
+use Temporal\Worker\Transport\Codec\JsonCodec\Encoder;
+use Temporal\Worker\Transport\Command\CommandInterface;
 
 final class JsonCodec implements CodecInterface
 {

@@ -15,11 +15,11 @@ use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\Exception\CancellationException;
 use Temporal\Internal\Queue\QueueInterface;
-use Temporal\Worker\Command\CommandInterface;
-use Temporal\Worker\Command\ErrorResponseInterface;
-use Temporal\Worker\Command\RequestInterface;
-use Temporal\Worker\Command\ResponseInterface;
-use Temporal\Worker\Command\SuccessResponseInterface;
+use Temporal\Worker\Transport\Command\CommandInterface;
+use Temporal\Worker\Transport\Command\ErrorResponseInterface;
+use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\ResponseInterface;
+use Temporal\Worker\Transport\Command\SuccessResponseInterface;
 use Temporal\Worker\LoopInterface;
 
 /**

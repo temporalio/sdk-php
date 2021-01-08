@@ -12,7 +12,7 @@ namespace Temporal\Internal\Workflow;
 use React\Promise\PromiseInterface;
 use Temporal\Exception\CancellationException;
 use Temporal\Internal\Workflow\Process\CoroutineScope;
-use Temporal\Worker\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\ScopedContextInterface;
 use Temporal\Workflow\WorkflowContext;

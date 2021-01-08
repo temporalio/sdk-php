@@ -11,8 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport\Request;
 
-use Temporal\Worker\Command\ErrorResponse;
-use Temporal\Worker\Command\Request;
+use Temporal\Worker\Transport\Command\ErrorResponse;
+use Temporal\Worker\Transport\Command\Request;
 
 final class CompleteWorkflow extends Request
 {

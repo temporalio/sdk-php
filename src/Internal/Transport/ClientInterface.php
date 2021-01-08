@@ -12,8 +12,8 @@ declare(strict_types=1);
 namespace Temporal\Internal\Transport;
 
 use React\Promise\PromiseInterface;
-use Temporal\Worker\Command\CommandInterface;
-use Temporal\Worker\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\CommandInterface;
+use Temporal\Worker\Transport\Command\RequestInterface;
 
 interface ClientInterface
 {

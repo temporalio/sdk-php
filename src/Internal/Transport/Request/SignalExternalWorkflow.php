@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport\Request;
 
-use Temporal\Worker\Command\Request;
+use Temporal\Worker\Transport\Command\Request;
 
 final class SignalExternalWorkflow extends Request
 {

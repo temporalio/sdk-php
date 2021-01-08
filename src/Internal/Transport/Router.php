@@ -14,7 +14,7 @@ namespace Temporal\Internal\Transport;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\Internal\Transport\Router\RouteInterface;
-use Temporal\Worker\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\RequestInterface;
 
 use function React\Promise\reject;
 

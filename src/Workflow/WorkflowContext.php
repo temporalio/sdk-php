@@ -32,7 +32,7 @@ use Temporal\Internal\Workflow\ActivityStub;
 use Temporal\Internal\Workflow\ChildWorkflowProxy;
 use Temporal\Internal\Workflow\ChildWorkflowStub;
 use Temporal\Internal\Workflow\Input;
-use Temporal\Worker\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\RequestInterface;
 
 use function React\Promise\reject;
 
