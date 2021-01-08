@@ -16,7 +16,7 @@ use Temporal\Worker\Transport\Command\Request;
 
 final class NewTimer extends Request
 {
-    protected const NAME = 'NewTimer';
+    public const NAME = 'NewTimer';
     protected const CANCELLABLE = true;
 
     /**

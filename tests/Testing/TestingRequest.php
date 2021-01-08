@@ -15,7 +15,7 @@ use Illuminate\Support\Arr;
 use PHPUnit\Framework\Assert;
 use Temporal\DataConverter\Payload;
 use Temporal\DataConverter\DataConverter;
-use Temporal\Worker\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\RequestInterface;
 
 /**
  * @template-extends TestingCommand<RequestInterface>
@@ -65,6 +65,11 @@ class TestingRequest extends TestingCommand implements RequestInterface
     public function getOptions(): array
     {
         return $this->command->getOptions();
+    }
+
+    public function getPayloads(): array
+    {
+        return $this->command->getPayloads();
     }
 
     /**

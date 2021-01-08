@@ -13,8 +13,8 @@ namespace Temporal\Tests\Testing;
 
 use React\Promise\PromiseInterface;
 use Temporal\Internal\Transport\ClientInterface;
-use Temporal\Worker\Command\CommandInterface;
-use Temporal\Worker\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\CommandInterface;
+use Temporal\Worker\Transport\Command\RequestInterface;
 
 class CapturedClient implements ClientInterface
 {
@@ -109,5 +109,10 @@ class CapturedClient implements ClientInterface
     public function cancel(CommandInterface $command): void
     {
         $this->parent->cancel($command);
+    }
+
+    public function reject(CommandInterface $command, \Throwable $reason): void
+    {
+        $this->parent->reject($command, $reason);
     }
 }

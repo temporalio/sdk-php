@@ -15,7 +15,7 @@ use Temporal\Worker\Transport\Command\Request;
 
 final class SignalExternalWorkflow extends Request
 {
-    protected const NAME = 'SignalExternalWorkflow';
+    public const NAME = 'SignalExternalWorkflow';
 
     /**
      * @param string $namespace

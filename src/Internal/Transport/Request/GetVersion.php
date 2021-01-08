@@ -15,7 +15,7 @@ use Temporal\Worker\Transport\Command\Request;
 
 final class GetVersion extends Request
 {
-    protected const NAME = 'GetVersion';
+    public const NAME = 'GetVersion';
 
     /**
      * @param string $changeID

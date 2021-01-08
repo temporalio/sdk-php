@@ -15,7 +15,7 @@ use Temporal\Worker\Transport\Command\Request;
 
 final class ContinueAsNew extends Request
 {
-    protected const NAME = 'ContinueAsNew';
+    public const NAME = 'ContinueAsNew';
 
     /**
      * @param string $name

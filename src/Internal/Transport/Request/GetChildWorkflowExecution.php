@@ -15,7 +15,7 @@ use Temporal\Worker\Transport\Command\Request;
 
 final class GetChildWorkflowExecution extends Request
 {
-    protected const NAME = 'GetChildWorkflowExecution';
+    public const NAME = 'GetChildWorkflowExecution';
 
     /**
      * @param ExecuteChildWorkflow $execution

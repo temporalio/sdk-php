@@ -15,7 +15,7 @@ use Temporal\Worker\Transport\Command\Request;
 
 final class ExecuteChildWorkflow extends Request
 {
-    protected const NAME = 'ExecuteChildWorkflow';
+    public const NAME = 'ExecuteChildWorkflow';
     protected const CANCELLABLE = true;
 
     /**

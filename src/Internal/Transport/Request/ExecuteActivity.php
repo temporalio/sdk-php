@@ -15,7 +15,7 @@ use Temporal\Worker\Transport\Command\Request;
 
 final class ExecuteActivity extends Request
 {
-    protected const NAME = 'ExecuteActivity';
+    public const NAME = 'ExecuteActivity';
     protected const CANCELLABLE = true;
 
     /**

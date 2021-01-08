@@ -15,7 +15,7 @@ use Temporal\Worker\Transport\Command\Request;
 
 final class Cancel extends Request
 {
-    protected const NAME = 'Cancel';
+    public const NAME = 'Cancel';
 
     /**
      * @param int ...$requestID

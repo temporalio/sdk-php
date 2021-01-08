@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Testing;
 
-use Temporal\Worker\Command\SuccessResponseInterface;
+use Temporal\Worker\Transport\Command\SuccessResponseInterface;
 
 /**
  * @template-extends TestingCommand<SuccessResponseInterface>

@@ -16,7 +16,7 @@ use Temporal\Worker\Transport\Command\Request;
 
 final class CompleteWorkflow extends Request
 {
-    protected const NAME = 'CompleteWorkflow';
+    public const NAME = 'CompleteWorkflow';
 
     /**
      * @param array $result
