@@ -35,6 +35,7 @@ use Temporal\Internal\Transport\RouterInterface;
 use Temporal\Internal\Transport\Server;
 use Temporal\Internal\Transport\ServerInterface;
 use Temporal\Worker\Transport\Codec\JsonCodec;
+use Temporal\Worker\Transport\Codec\ProtoCodec;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\FactoryInterface;
 use Temporal\Worker\LoopInterface;
@@ -140,8 +141,7 @@ final class Worker implements FactoryInterface
         DataConverterInterface $dataConverter = null,
         RelayConnectionInterface $relay = null,
         RpcConnectionInterface $rpc = null
-    )
-    {
+    ) {
         $this->dataConverter = $dataConverter ?? DataConverter::createDefault();
 
         $this->relay = $relay ?? new RoadRunner(Relay::create(Relay::PIPES));
@@ -174,10 +174,12 @@ final class Worker implements FactoryInterface
                 DoctrineReader::addGlobalIgnoredName($annotation);
             }
 
-            return new SelectiveReader([
-                new AnnotationReader(),
-                new AttributeReader(),
-            ]);
+            return new SelectiveReader(
+                [
+                    new AnnotationReader(),
+                    new AttributeReader(),
+                ]
+            );
         }
 
         return new AttributeReader();
@@ -207,8 +209,9 @@ final class Worker implements FactoryInterface
      */
     private function createCodec(): CodecInterface
     {
-       // return new MsgpackCodec($this->dataConverter);
-        return new JsonCodec($this->dataConverter);
+        // todo: switch using ENV variable
+        return new ProtoCodec($this->dataConverter);
+        //return new JsonCodec($this->dataConverter);
     }
 
     /**
@@ -388,10 +391,13 @@ final class Worker implements FactoryInterface
         $taskQueue = $headers[self::HEADER_TASK_QUEUE];
 
         if (!\is_string($taskQueue)) {
-            $error = \vsprintf(self::ERROR_HEADER_NOT_STRING_TYPE, [
-                self::HEADER_TASK_QUEUE,
-                \get_debug_type($taskQueue)
-            ]);
+            $error = \vsprintf(
+                self::ERROR_HEADER_NOT_STRING_TYPE,
+                [
+                    self::HEADER_TASK_QUEUE,
+                    \get_debug_type($taskQueue)
+                ]
+            );
 
             throw new \InvalidArgumentException($error);
         }

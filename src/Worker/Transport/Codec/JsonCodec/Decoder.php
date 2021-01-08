@@ -24,9 +24,6 @@ use Temporal\Worker\Transport\Command\SuccessResponseInterface;
 
 class Decoder
 {
-    // A set of pre-defined fields which typically carry the encoded payloads and must be decoded
-    protected const PAYLOAD_PARAMS = ['args', 'input', 'result'];
-
     /**
      * @var DataConverterInterface
      */
@@ -73,12 +70,6 @@ class Decoder
 
         if (isset($data['options']) && !\is_array($data['options'])) {
             throw new \InvalidArgumentException('Request params must be an object');
-        }
-
-        foreach (self::PAYLOAD_PARAMS as $name) {
-            if (array_key_exists($name, $data['options'])) {
-                $data['options'][$name] = $this->decodePayloads($data['options'][$name] ?? []);
-            }
         }
 
         $payloads = [];

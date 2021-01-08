@@ -24,7 +24,7 @@ class Error extends \Google\Protobuf\Internal\Message
      */
     protected $message = '';
     /**
-     * Generated from protobuf field <code>string data = 3;</code>
+     * Generated from protobuf field <code>bytes data = 3;</code>
      */
     protected $data = '';
 
@@ -89,7 +89,7 @@ class Error extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>string data = 3;</code>
+     * Generated from protobuf field <code>bytes data = 3;</code>
      * @return string
      */
     public function getData()
@@ -98,13 +98,13 @@ class Error extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>string data = 3;</code>
+     * Generated from protobuf field <code>bytes data = 3;</code>
      * @param string $var
      * @return $this
      */
     public function setData($var)
     {
-        GPBUtil::checkString($var, True);
+        GPBUtil::checkString($var, False);
         $this->data = $var;
 
         return $this;
