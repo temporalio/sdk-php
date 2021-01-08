@@ -9,8 +9,14 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Worker\Command;
+namespace Temporal\Worker\Transport\Command;
 
-abstract class Response extends Command implements ResponseInterface
+use Temporal\Internal\Repository\Identifiable;
+
+interface CommandInterface extends Identifiable
 {
+    /**
+     * @return int
+     */
+    public function getID(): int;
 }

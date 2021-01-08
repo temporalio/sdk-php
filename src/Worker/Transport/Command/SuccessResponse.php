@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Worker\Command;
+namespace Temporal\Worker\Transport\Command;
 
 use Temporal\DataConverter\Payload;
 
@@ -34,7 +34,7 @@ class SuccessResponse extends Response implements SuccessResponseInterface
     /**
      * {@inheritDoc}
      */
-    public function getResult(): array
+    public function getPayloads(): array
     {
         return $this->result;
     }

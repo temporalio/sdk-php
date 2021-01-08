@@ -18,16 +18,16 @@ final class GetVersion extends Request
     protected const NAME = 'GetVersion';
 
     /**
-     * @param string $changeId
+     * @param string $changeID
      * @param positive-int $minSupported
      * @param positive-int $maxSupported
      */
-    public function __construct(string $changeId, int $minSupported, int $maxSupported)
+    public function __construct(string $changeID, int $minSupported, int $maxSupported)
     {
         parent::__construct(
             self::NAME,
             [
-                'changeID' => $changeId,
+                'changeID' => $changeID,
                 'minSupported' => $minSupported,
                 'maxSupported' => $maxSupported,
             ]

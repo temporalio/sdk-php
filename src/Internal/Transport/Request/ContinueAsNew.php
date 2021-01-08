@@ -29,7 +29,8 @@ final class ContinueAsNew extends Request
             [
                 'name' => $name,
                 'args' => $input,
-            ]
+            ],
+            $input
         );
     }
 }

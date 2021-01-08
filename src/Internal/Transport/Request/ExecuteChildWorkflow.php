@@ -26,13 +26,6 @@ final class ExecuteChildWorkflow extends Request
      */
     public function __construct(string $name, array $args, array $options)
     {
-        parent::__construct(
-            self::NAME,
-            [
-                'name' => $name,
-                'args' => $args,
-                'options' => $options,
-            ]
-        );
+        parent::__construct(self::NAME, ['name' => $name, 'options' => $options], $args);
     }
 }

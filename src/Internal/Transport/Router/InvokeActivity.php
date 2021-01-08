@@ -62,7 +62,16 @@ final class InvokeActivity extends Route
     public function handle(array $payload, array $headers, Deferred $resolver): void
     {
         $context = new ActivityContext($this->rpc, $this->services->dataConverter);
-        $context = $this->services->marshaller->unmarshal($payload, $context);
+
+        try {
+            $context = $this->services->marshaller->unmarshal($payload, $context);
+        } catch (\Throwable $e) {
+            error_log(print_r($payload, true));
+            error_log((string)$e);
+
+            sleep(2);
+            throw $e;
+        }
 
         $prototype = $this->findDeclarationOrFail($context->getInfo());
 

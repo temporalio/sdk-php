@@ -17,7 +17,6 @@ use Temporal\Worker\Command\Request;
 final class CompleteWorkflow extends Request
 {
     protected const NAME = 'CompleteWorkflow';
-    protected const PAYLOAD_PARAMS = ['result'];
 
     /**
      * @param array $result
@@ -29,12 +28,6 @@ final class CompleteWorkflow extends Request
             $error = ErrorResponse::exceptionToArray($error);
         }
 
-        parent::__construct(
-            self::NAME,
-            [
-                'result' => $result,
-                'error' => $error
-            ]
-        );
+        parent::__construct(self::NAME, ['error' => $error], $result);
     }
 }

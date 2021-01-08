@@ -9,10 +9,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Worker\Codec;
+namespace Temporal\Worker\Transport\Codec;
 
 use Temporal\Exception\ProtocolException;
-use Temporal\Worker\Command\CommandInterface;
+use Temporal\Worker\Transport\Command\CommandInterface;
 
 interface CodecInterface
 {
@@ -24,9 +24,9 @@ interface CodecInterface
     public function encode(iterable $commands): string;
 
     /**
-     * @param string $message
+     * @param string $batch
      * @return iterable<CommandInterface>
      * @throws ProtocolException
      */
-    public function decode(string $message): iterable;
+    public function decode(string $batch): iterable;
 }

@@ -23,11 +23,6 @@ final class SideEffect extends Request
      */
     public function __construct(...$value)
     {
-        parent::__construct(
-            self::NAME,
-            [
-                'result' => $value,
-            ]
-        );
+        parent::__construct(self::NAME, [], $value);
     }
 }

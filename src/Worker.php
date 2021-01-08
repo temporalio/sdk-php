@@ -35,6 +35,7 @@ use Temporal\Internal\Transport\Router;
 use Temporal\Internal\Transport\RouterInterface;
 use Temporal\Internal\Transport\Server;
 use Temporal\Internal\Transport\ServerInterface;
+use Temporal\Worker\Codec\MsgpackCodec;
 use Temporal\Worker\Command\RequestInterface;
 use Temporal\Worker\FactoryInterface;
 use Temporal\Worker\LoopInterface;
@@ -207,6 +208,7 @@ final class Worker implements FactoryInterface
      */
     private function createCodec(): CodecInterface
     {
+       // return new MsgpackCodec($this->dataConverter);
         return new JsonCodec($this->dataConverter);
     }
 

@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Worker\Command;
+namespace Temporal\Worker\Transport\Command;
 
 use Temporal\DataConverter\Payload;
 
@@ -18,5 +18,5 @@ interface SuccessResponseInterface extends ResponseInterface
     /**
      * @return array<Payload>
      */
-    public function getResult(): array;
+    public function getPayloads(): array;
 }

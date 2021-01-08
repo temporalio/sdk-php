@@ -9,18 +9,18 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Worker\Codec\JsonCodec;
+namespace Temporal\Worker\Transport\Codec\JsonCodec;
 
 use JetBrains\PhpStorm\Pure;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\Payload;
-use Temporal\Worker\Command\CommandInterface;
-use Temporal\Worker\Command\ErrorResponse;
-use Temporal\Worker\Command\ErrorResponseInterface;
-use Temporal\Worker\Command\Request;
-use Temporal\Worker\Command\RequestInterface;
-use Temporal\Worker\Command\SuccessResponse;
-use Temporal\Worker\Command\SuccessResponseInterface;
+use Temporal\Worker\Transport\Command\CommandInterface;
+use Temporal\Worker\Transport\Command\ErrorResponse;
+use Temporal\Worker\Transport\Command\ErrorResponseInterface;
+use Temporal\Worker\Transport\Command\Request;
+use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\SuccessResponse;
+use Temporal\Worker\Transport\Command\SuccessResponseInterface;
 
 class Decoder
 {
@@ -33,6 +33,7 @@ class Decoder
     private DataConverterInterface $dataConverter;
 
     /**
+     * Decoder constructor.
      * @param DataConverterInterface $dataConverter
      */
     public function __construct(DataConverterInterface $dataConverter)
@@ -70,17 +71,17 @@ class Decoder
             throw new \InvalidArgumentException('Request command must be a non-empty string');
         }
 
-        if (isset($data['params']) && !\is_array($data['params'])) {
+        if (isset($data['options']) && !\is_array($data['options'])) {
             throw new \InvalidArgumentException('Request params must be an object');
         }
 
         foreach (self::PAYLOAD_PARAMS as $name) {
-            if (array_key_exists($name, $data['params'])) {
-                $data['params'][$name] = $this->decodePayloads($data['params'][$name] ?? []);
+            if (array_key_exists($name, $data['options'])) {
+                $data['options'][$name] = $this->decodePayloads($data['options'][$name] ?? []);
             }
         }
 
-        return new Request($data['command'], $data['params'] ?? [], $data['id']);
+        return new Request($data['command'], $data['options'] ?? [], [], $data['id']);
     }
 
     /**

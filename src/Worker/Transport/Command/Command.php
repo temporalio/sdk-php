@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Worker\Command;
+namespace Temporal\Worker\Transport\Command;
 
 abstract class Command implements CommandInterface
 {
@@ -24,11 +24,11 @@ abstract class Command implements CommandInterface
     protected int $id;
 
     /**
-     * @param int|null $id
+     * @param int|null $ID
      */
-    public function __construct(int $id = null)
+    public function __construct(int $ID = null)
     {
-        $this->id = $id ?? $this->getNextID();
+        $this->id = $ID ?? $this->getNextID();
     }
 
     /**

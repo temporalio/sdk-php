@@ -16,7 +16,6 @@ use Temporal\Worker\Command\Request;
 final class SignalExternalWorkflow extends Request
 {
     protected const NAME = 'SignalExternalWorkflow';
-    protected const PAYLOAD_PARAMS = ['args'];
 
     /**
      * @param string $namespace
@@ -40,8 +39,8 @@ final class SignalExternalWorkflow extends Request
                 'runID' => $runId,
                 'signal' => $signal,
                 'childWorkflowOnly' => true,
-                'args' => $args,
-            ]
+            ],
+            $args
         );
     }
 }

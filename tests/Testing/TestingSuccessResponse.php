@@ -29,8 +29,8 @@ class TestingSuccessResponse extends TestingCommand implements SuccessResponseIn
     /**
      * {@inheritDoc}
      */
-    public function getResult(): array
+    public function getPayloads(): array
     {
-        return $this->command->getResult();
+        return $this->command->getPayloads();
     }
 }

@@ -68,10 +68,10 @@ final class JsonCodec implements CodecInterface
     /**
      * {@inheritDoc}
      */
-    public function decode(string $message): iterable
+    public function decode(string $batch): iterable
     {
         try {
-            $commands = \json_decode($message, true, $this->maxDepth, \JSON_THROW_ON_ERROR);
+            $commands = \json_decode($batch, true, $this->maxDepth, \JSON_THROW_ON_ERROR);
 
             foreach ($commands as $command) {
                 assert(\is_array($command));

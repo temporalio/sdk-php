@@ -22,11 +22,6 @@ final class GetChildWorkflowExecution extends Request
      */
     public function __construct(ExecuteChildWorkflow $execution)
     {
-        parent::__construct(
-            self::NAME,
-            [
-                'id' => $execution->getID(),
-            ]
-        );
+        parent::__construct(self::NAME, ['id' => $execution->getID()]);
     }
 }

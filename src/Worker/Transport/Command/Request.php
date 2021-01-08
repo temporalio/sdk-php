@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Worker\Command;
+namespace Temporal\Worker\Transport\Command;
 
 class Request extends Command implements RequestInterface
 {
@@ -27,24 +27,27 @@ class Request extends Command implements RequestInterface
     protected array $params;
 
     /**
-     * @param string $name
-     * @param array $params
-     * @param int|null $id
+     * @var array
      */
-    public function __construct(string $name, array $params = [], int $id = null)
-    {
-        $this->name = $name;
-        $this->params = $params;
-
-        parent::__construct($id);
-    }
+    protected array $payloads;
 
     /**
-     * @return array
+     * @param string $name
+     * @param array $params
+     * @param array $payloads
+     * @param int|null $id
      */
-    public function getParams(): array
-    {
-        return $this->params;
+    public function __construct(
+        string $name,
+        array $params = [],
+        array $payloads = [],
+        int $id = null
+    ) {
+        $this->name = $name;
+        $this->params = $params;
+        $this->payloads = $payloads;
+
+        parent::__construct($id);
     }
 
     /**
@@ -53,6 +56,22 @@ class Request extends Command implements RequestInterface
     public function getName(): string
     {
         return $this->name;
+    }
+
+    /**
+     * @return array
+     */
+    public function getOptions(): array
+    {
+        return $this->params;
+    }
+
+    /**
+     * @return array
+     */
+    public function getPayloads(): array
+    {
+        return $this->payloads;
     }
 
     /**
@@ -65,9 +84,11 @@ class Request extends Command implements RequestInterface
 
     /**
      * @return array
+     * @deprecated
      */
     public function getPayloadParams(): array
     {
+        // todo: remove it
         return static::PAYLOAD_PARAMS;
     }
 }

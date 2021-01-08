@@ -9,28 +9,31 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Worker\Command;
+namespace Temporal\Worker\Transport\Command;
+
+use Temporal\DataConverter\Payload;
 
 interface RequestInterface extends CommandInterface
 {
-
-    /**
-     * @return array
-     */
-    public function getParams(): array;
-
     /**
      * @return string
      */
     public function getName(): string;
 
     /**
+     * @return array
+     */
+    public function getOptions(): array;
+
+    /**
+     * For incoming requests.
+     *
+     * @return array<Payload|mixed>
+     */
+    public function getPayloads(): array;
+
+    /**
      * @return bool
      */
     public function isCancellable(): bool;
-
-    /**
-     * @return array
-     */
-    public function getPayloadParams(): array;
 }

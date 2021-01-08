@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Worker\Command;
+namespace Temporal\Worker\Transport\Command;
 
 interface ErrorResponseInterface extends ResponseInterface
 {

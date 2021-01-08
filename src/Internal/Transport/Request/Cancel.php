@@ -18,15 +18,10 @@ final class Cancel extends Request
     protected const NAME = 'Cancel';
 
     /**
-     * @param int ...$requestId
+     * @param int ...$requestID
      */
-    public function __construct(int ...$requestId)
+    public function __construct(int ...$requestID)
     {
-        parent::__construct(
-            self::NAME,
-            [
-                'ids' => $requestId,
-            ]
-        );
+        parent::__construct(self::NAME, ['ids' => $requestID]);
     }
 }

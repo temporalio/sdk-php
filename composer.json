@@ -4,7 +4,16 @@
     "type": "library",
     "description": "Temporal SDK",
     "homepage": "https://temporal.io",
-    "keywords": ["sdk", "api", "library", "temporal", "event-sourcing", "workflow", "activity","service-bus"],
+    "keywords": [
+        "sdk",
+        "api",
+        "library",
+        "temporal",
+        "event-sourcing",
+        "workflow",
+        "activity",
+        "service-bus"
+    ],
     "support": {
         "forum": "https://community.temporal.io",
         "docs": "https://docs.temporal.io/docs",
@@ -15,6 +24,7 @@
         "php": ">=7.4",
         "ext-json": "*",
         "composer-runtime-api": "^2.0",
+        "google/protobuf": "^3.14",
         "nesbot/carbon": "^2.41",
         "phpfn/immutable": "^2.0",
         "psr/log": "^1.1",
@@ -25,6 +35,8 @@
     },
     "autoload": {
         "psr-4": {
+            "GPBMetadata\\": "api/GPBMetadata",
+            "Temporal\\Api\\": "api/Temporal/Api",
             "Temporal\\": "src"
         }
     },

@@ -9,9 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Worker\Command;
-
-use JetBrains\PhpStorm\ArrayShape;
+namespace Temporal\Worker\Transport\Command;
 
 class ErrorResponse extends Response implements ErrorResponseInterface
 {

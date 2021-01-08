@@ -21,18 +21,11 @@ final class ExecuteActivity extends Request
 
     /**
      * @param string $name
-     * @param array $arguments
+     * @param array $args
      * @param array $options
      */
-    public function __construct(string $name, array $arguments, array $options)
+    public function __construct(string $name, array $args, array $options)
     {
-        parent::__construct(
-            self::NAME,
-            [
-                'name' => $name,
-                'args' => $arguments,
-                'options' => $options,
-            ]
-        );
+        parent::__construct(self::NAME, ['name' => $name, 'options' => $options], $args);
     }
 }

@@ -9,14 +9,8 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Worker\Command;
+namespace Temporal\Worker\Transport\Command;
 
-use Temporal\Internal\Repository\Identifiable;
-
-interface CommandInterface extends Identifiable
+interface ResponseInterface extends CommandInterface
 {
-    /**
-     * @return int
-     */
-    public function getID(): int;
 }

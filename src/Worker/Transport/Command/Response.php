@@ -9,8 +9,8 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Worker\Command;
+namespace Temporal\Worker\Transport\Command;
 
-interface ResponseInterface extends CommandInterface
+abstract class Response extends Command implements ResponseInterface
 {
 }

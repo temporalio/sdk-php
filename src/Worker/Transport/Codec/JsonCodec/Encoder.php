@@ -9,14 +9,14 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Worker\Codec\JsonCodec;
+namespace Temporal\Worker\Transport\Codec\JsonCodec;
 
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\Payload;
-use Temporal\Worker\Command\CommandInterface;
-use Temporal\Worker\Command\ErrorResponseInterface;
-use Temporal\Worker\Command\RequestInterface;
-use Temporal\Worker\Command\SuccessResponseInterface;
+use Temporal\Worker\Transport\Command\CommandInterface;
+use Temporal\Worker\Transport\Command\ErrorResponseInterface;
+use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\SuccessResponseInterface;
 
 class Encoder
 {
@@ -46,13 +46,16 @@ class Encoder
     {
         switch (true) {
             case $command instanceof RequestInterface:
+                $options = $command->getOptions();
+                if ($options === []) {
+                    $options = new \stdClass();
+                }
+
                 return [
                     'id' => $command->getID(),
                     'command' => $command->getName(),
-                    'params' => $this->encodeParams(
-                        $command->getParams(),
-                        $command->getPayloadParams()
-                    ),
+                    'options' => $options,
+                    'payloads' => ['payloads' => $this->encodePayloads($command->getPayloads())],
                 ];
 
             case $command instanceof ErrorResponseInterface:
@@ -68,29 +71,12 @@ class Encoder
             case $command instanceof SuccessResponseInterface:
                 return [
                     'id' => $command->getID(),
-                    'result' => $this->encodePayloads($command->getResult()),
+                    'payloads' => ['payloads' => $this->encodePayloads($command->getPayloads())],
                 ];
 
             default:
                 throw new \InvalidArgumentException(\sprintf(self::ERROR_INVALID_COMMAND, \get_class($command)));
         }
-    }
-
-    /**
-     * @param array $params
-     * @param array $payloadParams
-     * @return array
-     */
-    private function encodeParams(array $params, array $payloadParams): array
-    {
-        $result = $params;
-        foreach ($payloadParams as $name) {
-            if (isset($params[$name])) {
-                $result[$name] = $this->encodePayloads($params[$name]);
-            }
-        }
-
-        return $result;
     }
 
     /**
@@ -107,8 +93,8 @@ class Encoder
             $encoded = $this->dataConverter->toPayload($value);
 
             $result[] = [
-                'Metadata' => array_map('base64_encode', $encoded->getMetadata()),
-                'Data' => base64_encode($encoded->getData())
+                'metadata' => array_map('base64_encode', $encoded->getMetadata()),
+                'data' => base64_encode($encoded->getData())
             ];
         }
 

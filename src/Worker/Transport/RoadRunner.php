@@ -40,7 +40,7 @@ final class RoadRunner implements RelayConnectionInterface
     /**
      * @var CodecInterface
      */
-    private CodecInterface  $codec;
+    private CodecInterface $codec;
 
     /**
      * @param RelayInterface $relay
@@ -69,11 +69,13 @@ final class RoadRunner implements RelayConnectionInterface
         \set_exception_handler(fn(\Throwable $e) => $this->writeException($e));
 
         // Intercept all errors
-        \set_error_handler(function (int $code, string $message, string $file, int $line) {
-            $this->writeException(
-                new \ErrorException($message, $code, $code, $file, $line)
-            );
-        });
+        \set_error_handler(
+            function (int $code, string $message, string $file, int $line) {
+                $this->writeException(
+                    new \ErrorException($message, $code, $code, $file, $line)
+                );
+            }
+        );
 
         return $this;
     }
@@ -118,18 +120,23 @@ final class RoadRunner implements RelayConnectionInterface
     /**
      * {@inheritDoc}
      */
-    public function await(): ?Frame
+    public function await(): ?MessageBatch
     {
         /** @var Payload $payload */
-        $payload = $this->interceptErrors(function () {
-            return $this->worker->waitPayload();
-        });
+        $payload = $this->interceptErrors(
+            function () {
+                return $this->worker->waitPayload();
+            }
+        );
 
         if ($payload === null) {
             return null;
         }
 
-        return new Frame($payload->body, $this->decodeHeaders($payload->header));
+        return new MessageBatch(
+            $payload->body,
+            $this->decodeHeaders($payload->header)
+        );
     }
 
     /**

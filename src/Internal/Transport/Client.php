@@ -88,7 +88,7 @@ final class Client implements ClientInterface
                 $deferred->reject($response->toException());
             }
         } else {
-            $result = $response->getResult();
+            $result = $response->getPayloads();
 
             // todo: make sure this is correct with arrays
             $deferred->resolve(\current($result) ?: false);
