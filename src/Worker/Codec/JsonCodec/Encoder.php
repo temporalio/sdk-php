@@ -18,12 +18,13 @@ use Temporal\Worker\Command\PayloadAwareRequest;
 use Temporal\Worker\Command\RequestInterface;
 use Temporal\Worker\Command\SuccessResponseInterface;
 
-class Serializer
+class Encoder
 {
     /**
      * @var string
      */
     private const ERROR_INVALID_COMMAND = 'Unserializable command type %s';
+
     /**
      * @var DataConverterInterface
      */
@@ -44,23 +45,19 @@ class Serializer
     public function serialize(CommandInterface $command): array
     {
         switch (true) {
-            case $command instanceof PayloadAwareRequest:
-                return [
-                    'id' => $command->getId(),
-                    'command' => $command->getName(),
-                    'params' => $command->getMappedParams($this->dataConverter),
-                ];
-
             case $command instanceof RequestInterface:
                 return [
-                    'id' => $command->getId(),
+                    'id' => $command->getID(),
                     'command' => $command->getName(),
-                    'params' => $command->getParams(),
+                    'params' => $this->encodeParams(
+                        $command->getParams(),
+                        $command->getPayloadParams()
+                    ),
                 ];
 
             case $command instanceof ErrorResponseInterface:
                 return [
-                    'id' => $command->getId(),
+                    'id' => $command->getID(),
                     'error' => [
                         'code' => $command->getCode(),
                         'message' => $command->getMessage(),
@@ -69,14 +66,39 @@ class Serializer
                 ];
 
             case $command instanceof SuccessResponseInterface:
-                // convert all payloads into transport format upon leave from worker
                 return [
-                    'id' => $command->getId(),
-                    'result' => $this->dataConverter->toPayloads($command->getResult()),
+                    'id' => $command->getID(),
+                    'result' => $this->toPayloads($command->getResult()),
                 ];
 
             default:
                 throw new \InvalidArgumentException(\sprintf(self::ERROR_INVALID_COMMAND, \get_class($command)));
         }
+    }
+
+    /**
+     * @param array $params
+     * @param array $payloadParams
+     * @return array
+     */
+    private function encodeParams(array $params, array $payloadParams): array
+    {
+        $result = $params;
+        foreach ($payloadParams as $name) {
+            if (isset($params[$name])) {
+                $result[$name] = $this->toPayloads($params[$name]);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param array $values
+     * @return array
+     */
+    private function toPayloads(array $values): array
+    {
+        return $this->dataConverter->toPayloads($values);
     }
 }

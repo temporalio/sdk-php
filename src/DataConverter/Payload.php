@@ -14,7 +14,6 @@ namespace Temporal\DataConverter;
 use React\Promise\PromiseInterface;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 
-// todo: migrate to protobuf
 final class Payload implements \JsonSerializable
 {
     #[Marshal(name: 'metadata')]
@@ -51,27 +50,6 @@ final class Payload implements \JsonSerializable
         return $payload;
     }
 
-    /**
-     * Unpack the server response into internal format based on return or argument type.
-     *
-     * @param DataConverterInterface $converter
-     * @param PromiseInterface $promise
-     * @param \ReflectionType|null $type
-     * @return PromiseInterface
-     */
-    public static function fromPromise(
-        DataConverterInterface $converter,
-        PromiseInterface $promise,
-        \ReflectionType $type = null
-    ): PromiseInterface {
-        return $promise->then(function ($value) use ($converter, $type) {
-            if (! $value instanceof Payload || $value instanceof \Throwable) {
-                return $value;
-            }
-
-            return $converter->fromPayload($value, $type);
-        });
-    }
 
     /**
      * @return array
@@ -94,10 +72,33 @@ final class Payload implements \JsonSerializable
      */
     public function jsonSerialize(): array
     {
-        // todo: check if needed double encoding
         return [
             'Metadata' => $this->metadata,
-            'Data'     => $this->data,
+            'Data' => $this->data,
         ];
+    }
+
+    /**
+     * Unpack the server response into internal format based on return or argument type.
+     *
+     * @param DataConverterInterface $converter
+     * @param PromiseInterface $promise
+     * @param \ReflectionType|null $type
+     * @return PromiseInterface
+     */
+    public static function fromPromise(
+        DataConverterInterface $converter,
+        PromiseInterface $promise,
+        \ReflectionType $type = null
+    ): PromiseInterface {
+        return $promise->then(
+            function ($value) use ($converter, $type) {
+                if (!$value instanceof Payload || $value instanceof \Throwable) {
+                    return $value;
+                }
+
+                return $converter->fromPayload($value, $type);
+            }
+        );
     }
 }

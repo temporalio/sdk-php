@@ -15,18 +15,18 @@ use Temporal\Worker\Command\Request;
 
 final class GetChildWorkflowExecution extends Request
 {
-    /**
-     * @var string
-     */
-    public const NAME = 'GetChildWorkflowExecution';
+    protected const NAME = 'GetChildWorkflowExecution';
 
     /**
      * @param ExecuteChildWorkflow $execution
      */
     public function __construct(ExecuteChildWorkflow $execution)
     {
-        parent::__construct(self::NAME, [
-            'id' => $execution->getId(),
-        ]);
+        parent::__construct(
+            self::NAME,
+            [
+                'id' => $execution->getID(),
+            ]
+        );
     }
 }

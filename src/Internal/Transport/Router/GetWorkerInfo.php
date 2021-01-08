@@ -54,17 +54,17 @@ final class GetWorkerInfo extends Route
     private function workerToArray(TaskQueueInterface $taskQueue): array
     {
         return [
-            'TaskQueue' => $taskQueue->getId(),
+            'TaskQueue' => $taskQueue->getID(),
             'Workflows' => $this->map($taskQueue->getWorkflows(), function (WorkflowPrototype $workflow) {
                 return [
-                    'Name' => $workflow->getId(),
+                    'Name' => $workflow->getID(),
                     'Queries' => $this->keys($workflow->getQueryHandlers()),
                     'Signals' => $this->keys($workflow->getSignalHandlers()),
                 ];
             }),
             'Activities' => $this->map($taskQueue->getActivities(), function (ActivityPrototype $activity) {
                 return [
-                    'Name' => $activity->getId(),
+                    'Name' => $activity->getID(),
                 ];
             }),
         ];

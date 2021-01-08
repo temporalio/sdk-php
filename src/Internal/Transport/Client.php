@@ -73,12 +73,12 @@ final class Client implements ClientInterface
      */
     public function dispatch(ResponseInterface $response): void
     {
-        if (!isset($this->requests[$response->getId()])) {
-            error_log(sprintf("Got the response to undefined request %s", $response->getId()));
+        if (!isset($this->requests[$response->getID()])) {
+            error_log(sprintf("Got the response to undefined request %s", $response->getID()));
             return;
         }
 
-        $deferred = $this->fetch($response->getId());
+        $deferred = $this->fetch($response->getID());
 
         if ($response instanceof ErrorResponseInterface) {
             // todo: improve exception mapping
@@ -103,7 +103,7 @@ final class Client implements ClientInterface
     {
         $this->queue->push($request);
 
-        $id = $request->getId();
+        $id = $request->getID();
 
         if (isset($this->requests[$id])) {
             throw new \OutOfBoundsException(\sprintf(self::ERROR_REQUEST_ID_DUPLICATION, $id));
@@ -134,7 +134,7 @@ final class Client implements ClientInterface
      */
     public function isQueued(CommandInterface $command): bool
     {
-        return $this->queue->has($command->getId());
+        return $this->queue->has($command->getID());
     }
 
     /**
@@ -143,8 +143,8 @@ final class Client implements ClientInterface
     public function cancel(CommandInterface $command): void
     {
         // remove from queue
-        $this->queue->pull($command->getId());
-        $this->fetch($command->getId())->promise()->cancel();
+        $this->queue->pull($command->getID());
+        $this->fetch($command->getID())->promise()->cancel();
     }
 
     /**

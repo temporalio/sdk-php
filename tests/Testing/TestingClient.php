@@ -45,7 +45,7 @@ class TestingClient extends CapturedClient
      */
     public function success(RequestInterface $request, $payload = null): TestingSuccessResponse
     {
-        $response = new SuccessResponse($payload, $request->getId());
+        $response = new SuccessResponse($payload, $request->getID());
 
         $this->parent->dispatch($response);
 
@@ -59,7 +59,7 @@ class TestingClient extends CapturedClient
      */
     public function error(RequestInterface $request, \Throwable $error): TestingErrorResponse
     {
-        $response = ErrorResponse::fromException($error, $request->getId());
+        $response = ErrorResponse::fromException($error, $request->getID());
 
         $this->parent->dispatch($response);
 

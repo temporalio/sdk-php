@@ -16,12 +16,8 @@ use Temporal\Worker\Command\Request;
 
 final class NewTimer extends Request
 {
+    protected const NAME = 'NewTimer';
     protected const CANCELLABLE = true;
-
-    /**
-     * @var string
-     */
-    public const NAME = 'NewTimer';
 
     /**
      * @param \DateInterval $interval

@@ -22,7 +22,7 @@ use Temporal\Worker\Command\RequestInterface;
 use Temporal\Worker\Command\SuccessResponse;
 use Temporal\Worker\Command\SuccessResponseInterface;
 
-class Parser
+class Decoder
 {
     /**
      * @var DataConverterInterface
@@ -44,10 +44,10 @@ class Parser
     public function parse(array $command): CommandInterface
     {
         switch (true) {
-            case isset($command['command']) || \array_key_exists('command', $command):
+            case isset($command['command']):
                 return $this->parseRequest($command);
 
-            case isset($command['error']) || \array_key_exists('error', $command):
+            case isset($command['error']) :
                 return $this->parseErrorResponse($command);
 
             default:
@@ -93,8 +93,9 @@ class Parser
      * @return bool
      */
     #[Pure]
-    private function isUInt32($value): bool
-    {
+    private function isUInt32(
+        $value
+    ): bool {
         return \is_int($value) && $value >= 0 && $value <= 2_147_483_647;
     }
 
@@ -133,11 +134,22 @@ class Parser
 
         // todo: do we need data encoder here?
         if (isset($data['result'])) {
-            $data['result'] = array_map(static function ($value) {
-                return Payload::createRaw($value['metadata'], $value['data']);
-            }, $data['result']);
+            $data['result'] = array_map(
+                static function ($value) {
+                    return Payload::createRaw($value['metadata'], $value['data']);
+                },
+                $data['result']
+            );
         }
 
         return new SuccessResponse($data['result'] ?? null, $data['id']);
+    }
+
+    /**
+     * Decodes payloads from the incoming request into internal representation.
+     */
+    private function fromPayloads(array $payloads): array
+    {
+        return [];
     }
 }

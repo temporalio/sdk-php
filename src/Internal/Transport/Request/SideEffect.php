@@ -11,35 +11,23 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport\Request;
 
-use Temporal\DataConverter\DataConverterInterface;
-use Temporal\Worker\Command\PayloadAwareRequest;
 use Temporal\Worker\Command\Request;
 
-final class SideEffect extends Request implements PayloadAwareRequest
+final class SideEffect extends Request
 {
-    /**
-     * @var string
-     */
-    public const NAME = 'SideEffect';
+    protected const NAME = 'SideEffect';
+    protected const PAYLOAD_PARAMS = ['result'];
 
     /**
      * @param mixed $value
      */
-    public function __construct($value)
+    public function __construct(...$value)
     {
-        parent::__construct(self::NAME, [
-            'value' => $value,
-        ]);
-    }
-
-    /**
-     * @param DataConverterInterface $dataConverter
-     * @return array
-     */
-    public function getMappedParams(DataConverterInterface $dataConverter): array
-    {
-        return \array_merge($this->params, [
-            'value' => $dataConverter->toPayload($this->params['value']),
-        ]);
+        parent::__construct(
+            self::NAME,
+            [
+                'result' => $value,
+            ]
+        );
     }
 }

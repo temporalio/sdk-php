@@ -18,5 +18,5 @@ interface CommandInterface extends Identifiable
     /**
      * @return int
      */
-    public function getId(): int;
+    public function getID(): int;
 }

@@ -14,6 +14,7 @@ namespace Temporal\Worker\Command;
 class Request extends Command implements RequestInterface
 {
     protected const CANCELLABLE = false;
+    protected const PAYLOAD_PARAMS = [];
 
     /**
      * @var string
@@ -39,14 +40,6 @@ class Request extends Command implements RequestInterface
     }
 
     /**
-     * @return string
-     */
-    public function getName(): string
-    {
-        return $this->name;
-    }
-
-    /**
      * @return array
      */
     public function getParams(): array
@@ -55,10 +48,26 @@ class Request extends Command implements RequestInterface
     }
 
     /**
+     * @return string
+     */
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    /**
      * @return bool
      */
     public function isCancellable(): bool
     {
         return static::CANCELLABLE;
+    }
+
+    /**
+     * @return array
+     */
+    public function getPayloadParams(): array
+    {
+        return static::PAYLOAD_PARAMS;
     }
 }

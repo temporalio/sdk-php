@@ -34,7 +34,7 @@ class ArrayQueue implements QueueInterface
     public function pull(int $commandId): ?CommandInterface
     {
         foreach ($this->commands as $i => $command) {
-            if ($command->getId() === $commandId) {
+            if ($command->getID() === $commandId) {
                 unset($this->commands[$i]);
                 return $command;
             }
@@ -51,7 +51,7 @@ class ArrayQueue implements QueueInterface
     {
         // todo: optimize?
         foreach ($this->commands as $command) {
-            if ($command->getId() === $commandId) {
+            if ($command->getID() === $commandId) {
                 return true;
             }
         }

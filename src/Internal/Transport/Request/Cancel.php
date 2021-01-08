@@ -15,13 +15,10 @@ use Temporal\Worker\Command\Request;
 
 final class Cancel extends Request
 {
-    /**
-     * @var string
-     */
-    public const NAME = 'Cancel';
+    protected const NAME = 'Cancel';
 
     /**
-     * @param ...int $requestId
+     * @param int ...$requestId
      */
     public function __construct(int ...$requestId)
     {

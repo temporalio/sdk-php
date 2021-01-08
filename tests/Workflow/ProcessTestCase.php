@@ -51,7 +51,7 @@ class ProcessTestCase extends WorkflowTestCase
         $this->queue->assertRequestsCount(1);
 
         $this->queue->each(function (RequestInterface $current) use ($request) {
-            $this->assertSame($request->getId(), $current->getId());
+            $this->assertSame($request->getID(), $current->getID());
             $this->assertSame($request->getName(), $current->getName());
             $this->assertSame($request->getParams(), $current->getParams());
         });

@@ -95,7 +95,7 @@ class TaskQueue implements TaskQueueInterface
     /**
      * {@inheritDoc}
      */
-    public function getId(): string
+    public function getID(): string
     {
         return $this->name;
     }

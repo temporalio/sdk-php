@@ -24,7 +24,7 @@ interface TaskQueueInterface extends
     /**
      * @return string
      */
-    public function getId(): string;
+    public function getID(): string;
 
     /**
      * @param class-string $class

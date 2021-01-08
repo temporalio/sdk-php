@@ -11,18 +11,13 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport\Request;
 
-use Temporal\DataConverter\DataConverterInterface;
-use Temporal\Worker\Command\PayloadAwareRequest;
 use Temporal\Worker\Command\Request;
 
-final class ExecuteActivity extends Request implements PayloadAwareRequest
+final class ExecuteActivity extends Request
 {
+    protected const NAME = 'ExecuteActivity';
     protected const CANCELLABLE = true;
-
-    /**
-     * @var string
-     */
-    public const NAME = 'ExecuteActivity';
+    protected const PAYLOAD_PARAMS = ['args'];
 
     /**
      * @param string $name
@@ -35,22 +30,8 @@ final class ExecuteActivity extends Request implements PayloadAwareRequest
             self::NAME,
             [
                 'name' => $name,
-                'arguments' => $arguments,
+                'args' => $arguments,
                 'options' => $options,
-            ]
-        );
-    }
-
-    /**
-     * @param DataConverterInterface $dataConverter
-     * @return array
-     */
-    public function getMappedParams(DataConverterInterface $dataConverter): array
-    {
-        return \array_merge(
-            $this->params,
-            [
-                'arguments' => $dataConverter->toPayloads($this->params['arguments']),
             ]
         );
     }

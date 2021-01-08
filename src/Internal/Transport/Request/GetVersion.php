@@ -15,10 +15,7 @@ use Temporal\Worker\Command\Request;
 
 final class GetVersion extends Request
 {
-    /**
-     * @var string
-     */
-    public const NAME = 'GetVersion';
+    protected const NAME = 'GetVersion';
 
     /**
      * @param string $changeId
@@ -27,10 +24,13 @@ final class GetVersion extends Request
      */
     public function __construct(string $changeId, int $minSupported, int $maxSupported)
     {
-        parent::__construct(self::NAME, [
-            'changeID'     => $changeId,
-            'minSupported' => $minSupported,
-            'maxSupported' => $maxSupported,
-        ]);
+        parent::__construct(
+            self::NAME,
+            [
+                'changeID' => $changeId,
+                'minSupported' => $minSupported,
+                'maxSupported' => $maxSupported,
+            ]
+        );
     }
 }

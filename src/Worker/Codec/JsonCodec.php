@@ -13,8 +13,8 @@ namespace Temporal\Worker\Codec;
 
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\ProtocolException;
-use Temporal\Worker\Codec\JsonCodec\Parser;
-use Temporal\Worker\Codec\JsonCodec\Serializer;
+use Temporal\Worker\Codec\JsonCodec\Decoder;
+use Temporal\Worker\Codec\JsonCodec\Encoder;
 use Temporal\Worker\Command\CommandInterface;
 
 final class JsonCodec implements CodecInterface
@@ -25,14 +25,14 @@ final class JsonCodec implements CodecInterface
     private int $depth;
 
     /**
-     * @var Parser
+     * @var Decoder
      */
-    private Parser $parser;
+    private Decoder $parser;
 
     /**
-     * @var Serializer
+     * @var Encoder
      */
-    private Serializer $serializer;
+    private Encoder $serializer;
 
     /**
      * @param DataConverterInterface $dataConverter
@@ -42,8 +42,8 @@ final class JsonCodec implements CodecInterface
     {
         $this->depth = $depth;
 
-        $this->parser = new Parser($dataConverter);
-        $this->serializer = new Serializer($dataConverter);
+        $this->parser = new Decoder($dataConverter);
+        $this->serializer = new Encoder($dataConverter);
     }
 
     /**

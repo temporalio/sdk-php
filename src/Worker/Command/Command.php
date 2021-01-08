@@ -16,7 +16,7 @@ abstract class Command implements CommandInterface
     /**
      * @var int
      */
-    protected static int $lastId = 9000;
+    protected static int $lastID = 9000;
 
     /**
      * @var int
@@ -28,28 +28,28 @@ abstract class Command implements CommandInterface
      */
     public function __construct(int $id = null)
     {
-        $this->id = $id ?? $this->getNextId();
+        $this->id = $id ?? $this->getNextID();
     }
 
     /**
      * @return int
      */
-    private function getNextId(): int
+    public function getID(): int
     {
-        $next = ++static::$lastId;
+        return $this->id;
+    }
+
+    /**
+     * @return int
+     */
+    private function getNextID(): int
+    {
+        $next = ++static::$lastID;
 
         if ($next >= \PHP_INT_MAX) {
-            $next = static::$lastId = 1;
+            $next = static::$lastID = 1;
         }
 
         return $next;
-    }
-
-    /**
-     * @return int
-     */
-    public function getId(): int
-    {
-        return $this->id;
     }
 }

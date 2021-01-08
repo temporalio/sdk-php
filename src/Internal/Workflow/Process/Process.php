@@ -43,7 +43,7 @@ class Process extends CoroutineScope implements ProcessInterface
     /**
      * @return mixed|string
      */
-    public function getId()
+    public function getID()
     {
         return $this->context->getRunId();
     }

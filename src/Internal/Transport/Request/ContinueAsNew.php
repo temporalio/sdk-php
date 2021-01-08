@@ -11,16 +11,12 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport\Request;
 
-use Temporal\DataConverter\DataConverterInterface;
-use Temporal\Worker\Command\PayloadAwareRequest;
 use Temporal\Worker\Command\Request;
 
-final class ContinueAsNew extends Request implements PayloadAwareRequest
+final class ContinueAsNew extends Request
 {
-    /**
-     * @var string
-     */
-    public const NAME = 'ContinueAsNew';
+    protected const NAME = 'ContinueAsNew';
+    protected const PAYLOAD_PARAMS = ['args'];
 
     /**
      * @param string $name
@@ -32,16 +28,8 @@ final class ContinueAsNew extends Request implements PayloadAwareRequest
             self::NAME,
             [
                 'name' => $name,
-                'input' => $input,
+                'args' => $input,
             ]
         );
-    }
-
-    public function getMappedParams(DataConverterInterface $dataConverter): array
-    {
-        return [
-            'name' => $this->params['name'],
-            'input' => $dataConverter->toPayloads($this->params['input'])
-        ];
     }
 }

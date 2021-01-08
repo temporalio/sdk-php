@@ -11,17 +11,13 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport\Request;
 
-use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Worker\Command\ErrorResponse;
-use Temporal\Worker\Command\PayloadAwareRequest;
 use Temporal\Worker\Command\Request;
 
-final class CompleteWorkflow extends Request implements PayloadAwareRequest
+final class CompleteWorkflow extends Request
 {
-    /**
-     * @var string
-     */
-    public const NAME = 'CompleteWorkflow';
+    protected const NAME = 'CompleteWorkflow';
+    protected const PAYLOAD_PARAMS = ['result'];
 
     /**
      * @param array $result
@@ -29,25 +25,16 @@ final class CompleteWorkflow extends Request implements PayloadAwareRequest
      */
     public function __construct(array $result, \Throwable $error = null)
     {
-        parent::__construct(self::NAME);
-        $this->params['result'] = $result;
-        $this->params['error'] = $error;
-    }
-
-    /**
-     * @param DataConverterInterface $dataConverter
-     * @return array
-     */
-    public function getMappedParams(DataConverterInterface $dataConverter): array
-    {
-        if ($this->params['error'] instanceof \Throwable) {
-            return [
-                'error' => ErrorResponse::exceptionToArray($this->params['error']),
-            ];
+        if ($error instanceof \Throwable) {
+            $error = ErrorResponse::exceptionToArray($error);
         }
 
-        return [
-            'result' => $dataConverter->toPayloads($this->params['result']),
-        ];
+        parent::__construct(
+            self::NAME,
+            [
+                'result' => $result,
+                'error' => $error
+            ]
+        );
     }
 }

@@ -277,7 +277,7 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
             }
 
             $this->awaitLock++;
-            $this->context->getClient()->request(new Cancel($request->getId()))->then($this->unlock, $this->unlock);
+            $this->context->getClient()->request(new Cancel($request->getID()))->then($this->unlock, $this->unlock);
         };
 
         $cancelID = $this->cancelID;

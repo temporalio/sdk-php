@@ -43,9 +43,9 @@ abstract class TestingCommand implements CommandInterface
     /**
      * {@inheritDoc}
      */
-    public function getId(): int
+    public function getID(): int
     {
-        return $this->command->getId();
+        return $this->command->getID();
     }
 
     /**
@@ -55,7 +55,7 @@ abstract class TestingCommand implements CommandInterface
      */
     public function assertId(int $expected, string $message = ''): self
     {
-        Assert::assertSame($expected, $this->getId(), $message);
+        Assert::assertSame($expected, $this->getID(), $message);
 
         return $this;
     }

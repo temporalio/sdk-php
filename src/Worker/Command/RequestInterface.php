@@ -13,10 +13,6 @@ namespace Temporal\Worker\Command;
 
 interface RequestInterface extends CommandInterface
 {
-    /**
-     * @return string
-     */
-    public function getName(): string;
 
     /**
      * @return array
@@ -24,7 +20,17 @@ interface RequestInterface extends CommandInterface
     public function getParams(): array;
 
     /**
+     * @return string
+     */
+    public function getName(): string;
+
+    /**
      * @return bool
      */
     public function isCancellable(): bool;
+
+    /**
+     * @return array
+     */
+    public function getPayloadParams(): array;
 }
