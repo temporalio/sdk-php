@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Workflow\Process;
 
 use JetBrains\PhpStorm\Pure;
+use Temporal\Exception\OffloadFromMemoryException;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Workflow\ProcessInterface;
@@ -67,6 +68,11 @@ class Process extends CoroutineScope implements ProcessInterface
         }
 
         if ($result instanceof \Throwable) {
+            if ($result instanceof OffloadFromMemoryException) {
+                // do not handle
+                return;
+            }
+
             $this->context->complete([], $result);
         } else {
             $this->context->complete($result);

@@ -14,6 +14,7 @@ namespace Temporal\Internal\Workflow\Process;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use React\Promise\PromisorInterface;
+use Temporal\Exception\OffloadFromMemoryException;
 use Temporal\Internal\Coroutine\CoroutineInterface;
 use Temporal\Internal\Coroutine\Stack;
 use Temporal\Internal\ServiceContainer;
@@ -182,10 +183,15 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
     }
 
     /**
-     * @return void
+     * @param \Throwable|null $reason
      */
-    public function cancel(): void
+    public function cancel(\Throwable $reason = null): void
     {
+        if ($this->detached && !$reason instanceof OffloadFromMemoryException) {
+            // detaches scopes can be offload via memory flush
+            return;
+        }
+
         if ($this->cancelled) {
             return;
         }
@@ -193,7 +199,7 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
 
         foreach ($this->onCancel as $i => $handler) {
             $this->makeCurrent();
-            $handler();
+            $handler($reason);
             unset($this->onCancel[$i]);
         }
     }
@@ -206,14 +212,13 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
     public function createScope(callable $handler, bool $detached): CancellationScopeInterface
     {
         $scope = new CoroutineScope($this->services, $this->context);
+        $scope->detached = $detached;
 
         // do not return parent scope result until inner scope complete
         $this->awaitLock++;
         $scope->promise()->then($this->unlock, $this->unlock);
 
-        if (!$detached) {
-            $this->onCancel(\Closure::fromCallable([$scope, 'cancel']));
-        }
+        $this->onCancel(\Closure::fromCallable([$scope, 'cancel']));
 
         $scope->start($handler);
 
@@ -270,7 +275,13 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
             return;
         }
 
-        $this->onCancel[++$this->cancelID] = function () use ($request) {
+        $this->onCancel[++$this->cancelID] = function (\Throwable $reason = null) use ($request) {
+            if ($reason instanceof OffloadFromMemoryException) {
+                // memory flush
+                $this->context->getClient()->reject($request, $reason);
+                return;
+            }
+
             if ($this->context->getClient()->isQueued($request)) {
                 $this->context->getClient()->cancel($request);
                 return;

@@ -33,4 +33,12 @@ interface ClientInterface
      * @param CommandInterface $command
      */
     public function cancel(CommandInterface $command): void;
+
+    /**
+     * Reject pending promise.
+     *
+     * @param CommandInterface $command
+     * @param \Throwable $reason
+     */
+    public function reject(CommandInterface $command, \Throwable $reason): void;
 }

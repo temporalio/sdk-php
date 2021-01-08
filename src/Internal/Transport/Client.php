@@ -148,6 +148,18 @@ final class Client implements ClientInterface
     }
 
     /**
+     * Reject pending promise.
+     *
+     * @param CommandInterface $command
+     * @param \Throwable $reason
+     */
+    public function reject(CommandInterface $command, \Throwable $reason): void
+    {
+        $request = $this->fetch($command->getID());
+        $request->reject($reason);
+    }
+
+    /**
      * @param int $id
      * @return Deferred
      */
