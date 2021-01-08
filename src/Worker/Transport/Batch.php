@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Transport;
 
-final class Frame
+final class Batch
 {
     /**
      * @var string|null

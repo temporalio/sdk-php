@@ -75,7 +75,7 @@ final class InvokeActivity extends Route
             Activity::setCurrentContext($context);
 
             $handler = $instance->getHandler();
-            $result = $handler($context->getArguments());
+            $result = $handler($request->getPayloads());
 
             if ($context->isDoNotCompleteOnReturn()) {
                 $resolver->reject(DoNotCompleteOnResultException::create());

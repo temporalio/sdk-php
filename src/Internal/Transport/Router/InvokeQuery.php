@@ -54,14 +54,14 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
 
         $instance = $this->findInstanceOrFail($runId);
         $handler = $this->findQueryHandlerOrFail($instance, $name);
-        $args = $payload['args'] ?? [];
 
-        $executor = static function () use ($args, $resolver, $handler) {
-            $result = $handler($args ?? []);
-            $resolver->resolve([$result]);
-        };
-
-        $this->loop->once(LoopInterface::ON_QUERY, $executor);
+        $this->loop->once(
+            LoopInterface::ON_QUERY,
+            static function () use ($request, $resolver, $handler) {
+                $result = $handler($request->getPayloads());
+                $resolver->resolve([$result]);
+            }
+        );
     }
 
     /**

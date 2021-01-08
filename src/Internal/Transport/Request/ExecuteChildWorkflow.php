@@ -17,7 +17,6 @@ final class ExecuteChildWorkflow extends Request
 {
     protected const NAME = 'ExecuteChildWorkflow';
     protected const CANCELLABLE = true;
-    protected const PAYLOAD_PARAMS = ['args'];
 
     /**
      * @param string $name

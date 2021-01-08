@@ -17,7 +17,6 @@ final class ExecuteActivity extends Request
 {
     protected const NAME = 'ExecuteActivity';
     protected const CANCELLABLE = true;
-    protected const PAYLOAD_PARAMS = ['args'];
 
     /**
      * @param string $name

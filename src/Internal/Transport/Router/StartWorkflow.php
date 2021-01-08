@@ -58,8 +58,9 @@ final class StartWorkflow extends Route
      */
     public function handle(RequestInterface $request, array $headers, Deferred $resolver): void
     {
-        // todo: get payload from another thing
+        /** @var Input $input */
         $input = $this->services->marshaller->unmarshal($request->getOptions(), new Input());
+        $input->args = $request->getPayloads();
 
         $instance = $this->instantiator->instantiate(
             $this->findWorkflowOrFail($input->info)

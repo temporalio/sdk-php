@@ -55,7 +55,7 @@ class Decoder
                 return $this->parseErrorResponse($command);
 
             default:
-                return $this->parseSuccessResponse($command);
+                return $this->parseResponse($command);
         }
     }
 
@@ -81,7 +81,12 @@ class Decoder
             }
         }
 
-        return new Request($data['command'], $data['options'] ?? [], [], $data['id']);
+        $payloads = [];
+        if (isset($data['payloads']['payloads'])) {
+            $payloads = $this->decodePayloads($data['payloads']['payloads']);
+        }
+
+        return new Request($data['command'], $data['options'] ?? [], $payloads, $data['id']);
     }
 
     /**
@@ -118,14 +123,16 @@ class Decoder
      * @param array $data
      * @return SuccessResponseInterface
      */
-    private function parseSuccessResponse(array $data): SuccessResponseInterface
+    private function parseResponse(array $data): SuccessResponseInterface
     {
         $this->assertCommandID($data);
 
-        return new SuccessResponse(
-            $this->decodePayloads($data['result'] ?? []),
-            $data['id']
-        );
+        $payloads = [];
+        if (isset($data['payloads']['payloads'])) {
+            $payloads = $this->decodePayloads($data['payloads']['payloads']);
+        }
+
+        return new SuccessResponse($payloads, $data['id']);
     }
 
     /**

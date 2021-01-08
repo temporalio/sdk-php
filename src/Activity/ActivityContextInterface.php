@@ -23,13 +23,6 @@ interface ActivityContextInterface
     public function getInfo(): ActivityInfo;
 
     /**
-     * Returns the arguments passed to the activity.
-     *
-     * @return array
-     */
-    public function getArguments(): array;
-
-    /**
      * If this method is called during an activity execution then activity is
      * not going to complete when its method returns. It is expected to be
      * completed asynchronously using {@see RpcConnectionInterface::call()}.

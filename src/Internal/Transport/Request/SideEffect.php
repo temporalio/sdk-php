@@ -16,7 +16,6 @@ use Temporal\Worker\Transport\Command\Request;
 final class SideEffect extends Request
 {
     protected const NAME = 'SideEffect';
-    protected const PAYLOAD_PARAMS = ['result'];
 
     /**
      * @param mixed $value

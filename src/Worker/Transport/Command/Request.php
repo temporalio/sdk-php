@@ -14,7 +14,6 @@ namespace Temporal\Worker\Transport\Command;
 class Request extends Command implements RequestInterface
 {
     protected const CANCELLABLE = false;
-    protected const PAYLOAD_PARAMS = [];
 
     /**
      * @var string
@@ -80,15 +79,5 @@ class Request extends Command implements RequestInterface
     public function isCancellable(): bool
     {
         return static::CANCELLABLE;
-    }
-
-    /**
-     * @return array
-     * @deprecated
-     */
-    public function getPayloadParams(): array
-    {
-        // todo: remove it
-        return static::PAYLOAD_PARAMS;
     }
 }
