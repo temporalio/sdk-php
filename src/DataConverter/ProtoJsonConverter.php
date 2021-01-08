@@ -54,7 +54,7 @@ class ProtoJsonConverter implements PayloadConverterInterface
             }
 
             /** @var Message $instance */
-            $instance = $obj->newInstanceWithoutConstructor();
+            $instance = $obj->newInstance();
             $instance->mergeFromJsonString($payload->getData());
 
             return $instance;

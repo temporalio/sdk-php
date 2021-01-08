@@ -54,7 +54,7 @@ class ProtoConverter implements PayloadConverterInterface
             }
 
             /** @var Message $instance */
-            $instance = $obj->newInstanceWithoutConstructor();
+            $instance = $obj->newInstance();
             $instance->mergeFromString($payload->getData());
 
             return $instance;
