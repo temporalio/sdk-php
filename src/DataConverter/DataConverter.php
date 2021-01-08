@@ -116,6 +116,7 @@ class DataConverter implements DataConverterInterface
         return new DataConverter(
             new NullConverter(),
             new BinaryConverter(),
+            new ProtoConverter(),
             new JsonDTOConverter()
         );
     }
