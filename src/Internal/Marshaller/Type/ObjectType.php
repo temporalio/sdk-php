@@ -32,21 +32,11 @@ class ObjectType extends Type implements DetectableTypeInterface
     }
 
     /**
-     * @param array $data
-     * @return object
-     * @throws \ReflectionException
-     */
-    protected function instance(array $data): object
-    {
-        return $this->marshaller->unmarshal($data, $this->reflection->newInstanceWithoutConstructor());
-    }
-
-    /**
      * {@inheritDoc}
      */
     public static function match(\ReflectionNamedType $type): bool
     {
-        return ! $type->isBuiltin();
+        return !$type->isBuiltin();
     }
 
     /**
@@ -54,11 +44,25 @@ class ObjectType extends Type implements DetectableTypeInterface
      */
     public function parse($value, $current): object
     {
+        if (is_object($value)) {
+            return $value;
+        }
+
         if ($current === null) {
             $current = $this->instance((array)$value);
         }
 
         return $this->marshaller->unmarshal($value, $current);
+    }
+
+    /**
+     * @param array $data
+     * @return object
+     * @throws \ReflectionException
+     */
+    protected function instance(array $data): object
+    {
+        return $this->marshaller->unmarshal($data, $this->reflection->newInstanceWithoutConstructor());
     }
 
     /**

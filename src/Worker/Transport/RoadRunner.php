@@ -118,7 +118,7 @@ final class RoadRunner implements RelayConnectionInterface
     /**
      * {@inheritDoc}
      */
-    public function await(): ?Message
+    public function await(): ?Frame
     {
         /** @var Payload $payload */
         $payload = $this->interceptErrors(function () {
@@ -129,7 +129,7 @@ final class RoadRunner implements RelayConnectionInterface
             return null;
         }
 
-        return new Message($payload->body, $this->decodeHeaders($payload->header));
+        return new Frame($payload->body, $this->decodeHeaders($payload->header));
     }
 
     /**
@@ -160,12 +160,12 @@ final class RoadRunner implements RelayConnectionInterface
     /**
      * {@inheritDoc}
      */
-    public function send(string $message, array $headers = []): void
+    public function send(string $frame, array $headers = []): void
     {
         $json = $this->encodeHeaders($headers);
 
         try {
-            $this->worker->send($message, $json);
+            $this->worker->send($frame, $json);
         } catch (\Throwable $e) {
             throw new TransportException($e->getMessage(), $e->getCode(), $e);
         }

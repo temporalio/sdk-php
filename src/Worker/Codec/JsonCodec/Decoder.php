@@ -24,6 +24,9 @@ use Temporal\Worker\Command\SuccessResponseInterface;
 
 class Decoder
 {
+    // A set of pre-defined fields which typically carry the encoded payloads and must be decoded
+    protected const PAYLOAD_PARAMS = ['args', 'input', 'result'];
+
     /**
      * @var DataConverterInterface
      */
@@ -61,7 +64,7 @@ class Decoder
      */
     private function parseRequest(array $data): RequestInterface
     {
-        $this->assertCommandId($data);
+        $this->assertCommandID($data);
 
         if (!\is_string($data['command']) || $data['command'] === '') {
             throw new \InvalidArgumentException('Request command must be a non-empty string');
@@ -71,13 +74,82 @@ class Decoder
             throw new \InvalidArgumentException('Request params must be an object');
         }
 
+        foreach (self::PAYLOAD_PARAMS as $name) {
+            if (array_key_exists($name, $data['params'])) {
+                $data['params'][$name] = $this->decodePayloads($data['params'][$name]);
+            }
+        }
+
         return new Request($data['command'], $data['params'] ?? [], $data['id']);
     }
 
     /**
      * @param array $data
+     * @return ErrorResponseInterface
      */
-    private function assertCommandId(array $data): void
+    private function parseErrorResponse(array $data): ErrorResponseInterface
+    {
+        $this->assertCommandID($data);
+
+        if (!isset($data['error']) || !\is_array($data['error'])) {
+            throw new \InvalidArgumentException('An error response must contain an object "error" field');
+        }
+
+        $error = $data['error'];
+
+        if (!isset($error['code']) || !$this->isUInt32($error['code'])) {
+            throw new \InvalidArgumentException('Error code must contain a valid uint32 value');
+        }
+
+        if (!isset($error['message']) || !\is_string($error['message']) || $error['message'] === '') {
+            throw new \InvalidArgumentException('Error message must contain a valid non-empty string value');
+        }
+
+        return new ErrorResponse(
+            $error['message'],
+            $error['code'],
+            $error['data'] ?? null,
+            $data['id']
+        );
+    }
+
+    /**
+     * @param array $data
+     * @return SuccessResponseInterface
+     */
+    private function parseSuccessResponse(array $data): SuccessResponseInterface
+    {
+        $this->assertCommandID($data);
+
+        return new SuccessResponse(
+            $this->decodePayloads($data['result'] ?? []),
+            $data['id']
+        );
+    }
+
+    /**
+     * Decodes payloads from the incoming request into internal representation.
+     *
+     * @param array $payloads
+     * @return array<Payload>
+     */
+    private function decodePayloads(array $payloads): array
+    {
+        return array_map(
+            static function ($value) {
+                return Payload::create(
+                    array_map('base64_decode', $value['metadata']),
+                    base64_decode($value['data'])
+                );
+            },
+            $payloads
+        );
+    }
+
+    /**
+     * @param array $data
+     */
+    private function assertCommandID(array $data): void
     {
         if (!isset($data['id'])) {
             throw new \InvalidArgumentException('An "id" command argument required');
@@ -97,59 +169,5 @@ class Decoder
         $value
     ): bool {
         return \is_int($value) && $value >= 0 && $value <= 2_147_483_647;
-    }
-
-    /**
-     * @param array $data
-     * @return ErrorResponseInterface
-     */
-    private function parseErrorResponse(array $data): ErrorResponseInterface
-    {
-        $this->assertCommandId($data);
-
-        if (!isset($data['error']) || !\is_array($data['error'])) {
-            throw new \InvalidArgumentException('An error response must contain an object "error" field');
-        }
-
-        $error = $data['error'];
-
-        if (!isset($error['code']) || !$this->isUInt32($error['code'])) {
-            throw new \InvalidArgumentException('Error code must contain a valid uint32 value');
-        }
-
-        if (!isset($error['message']) || !\is_string($error['message']) || $error['message'] === '') {
-            throw new \InvalidArgumentException('Error message must contain a valid non-empty string value');
-        }
-
-        return new ErrorResponse($error['message'], $error['code'], $error['data'] ?? null, $data['id']);
-    }
-
-    /**
-     * @param array $data
-     * @return SuccessResponseInterface
-     */
-    private function parseSuccessResponse(array $data): SuccessResponseInterface
-    {
-        $this->assertCommandId($data);
-
-        // todo: do we need data encoder here?
-        if (isset($data['result'])) {
-            $data['result'] = array_map(
-                static function ($value) {
-                    return Payload::createRaw($value['metadata'], $value['data']);
-                },
-                $data['result']
-            );
-        }
-
-        return new SuccessResponse($data['result'] ?? null, $data['id']);
-    }
-
-    /**
-     * Decodes payloads from the incoming request into internal representation.
-     */
-    private function fromPayloads(array $payloads): array
-    {
-        return [];
     }
 }

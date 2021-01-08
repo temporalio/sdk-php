@@ -21,6 +21,8 @@ use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Worker\Transport\RpcConnectionInterface;
 
+use function Amp\call;
+
 final class InvokeActivity extends Route
 {
     /**
@@ -76,8 +78,11 @@ final class InvokeActivity extends Route
             if ($context->isDoNotCompleteOnReturn()) {
                 $resolver->reject(DoNotCompleteOnResultException::create());
             } else {
-                $resolver->resolve($result);
+                $resolver->resolve([$result]);
             }
+        } catch (\Throwable $e) {
+            // todo: improve exception handling
+            $resolver->reject($e);
         } finally {
             Activity::setCurrentContext(null);
         }

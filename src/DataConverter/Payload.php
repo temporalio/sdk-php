@@ -14,34 +14,20 @@ namespace Temporal\DataConverter;
 use React\Promise\PromiseInterface;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 
-final class Payload implements \JsonSerializable
+final class Payload
 {
-    #[Marshal(name: 'metadata')]
+    #[Marshal(name: 'Metadata')]
     private array $metadata;
 
-    #[Marshal(name: 'data')]
+    #[Marshal(name: 'Data')]
     private string $data = '';
-
-    /**
-     * @param array $metadata
-     * @param string $data
-     * @return Payload
-     */
-    public static function create(array $metadata, string $data): Payload
-    {
-        $payload = new self();
-        $payload->metadata = \array_map('\\base64_encode', $metadata);
-        $payload->data = \base64_encode($data);
-
-        return $payload;
-    }
 
     /**
      * @param array $metadata
      * @param string|null $data
      * @return Payload
      */
-    public static function createRaw(array $metadata, string $data = null): Payload
+    public static function create(array $metadata, string $data = null): Payload
     {
         $payload = new self();
         $payload->metadata = $metadata;
@@ -50,13 +36,12 @@ final class Payload implements \JsonSerializable
         return $payload;
     }
 
-
     /**
      * @return array
      */
     public function getMetadata(): array
     {
-        return \array_map('\\base64_decode', $this->metadata);
+        return $this->metadata;
     }
 
     /**
@@ -64,18 +49,7 @@ final class Payload implements \JsonSerializable
      */
     public function getData(): string
     {
-        return \base64_decode($this->data);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function jsonSerialize(): array
-    {
-        return [
-            'Metadata' => $this->metadata,
-            'Data' => $this->data,
-        ];
+        return $this->data;
     }
 
     /**

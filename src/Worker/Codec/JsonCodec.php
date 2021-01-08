@@ -22,7 +22,7 @@ final class JsonCodec implements CodecInterface
     /**
      * @var int
      */
-    private int $depth;
+    private int $maxDepth;
 
     /**
      * @var Decoder
@@ -36,11 +36,11 @@ final class JsonCodec implements CodecInterface
 
     /**
      * @param DataConverterInterface $dataConverter
-     * @param int $depth
+     * @param int $maxDepth
      */
-    public function __construct(DataConverterInterface $dataConverter, int $depth = 64)
+    public function __construct(DataConverterInterface $dataConverter, int $maxDepth = 64)
     {
-        $this->depth = $depth;
+        $this->maxDepth = $maxDepth;
 
         $this->parser = new Decoder($dataConverter);
         $this->serializer = new Encoder($dataConverter);
@@ -56,11 +56,10 @@ final class JsonCodec implements CodecInterface
 
             foreach ($commands as $command) {
                 assert($command instanceof CommandInterface);
-
                 $result[] = $this->serializer->serialize($command);
             }
 
-            return \json_encode($result, \JSON_THROW_ON_ERROR, $this->depth);
+            return \json_encode($result, \JSON_THROW_ON_ERROR, $this->maxDepth);
         } catch (\Throwable $e) {
             throw new ProtocolException($e->getMessage(), $e->getCode(), $e);
         }
@@ -72,11 +71,10 @@ final class JsonCodec implements CodecInterface
     public function decode(string $message): iterable
     {
         try {
-            $commands = \json_decode($message, true, $this->depth, \JSON_THROW_ON_ERROR);
+            $commands = \json_decode($message, true, $this->maxDepth, \JSON_THROW_ON_ERROR);
 
             foreach ($commands as $command) {
                 assert(\is_array($command));
-
                 yield $this->parser->parse($command);
             }
         } catch (\Throwable $e) {

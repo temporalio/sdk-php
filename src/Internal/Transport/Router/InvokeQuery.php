@@ -51,15 +51,10 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
     {
         ['runId' => $runId, 'name' => $name] = $payload;
 
-        $args = $payload['args'] ?? [];
-        if ($args !== []) {
-            foreach ($payload['args'] as $i => $arg) {
-                $args[$i] = Payload::createRaw($arg['metadata'], $arg['data'] ?? null);
-            }
-        }
 
         $instance = $this->findInstanceOrFail($runId);
         $handler = $this->findQueryHandlerOrFail($instance, $name);
+        $args = $payload['args'] ?? [];
 
         $executor = static function () use ($args, $resolver, $handler) {
             $result = $handler($args ?? []);

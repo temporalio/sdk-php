@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Transport;
 
-final class Message
+final class Frame
 {
     /**
      * @var string|null

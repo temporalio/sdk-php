@@ -12,9 +12,9 @@ declare(strict_types=1);
 namespace Temporal\Worker\Codec\JsonCodec;
 
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\Payload;
 use Temporal\Worker\Command\CommandInterface;
 use Temporal\Worker\Command\ErrorResponseInterface;
-use Temporal\Worker\Command\PayloadAwareRequest;
 use Temporal\Worker\Command\RequestInterface;
 use Temporal\Worker\Command\SuccessResponseInterface;
 
@@ -68,7 +68,7 @@ class Encoder
             case $command instanceof SuccessResponseInterface:
                 return [
                     'id' => $command->getID(),
-                    'result' => $this->toPayloads($command->getResult()),
+                    'result' => $this->encodePayloads($command->getResult()),
                 ];
 
             default:
@@ -86,7 +86,7 @@ class Encoder
         $result = $params;
         foreach ($payloadParams as $name) {
             if (isset($params[$name])) {
-                $result[$name] = $this->toPayloads($params[$name]);
+                $result[$name] = $this->encodePayloads($params[$name]);
             }
         }
 
@@ -94,11 +94,24 @@ class Encoder
     }
 
     /**
+     * JSON require base64 encoding for all the payload data
+     *
      * @param array $values
      * @return array
      */
-    private function toPayloads(array $values): array
+    private function encodePayloads(array $values): array
     {
-        return $this->dataConverter->toPayloads($values);
+        $result = [];
+        /** @var Payload $payload */
+        foreach ($values as $value) {
+            $encoded = $this->dataConverter->toPayload($value);
+
+            $result[] = [
+                'Metadata' => array_map('base64_encode', $encoded->getMetadata()),
+                'Data' => base64_encode($encoded->getData())
+            ];
+        }
+
+        return $result;
     }
 }

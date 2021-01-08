@@ -19,16 +19,16 @@ use Temporal\Exception\TransportException;
 interface RelayConnectionInterface
 {
     /**
-     * @return Message|null
+     * @return Frame|null
      * @throws TransportException
      */
-    public function await(): ?Message;
+    public function await(): ?Frame;
 
     /**
-     * @param string $message
+     * @param string $frame
      * @throws TransportException
      */
-    public function send(string $message): void;
+    public function send(string $frame): void;
 
     /**
      * @param \Throwable $error

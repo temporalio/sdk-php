@@ -11,10 +11,12 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Command;
 
+use Temporal\DataConverter\Payload;
+
 interface SuccessResponseInterface extends ResponseInterface
 {
     /**
-     * @return array
+     * @return array<Payload>
      */
     public function getResult(): array;
 }

@@ -41,14 +41,9 @@ final class InvokeSignal extends WorkflowProcessAwareRoute
     {
         $instance = $this->findInstanceOrFail($payload['runId']);
         $handler = $instance->getSignalHandler($payload['name']);
+        $args = $payload['args'] ?? [];
 
-        // todo: handle on protobuf level
-        foreach ($payload['args'] as &$arg) {
-            $arg = Payload::createRaw($arg['metadata'], $arg['data'] ?? null);
-            unset($arg);
-        }
-
-        $executor = static fn() => $resolver->resolve($handler($payload['args'] ?? []));
+        $executor = static fn() => $resolver->resolve($handler($args));
         $this->loop->once(LoopInterface::ON_SIGNAL, $executor);
     }
 }

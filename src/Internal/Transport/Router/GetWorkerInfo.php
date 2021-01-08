@@ -55,18 +55,24 @@ final class GetWorkerInfo extends Route
     {
         return [
             'TaskQueue' => $taskQueue->getID(),
-            'Workflows' => $this->map($taskQueue->getWorkflows(), function (WorkflowPrototype $workflow) {
-                return [
-                    'Name' => $workflow->getID(),
-                    'Queries' => $this->keys($workflow->getQueryHandlers()),
-                    'Signals' => $this->keys($workflow->getSignalHandlers()),
-                ];
-            }),
-            'Activities' => $this->map($taskQueue->getActivities(), function (ActivityPrototype $activity) {
-                return [
-                    'Name' => $activity->getID(),
-                ];
-            }),
+            'Workflows' => $this->map(
+                $taskQueue->getWorkflows(),
+                function (WorkflowPrototype $workflow) {
+                    return [
+                        'Name' => $workflow->getID(),
+                        'Queries' => $this->keys($workflow->getQueryHandlers()),
+                        'Signals' => $this->keys($workflow->getSignalHandlers()),
+                    ];
+                }
+            ),
+            'Activities' => $this->map(
+                $taskQueue->getActivities(),
+                function (ActivityPrototype $activity) {
+                    return [
+                        'Name' => $activity->getID(),
+                    ];
+                }
+            ),
         ];
     }
 

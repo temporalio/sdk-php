@@ -11,10 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\DataConverter;
 
-use Temporal\DataConverter\Bytes;
-use Temporal\DataConverter\EncodingKeys;
-use Temporal\DataConverter\Payload;
-use Temporal\DataConverter\PayloadConverterInterface;
 use Temporal\Exception\DataConverterException;
 
 class BinaryConverter implements PayloadConverterInterface
