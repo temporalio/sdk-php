@@ -138,7 +138,7 @@ class Decoder
             static function ($value) {
                 return Payload::create(
                     array_map('base64_decode', $value['metadata']),
-                    $value['data'] === null ? null : base64_decode($value['data'])
+                    ($value['data'] ?? null) === null ? null : base64_decode($value['data'])
                 );
             },
             $payloads

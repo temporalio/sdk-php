@@ -16,13 +16,8 @@ use Temporal\Worker\Transport\Codec\ProtoCodec\Decoder;
 use Temporal\Worker\Transport\Codec\ProtoCodec\Encoder;
 use Temporal\Worker\Transport\Command\CommandInterface;
 
-class ProtoCodec implements CodecInterface
+final class ProtoCodec implements CodecInterface
 {
-    /**
-     * @var int
-     */
-    private int $maxDepth;
-
     /**
      * @var Decoder
      */

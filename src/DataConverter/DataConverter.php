@@ -13,7 +13,7 @@ namespace Temporal\DataConverter;
 
 use Temporal\Exception\DataConverterException;
 
-class DataConverter implements DataConverterInterface
+final class DataConverter implements DataConverterInterface
 {
     /**
      * @var array<PayloadConverterInterface>
