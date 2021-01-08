@@ -58,7 +58,6 @@ final class StartWorkflow extends Route
      */
     public function handle(RequestInterface $request, array $headers, Deferred $resolver): void
     {
-        /** @var Input $input */
         $input = $this->services->marshaller->unmarshal($request->getOptions(), new Input());
         $input->args = $request->getPayloads();
 
