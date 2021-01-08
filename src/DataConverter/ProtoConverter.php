@@ -41,7 +41,8 @@ class ProtoConverter implements PayloadConverterInterface
     /**
      * @param Payload $payload
      * @param \ReflectionType|null $type
-     * @return mixed|void
+     * @return Message
+     * @throws DataConverterException
      */
     public function fromPayload(Payload $payload, ?\ReflectionType $type)
     {
