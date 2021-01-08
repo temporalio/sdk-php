@@ -53,9 +53,11 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
 
         $info = $process->getContext()->getInfo();
 
-        $resolver->resolve([
-            'WorkflowExecution' => $info->execution
-        ]);
+        $resolver->resolve(
+            [
+                'WorkflowExecution' => $info->execution
+            ]
+        );
     }
 
     /**

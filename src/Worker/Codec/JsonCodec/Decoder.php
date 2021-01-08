@@ -76,7 +76,7 @@ class Decoder
 
         foreach (self::PAYLOAD_PARAMS as $name) {
             if (array_key_exists($name, $data['params'])) {
-                $data['params'][$name] = $this->decodePayloads($data['params'][$name]);
+                $data['params'][$name] = $this->decodePayloads($data['params'][$name] ?? []);
             }
         }
 
