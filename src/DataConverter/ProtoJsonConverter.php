@@ -40,26 +40,26 @@ class ProtoJsonConverter implements PayloadConverterInterface
 
     /**
      * @param Payload $payload
-     * @param \ReflectionType|null $type
+     * @param Type $type
      * @return Message
      * @throws DataConverterException
      */
-    public function fromPayload(Payload $payload, ?\ReflectionType $type)
+    public function fromPayload(Payload $payload, Type $type)
     {
-        if ($type instanceof \ReflectionNamedType && !$type->isBuiltin()) {
-            try {
-                $obj = new \ReflectionClass($type->getName());
-            } catch (\ReflectionException $e) {
-                throw new DataConverterException($e->getMessage(), $e->getCode(), $e);
-            }
-
-            /** @var Message $instance */
-            $instance = $obj->newInstance();
-            $instance->mergeFromJsonString($payload->getData());
-
-            return $instance;
-        } else {
-            throw new DataConverterException("Unable to decode value using protobuf converter");
+        if (!$type->isClass()) {
+            throw new DataConverterException("Unable to decode value using protobuf converter - ");
         }
+
+        try {
+            $obj = new \ReflectionClass($type->getName());
+        } catch (\ReflectionException $e) {
+            throw new DataConverterException($e->getMessage(), $e->getCode(), $e);
+        }
+
+        /** @var Message $instance */
+        $instance = $obj->newInstance();
+        $instance->mergeFromJsonString($payload->getData());
+
+        return $instance;
     }
 }

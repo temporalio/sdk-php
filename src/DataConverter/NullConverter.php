@@ -41,12 +41,12 @@ class NullConverter implements PayloadConverterInterface
 
     /**
      * @param Payload $payload
-     * @param \ReflectionType|null $type
+     * @param Type $type
      * @return null
      */
-    public function fromPayload(Payload $payload, ?\ReflectionType $type)
+    public function fromPayload(Payload $payload, Type $type)
     {
-        if ($type !== null && !$type->allowsNull()) {
+        if (!$type->isUntyped() && !$type->allowsNull()) {
             throw new DataConverterException('Unable to convert null to non nullable type');
         }
 

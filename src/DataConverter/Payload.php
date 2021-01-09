@@ -57,13 +57,13 @@ final class Payload
      *
      * @param DataConverterInterface $converter
      * @param PromiseInterface $promise
-     * @param \ReflectionType|null $type
+     * @param Type|string $type
      * @return PromiseInterface
      */
     public static function fromPromise(
         DataConverterInterface $converter,
         PromiseInterface $promise,
-        \ReflectionType $type = null
+        $type = null
     ): PromiseInterface {
         return $promise->then(
             function ($value) use ($converter, $type) {

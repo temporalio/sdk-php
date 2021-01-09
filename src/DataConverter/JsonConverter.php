@@ -38,10 +38,10 @@ class JsonConverter implements PayloadConverterInterface
 
     /**
      * @param Payload $payload
-     * @param \ReflectionType|null $type
+     * @param Type $type
      * @return mixed|void
      */
-    public function fromPayload(Payload $payload, ?\ReflectionType $type)
+    public function fromPayload(Payload $payload, Type $type)
     {
         try {
             return \json_decode($payload->getData(), true, 512, \JSON_THROW_ON_ERROR);

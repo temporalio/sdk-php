@@ -78,11 +78,11 @@ class JsonDTOConverter implements PayloadConverterInterface
 
     /**
      * @param Payload $payload
-     * @param \ReflectionType|null $type
+     * @param Type $type
      * @return mixed|void
      * @throws DataConverterException
      */
-    public function fromPayload(Payload $payload, ?\ReflectionType $type)
+    public function fromPayload(Payload $payload, Type $type)
     {
         try {
             $data = \json_decode($payload->getData(), true, 512, \JSON_THROW_ON_ERROR);
@@ -90,7 +90,7 @@ class JsonDTOConverter implements PayloadConverterInterface
             throw new DataConverterException($e->getMessage(), $e->getCode(), $e);
         }
 
-        if (\is_array($data) && $type instanceof \ReflectionNamedType && !$type->isBuiltin()) {
+        if (\is_array($data) && $type->isClass()) {
             try {
                 $obj = new \ReflectionClass($type->getName());
             } catch (\ReflectionException $e) {
@@ -121,10 +121,12 @@ class JsonDTOConverter implements PayloadConverterInterface
                 DoctrineReader::addGlobalIgnoredName($annotation);
             }
 
-            return new SelectiveReader([
-                new AnnotationReader(),
-                new AttributeReader(),
-            ]);
+            return new SelectiveReader(
+                [
+                    new AnnotationReader(),
+                    new AttributeReader(),
+                ]
+            );
         }
 
         return new AttributeReader();

@@ -26,12 +26,12 @@ interface DataConverterInterface
 
     /**
      * @param Payload $payload
-     * @param \ReflectionType|null $type
+     * @param Type|string $type
      * @return mixed
      *
      * @throws DataConverterException
      */
-    public function fromPayload(Payload $payload, ?\ReflectionType $type);
+    public function fromPayload(Payload $payload, $type);
 
     /**
      * @param array $values

@@ -34,10 +34,10 @@ interface PayloadConverterInterface
 
     /**
      * @param Payload $payload
-     * @param \ReflectionType|null $type
+     * @param Type $type
      * @return mixed
      *
      * @throws DataConverterException
      */
-    public function fromPayload(Payload $payload, ?\ReflectionType $type);
+    public function fromPayload(Payload $payload, Type $type);
 }

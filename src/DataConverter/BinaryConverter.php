@@ -41,12 +41,12 @@ class BinaryConverter implements PayloadConverterInterface
 
     /**
      * @param Payload $payload
-     * @param \ReflectionType|null $type
+     * @param Type $type
      * @return Bytes
      */
-    public function fromPayload(Payload $payload, ?\ReflectionType $type)
+    public function fromPayload(Payload $payload, Type $type)
     {
-        if ($type === null || !$type instanceof \ReflectionNamedType) {
+        if (!$type->isClass()) {
             throw new DataConverterException('Unable to convert raw data to non Bytes type');
         }
 

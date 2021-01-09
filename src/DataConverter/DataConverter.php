@@ -32,7 +32,7 @@ final class DataConverter implements DataConverterInterface
 
     /**
      * @param array<Payload> $payloads
-     * @param array<\ReflectionType> $types
+     * @param array<Type|string|\ReflectionType> $types
      * @return array
      */
     public function fromPayloads(array $payloads, array $types): array
@@ -47,10 +47,10 @@ final class DataConverter implements DataConverterInterface
 
     /**
      * @param Payload $payload
-     * @param \ReflectionType|null $type
+     * @param Type|string|\ReflectionType $type
      * @return mixed
      */
-    public function fromPayload(Payload $payload, ?\ReflectionType $type)
+    public function fromPayload(Payload $payload, $type)
     {
         $encoding = $payload->getMetadata()[EncodingKeys::METADATA_ENCODING_KEY];
 
@@ -58,7 +58,7 @@ final class DataConverter implements DataConverterInterface
             throw new DataConverterException(sprintf('Undefined payload encoding %s', $encoding));
         }
 
-        return $this->converters[$encoding]->fromPayload($payload, $type);
+        return $this->converters[$encoding]->fromPayload($payload, Type::fromMixed($type));
     }
 
     /**
