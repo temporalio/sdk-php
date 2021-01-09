@@ -62,13 +62,12 @@ class WorkerMock implements Worker\Transport\RelayConnectionInterface
     }
 
     /**
+     * @param TestCase $testCase
      * @param array $queue
+     * @param bool $debug
      */
-    public function run(
-        TestCase $testCase,
-        array $queue,
-        bool $debug = false
-    ) {
+    public function run(TestCase $testCase, array $queue, bool $debug = false)
+    {
         $this->debug = $debug;
 
         $this->in = $queue[1];
