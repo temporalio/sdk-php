@@ -1,0 +1,3 @@
+[submodule "proto"]
+	path = proto
+	url = git@github.com:temporalio/api.git
