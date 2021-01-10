@@ -19,7 +19,7 @@ message Message {
     bytes options = 3;
 
     // error response.
-     temporal.api.common.v1.Failure error = 4;
+    Error error = 4;
 
     // invocation or result payloads.
     temporal.api.common.v1.Payloads payloads = 5;
