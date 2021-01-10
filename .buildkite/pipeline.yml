@@ -1,0 +1,11 @@
+steps:
+  - label: ":golang: check"
+    agents:
+      queue: "default"
+      docker: "*"
+    command: "make check"
+    plugins:
+      - docker-compose#v3.1.0:
+          run: build
+          config: docker/buildkite/docker-compose.yml
+

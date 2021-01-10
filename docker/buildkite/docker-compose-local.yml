@@ -1,0 +1,33 @@
+version: "3.5"
+
+services:
+  cassandra:
+    image: cassandra:3.11
+    ports:
+      - "9042:9042"
+    networks:
+      services-network:
+        aliases:
+          - cassandra
+
+  temporal:
+    image: temporalio/auto-setup:latest
+    ports:
+      - "7233:7233"
+      - "7234:7234"
+      - "7235:7235"
+      - "7239:7239"
+    environment:
+      - "CASSANDRA_SEEDS=cassandra"
+      - "DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development.yaml"
+    depends_on:
+      - cassandra
+    networks:
+      services-network:
+        aliases:
+          - temporal
+
+networks:
+  services-network:
+    name: services-network
+    driver: bridge
