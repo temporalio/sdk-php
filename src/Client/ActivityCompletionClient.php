@@ -34,6 +34,8 @@ class ActivityCompletionClient implements ActivityCompletionClientInterface
     {
         $this->rpc = $rpc;
         $this->namespace = $namespace;
+
+
     }
 
     /**
@@ -41,6 +43,7 @@ class ActivityCompletionClient implements ActivityCompletionClientInterface
      */
     public function completeExceptionally(string $wid, ?string $runId, string $activityId, \Throwable $error): void
     {
+        // todo: exception mapping
         $this->complete($wid, $runId, $activityId, [
             'error' => ErrorResponse::exceptionToArray($error),
         ]);

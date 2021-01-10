@@ -11,10 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport;
 
-use React\Promise\CancellablePromiseInterface;
+use React\Promise\PromiseInterface;
 use React\Promise\PromisorInterface;
 
-interface FutureInterface extends PromisorInterface, CancellablePromiseInterface
+interface CompletableResultInterface extends PromisorInterface, PromiseInterface
 {
     /**
      * @return bool

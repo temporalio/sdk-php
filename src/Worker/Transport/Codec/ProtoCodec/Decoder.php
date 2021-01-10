@@ -81,6 +81,8 @@ class Decoder
      */
     private function parseErrorResponse(Message $msg): ErrorResponseInterface
     {
+        // todo: access payloads
+
         return new ErrorResponse(
             $msg->getError()->getMessage(),
             $msg->getError()->getCode(),

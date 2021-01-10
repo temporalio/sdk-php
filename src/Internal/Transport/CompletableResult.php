@@ -16,8 +16,10 @@ use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\Worker\LoopInterface;
 use Temporal\Worker\TaskQueueInterface;
+use Temporal\Workflow;
+use Temporal\Workflow\WorkflowContextInterface;
 
-class Future implements FutureInterface
+class CompletableResult implements CompletableResultInterface
 {
     /**
      * @var bool
@@ -30,9 +32,19 @@ class Future implements FutureInterface
     private $value;
 
     /**
-     * @var CancellablePromiseInterface
+     * @var WorkflowContextInterface
      */
-    private CancellablePromiseInterface $promise;
+    private WorkflowContextInterface $context;
+
+    /**
+     * @var LoopInterface
+     */
+    private LoopInterface $loop;
+
+    /**
+     * @var PromiseInterface
+     */
+    private PromiseInterface $promise;
 
     /**
      * @var Deferred
@@ -40,28 +52,24 @@ class Future implements FutureInterface
     private Deferred $deferred;
 
     /**
-     * @var TaskQueueInterface
+     * @param WorkflowContextInterface $context
+     * @param LoopInterface $loop
+     * @param PromiseInterface $promise
      */
-    private TaskQueueInterface $taskQueue;
-
-    /**
-     * @param CancellablePromiseInterface $promise
-     * @param TaskQueueInterface $taskQueue
-     */
-    public function __construct(CancellablePromiseInterface $promise, TaskQueueInterface $taskQueue)
-    {
-        $this->taskQueue = $taskQueue;
-        $this->deferred = new Deferred(function () use ($promise) {
-            $promise->cancel();
-        });
+    public function __construct(
+        WorkflowContextInterface $context,
+        LoopInterface $loop,
+        PromiseInterface $promise
+    ) {
+        $this->context = $context;
+        $this->loop = $loop;
+        $this->deferred = new Deferred();
 
         /** @var CancellablePromiseInterface $current */
-        $current = $promise->then(
+        $this->promise = $promise->then(
             \Closure::fromCallable([$this, 'onFulfilled']),
             \Closure::fromCallable([$this, 'onRejected']),
         );
-
-        $this->promise = $current;
     }
 
     /**
@@ -83,23 +91,16 @@ class Future implements FutureInterface
     /**
      * {@inheritDoc}
      */
-    public function cancel(): void
-    {
-        $this->promise->cancel();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public function then(
         callable $onFulfilled = null,
         callable $onRejected = null,
         callable $onProgress = null
     ): PromiseInterface {
+        Workflow::setCurrentContext($this->context);
+
         /** @var CancellablePromiseInterface $promise */
         $promise = $this->promise()
-            ->then($onFulfilled, $onRejected, $onProgress)
-        ;
+            ->then($onFulfilled, $onRejected, $onProgress);
 
         return $promise;
         //return new Future($promise, $this->worker);
@@ -121,9 +122,13 @@ class Future implements FutureInterface
         $this->resolved = true;
         $this->value = $result;
 
-        $this->taskQueue->once(LoopInterface::ON_CALLBACK, function () {
-            $this->deferred->resolve($this->value);
-        });
+        $this->loop->once(
+            LoopInterface::ON_CALLBACK,
+            function () {
+                Workflow::setCurrentContext($this->context);
+                $this->deferred->resolve($this->value);
+            }
+        );
     }
 
     /**
@@ -133,8 +138,12 @@ class Future implements FutureInterface
     {
         $this->resolved = true;
 
-        $this->taskQueue->once(LoopInterface::ON_CALLBACK, function () use ($e) {
-            $this->deferred->reject($e);
-        });
+        $this->loop->once(
+            LoopInterface::ON_CALLBACK,
+            function () use ($e) {
+                Workflow::setCurrentContext($this->context);
+                $this->deferred->reject($e);
+            }
+        );
     }
 }

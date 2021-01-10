@@ -86,6 +86,8 @@ class Decoder
      */
     private function parseErrorResponse(array $data): ErrorResponseInterface
     {
+        // todo: access payloads
+
         $this->assertCommandID($data);
 
         if (!isset($data['error']) || !\is_array($data['error'])) {

@@ -13,4 +13,5 @@ namespace Temporal\Exception;
 
 class TemporalException extends \RuntimeException
 {
+
 }

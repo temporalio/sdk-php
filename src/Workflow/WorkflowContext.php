@@ -249,7 +249,7 @@ class WorkflowContext implements WorkflowContextInterface
     {
         $this->recordTrace();
 
-        // must not be captured
+        // todo: implement exception wrapping
         return $this->services->client->request(new CompleteWorkflow($result, $error));
     }
 

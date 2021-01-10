@@ -32,7 +32,7 @@ use Temporal\Workflow\WorkflowContext;
  * @internal CoroutineScope is an internal library class, please do not use it in your code.
  * @psalm-internal Temporal\Client
  */
-class CoroutineScope implements CancellationScopeInterface, PromisorInterface
+class Scope implements CancellationScopeInterface, PromisorInterface
 {
     /**
      * @var ServiceContainer
@@ -211,7 +211,7 @@ class CoroutineScope implements CancellationScopeInterface, PromisorInterface
      */
     public function createScope(callable $handler, bool $detached): CancellationScopeInterface
     {
-        $scope = new CoroutineScope($this->services, $this->context);
+        $scope = new Scope($this->services, $this->context);
         $scope->detached = $detached;
 
         // do not return parent scope result until inner scope complete

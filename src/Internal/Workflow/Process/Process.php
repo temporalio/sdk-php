@@ -18,7 +18,7 @@ use Temporal\Internal\ServiceContainer;
 use Temporal\Workflow\ProcessInterface;
 use Temporal\Workflow\WorkflowContext;
 
-class Process extends CoroutineScope implements ProcessInterface
+class Process extends Scope implements ProcessInterface
 {
     /**
      * Process constructor.
