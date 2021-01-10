@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Workflow;
 
 use React\Promise\PromiseInterface;
+use Temporal\Internal\Transport\CompletableResultInterface;
 
 interface ChildWorkflowStubInterface
 {
@@ -34,14 +35,14 @@ interface ChildWorkflowStubInterface
     /**
      * @param array $args
      * @param \ReflectionType|null $returnType
-     * @return PromiseInterface
+     * @return CompletableResultInterface
      */
     public function execute(array $args = [], \ReflectionType $returnType = null): PromiseInterface;
 
     /**
      * @param string $name
      * @param array $args
-     * @return PromiseInterface
+     * @return CompletableResultInterface
      * @throws \LogicException
      */
     public function signal(string $name, array $args = []): PromiseInterface;
