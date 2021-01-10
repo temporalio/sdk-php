@@ -7,4 +7,12 @@
  * file that was distributed with this source code.
  */
 
-require __DIR__ . '/../../vendor/autoload.php';
+namespace Temporal\Client;
+
+/**
+ * Retries call until it succeed.
+ */
+class Backoff
+{
+
+}
