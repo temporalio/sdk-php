@@ -84,7 +84,7 @@ echo "[OK]\n";
 
 echo "generating interface: ";
 
-$interface = new Generator\InterfaceGenerator('ClientInterface');
+$interface = new Generator\InterfaceGenerator('ServiceClientInterface');
 
 foreach ($methods as $method => $options) {
     $m = new MethodGenerator($method);
@@ -140,7 +140,7 @@ $file->setUses(
 
 // write and shorten names
 file_put_contents(
-    __DIR__ . '/../../src/Client/GRPC/ClientInterface.php',
+    __DIR__ . '/../../src/Client/GRPC/ServiceClientInterface.php',
     str_replace(
         ['\\Temporal\\Api\\Workflowservice\\', '\\Temporal\\Client\\GRPC\\ContextInterface'],
         ['', 'ContextInterface'],
