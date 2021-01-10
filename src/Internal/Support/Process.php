@@ -12,8 +12,7 @@ namespace Temporal\Internal\Support;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 
 /**
- * Class ProcessInvoker
- * @package Temporal\Internal\Support
+ * @codeCoverageIgnore
  */
 class Process
 {

@@ -19,13 +19,6 @@ use JetBrains\PhpStorm\ExpectedValues;
 interface ClientInterface
 {
     /**
-     * @param ReloadGroupFlags $group
-     * @return iterable
-     */
-    #[ExpectedValues(flagsFromClass: ReloadGroup::class)]
-    public function reload(int $group = ReloadGroup::GROUP_ALL): iterable;
-
-    /**
      * @psalm-template T of object
      * @param class-string<T> $class
      * @param WorkflowOptions|null $options

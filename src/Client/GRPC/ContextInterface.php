@@ -7,12 +7,10 @@
  * file that was distributed with this source code.
  */
 
-namespace Temporal\Client;
+namespace Temporal\Client\GRPC;
 
-/**
- * Retries call until it succeed.
- */
-class Backoff
+interface ContextInterface
 {
-
+//public function getMetadata();
+    //    public function getTimeout():imnt{}
 }
