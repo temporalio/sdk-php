@@ -32,7 +32,7 @@ use Temporal\Exception\Client\ActivityCanceledException;
 use Temporal\Exception\Client\ActivityCompletionException;
 use Temporal\Exception\Client\ActivityCompletionFailureException;
 use Temporal\Exception\Client\ActivityNotExistsException;
-use Temporal\Exception\ClientException;
+use Temporal\Exception\ServiceClientException;
 use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Worker\Transport\RpcConnectionInterface;
 
@@ -85,7 +85,7 @@ class ActivityCompletionClient implements ActivityCompletionClientInterface
 
         try {
             $this->serviceClient->RespondActivityTaskCompletedById($r);
-        } catch (ClientException $e) {
+        } catch (ServiceClientException $e) {
             if ($e->getCode() === StatusCode::NOT_FOUND) {
                 // todo: map
                 throw new ActivityNotExistsException();
@@ -112,7 +112,7 @@ class ActivityCompletionClient implements ActivityCompletionClientInterface
 
         try {
             $this->serviceClient->RespondActivityTaskCompleted($r);
-        } catch (ClientException $e) {
+        } catch (ServiceClientException $e) {
             if ($e->getCode() === StatusCode::NOT_FOUND) {
                 // todo: map
                 throw new ActivityNotExistsException();
@@ -143,7 +143,7 @@ class ActivityCompletionClient implements ActivityCompletionClientInterface
 
         try {
             $this->serviceClient->RespondActivityTaskFailedById($r);
-        } catch (ClientException $e) {
+        } catch (ServiceClientException $e) {
             if ($e->getCode() === StatusCode::NOT_FOUND) {
                 // todo: map
                 throw new ActivityNotExistsException();
@@ -168,7 +168,7 @@ class ActivityCompletionClient implements ActivityCompletionClientInterface
 
         try {
             $this->serviceClient->RespondActivityTaskFailed($r);
-        } catch (ClientException $e) {
+        } catch (ServiceClientException $e) {
             if ($e->getCode() === StatusCode::NOT_FOUND) {
                 // todo: map
                 throw new ActivityNotExistsException();
@@ -197,7 +197,7 @@ class ActivityCompletionClient implements ActivityCompletionClientInterface
 
         try {
             $this->serviceClient->RespondActivityTaskCanceledById($r);
-        } catch (ClientException $e) {
+        } catch (ServiceClientException $e) {
             // There is nothing that can be done at this point so let's just ignore.
             // todo: confirm this is true
         }
@@ -219,7 +219,7 @@ class ActivityCompletionClient implements ActivityCompletionClientInterface
 
         try {
             $this->serviceClient->RespondActivityTaskCanceled($r);
-        } catch (ClientException $e) {
+        } catch (ServiceClientException $e) {
             // There is nothing that can be done at this point so let's just ignore.
             // todo: confirm this is true
         }
@@ -246,7 +246,7 @@ class ActivityCompletionClient implements ActivityCompletionClientInterface
             if ($response->getCancelRequested()) {
                 throw new ActivityCanceledException();
             }
-        } catch (ClientException $e) {
+        } catch (ServiceClientException $e) {
             if ($e->getCode() === StatusCode::NOT_FOUND) {
                 // todo: map
                 throw new ActivityNotExistsException();
@@ -276,7 +276,7 @@ class ActivityCompletionClient implements ActivityCompletionClientInterface
             if ($response->getCancelRequested()) {
                 throw new ActivityCanceledException();
             }
-        } catch (ClientException $e) {
+        } catch (ServiceClientException $e) {
             if ($e->getCode() === StatusCode::NOT_FOUND) {
                 // todo: map
                 throw new ActivityNotExistsException();

@@ -1,35 +1,49 @@
 <?php
 
+/**
+ * This file is part of Temporal package.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace Temporal\Exception\Failure;
 
-
-use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\ValuesInterface;
 use Throwable;
 
 class CanceledFailure extends TemporalFailure
 {
     /**
-     * @var EncodedValues
+     * @var ValuesInterface
      */
-    private EncodedValues $details;
+    private ValuesInterface $details;
 
     /**
      * @param string $message
-     * @param EncodedValues $details
+     * @param ValuesInterface $details
      * @param Throwable|null $previous
      */
-    public function __construct(string $message, EncodedValues $details, Throwable $previous = null)
+    public function __construct(string $message, ValuesInterface $details, Throwable $previous = null)
     {
         parent::__construct($message, "", $previous);
         $this->details = $details;
     }
 
     /**
-     * @return EncodedValues
+     * @return ValuesInterface
      */
-    public function getDetails(): EncodedValues
+    public function getDetails(): ValuesInterface
     {
         return $this->details;
+    }
+
+    /**
+     * @param DataConverterInterface $converter
+     */
+    public function setDataConverter(DataConverterInterface $converter): void
+    {
+        $this->details->setDataConverter($converter);
     }
 }

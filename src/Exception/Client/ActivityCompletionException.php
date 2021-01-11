@@ -2,7 +2,7 @@
 
 namespace Temporal\Exception\Client;
 
-use Temporal\Exception\ClientException;
+use Temporal\Exception\ServiceClientException;
 use Temporal\Exception\TemporalException;
 
 class ActivityCompletionException extends TemporalException

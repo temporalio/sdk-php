@@ -11,7 +11,7 @@ namespace Temporal\Client\GRPC;
 
 use Grpc\UnaryCall;
 use Temporal\Api\Workflowservice\V1\WorkflowServiceClient;
-use Temporal\Exception\ClientException;
+use Temporal\Exception\ServiceClientException;
 
 abstract class BaseClient implements ServiceClientInterface
 {
@@ -65,7 +65,7 @@ abstract class BaseClient implements ServiceClientInterface
          // todo: retry?
 
         if ($status->code !== 0) {
-            throw new ClientException($status);
+            throw new ServiceClientException($status);
         }
 
         return $result;

@@ -1,19 +1,23 @@
 <?php
 
+/**
+ * This file is part of Temporal package.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace Temporal\Exception\Failure;
 
-
-use Temporal\Api\Enums\V1\TimeoutType;
-use Temporal\DataConverter\EncodedValues;
-use Throwable;
+use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\ValuesInterface;
 
 class TimeoutFailure extends TemporalFailure
 {
     /**
-     * @var EncodedValues
+     * @var ValuesInterface
      */
-    private ?EncodedValues $lastHeartbeatDetails;
+    private ValuesInterface $lastHeartbeatDetails;
 
     /**
      * @var int
@@ -22,27 +26,24 @@ class TimeoutFailure extends TemporalFailure
 
     /**
      * @param string $message
-     * @param EncodedValues|null $lastHeartbeatDetails
+     * @param ValuesInterface $lastHeartbeatDetails
      * @param int $timeoutType
-     * @param Throwable|null $previous
+     * @param \Throwable|null $previous
      */
     public function __construct(
         string $message,
-        ?EncodedValues $lastHeartbeatDetails,
+        ValuesInterface $lastHeartbeatDetails,
         int $timeoutType,
-        Throwable $previous = null
+        \Throwable $previous = null
     ) {
-        parent::__construct(self::buildMessage($message, $timeoutType), $message, $previous);
+        parent::__construct(
+            self::buildMessage(compact('message', 'timeoutType')),
+            $message,
+            $previous
+        );
+
         $this->lastHeartbeatDetails = $lastHeartbeatDetails;
         $this->timeoutType = $timeoutType;
-    }
-
-    /**
-     * @return EncodedValues|null
-     */
-    public function getLastHeartbeatDetails(): ?EncodedValues
-    {
-        return $this->lastHeartbeatDetails;
     }
 
     /**
@@ -54,16 +55,18 @@ class TimeoutFailure extends TemporalFailure
     }
 
     /**
-     * @param string $message
-     * @param int $timeoutType
-     * @return string
+     * @return ValuesInterface
      */
-    public static function buildMessage(string $message, int $timeoutType): string
+    public function getLastHeartbeatDetails(): ValuesInterface
     {
-        if ($message !== '') {
-            return 'message=' . $message . ',timeoutType=' . TimeoutType::name($timeoutType);
-        }
+        return $this->lastHeartbeatDetails;
+    }
 
-        return 'timeoutType=' . TimeoutType::name($timeoutType);
+    /**
+     * @param DataConverterInterface $converter
+     */
+    public function setDataConverter(DataConverterInterface $converter): void
+    {
+        $this->lastHeartbeatDetails->setDataConverter($converter);
     }
 }

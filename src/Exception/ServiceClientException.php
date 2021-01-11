@@ -9,11 +9,9 @@
 
 namespace Temporal\Exception;
 
-
-use Google\Protobuf\Any;
 use Throwable;
 
-class ClientException extends \RuntimeException
+class ServiceClientException extends \RuntimeException
 {
     /**
      * @var \stdClass

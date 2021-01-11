@@ -29,6 +29,7 @@
         "laminas/laminas-code": "^4.0",
         "nesbot/carbon": "^2.41",
         "phpfn/immutable": "^2.0",
+        "psr/container": "^1.0",
         "psr/log": "^1.1",
         "react/promise": "^2.8",
         "spiral/attributes": "^2.7",

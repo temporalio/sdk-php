@@ -134,7 +134,7 @@ $file->setClass($interface);
 $file->setUses(
     [
         'Temporal\Api\Workflowservice\V1',
-        'Temporal\Exception\ClientException',
+        'Temporal\Exception\ServiceClientException',
     ]
 );
 
@@ -183,7 +183,7 @@ $file->setClass($impl);
 $file->setUses(
     [
         'Temporal\Api\Workflowservice\V1',
-        'Temporal\Exception\ClientException',
+        'Temporal\Exception\ServiceClientException',
     ]
 );
 

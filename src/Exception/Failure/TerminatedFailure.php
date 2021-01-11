@@ -1,18 +1,22 @@
 <?php
 
+/**
+ * This file is part of Temporal package.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace Temporal\Exception\Failure;
 
-
-use Throwable;
 
 class TerminatedFailure extends TemporalFailure
 {
     /**
      * @param string $message
-     * @param Throwable|null $previous
+     * @param \Throwable|null $previous
      */
-    public function __construct(string $message, Throwable $previous = null)
+    public function __construct(string $message, \Throwable $previous = null)
     {
         parent::__construct($message, $message, $previous);
     }

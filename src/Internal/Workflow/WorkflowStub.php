@@ -42,7 +42,7 @@ use Temporal\DataConverter\Type;
 use Temporal\Exception\Client\WorkflowExecutionAlreadyStartedException;
 use Temporal\Exception\Client\WorkflowQueryException;
 use Temporal\Exception\Client\WorkflowQueryRejectedException;
-use Temporal\Exception\ClientException;
+use Temporal\Exception\ServiceClientException;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\TerminatedFailure;
 use Temporal\Exception\Failure\TimeoutFailure;
@@ -207,7 +207,7 @@ final class WorkflowStub implements WorkflowStubInterface
 
         try {
             $response = $this->serviceClient->StartWorkflowExecution($r);
-        } catch (ClientException $e) {
+        } catch (ServiceClientException $e) {
             $f = $e->tryFailure(
                 WorkflowExecutionAlreadyStartedFailure::class,
                 'Workflow execution is already running'
@@ -293,7 +293,7 @@ final class WorkflowStub implements WorkflowStubInterface
 
         try {
             $response = $this->serviceClient->SignalWithStartWorkflowExecution($r);
-        } catch (ClientException $e) {
+        } catch (ServiceClientException $e) {
             $f = $e->tryFailure(
                 WorkflowExecutionAlreadyStartedFailure::class,
                 'Workflow execution is already running'
@@ -359,7 +359,7 @@ final class WorkflowStub implements WorkflowStubInterface
 
         try {
             $this->serviceClient->SignalWorkflowExecution($r);
-        } catch (ClientException $e) {
+        } catch (ServiceClientException $e) {
             if ($e->getCode() === StatusCode::NOT_FOUND) {
                 throw new WorkflowNotFoundException(null, $this->execution, $this->workflowType, $e);
             } else {
@@ -394,7 +394,7 @@ final class WorkflowStub implements WorkflowStubInterface
 
         try {
             $result = $this->serviceClient->QueryWorkflow($r);
-        } catch (ClientException $e) {
+        } catch (ServiceClientException $e) {
             if ($e->getCode() === StatusCode::NOT_FOUND) {
                 throw new WorkflowNotFoundException(null, $this->execution, $this->workflowType, $e);
             } elseif ($e->tryFailure(QueryFailedFailure::class, 'query') !== null) {
@@ -565,7 +565,7 @@ final class WorkflowStub implements WorkflowStubInterface
                     $attr->getRetryState(),
                     new TimeoutFailure(
                         "",
-                        null,
+                        EncodedValues::createEmpty(),
                         TimeoutType::TIMEOUT_TYPE_START_TO_CLOSE
                     )
                 );

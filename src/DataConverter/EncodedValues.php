@@ -12,7 +12,7 @@ namespace Temporal\DataConverter;
 use Temporal\Api\Common\V1\Payloads;
 use Temporal\Exception\DataConverterException;
 
-class EncodedValues
+class EncodedValues implements ValuesInterface
 {
     /**
      * @var DataConverterInterface|null
@@ -121,6 +121,17 @@ class EncodedValues
     public function setDataConverter(DataConverterInterface $dataConverter)
     {
         $this->dataConverter = $dataConverter;
+    }
+
+    /**
+     * @return EncodedValues
+     */
+    public static function createEmpty(): EncodedValues
+    {
+        $ev = new self();
+        $ev->values = [];
+
+        return $ev;
     }
 
     /**

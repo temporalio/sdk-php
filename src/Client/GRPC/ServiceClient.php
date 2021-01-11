@@ -10,7 +10,7 @@
 namespace Temporal\Client\GRPC;
 
 use Temporal\Api\Workflowservice\V1;
-use Temporal\Exception\ClientException;
+use Temporal\Exception\ServiceClientException;
 
 class ServiceClient extends BaseClient
 {
@@ -26,7 +26,7 @@ class ServiceClient extends BaseClient
      * @param V1\RegisterNamespaceRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\RegisterNamespaceResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function RegisterNamespace(
         V1\RegisterNamespaceRequest $arg,
@@ -42,7 +42,7 @@ class ServiceClient extends BaseClient
      * @param V1\DescribeNamespaceRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\DescribeNamespaceResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function DescribeNamespace(
         V1\DescribeNamespaceRequest $arg,
@@ -57,7 +57,7 @@ class ServiceClient extends BaseClient
      * @param V1\ListNamespacesRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\ListNamespacesResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function ListNamespaces(
         V1\ListNamespacesRequest $arg,
@@ -77,7 +77,7 @@ class ServiceClient extends BaseClient
      * @param V1\UpdateNamespaceRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\UpdateNamespaceResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function UpdateNamespace(
         V1\UpdateNamespaceRequest $arg,
@@ -96,7 +96,7 @@ class ServiceClient extends BaseClient
      * @param V1\DeprecateNamespaceRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\DeprecateNamespaceResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function DeprecateNamespace(
         V1\DeprecateNamespaceRequest $arg,
@@ -117,7 +117,7 @@ class ServiceClient extends BaseClient
      * @param V1\StartWorkflowExecutionRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\StartWorkflowExecutionResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function StartWorkflowExecution(
         V1\StartWorkflowExecutionRequest $arg,
@@ -134,7 +134,7 @@ class ServiceClient extends BaseClient
      * @param V1\GetWorkflowExecutionHistoryRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\GetWorkflowExecutionHistoryResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function GetWorkflowExecutionHistory(
         V1\GetWorkflowExecutionHistoryRequest $arg,
@@ -157,7 +157,7 @@ class ServiceClient extends BaseClient
      * @param V1\PollWorkflowTaskQueueRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\PollWorkflowTaskQueueResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function PollWorkflowTaskQueue(
         V1\PollWorkflowTaskQueueRequest $arg,
@@ -182,7 +182,7 @@ class ServiceClient extends BaseClient
      * @param V1\RespondWorkflowTaskCompletedRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\RespondWorkflowTaskCompletedResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function RespondWorkflowTaskCompleted(
         V1\RespondWorkflowTaskCompletedRequest $arg,
@@ -204,7 +204,7 @@ class ServiceClient extends BaseClient
      * @param V1\RespondWorkflowTaskFailedRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\RespondWorkflowTaskFailedResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function RespondWorkflowTaskFailed(
         V1\RespondWorkflowTaskFailedRequest $arg,
@@ -230,7 +230,7 @@ class ServiceClient extends BaseClient
      * @param V1\PollActivityTaskQueueRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\PollActivityTaskQueueResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function PollActivityTaskQueue(
         V1\PollActivityTaskQueueRequest $arg,
@@ -253,7 +253,7 @@ class ServiceClient extends BaseClient
      * @param V1\RecordActivityTaskHeartbeatRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\RecordActivityTaskHeartbeatResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function RecordActivityTaskHeartbeat(
         V1\RecordActivityTaskHeartbeatRequest $arg,
@@ -279,7 +279,7 @@ class ServiceClient extends BaseClient
      * $arg
      * @param ContextInterface|null $ctx
      * @return V1\RecordActivityTaskHeartbeatByIdResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function RecordActivityTaskHeartbeatById(
         V1\RecordActivityTaskHeartbeatByIdRequest $arg,
@@ -302,7 +302,7 @@ class ServiceClient extends BaseClient
      * @param V1\RespondActivityTaskCompletedRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\RespondActivityTaskCompletedResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function RespondActivityTaskCompleted(
         V1\RespondActivityTaskCompletedRequest $arg,
@@ -329,7 +329,7 @@ class ServiceClient extends BaseClient
      * @param ContextInterface|null $ctx
      * @return
      * V1\RespondActivityTaskCompletedByIdResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function RespondActivityTaskCompletedById(
         V1\RespondActivityTaskCompletedByIdRequest $arg,
@@ -352,7 +352,7 @@ class ServiceClient extends BaseClient
      * @param V1\RespondActivityTaskFailedRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\RespondActivityTaskFailedResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function RespondActivityTaskFailed(
         V1\RespondActivityTaskFailedRequest $arg,
@@ -378,7 +378,7 @@ class ServiceClient extends BaseClient
      * $arg
      * @param ContextInterface|null $ctx
      * @return V1\RespondActivityTaskFailedByIdResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function RespondActivityTaskFailedById(
         V1\RespondActivityTaskFailedByIdRequest $arg,
@@ -401,7 +401,7 @@ class ServiceClient extends BaseClient
      * @param V1\RespondActivityTaskCanceledRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\RespondActivityTaskCanceledResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function RespondActivityTaskCanceled(
         V1\RespondActivityTaskCanceledRequest $arg,
@@ -427,7 +427,7 @@ class ServiceClient extends BaseClient
      * $arg
      * @param ContextInterface|null $ctx
      * @return V1\RespondActivityTaskCanceledByIdResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function RespondActivityTaskCanceledById(
         V1\RespondActivityTaskCanceledByIdRequest $arg,
@@ -449,7 +449,7 @@ class ServiceClient extends BaseClient
      * $arg
      * @param ContextInterface|null $ctx
      * @return V1\RequestCancelWorkflowExecutionResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function RequestCancelWorkflowExecution(
         V1\RequestCancelWorkflowExecutionRequest $arg,
@@ -467,7 +467,7 @@ class ServiceClient extends BaseClient
      * @param V1\SignalWorkflowExecutionRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\SignalWorkflowExecutionResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function SignalWorkflowExecution(
         V1\SignalWorkflowExecutionRequest $arg,
@@ -493,7 +493,7 @@ class ServiceClient extends BaseClient
      * @param ContextInterface|null $ctx
      * @return
      * V1\SignalWithStartWorkflowExecutionResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function SignalWithStartWorkflowExecution(
         V1\SignalWithStartWorkflowExecutionRequest $arg,
@@ -510,7 +510,7 @@ class ServiceClient extends BaseClient
      * @param V1\ResetWorkflowExecutionRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\ResetWorkflowExecutionResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function ResetWorkflowExecution(
         V1\ResetWorkflowExecutionRequest $arg,
@@ -527,7 +527,7 @@ class ServiceClient extends BaseClient
      * @param V1\TerminateWorkflowExecutionRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\TerminateWorkflowExecutionResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function TerminateWorkflowExecution(
         V1\TerminateWorkflowExecutionRequest $arg,
@@ -543,7 +543,7 @@ class ServiceClient extends BaseClient
      * @param V1\ListOpenWorkflowExecutionsRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\ListOpenWorkflowExecutionsResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function ListOpenWorkflowExecutions(
         V1\ListOpenWorkflowExecutionsRequest $arg,
@@ -559,7 +559,7 @@ class ServiceClient extends BaseClient
      * @param V1\ListClosedWorkflowExecutionsRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\ListClosedWorkflowExecutionsResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function ListClosedWorkflowExecutions(
         V1\ListClosedWorkflowExecutionsRequest $arg,
@@ -575,7 +575,7 @@ class ServiceClient extends BaseClient
      * @param V1\ListWorkflowExecutionsRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\ListWorkflowExecutionsResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function ListWorkflowExecutions(
         V1\ListWorkflowExecutionsRequest $arg,
@@ -592,7 +592,7 @@ class ServiceClient extends BaseClient
      * $arg
      * @param ContextInterface|null $ctx
      * @return V1\ListArchivedWorkflowExecutionsResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function ListArchivedWorkflowExecutions(
         V1\ListArchivedWorkflowExecutionsRequest $arg,
@@ -608,7 +608,7 @@ class ServiceClient extends BaseClient
      * @param V1\ScanWorkflowExecutionsRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\ScanWorkflowExecutionsResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function ScanWorkflowExecutions(
         V1\ScanWorkflowExecutionsRequest $arg,
@@ -624,7 +624,7 @@ class ServiceClient extends BaseClient
      * @param V1\CountWorkflowExecutionsRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\CountWorkflowExecutionsResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function CountWorkflowExecutions(
         V1\CountWorkflowExecutionsRequest $arg,
@@ -640,7 +640,7 @@ class ServiceClient extends BaseClient
      * @param V1\GetSearchAttributesRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\GetSearchAttributesResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function GetSearchAttributes(
         V1\GetSearchAttributesRequest $arg,
@@ -660,7 +660,7 @@ class ServiceClient extends BaseClient
      * @param V1\RespondQueryTaskCompletedRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\RespondQueryTaskCompletedResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function RespondQueryTaskCompleted(
         V1\RespondQueryTaskCompletedRequest $arg,
@@ -679,7 +679,7 @@ class ServiceClient extends BaseClient
      * @param V1\ResetStickyTaskQueueRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\ResetStickyTaskQueueResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function ResetStickyTaskQueue(
         V1\ResetStickyTaskQueueRequest $arg,
@@ -694,7 +694,7 @@ class ServiceClient extends BaseClient
      * @param V1\QueryWorkflowRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\QueryWorkflowResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function QueryWorkflow(V1\QueryWorkflowRequest $arg, ContextInterface $ctx = null): V1\QueryWorkflowResponse
     {
@@ -708,7 +708,7 @@ class ServiceClient extends BaseClient
      * @param V1\DescribeWorkflowExecutionRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\DescribeWorkflowExecutionResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function DescribeWorkflowExecution(
         V1\DescribeWorkflowExecutionRequest $arg,
@@ -725,7 +725,7 @@ class ServiceClient extends BaseClient
      * @param V1\DescribeTaskQueueRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\DescribeTaskQueueResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function DescribeTaskQueue(
         V1\DescribeTaskQueueRequest $arg,
@@ -740,7 +740,7 @@ class ServiceClient extends BaseClient
      * @param V1\GetClusterInfoRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\GetClusterInfoResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function GetClusterInfo(
         V1\GetClusterInfoRequest $arg,
@@ -753,7 +753,7 @@ class ServiceClient extends BaseClient
      * @param V1\ListTaskQueuePartitionsRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\ListTaskQueuePartitionsResponse
-     * @throws ClientException
+     * @throws ServiceClientException
      */
     public function ListTaskQueuePartitions(
         V1\ListTaskQueuePartitionsRequest $arg,
