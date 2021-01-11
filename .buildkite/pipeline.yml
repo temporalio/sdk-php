@@ -1,9 +1,9 @@
 steps:
-  - label: ":golang: check"
+  - label: ":php: check"
     agents:
       queue: "default"
       docker: "*"
-    command: "make check"
+    command: "echo Hello World"
     plugins:
       - docker-compose#v3.1.0:
           run: build
