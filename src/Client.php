@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal;
 
-use Temporal\Client\ClientConnection;
+use Temporal\Client\Client;
 use Temporal\Client\ClientInterface;
 use Temporal\Client\ClientOptions;
 use Temporal\Worker\Transport\RpcConnectionInterface;
@@ -25,6 +25,6 @@ final class Client
      */
     public static function create(RpcConnectionInterface $rpc, ClientOptions $options = null): ClientInterface
     {
-        return new ClientConnection($rpc, $options ?? new ClientOptions());
+        return new Client($rpc, $options ?? new ClientOptions());
     }
 }

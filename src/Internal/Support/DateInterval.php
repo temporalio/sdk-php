@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Support;
 
 use Carbon\CarbonInterval;
+use Google\Protobuf\Duration;
 
 /**
  * @psalm-type DateIntervalFormat = DateInterval::FORMAT_*

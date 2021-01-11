@@ -148,3 +148,52 @@ file_put_contents(
     )
 );
 echo "[OK]\n";
+
+
+echo "generating implementation: ";
+
+$impl = new Generator\ClassGenerator('ServiceClient');
+$impl->setExtendedClass('BaseClient');
+
+foreach ($methods as $method => $options) {
+    $m = new MethodGenerator($method);
+
+    $m->setDocBlock(($methodDocBlock)($r, $method, $options['request'], $options['response']));
+    $m->setParameters(
+        [
+            Generator\ParameterGenerator::fromArray(['type' => $options['request'], 'name' => 'arg']),
+            $ctxParam
+        ]
+    );
+    $m->setReturnType($options['response']);
+
+    $m->setBody(sprintf('return $this->invoke("%s", $arg, $ctx);', $m->getName()));
+
+    $impl->addMethodFromGenerator($m);
+}
+
+echo "[OK]\n";
+
+echo "writing implementation: ";
+
+$file = new Generator\FileGenerator();
+$file->setNamespace('Temporal\\Client\\GRPC');
+$file->setDocBlock($docBlock);
+$file->setClass($impl);
+$file->setUses(
+    [
+        'Temporal\Api\Workflowservice\V1',
+        'Temporal\Exception\ClientException',
+    ]
+);
+
+// write and shorten names
+file_put_contents(
+    __DIR__ . '/../../src/Client/GRPC/ServiceClient.php',
+    str_replace(
+        ['\\Temporal\\Api\\Workflowservice\\', '\\Temporal\\Client\\GRPC\\ContextInterface'],
+        ['', 'ContextInterface'],
+        $file->generate()
+    )
+);
+echo "[OK]\n";

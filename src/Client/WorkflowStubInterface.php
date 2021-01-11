@@ -20,11 +20,6 @@ use Temporal\Internal\Support\DateInterval;
 interface WorkflowStubInterface
 {
     /**
-     * @return WorkflowExecution
-     */
-    public function getExecution(): WorkflowExecution;
-
-    /**
      * @return string
      */
     public function getWorkflowType(): string;
@@ -33,6 +28,12 @@ interface WorkflowStubInterface
      * @return WorkflowOptions
      */
     public function getOptions(): WorkflowOptions;
+
+    /**
+     * @todo: use GRPC type
+     * @return WorkflowExecution
+     */
+    public function getExecution(): WorkflowExecution;
 
     /**
      * @param string $name
@@ -62,9 +63,9 @@ interface WorkflowStubInterface
     public function signalWithStart(string $signal, array $signalArgs = [], array $startArgs = []): WorkflowExecution;
 
     /**
-     * @see DateInterval
      * @param DateIntervalValue|null $timeout
      * @return mixed
+     * @see DateInterval
      */
     public function getResult($timeout = null);
 

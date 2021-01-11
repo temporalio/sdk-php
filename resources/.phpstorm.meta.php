@@ -32,7 +32,7 @@ namespace PHPSTORM_META {
         '' => type(0),
     ]));
 
-    override(\Temporal\Client\ClientConnection::newWorkflowStub(), map([
+    override(\Temporal\Client\Client::newWorkflowStub(), map([
         '' => type(0),
     ]));
 }
