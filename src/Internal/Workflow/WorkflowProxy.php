@@ -13,9 +13,11 @@ namespace Temporal\Internal\Workflow;
 
 use Temporal\Client\WorkflowOptions;
 use Temporal\Client\WorkflowStubInterface;
+use Temporal\Internal\Declaration\Prototype\Prototype;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Worker\Transport\RpcConnectionInterface;
+use Temporal\Workflow\WorkflowRun;
 
 /**
  * @template-covariant T of object
@@ -26,45 +28,23 @@ final class WorkflowProxy extends Proxy
      * @var string
      */
     private const ERROR_UNDEFINED_WORKFLOW_METHOD =
-        'The given stub class "%s" does not contain a workflow method named "%s"'
-    ;
+        'The given stub class "%s" does not contain a workflow method named "%s"';
 
     /**
      * @var string
      */
     private const ERROR_UNDEFINED_METHOD =
-        'The given stub class "%s" does not contain a workflow, query or signal method named "%s"'
-    ;
+        'The given stub class "%s" does not contain a workflow, query or signal method named "%s"';
 
     /**
      * @var WorkflowStubInterface|null
      */
-    private ?WorkflowStubInterface $stub = null;
+    private ?WorkflowStubInterface $stub;
 
     /**
      * @var WorkflowPrototype|null
      */
-    private ?WorkflowPrototype $prototype = null;
-
-    /**
-     * @var RpcConnectionInterface
-     */
-    private RpcConnectionInterface $rpc;
-
-    /**
-     * @var MarshallerInterface
-     */
-    private MarshallerInterface $marshaller;
-
-    /**
-     * @var WorkflowPrototype[]
-     */
-    private array $workflows;
-
-    /**
-     * @var WorkflowOptions
-     */
-    private WorkflowOptions $options;
+    private ?WorkflowPrototype $prototype;
 
     /**
      * @var string
@@ -72,24 +52,15 @@ final class WorkflowProxy extends Proxy
     private string $class;
 
     /**
-     * @param RpcConnectionInterface $rpc
-     * @param MarshallerInterface $marshaller
+     * @param WorkflowStubInterface $stub
+     * @param WorkflowPrototype $prototype
      * @param string $class
-     * @param array<WorkflowPrototype> $workflows
-     * @param WorkflowOptions $options
      */
-    public function __construct(
-        RpcConnectionInterface $rpc,
-        MarshallerInterface $marshaller,
-        string $class,
-        array $workflows,
-        WorkflowOptions $options
-    ) {
-        $this->rpc = $rpc;
+    public function __construct(WorkflowStubInterface $stub, WorkflowPrototype $prototype, string $class)
+    {
+        $this->stub = $stub;
+        $this->prototype = $prototype;
         $this->class = $class;
-        $this->marshaller = $marshaller;
-        $this->workflows = $workflows;
-        $this->options = $options;
     }
 
     /**
@@ -99,14 +70,13 @@ final class WorkflowProxy extends Proxy
      */
     public function __call(string $method, array $args)
     {
-        // If the proxy does not contain information about the running workflow,
-        // then we try to create a new stub from the workflow method and start
-        // the workflow.
-        if (! $this->isRunning()) {
-            $this->prototype = $this->findPrototypeByHandlerNameOrFail($method);
-            $this->stub = new WorkflowStub($this->rpc, $this->marshaller, $this->prototype->getID(), $this->options);
+        if ($method === $this->prototype->getHandler()->getName()) {
+            // If the proxy does not contain information about the running workflow,
+            // then we try to create a new stub from the workflow method and start
+            // the workflow.
+            $this->stub->start(...$args);
 
-            return $this->stub->start(...$args);
+            return new WorkflowRun($this->stub, $this->prototype->getHandler()->getReturnType());
         }
 
         // Otherwise, we try to find a suitable workflow "query" method.
@@ -128,30 +98,5 @@ final class WorkflowProxy extends Proxy
         throw new \BadMethodCallException(
             \sprintf(self::ERROR_UNDEFINED_METHOD, $this->class, $method)
         );
-    }
-
-    /**
-     * @return bool
-     */
-    private function isRunning(): bool
-    {
-        return $this->stub !== null && $this->prototype !== null;
-    }
-
-    /**
-     * @param string $name
-     * @return WorkflowPrototype
-     */
-    private function findPrototypeByHandlerNameOrFail(string $name): WorkflowPrototype
-    {
-        $prototype = $this->findPrototypeByHandlerName($this->workflows, $name);
-
-        if ($prototype === null) {
-            throw new \BadMethodCallException(
-                \sprintf(self::ERROR_UNDEFINED_WORKFLOW_METHOD, $this->class, $name)
-            );
-        }
-
-        return $prototype;
     }
 }

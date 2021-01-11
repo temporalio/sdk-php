@@ -1,6 +1,7 @@
 <?php
 
 use Temporal\Client;
+use Temporal\Tests\Workflow\SimpleWorkflow;
 
 require 'vendor/autoload.php';
 
@@ -8,12 +9,7 @@ $client = new Client\Client(
     Client\GRPC\ServiceClient::createInsecure('localhost:7233')
 );
 
-$w = $client->newUntypedWorkflowStub(
-    'SimpleWorkflow',
-    Client\WorkflowOptions::new()
-);
+$w = $client->newWorkflowStub(SimpleWorkflow::class, Client\WorkflowOptions::new());
 
-// todo: get result
-dump($w->start('hello world'));
-
-dump($w->getResult());
+// todo: how to deal with it?
+dump($w->handler('hello world')->getResult());

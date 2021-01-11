@@ -10,6 +10,7 @@
 namespace Temporal\DataConverter;
 
 use Temporal\Api\Common\V1\Payloads;
+use Temporal\Exception\DataConverterException;
 
 class EncodedValues
 {
@@ -51,6 +52,40 @@ class EncodedValues
         return 0;
     }
 
+    /**
+     * @param int $index
+     * @param Type|string|null $type
+     * @return mixed
+     */
+    public function getValue(int $index, $type = null)
+    {
+        if (isset($this->values[$index])) {
+            return $this->values[$index];
+        }
+
+        if ($this->dataConverter === null) {
+            throw new \LogicException("DataConverter is not set");
+        }
+
+        /** @var \Temporal\Api\Common\V1\Payload $payload */
+        $payload = $this->payloads->getPayloads()->offsetGet($index);
+
+        $meta = [];
+
+        // todo: remove it
+        foreach ($payload->getMetadata() as $k => $v) {
+            $meta[$k] = $v;
+        }
+
+        // todo: remove internal type of payload
+        $internalPayload = Payload::create($meta, $payload->getData());
+
+        return $this->dataConverter->fromPayload($internalPayload, $type);
+    }
+
+    /**
+     * @return Payloads
+     */
     public function toPayloads(): Payloads
     {
         if ($this->payloads !== null) {

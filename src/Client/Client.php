@@ -18,6 +18,7 @@ use Temporal\Api\Workflowservice\V1\WorkflowServiceClient;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
@@ -43,6 +44,16 @@ class Client implements ClientInterface
     private DataConverterInterface $dataConverter;
 
     /**
+     * @var ReaderInterface
+     */
+    private ReaderInterface $reader;
+
+    /**
+     * @var MarshallerInterface
+     */
+    private MarshallerInterface $marshaller;
+
+    /**
      * @param ServiceClientInterface $serviceClient
      * @param ClientOptions|null $options
      * @param DataConverterInterface|null $dc
@@ -55,6 +66,11 @@ class Client implements ClientInterface
         $this->serviceClient = $serviceClient;
         $this->clientOptions = $options ?? new ClientOptions();
         $this->dataConverter = $dc ?? DataConverter::createDefault();
+
+        $this->reader = new AttributeReader();
+        $this->marshaller = new Marshaller(
+            new AttributeMapperFactory($this->reader)
+        );
     }
 
     /**
@@ -62,11 +78,14 @@ class Client implements ClientInterface
      */
     public function newWorkflowStub(string $class, WorkflowOptions $options = null): WorkflowProxy
     {
-//        $workflows = (new WorkflowReader($this->reader))->fromClass($class);
-//
-//        $options ??= new WorkflowOptions();
-//
-//        return new WorkflowProxy($this->serviceClient, $this->marshaller, $class, $workflows, $options);
+        /** @var WorkflowPrototype[] $workflows */
+        $workflows = (new WorkflowReader($this->reader))->fromClass($class);
+
+        return new WorkflowProxy(
+            $this->newUntypedWorkflowStub($workflows[0]->getID(), $options),
+            $workflows[0],
+            $class
+        );
     }
 
     /**

@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
+use Temporal\DataConverter\EncodedValues;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Internal\Support\DateInterval;
 
@@ -30,8 +31,8 @@ interface WorkflowStubInterface
     public function getOptions(): WorkflowOptions;
 
     /**
-     * @todo: use GRPC type
      * @return WorkflowExecution
+     * @todo: use GRPC type
      */
     public function getExecution(): WorkflowExecution;
 
@@ -44,15 +45,15 @@ interface WorkflowStubInterface
     /**
      * @param string $name
      * @param array $args
-     * @return mixed
+     * @return EncodedValues
      */
-    public function query(string $name, array $args = []);
+    public function query(string $name, array $args = []): EncodedValues;
 
     /**
      * @param mixed ...$args
-     * @return WorkflowExecution
+     * @return WorkflowExecution|null
      */
-    public function start(...$args): WorkflowExecution;
+    public function start(...$args): ?WorkflowExecution;
 
     /**
      * @param string $signal
@@ -64,10 +65,11 @@ interface WorkflowStubInterface
 
     /**
      * @param DateIntervalValue|null $timeout
+     * @param mixed $returnType
      * @return mixed
      * @see DateInterval
      */
-    public function getResult($timeout = null);
+    public function getResult($timeout = null, $returnType = null);
 
     /**
      * @return void

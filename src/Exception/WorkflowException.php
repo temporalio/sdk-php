@@ -11,6 +11,7 @@ namespace Temporal\Exception;
 
 use Temporal\Workflow\WorkflowExecution;
 
+// todo: move to client folder
 class WorkflowException extends TemporalException
 {
     /**
@@ -24,17 +25,21 @@ class WorkflowException extends TemporalException
     private ?string $type;
 
     /**
-     * @param string $message
+     * @param string|null $message
      * @param WorkflowExecution $execution
      * @param string|null $type
      * @param \Throwable|null $previous
      */
     public function __construct(
-        string $message,
+        ?string $message,
         WorkflowExecution $execution,
         string $type = null,
         \Throwable $previous = null
     ) {
+        if ($message === null) {
+            $message = self::buildMessage($execution, $type);
+        }
+
         parent::__construct($message, 0, $previous);
         $this->execution = $execution;
         $this->type = $type;
@@ -54,5 +59,19 @@ class WorkflowException extends TemporalException
     public function getWorkflowType(): ?string
     {
         return $this->type;
+    }
+
+    /**
+     * @param WorkflowExecution $execution
+     * @param string|null $workflowType
+     * @return string
+     */
+    private static function buildMessage(WorkflowExecution $execution, ?string $workflowType): string
+    {
+        return "workflowId='"
+            . $execution->id
+            . "', runId='"
+            . $execution->runId
+            . ($workflowType == null ? "" : "', workflowType='" . $workflowType . '\'');
     }
 }

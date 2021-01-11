@@ -65,7 +65,7 @@ abstract class BaseClient implements ServiceClientInterface
         // todo: retry?
 
         if ($status->code !== 0) {
-            throw new ClientException($status->details, $status->code);
+            throw new ClientException($status);
         }
 
         return $result;
