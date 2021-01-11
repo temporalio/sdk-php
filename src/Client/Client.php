@@ -74,6 +74,14 @@ class Client implements ClientInterface
     }
 
     /**
+     * @return ServiceClientInterface
+     */
+    public function getServiceClient(): ServiceClientInterface
+    {
+        return $this->serviceClient;
+    }
+
+    /**
      * {@inheritDoc}
      */
     public function newWorkflowStub(string $class, WorkflowOptions $options = null): WorkflowProxy
@@ -107,8 +115,12 @@ class Client implements ClientInterface
     /**
      * {@inheritDoc}
      */
-    public function newActivityClient(): ActivityCompletionClientInterface
+    public function newActivityCompletionClient(): ActivityCompletionClientInterface
     {
-        //   return new ActivityCompletionClient($this->serviceClient, $this->options->namespace);
+        return new ActivityCompletionClient(
+            $this->serviceClient,
+            $this->clientOptions,
+            $this->dataConverter
+        );
     }
 }

@@ -21,11 +21,10 @@ $client = new Client\Client(
 //
 //dump($run->getResult());
 
-
 $w = $client->newWorkflowStub(
     \Temporal\Tests\Workflow\QueryWorkflow::class,
     Client\WorkflowOptions::new()
-        ->withWorkflowId('test2')
+        ->withWorkflowId('test')
 );
 
 $run = $w->handler();

@@ -12,12 +12,18 @@ declare(strict_types=1);
 namespace Temporal\Client;
 
 use JetBrains\PhpStorm\ExpectedValues;
+use Temporal\Client\GRPC\ServiceClientInterface;
 
 /**
  * @psalm-import-type ReloadGroupFlags from ReloadGroup
  */
 interface ClientInterface
 {
+    /**
+     * @return ServiceClientInterface
+     */
+    public function getServiceClient(): ServiceClientInterface;
+
     /**
      * @psalm-template T of object
      * @param class-string<T> $class
@@ -36,5 +42,5 @@ interface ClientInterface
     /**
      * @return ActivityCompletionClientInterface
      */
-    public function newActivityClient(): ActivityCompletionClientInterface;
+    public function newActivityCompletionClient(): ActivityCompletionClientInterface;
 }

@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Workflow;
 
-use GPBMetadata\Temporal\Api\Enums\V1\Workflow;
 use Temporal\Api\Common\V1\Memo;
 use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\Api\Common\V1\WorkflowType;
@@ -19,7 +18,6 @@ use Temporal\Api\Enums\V1\EventType;
 use Temporal\Api\Enums\V1\HistoryEventFilterType;
 use Temporal\Api\Enums\V1\RetryState;
 use Temporal\Api\Enums\V1\TimeoutType;
-use Temporal\Api\Errordetails\V1\NamespaceNotActiveFailure;
 use Temporal\Api\Errordetails\V1\QueryFailedFailure;
 use Temporal\Api\Errordetails\V1\WorkflowExecutionAlreadyStartedFailure;
 use Temporal\Api\History\V1\HistoryEvent;
