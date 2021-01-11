@@ -82,7 +82,12 @@ final class WorkflowProxy extends Proxy
         // Otherwise, we try to find a suitable workflow "query" method.
         foreach ($this->prototype->getQueryHandlers() as $name => $query) {
             if ($query->getName() === $method) {
-                return $this->stub->query($name, $args);
+                $result = $this->stub->query($name, $args);
+                if ($result === null) {
+                    return null;
+                }
+
+                return $result->getValue(0, $query->getReturnType());
             }
         }
 

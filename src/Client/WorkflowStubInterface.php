@@ -32,7 +32,6 @@ interface WorkflowStubInterface
 
     /**
      * @return WorkflowExecution
-     * @todo: use GRPC type
      */
     public function getExecution(): WorkflowExecution;
 
@@ -45,9 +44,9 @@ interface WorkflowStubInterface
     /**
      * @param string $name
      * @param array $args
-     * @return EncodedValues
+     * @return EncodedValues|null
      */
-    public function query(string $name, array $args = []): EncodedValues;
+    public function query(string $name, array $args = []): ?EncodedValues;
 
     /**
      * @param mixed ...$args

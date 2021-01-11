@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Workflow;
 
+use GPBMetadata\Temporal\Api\Enums\V1\Workflow;
 use Temporal\Api\Common\V1\Memo;
 use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\Api\Common\V1\WorkflowType;
@@ -18,12 +19,16 @@ use Temporal\Api\Enums\V1\EventType;
 use Temporal\Api\Enums\V1\HistoryEventFilterType;
 use Temporal\Api\Enums\V1\RetryState;
 use Temporal\Api\Enums\V1\TimeoutType;
+use Temporal\Api\Errordetails\V1\NamespaceNotActiveFailure;
+use Temporal\Api\Errordetails\V1\QueryFailedFailure;
+use Temporal\Api\Errordetails\V1\WorkflowExecutionAlreadyStartedFailure;
 use Temporal\Api\History\V1\HistoryEvent;
 use Temporal\Api\Query\V1\WorkflowQuery;
 use Temporal\Api\Taskqueue\V1\TaskQueue;
 use Temporal\Api\Workflowservice\V1\GetWorkflowExecutionHistoryRequest;
 use Temporal\Api\Workflowservice\V1\QueryWorkflowRequest;
 use Temporal\Api\Workflowservice\V1\RequestCancelWorkflowExecutionRequest;
+use Temporal\Api\Workflowservice\V1\SignalWithStartWorkflowExecutionRequest;
 use Temporal\Api\Workflowservice\V1\SignalWorkflowExecutionRequest;
 use Temporal\Api\Workflowservice\V1\StartWorkflowExecutionRequest;
 use Temporal\Api\Workflowservice\V1\TerminateWorkflowExecutionRequest;
@@ -36,6 +41,7 @@ use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Type;
+use Temporal\Exception\Client\WorkflowExecutionAlreadyStartedException;
 use Temporal\Exception\Client\WorkflowQueryException;
 use Temporal\Exception\Client\WorkflowQueryRejectedException;
 use Temporal\Exception\ClientException;
@@ -149,8 +155,6 @@ final class WorkflowStub implements WorkflowStubInterface
      */
     public function start(...$args): WorkflowExecution
     {
-        $this->assertNotStarted();
-
         $r = new StartWorkflowExecutionRequest();
         $r->setRequestId(Uuid::v4());
         $r->setIdentity($this->clientOptions->identity);
@@ -193,14 +197,121 @@ final class WorkflowStub implements WorkflowStubInterface
 //                );
 //            }
 //        }
-
         // todo: map timings
 
         if ($args !== []) {
             $r->setInput(EncodedValues::createFromValues($args, $this->dataConverter)->toPayloads());
         }
 
-        $response = $this->serviceClient->StartWorkflowExecution($r);
+        if ($args !== []) {
+            $r->setInput(EncodedValues::createFromValues($args, $this->dataConverter)->toPayloads());
+        }
+
+        try {
+            $response = $this->serviceClient->StartWorkflowExecution($r);
+        } catch (ClientException $e) {
+            $f = $e->tryFailure(
+                WorkflowExecutionAlreadyStartedFailure::class,
+                'Workflow execution is already running'
+            );
+
+            if ($f instanceof WorkflowExecutionAlreadyStartedFailure) {
+                $this->execution = new WorkflowExecution($r->getWorkflowId(), $f->getRunId());
+                throw new WorkflowExecutionAlreadyStartedException(
+                    $this->execution,
+                    $this->workflowType,
+                    $e
+                );
+            }
+
+            throw $e;
+        }
+
+        return $this->execution = new WorkflowExecution($this->options->workflowId, $response->getRunId());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function signalWithStart(string $signal, array $signalArgs = [], array $startArgs = []): WorkflowExecution
+    {
+        $this->assertNotStarted();
+
+        $r = new SignalWithStartWorkflowExecutionRequest();
+        $r->setRequestId(Uuid::v4());
+        $r->setIdentity($this->clientOptions->identity);
+        $r->setNamespace($this->clientOptions->namespace);
+
+        $r->setWorkflowId($this->options->workflowId);
+        $r->setCronSchedule($this->options->cronSchedule);
+        $r->setWorkflowType(new WorkflowType(['name' => $this->workflowType]));
+        $r->setTaskQueue(new TaskQueue(['name' => $this->options->taskQueue]));
+
+        if (is_array($this->options->memo)) {
+            $memo = new Memo();
+            $memo->setFields($this->options->memo);
+            $r->setMemo($memo);
+        }
+
+        if (is_array($this->options->searchAttributes)) {
+            $search = new SearchAttributes();
+            $search->setIndexedFields($this->options->searchAttributes);
+            $r->setSearchAttributes($search);
+        }
+
+        if ($this->options->cronSchedule !== null) {
+            $r->setCronSchedule($this->options->cronSchedule);
+        }
+
+        if ($this->options->workflowIdReusePolicy !== null) {
+            $r->setWorkflowIdReusePolicy($this->options->workflowIdReusePolicy);
+        }
+
+        // todo: map retry options
+//        if ($this->options->retryOptions !== null) {
+//            $ro = new RetryPolicy();
+//            $ro->setBackoffCoefficient($this->options->retryOptions->backoffCoefficient);
+//
+//            if ($this->options->retryOptions->initialInterval !== null) {
+//                // todo: has to be updated
+//                $ro->setInitialInterval(
+//                    new Duration(['seconds' => $this->options->retryOptions->initialInterval->s])
+//                );
+//            }
+//        }
+
+
+        // todo: map timings
+
+        $r->setSignalName($signal);
+
+        if ($startArgs !== []) {
+            $r->setInput(EncodedValues::createFromValues($startArgs, $this->dataConverter)->toPayloads());
+        }
+
+        if ($signalArgs !== []) {
+            $r->setSignalInput(EncodedValues::createFromValues($signalArgs, $this->dataConverter)->toPayloads());
+        }
+
+        try {
+            $response = $this->serviceClient->SignalWithStartWorkflowExecution($r);
+        } catch (ClientException $e) {
+            $f = $e->tryFailure(
+                WorkflowExecutionAlreadyStartedFailure::class,
+                'Workflow execution is already running'
+            );
+
+            if ($f instanceof WorkflowExecutionAlreadyStartedFailure) {
+                $this->execution = new WorkflowExecution($r->getWorkflowId(), $f->getRunId());
+                throw new WorkflowExecutionAlreadyStartedException(
+                    $this->execution,
+                    $this->workflowType,
+                    $e
+                );
+            }
+
+            throw $e;
+        }
 
         return $this->execution = new WorkflowExecution($this->options->workflowId, $response->getRunId());
     }
@@ -233,30 +344,6 @@ final class WorkflowStub implements WorkflowStubInterface
     /**
      * {@inheritDoc}
      */
-    public function signalWithStart(string $signal, array $signalArgs = [], array $startArgs = []): WorkflowExecution
-    {
-        $this->assertNotStarted();
-
-        $result = $this->serviceClient->call(
-            'temporal.SignalWithStartWorkflow',
-            [
-                'name' => $this->getWorkflowType(),
-                'input' => $startArgs,
-                'signal_name' => $signal,
-                'signal_args' => $signalArgs,
-                'options' => $this->getOptionsArray(),
-            ]
-        );
-
-        assert(\is_string($result['wid'] ?? null));
-        assert(\is_string($result['rid'] ?? null));
-
-        return $this->execution = new WorkflowExecution($result['wid'], $result['rid']);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public function signal(string $name, array $args = []): void
     {
         $this->assertStarted(__FUNCTION__);
@@ -266,6 +353,7 @@ final class WorkflowStub implements WorkflowStubInterface
         $r->setIdentity($this->clientOptions->identity);
         $r->setNamespace($this->clientOptions->namespace);
         $r->setWorkflowExecution($this->getProtoWorkflowExecution());
+        $r->setSignalName($name);
 
         if ($args !== []) {
             $r->setInput(EncodedValues::createFromValues($args, $this->dataConverter)->toPayloads());
@@ -311,8 +399,8 @@ final class WorkflowStub implements WorkflowStubInterface
         } catch (ClientException $e) {
             if ($e->getCode() === StatusCode::NOT_FOUND) {
                 throw new WorkflowNotFoundException(null, $this->execution, $this->workflowType, $e);
-            } elseif (count($e->getStatus()->detauls) !== 0) {
-                // todo: access failure details?
+            } elseif ($e->tryFailure(QueryFailedFailure::class, 'query') !== null) {
+                // todo: verify properly working
                 throw new WorkflowQueryException(null, $this->execution, $this->workflowType, $e);
             }
 

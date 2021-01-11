@@ -62,7 +62,7 @@ abstract class BaseClient implements ServiceClientInterface
         $call = $this->workflowService->{$method}($arg);
         [$result, $status] = $call->wait();
 
-        // todo: retry?
+         // todo: retry?
 
         if ($status->code !== 0) {
             throw new ClientException($status);
