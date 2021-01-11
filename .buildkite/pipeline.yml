@@ -1,5 +1,5 @@
 steps:
-  - label: ":golang: check"
+  - label: ":phplang: check"
     agents:
       queue: "default"
       docker: "*"

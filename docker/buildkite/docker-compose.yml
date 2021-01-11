@@ -36,3 +36,7 @@ services:
         aliases:
           - build
 
+networks:
+  services-network:
+    name: services-network
+    driver: bridge
