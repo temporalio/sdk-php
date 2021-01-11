@@ -1,5 +1,5 @@
 steps:
-  - label: ":php: check"
+  - label: ":go: check"
     agents:
       queue: "default"
       docker: "*"
