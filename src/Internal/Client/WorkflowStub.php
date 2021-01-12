@@ -45,7 +45,7 @@ use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\TerminatedFailure;
 use Temporal\Exception\Failure\TimeoutFailure;
 use Temporal\Exception\IllegalStateException;
-use Temporal\Exception\TimeoutException;
+use Temporal\Exception\Client\TimeoutException;
 use Temporal\Exception\WorkflowExecutionFailedException;
 use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Client\WorkflowNotFoundException;

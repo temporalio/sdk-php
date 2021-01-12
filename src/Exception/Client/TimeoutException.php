@@ -9,8 +9,9 @@
 
 namespace Temporal\Exception\Client;
 
+use Temporal\Exception\TemporalException;
 
-class TimeoutException
+class TimeoutException extends TemporalException
 {
 
 }
