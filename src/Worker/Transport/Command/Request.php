@@ -11,47 +11,36 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Transport\Command;
 
-use Temporal\Api\Failure\V1\Failure;
+use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\ValuesInterface;
 
+/**
+ * Carries request to perform host action with payloads and failure as context. Can be cancelled if allows
+ */
 class Request extends Command implements RequestInterface
 {
     protected const CANCELLABLE = false;
 
-    /**
-     * @var string
-     */
     protected string $name;
-
-    /**
-     * @var array
-     */
-    protected array $params;
-
-    /**
-     * @var array
-     */
-    protected array $payloads;
-
-    /**
-     * @var \Throwable|null
-     */
+    protected array $options;
+    protected ValuesInterface $payloads;
     protected ?\Throwable $failure = null;
 
     /**
      * @param string $name
-     * @param array $params
-     * @param array $payloads
+     * @param array $options
+     * @param ValuesInterface|null $payloads
      * @param int|null $id
      */
     public function __construct(
         string $name,
-        array $params = [],
-        array $payloads = [],
+        array $options = [],
+        ValuesInterface $payloads = null,
         int $id = null
     ) {
         $this->name = $name;
-        $this->params = $params;
-        $this->payloads = $payloads;
+        $this->options = $options;
+        $this->payloads = $payloads ?? EncodedValues::empty();
 
         parent::__construct($id);
     }
@@ -69,23 +58,23 @@ class Request extends Command implements RequestInterface
      */
     public function getOptions(): array
     {
-        return $this->params;
+        return $this->options;
     }
 
     /**
-     * @return array
+     * @return ValuesInterface
      */
-    public function getPayloads(): array
+    public function getPayloads(): ValuesInterface
     {
         return $this->payloads;
     }
 
     /**
-     * @param \Throwable|null $e
+     * @param \Throwable|null $failure
      */
-    public function setFailure(?\Throwable $e)
+    public function setFailure(?\Throwable $failure)
     {
-        $this->failure = $e;
+        $this->failure = $failure;
     }
 
     /**

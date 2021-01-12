@@ -19,19 +19,8 @@ use Temporal\Worker\Transport\Command\CommandInterface;
 
 final class JsonCodec implements CodecInterface
 {
-    /**
-     * @var int
-     */
     private int $maxDepth;
-
-    /**
-     * @var Decoder
-     */
     private Decoder $parser;
-
-    /**
-     * @var Encoder
-     */
     private Encoder $serializer;
 
     /**
@@ -56,7 +45,7 @@ final class JsonCodec implements CodecInterface
 
             foreach ($commands as $command) {
                 assert($command instanceof CommandInterface);
-                $result[] = $this->serializer->serialize($command);
+                $result[] = $this->serializer->encode($command);
             }
 
             return \json_encode($result, \JSON_THROW_ON_ERROR, $this->maxDepth);
@@ -75,7 +64,7 @@ final class JsonCodec implements CodecInterface
 
             foreach ($commands as $command) {
                 assert(\is_array($command));
-                yield $this->parser->parse($command);
+                yield $this->parser->decode($command);
             }
         } catch (\Throwable $e) {
             throw new ProtocolException($e->getMessage(), $e->getCode(), $e);

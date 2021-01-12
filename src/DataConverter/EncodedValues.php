@@ -64,6 +64,8 @@ class EncodedValues implements ValuesInterface
      */
     public function getValue(int $index, $type = null)
     {
+        // todo: optimize
+
         if (isset($this->values[$index])) {
             return $this->values[$index];
         }
@@ -103,18 +105,12 @@ class EncodedValues implements ValuesInterface
 
         $data = [];
         foreach ($this->values as $value) {
-            // todo: skip this step
-            $payload = $this->dataConverter->toPayload($value);
-
-            $pp = new \Temporal\Api\Common\V1\Payload();
-            $pp->setMetadata($payload->getMetadata());
-            $pp->setData($payload->getData());
-
-            $data[] = $pp;
+            $data[] = $this->dataConverter->toPayload($value);
         }
 
         $payloads = new Payloads();
         $payloads->setPayloads($data);
+
         return $payloads;
     }
 
@@ -131,7 +127,7 @@ class EncodedValues implements ValuesInterface
     /**
      * @return EncodedValues
      */
-    public static function createEmpty(): EncodedValues
+    public static function empty(): EncodedValues
     {
         $ev = new self();
         $ev->values = [];
@@ -158,7 +154,7 @@ class EncodedValues implements ValuesInterface
      * @param DataConverterInterface|null $dataConverter
      * @return EncodedValues
      */
-    public static function createFromPayloads(Payloads $payloads, DataConverterInterface $dataConverter): EncodedValues
+    public static function fromPayloads(Payloads $payloads, DataConverterInterface $dataConverter): EncodedValues
     {
         $ev = new self();
         $ev->payloads = $payloads;
@@ -166,6 +162,4 @@ class EncodedValues implements ValuesInterface
 
         return $ev;
     }
-
-    // todo: create sliced
 }

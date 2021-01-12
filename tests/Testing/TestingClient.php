@@ -16,7 +16,7 @@ use React\Promise\PromiseInterface;
 use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Internal\Transport\Client;
 use Temporal\Worker\Transport\Command\CommandInterface;
-use Temporal\Worker\Transport\Command\ErrorResponse;
+use Temporal\Worker\Transport\Command\FailureResponse;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\SuccessResponse;
 use Temporal\Worker\LoopInterface;
@@ -60,7 +60,7 @@ class TestingClient extends CapturedClient
      */
     public function error(RequestInterface $request, \Throwable $error): TestingErrorResponse
     {
-        $response = ErrorResponse::fromException($error, $request->getID());
+        $response = FailureResponse::fromException($error, $request->getID());
 
         $this->parent->dispatch($response);
 

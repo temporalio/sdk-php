@@ -12,12 +12,13 @@ declare(strict_types=1);
 namespace Temporal\Worker\Transport\Codec\JsonCodec;
 
 use JetBrains\PhpStorm\Pure;
+use Temporal\Api\Common\V1\Payloads;
 use Temporal\Api\Failure\V1\Failure;
 use Temporal\DataConverter\DataConverterInterface;
-use Temporal\DataConverter\Payload;
+use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Worker\Transport\Command\CommandInterface;
-use Temporal\Worker\Transport\Command\ErrorResponse;
+use Temporal\Worker\Transport\Command\FailureResponse;
 use Temporal\Worker\Transport\Command\ErrorResponseInterface;
 use Temporal\Worker\Transport\Command\Request;
 use Temporal\Worker\Transport\Command\RequestInterface;
@@ -26,13 +27,9 @@ use Temporal\Worker\Transport\Command\SuccessResponseInterface;
 
 class Decoder
 {
-    /**
-     * @var DataConverterInterface
-     */
     private DataConverterInterface $converter;
 
     /**
-     * Decoder constructor.
      * @param DataConverterInterface $dataConverter
      */
     public function __construct(DataConverterInterface $dataConverter)
@@ -43,14 +40,15 @@ class Decoder
     /**
      * @param array $command
      * @return CommandInterface
+     * @throws \Exception
      */
-    public function parse(array $command): CommandInterface
+    public function decode(array $command): CommandInterface
     {
         switch (true) {
             case isset($command['command']):
                 return $this->parseRequest($command);
 
-            case isset($command['failure']) :
+            case isset($command['failure']):
                 return $this->parseFailureResponse($command);
 
             default:
@@ -61,43 +59,46 @@ class Decoder
     /**
      * @param array $data
      * @return RequestInterface
+     * @throws \Exception
      */
     private function parseRequest(array $data): RequestInterface
     {
         $this->assertCommandID($data);
 
-        if (!\is_string($data['command']) || $data['command'] === '') {
-            throw new \InvalidArgumentException('Request command must be a non-empty string');
+        $payloads = new Payloads();
+        if (isset($data['payloads'])) {
+            $payloads->mergeFromString(base64_decode($data['payloads']));
         }
 
-        if (isset($data['options']) && !\is_array($data['options'])) {
-            throw new \InvalidArgumentException('Request params must be an object');
+        $request = new Request(
+            $data['command'],
+            $data['options'] ?? [],
+            EncodedValues::fromPayloads($payloads, $this->converter),
+            $data['id']
+        );
+
+        if (isset($data['failure'])) {
+            $failure = new Failure();
+            $failure->mergeFromString(base64_decode($data['failure']));
+            $request->setFailure(FailureConverter::mapFailureToException($failure, $this->converter));
         }
 
-        $payloads = [];
-        if (isset($data['payloads']['payloads'])) {
-            $payloads = $this->decodePayloads($data['payloads']['payloads']);
-        }
-
-        return new Request($data['command'], $data['options'] ?? [], $payloads, $data['id']);
+        return $request;
     }
 
     /**
      * @param array $data
      * @return ErrorResponseInterface
+     * @throws \Exception
      */
     private function parseFailureResponse(array $data): ErrorResponseInterface
     {
         $this->assertCommandID($data);
 
-        if (!isset($data['failure']) || !\is_string($data['failure'])) {
-            throw new \InvalidArgumentException('An error response must contain an object "error" field');
-        }
-
         $failure = new Failure();
         $failure->mergeFromString(base64_decode($data['failure']));
 
-        return new ErrorResponse(
+        return new FailureResponse(
             FailureConverter::mapFailureToException($failure, $this->converter),
             $data['id']
         );
@@ -106,36 +107,18 @@ class Decoder
     /**
      * @param array $data
      * @return SuccessResponseInterface
+     * @throws \Exception
      */
     private function parseResponse(array $data): SuccessResponseInterface
     {
         $this->assertCommandID($data);
 
-        $payloads = [];
-        if (isset($data['payloads']['payloads'])) {
-            $payloads = $this->decodePayloads($data['payloads']['payloads']);
+        $payloads = new Payloads();
+        if (isset($data['payloads'])) {
+            $payloads->mergeFromString(base64_decode($data['payloads']));
         }
 
-        return new SuccessResponse($payloads, $data['id']);
-    }
-
-    /**
-     * Decodes payloads from the incoming request into internal representation.
-     *
-     * @param array $payloads
-     * @return array<Payload>
-     */
-    private function decodePayloads(array $payloads): array
-    {
-        return array_map(
-            static function ($value) {
-                return Payload::create(
-                    array_map('base64_decode', $value['metadata']),
-                    ($value['data'] ?? null) === null ? null : base64_decode($value['data'])
-                );
-            },
-            $payloads
-        );
+        return new SuccessResponse(EncodedValues::fromPayloads($payloads, $this->converter), $data['id']);
     }
 
     /**

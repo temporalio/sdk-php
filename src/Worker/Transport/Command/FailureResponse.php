@@ -14,11 +14,8 @@ namespace Temporal\Worker\Transport\Command;
 /**
  * Carries failure response.
  */
-class ErrorResponse extends Response implements ErrorResponseInterface
+class FailureResponse extends Response implements ErrorResponseInterface
 {
-    /**
-     * @var \Throwable
-     */
     protected \Throwable $failure;
 
     /**

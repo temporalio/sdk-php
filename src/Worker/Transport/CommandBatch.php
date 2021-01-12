@@ -11,16 +11,12 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Transport;
 
-final class Batch
+/**
+ * Carries multiple commands between host and worker process (use proper codec to read command content).
+ */
+final class CommandBatch
 {
-    /**
-     * @var string|null
-     */
     public ?string $messages;
-
-    /**
-     * @var array
-     */
     public array $context;
 
     /**

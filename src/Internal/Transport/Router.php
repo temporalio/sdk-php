@@ -73,12 +73,10 @@ final class Router implements RouterInterface
 
         if ($route === null) {
             $error = \sprintf(self::ERROR_ROUTE_NOT_FOUND, $request->getName());
-
             return reject(new \BadMethodCallException($error));
         }
 
         $deferred = new Deferred();
-
         try {
             $route->handle($request, $headers, $deferred);
         } catch (\Throwable $e) {

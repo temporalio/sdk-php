@@ -19,10 +19,10 @@ use Temporal\Exception\TransportException;
 interface RelayConnectionInterface
 {
     /**
-     * @return Batch|null
+     * @return CommandBatch|null
      * @throws TransportException
      */
-    public function await(): ?Batch;
+    public function await(): ?CommandBatch;
 
     /**
      * @param string $frame

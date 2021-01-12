@@ -5,6 +5,7 @@ namespace Temporal\Workflow;
 
 use Temporal\Client\WorkflowStubInterface;
 
+// todo: move to client (?)
 final class WorkflowRun
 {
     /**

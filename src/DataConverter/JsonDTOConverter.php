@@ -17,6 +17,7 @@ use Spiral\Attributes\AnnotationReader;
 use Spiral\Attributes\AttributeReader;
 use Spiral\Attributes\Composite\SelectiveReader;
 use Spiral\Attributes\ReaderInterface;
+use Temporal\Api\Common\V1\Payload;
 use Temporal\Exception\DataConverterException;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
@@ -25,7 +26,7 @@ use Temporal\Internal\Marshaller\MarshallerInterface;
 /**
  * Json converter with the ability to serialize/unserialize DTO objects using JSON.
  */
-class JsonDTOConverter implements PayloadConverterInterface
+class JsonDTOConverter extends Converter
 {
     /**
      * @var string
@@ -67,10 +68,7 @@ class JsonDTOConverter implements PayloadConverterInterface
         }
 
         try {
-            return Payload::create(
-                [EncodingKeys::METADATA_ENCODING_KEY => EncodingKeys::METADATA_ENCODING_JSON],
-                \json_encode($value, \JSON_THROW_ON_ERROR)
-            );
+            return self::create(\json_encode($value, \JSON_THROW_ON_ERROR));
         } catch (\Throwable $e) {
             throw new DataConverterException($e->getMessage(), $e->getCode(), $e);
         }

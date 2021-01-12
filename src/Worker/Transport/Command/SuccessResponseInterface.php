@@ -11,12 +11,12 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Transport\Command;
 
-use Temporal\DataConverter\Payload;
+use Temporal\DataConverter\ValuesInterface;
 
 interface SuccessResponseInterface extends ResponseInterface
 {
     /**
-     * @return array<Payload>
+     * @return ValuesInterface
      */
-    public function getPayloads(): array;
+    public function getPayloads(): ValuesInterface;
 }

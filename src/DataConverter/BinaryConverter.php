@@ -11,9 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\DataConverter;
 
+use Temporal\Api\Common\V1\Payload;
 use Temporal\Exception\DataConverterException;
 
-class BinaryConverter implements PayloadConverterInterface
+class BinaryConverter extends Converter
 {
     /**
      * @return string
@@ -33,10 +34,7 @@ class BinaryConverter implements PayloadConverterInterface
             return null;
         }
 
-        return Payload::create(
-            [EncodingKeys::METADATA_ENCODING_KEY => EncodingKeys::METADATA_ENCODING_RAW],
-            $value->getData()
-        );
+        return self::create($value->getData());
     }
 
     /**

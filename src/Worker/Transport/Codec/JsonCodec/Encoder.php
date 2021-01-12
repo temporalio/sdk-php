@@ -21,14 +21,8 @@ use Temporal\Worker\Transport\Command\SuccessResponseInterface;
 
 class Encoder
 {
-    /**
-     * @var string
-     */
     private const ERROR_INVALID_COMMAND = 'Unserializable command type %s';
 
-    /**
-     * @var DataConverterInterface
-     */
     private DataConverterInterface $converter;
 
     /**
@@ -43,10 +37,12 @@ class Encoder
      * @param CommandInterface $cmd
      * @return array
      */
-    public function serialize(CommandInterface $cmd): array
+    public function encode(CommandInterface $cmd): array
     {
         switch (true) {
             case $cmd instanceof RequestInterface:
+                $cmd->getPayloads()->setDataConverter($this->converter);
+
                 $options = $cmd->getOptions();
                 if ($options === []) {
                     $options = new \stdClass();
@@ -56,7 +52,7 @@ class Encoder
                     'id' => $cmd->getID(),
                     'command' => $cmd->getName(),
                     'options' => $options,
-                    'payloads' => ['payloads' => $this->encodePayloads($cmd->getPayloads())],
+                    'payloads' => base64_encode($cmd->getPayloads()->toPayloads()->serializeToString()),
                 ];
 
                 if ($cmd->getFailure() !== null) {
@@ -75,35 +71,15 @@ class Encoder
                 ];
 
             case $cmd instanceof SuccessResponseInterface:
+                $cmd->getPayloads()->setDataConverter($this->converter);
+
                 return [
                     'id' => $cmd->getID(),
-                    'payloads' => ['payloads' => $this->encodePayloads($cmd->getPayloads())],
+                    'payloads' => base64_encode($cmd->getPayloads()->toPayloads()->serializeToString()),
                 ];
 
             default:
                 throw new \InvalidArgumentException(\sprintf(self::ERROR_INVALID_COMMAND, \get_class($cmd)));
         }
-    }
-
-    /**
-     * JSON require base64 encoding for all the payload data
-     *
-     * @param array $values
-     * @return array
-     */
-    private function encodePayloads(array $values): array
-    {
-        $result = [];
-        /** @var Payload $payload */
-        foreach ($values as $value) {
-            $encoded = $this->converter->toPayload($value);
-
-            $result[] = [
-                'metadata' => array_map('base64_encode', $encoded->getMetadata()),
-                'data' => base64_encode($encoded->getData())
-            ];
-        }
-
-        return $result;
     }
 }

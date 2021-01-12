@@ -10,9 +10,10 @@
 namespace Temporal\DataConverter;
 
 use Google\Protobuf\Internal\Message;
+use Temporal\Api\Common\V1\Payload;
 use Temporal\Exception\DataConverterException;
 
-class ProtoConverter implements PayloadConverterInterface
+class ProtoConverter extends Converter
 {
     /**
      * @return string
@@ -32,10 +33,7 @@ class ProtoConverter implements PayloadConverterInterface
             return null;
         }
 
-        return Payload::create(
-            [EncodingKeys::METADATA_ENCODING_KEY => EncodingKeys::METADATA_ENCODING_PROTOBUF],
-            $value->serializeToString()
-        );
+        return self::create($value->serializeToString());
     }
 
     /**

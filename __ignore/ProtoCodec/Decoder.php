@@ -15,7 +15,7 @@ use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\Payload;
 use Temporal\Roadrunner\Internal\Message;
 use Temporal\Worker\Transport\Command\CommandInterface;
-use Temporal\Worker\Transport\Command\ErrorResponse;
+use Temporal\Worker\Transport\Command\FailureResponse;
 use Temporal\Worker\Transport\Command\ErrorResponseInterface;
 use Temporal\Worker\Transport\Command\Request;
 use Temporal\Worker\Transport\Command\RequestInterface;
@@ -83,7 +83,7 @@ class Decoder
     {
         // todo: access payloads
 
-        return new ErrorResponse(
+        return new FailureResponse(
             $msg->getError()->getMessage(),
             $msg->getError()->getCode(),
             json_decode($msg->getError()->getData()),

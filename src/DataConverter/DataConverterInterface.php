@@ -11,19 +11,11 @@ declare(strict_types=1);
 
 namespace Temporal\DataConverter;
 
+use Temporal\Api\Common\V1\Payload;
 use Temporal\Exception\DataConverterException;
 
 interface DataConverterInterface
 {
-    /**
-     * @param array<Payload> $payloads
-     * @param array<\ReflectionType> $types
-     * @return array
-     *
-     * @throws DataConverterException
-     */
-    public function fromPayloads(array $payloads, array $types): array;
-
     /**
      * @param Payload $payload
      * @param Type|string $type
@@ -32,14 +24,6 @@ interface DataConverterInterface
      * @throws DataConverterException
      */
     public function fromPayload(Payload $payload, $type);
-
-    /**
-     * @param array $values
-     * @return array<Payload>
-     *
-     * @throws DataConverterException
-     */
-    public function toPayloads(array $values): array;
 
     /**
      * @param mixed $value

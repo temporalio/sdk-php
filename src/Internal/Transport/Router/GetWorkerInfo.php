@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
-use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\EncodedValues;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Repository\RepositoryInterface;
@@ -21,9 +21,6 @@ use Temporal\Worker\Transport\Command\RequestInterface;
 
 final class GetWorkerInfo extends Route
 {
-    /**
-     * @var RepositoryInterface<TaskQueueInterface>
-     */
     private RepositoryInterface $queues;
 
     /**
@@ -40,12 +37,11 @@ final class GetWorkerInfo extends Route
     public function handle(RequestInterface $request, array $headers, Deferred $resolver): void
     {
         $result = [];
-
         foreach ($this->queues as $taskQueue) {
             $result[] = $this->workerToArray($taskQueue);
         }
 
-        $resolver->resolve($result);
+        $resolver->resolve(EncodedValues::fromValues($result));
     }
 
     /**
@@ -69,9 +65,7 @@ final class GetWorkerInfo extends Route
             'Activities' => $this->map(
                 $taskQueue->getActivities(),
                 function (ActivityPrototype $activity) {
-                    return [
-                        'Name' => $activity->getID(),
-                    ];
+                    return ['Name' => $activity->getID()];
                 }
             ),
         ];

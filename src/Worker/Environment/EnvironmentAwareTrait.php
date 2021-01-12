@@ -27,14 +27,6 @@ trait EnvironmentAwareTrait
     /**
      * {@inheritDoc}
      */
-    public function getTimeZone(): CarbonTimeZone
-    {
-        return $this->env->getTimeZone();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public function now(): CarbonInterface
     {
         return $this->env->now();

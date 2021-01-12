@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport\Request;
 
-use Temporal\Worker\Transport\Command\ErrorResponse;
+use Temporal\Worker\Transport\Command\FailureResponse;
 use Temporal\Worker\Transport\Command\Request;
 
 final class CompleteWorkflow extends Request
@@ -19,12 +19,12 @@ final class CompleteWorkflow extends Request
     public const NAME = 'CompleteWorkflow';
 
     /**
-     * @param array $result
+     * @param array $values
      * @param \Throwable|null $failure
      */
-    public function __construct(array $result, \Throwable $failure = null)
+    public function __construct(array $values, \Throwable $failure = null)
     {
-        parent::__construct(self::NAME, [], $result);
+        parent::__construct(self::NAME, [], $values);
         $this->setFailure($failure);
     }
 }

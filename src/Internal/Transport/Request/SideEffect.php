@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport\Request;
 
+use Temporal\DataConverter\ValuesInterface;
 use Temporal\Worker\Transport\Command\Request;
 
 final class SideEffect extends Request
@@ -18,10 +19,10 @@ final class SideEffect extends Request
     public const NAME = 'SideEffect';
 
     /**
-     * @param mixed $value
+     * @param ValuesInterface $values
      */
-    public function __construct(...$value)
+    public function __construct(ValuesInterface $values)
     {
-        parent::__construct(self::NAME, [], $value);
+        parent::__construct(self::NAME, [], $values);
     }
 }

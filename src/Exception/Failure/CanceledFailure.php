@@ -29,7 +29,7 @@ class CanceledFailure extends TemporalFailure
     public function __construct(string $message, ValuesInterface $details = null, Throwable $previous = null)
     {
         parent::__construct($message, "", $previous);
-        $this->details = $details ?? EncodedValues::createEmpty();
+        $this->details = $details ?? EncodedValues::empty();
     }
 
     /**

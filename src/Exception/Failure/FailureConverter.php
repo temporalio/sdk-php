@@ -185,9 +185,9 @@ final class FailureConverter
                 $info = $failure->getApplicationFailureInfo();
 
                 if ($info->hasDetails()) {
-                    $details = EncodedValues::createFromPayloads($info->getDetails(), $converter);
+                    $details = EncodedValues::fromPayloads($info->getDetails(), $converter);
                 } else {
-                    $details = EncodedValues::createEmpty();
+                    $details = EncodedValues::empty();
                 }
 
                 return new ApplicationFailure(
@@ -201,9 +201,9 @@ final class FailureConverter
             case $failure->hasTimeoutFailureInfo():
                 $info = $failure->getTimeoutFailureInfo();
                 if ($info->hasLastHeartbeatDetails()) {
-                    $details = EncodedValues::createFromPayloads($info->getLastHeartbeatDetails(), $converter);
+                    $details = EncodedValues::fromPayloads($info->getLastHeartbeatDetails(), $converter);
                 } else {
-                    $details = EncodedValues::createEmpty();
+                    $details = EncodedValues::empty();
                 }
 
                 return new TimeoutFailure(
@@ -216,9 +216,9 @@ final class FailureConverter
             case $failure->hasCanceledFailureInfo():
                 $info = $failure->getCanceledFailureInfo();
                 if ($info->hasDetails()) {
-                    $details = EncodedValues::createFromPayloads($info->getDetails(), $converter);
+                    $details = EncodedValues::fromPayloads($info->getDetails(), $converter);
                 } else {
-                    $details = EncodedValues::createEmpty();
+                    $details = EncodedValues::empty();
                 }
 
                 return new CanceledFailure($failure->getMessage(), $details, $previous);
@@ -233,9 +233,9 @@ final class FailureConverter
             case $failure->hasResetWorkflowFailureInfo():
                 $info = $failure->getResetWorkflowFailureInfo();
                 if ($info->hasLastHeartbeatDetails()) {
-                    $details = EncodedValues::createFromPayloads($info->getLastHeartbeatDetails(), $converter);
+                    $details = EncodedValues::fromPayloads($info->getLastHeartbeatDetails(), $converter);
                 } else {
-                    $details = EncodedValues::createEmpty();
+                    $details = EncodedValues::empty();
                 }
 
                 return new ApplicationFailure(

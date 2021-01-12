@@ -336,7 +336,7 @@ final class WorkflowStub implements WorkflowStubInterface
                 return null;
             }
 
-            return EncodedValues::createFromPayloads($result->getQueryResult(), $this->converter);
+            return EncodedValues::fromPayloads($result->getQueryResult(), $this->converter);
         }
 
         throw new WorkflowQueryRejectedException(
@@ -463,7 +463,7 @@ final class WorkflowStub implements WorkflowStubInterface
                     return null;
                 }
 
-                return EncodedValues::createFromPayloads($attr->getResult(), $this->converter);
+                return EncodedValues::fromPayloads($attr->getResult(), $this->converter);
             case EventType::EVENT_TYPE_WORKFLOW_EXECUTION_FAILED:
                 $attr = $closeEvent->getWorkflowExecutionFailedEventAttributes();
 
@@ -477,7 +477,7 @@ final class WorkflowStub implements WorkflowStubInterface
                 $attr = $closeEvent->getWorkflowExecutionCanceledEventAttributes();
 
                 if ($attr->hasDetails()) {
-                    $details = EncodedValues::createFromPayloads($attr->getDetails(), $this->converter);
+                    $details = EncodedValues::fromPayloads($attr->getDetails(), $this->converter);
                 } else {
                     $details = EncodedValues::fromValues([]);
                 }
@@ -514,7 +514,7 @@ final class WorkflowStub implements WorkflowStubInterface
                     $attr->getRetryState(),
                     new TimeoutFailure(
                         "",
-                        EncodedValues::createEmpty(),
+                        EncodedValues::empty(),
                         TimeoutType::TIMEOUT_TYPE_START_TO_CLOSE
                     )
                 );

@@ -5,7 +5,7 @@ namespace Temporal\Tests\Fixtures;
 use Temporal\DataConverter\DataConverter;
 use Temporal\Tests\TestCase;
 use Temporal\Worker;
-use Temporal\Worker\Transport\Batch;
+use Temporal\Worker\Transport\CommandBatch;
 
 class WorkerMock implements Worker\Transport\RelayConnectionInterface
 {
@@ -82,9 +82,9 @@ class WorkerMock implements Worker\Transport\RelayConnectionInterface
     }
 
     /**
-     * @return Batch|null
+     * @return CommandBatch|null
      */
-    public function await(): ?Batch
+    public function await(): ?CommandBatch
     {
         if (!isset($this->out[$this->indexOut])) {
             return null;
@@ -97,7 +97,7 @@ class WorkerMock implements Worker\Transport\RelayConnectionInterface
             dump($pair[0]);
         }
 
-        return new Batch(
+        return new CommandBatch(
             $pair[0],
             json_decode($pair[1], true),
         );

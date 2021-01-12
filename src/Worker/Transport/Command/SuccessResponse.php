@@ -11,31 +11,28 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Transport\Command;
 
-use Temporal\DataConverter\Payload;
+use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\ValuesInterface;
 
 class SuccessResponse extends Response implements SuccessResponseInterface
 {
-    /**
-     * @var array<Payload>
-     */
-    protected array $result;
+    protected ValuesInterface $values;
 
     /**
-     * @param array<Payload> $result
+     * @param ValuesInterface|null $values
      * @param int|null $id
      */
-    public function __construct(array $result, int $id = null)
+    public function __construct(?ValuesInterface $values, int $id)
     {
-        $this->result = $result;
-
+        $this->values = $values ?? EncodedValues::empty();
         parent::__construct($id);
     }
 
     /**
      * {@inheritDoc}
      */
-    public function getPayloads(): array
+    public function getPayloads(): ValuesInterface
     {
-        return $this->result;
+        return $this->values;
     }
 }

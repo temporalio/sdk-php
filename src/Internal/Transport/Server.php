@@ -13,7 +13,7 @@ namespace Temporal\Internal\Transport;
 
 use React\Promise\PromiseInterface;
 use Temporal\Internal\Queue\QueueInterface;
-use Temporal\Worker\Transport\Command\ErrorResponse;
+use Temporal\Worker\Transport\Command\FailureResponse;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\SuccessResponse;
 
@@ -22,33 +22,18 @@ use Temporal\Worker\Transport\Command\SuccessResponse;
  */
 final class Server implements ServerInterface
 {
-    /**
-     * @var string
-     */
     private const ERROR_INVALID_RETURN_TYPE = 'Request handler must return an instance of \%s, but returned %s';
-
-    /**
-     * @var string
-     */
     private const ERROR_INVALID_REJECTION_TYPE =
         'An internal error has occurred: ' .
         'Promise rejection must contain an instance of \Throwable, however %s is given';
 
-    /**
-     * @var \Closure
-     */
     private \Closure $onMessage;
-
-    /**
-     * @var QueueInterface
-     */
     private QueueInterface $queue;
 
     /**
      * @psalm-param OnMessageHandler $onMessage
-     *
      * @param QueueInterface $queue
-     * @param \Closure $onMessage
+     * @param callable $onMessage
      */
     public function __construct(QueueInterface $queue, callable $onMessage)
     {
@@ -74,12 +59,12 @@ final class Server implements ServerInterface
         try {
             $result = ($this->onMessage)($request, $headers);
         } catch (\Throwable $e) {
-            $this->queue->push(new ErrorResponse($e, $request->getID()));
+            $this->queue->push(new FailureResponse($e, $request->getID()));
 
             return;
         }
 
-        if (! $result instanceof PromiseInterface) {
+        if (!$result instanceof PromiseInterface) {
             $error = \sprintf(self::ERROR_INVALID_RETURN_TYPE, PromiseInterface::class, \get_debug_type($result));
             throw new \BadMethodCallException($error);
         }
@@ -109,13 +94,13 @@ final class Server implements ServerInterface
     private function onRejected(RequestInterface $request): \Closure
     {
         return function ($result) use ($request) {
-            if (! $result instanceof \Throwable) {
+            if (!$result instanceof \Throwable) {
                 $result = new \InvalidArgumentException(
                     \sprintf(self::ERROR_INVALID_REJECTION_TYPE, \get_debug_type($result))
                 );
             }
 
-            $response = new ErrorResponse($result, $request->getID());
+            $response = new FailureResponse($result, $request->getID());
 
             $this->queue->push($response);
 

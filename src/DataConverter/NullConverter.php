@@ -11,9 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\DataConverter;
 
+use Temporal\Api\Common\V1\Payload;
 use Temporal\Exception\DataConverterException;
 
-class NullConverter implements PayloadConverterInterface
+class NullConverter extends Converter
 {
     /**
      * @return string
@@ -33,10 +34,7 @@ class NullConverter implements PayloadConverterInterface
             return null;
         }
 
-        return Payload::create(
-            [EncodingKeys::METADATA_ENCODING_KEY => EncodingKeys::METADATA_ENCODING_NULL],
-            ''
-        );
+        return self::create('');
     }
 
     /**
