@@ -104,19 +104,7 @@ final class Client implements ClientInterface
             throw new \OutOfBoundsException(\sprintf(self::ERROR_REQUEST_ID_DUPLICATION, $id));
         }
 
-        $this->requests[$id] = $deferred = new Deferred(
-            function () use ($id) {
-                $request = $this->fetch($id);
-                $request->reject(CancellationException::fromRequestId($id));
-
-                // In the case that after the local promise rejection we have
-                // nothing to send, then we independently execute the next
-                // tick of the event loop.
-                if ($this->queue->count() === 0) {
-                    $this->loop->tick();
-                }
-            }
-        );
+        $this->requests[$id] = $deferred = new Deferred();
 
         return $deferred->promise();
     }

@@ -15,7 +15,6 @@ use Carbon\CarbonInterface;
 use Carbon\CarbonTimeZone;
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
-use Temporal\Exception\CancellationException;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Transport\Request\ContinueAsNew;
@@ -245,7 +244,7 @@ class WorkflowContext implements WorkflowContextInterface
     /**
      * {@inheritDoc}
      */
-    public function complete($result = null, \Throwable $failure=null): PromiseInterface
+    public function complete($result = null, \Throwable $failure = null): PromiseInterface
     {
         $this->recordTrace();
 

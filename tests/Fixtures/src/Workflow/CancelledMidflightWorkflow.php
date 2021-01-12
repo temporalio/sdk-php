@@ -3,7 +3,6 @@
 namespace Temporal\Tests\Workflow;
 
 use Temporal\Activity\ActivityOptions;
-use Temporal\Exception\CancellationException;
 use Temporal\Tests\Activity\SimpleActivity;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;

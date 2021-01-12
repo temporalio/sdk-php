@@ -20,4 +20,6 @@ interface CompletableResultInterface extends PromisorInterface, PromiseInterface
      * @return bool
      */
     public function isComplete(): bool;
+
+    // todo: get value
 }

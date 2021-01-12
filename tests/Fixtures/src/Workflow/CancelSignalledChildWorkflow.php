@@ -3,7 +3,6 @@
 namespace Temporal\Tests\Workflow;
 
 use React\Promise\Deferred;
-use Temporal\Exception\CancellationException;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 

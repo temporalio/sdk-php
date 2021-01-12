@@ -2,6 +2,7 @@
 
 namespace Temporal\Exception\Failure;
 
+use Temporal\Api\Enums\V1\RetryState;
 use Temporal\Api\Enums\V1\TimeoutType;
 use Temporal\Api\Failure\V1\Failure;
 use Temporal\DataConverter\DataConverterInterface;
@@ -69,8 +70,8 @@ class TemporalFailure extends TemporalException
         return $this->originalMessage;
     }
 
-    public function setOriginalStackTrace(string $stackTrace){
-
+    public function setOriginalStackTrace(string $stackTrace)
+    {
     }
 
     /**
@@ -90,7 +91,8 @@ class TemporalFailure extends TemporalException
     protected static function buildMessage(array $values): string
     {
         $mapped = [
-            'timeoutType' => fn($value) => TimeoutType::name($value)
+            'timeoutType' => fn($value) => TimeoutType::name($value),
+            'retryState' => fn($value) => RetryState::name($value)
         ];
 
         $mapped = [];

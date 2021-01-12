@@ -3,7 +3,7 @@
 namespace Temporal\Tests\Workflow;
 
 use Temporal\Activity\ActivityOptions;
-use Temporal\Exception\CancellationException;
+use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Tests\Activity\SimpleActivity;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
@@ -32,20 +32,20 @@ class CancelledWithCompensationWorkflow
         try {
             $this->status[] = 'yield';
             $result = yield $slow;
-        } catch (CancellationException $e) {
+        } catch (CanceledFailure $e) {
             $this->status[] = 'rollback';
 
             try {
                 // must fail again
                 $result = yield $slow;
-            } catch (CancellationException $e) {
+            } catch (CanceledFailure $e) {
                 $this->status[] = 'captured retry';
             }
 
             try {
                 // fail since on cancelled context
                 $result = yield $simple->echo('echo must fail');
-            } catch (CancellationException $e) {
+            } catch (CanceledFailure $e) {
                 $this->status[] = 'captured promise on cancelled';
             }
 

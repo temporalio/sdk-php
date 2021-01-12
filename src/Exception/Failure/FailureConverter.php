@@ -263,12 +263,14 @@ final class FailureConverter
             case $failure->hasChildWorkflowExecutionFailureInfo():
                 $info = $failure->getChildWorkflowExecutionFailureInfo();
 
-                // todo: complete mapping
                 return new ChildWorkflowFailure(
                     $info->getInitiatedEventId(),
                     $info->getStartedEventId(),
                     $info->getWorkflowType()->getName(),
-                    $info->getWorkflowExecution(),
+                    new \Temporal\Workflow\WorkflowExecution(
+                        $info->getWorkflowExecution()->getWorkflowId(),
+                        $info->getWorkflowExecution()->getRunId(),
+                    ),
                     $info->getNamespace(),
                     $info->getRetryState(),
                     $previous
