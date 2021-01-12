@@ -12,17 +12,23 @@ declare(strict_types=1);
 namespace Temporal\Client;
 
 use Carbon\CarbonInterval;
+use Cron\CronExpression;
 use Temporal\Common\CronSchedule;
 use Temporal\Common\IdReusePolicy;
+use Temporal\Common\MethodRetry;
 use Temporal\Common\RetryOptions;
 use Temporal\Common\Uuid;
 use Temporal\Internal\Assert;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\ArrayType;
+use Temporal\Internal\Marshaller\Type\CronType;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\NullableType;
 use Temporal\Internal\Marshaller\Type\ObjectType;
+use Temporal\Internal\Support\Cron;
 use Temporal\Internal\Support\DateInterval;
+use Temporal\Internal\Support\Diff;
+use Temporal\Internal\Support\Options;
 use Temporal\Worker\FactoryInterface;
 use Temporal\Worker\TaskQueue;
 
@@ -32,7 +38,7 @@ use Temporal\Worker\TaskQueue;
  * @psalm-import-type DateIntervalValue from DateInterval
  * @psalm-import-type IdReusePolicyEnum from IdReusePolicy
  */
-final class WorkflowOptions
+final class WorkflowOptions extends Options
 {
     /**
      * The business identifier of the workflow execution.
@@ -97,11 +103,9 @@ final class WorkflowOptions
 
     /**
      * Optional cron schedule for workflow.
-     *
-     * @see CronSchedule
      */
-    #[Marshal(name: 'CronSchedule')]
-    public ?string $cronSchedule = null;
+    #[Marshal(name: 'CronSchedule', type: NullableType::class, of: CronType::class)]
+    public ?CronExpression $cronSchedule = null;
 
     /**
      * Optional non-indexed info that will be shown in list workflow.
@@ -132,14 +136,30 @@ final class WorkflowOptions
         $this->workflowRunTimeout = CarbonInterval::years(10);
         $this->workflowTaskTimeout = CarbonInterval::seconds(10);
         $this->retryOptions = new RetryOptions();
+
+        parent::__construct();
     }
 
     /**
-     * @return static
+     * @param MethodRetry|null $retry
+     * @param CronSchedule|null $cron
+     * @return $this
      */
-    public static function new(): self
+    public function mergeWith(MethodRetry $retry = null, CronSchedule $cron = null): self
     {
-        return new self();
+        return immutable(function () use ($retry, $cron) {
+            if ($retry !== null && $this->diff->isPresent($this, 'retryOptions')) {
+                $this->retryOptions = $this->retryOptions->mergeWith($retry);
+            }
+
+            if ($cron !== null && $this->diff->isPresent($this, 'cronSchedule')) {
+                if ($this->cronSchedule === null) {
+                    $this->cronSchedule = clone $cron->interval;
+                }
+
+                $this->cronSchedule->setExpression($cron->interval->getExpression());
+            }
+        });
     }
 
     /**
@@ -263,12 +283,12 @@ final class WorkflowOptions
     }
 
     /**
-     * @param string|null $cronSchedule
+     * @param string|CronExpression|CronSchedule|null $expression
      * @return $this
      */
-    public function withCronSchedule(?string $cronSchedule): self
+    public function withCronSchedule($expression): self
     {
-        return immutable(fn() => $this->cronSchedule = $cronSchedule);
+        return immutable(fn() => $this->cronSchedule = Cron::parseOrNull($expression));
     }
 
     /**

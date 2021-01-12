@@ -12,12 +12,16 @@ declare(strict_types=1);
 namespace Temporal\Workflow;
 
 use Carbon\CarbonInterval;
+use Cron\CronExpression;
 use Temporal\Client\ClientOptions;
+use Temporal\Common\CronSchedule;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\ArrayType;
+use Temporal\Internal\Marshaller\Type\CronType;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\NullableType;
 use Temporal\Internal\Marshaller\Type\ObjectType;
+use Temporal\Internal\Support\Cron;
 use Temporal\Worker\FactoryInterface;
 
 /**
@@ -95,10 +99,10 @@ final class WorkflowInfo
     /**
      * @readonly
      * @psalm-allow-private-mutation
-     * @var string|null
+     * @var CronExpression|null
      */
-    #[Marshal(name: 'CronSchedule')]
-    public ?string $cronSchedule = null;
+    #[Marshal(name: 'CronSchedule', type: NullableType::class, of: CronType::class)]
+    public ?CronExpression $cronSchedule = null;
 
     /**
      * @readonly
@@ -250,12 +254,12 @@ final class WorkflowInfo
     }
 
     /**
-     * @param string|null $cronSchedule
-     * @return WorkflowInfo
+     * @param string|CronExpression|CronSchedule|null $cronSchedule
+     * @return $this
      */
-    public function withCronSchedule(?string $cronSchedule): self
+    public function withCronSchedule($cronSchedule): self
     {
-        $this->cronSchedule = $cronSchedule;
+        $this->cronSchedule = Cron::parseOrNull($cronSchedule);
 
         return $this;
     }

@@ -23,6 +23,7 @@
     "require": {
         "php": ">=7.4",
         "ext-json": "*",
+        "dragonmantank/cron-expression": "^3.1",
         "composer-runtime-api": "^2.0",
         "google/protobuf": "^3.14",
         "nesbot/carbon": "^2.41",

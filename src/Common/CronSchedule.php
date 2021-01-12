@@ -12,7 +12,8 @@ declare(strict_types=1);
 namespace Temporal\Common;
 
 use Carbon\CarbonInterval;
-use JetBrains\PhpStorm\Pure;
+use Cron\CronExpression;
+use JetBrains\PhpStorm\Immutable;
 use Spiral\Attributes\NamedArgumentConstructorAttribute;
 use Temporal\Internal\Support\DateInterval;
 
@@ -36,40 +37,17 @@ use Temporal\Internal\Support\DateInterval;
 final class CronSchedule implements NamedArgumentConstructorAttribute, \Stringable
 {
     /**
-     * @var CarbonInterval
+     * @var CronExpression
      */
-    public CarbonInterval $interval;
+    #[Immutable]
+    public CronExpression $interval;
 
     /**
-     * @param DateIntervalValue $interval
+     * @param string $interval
      */
-    public function __construct($interval)
+    public function __construct(string $interval)
     {
-        $this->interval = DateInterval::parse($interval);
-    }
-
-    /**
-     * The cron spec is as follows:
-     *
-     * ┌───────────── minute (0 - 59)
-     * │ ┌───────────── hour (0 - 23)
-     * │ │ ┌───────────── day of the month (1 - 31)
-     * │ │ │ ┌───────────── month (1 - 12)
-     * │ │ │ │ ┌───────────── day of the week (0 - 6) (Sunday to Saturday)
-     * │ │ │ │ │
-     * │ │ │ │ │
-     * * * * * *
-     *
-     * @return string
-     */
-    public function toCron(): string
-    {
-        return \vsprintf('%s %s %s %s *', [
-            $this->interval->minutes,
-            $this->interval->hours,
-            $this->interval->days,
-            $this->interval->months,
-        ]);
+        $this->interval = new CronExpression($interval);
     }
 
     /**
@@ -77,6 +55,6 @@ final class CronSchedule implements NamedArgumentConstructorAttribute, \Stringab
      */
     public function __toString(): string
     {
-        return $this->toCron();
+        return (string)$this->interval->getExpression();
     }
 }

@@ -17,6 +17,8 @@ use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\NullableType;
 use Temporal\Internal\Support\DateInterval;
+use Temporal\Internal\Support\Diff;
+use Temporal\Internal\Support\Options;
 
 /**
  * Note that the history of activity with retry policy will be different:
@@ -31,7 +33,7 @@ use Temporal\Internal\Support\DateInterval;
  * @psalm-type ExceptionsList = array<class-string<\Throwable>>
  * @psalm-import-type DateIntervalValue from DateInterval
  */
-class RetryOptions
+class RetryOptions extends Options
 {
     /**
      * @var null
@@ -103,6 +105,21 @@ class RetryOptions
     public array $nonRetryableExceptions = self::DEFAULT_NON_RETRYABLE_EXCEPTIONS;
 
     /**
+     * @param MethodRetry|null $retry
+     * @return $this
+     */
+    public function mergeWith(MethodRetry $retry = null): self
+    {
+        return immutable(function () use ($retry) {
+            if ($retry !== null) {
+                foreach ($this->diff->getPresentPropertyNames($this) as $name) {
+                    $this->$name = $retry->$name;
+                }
+            }
+        });
+    }
+
+    /**
      * @param DateIntervalValue|null $interval
      * @return $this
      */
@@ -145,7 +162,7 @@ class RetryOptions
      */
     public function withMaximumAttempts(int $attempts): self
     {
-        assert($attempts > 0);
+        assert($attempts >= 0);
 
         return immutable(fn () => $this->maximumAttempts = $attempts);
     }

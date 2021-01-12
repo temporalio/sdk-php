@@ -91,14 +91,12 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @param class-string|string $type
      * @param array $args
      * @param ContinueAsNewOptions|null $options
-     * @param \ReflectionType|null $returnType
      * @return PromiseInterface
      */
     public function continueAsNew(
         string $type,
         array $args = [],
-        ContinueAsNewOptions $options = null,
-        \ReflectionType $returnType = null
+        ContinueAsNewOptions $options = null
     ): PromiseInterface;
 
     /**

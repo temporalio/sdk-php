@@ -383,7 +383,8 @@ class WorkflowContext implements WorkflowContextInterface
         return new ActivityProxy(
             $class,
             $activities,
-            $this->newUntypedActivityStub($options)
+            $options ?? ActivityOptions::new(),
+            $this
         );
     }
 
