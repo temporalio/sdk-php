@@ -12,6 +12,9 @@ namespace Temporal\Client\GRPC;
 use Temporal\Api\Workflowservice\V1;
 use Temporal\Exception\Client\ServiceClientException;
 
+/**
+ * @codeCoverageIgnore
+ */
 class ServiceClient extends BaseClient
 {
     /**
@@ -174,9 +177,9 @@ class ServiceClient extends BaseClient
     }
 
     /**
-     * RespondWorkflowTaskFailed is called by application worker to indicate failure. 
+     * RespondWorkflowTaskFailed is called by application worker to indicate failure.
      * This results in
-     * WorkflowTaskFailedEvent written to the history and a new WorkflowTask created. 
+     * WorkflowTaskFailedEvent written to the history and a new WorkflowTask created.
      * This API can be used by client to
      * either clear sticky task queue or report any panics during WorkflowTask
      * processing.  Temporal will only append first
