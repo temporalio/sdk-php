@@ -76,7 +76,7 @@ class ActivityCompletionClient implements ActivityCompletionClientInterface
         $r->setActivityId($activityId);
 
         if (func_num_args() == 4) {
-            $r->setResult(EncodedValues::createFromValues([$result], $this->dataConverter)->toPayloads());
+            $r->setResult(EncodedValues::fromValues([$result], $this->dataConverter)->toPayloads());
         }
 
         try {
@@ -103,7 +103,7 @@ class ActivityCompletionClient implements ActivityCompletionClientInterface
         $r->setTaskToken($taskToken);
 
         if (func_num_args() == 2) {
-            $r->setResult(EncodedValues::createFromValues([$result], $this->dataConverter)->toPayloads());
+            $r->setResult(EncodedValues::fromValues([$result], $this->dataConverter)->toPayloads());
         }
 
         try {
@@ -188,7 +188,7 @@ class ActivityCompletionClient implements ActivityCompletionClientInterface
         $r->setActivityId($activityId);
 
         if (func_num_args() == 4) {
-            $r->setDetails(EncodedValues::createFromValues([$details], $this->dataConverter)->toPayloads());
+            $r->setDetails(EncodedValues::fromValues([$details], $this->dataConverter)->toPayloads());
         }
 
         try {
@@ -210,7 +210,7 @@ class ActivityCompletionClient implements ActivityCompletionClientInterface
         $r->setTaskToken($taskToken);
 
         if (func_num_args() == 2) {
-            $r->setDetails(EncodedValues::createFromValues([$details], $this->dataConverter)->toPayloads());
+            $r->setDetails(EncodedValues::fromValues([$details], $this->dataConverter)->toPayloads());
         }
 
         try {
@@ -234,7 +234,7 @@ class ActivityCompletionClient implements ActivityCompletionClientInterface
         $r->setActivityId($activityId);
 
         if (func_num_args() == 4) {
-            $r->setDetails(EncodedValues::createFromValues([$details], $this->dataConverter)->toPayloads());
+            $r->setDetails(EncodedValues::fromValues([$details], $this->dataConverter)->toPayloads());
         }
 
         try {
@@ -264,7 +264,7 @@ class ActivityCompletionClient implements ActivityCompletionClientInterface
         $r->setTaskToken($taskToken);
 
         if (func_num_args() == 2) {
-            $r->setDetails(EncodedValues::createFromValues([$details], $this->dataConverter)->toPayloads());
+            $r->setDetails(EncodedValues::fromValues([$details], $this->dataConverter)->toPayloads());
         }
 
         try {

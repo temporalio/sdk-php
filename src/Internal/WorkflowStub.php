@@ -198,11 +198,11 @@ final class WorkflowStub implements WorkflowStubInterface
         // todo: map timings
 
         if ($args !== []) {
-            $r->setInput(EncodedValues::createFromValues($args, $this->dataConverter)->toPayloads());
+            $r->setInput(EncodedValues::fromValues($args, $this->dataConverter)->toPayloads());
         }
 
         if ($args !== []) {
-            $r->setInput(EncodedValues::createFromValues($args, $this->dataConverter)->toPayloads());
+            $r->setInput(EncodedValues::fromValues($args, $this->dataConverter)->toPayloads());
         }
 
         try {
@@ -284,11 +284,11 @@ final class WorkflowStub implements WorkflowStubInterface
         $r->setSignalName($signal);
 
         if ($startArgs !== []) {
-            $r->setInput(EncodedValues::createFromValues($startArgs, $this->dataConverter)->toPayloads());
+            $r->setInput(EncodedValues::fromValues($startArgs, $this->dataConverter)->toPayloads());
         }
 
         if ($signalArgs !== []) {
-            $r->setSignalInput(EncodedValues::createFromValues($signalArgs, $this->dataConverter)->toPayloads());
+            $r->setSignalInput(EncodedValues::fromValues($signalArgs, $this->dataConverter)->toPayloads());
         }
 
         try {
@@ -351,7 +351,7 @@ final class WorkflowStub implements WorkflowStubInterface
         $r->setSignalName($name);
 
         if ($args !== []) {
-            $r->setInput(EncodedValues::createFromValues($args, $this->dataConverter)->toPayloads());
+            $r->setInput(EncodedValues::fromValues($args, $this->dataConverter)->toPayloads());
         }
 
         try {
@@ -384,7 +384,7 @@ final class WorkflowStub implements WorkflowStubInterface
         $q = new WorkflowQuery();
         $q->setQueryType($name);
         if ($args !== []) {
-            $q->setQueryArgs(EncodedValues::createFromValues($args, $this->dataConverter)->toPayloads());
+            $q->setQueryArgs(EncodedValues::fromValues($args, $this->dataConverter)->toPayloads());
         }
 
         $r->setQuery($q);
@@ -451,7 +451,7 @@ final class WorkflowStub implements WorkflowStubInterface
         $r->setReason($reason);
 
         if ($details !== []) {
-            $r->setDetails(EncodedValues::createFromValues($details, $this->dataConverter)->toPayloads());
+            $r->setDetails(EncodedValues::fromValues($details, $this->dataConverter)->toPayloads());
         }
 
         $this->serviceClient->TerminateWorkflowExecution($r);
@@ -527,7 +527,7 @@ final class WorkflowStub implements WorkflowStubInterface
                 if ($attr->hasDetails()) {
                     $details = EncodedValues::createFromPayloads($attr->getDetails(), $this->dataConverter);
                 } else {
-                    $details = EncodedValues::createFromValues([]);
+                    $details = EncodedValues::fromValues([]);
                 }
 
                 throw new WorkflowFailedException(

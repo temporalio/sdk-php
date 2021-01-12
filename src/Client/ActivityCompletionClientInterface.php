@@ -11,6 +11,12 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
+/**
+ * Used to complete asynchronously activities that called {@link
+ * ActivityContext->doNotCompleteOnReturn()}.
+ *
+ * <p>Use {@link WorkflowClient#newActivityCompletionClient()} to create an instance.
+ */
 interface ActivityCompletionClientInterface
 {
     /**
@@ -19,13 +25,21 @@ interface ActivityCompletionClientInterface
      * @param string $activityId
      * @param mixed $result
      */
-    public function complete(string $workflowId, ?string $runId, string $activityId, $result = null): void;
+    public function complete(
+        string $workflowId,
+        ?string $runId,
+        string $activityId,
+        $result = null
+    ): void;
 
     /**
      * @param string $taskToken
      * @param mixed $result
      */
-    public function completeByToken(string $taskToken, $result = null): void;
+    public function completeByToken(
+        string $taskToken,
+        $result = null
+    ): void;
 
     /**
      * @param string $workflowId
@@ -44,7 +58,10 @@ interface ActivityCompletionClientInterface
      * @param string $taskToken
      * @param \Throwable $error
      */
-    public function completeExceptionallyByToken(string $taskToken, \Throwable $error): void;
+    public function completeExceptionallyByToken(
+        string $taskToken,
+        \Throwable $error
+    ): void;
 
     /**
      * @param string $workflowId
@@ -52,13 +69,21 @@ interface ActivityCompletionClientInterface
      * @param string $activityId
      * @param $details
      */
-    public function reportCancellation(string $workflowId, ?string $runId, string $activityId, $details = null): void;
+    public function reportCancellation(
+        string $workflowId,
+        ?string $runId,
+        string $activityId,
+        $details = null
+    ): void;
 
     /**
      * @param string $taskToken
      * @param $details
      */
-    public function reportCancellationByToken(string $taskToken, $details = null): void;
+    public function reportCancellationByToken(
+        string $taskToken,
+        $details = null
+    ): void;
 
     /**
      * @param string $workflowId
@@ -67,12 +92,20 @@ interface ActivityCompletionClientInterface
      * @param mixed $details
      * @return bool
      */
-    public function recordHeartbeat(string $workflowId, ?string $runId, string $activityId, $details = null): bool;
+    public function recordHeartbeat(
+        string $workflowId,
+        ?string $runId,
+        string $activityId,
+        $details = null
+    ): bool;
 
     /**
      * @param string $taskToken
      * @param mixed $details
      * @return bool
      */
-    public function recordHeartbeatByToken(string $taskToken, $details = null): bool;
+    public function recordHeartbeatByToken(
+        string $taskToken,
+        $details = null
+    ): bool;
 }

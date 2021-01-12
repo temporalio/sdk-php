@@ -52,6 +52,11 @@ class EncodedValues implements ValuesInterface
         return 0;
     }
 
+    public function isEmpty(): bool
+    {
+        return $this->getSize() === 0;
+    }
+
     /**
      * @param int $index
      * @param Type|string|null $type
@@ -139,7 +144,7 @@ class EncodedValues implements ValuesInterface
      * @param DataConverterInterface|null $dataConverter
      * @return EncodedValues
      */
-    public static function createFromValues(array $values, DataConverterInterface $dataConverter = null): EncodedValues
+    public static function fromValues(array $values, DataConverterInterface $dataConverter = null): EncodedValues
     {
         $ev = new self();
         $ev->values = $values;

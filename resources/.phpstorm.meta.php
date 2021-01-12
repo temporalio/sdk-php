@@ -28,11 +28,11 @@ namespace PHPSTORM_META {
 
 
     // RPC
-    override(\Temporal\Client\ClientInterface::newWorkflowStub(), map([
+    override(\Temporal\Client\WorkflowClientInterface::newWorkflowStub(), map([
         '' => type(0),
     ]));
 
-    override(\Temporal\Client\Client::newWorkflowStub(), map([
+    override(\Temporal\Client\WorkflowClient::newWorkflowStub(), map([
         '' => type(0),
     ]));
 }

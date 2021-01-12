@@ -37,11 +37,13 @@ class WorkflowException extends TemporalException
         \Throwable $previous = null
     ) {
         parent::__construct(
-            [
-                'message' => $message,
-                'runId' => $execution->runId,
-                'workflowType' => $workflowType,
-            ],
+            self::buildMessage(
+                [
+                    'message' => $message,
+                    'runId' => $execution->runId,
+                    'workflowType' => $workflowType,
+                ]
+            ),
             0,
             $previous
         );
@@ -63,5 +65,19 @@ class WorkflowException extends TemporalException
     public function getWorkflowType(): ?string
     {
         return $this->type;
+    }
+
+    /**
+     * @param WorkflowExecution $execution
+     * @param string|null $workflowType
+     * @param \Throwable|null $previous
+     * @return WorkflowException
+     */
+    public static function withoutMessage(
+        WorkflowExecution $execution,
+        string $workflowType = null,
+        \Throwable $previous = null
+    ): WorkflowException {
+        return new static(null, $execution, $workflowType, $previous);
     }
 }

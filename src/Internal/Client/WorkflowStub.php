@@ -52,6 +52,7 @@ use Temporal\Exception\WorkflowExecutionFailedException;
 use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Client\WorkflowNotFoundException;
 use Temporal\Exception\Client\WorkflowServiceException;
+use Temporal\Internal\Support\DateInterval;
 use Temporal\Workflow\WorkflowExecution;
 
 final class WorkflowStub implements WorkflowStubInterface
@@ -68,8 +69,7 @@ final class WorkflowStub implements WorkflowStubInterface
     /**
      * @var string
      */
-    private const ERROR_WORKFLOW_NOT_STARTED =
-        'Method "%s" cannot be called because the workflow has not been started';
+    private const ERROR_WORKFLOW_NOT_STARTED = 'Method "%s" cannot be called because the workflow has not been started';
 
     /**
      * @var ServiceClientInterface
@@ -84,7 +84,7 @@ final class WorkflowStub implements WorkflowStubInterface
     /**
      * @var DataConverterInterface
      */
-    private DataConverterInterface $dataConverter;
+    private DataConverterInterface $converter;
 
     /**
      * @var string
@@ -104,20 +104,20 @@ final class WorkflowStub implements WorkflowStubInterface
     /**
      * @param ServiceClientInterface $serviceClient
      * @param ClientOptions $clientOptions
-     * @param DataConverterInterface $dataConverter
+     * @param DataConverterInterface $converter
      * @param string $workflowType
      * @param WorkflowOptions $options
      */
     public function __construct(
         ServiceClientInterface $serviceClient,
         ClientOptions $clientOptions,
-        DataConverterInterface $dataConverter,
+        DataConverterInterface $converter,
         string $workflowType,
         WorkflowOptions $options
     ) {
         $this->serviceClient = $serviceClient;
         $this->clientOptions = $clientOptions;
-        $this->dataConverter = $dataConverter;
+        $this->converter = $converter;
         $this->workflowType = $workflowType;
         $this->options = $options;
     }
@@ -151,58 +151,34 @@ final class WorkflowStub implements WorkflowStubInterface
     /**
      * {@inheritDoc}
      */
-    public function start(...$args): WorkflowExecution
+    public function start(array $args = []): WorkflowExecution
     {
         $r = new StartWorkflowExecutionRequest();
-        $r->setRequestId(Uuid::v4());
-        $r->setIdentity($this->clientOptions->identity);
-        $r->setNamespace($this->clientOptions->namespace);
+        $r
+            ->setRequestId(Uuid::v4())
+            ->setIdentity($this->clientOptions->identity)
+            ->setNamespace($this->clientOptions->namespace)
+            ->setTaskQueue(new TaskQueue(['name' => $this->options->taskQueue]))
+            ->setWorkflowType(new WorkflowType(['name' => $this->workflowType]))
+            ->setWorkflowId($this->options->workflowId)
+            ->setCronSchedule($this->options->cronSchedule)
+            ->setRetryPolicy($this->options->toRetryPolicy())
+            ->setWorkflowIdReusePolicy($this->options->workflowIdReusePolicy)
+            ->setWorkflowRunTimeout(DateInterval::toDuration($this->options->workflowRunTimeout))
+            ->setWorkflowExecutionTimeout(DateInterval::toDuration($this->options->workflowExecutionTimeout))
+            ->setWorkflowTaskTimeout(DateInterval::toDuration($this->options->workflowTaskTimeout));
 
-        $r->setWorkflowId($this->options->workflowId);
-        $r->setCronSchedule($this->options->cronSchedule);
-        $r->setWorkflowType(new WorkflowType(['name' => $this->workflowType]));
-        $r->setTaskQueue(new TaskQueue(['name' => $this->options->taskQueue]));
-
-        if (is_array($this->options->memo)) {
-            $memo = new Memo();
-            $memo->setFields($this->options->memo);
-            $r->setMemo($memo);
+        if ($this->options->memo !== null) {
+            $r->setMemo($this->options->toMemo());
         }
 
-        if (is_array($this->options->searchAttributes)) {
-            $search = new SearchAttributes();
-            $search->setIndexedFields($this->options->searchAttributes);
-            $r->setSearchAttributes($search);
+        if ($this->options->searchAttributes !== null) {
+            $r->setSearchAttributes($this->options->toSearchAttributes());
         }
 
-        if ($this->options->cronSchedule !== null) {
-            $r->setCronSchedule($this->options->cronSchedule);
-        }
-
-        if ($this->options->workflowIdReusePolicy !== null) {
-            $r->setWorkflowIdReusePolicy($this->options->workflowIdReusePolicy);
-        }
-
-        // todo: map retry options
-//        if ($this->options->retryOptions !== null) {
-//            $ro = new RetryPolicy();
-//            $ro->setBackoffCoefficient($this->options->retryOptions->backoffCoefficient);
-//
-//            if ($this->options->retryOptions->initialInterval !== null) {
-//                // todo: has to be updated
-//                $ro->setInitialInterval(
-//                    new Duration(['seconds' => $this->options->retryOptions->initialInterval->s])
-//                );
-//            }
-//        }
-        // todo: map timings
-
-        if ($args !== []) {
-            $r->setInput(EncodedValues::createFromValues($args, $this->dataConverter)->toPayloads());
-        }
-
-        if ($args !== []) {
-            $r->setInput(EncodedValues::createFromValues($args, $this->dataConverter)->toPayloads());
+        $input = EncodedValues::fromValues($args, $this->converter);
+        if (!$input->isEmpty()) {
+            $r->setInput($input->toPayloads());
         }
 
         try {
@@ -243,6 +219,8 @@ final class WorkflowStub implements WorkflowStubInterface
         $r->setWorkflowType(new WorkflowType(['name' => $this->workflowType]));
         $r->setTaskQueue(new TaskQueue(['name' => $this->options->taskQueue]));
 
+        $r->setSignalName($signal);
+
         if (is_array($this->options->memo)) {
             $memo = new Memo();
             $memo->setFields($this->options->memo);
@@ -279,14 +257,13 @@ final class WorkflowStub implements WorkflowStubInterface
 
         // todo: map timings
 
-        $r->setSignalName($signal);
 
         if ($startArgs !== []) {
-            $r->setInput(EncodedValues::createFromValues($startArgs, $this->dataConverter)->toPayloads());
+            $r->setInput(EncodedValues::fromValues($startArgs, $this->converter)->toPayloads());
         }
 
         if ($signalArgs !== []) {
-            $r->setSignalInput(EncodedValues::createFromValues($signalArgs, $this->dataConverter)->toPayloads());
+            $r->setSignalInput(EncodedValues::fromValues($signalArgs, $this->converter)->toPayloads());
         }
 
         try {
@@ -346,23 +323,23 @@ final class WorkflowStub implements WorkflowStubInterface
         $r->setRequestId(Uuid::v4());
         $r->setIdentity($this->clientOptions->identity);
         $r->setNamespace($this->clientOptions->namespace);
-        $r->setWorkflowExecution($this->getProtoWorkflowExecution());
+
+        $r->setWorkflowExecution($this->mapWorkflowExecution());
         $r->setSignalName($name);
 
-        if ($args !== []) {
-            $r->setInput(EncodedValues::createFromValues($args, $this->dataConverter)->toPayloads());
+        $input = EncodedValues::fromValues($args, $this->converter);
+        if (!$input->isEmpty()) {
+            $r->setInput($input->toPayloads());
         }
 
         try {
             $this->serviceClient->SignalWorkflowExecution($r);
         } catch (ServiceClientException $e) {
             if ($e->getCode() === StatusCode::NOT_FOUND) {
-                throw new WorkflowNotFoundException(null, $this->execution, $this->workflowType, $e);
-            } else {
-                throw new WorkflowServiceException(null, $this->execution, $this->workflowType, $e);
+                throw WorkflowNotFoundException::withoutMessage($this->execution, $this->workflowType, $e);
             }
-        } catch (\Throwable $e) {
-            throw new WorkflowServiceException(null, $this->execution, $this->workflowType, $e);
+
+            throw WorkflowServiceException::withoutMessage($this->execution, $this->workflowType, $e);
         }
     }
 
@@ -377,13 +354,13 @@ final class WorkflowStub implements WorkflowStubInterface
 
         $r = new QueryWorkflowRequest();
         $r->setNamespace($this->clientOptions->namespace);
-        $r->setExecution($this->getProtoWorkflowExecution());
+        $r->setExecution($this->mapWorkflowExecution());
         $r->setQueryRejectCondition($this->clientOptions->queryRejectionCondition);
 
         $q = new WorkflowQuery();
         $q->setQueryType($name);
         if ($args !== []) {
-            $q->setQueryArgs(EncodedValues::createFromValues($args, $this->dataConverter)->toPayloads());
+            $q->setQueryArgs(EncodedValues::fromValues($args, $this->converter)->toPayloads());
         }
 
         $r->setQuery($q);
@@ -407,7 +384,7 @@ final class WorkflowStub implements WorkflowStubInterface
                 return null;
             }
 
-            return EncodedValues::createFromPayloads($result->getQueryResult(), $this->dataConverter);
+            return EncodedValues::createFromPayloads($result->getQueryResult(), $this->converter);
         }
 
         throw new WorkflowQueryRejectedException(
@@ -430,7 +407,7 @@ final class WorkflowStub implements WorkflowStubInterface
         $r->setRequestId(Uuid::v4());
         $r->setIdentity($this->clientOptions->identity);
         $r->setNamespace($this->clientOptions->namespace);
-        $r->setWorkflowExecution($this->getProtoWorkflowExecution());
+        $r->setWorkflowExecution($this->mapWorkflowExecution());
 
         $this->serviceClient->RequestCancelWorkflowExecution($r);
     }
@@ -445,11 +422,11 @@ final class WorkflowStub implements WorkflowStubInterface
         $r = new TerminateWorkflowExecutionRequest();
         $r->setNamespace($this->clientOptions->namespace);
         $r->setIdentity($this->clientOptions->identity);
-        $r->setWorkflowExecution($this->getProtoWorkflowExecution());
+        $r->setWorkflowExecution($this->mapWorkflowExecution());
         $r->setReason($reason);
 
         if ($details !== []) {
-            $r->setDetails(EncodedValues::createFromValues($details, $this->dataConverter)->toPayloads());
+            $r->setDetails(EncodedValues::fromValues($details, $this->converter)->toPayloads());
         }
 
         $this->serviceClient->TerminateWorkflowExecution($r);
@@ -482,7 +459,7 @@ final class WorkflowStub implements WorkflowStubInterface
     /**
      * @return \Temporal\Api\Common\V1\WorkflowExecution
      */
-    private function getProtoWorkflowExecution(): \Temporal\Api\Common\V1\WorkflowExecution
+    private function mapWorkflowExecution(): \Temporal\Api\Common\V1\WorkflowExecution
     {
         $wr = new \Temporal\Api\Common\V1\WorkflowExecution();
         $wr->setWorkflowId($this->execution->id);
@@ -509,7 +486,7 @@ final class WorkflowStub implements WorkflowStubInterface
                     return null;
                 }
 
-                return EncodedValues::createFromPayloads($attr->getResult(), $this->dataConverter);
+                return EncodedValues::createFromPayloads($attr->getResult(), $this->converter);
             case EventType::EVENT_TYPE_WORKFLOW_EXECUTION_FAILED:
                 $attr = $closeEvent->getWorkflowExecutionFailedEventAttributes();
 
@@ -523,9 +500,9 @@ final class WorkflowStub implements WorkflowStubInterface
                 $attr = $closeEvent->getWorkflowExecutionCanceledEventAttributes();
 
                 if ($attr->hasDetails()) {
-                    $details = EncodedValues::createFromPayloads($attr->getDetails(), $this->dataConverter);
+                    $details = EncodedValues::createFromPayloads($attr->getDetails(), $this->converter);
                 } else {
-                    $details = EncodedValues::createFromValues([]);
+                    $details = EncodedValues::fromValues([]);
                 }
 
                 throw new WorkflowFailedException(
@@ -580,7 +557,7 @@ final class WorkflowStub implements WorkflowStubInterface
             ->setNamespace($this->clientOptions->namespace)
             ->setWaitNewEvent(true)
             ->setHistoryEventFilterType(HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_CLOSE_EVENT)
-            ->setExecution($this->getProtoWorkflowExecution());
+            ->setExecution($this->mapWorkflowExecution());
 
         // todo: timeouts and retries
         do {
@@ -597,7 +574,7 @@ final class WorkflowStub implements WorkflowStubInterface
                             ->getNewExecutionRunId()
                     );
 
-                    $historyRequest->setExecution($this->getProtoWorkflowExecution());
+                    $historyRequest->setExecution($this->mapWorkflowExecution());
                     continue;
                 }
 

@@ -25,7 +25,7 @@ use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Client\WorkflowProxy;
 use Temporal\Internal\Client\WorkflowStub;
 
-class Client implements ClientInterface
+class WorkflowClient implements WorkflowClientInterface
 {
     /**
      * @var ServiceClientInterface
@@ -40,7 +40,7 @@ class Client implements ClientInterface
     /**
      * @var DataConverterInterface
      */
-    private DataConverterInterface $dataConverter;
+    private DataConverterInterface $converter;
 
     /**
      * @var ReaderInterface
@@ -55,16 +55,16 @@ class Client implements ClientInterface
     /**
      * @param ServiceClientInterface $serviceClient
      * @param ClientOptions|null $options
-     * @param DataConverterInterface|null $dc
+     * @param DataConverterInterface|null $converter
      */
     public function __construct(
         ServiceClientInterface $serviceClient,
         ClientOptions $options = null,
-        DataConverterInterface $dc = null
+        DataConverterInterface $converter = null
     ) {
         $this->serviceClient = $serviceClient;
         $this->clientOptions = $options ?? new ClientOptions();
-        $this->dataConverter = $dc ?? DataConverter::createDefault();
+        $this->converter = $converter ?? DataConverter::createDefault();
 
         $this->reader = new AttributeReader();
         $this->marshaller = new Marshaller(
@@ -85,6 +85,7 @@ class Client implements ClientInterface
      */
     public function newWorkflowStub(string $class, WorkflowOptions $options = null): WorkflowProxy
     {
+        // todo: wait for a single method per workflow
         /** @var WorkflowPrototype[] $workflows */
         $workflows = (new WorkflowReader($this->reader))->fromClass($class);
 
@@ -105,7 +106,7 @@ class Client implements ClientInterface
         return new WorkflowStub(
             $this->serviceClient,
             $this->clientOptions,
-            $this->dataConverter,
+            $this->converter,
             $name,
             $options
         );
@@ -119,7 +120,7 @@ class Client implements ClientInterface
         return new ActivityCompletionClient(
             $this->serviceClient,
             $this->clientOptions,
-            $this->dataConverter
+            $this->converter
         );
     }
 }
