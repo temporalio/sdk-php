@@ -42,6 +42,7 @@ use Temporal\Exception\Client\WorkflowQueryException;
 use Temporal\Exception\Client\WorkflowQueryRejectedException;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Failure\CanceledFailure;
+use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Exception\Failure\TerminatedFailure;
 use Temporal\Exception\Failure\TimeoutFailure;
 use Temporal\Exception\IllegalStateException;
@@ -656,12 +657,32 @@ final class WorkflowStub implements WorkflowStubInterface
     }
 
     /**
-     * @param \Throwable $e
-     * @throws \Throwable
+     * @param \Throwable $failure
+     * @return \Throwable
      */
-    private function mapWorkflowFailureToException(\Throwable $e): \Throwable
+    private function mapWorkflowFailureToException(\Throwable $failure): \Throwable
     {
-        return $e;
+        switch (true) {
+            case $failure instanceof WorkflowExecutionFailedException:
+                throw new WorkflowFailedException(
+                    $this->execution,
+                    $this->workflowType,
+                    $failure->getWorkflowTaskCompletedEventId(),
+                    $failure->getRetryState(),
+                    FailureConverter::mapFailureToException($failure->getFailure(), $this->converter)
+                );
+
+            default:
+                return new WorkflowServiceException(
+                    null,
+                    $this->execution,
+                    $this->workflowType,
+                    $failure,
+                );
+        }
+
+
+        return $failure;
 //        Exception failure, @SuppressWarnings("unused") Class<R> returnType) {
 //        Throwable f = CheckedExceptionWrapper.unwrap(failure);
 //    if (f instanceof Error) {

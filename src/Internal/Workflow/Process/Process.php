@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Workflow\Process;
 
 use JetBrains\PhpStorm\Pure;
+use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\ServiceContainer;
@@ -39,6 +40,19 @@ class Process extends Scope implements ProcessInterface
                 $this->complete($e);
             }
         );
+    }
+
+    /**
+     * @param callable $handler
+     * @param ValuesInterface|null $values
+     */
+    public function start(callable $handler, ValuesInterface $values = null)
+    {
+        try {
+            parent::start($handler, $values);
+        } catch (\Throwable $e) {
+            $this->complete($e);
+        }
     }
 
     /**

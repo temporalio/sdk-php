@@ -24,6 +24,7 @@ class TemporalFailure extends TemporalException
 {
     private ?Failure $failure = null;
     private string $originalMessage;
+    private ?string $originalStackTrace = null;
 
     /**
      * @param string $message
@@ -63,8 +64,40 @@ class TemporalFailure extends TemporalException
         return $this->originalMessage;
     }
 
+    /**
+     * @param string $stackTrace
+     */
     public function setOriginalStackTrace(string $stackTrace)
     {
+        $this->originalStackTrace = $stackTrace;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasOriginalStackTrace(): bool
+    {
+        return $this->originalStackTrace;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getOriginalStackTrace(): ?string
+    {
+        return $this->originalStackTrace;
+    }
+
+    /**
+     * @return string
+     */
+    public function __toString(): string
+    {
+        if ($this->hasOriginalStackTrace()) {
+            return $this->getOriginalStackTrace();
+        }
+
+        return parent::__toString();
     }
 
     /**
@@ -99,6 +132,4 @@ class TemporalFailure extends TemporalException
 
         return parent::buildMessage($mapped);
     }
-
-    // todo: support external trace as string
 }

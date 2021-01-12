@@ -45,25 +45,25 @@ class ApplicationFailure extends TemporalFailure
 
     /**
      * @param string $message
-     * @param string $type
+     * @param string $workflowType
      * @param bool $nonRetryable
      * @param ValuesInterface $details
      * @param \Throwable|null $previous
      */
     public function __construct(
         string $message,
-        string $type,
+        string $workflowType,
         bool $nonRetryable,
         ValuesInterface $details,
         \Throwable $previous = null
     ) {
         parent::__construct(
-            self::buildMessage(compact('message', 'type', 'nonRetryable')),
+            self::buildMessage(compact('message', 'workflowType', 'nonRetryable')),
             $message,
             $previous
         );
 
-        $this->type = $type;
+        $this->type = $workflowType;
         $this->nonRetryable = $nonRetryable;
         $this->details = $details;
     }

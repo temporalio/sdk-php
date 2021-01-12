@@ -15,14 +15,14 @@ class WorkflowExecutionAlreadyStartedException extends WorkflowException
 {
     /**
      * @param WorkflowExecution $execution
-     * @param string|null $type
+     * @param string|null $workflowType
      * @param \Throwable|null $previous
      */
     public function __construct(
         WorkflowExecution $execution,
-        string $type = null,
+        string $workflowType = null,
         \Throwable $previous = null
     ) {
-        parent::__construct(null, $execution, $type, $previous);
+        parent::__construct(null, $execution, $workflowType, $previous);
     }
 }

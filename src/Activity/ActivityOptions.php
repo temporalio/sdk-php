@@ -37,7 +37,7 @@ class ActivityOptions
      * Optional: The default task queue with the same name as the workflow task
      * queue.
      */
-    #[Marshal(name: 'TaskQueue')]
+    #[Marshal(name: 'TaskQueueName')]
     public string $taskQueue = FactoryInterface::DEFAULT_TASK_QUEUE;
 
     /**

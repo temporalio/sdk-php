@@ -9,40 +9,40 @@
 
 namespace Temporal\Exception\Client;
 
-use Temporal\Api\Enums\V1\RetryState;
 use Temporal\Workflow\WorkflowExecution;
 use Throwable;
 
 class WorkflowFailedException extends WorkflowException
 {
-    /**
-     * @var int
-     */
     private int $lastWorkflowTaskCompletedEventId;
-
-    /**
-     * @var int
-     */
     private int $retryState;
 
     /**
      * @param WorkflowExecution $execution
-     * @param string|null $type
+     * @param string|null $workflowType
      * @param int $lastWorkflowTaskCompletedEventId
      * @param int $retryState
      * @param Throwable|null $previous
      */
     public function __construct(
         WorkflowExecution $execution,
-        ?string $type,
+        ?string $workflowType,
         int $lastWorkflowTaskCompletedEventId,
         int $retryState,
         \Throwable $previous = null
     ) {
         parent::__construct(
-            self::buildMessage($execution, $type, $lastWorkflowTaskCompletedEventId, $retryState),
+            self::buildMessage(
+                [
+                    'workflowId' => $execution->id,
+                    'runId' => $execution->runId,
+                    'workflowType' => $workflowType,
+                    'workflowTaskCompletedEventId' => $lastWorkflowTaskCompletedEventId,
+                    'retryState' => $retryState
+                ]
+            ),
             $execution,
-            $type,
+            $workflowType,
             $previous
         );
 
@@ -56,29 +56,5 @@ class WorkflowFailedException extends WorkflowException
     public function getWorkflowTaskCompletedEventId(): int
     {
         return $this->lastWorkflowTaskCompletedEventId;
-    }
-
-    /**
-     * @param WorkflowExecution $workflowExecution
-     * @param string $workflowType
-     * @param int $workflowTaskCompletedEventId
-     * @param int $retryState
-     * @return string
-     */
-    public static function buildMessage(
-        WorkflowExecution $workflowExecution,
-        string $workflowType,
-        int $workflowTaskCompletedEventId,
-        int $retryState
-    ): string {
-        return "workflowId='"
-            . $workflowExecution->id
-            . "', runId='"
-            . $workflowExecution->runId
-            . ($workflowType == null ? "'" : "', workflowType='" . $workflowType . '\'')
-            . ", retryState="
-            . RetryState::name($retryState)
-            . ", workflowTaskCompletedEventId="
-            . $workflowTaskCompletedEventId;
     }
 }

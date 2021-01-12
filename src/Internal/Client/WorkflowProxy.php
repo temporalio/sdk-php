@@ -73,6 +73,7 @@ final class WorkflowProxy extends Proxy
             // the workflow.
             $this->stub->start(...$args);
 
+            // todo: remove it
             return new WorkflowRun($this->stub, $this->prototype->getHandler()->getReturnType());
         }
 
