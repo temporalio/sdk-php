@@ -210,60 +210,37 @@ final class WorkflowStub implements WorkflowStubInterface
         $this->assertNotStarted();
 
         $r = new SignalWithStartWorkflowExecutionRequest();
-        $r->setRequestId(Uuid::v4());
-        $r->setIdentity($this->clientOptions->identity);
-        $r->setNamespace($this->clientOptions->namespace);
+        $r
+            ->setRequestId(Uuid::v4())
+            ->setIdentity($this->clientOptions->identity)
+            ->setNamespace($this->clientOptions->namespace)
+            ->setTaskQueue(new TaskQueue(['name' => $this->options->taskQueue]))
+            ->setWorkflowType(new WorkflowType(['name' => $this->workflowType]))
+            ->setWorkflowId($this->options->workflowId)
+            ->setCronSchedule($this->options->cronSchedule)
+            ->setRetryPolicy($this->options->toRetryPolicy())
+            ->setWorkflowIdReusePolicy($this->options->workflowIdReusePolicy)
+            ->setWorkflowRunTimeout(DateInterval::toDuration($this->options->workflowRunTimeout))
+            ->setWorkflowExecutionTimeout(DateInterval::toDuration($this->options->workflowExecutionTimeout))
+            ->setWorkflowTaskTimeout(DateInterval::toDuration($this->options->workflowTaskTimeout));
 
-        $r->setWorkflowId($this->options->workflowId);
-        $r->setCronSchedule($this->options->cronSchedule);
-        $r->setWorkflowType(new WorkflowType(['name' => $this->workflowType]));
-        $r->setTaskQueue(new TaskQueue(['name' => $this->options->taskQueue]));
+        if ($this->options->memo !== null) {
+            $r->setMemo($this->options->toMemo());
+        }
+
+        if ($this->options->searchAttributes !== null) {
+            $r->setSearchAttributes($this->options->toSearchAttributes());
+        }
+
+        $input = EncodedValues::fromValues($startArgs, $this->converter);
+        if (!$input->isEmpty()) {
+            $r->setInput($input->toPayloads());
+        }
 
         $r->setSignalName($signal);
-
-        if (is_array($this->options->memo)) {
-            $memo = new Memo();
-            $memo->setFields($this->options->memo);
-            $r->setMemo($memo);
-        }
-
-        if (is_array($this->options->searchAttributes)) {
-            $search = new SearchAttributes();
-            $search->setIndexedFields($this->options->searchAttributes);
-            $r->setSearchAttributes($search);
-        }
-
-        if ($this->options->cronSchedule !== null) {
-            $r->setCronSchedule($this->options->cronSchedule);
-        }
-
-        if ($this->options->workflowIdReusePolicy !== null) {
-            $r->setWorkflowIdReusePolicy($this->options->workflowIdReusePolicy);
-        }
-
-        // todo: map retry options
-//        if ($this->options->retryOptions !== null) {
-//            $ro = new RetryPolicy();
-//            $ro->setBackoffCoefficient($this->options->retryOptions->backoffCoefficient);
-//
-//            if ($this->options->retryOptions->initialInterval !== null) {
-//                // todo: has to be updated
-//                $ro->setInitialInterval(
-//                    new Duration(['seconds' => $this->options->retryOptions->initialInterval->s])
-//                );
-//            }
-//        }
-
-
-        // todo: map timings
-
-
-        if ($startArgs !== []) {
-            $r->setInput(EncodedValues::fromValues($startArgs, $this->converter)->toPayloads());
-        }
-
-        if ($signalArgs !== []) {
-            $r->setSignalInput(EncodedValues::fromValues($signalArgs, $this->converter)->toPayloads());
+        $signalInput = EncodedValues::fromValues($signalArgs, $this->converter);
+        if (!$signalInput->isEmpty()) {
+            $r->setSignalInput($signalInput->toPayloads());
         }
 
         try {
