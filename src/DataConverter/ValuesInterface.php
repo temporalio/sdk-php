@@ -11,7 +11,7 @@ namespace Temporal\DataConverter;
 
 use Temporal\Api\Common\V1\Payloads;
 
-interface ValuesInterface
+interface ValuesInterface extends \Countable
 {
     /**
      * Checks if any value present.

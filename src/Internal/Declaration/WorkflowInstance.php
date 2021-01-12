@@ -38,12 +38,11 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
 
     /**
      * @param WorkflowPrototype $prototype
-     * @param DataConverterInterface $dataConverter
      * @param object $context
      */
-    public function __construct(WorkflowPrototype $prototype, DataConverterInterface $dataConverter, object $context)
+    public function __construct(WorkflowPrototype $prototype, object $context)
     {
-        parent::__construct($prototype, $dataConverter, $context);
+        parent::__construct($prototype, $context);
 
         $this->signalQueue = new SignalQueue();
 

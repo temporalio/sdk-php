@@ -80,7 +80,6 @@ final class Server implements ServerInterface
     {
         return function ($result) use ($request) {
             $response = new SuccessResponse($result, $request->getID());
-
             $this->queue->push($response);
 
             return $response;
@@ -101,7 +100,6 @@ final class Server implements ServerInterface
             }
 
             $response = new FailureResponse($result, $request->getID());
-
             $this->queue->push($response);
 
             return $response;

@@ -13,7 +13,6 @@ namespace Temporal\Internal\Transport;
 
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
-use Temporal\Exception\CancellationException;
 use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\ErrorResponseInterface;
@@ -28,34 +27,17 @@ use Temporal\Worker\LoopInterface;
  */
 final class Client implements ClientInterface
 {
-    /**
-     * @var string
-     */
     private const ERROR_REQUEST_ID_DUPLICATION =
         'Unable to create a new request because a ' .
         'request with id %d has already been sent';
 
-    /**
-     * @var string
-     */
     private const ERROR_REQUEST_NOT_FOUND =
         'Unable to receive a request with id %d because ' .
         'a request with that identifier was not sent';
 
-    /**
-     * @var QueueInterface
-     */
     private QueueInterface $queue;
-
-    /**
-     * @var array|Deferred[]
-     */
-    private array $requests = [];
-
-    /**
-     * @var LoopInterface
-     */
     private LoopInterface $loop;
+    private array $requests = [];
 
     /**
      * @param QueueInterface $queue
@@ -83,10 +65,7 @@ final class Client implements ClientInterface
         if ($response instanceof ErrorResponseInterface) {
             $deferred->reject($response->getFailure());
         } else {
-            $result = $response->getPayloads();
-
-            // todo: make sure this is correct with arrays
-            $deferred->resolve(\current($result) ?: false);
+            $deferred->resolve($response->getPayloads());
         }
     }
 

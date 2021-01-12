@@ -14,6 +14,7 @@ namespace Temporal\Workflow;
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Environment\EnvironmentInterface;
@@ -29,9 +30,9 @@ interface WorkflowContextInterface extends EnvironmentInterface
     public function getInfo(): WorkflowInfo;
 
     /**
-     * @return array
+     * @return ValuesInterface
      */
-    public function getArguments(): array;
+    public function getInput(): ValuesInterface;
 
     /**
      * @return DataConverterInterface
@@ -70,10 +71,11 @@ interface WorkflowContextInterface extends EnvironmentInterface
     public function sideEffect(callable $context): PromiseInterface;
 
     /**
-     * @param mixed $result
+     * @param array|null $result
+     * @param \Throwable|null $failure
      * @return PromiseInterface
      */
-    public function complete($result = null): PromiseInterface;
+    public function complete(array $result = null, \Throwable $failure = null): PromiseInterface;
 
     /**
      * @param DateIntervalFormat|int $interval

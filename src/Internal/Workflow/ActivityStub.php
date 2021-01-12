@@ -14,6 +14,7 @@ namespace Temporal\Internal\Workflow;
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Payload;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Transport\ClientInterface;
@@ -24,32 +25,15 @@ use Temporal\Workflow\ActivityStubInterface;
 
 final class ActivityStub implements ActivityStubInterface
 {
-    /**
-     * @var DataConverterInterface
-     */
-    private DataConverterInterface $converter;
-
-    /**
-     * @var MarshallerInterface
-     */
     private MarshallerInterface $marshaller;
-
-    /**
-     * @var ActivityOptions
-     */
     private ActivityOptions $options;
 
     /**
-     * @param DataConverterInterface $converter
      * @param MarshallerInterface $marshaller
      * @param ActivityOptions $options
      */
-    public function __construct(
-        DataConverterInterface $converter,
-        MarshallerInterface $marshaller,
-        ActivityOptions $options
-    ) {
-        $this->converter = $converter;
+    public function __construct(MarshallerInterface $marshaller, ActivityOptions $options)
+    {
         $this->marshaller = $marshaller;
         $this->options = $options;
     }
@@ -78,9 +62,13 @@ final class ActivityStub implements ActivityStubInterface
      */
     public function execute(string $name, array $args = [], \ReflectionType $returnType = null): PromiseInterface
     {
-        $request = new ExecuteActivity($name, $args, $this->getOptionsArray());
+        $request = new ExecuteActivity(
+            $name,
+            EncodedValues::fromValues($args),
+            $this->getOptionsArray()
+        );
 
-        return Payload::fromPromise($this->converter, $this->request($request), $returnType);
+        return EncodedValues::decodePromise($this->request($request), $returnType);
     }
 
     /**

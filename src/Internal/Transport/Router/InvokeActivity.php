@@ -15,6 +15,7 @@ use React\Promise\Deferred;
 use Temporal\Activity;
 use Temporal\Activity\ActivityContext;
 use Temporal\Activity\ActivityInfo;
+use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\DoNotCompleteOnResultException;
 use Temporal\Internal\Declaration\Instantiator\ActivityInstantiator;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
@@ -54,7 +55,7 @@ final class InvokeActivity extends Route
     {
         $this->rpc = $rpc;
         $this->services = $services;
-        $this->instantiator = new ActivityInstantiator($services->dataConverter);
+        $this->instantiator = new ActivityInstantiator();
     }
 
     /**
@@ -80,10 +81,9 @@ final class InvokeActivity extends Route
             if ($context->isDoNotCompleteOnReturn()) {
                 $resolver->reject(DoNotCompleteOnResultException::create());
             } else {
-                $resolver->resolve([$result]);
+                $resolver->resolve(EncodedValues::fromValues([$result]));
             }
         } catch (\Throwable $e) {
-            // todo: improve exception handling
             $resolver->reject($e);
         } finally {
             Activity::setCurrentContext(null);

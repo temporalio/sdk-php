@@ -14,7 +14,9 @@ namespace Temporal\Internal\Workflow;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Payload;
+use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Transport\Request\ExecuteChildWorkflow;
@@ -28,54 +30,22 @@ use Temporal\Workflow\WorkflowExecution;
 
 final class ChildWorkflowStub implements ChildWorkflowStubInterface
 {
-    /**
-     * @var string
-     */
     private string $workflow;
-
-    /**
-     * @var ChildWorkflowOptions
-     */
-    private ChildWorkflowOptions $options;
-
-    /**
-     * @var MarshallerInterface
-     */
-    private MarshallerInterface $marshaller;
-
-    /**
-     * @var Deferred
-     */
     private Deferred $execution;
-
-    /**
-     * @var ExecuteChildWorkflow|null
-     */
+    private ChildWorkflowOptions $options;
+    private MarshallerInterface $marshaller;
     private ?ExecuteChildWorkflow $request = null;
 
     /**
-     * @var DataConverterInterface
-     */
-    private DataConverterInterface $converter;
-
-    /**
-     * @param DataConverterInterface $converter
      * @param MarshallerInterface $marshaller
      * @param string $workflow
      * @param ChildWorkflowOptions $options
      */
-    public function __construct(
-        DataConverterInterface $converter,
-        MarshallerInterface $marshaller,
-        string $workflow,
-        ChildWorkflowOptions $options
-    ) {
-        $this->converter = $converter;
+    public function __construct(MarshallerInterface $marshaller, string $workflow, ChildWorkflowOptions $options)
+    {
         $this->marshaller = $marshaller;
-
         $this->workflow = $workflow;
         $this->options = $options;
-
         $this->execution = new Deferred();
     }
 
@@ -109,27 +79,17 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
         $promise = $this->request($this->request);
 
         $this->request(new GetChildWorkflowExecution($this->request))
-            ->then(function (Payload $encoded) {
-                $this->execution->resolve(
-                    $execution = $this->toExecution($encoded)
-                );
+            ->then(
+                function (ValuesInterface $values) {
+                    $execution = $values->getValue(0, WorkflowExecution::class);
 
-                return $execution;
-            });
+                    $this->execution->resolve($execution);
 
-        return Payload::fromPromise($this->converter, $promise, $returnType);
-    }
+                    return $execution;
+                }
+            );
 
-    /**
-     * @param Payload $payload
-     * @return WorkflowExecution
-     * @throws \ReflectionException
-     */
-    private function toExecution(Payload $payload): WorkflowExecution
-    {
-        $reflection = new \ReflectionMethod($this, __FUNCTION__);
-
-        return $this->converter->fromPayload($payload, $reflection->getReturnType());
+        return EncodedValues::decodePromise($promise, $returnType);
     }
 
     /**
@@ -155,17 +115,19 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
     {
         $execution = $this->execution->promise();
 
-        return $execution->then(function (WorkflowExecution $execution) use ($name, $args) {
-            $request = new SignalExternalWorkflow(
-                $this->getOptions()->namespace,
-                $execution->id,
-                $execution->runId,
-                $name,
-                $args
-            );
+        return $execution->then(
+            function (WorkflowExecution $execution) use ($name, $args) {
+                $request = new SignalExternalWorkflow(
+                    $this->getOptions()->namespace,
+                    $execution->id,
+                    $execution->runId,
+                    $name,
+                    $args
+                );
 
-            return $this->request($request);
-        });
+                return $this->request($request);
+            }
+        );
     }
 
     /**

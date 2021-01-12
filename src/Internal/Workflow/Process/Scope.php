@@ -14,6 +14,8 @@ namespace Temporal\Internal\Workflow\Process;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use React\Promise\PromisorInterface;
+use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Internal\Coroutine\CoroutineInterface;
 use Temporal\Internal\Coroutine\Stack;
@@ -156,16 +158,14 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     }
 
     /**
-     * Start the scope coroutine.
-     *
      * @param callable $handler
-     * @param array $args
+     * @param ValuesInterface $values
      */
-    public function start(callable $handler, array $args = [])
+    public function start(callable $handler, ValuesInterface $values)
     {
         try {
             $this->awaitLock++;
-            $this->coroutine = new Stack($this->call($handler, $args));
+            $this->coroutine = new Stack($this->call($handler, $values ?? EncodedValues::empty()));
         } catch (\Throwable $e) {
             $this->deferred->reject($e);
         }
@@ -248,13 +248,13 @@ class Scope implements CancellationScopeInterface, PromisorInterface
 
     /**
      * @param callable $handler
-     * @param array $args
+     * @param ValuesInterface|null $values
      * @return \Generator
      */
-    protected function call(callable $handler, array $args): \Generator
+    protected function call(callable $handler, ValuesInterface $values): \Generator
     {
         $this->makeCurrent();
-        $result = $handler($args);
+        $result = $handler($values);
 
         if ($result instanceof \Generator || $result instanceof CoroutineInterface) {
             yield from $result;

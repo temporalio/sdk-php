@@ -9,6 +9,7 @@
 
 namespace Temporal\DataConverter;
 
+use React\Promise\PromiseInterface;
 use Temporal\Api\Common\V1\Payloads;
 use Temporal\Exception\DataConverterException;
 
@@ -17,7 +18,7 @@ class EncodedValues implements ValuesInterface
     /**
      * @var DataConverterInterface|null
      */
-    private ?DataConverterInterface $dataConverter = null;
+    private ?DataConverterInterface $converter = null;
 
     /**
      * @var Payloads|null
@@ -39,7 +40,7 @@ class EncodedValues implements ValuesInterface
     /**
      * @return int
      */
-    public function getSize(): int
+    public function count(): int
     {
         if ($this->values !== null) {
             return count($this->values);
@@ -54,7 +55,7 @@ class EncodedValues implements ValuesInterface
 
     public function isEmpty(): bool
     {
-        return $this->getSize() === 0;
+        return $this->count() === 0;
     }
 
     /**
@@ -64,30 +65,18 @@ class EncodedValues implements ValuesInterface
      */
     public function getValue(int $index, $type = null)
     {
-        // todo: optimize
-
         if (isset($this->values[$index])) {
             return $this->values[$index];
         }
 
-        if ($this->dataConverter === null) {
+        if ($this->converter === null) {
             throw new \LogicException("DataConverter is not set");
         }
 
-        /** @var \Temporal\Api\Common\V1\Payload $payload */
-        $payload = $this->payloads->getPayloads()->offsetGet($index);
-
-        $meta = [];
-
-        // todo: remove it
-        foreach ($payload->getMetadata() as $k => $v) {
-            $meta[$k] = $v;
-        }
-
-        // todo: remove internal type of payload
-        $internalPayload = Payload::create($meta, $payload->getData());
-
-        return $this->dataConverter->fromPayload($internalPayload, $type);
+        return $this->converter->fromPayload(
+            $this->payloads->getPayloads()->offsetGet($index),
+            $type
+        );
     }
 
     /**
@@ -99,13 +88,13 @@ class EncodedValues implements ValuesInterface
             return $this->payloads;
         }
 
-        if ($this->dataConverter === null) {
+        if ($this->converter === null) {
             throw new \LogicException("DataConverter is not set");
         }
 
         $data = [];
         foreach ($this->values as $value) {
-            $data[] = $this->dataConverter->toPayload($value);
+            $data[] = $this->converter->toPayload($value);
         }
 
         $payloads = new Payloads();
@@ -114,14 +103,12 @@ class EncodedValues implements ValuesInterface
         return $payloads;
     }
 
-    // todo: get value by index
-
     /**
-     * @param DataConverterInterface $dataConverter
+     * @param DataConverterInterface $converter
      */
-    public function setDataConverter(DataConverterInterface $dataConverter)
+    public function setDataConverter(DataConverterInterface $converter)
     {
-        $this->dataConverter = $dataConverter;
+        $this->converter = $converter;
     }
 
     /**
@@ -144,7 +131,7 @@ class EncodedValues implements ValuesInterface
     {
         $ev = new self();
         $ev->values = $values;
-        $ev->dataConverter = $dataConverter;
+        $ev->converter = $dataConverter;
 
         return $ev;
     }
@@ -158,8 +145,28 @@ class EncodedValues implements ValuesInterface
     {
         $ev = new self();
         $ev->payloads = $payloads;
-        $ev->dataConverter = $dataConverter;
+        $ev->converter = $dataConverter;
 
         return $ev;
+    }
+
+    /**
+     * Decode promise response upon returning it to the domain layer.
+     *
+     * @param PromiseInterface $promise
+     * @param Type|string|null $type
+     * @return PromiseInterface
+     */
+    public static function decodePromise(PromiseInterface $promise, $type = null): PromiseInterface
+    {
+        return $promise->then(
+            function ($value) use ($type) {
+                if (!$value instanceof ValuesInterface || $value instanceof \Throwable) {
+                    return $value;
+                }
+
+                return $value->getValue(0, $type);
+            }
+        );
     }
 }

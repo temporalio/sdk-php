@@ -397,7 +397,7 @@ final class WorkflowStub implements WorkflowStubInterface
     {
         try {
             $result = $this->fetchResult($timeout);
-            if ($result === null || $result->getSize() === 0) {
+            if ($result === null || $result->count() === 0) {
                 return $result;
             }
 
