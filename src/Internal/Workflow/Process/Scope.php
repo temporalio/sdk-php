@@ -159,9 +159,9 @@ class Scope implements CancellationScopeInterface, PromisorInterface
 
     /**
      * @param callable $handler
-     * @param ValuesInterface $values
+     * @param ValuesInterface|null $values
      */
-    public function start(callable $handler, ValuesInterface $values)
+    public function start(callable $handler, ValuesInterface $values = null)
     {
         try {
             $this->awaitLock++;

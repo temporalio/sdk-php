@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration\WorkflowInstance;
 
+use Temporal\DataConverter\ValuesInterface;
+
 /**
  * @psalm-type Consumer = callable(array): mixed
  */
@@ -28,16 +30,16 @@ final class SignalQueue
 
     /**
      * @param string $signal
-     * @param array $args
+     * @param ValuesInterface $values
      */
-    public function push(string $signal, array $args): void
+    public function push(string $signal, ValuesInterface $values): void
     {
         if (isset($this->consumers[$signal])) {
-            ($this->consumers[$signal])($args);
+            ($this->consumers[$signal])($values);
             return;
         }
 
-        $this->queue[$signal][] = $args;
+        $this->queue[$signal][] = $values;
         $this->flush($signal);
     }
 

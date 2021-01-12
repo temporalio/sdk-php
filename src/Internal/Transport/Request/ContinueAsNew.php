@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport\Request;
 
+use Temporal\DataConverter\ValuesInterface;
 use Temporal\Worker\Transport\Command\Request;
 
 final class ContinueAsNew extends Request
@@ -19,9 +20,9 @@ final class ContinueAsNew extends Request
 
     /**
      * @param string $name
-     * @param array $input
+     * @param ValuesInterface $input
      */
-    public function __construct(string $name, array $input)
+    public function __construct(string $name, ValuesInterface $input)
     {
         parent::__construct(
             self::NAME,

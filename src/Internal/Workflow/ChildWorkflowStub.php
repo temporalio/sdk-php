@@ -74,7 +74,11 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
             throw new \LogicException('Child workflow already has been executed');
         }
 
-        $this->request = new ExecuteChildWorkflow($this->workflow, $args, $this->getOptionsArray());
+        $this->request = new ExecuteChildWorkflow(
+            $this->workflow,
+            EncodedValues::fromValues($args),
+            $this->getOptionsArray()
+        );
 
         $promise = $this->request($this->request);
 
@@ -82,7 +86,6 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
             ->then(
                 function (ValuesInterface $values) {
                     $execution = $values->getValue(0, WorkflowExecution::class);
-
                     $this->execution->resolve($execution);
 
                     return $execution;
@@ -122,7 +125,7 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
                     $execution->id,
                     $execution->runId,
                     $name,
-                    $args
+                    EncodedValues::fromValues($args)
                 );
 
                 return $this->request($request);

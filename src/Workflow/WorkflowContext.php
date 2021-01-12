@@ -241,7 +241,7 @@ class WorkflowContext implements WorkflowContextInterface
         $this->continueAsNew = true;
 
         // must not be captured
-        return $this->services->client->request(new ContinueAsNew($name, $input));
+        return $this->services->client->request(new ContinueAsNew($name, EncodedValues::fromValues($input)));
     }
 
     /**
