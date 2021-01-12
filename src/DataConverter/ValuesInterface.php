@@ -10,4 +10,6 @@ interface ValuesInterface
      * @param DataConverterInterface $dataConverter
      */
     public function setDataConverter(DataConverterInterface $dataConverter);
+
+    public function isEmpty():bool;
 }

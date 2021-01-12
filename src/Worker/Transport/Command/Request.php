@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Transport\Command;
 
+use Temporal\Api\Failure\V1\Failure;
+
 class Request extends Command implements RequestInterface
 {
     protected const CANCELLABLE = false;
@@ -29,6 +31,11 @@ class Request extends Command implements RequestInterface
      * @var array
      */
     protected array $payloads;
+
+    /**
+     * @var \Throwable|null
+     */
+    protected ?\Throwable $failure = null;
 
     /**
      * @param string $name
@@ -71,6 +78,22 @@ class Request extends Command implements RequestInterface
     public function getPayloads(): array
     {
         return $this->payloads;
+    }
+
+    /**
+     * @param \Throwable|null $e
+     */
+    public function setFailure(?\Throwable $e)
+    {
+        $this->failure = $e;
+    }
+
+    /**
+     * @return \Throwable|null
+     */
+    public function getFailure(): ?\Throwable
+    {
+        return $this->failure;
     }
 
     /**

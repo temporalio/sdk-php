@@ -25,5 +25,4 @@ class HeartBeatActivity
         sleep($value);
         return 'OK';
     }
-
 }

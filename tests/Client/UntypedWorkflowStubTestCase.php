@@ -82,7 +82,7 @@ class UntypedWorkflowStubTestCase extends TestCase
         $simple2 = $w->newUntypedWorkflowStub('SimpleWorkflow', WorkflowOptions::new()->withWorkflowId($e->id));
 
         $this->expectException(WorkflowExecutionAlreadyStartedException::class);
-        $simple2->start(['hello world']);
+        $simple2->signalWithStart('add', [-1]);
     }
 
     public function testSignalNotStarted()
@@ -116,6 +116,18 @@ class UntypedWorkflowStubTestCase extends TestCase
 
         $this->assertSame(88, $simple->query('get')->getValue(0));
         $this->assertSame(88, $simple->getResult(0));
+    }
+
+    public function testStartAsNewEventTrailing()
+    {
+        $w = $this->createClient();
+        $simple = $w->newUntypedWorkflowStub('ContinuableWorkflow');
+
+        $e = $simple->start([1]);
+        $this->assertNotEmpty($e->id);
+        $this->assertNotEmpty($e->runId);
+
+        $this->assertSame('OK6', $simple->getResult(0));
     }
 
     /**

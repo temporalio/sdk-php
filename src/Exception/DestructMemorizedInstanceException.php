@@ -14,7 +14,7 @@ namespace Temporal\Exception;
  *
  * @internal
  */
-class OffloadFromMemoryException extends TemporalException
+class DestructMemorizedInstanceException extends TemporalException
 {
 
 }

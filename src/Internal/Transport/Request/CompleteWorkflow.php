@@ -20,14 +20,11 @@ final class CompleteWorkflow extends Request
 
     /**
      * @param array $result
-     * @param \Throwable|null $error
+     * @param \Throwable|null $failure
      */
-    public function __construct(array $result, \Throwable $error = null)
+    public function __construct(array $result, \Throwable $failure = null)
     {
-        if ($error instanceof \Throwable) {
-            $error = ErrorResponse::exceptionToArray($error);
-        }
-
-        parent::__construct(self::NAME, ['error' => $error], $result);
+        parent::__construct(self::NAME, [], $result);
+        $this->setFailure($failure);
     }
 }

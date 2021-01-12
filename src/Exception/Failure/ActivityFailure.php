@@ -35,51 +35,57 @@ class ActivityFailure extends TemporalFailure
     this.identity = identity;
     this.retryState = retryState;
   }
+*/
+    public function getScheduledEventId()
+    {
+        return scheduledEventId;
+    }
 
-  public long getScheduledEventId() {
-    return scheduledEventId;
-  }
+    public function getStartedEventId()
+    {
+        return startedEventId;
+    }
 
-  public long getStartedEventId() {
-    return startedEventId;
-  }
+    public function getActivityType()
+    {
+        return activityType;
+    }
 
-  public String getActivityType() {
-    return activityType;
-  }
+    public function getActivityId()
+    {
+        return activityId;
+    }
 
-  public String getActivityId() {
-    return activityId;
-  }
+    public function getIdentity()
+    {
+        return identity;
+    }
 
-  public String getIdentity() {
-    return identity;
-  }
-
-  public RetryState getRetryState() {
-    return retryState;
-  }
-
-  public static String getMessage(
-      long scheduledEventId,
-      long startedEventId,
-      String activityType,
-      String activityId,
-      RetryState retryState,
-      String identity) {
-    return "scheduledEventId="
-        + scheduledEventId
-        + ", startedEventId="
-        + startedEventId
-        + ", activityType='"
-        + activityType
-        + '\''
-        + (activityId == null ? "" : ", activityId='" + activityId + '\'')
-        + ", identity='"
-        + identity
-        + '\''
-        + ", retryState="
-        + retryState;
-  }
-     */
+    public function getRetryState()
+    {
+        return retryState;
+    }
+    /*
+      public static String getMessage(
+          long scheduledEventId,
+          long startedEventId,
+          String activityType,
+          String activityId,
+          RetryState retryState,
+          String identity) {
+        return "scheduledEventId="
+            + scheduledEventId
+            + ", startedEventId="
+            + startedEventId
+            + ", activityType='"
+            + activityType
+            + '\''
+            + (activityId == null ? "" : ", activityId='" + activityId + '\'')
+            + ", identity='"
+            + identity
+            + '\''
+            + ", retryState="
+            + retryState;
+      }
+         */
 }

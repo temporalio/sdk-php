@@ -33,30 +33,30 @@ class ChildWorkflowFailure extends TemporalFailure
 //    this.namespace = namespace;
 //    this.retryState = retryState;
 //  }
-//
-//public long getInitiatedEventId() {
-//    return initiatedEventId;
-//  }
-//
-//  public long getStartedEventId() {
-//    return startedEventId;
-//  }
-//
-//  public String getNamespace() {
-//    return namespace;
-//  }
-//
-//  public RetryState getRetryState() {
-//    return retryState;
-//  }
-//
-//  public WorkflowExecution getExecution() {
-//    return execution;
-//  }
-//
-//  public String getWorkflowType() {
-//    return workflowType;
-//  }
+
+public function getInitiatedEventId() {
+    return initiatedEventId;
+  }
+
+  public function getStartedEventId() {
+    return startedEventId;
+  }
+
+  public function getNamespace() {
+    return namespace;
+  }
+
+  public function getRetryState() {
+    return retryState;
+  }
+
+  public function getExecution() {
+    return execution;
+  }
+
+  public function getWorkflowType() {
+    return workflowType;
+  }
 //
 //  public static String getMessage(
 //    WorkflowExecution execution,

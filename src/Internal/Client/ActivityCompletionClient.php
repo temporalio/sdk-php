@@ -46,7 +46,7 @@ class ActivityCompletionClient implements ActivityCompletionClientInterface
     /**
      * @var DataConverterInterface
      */
-    private DataConverterInterface $dataConverter;
+    private DataConverterInterface $converter;
 
     /**
      * @param ServiceClientInterface $serviceClient
@@ -60,7 +60,7 @@ class ActivityCompletionClient implements ActivityCompletionClientInterface
     ) {
         $this->serviceClient = $serviceClient;
         $this->clientOptions = $clientOptions;
-        $this->dataConverter = $dataConverter;
+        $this->converter = $dataConverter;
     }
 
     /**
@@ -69,53 +69,54 @@ class ActivityCompletionClient implements ActivityCompletionClientInterface
     public function complete(string $workflowId, ?string $runId, string $activityId, $result = null): void
     {
         $r = new RespondActivityTaskCompletedByIdRequest();
-        $r->setIdentity($this->clientOptions->identity);
-        $r->setNamespace($this->clientOptions->namespace);
-        $r->setWorkflowId($workflowId);
-        $r->setRunId($runId ?? '');
-        $r->setActivityId($activityId);
+        $r
+            ->setIdentity($this->clientOptions->identity)
+            ->setNamespace($this->clientOptions->namespace)
+            ->setWorkflowId($workflowId)
+            ->setRunId($runId ?? '')
+            ->setActivityId($activityId);
 
-        if (func_num_args() == 4) {
-            $r->setResult(EncodedValues::fromValues([$result], $this->dataConverter)->toPayloads());
+        $input = EncodedValues::fromValues(array_slice(func_get_args(), 3), $this->converter);
+        if (!$input->isEmpty()) {
+            $r->setResult($input->toPayloads());
         }
 
         try {
             $this->serviceClient->RespondActivityTaskCompletedById($r);
         } catch (ServiceClientException $e) {
             if ($e->getCode() === StatusCode::NOT_FOUND) {
-                // todo: map
-                throw new ActivityNotExistsException();
+                throw ActivityNotExistsException::fromPreviousWithActivityId($activityId, $e);
             }
 
-            // todo: map
-            throw new ActivityCompletionFailureException();
+            throw ActivityCompletionFailureException::fromPreviousWithActivityId($activityId, $e);
         }
     }
 
     /**
      * {@inheritDoc}
      */
-    public function completeByToken(string $taskToken, $result): void
+    public function completeByToken(string $taskToken, $result = null): void
     {
         $r = new RespondActivityTaskCompletedRequest();
-        $r->setIdentity($this->clientOptions->identity);
-        $r->setNamespace($this->clientOptions->namespace);
-        $r->setTaskToken($taskToken);
 
-        if (func_num_args() == 2) {
-            $r->setResult(EncodedValues::fromValues([$result], $this->dataConverter)->toPayloads());
+        $r
+            ->setIdentity($this->clientOptions->identity)
+            ->setNamespace($this->clientOptions->namespace)
+            ->setTaskToken($taskToken);
+
+        $input = EncodedValues::fromValues(array_slice(func_get_args(), 1), $this->converter);
+        if (!$input->isEmpty()) {
+            $r->setResult($input->toPayloads());
         }
 
         try {
             $this->serviceClient->RespondActivityTaskCompleted($r);
         } catch (ServiceClientException $e) {
             if ($e->getCode() === StatusCode::NOT_FOUND) {
-                // todo: map
-                throw new ActivityNotExistsException();
+                throw ActivityNotExistsException::fromPrevious($e);
             }
 
-            // todo: map
-            throw new ActivityCompletionFailureException();
+            throw  ActivityCompletionFailureException::fromPrevious($e);
         }
     }
 
@@ -135,7 +136,7 @@ class ActivityCompletionClient implements ActivityCompletionClientInterface
         $r->setRunId($runId ?? '');
         $r->setActivityId($activityId);
 
-        $r->setFailure(FailureConverter::mapExceptionToFailure($error, $this->dataConverter));
+        $r->setFailure(FailureConverter::mapExceptionToFailure($error, $this->converter));
 
         try {
             $this->serviceClient->RespondActivityTaskFailedById($r);
@@ -160,7 +161,7 @@ class ActivityCompletionClient implements ActivityCompletionClientInterface
         $r->setNamespace($this->clientOptions->namespace);
         $r->setTaskToken($taskToken);
 
-        $r->setFailure(FailureConverter::mapExceptionToFailure($error, $this->dataConverter));
+        $r->setFailure(FailureConverter::mapExceptionToFailure($error, $this->converter));
 
         try {
             $this->serviceClient->RespondActivityTaskFailed($r);
@@ -188,7 +189,7 @@ class ActivityCompletionClient implements ActivityCompletionClientInterface
         $r->setActivityId($activityId);
 
         if (func_num_args() == 4) {
-            $r->setDetails(EncodedValues::fromValues([$details], $this->dataConverter)->toPayloads());
+            $r->setDetails(EncodedValues::fromValues([$details], $this->converter)->toPayloads());
         }
 
         try {
@@ -202,15 +203,16 @@ class ActivityCompletionClient implements ActivityCompletionClientInterface
     /**
      * {@inheritDoc}
      */
-    public function reportCancellationByToken(string $taskToken, $details): void
+    public function reportCancellationByToken(string $taskToken, $details = null): void
     {
         $r = new RespondActivityTaskCanceledRequest();
         $r->setIdentity($this->clientOptions->identity);
         $r->setNamespace($this->clientOptions->namespace);
         $r->setTaskToken($taskToken);
 
+
         if (func_num_args() == 2) {
-            $r->setDetails(EncodedValues::fromValues([$details], $this->dataConverter)->toPayloads());
+            $r->setDetails(EncodedValues::fromValues([$details], $this->converter)->toPayloads());
         }
 
         try {
@@ -234,7 +236,7 @@ class ActivityCompletionClient implements ActivityCompletionClientInterface
         $r->setActivityId($activityId);
 
         if (func_num_args() == 4) {
-            $r->setDetails(EncodedValues::fromValues([$details], $this->dataConverter)->toPayloads());
+            $r->setDetails(EncodedValues::fromValues([$details], $this->converter)->toPayloads());
         }
 
         try {
@@ -264,7 +266,7 @@ class ActivityCompletionClient implements ActivityCompletionClientInterface
         $r->setTaskToken($taskToken);
 
         if (func_num_args() == 2) {
-            $r->setDetails(EncodedValues::fromValues([$details], $this->dataConverter)->toPayloads());
+            $r->setDetails(EncodedValues::fromValues([$details], $this->converter)->toPayloads());
         }
 
         try {

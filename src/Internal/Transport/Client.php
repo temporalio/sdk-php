@@ -81,14 +81,7 @@ final class Client implements ClientInterface
         $deferred = $this->fetch($response->getID());
 
         if ($response instanceof ErrorResponseInterface) {
-
-            // todo: implement exception mapping
-
-            if ($response->getMessage() === 'canceled') {
-                $deferred->reject($response->toException(CancellationException::class));
-            } else {
-                $deferred->reject($response->toException());
-            }
+            $deferred->reject($response->getFailure());
         } else {
             $result = $response->getPayloads();
 

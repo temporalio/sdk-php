@@ -74,7 +74,7 @@ final class Server implements ServerInterface
         try {
             $result = ($this->onMessage)($request, $headers);
         } catch (\Throwable $e) {
-            $this->queue->push(ErrorResponse::fromException($e, $request->getID()));
+            $this->queue->push(new ErrorResponse($e, $request->getID()));
 
             return;
         }
@@ -115,7 +115,7 @@ final class Server implements ServerInterface
                 );
             }
 
-            $response = ErrorResponse::fromException($result, $request->getID());
+            $response = new ErrorResponse($result, $request->getID());
 
             $this->queue->push($response);
 

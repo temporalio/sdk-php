@@ -11,8 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Client;
 
-use Temporal\Api\Common\V1\Memo;
-use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\Api\Common\V1\WorkflowType;
 use Temporal\Api\Enums\V1\EventType;
 use Temporal\Api\Enums\V1\HistoryEventFilterType;
@@ -265,31 +263,6 @@ final class WorkflowStub implements WorkflowStubInterface
     }
 
     /**
-     * Wait for the workflow completion and return it's result.
-     *
-     * @param int $timeout Timeout in seconds.
-     * @param Type|string $returnType
-     * @return mixed|null
-     *
-     * @throws \Throwable
-     */
-    public function getResult($timeout = null, $returnType = null)
-    {
-        try {
-            $result = $this->fetchResult($timeout);
-            if ($result === null || $result->getSize() === 0) {
-                return $result;
-            }
-
-            return $result->getValue(0, $returnType);
-        } catch (TimeoutException $e) {
-            throw $e;
-        } catch (\Throwable $e) {
-            throw $this->mapWorkflowFailureToException($e);
-        }
-    }
-
-    /**
      * {@inheritDoc}
      */
     public function signal(string $name, array $args = []): void
@@ -336,8 +309,10 @@ final class WorkflowStub implements WorkflowStubInterface
 
         $q = new WorkflowQuery();
         $q->setQueryType($name);
-        if ($args !== []) {
-            $q->setQueryArgs(EncodedValues::fromValues($args, $this->converter)->toPayloads());
+
+        $input = EncodedValues::fromValues($args, $this->converter);
+        if (!$input->isEmpty()) {
+            $q->setQueryArgs($input->toPayloads());
         }
 
         $r->setQuery($q);
@@ -410,6 +385,31 @@ final class WorkflowStub implements WorkflowStubInterface
     }
 
     /**
+     * Wait for the workflow completion and return it's result.
+     *
+     * @param int $timeout Timeout in seconds.
+     * @param Type|string $returnType
+     * @return mixed|null
+     *
+     * @throws \Throwable
+     */
+    public function getResult($timeout = null, $returnType = null)
+    {
+        try {
+            $result = $this->fetchResult($timeout);
+            if ($result === null || $result->getSize() === 0) {
+                return $result;
+            }
+
+            return $result->getValue(0, $returnType);
+        } catch (TimeoutException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            throw $this->mapWorkflowFailureToException($e);
+        }
+    }
+
+    /**
      * @return void
      */
     private function assertNotStarted(): void
@@ -446,10 +446,10 @@ final class WorkflowStub implements WorkflowStubInterface
     }
 
     /**
-     * @param null $timeout
+     * @param int|null $timeout
      * @return EncodedValues|null
      */
-    private function fetchResult($timeout = null): ?EncodedValues
+    private function fetchResult(int $timeout = null): ?EncodedValues
     {
         $this->assertStarted(__FUNCTION__);
 
@@ -561,51 +561,9 @@ final class WorkflowStub implements WorkflowStubInterface
             }
             // todo: retry
         } while (true);
-    }
-
-    /**
-     * @param \Throwable $e
-     * @throws \Throwable
-     */
-    private function mapWorkflowFailureToException(\Throwable $e): \Throwable
-    {
-        return $e;
-//        Exception failure, @SuppressWarnings("unused") Class<R> returnType) {
-//        Throwable f = CheckedExceptionWrapper.unwrap(failure);
-//    if (f instanceof Error) {
-//        throw (Error) f;
-//    }
-//    failure = (Exception) f;
-//    if (failure instanceof WorkflowExecutionFailedException) {
-//        WorkflowExecutionFailedException executionFailed = (WorkflowExecutionFailedException) failure;
-//      Throwable cause =
-//            FailureConverter.failureToException(
-//                executionFailed.getFailure(), clientOptions.getDataConverter());
-//      throw new WorkflowFailedException(
-//          execution.get(),
-//          workflowType.orElse(null),
-//          executionFailed.getWorkflowTaskCompletedEventId(),
-//          executionFailed.getRetryState(),
-//          cause);
-//    } else if (failure instanceof StatusRuntimeException) {
-//        StatusRuntimeException sre = (StatusRuntimeException) failure;
-//      if (sre.getStatus().getCode() == Status.Code.NOT_FOUND) {
-//          throw new WorkflowNotFoundException(execution.get(), workflowType.orElse(null));
-//      } else {
-//          throw new WorkflowServiceException(execution.get(), workflowType.orElse(null), failure);
-//      }
-//    } else if (failure instanceof CanceledFailure) {
-//        throw (CanceledFailure) failure;
-//    } else if (failure instanceof WorkflowException) {
-//        throw (WorkflowException) failure;
-//    } else {
-//        throw new WorkflowServiceException(execution.get(), workflowType.orElse(null), failure);
-//    }
-
-    }
 
 
-    //    public static HistoryEvent getInstanceCloseEvent(
+        //    public static HistoryEvent getInstanceCloseEvent(
 //      WorkflowServiceStubs service,
 //      String namespace,
 //      WorkflowExecution workflowExecution,
@@ -695,4 +653,46 @@ final class WorkflowStub implements WorkflowStubInterface
 //    } while (true);
 //    return event;
 //  }
+    }
+
+    /**
+     * @param \Throwable $e
+     * @throws \Throwable
+     */
+    private function mapWorkflowFailureToException(\Throwable $e): \Throwable
+    {
+        return $e;
+//        Exception failure, @SuppressWarnings("unused") Class<R> returnType) {
+//        Throwable f = CheckedExceptionWrapper.unwrap(failure);
+//    if (f instanceof Error) {
+//        throw (Error) f;
+//    }
+//    failure = (Exception) f;
+//    if (failure instanceof WorkflowExecutionFailedException) {
+//        WorkflowExecutionFailedException executionFailed = (WorkflowExecutionFailedException) failure;
+//      Throwable cause =
+//            FailureConverter.failureToException(
+//                executionFailed.getFailure(), clientOptions.getDataConverter());
+//      throw new WorkflowFailedException(
+//          execution.get(),
+//          workflowType.orElse(null),
+//          executionFailed.getWorkflowTaskCompletedEventId(),
+//          executionFailed.getRetryState(),
+//          cause);
+//    } else if (failure instanceof StatusRuntimeException) {
+//        StatusRuntimeException sre = (StatusRuntimeException) failure;
+//      if (sre.getStatus().getCode() == Status.Code.NOT_FOUND) {
+//          throw new WorkflowNotFoundException(execution.get(), workflowType.orElse(null));
+//      } else {
+//          throw new WorkflowServiceException(execution.get(), workflowType.orElse(null), failure);
+//      }
+//    } else if (failure instanceof CanceledFailure) {
+//        throw (CanceledFailure) failure;
+//    } else if (failure instanceof WorkflowException) {
+//        throw (WorkflowException) failure;
+//    } else {
+//        throw new WorkflowServiceException(execution.get(), workflowType.orElse(null), failure);
+//    }
+
+    }
 }

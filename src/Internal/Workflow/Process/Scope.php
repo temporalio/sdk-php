@@ -14,7 +14,7 @@ namespace Temporal\Internal\Workflow\Process;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use React\Promise\PromisorInterface;
-use Temporal\Exception\OffloadFromMemoryException;
+use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Internal\Coroutine\CoroutineInterface;
 use Temporal\Internal\Coroutine\Stack;
 use Temporal\Internal\ServiceContainer;
@@ -187,7 +187,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
      */
     public function cancel(\Throwable $reason = null): void
     {
-        if ($this->detached && !$reason instanceof OffloadFromMemoryException) {
+        if ($this->detached && !$reason instanceof DestructMemorizedInstanceException) {
             // detaches scopes can be offload via memory flush
             return;
         }
@@ -276,7 +276,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
         }
 
         $this->onCancel[++$this->cancelID] = function (\Throwable $reason = null) use ($request) {
-            if ($reason instanceof OffloadFromMemoryException) {
+            if ($reason instanceof DestructMemorizedInstanceException) {
                 // memory flush
                 $this->context->getClient()->reject($request, $reason);
                 return;

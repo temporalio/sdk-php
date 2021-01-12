@@ -14,6 +14,24 @@ use Temporal\Exception\TemporalException;
 
 class ActivityCompletionException extends TemporalException
 {
+    public static function fromPrevious(\Throwable $e): self
+    {
+        return new static(
+            '',
+            $e->getCode(),
+            $e
+        );
+    }
+
+
+    public static function fromPreviousWithActivityId(string $activityId, \Throwable $e): self
+    {
+        return new static(
+            '',
+            $e->getCode(),
+            $e
+        );
+    }
 
     /*
      *

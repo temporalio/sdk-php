@@ -29,8 +29,16 @@ interface RequestInterface extends CommandInterface
      * For incoming requests.
      *
      * @return array<Payload|mixed>
+     * @todo: migrate to encoded values
      */
     public function getPayloads(): array;
+
+    /**
+     * Optional failure.
+     *
+     * @return \Throwable|null
+     */
+    public function getFailure(): ?\Throwable;
 
     /**
      * @return bool

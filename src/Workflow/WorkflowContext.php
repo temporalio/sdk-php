@@ -245,12 +245,11 @@ class WorkflowContext implements WorkflowContextInterface
     /**
      * {@inheritDoc}
      */
-    public function complete($result = null, \Throwable $error=null): PromiseInterface
+    public function complete($result = null, \Throwable $failure=null): PromiseInterface
     {
         $this->recordTrace();
 
-        // todo: implement exception wrapping
-        return $this->services->client->request(new CompleteWorkflow($result, $error));
+        return $this->services->client->request(new CompleteWorkflow($result, $failure));
     }
 
     /**

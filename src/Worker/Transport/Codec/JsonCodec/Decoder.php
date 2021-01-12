@@ -12,8 +12,10 @@ declare(strict_types=1);
 namespace Temporal\Worker\Transport\Codec\JsonCodec;
 
 use JetBrains\PhpStorm\Pure;
+use Temporal\Api\Failure\V1\Failure;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\Payload;
+use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\ErrorResponse;
 use Temporal\Worker\Transport\Command\ErrorResponseInterface;
@@ -27,7 +29,7 @@ class Decoder
     /**
      * @var DataConverterInterface
      */
-    private DataConverterInterface $dataConverter;
+    private DataConverterInterface $converter;
 
     /**
      * Decoder constructor.
@@ -35,7 +37,7 @@ class Decoder
      */
     public function __construct(DataConverterInterface $dataConverter)
     {
-        $this->dataConverter = $dataConverter;
+        $this->converter = $dataConverter;
     }
 
     /**
@@ -48,8 +50,8 @@ class Decoder
             case isset($command['command']):
                 return $this->parseRequest($command);
 
-            case isset($command['error']) :
-                return $this->parseErrorResponse($command);
+            case isset($command['failure']) :
+                return $this->parseFailureResponse($command);
 
             default:
                 return $this->parseResponse($command);
@@ -84,30 +86,19 @@ class Decoder
      * @param array $data
      * @return ErrorResponseInterface
      */
-    private function parseErrorResponse(array $data): ErrorResponseInterface
+    private function parseFailureResponse(array $data): ErrorResponseInterface
     {
-        // todo: access payloads
-
         $this->assertCommandID($data);
 
-        if (!isset($data['error']) || !\is_array($data['error'])) {
+        if (!isset($data['failure']) || !\is_string($data['failure'])) {
             throw new \InvalidArgumentException('An error response must contain an object "error" field');
         }
 
-        $error = $data['error'];
-
-        if (!isset($error['code']) || !$this->isUInt32($error['code'])) {
-            throw new \InvalidArgumentException('Error code must contain a valid uint32 value');
-        }
-
-        if (!isset($error['message']) || !\is_string($error['message']) || $error['message'] === '') {
-            throw new \InvalidArgumentException('Error message must contain a valid non-empty string value');
-        }
+        $failure = new Failure();
+        $failure->mergeFromString(base64_decode($data['failure']));
 
         return new ErrorResponse(
-            $error['message'],
-            $error['code'],
-            $error['data'] ?? null,
+            FailureConverter::mapFailureToException($failure, $this->converter),
             $data['id']
         );
     }
