@@ -51,7 +51,7 @@ $methodDocBlock = function (ReflectionClass $r, string $method, string $arg, str
     $block[] = sprintf('@param \\%s $arg', $arg);
     $block[] = sprintf('@param ContextInterface|null $ctx');
     $block[] = sprintf('@return \\%s', $return);
-    $block[] = sprintf('@throws ClientException');
+    $block[] = sprintf('@throws ServiceClientException');
 
     return join("\n", $block);
 };
@@ -134,7 +134,7 @@ $file->setClass($interface);
 $file->setUses(
     [
         'Temporal\Api\Workflowservice\V1',
-        'Temporal\Exception\ServiceClientException',
+        'Temporal\Exception\Client\ServiceClientException',
     ]
 );
 
@@ -183,7 +183,7 @@ $file->setClass($impl);
 $file->setUses(
     [
         'Temporal\Api\Workflowservice\V1',
-        'Temporal\Exception\ServiceClientException',
+        'Temporal\Exception\Client\ServiceClientException',
     ]
 );
 
