@@ -268,8 +268,7 @@ class WorkflowContext implements WorkflowContextInterface
     public function continueAsNew(
         string $type,
         array $args = [],
-        ContinueAsNewOptions $options = null,
-        \ReflectionType $returnType = null
+        ContinueAsNewOptions $options = null
     ): PromiseInterface {
         $this->recordTrace();
         $this->continueAsNew = true;
@@ -279,9 +278,7 @@ class WorkflowContext implements WorkflowContextInterface
         $request = new ContinueAsNew($type, $args, $options);
 
         // must not be captured
-        $promise = $this->services->client->request($request);
-
-        return Payload::fromPromise($this->getDataConverter(), $promise, $returnType);
+        return $this->services->client->request($request);
     }
 
     /**
