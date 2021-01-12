@@ -22,14 +22,7 @@ use Temporal\Exception\TemporalException;
  */
 class TemporalFailure extends TemporalException
 {
-    /**
-     * @var Failure|null
-     */
     private ?Failure $failure = null;
-
-    /**
-     * @var string
-     */
     private string $originalMessage;
 
     /**

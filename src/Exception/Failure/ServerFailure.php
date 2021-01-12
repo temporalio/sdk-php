@@ -12,9 +12,6 @@ namespace Temporal\Exception\Failure;
 
 class ServerFailure extends TemporalFailure
 {
-    /**
-     * @var bool
-     */
     private bool $nonRetryable;
 
     /**

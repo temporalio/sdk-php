@@ -39,19 +39,8 @@ use Temporal\DataConverter\ValuesInterface;
  */
 class ApplicationFailure extends TemporalFailure
 {
-    /**
-     * @var string
-     */
     private string $type;
-
-    /**
-     * @var ValuesInterface
-     */
     private ValuesInterface $details;
-
-    /**
-     * @var bool
-     */
     private bool $nonRetryable;
 
     /**

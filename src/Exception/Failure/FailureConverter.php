@@ -169,7 +169,7 @@ final class FailureConverter
     /**
      * @param Failure $failure
      * @param DataConverterInterface $converter
-     * @return \Throwable
+     * @return TemporalFailure
      */
     private static function createFailureException(
         Failure $failure,
@@ -249,7 +249,6 @@ final class FailureConverter
             case $failure->hasActivityFailureInfo():
                 $info = $failure->getActivityFailureInfo();
 
-                // todo: complete mapping
                 return new ActivityFailure(
                     $info->getScheduledEventId(),
                     $info->getStartedEventId(),

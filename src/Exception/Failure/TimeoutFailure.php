@@ -14,14 +14,7 @@ use Temporal\DataConverter\ValuesInterface;
 
 class TimeoutFailure extends TemporalFailure
 {
-    /**
-     * @var ValuesInterface
-     */
     private ValuesInterface $lastHeartbeatDetails;
-
-    /**
-     * @var int
-     */
     private int $timeoutType;
 
     /**

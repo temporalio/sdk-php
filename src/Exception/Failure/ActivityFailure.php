@@ -1,91 +1,109 @@
 <?php
 
+/**
+ * This file is part of Temporal package.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace Temporal\Exception\Failure;
 
-
 class ActivityFailure extends TemporalFailure
 {
+    private int $scheduledEventId;
+    private int $startedEventId;
+    private string $activityType;
+    private string $activityId;
+    private string $identity;
+    private int $retryState;
 
-    /*
-     *  private final long scheduledEventId;
-  private final long startedEventId;
-  private final String activityType;
-  private final String activityId;
-  private final String identity;
-  private final RetryState retryState;
+    /**
+     * @param int $scheduledEventId
+     * @param int $startedEventId
+     * @param string $activityType
+     * @param string $activityId
+     * @param int $retryState
+     * @param string $identity
+     * @param \Throwable|null $previous
+     */
+    public function __construct(
+        int $scheduledEventId,
+        int $startedEventId,
+        string $activityType,
+        string $activityId,
+        int $retryState,
+        string $identity,
+        \Throwable $previous = null
+    ) {
+        parent::__construct(
+            self::buildMessage(
+                [
+                    'scheduledEventId' => $scheduledEventId,
+                    'startedEventId' => $startedEventId,
+                    'activityType' => $activityType,
+                    'activityId' => $activityId,
+                    'identity' => $identity,
+                    'retryState' => $retryState,
+                ]
+            ),
+            null,
+            $previous
+        );
 
-  public ActivityFailure(
-      long scheduledEventId,
-      long startedEventId,
-      String activityType,
-      String activityId,
-      RetryState retryState,
-      String identity,
-      Throwable cause) {
-    super(
-        getMessage(
-            scheduledEventId, startedEventId, activityType, activityId, retryState, identity),
-        null,
-        cause);
-    this.scheduledEventId = scheduledEventId;
-    this.startedEventId = startedEventId;
-    this.activityType = activityType;
-    this.activityId = activityId;
-    this.identity = identity;
-    this.retryState = retryState;
-  }
-*/
-    public function getScheduledEventId()
-    {
-        return scheduledEventId;
+        $this->scheduledEventId = $scheduledEventId;
+        $this->startedEventId = $startedEventId;
+        $this->activityType = $activityType;
+        $this->activityId = $activityId;
+        $this->identity = $identity;
+        $this->retryState = $retryState;
     }
 
-    public function getStartedEventId()
+    /**
+     * @return int
+     */
+    public function getScheduledEventId(): int
     {
-        return startedEventId;
+        return $this->scheduledEventId;
     }
 
-    public function getActivityType()
+    /**
+     * @return int
+     */
+    public function getStartedEventId(): int
     {
-        return activityType;
+        return $this->startedEventId;
     }
 
-    public function getActivityId()
+    /**
+     * @return string
+     */
+    public function getActivityType(): string
     {
-        return activityId;
+        return $this->activityType;
     }
 
-    public function getIdentity()
+    /**
+     * @return int
+     */
+    public function getActivityId(): int
     {
-        return identity;
+        return $this->activityId;
     }
 
-    public function getRetryState()
+    /**
+     * @return string
+     */
+    public function getIdentity(): string
     {
-        return retryState;
+        return $this->identity;
     }
-    /*
-      public static String getMessage(
-          long scheduledEventId,
-          long startedEventId,
-          String activityType,
-          String activityId,
-          RetryState retryState,
-          String identity) {
-        return "scheduledEventId="
-            + scheduledEventId
-            + ", startedEventId="
-            + startedEventId
-            + ", activityType='"
-            + activityType
-            + '\''
-            + (activityId == null ? "" : ", activityId='" + activityId + '\'')
-            + ", identity='"
-            + identity
-            + '\''
-            + ", retryState="
-            + retryState;
-      }
-         */
+
+    /**
+     * @return int
+     */
+    public function getRetryState(): int
+    {
+        return $this->retryState;
+    }
 }

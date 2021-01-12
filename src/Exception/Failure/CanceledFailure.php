@@ -16,9 +16,6 @@ use Throwable;
 
 class CanceledFailure extends TemporalFailure
 {
-    /**
-     * @var ValuesInterface
-     */
     private ValuesInterface $details;
 
     /**

@@ -8,34 +8,11 @@ use Temporal\Workflow\WorkflowExecution;
 
 class ChildWorkflowFailure extends TemporalFailure
 {
-    /**
-     * @var int
-     */
     private int $initiatedEventId;
-
-    /**
-     * @var int
-     */
     private int $startedEventId;
-
-    /**
-     * @var string
-     */
     private string $namespace;
-
-    /**
-     * @var int
-     */
     private int $retryState;
-
-    /**
-     * @var WorkflowExecution
-     */
     private WorkflowExecution $execution;
-
-    /**
-     * @var string
-     */
     private string $workflowType;
 
     /**
