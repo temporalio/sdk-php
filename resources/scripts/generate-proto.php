@@ -128,7 +128,7 @@ try {
 copy('resources/protocol.proto', 'proto/protocol.proto');
 
 try {
-    echo "generating roadrunner prototol: ";
+    echo "generating roadrunner prototol (php): ";
 
     $result = exec(
         sprintf(

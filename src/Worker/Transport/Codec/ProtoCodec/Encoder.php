@@ -9,10 +9,13 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Worker\Transport\Codec\JsonCodec;
+namespace Temporal\Worker\Transport\Codec\ProtoCodec;
 
+use Temporal\Api\Common\V1\Payloads;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\Failure\FailureConverter;
+use Temporal\Roadrunner\Internal\Error;
+use Temporal\Roadrunner\Internal\Message;
 use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\FailureResponseInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
@@ -20,24 +23,33 @@ use Temporal\Worker\Transport\Command\SuccessResponseInterface;
 
 class Encoder
 {
+    /**
+     * @var string
+     */
     private const ERROR_INVALID_COMMAND = 'Unserializable command type %s';
 
+    /**
+     * @var DataConverterInterface
+     */
     private DataConverterInterface $converter;
 
     /**
-     * @param DataConverterInterface $dataConverter
+     * @param DataConverterInterface $converter
      */
-    public function __construct(DataConverterInterface $dataConverter)
+    public function __construct(DataConverterInterface $converter)
     {
-        $this->converter = $dataConverter;
+        $this->converter = $converter;
     }
 
     /**
      * @param CommandInterface $cmd
-     * @return array
+     * @return Message
      */
-    public function encode(CommandInterface $cmd): array
+    public function encode(CommandInterface $cmd): Message
     {
+        $msg = new Message();
+        $msg->setId($cmd->getID());
+
         switch (true) {
             case $cmd instanceof RequestInterface:
                 $cmd->getPayloads()->setDataConverter($this->converter);
@@ -47,35 +59,26 @@ class Encoder
                     $options = new \stdClass();
                 }
 
-                $data = [
-                    'id' => $cmd->getID(),
-                    'command' => $cmd->getName(),
-                    'options' => $options,
-                    'payloads' => base64_encode($cmd->getPayloads()->toPayloads()->serializeToString()),
-                ];
+                $msg->setCommand($cmd->getName());
+                $msg->setOptions(json_encode($options));
+                $msg->setPayloads($cmd->getPayloads()->toPayloads());
 
                 if ($cmd->getFailure() !== null) {
-                    $failure = FailureConverter::mapExceptionToFailure($cmd->getFailure(), $this->converter);
-                    $data['failure'] = base64_encode($failure->serializeToString());
+                    $msg->setFailure(FailureConverter::mapExceptionToFailure($cmd->getFailure(), $this->converter));
                 }
 
-                return $data;
+                return $msg;
 
             case $cmd instanceof FailureResponseInterface:
-                $failure = FailureConverter::mapExceptionToFailure($cmd->getFailure(), $this->converter);
+                $msg->setFailure(FailureConverter::mapExceptionToFailure($cmd->getFailure(), $this->converter));
 
-                return [
-                    'id' => $cmd->getID(),
-                    'failure' => base64_encode($failure->serializeToString()),
-                ];
+                return $msg;
 
             case $cmd instanceof SuccessResponseInterface:
                 $cmd->getPayloads()->setDataConverter($this->converter);
+                $msg->setPayloads($cmd->getPayloads()->toPayloads());
 
-                return [
-                    'id' => $cmd->getID(),
-                    'payloads' => base64_encode($cmd->getPayloads()->toPayloads()->serializeToString()),
-                ];
+                return $msg;
 
             default:
                 throw new \InvalidArgumentException(\sprintf(self::ERROR_INVALID_COMMAND, \get_class($cmd)));

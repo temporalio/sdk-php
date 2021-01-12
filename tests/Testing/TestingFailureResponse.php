@@ -11,17 +11,17 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Testing;
 
-use Temporal\Worker\Transport\Command\ErrorResponseInterface;
+use Temporal\Worker\Transport\Command\FailureResponseInterface;
 
 /**
  * @template-extends TestingCommand<ErrorResponseInterface>
  */
-class TestingErrorResponse extends TestingCommand implements ErrorResponseInterface
+class TestingFailureResponse extends TestingCommand implements FailureResponseInterface
 {
     /**
-     * @param ErrorResponseInterface $response
+     * @param FailureResponseInterface $response
      */
-    public function __construct(ErrorResponseInterface $response)
+    public function __construct(FailureResponseInterface $response)
     {
         parent::__construct($response);
     }

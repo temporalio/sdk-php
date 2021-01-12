@@ -19,7 +19,7 @@ use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\FailureResponse;
-use Temporal\Worker\Transport\Command\ErrorResponseInterface;
+use Temporal\Worker\Transport\Command\FailureResponseInterface;
 use Temporal\Worker\Transport\Command\Request;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\SuccessResponse;
@@ -88,10 +88,10 @@ class Decoder
 
     /**
      * @param array $data
-     * @return ErrorResponseInterface
+     * @return FailureResponseInterface
      * @throws \Exception
      */
-    private function parseFailureResponse(array $data): ErrorResponseInterface
+    private function parseFailureResponse(array $data): FailureResponseInterface
     {
         $this->assertCommandID($data);
 

@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Transport\Command;
 
-interface ErrorResponseInterface extends ResponseInterface
+interface FailureResponseInterface extends ResponseInterface
 {
     /**
      * @return \Throwable

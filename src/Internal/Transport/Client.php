@@ -15,7 +15,7 @@ use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Worker\Transport\Command\CommandInterface;
-use Temporal\Worker\Transport\Command\ErrorResponseInterface;
+use Temporal\Worker\Transport\Command\FailureResponseInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\ResponseInterface;
 use Temporal\Worker\Transport\Command\SuccessResponseInterface;
@@ -50,7 +50,7 @@ final class Client implements ClientInterface
     }
 
     /**
-     * @psalm-param SuccessResponseInterface|ErrorResponseInterface $response
+     * @psalm-param SuccessResponseInterface|FailureResponseInterface $response
      * @param ResponseInterface $response
      */
     public function dispatch(ResponseInterface $response): void
@@ -62,7 +62,7 @@ final class Client implements ClientInterface
 
         $deferred = $this->fetch($response->getID());
 
-        if ($response instanceof ErrorResponseInterface) {
+        if ($response instanceof FailureResponseInterface) {
             $deferred->reject($response->getFailure());
         } else {
             $deferred->resolve($response->getPayloads());
