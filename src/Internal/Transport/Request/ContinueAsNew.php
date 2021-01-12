@@ -15,21 +15,21 @@ use Temporal\Worker\Transport\Command\Request;
 
 final class ContinueAsNew extends Request
 {
+    /**
+     * @var string
+     */
     public const NAME = 'ContinueAsNew';
 
     /**
      * @param string $name
-     * @param array $input
+     * @param array $args
+     * @param array $options
      */
-    public function __construct(string $name, array $input)
+    public function __construct(string $name, array $args, array $options)
     {
-        parent::__construct(
-            self::NAME,
-            [
-                'name' => $name,
-                'args' => $input,
-            ],
-            $input
-        );
+        parent::__construct(self::NAME, [
+            'name'    => $name,
+            'options' => $options,
+        ], $args);
     }
 }

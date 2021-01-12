@@ -18,10 +18,12 @@ use Temporal\Internal\Support\Facade;
 use Temporal\Internal\Transport\FutureInterface;
 use Temporal\Internal\Workflow\ActivityProxy;
 use Temporal\Internal\Workflow\ChildWorkflowProxy;
+use Temporal\Internal\Workflow\ContinueAsNewProxy;
 use Temporal\Workflow\ActivityStubInterface;
 use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\ChildWorkflowOptions;
 use Temporal\Workflow\ChildWorkflowStubInterface;
+use Temporal\Workflow\ContinueAsNewOptions;
 use Temporal\Workflow\WorkflowContextInterface;
 use Temporal\Workflow\WorkflowInfo;
 
@@ -46,7 +48,8 @@ use Temporal\Workflow\WorkflowInfo;
  * @method static WorkflowContextInterface registerQuery(string $queryType, callable $handler)
  * @method static WorkflowContextInterface registerSignal(string $signalType, callable $handler)
  *
- * @method static FutureInterface continueAsNew(string $name, ...$input)
+ * @method static FutureInterface continueAsNew(string $name, array $args = [], ContinueAsNewOptions $options = null, \ReflectionType $returnType = null)
+ * @method static ContinueAsNewProxy|object newContinueAsNewStub(string $class, ContinueAsNewOptions $options = null)
  *
  * @method static PromiseInterface executeActivity(string $name, array $args = [], ActivityOptions $options = null, \ReflectionType $returnType = null)
  * @method static ActivityProxy|object newActivityStub(string $class, ActivityOptions $options = null)

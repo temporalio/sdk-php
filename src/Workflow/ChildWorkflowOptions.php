@@ -15,7 +15,6 @@ use Carbon\CarbonInterval;
 use Temporal\Client\ClientOptions;
 use Temporal\Common\IdReusePolicy;
 use Temporal\Common\RetryOptions;
-use Temporal\Common\Uuid;
 use Temporal\Exception\FailedCancellationException;
 use Temporal\Internal\Assert;
 use Temporal\Internal\Marshaller\Meta\Marshal;

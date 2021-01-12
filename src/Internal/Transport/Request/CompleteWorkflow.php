@@ -20,9 +20,9 @@ final class CompleteWorkflow extends Request
 
     /**
      * @param array $result
-     * @param \Throwable|null $error
+     * @param \Throwable|array|null $error
      */
-    public function __construct(array $result, \Throwable $error = null)
+    public function __construct(array $result, $error = null)
     {
         if ($error instanceof \Throwable) {
             $error = ErrorResponse::exceptionToArray($error);
