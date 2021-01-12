@@ -42,7 +42,7 @@ use Temporal\DataConverter\Type;
 use Temporal\Exception\Client\WorkflowExecutionAlreadyStartedException;
 use Temporal\Exception\Client\WorkflowQueryException;
 use Temporal\Exception\Client\WorkflowQueryRejectedException;
-use Temporal\Exception\ServiceClientException;
+use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\TerminatedFailure;
 use Temporal\Exception\Failure\TimeoutFailure;
@@ -208,7 +208,7 @@ final class WorkflowStub implements WorkflowStubInterface
         try {
             $response = $this->serviceClient->StartWorkflowExecution($r);
         } catch (ServiceClientException $e) {
-            $f = $e->tryFailure(
+            $f = $e->getFailure(
                 WorkflowExecutionAlreadyStartedFailure::class,
                 'Workflow execution is already running'
             );
@@ -294,10 +294,7 @@ final class WorkflowStub implements WorkflowStubInterface
         try {
             $response = $this->serviceClient->SignalWithStartWorkflowExecution($r);
         } catch (ServiceClientException $e) {
-            $f = $e->tryFailure(
-                WorkflowExecutionAlreadyStartedFailure::class,
-                'Workflow execution is already running'
-            );
+            $f = $e->getFailure(WorkflowExecutionAlreadyStartedFailure::class);
 
             if ($f instanceof WorkflowExecutionAlreadyStartedFailure) {
                 $this->execution = new WorkflowExecution($r->getWorkflowId(), $f->getRunId());
@@ -397,7 +394,7 @@ final class WorkflowStub implements WorkflowStubInterface
         } catch (ServiceClientException $e) {
             if ($e->getCode() === StatusCode::NOT_FOUND) {
                 throw new WorkflowNotFoundException(null, $this->execution, $this->workflowType, $e);
-            } elseif ($e->tryFailure(QueryFailedFailure::class, 'query') !== null) {
+            } elseif ($e->getFailure(QueryFailedFailure::class, 'query') !== null) {
                 // todo: verify properly working
                 throw new WorkflowQueryException(null, $this->execution, $this->workflowType, $e);
             }

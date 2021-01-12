@@ -22,7 +22,11 @@ class TemporalException extends \RuntimeException
     {
         $result = [];
 
-        // todo: special use-cases
+        foreach ($values as $k => $value) {
+            if (!empty($value)) {
+                $result[] = sprintf('%s=%s', $k, var_export($value, true));
+            }
+        }
 
         return join(', ', $result);
     }

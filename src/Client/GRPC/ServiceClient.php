@@ -10,7 +10,7 @@
 namespace Temporal\Client\GRPC;
 
 use Temporal\Api\Workflowservice\V1;
-use Temporal\Exception\ServiceClientException;
+use Temporal\Exception\Client\ServiceClientException;
 
 class ServiceClient extends BaseClient
 {

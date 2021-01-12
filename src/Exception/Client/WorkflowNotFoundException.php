@@ -1,5 +1,4 @@
 <?php
-
 /**
  * This file is part of Temporal package.
  *
@@ -9,8 +8,7 @@
 
 namespace Temporal\Exception\Client;
 
-
-class TimeoutException
+class WorkflowNotFoundException extends WorkflowException
 {
 
 }

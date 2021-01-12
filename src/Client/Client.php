@@ -11,20 +11,19 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
-use JetBrains\PhpStorm\ExpectedValues;
 use Spiral\Attributes\AttributeReader;
 use Spiral\Attributes\ReaderInterface;
-use Temporal\Api\Workflowservice\V1\WorkflowServiceClient;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\Internal\Client\ActivityCompletionClient;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Marshaller\MarshallerInterface;
-use Temporal\Internal\Workflow\WorkflowProxy;
-use Temporal\Internal\Workflow\WorkflowStub;
+use Temporal\Internal\Client\WorkflowProxy;
+use Temporal\Internal\Client\WorkflowStub;
 
 class Client implements ClientInterface
 {

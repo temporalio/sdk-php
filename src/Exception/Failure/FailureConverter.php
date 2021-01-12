@@ -21,18 +21,67 @@ final class FailureConverter
      */
     private static ?LoggerInterface $logger;
 
+    /**
+     *   public static RuntimeException failureToException(Failure failure, DataConverter dataConverter) {
+     * if (failure == null) {
+     * return null;
+     * }
+     * RuntimeException result = failureToExceptionImpl(failure, dataConverter);
+     * if (result instanceof TemporalFailure) {
+     * ((TemporalFailure) result).setFailure(failure);
+     * }
+     * if (failure.getSource().equals(JAVA_SDK) && !failure.getStackTrace().isEmpty()) {
+     * StackTraceElement[] stackTrace = parseStackTrace(failure.getStackTrace());
+     * result.setStackTrace(stackTrace);
+     * }
+     * return result;
+     * }
+     */
 
-    public static function toException(Failure $failure, DataConverterInterface $converter): \Throwable
+    /**
+     * @param Failure $failure
+     * @param DataConverterInterface $converter
+     * @return \Throwable
+     */
+    public static function mapFailureToException(Failure $failure, DataConverterInterface $converter): \Throwable
     {
         $previous = null;
         if ($failure->hasCause()) {
-            $previous = self::toException($failure->getCause(), $converter);
+            $previous = self::mapFailureToException($failure->getCause(), $converter);
         }
 
         // todo: do we have constants for that?
         switch ($failure->getFailureInfo()) {
             case 'APPLICATION_FAILURE_INFO':
+                $info = $failure->getApplicationFailureInfo();
+
+                if ($info->hasDetails()) {
+                    $details = EncodedValues::createFromPayloads($info->getDetails(), $converter);
+                } else {
+                    $details = EncodedValues::createEmpty();
+                }
+
+                return new ApplicationFailure(
+                    $failure->getMessage(),
+                    $info->getType(),
+                    $info->getNonRetryable(),
+                    $details,
+                    $previous
+                );
             case 'TIMEOUT_FAILURE_INFO':
+                $info = $failure->getTimeoutFailureInfo();
+                if ($info->hasLastHeartbeatDetails()) {
+                    $details = EncodedValues::createFromPayloads($info->getLastHeartbeatDetails(), $converter);
+                } else {
+                    $details = EncodedValues::createEmpty();
+                }
+
+                return new TimeoutFailure(
+                    $failure->getMessage(),
+                    $details,
+                    $info->getTimeoutType(),
+                    $previous
+                );
             case 'CANCELED_FAILURE_INFO':
                 $info = $failure->getCanceledFailureInfo();
                 if ($info->hasDetails()) {
@@ -91,95 +140,30 @@ final class FailureConverter
             case 'FAILUREINFO_NOT_SET':
                 throw new \InvalidArgumentException('Failure info not set');
         }
-
-
-//        RuntimeException cause =
-//        failure.hasCause() ? failureToException(failure.getCause(), dataConverter) : null;
-//    switch (failure.getFailureInfoCase()) {
-//        case APPLICATION_FAILURE_INFO:
-//        {
-//            ApplicationFailureInfo info = failure.getApplicationFailureInfo();
-//          // Unwrap SimulatedTimeoutFailure
-//          if (failure.getSource().equals(JAVA_SDK)
-//              && info.getType().equals(SimulatedTimeoutFailure.class.getName())
-//              && cause != null) {
-//            return cause;
-//        }
-//          Optional<Payloads> details =
-//            info.hasDetails() ? Optional.of(info.getDetails()) : Optional.empty();
-//          return ApplicationFailure.newFromValues(
-//                  failure.getMessage(),
-//                  info.getType(),
-//                  info.getNonRetryable(),
-//                  new EncodedValues(details, dataConverter),
-//                  cause);
-//        }
-//        case TIMEOUT_FAILURE_INFO:
-//        {
-//            TimeoutFailureInfo info = failure.getTimeoutFailureInfo();
-//          Optional<Payloads> lastHeartbeatDetails =
-//            info.hasLastHeartbeatDetails()
-//                ? Optional.of(info.getLastHeartbeatDetails())
-//                : Optional.empty();
-//          TimeoutFailure tf =
-//            new TimeoutFailure(
-//                failure.getMessage(),
-//                new EncodedValues(lastHeartbeatDetails, dataConverter),
-//                info.getTimeoutType(),
-//                cause);
-//          tf.setStackTrace(new StackTraceElement[0]);
-//          return tf;
-//
-//
-
-//        case ACTIVITY_FAILURE_INFO:
-//        {
-//            ActivityFailureInfo info = failure.getActivityFailureInfo();
-//          return new ActivityFailure(
-//              info.getScheduledEventId(),
-//              info.getStartedEventId(),
-//              info.getActivityType().getName(),
-//              info.getActivityId(),
-//              info.getRetryState(),
-//              info.getIdentity(),
-//              cause);
-//        }
-//        case CHILD_WORKFLOW_EXECUTION_FAILURE_INFO:
-//        {
-//            ChildWorkflowExecutionFailureInfo info = failure.getChildWorkflowExecutionFailureInfo();
-//          return new ChildWorkflowFailure(
-//              info.getInitiatedEventId(),
-//              info.getStartedEventId(),
-//              info.getWorkflowType().getName(),
-//              info.getWorkflowExecution(),
-//              info.getNamespace(),
-//              info.getRetryState(),
-//              cause);
-//        }
-//        case FAILUREINFO_NOT_SET:
-//        default:
-//            throw new IllegalArgumentException("Failure info not set");
-//    }
     }
 
-    public static function toFailure(\Throwable $e, DataConverterInterface $dataConverter): Failure
+    /**
+     * @param \Throwable $e
+     * @param DataConverterInterface $dataConverter
+     * @return Failure
+     */
+    public static function mapExceptionToFailure(\Throwable $e, DataConverterInterface $dataConverter): Failure
     {
-//        if (e instanceof CheckedExceptionWrapper) {
-//            return exceptionToFailure(e.getCause());
-//        }
-//        String message;
-//    if (e instanceof TemporalFailure) {
-//        TemporalFailure tf = (TemporalFailure) e;
-//      if (tf.getFailure().isPresent()) {
-//          return tf.getFailure().get();
-//      }
-//      message = tf.getOriginalMessage();
-//    } else {
-//        message = e.getMessage() == null ? "" : e.getMessage();
-//    }
+        $failure = new Failure();
+
+        if ($e instanceof TemporalFailure && $e->getFailure() !== null) {
+            return $e->getFailure();
+        } else {
+            $failure->setMessage($e->getMessage());
+        }
+
+        $failure->setSource('PHP_SDK')->setStackTrace((string)$e);
+
+        if ($e->getPrevious() !== null) {
+            $failure->setCause(self::mapExceptionToFailure($e->getPrevious(), $dataConverter));
+        }
+
 //    String stackTrace = serializeStackTrace(e);
-//    Failure.Builder failure =
-//        Failure.newBuilder().setMessage(message).setSource(JAVA_SDK).setStackTrace(stackTrace);
 //    if (e.getCause() != null) {
 //        failure.setCause(exceptionToFailure(e.getCause()));
 //    }

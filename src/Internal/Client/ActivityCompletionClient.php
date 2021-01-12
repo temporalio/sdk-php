@@ -9,30 +9,26 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client;
+namespace Temporal\Internal\Client;
 
-use Temporal\Api\Common\V1\WorkflowExecution as ProtoWorkflowExecution;
 use Temporal\Api\Workflowservice\V1\RecordActivityTaskHeartbeatByIdRequest;
-use Temporal\Api\Workflowservice\V1\RecordActivityTaskHeartbeatByIdResponse;
 use Temporal\Api\Workflowservice\V1\RecordActivityTaskHeartbeatRequest;
 use Temporal\Api\Workflowservice\V1\RespondActivityTaskCanceledByIdRequest;
 use Temporal\Api\Workflowservice\V1\RespondActivityTaskCanceledRequest;
-use Temporal\Api\Workflowservice\V1\RespondActivityTaskCanceledResponse;
 use Temporal\Api\Workflowservice\V1\RespondActivityTaskCompletedByIdRequest;
-use Temporal\Api\Workflowservice\V1\RespondActivityTaskCompletedByIdResponse;
 use Temporal\Api\Workflowservice\V1\RespondActivityTaskCompletedRequest;
 use Temporal\Api\Workflowservice\V1\RespondActivityTaskFailedByIdRequest;
 use Temporal\Api\Workflowservice\V1\RespondActivityTaskFailedRequest;
-use Temporal\Api\Workflowservice\V1\RespondActivityTaskFailedResponse;
+use Temporal\Client\ActivityCompletionClientInterface;
+use Temporal\Client\ClientOptions;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Client\GRPC\StatusCode;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\Client\ActivityCanceledException;
-use Temporal\Exception\Client\ActivityCompletionException;
 use Temporal\Exception\Client\ActivityCompletionFailureException;
 use Temporal\Exception\Client\ActivityNotExistsException;
-use Temporal\Exception\ServiceClientException;
+use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Worker\Transport\RpcConnectionInterface;
 
@@ -139,7 +135,7 @@ class ActivityCompletionClient implements ActivityCompletionClientInterface
         $r->setRunId($runId ?? '');
         $r->setActivityId($activityId);
 
-        $r->setFailure(FailureConverter::toFailure($error, $this->dataConverter));
+        $r->setFailure(FailureConverter::mapExceptionToFailure($error, $this->dataConverter));
 
         try {
             $this->serviceClient->RespondActivityTaskFailedById($r);
@@ -164,7 +160,7 @@ class ActivityCompletionClient implements ActivityCompletionClientInterface
         $r->setNamespace($this->clientOptions->namespace);
         $r->setTaskToken($taskToken);
 
-        $r->setFailure(FailureConverter::toFailure($error, $this->dataConverter));
+        $r->setFailure(FailureConverter::mapExceptionToFailure($error, $this->dataConverter));
 
         try {
             $this->serviceClient->RespondActivityTaskFailed($r);

@@ -100,4 +100,6 @@ class TemporalFailure extends TemporalException
 
         return parent::buildMessage($mapped);
     }
+    
+    // todo: support external trace as string
 }

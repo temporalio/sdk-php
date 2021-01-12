@@ -11,7 +11,7 @@ namespace Temporal\Client\GRPC;
 
 use Grpc\UnaryCall;
 use Temporal\Api\Workflowservice\V1\WorkflowServiceClient;
-use Temporal\Exception\ServiceClientException;
+use Temporal\Exception\Client\ServiceClientException;
 
 abstract class BaseClient implements ServiceClientInterface
 {

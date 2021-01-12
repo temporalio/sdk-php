@@ -10,7 +10,7 @@
 namespace Temporal\Exception\Client;
 
 
-class TimeoutException
+class WorkflowServiceException extends WorkflowException
 {
 
 }

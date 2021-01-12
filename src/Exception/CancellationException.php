@@ -13,6 +13,7 @@ namespace Temporal\Exception;
 
 use Temporal\Internal\Workflow\Process\Scope;
 
+// todo: make sure fits new exception structure
 class CancellationException extends TemporalException implements NonThrowableExceptionInterface
 {
     /**

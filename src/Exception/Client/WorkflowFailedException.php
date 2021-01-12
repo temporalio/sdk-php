@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Temporal\Exception;
+namespace Temporal\Exception\Client;
 
 use Temporal\Api\Enums\V1\RetryState;
 use Temporal\Workflow\WorkflowExecution;

@@ -22,7 +22,7 @@ class QueryWorkflow
     }
 
     #[WorkflowMethod(name: 'QueryWorkflow')]
-    public function handler(): iterable
+    public function handler()
     {
         // collect signals during one second
         yield Workflow::timer(1);
