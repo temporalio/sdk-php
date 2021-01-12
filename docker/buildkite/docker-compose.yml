@@ -31,6 +31,8 @@ services:
     build:
       context: ../../
       dockerfile: ./docker/buildkite/Dockerfile
+    volumes:
+      - ../../:/php/src
     networks:
       services-network:
         aliases:
