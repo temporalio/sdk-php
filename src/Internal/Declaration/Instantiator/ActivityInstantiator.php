@@ -22,27 +22,12 @@ use Temporal\Internal\Declaration\Prototype\PrototypeInterface;
 final class ActivityInstantiator extends Instantiator
 {
     /**
-     * @var DataConverterInterface
-     */
-    private DataConverterInterface $dataConverter;
-
-    /**
-     * @param DataConverterInterface $dataConverter
-     */
-    public function __construct(DataConverterInterface $dataConverter)
-    {
-        $this->dataConverter = $dataConverter;
-    }
-
-    /**
      * {@inheritDoc}
      */
     public function instantiate(PrototypeInterface $prototype): ActivityInstance
     {
         assert($prototype instanceof ActivityPrototype, 'Precondition failed');
 
-        $instance = $this->getInstance($prototype);
-
-        return new ActivityInstance($prototype, $this->dataConverter, $instance);
+        return new ActivityInstance($prototype, $this->getInstance($prototype));
     }
 }

@@ -89,6 +89,7 @@ final class ActivityContext implements ActivityContextInterface
      */
     public function heartbeat($details)
     {
+        // todo: upgrade
         return $this->rpc->call(
             'temporal.RecordActivityHeartbeat',
             [

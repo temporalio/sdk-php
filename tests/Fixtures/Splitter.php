@@ -50,14 +50,11 @@ class Splitter
         $lines = file($this->filename);
 
         // skip get worker info
-        $offset = 2;
-
-        $workflow = null;
-
+        $offset = 0;
         while (isset($lines[$offset])) {
             $line = $lines[$offset];
 
-            if (preg_match('/(?:\[0m\t)(\[.*\])\s*({.*})$/', $line, $matches)) {
+            if (preg_match('/(?:\[0m\t)(\[.*\])\s*({.*})(?:[\r\n]*)$/', $line, $matches)) {
                 $ctx = json_decode($matches[2], true);
                 if (isset($ctx['receive'])) {
                     $this->in[] = [$matches[1], $matches[2]];

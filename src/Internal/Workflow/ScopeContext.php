@@ -10,8 +10,9 @@
 namespace Temporal\Internal\Workflow;
 
 use React\Promise\PromiseInterface;
-use Temporal\Exception\CancellationException;
-use Temporal\Internal\Workflow\Process\CoroutineScope;
+use Temporal\Exception\Failure\CanceledFailure;
+use Temporal\Internal\Transport\CompletableResult;
+use Temporal\Internal\Workflow\Process\Scope;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\ScopedContextInterface;
@@ -21,9 +22,9 @@ use Temporal\Workflow\WorkflowContextInterface;
 class ScopeContext extends WorkflowContext implements ScopedContextInterface
 {
     /**
-     * @var CoroutineScope
+     * @var Scope
      */
-    private CoroutineScope $scope;
+    private Scope $scope;
 
     /**
      * @var callable
@@ -34,14 +35,14 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
      * Creates scope specific context.
      *
      * @param WorkflowContext $context
-     * @param CoroutineScope $scope
+     * @param Scope $scope
      * @param callable $onRequest
      *
      * @return WorkflowContextInterface
      */
     public static function fromWorkflowContext(
         WorkflowContext $context,
-        CoroutineScope $scope,
+        Scope $scope,
         callable $onRequest
     ): WorkflowContextInterface {
         $ctx = new self($context->services, $context->client, $context->workflowInstance, $context->input);
@@ -82,12 +83,13 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
     public function request(RequestInterface $request): PromiseInterface
     {
         if ($this->scope->isCancelled()) {
-            throw new CancellationException("Attempt to send request to cancelled scope");
+            throw new CanceledFailure("Attempt to send request to cancelled scope");
         }
 
         $promise = parent::request($request);
         ($this->onRequest)($request, $promise);
 
-        return $promise;
+
+        return new CompletableResult($this, $this->services->loop, $promise);
     }
 }

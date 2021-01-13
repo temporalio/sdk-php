@@ -11,9 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\DataConverter;
 
+use Temporal\Api\Common\V1\Payload;
 use Temporal\Exception\DataConverterException;
 
-class JsonConverter implements PayloadConverterInterface
+class JsonConverter extends Converter
 {
     /**
      * @return string
@@ -30,18 +31,19 @@ class JsonConverter implements PayloadConverterInterface
      */
     public function toPayload($value): ?Payload
     {
-        return Payload::create(
-            [EncodingKeys::METADATA_ENCODING_KEY => EncodingKeys::METADATA_ENCODING_JSON],
-            \json_encode($value, \JSON_THROW_ON_ERROR)
-        );
+        try {
+            return self::create(\json_encode($value, \JSON_THROW_ON_ERROR));
+        } catch (\Throwable $e) {
+            throw new DataConverterException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
      * @param Payload $payload
-     * @param \ReflectionType|null $type
+     * @param Type $type
      * @return mixed|void
      */
-    public function fromPayload(Payload $payload, ?\ReflectionType $type)
+    public function fromPayload(Payload $payload, Type $type)
     {
         try {
             return \json_decode($payload->getData(), true, 512, \JSON_THROW_ON_ERROR);

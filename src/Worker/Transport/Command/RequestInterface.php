@@ -11,10 +11,15 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Transport\Command;
 
-use Temporal\DataConverter\Payload;
+use Temporal\DataConverter\ValuesInterface;
 
 interface RequestInterface extends CommandInterface
 {
+    /**
+     * @return bool
+     */
+    public function isCancellable(): bool;
+
     /**
      * @return string
      */
@@ -26,14 +31,14 @@ interface RequestInterface extends CommandInterface
     public function getOptions(): array;
 
     /**
-     * For incoming requests.
-     *
-     * @return array<Payload|mixed>
+     * @return ValuesInterface
      */
-    public function getPayloads(): array;
+    public function getPayloads(): ValuesInterface;
 
     /**
-     * @return bool
+     * Optional failure.
+     *
+     * @return \Throwable|null
      */
-    public function isCancellable(): bool;
+    public function getFailure(): ?\Throwable;
 }

@@ -26,7 +26,6 @@ class CancelledMidflightWorkflow
             ActivityOptions::new()->withStartToCloseTimeout(5)
         );
 
-
         $this->status[] = 'start';
 
         $scope = Workflow::newCancellationScope(

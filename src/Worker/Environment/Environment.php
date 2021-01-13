@@ -28,11 +28,6 @@ class Environment implements EnvironmentInterface
     private const HEADER_TICK_TIME = 'tickTime';
 
     /**
-     * @var CarbonTimeZone
-     */
-    protected CarbonTimeZone $zone;
-
-    /**
      * @var CarbonInterface
      */
     protected CarbonInterface $tickTime;
@@ -47,16 +42,7 @@ class Environment implements EnvironmentInterface
      */
     public function __construct()
     {
-        $this->zone = new CarbonTimeZone('UTC');
-        $this->tickTime = new Carbon('now', $this->zone);
-    }
-
-    /**
-     * @return CarbonTimeZone
-     */
-    public function getTimeZone(): CarbonTimeZone
-    {
-        return $this->zone;
+        $this->tickTime = new Carbon('now', new CarbonTimeZone('UTC'));
     }
 
     /**
@@ -84,7 +70,7 @@ class Environment implements EnvironmentInterface
 
         // Intercept headers
         if (isset($headers[self::HEADER_TICK_TIME])) {
-            $this->tickTime = Carbon::parse($headers[self::HEADER_TICK_TIME], $this->zone);
+            $this->tickTime = Carbon::parse($headers[self::HEADER_TICK_TIME], new CarbonTimeZone('UTC'));
         }
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Temporal\Tests\Activity;
 
+use Temporal\Activity;
 use Temporal\Activity\ActivityInterface;
 use Temporal\Activity\ActivityMethod;
 use Temporal\Api\Common\V1\WorkflowExecution;
@@ -49,9 +50,22 @@ class SimpleActivity
         return md5($input->getData());
     }
 
+    #[ActivityMethod]
+    public function external()
+    {
+        Activity::doNotCompleteOnReturn();
+        file_put_contents('taskToken', Activity::getInfo()->taskToken);
+    }
+
     public function updateRunID(WorkflowExecution $e): WorkflowExecution
     {
         $e->setRunId('updated');
         return $e;
+    }
+
+    #[ActivityMethod]
+    public function fail()
+    {
+        throw new \Error("failed activity");
     }
 }

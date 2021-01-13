@@ -11,9 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\DataConverter;
 
+use Temporal\Api\Common\V1\Payload;
 use Temporal\Exception\DataConverterException;
 
-class BinaryConverter implements PayloadConverterInterface
+class BinaryConverter extends Converter
 {
     /**
      * @return string
@@ -33,20 +34,17 @@ class BinaryConverter implements PayloadConverterInterface
             return null;
         }
 
-        return Payload::create(
-            [EncodingKeys::METADATA_ENCODING_KEY => EncodingKeys::METADATA_ENCODING_RAW],
-            $value->getData()
-        );
+        return self::create($value->getData());
     }
 
     /**
      * @param Payload $payload
-     * @param \ReflectionType|null $type
+     * @param Type $type
      * @return Bytes
      */
-    public function fromPayload(Payload $payload, ?\ReflectionType $type)
+    public function fromPayload(Payload $payload, Type $type)
     {
-        if ($type === null || !$type instanceof \ReflectionNamedType) {
+        if (!$type->isClass()) {
             throw new DataConverterException('Unable to convert raw data to non Bytes type');
         }
 

@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
-use Temporal\Exception\OffloadFromMemoryException;
+use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Workflow\Process\Process;
@@ -67,7 +67,7 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
         }
 
         $this->running->pull($runId);
-        $process->cancel(new OffloadFromMemoryException());
+        $process->cancel(new DestructMemorizedInstanceException());
 
         return [];
     }

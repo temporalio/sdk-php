@@ -11,16 +11,12 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Transport\Command;
 
+/**
+ * Carries requests and responses between worker and host process.
+ */
 abstract class Command implements CommandInterface
 {
-    /**
-     * @var int
-     */
     protected static int $lastID = 9000;
-
-    /**
-     * @var int
-     */
     protected int $id;
 
     /**

@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\DataConverter;
 
-final class Bytes implements \JsonSerializable
+final class Bytes
 {
     /**
      * @var string
@@ -48,13 +48,5 @@ final class Bytes implements \JsonSerializable
     public function __toString()
     {
         return $this->data;
-    }
-
-    /**
-     * @return mixed|string
-     */
-    public function jsonSerialize()
-    {
-        return base64_encode($this->data);
     }
 }

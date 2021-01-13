@@ -32,6 +32,6 @@ class ContinuableWorkflow
             yield $simple->echo((string)$generation);
         }
 
-        return Workflow::continueAsNew('ContinuableWorkflow', ++$generation);
+        return Workflow::continueAsNew('ContinuableWorkflow', [++$generation]);
     }
 }

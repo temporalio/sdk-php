@@ -35,7 +35,6 @@ class WorkflowExecution
     /**
      * @param string|null $id
      * @param string|null $runId
-     * @throws \Exception
      */
     public function __construct(string $id = null, string $runId = null)
     {

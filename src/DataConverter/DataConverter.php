@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\DataConverter;
 
+use Temporal\Api\Common\V1\Payload;
 use Temporal\Exception\DataConverterException;
 
 final class DataConverter implements DataConverterInterface
@@ -31,26 +32,11 @@ final class DataConverter implements DataConverterInterface
     }
 
     /**
-     * @param array<Payload> $payloads
-     * @param array<\ReflectionType> $types
-     * @return array
-     */
-    public function fromPayloads(array $payloads, array $types): array
-    {
-        $values = [];
-        foreach ($payloads as $i => $payload) {
-            $values[] = $this->fromPayload($payload, $types[$i] ?? null);
-        }
-
-        return $values;
-    }
-
-    /**
      * @param Payload $payload
-     * @param \ReflectionType|null $type
+     * @param Type|string|\ReflectionType $type
      * @return mixed
      */
-    public function fromPayload(Payload $payload, ?\ReflectionType $type)
+    public function fromPayload(Payload $payload, $type)
     {
         $encoding = $payload->getMetadata()[EncodingKeys::METADATA_ENCODING_KEY];
 
@@ -58,33 +44,7 @@ final class DataConverter implements DataConverterInterface
             throw new DataConverterException(sprintf('Undefined payload encoding %s', $encoding));
         }
 
-        return $this->converters[$encoding]->fromPayload($payload, $type);
-    }
-
-    /**
-     * @param array $values
-     * @return array<Payload>
-     */
-    public function toPayloads(array $values): array
-    {
-        $payloads = [];
-
-        foreach ($values as $value) {
-            foreach ($this->converters as $converter) {
-                $payload = $converter->toPayload($value);
-
-                if ($payload !== null) {
-                    $payloads[] = $payload;
-                    continue 2;
-                }
-            }
-
-            throw new DataConverterException(
-                \sprintf('Unable to convert value of type %s to Payload', \get_debug_type($value))
-            );
-        }
-
-        return $payloads;
+        return $this->converters[$encoding]->fromPayload($payload, Type::fromMixed($type));
     }
 
     /**

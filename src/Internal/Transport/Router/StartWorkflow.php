@@ -23,24 +23,10 @@ use Temporal\Workflow\WorkflowInfo;
 
 final class StartWorkflow extends Route
 {
-    /**
-     * @var string
-     */
     private const ERROR_NOT_FOUND = 'Workflow with the specified name "%s" was not registered';
-
-    /**
-     * @var string
-     */
     private const ERROR_ALREADY_RUNNING = 'Workflow "%s" with run id "%s" has been already started';
 
-    /**
-     * @var ServiceContainer
-     */
     private ServiceContainer $services;
-
-    /**
-     * @var WorkflowInstantiator
-     */
     private WorkflowInstantiator $instantiator;
 
     /**
@@ -48,8 +34,8 @@ final class StartWorkflow extends Route
      */
     public function __construct(ServiceContainer $services)
     {
-        $this->instantiator = new WorkflowInstantiator($services->dataConverter);
         $this->services = $services;
+        $this->instantiator = new WorkflowInstantiator();
     }
 
     /**
@@ -59,11 +45,9 @@ final class StartWorkflow extends Route
     public function handle(RequestInterface $request, array $headers, Deferred $resolver): void
     {
         $input = $this->services->marshaller->unmarshal($request->getOptions(), new Input());
-        $input->args = $request->getPayloads();
+        $input->input = $request->getPayloads();
 
-        $instance = $this->instantiator->instantiate(
-            $this->findWorkflowOrFail($input->info)
-        );
+        $instance = $this->instantiator->instantiate($this->findWorkflowOrFail($input->info));
 
         $context = new WorkflowContext(
             $this->services,
@@ -75,7 +59,7 @@ final class StartWorkflow extends Route
         $process = new Process($this->services, $context);
         $this->services->running->add($process);
 
-        $process->start($instance->getHandler(), $context->getArguments());
+        $process->start($instance->getHandler(), $context->getInput());
     }
 
     /**

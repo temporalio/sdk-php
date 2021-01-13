@@ -12,13 +12,14 @@ declare(strict_types=1);
 namespace Temporal\Internal\Workflow\Process;
 
 use JetBrains\PhpStorm\Pure;
-use Temporal\Exception\OffloadFromMemoryException;
+use Temporal\DataConverter\ValuesInterface;
+use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Workflow\ProcessInterface;
 use Temporal\Workflow\WorkflowContext;
 
-class Process extends CoroutineScope implements ProcessInterface
+class Process extends Scope implements ProcessInterface
 {
     /**
      * Process constructor.
@@ -39,6 +40,19 @@ class Process extends CoroutineScope implements ProcessInterface
                 $this->complete($e);
             }
         );
+    }
+
+    /**
+     * @param callable $handler
+     * @param ValuesInterface|null $values
+     */
+    public function start(callable $handler, ValuesInterface $values = null)
+    {
+        try {
+            parent::start($handler, $values);
+        } catch (\Throwable $e) {
+            $this->complete($e);
+        }
     }
 
     /**
@@ -68,7 +82,7 @@ class Process extends CoroutineScope implements ProcessInterface
         }
 
         if ($result instanceof \Throwable) {
-            if ($result instanceof OffloadFromMemoryException) {
+            if ($result instanceof DestructMemorizedInstanceException) {
                 // do not handle
                 return;
             }

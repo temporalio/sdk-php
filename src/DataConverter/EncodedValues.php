@@ -1,0 +1,172 @@
+<?php
+
+/**
+ * This file is part of Temporal package.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace Temporal\DataConverter;
+
+use React\Promise\PromiseInterface;
+use Temporal\Api\Common\V1\Payloads;
+use Temporal\Exception\DataConverterException;
+
+class EncodedValues implements ValuesInterface
+{
+    /**
+     * @var DataConverterInterface|null
+     */
+    private ?DataConverterInterface $converter = null;
+
+    /**
+     * @var Payloads|null
+     */
+    private ?Payloads $payloads = null;
+
+    /**
+     * @var array|null
+     */
+    private ?array $values = null;
+
+    /**
+     * Can not be constructed directly.
+     */
+    private function __construct()
+    {
+    }
+
+    /**
+     * @return int
+     */
+    public function count(): int
+    {
+        if ($this->values !== null) {
+            return count($this->values);
+        }
+
+        if ($this->payloads !== null) {
+            return $this->payloads->getPayloads()->count();
+        }
+
+        return 0;
+    }
+
+    public function isEmpty(): bool
+    {
+        return $this->count() === 0;
+    }
+
+    /**
+     * @param int $index
+     * @param Type|string|null $type
+     * @return mixed
+     */
+    public function getValue(int $index, $type = null)
+    {
+        if (isset($this->values[$index])) {
+            return $this->values[$index];
+        }
+
+        if ($this->converter === null) {
+            throw new \LogicException("DataConverter is not set");
+        }
+
+        return $this->converter->fromPayload(
+            $this->payloads->getPayloads()->offsetGet($index),
+            $type
+        );
+    }
+
+    /**
+     * @return Payloads
+     */
+    public function toPayloads(): Payloads
+    {
+        if ($this->payloads !== null) {
+            return $this->payloads;
+        }
+
+        if ($this->converter === null) {
+            throw new \LogicException("DataConverter is not set");
+        }
+
+        $data = [];
+        foreach ($this->values as $value) {
+            $data[] = $this->converter->toPayload($value);
+        }
+
+        $payloads = new Payloads();
+        $payloads->setPayloads($data);
+
+        return $payloads;
+    }
+
+    /**
+     * @param DataConverterInterface $converter
+     */
+    public function setDataConverter(DataConverterInterface $converter)
+    {
+        $this->converter = $converter;
+    }
+
+    /**
+     * @return EncodedValues
+     */
+    public static function empty(): EncodedValues
+    {
+        $ev = new self();
+        $ev->values = [];
+
+        return $ev;
+    }
+
+    /**
+     * @param array $values
+     * @param DataConverterInterface|null $dataConverter
+     * @return EncodedValues
+     */
+    public static function fromValues(array $values, DataConverterInterface $dataConverter = null): EncodedValues
+    {
+        $ev = new self();
+        $ev->values = $values;
+        $ev->converter = $dataConverter;
+
+        return $ev;
+    }
+
+    /**
+     * @param Payloads $payloads
+     * @param DataConverterInterface|null $dataConverter
+     * @return EncodedValues
+     */
+    public static function fromPayloads(Payloads $payloads, DataConverterInterface $dataConverter): EncodedValues
+    {
+        $ev = new self();
+        $ev->payloads = $payloads;
+        $ev->converter = $dataConverter;
+
+        return $ev;
+    }
+
+    /**
+     * Decode promise response upon returning it to the domain layer.
+     *
+     * @param PromiseInterface $promise
+     * @param Type|string|null $type
+     * @return PromiseInterface
+     */
+    public static function decodePromise(PromiseInterface $promise, $type = null): PromiseInterface
+    {
+        return $promise->then(
+            function ($value) use ($type) {
+                if (!$value instanceof ValuesInterface || $value instanceof \Throwable) {
+                    return $value;
+                }
+
+                return $value->getValue(0, $type);
+            }
+        );
+    }
+}

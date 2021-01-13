@@ -2,7 +2,7 @@
 
 namespace Temporal\Tests\Workflow;
 
-use Temporal\Exception\CancellationException;
+use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 
@@ -31,7 +31,7 @@ class CancelledNestedWorkflow
 
                             try {
                                 yield Workflow::timer(2);
-                            } catch (CancellationException $e) {
+                            } catch (CanceledFailure $e) {
                                 $this->status[] = 'second scope cancelled';
                                 throw $e;
                             }
@@ -46,7 +46,7 @@ class CancelledNestedWorkflow
 
                     try {
                         yield Workflow::timer(1);
-                    } catch (CancellationException $e) {
+                    } catch (CanceledFailure $e) {
                         $this->status[] = 'first scope cancelled';
                         throw $e;
                     }
@@ -60,7 +60,7 @@ class CancelledNestedWorkflow
                     $this->status[] = 'close first scope';
                 }
             );
-        } catch (CancellationException $e) {
+        } catch (CanceledFailure $e) {
             $this->status[] = 'close process';
 
             return 'CANCELLED';

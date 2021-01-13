@@ -244,6 +244,7 @@ final class Worker implements FactoryInterface
 
     /**
      * {@inheritDoc}
+     * @todo pass options
      */
     public function createAndRegister(string $taskQueue = self::DEFAULT_TASK_QUEUE): TaskQueueInterface
     {

@@ -12,6 +12,9 @@ declare(strict_types=1);
 namespace Temporal\Client;
 
 use Carbon\CarbonInterval;
+use Temporal\Api\Common\V1\Memo;
+use Temporal\Api\Common\V1\RetryPolicy;
+use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\Common\CronSchedule;
 use Temporal\Common\IdReusePolicy;
 use Temporal\Common\RetryOptions;
@@ -128,9 +131,9 @@ final class WorkflowOptions
     public function __construct()
     {
         $this->workflowId = Uuid::v4();
-        $this->workflowExecutionTimeout = CarbonInterval::years(10);
-        $this->workflowRunTimeout = CarbonInterval::years(10);
-        $this->workflowTaskTimeout = CarbonInterval::seconds(10);
+        $this->workflowExecutionTimeout = CarbonInterval::years(0);
+        $this->workflowRunTimeout = CarbonInterval::years(0);
+        $this->workflowTaskTimeout = CarbonInterval::seconds(0);
         $this->retryOptions = new RetryOptions();
     }
 
@@ -291,5 +294,46 @@ final class WorkflowOptions
     public function withSearchAttributes(?array $searchAttributes): self
     {
         return immutable(fn() => $this->searchAttributes = $searchAttributes);
+    }
+
+    /**
+     * @return Memo
+     * @internal
+     */
+    public function toMemo(): Memo
+    {
+        $memo = new Memo();
+        $memo->setFields($this->memo);
+
+        return $memo;
+    }
+
+    /**
+     * @return SearchAttributes
+     * @internal
+     */
+    public function toSearchAttributes(): SearchAttributes
+    {
+        $search = new SearchAttributes();
+        $search->setIndexedFields($this->searchAttributes);
+
+        return $search;
+    }
+
+    /**
+     * @return RetryPolicy
+     * @internal
+     */
+    public function toRetryPolicy(): RetryPolicy
+    {
+        $rt = new RetryPolicy();
+        $rt->setInitialInterval(DateInterval::toDuration($this->retryOptions->initialInterval));
+        $rt->setMaximumInterval(DateInterval::toDuration($this->retryOptions->maximumInterval));
+
+        $rt->setBackoffCoefficient($this->retryOptions->backoffCoefficient);
+        $rt->setMaximumAttempts($this->retryOptions->maximumAttempts);
+        $rt->setNonRetryableErrorTypes($this->retryOptions->nonRetryableExceptions);
+
+        return $rt;
     }
 }

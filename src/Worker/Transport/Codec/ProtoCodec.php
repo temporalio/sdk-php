@@ -12,6 +12,7 @@ namespace Temporal\Worker\Transport\Codec;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\ProtocolException;
 use Temporal\Roadrunner\Internal\Frame;
+use Temporal\Roadrunner\Internal\Message;
 use Temporal\Worker\Transport\Codec\ProtoCodec\Decoder;
 use Temporal\Worker\Transport\Codec\ProtoCodec\Encoder;
 use Temporal\Worker\Transport\Command\CommandInterface;
@@ -26,7 +27,7 @@ final class ProtoCodec implements CodecInterface
     /**
      * @var Encoder
      */
-    private Encoder $serializer;
+    private Encoder $encoder;
 
     /**
      * @param DataConverterInterface $dataConverter
@@ -34,7 +35,7 @@ final class ProtoCodec implements CodecInterface
     public function __construct(DataConverterInterface $dataConverter)
     {
         $this->parser = new Decoder($dataConverter);
-        $this->serializer = new Encoder($dataConverter);
+        $this->encoder = new Encoder($dataConverter);
     }
 
     /**
@@ -48,7 +49,7 @@ final class ProtoCodec implements CodecInterface
             $messages = [];
             foreach ($commands as $command) {
                 assert($command instanceof CommandInterface);
-                $messages[] = $this->serializer->serialize($command);
+                $messages[] = $this->encoder->encode($command);
             }
 
             $frame->setMessages($messages);
@@ -68,8 +69,9 @@ final class ProtoCodec implements CodecInterface
             $frame = new Frame();
             $frame->mergeFromString($batch);
 
+            /** @var Message $msg */
             foreach ($frame->getMessages() as $msg) {
-                yield $this->parser->parse($msg);
+                yield $this->parser->decode($msg);
             }
         } catch (\Throwable $e) {
             throw new ProtocolException($e->getMessage(), $e->getCode(), $e);

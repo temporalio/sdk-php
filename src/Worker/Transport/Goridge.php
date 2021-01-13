@@ -8,15 +8,14 @@ use Spiral\Goridge\RPC\RPC;
 use Spiral\Goridge\RPC\RPCInterface;
 use Temporal\Exception\TransportException;
 
+// todo: deprecate
 final class Goridge implements RpcConnectionInterface
 {
-    /** @var RPCInterface */
     private RPCInterface $rpc;
 
     public function __construct(RelayInterface $relay)
     {
-        // todo: add prefix
-        // todo: update to MSGPack
+        // todo: add prefix (?)
         $this->rpc = new RPC($relay);
     }
 

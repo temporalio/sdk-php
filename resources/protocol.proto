@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package temporal.roadrunner.internal;
+
+import "temporal/api/common/v1/message.proto";
+import "temporal/api/failure/v1/message.proto";
+
+message Frame {
+    repeated Message messages = 1;
+}
+
+// Single communication message.
+message Message {
+    uint64 id = 1;
+
+    // command name (if any)
+    string command = 2;
+
+    // command options in json format.
+    bytes options = 3;
+
+    // error response.
+    temporal.api.failure.v1.Failure failure = 4;
+
+    // invocation or result payloads.
+    temporal.api.common.v1.Payloads payloads = 5;
+}

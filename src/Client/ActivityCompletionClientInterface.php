@@ -11,63 +11,101 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
+/**
+ * Used to complete asynchronously activities that called {@link
+ * ActivityContext->doNotCompleteOnReturn()}.
+ *
+ * <p>Use {@link WorkflowClient#newActivityCompletionClient()} to create an instance.
+ */
 interface ActivityCompletionClientInterface
 {
     /**
-     * @param string $wid
+     * @param string $workflowId
      * @param string|null $runId
      * @param string $activityId
      * @param mixed $result
      */
-    public function complete(string $wid, ?string $runId, string $activityId, $result): void;
-
-    /**
-     * @param string $wid
-     * @param string|null $runId
-     * @param string $activityId
-     * @param \Throwable $error
-     */
-    public function completeExceptionally(string $wid, ?string $runId, string $activityId, \Throwable $error): void;
+    public function complete(
+        string $workflowId,
+        ?string $runId,
+        string $activityId,
+        $result = null
+    ): void;
 
     /**
      * @param string $taskToken
      * @param mixed $result
      */
-    public function completeByToken(string $taskToken, $result): void;
+    public function completeByToken(
+        string $taskToken,
+        $result = null
+    ): void;
+
+    /**
+     * @param string $workflowId
+     * @param string|null $runId
+     * @param string $activityId
+     * @param \Throwable $error
+     */
+    public function completeExceptionally(
+        string $workflowId,
+        ?string $runId,
+        string $activityId,
+        \Throwable $error
+    ): void;
 
     /**
      * @param string $taskToken
      * @param \Throwable $error
      */
-    public function completeExceptionallyByToken(string $taskToken, \Throwable $error): void;
+    public function completeExceptionallyByToken(
+        string $taskToken,
+        \Throwable $error
+    ): void;
 
     /**
-     * @param string $wid
+     * @param string $workflowId
      * @param string|null $runId
      * @param string $activityId
      * @param $details
      */
-    public function reportCancellation(string $wid, ?string $runId, string $activityId, $details): void;
+    public function reportCancellation(
+        string $workflowId,
+        ?string $runId,
+        string $activityId,
+        $details = null
+    ): void;
 
     /**
      * @param string $taskToken
      * @param $details
      */
-    public function reportCancellationByToken(string $taskToken, $details): void;
+    public function reportCancellationByToken(
+        string $taskToken,
+        $details = null
+    ): void;
 
     /**
-     * @param string $wid
+     * @param string $workflowId
      * @param string|null $runId
      * @param string $activityId
      * @param mixed $details
      * @return bool
      */
-    public function heartbeat(string $wid, ?string $runId, string $activityId, $details): bool;
+    public function recordHeartbeat(
+        string $workflowId,
+        ?string $runId,
+        string $activityId,
+        $details = null
+    ): bool;
 
     /**
      * @param string $taskToken
      * @param mixed $details
      * @return bool
      */
-    public function heartbeatByToken(string $taskToken, $details): bool;
+    public function recordHeartbeatByToken(
+        string $taskToken,
+        $details = null
+    ): bool;
 }

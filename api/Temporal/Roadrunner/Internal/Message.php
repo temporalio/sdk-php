@@ -34,9 +34,9 @@ class Message extends \Google\Protobuf\Internal\Message
     /**
      * error response.
      *
-     * Generated from protobuf field <code>.temporal.roadrunner.internal.Error error = 4;</code>
+     * Generated from protobuf field <code>.temporal.api.failure.v1.Failure failure = 4;</code>
      */
-    protected $error = null;
+    protected $failure = null;
     /**
      * invocation or result payloads.
      *
@@ -55,7 +55,7 @@ class Message extends \Google\Protobuf\Internal\Message
      *           command name (if any)
      *     @type string $options
      *           command options in json format.
-     *     @type \Temporal\Roadrunner\Internal\Error $error
+     *     @type \Temporal\Api\Failure\V1\Failure $failure
      *           error response.
      *     @type \Temporal\Api\Common\V1\Payloads $payloads
      *           invocation or result payloads.
@@ -143,35 +143,35 @@ class Message extends \Google\Protobuf\Internal\Message
     /**
      * error response.
      *
-     * Generated from protobuf field <code>.temporal.roadrunner.internal.Error error = 4;</code>
-     * @return \Temporal\Roadrunner\Internal\Error
+     * Generated from protobuf field <code>.temporal.api.failure.v1.Failure failure = 4;</code>
+     * @return \Temporal\Api\Failure\V1\Failure
      */
-    public function getError()
+    public function getFailure()
     {
-        return isset($this->error) ? $this->error : null;
+        return isset($this->failure) ? $this->failure : null;
     }
 
-    public function hasError()
+    public function hasFailure()
     {
-        return isset($this->error);
+        return isset($this->failure);
     }
 
-    public function clearError()
+    public function clearFailure()
     {
-        unset($this->error);
+        unset($this->failure);
     }
 
     /**
      * error response.
      *
-     * Generated from protobuf field <code>.temporal.roadrunner.internal.Error error = 4;</code>
-     * @param \Temporal\Roadrunner\Internal\Error $var
+     * Generated from protobuf field <code>.temporal.api.failure.v1.Failure failure = 4;</code>
+     * @param \Temporal\Api\Failure\V1\Failure $var
      * @return $this
      */
-    public function setError($var)
+    public function setFailure($var)
     {
-        GPBUtil::checkMessage($var, \Temporal\Roadrunner\Internal\Error::class);
-        $this->error = $var;
+        GPBUtil::checkMessage($var, \Temporal\Api\Failure\V1\Failure::class);
+        $this->failure = $var;
 
         return $this;
     }

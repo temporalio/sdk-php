@@ -12,9 +12,9 @@ declare(strict_types=1);
 namespace Temporal\Internal\Workflow;
 
 use JetBrains\PhpStorm\Immutable;
-use Temporal\DataConverter\Payload;
+use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Marshaller\Meta\Marshal;
-use Temporal\Internal\Marshaller\Meta\MarshalArray;
 use Temporal\Workflow\WorkflowInfo;
 
 #[Immutable]
@@ -30,17 +30,16 @@ final class Input
     /**
      * @var array
      */
-    #[MarshalArray(name: 'args', of: Payload::class)]
     #[Immutable]
-    public array $args;
+    public ValuesInterface $input;
 
     /**
-     * @param WorkflowInfo $info
-     * @param array<Payload> $args
+     * @param WorkflowInfo|null $info
+     * @param ValuesInterface|null $args
      */
-    public function __construct(WorkflowInfo $info = null, array $args = [])
+    public function __construct(WorkflowInfo $info = null, ValuesInterface $args = null)
     {
         $this->info = $info ?? new WorkflowInfo();
-        $this->args = $args;
+        $this->input = $args ?? EncodedValues::empty();
     }
 }
