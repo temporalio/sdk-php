@@ -64,7 +64,7 @@ class RetryOptions extends Options
      * Backoff interval for the first retry. If {@see RetryOptions::$backoffCoefficient}
      * is 1.0 then it is used for all retries.
      */
-    #[Marshal(name: 'InitialInterval', type: NullableType::class, of: DateIntervalType::class)]
+    #[Marshal(name: 'initial_interval', type: NullableType::class, of: DateIntervalType::class)]
     public ?\DateInterval $initialInterval = self::DEFAULT_INITIAL_INTERVAL;
 
     /**
@@ -73,7 +73,7 @@ class RetryOptions extends Options
      *
      * Note: Must be greater than 1.0
      */
-    #[Marshal(name: 'BackoffCoefficient')]
+    #[Marshal(name: 'backoff_coefficient')]
     public float $backoffCoefficient = self::DEFAULT_BACKOFF_COEFFICIENT;
 
     /**
@@ -82,7 +82,7 @@ class RetryOptions extends Options
      *
      * Default is 100x of {@see $initialInterval}.
      */
-    #[Marshal(name: 'MaximumInterval', type: NullableType::class, of: DateIntervalType::class)]
+    #[Marshal(name: 'maximum_interval', type: NullableType::class, of: DateIntervalType::class)]
     public ?\DateInterval $maximumInterval = self::DEFAULT_MAXIMUM_INTERVAL;
 
     /**
@@ -92,7 +92,7 @@ class RetryOptions extends Options
      *
      * @var positive-int
      */
-    #[Marshal(name: 'MaximumAttempts')]
+    #[Marshal(name: 'maximum_attempts')]
     public int $maximumAttempts = self::DEFAULT_MAXIMUM_ATTEMPTS;
 
     /**
@@ -101,7 +101,7 @@ class RetryOptions extends Options
      *
      * @var ExceptionsList
      */
-    #[Marshal(name: 'NonRetryableErrorTypes')]
+    #[Marshal(name: 'non_retryable_error_types')]
     public array $nonRetryableExceptions = self::DEFAULT_NON_RETRYABLE_EXCEPTIONS;
 
     /**

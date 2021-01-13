@@ -57,7 +57,7 @@ final class ChildWorkflowOptions extends Options
      * provided.
      */
     #[Marshal(name: 'WorkflowID')]
-    public string $workflowId;
+    public ?string $workflowId = null;
 
     /**
      * TaskQueue that the child workflow needs to be scheduled on.
@@ -179,19 +179,21 @@ final class ChildWorkflowOptions extends Options
      */
     public function mergeWith(MethodRetry $retry = null, CronSchedule $cron = null): self
     {
-        return immutable(function () use ($retry, $cron) {
-            if ($retry !== null && $this->diff->isPresent($this, 'retryOptions')) {
-                $this->retryOptions = $this->retryOptions->mergeWith($retry);
-            }
-
-            if ($cron !== null && $this->diff->isPresent($this, 'cronSchedule')) {
-                if ($this->cronSchedule === null) {
-                    $this->cronSchedule = clone $cron->interval;
+        return immutable(
+            function () use ($retry, $cron) {
+                if ($retry !== null && $this->diff->isPresent($this, 'retryOptions')) {
+                    $this->retryOptions = $this->retryOptions->mergeWith($retry);
                 }
 
-                $this->cronSchedule->setExpression($cron->interval->getExpression());
+                if ($cron !== null && $this->diff->isPresent($this, 'cronSchedule')) {
+                    if ($this->cronSchedule === null) {
+                        $this->cronSchedule = clone $cron->interval;
+                    }
+
+                    $this->cronSchedule->setExpression($cron->interval->getExpression());
+                }
             }
-        });
+        );
     }
 
     /**
