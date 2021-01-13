@@ -25,6 +25,6 @@ final class Client
      */
     public static function create(RpcConnectionInterface $rpc, ClientOptions $options = null): WorkflowClientInterface
     {
-        return new Client($rpc, $options ?? new ClientOptions());
+        return new WorkflowClient($rpc, $options ?? new ClientOptions());
     }
 }
