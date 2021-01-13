@@ -11,20 +11,25 @@ declare(strict_types=1);
 
 namespace Temporal;
 
+use Temporal\Client\ClientOptions;
+use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Client\WorkflowClient;
 use Temporal\Client\WorkflowClientInterface;
-use Temporal\Client\ClientOptions;
-use Temporal\Worker\Transport\RpcConnectionInterface;
+use Temporal\DataConverter\DataConverterInterface;
 
 final class Client
 {
     /**
-     * @param RpcConnectionInterface $rpc
+     * @param ServiceClientInterface $serviceClient
      * @param ClientOptions|null $options
+     * @param DataConverterInterface|null $converter
      * @return WorkflowClientInterface
      */
-    public static function create(RpcConnectionInterface $rpc, ClientOptions $options = null): WorkflowClientInterface
-    {
-        return new WorkflowClient($rpc, $options ?? new ClientOptions());
+    public static function create(
+        ServiceClientInterface $serviceClient,
+        ClientOptions $options = null,
+        DataConverterInterface $converter = null
+    ): WorkflowClientInterface {
+        return new WorkflowClient($serviceClient, $options ?? new ClientOptions(), $converter);
     }
 }
