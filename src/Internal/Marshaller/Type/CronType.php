@@ -21,15 +21,14 @@ class CronType extends Type implements DetectableTypeInterface
      */
     private const ERROR_INVALID_TYPE =
         'Passed value must be a type of ' .
-        'cron-like string or cron expression, but %s given'
-    ;
+        'cron-like string or cron expression, but %s given';
 
     /**
      * {@inheritDoc}
      */
     public static function match(\ReflectionNamedType $type): bool
     {
-        return ! $type->isBuiltin() && Inheritance::extends($type->getName(), CronExpression::class);
+        return !$type->isBuiltin() && Inheritance::extends($type->getName(), CronExpression::class);
     }
 
     /**
@@ -37,6 +36,11 @@ class CronType extends Type implements DetectableTypeInterface
      */
     public function parse($value, $current)
     {
+        // todo: think about it
+        if ($value === '') {
+            return null;
+        }
+
         if (\is_string($value)) {
             return new CronExpression($value);
         }
@@ -57,7 +61,7 @@ class CronType extends Type implements DetectableTypeInterface
             $value = new CronExpression($value);
         }
 
-        if (! $value instanceof CronExpression) {
+        if (!$value instanceof CronExpression) {
             throw new \InvalidArgumentException(\sprintf(self::ERROR_INVALID_TYPE, \get_debug_type($value)));
         }
 

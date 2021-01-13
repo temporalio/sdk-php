@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
+use Temporal\Api\Enums\V1\QueryRejectCondition;
+
 class ClientOptions
 {
     /**
@@ -29,14 +31,22 @@ class ClientOptions
     public string $identity;
 
     /**
+     * @var int
+     */
+    public int $queryRejectionCondition = QueryRejectCondition::QUERY_REJECT_CONDITION_NONE;
+
+    /**
      * ClientOptions constructor.
      */
     public function __construct()
     {
-        $this->identity = \vsprintf('%d@%s', [
-            \getmypid(),
-            \gethostname(),
-        ]);
+        $this->identity = \vsprintf(
+            '%d@%s',
+            [
+                \getmypid(),
+                \gethostname(),
+            ]
+        );
     }
 
     /**
@@ -55,5 +65,14 @@ class ClientOptions
     public function withIdentity(string $identity): self
     {
         return immutable(fn() => $this->identity = $identity);
+    }
+
+    /**
+     * @param int $condition
+     * @return $this
+     */
+    public function withQueryRejectionCondition(int $condition): self
+    {
+        return immutable(fn() => $this->queryRejectionCondition = $condition);
     }
 }

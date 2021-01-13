@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Declaration;
 
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Declaration\Dispatcher\AutowiredPayloads;
 use Temporal\Internal\Declaration\Prototype\Prototype;
 
@@ -20,36 +21,18 @@ use Temporal\Internal\Declaration\Prototype\Prototype;
  */
 abstract class Instance implements InstanceInterface
 {
-    /**
-     * @var Prototype
-     */
     protected Prototype $prototype;
-
-    /**
-     * @var object|null
-     */
     protected ?object $context;
-
-    /**
-     * @var \Closure
-     */
     private \Closure $handler;
 
     /**
-     * @var DataConverterInterface
-     */
-    private DataConverterInterface $dataConverter;
-
-    /**
      * @param Prototype $prototype
-     * @param DataConverterInterface $dataConverter
      * @param object|null $context
      */
-    public function __construct(Prototype $prototype, DataConverterInterface $dataConverter, ?object $context)
+    public function __construct(Prototype $prototype, ?object $context)
     {
         $this->prototype = $prototype;
         $this->context = $context;
-        $this->dataConverter = $dataConverter;
         $this->handler = $this->createHandler($prototype->getHandler());
     }
 
@@ -62,31 +45,24 @@ abstract class Instance implements InstanceInterface
     }
 
     /**
-     * @return DataConverterInterface
-     */
-    public function getDataConverter(): DataConverterInterface
-    {
-        return $this->dataConverter;
-    }
-
-    /**
      * @psalm-return DispatchableHandler
      *
-     * @param \ReflectionFunctionAbstract $fun
+     * @param \ReflectionFunctionAbstract $func
      * @return \Closure
      */
-    protected function createHandler(\ReflectionFunctionAbstract $fun): \Closure
+    protected function createHandler(\ReflectionFunctionAbstract $func): \Closure
     {
-        $dispatcher = new AutowiredPayloads($fun, $this->dataConverter);
+        $valueMapper = new AutowiredPayloads($func);
 
-        return function (array $arguments = []) use ($dispatcher) {
-            return $dispatcher->dispatch($this->context, $arguments);
+        return function (ValuesInterface $values) use ($valueMapper) {
+            return $valueMapper->dispatchValues($this->context, $values);
         };
     }
 
     /**
-     * @param callable $callable
+     * @param callable $handler
      * @return \Closure
+     * @throws \ReflectionException
      */
     protected function createCallableHandler(callable $handler): \Closure
     {

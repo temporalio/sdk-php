@@ -13,6 +13,7 @@ namespace Temporal\Worker\Transport;
 
 use Temporal\Exception\TransportException;
 
+// todo: deprecate
 interface RpcConnectionInterface
 {
     /**
@@ -23,5 +24,3 @@ interface RpcConnectionInterface
      */
     public function call(string $method, $payload);
 }
-
-

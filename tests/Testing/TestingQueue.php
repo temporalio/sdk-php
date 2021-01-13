@@ -14,7 +14,7 @@ namespace Temporal\Tests\Testing;
 use PHPUnit\Framework\Assert;
 use Temporal\Internal\Queue\ArrayQueue;
 use Temporal\Worker\Transport\Command\CommandInterface;
-use Temporal\Worker\Transport\Command\ErrorResponseInterface;
+use Temporal\Worker\Transport\Command\FailureResponseInterface;
 use Temporal\Worker\Transport\Command\Request;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\ResponseInterface;
@@ -33,7 +33,7 @@ class TestingQueue extends ArrayQueue
     }
 
     /**
-     * @return TestingRequest|TestingSuccessResponse|TestingErrorResponse
+     * @return TestingRequest|TestingSuccessResponse|TestingFailureResponse
      */
     public function pop(): CommandInterface
     {
@@ -41,7 +41,7 @@ class TestingQueue extends ArrayQueue
     }
 
     /**
-     * @return TestingRequest|TestingSuccessResponse|TestingErrorResponse
+     * @return TestingRequest|TestingSuccessResponse|TestingFailureResponse
      */
     public function shift(): CommandInterface
     {
@@ -125,7 +125,7 @@ class TestingQueue extends ArrayQueue
      */
     public function assertErrorResponsesCount(int $expected, string $message = ''): self
     {
-        $this->assertTypesCount(ErrorResponseInterface::class, $expected, $message);
+        $this->assertTypesCount(FailureResponseInterface::class, $expected, $message);
 
         return $this;
     }
@@ -189,7 +189,7 @@ class TestingQueue extends ArrayQueue
     }
 
     /**
-     * @return TestingRequest|TestingSuccessResponse|TestingErrorResponse
+     * @return TestingRequest|TestingSuccessResponse|TestingFailureResponse
      */
     public function first(): CommandInterface
     {
@@ -197,7 +197,7 @@ class TestingQueue extends ArrayQueue
     }
 
     /**
-     * @return TestingRequest|TestingSuccessResponse|TestingErrorResponse
+     * @return TestingRequest|TestingSuccessResponse|TestingFailureResponse
      */
     public function last(): CommandInterface
     {
@@ -206,7 +206,7 @@ class TestingQueue extends ArrayQueue
 
     /**
      * @param positive-int $index
-     * @return TestingRequest|TestingSuccessResponse|TestingErrorResponse|null
+     * @return TestingRequest|TestingSuccessResponse|TestingFailureResponse|null
      */
     public function find(int $index): ?CommandInterface
     {
@@ -215,7 +215,7 @@ class TestingQueue extends ArrayQueue
 
     /**
      * @param positive-int $index
-     * @return TestingRequest|TestingSuccessResponse|TestingErrorResponse
+     * @return TestingRequest|TestingSuccessResponse|TestingFailureResponse
      */
     public function get(int $index): CommandInterface
     {

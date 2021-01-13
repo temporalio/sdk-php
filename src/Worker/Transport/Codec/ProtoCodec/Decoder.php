@@ -12,11 +12,12 @@ declare(strict_types=1);
 namespace Temporal\Worker\Transport\Codec\ProtoCodec;
 
 use Temporal\DataConverter\DataConverterInterface;
-use Temporal\DataConverter\Payload;
+use Temporal\DataConverter\EncodedValues;
+use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Roadrunner\Internal\Message;
 use Temporal\Worker\Transport\Command\CommandInterface;
-use Temporal\Worker\Transport\Command\ErrorResponse;
-use Temporal\Worker\Transport\Command\ErrorResponseInterface;
+use Temporal\Worker\Transport\Command\FailureResponse;
+use Temporal\Worker\Transport\Command\FailureResponseInterface;
 use Temporal\Worker\Transport\Command\Request;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\SuccessResponse;
@@ -27,29 +28,28 @@ class Decoder
     /**
      * @var DataConverterInterface
      */
-    private DataConverterInterface $dataConverter;
+    private DataConverterInterface $converter;
 
     /**
-     * Decoder constructor.
      * @param DataConverterInterface $dataConverter
      */
     public function __construct(DataConverterInterface $dataConverter)
     {
-        $this->dataConverter = $dataConverter;
+        $this->converter = $dataConverter;
     }
 
     /**
      * @param Message $msg
      * @return CommandInterface
      */
-    public function parse(Message $msg): CommandInterface
+    public function decode(Message $msg): CommandInterface
     {
         switch (true) {
             case $msg->getCommand() !== "":
                 return $this->parseRequest($msg);
 
-            case $msg->getError() !== null :
-                return $this->parseErrorResponse($msg);
+            case $msg->hasFailure():
+                return $this->parseFailureResponse($msg);
 
             default:
                 return $this->parseResponse($msg);
@@ -57,72 +57,42 @@ class Decoder
     }
 
     /**
-     * @param array $msg
+     * @param Message $msg
      * @return RequestInterface
      */
     private function parseRequest(Message $msg): RequestInterface
     {
-        $payloads = [];
-        if ($msg->getPayloads() !== null && $msg->getPayloads()->getPayloads()->count() !== 0) {
-            $payloads = $this->decodePayloads($msg->getPayloads()->getPayloads());
+        $payloads = null;
+        if ($msg->hasPayloads()) {
+            $payloads = EncodedValues::fromPayloads($msg->getPayloads(), $this->converter);
         }
 
-        return new Request(
-            $msg->getCommand(),
-            json_decode($msg->getOptions(), true),
-            $payloads,
-            $msg->getId()
-        );
+        return new Request($msg->getCommand(), json_decode($msg->getOptions(), true), $payloads, $msg->getId());
     }
 
     /**
-     * @param array $msg
-     * @return ErrorResponseInterface
+     * @param Message $msg
+     * @return FailureResponseInterface
      */
-    private function parseErrorResponse(Message $msg): ErrorResponseInterface
+    private function parseFailureResponse(Message $msg): FailureResponseInterface
     {
-        return new ErrorResponse(
-            $msg->getError()->getMessage(),
-            $msg->getError()->getCode(),
-            json_decode($msg->getError()->getData()),
+        return new FailureResponse(
+            FailureConverter::mapFailureToException($msg->getFailure(), $this->converter),
             $msg->getId()
         );
     }
 
     /**
-     * @param array $msg
+     * @param Message $msg
      * @return SuccessResponseInterface
      */
     private function parseResponse(Message $msg): SuccessResponseInterface
     {
-        $payloads = [];
-        if ($msg->getPayloads() !== null && $msg->getPayloads()->getPayloads()->count() !== 0) {
-            $payloads = $this->decodePayloads($msg->getPayloads()->getPayloads());
+        $payloads = null;
+        if ($msg->hasPayloads()) {
+            $payloads = EncodedValues::fromPayloads($msg->getPayloads(), $this->converter);
         }
 
         return new SuccessResponse($payloads, $msg->getId());
-    }
-
-    /**
-     * Decodes payloads from the incoming request into internal representation.
-     *
-     * @param array $payloads
-     * @return array<Payload>
-     */
-    private function decodePayloads(iterable $payloads): array
-    {
-        $result = [];
-
-        /** @var \Temporal\Api\Common\V1\Payload $payload */
-        foreach ($payloads as $payload) {
-            $metadata = [];
-            foreach ($payload->getMetadata() as $key => $value) {
-                $metadata[$key] = $value;
-            }
-
-            $result[] = Payload::create($metadata, $payload->getData());
-        }
-
-        return $result;
     }
 }

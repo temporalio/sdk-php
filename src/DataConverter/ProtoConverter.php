@@ -10,9 +10,10 @@
 namespace Temporal\DataConverter;
 
 use Google\Protobuf\Internal\Message;
+use Temporal\Api\Common\V1\Payload;
 use Temporal\Exception\DataConverterException;
 
-class ProtoConverter implements PayloadConverterInterface
+class ProtoConverter extends Converter
 {
     /**
      * @return string
@@ -32,34 +33,31 @@ class ProtoConverter implements PayloadConverterInterface
             return null;
         }
 
-        return Payload::create(
-            [EncodingKeys::METADATA_ENCODING_KEY => EncodingKeys::METADATA_ENCODING_PROTOBUF],
-            $value->serializeToString()
-        );
+        return self::create($value->serializeToString());
     }
 
     /**
      * @param Payload $payload
-     * @param \ReflectionType|null $type
+     * @param Type $type
      * @return Message
      * @throws DataConverterException
      */
-    public function fromPayload(Payload $payload, ?\ReflectionType $type)
+    public function fromPayload(Payload $payload, Type $type)
     {
-        if ($type instanceof \ReflectionNamedType && !$type->isBuiltin()) {
-            try {
-                $obj = new \ReflectionClass($type->getName());
-            } catch (\ReflectionException $e) {
-                throw new DataConverterException($e->getMessage(), $e->getCode(), $e);
-            }
-
-            /** @var Message $instance */
-            $instance = $obj->newInstance();
-            $instance->mergeFromString($payload->getData());
-
-            return $instance;
-        } else {
+        if (!$type->isClass()) {
             throw new DataConverterException("Unable to decode value using protobuf converter");
         }
+
+        try {
+            $obj = new \ReflectionClass($type->getName());
+        } catch (\ReflectionException $e) {
+            throw new DataConverterException($e->getMessage(), $e->getCode(), $e);
+        }
+
+        /** @var Message $instance */
+        $instance = $obj->newInstance();
+        $instance->mergeFromString($payload->getData());
+
+        return $instance;
     }
 }

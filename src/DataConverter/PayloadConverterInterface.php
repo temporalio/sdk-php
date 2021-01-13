@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\DataConverter;
 
+use Temporal\Api\Common\V1\Payload;
 use Temporal\Exception\DataConverterException;
 
 interface PayloadConverterInterface
@@ -26,7 +27,8 @@ interface PayloadConverterInterface
      * Implements conversion of a single value to Payload. Must return null if value can't be encoded.
      *
      * @param mixed $value
-     * @return Payload|null
+     * @return Payload
+     * |null
      *
      * @throws DataConverterException
      */
@@ -34,10 +36,10 @@ interface PayloadConverterInterface
 
     /**
      * @param Payload $payload
-     * @param \ReflectionType|null $type
+     * @param Type $type
      * @return mixed
      *
      * @throws DataConverterException
      */
-    public function fromPayload(Payload $payload, ?\ReflectionType $type);
+    public function fromPayload(Payload $payload, Type $type);
 }

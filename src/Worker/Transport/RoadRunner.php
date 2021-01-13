@@ -23,6 +23,7 @@ use Temporal\Exception\TransportException;
 /**
  * @psalm-type JsonHeaders = string
  */
+// todo: deprecate
 final class RoadRunner implements RelayConnectionInterface
 {
     /**
@@ -120,7 +121,7 @@ final class RoadRunner implements RelayConnectionInterface
     /**
      * {@inheritDoc}
      */
-    public function await(): ?Batch
+    public function await(): ?CommandBatch
     {
         /** @var Payload $payload */
         $payload = $this->interceptErrors(
@@ -133,7 +134,7 @@ final class RoadRunner implements RelayConnectionInterface
             return null;
         }
 
-        return new Batch(
+        return new CommandBatch(
             $payload->body,
             $this->decodeHeaders($payload->header)
         );

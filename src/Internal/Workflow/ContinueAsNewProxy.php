@@ -18,41 +18,18 @@ use Temporal\Workflow\WorkflowContextInterface;
 
 class ContinueAsNewProxy extends Proxy
 {
-    /**
-     * @var string
-     */
     private const ERROR_UNDEFINED_WORKFLOW_METHOD =
         'The given stub class "%s" does not contain a workflow method named "%s"';
 
-    /**
-     * @var string
-     */
     private const ERROR_ALREADY_CONTINUED =
         'Workflow "%s" has already been called within this "continue as new" stub';
 
-    /**
-     * @var string
-     */
-    private string $class;
 
-    /**
-     * @var WorkflowPrototype[]
-     */
+    private string $class;
     private array $workflows;
 
-    /**
-     * @var ContinueAsNewOptions
-     */
     private ContinueAsNewOptions $options;
-
-    /**
-     * @var WorkflowContextInterface
-     */
     private WorkflowContextInterface $context;
-
-    /**
-     * @var WorkflowPrototype|null
-     */
     private ?WorkflowPrototype $prototype = null;
 
     /**

@@ -11,25 +11,27 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport\Request;
 
+use Temporal\DataConverter\ValuesInterface;
 use Temporal\Worker\Transport\Command\Request;
 
 final class ContinueAsNew extends Request
 {
-    /**
-     * @var string
-     */
     public const NAME = 'ContinueAsNew';
 
     /**
      * @param string $name
-     * @param array $args
+     * @param ValuesInterface $input
      * @param array $options
      */
-    public function __construct(string $name, array $args, array $options)
+    public function __construct(string $name, ValuesInterface $input, array $options)
     {
-        parent::__construct(self::NAME, [
-            'name'    => $name,
-            'options' => $options,
-        ], $args);
+        parent::__construct(
+            self::NAME,
+            [
+                'name' => $name,
+                'options' => $options,
+            ],
+            $input
+        );
     }
 }

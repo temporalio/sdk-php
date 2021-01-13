@@ -13,11 +13,11 @@ namespace Temporal\Worker\Transport\Codec\ProtoCodec;
 
 use Temporal\Api\Common\V1\Payloads;
 use Temporal\DataConverter\DataConverterInterface;
-use Temporal\DataConverter\Payload;
+use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Roadrunner\Internal\Error;
 use Temporal\Roadrunner\Internal\Message;
 use Temporal\Worker\Transport\Command\CommandInterface;
-use Temporal\Worker\Transport\Command\ErrorResponseInterface;
+use Temporal\Worker\Transport\Command\FailureResponseInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\SuccessResponseInterface;
 
@@ -31,82 +31,57 @@ class Encoder
     /**
      * @var DataConverterInterface
      */
-    private DataConverterInterface $dataConverter;
+    private DataConverterInterface $converter;
 
     /**
-     * @param DataConverterInterface $dataConverter
+     * @param DataConverterInterface $converter
      */
-    public function __construct(DataConverterInterface $dataConverter)
+    public function __construct(DataConverterInterface $converter)
     {
-        $this->dataConverter = $dataConverter;
+        $this->converter = $converter;
     }
 
     /**
-     * @param CommandInterface $command
+     * @param CommandInterface $cmd
      * @return Message
      */
-    public function serialize(CommandInterface $command): Message
+    public function encode(CommandInterface $cmd): Message
     {
         $msg = new Message();
-        $msg->setId($command->getID());
+        $msg->setId($cmd->getID());
 
         switch (true) {
-            case $command instanceof RequestInterface:
-                $options = $command->getOptions();
+            case $cmd instanceof RequestInterface:
+                $cmd->getPayloads()->setDataConverter($this->converter);
+
+                $options = $cmd->getOptions();
                 if ($options === []) {
                     $options = new \stdClass();
                 }
 
-                $msg->setCommand($command->getName());
+                $msg->setCommand($cmd->getName());
                 $msg->setOptions(json_encode($options));
-                $msg->setPayloads($this->encodePayloads($command->getPayloads()));
+                $msg->setPayloads($cmd->getPayloads()->toPayloads());
+
+                if ($cmd->getFailure() !== null) {
+                    $msg->setFailure(FailureConverter::mapExceptionToFailure($cmd->getFailure(), $this->converter));
+                }
 
                 return $msg;
 
-            case $command instanceof ErrorResponseInterface:
-                $error = new Error();
-                $error->setMessage($command->getMessage());
-                $error->setCode($command->getCode());
-                $error->setData(json_encode($command->getData()));
-
-                $msg->setError($error);
+            case $cmd instanceof FailureResponseInterface:
+                $msg->setFailure(FailureConverter::mapExceptionToFailure($cmd->getFailure(), $this->converter));
 
                 return $msg;
 
-            case $command instanceof SuccessResponseInterface:
-                $msg->setPayloads($this->encodePayloads($command->getPayloads()));
+            case $cmd instanceof SuccessResponseInterface:
+                $cmd->getPayloads()->setDataConverter($this->converter);
+                $msg->setPayloads($cmd->getPayloads()->toPayloads());
 
                 return $msg;
 
             default:
-                throw new \InvalidArgumentException(\sprintf(self::ERROR_INVALID_COMMAND, \get_class($command)));
+                throw new \InvalidArgumentException(\sprintf(self::ERROR_INVALID_COMMAND, \get_class($cmd)));
         }
-    }
-
-    /**
-     * JSON require base64 encoding for all the payload data
-     *
-     * @param array $values
-     * @return Payloads
-     */
-    private function encodePayloads(array $values): Payloads
-    {
-        $payloadValues = [];
-
-        /** @var Payload $payload */
-        foreach ($values as $value) {
-            $encoded = $this->dataConverter->toPayload($value);
-
-            $value = new \Temporal\Api\Common\V1\Payload();
-            $value->setMetadata($encoded->getMetadata());
-            $value->setData($encoded->getData());
-
-            $payloadValues[] = $value;
-        }
-
-        $payloads = new Payloads();
-        $payloads->setPayloads($payloadValues);
-
-        return $payloads;
     }
 }

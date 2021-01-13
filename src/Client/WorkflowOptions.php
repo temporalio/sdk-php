@@ -13,6 +13,9 @@ namespace Temporal\Client;
 
 use Carbon\CarbonInterval;
 use Cron\CronExpression;
+use Temporal\Api\Common\V1\Memo;
+use Temporal\Api\Common\V1\RetryPolicy;
+use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\Common\CronSchedule;
 use Temporal\Common\IdReusePolicy;
 use Temporal\Common\MethodRetry;
@@ -27,7 +30,6 @@ use Temporal\Internal\Marshaller\Type\NullableType;
 use Temporal\Internal\Marshaller\Type\ObjectType;
 use Temporal\Internal\Support\Cron;
 use Temporal\Internal\Support\DateInterval;
-use Temporal\Internal\Support\Diff;
 use Temporal\Internal\Support\Options;
 use Temporal\Worker\FactoryInterface;
 use Temporal\Worker\TaskQueue;
@@ -311,5 +313,46 @@ final class WorkflowOptions extends Options
     public function withSearchAttributes(?array $searchAttributes): self
     {
         return immutable(fn() => $this->searchAttributes = $searchAttributes);
+    }
+
+    /**
+     * @return Memo
+     * @internal
+     */
+    public function toMemo(): Memo
+    {
+        $memo = new Memo();
+        $memo->setFields($this->memo);
+
+        return $memo;
+    }
+
+    /**
+     * @return SearchAttributes
+     * @internal
+     */
+    public function toSearchAttributes(): SearchAttributes
+    {
+        $search = new SearchAttributes();
+        $search->setIndexedFields($this->searchAttributes);
+
+        return $search;
+    }
+
+    /**
+     * @return RetryPolicy
+     * @internal
+     */
+    public function toRetryPolicy(): RetryPolicy
+    {
+        $rt = new RetryPolicy();
+        $rt->setInitialInterval(DateInterval::toDuration($this->retryOptions->initialInterval));
+        $rt->setMaximumInterval(DateInterval::toDuration($this->retryOptions->maximumInterval));
+
+        $rt->setBackoffCoefficient($this->retryOptions->backoffCoefficient);
+        $rt->setMaximumAttempts($this->retryOptions->maximumAttempts);
+        $rt->setNonRetryableErrorTypes($this->retryOptions->nonRetryableExceptions);
+
+        return $rt;
     }
 }

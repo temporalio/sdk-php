@@ -14,6 +14,7 @@ namespace Temporal\Internal\Workflow;
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
+use Temporal\Internal\Transport\CompletableResultInterface;
 use Temporal\Workflow\WorkflowContextInterface;
 
 final class ActivityProxy extends Proxy
@@ -62,7 +63,7 @@ final class ActivityProxy extends Proxy
     /**
      * @param string $method
      * @param array $args
-     * @return PromiseInterface
+     * @return CompletableResultInterface
      */
     public function __call(string $method, array $args = []): PromiseInterface
     {

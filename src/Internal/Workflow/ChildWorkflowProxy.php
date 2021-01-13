@@ -13,6 +13,7 @@ namespace Temporal\Internal\Workflow;
 
 use React\Promise\PromiseInterface;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Internal\Transport\CompletableResultInterface;
 use Temporal\Workflow\ChildWorkflowOptions;
 use Temporal\Workflow\ChildWorkflowStubInterface;
 use Temporal\Workflow\WorkflowContextInterface;
@@ -89,14 +90,14 @@ final class ChildWorkflowProxy extends Proxy
     /**
      * @param string $method
      * @param array $args
-     * @return PromiseInterface
+     * @return CompletableResultInterface
      */
     public function __call(string $method, array $args): PromiseInterface
     {
         // If the proxy does not contain information about the running workflow,
         // then we try to create a new stub from the workflow method and start
         // the workflow.
-        if (! $this->isRunning()) {
+        if (!$this->isRunning()) {
             $this->prototype = $this->findPrototypeByHandlerNameOrFail($method);
 
             // Merge options with defaults defined using attributes:

@@ -11,9 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\DataConverter;
 
+use Temporal\Api\Common\V1\Payload;
 use Temporal\Exception\DataConverterException;
 
-class NullConverter implements PayloadConverterInterface
+class NullConverter extends Converter
 {
     /**
      * @return string
@@ -33,20 +34,17 @@ class NullConverter implements PayloadConverterInterface
             return null;
         }
 
-        return Payload::create(
-            [EncodingKeys::METADATA_ENCODING_KEY => EncodingKeys::METADATA_ENCODING_NULL],
-            ''
-        );
+        return self::create('');
     }
 
     /**
      * @param Payload $payload
-     * @param \ReflectionType|null $type
+     * @param Type $type
      * @return null
      */
-    public function fromPayload(Payload $payload, ?\ReflectionType $type)
+    public function fromPayload(Payload $payload, Type $type)
     {
-        if ($type !== null && !$type->allowsNull()) {
+        if (!$type->isUntyped() && !$type->allowsNull()) {
             throw new DataConverterException('Unable to convert null to non nullable type');
         }
 

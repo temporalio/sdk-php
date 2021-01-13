@@ -15,7 +15,7 @@ class WorkflowTestCase extends TestCase
 {
     public function testSplitter()
     {
-        $splitter = Splitter::create('Test_SimpleWorkflow.log');
+        $splitter = Splitter::create('Test_ExecuteSimpleWorkflow_1.log');
 
         $this->assertNotEmpty($splitter->getQueue());
     }
@@ -24,14 +24,14 @@ class WorkflowTestCase extends TestCase
     {
         $worker = WorkerMock::createMock();
 
-        $worker->run($this, Splitter::create('Test_SimpleWorkflow.log')->getQueue());
+        $worker->run($this, Splitter::create('Test_ExecuteSimpleWorkflow_1.log')->getQueue());
     }
 
     public function testTimer()
     {
         $worker = WorkerMock::createMock();
 
-        $worker->run($this, Splitter::create('Test_TimerWorkflow.log')->getQueue());
+        $worker->run($this, Splitter::create('Test_Timer.log')->getQueue());
     }
 
     public function testGetQuery()
@@ -95,13 +95,6 @@ class WorkflowTestCase extends TestCase
         $worker = WorkerMock::createMock();
 
         $worker->run($this, Splitter::create('Test_EmptyWorkflow.log')->getQueue());
-    }
-
-    public function testTimerWorkflow()
-    {
-        $worker = WorkerMock::createMock();
-
-        $worker->run($this, Splitter::create('Test_TimerWorkflow.log')->getQueue());
     }
 
     public function testExecuteWorkflowWithParallelScopes()

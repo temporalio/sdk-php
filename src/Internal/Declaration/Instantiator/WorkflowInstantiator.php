@@ -22,28 +22,12 @@ use Temporal\Internal\Declaration\WorkflowInstance;
 final class WorkflowInstantiator extends Instantiator
 {
     /**
-     * @var DataConverterInterface
-     */
-    private DataConverterInterface $dataConverter;
-
-    /**
-     * @param DataConverterInterface $dataConverter
-     */
-    public function __construct(DataConverterInterface $dataConverter)
-    {
-        $this->dataConverter = $dataConverter;
-    }
-
-    /**
      * {@inheritDoc}
      */
     public function instantiate(PrototypeInterface $prototype): WorkflowInstance
     {
         assert($prototype instanceof WorkflowPrototype, 'Precondition failed');
 
-        // TODO
-        $instance = $this->getInstance($prototype);
-
-        return new WorkflowInstance($prototype, $this->dataConverter, $instance);
+        return new WorkflowInstance($prototype, $this->getInstance($prototype));
     }
 }

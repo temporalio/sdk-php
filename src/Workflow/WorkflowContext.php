@@ -15,12 +15,12 @@ use Carbon\CarbonInterface;
 use Carbon\CarbonTimeZone;
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
-use Temporal\Exception\CancellationException;
+use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Transport\Request\ContinueAsNew;
 use Temporal\DataConverter\DataConverterInterface;
-use Temporal\DataConverter\Payload;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Transport\Request\CompleteWorkflow;
@@ -39,34 +39,13 @@ use function React\Promise\reject;
 
 class WorkflowContext implements WorkflowContextInterface
 {
-    /**
-     * @var ServiceContainer
-     */
     protected ServiceContainer $services;
-
-    /**
-     * @var ClientInterface
-     */
     protected ClientInterface $client;
 
-    /**
-     * @var Input
-     */
     protected Input $input;
-
-    /**
-     * @var WorkflowInstanceInterface
-     */
     protected WorkflowInstanceInterface $workflowInstance;
 
-    /**
-     * @var array
-     */
     private array $trace = [];
-
-    /**
-     * @var bool
-     */
     private bool $continueAsNew = false;
 
     /**
@@ -96,25 +75,13 @@ class WorkflowContext implements WorkflowContextInterface
     }
 
     /**
-     * {@inheritDoc}
-     */
-    public function getTimeZone(): CarbonTimeZone
-    {
-        $this->recordTrace();
-
-        return $this->services->env->getTimeZone();
-    }
-
-    /**
      * Record last stack trace of the call.
      *
      * @return void
      */
     protected function recordTrace(): void
     {
-        $this->trace = \debug_backtrace(
-            \DEBUG_BACKTRACE_IGNORE_ARGS
-        );
+        $this->trace = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
     }
 
     /**
@@ -150,11 +117,11 @@ class WorkflowContext implements WorkflowContextInterface
     /**
      * {@inheritDoc}
      */
-    public function getArguments(): array
+    public function getInput(): ValuesInterface
     {
         $this->recordTrace();
 
-        return $this->input->args;
+        return $this->input->input;
     }
 
     /**
@@ -230,7 +197,11 @@ class WorkflowContext implements WorkflowContextInterface
         }
 
         // todo: get return type from context (is it possible?)
-        return Payload::fromPromise($this->services->dataConverter, $this->request(new SideEffect($value)));
+        return EncodedValues::decodePromise(
+            $this->request(
+                new SideEffect(EncodedValues::fromValues([$value]))
+            )
+        );
     }
 
     /**
@@ -246,20 +217,19 @@ class WorkflowContext implements WorkflowContextInterface
     /**
      * {@inheritDoc}
      */
-    public function complete($result = null, \Throwable $error=null): PromiseInterface
+    public function complete(array $result = null, \Throwable $failure = null): PromiseInterface
     {
         $this->recordTrace();
 
-        // must not be captured
-        return $this->services->client->request(new CompleteWorkflow($result, $error));
-    }
+        if ($result !== null) {
+            $values = EncodedValues::fromValues($result);
+        } else {
+            $values = EncodedValues::empty();
+        }
 
-    /**
-     * @return bool
-     */
-    public function isContinuedAsNew(): bool
-    {
-        return $this->continueAsNew;
+        return $this->services->client->request(
+            new CompleteWorkflow($values, $failure)
+        );
     }
 
     /**
@@ -275,7 +245,7 @@ class WorkflowContext implements WorkflowContextInterface
 
         $options = $this->services->marshaller->marshal($options ?? new ContinueAsNewOptions());
 
-        $request = new ContinueAsNew($type, $args, $options);
+        $request = new ContinueAsNew($type, EncodedValues::fromValues($args), $options);
 
         // must not be captured
         return $this->services->client->request($request);
@@ -294,6 +264,14 @@ class WorkflowContext implements WorkflowContextInterface
     }
 
     /**
+     * @return bool
+     */
+    public function isContinuedAsNew(): bool
+    {
+        return $this->continueAsNew;
+    }
+
+    /**
      * {@inheritDoc}
      */
     public function executeChildWorkflow(
@@ -304,8 +282,7 @@ class WorkflowContext implements WorkflowContextInterface
     ): PromiseInterface {
         $this->recordTrace();
 
-        return $this->newUntypedChildWorkflowStub($type, $options)
-            ->execute($args, $returnType);
+        return $this->newUntypedChildWorkflowStub($type, $options)->execute($args, $returnType);
     }
 
     /**
@@ -318,12 +295,7 @@ class WorkflowContext implements WorkflowContextInterface
         $this->recordTrace();
         $options ??= new ChildWorkflowOptions();
 
-        return new ChildWorkflowStub(
-            $this->services->dataConverter,
-            $this->services->marshaller,
-            $name,
-            $options
-        );
+        return new ChildWorkflowStub($this->services->marshaller, $name, $options);
     }
 
     /**
@@ -353,8 +325,7 @@ class WorkflowContext implements WorkflowContextInterface
     ): PromiseInterface {
         $this->recordTrace();
 
-        return $this->newUntypedActivityStub($options)
-            ->execute($type, $args, $returnType);
+        return $this->newUntypedActivityStub($options)->execute($type, $args, $returnType);
     }
 
     /**
@@ -365,11 +336,7 @@ class WorkflowContext implements WorkflowContextInterface
         $this->recordTrace();
         $options ??= new ActivityOptions();
 
-        return new ActivityStub(
-            $this->services->dataConverter,
-            $this->services->marshaller,
-            $options
-        );
+        return new ActivityStub($this->services->marshaller, $options);
     }
 
     /**

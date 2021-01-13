@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
+use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Payload;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Worker\LoopInterface;
@@ -45,7 +46,8 @@ final class InvokeSignal extends WorkflowProcessAwareRoute
         $instance = $this->findInstanceOrFail($payload['runId']);
         $handler = $instance->getSignalHandler($payload['name']);
 
-        $executor = static fn() => $resolver->resolve($handler($request->getPayloads()));
+        $executor = static fn() => $resolver->resolve(EncodedValues::fromValues([$handler($request->getPayloads())]));
+
         $this->loop->once(LoopInterface::ON_SIGNAL, $executor);
     }
 }
