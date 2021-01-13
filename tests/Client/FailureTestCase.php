@@ -11,10 +11,7 @@ namespace Temporal\Tests\Client;
 
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
-use Temporal\Client\WorkflowOptions;
-use Temporal\Common\RetryOptions;
 use Temporal\Exception\Client\WorkflowFailedException;
-use Temporal\Exception\Failure\TemporalFailure;
 use Temporal\Tests\TestCase;
 
 class FailureTestCase extends TestCase
