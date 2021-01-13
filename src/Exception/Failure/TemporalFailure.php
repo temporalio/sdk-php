@@ -70,6 +70,7 @@ class TemporalFailure extends TemporalException
     public function setOriginalStackTrace(string $stackTrace)
     {
         $this->originalStackTrace = $stackTrace;
+        $this->message .= "\nOriginalStackTrace:\n" . $this->originalStackTrace;
     }
 
     /**
@@ -77,7 +78,7 @@ class TemporalFailure extends TemporalException
      */
     public function hasOriginalStackTrace(): bool
     {
-        return $this->originalStackTrace;
+        return $this->originalStackTrace !== null;
     }
 
     /**
@@ -124,7 +125,8 @@ class TemporalFailure extends TemporalException
         $mapped = [];
         foreach ($values as $key => $value) {
             if (isset($mapped[$key])) {
-                $values = ($mapped[$key])($value);
+                // todo: check retryState
+                $value = ($mapped[$key])($value);
             }
 
             $mapped[$key] = $value;

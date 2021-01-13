@@ -11,7 +11,10 @@ namespace Temporal\Tests\Client;
 
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
+use Temporal\Client\WorkflowOptions;
+use Temporal\Common\RetryOptions;
 use Temporal\Exception\Client\WorkflowFailedException;
+use Temporal\Exception\Failure\TemporalFailure;
 use Temporal\Tests\TestCase;
 
 class FailureTestCase extends TestCase
@@ -53,7 +56,7 @@ class FailureTestCase extends TestCase
         $this->assertNotEmpty($e->id);
         $this->assertNotEmpty($e->runId);
 
-        //$this->expectException(WorkflowFailedException::class);
+        $this->expectException(WorkflowFailedException::class);
         $ex->getResult(0);
         // todo: verify parent exceptions
     }

@@ -102,7 +102,7 @@ class ActivityCompletionClient implements ActivityCompletionClientInterface
         $r
             ->setIdentity($this->clientOptions->identity)
             ->setNamespace($this->clientOptions->namespace)
-            ->setTaskToken($taskToken);
+            ->setTaskToken(base64_decode($taskToken));
 
         $input = EncodedValues::fromValues(array_slice(func_get_args(), 1), $this->converter);
         if (!$input->isEmpty()) {
