@@ -31,6 +31,7 @@ use Temporal\Internal\Workflow\ActivityProxy;
 use Temporal\Internal\Workflow\ActivityStub;
 use Temporal\Internal\Workflow\ChildWorkflowProxy;
 use Temporal\Internal\Workflow\ChildWorkflowStub;
+use Temporal\Internal\Workflow\ContinueAsNewProxy;
 use Temporal\Internal\Workflow\Input;
 use Temporal\Worker\Transport\Command\RequestInterface;
 
@@ -168,7 +169,6 @@ class WorkflowContext implements WorkflowContextInterface
     {
         $this->recordTrace();
 
-        // todo: what is payload?
         return $this->request(
             new GetVersion($changeId, $minSupported, $maxSupported)
         );
@@ -235,13 +235,32 @@ class WorkflowContext implements WorkflowContextInterface
     /**
      * {@inheritDoc}
      */
-    public function continueAsNew(string $name, ...$input): PromiseInterface
-    {
+    public function continueAsNew(
+        string $type,
+        array $args = [],
+        ContinueAsNewOptions $options = null
+    ): PromiseInterface {
         $this->recordTrace();
         $this->continueAsNew = true;
 
+        $options = $this->services->marshaller->marshal($options ?? new ContinueAsNewOptions());
+
+        $request = new ContinueAsNew($type, EncodedValues::fromValues($args), $options);
+
         // must not be captured
-        return $this->services->client->request(new ContinueAsNew($name, EncodedValues::fromValues($input)));
+        return $this->services->client->request($request);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function newContinueAsNewStub(string $class, ContinueAsNewOptions $options = null): object
+    {
+        $options ??= new ContinueAsNewOptions();
+
+        $workflows = $this->services->workflowsReader->fromClass($class);
+
+        return new ContinueAsNewProxy($class, $workflows, $options, $this);
     }
 
     /**

@@ -92,6 +92,31 @@ interface WorkflowContextInterface extends EnvironmentInterface
     /**
      * @param class-string|string $type
      * @param array $args
+     * @param ContinueAsNewOptions|null $options
+     * @return PromiseInterface
+     */
+    public function continueAsNew(
+        string $type,
+        array $args = [],
+        ContinueAsNewOptions $options = null
+    ): PromiseInterface;
+
+    /**
+     * Creates client stub that can be used to continue this workflow as new.
+     *
+     * @psalm-template T of object
+     * @psalm-param class-string<T> $class
+     * @psalm-return object<T>|T
+     *
+     * @param string $class
+     * @param ContinueAsNewOptions|null $options
+     * @return object
+     */
+    public function newContinueAsNewStub(string $class, ContinueAsNewOptions $options = null): object;
+
+    /**
+     * @param class-string|string $type
+     * @param array $args
      * @param ChildWorkflowOptions|null $options
      * @param \ReflectionType|null $returnType
      * @return PromiseInterface

@@ -18,10 +18,12 @@ use Temporal\Internal\Support\Facade;
 use Temporal\Internal\Transport\CompletableResultInterface;
 use Temporal\Internal\Workflow\ActivityProxy;
 use Temporal\Internal\Workflow\ChildWorkflowProxy;
+use Temporal\Internal\Workflow\ContinueAsNewProxy;
 use Temporal\Workflow\ActivityStubInterface;
 use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\ChildWorkflowOptions;
 use Temporal\Workflow\ChildWorkflowStubInterface;
+use Temporal\Workflow\ContinueAsNewOptions;
 use Temporal\Workflow\WorkflowContextInterface;
 use Temporal\Workflow\WorkflowInfo;
 
@@ -45,11 +47,14 @@ use Temporal\Workflow\WorkflowInfo;
  * @method static WorkflowContextInterface registerQuery(string $queryType, callable $handler)
  * @method static WorkflowContextInterface registerSignal(string $signalType, callable $handler)
  *
- * @method static CompletableResultInterface continueAsNew(string $name, ...$input)
+ * @method static CompletableResultInterface continueAsNew(string $name, array $args = [], ContinueAsNewOptions $options = null)
+ * @method static ContinueAsNewProxy|object newContinueAsNewStub(string $class, ContinueAsNewOptions $options = null)
  *
+ * @method static CompletableResultInterface executeActivity(string $name, array $args = [], ActivityOptions $options = null, \ReflectionType $returnType = null)
  * @method static ActivityProxy|object newActivityStub(string $class, ActivityOptions $options = null)
  * @method static ActivityStubInterface newUntypedActivityStub(ActivityOptions $options = null)
  *
+ * @method static CompletableResultInterface executeChildWorkflow(string $name, array $args = [], ChildWorkflowOptions $options = null, \ReflectionType $returnType = null)
  * @method static ChildWorkflowProxy|object newChildWorkflowStub(string $class, ChildWorkflowOptions $options = null)
  * @method static ChildWorkflowStubInterface newUntypedChildWorkflowStub(string $name, ChildWorkflowOptions $options = null)
  */

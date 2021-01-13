@@ -21,14 +21,15 @@ final class ContinueAsNew extends Request
     /**
      * @param string $name
      * @param ValuesInterface $input
+     * @param array $options
      */
-    public function __construct(string $name, ValuesInterface $input)
+    public function __construct(string $name, ValuesInterface $input, array $options)
     {
         parent::__construct(
             self::NAME,
             [
                 'name' => $name,
-                'args' => $input,
+                'options' => $options,
             ],
             $input
         );
