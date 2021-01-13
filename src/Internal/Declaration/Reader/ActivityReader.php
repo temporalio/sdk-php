@@ -11,10 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration\Reader;
 
-use JetBrains\PhpStorm\Pure;
 use ReflectionFunctionAbstract as ReflectionFunction;
 use Temporal\Activity\ActivityInterface;
 use Temporal\Activity\ActivityMethod;
+use Temporal\Common\MethodRetry;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 
 /**
@@ -32,12 +32,18 @@ class ActivityReader extends Reader
         $result = [];
 
         $reflection = new \ReflectionClass($class);
-        $interface = $this->getActivityInterface($reflection);
+        $interface = $this->findActivityInterface($reflection);
 
         foreach ($this->annotatedMethods($reflection, ActivityMethod::class) as $method => $handler) {
-            $name = $this->createActivityName($handler, $method, $interface);
+            $name = $this->createActivityName($handler, $method, $interface ?? new ActivityInterface());
 
-            $result[] = new ActivityPrototype($name, $handler, $reflection);
+            $prototype = new ActivityPrototype($name, $handler, $reflection, $interface !== null);
+
+            if ($retry = $this->findAttribute($handler, MethodRetry::class)) {
+                $prototype->setMethodRetry($retry);
+            }
+
+            $result[] = $prototype;
         }
 
         return $result;
@@ -56,9 +62,9 @@ class ActivityReader extends Reader
 
     /**
      * @param \ReflectionClass $class
-     * @return ActivityInterface
+     * @return ActivityInterface|null
      */
-    private function getActivityInterface(\ReflectionClass $class): ActivityInterface
+    private function findActivityInterface(\ReflectionClass $class): ?ActivityInterface
     {
         $attributes = $this->reader->getClassMetadata($class, ActivityInterface::class);
 
@@ -67,6 +73,6 @@ class ActivityReader extends Reader
             return $attribute;
         }
 
-        return new ActivityInterface();
+        return null;
     }
 }

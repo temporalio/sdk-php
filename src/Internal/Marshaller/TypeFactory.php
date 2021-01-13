@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Marshaller;
 
 use Temporal\Internal\Marshaller\Type\ArrayType;
+use Temporal\Internal\Marshaller\Type\CronType;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\DateTimeType;
 use Temporal\Internal\Marshaller\Type\DetectableTypeInterface;
@@ -78,6 +79,7 @@ class TypeFactory implements TypeFactoryInterface
      */
     private function getDefaultMatchers(): iterable
     {
+        yield CronType::class;
         yield DateTimeType::class;
         yield DateIntervalType::class;
         yield ArrayType::class;

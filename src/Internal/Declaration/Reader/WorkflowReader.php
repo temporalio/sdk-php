@@ -11,8 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration\Reader;
 
-use JetBrains\PhpStorm\Pure;
 use ReflectionFunctionAbstract as ReflectionFunction;
+use Temporal\Common\CronSchedule;
+use Temporal\Common\MethodRetry;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Workflow\QueryMethod;
 use Temporal\Workflow\SignalMethod;
@@ -34,12 +35,22 @@ class WorkflowReader extends Reader
         $declarations = [];
         $reflection = new \ReflectionClass($class);
 
-        //$interface = $this->getWorkflowInterface($reflection);
+        $interface = $this->findWorkflowInterface($reflection);
 
         foreach ($this->annotatedMethods($reflection, WorkflowMethod::class) as $method => $handler) {
             $name = $this->createWorkflowName($handler, $method);
 
-            $declarations[] = new WorkflowPrototype($name, $handler, $reflection);
+            $prototype = new WorkflowPrototype($name, $handler, $reflection, $interface !== null);
+
+            if ($cron = $this->findAttribute($handler, CronSchedule::class)) {
+                $prototype->setCronSchedule($cron);
+            }
+
+            if ($retry = $this->findAttribute($handler, MethodRetry::class)) {
+                $prototype->setMethodRetry($retry);
+            }
+
+            $declarations[] = $prototype;
         }
 
         foreach ($this->annotatedMethods($reflection, SignalMethod::class) as $signal => $handler) {
@@ -93,9 +104,9 @@ class WorkflowReader extends Reader
 
     /**
      * @param \ReflectionClass $class
-     * @return WorkflowInterface
+     * @return WorkflowInterface|null
      */
-    private function getWorkflowInterface(\ReflectionClass $class): WorkflowInterface
+    private function findWorkflowInterface(\ReflectionClass $class): ?WorkflowInterface
     {
         $attributes = $this->reader->getClassMetadata($class, WorkflowInterface::class);
 
@@ -104,6 +115,6 @@ class WorkflowReader extends Reader
             return $attribute;
         }
 
-        return new WorkflowInterface();
+        return null;
     }
 }

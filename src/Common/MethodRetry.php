@@ -51,5 +51,7 @@ final class MethodRetry extends RetryOptions implements NamedArgumentConstructor
         $this->maximumAttempts = $maximumAttempts;
         $this->backoffCoefficient = $backoffCoefficient;
         $this->nonRetryableExceptions = $nonRetryableExceptions;
+
+        parent::__construct();
     }
 }

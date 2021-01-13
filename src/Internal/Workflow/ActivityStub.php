@@ -17,7 +17,6 @@ use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Payload;
 use Temporal\Internal\Marshaller\MarshallerInterface;
-use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Transport\Request\ExecuteActivity;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow;

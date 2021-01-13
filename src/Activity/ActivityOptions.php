@@ -13,12 +13,16 @@ namespace Temporal\Activity;
 
 use Carbon\CarbonInterval;
 use JetBrains\PhpStorm\Pure;
+use Temporal\Client\WorkflowOptions;
+use Temporal\Common\CronSchedule;
+use Temporal\Common\MethodRetry;
 use Temporal\Common\RetryOptions;
 use Temporal\Internal\Assert;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\ObjectType;
 use Temporal\Internal\Support\DateInterval;
+use Temporal\Internal\Support\Options;
 use Temporal\Worker\FactoryInterface;
 
 /**
@@ -29,7 +33,7 @@ use Temporal\Worker\FactoryInterface;
  *
  * @psalm-import-type DateIntervalValue from DateInterval
  */
-class ActivityOptions
+class ActivityOptions extends Options
 {
     /**
      * TaskQueue that the activity needs to be scheduled on.
@@ -114,15 +118,21 @@ class ActivityOptions
         $this->startToCloseTimeout = CarbonInterval::seconds(0);
         $this->heartbeatTimeout = CarbonInterval::seconds(0);
         $this->retryOptions = new RetryOptions();
+
+        parent::__construct();
     }
 
     /**
-     * @return static
+     * @param MethodRetry|null $retry
+     * @return $this
      */
-    #[Pure]
-    public static function new(): self
+    public function mergeWith(MethodRetry $retry = null): self
     {
-        return new static();
+        return immutable(function () use ($retry) {
+            if ($retry !== null && $this->diff->isPresent($this, 'retryOptions')) {
+                $this->retryOptions = $this->retryOptions->mergeWith($retry);
+            }
+        });
     }
 
     /**
@@ -134,7 +144,7 @@ class ActivityOptions
      */
     public function withTaskQueue(?string $taskQueue): self
     {
-        return immutable(fn() => $this->taskQueue = $taskQueue);
+        return immutable(fn() => $this->taskQueue = $taskQueue ?? FactoryInterface::DEFAULT_TASK_QUEUE);
     }
 
     /**

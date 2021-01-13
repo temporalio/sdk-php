@@ -139,6 +139,15 @@ final class WorkflowStub implements WorkflowStubInterface
 
     /**
      * {@inheritDoc}
+     * @internal
+     */
+    public function setOptions(WorkflowOptions $options)
+    {
+        $this->options = $options;
+    }
+
+    /**
+     * {@inheritDoc}
      */
     public function getExecution(): WorkflowExecution
     {

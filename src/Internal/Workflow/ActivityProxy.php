@@ -12,9 +12,10 @@ declare(strict_types=1);
 namespace Temporal\Internal\Workflow;
 
 use React\Promise\PromiseInterface;
+use Temporal\Activity\ActivityOptions;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Transport\CompletableResultInterface;
-use Temporal\Workflow\ActivityStubInterface;
+use Temporal\Workflow\WorkflowContextInterface;
 
 final class ActivityProxy extends Proxy
 {
@@ -31,25 +32,32 @@ final class ActivityProxy extends Proxy
     private array $activities;
 
     /**
-     * @var ActivityStubInterface
-     */
-    private ActivityStubInterface $stub;
-
-    /**
      * @var string
      */
     private string $class;
 
     /**
+     * @var ActivityOptions
+     */
+    private ActivityOptions $options;
+
+    /**
+     * @var WorkflowContextInterface
+     */
+    private WorkflowContextInterface $ctx;
+
+    /**
      * @param string $class
      * @param array<ActivityPrototype> $activities
-     * @param ActivityStubInterface $stub
+     * @param ActivityOptions $options
+     * @param WorkflowContextInterface $ctx
      */
-    public function __construct(string $class, array $activities, ActivityStubInterface $stub)
+    public function __construct(string $class, array $activities, ActivityOptions $options, WorkflowContextInterface $ctx)
     {
         $this->activities = $activities;
         $this->class = $class;
-        $this->stub = $stub;
+        $this->options = $options;
+        $this->ctx = $ctx;
     }
 
     /**
@@ -61,7 +69,13 @@ final class ActivityProxy extends Proxy
     {
         $handler = $this->findPrototypeByHandlerNameOrFail($method);
 
-        return $this->stub->execute($handler->getID(), $args, $handler->getHandler()->getReturnType());
+        $type = $handler->getHandler()->getReturnType();
+
+        return $this->ctx->newUntypedActivityStub(
+            $this->options->mergeWith($handler->getMethodRetry())
+        )
+            ->execute($handler->getID(), $args, $type)
+        ;
     }
 
     /**

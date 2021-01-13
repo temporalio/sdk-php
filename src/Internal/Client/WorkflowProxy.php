@@ -68,6 +68,17 @@ final class WorkflowProxy extends Proxy
     public function __call(string $method, array $args)
     {
         if ($method === $this->prototype->getHandler()->getName()) {
+            // Merge options with defaults defined using attributes:
+            //  - #[MethodRetry]
+            //  - #[CronSchedule]
+            $options = $this->stub->getOptions()->mergeWith(
+                $this->prototype->getMethodRetry(),
+                $this->prototype->getCronSchedule()
+            );
+
+            // todo: improve dependency
+            $this->stub->setOptions($options);
+
             // If the proxy does not contain information about the running workflow,
             // then we try to create a new stub from the workflow method and start
             // the workflow.

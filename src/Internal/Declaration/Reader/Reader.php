@@ -52,4 +52,16 @@ abstract class Reader
             }
         }
     }
+
+    /**
+     * @psalm-template Attribute of object
+     *
+     * @param \ReflectionMethod $method
+     * @param class-string<Attribute> $attribute
+     * @return Attribute|null
+     */
+    protected function findAttribute(\ReflectionMethod $method, string $attribute): ?object
+    {
+        return $this->reader->firstFunctionMetadata($method, $attribute);
+    }
 }

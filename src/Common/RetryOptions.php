@@ -17,6 +17,8 @@ use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\NullableType;
 use Temporal\Internal\Support\DateInterval;
+use Temporal\Internal\Support\Diff;
+use Temporal\Internal\Support\Options;
 
 /**
  * Note that the history of activity with retry policy will be different:
@@ -31,7 +33,7 @@ use Temporal\Internal\Support\DateInterval;
  * @psalm-type ExceptionsList = array<class-string<\Throwable>>
  * @psalm-import-type DateIntervalValue from DateInterval
  */
-class RetryOptions
+class RetryOptions extends Options
 {
     /**
      * @var null
@@ -62,7 +64,7 @@ class RetryOptions
      * Backoff interval for the first retry. If {@see RetryOptions::$backoffCoefficient}
      * is 1.0 then it is used for all retries.
      */
-    #[Marshal(name: 'InitialInterval', type: NullableType::class, of: DateIntervalType::class)]
+    #[Marshal(name: 'initial_interval', type: NullableType::class, of: DateIntervalType::class)]
     public ?\DateInterval $initialInterval = self::DEFAULT_INITIAL_INTERVAL;
 
     /**
@@ -71,7 +73,7 @@ class RetryOptions
      *
      * Note: Must be greater than 1.0
      */
-    #[Marshal(name: 'BackoffCoefficient')]
+    #[Marshal(name: 'backoff_coefficient')]
     public float $backoffCoefficient = self::DEFAULT_BACKOFF_COEFFICIENT;
 
     /**
@@ -80,7 +82,7 @@ class RetryOptions
      *
      * Default is 100x of {@see $initialInterval}.
      */
-    #[Marshal(name: 'MaximumInterval', type: NullableType::class, of: DateIntervalType::class)]
+    #[Marshal(name: 'maximum_interval', type: NullableType::class, of: DateIntervalType::class)]
     public ?\DateInterval $maximumInterval = self::DEFAULT_MAXIMUM_INTERVAL;
 
     /**
@@ -90,7 +92,7 @@ class RetryOptions
      *
      * @var positive-int
      */
-    #[Marshal(name: 'MaximumAttempts')]
+    #[Marshal(name: 'maximum_attempts')]
     public int $maximumAttempts = self::DEFAULT_MAXIMUM_ATTEMPTS;
 
     /**
@@ -99,8 +101,23 @@ class RetryOptions
      *
      * @var ExceptionsList
      */
-    #[Marshal(name: 'NonRetryableErrorTypes')]
+    #[Marshal(name: 'non_retryable_error_types')]
     public array $nonRetryableExceptions = self::DEFAULT_NON_RETRYABLE_EXCEPTIONS;
+
+    /**
+     * @param MethodRetry|null $retry
+     * @return $this
+     */
+    public function mergeWith(MethodRetry $retry = null): self
+    {
+        return immutable(function () use ($retry) {
+            if ($retry !== null) {
+                foreach ($this->diff->getPresentPropertyNames($this) as $name) {
+                    $this->$name = $retry->$name;
+                }
+            }
+        });
+    }
 
     /**
      * @param DateIntervalValue|null $interval
@@ -145,7 +162,7 @@ class RetryOptions
      */
     public function withMaximumAttempts(int $attempts): self
     {
-        assert($attempts > 0);
+        assert($attempts >= 0);
 
         return immutable(fn () => $this->maximumAttempts = $attempts);
     }
