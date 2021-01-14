@@ -11,6 +11,7 @@ namespace Temporal\Tests\Client;
 
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
+use Temporal\Tests\DTO\Message;
 use Temporal\Tests\DTO\User;
 use Temporal\Tests\TestCase;
 use Temporal\Tests\Workflow\QueryWorkflow;
@@ -55,17 +56,20 @@ class TypedStubTestCase extends TestCase
         $this->assertSame(88, $e->getResult());
     }
 
-    // todo: GET RETURN TYPE VIA ANNOTATION
+    // todo: fix return type
 //    public function testGetDTOResult()
 //    {
 //        $w = $this->createClient();
-//        $simple = $w->newWorkflowStub(SimpleDTOWorkflow::class);
+//        $dto = $w->newWorkflowStub(SimpleDTOWorkflow::class);
 //
 //        $u = new User();
 //        $u->name = 'Antony';
 //        $u->email = 'email@domain.com';
 //
-//        $this->assertEquals('HELLO WORLD', $simple->handler($u));
+//        $this->assertEquals(
+//            new Message(sprintf("Hello %s <%s>", $u->name, $u->email)),
+//            $dto->handler($u)
+//        );
 //    }
 
     /**
