@@ -51,14 +51,18 @@ final class FailureConverter
 
     /**
      * @param \Throwable $e
-     * @param DataConverterInterface $dataConverter
+     * @param DataConverterInterface $converter
      * @return Failure
      */
-    public static function mapExceptionToFailure(\Throwable $e, DataConverterInterface $dataConverter): Failure
+    public static function mapExceptionToFailure(\Throwable $e, DataConverterInterface $converter): Failure
     {
         $failure = new Failure();
 
         if ($e instanceof TemporalFailure && $e->getFailure() !== null) {
+            if ($e->hasOriginalStackTrace() && $e->getFailure()->getStackTrace() === "") {
+                $e->getFailure()->setStackTrace($e->getOriginalStackTrace());
+            }
+
             return $e->getFailure();
         } else {
             $failure->setMessage($e->getMessage());
@@ -67,7 +71,7 @@ final class FailureConverter
         $failure->setSource('PHP_SDK')->setStackTrace((string)$e);
 
         if ($e->getPrevious() !== null) {
-            $failure->setCause(self::mapExceptionToFailure($e->getPrevious(), $dataConverter));
+            $failure->setCause(self::mapExceptionToFailure($e->getPrevious(), $converter));
         }
 
         switch (true) {

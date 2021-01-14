@@ -21,14 +21,8 @@ use Temporal\Workflow\WorkflowContextInterface;
 
 class ScopeContext extends WorkflowContext implements ScopedContextInterface
 {
-    /**
-     * @var Scope
-     */
+    private WorkflowContext $parent;
     private Scope $scope;
-
-    /**
-     * @var callable
-     */
     private $onRequest;
 
     /**
@@ -46,6 +40,7 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
         callable $onRequest
     ): WorkflowContextInterface {
         $ctx = new self($context->services, $context->client, $context->workflowInstance, $context->input);
+        $ctx->parent = $context;
         $ctx->scope = $scope;
         $ctx->onRequest = $onRequest;
 
@@ -58,8 +53,6 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
      */
     public function newCancellationScope(callable $handler): CancellationScopeInterface
     {
-        $this->recordTrace();
-
         return $this->scope->createScope($handler, false);
     }
 
@@ -71,8 +64,6 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
      */
     public function newDetachedCancellationScope(callable $handler): CancellationScopeInterface
     {
-        $this->recordTrace();
-
         return $this->scope->createScope($handler, true);
     }
 
@@ -86,9 +77,8 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
             throw new CanceledFailure("Attempt to send request to cancelled scope");
         }
 
-        $promise = parent::request($request);
+        $promise = $this->parent->request($request);
         ($this->onRequest)($request, $promise);
-
 
         return new CompletableResult($this, $this->services->loop, $promise);
     }
