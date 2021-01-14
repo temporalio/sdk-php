@@ -97,6 +97,13 @@ class WorkflowTestCase extends TestCase
         $worker->run($this, Splitter::create('Test_EmptyWorkflow.log')->getQueue());
     }
 
+    public function testSideEffectWorkflow()
+    {
+        $worker = WorkerMock::createMock();
+
+        $worker->run($this, Splitter::create('Test_SideEffect.log')->getQueue());
+    }
+
     public function testExecuteWorkflowWithParallelScopes()
     {
         $worker = WorkerMock::createMock();
@@ -104,12 +111,20 @@ class WorkflowTestCase extends TestCase
         $worker->run($this, Splitter::create('Test_ExecuteWorkflowWithParallelScopes.log')->getQueue());
     }
 
-    public function testExecuteProtoWorkflow()
+    public function testActivity()
     {
         $worker = WorkerMock::createMock();
 
-        $worker->run($this, Splitter::create('Test_ExecuteProtoWorkflow.log')->getQueue());
+        $worker->run($this, Splitter::create('Test_Activity.log')->getQueue());
     }
+
+    // todo: uncomment
+//    public function testExecuteProtoWorkflow()
+//    {
+//        $worker = WorkerMock::createMock();
+//
+//        $worker->run($this, Splitter::create('Test_ExecuteProtoWorkflow.log')->getQueue());
+//    }
 
     public function testExecuteSimpleDTOWorkflow()
     {

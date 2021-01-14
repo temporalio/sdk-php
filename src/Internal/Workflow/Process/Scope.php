@@ -17,6 +17,8 @@ use React\Promise\PromisorInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DestructMemorizedInstanceException;
+use Temporal\Exception\Failure\TemporalFailure;
+use Temporal\Exception\Internal\WrappedException;
 use Temporal\Internal\Coroutine\CoroutineInterface;
 use Temporal\Internal\Coroutine\Stack;
 use Temporal\Internal\ServiceContainer;
@@ -368,6 +370,10 @@ class Scope implements CancellationScopeInterface, PromisorInterface
             $this->defer(
                 function () use ($e) {
                     $this->makeCurrent();
+
+                    if ($e instanceof TemporalFailure && !$e->hasOriginalStackTrace()) {
+                        $e->setOriginalStackTrace($this->context->getLastTrace());
+                    }
 
                     try {
                         $this->coroutine->throw($e);

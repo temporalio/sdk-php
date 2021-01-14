@@ -6,6 +6,9 @@ use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Exception\Client\WorkflowExecutionAlreadyStartedException;
+use Temporal\Exception\Client\WorkflowFailedException;
+use Temporal\Exception\Failure\CanceledFailure;
+use Temporal\Exception\Failure\TerminatedFailure;
 use Temporal\Exception\IllegalStateException;
 use Temporal\Tests\TestCase;
 
@@ -21,6 +24,18 @@ class UntypedWorkflowStubTestCase extends TestCase
         $this->assertNotEmpty($e->runId);
 
         $this->assertSame('HELLO WORLD', $simple->getResult(0));
+    }
+
+    public function testUntypedStartViaClient()
+    {
+        $w = $this->createClient();
+        $simple = $w->newUntypedWorkflowStub('SimpleWorkflow');
+        $r = $w->start($simple, 'test');
+
+        $this->assertNotEmpty($r->getExecution()->id);
+        $this->assertNotEmpty($r->getExecution()->runId);
+
+        $this->assertSame('TEST', $r->getResult());
     }
 
     public function testStartWithSameID()
@@ -128,6 +143,40 @@ class UntypedWorkflowStubTestCase extends TestCase
         $this->assertNotEmpty($e->runId);
 
         $this->assertSame('OK6', $simple->getResult(0));
+    }
+
+    public function testCancelled()
+    {
+        $w = $this->createClient();
+        $simple = $w->newUntypedWorkflowStub('SimpleSignalledWorkflowWithSleep');
+
+        $e = $simple->start([-1]);
+        $this->assertNotEmpty($e->id);
+        $this->assertNotEmpty($e->runId);
+
+        $simple->cancel();
+        try {
+            $simple->getResult();
+        } catch (WorkflowFailedException $e) {
+            $this->assertInstanceOf(CanceledFailure::class, $e->getPrevious());
+        }
+    }
+
+    public function testTerminated()
+    {
+        $w = $this->createClient();
+        $simple = $w->newUntypedWorkflowStub('SimpleSignalledWorkflowWithSleep');
+
+        $e = $simple->start([-1]);
+        $this->assertNotEmpty($e->id);
+        $this->assertNotEmpty($e->runId);
+
+        $simple->terminate('user triggered');
+        try {
+            $simple->getResult();
+        } catch (WorkflowFailedException $e) {
+            $this->assertInstanceOf(TerminatedFailure::class, $e->getPrevious());
+        }
     }
 
     /**

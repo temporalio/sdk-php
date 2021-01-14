@@ -37,6 +37,7 @@ use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Type;
+use Temporal\Exception\Client\WorkflowException;
 use Temporal\Exception\Client\WorkflowExecutionAlreadyStartedException;
 use Temporal\Exception\Client\WorkflowQueryException;
 use Temporal\Exception\Client\WorkflowQueryRejectedException;
@@ -53,51 +54,23 @@ use Temporal\Exception\Client\WorkflowNotFoundException;
 use Temporal\Exception\Client\WorkflowServiceException;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Workflow\WorkflowExecution;
+use Temporal\Workflow\WorkflowRunInterface;
 
 final class WorkflowStub implements WorkflowStubInterface
 {
-    /**
-     * @var string
-     */
     private const ERROR_WORKFLOW_START_DUPLICATION =
         'Cannot reuse a stub instance to start more than one workflow execution. ' .
         'The stub points to already started execution. If you are trying to wait ' .
         'for a workflow completion either change WorkflowIdReusePolicy from ' .
         'AllowDuplicate or use WorkflowStub.getResult';
 
-    /**
-     * @var string
-     */
     private const ERROR_WORKFLOW_NOT_STARTED = 'Method "%s" cannot be called because the workflow has not been started';
 
-    /**
-     * @var ServiceClientInterface
-     */
     private ServiceClientInterface $serviceClient;
-
-    /**
-     * @var ClientOptions
-     */
     private ClientOptions $clientOptions;
-
-    /**
-     * @var DataConverterInterface
-     */
     private DataConverterInterface $converter;
-
-    /**
-     * @var string
-     */
     private string $workflowType;
-
-    /**
-     * @var WorkflowOptions
-     */
     private WorkflowOptions $options;
-
-    /**
-     * @var WorkflowExecution|null
-     */
     private ?WorkflowExecution $execution = null;
 
     /**
@@ -143,6 +116,7 @@ final class WorkflowStub implements WorkflowStubInterface
      */
     public function setOptions(WorkflowOptions $options)
     {
+        // todo: replace with merge options
         $this->options = $options;
     }
 
@@ -284,7 +258,7 @@ final class WorkflowStub implements WorkflowStubInterface
         $r->setIdentity($this->clientOptions->identity);
         $r->setNamespace($this->clientOptions->namespace);
 
-        $r->setWorkflowExecution($this->mapWorkflowExecution());
+        $r->setWorkflowExecution($this->execution->toProtoWorkflowExecution());
         $r->setSignalName($name);
 
         $input = EncodedValues::fromValues($args, $this->converter);
@@ -314,7 +288,7 @@ final class WorkflowStub implements WorkflowStubInterface
 
         $r = new QueryWorkflowRequest();
         $r->setNamespace($this->clientOptions->namespace);
-        $r->setExecution($this->mapWorkflowExecution());
+        $r->setExecution($this->execution->toProtoWorkflowExecution());
         $r->setQueryRejectCondition($this->clientOptions->queryRejectionCondition);
 
         $q = new WorkflowQuery();
@@ -369,7 +343,7 @@ final class WorkflowStub implements WorkflowStubInterface
         $r->setRequestId(Uuid::v4());
         $r->setIdentity($this->clientOptions->identity);
         $r->setNamespace($this->clientOptions->namespace);
-        $r->setWorkflowExecution($this->mapWorkflowExecution());
+        $r->setWorkflowExecution($this->execution->toProtoWorkflowExecution());
 
         $this->serviceClient->RequestCancelWorkflowExecution($r);
     }
@@ -384,7 +358,7 @@ final class WorkflowStub implements WorkflowStubInterface
         $r = new TerminateWorkflowExecutionRequest();
         $r->setNamespace($this->clientOptions->namespace);
         $r->setIdentity($this->clientOptions->identity);
-        $r->setWorkflowExecution($this->mapWorkflowExecution());
+        $r->setWorkflowExecution($this->execution->toProtoWorkflowExecution());
         $r->setReason($reason);
 
         if ($details !== []) {
@@ -414,6 +388,8 @@ final class WorkflowStub implements WorkflowStubInterface
             return $result->getValue(0, $returnType);
         } catch (TimeoutException $e) {
             throw $e;
+        } catch (IllegalStateException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             throw $this->mapWorkflowFailureToException($e);
         }
@@ -441,18 +417,6 @@ final class WorkflowStub implements WorkflowStubInterface
         }
 
         throw new IllegalStateException(\sprintf(self::ERROR_WORKFLOW_NOT_STARTED, $method));
-    }
-
-    /**
-     * @return \Temporal\Api\Common\V1\WorkflowExecution
-     */
-    private function mapWorkflowExecution(): \Temporal\Api\Common\V1\WorkflowExecution
-    {
-        $wr = new \Temporal\Api\Common\V1\WorkflowExecution();
-        $wr->setWorkflowId($this->execution->id);
-        $wr->setRunId($this->execution->runId);
-
-        return $wr;
     }
 
     /**
@@ -544,7 +508,7 @@ final class WorkflowStub implements WorkflowStubInterface
             ->setNamespace($this->clientOptions->namespace)
             ->setWaitNewEvent(true)
             ->setHistoryEventFilterType(HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_CLOSE_EVENT)
-            ->setExecution($this->mapWorkflowExecution());
+            ->setExecution($this->execution->toProtoWorkflowExecution());
 
         // todo: timeouts and retries
         do {
@@ -561,7 +525,7 @@ final class WorkflowStub implements WorkflowStubInterface
                             ->getNewExecutionRunId()
                     );
 
-                    $historyRequest->setExecution($this->mapWorkflowExecution());
+                    $historyRequest->setExecution($this->execution->toProtoWorkflowExecution());
                     continue;
                 }
 
@@ -571,98 +535,6 @@ final class WorkflowStub implements WorkflowStubInterface
             }
             // todo: retry
         } while (true);
-
-
-        //    public static HistoryEvent getInstanceCloseEvent(
-//      WorkflowServiceStubs service,
-//      String namespace,
-//      WorkflowExecution workflowExecution,
-//      Scope metricsScope,
-//      long timeout,
-//      TimeUnit unit)
-//      throws TimeoutException {
-//    ByteString pageToken = ByteString.EMPTY;
-//    GetWorkflowExecutionHistoryResponse response = null;
-//    // TODO: Interrupt service long poll call on timeout and on interrupt
-//    long start = System.currentTimeMillis();
-//    HistoryEvent event;
-//    do {
-//      GetWorkflowExecutionHistoryRequest r =
-//          GetWorkflowExecutionHistoryRequest.newBuilder()
-//              .setNamespace(namespace)
-//              .setExecution(workflowExecution)
-//              .setHistoryEventFilterType(
-//                  HistoryEventFilterType.HISTORY_EVENT_FILTER_TYPE_CLOSE_EVENT)
-//              .setWaitNewEvent(true)
-//              .setNextPageToken(pageToken)
-//              .build();
-//      long elapsed = System.currentTimeMillis() - start;
-//      Deadline expiration = Deadline.after(unit.toMillis(timeout) - elapsed, TimeUnit.MILLISECONDS);
-//      if (expiration.timeRemaining(TimeUnit.MILLISECONDS) > 0) {
-//        RpcRetryOptions retryOptions =
-//            RpcRetryOptions.newBuilder()
-//                .setBackoffCoefficient(1)
-//                .setInitialInterval(Duration.ofMillis(1))
-//                .setMaximumAttempts(Integer.MAX_VALUE)
-//                .setExpiration(Duration.ofMillis(expiration.timeRemaining(TimeUnit.MILLISECONDS)))
-//                .addDoNotRetry(Status.Code.INVALID_ARGUMENT, null)
-//                .addDoNotRetry(Status.Code.NOT_FOUND, null)
-//                .build();
-//        response =
-//            GrpcRetryer.retryWithResult(
-//                retryOptions,
-//                () -> {
-//                  long elapsedInRetry = System.currentTimeMillis() - start;
-//                  Deadline expirationInRetry =
-//                      Deadline.after(
-//                          unit.toMillis(timeout) - elapsedInRetry, TimeUnit.MILLISECONDS);
-//                  return service
-//                      .blockingStub()
-//                      .withOption(METRICS_TAGS_CALL_OPTIONS_KEY, metricsScope)
-//                      .withOption(HISTORY_LONG_POLL_CALL_OPTIONS_KEY, true)
-//                      .withDeadline(expirationInRetry)
-//                      .getWorkflowExecutionHistory(r);
-//                });
-//}
-//if (response == null || !response.hasHistory()) {
-//    continue;
-//}
-//if (timeout != 0 && System.currentTimeMillis() - start > unit.toMillis(timeout)) {
-//    throw new TimeoutException(
-//        "WorkflowId="
-//        + workflowExecution.getWorkflowId()
-//        + ", runId="
-//        + workflowExecution.getRunId()
-//        + ", timeout="
-//        + timeout
-//        + ", unit="
-//        + unit);
-//}
-//pageToken = response.getNextPageToken();
-//History history = response.getHistory();
-//      if (history.getEventsCount() > 0) {
-//          event = history.getEvents(0);
-//          if (!isWorkflowExecutionCompletedEvent(event)) {
-//              throw new RuntimeException("Last history event is not completion event: " + event);
-//          }
-//          // Workflow called continueAsNew. Start polling the new generation with new runId.
-//          if (event.getEventType() == EventType.EVENT_TYPE_WORKFLOW_EXECUTION_CONTINUED_AS_NEW) {
-//              pageToken = ByteString.EMPTY;
-//              workflowExecution =
-//                  WorkflowExecution.newBuilder()
-//                  .setWorkflowId(workflowExecution.getWorkflowId())
-//                  .setRunId(
-//                      event
-//                      .getWorkflowExecutionContinuedAsNewEventAttributes()
-//                      .getNewExecutionRunId())
-//                  .build();
-//              continue;
-//          }
-//          break;
-//      }
-//    } while (true);
-//    return event;
-//  }
     }
 
     /**
@@ -673,13 +545,33 @@ final class WorkflowStub implements WorkflowStubInterface
     {
         switch (true) {
             case $failure instanceof WorkflowExecutionFailedException:
-                throw new WorkflowFailedException(
+                return new WorkflowFailedException(
                     $this->execution,
                     $this->workflowType,
                     $failure->getWorkflowTaskCompletedEventId(),
                     $failure->getRetryState(),
                     FailureConverter::mapFailureToException($failure->getFailure(), $this->converter)
                 );
+
+            case $failure instanceof ServiceClientException:
+                if ($failure->getStatus()->getCode() === StatusCode::NOT_FOUND) {
+                    return new WorkflowNotFoundException(
+                        null,
+                        $this->execution,
+                        $this->workflowType,
+                        $failure
+                    );
+                } else {
+                    return new WorkflowServiceException(
+                        null,
+                        $this->execution,
+                        $this->workflowType,
+                        $failure
+                    );
+                }
+
+            case $failure instanceof CanceledFailure || $failure instanceof WorkflowException :
+                return $failure;
 
             default:
                 return new WorkflowServiceException(
@@ -689,40 +581,5 @@ final class WorkflowStub implements WorkflowStubInterface
                     $failure,
                 );
         }
-
-
-        return $failure;
-//        Exception failure, @SuppressWarnings("unused") Class<R> returnType) {
-//        Throwable f = CheckedExceptionWrapper.unwrap(failure);
-//    if (f instanceof Error) {
-//        throw (Error) f;
-//    }
-//    failure = (Exception) f;
-//    if (failure instanceof WorkflowExecutionFailedException) {
-//        WorkflowExecutionFailedException executionFailed = (WorkflowExecutionFailedException) failure;
-//      Throwable cause =
-//            FailureConverter.failureToException(
-//                executionFailed.getFailure(), clientOptions.getDataConverter());
-//      throw new WorkflowFailedException(
-//          execution.get(),
-//          workflowType.orElse(null),
-//          executionFailed.getWorkflowTaskCompletedEventId(),
-//          executionFailed.getRetryState(),
-//          cause);
-//    } else if (failure instanceof StatusRuntimeException) {
-//        StatusRuntimeException sre = (StatusRuntimeException) failure;
-//      if (sre.getStatus().getCode() == Status.Code.NOT_FOUND) {
-//          throw new WorkflowNotFoundException(execution.get(), workflowType.orElse(null));
-//      } else {
-//          throw new WorkflowServiceException(execution.get(), workflowType.orElse(null), failure);
-//      }
-//    } else if (failure instanceof CanceledFailure) {
-//        throw (CanceledFailure) failure;
-//    } else if (failure instanceof WorkflowException) {
-//        throw (WorkflowException) failure;
-//    } else {
-//        throw new WorkflowServiceException(execution.get(), workflowType.orElse(null), failure);
-//    }
-
     }
 }

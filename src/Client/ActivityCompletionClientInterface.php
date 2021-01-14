@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
+use Temporal\Exception\Client\ActivityCanceledException;
+
 /**
  * Used to complete asynchronously activities that called {@link
  * ActivityContext->doNotCompleteOnReturn()}.
@@ -90,22 +92,24 @@ interface ActivityCompletionClientInterface
      * @param string|null $runId
      * @param string $activityId
      * @param mixed $details
-     * @return bool
+     *
+     * @throw ActivityCanceledException
      */
     public function recordHeartbeat(
         string $workflowId,
         ?string $runId,
         string $activityId,
         $details = null
-    ): bool;
+    );
 
     /**
      * @param string $taskToken
      * @param mixed $details
-     * @return bool
+     *
+     * @throw ActivityCanceledException
      */
     public function recordHeartbeatByToken(
         string $taskToken,
         $details = null
-    ): bool;
+    );
 }

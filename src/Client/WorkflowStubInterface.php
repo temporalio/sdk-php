@@ -14,6 +14,7 @@ namespace Temporal\Client;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Internal\Support\DateInterval;
+use Temporal\Workflow\WorkflowRunInterface;
 
 /**
  * WorkflowStub is a client side stub to a single workflow instance. It can be used to start,
@@ -22,7 +23,7 @@ use Temporal\Internal\Support\DateInterval;
  * WorkflowClient#newUntypedWorkflowStub(WorkflowExecution, Optional)}.
  * @psalm-import-type DateIntervalValue from DateInterval
  */
-interface WorkflowStubInterface
+interface WorkflowStubInterface extends WorkflowRunInterface
 {
     /**
      * @return WorkflowOptions
@@ -33,11 +34,6 @@ interface WorkflowStubInterface
      * @return string
      */
     public function getWorkflowType(): string;
-
-    /**
-     * @return WorkflowExecution
-     */
-    public function getExecution(): WorkflowExecution;
 
     /**
      * @param string $name
@@ -84,7 +80,7 @@ interface WorkflowStubInterface
      * @return mixed
      * @see DateInterval
      */
-    public function getResult($timeout = null, $returnType = null);
+    public function getResult($timeout = WorkflowRunInterface::DEFAULT_TIMEOUT, $returnType = null);
 
     /**
      * Request cancellation of a workflow execution.

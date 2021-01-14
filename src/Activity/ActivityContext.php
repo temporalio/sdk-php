@@ -93,7 +93,7 @@ final class ActivityContext implements ActivityContextInterface
         return $this->rpc->call(
             'temporal.RecordActivityHeartbeat',
             [
-                'TaskToken' => $this->info->taskToken,
+                'TaskToken' => base64_encode($this->info->taskToken),
                 'Details' => $details,
             ]
         );
