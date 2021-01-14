@@ -15,14 +15,7 @@ use Temporal\Workflow\WorkflowRunInterface;
 
 final class WorkflowRun implements WorkflowRunInterface
 {
-    /**
-     * @var WorkflowStubInterface
-     */
     private WorkflowStubInterface $stub;
-
-    /**
-     * @var mixed
-     */
     private $returnType;
 
     /**
@@ -45,7 +38,7 @@ final class WorkflowRun implements WorkflowRunInterface
 
     /**
      * @param int $timeout
-     * @param null $returnType
+     * @param Type|string $returnType
      * @return mixed
      */
     public function getResult(int $timeout = self::DEFAULT_TIMEOUT, $returnType = null)

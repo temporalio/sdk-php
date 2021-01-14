@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client;
 
 use Temporal\Client\GRPC\ServiceClientInterface;
+use Temporal\Workflow\WorkflowRunInterface;
 
 /**
  * Client to the Temporal service used to start and query workflows by external processes. Also it
@@ -83,7 +84,16 @@ interface WorkflowClientInterface
     /**
      * @return ServiceClientInterface
      */
-    public function getServiceClient(): ServiceClientInterface;
+    public function getClient(): ServiceClientInterface;
+
+    /**
+     * Starts untyped and typed workflow stubs in async mode.
+     *
+     * @param WorkflowStubInterface|object $workflow
+     * @param mixed $args
+     * @return WorkflowRunInterface
+     */
+    public function start($workflow, ...$args): WorkflowRunInterface;
 
     /**
      * Creates workflow client stub that can be used to start a single workflow execution. The first

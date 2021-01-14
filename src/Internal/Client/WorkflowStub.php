@@ -388,6 +388,8 @@ final class WorkflowStub implements WorkflowStubInterface
             return $result->getValue(0, $returnType);
         } catch (TimeoutException $e) {
             throw $e;
+        } catch (IllegalStateException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             throw $this->mapWorkflowFailureToException($e);
         }
