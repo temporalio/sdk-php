@@ -10,12 +10,11 @@ use Temporal\Workflow\WorkflowMethod;
 use Temporal\Tests\Activity\SimpleActivity;
 
 // todo: rename this sucker
-class ExternalCompleteWorkflow
+class AsyncActivityWorkflow
 {
-    #[WorkflowMethod(name: 'ExternalCompleteWorkflow')]
-    public function handler(
-        string $input
-    ): iterable {
+    #[WorkflowMethod(name: 'AsyncActivityWorkflow')]
+    public function handler()
+    {
         $simple = Workflow::newActivityStub(
             SimpleActivity::class,
             ActivityOptions::new()

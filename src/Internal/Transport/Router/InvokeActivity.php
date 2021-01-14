@@ -64,8 +64,10 @@ final class InvokeActivity extends Route
     public function handle(RequestInterface $request, array $headers, Deferred $resolver): void
     {
         $context = new ActivityContext($this->rpc, $this->services->dataConverter);
-
         $context = $this->services->marshaller->unmarshal($request->getOptions(), $context);
+
+        // always in binary format
+        $context->getInfo()->taskToken = base64_decode($context->getInfo()->taskToken);
 
         $prototype = $this->findDeclarationOrFail($context->getInfo());
 

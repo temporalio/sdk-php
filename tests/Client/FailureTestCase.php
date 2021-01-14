@@ -15,7 +15,6 @@ use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Failure\ActivityFailure;
 use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Exception\Failure\ChildWorkflowFailure;
-use Temporal\Exception\WorkflowExecutionFailedException;
 use Temporal\Tests\TestCase;
 
 class FailureTestCase extends TestCase
