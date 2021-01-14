@@ -2,13 +2,14 @@
 
 namespace Temporal\Tests\Client;
 
+use Temporal\Api\Workflow\V1\PendingActivityInfo;
+use Temporal\Api\Workflowservice\V1\DescribeWorkflowExecutionRequest;
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
 use Temporal\Exception\Client\ActivityCompletionFailureException;
 use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Failure\ActivityFailure;
 use Temporal\Exception\Failure\ApplicationFailure;
-use Temporal\Exception\Failure\ChildWorkflowFailure;
 use Temporal\Tests\TestCase;
 
 class ActivityCompletionClientTestCase extends TestCase
@@ -187,6 +188,89 @@ class ActivityCompletionClientTestCase extends TestCase
             $this->assertInstanceOf(ApplicationFailure::class, $e->getPrevious());
             $this->assertStringContainsString('manually triggered 2', $e->getPrevious()->getMessage());
         }
+    }
+
+    public function testHeartBeatByID()
+    {
+        $w = $this->createClient();
+        $simple = $w->newUntypedWorkflowStub('AsyncActivityWorkflow');
+
+        $e = $simple->start(['hello world']);
+        $this->assertNotEmpty($e->id);
+        $this->assertNotEmpty($e->runId);
+
+        sleep(1);
+        $this->assertFileExists(__DIR__ . '/../taskToken');
+        $data = json_decode(file_get_contents(__DIR__ . '/../activityId'));
+        unlink(__DIR__ . '/../taskToken');
+        unlink(__DIR__ . '/../activityId');
+
+        $act = $w->newActivityCompletionClient();
+
+        $act->recordHeartbeat(
+            $data->id,
+            $data->runId,
+            $data->activityId,
+            'heardbeatdata'
+        );
+
+        $r = new DescribeWorkflowExecutionRequest();
+        $r->setExecution($simple->getExecution()->toProtoWorkflowExecution());
+        $r->setNamespace('default');
+
+        $d = $this->createClient()->getServiceClient()->DescribeWorkflowExecution($r);
+
+        /** @var PendingActivityInfo $pa */
+        $pa = $d->getPendingActivities()->offsetGet(0);
+        $this->assertSame(
+            json_encode('heardbeatdata'),
+            $pa->getHeartbeatDetails()->getPayloads()->offsetGet(0)->getData()
+        );
+
+        $act->complete(
+            $data->id,
+            $data->runId,
+            $data->activityId,
+            'Completed Externally'
+        );
+
+        $simple->getResult(0);
+    }
+
+    public function testHeartBeatByToken()
+    {
+        $w = $this->createClient();
+        $simple = $w->newUntypedWorkflowStub('AsyncActivityWorkflow');
+
+        $e = $simple->start(['hello world']);
+        $this->assertNotEmpty($e->id);
+        $this->assertNotEmpty($e->runId);
+
+        sleep(1);
+        $this->assertFileExists(__DIR__ . '/../taskToken');
+        $taskToken = file_get_contents(__DIR__ . '/../taskToken');
+        unlink(__DIR__ . '/../taskToken');
+        unlink(__DIR__ . '/../activityId');
+
+        $act = $w->newActivityCompletionClient();
+
+        $act->recordHeartbeatByToken($taskToken, 'heardbeatdata');
+
+        $r = new DescribeWorkflowExecutionRequest();
+        $r->setExecution($simple->getExecution()->toProtoWorkflowExecution());
+        $r->setNamespace('default');
+
+        $d = $this->createClient()->getServiceClient()->DescribeWorkflowExecution($r);
+
+        /** @var PendingActivityInfo $pa */
+        $pa = $d->getPendingActivities()->offsetGet(0);
+        $this->assertSame(
+            json_encode('heardbeatdata'),
+            $pa->getHeartbeatDetails()->getPayloads()->offsetGet(0)->getData()
+        );
+
+        $act->completeByToken($taskToken, 'Completed Externally');
+        $simple->getResult(0);
     }
 
     /**

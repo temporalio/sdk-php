@@ -13,6 +13,7 @@ namespace Temporal\Internal\Transport;
 
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
+use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\FailureResponseInterface;
@@ -83,19 +84,7 @@ final class Client implements ClientInterface
             throw new \OutOfBoundsException(\sprintf(self::ERROR_REQUEST_ID_DUPLICATION, $id));
         }
 
-        $this->requests[$id] = $deferred = new Deferred(
-            function () use ($id) {
-                $request = $this->fetch($id);
-                $request->reject(CancellationException::fromRequestId($id));
-
-                // In the case that after the local promise rejection we have
-                // nothing to send, then we independently execute the next
-                // tick of the event loop.
-                if ($this->queue->count() === 0) {
-                    $this->loop->tick();
-                }
-            }
-        );
+        $this->requests[$id] = $deferred = new Deferred();
 
         return $deferred->promise();
     }
@@ -118,7 +107,7 @@ final class Client implements ClientInterface
     {
         // remove from queue
         $this->queue->pull($command->getID());
-        $this->fetch($command->getID())->promise()->cancel();
+        $this->fetch($command->getID())->reject(new CanceledFailure('internal cancel'));
     }
 
     /**
