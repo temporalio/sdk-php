@@ -11,22 +11,27 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
+use JetBrains\PhpStorm\Immutable;
 use Spiral\Attributes\AttributeReader;
 use Spiral\Attributes\ReaderInterface;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Internal\Client\ActivityCompletionClient;
-use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Client\WorkflowProxy;
 use Temporal\Internal\Client\WorkflowStub;
+use Temporal\Workflow\WorkflowInterface;
 
 class WorkflowClient implements WorkflowClientInterface
 {
+    private const ERROR_NON_INTERFACED_WORKFLOW_STUB =
+        'Could not create a workflow stub %s from a class that does not contain the #[%s] attribute'
+    ;
+
     /**
      * @var ServiceClientInterface
      */
@@ -86,6 +91,12 @@ class WorkflowClient implements WorkflowClientInterface
     public function newWorkflowStub(string $class, WorkflowOptions $options = null): WorkflowProxy
     {
         $workflow = (new WorkflowReader($this->reader))->fromClass($class);
+
+        if (! $workflow->isInterfaced()) {
+            throw new \InvalidArgumentException(
+                \sprintf(self::ERROR_NON_INTERFACED_WORKFLOW_STUB, $class, WorkflowInterface::class)
+            );
+        }
 
         return new WorkflowProxy(
             $this->newUntypedWorkflowStub($workflow->getID(), $options),

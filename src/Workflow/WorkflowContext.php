@@ -14,6 +14,7 @@ namespace Temporal\Workflow;
 use Carbon\CarbonInterface;
 use Carbon\CarbonTimeZone;
 use React\Promise\PromiseInterface;
+use Temporal\Activity\ActivityInterface;
 use Temporal\Activity\ActivityOptions;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
@@ -39,6 +40,14 @@ use function React\Promise\reject;
 
 class WorkflowContext implements WorkflowContextInterface
 {
+    private const ERROR_NON_INTERFACED_WORKFLOW_STUB =
+        'Could not create a workflow stub %s from a class that does not contain the #[%s] attribute'
+    ;
+
+    private const ERROR_NON_INTERFACED_ACTIVITY_STUB =
+        'Could not create an activity stub %s from a class that does not contain the #[%s] attribute'
+    ;
+
     protected ServiceContainer $services;
     protected ClientInterface $client;
 
@@ -260,6 +269,12 @@ class WorkflowContext implements WorkflowContextInterface
 
         $workflow = $this->services->workflowsReader->fromClass($class);
 
+        if (! $workflow->isInterfaced()) {
+            throw new \InvalidArgumentException(
+                \sprintf(self::ERROR_NON_INTERFACED_WORKFLOW_STUB, $class, WorkflowInterface::class)
+            );
+        }
+
         return new ContinueAsNewProxy($class, $workflow, $options, $this);
     }
 
@@ -306,6 +321,12 @@ class WorkflowContext implements WorkflowContextInterface
         $this->recordTrace();
         $workflow = $this->services->workflowsReader->fromClass($class);
 
+        if (! $workflow->isInterfaced()) {
+            throw new \InvalidArgumentException(
+                \sprintf(self::ERROR_NON_INTERFACED_WORKFLOW_STUB, $class, WorkflowInterface::class)
+            );
+        }
+
         return new ChildWorkflowProxy(
             $class,
             $workflow,
@@ -346,6 +367,14 @@ class WorkflowContext implements WorkflowContextInterface
     {
         $this->recordTrace();
         $activities = $this->services->activitiesReader->fromClass($class);
+
+        foreach ($activities as $activity) {
+            if (! $activity->isInterfaced()) {
+                throw new \InvalidArgumentException(
+                    \sprintf(self::ERROR_NON_INTERFACED_ACTIVITY_STUB, $class, ActivityInterface::class)
+                );
+            }
+        }
 
         return new ActivityProxy(
             $class,
