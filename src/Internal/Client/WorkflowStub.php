@@ -55,7 +55,6 @@ use Temporal\Exception\Client\WorkflowNotFoundException;
 use Temporal\Exception\Client\WorkflowServiceException;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Workflow\WorkflowExecution;
-use Temporal\Workflow\WorkflowRunInterface;
 
 final class WorkflowStub implements WorkflowStubInterface
 {
@@ -129,6 +128,18 @@ final class WorkflowStub implements WorkflowStubInterface
         $this->assertStarted(__FUNCTION__);
 
         return $this->execution;
+    }
+
+    /**
+     * Connects stub to running workflow.
+     *
+     * @param WorkflowExecution $execution
+     * @return $this
+     */
+    public function setExecution(WorkflowExecution $execution): self
+    {
+        $this->execution = $execution;
+        return $this;
     }
 
     /**
