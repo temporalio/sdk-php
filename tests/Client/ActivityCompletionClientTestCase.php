@@ -141,7 +141,7 @@ class ActivityCompletionClientTestCase extends TestCase
 
         $act->completeExceptionallyByToken($taskToken, new \Error('manually triggered'));
         try {
-            $simple->getResult(0);
+            $simple->getResult();
         } catch (WorkflowFailedException $e) {
             $this->assertInstanceOf(ActivityFailure::class, $e->getPrevious());
             $this->assertStringContainsString('\AsyncActivityWorkflow', $e->getPrevious()->getMessage());
@@ -178,7 +178,7 @@ class ActivityCompletionClientTestCase extends TestCase
         );
 
         try {
-            $simple->getResult(0);
+            $simple->getResult();
         } catch (WorkflowFailedException $e) {
             $this->assertInstanceOf(ActivityFailure::class, $e->getPrevious());
             $this->assertStringContainsString('\AsyncActivityWorkflow', $e->getPrevious()->getMessage());

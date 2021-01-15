@@ -9,6 +9,8 @@
 
 namespace Temporal\Workflow;
 
+use Temporal\DataConverter\Type;
+
 interface WorkflowRunInterface
 {
     public const DEFAULT_TIMEOUT = 30;
@@ -23,9 +25,9 @@ interface WorkflowRunInterface
     /**
      * Get execution result value.
      *
-     * @param int $timeout
      * @param Type|string $type
+     * @param int $timeout
      * @return mixed
      */
-    public function getResult(int $timeout = self::DEFAULT_TIMEOUT, $type = null);
+    public function getResult($type = null, int $timeout = self::DEFAULT_TIMEOUT);
 }

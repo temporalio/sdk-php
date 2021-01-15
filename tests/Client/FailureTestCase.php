@@ -34,7 +34,7 @@ class FailureTestCase extends TestCase
         $this->assertNotEmpty($e->runId);
 
         try {
-            $this->assertSame('OK', $ex->getResult(0));
+            $this->assertSame('OK', $ex->getResult());
         } catch (WorkflowFailedException $e) {
             $this->assertInstanceOf(ApplicationFailure::class, $e->getPrevious());
             $this->assertStringContainsString('workflow error', $e->getPrevious()->getMessage());
@@ -51,7 +51,7 @@ class FailureTestCase extends TestCase
         $this->assertNotEmpty($e->runId);
 
         $this->expectException(WorkflowFailedException::class);
-        $ex->getResult(0);
+        $ex->getResult();
     }
 
     public function testChildWorkflowFailurePropagation()
@@ -64,7 +64,7 @@ class FailureTestCase extends TestCase
         $this->assertNotEmpty($e->runId);
 
         try {
-            $ex->getResult(0);
+            $ex->getResult();
         } catch (WorkflowFailedException $e) {
             $this->assertInstanceOf(ChildWorkflowFailure::class, $e->getPrevious());
             $this->assertStringContainsString('ComplexExceptionalWorkflow', $e->getPrevious()->getMessage());

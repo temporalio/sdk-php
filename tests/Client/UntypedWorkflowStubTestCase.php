@@ -23,7 +23,7 @@ class UntypedWorkflowStubTestCase extends TestCase
         $this->assertNotEmpty($e->id);
         $this->assertNotEmpty($e->runId);
 
-        $this->assertSame('HELLO WORLD', $simple->getResult(0));
+        $this->assertSame('HELLO WORLD', $simple->getResult());
     }
 
     public function testUntypedStartViaClient()
@@ -64,7 +64,7 @@ class UntypedWorkflowStubTestCase extends TestCase
 
         $simple->signal('add', [-1]);
 
-        $this->assertSame(-1, $simple->getResult(0));
+        $this->assertSame(-1, $simple->getResult());
     }
 
     public function testSignalWithStart()
@@ -78,7 +78,7 @@ class UntypedWorkflowStubTestCase extends TestCase
 
         $simple->signal('add', [-1]);
 
-        $this->assertSame(-2, $simple->getResult(0));
+        $this->assertSame(-2, $simple->getResult());
     }
 
     public function testSignalWithStartAlreadyStarted()
@@ -92,7 +92,7 @@ class UntypedWorkflowStubTestCase extends TestCase
 
         $simple->signal('add', [-1]);
 
-        $this->assertSame(-2, $simple->getResult(0));
+        $this->assertSame(-2, $simple->getResult());
 
         $simple2 = $w->newUntypedWorkflowStub('SimpleWorkflow', WorkflowOptions::new()->withWorkflowId($e->id));
 
@@ -130,7 +130,7 @@ class UntypedWorkflowStubTestCase extends TestCase
         $simple->signal('add', [88]);
 
         $this->assertSame(88, $simple->query('get')->getValue(0));
-        $this->assertSame(88, $simple->getResult(0));
+        $this->assertSame(88, $simple->getResult());
     }
 
     public function testStartAsNewEventTrailing()
@@ -142,7 +142,7 @@ class UntypedWorkflowStubTestCase extends TestCase
         $this->assertNotEmpty($e->id);
         $this->assertNotEmpty($e->runId);
 
-        $this->assertSame('OK6', $simple->getResult(0));
+        $this->assertSame('OK6', $simple->getResult());
     }
 
     public function testCancelled()
