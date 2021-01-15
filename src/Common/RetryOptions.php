@@ -33,7 +33,7 @@ use Temporal\Internal\Support\Options;
  * @psalm-type ExceptionsList = array<class-string<\Throwable>>
  * @psalm-import-type DateIntervalValue from DateInterval
  */
-class RetryOptions extends Options
+final class RetryOptions extends Options
 {
     /**
      * @var null

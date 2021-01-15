@@ -218,7 +218,7 @@ class ActivityCompletionClientTestCase extends TestCase
         $r->setExecution($simple->getExecution()->toProtoWorkflowExecution());
         $r->setNamespace('default');
 
-        $d = $this->createClient()->getClient()->DescribeWorkflowExecution($r);
+        $d = $this->createClient()->getServiceClient()->DescribeWorkflowExecution($r);
 
         /** @var PendingActivityInfo $pa */
         $pa = $d->getPendingActivities()->offsetGet(0);
@@ -260,7 +260,7 @@ class ActivityCompletionClientTestCase extends TestCase
         $r->setExecution($simple->getExecution()->toProtoWorkflowExecution());
         $r->setNamespace('default');
 
-        $d = $this->createClient()->getClient()->DescribeWorkflowExecution($r);
+        $d = $this->createClient()->getServiceClient()->DescribeWorkflowExecution($r);
 
         /** @var PendingActivityInfo $pa */
         $pa = $d->getPendingActivities()->offsetGet(0);

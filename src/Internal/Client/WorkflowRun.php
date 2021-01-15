@@ -10,6 +10,7 @@
 namespace Temporal\Internal\Client;
 
 use Temporal\Client\WorkflowStubInterface;
+use Temporal\DataConverter\Type;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowRunInterface;
 

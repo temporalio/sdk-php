@@ -9,6 +9,11 @@
 
 namespace Temporal\Tests\Client;
 
+use Carbon\CarbonInterval;
+use Temporal\Api\Filter\V1\WorkflowTypeFilter;
+use Temporal\Api\Workflowservice\V1\DescribeNamespaceRequest;
+use Temporal\Api\Workflowservice\V1\ListClosedWorkflowExecutionsRequest;
+use Temporal\Client\GRPC\Context;
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\WorkflowClient;
 use Temporal\Exception\Client\WorkflowFailedException;

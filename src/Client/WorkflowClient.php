@@ -58,7 +58,7 @@ class WorkflowClient implements WorkflowClientInterface
     /**
      * @return ServiceClientInterface
      */
-    public function getClient(): ServiceClientInterface
+    public function getServiceClient(): ServiceClientInterface
     {
         return $this->client;
     }

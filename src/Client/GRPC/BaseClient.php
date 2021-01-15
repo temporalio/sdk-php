@@ -9,15 +9,14 @@
 
 namespace Temporal\Client\GRPC;
 
+use Carbon\CarbonInterval;
 use Grpc\UnaryCall;
 use Temporal\Api\Workflowservice\V1\WorkflowServiceClient;
 use Temporal\Exception\Client\ServiceClientException;
+use Temporal\Exception\Client\TimeoutException;
 
 abstract class BaseClient implements ServiceClientInterface
 {
-    /**
-     * @var WorkflowServiceClient
-     */
     private WorkflowServiceClient $workflowService;
 
     /**
@@ -56,19 +55,65 @@ abstract class BaseClient implements ServiceClientInterface
     {
         $ctx = $ctx ?? Context::default();
 
-        // todo: map context
+        $attempt = 0;
+        $retryOption = $ctx->getRetryOptions();
 
-        /** @var UnaryCall $call */
-        $call = $this->workflowService->{$method}($arg);
-        [$result, $status] = $call->wait();
-
-         // todo: retry?
-
-        if ($status->code !== 0) {
-            throw new ServiceClientException($status);
+        $maxInterval = null;
+        if ($retryOption->maximumInterval !== null) {
+            $maxInterval = CarbonInterval::create($retryOption->maximumInterval);
         }
 
-        return $result;
+        $waitRetry = $retryOption->initialInterval ?? CarbonInterval::millisecond(500);
+        $waitRetry = CarbonInterval::create($waitRetry);
+
+        do {
+            $attempt++;
+            try {
+                $options = $ctx->getOptions();
+                if ($ctx->getDeadline() !== null) {
+                    $diff = (new \DateTime())->diff($ctx->getDeadline());
+                    $options['timeout'] = CarbonInterval::instance($diff)->totalMicroseconds;;
+                }
+
+                /** @var UnaryCall $call */
+                $call = $this->workflowService->{$method}($arg, $ctx->getMetadata(), $options);
+                [$result, $status] = $call->wait();
+
+                if ($status->code !== 0) {
+                    throw new ServiceClientException($status);
+                }
+
+                return $result;
+            } catch (ServiceClientException $e) {
+                if ($e->getCode() !== StatusCode::RESOURCE_EXHAUSTED) {
+                    if ($e->getCode() === StatusCode::DEADLINE_EXCEEDED) {
+                        throw new TimeoutException($e->getMessage(), $e->getCode(), $e);
+                    }
+
+                    // non retryable
+                    throw $e;
+                }
+
+                if ($retryOption->maximumAttempts !== 0 && $attempt >= $retryOption->maximumAttempts) {
+                    throw $e;
+                }
+
+                if ($ctx->getDeadline() !== null && $ctx->getDeadline()->getTimestamp() > time()) {
+                    throw new TimeoutException("Call timeout has been reached");
+                }
+
+                // wait till next call
+                usleep($waitRetry->totalMicroseconds);
+
+                $waitRetry = CarbonInterval::millisecond(
+                    $waitRetry->totalMilliseconds + $retryOption->backoffCoefficient
+                );
+
+                if ($maxInterval !== null && $maxInterval->totalMilliseconds < $waitRetry->totalMilliseconds) {
+                    $waitRetry = $maxInterval;
+                }
+            }
+        } while (true);
     }
 
     /**
