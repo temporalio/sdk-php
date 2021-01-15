@@ -9,14 +9,13 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Fixtures;
+namespace Temporal\Tests\Unit;
 
-use Temporal\Worker\Transport\Command\Command;
+use Temporal\Tests\TestCase;
 
-class CommandResetter extends Command
+/**
+ * @group unit
+ */
+abstract class UnitTestCase extends TestCase
 {
-    public static function reset()
-    {
-        self::$lastID = 9000;
-    }
 }

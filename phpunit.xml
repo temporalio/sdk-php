@@ -19,8 +19,14 @@
         </include>
     </coverage>
     <testsuites>
-        <testsuite name="Client Test Suite">
-            <directory suffix="TestCase.php">tests</directory>
+        <testsuite name="Unit Test Suite">
+            <directory suffix="TestCase.php">tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Feature Test Suite">
+            <directory suffix="TestCase.php">tests/Feature</directory>
+        </testsuite>
+        <testsuite name="Functional Test Suite">
+            <directory suffix="TestCase.php">tests/Functional</directory>
         </testsuite>
     </testsuites>
     <php>

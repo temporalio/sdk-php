@@ -9,14 +9,13 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Fixtures;
+namespace Temporal\Tests\Unit\Protocol;
 
-use Temporal\Worker\Transport\Command\Command;
-
-class CommandResetter extends Command
+class DecodingCommandsTestCase extends ProtocolTestCase
 {
-    public static function reset()
+    /** @test */
+    public function todo(): void
     {
-        self::$lastID = 9000;
+        $this->expectNotToPerformAssertions();
     }
 }

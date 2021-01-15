@@ -51,6 +51,18 @@ abstract class Reader
                 yield $meta => $method;
             }
         }
+
+        foreach ($ctx->getTraits() ?? [] as $trait) {
+            yield from $this->annotatedMethods($trait, $attribute);
+        }
+
+        if ($parent = $ctx->getParentClass()) {
+            yield from $this->annotatedMethods($parent, $attribute);
+        }
+
+        foreach ($ctx->getInterfaces() as $interface) {
+            yield from $this->annotatedMethods($interface, $attribute);
+        }
     }
 
     /**

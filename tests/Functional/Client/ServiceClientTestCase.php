@@ -9,14 +9,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Fixtures;
+namespace Temporal\Tests\Functional\Client;
 
-use Temporal\Worker\Transport\Command\Command;
-
-class CommandResetter extends Command
+class ServiceClientTestCase extends ClientTestCase
 {
-    public static function reset()
-    {
-        self::$lastID = 9000;
-    }
+    // todo: implement
 }

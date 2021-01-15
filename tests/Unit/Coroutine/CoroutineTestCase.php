@@ -9,14 +9,14 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Fixtures;
+namespace Temporal\Tests\Unit\Coroutine;
 
-use Temporal\Worker\Transport\Command\Command;
+use Temporal\Tests\Unit\UnitTestCase;
 
-class CommandResetter extends Command
+/**
+ * @group coroutine
+ */
+abstract class CoroutineTestCase extends UnitTestCase
 {
-    public static function reset()
-    {
-        self::$lastID = 9000;
-    }
+
 }
