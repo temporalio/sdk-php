@@ -45,11 +45,6 @@ final class ChildWorkflowProxy extends Proxy
     private string $class;
 
     /**
-     * @var WorkflowPrototype[]
-     */
-    private array $workflows;
-
-    /**
      * @var ChildWorkflowOptions
      */
     private ChildWorkflowOptions $options;
@@ -60,29 +55,29 @@ final class ChildWorkflowProxy extends Proxy
     private ?ChildWorkflowStubInterface $stub = null;
 
     /**
-     * @var WorkflowPrototype|null
-     */
-    private ?WorkflowPrototype $prototype = null;
-
-    /**
      * @var WorkflowContextInterface
      */
     private WorkflowContextInterface $context;
 
     /**
+     * @var WorkflowPrototype
+     */
+    private WorkflowPrototype $workflow;
+
+    /**
      * @param string $class
-     * @param array<WorkflowPrototype> $workflows
+     * @param WorkflowPrototype $workflow
      * @param ChildWorkflowOptions $options
      * @param WorkflowContextInterface $context
      */
     public function __construct(
         string $class,
-        array $workflows,
+        WorkflowPrototype $workflow,
         ChildWorkflowOptions $options,
         WorkflowContextInterface $context
     ) {
         $this->class = $class;
-        $this->workflows = $workflows;
+        $this->workflow = $workflow;
         $this->options = $options;
         $this->context = $context;
     }
@@ -98,30 +93,36 @@ final class ChildWorkflowProxy extends Proxy
         // then we try to create a new stub from the workflow method and start
         // the workflow.
         if (!$this->isRunning()) {
-            $this->prototype = $this->findPrototypeByHandlerNameOrFail($method);
+            $handler = $this->workflow->getHandler();
+
+            if ($handler->getName() !== $method) {
+                throw new \BadMethodCallException(
+                    \sprintf(self::ERROR_UNDEFINED_WORKFLOW_METHOD, $this->class, $method)
+                );
+            }
 
             // Merge options with defaults defined using attributes:
             //  - #[MethodRetry]
             //  - #[CronSchedule]
             $options = $this->options->mergeWith(
-                $this->prototype->getMethodRetry(),
-                $this->prototype->getCronSchedule()
+                $this->workflow->getMethodRetry(),
+                $this->workflow->getCronSchedule()
             );
 
-            $this->stub = $this->context->newUntypedChildWorkflowStub($this->prototype->getID(), $options);
+            $this->stub = $this->context->newUntypedChildWorkflowStub($this->workflow->getID(), $options);
 
             return $this->stub->execute($args);
         }
 
         // Otherwise, we try to find a suitable workflow "signal" method.
-        foreach ($this->prototype->getSignalHandlers() as $name => $signal) {
+        foreach ($this->workflow->getSignalHandlers() as $name => $signal) {
             if ($signal->getName() === $method) {
                 return $this->stub->signal($name, $args);
             }
         }
 
         // Otherwise, we try to find a suitable workflow "query" method.
-        foreach ($this->prototype->getQueryHandlers() as $name => $query) {
+        foreach ($this->workflow->getQueryHandlers() as $name => $query) {
             if ($query->getName() === $method) {
                 throw new \BadMethodCallException(
                     \sprintf(self::ERROR_UNSUPPORTED_METHOD, $method, $name)
@@ -139,23 +140,6 @@ final class ChildWorkflowProxy extends Proxy
      */
     private function isRunning(): bool
     {
-        return $this->stub !== null && $this->prototype !== null;
-    }
-
-    /**
-     * @param string $name
-     * @return WorkflowPrototype
-     */
-    private function findPrototypeByHandlerNameOrFail(string $name): WorkflowPrototype
-    {
-        $prototype = $this->findPrototypeByHandlerName($this->workflows, $name);
-
-        if ($prototype === null) {
-            throw new \BadMethodCallException(
-                \sprintf(self::ERROR_UNDEFINED_WORKFLOW_METHOD, $this->class, $name)
-            );
-        }
-
-        return $prototype;
+        return $this->stub !== null;
     }
 }

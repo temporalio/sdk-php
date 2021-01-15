@@ -26,19 +26,55 @@ use Temporal\Workflow\WorkflowMethod;
 class WorkflowReader extends Reader
 {
     /**
+     * @var string
+     */
+    private const ERROR_HANDLER_NOT_FOUND =
+        'Can not find workflow handler, because class %s has no method marked with #[%s] attribute'
+    ;
+
+    /**
      * @param string $class
-     * @return WorkflowPrototype[]
+     * @return WorkflowPrototype
      * @throws \ReflectionException
      */
-    public function fromClass(string $class): array
+    public function fromClass(string $class): WorkflowPrototype
     {
-        $declarations = [];
         $reflection = new \ReflectionClass($class);
 
-        $interface = $this->findWorkflowInterface($reflection);
+        // Find #[WorkflowMethod] and create WorkflowPrototype or null
+        $prototype = $this->findWorkflowHandler($reflection, $this->findWorkflowInterface($reflection));
 
+        if ($prototype === null) {
+            $message = \sprintf(self::ERROR_HANDLER_NOT_FOUND, $class, WorkflowMethod::class);
+            throw new \DomainException($message);
+        }
+
+        // Add signals
+        foreach ($this->annotatedMethods($reflection, SignalMethod::class) as $signal => $handler) {
+            $name = $this->createWorkflowSignalName($handler, $signal);
+
+            $prototype->addSignalHandler($name, $handler);
+        }
+
+        // Add queries
+        foreach ($this->annotatedMethods($reflection, QueryMethod::class) as $query => $handler) {
+            $name = $this->createWorkflowQueryName($handler, $query);
+
+            $prototype->addQueryHandler($name, $handler);
+        }
+
+        return $prototype;
+    }
+
+    /**
+     * @param \ReflectionClass $reflection
+     * @param WorkflowInterface|null $interface
+     * @return WorkflowPrototype|null
+     */
+    private function findWorkflowHandler(\ReflectionClass $reflection, ?WorkflowInterface $interface): ?WorkflowPrototype
+    {
         foreach ($this->annotatedMethods($reflection, WorkflowMethod::class) as $method => $handler) {
-            $name = $this->createWorkflowName($handler, $method);
+            $name = $method->name ?? $handler->getName();
 
             $prototype = new WorkflowPrototype($name, $handler, $reflection, $interface !== null);
 
@@ -50,36 +86,10 @@ class WorkflowReader extends Reader
                 $prototype->setMethodRetry($retry);
             }
 
-            $declarations[] = $prototype;
+            return $prototype;
         }
 
-        foreach ($this->annotatedMethods($reflection, SignalMethod::class) as $signal => $handler) {
-            $name = $this->createWorkflowSignalName($handler, $signal);
-
-            foreach ($declarations as $declaration) {
-                $declaration->addSignalHandler($name, $handler);
-            }
-        }
-
-        foreach ($this->annotatedMethods($reflection, QueryMethod::class) as $query => $handler) {
-            $name = $this->createWorkflowQueryName($handler, $query);
-
-            foreach ($declarations as $declaration) {
-                $declaration->addQueryHandler($name, $handler);
-            }
-        }
-
-        return $declarations;
-    }
-
-    /**
-     * @param ReflectionFunction $fun
-     * @param WorkflowMethod $method
-     * @return string
-     */
-    private function createWorkflowName(ReflectionFunction $fun, WorkflowMethod $method): string
-    {
-        return $method->name ?? $fun->getName();
+        return null;
     }
 
     /**

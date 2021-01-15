@@ -258,9 +258,9 @@ class WorkflowContext implements WorkflowContextInterface
     {
         $options ??= new ContinueAsNewOptions();
 
-        $workflows = $this->services->workflowsReader->fromClass($class);
+        $workflow = $this->services->workflowsReader->fromClass($class);
 
-        return new ContinueAsNewProxy($class, $workflows, $options, $this);
+        return new ContinueAsNewProxy($class, $workflow, $options, $this);
     }
 
     /**
@@ -304,11 +304,11 @@ class WorkflowContext implements WorkflowContextInterface
     public function newChildWorkflowStub(string $class, ChildWorkflowOptions $options = null): object
     {
         $this->recordTrace();
-        $workflows = $this->services->workflowsReader->fromClass($class);
+        $workflow = $this->services->workflowsReader->fromClass($class);
 
         return new ChildWorkflowProxy(
             $class,
-            $workflows,
+            $workflow,
             $options ?? new ChildWorkflowOptions(),
             $this
         );

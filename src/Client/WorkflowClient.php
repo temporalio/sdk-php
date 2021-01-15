@@ -85,13 +85,11 @@ class WorkflowClient implements WorkflowClientInterface
      */
     public function newWorkflowStub(string $class, WorkflowOptions $options = null): WorkflowProxy
     {
-        // todo: wait for a single method per workflow
-        /** @var WorkflowPrototype[] $workflows */
-        $workflows = (new WorkflowReader($this->reader))->fromClass($class);
+        $workflow = (new WorkflowReader($this->reader))->fromClass($class);
 
         return new WorkflowProxy(
-            $this->newUntypedWorkflowStub($workflows[0]->getID(), $options),
-            $workflows[0],
+            $this->newUntypedWorkflowStub($workflow->getID(), $options),
+            $workflow,
             $class
         );
     }

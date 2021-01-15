@@ -18,34 +18,57 @@ use Temporal\Workflow\WorkflowContextInterface;
 
 class ContinueAsNewProxy extends Proxy
 {
+    /**
+     * @var string
+     */
     private const ERROR_UNDEFINED_WORKFLOW_METHOD =
         'The given stub class "%s" does not contain a workflow method named "%s"';
 
+    /**
+     * @var string
+     */
     private const ERROR_ALREADY_CONTINUED =
         'Workflow "%s" has already been called within this "continue as new" stub';
 
-
+    /**
+     * @var string
+     */
     private string $class;
-    private array $workflows;
 
+    /**
+     * @var WorkflowPrototype
+     */
+    private WorkflowPrototype $workflow;
+
+    /**
+     * @var ContinueAsNewOptions
+     */
     private ContinueAsNewOptions $options;
+
+    /**
+     * @var WorkflowContextInterface
+     */
     private WorkflowContextInterface $context;
-    private ?WorkflowPrototype $prototype = null;
+
+    /**
+     * @var bool
+     */
+    private bool $isContinued = false;
 
     /**
      * @param string $class
-     * @param array<WorkflowPrototype> $workflows
+     * @param WorkflowPrototype $workflow
      * @param ContinueAsNewOptions $options
      * @param WorkflowContextInterface $context
      */
     public function __construct(
         string $class,
-        array $workflows,
+        WorkflowPrototype $workflow,
         ContinueAsNewOptions $options,
         WorkflowContextInterface $context
     ) {
         $this->class = $class;
-        $this->workflows = $workflows;
+        $this->workflow = $workflow;
         $this->options = $options;
         $this->context = $context;
     }
@@ -57,34 +80,23 @@ class ContinueAsNewProxy extends Proxy
      */
     public function __call(string $method, array $args)
     {
-        $prototype = $this->findPrototypeByHandlerNameOrFail($method);
-
         if ($this->isContinued()) {
             throw new \BadMethodCallException(
-                \sprintf(self::ERROR_ALREADY_CONTINUED, $this->prototype->getID())
+                \sprintf(self::ERROR_ALREADY_CONTINUED, $this->workflow->getID())
             );
         }
 
-        $this->prototype = $prototype;
+        $handler = $this->workflow->getHandler();
 
-        return $this->context->continueAsNew($prototype->getID(), $args, $this->options);
-    }
-
-    /**
-     * @param string $name
-     * @return WorkflowPrototype
-     */
-    private function findPrototypeByHandlerNameOrFail(string $name): WorkflowPrototype
-    {
-        $prototype = $this->findPrototypeByHandlerName($this->workflows, $name);
-
-        if ($prototype === null) {
+        if ($method !== $handler->getName()) {
             throw new \BadMethodCallException(
-                \sprintf(self::ERROR_UNDEFINED_WORKFLOW_METHOD, $this->class, $name)
+                \sprintf(self::ERROR_UNDEFINED_WORKFLOW_METHOD, $this->class, $method)
             );
         }
 
-        return $prototype;
+        $this->isContinued = true;
+
+        return $this->context->continueAsNew($this->workflow->getID(), $args, $this->options);
     }
 
     /**
@@ -92,6 +104,6 @@ class ContinueAsNewProxy extends Proxy
      */
     private function isContinued(): bool
     {
-        return $this->prototype !== null;
+        return $this->isContinued;
     }
 }

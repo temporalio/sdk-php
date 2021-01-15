@@ -33,9 +33,9 @@ abstract class Reader
 
     /**
      * @param class-string $class
-     * @return array<T>
+     * @return array<T>|T
      */
-    abstract public function fromClass(string $class): array;
+    abstract public function fromClass(string $class);
 
     /**
      * @psalm-template Attribute of object
