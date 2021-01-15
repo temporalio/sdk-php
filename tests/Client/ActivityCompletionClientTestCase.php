@@ -5,7 +5,7 @@ namespace Temporal\Tests\Client;
 use Temporal\Api\Workflow\V1\PendingActivityInfo;
 use Temporal\Api\Workflowservice\V1\DescribeWorkflowExecutionRequest;
 use Temporal\Client\GRPC\ServiceClient;
-use Temporal\Client\WorkflowClient;
+use Temporal\WorkflowClient;
 use Temporal\Exception\Client\ActivityCompletionFailureException;
 use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Failure\ActivityFailure;

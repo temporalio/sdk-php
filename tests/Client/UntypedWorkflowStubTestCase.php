@@ -3,7 +3,7 @@
 namespace Temporal\Tests\Client;
 
 use Temporal\Client\GRPC\ServiceClient;
-use Temporal\Client\WorkflowClient;
+use Temporal\WorkflowClient;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Exception\Client\WorkflowExecutionAlreadyStartedException;
 use Temporal\Exception\Client\WorkflowFailedException;

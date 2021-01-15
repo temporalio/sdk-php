@@ -10,7 +10,7 @@
 namespace Temporal\Tests\Client;
 
 use Temporal\Client\GRPC\ServiceClient;
-use Temporal\Client\WorkflowClient;
+use Temporal\WorkflowClient;
 use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Failure\ActivityFailure;
 use Temporal\Exception\Failure\ApplicationFailure;
