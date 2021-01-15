@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration\Reader;
 
-use ReflectionFunctionAbstract as ReflectionFunction;
 use Temporal\Common\CronSchedule;
 use Temporal\Common\MethodRetry;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
@@ -51,14 +50,14 @@ class WorkflowReader extends Reader
 
         // Add signals
         foreach ($this->annotatedMethods($reflection, SignalMethod::class) as $signal => $handler) {
-            $name = $this->createWorkflowSignalName($handler, $signal);
+            $name = $signal->name ?? $handler->getName();
 
             $prototype->addSignalHandler($name, $handler);
         }
 
         // Add queries
         foreach ($this->annotatedMethods($reflection, QueryMethod::class) as $query => $handler) {
-            $name = $this->createWorkflowQueryName($handler, $query);
+            $name = $query->name ?? $handler->getName();
 
             $prototype->addQueryHandler($name, $handler);
         }
@@ -90,26 +89,6 @@ class WorkflowReader extends Reader
         }
 
         return null;
-    }
-
-    /**
-     * @param ReflectionFunction $fun
-     * @param QueryMethod $method
-     * @return string
-     */
-    private function createWorkflowQueryName(ReflectionFunction $fun, QueryMethod $method): string
-    {
-        return $method->name ?? $fun->getName();
-    }
-
-    /**
-     * @param ReflectionFunction $fun
-     * @param SignalMethod $method
-     * @return string
-     */
-    private function createWorkflowSignalName(ReflectionFunction $fun, SignalMethod $method): string
-    {
-        return $method->name ?? $fun->getName();
     }
 
     /**
