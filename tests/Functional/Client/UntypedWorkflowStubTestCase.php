@@ -31,16 +31,6 @@ class UntypedWorkflowStubTestCase extends ClientTestCase
         $this->assertSame('HELLO WORLD', $simple->getResult(0));
     }
 
-    /**
-     * @return WorkflowClient
-     */
-    private function createClient(): WorkflowClient
-    {
-        $sc = ServiceClient::createInsecure('localhost:7233');
-
-        return new WorkflowClient($sc);
-    }
-
     public function testStartWithSameID()
     {
         $w = $this->createClient();

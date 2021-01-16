@@ -20,6 +20,10 @@ function global_function(): int
     return 0xDEAD_BEEF;
 }
 
+/**
+ * @group unit
+ * @group worker
+ */
 class AutowiringTestCase extends WorkerTestCase
 {
     public static function staticMethod(): int

@@ -14,6 +14,10 @@ namespace Temporal\Tests\Unit\Coroutine;
 use Temporal\Internal\Coroutine\AppendableInterface;
 use Temporal\Internal\Coroutine\Stack;
 
+/**
+ * @group unit
+ * @group coroutine
+ */
 class StackTestCase extends CoroutineTestCase
 {
     public function testStackCallable(): void

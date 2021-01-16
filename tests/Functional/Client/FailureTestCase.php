@@ -23,22 +23,13 @@ class FailureTestCase extends ClientTestCase
         $ex = $w->newUntypedWorkflowStub('ExceptionalWorkflow');
 
         $e = $ex->start();
+
         $this->assertNotEmpty($e->id);
         $this->assertNotEmpty($e->runId);
 
         $this->expectException(WorkflowFailedException::class);
         $this->assertSame('OK', $ex->getResult(0));
         // todo: verify parent exceptions
-    }
-
-    /**
-     * @return WorkflowClient
-     */
-    private function createClient(): WorkflowClient
-    {
-        $sc = ServiceClient::createInsecure('localhost:7233');
-
-        return new WorkflowClient($sc);
     }
 
     public function testActivityFailurePropagation()

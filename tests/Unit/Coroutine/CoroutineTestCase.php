@@ -14,9 +14,9 @@ namespace Temporal\Tests\Unit\Coroutine;
 use Temporal\Tests\Unit\UnitTestCase;
 
 /**
+ * @group unit
  * @group coroutine
  */
 abstract class CoroutineTestCase extends UnitTestCase
 {
-
 }

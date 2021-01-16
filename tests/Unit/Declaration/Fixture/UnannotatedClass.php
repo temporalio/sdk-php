@@ -9,14 +9,12 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Unit\Worker;
+namespace Temporal\Tests\Unit\Declaration\Fixture;
 
-use Temporal\Tests\Unit\UnitTestCase;
-
-/**
- * @group worker
- * @group unit
- */
-abstract class WorkerTestCase extends UnitTestCase
+class UnannotatedClass
 {
+    public function method()
+    {
+        return 42;
+    }
 }

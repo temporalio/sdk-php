@@ -14,6 +14,7 @@ namespace Temporal\Tests\Unit\Protocol;
 use Temporal\Tests\Unit\UnitTestCase;
 
 /**
+ * @group unit
  * @group protocol
  */
 abstract class ProtocolTestCase extends UnitTestCase

@@ -9,17 +9,15 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Unit\Protocol;
+namespace Temporal\Tests\Unit\Declaration\Fixture;
 
-/**
- * @group unit
- * @group protocol
- */
-class EncodingTestCase extends ProtocolTestCase
+use Temporal\Activity\ActivityMethod;
+
+class ActivityWithPrivateMethod
 {
-    /** @test */
-    public function todo(): void
+    /** @ActivityMethod */
+    #[ActivityMethod]
+    private function invalidActivityPrivateMethod(): void
     {
-        $this->expectNotToPerformAssertions();
     }
 }

@@ -11,6 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Protocol;
 
+/**
+ * @group unit
+ * @group protocol
+ */
 class DecodingCommandsTestCase extends ProtocolTestCase
 {
     /** @test */

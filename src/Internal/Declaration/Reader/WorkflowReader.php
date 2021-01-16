@@ -45,17 +45,25 @@ class WorkflowReader extends Reader
 
         if ($prototype === null) {
             $message = \sprintf(self::ERROR_HANDLER_NOT_FOUND, $class, WorkflowMethod::class);
-            throw new \DomainException($message);
+            throw new \InvalidArgumentException($message);
         }
 
-        // Add signals
+        /**
+         * Add signals
+         *
+         * @var SignalMethod $signal
+         */
         foreach ($this->annotatedMethods($reflection, SignalMethod::class) as $signal => $handler) {
             $name = $signal->name ?? $handler->getName();
 
             $prototype->addSignalHandler($name, $handler);
         }
 
-        // Add queries
+        /**
+         * Add queries
+         *
+         * @var QueryMethod $query
+         */
         foreach ($this->annotatedMethods($reflection, QueryMethod::class) as $query => $handler) {
             $name = $query->name ?? $handler->getName();
 
@@ -72,6 +80,11 @@ class WorkflowReader extends Reader
      */
     private function findWorkflowHandler(\ReflectionClass $reflection, ?WorkflowInterface $interface): ?WorkflowPrototype
     {
+        /**
+         * @var WorkflowMethod $method
+         * @var \ReflectionFunction $handler
+         * @noinspection LoopWhichDoesNotLoopInspection
+         */
         foreach ($this->annotatedMethods($reflection, WorkflowMethod::class) as $method => $handler) {
             $name = $method->name ?? $handler->getName();
 

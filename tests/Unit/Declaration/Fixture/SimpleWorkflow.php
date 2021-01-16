@@ -9,14 +9,15 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Unit\Worker;
+namespace Temporal\Tests\Unit\Declaration\Fixture;
 
-use Temporal\Tests\Unit\UnitTestCase;
+use Temporal\Workflow\WorkflowMethod;
 
-/**
- * @group worker
- * @group unit
- */
-abstract class WorkerTestCase extends UnitTestCase
+class SimpleWorkflow
 {
+    /** @WorkflowMethod */
+    #[WorkflowMethod]
+    public function handler(): void
+    {
+    }
 }

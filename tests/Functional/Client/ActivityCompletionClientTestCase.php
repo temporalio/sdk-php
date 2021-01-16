@@ -11,9 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Functional\Client;
 
-use Temporal\Client\GRPC\ServiceClient;
-use Temporal\Client\WorkflowClient;
-
 class ActivityCompletionClientTestCase extends ClientTestCase
 {
     public function testCompletedExternallyByToken()
@@ -38,14 +35,4 @@ class ActivityCompletionClientTestCase extends ClientTestCase
     }
 
     // todo: by id
-
-    /**
-     * @return WorkflowClient
-     */
-    private function createClient(): WorkflowClient
-    {
-        $sc = ServiceClient::createInsecure('localhost:7233');
-
-        return new WorkflowClient($sc);
-    }
 }

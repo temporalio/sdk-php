@@ -38,11 +38,11 @@ abstract class Reader
     abstract public function fromClass(string $class);
 
     /**
-     * @psalm-template Attribute of object
+     * @psalm-template T of object
      *
      * @param \ReflectionClass $ctx
-     * @param class-string<Attribute> $attribute
-     * @return iterable<Attribute, \ReflectionMethod>
+     * @param class-string<T> $attribute
+     * @return iterable<T, \ReflectionMethod>
      */
     protected function annotatedMethods(\ReflectionClass $ctx, string $attribute): iterable
     {

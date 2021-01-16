@@ -68,6 +68,11 @@
         "doctrine/annotations": "^1.0 for Doctrine metadata driver support"
     },
     "scripts": {
+        "tests": [
+            "phpunit --testsuite=Unit --testdox",
+            "phpunit --testsuite=Feature --testdox",
+            "phpunit --testsuite=Functional --testdox"
+        ],
         "check": "psalm"
     },
     "extra": {

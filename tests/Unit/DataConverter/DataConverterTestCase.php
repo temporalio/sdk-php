@@ -15,6 +15,7 @@ use Temporal\DataConverter\DataConverter;
 use Temporal\Tests\Unit\UnitTestCase;
 
 /**
+ * @group unit
  * @group data-converter
  */
 class DataConverterTestCase extends UnitTestCase
