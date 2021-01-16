@@ -1,16 +1,16 @@
-name: Security
+name: Code Style
 
 on: [push, pull_request]
 
 jobs:
-  build:
-    name: Build (PHP ${{ matrix.php }}, OS ${{ matrix.os }})
+  psalm:
+    name: Psalm Validation (PHP ${{ matrix.php }}, OS ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
-        # Note: This workflow requires only the LATEST version of PHP
-        php: [7.4]
+        php: [7.4, 8.0]
         os: [ubuntu-latest]
     steps:
       - name: Set up PHP ${{ matrix.php }}
@@ -40,5 +40,5 @@ jobs:
       - name: Install Composer Dependencies
         run: composer install --prefer-dist --no-interaction --no-suggest --ignore-platform-reqs
 
-      - name: Verify
-        run: composer require --dev roave/security-advisories:dev-latest
+      - name: Run Tests
+        run: vendor/bin/psalm
