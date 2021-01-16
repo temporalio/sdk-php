@@ -47,7 +47,7 @@
     },
     "require-dev": {
         "composer/composer": "^2.0",
-        "doctrine/annotations": "^1.10",
+        "doctrine/annotations": "^1.11",
         "illuminate/support": "^7.0",
         "jetbrains/phpstorm-attributes": "dev-master@dev",
         "monolog/monolog": "^2.1",
