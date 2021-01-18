@@ -16,6 +16,7 @@ use Temporal\Activity;
 use Temporal\Activity\ActivityContext;
 use Temporal\Activity\ActivityInfo;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DoNotCompleteOnResultException;
 use Temporal\Internal\Declaration\Instantiator\ActivityInstantiator;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
@@ -32,19 +33,8 @@ final class InvokeActivity extends Route
      */
     private const ERROR_NOT_FOUND = 'Activity with the specified name "%s" was not registered';
 
-    /**
-     * @var ActivityInstantiator
-     */
     private ActivityInstantiator $instantiator;
-
-    /**
-     * @var ServiceContainer
-     */
     private ServiceContainer $services;
-
-    /**
-     * @var RpcConnectionInterface
-     */
     private RpcConnectionInterface $rpc;
 
     /**
@@ -63,22 +53,32 @@ final class InvokeActivity extends Route
      */
     public function handle(RequestInterface $request, array $headers, Deferred $resolver): void
     {
-        $context = new ActivityContext($this->rpc, $this->services->dataConverter);
-        $context = $this->services->marshaller->unmarshal($request->getOptions(), $context);
+        $options = $request->getOptions();
+        $payloads = $request->getPayloads();
+        $heartbeatDetails = null;
 
         // always in binary format
-        $context->getInfo()->taskToken = base64_decode($context->getInfo()->taskToken);
+        $options['info']['TaskToken'] = base64_decode($options['info']['TaskToken']);
 
-        $prototype = $this->findDeclarationOrFail($context->getInfo());
+        if ($options['heartbeatDetails'] !== 0) {
+            $offset = count($payloads) - $options['heartbeatDetails'];
+
+            $heartbeatDetails = EncodedValues::sliceValues($this->services->dataConverter, $payloads, $offset);
+            $payloads = EncodedValues::sliceValues($this->services->dataConverter, $payloads, 0, $offset);
+        }
+
+        $context = new ActivityContext($this->rpc, $this->services->dataConverter, $heartbeatDetails);
+        $context = $this->services->marshaller->unmarshal($options, $context);
 
         // todo: get from container
+        $prototype = $this->findDeclarationOrFail($context->getInfo());
         $instance = $this->instantiator->instantiate($prototype);
 
         try {
             Activity::setCurrentContext($context);
 
             $handler = $instance->getHandler();
-            $result = $handler($request->getPayloads());
+            $result = $handler($payloads);
 
             if ($context->isDoNotCompleteOnReturn()) {
                 $resolver->reject(DoNotCompleteOnResultException::create());

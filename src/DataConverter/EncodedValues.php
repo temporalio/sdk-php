@@ -169,4 +169,24 @@ class EncodedValues implements ValuesInterface
             }
         );
     }
+
+    /**
+     * @param DataConverterInterface $converter
+     * @param ValuesInterface $values
+     * @param int $offset
+     * @param int|null $length
+     * @return ValuesInterface
+     */
+    public static function sliceValues(
+        DataConverterInterface $converter,
+        ValuesInterface $values,
+        int $offset,
+        int $length = null
+    ): ValuesInterface {
+        $payloads = $values->toPayloads();
+        $newPayloads = new Payloads();
+        $newPayloads->setPayloads(array_slice(iterator_to_array($payloads->getPayloads()), $offset, $length));
+
+        return self::fromPayloads($newPayloads, $converter);
+    }
 }

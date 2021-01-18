@@ -220,6 +220,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
         $this->awaitLock++;
         $scope->promise()->then($this->unlock, $this->unlock);
 
+        // todo: remove child reference when scope closed
         $this->onCancel(\Closure::fromCallable([$scope, 'cancel']));
 
         $scope->start($handler);
@@ -424,6 +425,8 @@ class Scope implements CancellationScopeInterface, PromisorInterface
             // not ready yes
             return;
         }
+
+        // todo: remove from parent
 
         if ($this->exception !== null) {
             $this->deferred->reject($this->exception);

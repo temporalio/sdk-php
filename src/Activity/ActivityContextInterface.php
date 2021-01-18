@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Activity;
 
+use Temporal\DataConverter\Type;
+use Temporal\DataConverter\ValuesInterface;
 use Temporal\Worker\Transport\RpcConnectionInterface;
 
 interface ActivityContextInterface
@@ -21,6 +23,17 @@ interface ActivityContextInterface
      * @return ActivityInfo
      */
     public function getInfo(): ActivityInfo;
+
+    /**
+     * @return bool
+     */
+    public function hasHeartbeatDetails(): bool;
+
+    /**
+     * @param Type|string $type
+     * @return mixed
+     */
+    public function getHeartbeatDetails($type = null);
 
     /**
      * If this method is called during an activity execution then activity is
@@ -39,10 +52,7 @@ interface ActivityContextInterface
     /**
      * Use to notify Simple Workflow that activity execution is alive.
      *
-     * @param mixed $details In case of activity timeout details are returned
-     *  as a field of the exception thrown.
-     *
-     * @return mixed
+     * @param mixed $details In case of activity timeout details are returned  as a field of the exception thrown.
      */
-    public function heartbeat($details);
+    public function heartbeat($details): void;
 }

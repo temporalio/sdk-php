@@ -12,43 +12,35 @@ declare(strict_types=1);
 namespace Temporal\Activity;
 
 use Temporal\DataConverter\DataConverterInterface;
-use Temporal\DataConverter\Payload;
+use Temporal\DataConverter\Type;
+use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Marshaller\Meta\Marshal;
-use Temporal\Internal\Marshaller\Meta\MarshalArray;
 use Temporal\Worker\Transport\RpcConnectionInterface;
 
 final class ActivityContext implements ActivityContextInterface
 {
-    /**
-     * @var ActivityInfo
-     */
     #[Marshal(name: 'info')]
     private ActivityInfo $info;
 
-    /**
-     * @var bool
-     */
     private bool $doNotCompleteOnReturn = false;
-
-    /**
-     * @var RpcConnectionInterface
-     */
     private RpcConnectionInterface $rpc;
-
-    /**
-     * @var DataConverterInterface
-     */
-    private DataConverterInterface $dataConverter;
+    private DataConverterInterface $converter;
+    private ?ValuesInterface $heartbeatDetails = null;
 
     /**
      * @param RpcConnectionInterface $rpc
-     * @param DataConverterInterface $dataConverter
+     * @param DataConverterInterface $converter
+     * @param ValuesInterface|null $lastHeartbeatDetails
      */
-    public function __construct(RpcConnectionInterface $rpc, DataConverterInterface $dataConverter)
-    {
+    public function __construct(
+        RpcConnectionInterface $rpc,
+        DataConverterInterface $converter,
+        ValuesInterface $lastHeartbeatDetails = null
+    ) {
         $this->info = new ActivityInfo();
         $this->rpc = $rpc;
-        $this->dataConverter = $dataConverter;
+        $this->converter = $converter;
+        $this->heartbeatDetails = $lastHeartbeatDetails;
     }
 
     /**
@@ -62,9 +54,30 @@ final class ActivityContext implements ActivityContextInterface
     /**
      * @return DataConverterInterface
      */
-    public function getDataConverter(): DataConverterInterface
+    public function getConverter(): DataConverterInterface
     {
-        return $this->dataConverter;
+        return $this->converter;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasHeartbeatDetails(): bool
+    {
+        return $this->heartbeatDetails !== null;
+    }
+
+    /**
+     * @param Type|string $type
+     * @return mixed
+     */
+    public function getHeartbeatDetails($type = null)
+    {
+        if (!$this->hasHeartbeatDetails()) {
+            return null;
+        }
+
+        return $this->heartbeatDetails->getValue(0, $type);
     }
 
     /**
@@ -85,12 +98,11 @@ final class ActivityContext implements ActivityContextInterface
 
     /**
      * @param mixed $details
-     * @return mixed
      */
-    public function heartbeat($details)
+    public function heartbeat($details): void
     {
         // todo: upgrade
-        return $this->rpc->call(
+        $this->rpc->call(
             'temporal.RecordActivityHeartbeat',
             [
                 'TaskToken' => base64_encode($this->info->taskToken),

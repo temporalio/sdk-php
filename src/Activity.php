@@ -18,6 +18,7 @@ use Temporal\Internal\Support\Facade;
  * @method static ActivityInfo getInfo()
  * @method static array getArguments()
  *
+ * @method static mixed getHeartbeatDetails(mixed $type=null)
  * @method static mixed heartbeat(mixed $details)
  *
  * @method static void doNotCompleteOnReturn()
