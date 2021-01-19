@@ -265,6 +265,7 @@ final class WorkflowInfo
     }
 
     /**
+     * @todo: remove setters
      * @param string|null $continuedExecutionRunId
      * @return WorkflowInfo
      */

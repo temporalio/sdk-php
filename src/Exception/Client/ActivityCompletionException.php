@@ -12,6 +12,7 @@ namespace Temporal\Exception\Client;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\TemporalException;
 
+// todo: complete exception mapping
 class ActivityCompletionException extends TemporalException
 {
     public static function fromPrevious(\Throwable $e): self
@@ -22,7 +23,6 @@ class ActivityCompletionException extends TemporalException
             $e
         );
     }
-
 
     public static function fromPreviousWithActivityId(string $activityId, \Throwable $e): self
     {

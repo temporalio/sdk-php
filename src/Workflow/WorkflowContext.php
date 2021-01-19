@@ -15,6 +15,7 @@ use Carbon\CarbonInterface;
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\Support\StackRenderer;
@@ -44,26 +45,31 @@ class WorkflowContext implements WorkflowContextInterface
 
     protected Input $input;
     protected WorkflowInstanceInterface $workflowInstance;
+    protected ?ValuesInterface $lastCompletionResult = null;
 
     private array $trace = [];
     private bool $continueAsNew = false;
 
     /**
+     * WorkflowContext constructor.
      * @param ServiceContainer $services
      * @param ClientInterface $client
      * @param WorkflowInstanceInterface $workflowInstance
      * @param Input $input
+     * @param ValuesInterface|null $lastCompletionResult
      */
     public function __construct(
         ServiceContainer $services,
         ClientInterface $client,
         WorkflowInstanceInterface $workflowInstance,
-        Input $input
+        Input $input,
+        ?ValuesInterface $lastCompletionResult
     ) {
         $this->services = $services;
         $this->client = $client;
         $this->workflowInstance = $workflowInstance;
         $this->input = $input;
+        $this->lastCompletionResult = $lastCompletionResult;
     }
 
     /**
@@ -114,6 +120,29 @@ class WorkflowContext implements WorkflowContextInterface
     public function getInput(): ValuesInterface
     {
         return $this->input->input;
+    }
+
+    /**
+     * @return ValuesInterface|null
+     */
+    public function getLastCompletionResultValues(): ?ValuesInterface
+    {
+        return $this->lastCompletionResult;
+    }
+
+    /**
+     * Get value of last completion result, if any.
+     *
+     * @param Type|string $type
+     * @return mixed
+     */
+    public function getLastCompletionResult($type = null)
+    {
+        if ($this->lastCompletionResult === null) {
+            return null;
+        }
+
+        return $this->lastCompletionResult->getValue(0, $type);
     }
 
     /**

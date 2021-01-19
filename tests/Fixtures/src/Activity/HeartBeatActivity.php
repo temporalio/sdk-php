@@ -25,4 +25,17 @@ class HeartBeatActivity
         sleep($value);
         return 'OK';
     }
+
+    #[ActivityMethod]
+    public function slow(
+        string $value
+    ): string {
+        for ($i = 0; $i < 5; $i++) {
+            // todo: try cancel
+            Activity::heartbeat(['value' => $i]);
+            sleep(1);
+        }
+
+        return 'OK';
+    }
 }

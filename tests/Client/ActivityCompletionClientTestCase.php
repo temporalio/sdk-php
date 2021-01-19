@@ -5,6 +5,8 @@ namespace Temporal\Tests\Client;
 use Temporal\Api\Workflow\V1\PendingActivityInfo;
 use Temporal\Api\Workflowservice\V1\DescribeWorkflowExecutionRequest;
 use Temporal\Client\GRPC\ServiceClient;
+use Temporal\Client\WorkflowStubInterface;
+use Temporal\Tests\Workflow\CanceledHeartbeatWorkflow;
 use Temporal\WorkflowClient;
 use Temporal\Exception\Client\ActivityCompletionFailureException;
 use Temporal\Exception\Client\WorkflowFailedException;
@@ -271,6 +273,21 @@ class ActivityCompletionClientTestCase extends TestCase
 
         $act->completeByToken($taskToken, 'Completed Externally');
         $simple->getResult(0);
+    }
+
+    public function testCanceledActivityInWorkflow()
+    {
+        $client = $this->createClient();
+        $w = $client->newWorkflowStub(CanceledHeartbeatWorkflow::class);
+
+        /** @var WorkflowStubInterface $r */
+        $r = $w->startAsync();
+        sleep(1);
+
+        $uw = $client->newUntypedWorkflowStub('CanceledHeartbeatWorkflow')->setExecution($r->getExecution());
+        $uw->cancel();
+
+        dump($r->getResult());
     }
 
     /**

@@ -12,5 +12,5 @@ namespace Temporal\Exception\Client;
 
 class ActivityCanceledException extends ActivityCompletionException
 {
-
+    // todo: where are the details?
 }

@@ -13,6 +13,8 @@ namespace Temporal\Client;
 
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Type;
+use Temporal\Exception\IllegalStateException;
+use Temporal\Internal\Client\WorkflowStub;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Workflow\WorkflowRunInterface;
@@ -30,6 +32,21 @@ interface WorkflowStubInterface extends WorkflowRunInterface
      * @return WorkflowOptions
      */
     public function getOptions(): WorkflowOptions;
+
+    /**
+     * Get associated workflow execution (if any).
+     *
+     * @throws IllegalStateException
+     */
+    public function getExecution(): WorkflowExecution;
+
+    /**
+     * Connects stub to running workflow.
+     *
+     * @param WorkflowExecution $execution
+     * @return WorkflowStubInterface
+     */
+    public function setExecution(WorkflowExecution $execution): WorkflowStubInterface;
 
     /**
      * @return string

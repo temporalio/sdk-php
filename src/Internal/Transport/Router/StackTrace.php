@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
+use Temporal\DataConverter\EncodedValues;
 use Temporal\Worker\Transport\Command\RequestInterface;
 
 final class StackTrace extends WorkflowProcessAwareRoute
@@ -27,6 +28,8 @@ final class StackTrace extends WorkflowProcessAwareRoute
 
         $context = $process->getContext();
 
-        $resolver->resolve($context->getLastTrace());
+        error_log($context->getLastTrace());
+
+        $resolver->resolve(EncodedValues::fromValues([$context->getLastTrace()]));
     }
 }
