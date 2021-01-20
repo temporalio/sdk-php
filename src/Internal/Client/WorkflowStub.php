@@ -29,6 +29,7 @@ use Temporal\Api\Workflowservice\V1\SignalWorkflowExecutionRequest;
 use Temporal\Api\Workflowservice\V1\StartWorkflowExecutionRequest;
 use Temporal\Api\Workflowservice\V1\TerminateWorkflowExecutionRequest;
 use Temporal\Client\ClientOptions;
+use Temporal\Client\GRPC\Context;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Client\GRPC\StatusCode;
 use Temporal\Client\WorkflowOptions;
@@ -54,7 +55,6 @@ use Temporal\Exception\Client\WorkflowNotFoundException;
 use Temporal\Exception\Client\WorkflowServiceException;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Workflow\WorkflowExecution;
-use Temporal\Workflow\WorkflowRunInterface;
 
 final class WorkflowStub implements WorkflowStubInterface
 {
@@ -128,6 +128,18 @@ final class WorkflowStub implements WorkflowStubInterface
         $this->assertStarted(__FUNCTION__);
 
         return $this->execution;
+    }
+
+    /**
+     * Connects stub to running workflow.
+     *
+     * @param WorkflowExecution $execution
+     * @return $this
+     */
+    public function setExecution(WorkflowExecution $execution): self
+    {
+        $this->execution = $execution;
+        return $this;
     }
 
     /**
@@ -371,13 +383,13 @@ final class WorkflowStub implements WorkflowStubInterface
     /**
      * Wait for the workflow completion and return it's result.
      *
-     * @param int $timeout Timeout in seconds.
      * @param Type|string $returnType
+     * @param int|null $timeout Timeout in seconds.
      * @return mixed|null
      *
      * @throws \Throwable
      */
-    public function getResult($timeout = null, $returnType = null)
+    public function getResult($returnType = null, int $timeout = self::DEFAULT_TIMEOUT)
     {
         try {
             $result = $this->fetchResult($timeout);
@@ -500,7 +512,11 @@ final class WorkflowStub implements WorkflowStubInterface
         }
     }
 
-    // todo: polish it
+    /**
+     * @param int|null $timeout
+     * @return HistoryEvent
+     * @throws \ErrorException
+     */
     private function getCloseEvent(int $timeout = null): HistoryEvent
     {
         $historyRequest = new GetWorkflowExecutionHistoryRequest();
@@ -510,30 +526,42 @@ final class WorkflowStub implements WorkflowStubInterface
             ->setHistoryEventFilterType(HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_CLOSE_EVENT)
             ->setExecution($this->execution->toProtoWorkflowExecution());
 
-        // todo: timeouts and retries
         do {
-            $response = $this->serviceClient->GetWorkflowExecutionHistory($historyRequest);
-            if ($response->getHistory()->getEvents()->count() > 0) {
-                /** @var HistoryEvent $closeEvent */
-                $closeEvent = $response->getHistory()->getEvents()->offsetGet(0);
+            $start = time();
+            $response = $this->serviceClient->GetWorkflowExecutionHistory(
+                $historyRequest,
+                $timeout === null ? null : Context::default()->withTimeout($timeout)
+            );
+            $elapsed = time() - $start;
 
-                if ($closeEvent->getEventType() === EventType::EVENT_TYPE_WORKFLOW_EXECUTION_CONTINUED_AS_NEW) {
-                    $this->execution = new WorkflowExecution(
-                        $this->execution->id,
-                        $closeEvent
-                            ->getWorkflowExecutionContinuedAsNewEventAttributes()
-                            ->getNewExecutionRunId()
-                    );
+            if ($timeout !== null) {
+                $timeout = max(0, $timeout - $elapsed);
 
-                    $historyRequest->setExecution($this->execution->toProtoWorkflowExecution());
-                    continue;
+                if ($timeout === 0) {
+                    throw new TimeoutException("Unable to wait for workflow completion, deadline reached");
                 }
-
-                // todo: TimeoutException
-
-                return $closeEvent;
             }
-            // todo: retry
+
+            if ($response->getHistory()->getEvents()->count() === 0) {
+                continue;
+            }
+
+            /** @var HistoryEvent $closeEvent */
+            $closeEvent = $response->getHistory()->getEvents()->offsetGet(0);
+
+            if ($closeEvent->getEventType() === EventType::EVENT_TYPE_WORKFLOW_EXECUTION_CONTINUED_AS_NEW) {
+                $this->execution = new WorkflowExecution(
+                    $this->execution->id,
+                    $closeEvent
+                        ->getWorkflowExecutionContinuedAsNewEventAttributes()
+                        ->getNewExecutionRunId()
+                );
+
+                $historyRequest->setExecution($this->execution->toProtoWorkflowExecution());
+                continue;
+            }
+
+            return $closeEvent;
         } while (true);
     }
 

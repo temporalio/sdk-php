@@ -14,6 +14,7 @@ namespace Temporal\Workflow;
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Worker\Transport\Command\RequestInterface;
@@ -33,6 +34,14 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @return ValuesInterface
      */
     public function getInput(): ValuesInterface;
+
+    /**
+     * Get value of last completion result, if any.
+     *
+     * @param Type|string $type
+     * @return mixed
+     */
+    public function getLastCompletionResult($type = null);
 
     /**
      * @return DataConverterInterface

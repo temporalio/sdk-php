@@ -7,7 +7,7 @@ use Temporal\Workflow\WorkflowMethod;
 
 class QueryWorkflow
 {
-    private $counter = 0;
+    private int $counter = 0;
 
     #[Workflow\SignalMethod(name: "add")]
     public function add(int $value)
@@ -22,7 +22,7 @@ class QueryWorkflow
     }
 
     #[WorkflowMethod(name: 'QueryWorkflow')]
-    public function handler(): iterable
+    public function handler()
     {
         // collect signals during one second
         yield Workflow::timer(1);

@@ -12,6 +12,8 @@ declare(strict_types=1);
 namespace Temporal\Client;
 
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\Type;
+use Temporal\Exception\IllegalStateException;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Workflow\WorkflowRunInterface;
@@ -29,6 +31,21 @@ interface WorkflowStubInterface extends WorkflowRunInterface
      * @return WorkflowOptions
      */
     public function getOptions(): WorkflowOptions;
+
+    /**
+     * Get associated workflow execution (if any).
+     *
+     * @throws IllegalStateException
+     */
+    public function getExecution(): WorkflowExecution;
+
+    /**
+     * Connects stub to running workflow.
+     *
+     * @param WorkflowExecution $execution
+     * @return WorkflowStubInterface
+     */
+    public function setExecution(WorkflowExecution $execution): WorkflowStubInterface;
 
     /**
      * @return string
@@ -75,12 +92,12 @@ interface WorkflowStubInterface extends WorkflowRunInterface
      * Returns workflow result potentially waiting for workflow to complete. Behind the scene this
      * call performs long poll on Temporal service waiting for workflow completion notification.
      *
-     * @param DateIntervalValue|null $timeout
-     * @param mixed $returnType
+     * @param Type|string $returnType
+     * @param int|null $timeout Timeout in seconds.
      * @return mixed
      * @see DateInterval
      */
-    public function getResult($timeout = WorkflowRunInterface::DEFAULT_TIMEOUT, $returnType = null);
+    public function getResult($returnType = null, int $timeout = WorkflowRunInterface::DEFAULT_TIMEOUT);
 
     /**
      * Request cancellation of a workflow execution.

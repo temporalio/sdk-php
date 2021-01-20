@@ -181,4 +181,18 @@ class WorkflowTestCase extends TestCase
 
         $worker->run($this, Splitter::create('Test_ExecuteChildWorkflow.log')->getQueue());
     }
+
+    public function testRuntimeSignal()
+    {
+        $worker = WorkerMock::createMock();
+
+        $worker->run($this, Splitter::create('Test_RuntimeSignal.log')->getQueue());
+    }
+
+    public function testSignalStepsAndRuntimeQuery()
+    {
+        $worker = WorkerMock::createMock();
+
+        $worker->run($this, Splitter::create('Test_SignalSteps.log')->getQueue());
+    }
 }

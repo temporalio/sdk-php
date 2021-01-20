@@ -21,9 +21,6 @@ use Temporal\Workflow\WorkflowRunInterface;
  */
 final class WorkflowProxy extends Proxy
 {
-    private const ERROR_UNDEFINED_WORKFLOW_METHOD =
-        'The given stub class "%s" does not contain a workflow method named "%s"';
-
     private const ERROR_UNDEFINED_METHOD =
         'The given stub class "%s" does not contain a workflow, query or signal method named "%s"';
 
@@ -44,7 +41,8 @@ final class WorkflowProxy extends Proxy
     }
 
     /**
-     * @return WorkflowStubInterface
+     * @param array $args
+     * @return WorkflowRunInterface
      */
     public function startAsync(array $args = []): WorkflowRunInterface
     {

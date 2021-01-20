@@ -9,25 +9,30 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client;
+namespace Temporal;
 
 use Spiral\Attributes\AttributeReader;
 use Spiral\Attributes\ReaderInterface;
+use Temporal\Client\ActivityCompletionClientInterface;
+use Temporal\Client\ClientOptions;
 use Temporal\Client\GRPC\ServiceClientInterface;
+use Temporal\Client\WorkflowClientInterface;
+use Temporal\Client\WorkflowOptions;
+use Temporal\Client\WorkflowStubInterface;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\InvalidArgumentException;
 use Temporal\Internal\Client\ActivityCompletionClient;
+use Temporal\Internal\Client\WorkflowProxy;
+use Temporal\Internal\Client\WorkflowStub;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Marshaller\MarshallerInterface;
-use Temporal\Internal\Client\WorkflowProxy;
-use Temporal\Internal\Client\WorkflowStub;
 use Temporal\Workflow\WorkflowRunInterface;
 
-class WorkflowClient implements WorkflowClientInterface
+final class WorkflowClient implements WorkflowClientInterface
 {
     private ServiceClientInterface $client;
     private ClientOptions $clientOptions;
@@ -127,5 +132,19 @@ class WorkflowClient implements WorkflowClientInterface
     public function newActivityCompletionClient(): ActivityCompletionClientInterface
     {
         return new ActivityCompletionClient($this->client, $this->clientOptions, $this->converter);
+    }
+
+    /**
+     * @param ServiceClientInterface $serviceClient
+     * @param ClientOptions|null $options
+     * @param DataConverterInterface|null $converter
+     * @return WorkflowClientInterface
+     */
+    public static function create(
+        ServiceClientInterface $serviceClient,
+        ClientOptions $options = null,
+        DataConverterInterface $converter = null
+    ): WorkflowClientInterface {
+        return new self($serviceClient, $options ?? new ClientOptions(), $converter);
     }
 }

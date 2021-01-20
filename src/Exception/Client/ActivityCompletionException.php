@@ -9,108 +9,99 @@
 
 namespace Temporal\Exception\Client;
 
-use Temporal\Exception\Client\ServiceClientException;
+use Temporal\Activity\ActivityInfo;
 use Temporal\Exception\TemporalException;
 
 class ActivityCompletionException extends TemporalException
 {
+    private ?string $workflowId = null;
+    private ?string $runId = null;
+    private ?string $activityType = null;
+    private ?string $activityId = null;
+
+    /**
+     * @return string|null
+     */
+    public function getWorkflowId(): ?string
+    {
+        return $this->workflowId;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getRunId(): ?string
+    {
+        return $this->runId;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getActivityType(): ?string
+    {
+        return $this->activityType;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getActivityId(): ?string
+    {
+        return $this->activityId;
+    }
+
+    /**
+     * @param \Throwable $e
+     * @return static
+     */
     public static function fromPrevious(\Throwable $e): self
     {
         return new static(
-            '',
+            $e->getMessage(),
             $e->getCode(),
             $e
         );
     }
 
-
+    /**
+     * @param string $activityId
+     * @param \Throwable $e
+     * @return static
+     */
     public static function fromPreviousWithActivityId(string $activityId, \Throwable $e): self
     {
-        return new static(
-            '',
-            $e->getCode(),
+        $e = new static('', $e->getCode(), $e);
+        $e->activityId = $activityId;
+
+        return $e;
+    }
+
+    /**
+     * @param ActivityInfo $info
+     * @param \Throwable|null $e
+     * @return static
+     */
+    public static function fromActivityInfo(ActivityInfo $info, \Throwable $e = null): self
+    {
+        $e = new static(
+            self::buildMessage(
+                [
+                    'workflowId' => $info->workflowExecution->id,
+                    'runId' => $info->workflowExecution->runId,
+                    'activityId' => $info->id,
+                    'activityType' => $info->type->name
+                ]
+            ),
+            $e === null ? 0 : $e->getCode(),
             $e
         );
+
+        $e->activityId = $info->id;
+        $e->workflowId = $info->workflowExecution->id;
+        $e->runId = $info->workflowExecution->runId;
+        $e->activityType = $info->type->name;
+
+        return $e;
     }
-
-    /*
-     *
-  private final String workflowId;
-
-  private final String runId;
-
-  private final String activityType;
-
-  private final String activityId;
-
-  protected ActivityCompletionException(ActivityInfo info) {
-    this(info, null);
-  }
-
-  protected ActivityCompletionException(ActivityInfo info, Throwable cause) {
-    super(
-        info != null
-            ? "WorkflowId="
-                + info.getWorkflowId()
-                + ", RunId="
-                + info.getRunId()
-                + ", ActivityType="
-                + info.getActivityType()
-                + ", ActivityId="
-                + info.getActivityId()
-            : null,
-        cause);
-    if (info != null) {
-      workflowId = info.getWorkflowId();
-      runId = info.getRunId();
-      activityType = info.getActivityType();
-      activityId = info.getActivityId();
-    } else {
-      this.workflowId = null;
-      this.runId = null;
-      activityType = null;
-      activityId = null;
-    }
-  }
-
-  protected ActivityCompletionException(String activityId, Throwable cause) {
-    super("ActivityId=" + activityId, cause);
-    this.workflowId = null;
-    this.runId = null;
-    this.activityType = null;
-    this.activityId = activityId;
-  }
-
-  protected ActivityCompletionException(Throwable cause) {
-    this((ActivityInfo) null, cause);
-  }
-
-  protected ActivityCompletionException() {
-    super(null, null);
-    workflowId = null;
-    runId = null;
-    activityType = null;
-    activityId = null;
-  }
-
-//  /** Optional as it might be not known to the exception source. */
-//    public Optional<String> getWorkflowId() {
-//    return Optional.ofNullable(workflowId);
-//  }
-//
-///** Optional as it might be not known to the exception source. */
-//public Optional<String> getRunId() {
-//    return Optional.ofNullable(runId);
-//  }
-//
-//  /** Optional as it might be not known to the exception source. */
-//  public Optional<String> getActivityType() {
-//    return Optional.ofNullable(activityType);
-//  }
-//
-//  /** Optional as it might be not known to the exception source. */
-//  public Optional<String> getActivityId() {
-//    return Optional.ofNullable(activityId);
-//  }
-//     */
 }

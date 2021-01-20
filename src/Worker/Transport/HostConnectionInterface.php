@@ -16,7 +16,7 @@ use Temporal\Exception\TransportException;
 /**
  * @psalm-type Headers = array<string, mixed>
  */
-interface RelayConnectionInterface
+interface HostConnectionInterface
 {
     /**
      * @return CommandBatch|null

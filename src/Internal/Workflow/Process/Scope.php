@@ -104,6 +104,11 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     private array $onCancel = [];
 
     /**
+     * @var array<callable>
+     */
+    private array $onClose = [];
+
+    /**
      * @var bool
      */
     private bool $detached = false;
@@ -185,6 +190,16 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     }
 
     /**
+     * @param callable $then
+     * @return $this
+     */
+    public function onClose(callable $then): self
+    {
+        $this->onClose[] = $then;
+        return $this;
+    }
+
+    /**
      * @param \Throwable|null $reason
      */
     public function cancel(\Throwable $reason = null): void
@@ -220,7 +235,14 @@ class Scope implements CancellationScopeInterface, PromisorInterface
         $this->awaitLock++;
         $scope->promise()->then($this->unlock, $this->unlock);
 
-        $this->onCancel(\Closure::fromCallable([$scope, 'cancel']));
+        $cancelID = ++$this->cancelID;
+        $this->onCancel[$cancelID] = \Closure::fromCallable([$scope, 'cancel']);
+
+        $scope->onClose(
+            function () use ($cancelID) {
+                unset($this->onCancel[$cancelID]);
+            }
+        );
 
         $scope->start($handler);
 
@@ -429,6 +451,10 @@ class Scope implements CancellationScopeInterface, PromisorInterface
             $this->deferred->reject($this->exception);
         } else {
             $this->deferred->resolve($this->result);
+        }
+
+        foreach ($this->onClose as $close) {
+            $close();
         }
     }
 

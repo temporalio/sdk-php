@@ -39,7 +39,14 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
         Scope $scope,
         callable $onRequest
     ): WorkflowContextInterface {
-        $ctx = new self($context->services, $context->client, $context->workflowInstance, $context->input);
+        $ctx = new self(
+            $context->services,
+            $context->client,
+            $context->workflowInstance,
+            $context->input,
+            $context->getLastCompletionResultValues()
+        );
+
         $ctx->parent = $context;
         $ctx->scope = $scope;
         $ctx->onRequest = $onRequest;

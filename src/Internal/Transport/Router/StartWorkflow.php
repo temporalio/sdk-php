@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
+use Temporal\DataConverter\EncodedValues;
 use Temporal\Internal\Declaration\Instantiator\WorkflowInstantiator;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\ServiceContainer;
@@ -44,8 +45,19 @@ final class StartWorkflow extends Route
      */
     public function handle(RequestInterface $request, array $headers, Deferred $resolver): void
     {
-        $input = $this->services->marshaller->unmarshal($request->getOptions(), new Input());
-        $input->input = $request->getPayloads();
+        $options = $request->getOptions();
+        $payloads = $request->getPayloads();
+        $lastCompletionResult = null;
+
+        if (($options['lastCompletion'] ?? 0) !== 0) {
+            $offset = count($payloads) - ($options['lastCompletion'] ?? 0);
+
+            $lastCompletionResult = EncodedValues::sliceValues($this->services->dataConverter, $payloads, $offset);
+            $payloads = EncodedValues::sliceValues($this->services->dataConverter, $payloads, 0, $offset);
+        }
+
+        $input = $this->services->marshaller->unmarshal($options, new Input());
+        $input->input = $payloads;
 
         $instance = $this->instantiator->instantiate($this->findWorkflowOrFail($input->info));
 
@@ -53,7 +65,8 @@ final class StartWorkflow extends Route
             $this->services,
             $this->services->client,
             $instance,
-            $input
+            $input,
+            $lastCompletionResult
         );
 
         $process = new Process($this->services, $context);

@@ -10,6 +10,7 @@
 namespace Temporal\Internal\Client;
 
 use Temporal\Client\WorkflowStubInterface;
+use Temporal\DataConverter\Type;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowRunInterface;
 
@@ -37,12 +38,12 @@ final class WorkflowRun implements WorkflowRunInterface
     }
 
     /**
-     * @param int $timeout
      * @param Type|string $returnType
+     * @param int $timeout
      * @return mixed
      */
-    public function getResult(int $timeout = self::DEFAULT_TIMEOUT, $returnType = null)
+    public function getResult($returnType = null, int $timeout = self::DEFAULT_TIMEOUT)
     {
-        return $this->stub->getResult($timeout, $returnType ?? $this->returnType);
+        return $this->stub->getResult($returnType ?? $this->returnType, $timeout);
     }
 }

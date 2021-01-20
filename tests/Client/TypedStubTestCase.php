@@ -10,7 +10,7 @@
 namespace Temporal\Tests\Client;
 
 use Temporal\Client\GRPC\ServiceClient;
-use Temporal\Client\WorkflowClient;
+use Temporal\WorkflowClient;
 use Temporal\Tests\DTO\Message;
 use Temporal\Tests\DTO\User;
 use Temporal\Tests\TestCase;
