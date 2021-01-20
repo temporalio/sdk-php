@@ -11,11 +11,12 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Declaration\Fixture\Interfaces;
 
-use Temporal\Workflow\WorkflowMethod;
+use Temporal\Activity\ActivityMethod;
+use Temporal\Common\MethodRetry;
 
 interface SimpleWorkflowInterface
 {
-    /** @WorkflowMethod(name="activityMethodFromInterface") */
-    #[WorkflowMethod(name: 'activityMethodFromInterface')]
+    /** @ActivityMethod(name="activityMethodFromInterface") */
+    #[ActivityMethod(name: 'activityMethodFromInterface')]
     public function activityMethod(): void;
 }

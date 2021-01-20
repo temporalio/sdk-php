@@ -53,7 +53,7 @@ class WorkflowReader extends Reader
          *
          * @var SignalMethod $signal
          */
-        foreach ($this->annotatedMethods($reflection, SignalMethod::class) as $signal => $handler) {
+        foreach ($this->reader->getFunctionMetadata($reflection, SignalMethod::class) as $signal => $handler) {
             $name = $signal->name ?? $handler->getName();
 
             $prototype->addSignalHandler($name, $handler);

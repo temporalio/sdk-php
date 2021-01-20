@@ -23,6 +23,15 @@ use Temporal\Tests\Unit\Declaration\Fixture\ChildActivityMethods;
 class ActivityDeclarationTestCase extends DeclarationTestCase
 {
     /**
+     * @param array<ActivityPrototype> $prototypes
+     * @return array<string>
+     */
+    private function arrayToActivityNames(array $prototypes): array
+    {
+        return array_map(static fn(ActivityPrototype $proto) => $proto->getID(), $prototypes);
+    }
+
+    /**
      * @testdox Reading activities (should return activity prototypes for all non-static public methods)
      * @dataProvider activityReaderDataProvider
      *
@@ -35,9 +44,7 @@ class ActivityDeclarationTestCase extends DeclarationTestCase
 
         $this->assertCount(3, $prototypes);
 
-        $this->assertSame(['a', 'b', 'c'],
-            array_map(static fn(ActivityPrototype $proto) => $proto->getID(), $prototypes)
-        );
+        $this->assertSame(['a', 'b', 'c'], $this->arrayToActivityNames($prototypes));
     }
 
     /**
@@ -51,6 +58,10 @@ class ActivityDeclarationTestCase extends DeclarationTestCase
     {
         $prototypes = $reader->fromClass(ChildActivityMethods::class);
 
-        // TODO
+        $this->assertCount(3, $prototypes);
+
+        $names = $this->arrayToActivityNames($prototypes);
+
+        $this->assertSame(['activityMethod', 'AlternativeActivityName', 'activityMethodFromParentClass'], $names);
     }
 }

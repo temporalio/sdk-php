@@ -11,18 +11,17 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Declaration\Fixture;
 
+use Temporal\Activity\ActivityInterface;
 use Temporal\Activity\ActivityMethod;
+use Temporal\Common\MethodRetry;
 use Temporal\Tests\Unit\Declaration\Fixture\Interfaces\SimpleWorkflowInterface;
 
+#[ActivityInterface(prefix: "prefix.")]
 abstract class ParentActivityMethods implements SimpleWorkflowInterface
 {
-    /** @ActivityMethod(name="AlternativeActivityName") */
-    #[ActivityMethod(name: 'AlternativeActivityName')]
+    /** @ActivityMethod(name="alternativeActivityName") */
+    #[ActivityMethod(name: 'alternativeActivityName')]
     public function activityMethod(): void
-    {
-    }
-
-    public function activityMethodFromParentClass(): void
     {
     }
 }

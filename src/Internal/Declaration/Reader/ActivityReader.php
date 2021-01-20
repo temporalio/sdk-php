@@ -14,6 +14,7 @@ namespace Temporal\Internal\Declaration\Reader;
 use JetBrains\PhpStorm\Pure;
 use Temporal\Activity\ActivityInterface;
 use Temporal\Activity\ActivityMethod;
+use Temporal\Common\MethodRetry;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 
 /**
@@ -26,116 +27,74 @@ class ActivityReader extends Reader
      */
     private const ERROR_BAD_DECLARATION =
         'An Activity method can only be a public non-static method, ' .
-        'but %s::%s() does not meet these criteria'
-    ;
+        'but %s::%s() does not meet these criteria';
 
     /**
      * @var string
      */
     private const ERROR_DECLARATION_DUPLICATION =
         'An Activity method %s::%s() with the same name "%s" has already ' .
-        'been previously registered in %s:%d'
-    ;
+        'been previously registered in %s:%d';
+
+    /**
+     * @var string[]
+     */
+    private const ACTIVITY_ATTRIBUTES = [
+        ActivityMethod::class,
+        MethodRetry::class,
+    ];
 
     /**
      * @param string $class
-     * @return ActivityPrototype[]
+     * @return array<ActivityPrototype>
      * @throws \ReflectionException
      */
     public function fromClass(string $class): array
     {
-        $reflection = new \ReflectionClass($class);
+        $methods = $this->getActivityPrototypes(new \ReflectionClass($class));
 
-        return $this->fromReflectionClass($reflection);
+        return \iterator_to_array($methods, false);
     }
 
     /**
      * @param \ReflectionClass $class
-     * @param array<string, ActivityPrototype> $result
-     * @return array<string, ActivityPrototype>
+     * @return \Traversable<ActivityPrototype>
+     * @throws \ReflectionException
      */
-    private function fromReflectionClass(\ReflectionClass $class, array $result = []): array
+    public function getActivityPrototypes(\ReflectionClass $class): \Traversable
     {
-        //
-        // Read #[ActivityInterface] attribute or null.
-        //
-        $interface = $this->findActivityInterface($class);
+        $reader = $this->getRecursiveReader($class, ActivityInterface::class);
 
-        //
-        // Then we should try to search any public activity methods.
-        //
+        $createActivityMethodName = \Closure::fromCallable([$this, 'createActivityMethodName']);
+
         foreach ($class->getMethods() as $method) {
-            $attribute = $this->resolveValidActivityMethod($class, $method);
-
-            // Skip registration of all non-valid activity methods.
-            if ($attribute === null) {
+            if (! $this->isValidActivityMethod($method)) {
                 continue;
             }
 
-            $name = $this->createActivityName($method, $attribute, $interface);
+            $reducer = new OptionsReducer(
+                $reader->bypass($method, MethodRetry::class)
+            );
 
-            //
-            // We should check the existence of a method with the same name
-            // and, if it is duplicated, throw an exception with the
-            // appropriate message.
-            //
-            if (isset($result[$name])) {
-                $previous = $result[$name];
+            $methods = $reader->bypassThrough($method, ActivityMethod::class, $createActivityMethodName);
 
-                $handler = $previous->getHandler();
-                $message = \vsprintf(self::ERROR_DECLARATION_DUPLICATION, [
-                    $method->getDeclaringClass()->getName(),
-                    $method->getName(),
-                    $name,
-                    $handler->getFileName(),
-                    $handler->getStartLine()
-                ]);
+            foreach ($methods as $data) {
+                $current = $reducer->current();
 
-                throw new \LogicException($message);
+                if ($data !== null) {
+                    [$name, $isInterfaced] = $data;
+                    $prototype = new ActivityPrototype($name, $method, $class, $isInterfaced);
+
+                    if ($current !== null) {
+                        $prototype->setMethodRetry($current);
+                    }
+
+                    yield $prototype;
+                }
+
+                $reducer->next();
             }
-
-            $result[$name] = new ActivityPrototype($name, $method, $class, $interface !== null);
         }
-
-        //
-        // Then we read the trait methods as our own.
-        //
-        foreach ($class->getTraits() ?? [] as $trait) {
-            $result = $this->fromReflectionClass($trait, $result);
-        }
-
-        return \array_values($result);
-    }
-
-    /**
-     * @param \ReflectionClass $ctx
-     * @param \ReflectionMethod $method
-     * @return ActivityMethod|null
-     */
-    private function resolveValidActivityMethod(\ReflectionClass $ctx, \ReflectionMethod $method): ?ActivityMethod
-    {
-        $isValid = $this->isValidActivityMethod($method);
-
-        /** @var ActivityMethod $attribute */
-        $attribute = $this->reader->firstFunctionMetadata($method, ActivityMethod::class);
-
-        //
-        // In the case that there is an activity method attribute, but
-        // the context (method definition) is not correct, then an
-        // exception should be thrown with an appropriate error message.
-        //
-        if ($attribute !== null && ! $isValid) {
-            throw new \LogicException(\vsprintf(self::ERROR_BAD_DECLARATION, [
-                $ctx->getName(),
-                $method->getName()
-            ]));
-        }
-
-        if (! $isValid) {
-            return null;
-        }
-
-        return $attribute ?? new ActivityMethod();
     }
 
     /**
@@ -145,41 +104,31 @@ class ActivityReader extends Reader
     #[Pure]
     private function isValidActivityMethod(\ReflectionMethod $method): bool
     {
-        return !$method->isStatic() && $method->isPublic();
+        return ! $method->isStatic() && $method->isPublic();
     }
 
     /**
-     * @param \ReflectionFunctionAbstract $reflection
-     * @param ActivityMethod $method
+     * @param ActivityMethod|null $method
+     * @param \ReflectionMethod $reflection
      * @param ActivityInterface|null $interface
-     * @return string
+     * @param bool $root
+     * @return array|null
      */
-    #[Pure]
-    private function createActivityName(
-        \ReflectionFunctionAbstract $reflection,
-        ActivityMethod $method,
-        ?ActivityInterface $interface
-    ): string {
-        $result = '';
+    private function createActivityMethodName(
+        ?ActivityMethod $method,
+        \ReflectionMethod $reflection,
+        ?ActivityInterface $interface,
+        bool $root
+    ): ?array {
+        $isInterfaced = $interface !== null;
+        $prefix = $isInterfaced ? $interface->prefix : '';
 
-        if ($interface !== null) {
-            $result .= $interface->prefix;
+        if ($method !== null) {
+            return [$prefix . ($method->name ?? $reflection->getName()), $isInterfaced];
         }
 
-        return $result . ($method->name ?? $reflection->getName());
-    }
-
-    /**
-     * @param \ReflectionClass $class
-     * @return ActivityInterface|null
-     */
-    private function findActivityInterface(\ReflectionClass $class): ?ActivityInterface
-    {
-        $attributes = $this->reader->getClassMetadata($class, ActivityInterface::class);
-
-        /** @noinspection LoopWhichDoesNotLoopInspection */
-        foreach ($attributes as $attribute) {
-            return $attribute;
+        if ($root) {
+            return [$prefix . $reflection->getName(), $isInterfaced];
         }
 
         return null;
