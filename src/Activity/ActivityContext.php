@@ -58,7 +58,7 @@ final class ActivityContext implements ActivityContextInterface
     /**
      * @return DataConverterInterface
      */
-    public function getConverter(): DataConverterInterface
+    public function getDataConverter(): DataConverterInterface
     {
         return $this->converter;
     }

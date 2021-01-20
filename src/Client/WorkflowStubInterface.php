@@ -14,7 +14,6 @@ namespace Temporal\Client;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Type;
 use Temporal\Exception\IllegalStateException;
-use Temporal\Internal\Client\WorkflowStub;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Workflow\WorkflowRunInterface;
