@@ -12,10 +12,14 @@ declare(strict_types=1);
 namespace Temporal\Activity;
 
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Exception\Client\ActivityCanceledException;
+use Temporal\Exception\Client\ActivityCompletionException;
+use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Internal\Marshaller\Meta\Marshal;
-use Temporal\Worker\Transport\RpcConnectionInterface;
+use Temporal\Worker\Transport\RPCConnectionInterface;
 
 final class ActivityContext implements ActivityContextInterface
 {
@@ -23,17 +27,17 @@ final class ActivityContext implements ActivityContextInterface
     private ActivityInfo $info;
 
     private bool $doNotCompleteOnReturn = false;
-    private RpcConnectionInterface $rpc;
+    private RPCConnectionInterface $rpc;
     private DataConverterInterface $converter;
     private ?ValuesInterface $heartbeatDetails = null;
 
     /**
-     * @param RpcConnectionInterface $rpc
+     * @param RPCConnectionInterface $rpc
      * @param DataConverterInterface $converter
      * @param ValuesInterface|null $lastHeartbeatDetails
      */
     public function __construct(
-        RpcConnectionInterface $rpc,
+        RPCConnectionInterface $rpc,
         DataConverterInterface $converter,
         ValuesInterface $lastHeartbeatDetails = null
     ) {
@@ -98,16 +102,33 @@ final class ActivityContext implements ActivityContextInterface
 
     /**
      * @param mixed $details
+     *
+     * @throws ActivityCompletionException
+     * @throws ActivityCanceledException
      */
     public function heartbeat($details): void
     {
-        // todo: upgrade
-        $this->rpc->call(
-            'temporal.RecordActivityHeartbeat',
-            [
-                'TaskToken' => base64_encode($this->info->taskToken),
-                'Details' => $details,
-            ]
-        );
+        // we use native host process RPC here to avoid excessive GRPC connections and to handle trottling
+        // on Golang end
+
+        $details = EncodedValues::fromValues([$details], $this->converter)
+            ->toPayloads()
+            ->serializeToString();
+
+        try {
+            $response = $this->rpc->call(
+                'activities.RecordActivityHeartbeat',
+                [
+                    'taskToken' => base64_encode($this->info->taskToken),
+                    'details' => base64_encode($details),
+                ]
+            );
+
+            if (!empty($response['canceled'])) {
+                throw ActivityCanceledException::fromActivityInfo($this->info);
+            }
+        } catch (ServiceClientException $e) {
+            throw ActivityCompletionException::fromActivityInfo($this->info, $e);
+        }
     }
 }

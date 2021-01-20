@@ -7,7 +7,7 @@ use Temporal\Tests\TestCase;
 use Temporal\Worker;
 use Temporal\Worker\Transport\CommandBatch;
 
-class WorkerMock implements Worker\Transport\RelayConnectionInterface
+class WorkerMock implements Worker\Transport\HostConnectionInterface
 {
     private Worker $worker;
 

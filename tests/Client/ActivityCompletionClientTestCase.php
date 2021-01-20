@@ -6,6 +6,7 @@ use Temporal\Api\Workflow\V1\PendingActivityInfo;
 use Temporal\Api\Workflowservice\V1\DescribeWorkflowExecutionRequest;
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowStubInterface;
+use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Tests\Workflow\CanceledHeartbeatWorkflow;
 use Temporal\WorkflowClient;
 use Temporal\Exception\Client\ActivityCompletionFailureException;
@@ -287,7 +288,12 @@ class ActivityCompletionClientTestCase extends TestCase
         $uw = $client->newUntypedWorkflowStub('CanceledHeartbeatWorkflow')->setExecution($r->getExecution());
         $uw->cancel();
 
-        dump($r->getResult());
+        try {
+            $r->getResult();
+            $this->fail('unreachable');
+        } catch (WorkflowFailedException $e) {
+            $this->assertInstanceOf(CanceledFailure::class, $e->getPrevious());
+        }
     }
 
     /**

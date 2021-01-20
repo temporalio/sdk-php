@@ -11,16 +11,17 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Transport\Codec\ProtoCodec;
 
-use Temporal\Api\Common\V1\Payloads;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\Failure\FailureConverter;
-use Temporal\Roadrunner\Internal\Error;
 use Temporal\Roadrunner\Internal\Message;
 use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\FailureResponseInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\SuccessResponseInterface;
 
+/**
+ * @codeCoverageIgnore tested via roadrunner-temporal repository.
+ */
 class Encoder
 {
     /**

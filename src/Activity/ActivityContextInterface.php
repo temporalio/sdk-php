@@ -13,7 +13,7 @@ namespace Temporal\Activity;
 
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
-use Temporal\Worker\Transport\RpcConnectionInterface;
+use Temporal\Worker\Transport\RPCConnectionInterface;
 
 interface ActivityContextInterface
 {
@@ -38,7 +38,7 @@ interface ActivityContextInterface
     /**
      * If this method is called during an activity execution then activity is
      * not going to complete when its method returns. It is expected to be
-     * completed asynchronously using {@see RpcConnectionInterface::call()}.
+     * completed asynchronously using {@see RPCConnectionInterface::call()}.
      *
      * @return void
      */

@@ -35,6 +35,7 @@ class FailureTestCase extends TestCase
 
         try {
             $this->assertSame('OK', $ex->getResult());
+            $this->fail('unreachable');
         } catch (WorkflowFailedException $e) {
             $this->assertInstanceOf(ApplicationFailure::class, $e->getPrevious());
             $this->assertStringContainsString('workflow error', $e->getPrevious()->getMessage());
@@ -65,6 +66,7 @@ class FailureTestCase extends TestCase
 
         try {
             $ex->getResult();
+            $this->fail('unreachable');
         } catch (WorkflowFailedException $e) {
             $this->assertInstanceOf(ChildWorkflowFailure::class, $e->getPrevious());
             $this->assertStringContainsString('ComplexExceptionalWorkflow', $e->getPrevious()->getMessage());

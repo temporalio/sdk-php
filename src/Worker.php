@@ -42,9 +42,9 @@ use Temporal\Worker\LoopInterface;
 use Temporal\Worker\TaskQueue;
 use Temporal\Worker\TaskQueueInterface;
 use Temporal\Worker\Transport\Goridge;
-use Temporal\Worker\Transport\RelayConnectionInterface;
+use Temporal\Worker\Transport\HostConnectionInterface;
 use Temporal\Worker\Transport\RoadRunner;
-use Temporal\Worker\Transport\RpcConnectionInterface;
+use Temporal\Worker\Transport\RPCConnectionInterface;
 
 final class Worker implements FactoryInterface
 {
@@ -88,9 +88,9 @@ final class Worker implements FactoryInterface
     private DataConverterInterface $dataConverter;
 
     /**
-     * @var RelayConnectionInterface
+     * @var HostConnectionInterface
      */
-    private RelayConnectionInterface $relay;
+    private HostConnectionInterface $host;
 
     /**
      * @var ReaderInterface
@@ -128,23 +128,24 @@ final class Worker implements FactoryInterface
     private QueueInterface $responses;
 
     /**
-     * @var RpcConnectionInterface
+     * @var RPCConnectionInterface
      */
-    private RpcConnectionInterface $rpc;
+    private RPCConnectionInterface $rpc;
 
     /**
      * @param DataConverterInterface|null $dataConverter
-     * @param RelayConnectionInterface|null $relay
-     * @param RpcConnectionInterface|null $rpc
+     * @param HostConnectionInterface|null $host
+     * @param RPCConnectionInterface|null $rpc
      */
     public function __construct(
         DataConverterInterface $dataConverter = null,
-        RelayConnectionInterface $relay = null,
-        RpcConnectionInterface $rpc = null
+        HostConnectionInterface $host = null,
+        RPCConnectionInterface $rpc = null
     ) {
         $this->dataConverter = $dataConverter ?? DataConverter::createDefault();
 
-        $this->relay = $relay ?? new RoadRunner(Relay::create(Relay::PIPES));
+        // todo: use auto-env variables
+        $this->host = $host ?? new RoadRunner(Relay::create(Relay::PIPES));
         $this->rpc = $rpc ?? new Goridge(Relay::create('tcp://127.0.0.1:6001'));
 
         $this->boot();
@@ -309,11 +310,11 @@ final class Worker implements FactoryInterface
      */
     public function run(): int
     {
-        while ($msg = $this->relay->await()) {
+        while ($msg = $this->host->await()) {
             try {
-                $this->relay->send($this->dispatch($msg->messages, $msg->context));
+                $this->host->send($this->dispatch($msg->messages, $msg->context));
             } catch (\Throwable $e) {
-                $this->relay->error($e);
+                $this->host->error($e);
             }
         }
 

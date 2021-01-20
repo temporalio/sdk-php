@@ -22,7 +22,7 @@ use Temporal\Internal\Declaration\Instantiator\ActivityInstantiator;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Worker\Transport\Command\RequestInterface;
-use Temporal\Worker\Transport\RpcConnectionInterface;
+use Temporal\Worker\Transport\RPCConnectionInterface;
 
 use function Amp\call;
 
@@ -35,13 +35,13 @@ final class InvokeActivity extends Route
 
     private ActivityInstantiator $instantiator;
     private ServiceContainer $services;
-    private RpcConnectionInterface $rpc;
+    private RPCConnectionInterface $rpc;
 
     /**
      * @param ServiceContainer $services
-     * @param RpcConnectionInterface $rpc
+     * @param RPCConnectionInterface $rpc
      */
-    public function __construct(ServiceContainer $services, RpcConnectionInterface $rpc)
+    public function __construct(ServiceContainer $services, RPCConnectionInterface $rpc)
     {
         $this->rpc = $rpc;
         $this->services = $services;
@@ -60,8 +60,8 @@ final class InvokeActivity extends Route
         // always in binary format
         $options['info']['TaskToken'] = base64_decode($options['info']['TaskToken']);
 
-        if ($options['heartbeatDetails'] !== 0) {
-            $offset = count($payloads) - $options['heartbeatDetails'];
+        if (($options['heartbeatDetails'] ?? 0) !== 0) {
+            $offset = count($payloads) - ($options['heartbeatDetails'] ?? 0);
 
             $heartbeatDetails = EncodedValues::sliceValues($this->services->dataConverter, $payloads, $offset);
             $payloads = EncodedValues::sliceValues($this->services->dataConverter, $payloads, 0, $offset);
