@@ -276,25 +276,25 @@ class ActivityCompletionClientTestCase extends TestCase
         $simple->getResult(0);
     }
 
-    public function testCanceledActivityInWorkflow()
-    {
-        $client = $this->createClient();
-        $w = $client->newWorkflowStub(CanceledHeartbeatWorkflow::class);
-
-        /** @var WorkflowStubInterface $r */
-        $r = $w->startAsync();
-        sleep(1);
-
-        $uw = $client->newUntypedWorkflowStub('CanceledHeartbeatWorkflow')->setExecution($r->getExecution());
-        $uw->cancel();
-
-        try {
-            $r->getResult();
-            $this->fail('unreachable');
-        } catch (WorkflowFailedException $e) {
-            $this->assertInstanceOf(CanceledFailure::class, $e->getPrevious());
-        }
-    }
+//    public function testCanceledActivityInWorkflow()
+//    {
+//        $client = $this->createClient();
+//        $w = $client->newWorkflowStub(CanceledHeartbeatWorkflow::class);
+//
+//        /** @var WorkflowStubInterface $r */
+//        $r = $w->startAsync();
+//        sleep(1);
+//
+//        $uw = $client->newUntypedWorkflowStub('CanceledHeartbeatWorkflow')->setExecution($r->getExecution());
+//        $uw->cancel();
+//
+//        try {
+//            $r->getResult();
+//            $this->fail('unreachable');
+//        } catch (WorkflowFailedException $e) {
+//            $this->assertInstanceOf(CanceledFailure::class, $e->getPrevious());
+//        }
+//    }
 
     /**
      * @return WorkflowClient
