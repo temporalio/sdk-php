@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration\Reader;
 
+use JetBrains\PhpStorm\Pure;
 use Spiral\Attributes\ReaderInterface;
 
 /**
@@ -32,13 +33,15 @@ abstract class Reader
     }
 
     /**
-     * @param \ReflectionClass $class
-     * @param string $attribute
-     * @return RecursiveAttributeReader
+     * @psalm-suppress ImpureMethodCall
+     *
+     * @param \ReflectionMethod $method
+     * @return bool
      */
-    protected function getRecursiveReader(\ReflectionClass $class, string $attribute): RecursiveAttributeReader
+    #[Pure]
+    protected function isValidMethod(\ReflectionMethod $method): bool
     {
-        return new RecursiveAttributeReader($this->reader, $class, $attribute);
+        return ! $method->isStatic() && $method->isPublic();
     }
 
     /**

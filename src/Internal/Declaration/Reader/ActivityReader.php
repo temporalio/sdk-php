@@ -15,6 +15,7 @@ use JetBrains\PhpStorm\Pure;
 use Temporal\Activity\ActivityInterface;
 use Temporal\Activity\ActivityMethod;
 use Temporal\Common\MethodRetry;
+use Temporal\Internal\Declaration\Graph\ClassNode;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 
 /**
@@ -37,14 +38,6 @@ class ActivityReader extends Reader
         'been previously registered in %s:%d';
 
     /**
-     * @var string[]
-     */
-    private const ACTIVITY_ATTRIBUTES = [
-        ActivityMethod::class,
-        MethodRetry::class,
-    ];
-
-    /**
      * @param string $class
      * @return array<ActivityPrototype>
      * @throws \ReflectionException
@@ -61,76 +54,113 @@ class ActivityReader extends Reader
      * @return \Traversable<ActivityPrototype>
      * @throws \ReflectionException
      */
-    public function getActivityPrototypes(\ReflectionClass $class): \Traversable
+    protected function getActivityPrototypes(\ReflectionClass $class): \Traversable
     {
-        $reader = $this->getRecursiveReader($class, ActivityInterface::class);
+        $ctx = new ClassNode($class);
 
-        $createActivityMethodName = \Closure::fromCallable([$this, 'createActivityMethodName']);
-
-        foreach ($class->getMethods() as $method) {
-            if (! $this->isValidActivityMethod($method)) {
+        foreach ($class->getMethods() as $reflection) {
+            if (! $this->isValidMethod($reflection)) {
                 continue;
             }
 
-            $reducer = new OptionsReducer(
-                $reader->bypass($method, MethodRetry::class)
-            );
+            yield from $this->getMethodGroups($ctx, $reflection);
+        }
+    }
 
-            $methods = $reader->bypassThrough($method, ActivityMethod::class, $createActivityMethodName);
+    /**
+     * @param ClassNode $graph
+     * @param \ReflectionMethod $root
+     * @return iterable
+     * @throws \ReflectionException
+     */
+    private function getMethodGroups(ClassNode $graph, \ReflectionMethod $root): iterable
+    {
+        $previousRetry = null;
 
-            foreach ($methods as $data) {
-                $current = $reducer->current();
+        //
+        // We begin to read all available methods in the reverse hierarchical
+        // order (from internal to external).
+        //
+        // For Example:
+        //  class ChildClass extends ParentClass { ... }
+        //
+        // Group Result:
+        //  - ParentClass::method()
+        //  - ChildClass::method()
+        //
+        foreach ($graph->getMethods($root->getName()) as $group) {
+            //
+            $contextualRetry = $previousRetry;
 
-                if ($data !== null) {
-                    [$name, $isInterfaced] = $data;
-                    $prototype = new ActivityPrototype($name, $method, $class, $isInterfaced);
+            //
+            // Each group of methods means one level of hierarchy in the
+            // inheritance graph.
+            //
+            foreach ($group as $ctx => $method) {
+                /** @var MethodRetry $retry */
+                $retry = $this->reader->firstFunctionMetadata($method, MethodRetry::class);
 
-                    if ($current !== null) {
-                        $prototype->setMethodRetry($current);
+                if ($retry !== null) {
+                    // Update current retry from previous value
+                    if ($previousRetry instanceof MethodRetry) {
+                        $retry = $retry->mergeWith($previousRetry);
                     }
 
-                    yield $prototype;
+                    // Update current context
+                    $contextualRetry = $contextualRetry ? $retry->mergeWith($contextualRetry) : $retry;
                 }
 
-                $reducer->next();
+                //
+                // In the future, activity methods are available only in
+                // those classes that contain the attribute:
+                //
+                //  - #[ActivityInterface]
+                //
+                $interface = $this->reader->firstClassMetadata($ctx->getReflection(), ActivityInterface::class);
+
+                if ($interface === null) {
+                    continue;
+                }
+
+                //
+                // The name of the activity must be generated based on the
+                // optional prefix on the #[ActivityInterface] attribute and
+                // the method's name which can be redefined
+                // using #[ActivityMethod] attribute.
+                //
+                $name = $this->activityName($method, $interface,
+                    $this->reader->firstFunctionMetadata($method, ActivityMethod::class)
+                );
+
+                $prototype = new ActivityPrototype($name, $root, $graph->getReflection(), true);
+
+                if ($retry !== null) {
+                    $prototype->setMethodRetry($retry);
+                }
+
+                yield $prototype;
             }
+
+            $previousRetry = $contextualRetry;
         }
+
+        return [];
     }
 
     /**
-     * @param \ReflectionMethod $method
-     * @return bool
+     * @psalm-suppress ImpureMethodCall
+     *
+     * @param \ReflectionMethod $ref
+     * @param ActivityInterface $int
+     * @param ActivityMethod|null $method
+     * @return string
      */
     #[Pure]
-    private function isValidActivityMethod(\ReflectionMethod $method): bool
+    private function activityName(\ReflectionMethod $ref, ActivityInterface $int, ?ActivityMethod $method): string
     {
-        return ! $method->isStatic() && $method->isPublic();
-    }
-
-    /**
-     * @param ActivityMethod|null $method
-     * @param \ReflectionMethod $reflection
-     * @param ActivityInterface|null $interface
-     * @param bool $root
-     * @return array|null
-     */
-    private function createActivityMethodName(
-        ?ActivityMethod $method,
-        \ReflectionMethod $reflection,
-        ?ActivityInterface $interface,
-        bool $root
-    ): ?array {
-        $isInterfaced = $interface !== null;
-        $prefix = $isInterfaced ? $interface->prefix : '';
-
-        if ($method !== null) {
-            return [$prefix . ($method->name ?? $reflection->getName()), $isInterfaced];
-        }
-
-        if ($root) {
-            return [$prefix . $reflection->getName(), $isInterfaced];
-        }
-
-        return null;
+        return $method === null
+            ? $int->prefix . $ref->getName()
+            : $int->prefix . ($method->name ?? $ref->getName())
+        ;
     }
 }
