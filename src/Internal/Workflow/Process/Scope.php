@@ -174,7 +174,8 @@ class Scope implements CancellationScopeInterface, PromisorInterface
             $this->awaitLock++;
             $this->coroutine = new Stack($this->call($handler, $values ?? EncodedValues::empty()));
         } catch (\Throwable $e) {
-            $this->deferred->reject($e);
+            $this->onException($e);
+            return;
         }
 
         $this->next();
@@ -380,8 +381,13 @@ class Scope implements CancellationScopeInterface, PromisorInterface
             $this->defer(
                 function () use ($result) {
                     $this->makeCurrent();
-                    $this->coroutine->send($result);
-                    $this->next();
+                    try {
+                        $this->coroutine->send($result);
+                        $this->next();
+                    } catch (\Throwable $e) {
+                        $this->onException($e);
+                        return;
+                    }
                 }
             );
 

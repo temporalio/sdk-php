@@ -12,11 +12,11 @@ temporal:
     address: "localhost:7233"
     activities:
       num_workers: 4
-    debugLevel: 2
+    debug_level: 2
     codec: json
 
 logs:
     #mode: none
-    #channels:
-       # activities:
-       #     mode: none
+    channels:
+        activities:
+            mode: none
