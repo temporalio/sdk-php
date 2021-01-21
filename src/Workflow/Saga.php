@@ -79,15 +79,15 @@ final class Saga
                     try {
                         yield Workflow::newDetachedCancellationScope($handler);
                     } catch (\Throwable $e) {
-                        if ($sagaException == null) {
+                        if ($sagaException === null) {
                             $sagaException = new CompensationException($e->getMessage(), $e->getCode(), $e);
                         }
 
-                        if ($this->continueWithError) {
-                            $sagaException->addSuppressed($e);
-                        } else {
+                        if (!$this->continueWithError) {
                             throw $e;
                         }
+
+                        $sagaException->addSuppressed($e);
                     }
                 }
 
