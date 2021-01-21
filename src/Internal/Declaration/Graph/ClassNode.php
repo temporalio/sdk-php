@@ -187,7 +187,7 @@ final class ClassNode implements NodeInterface
         $result = [];
 
         foreach ($classes as $class) {
-            if ($this->isDirectMethodImplementation($name)) {
+            if ($class->isDirectMethodImplementation($name)) {
                 $result[] = [$class, $class->class->getMethod($name)];
             }
         }
