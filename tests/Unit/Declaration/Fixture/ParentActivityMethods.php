@@ -13,11 +13,12 @@ namespace Temporal\Tests\Unit\Declaration\Fixture;
 
 use Temporal\Activity\ActivityInterface;
 use Temporal\Activity\ActivityMethod;
-use Temporal\Common\MethodRetry;
+use Temporal\Tests\Unit\Declaration\Fixture\Interfaces\SimpleActivityInterface;
 use Temporal\Tests\Unit\Declaration\Fixture\Interfaces\SimpleWorkflowInterface;
 
+/** @ActivityInterface(prefix="prefix.") */
 #[ActivityInterface(prefix: "prefix.")]
-abstract class ParentActivityMethods implements SimpleWorkflowInterface
+abstract class ParentActivityMethods implements SimpleActivityInterface
 {
     /** @ActivityMethod(name="alternativeActivityName") */
     #[ActivityMethod(name: 'alternativeActivityName')]

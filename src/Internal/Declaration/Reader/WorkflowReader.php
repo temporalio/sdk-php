@@ -11,8 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration\Reader;
 
-use Temporal\Common\CronSchedule;
 use Temporal\Common\MethodRetry;
+use Temporal\Internal\Declaration\Graph\ClassNode;
+use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Workflow\QueryMethod;
 use Temporal\Workflow\SignalMethod;
@@ -27,8 +28,39 @@ class WorkflowReader extends Reader
     /**
      * @var string
      */
+    private const ERROR_WORKFLOW_INTERFACE_NOT_FOUND =
+        'Workflow class %s or one of his parents (i.e. class, interface or trait) ' .
+        'must contain #[%s] attribute'
+    ;
+
+    /**
+     * @var string
+     */
     private const ERROR_HANDLER_NOT_FOUND =
         'Can not find workflow handler, because class %s has no method marked with #[%s] attribute'
+    ;
+
+    /**
+     * @var string
+     */
+    private const ERROR_HANDLER_DUPLICATE =
+        'Workflow class %s must contain only one handler marked by #[%s] attribute, but %d has been found'
+    ;
+
+    /**
+     * @var string
+     */
+    private const ERROR_HANDLER_VISIBILITY =
+        'A Workflow handler method can only be a public non-static method, ' .
+        'but %s::%s() does not meet these criteria'
+    ;
+
+    /**
+     * @var string
+     */
+    private const ERROR_COMMON_METHOD_VISIBILITY =
+        'A Workflow %s handler method can only be a public non-static method, ' .
+        'but %s::%s() does not meet these criteria'
     ;
 
     /**
@@ -39,84 +71,250 @@ class WorkflowReader extends Reader
     public function fromClass(string $class): WorkflowPrototype
     {
         $reflection = new \ReflectionClass($class);
+        $graph = new ClassNode($reflection);
 
-        // Find #[WorkflowMethod] and create WorkflowPrototype or null
-        $prototype = $this->findWorkflowHandler($reflection, $this->findWorkflowInterface($reflection));
+        $this->assertWorkflowInterface($graph);
 
-        if ($prototype === null) {
-            $message = \sprintf(self::ERROR_HANDLER_NOT_FOUND, $class, WorkflowMethod::class);
-            throw new \InvalidArgumentException($message);
+        $prototypes = \iterator_to_array($this->getWorkflowPrototypes($graph), false);
+
+        switch (\count($prototypes)) {
+            case 0:
+                $message = \sprintf(self::ERROR_HANDLER_NOT_FOUND, $graph, WorkflowMethod::class);
+                throw new \LogicException($message);
+
+            case 1:
+                return $this->withSignalsAndQueries($graph, \reset($prototypes));
+
+            default:
+                $message = \sprintf(self::ERROR_HANDLER_DUPLICATE, $graph, WorkflowMethod::class, \count($prototypes));
+                throw new \LogicException($message);
         }
+    }
 
-        /**
-         * Add signals
-         *
-         * @var SignalMethod $signal
-         */
-        foreach ($this->reader->getFunctionMetadata($reflection, SignalMethod::class) as $signal => $handler) {
-            $name = $signal->name ?? $handler->getName();
+    /**
+     * @param ClassNode $graph
+     * @param WorkflowPrototype $prototype
+     * @return WorkflowPrototype
+     * @throws \ReflectionException
+     */
+    private function withSignalsAndQueries(ClassNode $graph, WorkflowPrototype $prototype): WorkflowPrototype
+    {
+        $class = $graph->getReflection();
 
-            $prototype->addSignalHandler($name, $handler);
-        }
+        foreach ($class->getMethods() as $ctx) {
+            $contextClass = $ctx->getDeclaringClass();
 
-        /**
-         * Add queries
-         *
-         * @var QueryMethod $query
-         */
-        foreach ($this->annotatedMethods($reflection, QueryMethod::class) as $query => $handler) {
-            $name = $query->name ?? $handler->getName();
+            /** @var SignalMethod|null $signal */
+            $signal = $this->getAttributedMethod($graph, $ctx, SignalMethod::class);
 
-            $prototype->addQueryHandler($name, $handler);
+            if ($signal !== null) {
+                // Validation
+                if (! $this->isValidMethod($ctx)) {
+                    throw new \LogicException(
+                        \vsprintf(self::ERROR_COMMON_METHOD_VISIBILITY, [
+                            'signal',
+                            $contextClass->getName(),
+                            $ctx->getName()
+                        ])
+                    );
+                }
+
+                $prototype->addSignalHandler(
+                    $signal->name ?? $ctx->getName(),
+                    $ctx
+                );
+            }
+
+            /** @var QueryMethod|null $query */
+            $query = $this->getAttributedMethod($graph, $ctx, QueryMethod::class);
+
+            if ($query !== null) {
+                // Validation
+                if (! $this->isValidMethod($ctx)) {
+                    throw new \LogicException(
+                        \vsprintf(self::ERROR_COMMON_METHOD_VISIBILITY, [
+                            'query',
+                            $contextClass->getName(),
+                            $ctx->getName()
+                        ])
+                    );
+                }
+
+                $prototype->addQueryHandler(
+                    $query->name ?? $ctx->getName(),
+                    $ctx
+                );
+            }
         }
 
         return $prototype;
     }
 
     /**
-     * @param \ReflectionClass $reflection
-     * @param WorkflowInterface|null $interface
-     * @return WorkflowPrototype|null
+     * @param ClassNode $graph
      */
-    private function findWorkflowHandler(\ReflectionClass $reflection, ?WorkflowInterface $interface): ?WorkflowPrototype
+    private function assertWorkflowInterface(ClassNode $graph): void
     {
-        /**
-         * @var WorkflowMethod $method
-         * @var \ReflectionFunction $handler
-         * @noinspection LoopWhichDoesNotLoopInspection
-         */
-        foreach ($this->annotatedMethods($reflection, WorkflowMethod::class) as $method => $handler) {
-            $name = $method->name ?? $handler->getName();
+        foreach ($graph as $edge) {
+            foreach ($edge as $node) {
+                $attribute = $this->reader->firstClassMetadata($node->getReflection(), WorkflowInterface::class);
 
-            $prototype = new WorkflowPrototype($name, $handler, $reflection, $interface !== null);
-
-            if ($cron = $this->findAttribute($handler, CronSchedule::class)) {
-                $prototype->setCronSchedule($cron);
+                if ($attribute !== null) {
+                    return;
+                }
             }
+        }
 
-            if ($retry = $this->findAttribute($handler, MethodRetry::class)) {
-                $prototype->setMethodRetry($retry);
+        throw new \LogicException(
+            \sprintf(self::ERROR_WORKFLOW_INTERFACE_NOT_FOUND, $graph, WorkflowInterface::class)
+        );
+    }
+
+    /**
+     * @param ClassNode $graph
+     * @return \Traversable<ActivityPrototype>
+     * @throws \ReflectionException
+     */
+    protected function getWorkflowPrototypes(ClassNode $graph): \Traversable
+    {
+        $class = $graph->getReflection();
+
+        foreach ($class->getMethods() as $reflection) {
+            if ($prototype = $this->getPrototype($graph, $reflection)) {
+                yield $prototype;
             }
+        }
+    }
 
-            return $prototype;
+    /**
+     * @param ClassNode $graph
+     * @param \ReflectionMethod $handler
+     * @param string $name
+     * @return object|null
+     * @throws \ReflectionException
+     */
+    private function getAttributedMethod(ClassNode $graph, \ReflectionMethod $handler, string $name): ?object
+    {
+        foreach ($graph->getMethods($handler->getName()) as $group) {
+            foreach ($group as $ctx => $method) {
+                $attribute = $this->reader->firstFunctionMetadata($method, $name);
+
+                if ($attribute !== null) {
+                    return $attribute;
+                }
+            }
         }
 
         return null;
     }
 
     /**
-     * @param \ReflectionClass $class
-     * @return WorkflowInterface|null
+     * @param ClassNode $graph
+     * @param \ReflectionMethod $handler
+     * @return WorkflowPrototype|null
+     * @throws \ReflectionException
      */
-    private function findWorkflowInterface(\ReflectionClass $class): ?WorkflowInterface
+    private function getPrototype(ClassNode $graph, \ReflectionMethod $handler): ?WorkflowPrototype
     {
-        $attributes = $this->reader->getClassMetadata($class, WorkflowInterface::class);
+        $previousRetry = $prototype = null;
 
-        /** @noinspection LoopWhichDoesNotLoopInspection */
-        foreach ($attributes as $attribute) {
-            return $attribute;
+        foreach ($graph->getMethods($handler->getName()) as $group) {
+            //
+            $contextualRetry = $previousRetry;
+
+            foreach ($group as $ctx => $method) {
+                /** @var MethodRetry $retry */
+                $retry = $this->reader->firstFunctionMetadata($method, MethodRetry::class);
+
+                if ($retry !== null) {
+                    // Update current retry from previous value
+                    if ($previousRetry instanceof MethodRetry) {
+                        $retry = $retry->mergeWith($previousRetry);
+                    }
+
+                    // Update current context
+                    $contextualRetry = $contextualRetry ? $retry->mergeWith($contextualRetry) : $retry;
+                }
+
+                //
+                // In the future, workflow methods are available only in
+                // those classes that contain the attribute:
+                //
+                //  - #[WorkflowInterface]
+                //
+                $interface = $this->reader->firstClassMetadata($ctx->getReflection(), WorkflowInterface::class);
+
+                // In case
+                if ($interface === null) {
+                    continue;
+                }
+
+                if ($prototype === null) {
+                    $prototype = $this->findProto($graph, $handler, $method);
+                }
+
+                if ($prototype !== null && $retry !== null) {
+                    $prototype->setMethodRetry($retry);
+                }
+            }
+
+            $previousRetry = $contextualRetry;
         }
 
-        return null;
+        return $prototype;
+    }
+
+    /**
+     * @param ClassNode $cls
+     * @param \ReflectionMethod $handler
+     * @param \ReflectionMethod $ctx
+     * @return WorkflowPrototype|null
+     */
+    private function findProto(ClassNode $cls, \ReflectionMethod $handler, \ReflectionMethod $ctx): ?WorkflowPrototype
+    {
+        $reflection = $cls->getReflection();
+
+        //
+        // The name of the workflow handler must be generated based
+        // method's name which can be redefined using #[WorkflowMethod]
+        // attribute.
+        //
+        $info = $this->reader->firstFunctionMetadata($ctx, WorkflowMethod::class);
+
+        if ($info === null) {
+            return null;
+        }
+
+        /**
+         * In the case that one of the handlers is declared on an incorrect
+         * method, we should inform about it. For example:
+         *
+         * <code>
+         *  #[WorkflowInterface]
+         *  class Workflow extends BaseWorkflow
+         *  {
+         *      #[WorkflowMethod]
+         *      public function handler(): void { ... } // << ALL OK
+         *  }
+         *
+         *  #[WorkflowInterface]
+         *  abstract class BaseWorkflow
+         *  {
+         *      #[WorkflowMethod]
+         *      protected function handler(): void { ... } // << Error: Cannot be protected
+         *  }
+         * </code>
+         */
+        if (! $this->isValidMethod($handler)) {
+            $contextClass = $ctx->getDeclaringClass();
+
+            throw new \LogicException(
+                \sprintf(self::ERROR_HANDLER_VISIBILITY, $contextClass->getName(), $ctx->getName())
+            );
+        }
+
+        $name = $info->name ?? $reflection->getName();
+
+        return new WorkflowPrototype($name, $handler, $reflection,true);
     }
 }

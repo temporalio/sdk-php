@@ -22,23 +22,24 @@ final class ClassNode implements NodeInterface
     private \ReflectionClass $class;
 
     /**
-     * @var ReaderInterface
-     */
-    private ReaderInterface $reader;
-
-    /**
      * @var array|null
      */
     private ?array $inheritance = null;
 
     /**
      * @param \ReflectionClass $class
-     * @param ReaderInterface $reader
      */
-    public function __construct(\ReflectionClass $class, ReaderInterface $reader)
+    public function __construct(\ReflectionClass $class)
     {
         $this->class = $class;
-        $this->reader = $reader;
+    }
+
+    /**
+     * @return \ReflectionClass
+     */
+    public function getReflection(): \ReflectionClass
+    {
+        return $this->class;
     }
 
     /**
@@ -95,7 +96,7 @@ final class ClassNode implements NodeInterface
     {
         // Traits
         foreach ($this->class->getTraits() ?? [] as $trait) {
-            yield new ClassNode($trait, $this->reader);
+            yield new ClassNode($trait);
         }
 
         // Interfaces
@@ -104,7 +105,7 @@ final class ClassNode implements NodeInterface
                 continue;
             }
 
-            yield new ClassNode($interface, $this->reader);
+            yield new ClassNode($interface);
         }
     }
 
@@ -146,7 +147,7 @@ final class ClassNode implements NodeInterface
     private function getParent(): ?ClassNode
     {
         if ($parent = $this->class->getParentClass()) {
-            return new ClassNode($parent, $this->reader);
+            return new ClassNode($parent);
         }
 
         return null;
@@ -154,16 +155,22 @@ final class ClassNode implements NodeInterface
 
     /**
      * @param string $name
-     * @return iterable<\ReflectionMethod>
+     * @param bool $reverse
+     * @return \Traversable<ClassNode, \ReflectionMethod>
      * @throws \ReflectionException
      */
-    public function getMethods(string $name): iterable
+    public function getMethods(string $name, bool $reverse = true): \Traversable
     {
-        foreach ($this->getInheritance() as $classes) {
+        $inheritance = $reverse
+            ? \array_reverse($this->getInheritance())
+            : $this->getInheritance()
+        ;
+
+        foreach ($inheritance as $classes) {
             $result = $this->boxMethods($classes, $name);
 
             if (\count($result)) {
-                yield from $this->unboxMethods($result);
+                yield $this->unboxMethods($result);
             }
         }
     }
