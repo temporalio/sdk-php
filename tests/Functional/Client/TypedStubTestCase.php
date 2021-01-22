@@ -7,18 +7,12 @@
  * file that was distributed with this source code.
  */
 
-namespace Temporal\Tests\Client;
+namespace Temporal\Tests\Functional\Client;
 
-use Temporal\Client\GRPC\ServiceClient;
-use Temporal\WorkflowClient;
-use Temporal\Tests\DTO\Message;
-use Temporal\Tests\DTO\User;
-use Temporal\Tests\TestCase;
 use Temporal\Tests\Workflow\QueryWorkflow;
-use Temporal\Tests\Workflow\SimpleDTOWorkflow;
 use Temporal\Tests\Workflow\SimpleWorkflow;
 
-class TypedStubTestCase extends TestCase
+class TypedStubTestCase extends ClientTestCase
 {
     public function testGetResult()
     {
@@ -71,14 +65,4 @@ class TypedStubTestCase extends TestCase
 //            $dto->handler($u)
 //        );
 //    }
-
-    /**
-     * @return WorkflowClient
-     */
-    private function createClient(): WorkflowClient
-    {
-        $sc = ServiceClient::createInsecure('localhost:7233');
-
-        return new WorkflowClient($sc);
-    }
 }

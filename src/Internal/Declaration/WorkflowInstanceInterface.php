@@ -17,6 +17,11 @@ namespace Temporal\Internal\Declaration;
 interface WorkflowInstanceInterface extends InstanceInterface
 {
     /**
+     * Trigger constructor in Process context.
+     */
+    public function initConstructor(): void;
+
+    /**
      * @param string $name
      * @return \Closure|null
      */

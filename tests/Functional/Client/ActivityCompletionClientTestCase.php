@@ -13,8 +13,6 @@ namespace Temporal\Tests\Functional\Client;
 
 use Temporal\Api\Workflow\V1\PendingActivityInfo;
 use Temporal\Api\Workflowservice\V1\DescribeWorkflowExecutionRequest;
-use Temporal\Client\GRPC\ServiceClient;
-use Temporal\WorkflowClient;
 use Temporal\Exception\Client\ActivityCompletionFailureException;
 use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Failure\ActivityFailure;
@@ -32,10 +30,10 @@ class ActivityCompletionClientTestCase extends ClientTestCase
         $this->assertNotEmpty($e->runId);
 
         sleep(1);
-        $this->assertFileExists(__DIR__ . '/../activityId');
-        $data = json_decode(file_get_contents(__DIR__ . '/../activityId'));
-        unlink(__DIR__ . '/../taskToken');
-        unlink(__DIR__ . '/../activityId');
+        $this->assertFileExists(__DIR__ . '/../../activityId');
+        $data = json_decode(file_get_contents(__DIR__ . '/../../activityId'));
+        unlink(__DIR__ . '/../../taskToken');
+        unlink(__DIR__ . '/../../activityId');
 
         $act = $w->newActivityCompletionClient();
 
@@ -54,10 +52,10 @@ class ActivityCompletionClientTestCase extends ClientTestCase
         $this->assertNotEmpty($e->runId);
 
         sleep(1);
-        $this->assertFileExists(__DIR__ . '/../activityId');
-        $data = json_decode(file_get_contents(__DIR__ . '/../activityId'));
-        unlink(__DIR__ . '/../taskToken');
-        unlink(__DIR__ . '/../activityId');
+        $this->assertFileExists(__DIR__ . '/../../activityId');
+        $data = json_decode(file_get_contents(__DIR__ . '/../../activityId'));
+        unlink(__DIR__ . '/../../taskToken');
+        unlink(__DIR__ . '/../../activityId');
 
         $act = $w->newActivityCompletionClient();
 
@@ -76,10 +74,10 @@ class ActivityCompletionClientTestCase extends ClientTestCase
         $this->assertNotEmpty($e->runId);
 
         sleep(1);
-        $this->assertFileExists(__DIR__ . '/../activityId');
-        $data = json_decode(file_get_contents(__DIR__ . '/../activityId'));
-        unlink(__DIR__ . '/../taskToken');
-        unlink(__DIR__ . '/../activityId');
+        $this->assertFileExists(__DIR__ . '/../../activityId');
+        $data = json_decode(file_get_contents(__DIR__ . '/../../activityId'));
+        unlink(__DIR__ . '/../../taskToken');
+        unlink(__DIR__ . '/../../activityId');
 
         $act = $w->newActivityCompletionClient();
 
@@ -97,10 +95,10 @@ class ActivityCompletionClientTestCase extends ClientTestCase
         $this->assertNotEmpty($e->runId);
 
         sleep(1);
-        $this->assertFileExists(__DIR__ . '/../taskToken');
-        $taskToken = file_get_contents(__DIR__ . '/../taskToken');
-        unlink(__DIR__ . '/../taskToken');
-        unlink(__DIR__ . '/../activityId');
+        $this->assertFileExists(__DIR__ . '/../../taskToken');
+        $taskToken = file_get_contents(__DIR__ . '/../../taskToken');
+        unlink(__DIR__ . '/../../taskToken');
+        unlink(__DIR__ . '/../../activityId');
 
         $act = $w->newActivityCompletionClient();
 
@@ -119,10 +117,10 @@ class ActivityCompletionClientTestCase extends ClientTestCase
         $this->assertNotEmpty($e->runId);
 
         sleep(1);
-        $this->assertFileExists(__DIR__ . '/../taskToken');
-        $taskToken = file_get_contents(__DIR__ . '/../taskToken');
-        unlink(__DIR__ . '/../taskToken');
-        unlink(__DIR__ . '/../activityId');
+        $this->assertFileExists(__DIR__ . '/../../taskToken');
+        $taskToken = file_get_contents(__DIR__ . '/../../taskToken');
+        unlink(__DIR__ . '/../../taskToken');
+        unlink(__DIR__ . '/../../activityId');
 
         $act = $w->newActivityCompletionClient();
 
@@ -140,10 +138,10 @@ class ActivityCompletionClientTestCase extends ClientTestCase
         $this->assertNotEmpty($e->runId);
 
         sleep(1);
-        $this->assertFileExists(__DIR__ . '/../taskToken');
-        $taskToken = file_get_contents(__DIR__ . '/../taskToken');
-        unlink(__DIR__ . '/../taskToken');
-        unlink(__DIR__ . '/../activityId');
+        $this->assertFileExists(__DIR__ . '/../../taskToken');
+        $taskToken = file_get_contents(__DIR__ . '/../../taskToken');
+        unlink(__DIR__ . '/../../taskToken');
+        unlink(__DIR__ . '/../../activityId');
 
         $act = $w->newActivityCompletionClient();
 
@@ -171,10 +169,10 @@ class ActivityCompletionClientTestCase extends ClientTestCase
         $this->assertNotEmpty($e->runId);
 
         sleep(1);
-        $this->assertFileExists(__DIR__ . '/../taskToken');
-        $data = json_decode(file_get_contents(__DIR__ . '/../activityId'));
-        unlink(__DIR__ . '/../taskToken');
-        unlink(__DIR__ . '/../activityId');
+        $this->assertFileExists(__DIR__ . '/../../taskToken');
+        $data = json_decode(file_get_contents(__DIR__ . '/../../activityId'));
+        unlink(__DIR__ . '/../../taskToken');
+        unlink(__DIR__ . '/../../activityId');
 
         $act = $w->newActivityCompletionClient();
 
@@ -208,10 +206,10 @@ class ActivityCompletionClientTestCase extends ClientTestCase
         $this->assertNotEmpty($e->runId);
 
         sleep(1);
-        $this->assertFileExists(__DIR__ . '/../taskToken');
-        $data = json_decode(file_get_contents(__DIR__ . '/../activityId'));
-        unlink(__DIR__ . '/../taskToken');
-        unlink(__DIR__ . '/../activityId');
+        $this->assertFileExists(__DIR__ . '/../../taskToken');
+        $data = json_decode(file_get_contents(__DIR__ . '/../../activityId'));
+        unlink(__DIR__ . '/../../taskToken');
+        unlink(__DIR__ . '/../../activityId');
 
         $act = $w->newActivityCompletionClient();
 
@@ -255,10 +253,10 @@ class ActivityCompletionClientTestCase extends ClientTestCase
         $this->assertNotEmpty($e->runId);
 
         sleep(1);
-        $this->assertFileExists(__DIR__ . '/../taskToken');
-        $taskToken = file_get_contents(__DIR__ . '/../taskToken');
-        unlink(__DIR__ . '/../taskToken');
-        unlink(__DIR__ . '/../activityId');
+        $this->assertFileExists(__DIR__ . '/../../taskToken');
+        $taskToken = file_get_contents(__DIR__ . '/../../taskToken');
+        unlink(__DIR__ . '/../../taskToken');
+        unlink(__DIR__ . '/../../activityId');
 
         $act = $w->newActivityCompletionClient();
 
@@ -300,14 +298,4 @@ class ActivityCompletionClientTestCase extends ClientTestCase
 //            $this->assertInstanceOf(CanceledFailure::class, $e->getPrevious());
 //        }
 //    }
-
-    /**
-     * @return WorkflowClient
-     */
-    private function createClient(): WorkflowClient
-    {
-        $sc = ServiceClient::createInsecure('localhost:7233');
-
-        return new WorkflowClient($sc);
-    }
 }

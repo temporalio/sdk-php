@@ -24,7 +24,8 @@ class CancelledSingleScopeWorkflow
     {
         $simple = Workflow::newActivityStub(
             SimpleActivity::class,
-            ActivityOptions::new()->withStartToCloseTimeout(5)
+            ActivityOptions::new()
+                ->withStartToCloseTimeout(5)
         );
 
         $this->status[] = 'start';
