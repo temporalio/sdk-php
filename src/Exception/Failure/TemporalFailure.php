@@ -122,16 +122,15 @@ class TemporalFailure extends TemporalException
             'retryState' => fn($value) => RetryState::name($value)
         ];
 
-        $mapped = [];
+        $result = [];
         foreach ($values as $key => $value) {
             if (isset($mapped[$key])) {
-                // todo: check retryState
                 $value = ($mapped[$key])($value);
             }
 
-            $mapped[$key] = $value;
+            $result[$key] = $value;
         }
 
-        return parent::buildMessage($mapped);
+        return parent::buildMessage($result);
     }
 }
