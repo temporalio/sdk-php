@@ -62,6 +62,6 @@ class ActivityDeclarationTestCase extends DeclarationTestCase
 
         $names = $this->arrayToActivityNames($prototypes);
 
-        $this->assertSame(['activityMethod', 'AlternativeActivityName', 'activityMethodFromParentClass'], $names);
+        $this->assertSame(['activityMethodFromInterface', 'prefix.alternativeActivityName', 'activityMethod'], $names);
     }
 }
