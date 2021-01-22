@@ -58,6 +58,16 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     }
 
     /**
+     * Trigger constructor in Process context.
+     */
+    public function initConstructor(): void
+    {
+        if (method_exists($this->context, '__construct')) {
+            $this->context->__construct();
+        }
+    }
+
+    /**
      * @return SignalQueue
      */
     public function getSignalQueue(): SignalQueue

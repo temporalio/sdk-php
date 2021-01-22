@@ -24,9 +24,6 @@ use Temporal\Internal\Marshaller\Type\ObjectType;
 use Temporal\Internal\Support\Cron;
 use Temporal\Worker\FactoryInterface;
 
-/**
- * TODO Previous execution result
- */
 final class WorkflowInfo
 {
     /**
@@ -265,9 +262,9 @@ final class WorkflowInfo
     }
 
     /**
-     * @todo: remove setters
      * @param string|null $continuedExecutionRunId
      * @return WorkflowInfo
+     * @todo: remove setters
      */
     public function withContinuedExecutionRunId(?string $continuedExecutionRunId): self
     {

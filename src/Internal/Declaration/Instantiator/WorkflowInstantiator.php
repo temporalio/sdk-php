@@ -30,4 +30,18 @@ final class WorkflowInstantiator extends Instantiator
 
         return new WorkflowInstance($prototype, $this->getInstance($prototype));
     }
+
+    /**
+     * @param PrototypeInterface $prototype
+     * @return object|null
+     * @throws \ReflectionException
+     */
+    protected function getInstance(PrototypeInterface $prototype): ?object
+    {
+        if ($class = $this->getClass($prototype)) {
+            return $class->newInstanceWithoutConstructor();
+        }
+
+        return null;
+    }
 }

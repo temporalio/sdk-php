@@ -50,7 +50,7 @@ class WorkflowContext implements WorkflowContextInterface
     private array $awaits = [];
 
     protected Input $input;
-    protected ?WorkflowInstanceInterface $workflowInstance;
+    protected WorkflowInstanceInterface $workflowInstance;
     protected ?ValuesInterface $lastCompletionResult = null;
 
     private array $trace = [];
@@ -60,14 +60,14 @@ class WorkflowContext implements WorkflowContextInterface
      * WorkflowContext constructor.
      * @param ServiceContainer $services
      * @param ClientInterface $client
-     * @param WorkflowInstanceInterface|null $workflowInstance
+     * @param WorkflowInstanceInterface $workflowInstance
      * @param Input $input
      * @param ValuesInterface|null $lastCompletionResult
      */
     public function __construct(
         ServiceContainer $services,
         ClientInterface $client,
-        ?WorkflowInstanceInterface $workflowInstance,
+        WorkflowInstanceInterface $workflowInstance,
         Input $input,
         ?ValuesInterface $lastCompletionResult
     ) {
@@ -76,14 +76,6 @@ class WorkflowContext implements WorkflowContextInterface
         $this->workflowInstance = $workflowInstance;
         $this->input = $input;
         $this->lastCompletionResult = $lastCompletionResult;
-    }
-
-    /**
-     * @param WorkflowInstanceInterface $instance
-     */
-    public function setWorkflowInstance(WorkflowInstanceInterface $instance): void
-    {
-        $this->workflowInstance = $instance;
     }
 
     /**
