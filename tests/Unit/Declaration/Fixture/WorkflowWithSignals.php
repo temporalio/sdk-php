@@ -12,8 +12,11 @@ declare(strict_types=1);
 namespace Temporal\Tests\Unit\Declaration\Fixture;
 
 use Temporal\Workflow\SignalMethod;
+use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
+/** @WorkflowInterface */
+#[WorkflowInterface]
 class WorkflowWithSignals
 {
     /** @WorkflowMethod */

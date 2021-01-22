@@ -16,14 +16,17 @@ use Temporal\Workflow\SignalMethod;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
+/** @WorkflowInterface */
 #[WorkflowInterface]
 class ChildWorkflowMethods extends ParentWorkflowMethods
 {
-
-    protected function handler(): void
+    /** @WorkflowMethod */
+    #[WorkflowMethod]
+    public function handler(): void
     {
     }
 
+    /** @SignalMethod */
     #[SignalMethod]
     protected function test(): void
     {

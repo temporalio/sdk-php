@@ -11,6 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Declaration\Fixture;
 
+use Temporal\Activity\ActivityInterface;
+
+/** @ActivityInterface */
+#[ActivityInterface]
 class ChildActivityMethods extends ParentActivityMethods
 {
     public function activityMethod(): void

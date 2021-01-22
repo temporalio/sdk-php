@@ -11,10 +11,14 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Declaration\Fixture\Interfaces;
 
-use Temporal\Common\MethodRetry;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
+/** @WorkflowInterface */
+#[WorkflowInterface]
 interface SimpleWorkflowInterface
 {
+    /** @WorkflowMethod */
+    #[WorkflowMethod]
+    public function handler(): void;
 }

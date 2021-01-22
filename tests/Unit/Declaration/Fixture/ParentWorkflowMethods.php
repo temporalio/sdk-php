@@ -12,10 +12,16 @@ declare(strict_types=1);
 namespace Temporal\Tests\Unit\Declaration\Fixture;
 
 use Temporal\Tests\Unit\Declaration\Fixture\Interfaces\SimpleWorkflowInterface;
+use Temporal\Workflow\WorkflowInterface;
+use Temporal\Workflow\WorkflowMethod;
 
+/** @WorkflowInterface */
+#[WorkflowInterface]
 abstract class ParentWorkflowMethods implements SimpleWorkflowInterface
 {
-    protected function handler(): void
+    /** @WorkflowMethod */
+    #[WorkflowMethod]
+    public function handler(): void
     {
     }
 }

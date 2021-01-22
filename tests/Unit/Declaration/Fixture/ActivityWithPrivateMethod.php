@@ -11,8 +11,11 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Declaration\Fixture;
 
+use Temporal\Activity\ActivityInterface;
 use Temporal\Activity\ActivityMethod;
 
+/** @ActivityInterface */
+#[ActivityInterface]
 class ActivityWithPrivateMethod
 {
     /** @ActivityMethod */
