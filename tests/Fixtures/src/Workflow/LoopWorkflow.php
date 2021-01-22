@@ -9,6 +9,7 @@ use Temporal\Workflow;
 use Temporal\Workflow\SignalMethod;
 use Temporal\Workflow\WorkflowMethod;
 
+#[Workflow\WorkflowInterface]
 class LoopWorkflow
 {
     private array $values = [];

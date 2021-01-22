@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Temporal\Tests\Workflow;
-
 
 use Temporal\Workflow;
 use Temporal\Workflow\SignalMethod;

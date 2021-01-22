@@ -7,17 +7,14 @@
  * file that was distributed with this source code.
  */
 
-namespace Temporal\Tests\Client;
+namespace Temporal\Tests\Functional\Client;
 
-use Temporal\Client\GRPC\ServiceClient;
-use Temporal\Tests\TestCase;
 use Temporal\Tests\Workflow\AggregatedWorkflow;
 use Temporal\Tests\Workflow\LoopWithSignalCoroutinesWorkflow;
 use Temporal\Tests\Workflow\LoopWorkflow;
 use Temporal\Tests\Workflow\WaitWorkflow;
-use Temporal\WorkflowClient;
 
-class AwaitTestCase extends TestCase
+class AwaitTestCase extends ClientTestCase
 {
     public function testSimpleAwait()
     {
@@ -101,14 +98,4 @@ class AwaitTestCase extends TestCase
     }
 
     // todo: test failure in signal coroutine
-
-    /**
-     * @return WorkflowClient
-     */
-    private function createClient(): WorkflowClient
-    {
-        $sc = ServiceClient::createInsecure('localhost:7233');
-
-        return new WorkflowClient($sc);
-    }
 }

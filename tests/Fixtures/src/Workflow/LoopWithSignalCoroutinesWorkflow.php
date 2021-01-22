@@ -8,6 +8,7 @@ use Temporal\Workflow;
 use Temporal\Workflow\SignalMethod;
 use Temporal\Workflow\WorkflowMethod;
 
+#[Workflow\WorkflowInterface]
 class LoopWithSignalCoroutinesWorkflow
 {
     private array $values = [];
