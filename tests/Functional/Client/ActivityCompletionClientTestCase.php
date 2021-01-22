@@ -32,10 +32,10 @@ class ActivityCompletionClientTestCase extends ClientTestCase
         $this->assertNotEmpty($e->runId);
 
         sleep(1);
-        $this->assertFileExists(__DIR__ . '/../activityId');
-        $data = json_decode(file_get_contents(__DIR__ . '/../activityId'));
-        unlink(__DIR__ . '/../taskToken');
-        unlink(__DIR__ . '/../activityId');
+        $this->assertFileExists(__DIR__ . '/../../activityId');
+        $data = json_decode(file_get_contents(__DIR__ . '/../../activityId'));
+        unlink(__DIR__ . '/../../taskToken');
+        unlink(__DIR__ . '/../../activityId');
 
         $act = $w->newActivityCompletionClient();
 
@@ -54,10 +54,10 @@ class ActivityCompletionClientTestCase extends ClientTestCase
         $this->assertNotEmpty($e->runId);
 
         sleep(1);
-        $this->assertFileExists(__DIR__ . '/../activityId');
-        $data = json_decode(file_get_contents(__DIR__ . '/../activityId'));
-        unlink(__DIR__ . '/../taskToken');
-        unlink(__DIR__ . '/../activityId');
+        $this->assertFileExists(__DIR__ . '/../../activityId');
+        $data = json_decode(file_get_contents(__DIR__ . '/../../activityId'));
+        unlink(__DIR__ . '/../../taskToken');
+        unlink(__DIR__ . '/../../activityId');
 
         $act = $w->newActivityCompletionClient();
 
@@ -76,10 +76,10 @@ class ActivityCompletionClientTestCase extends ClientTestCase
         $this->assertNotEmpty($e->runId);
 
         sleep(1);
-        $this->assertFileExists(__DIR__ . '/../activityId');
-        $data = json_decode(file_get_contents(__DIR__ . '/../activityId'));
-        unlink(__DIR__ . '/../taskToken');
-        unlink(__DIR__ . '/../activityId');
+        $this->assertFileExists(__DIR__ . '/../../activityId');
+        $data = json_decode(file_get_contents(__DIR__ . '/../../activityId'));
+        unlink(__DIR__ . '/../../taskToken');
+        unlink(__DIR__ . '/../../activityId');
 
         $act = $w->newActivityCompletionClient();
 
@@ -97,10 +97,10 @@ class ActivityCompletionClientTestCase extends ClientTestCase
         $this->assertNotEmpty($e->runId);
 
         sleep(1);
-        $this->assertFileExists(__DIR__ . '/../taskToken');
-        $taskToken = file_get_contents(__DIR__ . '/../taskToken');
-        unlink(__DIR__ . '/../taskToken');
-        unlink(__DIR__ . '/../activityId');
+        $this->assertFileExists(__DIR__ . '/../../taskToken');
+        $taskToken = file_get_contents(__DIR__ . '/../../taskToken');
+        unlink(__DIR__ . '/../../taskToken');
+        unlink(__DIR__ . '/../../activityId');
 
         $act = $w->newActivityCompletionClient();
 
@@ -119,10 +119,10 @@ class ActivityCompletionClientTestCase extends ClientTestCase
         $this->assertNotEmpty($e->runId);
 
         sleep(1);
-        $this->assertFileExists(__DIR__ . '/../taskToken');
-        $taskToken = file_get_contents(__DIR__ . '/../taskToken');
-        unlink(__DIR__ . '/../taskToken');
-        unlink(__DIR__ . '/../activityId');
+        $this->assertFileExists(__DIR__ . '/../../taskToken');
+        $taskToken = file_get_contents(__DIR__ . '/../../taskToken');
+        unlink(__DIR__ . '/../../taskToken');
+        unlink(__DIR__ . '/../../activityId');
 
         $act = $w->newActivityCompletionClient();
 
@@ -140,10 +140,10 @@ class ActivityCompletionClientTestCase extends ClientTestCase
         $this->assertNotEmpty($e->runId);
 
         sleep(1);
-        $this->assertFileExists(__DIR__ . '/../taskToken');
-        $taskToken = file_get_contents(__DIR__ . '/../taskToken');
-        unlink(__DIR__ . '/../taskToken');
-        unlink(__DIR__ . '/../activityId');
+        $this->assertFileExists(__DIR__ . '/../../taskToken');
+        $taskToken = file_get_contents(__DIR__ . '/../../taskToken');
+        unlink(__DIR__ . '/../../taskToken');
+        unlink(__DIR__ . '/../../activityId');
 
         $act = $w->newActivityCompletionClient();
 
@@ -171,10 +171,10 @@ class ActivityCompletionClientTestCase extends ClientTestCase
         $this->assertNotEmpty($e->runId);
 
         sleep(1);
-        $this->assertFileExists(__DIR__ . '/../taskToken');
-        $data = json_decode(file_get_contents(__DIR__ . '/../activityId'));
-        unlink(__DIR__ . '/../taskToken');
-        unlink(__DIR__ . '/../activityId');
+        $this->assertFileExists(__DIR__ . '/../../taskToken');
+        $data = json_decode(file_get_contents(__DIR__ . '/../../activityId'));
+        unlink(__DIR__ . '/../../taskToken');
+        unlink(__DIR__ . '/../../activityId');
 
         $act = $w->newActivityCompletionClient();
 
@@ -208,10 +208,10 @@ class ActivityCompletionClientTestCase extends ClientTestCase
         $this->assertNotEmpty($e->runId);
 
         sleep(1);
-        $this->assertFileExists(__DIR__ . '/../taskToken');
-        $data = json_decode(file_get_contents(__DIR__ . '/../activityId'));
-        unlink(__DIR__ . '/../taskToken');
-        unlink(__DIR__ . '/../activityId');
+        $this->assertFileExists(__DIR__ . '/../../taskToken');
+        $data = json_decode(file_get_contents(__DIR__ . '/../../activityId'));
+        unlink(__DIR__ . '/../../taskToken');
+        unlink(__DIR__ . '/../../activityId');
 
         $act = $w->newActivityCompletionClient();
 
@@ -255,10 +255,10 @@ class ActivityCompletionClientTestCase extends ClientTestCase
         $this->assertNotEmpty($e->runId);
 
         sleep(1);
-        $this->assertFileExists(__DIR__ . '/../taskToken');
-        $taskToken = file_get_contents(__DIR__ . '/../taskToken');
-        unlink(__DIR__ . '/../taskToken');
-        unlink(__DIR__ . '/../activityId');
+        $this->assertFileExists(__DIR__ . '/../../taskToken');
+        $taskToken = file_get_contents(__DIR__ . '/../../taskToken');
+        unlink(__DIR__ . '/../../taskToken');
+        unlink(__DIR__ . '/../../activityId');
 
         $act = $w->newActivityCompletionClient();
 
