@@ -44,38 +44,47 @@ class ActivityReader extends Reader
      */
     public function fromClass(string $class): array
     {
-        $methods = $this->getActivityPrototypes(new \ReflectionClass($class));
-
-        return \iterator_to_array($methods, false);
+        return $this->getActivityPrototypes(new \ReflectionClass($class));
     }
 
     /**
      * @param \ReflectionClass $class
-     * @return \Traversable<ActivityPrototype>
+     * @return array<ActivityPrototype>
      * @throws \ReflectionException
      */
-    protected function getActivityPrototypes(\ReflectionClass $class): \Traversable
+    protected function getActivityPrototypes(\ReflectionClass $class): array
     {
         $ctx = new ClassNode($class);
+
+        $prototypes = [];
 
         foreach ($class->getMethods() as $reflection) {
             if (! $this->isValidMethod($reflection)) {
                 continue;
             }
 
-            yield from $this->getMethodGroups($ctx, $reflection);
+            foreach ($this->getMethodGroups($ctx, $reflection) as $name => $prototype) {
+                $this->assertActivityNotExists($name, $prototypes, $class, $reflection);
+
+                $prototypes[$name] = $prototype;
+            }
         }
+
+        return \array_values($prototypes);
     }
 
     /**
      * @param ClassNode $graph
      * @param \ReflectionMethod $root
-     * @return iterable
+     * @return array<ActivityPrototype>
      * @throws \ReflectionException
      */
-    private function getMethodGroups(ClassNode $graph, \ReflectionMethod $root): iterable
+    private function getMethodGroups(ClassNode $graph, \ReflectionMethod $root): array
     {
         $previousRetry = null;
+
+        // Activity prototypes
+        $prototypes = [];
 
         //
         // We begin to read all available methods in the reverse hierarchical
@@ -138,13 +147,13 @@ class ActivityReader extends Reader
                     $prototype->setMethodRetry($retry);
                 }
 
-                yield $prototype;
+                $prototypes[$name] = $prototype;
             }
 
             $previousRetry = $contextualRetry;
         }
 
-        return [];
+        return $prototypes;
     }
 
     /**
@@ -156,11 +165,44 @@ class ActivityReader extends Reader
      * @return string
      */
     #[Pure]
-    private function activityName(\ReflectionMethod $ref, ActivityInterface $int, ?ActivityMethod $method): string
-    {
+    private function activityName(
+        \ReflectionMethod $ref,
+        ActivityInterface $int,
+        ?ActivityMethod $method
+    ): string {
         return $method === null
             ? $int->prefix . $ref->getName()
-            : $int->prefix . ($method->name ?? $ref->getName())
-        ;
+            : $int->prefix . ($method->name ?? $ref->getName());
+    }
+
+    /**
+     * @param string $name
+     * @param array $activities
+     * @param \ReflectionClass $class
+     * @param \ReflectionMethod $method
+     */
+    private function assertActivityNotExists(
+        string $name,
+        array $activities,
+        \ReflectionClass $class,
+        \ReflectionMethod $method
+    ): void {
+        if (! isset($activities[$name])) {
+            return;
+        }
+
+        /** @var ActivityPrototype $previous */
+        $previous = $activities[$name];
+        $handler = $previous->getHandler();
+
+        $error = \vsprintf(self::ERROR_DECLARATION_DUPLICATION, [
+            $class->getName(),
+            $method->getName(),
+            $name,
+            $handler->getFileName(),
+            $handler->getStartLine(),
+        ]);
+
+        throw new \LogicException($error);
     }
 }

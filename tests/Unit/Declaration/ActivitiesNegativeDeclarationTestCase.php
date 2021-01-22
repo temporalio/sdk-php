@@ -45,7 +45,7 @@ class ActivitiesNegativeDeclarationTestCase extends DeclarationTestCase
             ]
         ));
 
-        $reader->fromClass(ActivityNamesDuplication::class);
+        $activities = $reader->fromClass(ActivityNamesDuplication::class);
     }
 
     /**
