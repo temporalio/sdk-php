@@ -300,14 +300,4 @@ class ActivityCompletionClientTestCase extends ClientTestCase
 //            $this->assertInstanceOf(CanceledFailure::class, $e->getPrevious());
 //        }
 //    }
-
-    /**
-     * @return WorkflowClient
-     */
-    private function createClient(): WorkflowClient
-    {
-        $sc = ServiceClient::createInsecure('localhost:7233');
-
-        return new WorkflowClient($sc);
-    }
 }
