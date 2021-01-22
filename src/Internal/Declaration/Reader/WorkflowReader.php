@@ -313,7 +313,7 @@ class WorkflowReader extends Reader
             );
         }
 
-        $name = $info->name ?? $reflection->getName();
+        $name = $info->name ?? $reflection->getShortName();
 
         return new WorkflowPrototype($name, $handler, $reflection,true);
     }
