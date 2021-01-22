@@ -33,7 +33,11 @@ $taskQueue = $worker->createAndRegister('default');
 
 // register all workflows
 foreach ($getClasses(__DIR__ . '/Fixtures/src/Workflow') as $name) {
-    $taskQueue->addWorkflow('Temporal\\Tests\\Workflow\\' . $name);
+    $class = 'Temporal\\Tests\\Workflow\\' . $name;
+
+    if (class_exists($class)) {
+        $taskQueue->addWorkflow($class);
+    }
 }
 
 // register all activity
