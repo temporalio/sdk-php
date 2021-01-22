@@ -29,13 +29,14 @@ use Temporal\Workflow\WorkflowInfo;
 /**
  * @method static array getArguments()
  * @method static WorkflowInfo getInfo()
- * @method static mixed getLastCompletionResult($type=null)
-
+ * @method static mixed getLastCompletionResult($type = null)
  * @method static string getRunId()
  *
  * @method static CarbonTimeZone getTimeZone()
  * @method static \DateTimeInterface now()
  * @method static bool isReplaying()
+ *
+ * @method static CompletableResultInterface await(... $condition)
  *
  * @method static CancellationScopeInterface newCancellationScope(callable $handler)
  * @method static CancellationScopeInterface newDetachedCancellationScope(callable $handler)

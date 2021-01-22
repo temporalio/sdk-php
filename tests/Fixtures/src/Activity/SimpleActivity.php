@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * This file is part of Temporal package.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+declare(strict_types=1);
+
 namespace Temporal\Tests\Activity;
 
 use Temporal\Activity;
@@ -18,6 +27,14 @@ class SimpleActivity
         string $input
     ): string {
         return strtoupper($input);
+    }
+
+    #[ActivityMethod]
+    public function prefix(
+        string $prefix,
+        string $input
+    ): string {
+        return $prefix . $input;
     }
 
     #[ActivityMethod]

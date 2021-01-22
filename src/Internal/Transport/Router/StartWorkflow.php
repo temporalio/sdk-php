@@ -18,7 +18,9 @@ use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Workflow\Input;
 use Temporal\Internal\Workflow\Process\Process;
+use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Workflow;
 use Temporal\Workflow\WorkflowContext;
 use Temporal\Workflow\WorkflowInfo;
 
@@ -73,6 +75,9 @@ final class StartWorkflow extends Route
         $this->services->running->add($process);
 
         $process->start($instance->getHandler(), $context->getInput());
+
+        // todo: fix test cases
+        //$resolver->resolve(EncodedValues::fromValues([spl_object_id($process)]));
     }
 
     /**

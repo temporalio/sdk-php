@@ -105,9 +105,9 @@ class TaskQueue implements TaskQueueInterface
      */
     public function addWorkflow(string $class, bool $overwrite = false): TaskQueueInterface
     {
-        foreach ($this->services->workflowsReader->fromClass($class) as $workflow) {
-            $this->services->workflows->add($workflow, $overwrite);
-        }
+        $workflow = $this->services->workflowsReader->fromClass($class);
+
+        $this->services->workflows->add($workflow, $overwrite);
 
         return $this;
     }

@@ -58,7 +58,7 @@ final class RoadRunner implements HostConnectionInterface
         }
 
         // Intercept all output messages
-        \ob_start(fn(string $chunk) => $this->write($chunk));
+        \ob_start(fn(string $chunk) => $this->write($chunk), 10 * 1024);
 
         // Intercept all exceptions
         \set_exception_handler(fn(\Throwable $e) => $this->writeException($e));

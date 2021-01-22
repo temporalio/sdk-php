@@ -30,7 +30,7 @@ class QueryWorkflow
         return $this->counter;
     }
 
-    #[WorkflowMethod(name: 'QueryWorkflow')]
+    #[WorkflowMethod]
     public function handler()
     {
         // collect signals during one second

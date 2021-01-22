@@ -8,6 +8,7 @@ use Temporal\Tests\Activity\SimpleActivity;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 
+#[Workflow\WorkflowInterface]
 class CancelledWithCompensationWorkflow
 {
     private array $status = [];

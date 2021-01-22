@@ -13,7 +13,6 @@ namespace Temporal\Internal\Declaration\Prototype;
 
 use Temporal\Common\CronSchedule;
 use Temporal\Common\MethodRetry;
-use Temporal\Common\RetryOptions;
 
 final class WorkflowPrototype extends Prototype
 {

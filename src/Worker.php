@@ -210,6 +210,7 @@ final class Worker implements FactoryInterface
      */
     private function createCodec(): CodecInterface
     {
+        // todo: make it better
         switch ($_SERVER['RR_CODEC'] ?? null) {
             case 'protobuf':
                 return new ProtoCodec($this->dataConverter);

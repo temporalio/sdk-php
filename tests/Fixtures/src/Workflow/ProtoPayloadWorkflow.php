@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Temporal\Tests\Workflow;
-
 
 use Temporal\Activity\ActivityOptions;
 use Temporal\Api\Common\V1\WorkflowExecution;
@@ -10,6 +8,7 @@ use Temporal\Tests\Activity\SimpleActivity;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 
+#[Workflow\WorkflowInterface]
 class ProtoPayloadWorkflow
 {
     #[WorkflowMethod(name: 'ProtoPayloadWorkflow')]

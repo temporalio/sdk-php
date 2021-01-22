@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Workflow;
 
 use Carbon\CarbonInterface;
+use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
 use Temporal\DataConverter\EncodedValues;
@@ -20,6 +21,7 @@ use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\Support\StackRenderer;
 use Temporal\Internal\Transport\ClientInterface;
+use Temporal\Internal\Transport\CompletableResultInterface;
 use Temporal\Internal\Transport\Request\ContinueAsNew;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Internal\ServiceContainer;
@@ -34,6 +36,8 @@ use Temporal\Internal\Workflow\ChildWorkflowProxy;
 use Temporal\Internal\Workflow\ChildWorkflowStub;
 use Temporal\Internal\Workflow\ContinueAsNewProxy;
 use Temporal\Internal\Workflow\Input;
+use Temporal\Promise;
+use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 
 use function React\Promise\reject;
@@ -42,6 +46,8 @@ class WorkflowContext implements WorkflowContextInterface
 {
     protected ServiceContainer $services;
     protected ClientInterface $client;
+
+    private array $awaits = [];
 
     protected Input $input;
     protected WorkflowInstanceInterface $workflowInstance;
@@ -202,11 +208,16 @@ class WorkflowContext implements WorkflowContextInterface
             return reject($e);
         }
 
-        // todo: get return type from context (is it possible?)
+        $returnType = null;
+        try {
+            $reflection = new \ReflectionFunction($context);
+            $returnType = $reflection->getReturnType();
+        } catch (\Throwable $e) {
+        }
+
         return EncodedValues::decodePromise(
-            $this->request(
-                new SideEffect(EncodedValues::fromValues([$value]))
-            )
+            $this->request(new SideEffect(EncodedValues::fromValues([$value]))),
+            $returnType
         );
     }
 
@@ -261,9 +272,9 @@ class WorkflowContext implements WorkflowContextInterface
     {
         $options ??= new ContinueAsNewOptions();
 
-        $workflows = $this->services->workflowsReader->fromClass($class);
+        $workflow = $this->services->workflowsReader->fromClass($class);
 
-        return new ContinueAsNewProxy($class, $workflows, $options, $this);
+        return new ContinueAsNewProxy($class, $workflow, $options, $this);
     }
 
     /**
@@ -303,11 +314,11 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function newChildWorkflowStub(string $class, ChildWorkflowOptions $options = null): object
     {
-        $workflows = $this->services->workflowsReader->fromClass($class);
+        $workflow = $this->services->workflowsReader->fromClass($class);
 
         return new ChildWorkflowProxy(
             $class,
-            $workflows,
+            $workflow,
             $options ?? new ChildWorkflowOptions(),
             $this
         );
@@ -375,5 +386,53 @@ class WorkflowContext implements WorkflowContextInterface
     public function getLastTrace(): string
     {
         return StackRenderer::renderTrace($this->trace);
+    }
+
+    /**
+     * @param mixed ...$condition
+     * @return PromiseInterface
+     */
+    public function await(...$condition): PromiseInterface
+    {
+        $conditions = [];
+        foreach ($condition as $cond) {
+            if ($cond instanceof PromiseInterface) {
+                $conditions[] = $cond;
+                continue;
+            }
+
+            $conditions[] = $this->addCondition($cond);
+        }
+
+        if (count($conditions) === 1) {
+            return $conditions[0];
+        }
+
+        return Promise::any($conditions);
+    }
+
+    /**
+     * @param callable $condition
+     * @return PromiseInterface
+     */
+    public function addCondition(callable $condition): PromiseInterface
+    {
+        $deferred = new Deferred();
+        $this->awaits[] = [$condition, $deferred];
+        return $deferred->promise();
+    }
+
+    /**
+     * Calculate unblocked conditions.
+     */
+    public function resolveConditions()
+    {
+        foreach ($this->awaits as $i => $cond) {
+            [$condition, $deferred] = $cond;
+            if ($condition()) {
+                unset($this->awaits[$i]);
+                $deferred->resolve();
+            }
+        }
     }
 }

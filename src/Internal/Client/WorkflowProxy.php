@@ -56,6 +56,9 @@ final class WorkflowProxy extends Proxy
             )
         );
 
+        // If the proxy does not contain information about the running workflow,
+        // then we try to create a new stub from the workflow method and start
+        // the workflow.
         $this->stub->start($args);
 
         return new WorkflowRun(

@@ -6,6 +6,7 @@ use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 
+#[Workflow\WorkflowInterface]
 class CancelledNestedWorkflow
 {
     private array $status = [];

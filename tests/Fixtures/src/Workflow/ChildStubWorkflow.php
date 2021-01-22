@@ -5,6 +5,7 @@ namespace Temporal\Tests\Workflow;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 
+#[Workflow\WorkflowInterface]
 class ChildStubWorkflow
 {
     #[WorkflowMethod(name: 'ChildStubWorkflow')]

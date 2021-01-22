@@ -7,6 +7,7 @@ use Temporal\DataConverter\Bytes;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 
+#[Workflow\WorkflowInterface]
 class BinaryWorkflow
 {
     #[WorkflowMethod(name: 'BinaryWorkflow')]

@@ -46,12 +46,12 @@ final class MethodRetry extends RetryOptions implements NamedArgumentConstructor
         float $backoffCoefficient = self::DEFAULT_BACKOFF_COEFFICIENT,
         array $nonRetryableExceptions = self::DEFAULT_NON_RETRYABLE_EXCEPTIONS
     ) {
+        parent::__construct();
+
         $this->initialInterval = DateInterval::parseOrNull($initialInterval);
         $this->maximumInterval = DateInterval::parseOrNull($maximumInterval);
         $this->maximumAttempts = $maximumAttempts;
         $this->backoffCoefficient = $backoffCoefficient;
         $this->nonRetryableExceptions = $nonRetryableExceptions;
-
-        parent::__construct();
     }
 }

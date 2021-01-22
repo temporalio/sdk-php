@@ -120,8 +120,7 @@ final class ServiceContainer
         ReaderInterface $reader,
         QueueInterface $queue,
         DataConverterInterface $dataConverter
-    )
-    {
+    ) {
         $this->loop = $loop;
         $this->client = $client;
         $this->reader = $reader;
@@ -133,9 +132,7 @@ final class ServiceContainer
         $this->running = new ProcessCollection($client);
 
         $this->dataConverter = $dataConverter;
-        // todo: ?
-        $mapper = new AttributeMapperFactory($this->reader);
-        $this->marshaller = new Marshaller($mapper);
+        $this->marshaller = new Marshaller(new AttributeMapperFactory($this->reader));
 
         $this->workflowsReader = new WorkflowReader($this->reader);
         $this->activitiesReader = new ActivityReader($this->reader);

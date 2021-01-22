@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Temporal\Tests\Workflow;
 
 use Temporal\Activity\ActivityOptions;
+use Temporal\Common\RetryOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 use Temporal\Tests\Activity\SimpleActivity;
 
+#[Workflow\WorkflowInterface]
 class SimpleWorkflow
 {
     #[WorkflowMethod(name: 'SimpleWorkflow')]
@@ -17,7 +19,12 @@ class SimpleWorkflow
     ): iterable {
         $simple = Workflow::newActivityStub(
             SimpleActivity::class,
-            ActivityOptions::new()->withStartToCloseTimeout(5)
+            ActivityOptions::new()
+                ->withStartToCloseTimeout(5)
+                // todo: update logs
+                //->withRetryOptions(
+                //    RetryOptions::new()->withMaximumAttempts(2)
+                //)
         );
 
         return yield $simple->echo($input);

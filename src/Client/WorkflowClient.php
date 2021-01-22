@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
+use JetBrains\PhpStorm\Immutable;
 use Spiral\Attributes\AttributeReader;
 use Spiral\Attributes\ReaderInterface;
 use Temporal\Client\GRPC\ServiceClientInterface;
@@ -18,7 +19,6 @@ use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\InvalidArgumentException;
 use Temporal\Internal\Client\ActivityCompletionClient;
-use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
@@ -26,6 +26,7 @@ use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Client\WorkflowProxy;
 use Temporal\Internal\Client\WorkflowStub;
 use Temporal\Workflow\WorkflowRunInterface;
+use Temporal\Workflow\WorkflowInterface;
 
 class WorkflowClient implements WorkflowClientInterface
 {
@@ -94,13 +95,11 @@ class WorkflowClient implements WorkflowClientInterface
      */
     public function newWorkflowStub(string $class, WorkflowOptions $options = null): WorkflowProxy
     {
-        // todo: wait for a single method per workflow
-        /** @var WorkflowPrototype[] $workflows */
-        $workflows = (new WorkflowReader($this->reader))->fromClass($class);
+        $workflow = (new WorkflowReader($this->reader))->fromClass($class);
 
         return new WorkflowProxy(
-            $this->newUntypedWorkflowStub($workflows[0]->getID(), $options),
-            $workflows[0],
+            $this->newUntypedWorkflowStub($workflow->getID(), $options),
+            $workflow,
             $class
         );
     }

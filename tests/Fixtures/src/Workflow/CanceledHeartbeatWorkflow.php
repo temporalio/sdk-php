@@ -10,6 +10,7 @@ use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 use Temporal\Tests\Activity\HeartBeatActivity;
 
+#[Workflow\WorkflowInterface]
 class CanceledHeartbeatWorkflow
 {
     #[WorkflowMethod(name: 'CanceledHeartbeatWorkflow')]

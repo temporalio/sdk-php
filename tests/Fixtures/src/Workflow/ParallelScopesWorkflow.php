@@ -10,6 +10,7 @@ use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 use Temporal\Tests\Activity\SimpleActivity;
 
+#[Workflow\WorkflowInterface]
 class ParallelScopesWorkflow
 {
     #[WorkflowMethod(name: 'ParallelScopesWorkflow')]

@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration\Reader;
 
+use JetBrains\PhpStorm\Pure;
 use Spiral\Attributes\ReaderInterface;
 
 /**
@@ -32,36 +33,20 @@ abstract class Reader
     }
 
     /**
-     * @param class-string $class
-     * @return array<T>
-     */
-    abstract public function fromClass(string $class): array;
-
-    /**
-     * @psalm-template Attribute of object
-     *
-     * @param \ReflectionClass $ctx
-     * @param class-string<Attribute> $attribute
-     * @return iterable<Attribute, \ReflectionMethod>
-     */
-    protected function annotatedMethods(\ReflectionClass $ctx, string $attribute): iterable
-    {
-        foreach ($ctx->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
-            foreach ($this->reader->getFunctionMetadata($method, $attribute) as $meta) {
-                yield $meta => $method;
-            }
-        }
-    }
-
-    /**
-     * @psalm-template Attribute of object
+     * @psalm-suppress ImpureMethodCall
      *
      * @param \ReflectionMethod $method
-     * @param class-string<Attribute> $attribute
-     * @return Attribute|null
+     * @return bool
      */
-    protected function findAttribute(\ReflectionMethod $method, string $attribute): ?object
+    #[Pure]
+    protected function isValidMethod(\ReflectionMethod $method): bool
     {
-        return $this->reader->firstFunctionMetadata($method, $attribute);
+        return ! $method->isStatic() && $method->isPublic();
     }
+
+    /**
+     * @param class-string $class
+     * @return array<T>|T
+     */
+    abstract public function fromClass(string $class);
 }
