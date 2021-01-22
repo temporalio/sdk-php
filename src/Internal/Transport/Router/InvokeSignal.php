@@ -45,23 +45,7 @@ final class InvokeSignal extends WorkflowProcessAwareRoute
         $instance = $this->findInstanceOrFail($payload['runId']);
         $handler = $instance->getSignalHandler($payload['name']);
 
-        // todo: create coroutine
-        // todo: what to do with error on serializer
-        // todo: need some way to pass signal error WHERE???
-        // todo: fail signal pass exception to workflow
-
-        //$executor = static fn() =>
-
-        // launches signal in coroutine
+        // todo: handle serialization error, handle logic error
         $resolver->resolve(EncodedValues::fromValues([$handler($request->getPayloads())]));
-
-        //$this->loop->once(LoopInterface::ON_SIGNAL, $executor);
-
-//        $process->createScope(
-//            $executor,
-//            $request->getPayloads(),
-//            true,
-//            LoopInterface::ON_SIGNAL
-//        );
     }
 }
