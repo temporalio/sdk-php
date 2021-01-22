@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration\Reader;
 
+use Temporal\Common\CronSchedule;
 use Temporal\Common\MethodRetry;
 use Temporal\Internal\Declaration\Graph\ClassNode;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
@@ -220,7 +221,7 @@ class WorkflowReader extends Reader
      */
     private function getPrototype(ClassNode $graph, \ReflectionMethod $handler): ?WorkflowPrototype
     {
-        $previousRetry = $prototype = null;
+        $lastCron = $previousRetry = $prototype = null;
 
         foreach ($graph->getMethods($handler->getName()) as $group) {
             //
@@ -239,6 +240,9 @@ class WorkflowReader extends Reader
                     // Update current context
                     $contextualRetry = $contextualRetry ? $retry->mergeWith($contextualRetry) : $retry;
                 }
+
+                // Last CronSchedule
+                $lastCron = $this->reader->firstFunctionMetadata($method, CronSchedule::class) ?? $lastCron;
 
                 //
                 // In the future, workflow methods are available only in
@@ -259,6 +263,10 @@ class WorkflowReader extends Reader
 
                 if ($prototype !== null && $retry !== null) {
                     $prototype->setMethodRetry($retry);
+                }
+
+                if ($prototype !== null && $lastCron !== null) {
+                    $prototype->setCronSchedule($lastCron);
                 }
             }
 
