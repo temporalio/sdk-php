@@ -180,6 +180,10 @@ class WorkflowReader extends Reader
         $class = $graph->getReflection();
 
         foreach ($class->getMethods() as $reflection) {
+            if (! $this->isValidMethod($reflection)) {
+                continue;
+            }
+
             if ($prototype = $this->getPrototype($graph, $reflection)) {
                 yield $prototype;
             }
