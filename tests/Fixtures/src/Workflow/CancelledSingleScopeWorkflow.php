@@ -3,12 +3,12 @@
 namespace Temporal\Tests\Workflow;
 
 use Temporal\Activity\ActivityOptions;
-use Temporal\Exception\CancellationException;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 use Temporal\Tests\Activity\SimpleActivity;
 
+#[Workflow\WorkflowInterface]
 class CancelledSingleScopeWorkflow
 {
     private array $status = [];

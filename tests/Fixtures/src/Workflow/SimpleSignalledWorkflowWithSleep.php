@@ -7,6 +7,7 @@ namespace Temporal\Tests\Workflow;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 
+#[Workflow\WorkflowInterface]
 class SimpleSignalledWorkflowWithSleep
 {
     private $counter = 0;

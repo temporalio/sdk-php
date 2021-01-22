@@ -23,6 +23,9 @@ use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\SuccessResponse;
 use Temporal\Worker\Transport\Command\SuccessResponseInterface;
 
+/**
+ * @codeCoverageIgnore tested via roadrunner-temporal repository.
+ */
 class Decoder
 {
     /**

@@ -42,7 +42,7 @@ final class ContinueAsNewOptions
      * Optional: the parent workflow task queue will be used if this is not
      * provided.
      */
-    #[Marshal(name: 'TaskQueue')]
+    #[Marshal(name: 'TaskQueueName')]
     public string $taskQueue = FactoryInterface::DEFAULT_TASK_QUEUE;
 
     /**
@@ -52,25 +52,6 @@ final class ContinueAsNewOptions
      */
     #[Marshal(name: 'WorkflowTaskTimeout', type: DateIntervalType::class)]
     public \DateInterval $workflowTaskTimeout;
-
-    /**
-     * Optional non-indexed info that will be shown in list workflow.
-     *
-     * @psalm-var array<string, mixed>|null
-     */
-    #[Marshal(name: 'Memo', type: NullableType::class, of: ArrayType::class)]
-    public ?array $memo = null;
-
-    /**
-     * Optional indexed info that can be used in query of List/Scan/Count
-     * workflow APIs (only supported when Temporal server is using
-     * ElasticSearch). The key and value type must be registered on Temporal
-     * server side.
-     *
-     * @psalm-var array<string, mixed>|null
-     */
-    #[Marshal(name: 'SearchAttributes', type: NullableType::class, of: ArrayType::class)]
-    public ?array $searchAttributes = null;
 
     /**
      * @throws \Exception
@@ -137,27 +118,5 @@ final class ContinueAsNewOptions
         assert($timeout->totalMicroseconds >= 0 && $timeout->totalSeconds <= 60);
 
         return immutable(fn() => $this->workflowTaskTimeout = $timeout);
-    }
-
-    /**
-     * Specifies additional non-indexed information in result of list workflow.
-     *
-     * @param array|null $memo
-     * @return $this
-     */
-    public function withMemo(?array $memo): self
-    {
-        return immutable(fn() => $this->memo = $memo);
-    }
-
-    /**
-     * Specifies additional indexed information in result of list workflow.
-     *
-     * @param array|null $searchAttributes
-     * @return $this
-     */
-    public function withSearchAttributes(?array $searchAttributes): self
-    {
-        return immutable(fn() => $this->searchAttributes = $searchAttributes);
     }
 }

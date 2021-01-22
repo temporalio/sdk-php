@@ -11,9 +11,18 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Functional\Client;
 
+use Carbon\CarbonInterval;
+use Temporal\Api\Filter\V1\WorkflowTypeFilter;
+use Temporal\Api\Workflowservice\V1\DescribeNamespaceRequest;
+use Temporal\Api\Workflowservice\V1\ListClosedWorkflowExecutionsRequest;
+use Temporal\Client\GRPC\Context;
 use Temporal\Client\GRPC\ServiceClient;
-use Temporal\Client\WorkflowClient;
+use Temporal\WorkflowClient;
 use Temporal\Exception\Client\WorkflowFailedException;
+use Temporal\Exception\Failure\ActivityFailure;
+use Temporal\Exception\Failure\ApplicationFailure;
+use Temporal\Exception\Failure\ChildWorkflowFailure;
+use Temporal\Tests\TestCase;
 
 class FailureTestCase extends ClientTestCase
 {
@@ -27,9 +36,13 @@ class FailureTestCase extends ClientTestCase
         $this->assertNotEmpty($e->id);
         $this->assertNotEmpty($e->runId);
 
-        $this->expectException(WorkflowFailedException::class);
-        $this->assertSame('OK', $ex->getResult(0));
-        // todo: verify parent exceptions
+        try {
+            $this->assertSame('OK', $ex->getResult());
+            $this->fail('unreachable');
+        } catch (WorkflowFailedException $e) {
+            $this->assertInstanceOf(ApplicationFailure::class, $e->getPrevious());
+            $this->assertStringContainsString('workflow error', $e->getPrevious()->getMessage());
+        }
     }
 
     public function testActivityFailurePropagation()
@@ -42,8 +55,7 @@ class FailureTestCase extends ClientTestCase
         $this->assertNotEmpty($e->runId);
 
         $this->expectException(WorkflowFailedException::class);
-        $ex->getResult(0);
-        // todo: verify parent exceptions
+        $ex->getResult();
     }
 
     public function testChildWorkflowFailurePropagation()
@@ -55,8 +67,22 @@ class FailureTestCase extends ClientTestCase
         $this->assertNotEmpty($e->id);
         $this->assertNotEmpty($e->runId);
 
-        $this->expectException(WorkflowFailedException::class);
-        $ex->getResult(0);
-        // todo: verify parent exceptions
+        try {
+            $ex->getResult();
+            $this->fail('unreachable');
+        } catch (WorkflowFailedException $e) {
+            $this->assertInstanceOf(ChildWorkflowFailure::class, $e->getPrevious());
+            $this->assertStringContainsString('ComplexExceptionalWorkflow', $e->getPrevious()->getMessage());
+
+            $e = $e->getPrevious();
+
+            $this->assertInstanceOf(ActivityFailure::class, $e->getPrevious());
+            $this->assertStringContainsString('ExceptionalActivityWorkflow', $e->getPrevious()->getMessage());
+
+            $e = $e->getPrevious();
+
+            $this->assertInstanceOf(ApplicationFailure::class, $e->getPrevious());
+            $this->assertStringContainsString('SimpleActivity->fail', $e->getPrevious()->getMessage());
+        }
     }
 }

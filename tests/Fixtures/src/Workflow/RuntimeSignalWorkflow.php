@@ -6,9 +6,10 @@ use React\Promise\Deferred;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 
+#[Workflow\WorkflowInterface]
 class RuntimeSignalWorkflow
 {
-    #[WorkflowMethod(name: 'RuntimeSignalWorkflow')]
+    #[WorkflowMethod]
     public function handler()
     {
         $wait1 = new Deferred();

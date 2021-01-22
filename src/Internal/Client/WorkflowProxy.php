@@ -14,38 +14,18 @@ namespace Temporal\Internal\Client;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Workflow\Proxy;
-use Temporal\Workflow\WorkflowRun;
+use Temporal\Workflow\WorkflowRunInterface;
 
 /**
  * @template-covariant T of object
  */
 final class WorkflowProxy extends Proxy
 {
-    /**
-     * @var string
-     */
-    private const ERROR_UNDEFINED_WORKFLOW_METHOD =
-        'The given stub class "%s" does not contain a workflow method named "%s"';
-
-    /**
-     * @var string
-     */
     private const ERROR_UNDEFINED_METHOD =
         'The given stub class "%s" does not contain a workflow, query or signal method named "%s"';
 
-    /**
-     * @var WorkflowStubInterface|null
-     */
     private ?WorkflowStubInterface $stub;
-
-    /**
-     * @var WorkflowPrototype|null
-     */
     private ?WorkflowPrototype $prototype;
-
-    /**
-     * @var string
-     */
     private string $class;
 
     /**
@@ -61,6 +41,33 @@ final class WorkflowProxy extends Proxy
     }
 
     /**
+     * @param array $args
+     * @return WorkflowRunInterface
+     */
+    public function startAsync(array $args = []): WorkflowRunInterface
+    {
+        // Merge options with defaults defined using attributes:
+        //  - #[MethodRetry]
+        //  - #[CronSchedule]
+        $this->stub->setOptions(
+            $this->stub->getOptions()->mergeWith(
+                $this->prototype->getMethodRetry(),
+                $this->prototype->getCronSchedule()
+            )
+        );
+
+        // If the proxy does not contain information about the running workflow,
+        // then we try to create a new stub from the workflow method and start
+        // the workflow.
+        $this->stub->start($args);
+
+        return new WorkflowRun(
+            $this->stub,
+            $this->prototype->getHandler()->getReturnType()
+        );
+    }
+
+    /**
      * @param string $method
      * @param array $args
      * @return mixed|void
@@ -68,24 +75,8 @@ final class WorkflowProxy extends Proxy
     public function __call(string $method, array $args)
     {
         if ($method === $this->prototype->getHandler()->getName()) {
-            // Merge options with defaults defined using attributes:
-            //  - #[MethodRetry]
-            //  - #[CronSchedule]
-            $options = $this->stub->getOptions()->mergeWith(
-                $this->prototype->getMethodRetry(),
-                $this->prototype->getCronSchedule()
-            );
-
-            // todo: improve dependency
-            $this->stub->setOptions($options);
-
-            // If the proxy does not contain information about the running workflow,
-            // then we try to create a new stub from the workflow method and start
-            // the workflow.
-            $this->stub->start($args);
-
-            // todo: remove it
-            return new WorkflowRun($this->stub, $this->prototype->getHandler()->getReturnType());
+            // no timeout (use async mode to get it)
+            return $this->startAsync($args)->getResult(0);
         }
 
         // Otherwise, we try to find a suitable workflow "query" method.

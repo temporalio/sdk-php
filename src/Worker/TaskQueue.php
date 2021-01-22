@@ -19,7 +19,7 @@ use Temporal\Internal\Transport\Router;
 use Temporal\Internal\Transport\RouterInterface;
 use Temporal\Worker;
 use Temporal\Worker\Transport\Command\RequestInterface;
-use Temporal\Worker\Transport\RpcConnectionInterface;
+use Temporal\Worker\Transport\RPCConnectionInterface;
 
 class TaskQueue implements TaskQueueInterface
 {
@@ -41,16 +41,16 @@ class TaskQueue implements TaskQueueInterface
     private ServiceContainer $services;
 
     /**
-     * @var RpcConnectionInterface
+     * @var RPCConnectionInterface
      */
-    private RpcConnectionInterface $rpc;
+    private RPCConnectionInterface $rpc;
 
     /**
      * @param string $name
      * @param Worker $worker
-     * @param RpcConnectionInterface $rpc
+     * @param RPCConnectionInterface $rpc
      */
-    public function __construct(string $name, Worker $worker, RpcConnectionInterface $rpc)
+    public function __construct(string $name, Worker $worker, RPCConnectionInterface $rpc)
     {
         $this->rpc = $rpc;
         $this->name = $name;

@@ -17,6 +17,8 @@ use React\Promise\PromisorInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DestructMemorizedInstanceException;
+use Temporal\Exception\Failure\TemporalFailure;
+use Temporal\Exception\Internal\WrappedException;
 use Temporal\Internal\Coroutine\CoroutineInterface;
 use Temporal\Internal\Coroutine\Stack;
 use Temporal\Internal\ServiceContainer;
@@ -102,6 +104,11 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     private array $onCancel = [];
 
     /**
+     * @var array<callable>
+     */
+    private array $onClose = [];
+
+    /**
      * @var bool
      */
     private bool $detached = false;
@@ -167,7 +174,8 @@ class Scope implements CancellationScopeInterface, PromisorInterface
             $this->awaitLock++;
             $this->coroutine = new Stack($this->call($handler, $values ?? EncodedValues::empty()));
         } catch (\Throwable $e) {
-            $this->deferred->reject($e);
+            $this->onException($e);
+            return;
         }
 
         $this->next();
@@ -179,6 +187,16 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     public function onCancel(callable $then): self
     {
         $this->onCancel[++$this->cancelID] = $then;
+        return $this;
+    }
+
+    /**
+     * @param callable $then
+     * @return $this
+     */
+    public function onClose(callable $then): self
+    {
+        $this->onClose[] = $then;
         return $this;
     }
 
@@ -218,7 +236,14 @@ class Scope implements CancellationScopeInterface, PromisorInterface
         $this->awaitLock++;
         $scope->promise()->then($this->unlock, $this->unlock);
 
-        $this->onCancel(\Closure::fromCallable([$scope, 'cancel']));
+        $cancelID = ++$this->cancelID;
+        $this->onCancel[$cancelID] = \Closure::fromCallable([$scope, 'cancel']);
+
+        $scope->onClose(
+            function () use ($cancelID) {
+                unset($this->onCancel[$cancelID]);
+            }
+        );
 
         $scope->start($handler);
 
@@ -356,8 +381,13 @@ class Scope implements CancellationScopeInterface, PromisorInterface
             $this->defer(
                 function () use ($result) {
                     $this->makeCurrent();
-                    $this->coroutine->send($result);
-                    $this->next();
+                    try {
+                        $this->coroutine->send($result);
+                        $this->next();
+                    } catch (\Throwable $e) {
+                        $this->onException($e);
+                        return;
+                    }
                 }
             );
 
@@ -368,6 +398,10 @@ class Scope implements CancellationScopeInterface, PromisorInterface
             $this->defer(
                 function () use ($e) {
                     $this->makeCurrent();
+
+                    if ($e instanceof TemporalFailure && !$e->hasOriginalStackTrace()) {
+                        $e->setOriginalStackTrace($this->context->getLastTrace());
+                    }
 
                     try {
                         $this->coroutine->throw($e);
@@ -423,6 +457,10 @@ class Scope implements CancellationScopeInterface, PromisorInterface
             $this->deferred->reject($this->exception);
         } else {
             $this->deferred->resolve($this->result);
+        }
+
+        foreach ($this->onClose as $close) {
+            $close();
         }
     }
 

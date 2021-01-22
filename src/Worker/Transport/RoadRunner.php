@@ -22,9 +22,10 @@ use Temporal\Exception\TransportException;
 
 /**
  * @psalm-type JsonHeaders = string
+ *
+ * @codeCoverageIgnore tested via roadrunner-temporal repository.
  */
-// todo: deprecate
-final class RoadRunner implements RelayConnectionInterface
+final class RoadRunner implements HostConnectionInterface
 {
     /**
      * @var string
@@ -33,14 +34,7 @@ final class RoadRunner implements RelayConnectionInterface
         'Incorrect format of received headers. An array<string, mixed> ' .
         'required, but %s (%s) given';
 
-    /**
-     * @var Worker
-     */
     private Worker $worker;
-
-    /**
-     * @var CodecInterface
-     */
     private CodecInterface $codec;
 
     /**

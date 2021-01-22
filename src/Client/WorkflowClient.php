@@ -17,6 +17,7 @@ use Spiral\Attributes\ReaderInterface;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\Exception\InvalidArgumentException;
 use Temporal\Internal\Client\ActivityCompletionClient;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
@@ -24,37 +25,15 @@ use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Client\WorkflowProxy;
 use Temporal\Internal\Client\WorkflowStub;
+use Temporal\Workflow\WorkflowRunInterface;
 use Temporal\Workflow\WorkflowInterface;
 
 class WorkflowClient implements WorkflowClientInterface
 {
-    private const ERROR_NON_INTERFACED_WORKFLOW_STUB =
-        'Could not create a workflow stub %s from a class that does not contain the #[%s] attribute'
-    ;
-
-    /**
-     * @var ServiceClientInterface
-     */
-    private ServiceClientInterface $serviceClient;
-
-    /**
-     * @var ClientOptions
-     */
+    private ServiceClientInterface $client;
     private ClientOptions $clientOptions;
-
-    /**
-     * @var DataConverterInterface
-     */
     private DataConverterInterface $converter;
-
-    /**
-     * @var ReaderInterface
-     */
     private ReaderInterface $reader;
-
-    /**
-     * @var MarshallerInterface
-     */
     private MarshallerInterface $marshaller;
 
     /**
@@ -67,7 +46,7 @@ class WorkflowClient implements WorkflowClientInterface
         ClientOptions $options = null,
         DataConverterInterface $converter = null
     ) {
-        $this->serviceClient = $serviceClient;
+        $this->client = $serviceClient;
         $this->clientOptions = $options ?? new ClientOptions();
         $this->converter = $converter ?? DataConverter::createDefault();
 
@@ -82,7 +61,33 @@ class WorkflowClient implements WorkflowClientInterface
      */
     public function getServiceClient(): ServiceClientInterface
     {
-        return $this->serviceClient;
+        return $this->client;
+    }
+
+    /**
+     * Starts workflow in async mode.
+     *
+     * @param object|WorkflowStubInterface $workflow
+     * @param mixed ...$args
+     * @return WorkflowRunInterface
+     */
+    public function start($workflow, ...$args): WorkflowRunInterface
+    {
+        if ($workflow instanceof WorkflowProxy) {
+            return $workflow->startAsync($args);
+        }
+
+        if ($workflow instanceof WorkflowStubInterface) {
+            $workflow->start($args);
+            return $workflow;
+        }
+
+        throw new InvalidArgumentException(
+            sprintf(
+                "Only workflow stubs can be started, %s given",
+                is_object($workflow) ? get_class($workflow) : gettype($workflow)
+            )
+        );
     }
 
     /**
@@ -91,12 +96,6 @@ class WorkflowClient implements WorkflowClientInterface
     public function newWorkflowStub(string $class, WorkflowOptions $options = null): WorkflowProxy
     {
         $workflow = (new WorkflowReader($this->reader))->fromClass($class);
-
-        if (! $workflow->isInterfaced()) {
-            throw new \InvalidArgumentException(
-                \sprintf(self::ERROR_NON_INTERFACED_WORKFLOW_STUB, $class, WorkflowInterface::class)
-            );
-        }
 
         return new WorkflowProxy(
             $this->newUntypedWorkflowStub($workflow->getID(), $options),
@@ -113,7 +112,7 @@ class WorkflowClient implements WorkflowClientInterface
         $options ??= new WorkflowOptions();
 
         return new WorkflowStub(
-            $this->serviceClient,
+            $this->client,
             $this->clientOptions,
             $this->converter,
             $name,
@@ -126,10 +125,6 @@ class WorkflowClient implements WorkflowClientInterface
      */
     public function newActivityCompletionClient(): ActivityCompletionClientInterface
     {
-        return new ActivityCompletionClient(
-            $this->serviceClient,
-            $this->clientOptions,
-            $this->converter
-        );
+        return new ActivityCompletionClient($this->client, $this->clientOptions, $this->converter);
     }
 }

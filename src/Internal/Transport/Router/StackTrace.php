@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
+use Temporal\DataConverter\EncodedValues;
 use Temporal\Worker\Transport\Command\RequestInterface;
 
 final class StackTrace extends WorkflowProcessAwareRoute
@@ -27,20 +28,8 @@ final class StackTrace extends WorkflowProcessAwareRoute
 
         $context = $process->getContext();
 
-        $resolver->resolve(
-            $this->traceToJson(
-                $context->getTrace()
-            )
-        );
-    }
+        error_log($context->getLastTrace());
 
-    /**
-     * @param array $backtrace
-     * @return string
-     * @throws \JsonException
-     */
-    private function traceToJson(array $backtrace): string
-    {
-        return \json_encode($backtrace, \JSON_PRETTY_PRINT | \JSON_THROW_ON_ERROR);
+        $resolver->resolve(EncodedValues::fromValues([$context->getLastTrace()]));
     }
 }

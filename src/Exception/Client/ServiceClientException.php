@@ -28,12 +28,13 @@ class ServiceClientException extends \RuntimeException
      */
     public function __construct(\stdClass $status, Throwable $previous = null)
     {
-        parent::__construct($status->details, $status->code, $previous);
         $this->status = new \Google\Rpc\Status();
 
         if (isset($status->metadata['grpc-status-details-bin'][0])) {
             $this->status->mergeFromString($status->metadata['grpc-status-details-bin'][0]);
         }
+
+        parent::__construct($status->details, $status->code, $previous);
     }
 
     /**

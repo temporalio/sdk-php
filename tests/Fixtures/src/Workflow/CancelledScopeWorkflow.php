@@ -7,6 +7,7 @@ use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 use Temporal\Tests\Activity\SimpleActivity;
 
+#[Workflow\WorkflowInterface]
 class CancelledScopeWorkflow
 {
     #[WorkflowMethod(name: 'CancelledScopeWorkflow')]

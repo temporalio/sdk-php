@@ -19,18 +19,32 @@ use Temporal\Activity\ActivityMethod;
 class HeartBeatActivity
 {
     #[ActivityMethod]
-    public function doSomething(int $value): string
-    {
+    public function doSomething(
+        int $value
+    ): string {
         Activity::heartbeat(['value' => $value]);
         sleep($value);
         return 'OK';
     }
 
     #[ActivityMethod]
-    public function something(string $value): string
-    {
+    public function something(
+        string $value
+    ): string {
         Activity::heartbeat(['value' => $value]);
         sleep($value);
+        return 'OK';
+    }
+
+    #[ActivityMethod]
+    public function slow(
+        string $value
+    ): string {
+        for ($i = 0; $i < 10; $i++) {
+            Activity::heartbeat(['value' => $i]);
+            sleep(1);
+        }
+
         return 'OK';
     }
 }

@@ -4,6 +4,7 @@ namespace Temporal\Tests\Workflow;
 
 use Temporal\Workflow\WorkflowMethod;
 
+#[Workflow\WorkflowInterface]
 class EmptyWorkflow
 {
     #[WorkflowMethod(name: 'EmptyWorkflow')]

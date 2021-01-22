@@ -17,6 +17,9 @@ use Temporal\Worker\Transport\Codec\ProtoCodec\Decoder;
 use Temporal\Worker\Transport\Codec\ProtoCodec\Encoder;
 use Temporal\Worker\Transport\Command\CommandInterface;
 
+/**
+ * @codeCoverageIgnore tested via roadrunner-temporal repository.
+ */
 final class ProtoCodec implements CodecInterface
 {
     /**

@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal;
 
 use Carbon\CarbonTimeZone;
-use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Internal\Support\Facade;
 use Temporal\Internal\Transport\CompletableResultInterface;
@@ -30,7 +29,8 @@ use Temporal\Workflow\WorkflowInfo;
 /**
  * @method static array getArguments()
  * @method static WorkflowInfo getInfo()
- *
+ * @method static mixed getLastCompletionResult($type=null)
+
  * @method static string getRunId()
  *
  * @method static CarbonTimeZone getTimeZone()

@@ -11,10 +11,11 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Functional\Client;
 
-use Temporal\Client\GRPC\ServiceClient;
-use Temporal\Client\WorkflowClient;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Exception\Client\WorkflowExecutionAlreadyStartedException;
+use Temporal\Exception\Client\WorkflowFailedException;
+use Temporal\Exception\Failure\CanceledFailure;
+use Temporal\Exception\Failure\TerminatedFailure;
 use Temporal\Exception\IllegalStateException;
 
 class UntypedWorkflowStubTestCase extends ClientTestCase
@@ -28,7 +29,19 @@ class UntypedWorkflowStubTestCase extends ClientTestCase
         $this->assertNotEmpty($e->id);
         $this->assertNotEmpty($e->runId);
 
-        $this->assertSame('HELLO WORLD', $simple->getResult(0));
+        $this->assertSame('HELLO WORLD', $simple->getResult());
+    }
+
+    public function testUntypedStartViaClient()
+    {
+        $w = $this->createClient();
+        $simple = $w->newUntypedWorkflowStub('SimpleWorkflow');
+        $r = $w->start($simple, 'test');
+
+        $this->assertNotEmpty($r->getExecution()->id);
+        $this->assertNotEmpty($r->getExecution()->runId);
+
+        $this->assertSame('TEST', $r->getResult());
     }
 
     public function testStartWithSameID()
@@ -58,7 +71,7 @@ class UntypedWorkflowStubTestCase extends ClientTestCase
 
         $simple->signal('add', [-1]);
 
-        $this->assertSame(-1, $simple->getResult(0));
+        $this->assertSame(-1, $simple->getResult());
     }
 
     public function testSignalWithStart()
@@ -72,7 +85,7 @@ class UntypedWorkflowStubTestCase extends ClientTestCase
 
         $simple->signal('add', [-1]);
 
-        $this->assertSame(-2, $simple->getResult(0));
+        $this->assertSame(-2, $simple->getResult());
     }
 
     public function testSignalWithStartAlreadyStarted()
@@ -86,7 +99,7 @@ class UntypedWorkflowStubTestCase extends ClientTestCase
 
         $simple->signal('add', [-1]);
 
-        $this->assertSame(-2, $simple->getResult(0));
+        $this->assertSame(-2, $simple->getResult());
 
         $simple2 = $w->newUntypedWorkflowStub('SimpleWorkflow', WorkflowOptions::new()
             ->withWorkflowId($e->id));
@@ -124,9 +137,8 @@ class UntypedWorkflowStubTestCase extends ClientTestCase
 
         $simple->signal('add', [88]);
 
-        $this->assertSame(88, $simple->query('get')
-            ->getValue(0));
-        $this->assertSame(88, $simple->getResult(0));
+        $this->assertSame(88, $simple->query('get')->getValue(0));
+        $this->assertSame(88, $simple->getResult());
     }
 
     public function testStartAsNewEventTrailing()
@@ -138,6 +150,40 @@ class UntypedWorkflowStubTestCase extends ClientTestCase
         $this->assertNotEmpty($e->id);
         $this->assertNotEmpty($e->runId);
 
-        $this->assertSame('OK6', $simple->getResult(0));
+        $this->assertSame('OK6', $simple->getResult());
+    }
+
+    public function testCancelled()
+    {
+        $w = $this->createClient();
+        $simple = $w->newUntypedWorkflowStub('SimpleSignalledWorkflowWithSleep');
+
+        $e = $simple->start([-1]);
+        $this->assertNotEmpty($e->id);
+        $this->assertNotEmpty($e->runId);
+
+        $simple->cancel();
+        try {
+            $simple->getResult();
+        } catch (WorkflowFailedException $e) {
+            $this->assertInstanceOf(CanceledFailure::class, $e->getPrevious());
+        }
+    }
+
+    public function testTerminated()
+    {
+        $w = $this->createClient();
+        $simple = $w->newUntypedWorkflowStub('SimpleSignalledWorkflowWithSleep');
+
+        $e = $simple->start([-1]);
+        $this->assertNotEmpty($e->id);
+        $this->assertNotEmpty($e->runId);
+
+        $simple->terminate('user triggered');
+        try {
+            $simple->getResult();
+        } catch (WorkflowFailedException $e) {
+            $this->assertInstanceOf(TerminatedFailure::class, $e->getPrevious());
+        }
     }
 }

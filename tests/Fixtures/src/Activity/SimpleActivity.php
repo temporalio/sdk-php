@@ -64,6 +64,16 @@ class SimpleActivity
     {
         Activity::doNotCompleteOnReturn();
         file_put_contents('taskToken', Activity::getInfo()->taskToken);
+        file_put_contents(
+            'activityId',
+            json_encode(
+                [
+                    'id' => Activity::getInfo()->workflowExecution->id,
+                    'runId' => Activity::getInfo()->workflowExecution->runId,
+                    'activityId' => Activity::getInfo()->id
+                ]
+            )
+        );
     }
 
     public function updateRunID(WorkflowExecution $e): WorkflowExecution

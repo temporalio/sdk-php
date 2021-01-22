@@ -11,11 +11,13 @@ use Temporal\Tests\Activity\SimpleActivity;
 use Temporal\Tests\DTO\Message;
 use Temporal\Tests\DTO\User;
 
+#[Workflow\WorkflowInterface]
 class SimpleDTOWorkflow
 {
-    #[WorkflowMethod(name: 'SimpleDTOWorkflow')]
-    public function handler(User $user): iterable
-    {
+    #[WorkflowMethod(name: 'SimpleDTOWorkflow')]//, returnType: Message::class)]
+    public function handler(
+        User $user
+    ) {
         $simple = Workflow::newActivityStub(
             SimpleActivity::class,
             ActivityOptions::new()

@@ -41,4 +41,16 @@ class WorkflowExecution
         $this->id = $id ?? Uuid::nil();
         $this->runId = $runId ?? Uuid::nil();
     }
+
+    /**
+     * @return \Temporal\Api\Common\V1\WorkflowExecution
+     */
+    public function toProtoWorkflowExecution(): \Temporal\Api\Common\V1\WorkflowExecution
+    {
+        $e = new \Temporal\Api\Common\V1\WorkflowExecution();
+        $e->setWorkflowId($this->id);
+        $e->setRunId($this->runId);
+
+        return $e;
+    }
 }

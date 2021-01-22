@@ -100,11 +100,25 @@ class WorkflowTestCase extends FunctionalTestCase
         $worker->run($this, Splitter::create('Test_EmptyWorkflow.log')->getQueue());
     }
 
+    public function testSideEffectWorkflow()
+    {
+        $worker = WorkerMock::createMock();
+
+        $worker->run($this, Splitter::create('Test_SideEffect.log')->getQueue());
+    }
+
     public function testExecuteWorkflowWithParallelScopes()
     {
         $worker = WorkerMock::createMock();
 
         $worker->run($this, Splitter::create('Test_ExecuteWorkflowWithParallelScopes.log')->getQueue());
+    }
+
+    public function testActivity()
+    {
+        $worker = WorkerMock::createMock();
+
+        $worker->run($this, Splitter::create('Test_Activity.log')->getQueue());
     }
 
     public function testExecuteProtoWorkflow()
@@ -168,5 +182,19 @@ class WorkflowTestCase extends FunctionalTestCase
         $worker = WorkerMock::createMock();
 
         $worker->run($this, Splitter::create('Test_ExecuteChildWorkflow.log')->getQueue());
+    }
+
+    public function testRuntimeSignal()
+    {
+        $worker = WorkerMock::createMock();
+
+        $worker->run($this, Splitter::create('Test_RuntimeSignal.log')->getQueue());
+    }
+
+    public function testSignalStepsAndRuntimeQuery()
+    {
+        $worker = WorkerMock::createMock();
+
+        $worker->run($this, Splitter::create('Test_SignalSteps.log')->getQueue());
     }
 }

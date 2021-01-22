@@ -8,6 +8,7 @@ use Temporal\Activity\ActivityOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 
+#[Workflow\WorkflowInterface]
 class ChainedWorkflow
 {
     #[WorkflowMethod(name: 'ChainedWorkflow')]

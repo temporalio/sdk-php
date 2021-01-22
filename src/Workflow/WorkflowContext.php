@@ -12,13 +12,13 @@ declare(strict_types=1);
 namespace Temporal\Workflow;
 
 use Carbon\CarbonInterface;
-use Carbon\CarbonTimeZone;
 use React\Promise\PromiseInterface;
-use Temporal\Activity\ActivityInterface;
 use Temporal\Activity\ActivityOptions;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
+use Temporal\Internal\Support\StackRenderer;
 use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Transport\Request\ContinueAsNew;
 use Temporal\DataConverter\DataConverterInterface;
@@ -40,39 +40,36 @@ use function React\Promise\reject;
 
 class WorkflowContext implements WorkflowContextInterface
 {
-    private const ERROR_NON_INTERFACED_WORKFLOW_STUB =
-        'Could not create a workflow stub %s from a class that does not contain the #[%s] attribute'
-    ;
-
-    private const ERROR_NON_INTERFACED_ACTIVITY_STUB =
-        'Could not create an activity stub %s from a class that does not contain the #[%s] attribute'
-    ;
-
     protected ServiceContainer $services;
     protected ClientInterface $client;
 
     protected Input $input;
     protected WorkflowInstanceInterface $workflowInstance;
+    protected ?ValuesInterface $lastCompletionResult = null;
 
     private array $trace = [];
     private bool $continueAsNew = false;
 
     /**
+     * WorkflowContext constructor.
      * @param ServiceContainer $services
      * @param ClientInterface $client
      * @param WorkflowInstanceInterface $workflowInstance
      * @param Input $input
+     * @param ValuesInterface|null $lastCompletionResult
      */
     public function __construct(
         ServiceContainer $services,
         ClientInterface $client,
         WorkflowInstanceInterface $workflowInstance,
-        Input $input
+        Input $input,
+        ?ValuesInterface $lastCompletionResult
     ) {
         $this->services = $services;
         $this->client = $client;
         $this->workflowInstance = $workflowInstance;
         $this->input = $input;
+        $this->lastCompletionResult = $lastCompletionResult;
     }
 
     /**
@@ -98,8 +95,6 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function now(): CarbonInterface
     {
-        $this->recordTrace();
-
         return $this->services->env->now();
     }
 
@@ -108,8 +103,6 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function getRunId(): string
     {
-        $this->recordTrace();
-
         return $this->input->info->execution->runId;
     }
 
@@ -118,8 +111,6 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function getInfo(): WorkflowInfo
     {
-        $this->recordTrace();
-
         return $this->input->info;
     }
 
@@ -128,9 +119,30 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function getInput(): ValuesInterface
     {
-        $this->recordTrace();
-
         return $this->input->input;
+    }
+
+    /**
+     * @return ValuesInterface|null
+     */
+    public function getLastCompletionResultValues(): ?ValuesInterface
+    {
+        return $this->lastCompletionResult;
+    }
+
+    /**
+     * Get value of last completion result, if any.
+     *
+     * @param Type|string $type
+     * @return mixed
+     */
+    public function getLastCompletionResult($type = null)
+    {
+        if ($this->lastCompletionResult === null) {
+            return null;
+        }
+
+        return $this->lastCompletionResult->getValue(0, $type);
     }
 
     /**
@@ -154,7 +166,6 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function registerQuery(string $queryType, callable $handler): WorkflowContextInterface
     {
-        $this->recordTrace();
         $this->getWorkflowInstance()->addQueryHandler($queryType, $handler);
 
         return $this;
@@ -165,7 +176,6 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function registerSignal(string $queryType, callable $handler): WorkflowContextInterface
     {
-        $this->recordTrace();
         $this->getWorkflowInstance()->addSignalHandler($queryType, $handler);
 
         return $this;
@@ -176,8 +186,6 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function getVersion(string $changeId, int $minSupported, int $maxSupported): PromiseInterface
     {
-        $this->recordTrace();
-
         return $this->request(
             new GetVersion($changeId, $minSupported, $maxSupported)
         );
@@ -186,19 +194,8 @@ class WorkflowContext implements WorkflowContextInterface
     /**
      * {@inheritDoc}
      */
-    public function request(RequestInterface $request): PromiseInterface
-    {
-        $this->recordTrace();
-        return $this->client->request($request);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public function sideEffect(callable $context): PromiseInterface
     {
-        $this->recordTrace();
-
         try {
             $value = $this->isReplaying() ? null : $context();
         } catch (\Throwable $e) {
@@ -218,8 +215,6 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function isReplaying(): bool
     {
-        $this->recordTrace();
-
         return $this->services->env->isReplaying();
     }
 
@@ -228,8 +223,6 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function complete(array $result = null, \Throwable $failure = null): PromiseInterface
     {
-        $this->recordTrace();
-
         if ($result !== null) {
             $values = EncodedValues::fromValues($result);
         } else {
@@ -249,12 +242,13 @@ class WorkflowContext implements WorkflowContextInterface
         array $args = [],
         ContinueAsNewOptions $options = null
     ): PromiseInterface {
-        $this->recordTrace();
         $this->continueAsNew = true;
 
-        $options = $this->services->marshaller->marshal($options ?? new ContinueAsNewOptions());
-
-        $request = new ContinueAsNew($type, EncodedValues::fromValues($args), $options);
+        $request = new ContinueAsNew(
+            $type,
+            EncodedValues::fromValues($args),
+            $this->services->marshaller->marshal($options ?? new ContinueAsNewOptions())
+        );
 
         // must not be captured
         return $this->services->client->request($request);
@@ -268,12 +262,6 @@ class WorkflowContext implements WorkflowContextInterface
         $options ??= new ContinueAsNewOptions();
 
         $workflow = $this->services->workflowsReader->fromClass($class);
-
-        if (! $workflow->isInterfaced()) {
-            throw new \InvalidArgumentException(
-                \sprintf(self::ERROR_NON_INTERFACED_WORKFLOW_STUB, $class, WorkflowInterface::class)
-            );
-        }
 
         return new ContinueAsNewProxy($class, $workflow, $options, $this);
     }
@@ -295,8 +283,6 @@ class WorkflowContext implements WorkflowContextInterface
         ChildWorkflowOptions $options = null,
         \ReflectionType $returnType = null
     ): PromiseInterface {
-        $this->recordTrace();
-
         return $this->newUntypedChildWorkflowStub($type, $options)->execute($args, $returnType);
     }
 
@@ -307,7 +293,6 @@ class WorkflowContext implements WorkflowContextInterface
         string $name,
         ChildWorkflowOptions $options = null
     ): ChildWorkflowStubInterface {
-        $this->recordTrace();
         $options ??= new ChildWorkflowOptions();
 
         return new ChildWorkflowStub($this->services->marshaller, $name, $options);
@@ -318,14 +303,7 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function newChildWorkflowStub(string $class, ChildWorkflowOptions $options = null): object
     {
-        $this->recordTrace();
         $workflow = $this->services->workflowsReader->fromClass($class);
-
-        if (! $workflow->isInterfaced()) {
-            throw new \InvalidArgumentException(
-                \sprintf(self::ERROR_NON_INTERFACED_WORKFLOW_STUB, $class, WorkflowInterface::class)
-            );
-        }
 
         return new ChildWorkflowProxy(
             $class,
@@ -344,8 +322,6 @@ class WorkflowContext implements WorkflowContextInterface
         ActivityOptions $options = null,
         \ReflectionType $returnType = null
     ): PromiseInterface {
-        $this->recordTrace();
-
         return $this->newUntypedActivityStub($options)->execute($type, $args, $returnType);
     }
 
@@ -354,7 +330,6 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function newUntypedActivityStub(ActivityOptions $options = null): ActivityStubInterface
     {
-        $this->recordTrace();
         $options ??= new ActivityOptions();
 
         return new ActivityStub($this->services->marshaller, $options);
@@ -365,16 +340,7 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function newActivityStub(string $class, ActivityOptions $options = null): object
     {
-        $this->recordTrace();
         $activities = $this->services->activitiesReader->fromClass($class);
-
-        foreach ($activities as $activity) {
-            if (! $activity->isInterfaced()) {
-                throw new \InvalidArgumentException(
-                    \sprintf(self::ERROR_NON_INTERFACED_ACTIVITY_STUB, $class, ActivityInterface::class)
-                );
-            }
-        }
 
         return new ActivityProxy(
             $class,
@@ -389,8 +355,6 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function timer($interval): PromiseInterface
     {
-        $this->recordTrace();
-
         return $this->request(
             new NewTimer(DateInterval::parse($interval, DateInterval::FORMAT_SECONDS))
         );
@@ -399,8 +363,17 @@ class WorkflowContext implements WorkflowContextInterface
     /**
      * {@inheritDoc}
      */
-    public function getTrace(): array
+    public function request(RequestInterface $request): PromiseInterface
     {
-        return $this->trace;
+        $this->recordTrace();
+        return $this->client->request($request);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getLastTrace(): string
+    {
+        return StackRenderer::renderTrace($this->trace);
     }
 }
