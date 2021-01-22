@@ -14,6 +14,8 @@ namespace Temporal\Tests\Unit\Declaration;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
 use Temporal\Tests\Unit\Declaration\Fixture\UnannotatedClass;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithMultipleMethods;
+use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithoutHandler;
+use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
 /**
@@ -23,24 +25,45 @@ use Temporal\Workflow\WorkflowMethod;
 class WorkflowNegativeDeclarationTestCase extends DeclarationTestCase
 {
     /**
-     * @testdox Validate errors while loading invalid workflow
+     * @testdox Validate errors while loading workflow without WorkflowInterface attribute
      * @dataProvider workflowReaderDataProvider
      *
      * @param WorkflowReader $reader
      * @throws \ReflectionException
      */
-    public function testUnannotatedWorkflow(WorkflowReader $reader): void
+    public function testWorkflowWithoutInterfaceAttribute(WorkflowReader $reader): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(\LogicException::class);
         $this->expectExceptionMessage(\vsprintf(
-            'Can not find workflow handler, because class %s has no method marked with #[%s] attribute',
+            'Workflow class %s or one of his parents (i.e. class, interface or trait) must contain #[%s] attribute',
             [
                 UnannotatedClass::class,
-                WorkflowMethod::class,
+                WorkflowInterface::class,
             ]
         ));
 
         $reader->fromClass(UnannotatedClass::class);
+    }
+
+    /**
+     * @testdox Validate errors while loading workflow without WorkflowInterface attribute
+     * @dataProvider workflowReaderDataProvider
+     *
+     * @param WorkflowReader $reader
+     * @throws \ReflectionException
+     */
+    public function testWorkflowWithoutHandler(WorkflowReader $reader): void
+    {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage(\vsprintf(
+            'Can not find workflow handler, because class %s has no method marked with #[%s] attribute',
+            [
+                WorkflowWithoutHandler::class,
+                WorkflowMethod::class,
+            ]
+        ));
+
+        $reader->fromClass(WorkflowWithoutHandler::class);
     }
 
     /**
