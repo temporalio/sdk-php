@@ -13,7 +13,6 @@ namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
 use Temporal\DataConverter\EncodedValues;
-use Temporal\DataConverter\Payload;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
@@ -46,8 +45,23 @@ final class InvokeSignal extends WorkflowProcessAwareRoute
         $instance = $this->findInstanceOrFail($payload['runId']);
         $handler = $instance->getSignalHandler($payload['name']);
 
-        $executor = static fn() => $resolver->resolve(EncodedValues::fromValues([$handler($request->getPayloads())]));
+        // todo: create coroutine
+        // todo: what to do with error on serializer
+        // todo: need some way to pass signal error WHERE???
+        // todo: fail signal pass exception to workflow
 
-        $this->loop->once(LoopInterface::ON_SIGNAL, $executor);
+        //$executor = static fn() =>
+
+        // launches signal in coroutine
+        $resolver->resolve(EncodedValues::fromValues([$handler($request->getPayloads())]));
+
+        //$this->loop->once(LoopInterface::ON_SIGNAL, $executor);
+
+//        $process->createScope(
+//            $executor,
+//            $request->getPayloads(),
+//            true,
+//            LoopInterface::ON_SIGNAL
+//        );
     }
 }

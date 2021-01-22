@@ -21,6 +21,14 @@ class SimpleActivity
     }
 
     #[ActivityMethod]
+    public function prefix(
+        string $prefix,
+        string $input
+    ): string {
+        return $prefix . $input;
+    }
+
+    #[ActivityMethod]
     public function lower(
         string $input
     ): string {

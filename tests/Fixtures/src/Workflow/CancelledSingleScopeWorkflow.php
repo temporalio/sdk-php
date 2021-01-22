@@ -3,6 +3,7 @@
 namespace Temporal\Tests\Workflow;
 
 use Temporal\Activity\ActivityOptions;
+use Temporal\Common\RetryOptions;
 use Temporal\Exception\CancellationException;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Workflow;
@@ -24,7 +25,8 @@ class CancelledSingleScopeWorkflow
     {
         $simple = Workflow::newActivityStub(
             SimpleActivity::class,
-            ActivityOptions::new()->withStartToCloseTimeout(5)
+            ActivityOptions::new()
+                ->withStartToCloseTimeout(5)
         );
 
         $this->status[] = 'start';

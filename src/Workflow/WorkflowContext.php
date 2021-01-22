@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Workflow;
 
 use Carbon\CarbonInterface;
+use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
 use Temporal\DataConverter\EncodedValues;
@@ -20,6 +21,7 @@ use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\Support\StackRenderer;
 use Temporal\Internal\Transport\ClientInterface;
+use Temporal\Internal\Transport\CompletableResultInterface;
 use Temporal\Internal\Transport\Request\ContinueAsNew;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Internal\ServiceContainer;
@@ -34,6 +36,8 @@ use Temporal\Internal\Workflow\ChildWorkflowProxy;
 use Temporal\Internal\Workflow\ChildWorkflowStub;
 use Temporal\Internal\Workflow\ContinueAsNewProxy;
 use Temporal\Internal\Workflow\Input;
+use Temporal\Promise;
+use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 
 use function React\Promise\reject;
@@ -43,8 +47,10 @@ class WorkflowContext implements WorkflowContextInterface
     protected ServiceContainer $services;
     protected ClientInterface $client;
 
+    private array $awaits = [];
+
     protected Input $input;
-    protected WorkflowInstanceInterface $workflowInstance;
+    protected ?WorkflowInstanceInterface $workflowInstance;
     protected ?ValuesInterface $lastCompletionResult = null;
 
     private array $trace = [];
@@ -54,14 +60,14 @@ class WorkflowContext implements WorkflowContextInterface
      * WorkflowContext constructor.
      * @param ServiceContainer $services
      * @param ClientInterface $client
-     * @param WorkflowInstanceInterface $workflowInstance
+     * @param WorkflowInstanceInterface|null $workflowInstance
      * @param Input $input
      * @param ValuesInterface|null $lastCompletionResult
      */
     public function __construct(
         ServiceContainer $services,
         ClientInterface $client,
-        WorkflowInstanceInterface $workflowInstance,
+        ?WorkflowInstanceInterface $workflowInstance,
         Input $input,
         ?ValuesInterface $lastCompletionResult
     ) {
@@ -70,6 +76,14 @@ class WorkflowContext implements WorkflowContextInterface
         $this->workflowInstance = $workflowInstance;
         $this->input = $input;
         $this->lastCompletionResult = $lastCompletionResult;
+    }
+
+    /**
+     * @param WorkflowInstanceInterface $instance
+     */
+    public function setWorkflowInstance(WorkflowInstanceInterface $instance): void
+    {
+        $this->workflowInstance = $instance;
     }
 
     /**
@@ -375,5 +389,53 @@ class WorkflowContext implements WorkflowContextInterface
     public function getLastTrace(): string
     {
         return StackRenderer::renderTrace($this->trace);
+    }
+
+    /**
+     * @param mixed ...$condition
+     * @return PromiseInterface
+     */
+    public function await(...$condition): PromiseInterface
+    {
+        $conditions = [];
+        foreach ($condition as $cond) {
+            if ($cond instanceof PromiseInterface) {
+                $conditions[] = $cond;
+                continue;
+            }
+
+            $conditions[] = $this->addCondition($cond);
+        }
+
+        if (count($conditions) === 1) {
+            return $conditions[0];
+        }
+
+        return Promise::any($conditions);
+    }
+
+    /**
+     * @param callable $condition
+     * @return PromiseInterface
+     */
+    public function addCondition(callable $condition): PromiseInterface
+    {
+        $deferred = new Deferred();
+        $this->awaits[] = [$condition, $deferred];
+        return $deferred->promise();
+    }
+
+    /**
+     * Calculate unblocked conditions.
+     */
+    public function resolveConditions()
+    {
+        foreach ($this->awaits as $i => $cond) {
+            [$condition, $deferred] = $cond;
+            if ($condition()) {
+                unset($this->awaits[$i]);
+                $deferred->resolve();
+            }
+        }
     }
 }

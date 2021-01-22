@@ -87,6 +87,25 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
         $promise = $this->parent->request($request);
         ($this->onRequest)($request, $promise);
 
-        return new CompletableResult($this, $this->services->loop, $promise);
+        return new CompletableResult(
+            $this,
+            $this->services->loop,
+            $promise,
+            $this->scope->getLayer()
+        );
+    }
+
+    /**
+     * @param callable $condition
+     * @return PromiseInterface
+     */
+    public function addCondition(callable $condition): PromiseInterface
+    {
+        return new CompletableResult(
+            $this,
+            $this->services->loop,
+            $this->parent->addCondition($condition),
+            $this->scope->getLayer()
+        );
     }
 }

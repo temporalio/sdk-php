@@ -34,6 +34,7 @@ trait EventEmitterTrait
 
     /**
      * {@inheritDoc}
+     * @todo: deprecate
      */
     public function on(string $event, callable $then): self
     {

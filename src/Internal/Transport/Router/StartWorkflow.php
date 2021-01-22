@@ -18,7 +18,9 @@ use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Workflow\Input;
 use Temporal\Internal\Workflow\Process\Process;
+use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Workflow;
 use Temporal\Workflow\WorkflowContext;
 use Temporal\Workflow\WorkflowInfo;
 
@@ -59,20 +61,36 @@ final class StartWorkflow extends Route
         $input = $this->services->marshaller->unmarshal($options, new Input());
         $input->input = $payloads;
 
-        $instance = $this->instantiator->instantiate($this->findWorkflowOrFail($input->info));
-
         $context = new WorkflowContext(
             $this->services,
             $this->services->client,
-            $instance,
+            null, // todo: remove instance from context
             $input,
             $lastCompletionResult
         );
 
+        // allows access to facede methods in constructor
+        Workflow::setCurrentContext($context);
+
+        $instance = $this->instantiator->instantiate($this->findWorkflowOrFail($input->info));
+
+        // todo: move instance to the process
+        $context->setWorkflowInstance($instance);
+
         $process = new Process($this->services, $context);
         $this->services->running->add($process);
 
+        $instance->getSignalQueue()->onSignal(
+            static function (callable $handler) use ($process) {
+                $process->createScope($handler, true, LoopInterface::ON_SIGNAL);
+            }
+        );
+
+        // todo: instanciate here
         $process->start($instance->getHandler(), $context->getInput());
+
+        // todo: fix test cases
+        //$resolver->resolve(EncodedValues::fromValues([spl_object_id($process)]));
     }
 
     /**

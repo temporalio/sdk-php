@@ -58,6 +58,14 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     }
 
     /**
+     * @return SignalQueue
+     */
+    public function getSignalQueue(): SignalQueue
+    {
+        return $this->signalQueue;
+    }
+
+    /**
      * @param string $name
      * @return \Closure|null
      */
