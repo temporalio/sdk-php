@@ -11,19 +11,15 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Functional\Client;
 
-use Carbon\CarbonInterval;
-use Temporal\Api\Filter\V1\WorkflowTypeFilter;
-use Temporal\Api\Workflowservice\V1\DescribeNamespaceRequest;
-use Temporal\Api\Workflowservice\V1\ListClosedWorkflowExecutionsRequest;
-use Temporal\Client\GRPC\Context;
-use Temporal\Client\GRPC\ServiceClient;
-use Temporal\WorkflowClient;
 use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Failure\ActivityFailure;
 use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Exception\Failure\ChildWorkflowFailure;
-use Temporal\Tests\TestCase;
 
+/**
+ * @group client
+ * @group functional
+ */
 class FailureTestCase extends ClientTestCase
 {
     public function testSimpleFailurePropagation()
