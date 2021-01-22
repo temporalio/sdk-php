@@ -16,6 +16,7 @@ use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\ServiceContainer;
+use Temporal\Worker\LoopInterface;
 use Temporal\Workflow\ProcessInterface;
 use Temporal\Workflow\WorkflowContext;
 
@@ -29,6 +30,10 @@ class Process extends Scope implements ProcessInterface
     public function __construct(ServiceContainer $services, WorkflowContext $ctx)
     {
         parent::__construct($services, $ctx);
+
+        $this->getWorkflowInstance()->getSignalQueue()->onSignal(
+            fn(callable $handler) => $this->createScope($handler, true, LoopInterface::ON_SIGNAL)
+        );
 
         // unlike other scopes Process will notify the server when complete instead of pushing the result
         // to parent scope (there are no parent scope)
@@ -49,6 +54,8 @@ class Process extends Scope implements ProcessInterface
     public function start(callable $handler, ValuesInterface $values = null)
     {
         try {
+            $this->makeCurrent();
+            $this->context->getWorkflowInstance()->initConstructor();
             parent::start($handler, $values);
         } catch (\Throwable $e) {
             $this->complete($e);

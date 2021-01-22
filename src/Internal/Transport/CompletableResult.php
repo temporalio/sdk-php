@@ -52,6 +52,11 @@ class CompletableResult implements CompletableResultInterface
     private Deferred $deferred;
 
     /**
+     * @var string
+     */
+    private string $layer;
+
+    /**
      * @param WorkflowContextInterface $context
      * @param LoopInterface $loop
      * @param PromiseInterface $promise
@@ -59,11 +64,13 @@ class CompletableResult implements CompletableResultInterface
     public function __construct(
         WorkflowContextInterface $context,
         LoopInterface $loop,
-        PromiseInterface $promise
+        PromiseInterface $promise,
+        string $layer
     ) {
         $this->context = $context;
         $this->loop = $loop;
         $this->deferred = new Deferred();
+        $this->layer = $layer;
 
         /** @var CancellablePromiseInterface $current */
         $this->promise = $promise->then(
@@ -123,7 +130,7 @@ class CompletableResult implements CompletableResultInterface
         $this->value = $result;
 
         $this->loop->once(
-            LoopInterface::ON_CALLBACK,
+            $this->layer,//LoopInterface::ON_CALLBACK,
             function () {
                 Workflow::setCurrentContext($this->context);
                 $this->deferred->resolve($this->value);
@@ -139,7 +146,7 @@ class CompletableResult implements CompletableResultInterface
         $this->resolved = true;
 
         $this->loop->once(
-            LoopInterface::ON_CALLBACK,
+            $this->layer,//  LoopInterface::ON_CALLBACK,
             function () use ($e) {
                 Workflow::setCurrentContext($this->context);
                 $this->deferred->reject($e);

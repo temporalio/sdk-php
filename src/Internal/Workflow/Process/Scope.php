@@ -18,7 +18,6 @@ use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Exception\Failure\TemporalFailure;
-use Temporal\Exception\Internal\WrappedException;
 use Temporal\Internal\Coroutine\CoroutineInterface;
 use Temporal\Internal\Coroutine\Stack;
 use Temporal\Internal\ServiceContainer;
@@ -77,6 +76,13 @@ class Scope implements CancellationScopeInterface, PromisorInterface
      * @var \Throwable|null
      */
     private ?\Throwable $exception = null;
+
+    /**
+     * Every coroutine runs on it's own loop layer.
+     *
+     * @var string
+     */
+    private string $layer = LoopInterface::ON_TICK;
 
     /**
      * When wait complete reaches 0 the result (or exception) will be resolved to parent scope. Waits for inner coroutines
@@ -141,6 +147,14 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     }
 
     /**
+     * @return string
+     */
+    public function getLayer(): string
+    {
+        return $this->layer;
+    }
+
+    /**
      * @return bool
      */
     public function isDetached(): bool
@@ -173,6 +187,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
         try {
             $this->awaitLock++;
             $this->coroutine = new Stack($this->call($handler, $values ?? EncodedValues::empty()));
+            $this->context->resolveConditions();
         } catch (\Throwable $e) {
             $this->onException($e);
             return;
@@ -225,12 +240,17 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     /**
      * @param callable $handler
      * @param bool $detached
+     * @param string|null $layer
      * @return CancellationScopeInterface
      */
-    public function createScope(callable $handler, bool $detached): CancellationScopeInterface
+    public function createScope(callable $handler, bool $detached, string $layer = null): CancellationScopeInterface
     {
         $scope = new Scope($this->services, $this->context);
         $scope->detached = $detached;
+
+        if ($layer !== null) {
+            $scope->layer = $layer;
+        }
 
         // do not return parent scope result until inner scope complete
         $this->awaitLock++;
@@ -340,6 +360,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     protected function next(): void
     {
         $this->makeCurrent();
+        $this->context->resolveConditions();
 
         if (!$this->coroutine->valid()) {
             $this->onResult($this->coroutine->getReturn());
@@ -443,6 +464,9 @@ class Scope implements CancellationScopeInterface, PromisorInterface
      */
     private function unlock(): void
     {
+        $this->makeCurrent();
+        $this->context->resolveConditions();
+
         $this->awaitLock--;
         if ($this->awaitLock < 0) {
             throw new \LogicException("Undefined wait lock removed");
@@ -470,7 +494,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
      */
     private function defer(\Closure $tick)
     {
-        $listener = $this->services->loop->once(LoopInterface::ON_TICK, $tick);
+        $listener = $this->services->loop->once($this->layer, $tick);
 
         if ($this->services->queue->count() === 0) {
             $this->services->loop->tick();

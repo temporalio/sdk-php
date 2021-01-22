@@ -28,6 +28,9 @@ final class SignalQueue
      */
     private array $consumers = [];
 
+    /** @var callable */
+    private $onSignal;
+
     /**
      * @param string $signal
      * @param ValuesInterface $values
@@ -35,12 +38,20 @@ final class SignalQueue
     public function push(string $signal, ValuesInterface $values): void
     {
         if (isset($this->consumers[$signal])) {
-            ($this->consumers[$signal])($values);
+            ($this->onSignal)(fn() => ($this->consumers[$signal])($values));
             return;
         }
 
         $this->queue[$signal][] = $values;
         $this->flush($signal);
+    }
+
+    /**
+     * @param callable $handler
+     */
+    public function onSignal(callable $handler): void
+    {
+        $this->onSignal = $handler;
     }
 
     /**
@@ -65,8 +76,7 @@ final class SignalQueue
 
         while ($this->queue[$signal] !== []) {
             $args = array_shift($this->queue[$signal]);
-
-            ($this->consumers[$signal])($args);
+            ($this->onSignal)(fn() => ($this->consumers[$signal])($args));
         }
     }
 }
