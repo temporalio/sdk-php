@@ -179,7 +179,7 @@ class WorkflowDeclarationTestCase extends DeclarationTestCase
     {
         $withoutName = $reader->fromClass(SimpleWorkflow::class);
 
-        $this->assertSame('handler', $withoutName->getID());
+        $this->assertSame('SimpleWorkflow', $withoutName->getID());
     }
 
     /**
