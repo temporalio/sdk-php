@@ -14,6 +14,10 @@ namespace Temporal\Tests\Functional;
 use Temporal\Tests\Fixtures\Splitter;
 use Temporal\Tests\Fixtures\WorkerMock;
 
+/**
+ * @group workflow
+ * @group functional
+ */
 class WorkflowTestCase extends FunctionalTestCase
 {
     public function testSplitter()

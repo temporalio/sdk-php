@@ -17,7 +17,6 @@ use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\NullableType;
 use Temporal\Internal\Support\DateInterval;
-use Temporal\Internal\Support\Diff;
 use Temporal\Internal\Support\Options;
 
 /**
@@ -33,7 +32,7 @@ use Temporal\Internal\Support\Options;
  * @psalm-type ExceptionsList = array<class-string<\Throwable>>
  * @psalm-import-type DateIntervalValue from DateInterval
  */
-final class RetryOptions extends Options
+class RetryOptions extends Options
 {
     /**
      * @var null

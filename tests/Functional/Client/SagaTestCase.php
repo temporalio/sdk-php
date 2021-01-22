@@ -7,12 +7,18 @@
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace Temporal\Tests\Functional\Client;
 
 use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Failure\ActivityFailure;
 use Temporal\Tests\Workflow\SagaWorkflow;
 
+/**
+ * @group client
+ * @group functional
+ */
 class SagaTestCase extends ClientTestCase
 {
     public function testGetResult()

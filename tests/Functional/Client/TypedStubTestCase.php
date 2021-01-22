@@ -7,11 +7,17 @@
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace Temporal\Tests\Functional\Client;
 
 use Temporal\Tests\Workflow\QueryWorkflow;
 use Temporal\Tests\Workflow\SimpleWorkflow;
 
+/**
+ * @group client
+ * @group functional
+ */
 class TypedStubTestCase extends ClientTestCase
 {
     public function testGetResult()

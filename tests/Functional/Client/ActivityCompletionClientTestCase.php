@@ -18,6 +18,10 @@ use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Failure\ActivityFailure;
 use Temporal\Exception\Failure\ApplicationFailure;
 
+/**
+ * @group client
+ * @group functional
+ */
 class ActivityCompletionClientTestCase extends ClientTestCase
 {
     public function testCompleteAsyncActivityById()

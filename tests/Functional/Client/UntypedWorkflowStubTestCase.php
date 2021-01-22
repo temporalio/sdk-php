@@ -18,6 +18,10 @@ use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\TerminatedFailure;
 use Temporal\Exception\IllegalStateException;
 
+/**
+ * @group client
+ * @group functional
+ */
 class UntypedWorkflowStubTestCase extends ClientTestCase
 {
     public function testUntypedStartAndWaitResult()
