@@ -21,9 +21,10 @@ class SimpleWorkflow
             SimpleActivity::class,
             ActivityOptions::new()
                 ->withStartToCloseTimeout(5)
-                ->withRetryOptions(
-                    RetryOptions::new()->withMaximumAttempts(2)
-                )
+                // todo: update logs
+                //->withRetryOptions(
+                //    RetryOptions::new()->withMaximumAttempts(2)
+                //)
         );
 
         return yield $simple->echo($input);
