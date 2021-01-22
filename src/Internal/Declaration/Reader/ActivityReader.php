@@ -55,14 +55,9 @@ class ActivityReader extends Reader
     protected function getActivityPrototypes(\ReflectionClass $class): array
     {
         $ctx = new ClassNode($class);
-
         $prototypes = [];
 
         foreach ($class->getMethods() as $reflection) {
-            if (! $this->isValidMethod($reflection)) {
-                continue;
-            }
-
             foreach ($this->getMethodGroups($ctx, $reflection) as $name => $prototype) {
                 $this->assertActivityNotExists($name, $prototypes, $class, $reflection);
 
@@ -131,15 +126,28 @@ class ActivityReader extends Reader
                     continue;
                 }
 
+                $attribute = $this->reader->firstFunctionMetadata($method, ActivityMethod::class);
+
+                /** @var \ReflectionMethod $method */
+                if (! $this->isValidMethod($method)) {
+                    if ($attribute !== null) {
+                        $reflection = $method->getDeclaringClass();
+
+                        throw new \LogicException(
+                            \sprintf(self::ERROR_BAD_DECLARATION, $reflection->getName(), $method->getName())
+                        );
+                    }
+
+                    continue;
+                }
+
                 //
                 // The name of the activity must be generated based on the
                 // optional prefix on the #[ActivityInterface] attribute and
                 // the method's name which can be redefined
                 // using #[ActivityMethod] attribute.
                 //
-                $name = $this->activityName($method, $interface,
-                    $this->reader->firstFunctionMetadata($method, ActivityMethod::class)
-                );
+                $name = $this->activityName($method, $interface, $attribute);
 
                 $prototype = new ActivityPrototype($name, $root, $graph->getReflection());
 
