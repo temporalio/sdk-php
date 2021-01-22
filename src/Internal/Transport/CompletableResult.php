@@ -57,9 +57,11 @@ class CompletableResult implements CompletableResultInterface
     private string $layer;
 
     /**
+     * CompletableResult constructor.
      * @param WorkflowContextInterface $context
      * @param LoopInterface $loop
      * @param PromiseInterface $promise
+     * @param string $layer
      */
     public function __construct(
         WorkflowContextInterface $context,
