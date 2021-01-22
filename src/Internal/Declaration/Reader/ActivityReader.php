@@ -132,7 +132,7 @@ class ActivityReader extends Reader
                     $this->reader->firstFunctionMetadata($method, ActivityMethod::class)
                 );
 
-                $prototype = new ActivityPrototype($name, $root, $graph->getReflection(), true);
+                $prototype = new ActivityPrototype($name, $root, $graph->getReflection());
 
                 if ($retry !== null) {
                     $prototype->setMethodRetry($retry);

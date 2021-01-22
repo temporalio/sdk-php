@@ -110,34 +110,6 @@ class WorkflowDeclarationTestCase extends DeclarationTestCase
     }
 
     /**
-     * @testdox Reading workflow without workflow interface attribute
-     * @dataProvider workflowReaderDataProvider
-     *
-     * @param WorkflowReader $reader
-     * @throws \ReflectionException
-     */
-    public function testWorkflowWithoutInterface(WorkflowReader $reader): void
-    {
-        $prototype = $reader->fromClass(SimpleWorkflow::class);
-
-        $this->assertFalse($prototype->isInterfaced());
-    }
-
-    /**
-     * @testdox Reading workflow without workflow interface attribute
-     * @dataProvider workflowReaderDataProvider
-     *
-     * @param WorkflowReader $reader
-     * @throws \ReflectionException
-     */
-    public function testWorkflowWithInterface(WorkflowReader $reader): void
-    {
-        $prototype = $reader->fromClass(WorkflowWithInterface::class);
-
-        $this->assertTrue($prototype->isInterfaced());
-    }
-
-    /**
      * @testdox Reading workflow without query methods (query methods count equals 0)
      * @dataProvider workflowReaderDataProvider
      *

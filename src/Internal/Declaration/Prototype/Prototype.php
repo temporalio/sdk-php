@@ -31,34 +31,15 @@ abstract class Prototype implements PrototypeInterface
     private ?\ReflectionClass $class;
 
     /**
-     * @var bool
-     */
-    private bool $interfaced;
-
-    /**
      * @param string $name
      * @param \ReflectionFunctionAbstract $handler
      * @param \ReflectionClass|null $class
-     * @param bool $interfaced
      */
-    public function __construct(
-        string $name,
-        \ReflectionFunctionAbstract $handler,
-        ?\ReflectionClass $class,
-        bool $interfaced = false
-    ) {
+    public function __construct(string $name, \ReflectionFunctionAbstract $handler, ?\ReflectionClass $class)
+    {
         $this->handler = $handler;
         $this->name = $name;
         $this->class = $class;
-        $this->interfaced = $interfaced;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function isInterfaced(): bool
-    {
-        return $this->interfaced;
     }
 
     /**

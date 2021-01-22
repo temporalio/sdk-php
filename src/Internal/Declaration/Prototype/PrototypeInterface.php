@@ -30,14 +30,6 @@ interface PrototypeInterface extends Identifiable
     public function getClass(): ?\ReflectionClass;
 
     /**
-     * Returns information that the class is defined with an interface
-     * attribute and can be used as a stub class.
-     *
-     * @return bool
-     */
-    public function isInterfaced(): bool;
-
-    /**
      * Returns the reflection of the handler function.
      *
      * @return \ReflectionFunctionAbstract
