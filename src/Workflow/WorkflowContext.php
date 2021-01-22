@@ -216,11 +216,16 @@ class WorkflowContext implements WorkflowContextInterface
             return reject($e);
         }
 
-        // todo: get return type from context (is it possible?)
+        $returnType = null;
+        try {
+            $reflection = new \ReflectionFunction($context);
+            $returnType = $reflection->getReturnType();
+        } catch (\Throwable $e) {
+        }
+
         return EncodedValues::decodePromise(
-            $this->request(
-                new SideEffect(EncodedValues::fromValues([$value]))
-            )
+            $this->request(new SideEffect(EncodedValues::fromValues([$value]))),
+            $returnType
         );
     }
 
