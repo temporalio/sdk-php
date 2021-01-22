@@ -2,7 +2,6 @@
 
 namespace Temporal\Tests\Workflow;
 
-use Temporal\Tests\Fixtures\src\Workflow\AggregatedWorkflow;
 use Temporal\Workflow;
 
 class AggregatedWorkflowImpl implements AggregatedWorkflow

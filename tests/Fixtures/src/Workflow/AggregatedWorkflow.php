@@ -1,6 +1,6 @@
 <?php
 
-namespace Temporal\Tests\Fixtures\src\Workflow;
+namespace Temporal\Tests\Workflow;
 
 use Temporal\Workflow\SignalMethod;
 use Temporal\Workflow\WorkflowInterface;

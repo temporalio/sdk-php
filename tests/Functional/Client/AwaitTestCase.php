@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Functional\Client;
 
-use Temporal\Tests\Fixtures\src\Workflow\AggregatedWorkflow;
+use Temporal\Tests\Workflow\AggregatedWorkflow;
 use Temporal\Tests\Workflow\LoopWithSignalCoroutinesWorkflow;
 use Temporal\Tests\Workflow\LoopWorkflow;
 use Temporal\Tests\Workflow\WaitWorkflow;
