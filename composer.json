@@ -57,7 +57,6 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "App\\": "example/app",
             "Temporal\\Tests\\": "tests",
             "Temporal\\Tests\\Workflow\\": "tests/Fixtures/src/Workflow",
             "Temporal\\Tests\\Activity\\": "tests/Fixtures/src/Activity",
