@@ -22,7 +22,7 @@ interface HostConnectionInterface
      * @return CommandBatch|null
      * @throws TransportException
      */
-    public function await(): ?CommandBatch;
+    public function waitBatch(): ?CommandBatch;
 
     /**
      * @param string $frame

@@ -27,7 +27,7 @@ use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Workflow\ProcessCollection;
-use Temporal\Worker;
+use Temporal\WorkerFactory;
 use Temporal\Worker\Environment\Environment;
 use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Worker\LoopInterface;
@@ -139,10 +139,10 @@ final class ServiceContainer
     }
 
     /**
-     * @param Worker $worker
+     * @param WorkerFactory $worker
      * @return static
      */
-    public static function fromWorker(Worker $worker): self
+    public static function fromWorker(WorkerFactory $worker): self
     {
         return new self(
             $worker,

@@ -13,25 +13,15 @@ namespace Temporal\Worker;
 
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
-use Temporal\Internal\Events\EventListenerInterface;
-use Temporal\Internal\Repository\Identifiable;
 
-interface TaskQueueInterface extends
-    EventListenerInterface,
-    DispatcherInterface,
-    Identifiable
+interface WorkerInterface
 {
-    /**
-     * @return string
-     */
-    public function getID(): string;
-
     /**
      * @param class-string $class
      * @param bool $overwrite
      * @return $this
      */
-    public function addWorkflow(string $class, bool $overwrite = false): self;
+    public function registerWorkflowType(string $class, bool $overwrite = false): self;
 
     /**
      * @return iterable<WorkflowPrototype>
@@ -43,7 +33,7 @@ interface TaskQueueInterface extends
      * @param bool $overwrite
      * @return $this
      */
-    public function addActivity(string $class, bool $overwrite = false): self;
+    public function registerActivityType(string $class, bool $overwrite = false): self;
 
     /**
      * @return iterable<ActivityPrototype>

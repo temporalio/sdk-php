@@ -11,14 +11,15 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Fixtures;
 
-use Temporal\DataConverter\DataConverter;
 use Temporal\Tests\TestCase;
-use Temporal\Worker;
+use Temporal\Worker\Transport\HostConnectionInterface;
+use Temporal\Worker\WorkerFactoryInterface;
+use Temporal\WorkerFactory;
 use Temporal\Worker\Transport\CommandBatch;
 
-class WorkerMock implements Worker\Transport\HostConnectionInterface
+class WorkerMock implements HostConnectionInterface
 {
-    private Worker $worker;
+    private WorkerFactoryInterface $factory;
 
     /** @var array */
     private array $in;
@@ -43,12 +44,7 @@ class WorkerMock implements Worker\Transport\HostConnectionInterface
 
         $mock = new self();
 
-        $worker = new Worker(
-            DataConverter::createDefault(),
-            $mock,
-        );
-
-        $mock->worker = $worker;
+        $mock->factory = WorkerFactory::create();
         $mock->registerWorkflowAndActivities();
 
         CommandResetter::reset();
@@ -58,15 +54,15 @@ class WorkerMock implements Worker\Transport\HostConnectionInterface
 
     public function registerWorkflowAndActivities()
     {
-        $taskQueue = $this->worker->createAndRegister('default');
+        $taskQueue = $this->factory->newWorker('default');
 
         foreach ($this->getClasses(__DIR__ . '/src/Workflow') as $name) {
-            $taskQueue->addWorkflow('Temporal\\Tests\\Workflow\\' . $name);
+            $taskQueue->registerWorkflowType('Temporal\\Tests\\Workflow\\' . $name);
         }
 
         // register all activity
         foreach ($this->getClasses(__DIR__ . '/src/Activity') as $name) {
-            $taskQueue->addActivity('Temporal\\Tests\\Activity\\' . $name);
+            $taskQueue->registerActivityType('Temporal\\Tests\\Activity\\' . $name);
         }
     }
 
@@ -87,13 +83,13 @@ class WorkerMock implements Worker\Transport\HostConnectionInterface
 
         $this->testCase = $testCase;
 
-        $this->worker->run();
+        $this->factory->run($this);
     }
 
     /**
      * @return CommandBatch|null
      */
-    public function await(): ?CommandBatch
+    public function waitBatch(): ?CommandBatch
     {
         if (!isset($this->out[$this->indexOut])) {
             return null;

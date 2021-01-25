@@ -16,7 +16,7 @@ use Temporal\DataConverter\EncodedValues;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Repository\RepositoryInterface;
-use Temporal\Worker\TaskQueueInterface;
+use Temporal\Worker\WorkerInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 
 final class GetWorkerInfo extends Route
@@ -45,10 +45,10 @@ final class GetWorkerInfo extends Route
     }
 
     /**
-     * @param TaskQueueInterface $taskQueue
+     * @param WorkerInterface $taskQueue
      * @return array
      */
-    private function workerToArray(TaskQueueInterface $taskQueue): array
+    private function workerToArray(WorkerInterface $taskQueue): array
     {
         return [
             'TaskQueue' => $taskQueue->getID(),

@@ -30,8 +30,8 @@ use Temporal\Internal\Marshaller\Type\ObjectType;
 use Temporal\Internal\Support\Cron;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\Options;
-use Temporal\Worker;
-use Temporal\Worker\FactoryInterface;
+use Temporal\WorkerFactory;
+use Temporal\Worker\WorkerFactoryInterface;
 
 /**
  * @psalm-import-type DateIntervalValue from DateInterval
@@ -66,7 +66,7 @@ final class ChildWorkflowOptions extends Options
      * provided.
      */
     #[Marshal(name: 'TaskQueue')]
-    public string $taskQueue = FactoryInterface::DEFAULT_TASK_QUEUE;
+    public string $taskQueue = WorkerFactoryInterface::DEFAULT_TASK_QUEUE;
 
     /**
      * The end to end timeout for the child workflow execution including
