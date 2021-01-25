@@ -10,7 +10,7 @@
 namespace Temporal\DataConverter;
 
 /**
- * @psalm-type TypeHint = string|object<\ReflectionClass|\ReflectionType|Type>
+ * @psalm-type TypeHint = string | \ReflectionClass | \ReflectionType | Type
  */
 final class Type
 {
