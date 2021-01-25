@@ -165,14 +165,11 @@ class ActivityReader extends Reader
     }
 
     /**
-     * @psalm-suppress ImpureMethodCall
-     *
      * @param \ReflectionMethod $ref
      * @param ActivityInterface $int
      * @param ActivityMethod|null $method
      * @return string
      */
-    #[Pure]
     private function activityName(
         \ReflectionMethod $ref,
         ActivityInterface $int,

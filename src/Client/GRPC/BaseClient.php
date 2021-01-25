@@ -119,6 +119,7 @@ abstract class BaseClient implements ServiceClientInterface
     /**
      * @param string $address
      * @return ServiceClientInterface
+     * @psalm-suppress UndefinedClass
      */
     public static function createInsecure(string $address): ServiceClientInterface
     {
@@ -134,11 +135,14 @@ abstract class BaseClient implements ServiceClientInterface
      * @param string $address
      * @param string $crt Certificate or cert file in x509 format.
      * @return ServiceClientInterface
+     *
+     * @psalm-suppress UndefinedClass
+     * @psalm-suppress UnusedVariable
      */
     public static function createWithCert(string $address, string $crt): ServiceClientInterface
     {
-        if (is_file($crt)) {
-            $crt = file_get_contents($crt);
+        if (\is_file($crt)) {
+            $crt = \file_get_contents($crt);
         }
 
         $client = new WorkflowServiceClient(

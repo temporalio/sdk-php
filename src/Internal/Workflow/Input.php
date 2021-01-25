@@ -22,6 +22,7 @@ final class Input
 {
     /**
      * @var WorkflowInfo
+     * @psalm-readonly
      */
     #[Marshal(name: 'info')]
     #[Immutable]
@@ -29,6 +30,7 @@ final class Input
 
     /**
      * @var ValuesInterface
+     * @psalm-readonly
      */
     #[Immutable]
     public ValuesInterface $input;

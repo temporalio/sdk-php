@@ -33,12 +33,9 @@ abstract class Reader
     }
 
     /**
-     * @psalm-suppress ImpureMethodCall
-     *
      * @param \ReflectionMethod $method
      * @return bool
      */
-    #[Pure]
     protected function isValidMethod(\ReflectionMethod $method): bool
     {
         return ! $method->isStatic() && $method->isPublic();

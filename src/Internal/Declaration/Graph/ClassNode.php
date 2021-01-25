@@ -141,9 +141,7 @@ final class ClassNode implements NodeInterface
 
     /**
      * @return ClassNode|null
-     * @psalm-suppress ImpureMethodCall
      */
-    #[Pure]
     private function getParent(): ?ClassNode
     {
         if ($parent = $this->class->getParentClass()) {
