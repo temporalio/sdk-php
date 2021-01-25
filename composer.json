@@ -64,7 +64,7 @@
         }
     },
     "suggest": {
-        "doctrine/annotations": "^1.0 for Doctrine metadata driver support"
+        "doctrine/annotations": "^1.11 for Doctrine metadata driver support"
     },
     "scripts": {
         "tests": [
