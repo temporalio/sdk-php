@@ -57,7 +57,6 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "App\\": "example/app",
             "Temporal\\Tests\\": "tests",
             "Temporal\\Tests\\Workflow\\": "tests/Fixtures/src/Workflow",
             "Temporal\\Tests\\Activity\\": "tests/Fixtures/src/Activity",
@@ -65,7 +64,7 @@
         }
     },
     "suggest": {
-        "doctrine/annotations": "^1.0 for Doctrine metadata driver support"
+        "doctrine/annotations": "^1.11 for Doctrine metadata driver support"
     },
     "scripts": {
         "tests": [
