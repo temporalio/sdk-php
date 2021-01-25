@@ -28,7 +28,7 @@ final class Input
     public WorkflowInfo $info;
 
     /**
-     * @var array
+     * @var ValuesInterface
      */
     #[Immutable]
     public ValuesInterface $input;
