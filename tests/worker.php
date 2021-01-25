@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Temporal\DataConverter\DataConverter;
-use Temporal\Worker;
+use Temporal\WorkerFactory;
 use Temporal\Worker\Transport\RoadRunner;
 use Temporal\Worker\Transport\Goridge;
 use Temporal\Tests;
@@ -23,26 +23,22 @@ $getClasses = static function (string $dir): iterable {
     }
 };
 
-$worker = new Worker(
-    DataConverter::createDefault(),
-    new RoadRunner(Relay::create(Relay::PIPES)),
-    new Goridge(Relay::create('tcp://127.0.0.1:6001'))
-);
+$factory = WorkerFactory::create();
 
-$taskQueue = $worker->createAndRegister('default');
+$worker = $factory->newWorker('default');
 
 // register all workflows
 foreach ($getClasses(__DIR__ . '/Fixtures/src/Workflow') as $name) {
     $class = 'Temporal\\Tests\\Workflow\\' . $name;
 
     if (class_exists($class)) {
-        $taskQueue->addWorkflow($class);
+        $worker->registerWorkflowType($class);
     }
 }
 
 // register all activity
 foreach ($getClasses(__DIR__ . '/Fixtures/src/Activity') as $name) {
-    $taskQueue->addActivity('Temporal\\Tests\\Activity\\' . $name);
+    $worker->registerActivityType('Temporal\\Tests\\Activity\\' . $name);
 }
 
-$worker->run();
+$factory->run();

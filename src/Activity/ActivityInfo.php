@@ -19,7 +19,7 @@ use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\DateTimeType;
 use Temporal\Internal\Marshaller\Type\NullableType;
 use Temporal\Internal\Marshaller\Type\ObjectType;
-use Temporal\Worker\FactoryInterface;
+use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowType;
 
@@ -82,7 +82,7 @@ class ActivityInfo
      * @var string
      */
     #[Marshal(name: 'TaskQueue')]
-    public string $taskQueue = FactoryInterface::DEFAULT_TASK_QUEUE;
+    public string $taskQueue = WorkerFactoryInterface::DEFAULT_TASK_QUEUE;
 
     /**
      * Maximum time between heartbeats. 0 means no heartbeat needed.

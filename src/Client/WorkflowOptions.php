@@ -31,8 +31,8 @@ use Temporal\Internal\Marshaller\Type\ObjectType;
 use Temporal\Internal\Support\Cron;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\Options;
-use Temporal\Worker\FactoryInterface;
-use Temporal\Worker\TaskQueue;
+use Temporal\Worker\WorkerFactoryInterface;
+use Temporal\Worker\Worker;
 
 /**
  * WorkflowOptions configuration parameters for starting a workflow execution.
@@ -56,7 +56,7 @@ final class WorkflowOptions extends Options
      * The workflow author can choose to override this using activity options.
      */
     #[Marshal(name: 'TaskQueue')]
-    public string $taskQueue = FactoryInterface::DEFAULT_TASK_QUEUE;
+    public string $taskQueue = WorkerFactoryInterface::DEFAULT_TASK_QUEUE;
 
     /**
      * The timeout for duration of workflow execution.
@@ -181,7 +181,7 @@ final class WorkflowOptions extends Options
 
     /**
      * Task queue to use for workflow tasks. It should match a task queue
-     * specified when creating a {@see TaskQueue} that hosts the
+     * specified when creating a {@see Worker} that hosts the
      * workflow code.
      *
      * @param string $taskQueue

@@ -9,10 +9,13 @@
 
 namespace Temporal\Worker\Transport;
 
+use Spiral\Goridge\Relay;
 use Spiral\Goridge\RelayInterface;
 use Spiral\Goridge\RPC\Exception\RPCException;
 use Spiral\Goridge\RPC\RPC;
 use Spiral\Goridge\RPC\RPCInterface;
+use Spiral\RoadRunner\Environment;
+use Spiral\RoadRunner\EnvironmentInterface;
 use Temporal\Exception\TransportException;
 
 final class Goridge implements RPCConnectionInterface
@@ -25,6 +28,17 @@ final class Goridge implements RPCConnectionInterface
     public function __construct(RelayInterface $relay)
     {
         $this->rpc = new RPC($relay);
+    }
+
+    /**
+     * @param EnvironmentInterface|null $env
+     * @return RPCConnectionInterface
+     */
+    public static function create(EnvironmentInterface $env = null): RPCConnectionInterface
+    {
+        $env ??= Environment::fromGlobals();
+
+        return new self(Relay::create($env->getRPCAddress()));
     }
 
     /**

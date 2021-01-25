@@ -37,16 +37,16 @@ use Temporal\Internal\Transport\ServerInterface;
 use Temporal\Worker\Transport\Codec\JsonCodec;
 use Temporal\Worker\Transport\Codec\ProtoCodec;
 use Temporal\Worker\Transport\Command\RequestInterface;
-use Temporal\Worker\FactoryInterface;
+use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Worker\LoopInterface;
-use Temporal\Worker\TaskQueue;
-use Temporal\Worker\TaskQueueInterface;
+use Temporal\Worker\Worker;
+use Temporal\Worker\WorkerInterface;
 use Temporal\Worker\Transport\Goridge;
 use Temporal\Worker\Transport\HostConnectionInterface;
 use Temporal\Worker\Transport\RoadRunner;
 use Temporal\Worker\Transport\RPCConnectionInterface;
 
-final class Worker implements FactoryInterface
+final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
 {
     use EventEmitterTrait;
 
@@ -85,12 +85,7 @@ final class Worker implements FactoryInterface
     /**
      * @var DataConverterInterface
      */
-    private DataConverterInterface $dataConverter;
-
-    /**
-     * @var HostConnectionInterface
-     */
-    private HostConnectionInterface $host;
+    private DataConverterInterface $converter;
 
     /**
      * @var ReaderInterface
@@ -103,7 +98,7 @@ final class Worker implements FactoryInterface
     private RouterInterface $router;
 
     /**
-     * @var RepositoryInterface<TaskQueueInterface>
+     * @var RepositoryInterface<WorkerInterface>
      */
     private RepositoryInterface $queues;
 
@@ -133,22 +128,30 @@ final class Worker implements FactoryInterface
     private RPCConnectionInterface $rpc;
 
     /**
-     * @param DataConverterInterface|null $dataConverter
-     * @param HostConnectionInterface|null $host
-     * @param RPCConnectionInterface|null $rpc
+     * @param DataConverterInterface $dataConverter
+     * @param RPCConnectionInterface $rpc
      */
-    public function __construct(
-        DataConverterInterface $dataConverter = null,
-        HostConnectionInterface $host = null,
-        RPCConnectionInterface $rpc = null
-    ) {
-        $this->dataConverter = $dataConverter ?? DataConverter::createDefault();
-
-        // todo: use auto-env variables
-        $this->host = $host ?? new RoadRunner(Relay::create(Relay::PIPES));
-        $this->rpc = $rpc ?? new Goridge(Relay::create('tcp://127.0.0.1:6001'));
+    public function __construct(DataConverterInterface $dataConverter, RPCConnectionInterface $rpc)
+    {
+        $this->converter = $dataConverter;
+        $this->rpc = $rpc;
 
         $this->boot();
+    }
+
+    /**
+     * @param DataConverterInterface|null $converter
+     * @param RPCConnectionInterface|null $rpc
+     * @return WorkerFactoryInterface
+     */
+    public static function create(
+        DataConverterInterface $converter = null,
+        RPCConnectionInterface $rpc = null
+    ): WorkerFactoryInterface {
+        return new self(
+            $converter ?? DataConverter::createDefault(),
+            $rpc ?? Goridge::create()
+        );
     }
 
     /**
@@ -159,7 +162,6 @@ final class Worker implements FactoryInterface
         $this->reader = $this->createReader();
         $this->queues = $this->createTaskQueue();
         $this->router = $this->createRouter();
-        $this->codec = $this->createCodec();
         $this->responses = $this->createQueue();
         $this->client = $this->createClient();
         $this->server = $this->createServer();
@@ -187,7 +189,7 @@ final class Worker implements FactoryInterface
     }
 
     /**
-     * @return RepositoryInterface<TaskQueueInterface>
+     * @return RepositoryInterface<WorkerInterface>
      */
     private function createTaskQueue(): RepositoryInterface
     {
@@ -203,20 +205,6 @@ final class Worker implements FactoryInterface
         $router->add(new Router\GetWorkerInfo($this->queues));
 
         return $router;
-    }
-
-    /**
-     * @return CodecInterface
-     */
-    private function createCodec(): CodecInterface
-    {
-        // todo: make it better
-        switch ($_SERVER['RR_CODEC'] ?? null) {
-            case 'protobuf':
-                return new ProtoCodec($this->dataConverter);
-            default:
-                return new JsonCodec($this->dataConverter);
-        }
     }
 
     /**
@@ -248,30 +236,12 @@ final class Worker implements FactoryInterface
      * {@inheritDoc}
      * @todo pass options
      */
-    public function createAndRegister(string $taskQueue = self::DEFAULT_TASK_QUEUE): TaskQueueInterface
+    public function newWorker(string $taskQueue = self::DEFAULT_TASK_QUEUE): WorkerInterface
     {
-        $instance = $this->create($taskQueue);
+        $worker = new Worker($taskQueue, $this, $this->rpc);
+        $this->queues->add($worker);
 
-        $this->register($instance);
-
-        return $instance;
-    }
-
-    /**
-     * @param string $taskQueue
-     * @return TaskQueueInterface
-     */
-    public function create(string $taskQueue = self::DEFAULT_TASK_QUEUE): TaskQueueInterface
-    {
-        return new TaskQueue($taskQueue, $this, $this->rpc);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function register(TaskQueueInterface $queue): void
-    {
-        $this->queues->add($queue);
+        return $worker;
     }
 
     /**
@@ -303,23 +273,40 @@ final class Worker implements FactoryInterface
      */
     public function getDataConverter(): DataConverterInterface
     {
-        return $this->dataConverter;
+        return $this->converter;
     }
 
     /**
      * {@inheritDoc}
      */
-    public function run(): int
+    public function run(HostConnectionInterface $host = null): int
     {
-        while ($msg = $this->host->await()) {
+        $host ??= RoadRunner::create();
+        $this->codec = $this->createCodec();
+
+        while ($msg = $host->waitBatch()) {
             try {
-                $this->host->send($this->dispatch($msg->messages, $msg->context));
+                $host->send($this->dispatch($msg->messages, $msg->context));
             } catch (\Throwable $e) {
-                $this->host->error($e);
+                $host->error($e);
             }
         }
 
         return 0;
+    }
+
+    /**
+     * @return CodecInterface
+     */
+    private function createCodec(): CodecInterface
+    {
+        // todo: make it better
+        switch ($_SERVER['RR_CODEC'] ?? null) {
+            case 'protobuf':
+                return new ProtoCodec($this->converter);
+            default:
+                return new JsonCodec($this->converter);
+        }
     }
 
     /**
@@ -375,9 +362,9 @@ final class Worker implements FactoryInterface
 
     /**
      * @param string $taskQueueName
-     * @return TaskQueueInterface
+     * @return WorkerInterface
      */
-    private function findTaskQueueOrFail(string $taskQueueName): TaskQueueInterface
+    private function findTaskQueueOrFail(string $taskQueueName): WorkerInterface
     {
         $queue = $this->queues->find($taskQueueName);
 

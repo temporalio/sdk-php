@@ -13,15 +13,17 @@ namespace Temporal\Worker;
 
 use React\Promise\PromiseInterface;
 use Temporal\Internal\Events\EventEmitterTrait;
+use Temporal\Internal\Events\EventListenerInterface;
+use Temporal\Internal\Repository\Identifiable;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Router;
 use Temporal\Internal\Transport\RouterInterface;
-use Temporal\Worker;
+use Temporal\WorkerFactory;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\RPCConnectionInterface;
 
-class TaskQueue implements TaskQueueInterface
+class Worker implements WorkerInterface, Identifiable, EventListenerInterface, DispatcherInterface
 {
     use EventEmitterTrait;
 
@@ -46,14 +48,14 @@ class TaskQueue implements TaskQueueInterface
     private RPCConnectionInterface $rpc;
 
     /**
-     * @param string $name
-     * @param Worker $worker
+     * @param string $taskQueue
+     * @param WorkerFactory $worker
      * @param RPCConnectionInterface $rpc
      */
-    public function __construct(string $name, Worker $worker, RPCConnectionInterface $rpc)
+    public function __construct(string $taskQueue, WorkerFactory $worker, RPCConnectionInterface $rpc)
     {
         $this->rpc = $rpc;
-        $this->name = $name;
+        $this->name = $taskQueue;
 
         $this->services = ServiceContainer::fromWorker($worker);
         $this->router = $this->createRouter();
@@ -103,7 +105,7 @@ class TaskQueue implements TaskQueueInterface
     /**
      * {@inheritDoc}
      */
-    public function addWorkflow(string $class, bool $overwrite = false): TaskQueueInterface
+    public function registerWorkflowType(string $class, bool $overwrite = false): WorkerInterface
     {
         $workflow = $this->services->workflowsReader->fromClass($class);
 
@@ -123,7 +125,7 @@ class TaskQueue implements TaskQueueInterface
     /**
      * {@inheritDoc}
      */
-    public function addActivity(string $class, bool $overwrite = false): TaskQueueInterface
+    public function registerActivityType(string $class, bool $overwrite = false): WorkerInterface
     {
         foreach ($this->services->activitiesReader->fromClass($class) as $activity) {
             $this->services->activities->add($activity, $overwrite);
@@ -131,6 +133,8 @@ class TaskQueue implements TaskQueueInterface
 
         return $this;
     }
+
+    // todo: add activity factory or container
 
     /**
      * {@inheritDoc}

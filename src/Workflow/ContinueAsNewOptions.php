@@ -17,8 +17,8 @@ use Temporal\Internal\Marshaller\Type\ArrayType;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\NullableType;
 use Temporal\Internal\Support\DateInterval;
-use Temporal\Worker\FactoryInterface;
-use Temporal\Worker\TaskQueue;
+use Temporal\Worker\WorkerFactoryInterface;
+use Temporal\Worker\Worker;
 
 /**
  * @psalm-import-type DateIntervalValue from DateInterval
@@ -43,7 +43,7 @@ final class ContinueAsNewOptions
      * provided.
      */
     #[Marshal(name: 'TaskQueueName')]
-    public string $taskQueue = FactoryInterface::DEFAULT_TASK_QUEUE;
+    public string $taskQueue = WorkerFactoryInterface::DEFAULT_TASK_QUEUE;
 
     /**
      * The workflow task timeout for the child workflow.
@@ -72,7 +72,7 @@ final class ContinueAsNewOptions
 
     /**
      * Task queue to use for workflow tasks. It should match a task queue
-     * specified when creating a {@see TaskQueue} that hosts the
+     * specified when creating a {@see Worker} that hosts the
      * workflow code.
      *
      * @param string $taskQueue

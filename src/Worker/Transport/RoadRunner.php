@@ -11,14 +11,17 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Transport;
 
-use Spiral\Goridge\RelayInterface;
+use Spiral\Goridge\Relay;
 use Spiral\Goridge\RPC\Codec\JsonCodec;
 use Spiral\Goridge\RPC\CodecInterface;
+use Spiral\RoadRunner\Environment;
+use Spiral\RoadRunner\EnvironmentInterface;
 use Spiral\RoadRunner\Payload;
 use Spiral\RoadRunner\Worker;
 use Symfony\Component\VarDumper\Dumper\CliDumper;
 use Temporal\Exception\ProtocolException;
 use Temporal\Exception\TransportException;
+use Spiral\RoadRunner\WorkerInterface as RoadRunnerWorker;
 
 /**
  * @psalm-type JsonHeaders = string
@@ -34,17 +37,28 @@ final class RoadRunner implements HostConnectionInterface
         'Incorrect format of received headers. An array<string, mixed> ' .
         'required, but %s (%s) given';
 
-    private Worker $worker;
+    private RoadRunnerWorker $worker;
     private CodecInterface $codec;
 
     /**
-     * @param RelayInterface $relay
+     * @param RoadRunnerWorker $worker
      */
-    public function __construct(RelayInterface $relay)
+    public function __construct(RoadRunnerWorker $worker)
     {
-        $this->worker = new Worker($relay);
+        $this->worker = $worker;
         $this->codec = new JsonCodec();
         $this->bootStdoutHandlers();
+    }
+
+    /**
+     * @param EnvironmentInterface|null $env
+     * @return HostConnectionInterface
+     */
+    public static function create(EnvironmentInterface $env = null): HostConnectionInterface
+    {
+        $env ??= Environment::fromGlobals();
+
+        return new self(new Worker(Relay::create($env->getRelayAddress())));
     }
 
     /**
@@ -115,7 +129,7 @@ final class RoadRunner implements HostConnectionInterface
     /**
      * {@inheritDoc}
      */
-    public function await(): ?CommandBatch
+    public function waitBatch(): ?CommandBatch
     {
         /** @var Payload $payload */
         $payload = $this->interceptErrors(

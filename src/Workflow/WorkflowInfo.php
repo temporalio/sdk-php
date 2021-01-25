@@ -22,7 +22,7 @@ use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\NullableType;
 use Temporal\Internal\Marshaller\Type\ObjectType;
 use Temporal\Internal\Support\Cron;
-use Temporal\Worker\FactoryInterface;
+use Temporal\Worker\WorkerFactoryInterface;
 
 final class WorkflowInfo
 {
@@ -48,7 +48,7 @@ final class WorkflowInfo
      * @var string
      */
     #[Marshal(name: 'TaskQueueName')]
-    public string $taskQueue = FactoryInterface::DEFAULT_TASK_QUEUE;
+    public string $taskQueue = WorkerFactoryInterface::DEFAULT_TASK_QUEUE;
 
     /**
      * @readonly
