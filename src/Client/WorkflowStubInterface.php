@@ -14,16 +14,20 @@ namespace Temporal\Client;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Type;
 use Temporal\Exception\IllegalStateException;
+use Temporal\Workflow\CancellationScopeInterface;
+use Temporal\Workflow\QueryMethod;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Workflow\WorkflowRunInterface;
 
 /**
- * WorkflowStub is a client side stub to a single workflow instance. It can be used to start,
- * signal, query, wait for completion and cancel a workflow execution. Created through {@link
- * WorkflowClient#newUntypedWorkflowStub(String, WorkflowOptions)} or {@link
- * WorkflowClient#newUntypedWorkflowStub(WorkflowExecution, Optional)}.
+ * WorkflowStub is a client side stub to a single workflow instance. It can be
+ * used to start, signal, query, wait for completion and cancel a workflow
+ * execution. Created through {@see WorkflowClient::newUntypedWorkflowStub()}.
+ *
  * @psalm-import-type DateIntervalValue from DateInterval
+ * @psalm-import-type TypeHint from Type
+ * @see Type
  */
 interface WorkflowStubInterface extends WorkflowRunInterface
 {
@@ -59,8 +63,8 @@ interface WorkflowStubInterface extends WorkflowRunInterface
     public function signal(string $name, array $args = []): void;
 
     /**
-     * Synchronously queries workflow by invoking its query handler. Usually a query handler is a
-     * method annotated with {@link io.temporal.workflow.QueryMethod}.
+     * Synchronously queries workflow by invoking its query handler. Usually a
+     * query handler is a method annotated with {@see QueryMethod}.
      *
      * @param string $name
      * @param array $args
@@ -69,7 +73,8 @@ interface WorkflowStubInterface extends WorkflowRunInterface
     public function query(string $name, array $args = []): ?EncodedValues;
 
     /**
-     * Starts workflow execution without blocking the thread. Use getResult to wait for the workflow execution result.
+     * Starts workflow execution without blocking the thread. Use getResult to
+     * wait for the workflow execution result.
      *
      * @param array $args
      * @return WorkflowExecution|null
@@ -82,18 +87,15 @@ interface WorkflowStubInterface extends WorkflowRunInterface
      * @param array $startArgs
      * @return WorkflowExecution
      */
-    public function signalWithStart(
-        string $signal,
-        array $signalArgs = [],
-        array $startArgs = []
-    ): WorkflowExecution;
+    public function signalWithStart(string $signal, array $signalArgs = [], array $startArgs = []): WorkflowExecution;
 
     /**
-     * Returns workflow result potentially waiting for workflow to complete. Behind the scene this
-     * call performs long poll on Temporal service waiting for workflow completion notification.
+     * Returns workflow result potentially waiting for workflow to complete.
+     * Behind the scene this call performs long poll on Temporal service waiting
+     * for workflow completion notification.
      *
-     * @param Type|string $returnType
-     * @param int|null $timeout Timeout in seconds.
+     * @param TypeHint|null $returnType
+     * @param int $timeout Timeout in seconds.
      * @return mixed
      * @see DateInterval
      */
@@ -102,9 +104,9 @@ interface WorkflowStubInterface extends WorkflowRunInterface
     /**
      * Request cancellation of a workflow execution.
      *
-     * <p>Cancellation cancels {@link io.temporal.workflow.CancellationScope} that wraps the main
-     * workflow method. Note that workflow can take long time to get canceled or even completely
-     * ignore the cancellation request.
+     * Cancellation cancels {@see CancellationScopeInterface} that wraps the
+     * main workflow method. Note that workflow can take long time to get
+     * canceled or even completely ignore the cancellation request.
      *
      * @return void
      */
@@ -113,8 +115,8 @@ interface WorkflowStubInterface extends WorkflowRunInterface
     /**
      * Terminates a workflow execution.
      *
-     * <p>Termination is a hard stop of a workflow execution which doesn't give workflow code any
-     * chance to perform cleanup.
+     * Termination is a hard stop of a workflow execution which doesn't give
+     * workflow code any chance to perform cleanup.
      *
      * @param string $reason
      * @param array $details

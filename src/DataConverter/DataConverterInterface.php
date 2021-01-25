@@ -14,11 +14,14 @@ namespace Temporal\DataConverter;
 use Temporal\Api\Common\V1\Payload;
 use Temporal\Exception\DataConverterException;
 
+/**
+ * @psalm-import-type TypeHint from Type
+ */
 interface DataConverterInterface
 {
     /**
      * @param Payload $payload
-     * @param Type|string $type
+     * @param TypeHint $type
      * @return mixed
      *
      * @throws DataConverterException

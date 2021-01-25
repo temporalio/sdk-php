@@ -56,6 +56,10 @@ use Temporal\Exception\Client\WorkflowServiceException;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Workflow\WorkflowExecution;
 
+/**
+ * @psalm-import-type TypeHint from Type
+ * @see Type
+ */
 final class WorkflowStub implements WorkflowStubInterface
 {
     private const ERROR_WORKFLOW_START_DUPLICATION =
@@ -383,8 +387,8 @@ final class WorkflowStub implements WorkflowStubInterface
     /**
      * Wait for the workflow completion and return it's result.
      *
-     * @param Type|string $returnType
-     * @param int|null $timeout Timeout in seconds.
+     * @param TypeHint|null $returnType
+     * @param int $timeout Timeout in seconds.
      * @return mixed|null
      *
      * @throws \Throwable

@@ -9,6 +9,9 @@
 
 namespace Temporal\DataConverter;
 
+/**
+ * @psalm-type TypeHint = string|object<\ReflectionClass|\ReflectionType|Type>
+ */
 final class Type
 {
     public const STRING = 'string';
@@ -92,18 +95,24 @@ final class Type
     }
 
     /**
-     * @param mixed $type
+     * @param TypeHint $type
      * @return Type
      */
     public static function fromMixed($type): Type
     {
         switch (true) {
-            case is_string($type):
+            case $type instanceof self:
+                return $type;
+
+            case \is_string($type):
                 return new self($type);
+
             case $type instanceof \ReflectionClass:
                 return self::fromReflectionClass($type);
+
             case $type instanceof \ReflectionType:
                 return self::fromReflectionType($type);
+
             default:
                 return new self();
         }

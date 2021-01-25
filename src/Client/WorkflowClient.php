@@ -83,10 +83,7 @@ class WorkflowClient implements WorkflowClientInterface
         }
 
         throw new InvalidArgumentException(
-            sprintf(
-                "Only workflow stubs can be started, %s given",
-                is_object($workflow) ? get_class($workflow) : gettype($workflow)
-            )
+            \sprintf('Only workflow stubs can be started, %s given', \get_debug_type($workflow))
         );
     }
 

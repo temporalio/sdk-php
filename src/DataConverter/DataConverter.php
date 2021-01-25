@@ -14,6 +14,9 @@ namespace Temporal\DataConverter;
 use Temporal\Api\Common\V1\Payload;
 use Temporal\Exception\DataConverterException;
 
+/**
+ * @psalm-import-type TypeHint from Type
+ */
 final class DataConverter implements DataConverterInterface
 {
     /**
@@ -33,12 +36,15 @@ final class DataConverter implements DataConverterInterface
 
     /**
      * @param Payload $payload
-     * @param Type|string|\ReflectionType $type
+     * @param TypeHint $type
      * @return mixed
      */
     public function fromPayload(Payload $payload, $type)
     {
-        $encoding = $payload->getMetadata()[EncodingKeys::METADATA_ENCODING_KEY];
+        /** @var \ArrayAccess $meta */
+        $meta = $payload->getMetadata();
+
+        $encoding = $meta[EncodingKeys::METADATA_ENCODING_KEY];
 
         if (!isset($this->converters[$encoding])) {
             throw new DataConverterException(sprintf('Undefined payload encoding %s', $encoding));
