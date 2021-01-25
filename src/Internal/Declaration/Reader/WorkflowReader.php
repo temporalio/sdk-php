@@ -201,7 +201,7 @@ class WorkflowReader extends Reader
     private function getAttributedMethod(ClassNode $graph, \ReflectionMethod $handler, string $name): ?object
     {
         foreach ($graph->getMethods($handler->getName()) as $group) {
-            foreach ($group as $ctx => $method) {
+            foreach ($group as $method) {
                 $attribute = $this->reader->firstFunctionMetadata($method, $name);
 
                 if ($attribute !== null) {

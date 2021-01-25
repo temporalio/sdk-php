@@ -18,9 +18,7 @@ use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Workflow\Input;
 use Temporal\Internal\Workflow\Process\Process;
-use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
-use Temporal\Workflow;
 use Temporal\Workflow\WorkflowContext;
 use Temporal\Workflow\WorkflowInfo;
 
@@ -59,7 +57,6 @@ final class StartWorkflow extends Route
         }
 
         $input = $this->services->marshaller->unmarshal($options, new Input());
-        $input->input = $payloads;
 
         $instance = $this->instantiator->instantiate($this->findWorkflowOrFail($input->info));
 

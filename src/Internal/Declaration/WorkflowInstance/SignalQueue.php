@@ -28,7 +28,9 @@ final class SignalQueue
      */
     private array $consumers = [];
 
-    /** @var callable */
+    /**
+     * @var callable
+     */
     private $onSignal;
 
     /**
@@ -67,6 +69,7 @@ final class SignalQueue
 
     /**
      * @param string $signal
+     * @psalm-suppress UnusedVariable
      */
     private function flush(string $signal): void
     {
@@ -75,7 +78,8 @@ final class SignalQueue
         }
 
         while ($this->queue[$signal] !== []) {
-            $args = array_shift($this->queue[$signal]);
+            $args = \array_shift($this->queue[$signal]);
+
             ($this->onSignal)(fn() => ($this->consumers[$signal])($args));
         }
     }

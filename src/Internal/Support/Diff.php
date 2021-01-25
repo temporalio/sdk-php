@@ -11,8 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Support;
 
-use Illuminate\Support\Str;
-
 class Diff
 {
     /**
@@ -137,7 +135,7 @@ class Diff
     public function getPresentProperties(object $context): array
     {
         $changed = $this->getChangedPropertyNames($context);
-        $filter = static fn($value, string $name): bool => ! \in_array($name, $changed, true);
+        $filter = static fn($_, string $name): bool => ! \in_array($name, $changed, true);
 
         return \array_filter($this->properties, $filter, \ARRAY_FILTER_USE_BOTH);
     }

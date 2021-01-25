@@ -99,7 +99,6 @@ final class WorkflowClient implements WorkflowClientInterface
      */
     public function newWorkflowStub(string $class, WorkflowOptions $options = null): WorkflowProxy
     {
-        /** @var WorkflowPrototype $workflow */
         $workflow = (new WorkflowReader($this->reader))->fromClass($class);
 
         return new WorkflowProxy(

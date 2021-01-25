@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Internal\Declaration\Graph;
 
 use JetBrains\PhpStorm\Pure;
-use Spiral\Attributes\ReaderInterface;
 
 final class ClassNode implements NodeInterface
 {
@@ -142,6 +141,7 @@ final class ClassNode implements NodeInterface
 
     /**
      * @return ClassNode|null
+     * @psalm-suppress ImpureMethodCall
      */
     #[Pure]
     private function getParent(): ?ClassNode
