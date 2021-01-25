@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Coroutine;
+namespace Temporal\Internal\Coroutine;
 
 interface AppendableInterface extends CoroutineInterface
 {

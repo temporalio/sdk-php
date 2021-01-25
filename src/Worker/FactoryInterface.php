@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Worker;
+namespace Temporal\Worker;
 
 /**
  * The {@see FactoryInterface} is responsible for providing an

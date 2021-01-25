@@ -9,12 +9,16 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Declaration;
+namespace Temporal\Internal\Declaration;
 
-use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
+use JetBrains\PhpStorm\Pure;
+use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\ValuesInterface;
+use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Internal\Declaration\WorkflowInstance\SignalQueue;
 
 /**
- * @psalm-import-type DispatchableHandler from WorkflowInstanceInterface
+ * @psalm-import-type DispatchableHandler from InstanceInterface
  */
 final class WorkflowInstance extends Instance implements WorkflowInstanceInterface
 {
@@ -29,6 +33,11 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     private array $signalHandlers = [];
 
     /**
+     * @var SignalQueue
+     */
+    private SignalQueue $signalQueue;
+
+    /**
      * @param WorkflowPrototype $prototype
      * @param object $context
      */
@@ -36,13 +45,34 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     {
         parent::__construct($prototype, $context);
 
+        $this->signalQueue = new SignalQueue();
+
         foreach ($prototype->getSignalHandlers() as $method => $reflection) {
             $this->signalHandlers[$method] = $this->createHandler($reflection);
+            $this->signalQueue->attach($method, $this->signalHandlers[$method]);
         }
 
         foreach ($prototype->getQueryHandlers() as $method => $reflection) {
             $this->queryHandlers[$method] = $this->createHandler($reflection);
         }
+    }
+
+    /**
+     * Trigger constructor in Process context.
+     */
+    public function initConstructor(): void
+    {
+        if (method_exists($this->context, '__construct')) {
+            $this->context->__construct();
+        }
+    }
+
+    /**
+     * @return SignalQueue
+     */
+    public function getSignalQueue(): SignalQueue
+    {
+        return $this->signalQueue;
     }
 
     /**
@@ -60,7 +90,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
      */
     public function addQueryHandler(string $name, callable $handler): void
     {
-        $this->queryHandlers[$name] = \Closure::fromCallable($handler);
+        $this->queryHandlers[$name] = $this->createCallableHandler($handler);
     }
 
     /**
@@ -73,11 +103,11 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
 
     /**
      * @param string $name
-     * @return \Closure|null
+     * @return \Closure
      */
-    public function findSignalHandler(string $name): ?\Closure
+    public function getSignalHandler(string $name): \Closure
     {
-        return $this->signalHandlers[$name] ?? null;
+        return fn(ValuesInterface $values) => $this->signalQueue->push($name, $values);
     }
 
     /**
@@ -86,12 +116,14 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
      */
     public function addSignalHandler(string $name, callable $handler): void
     {
-        $this->signalHandlers[$name] = \Closure::fromCallable($handler);
+        $this->signalHandlers[$name] = $this->createCallableHandler($handler);
+        $this->signalQueue->attach($name, $this->signalHandlers[$name]);
     }
 
     /**
      * @return string[]
      */
+    #[Pure]
     public function getSignalHandlerNames(): array
     {
         return \array_keys($this->signalHandlers);

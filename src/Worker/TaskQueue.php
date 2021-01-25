@@ -9,19 +9,17 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Worker;
+namespace Temporal\Worker;
 
 use React\Promise\PromiseInterface;
-use Temporal\Client\Internal\Declaration\Reader\ActivityReader;
-use Temporal\Client\Internal\Declaration\Reader\WorkflowReader;
-use Temporal\Client\Internal\Events\EventEmitterTrait;
-use Temporal\Client\Internal\Repository\RepositoryInterface;
-use Temporal\Client\Internal\ServiceContainer;
-use Temporal\Client\Internal\Transport\Router;
-use Temporal\Client\Internal\Transport\RouterInterface;
-use Temporal\Client\Worker;
-use Temporal\Client\Worker\Command\RequestInterface;
-use Temporal\Client\Worker\Transport\RpcConnectionInterface;
+use Temporal\Internal\Events\EventEmitterTrait;
+use Temporal\Internal\Repository\RepositoryInterface;
+use Temporal\Internal\ServiceContainer;
+use Temporal\Internal\Transport\Router;
+use Temporal\Internal\Transport\RouterInterface;
+use Temporal\Worker;
+use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Transport\RPCConnectionInterface;
 
 class TaskQueue implements TaskQueueInterface
 {
@@ -31,16 +29,6 @@ class TaskQueue implements TaskQueueInterface
      * @var string
      */
     private string $name;
-
-    /**
-     * @var WorkflowReader
-     */
-    private WorkflowReader $workflowReader;
-
-    /**
-     * @var ActivityReader
-     */
-    private ActivityReader $activityReader;
 
     /**
      * @var RouterInterface
@@ -53,31 +41,21 @@ class TaskQueue implements TaskQueueInterface
     private ServiceContainer $services;
 
     /**
-     * @var RpcConnectionInterface
+     * @var RPCConnectionInterface
      */
-    private RpcConnectionInterface $rpc;
+    private RPCConnectionInterface $rpc;
 
     /**
      * @param string $name
      * @param Worker $worker
+     * @param RPCConnectionInterface $rpc
      */
-    public function __construct(string $name, Worker $worker, RpcConnectionInterface $rpc)
+    public function __construct(string $name, Worker $worker, RPCConnectionInterface $rpc)
     {
         $this->rpc = $rpc;
         $this->name = $name;
+
         $this->services = ServiceContainer::fromWorker($worker);
-
-        $this->boot();
-    }
-
-    /**
-     * @return void
-     */
-    private function boot(): void
-    {
-        $this->workflowReader = new WorkflowReader($this->services->reader);
-        $this->activityReader = new ActivityReader($this->services->reader);
-
         $this->router = $this->createRouter();
     }
 
@@ -93,8 +71,9 @@ class TaskQueue implements TaskQueueInterface
 
         // Workflow routes
         $router->add(new Router\StartWorkflow($this->services));
-        $router->add(new Router\InvokeQuery($this->services->running));
+        $router->add(new Router\InvokeQuery($this->services->running, $this->services->loop));
         $router->add(new Router\InvokeSignal($this->services->running, $this->services->loop));
+        $router->add(new Router\CancelWorkflow($this->services->running, $this->services->client));
         $router->add(new Router\DestroyWorkflow($this->services->running, $this->services->client));
         $router->add(new Router\StackTrace($this->services->running));
 
@@ -116,7 +95,7 @@ class TaskQueue implements TaskQueueInterface
     /**
      * {@inheritDoc}
      */
-    public function getId(): string
+    public function getID(): string
     {
         return $this->name;
     }
@@ -126,9 +105,9 @@ class TaskQueue implements TaskQueueInterface
      */
     public function addWorkflow(string $class, bool $overwrite = false): TaskQueueInterface
     {
-        foreach ($this->workflowReader->fromClass($class) as $workflow) {
-            $this->services->workflows->add($workflow, $overwrite);
-        }
+        $workflow = $this->services->workflowsReader->fromClass($class);
+
+        $this->services->workflows->add($workflow, $overwrite);
 
         return $this;
     }
@@ -146,7 +125,7 @@ class TaskQueue implements TaskQueueInterface
      */
     public function addActivity(string $class, bool $overwrite = false): TaskQueueInterface
     {
-        foreach ($this->activityReader->fromClass($class) as $activity) {
+        foreach ($this->services->activitiesReader->fromClass($class) as $activity) {
             $this->services->activities->add($activity, $overwrite);
         }
 

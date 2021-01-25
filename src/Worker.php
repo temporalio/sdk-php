@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client;
+namespace Temporal;
 
 use Doctrine\Common\Annotations\AnnotationReader as DoctrineReader;
 use Doctrine\Common\Annotations\Reader;
@@ -19,28 +19,32 @@ use Spiral\Attributes\AnnotationReader;
 use Spiral\Attributes\AttributeReader;
 use Spiral\Attributes\Composite\SelectiveReader;
 use Spiral\Attributes\ReaderInterface;
-use Temporal\Client\Internal\Codec\CodecInterface;
-use Temporal\Client\Internal\Codec\JsonCodec;
-use Temporal\Client\Internal\Events\EventEmitterTrait;
-use Temporal\Client\Internal\Queue\ArrayQueue;
-use Temporal\Client\Internal\Queue\QueueInterface;
-use Temporal\Client\Internal\Repository\ArrayRepository;
-use Temporal\Client\Internal\Repository\RepositoryInterface;
-use Temporal\Client\Internal\Transport\CapturedClientInterface;
-use Temporal\Client\Internal\Transport\Client;
-use Temporal\Client\Internal\Transport\ClientInterface;
-use Temporal\Client\Internal\Transport\Router;
-use Temporal\Client\Internal\Transport\RouterInterface;
-use Temporal\Client\Internal\Transport\Server;
-use Temporal\Client\Internal\Transport\ServerInterface;
-use Temporal\Client\Worker\Command\RequestInterface;
-use Temporal\Client\Worker\FactoryInterface;
-use Temporal\Client\Worker\LoopInterface;
-use Temporal\Client\Worker\TaskQueue;
-use Temporal\Client\Worker\TaskQueueInterface;
-use Temporal\Client\Worker\Transport\RelayConnectionInterface;
-use Temporal\Client\Worker\Transport\RoadRunner;
-use Temporal\Client\Worker\Transport\RpcConnectionInterface;
+use Spiral\Goridge\Relay;
+use Temporal\DataConverter\DataConverter;
+use Temporal\DataConverter\DataConverterInterface;
+use Temporal\Worker\Transport\Codec\CodecInterface;
+use Temporal\Internal\Events\EventEmitterTrait;
+use Temporal\Internal\Queue\ArrayQueue;
+use Temporal\Internal\Queue\QueueInterface;
+use Temporal\Internal\Repository\ArrayRepository;
+use Temporal\Internal\Repository\RepositoryInterface;
+use Temporal\Internal\Transport\Client;
+use Temporal\Internal\Transport\ClientInterface;
+use Temporal\Internal\Transport\Router;
+use Temporal\Internal\Transport\RouterInterface;
+use Temporal\Internal\Transport\Server;
+use Temporal\Internal\Transport\ServerInterface;
+use Temporal\Worker\Transport\Codec\JsonCodec;
+use Temporal\Worker\Transport\Codec\ProtoCodec;
+use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\FactoryInterface;
+use Temporal\Worker\LoopInterface;
+use Temporal\Worker\TaskQueue;
+use Temporal\Worker\TaskQueueInterface;
+use Temporal\Worker\Transport\Goridge;
+use Temporal\Worker\Transport\HostConnectionInterface;
+use Temporal\Worker\Transport\RoadRunner;
+use Temporal\Worker\Transport\RPCConnectionInterface;
 
 final class Worker implements FactoryInterface
 {
@@ -79,9 +83,14 @@ final class Worker implements FactoryInterface
     ];
 
     /**
-     * @var RelayConnectionInterface
+     * @var DataConverterInterface
      */
-    private RelayConnectionInterface $relay;
+    private DataConverterInterface $dataConverter;
+
+    /**
+     * @var HostConnectionInterface
+     */
+    private HostConnectionInterface $host;
 
     /**
      * @var ReaderInterface
@@ -119,21 +128,27 @@ final class Worker implements FactoryInterface
     private QueueInterface $responses;
 
     /**
-     * @var RpcConnectionInterface
+     * @var RPCConnectionInterface
      */
-    private RpcConnectionInterface $rpc;
+    private RPCConnectionInterface $rpc;
 
     /**
-     * @param RelayConnectionInterface|null $relay
-     * @param RpcConnectionInterface|null $rpc
+     * @param DataConverterInterface|null $dataConverter
+     * @param HostConnectionInterface|null $host
+     * @param RPCConnectionInterface|null $rpc
      */
-    public function __construct(RelayConnectionInterface $relay = null, RpcConnectionInterface $rpc = null)
-    {
-        $this->relay = $relay ?? RoadRunner::pipes();
-        $this->rpc = $rpc ?? RoadRunner::socket(6001);
+    public function __construct(
+        DataConverterInterface $dataConverter = null,
+        HostConnectionInterface $host = null,
+        RPCConnectionInterface $rpc = null
+    ) {
+        $this->dataConverter = $dataConverter ?? DataConverter::createDefault();
+
+        // todo: use auto-env variables
+        $this->host = $host ?? new RoadRunner(Relay::create(Relay::PIPES));
+        $this->rpc = $rpc ?? new Goridge(Relay::create('tcp://127.0.0.1:6001'));
 
         $this->boot();
-        $this->bootEvents();
     }
 
     /**
@@ -160,10 +175,12 @@ final class Worker implements FactoryInterface
                 DoctrineReader::addGlobalIgnoredName($annotation);
             }
 
-            return new SelectiveReader([
-                new AnnotationReader(),
-                new AttributeReader(),
-            ]);
+            return new SelectiveReader(
+                [
+                    new AnnotationReader(),
+                    new AttributeReader(),
+                ]
+            );
         }
 
         return new AttributeReader();
@@ -172,7 +189,6 @@ final class Worker implements FactoryInterface
     /**
      * @return RepositoryInterface<TaskQueueInterface>
      */
-    #[Pure]
     private function createTaskQueue(): RepositoryInterface
     {
         return new ArrayRepository();
@@ -194,7 +210,13 @@ final class Worker implements FactoryInterface
      */
     private function createCodec(): CodecInterface
     {
-        return new JsonCodec();
+        // todo: make it better
+        switch ($_SERVER['RR_CODEC'] ?? null) {
+            case 'protobuf':
+                return new ProtoCodec($this->dataConverter);
+            default:
+                return new JsonCodec($this->dataConverter);
+        }
     }
 
     /**
@@ -206,7 +228,7 @@ final class Worker implements FactoryInterface
     }
 
     /**
-     * @return CapturedClientInterface
+     * @return ClientInterface
      */
     #[Pure]
     private function createClient(): ClientInterface
@@ -223,31 +245,8 @@ final class Worker implements FactoryInterface
     }
 
     /**
-     * @return void
-     */
-    private function bootEvents(): void
-    {
-        $this->on(self::ON_TICK, function () {
-            foreach ($this->queues as $queue) {
-                $queue->emit(TaskQueueInterface::ON_SIGNAL);
-            }
-
-            foreach ($this->queues as $queue) {
-                $queue->emit(TaskQueueInterface::ON_CALLBACK);
-            }
-
-            foreach ($this->queues as $queue) {
-                $queue->emit(TaskQueueInterface::ON_QUERY);
-            }
-
-            foreach ($this->queues as $queue) {
-                $queue->emit(TaskQueueInterface::ON_TICK);
-            }
-        });
-    }
-
-    /**
      * {@inheritDoc}
+     * @todo pass options
      */
     public function createAndRegister(string $taskQueue = self::DEFAULT_TASK_QUEUE): TaskQueueInterface
     {
@@ -300,15 +299,23 @@ final class Worker implements FactoryInterface
     }
 
     /**
+     * @return DataConverterInterface
+     */
+    public function getDataConverter(): DataConverterInterface
+    {
+        return $this->dataConverter;
+    }
+
+    /**
      * {@inheritDoc}
      */
     public function run(): int
     {
-        while ([$messages, $headers] = $this->relay->await()) {
+        while ($msg = $this->host->await()) {
             try {
-                $this->relay->send($this->dispatch($messages, $headers));
+                $this->host->send($this->dispatch($msg->messages, $msg->context));
             } catch (\Throwable $e) {
-                $this->relay->error($e);
+                $this->host->error($e);
             }
         }
 
@@ -342,6 +349,9 @@ final class Worker implements FactoryInterface
      */
     public function tick(): void
     {
+        $this->emit(LoopInterface::ON_SIGNAL);
+        $this->emit(LoopInterface::ON_CALLBACK);
+        $this->emit(LoopInterface::ON_QUERY);
         $this->emit(LoopInterface::ON_TICK);
     }
 
@@ -352,7 +362,7 @@ final class Worker implements FactoryInterface
      */
     private function onRequest(RequestInterface $request, array $headers): PromiseInterface
     {
-        if (! isset($headers[self::HEADER_TASK_QUEUE])) {
+        if (!isset($headers[self::HEADER_TASK_QUEUE])) {
             return $this->router->dispatch($request, $headers);
         }
 
@@ -386,8 +396,15 @@ final class Worker implements FactoryInterface
     {
         $taskQueue = $headers[self::HEADER_TASK_QUEUE];
 
-        if (! \is_string($taskQueue)) {
-            $error = \sprintf(self::ERROR_HEADER_NOT_STRING_TYPE, self::HEADER_TASK_QUEUE, \get_debug_type($taskQueue));
+        if (!\is_string($taskQueue)) {
+            $error = \vsprintf(
+                self::ERROR_HEADER_NOT_STRING_TYPE,
+                [
+                    self::HEADER_TASK_QUEUE,
+                    \get_debug_type($taskQueue)
+                ]
+            );
+
             throw new \InvalidArgumentException($error);
         }
 

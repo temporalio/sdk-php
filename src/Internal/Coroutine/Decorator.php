@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Coroutine;
+namespace Temporal\Internal\Coroutine;
 
 class Decorator implements CoroutineInterface
 {
@@ -101,7 +101,7 @@ class Decorator implements CoroutineInterface
         }
 
         if ($this->iterator->valid()) {
-            throw new \LogicException('Cannot get return value of an iterator that hasn\'t returned');
+            throw new \LogicException('Cannot get return value of an iterator that has not returned');
         }
 
         return null;

@@ -9,11 +9,11 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Marshaller\Type;
+namespace Temporal\Internal\Marshaller\Type;
 
 use Carbon\Carbon;
-use Temporal\Client\Internal\Marshaller\MarshallerInterface;
-use Temporal\Client\Internal\Support\Inheritance;
+use Temporal\Internal\Marshaller\MarshallerInterface;
+use Temporal\Internal\Support\Inheritance;
 
 class DateTimeType extends Type implements DetectableTypeInterface
 {
@@ -37,7 +37,7 @@ class DateTimeType extends Type implements DetectableTypeInterface
      */
     public static function match(\ReflectionNamedType $type): bool
     {
-        return ! $type->isBuiltin() && Inheritance::implements($type->getName(), \DateTimeInterface::class);
+        return !$type->isBuiltin() && Inheritance::implements($type->getName(), \DateTimeInterface::class);
     }
 
     /**
@@ -54,7 +54,6 @@ class DateTimeType extends Type implements DetectableTypeInterface
     public function serialize($value): string
     {
         return Carbon::parse($value)
-            ->format($this->format)
-        ;
+            ->format($this->format);
     }
 }

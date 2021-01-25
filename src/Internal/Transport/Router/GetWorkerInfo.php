@@ -9,23 +9,22 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Transport\Router;
+namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
-use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
-use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
-use Temporal\Client\Internal\Repository\RepositoryInterface;
-use Temporal\Client\Worker\TaskQueueInterface;
+use Temporal\DataConverter\EncodedValues;
+use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
+use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Internal\Repository\RepositoryInterface;
+use Temporal\Worker\TaskQueueInterface;
+use Temporal\Worker\Transport\Command\RequestInterface;
 
 final class GetWorkerInfo extends Route
 {
-    /**
-     * @var RepositoryInterface<TaskQueueInterface>
-     */
     private RepositoryInterface $queues;
 
     /**
-     * @param RepositoryInterface<TaskQueueInterface> $queues
+     * @param RepositoryInterface $queues
      */
     public function __construct(RepositoryInterface $queues)
     {
@@ -35,15 +34,14 @@ final class GetWorkerInfo extends Route
     /**
      * {@inheritDoc}
      */
-    public function handle(array $payload, array $headers, Deferred $resolver): void
+    public function handle(RequestInterface $request, array $headers, Deferred $resolver): void
     {
         $result = [];
-
         foreach ($this->queues as $taskQueue) {
             $result[] = $this->workerToArray($taskQueue);
         }
 
-        $resolver->resolve($result);
+        $resolver->resolve(EncodedValues::fromValues($result));
     }
 
     /**
@@ -53,19 +51,23 @@ final class GetWorkerInfo extends Route
     private function workerToArray(TaskQueueInterface $taskQueue): array
     {
         return [
-            'taskQueue'  => $taskQueue->getId(),
-            'workflows'  => $this->map($taskQueue->getWorkflows(), function (WorkflowPrototype $workflow) {
-                return [
-                    'name'    => $workflow->getId(),
-                    'queries' => $this->keys($workflow->getQueryHandlers()),
-                    'signals' => $this->keys($workflow->getSignalHandlers()),
-                ];
-            }),
-            'activities' => $this->map($taskQueue->getActivities(), function (ActivityPrototype $activity) {
-                return [
-                    'name' => $activity->getId(),
-                ];
-            }),
+            'TaskQueue' => $taskQueue->getID(),
+            'Workflows' => $this->map(
+                $taskQueue->getWorkflows(),
+                function (WorkflowPrototype $workflow) {
+                    return [
+                        'Name' => $workflow->getID(),
+                        'Queries' => $this->keys($workflow->getQueryHandlers()),
+                        'Signals' => $this->keys($workflow->getSignalHandlers()),
+                    ];
+                }
+            ),
+            'Activities' => $this->map(
+                $taskQueue->getActivities(),
+                function (ActivityPrototype $activity) {
+                    return ['Name' => $activity->getID()];
+                }
+            ),
         ];
     }
 

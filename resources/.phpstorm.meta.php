@@ -2,16 +2,37 @@
 
 namespace PHPSTORM_META {
 
-    override(\Temporal\Client\Internal\Workflow\WorkflowContextInterface::newActivityStub(), map([
+    override(\Temporal\Workflow\WorkflowContextInterface::newActivityStub(), map([
         '' => type(0),
     ]));
 
-    override(\Temporal\Client\Internal\Workflow\WorkflowContext::newActivityStub(), map([
+    override(\Temporal\Workflow\WorkflowContext::newActivityStub(), map([
         '' => type(0),
     ]));
 
-    override(\Temporal\Client\Workflow::newActivityStub(), map([
+    override(\Temporal\Workflow::newActivityStub(), map([
         '' => type(0),
     ]));
 
+    override(\Temporal\Workflow\WorkflowContextInterface::newChildWorkflowStub(), map([
+        '' => type(0),
+    ]));
+
+    override(\Temporal\Workflow\WorkflowContext::newChildWorkflowStub(), map([
+        '' => type(0),
+    ]));
+
+    override(\Temporal\Workflow::newChildWorkflowStub(), map([
+        '' => type(0),
+    ]));
+
+
+    // RPC
+    override(\Temporal\Client\WorkflowClientInterface::newWorkflowStub(), map([
+        '' => type(0),
+    ]));
+
+    override(\Temporal\WorkflowClient::newWorkflowStub(), map([
+        '' => type(0),
+    ]));
 }

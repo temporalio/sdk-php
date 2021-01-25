@@ -9,14 +9,14 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Marshaller\Mapper;
+namespace Temporal\Internal\Marshaller\Mapper;
 
 use Spiral\Attributes\ReaderInterface;
-use Temporal\Client\Internal\Marshaller\MarshallerInterface;
-use Temporal\Client\Internal\Marshaller\Meta\Marshal;
-use Temporal\Client\Internal\Marshaller\Meta\Scope;
-use Temporal\Client\Internal\Marshaller\Type\TypeInterface;
-use Temporal\Client\Internal\Marshaller\TypeFactoryInterface;
+use Temporal\Internal\Marshaller\MarshallerInterface;
+use Temporal\Internal\Marshaller\Meta\Marshal;
+use Temporal\Internal\Marshaller\Meta\Scope;
+use Temporal\Internal\Marshaller\Type\TypeInterface;
+use Temporal\Internal\Marshaller\TypeFactoryInterface;
 
 /**
  * @psalm-import-type Getter from MapperInterface
@@ -142,7 +142,7 @@ class AttributeMapper implements MapperInterface
         return function () use ($name, $type) {
             try {
                 $result = $this->$name;
-            } catch (\Error $e) {
+            } catch (\Error $_) {
                 return null;
             }
 
@@ -160,7 +160,7 @@ class AttributeMapper implements MapperInterface
         return function ($value) use ($name, $type) {
             try {
                 $source = $this->$name;
-            } catch (\Error $e) {
+            } catch (\Error $_) {
                 $source = null;
             }
 

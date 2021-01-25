@@ -9,12 +9,15 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Common;
+namespace Temporal\Common;
 
-use Temporal\Client\Activity\ActivityOptions;
-use Temporal\Client\Internal\Marshaller\Meta\Marshal;
-use Temporal\Client\Internal\Marshaller\Type\DateIntervalType;
-use Temporal\Client\Internal\Marshaller\Type\NullableType;
+use Temporal\Activity\ActivityOptions;
+use Temporal\Internal\Assert;
+use Temporal\Internal\Marshaller\Meta\Marshal;
+use Temporal\Internal\Marshaller\Type\DateIntervalType;
+use Temporal\Internal\Marshaller\Type\NullableType;
+use Temporal\Internal\Support\DateInterval;
+use Temporal\Internal\Support\Options;
 
 /**
  * Note that the history of activity with retry policy will be different:
@@ -27,8 +30,9 @@ use Temporal\Client\Internal\Marshaller\Type\NullableType;
  *     temporal --do <namespace> wf desc -w <wf-id>
  *
  * @psalm-type ExceptionsList = array<class-string<\Throwable>>
+ * @psalm-import-type DateIntervalValue from DateInterval
  */
-class RetryOptions
+class RetryOptions extends Options
 {
     /**
      * @var null
@@ -51,17 +55,15 @@ class RetryOptions
     public const DEFAULT_MAXIMUM_ATTEMPTS = 1;
 
     /**
-     * @var array<string>
+     * @psalm-var ExceptionsList
      */
     public const DEFAULT_NON_RETRYABLE_EXCEPTIONS = [];
 
     /**
      * Backoff interval for the first retry. If {@see RetryOptions::$backoffCoefficient}
      * is 1.0 then it is used for all retries.
-     *
-     * @var \DateInterval|null
      */
-    #[Marshal(name: 'InitialInterval', type: NullableType::class, of: DateIntervalType::class)]
+    #[Marshal(name: 'initial_interval', type: NullableType::class, of: DateIntervalType::class)]
     public ?\DateInterval $initialInterval = self::DEFAULT_INITIAL_INTERVAL;
 
     /**
@@ -69,10 +71,8 @@ class RetryOptions
      * retry interval is previous interval multiplied by this coefficient.
      *
      * Note: Must be greater than 1.0
-     *
-     * @var float
      */
-    #[Marshal(name: 'BackoffCoefficient')]
+    #[Marshal(name: 'backoff_coefficient')]
     public float $backoffCoefficient = self::DEFAULT_BACKOFF_COEFFICIENT;
 
     /**
@@ -80,10 +80,8 @@ class RetryOptions
      * interval increase. This value is the cap of the interval.
      *
      * Default is 100x of {@see $initialInterval}.
-     *
-     * @var \DateInterval|null
      */
-    #[Marshal(name: 'MaximumInterval', type: NullableType::class, of: DateIntervalType::class)]
+    #[Marshal(name: 'maximum_interval', type: NullableType::class, of: DateIntervalType::class)]
     public ?\DateInterval $maximumInterval = self::DEFAULT_MAXIMUM_INTERVAL;
 
     /**
@@ -93,7 +91,7 @@ class RetryOptions
      *
      * @var positive-int
      */
-    #[Marshal(name: 'MaximumAttempts')]
+    #[Marshal(name: 'maximum_attempts')]
     public int $maximumAttempts = self::DEFAULT_MAXIMUM_ATTEMPTS;
 
     /**
@@ -102,61 +100,80 @@ class RetryOptions
      *
      * @var ExceptionsList
      */
-    #[Marshal(name: 'NonRetryableErrorTypes')]
+    #[Marshal(name: 'non_retryable_error_types')]
     public array $nonRetryableExceptions = self::DEFAULT_NON_RETRYABLE_EXCEPTIONS;
 
     /**
-     * @param \DateInterval|null $initialInterval
-     * @return RetryOptions
+     * @param MethodRetry|null $retry
+     * @return $this
      */
-    public function withInitialInterval(?\DateInterval $initialInterval): self
+    public function mergeWith(MethodRetry $retry = null): self
     {
-        $this->initialInterval = $initialInterval;
-
-        return $this;
+        return immutable(function () use ($retry) {
+            if ($retry !== null) {
+                foreach ($this->diff->getPresentPropertyNames($this) as $name) {
+                    $this->$name = $retry->$name;
+                }
+            }
+        });
     }
 
     /**
-     * @param float $backoffCoefficient
-     * @return RetryOptions
+     * @param DateIntervalValue|null $interval
+     * @return $this
      */
-    public function withBackoffCoefficient(float $backoffCoefficient): self
+    public function withInitialInterval($interval): self
     {
-        $this->backoffCoefficient = $backoffCoefficient;
+        assert(DateInterval::assert($interval) || $interval === null);
 
-        return $this;
+        return immutable(fn() =>
+            $this->initialInterval = DateInterval::parseOrNull($interval, DateInterval::FORMAT_SECONDS)
+        );
     }
 
     /**
-     * @param \DateInterval|null $maximumInterval
-     * @return RetryOptions
+     * @param float $coefficient
+     * @return $this
      */
-    public function withMaximumInterval(?\DateInterval $maximumInterval): self
+    public function withBackoffCoefficient(float $coefficient): self
     {
-        $this->maximumInterval = $maximumInterval;
+        assert($coefficient >= 1.0);
 
-        return $this;
+        return immutable(fn () => $this->backoffCoefficient = $coefficient);
     }
 
     /**
-     * @param int $maximumAttempts
-     * @return RetryOptions
+     * @param DateIntervalValue|null $interval
+     * @return $this
      */
-    public function withMaximumAttempts(int $maximumAttempts): self
+    public function withMaximumInterval($interval): self
     {
-        $this->maximumAttempts = $maximumAttempts;
+        assert(DateInterval::assert($interval) || $interval === null);
 
-        return $this;
+        return immutable(fn() =>
+            $this->initialInterval = DateInterval::parseOrNull($interval, DateInterval::FORMAT_SECONDS)
+        );
     }
 
     /**
-     * @param mixed $nonRetryableExceptions
-     * @return RetryOptions
+     * @param int $attempts
+     * @return $this
      */
-    public function withNonRetryableExceptions(array $nonRetryableExceptions): self
+    public function withMaximumAttempts(int $attempts): self
     {
-        $this->nonRetryableExceptions = $nonRetryableExceptions;
+        assert($attempts >= 0);
 
-        return $this;
+        return immutable(fn () => $this->maximumAttempts = $attempts);
+    }
+
+    /**
+     * @param mixed $exceptions
+     * @return $this
+     */
+    public function withNonRetryableExceptions(array $exceptions): self
+    {
+        assert(Assert::valuesInstanceOf($exceptions, \Throwable::class));
+
+        return immutable(fn () => $this->nonRetryableExceptions = $exceptions);
     }
 }

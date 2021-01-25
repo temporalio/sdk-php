@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Workflow;
+namespace Temporal\Workflow;
 
 final class ParentClosePolicy
 {
@@ -20,22 +20,16 @@ final class ParentClosePolicy
 
     /**
      * Terminate means terminating the child workflow.
-     *
-     * @var int
      */
     public const POLICY_TERMINATE = 1;
 
     /**
      * Abandon means not doing anything on the child workflow.
-     *
-     * @var int
      */
     public const POLICY_ABANDON = 2;
 
     /**
      * Cancel means requesting cancellation on the child workflow.
-     *
-     * @var int
      */
     public const POLICY_REQUEST_CANCEL = 3;
 }

@@ -9,9 +9,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Queue;
+namespace Temporal\Internal\Queue;
 
-use Temporal\Client\Worker\Command\CommandInterface;
+use Temporal\Worker\Transport\Command\CommandInterface;
 
 class ArrayQueue implements QueueInterface
 {
@@ -34,14 +34,28 @@ class ArrayQueue implements QueueInterface
     public function pull(int $commandId): ?CommandInterface
     {
         foreach ($this->commands as $i => $command) {
-            if ($command->getId() === $commandId) {
+            if ($command->getID() === $commandId) {
                 unset($this->commands[$i]);
-
-                break;
+                return $command;
             }
         }
 
-        return $command ?? null;
+        return null;
+    }
+
+    /**
+     * @param int $commandId
+     * @return bool
+     */
+    public function has(int $commandId): bool
+    {
+        foreach ($this->commands as $command) {
+            if ($command->getID() === $commandId) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

@@ -9,28 +9,23 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Transport\Request;
+namespace Temporal\Internal\Transport\Request;
 
-use Temporal\Client\Worker\Command\Request;
+use Temporal\DataConverter\ValuesInterface;
+use Temporal\Worker\Transport\Command\Request;
 
 final class ExecuteActivity extends Request
 {
-    /**
-     * @var string
-     */
     public const NAME = 'ExecuteActivity';
+    protected const CANCELLABLE = true;
 
     /**
      * @param string $name
-     * @param array $arguments
+     * @param ValuesInterface $args
      * @param array $options
      */
-    public function __construct(string $name, array $arguments, array $options)
+    public function __construct(string $name, ValuesInterface $args, array $options)
     {
-        parent::__construct(self::NAME, [
-            'name'      => $name,
-            'arguments' => $arguments,
-            'options'   => $options,
-        ]);
+        parent::__construct(self::NAME, ['name' => $name, 'options' => $options], $args);
     }
 }

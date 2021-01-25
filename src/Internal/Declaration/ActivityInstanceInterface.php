@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Declaration;
+namespace Temporal\Internal\Declaration;
 
 interface ActivityInstanceInterface extends InstanceInterface
 {

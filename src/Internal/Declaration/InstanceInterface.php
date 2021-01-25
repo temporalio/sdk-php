@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Declaration;
+namespace Temporal\Internal\Declaration;
 
 /**
  * @psalm-type DispatchableHandler = callable(array): mixed
@@ -20,4 +20,9 @@ interface InstanceInterface
      * @return DispatchableHandler
      */
     public function getHandler(): callable;
+
+    /**
+     * @return object|null
+     */
+    public function getContext(): ?object;
 }

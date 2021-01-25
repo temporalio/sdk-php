@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Marshaller;
+namespace Temporal\Internal\Marshaller;
 
 interface MarshallerInterface
 {

@@ -9,36 +9,39 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Workflow;
+namespace Temporal\Internal\Workflow;
 
 use JetBrains\PhpStorm\Immutable;
-use Temporal\Client\Internal\Marshaller\Meta\Marshal;
-use Temporal\Client\Workflow\WorkflowInfo;
+use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\ValuesInterface;
+use Temporal\Internal\Marshaller\Meta\Marshal;
+use Temporal\Workflow\WorkflowInfo;
 
 #[Immutable]
 final class Input
 {
     /**
      * @var WorkflowInfo
+     * @psalm-readonly
      */
     #[Marshal(name: 'info')]
     #[Immutable]
     public WorkflowInfo $info;
 
     /**
-     * @var array
+     * @var ValuesInterface
+     * @psalm-readonly
      */
-    #[Marshal(name: 'args')]
     #[Immutable]
-    public array $args;
+    public ValuesInterface $input;
 
     /**
-     * @param WorkflowInfo $info
-     * @param array $args
+     * @param WorkflowInfo|null $info
+     * @param ValuesInterface|null $args
      */
-    public function __construct(WorkflowInfo $info = null, array $args = [])
+    public function __construct(WorkflowInfo $info = null, ValuesInterface $args = null)
     {
         $this->info = $info ?? new WorkflowInfo();
-        $this->args = $args;
+        $this->input = $args ?? EncodedValues::empty();
     }
 }

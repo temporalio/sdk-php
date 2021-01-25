@@ -9,24 +9,20 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Transport\Request;
+namespace Temporal\Internal\Transport\Request;
 
-use Temporal\Client\Worker\Command\Request;
+use Temporal\DataConverter\ValuesInterface;
+use Temporal\Worker\Transport\Command\Request;
 
 final class SideEffect extends Request
 {
-    /**
-     * @var string
-     */
     public const NAME = 'SideEffect';
 
     /**
-     * @param mixed $value
+     * @param ValuesInterface $values
      */
-    public function __construct($value)
+    public function __construct(ValuesInterface $values)
     {
-        parent::__construct(self::NAME, [
-            'value' => $value,
-        ]);
+        parent::__construct(self::NAME, [], $values);
     }
 }

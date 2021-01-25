@@ -9,15 +9,16 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client;
+namespace Temporal;
 
-use Temporal\Client\Activity\ActivityInfo;
-use Temporal\Client\Internal\Support\Facade;
+use Temporal\Activity\ActivityInfo;
+use Temporal\Internal\Support\Facade;
 
 /**
  * @method static ActivityInfo getInfo()
  * @method static array getArguments()
  *
+ * @method static mixed getHeartbeatDetails(mixed $type=null)
  * @method static mixed heartbeat(mixed $details)
  *
  * @method static void doNotCompleteOnReturn()

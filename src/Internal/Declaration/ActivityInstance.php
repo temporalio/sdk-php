@@ -9,18 +9,11 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Declaration;
+namespace Temporal\Internal\Declaration;
 
-use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
+use Temporal\DataConverter\DataConverterInterface;
+use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 
 final class ActivityInstance extends Instance implements ActivityInstanceInterface
 {
-    /**
-     * @param ActivityPrototype $prototype
-     * @param object $context
-     */
-    public function __construct(ActivityPrototype $prototype, object $context)
-    {
-        parent::__construct($prototype, $context);
-    }
 }

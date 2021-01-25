@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Workflow;
+namespace Temporal\Workflow;
 
 use Doctrine\Common\Annotations\Annotation\Target;
 use Spiral\Attributes\NamedArgumentConstructorAttribute;

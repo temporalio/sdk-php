@@ -9,10 +9,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Marshaller\Meta;
+namespace Temporal\Internal\Marshaller\Meta;
 
-use Temporal\Client\Internal\Marshaller\Type\ArrayType;
-use Temporal\Client\Internal\Marshaller\Type\TypeInterface;
+use Temporal\Internal\Marshaller\Type\ArrayType;
+use Temporal\Internal\Marshaller\Type\TypeInterface;
 
 /**
  * @Annotation

@@ -9,47 +9,22 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Worker;
+namespace Temporal\Worker;
 
-use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
-use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
-use Temporal\Client\Internal\Events\EventEmitterInterface;
-use Temporal\Client\Internal\Events\EventListenerInterface;
-use Temporal\Client\Internal\Repository\Identifiable;
+use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
+use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Internal\Events\EventListenerInterface;
+use Temporal\Internal\Repository\Identifiable;
 
-/**
- * @implements EventEmitterInterface<TaskQueueInterface::ON_*>
- */
 interface TaskQueueInterface extends
     EventListenerInterface,
     DispatcherInterface,
-    EventEmitterInterface,
     Identifiable
 {
     /**
-     * @var string
-     */
-    public const ON_SIGNAL = 'signal';
-
-    /**
-     * @var string
-     */
-    public const ON_QUERY = 'query';
-
-    /**
-     * @var string
-     */
-    public const ON_CALLBACK = 'callback';
-
-    /**
-     * @var string
-     */
-    public const ON_TICK = 'tick';
-
-    /**
      * @return string
      */
-    public function getId(): string;
+    public function getID(): string;
 
     /**
      * @param class-string $class

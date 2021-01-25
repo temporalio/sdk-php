@@ -9,10 +9,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Marshaller\Meta;
+namespace Temporal\Internal\Marshaller\Meta;
 
 use Spiral\Attributes\NamedArgumentConstructorAttribute;
-use Temporal\Client\Internal\Marshaller\Type\TypeInterface;
+use Temporal\Internal\Marshaller\Type\TypeInterface;
 
 /**
  * @Annotation

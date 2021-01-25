@@ -9,10 +9,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Worker;
+namespace Temporal\Worker;
 
 use React\Promise\PromiseInterface;
-use Temporal\Client\Worker\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\RequestInterface;
 
 interface DispatcherInterface
 {

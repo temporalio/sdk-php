@@ -9,13 +9,18 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Declaration;
+namespace Temporal\Internal\Declaration;
 
 /**
  * @psalm-import-type DispatchableHandler from InstanceInterface
  */
 interface WorkflowInstanceInterface extends InstanceInterface
 {
+    /**
+     * Trigger constructor in Process context.
+     */
+    public function initConstructor(): void;
+
     /**
      * @param string $name
      * @return \Closure|null
@@ -30,9 +35,9 @@ interface WorkflowInstanceInterface extends InstanceInterface
 
     /**
      * @param string $name
-     * @return \Closure|null
+     * @return \Closure
      */
-    public function findSignalHandler(string $name): ?\Closure;
+    public function getSignalHandler(string $name): \Closure;
 
     /**
      * @param string $name

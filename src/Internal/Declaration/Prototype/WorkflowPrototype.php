@@ -9,7 +9,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Declaration\Prototype;
+namespace Temporal\Internal\Declaration\Prototype;
+
+use Temporal\Common\CronSchedule;
+use Temporal\Common\MethodRetry;
 
 final class WorkflowPrototype extends Prototype
 {
@@ -22,6 +25,48 @@ final class WorkflowPrototype extends Prototype
      * @var array<string, \ReflectionFunctionAbstract>
      */
     private array $signalHandlers = [];
+
+    /**
+     * @var CronSchedule|null
+     */
+    private ?CronSchedule $cronSchedule = null;
+
+    /**
+     * @var MethodRetry|null
+     */
+    private ?MethodRetry $methodRetry = null;
+
+    /**
+     * @return CronSchedule|null
+     */
+    public function getCronSchedule(): ?CronSchedule
+    {
+        return $this->cronSchedule;
+    }
+
+    /**
+     * @param CronSchedule|null $attribute
+     */
+    public function setCronSchedule(?CronSchedule $attribute): void
+    {
+        $this->cronSchedule = $attribute;
+    }
+
+    /**
+     * @return MethodRetry|null
+     */
+    public function getMethodRetry(): ?MethodRetry
+    {
+        return $this->methodRetry;
+    }
+
+    /**
+     * @param MethodRetry|null $attribute
+     */
+    public function setMethodRetry(?MethodRetry $attribute): void
+    {
+        $this->methodRetry = $attribute;
+    }
 
     /**
      * @param string $name

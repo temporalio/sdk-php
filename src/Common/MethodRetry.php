@@ -9,10 +9,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Common;
+namespace Temporal\Common;
 
 use Spiral\Attributes\NamedArgumentConstructorAttribute;
-use Temporal\Client\Internal\Support\DateInterval;
+use Temporal\Internal\Support\DateInterval;
 
 /**
  * Specifies a retry policy for a workflow or activity method. This annotation
@@ -46,6 +46,8 @@ final class MethodRetry extends RetryOptions implements NamedArgumentConstructor
         float $backoffCoefficient = self::DEFAULT_BACKOFF_COEFFICIENT,
         array $nonRetryableExceptions = self::DEFAULT_NON_RETRYABLE_EXCEPTIONS
     ) {
+        parent::__construct();
+
         $this->initialInterval = DateInterval::parseOrNull($initialInterval);
         $this->maximumInterval = DateInterval::parseOrNull($maximumInterval);
         $this->maximumAttempts = $maximumAttempts;

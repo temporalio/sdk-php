@@ -9,10 +9,11 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Transport;
+namespace Temporal\Internal\Transport;
 
 use React\Promise\PromiseInterface;
-use Temporal\Client\Worker\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\CommandInterface;
+use Temporal\Worker\Transport\Command\RequestInterface;
 
 interface ClientInterface
 {
@@ -21,4 +22,23 @@ interface ClientInterface
      * @return PromiseInterface
      */
     public function request(RequestInterface $request): PromiseInterface;
+
+    /**
+     * @param CommandInterface $command
+     * @return bool
+     */
+    public function isQueued(CommandInterface $command): bool;
+
+    /**
+     * @param CommandInterface $command
+     */
+    public function cancel(CommandInterface $command): void;
+
+    /**
+     * Reject pending promise.
+     *
+     * @param CommandInterface $command
+     * @param \Throwable $reason
+     */
+    public function reject(CommandInterface $command, \Throwable $reason): void;
 }

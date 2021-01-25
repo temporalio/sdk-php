@@ -9,14 +9,15 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Marshaller;
+namespace Temporal\Internal\Marshaller;
 
-use Temporal\Client\Internal\Marshaller\Type\ArrayType;
-use Temporal\Client\Internal\Marshaller\Type\DateIntervalType;
-use Temporal\Client\Internal\Marshaller\Type\DateTimeType;
-use Temporal\Client\Internal\Marshaller\Type\ObjectType;
-use Temporal\Client\Internal\Marshaller\Type\TypeInterface;
-use Temporal\Client\Internal\Marshaller\Type\DetectableTypeInterface;
+use Temporal\Internal\Marshaller\Type\ArrayType;
+use Temporal\Internal\Marshaller\Type\CronType;
+use Temporal\Internal\Marshaller\Type\DateIntervalType;
+use Temporal\Internal\Marshaller\Type\DateTimeType;
+use Temporal\Internal\Marshaller\Type\DetectableTypeInterface;
+use Temporal\Internal\Marshaller\Type\ObjectType;
+use Temporal\Internal\Marshaller\Type\TypeInterface;
 
 /**
  * @psalm-type CallableTypeMatcher = \Closure(\ReflectionNamedType): ?string
@@ -78,6 +79,7 @@ class TypeFactory implements TypeFactoryInterface
      */
     private function getDefaultMatchers(): iterable
     {
+        yield CronType::class;
         yield DateTimeType::class;
         yield DateIntervalType::class;
         yield ArrayType::class;

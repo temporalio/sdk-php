@@ -9,7 +9,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Declaration\Prototype;
+namespace Temporal\Internal\Declaration\Prototype;
+
+use Temporal\Internal\Repository\RepositoryInterface;
 
 abstract class Prototype implements PrototypeInterface
 {
@@ -41,9 +43,53 @@ abstract class Prototype implements PrototypeInterface
     }
 
     /**
+     * @template T of PrototypeInterface
+     *
+     * @param string $class
+     * @param string $method
+     * @param RepositoryInterface<T> $repository
+     * @return T|null
+     */
+    public static function find(string $class, string $method, RepositoryInterface $repository): ?PrototypeInterface
+    {
+        /** @var PrototypeInterface $prototype */
+        foreach ($repository as $prototype) {
+            if (self::matchClass($prototype, $class) && self::matchMethod($prototype, $method)) {
+                return $prototype;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param PrototypeInterface $prototype
+     * @param string $class
+     * @return bool
+     */
+    private static function matchClass(PrototypeInterface $prototype, string $class): bool
+    {
+        $reflection = $prototype->getClass();
+
+        return $reflection && $reflection->getName() === \trim($class, '\\');
+    }
+
+    /**
+     * @param PrototypeInterface $prototype
+     * @param string $method
+     * @return bool
+     */
+    private static function matchMethod(PrototypeInterface $prototype, string $method): bool
+    {
+        $handler = $prototype->getHandler();
+
+        return $handler->getName() === $method;
+    }
+
+    /**
      * @return string
      */
-    public function getId(): string
+    public function getID(): string
     {
         return $this->name;
     }

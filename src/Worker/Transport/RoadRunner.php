@@ -9,24 +9,23 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Worker\Transport;
+namespace Temporal\Worker\Transport;
 
-use JetBrains\PhpStorm\Pure;
 use Spiral\Goridge\RelayInterface;
-use Spiral\Goridge\RPC;
-use Spiral\Goridge\SocketRelay;
-use Spiral\Goridge\StreamRelay;
+use Spiral\Goridge\RPC\Codec\JsonCodec;
+use Spiral\Goridge\RPC\CodecInterface;
+use Spiral\RoadRunner\Payload;
 use Spiral\RoadRunner\Worker;
 use Symfony\Component\VarDumper\Dumper\CliDumper;
-use Temporal\Client\Exception\ProtocolException;
-use Temporal\Client\Exception\TransportException;
+use Temporal\Exception\ProtocolException;
+use Temporal\Exception\TransportException;
 
 /**
  * @psalm-type JsonHeaders = string
+ *
+ * @codeCoverageIgnore tested via roadrunner-temporal repository.
  */
-final class RoadRunner implements
-    RpcConnectionInterface,
-    RelayConnectionInterface
+final class RoadRunner implements HostConnectionInterface
 {
     /**
      * @var string
@@ -35,26 +34,16 @@ final class RoadRunner implements
         'Incorrect format of received headers. An array<string, mixed> ' .
         'required, but %s (%s) given';
 
-    /**
-     * @var Worker
-     */
     private Worker $worker;
-
-    /**
-     * @var RPC
-     */
-    private RPC $rpc;
+    private CodecInterface $codec;
 
     /**
      * @param RelayInterface $relay
      */
-    #[Pure]
-    private function __construct(
-        RelayInterface $relay
-    ) {
-        $this->rpc = new RPC($relay);
+    public function __construct(RelayInterface $relay)
+    {
         $this->worker = new Worker($relay);
-
+        $this->codec = new JsonCodec();
         $this->bootStdoutHandlers();
     }
 
@@ -69,17 +58,19 @@ final class RoadRunner implements
         }
 
         // Intercept all output messages
-        \ob_start(fn(string $chunk) => $this->write($chunk));
+        \ob_start(fn(string $chunk) => $this->write($chunk), 10 * 1024);
 
         // Intercept all exceptions
         \set_exception_handler(fn(\Throwable $e) => $this->writeException($e));
 
         // Intercept all errors
-        \set_error_handler(function (int $code, string $message, string $file, int $line) {
-            $this->writeException(
-                new \ErrorException($message, $code, $code, $file, $line)
-            );
-        });
+        \set_error_handler(
+            function (int $code, string $message, string $file, int $line) {
+                $this->writeException(
+                    new \ErrorException($message, $code, $code, $file, $line)
+                );
+            }
+        );
 
         return $this;
     }
@@ -98,47 +89,6 @@ final class RoadRunner implements
     private function writeException(\Throwable $e): void
     {
         $this->write((string)$e);
-    }
-
-    /**
-     * @return static
-     */
-    public static function pipes(): self
-    {
-        return new self(new StreamRelay(\STDIN, \STDOUT));
-    }
-
-    /**
-     * @param int $port
-     * @param string $host
-     * @return static
-     */
-    public static function socket(int $port, string $host = '127.0.0.1'): self
-    {
-        return new self(new SocketRelay($host, $port));
-    }
-
-    /**
-     * @param string $sock
-     * @return static
-     */
-    public static function unix(string $sock): self
-    {
-        return new self(new SocketRelay($sock, null, SocketRelay::SOCK_UNIX));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function call(string $method, $payload)
-    {
-        try {
-            return $this->interceptErrors(fn() => $this->rpc->call($method, $payload));
-        } catch (TransportException $e) {
-            throw $e;
-        } catch (\Throwable $e) {
-            throw new TransportException($e->getMessage(), $e->getCode(), $e);
-        }
     }
 
     /**
@@ -165,15 +115,23 @@ final class RoadRunner implements
     /**
      * {@inheritDoc}
      */
-    public function await(): array
+    public function await(): ?CommandBatch
     {
-        [$body, $json] = $this->interceptErrors(function () {
-            $body = $this->worker->receive($json);
+        /** @var Payload $payload */
+        $payload = $this->interceptErrors(
+            function () {
+                return $this->worker->waitPayload();
+            }
+        );
 
-            return [$body, $json];
-        });
+        if ($payload === null) {
+            return null;
+        }
 
-        return [$body, $this->decodeHeaders($json)];
+        return new CommandBatch(
+            $payload->body,
+            $this->decodeHeaders($payload->header)
+        );
     }
 
     /**
@@ -188,12 +146,12 @@ final class RoadRunner implements
         }
 
         try {
-            $result = \json_decode($headers, true, 4, \JSON_THROW_ON_ERROR);
-        } catch (\JsonException $e) {
+            $result = $this->codec->decode($headers);
+        } catch (\Throwable $e) {
             throw new ProtocolException($e->getMessage(), $e->getCode(), $e);
         }
 
-        if (! \is_array($result)) {
+        if (!\is_array($result)) {
             $message = \sprintf(self::ERROR_HEADERS_FORMAT, \get_debug_type($result), $headers);
             throw new ProtocolException($message);
         }
@@ -204,12 +162,12 @@ final class RoadRunner implements
     /**
      * {@inheritDoc}
      */
-    public function send(string $message, array $headers = []): void
+    public function send(string $frame, array $headers = []): void
     {
         $json = $this->encodeHeaders($headers);
 
         try {
-            $this->worker->send($message, $json);
+            $this->worker->send($frame, $json);
         } catch (\Throwable $e) {
             throw new TransportException($e->getMessage(), $e->getCode(), $e);
         }
@@ -226,8 +184,8 @@ final class RoadRunner implements
         }
 
         try {
-            return \json_encode($headers, \JSON_THROW_ON_ERROR);
-        } catch (\JsonException $e) {
+            return $this->codec->encode($headers, \JSON_THROW_ON_ERROR);
+        } catch (\Throwable $e) {
             throw new ProtocolException($e->getMessage(), $e->getCode(), $e);
         }
     }

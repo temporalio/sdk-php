@@ -9,24 +9,28 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal;
+namespace Temporal\Internal;
 
 use JetBrains\PhpStorm\Immutable;
 use Spiral\Attributes\ReaderInterface;
-use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
-use Temporal\Client\Internal\Declaration\Prototype\Collection;
-use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
-use Temporal\Client\Internal\Marshaller\Mapper\AttributeMapperFactory;
-use Temporal\Client\Internal\Marshaller\Marshaller;
-use Temporal\Client\Internal\Marshaller\MarshallerInterface;
-use Temporal\Client\Internal\Queue\QueueInterface;
-use Temporal\Client\Internal\Repository\RepositoryInterface;
-use Temporal\Client\Internal\Transport\ClientInterface;
-use Temporal\Client\Internal\Workflow\ProcessCollection;
-use Temporal\Client\Worker;
-use Temporal\Client\Worker\Environment\Environment;
-use Temporal\Client\Worker\Environment\EnvironmentInterface;
-use Temporal\Client\Worker\LoopInterface;
+use Temporal\DataConverter\DataConverterInterface;
+use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
+use Temporal\Internal\Declaration\Prototype\ActivityCollection;
+use Temporal\Internal\Declaration\Prototype\WorkflowCollection;
+use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Internal\Declaration\Reader\ActivityReader;
+use Temporal\Internal\Declaration\Reader\WorkflowReader;
+use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
+use Temporal\Internal\Marshaller\Marshaller;
+use Temporal\Internal\Marshaller\MarshallerInterface;
+use Temporal\Internal\Queue\QueueInterface;
+use Temporal\Internal\Repository\RepositoryInterface;
+use Temporal\Internal\Transport\ClientInterface;
+use Temporal\Internal\Workflow\ProcessCollection;
+use Temporal\Worker;
+use Temporal\Worker\Environment\Environment;
+use Temporal\Worker\Environment\EnvironmentInterface;
+use Temporal\Worker\LoopInterface;
 
 #[Immutable]
 final class ServiceContainer
@@ -86,32 +90,52 @@ final class ServiceContainer
     public QueueInterface $queue;
 
     /**
+     * @var DataConverterInterface
+     */
+    #[Immutable]
+    public DataConverterInterface $dataConverter;
+
+    /**
+     * @var WorkflowReader
+     */
+    #[Immutable]
+    public WorkflowReader $workflowsReader;
+
+    /**
+     * @var ActivityReader
+     */
+    #[Immutable]
+    public ActivityReader $activitiesReader;
+
+    /**
      * @param LoopInterface $loop
      * @param ClientInterface $client
      * @param ReaderInterface $reader
+     * @param QueueInterface $queue
+     * @param DataConverterInterface $dataConverter
      */
     public function __construct(
         LoopInterface $loop,
         ClientInterface $client,
         ReaderInterface $reader,
-        QueueInterface $queue
+        QueueInterface $queue,
+        DataConverterInterface $dataConverter
     ) {
         $this->loop = $loop;
         $this->client = $client;
         $this->reader = $reader;
         $this->queue = $queue;
 
-        $this->workflows = new Collection();
-        $this->activities = new Collection();
-
+        $this->env = new Environment();
+        $this->workflows = new WorkflowCollection();
+        $this->activities = new ActivityCollection();
         $this->running = new ProcessCollection($client);
 
-        $this->env = new Environment();
+        $this->dataConverter = $dataConverter;
+        $this->marshaller = new Marshaller(new AttributeMapperFactory($this->reader));
 
-        $this->marshaller = new Marshaller(
-            new AttributeMapperFactory($this->reader)
-        );
-        $this->queue = $queue;
+        $this->workflowsReader = new WorkflowReader($this->reader);
+        $this->activitiesReader = new ActivityReader($this->reader);
     }
 
     /**
@@ -124,7 +148,8 @@ final class ServiceContainer
             $worker,
             $worker->getClient(),
             $worker->getReader(),
-            $worker->getQueue()
+            $worker->getQueue(),
+            $worker->getDataConverter()
         );
     }
 }

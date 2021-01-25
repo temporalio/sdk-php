@@ -9,12 +9,16 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Workflow;
+namespace Temporal\Workflow;
 
 use React\Promise\PromiseInterface;
-use Temporal\Client\Activity\ActivityOptions;
-use Temporal\Client\Internal\Support\DateInterval;
-use Temporal\Client\Worker\Environment\EnvironmentInterface;
+use Temporal\Activity\ActivityOptions;
+use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\Type;
+use Temporal\DataConverter\ValuesInterface;
+use Temporal\Internal\Support\DateInterval;
+use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Environment\EnvironmentInterface;
 
 /**
  * @psalm-import-type DateIntervalFormat from DateInterval
@@ -27,9 +31,22 @@ interface WorkflowContextInterface extends EnvironmentInterface
     public function getInfo(): WorkflowInfo;
 
     /**
-     * @return array
+     * @return ValuesInterface
      */
-    public function getArguments(): array;
+    public function getInput(): ValuesInterface;
+
+    /**
+     * Get value of last completion result, if any.
+     *
+     * @param Type|string $type
+     * @return mixed
+     */
+    public function getLastCompletionResult($type = null);
+
+    /**
+     * @return DataConverterInterface
+     */
+    public function getDataConverter(): DataConverterInterface;
 
     /**
      * @param string $queryType
@@ -44,12 +61,6 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @return $this
      */
     public function registerSignal(string $queryType, callable $handler): self;
-
-    /**
-     * @param callable $handler
-     * @return CancellationScopeInterface
-     */
-    public function newCancellationScope(callable $handler): CancellationScopeInterface;
 
     /**
      * @param string $changeId
@@ -69,41 +80,117 @@ interface WorkflowContextInterface extends EnvironmentInterface
     public function sideEffect(callable $context): PromiseInterface;
 
     /**
-     * @param mixed $result
+     * @param array|null $result
+     * @param \Throwable|null $failure
      * @return PromiseInterface
      */
-    public function complete($result = null): PromiseInterface;
+    public function complete(array $result = null, \Throwable $failure = null): PromiseInterface;
 
     /**
-     * @psalm-param class-string|string $name
-     *
-     * @param string $name
-     * @param array $args
-     * @param ActivityOptions|null $options
-     * @return PromiseInterface
-     */
-    public function executeActivity(string $name, array $args = [], ActivityOptions $options = null): PromiseInterface;
-
-    /**
-     * @psalm-template ActivityType
-     * @psalm-param class-string<ActivityType> $name
-     * @psalm-return ActivityType
-     *
-     * @param string $name
-     * @param ActivityOptions|null $options
-     * @return object
-     */
-    public function newActivityStub(string $name, ActivityOptions $options = null): object;
-
-    /**
-     * @param DateIntervalFormat $interval
+     * @param DateIntervalFormat|int $interval
      * @return PromiseInterface
      * @see DateInterval
      */
     public function timer($interval): PromiseInterface;
 
     /**
-     * @return array
+     * @return string
      */
-    public function getTrace(): array;
+    public function getLastTrace(): string;
+
+    /**
+     * @param class-string|string $type
+     * @param array $args
+     * @param ContinueAsNewOptions|null $options
+     * @return PromiseInterface
+     */
+    public function continueAsNew(
+        string $type,
+        array $args = [],
+        ContinueAsNewOptions $options = null
+    ): PromiseInterface;
+
+    /**
+     * Creates client stub that can be used to continue this workflow as new.
+     *
+     * @psalm-template T of object
+     * @psalm-param class-string<T> $class
+     * @psalm-return object<T>|T
+     *
+     * @param string $class
+     * @param ContinueAsNewOptions|null $options
+     * @return object
+     */
+    public function newContinueAsNewStub(string $class, ContinueAsNewOptions $options = null): object;
+
+    /**
+     * @param class-string|string $type
+     * @param array $args
+     * @param ChildWorkflowOptions|null $options
+     * @param \ReflectionType|null $returnType
+     * @return PromiseInterface
+     */
+    public function executeChildWorkflow(
+        string $type,
+        array $args = [],
+        ChildWorkflowOptions $options = null,
+        \ReflectionType $returnType = null
+    ): PromiseInterface;
+
+    /**
+     * @psalm-template T of object
+     * @psalm-param class-string<T> $class
+     * @psalm-return object<T>|T
+     *
+     * @param string $class
+     * @param ChildWorkflowOptions|null $options
+     * @return object
+     */
+    public function newChildWorkflowStub(string $class, ChildWorkflowOptions $options = null): object;
+
+    /**
+     * @param string $name
+     * @param ChildWorkflowOptions|null $options
+     * @return ChildWorkflowStubInterface
+     */
+    public function newUntypedChildWorkflowStub(
+        string $name,
+        ChildWorkflowOptions $options = null
+    ): ChildWorkflowStubInterface;
+
+    /**
+     * @param string $type
+     * @param array $args
+     * @param ActivityOptions|null $options
+     * @param \ReflectionType|null $returnType
+     * @return PromiseInterface
+     */
+    public function executeActivity(
+        string $type,
+        array $args = [],
+        ActivityOptions $options = null,
+        \ReflectionType $returnType = null
+    ): PromiseInterface;
+
+    /**
+     * @psalm-template TActivity
+     * @psalm-param class-string<TActivity> $class
+     * @psalm-return TActivity
+     *
+     * @param string $class
+     * @param ActivityOptions|null $options
+     * @return object
+     */
+    public function newActivityStub(string $class, ActivityOptions $options = null): object;
+
+    /**
+     * @param ActivityOptions|null $options
+     * @return ActivityStubInterface
+     */
+    public function newUntypedActivityStub(ActivityOptions $options = null): ActivityStubInterface;
+
+    /**
+     * {@inheritDoc}
+     */
+    public function request(RequestInterface $request): PromiseInterface;
 }

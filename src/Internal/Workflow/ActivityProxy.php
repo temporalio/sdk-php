@@ -9,27 +9,32 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Workflow;
+namespace Temporal\Internal\Workflow;
 
 use React\Promise\PromiseInterface;
-use Temporal\Client\Activity\ActivityOptions;
-use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
-use Temporal\Client\Internal\Repository\RepositoryInterface;
-use Temporal\Client\Workflow\Context\RequestsInterface;
-use Temporal\Client\Workflow\WorkflowContextInterface;
+use Temporal\Activity\ActivityOptions;
+use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
+use Temporal\Internal\Transport\CompletableResultInterface;
+use Temporal\Workflow\WorkflowContextInterface;
 
-/**
- * @internal ActivityProxy is an internal library class, please do not use it in your code.
- * @psalm-internal Temporal\Client
- *
- * @psalm-template Activity of object
- */
-class ActivityProxy
+final class ActivityProxy extends Proxy
 {
     /**
-     * @var ActivityPrototype[]
+     * @var string
+     */
+    private const ERROR_UNDEFINED_ACTIVITY_METHOD =
+        'The given stub class "%s" does not contain an activity method named "%s"'
+    ;
+
+    /**
+     * @var array<ActivityPrototype>
      */
     private array $activities;
+
+    /**
+     * @var string
+     */
+    private string $class;
 
     /**
      * @var ActivityOptions
@@ -39,102 +44,54 @@ class ActivityProxy
     /**
      * @var WorkflowContextInterface
      */
-    private WorkflowContextInterface $context;
+    private WorkflowContextInterface $ctx;
 
     /**
-     * @param class-string<Activity> $class
-     * @param ActivityOptions $options
-     * @param WorkflowContextInterface $context
-     * @param RepositoryInterface<ActivityPrototype> $activities
-     */
-    public function __construct(
-        string $class,
-        ActivityOptions $options,
-        WorkflowContextInterface $context,
-        RepositoryInterface $activities
-    ) {
-        $this->options = $options;
-        $this->context = $context;
-
-        $this->activities = [
-            ...$this->filterActivities($activities, $class)
-        ];
-    }
-
-    /**
-     * @param ActivityPrototype[] $activities
      * @param string $class
-     * @return \Traversable
+     * @param array<ActivityPrototype> $activities
+     * @param ActivityOptions $options
+     * @param WorkflowContextInterface $ctx
      */
-    private function filterActivities(iterable $activities, string $class): \Traversable
+    public function __construct(string $class, array $activities, ActivityOptions $options, WorkflowContextInterface $ctx)
     {
-        foreach ($activities as $activity) {
-            if ($this->matchClass($activity, $class)) {
-                yield $activity;
-            }
-        }
-    }
-
-    /**
-     * @param ActivityPrototype $prototype
-     * @param string $needle
-     * @return bool
-     */
-    private function matchClass(ActivityPrototype $prototype, string $needle): bool
-    {
-        $reflection = $prototype->getClass();
-
-        return $reflection && $reflection->getName() === \trim($needle, '\\');
+        $this->activities = $activities;
+        $this->class = $class;
+        $this->options = $options;
+        $this->ctx = $ctx;
     }
 
     /**
      * @param string $method
-     * @param array $arguments
-     * @return PromiseInterface
+     * @param array $args
+     * @return CompletableResultInterface
      */
-    public function __call(string $method, array $arguments = []): PromiseInterface
+    public function __call(string $method, array $args = []): PromiseInterface
     {
-        return $this->call($method, $arguments);
+        $handler = $this->findPrototypeByHandlerNameOrFail($method);
+
+        $type = $handler->getHandler()->getReturnType();
+
+        return $this->ctx->newUntypedActivityStub(
+            $this->options->mergeWith($handler->getMethodRetry())
+        )
+            ->execute($handler->getID(), $args, $type)
+        ;
     }
 
     /**
-     * @param string $method
-     * @param array $arguments
-     * @return PromiseInterface
+     * @param string $name
+     * @return ActivityPrototype
      */
-    public function call(string $method, array $arguments = []): PromiseInterface
+    private function findPrototypeByHandlerNameOrFail(string $name): ActivityPrototype
     {
-        $activity = $this->findActivityPrototype($method);
+        $prototype = $this->findPrototypeByHandlerName($this->activities, $name);
 
-        $method = $activity ? $activity->getId() : $method;
-
-        return $this->context->executeActivity($method, $arguments, $this->options);
-    }
-
-    /**
-     * @param string $method
-     * @return ActivityPrototype|null
-     */
-    private function findActivityPrototype(string $method): ?ActivityPrototype
-    {
-        foreach ($this->activities as $activity) {
-            if ($this->matchMethod($activity, $method)) {
-                return $activity;
-            }
+        if ($prototype === null) {
+            throw new \BadMethodCallException(
+                \sprintf(self::ERROR_UNDEFINED_ACTIVITY_METHOD, $this->class, $name)
+            );
         }
 
-        return null;
-    }
-
-    /**
-     * @param ActivityPrototype $prototype
-     * @param string $needle
-     * @return bool
-     */
-    private function matchMethod(ActivityPrototype $prototype, string $needle): bool
-    {
-        $handler = $prototype->getHandler();
-
-        return $handler->getName() === $needle;
+        return $prototype;
     }
 }

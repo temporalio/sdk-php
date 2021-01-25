@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Worker\Environment;
+namespace Temporal\Worker\Environment;
 
 use Carbon\CarbonInterface;
 use Carbon\CarbonTimeZone;
@@ -23,14 +23,6 @@ trait EnvironmentAwareTrait
      * @var EnvironmentInterface
      */
     protected EnvironmentInterface $env;
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getTimeZone(): CarbonTimeZone
-    {
-        return $this->env->getTimeZone();
-    }
 
     /**
      * {@inheritDoc}

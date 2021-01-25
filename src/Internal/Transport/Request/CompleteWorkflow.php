@@ -9,24 +9,22 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Transport\Request;
+namespace Temporal\Internal\Transport\Request;
 
-use Temporal\Client\Worker\Command\Request;
+use Temporal\DataConverter\ValuesInterface;
+use Temporal\Worker\Transport\Command\Request;
 
 final class CompleteWorkflow extends Request
 {
-    /**
-     * @var string
-     */
     public const NAME = 'CompleteWorkflow';
 
     /**
-     * @param $result
+     * @param ValuesInterface $values
+     * @param \Throwable|null $failure
      */
-    public function __construct($result)
+    public function __construct(ValuesInterface $values, \Throwable $failure = null)
     {
-        parent::__construct(self::NAME, [
-            'result' => [$result],
-        ]);
+        parent::__construct(self::NAME, [], $values);
+        $this->setFailure($failure);
     }
 }

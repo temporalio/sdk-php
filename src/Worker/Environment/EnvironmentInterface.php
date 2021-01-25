@@ -9,18 +9,13 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Worker\Environment;
+namespace Temporal\Worker\Environment;
 
 use Carbon\CarbonInterface;
 use Carbon\CarbonTimeZone;
 
 interface EnvironmentInterface
 {
-    /**
-     * @return CarbonTimeZone
-     */
-    public function getTimeZone(): CarbonTimeZone;
-
     /**
      * @return CarbonInterface
      */

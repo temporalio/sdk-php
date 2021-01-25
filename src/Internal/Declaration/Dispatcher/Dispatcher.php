@@ -9,7 +9,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Declaration\Dispatcher;
+namespace Temporal\Internal\Declaration\Dispatcher;
+
+use ReflectionType;
 
 /**
  * @psalm-type FunctionExecutor = \Closure(object|null, array): mixed
@@ -31,6 +33,11 @@ class Dispatcher implements DispatcherInterface
      * @var \Closure
      */
     private \Closure $executor;
+
+    /**
+     * @var array<ReflectionType>
+     */
+    private $types;
 
     /**
      * @var int
@@ -84,6 +91,14 @@ class Dispatcher implements DispatcherInterface
     public function isStaticContextAllowed(): bool
     {
         return $this->scopeMatches(static::SCOPE_STATIC);
+    }
+
+    /**
+     * @return array<ReflectionType>
+     */
+    public function getArgumentTypes(): array
+    {
+        return $this->types;
     }
 
     /**
@@ -148,6 +163,11 @@ class Dispatcher implements DispatcherInterface
                 $this->scope |= static::SCOPE_STATIC;
             }
 
+            $this->types = [];
+            foreach ($fun->getParameters() as $param) {
+                $this->types[] = $param->getType();
+            }
+
             return;
         }
 
@@ -157,6 +177,11 @@ class Dispatcher implements DispatcherInterface
 
             if ($fun->isClosure() && $fun->getClosureThis()) {
                 $this->scope |= static::SCOPE_OBJECT;
+            }
+
+            $this->types = [];
+            foreach ($fun->getParameters() as $param) {
+                $this->types[] = $param->getType();
             }
 
             return;

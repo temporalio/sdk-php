@@ -9,9 +9,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Queue;
+namespace Temporal\Internal\Queue;
 
-use Temporal\Client\Worker\Command\CommandInterface;
+use Temporal\Worker\Transport\Command\CommandInterface;
 
 /**
  * @implements \IteratorAggregate<array-key, CommandInterface>
@@ -28,4 +28,10 @@ interface QueueInterface extends \IteratorAggregate, \Countable
      * @return CommandInterface|null
      */
     public function pull(int $commandId): ?CommandInterface;
+
+    /**
+     * @param int $commandId
+     * @return bool
+     */
+    public function has(int $commandId): bool;
 }

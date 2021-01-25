@@ -9,11 +9,11 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Activity;
+namespace Temporal\Activity;
 
 use Doctrine\Common\Annotations\Annotation\Target;
 use Spiral\Attributes\NamedArgumentConstructorAttribute;
-use Temporal\Client\Internal\Workflow\WorkflowContextInterface;
+use Temporal\Internal\Workflow\WorkflowContextInterface;
 
 /**
  * Indicates that an interface is an activity interface. Only interfaces

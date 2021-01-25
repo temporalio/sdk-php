@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Repository;
+namespace Temporal\Internal\Repository;
 
 /**
  * @psalm-type Identifier = string|int
@@ -19,5 +19,5 @@ interface Identifiable
     /**
      * @return Identifier
      */
-    public function getId();
+    public function getID();
 }

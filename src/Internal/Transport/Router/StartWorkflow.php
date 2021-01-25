@@ -9,64 +9,74 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Transport\Router;
+namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
-use Temporal\Client\Internal\Declaration\Instantiator\WorkflowInstantiator;
-use Temporal\Client\Internal\Declaration\Prototype\WorkflowPrototype;
-use Temporal\Client\Internal\Repository\RepositoryInterface;
-use Temporal\Client\Internal\ServiceContainer;
-use Temporal\Client\Internal\Workflow\Input;
-use Temporal\Client\Internal\Workflow\Process\Process;
-use Temporal\Client\Workflow\WorkflowInfo;
+use Temporal\DataConverter\EncodedValues;
+use Temporal\Internal\Declaration\Instantiator\WorkflowInstantiator;
+use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Internal\ServiceContainer;
+use Temporal\Internal\Workflow\Input;
+use Temporal\Internal\Workflow\Process\Process;
+use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Workflow\WorkflowContext;
+use Temporal\Workflow\WorkflowInfo;
 
 final class StartWorkflow extends Route
 {
-    /**
-     * @var string
-     */
     private const ERROR_NOT_FOUND = 'Workflow with the specified name "%s" was not registered';
-
-    /**
-     * @var string
-     */
     private const ERROR_ALREADY_RUNNING = 'Workflow "%s" with run id "%s" has been already started';
 
-    /**
-     * @var ServiceContainer
-     */
     private ServiceContainer $services;
-
-    /**
-     * @var WorkflowInstantiator
-     */
     private WorkflowInstantiator $instantiator;
 
     /**
      * @param ServiceContainer $services
-     * @param RepositoryInterface $running
      */
     public function __construct(ServiceContainer $services)
     {
-        $this->instantiator = new WorkflowInstantiator();
         $this->services = $services;
+        $this->instantiator = new WorkflowInstantiator();
     }
 
     /**
      * {@inheritDoc}
      * @throws \Throwable
      */
-    public function handle(array $payload, array $headers, Deferred $resolver): void
+    public function handle(RequestInterface $request, array $headers, Deferred $resolver): void
     {
-        $input = $this->services->marshaller->unmarshal($payload, new Input());
+        $options = $request->getOptions();
+        $payloads = $request->getPayloads();
+        $lastCompletionResult = null;
 
-        $instance = $this->instantiator->instantiate(
-            $this->findWorkflowOrFail($input->info)
+        if (($options['lastCompletion'] ?? 0) !== 0) {
+            $offset = count($payloads) - ($options['lastCompletion'] ?? 0);
+
+            $lastCompletionResult = EncodedValues::sliceValues($this->services->dataConverter, $payloads, $offset);
+            $payloads = EncodedValues::sliceValues($this->services->dataConverter, $payloads, 0, $offset);
+        }
+
+        $input = $this->services->marshaller->unmarshal($options, new Input());
+        /** @psalm-suppress InaccessibleProperty */
+        $input->input = $payloads;
+
+        $instance = $this->instantiator->instantiate($this->findWorkflowOrFail($input->info));
+
+        $context = new WorkflowContext(
+            $this->services,
+            $this->services->client,
+            $instance,
+            $input,
+            $lastCompletionResult
         );
 
-        $process = new Process($input, $this->services, $instance);
-
+        $process = new Process($this->services, $context);
         $this->services->running->add($process);
+
+        $process->start($instance->getHandler(), $context->getInput());
+
+        // todo: fix test cases
+        //$resolver->resolve(EncodedValues::fromValues([spl_object_id($process)]));
     }
 
     /**

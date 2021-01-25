@@ -9,29 +9,20 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Declaration;
+namespace Temporal\Internal\Declaration;
 
-use Temporal\Client\Internal\Declaration\Dispatcher\Autowired;
-use Temporal\Client\Internal\Declaration\Prototype\Prototype;
+use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\ValuesInterface;
+use Temporal\Internal\Declaration\Dispatcher\AutowiredPayloads;
+use Temporal\Internal\Declaration\Prototype\Prototype;
 
 /**
  * @psalm-import-type DispatchableHandler from InstanceInterface
  */
 abstract class Instance implements InstanceInterface
 {
-    /**
-     * @var Prototype
-     */
     protected Prototype $prototype;
-
-    /**
-     * @var object|null
-     */
     protected ?object $context;
-
-    /**
-     * @var \Closure
-     */
     private \Closure $handler;
 
     /**
@@ -46,18 +37,36 @@ abstract class Instance implements InstanceInterface
     }
 
     /**
+     * @return object|null
+     */
+    public function getContext(): ?object
+    {
+        return $this->context;
+    }
+
+    /**
      * @psalm-return DispatchableHandler
      *
-     * @param \ReflectionFunctionAbstract $fun
+     * @param \ReflectionFunctionAbstract $func
      * @return \Closure
      */
-    protected function createHandler(\ReflectionFunctionAbstract $fun): \Closure
+    protected function createHandler(\ReflectionFunctionAbstract $func): \Closure
     {
-        $dispatcher = new Autowired($fun);
+        $valueMapper = new AutowiredPayloads($func);
 
-        return function (array $arguments = []) use ($dispatcher) {
-            return $dispatcher->dispatch($this->context, $arguments);
+        return function (ValuesInterface $values) use ($valueMapper) {
+            return $valueMapper->dispatchValues($this->context, $values);
         };
+    }
+
+    /**
+     * @param callable $handler
+     * @return \Closure
+     * @throws \ReflectionException
+     */
+    protected function createCallableHandler(callable $handler): \Closure
+    {
+        return $this->createHandler(new \ReflectionFunction($handler));
     }
 
     /**

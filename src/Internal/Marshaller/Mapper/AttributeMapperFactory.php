@@ -9,10 +9,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Marshaller\Mapper;
+namespace Temporal\Internal\Marshaller\Mapper;
 
 use Spiral\Attributes\ReaderInterface;
-use Temporal\Client\Internal\Marshaller\TypeFactoryInterface;
+use Temporal\Internal\Marshaller\TypeFactoryInterface;
 
 class AttributeMapperFactory implements MapperFactoryInterface
 {

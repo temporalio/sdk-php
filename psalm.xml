@@ -4,14 +4,14 @@
     xmlns="https://getpsalm.org/schema/config"
     xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
 
-    errorLevel="8"
+    errorLevel="7"
     hoistConstants="true"
-    resolveFromConfigFile="true"
     allowPhpStormGenerics="true"
-    findUnusedPsalmSuppress="true"
+    findUnusedPsalmSuppress="false"
     findUnusedVariablesAndParams="true"
     ensureArrayStringOffsetsExist="true"
     addParamDefaultToDocblockType="true"
+    strictBinaryOperands="true"
 >
     <projectFiles>
         <directory name="src" />

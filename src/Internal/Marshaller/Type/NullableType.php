@@ -9,9 +9,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Marshaller\Type;
+namespace Temporal\Internal\Marshaller\Type;
 
-use Temporal\Client\Internal\Marshaller\MarshallerInterface;
+use Temporal\Internal\Marshaller\MarshallerInterface;
 
 class NullableType extends Type
 {
@@ -42,7 +42,7 @@ class NullableType extends Type
     public function parse($value, $current)
     {
         if ($value === null) {
-            return $value;
+            return null;
         }
 
         if ($this->type) {
@@ -59,7 +59,7 @@ class NullableType extends Type
     public function serialize($value)
     {
         if ($value === null) {
-            return $value;
+            return null;
         }
 
         if ($this->type) {

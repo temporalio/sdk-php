@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Repository;
+namespace Temporal\Internal\Repository;
 
 /**
  * @template-covariant TEntry of Identifiable
@@ -28,6 +28,25 @@ class ArrayRepository implements RepositoryInterface
      * @var array<Identifier, Identifiable>
      */
     private array $entries = [];
+
+    /**
+     * @param iterable<Identifiable> $entries
+     * @param bool $overwrite
+     */
+    public function __construct(iterable $entries = [], bool $overwrite = false)
+    {
+        foreach ($entries as $entry) {
+            $this->add($entry, $overwrite);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function filter(callable $filter): RepositoryInterface
+    {
+        return new static(\array_filter($this->entries, $filter));
+    }
 
     /**
      * {@inheritDoc}
@@ -50,7 +69,7 @@ class ArrayRepository implements RepositoryInterface
      */
     public function add(Identifiable $entry, bool $overwrite = false): void
     {
-        $name = $entry->getId();
+        $name = $entry->getID();
 
         if ($overwrite === false && isset($this->prototypes[$name])) {
             throw new \OutOfBoundsException(\sprintf(self::ERROR_ALREADY_EXISTS, $name));

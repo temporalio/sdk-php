@@ -9,68 +9,94 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Workflow\Process;
+namespace Temporal\Internal\Workflow\Process;
 
 use JetBrains\PhpStorm\Pure;
-use Temporal\Client\Internal\Declaration\WorkflowInstanceInterface;
-use Temporal\Client\Internal\ServiceContainer;
-use Temporal\Client\Internal\Workflow\Input;
-use Temporal\Client\Workflow\ProcessInterface;
-use Temporal\Client\Workflow\WorkflowContext;
-use Temporal\Client\Workflow\WorkflowContextInterface;
+use Temporal\DataConverter\ValuesInterface;
+use Temporal\Exception\DestructMemorizedInstanceException;
+use Temporal\Internal\Declaration\WorkflowInstanceInterface;
+use Temporal\Internal\ServiceContainer;
+use Temporal\Worker\LoopInterface;
+use Temporal\Workflow\ProcessInterface;
+use Temporal\Workflow\WorkflowContext;
 
 class Process extends Scope implements ProcessInterface
 {
     /**
-     * @var WorkflowInstanceInterface
+     * Process constructor.
+     * @param ServiceContainer $services
+     * @param WorkflowContext $ctx
      */
-    private WorkflowInstanceInterface $instance;
+    public function __construct(ServiceContainer $services, WorkflowContext $ctx)
+    {
+        parent::__construct($services, $ctx);
+
+        $this->getWorkflowInstance()->getSignalQueue()->onSignal(
+            fn(callable $handler) => $this->createScope($handler, true, LoopInterface::ON_SIGNAL)
+        );
+
+        // unlike other scopes Process will notify the server when complete instead of pushing the result
+        // to parent scope (there are no parent scope)
+        $this->promise()->then(
+            function ($result) {
+                $this->complete([$result]);
+            },
+            function (\Throwable $e) {
+                $this->complete($e);
+            }
+        );
+    }
 
     /**
-     * @param Input $input
-     * @param ServiceContainer $services
-     * @param WorkflowInstanceInterface $instance
+     * @param callable $handler
+     * @param ValuesInterface|null $values
      */
-    public function __construct(Input $input, ServiceContainer $services, WorkflowInstanceInterface $instance)
+    public function start(callable $handler, ValuesInterface $values = null)
     {
-        $this->instance = $instance;
+        try {
+            $this->makeCurrent();
+            $this->context->getWorkflowInstance()->initConstructor();
+            parent::start($handler, $values);
+        } catch (\Throwable $e) {
+            $this->complete($e);
+        }
+    }
 
-        $context = new WorkflowContext($this, $services, $input);
-
-        parent::__construct($context, $services, $instance->getHandler(), $context->getArguments());
+    /**
+     * @return mixed|string
+     */
+    public function getID()
+    {
+        return $this->context->getRunId();
     }
 
     /**
      * @return WorkflowInstanceInterface
      */
+    #[Pure]
     public function getWorkflowInstance(): WorkflowInstanceInterface
     {
-        return $this->instance;
+        return $this->getContext()->getWorkflowInstance();
     }
 
     /**
-     * @return WorkflowContextInterface
+     * @param $result
      */
-    public function getContext(): WorkflowContextInterface
+    protected function complete($result)
     {
-        return $this->context;
-    }
+        if ($this->context->isContinuedAsNew()) {
+            return;
+        }
 
-    /**
-     * @return string
-     */
-    public function getId(): string
-    {
-        $info = $this->context->getInfo();
+        if ($result instanceof \Throwable) {
+            if ($result instanceof DestructMemorizedInstanceException) {
+                // do not handle
+                return;
+            }
 
-        return $info->execution->runId;
-    }
-
-    /**
-     * @param mixed $result
-     */
-    protected function onComplete($result): void
-    {
-        $this->context->complete($result ?? $this->coroutine->getReturn());
+            $this->context->complete([], $result);
+        } else {
+            $this->context->complete($result);
+        }
     }
 }

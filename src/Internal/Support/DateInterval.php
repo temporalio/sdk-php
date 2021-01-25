@@ -9,9 +9,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Support;
+namespace Temporal\Internal\Support;
 
 use Carbon\CarbonInterval;
+use Google\Protobuf\Duration;
 
 /**
  * @psalm-type DateIntervalFormat = DateInterval::FORMAT_*
@@ -57,12 +58,12 @@ final class DateInterval
     /**
      * @var string
      */
-    public const FORMAT_MINUTES  = 'minutes';
+    public const FORMAT_MINUTES = 'minutes';
 
     /**
      * @var string
      */
-    public const FORMAT_SECONDS  = 'seconds';
+    public const FORMAT_SECONDS = 'seconds';
 
     /**
      * @var string
@@ -101,7 +102,7 @@ final class DateInterval
      */
     private static function validateFormat(string $format): void
     {
-        if (! \in_array($format, self::AVAILABLE_FORMATS, true)) {
+        if (!\in_array($format, self::AVAILABLE_FORMATS, true)) {
             $message = \sprintf(self::ERROR_INVALID_FORMAT, $format, \implode(', ', self::AVAILABLE_FORMATS));
 
             throw new \InvalidArgumentException($message);
@@ -160,5 +161,21 @@ final class DateInterval
         $isParsable = \is_string($interval) || \is_int($interval) || \is_float($interval);
 
         return $isParsable || $interval instanceof \DateInterval;
+    }
+
+    /**
+     * @param \DateInterval $i
+     * @return Duration|null
+     */
+    public static function toDuration(\DateInterval $i = null): ?Duration
+    {
+        if ($i === null) {
+            return null;
+        }
+
+        $d = new Duration();
+        $d->setSeconds(self::parse($i)->totalSeconds);
+
+        return $d;
     }
 }

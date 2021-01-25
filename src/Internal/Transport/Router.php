@@ -9,12 +9,12 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Transport;
+namespace Temporal\Internal\Transport;
 
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
-use Temporal\Client\Internal\Transport\Router\RouteInterface;
-use Temporal\Client\Worker\Command\RequestInterface;
+use Temporal\Internal\Transport\Router\RouteInterface;
+use Temporal\Worker\Transport\Command\RequestInterface;
 
 use function React\Promise\reject;
 
@@ -73,14 +73,12 @@ final class Router implements RouterInterface
 
         if ($route === null) {
             $error = \sprintf(self::ERROR_ROUTE_NOT_FOUND, $request->getName());
-
             return reject(new \BadMethodCallException($error));
         }
 
         $deferred = new Deferred();
-
         try {
-            $route->handle($request->getParams(), $headers, $deferred);
+            $route->handle($request, $headers, $deferred);
         } catch (\Throwable $e) {
             $deferred->reject($e);
         }

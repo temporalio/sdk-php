@@ -9,9 +9,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Workflow;
+namespace Temporal\Workflow;
 
-use Temporal\Client\Internal\Marshaller\Meta\Marshal;
+use Temporal\Internal\Marshaller\Meta\Marshal;
 
 /**
  * WorkflowType identifies a workflow type.

@@ -9,24 +9,19 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Transport\Request;
+namespace Temporal\Internal\Transport\Request;
 
-use Temporal\Client\Worker\Command\Request;
+use Temporal\Worker\Transport\Command\Request;
 
 final class Cancel extends Request
 {
-    /**
-     * @var string
-     */
     public const NAME = 'Cancel';
 
     /**
-     * @param array<int> $requestIdentifiers
+     * @param int ...$requestID
      */
-    public function __construct(array $requestIdentifiers)
+    public function __construct(int ...$requestID)
     {
-        parent::__construct(self::NAME, [
-            'ids' => $requestIdentifiers,
-        ]);
+        parent::__construct(self::NAME, ['ids' => $requestID]);
     }
 }

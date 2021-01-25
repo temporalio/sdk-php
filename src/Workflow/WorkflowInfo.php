@@ -9,18 +9,21 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Workflow;
+namespace Temporal\Workflow;
 
 use Carbon\CarbonInterval;
-use Temporal\Client\Internal\Marshaller\Meta\Marshal;
-use Temporal\Client\Internal\Marshaller\Type\DateIntervalType;
-use Temporal\Client\Internal\Marshaller\Type\NullableType;
-use Temporal\Client\Internal\Marshaller\Type\ObjectType;
-use Temporal\Client\Worker\FactoryInterface;
+use Cron\CronExpression;
+use Temporal\Client\ClientOptions;
+use Temporal\Common\CronSchedule;
+use Temporal\Internal\Marshaller\Meta\Marshal;
+use Temporal\Internal\Marshaller\Type\ArrayType;
+use Temporal\Internal\Marshaller\Type\CronType;
+use Temporal\Internal\Marshaller\Type\DateIntervalType;
+use Temporal\Internal\Marshaller\Type\NullableType;
+use Temporal\Internal\Marshaller\Type\ObjectType;
+use Temporal\Internal\Support\Cron;
+use Temporal\Worker\FactoryInterface;
 
-/**
- * TODO Previous execution result
- */
 final class WorkflowInfo
 {
     /**
@@ -77,7 +80,7 @@ final class WorkflowInfo
      * @var string
      */
     #[Marshal(name: 'Namespace')]
-    public string $namespace = 'default';
+    public string $namespace = ClientOptions::DEFAULT_NAMESPACE;
 
     /**
      * Attempt starts from 1 and increased by 1 for every retry
@@ -93,10 +96,10 @@ final class WorkflowInfo
     /**
      * @readonly
      * @psalm-allow-private-mutation
-     * @var string|null
+     * @var CronExpression|null
      */
-    #[Marshal(name: 'CronSchedule')]
-    public ?string $cronSchedule = null;
+    #[Marshal(name: 'CronSchedule', type: NullableType::class, of: CronType::class)]
+    public ?CronExpression $cronSchedule = null;
 
     /**
      * @readonly
@@ -125,18 +128,18 @@ final class WorkflowInfo
     /**
      * @readonly
      * @psalm-allow-private-mutation
-     * @var array
+     * @var array|null
      */
-    #[Marshal(name: 'SearchAttributes')]
-    public array $searchAttributes;
+    #[Marshal(name: 'SearchAttributes', type: NullableType::class, of: ArrayType::class)]
+    public ?array $searchAttributes = null;
 
     /**
      * @readonly
      * @psalm-allow-private-mutation
-     * @var array
+     * @var array|null
      */
-    #[Marshal(name: 'Memo')]
-    public array $memo;
+    #[Marshal(name: 'SearchAttributes', type: NullableType::class, of: ArrayType::class)]
+    public ?array $memo = null;
 
     /**
      * @readonly
@@ -157,170 +160,5 @@ final class WorkflowInfo
         $this->executionTimeout = CarbonInterval::years(10);
         $this->runTimeout = CarbonInterval::years(10);
         $this->taskTimeout = CarbonInterval::years(10);
-    }
-
-    /**
-     * @param WorkflowExecution $execution
-     * @return WorkflowInfo
-     */
-    public function withExecution(WorkflowExecution $execution): self
-    {
-        $this->execution = $execution;
-
-        return $this;
-    }
-
-    /**
-     * @param WorkflowType $type
-     * @return WorkflowInfo
-     */
-    public function withType(WorkflowType $type): self
-    {
-        $this->type = $type;
-
-        return $this;
-    }
-
-    /**
-     * @param string $taskQueue
-     * @return WorkflowInfo
-     */
-    public function withTaskQueue(string $taskQueue): self
-    {
-        $this->taskQueue = $taskQueue;
-
-        return $this;
-    }
-
-    /**
-     * @param \DateInterval $executionTimeout
-     * @return WorkflowInfo
-     */
-    public function withExecutionTimeout($executionTimeout): self
-    {
-        $this->executionTimeout = $executionTimeout;
-
-        return $this;
-    }
-
-    /**
-     * @param \DateInterval $runTimeout
-     * @return WorkflowInfo
-     */
-    public function withRunTimeout($runTimeout): self
-    {
-        $this->runTimeout = $runTimeout;
-
-        return $this;
-    }
-
-    /**
-     * @param \DateInterval $taskTimeout
-     * @return WorkflowInfo
-     */
-    public function withTaskTimeout($taskTimeout): self
-    {
-        $this->taskTimeout = $taskTimeout;
-
-        return $this;
-    }
-
-    /**
-     * @param string $namespace
-     * @return WorkflowInfo
-     */
-    public function withNamespace(string $namespace): self
-    {
-        $this->namespace = $namespace;
-
-        return $this;
-    }
-
-    /**
-     * @param int $attempt
-     * @return WorkflowInfo
-     */
-    public function withAttempt(int $attempt): self
-    {
-        $this->attempt = $attempt;
-
-        return $this;
-    }
-
-    /**
-     * @param string|null $cronSchedule
-     * @return WorkflowInfo
-     */
-    public function withCronSchedule(?string $cronSchedule): self
-    {
-        $this->cronSchedule = $cronSchedule;
-
-        return $this;
-    }
-
-    /**
-     * @param string|null $continuedExecutionRunId
-     * @return WorkflowInfo
-     */
-    public function withContinuedExecutionRunId(?string $continuedExecutionRunId): self
-    {
-        $this->continuedExecutionRunId = $continuedExecutionRunId;
-
-        return $this;
-    }
-
-    /**
-     * @param string|null $parentNamespace
-     * @return WorkflowInfo
-     */
-    public function withParentNamespace(?string $parentNamespace): self
-    {
-        $this->parentNamespace = $parentNamespace;
-
-        return $this;
-    }
-
-    /**
-     * @param WorkflowExecution|null $parentExecution
-     * @return WorkflowInfo
-     */
-    public function withParentExecution(?WorkflowExecution $parentExecution): self
-    {
-        $this->parentExecution = $parentExecution;
-
-        return $this;
-    }
-
-    /**
-     * @param array $searchAttributes
-     * @return WorkflowInfo
-     */
-    public function withSearchAttributes(array $searchAttributes): self
-    {
-        $this->searchAttributes = $searchAttributes;
-
-        return $this;
-    }
-
-    /**
-     * @param array $memo
-     * @return WorkflowInfo
-     */
-    public function withMemo(array $memo): self
-    {
-        $this->memo = $memo;
-
-        return $this;
-    }
-
-    /**
-     * @param string $binaryChecksum
-     * @return $this
-     */
-    public function withBinaryChecksum(string $binaryChecksum): self
-    {
-        $this->binaryChecksum = $binaryChecksum;
-
-        return $this;
     }
 }

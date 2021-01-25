@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Exception;
+namespace Temporal\Exception;
 
 /**
  * This interface marks an exception that is part of correct work and must be

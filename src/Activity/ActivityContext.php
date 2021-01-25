@@ -9,51 +9,42 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Activity;
+namespace Temporal\Activity;
 
-use Temporal\Client\Internal\Marshaller\Meta\Marshal;
-use Temporal\Client\Internal\Marshaller\Meta\MarshalArray;
-use Temporal\Client\Worker\Transport\RpcConnectionInterface;
+use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\Type;
+use Temporal\DataConverter\ValuesInterface;
+use Temporal\Exception\Client\ActivityCanceledException;
+use Temporal\Exception\Client\ActivityCompletionException;
+use Temporal\Exception\Client\ServiceClientException;
+use Temporal\Internal\Marshaller\Meta\Marshal;
+use Temporal\Worker\Transport\RPCConnectionInterface;
 
 final class ActivityContext implements ActivityContextInterface
 {
-    /**
-     * @var ActivityInfo
-     */
     #[Marshal(name: 'info')]
     private ActivityInfo $info;
 
-    /**
-     * @var array
-     */
-    #[MarshalArray(name: 'args')]
-    private array $arguments = [];
-
-    /**
-     * @var bool
-     */
     private bool $doNotCompleteOnReturn = false;
+    private RPCConnectionInterface $rpc;
+    private DataConverterInterface $converter;
+    private ?ValuesInterface $heartbeatDetails = null;
 
     /**
-     * @var RpcConnectionInterface
+     * @param RPCConnectionInterface $rpc
+     * @param DataConverterInterface $converter
+     * @param ValuesInterface|null $lastHeartbeatDetails
      */
-    private RpcConnectionInterface $rpc;
-
-    /**
-     * @param RpcConnectionInterface $rpc
-     */
-    public function __construct(RpcConnectionInterface $rpc)
-    {
+    public function __construct(
+        RPCConnectionInterface $rpc,
+        DataConverterInterface $converter,
+        ValuesInterface $lastHeartbeatDetails = null
+    ) {
         $this->info = new ActivityInfo();
         $this->rpc = $rpc;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getArguments(): array
-    {
-        return $this->arguments;
+        $this->converter = $converter;
+        $this->heartbeatDetails = $lastHeartbeatDetails;
     }
 
     /**
@@ -62,6 +53,35 @@ final class ActivityContext implements ActivityContextInterface
     public function getInfo(): ActivityInfo
     {
         return $this->info;
+    }
+
+    /**
+     * @return DataConverterInterface
+     */
+    public function getDataConverter(): DataConverterInterface
+    {
+        return $this->converter;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasHeartbeatDetails(): bool
+    {
+        return $this->heartbeatDetails !== null;
+    }
+
+    /**
+     * @param Type|string $type
+     * @return mixed
+     */
+    public function getHeartbeatDetails($type = null)
+    {
+        if (!$this->hasHeartbeatDetails()) {
+            return null;
+        }
+
+        return $this->heartbeatDetails->getValue(0, $type);
     }
 
     /**
@@ -82,13 +102,33 @@ final class ActivityContext implements ActivityContextInterface
 
     /**
      * @param mixed $details
-     * @return mixed
+     *
+     * @throws ActivityCompletionException
+     * @throws ActivityCanceledException
      */
-    public function heartbeat($details)
+    public function heartbeat($details): void
     {
-        return $this->rpc->call('activity.heartbeat', [
-            'taskToken' => $this->info->taskToken,
-            'details'   => $details,
-        ]);
+        // we use native host process RPC here to avoid excessive GRPC connections and to handle trottling
+        // on Golang end
+
+        $details = EncodedValues::fromValues([$details], $this->converter)
+            ->toPayloads()
+            ->serializeToString();
+
+        try {
+            $response = $this->rpc->call(
+                'activities.RecordActivityHeartbeat',
+                [
+                    'taskToken' => base64_encode($this->info->taskToken),
+                    'details' => base64_encode($details),
+                ]
+            );
+
+            if (!empty($response['canceled'])) {
+                throw ActivityCanceledException::fromActivityInfo($this->info);
+            }
+        } catch (ServiceClientException $e) {
+            throw ActivityCompletionException::fromActivityInfo($this->info, $e);
+        }
     }
 }

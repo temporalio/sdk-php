@@ -9,13 +9,15 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Transport\Router;
+namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
-use Temporal\Client\Internal\Repository\RepositoryInterface;
-use Temporal\Client\Internal\Transport\ClientInterface;
-use Temporal\Client\Internal\Workflow\Process\Process;
-use Temporal\Client\Workflow;
+use Temporal\Exception\DestructMemorizedInstanceException;
+use Temporal\Internal\Repository\RepositoryInterface;
+use Temporal\Internal\Transport\ClientInterface;
+use Temporal\Internal\Workflow\Process\Process;
+use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Workflow;
 
 class DestroyWorkflow extends WorkflowProcessAwareRoute
 {
@@ -43,19 +45,13 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
     /**
      * {@inheritDoc}
      */
-    public function handle(array $payload, array $headers, Deferred $resolver): void
+    public function handle(RequestInterface $request, array $headers, Deferred $resolver): void
     {
-        ['runId' => $runId] = $payload;
-
-        $process = $this->findProcessOrFail($runId);
+        ['runId' => $runId] = $request->getOptions();
 
         $this->kill($runId);
 
-        $info = $process->getContext()->getInfo();
-
-        $resolver->resolve([
-            'WorkflowExecution' => $info->execution
-        ]);
+        $resolver->resolve(['OK']);
     }
 
     /**
@@ -66,15 +62,12 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
     {
         /** @var Process $process */
         $process = $this->running->find($runId);
-
         if ($process === null) {
             throw new \InvalidArgumentException(\sprintf(self::ERROR_PROCESS_NOT_DEFINED, $runId));
         }
 
-        Workflow::setCurrentContext(null);
-        $this->running->remove($runId);
-
-        $process->cancel();
+        $this->running->pull($runId);
+        $process->cancel(new DestructMemorizedInstanceException());
 
         return [];
     }

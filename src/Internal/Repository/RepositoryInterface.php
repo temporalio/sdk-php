@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Repository;
+namespace Temporal\Internal\Repository;
 
 /**
  * The task of the {@see RepositoryInterface} is to be able to register a
@@ -23,9 +23,16 @@ namespace Temporal\Client\Internal\Repository;
 interface RepositoryInterface extends \IteratorAggregate, \Countable
 {
     /**
+     * @param callable(TEntry): bool $filter
+     * @return $this
+     */
+    public function filter(callable $filter): self;
+
+    /**
      * Register a new {@see Identifiable} inside the repository.
      *
-     * @param TEntry $entry
+     * @param Identifiable $entry
+     * @param bool $overwrite
      */
     public function add(Identifiable $entry, bool $overwrite = false): void;
 

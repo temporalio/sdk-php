@@ -9,11 +9,11 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Transport\Router;
+namespace Temporal\Internal\Transport\Router;
 
-use Temporal\Client\Internal\Declaration\WorkflowInstanceInterface;
-use Temporal\Client\Internal\Repository\RepositoryInterface;
-use Temporal\Client\Internal\Workflow\Process\Process;
+use Temporal\Internal\Declaration\WorkflowInstanceInterface;
+use Temporal\Internal\Repository\RepositoryInterface;
+use Temporal\Internal\Workflow\Process\Process;
 
 abstract class WorkflowProcessAwareRoute extends Route
 {

@@ -9,18 +9,16 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Worker;
+namespace Temporal\Worker;
 
-use Temporal\Client\Internal\Events\EventListenerInterface;
+use Temporal\Internal\Events\EventListenerInterface;
 
 /**
  * The {@see LoopInterface} is responsible for providing an interface for
  * creating an event loop.
  *
  * Besides defining a few methods, this interface also implements
- * the {@see EventEmitterInterface} which allows you to react to certain events.
- *
- * @implements EventEmitterInterface<FactoryInterface::ON_*>
+ * the {@see EventListenerInterface} which allows you to react to certain events.
  */
 interface LoopInterface extends EventListenerInterface
 {
@@ -40,6 +38,21 @@ interface LoopInterface extends EventListenerInterface
      * @var string
      */
     public const ON_TICK = 'tick';
+
+    /**
+     * @var string
+     */
+    public const ON_SIGNAL = 'signal';
+
+    /**
+     * @var string
+     */
+    public const ON_QUERY = 'query';
+
+    /**
+     * @var string
+     */
+    public const ON_CALLBACK = 'callback';
 
     /**
      * @return void

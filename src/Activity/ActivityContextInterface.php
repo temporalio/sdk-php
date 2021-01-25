@@ -9,9 +9,11 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Activity;
+namespace Temporal\Activity;
 
-use Temporal\Client\Worker\Transport\RpcConnectionInterface;
+use Temporal\DataConverter\Type;
+use Temporal\DataConverter\ValuesInterface;
+use Temporal\Worker\Transport\RPCConnectionInterface;
 
 interface ActivityContextInterface
 {
@@ -23,16 +25,20 @@ interface ActivityContextInterface
     public function getInfo(): ActivityInfo;
 
     /**
-     * Returns the arguments passed to the activity.
-     *
-     * @return array
+     * @return bool
      */
-    public function getArguments(): array;
+    public function hasHeartbeatDetails(): bool;
+
+    /**
+     * @param Type|string $type
+     * @return mixed
+     */
+    public function getHeartbeatDetails($type = null);
 
     /**
      * If this method is called during an activity execution then activity is
      * not going to complete when its method returns. It is expected to be
-     * completed asynchronously using {@see RpcConnectionInterface::call()}.
+     * completed asynchronously using {@see RPCConnectionInterface::call()}.
      *
      * @return void
      */
@@ -46,10 +52,7 @@ interface ActivityContextInterface
     /**
      * Use to notify Simple Workflow that activity execution is alive.
      *
-     * @param mixed $details In case of activity timeout details are returned
-     *  as a field of the exception thrown.
-     *
-     * @return mixed
+     * @param mixed $details In case of activity timeout details are returned  as a field of the exception thrown.
      */
-    public function heartbeat($details);
+    public function heartbeat($details): void;
 }

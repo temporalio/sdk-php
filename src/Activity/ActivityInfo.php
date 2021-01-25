@@ -9,19 +9,19 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Activity;
+namespace Temporal\Activity;
 
 use Carbon\Carbon;
 use Carbon\CarbonInterval;
-use Temporal\Client\Common\Uuid;
-use Temporal\Client\Internal\Marshaller\Meta\Marshal;
-use Temporal\Client\Internal\Marshaller\Type\DateIntervalType;
-use Temporal\Client\Internal\Marshaller\Type\DateTimeType;
-use Temporal\Client\Internal\Marshaller\Type\NullableType;
-use Temporal\Client\Internal\Marshaller\Type\ObjectType;
-use Temporal\Client\Worker\FactoryInterface;
-use Temporal\Client\Workflow\WorkflowExecution;
-use Temporal\Client\Workflow\WorkflowType;
+use Temporal\Common\Uuid;
+use Temporal\Internal\Marshaller\Meta\Marshal;
+use Temporal\Internal\Marshaller\Type\DateIntervalType;
+use Temporal\Internal\Marshaller\Type\DateTimeType;
+use Temporal\Internal\Marshaller\Type\NullableType;
+use Temporal\Internal\Marshaller\Type\ObjectType;
+use Temporal\Worker\FactoryInterface;
+use Temporal\Workflow\WorkflowExecution;
+use Temporal\Workflow\WorkflowType;
 
 /**
  * ActivityInfo contains information about currently executing activity.

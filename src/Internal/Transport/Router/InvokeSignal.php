@@ -9,21 +9,16 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Transport\Router;
+namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
-use Temporal\Client\Internal\Declaration\WorkflowInstanceInterface;
-use Temporal\Client\Internal\Repository\RepositoryInterface;
-use Temporal\Client\Worker\LoopInterface;
-use Temporal\Client\Worker\TaskQueueInterface;
+use Temporal\DataConverter\EncodedValues;
+use Temporal\Internal\Repository\RepositoryInterface;
+use Temporal\Worker\LoopInterface;
+use Temporal\Worker\Transport\Command\RequestInterface;
 
 final class InvokeSignal extends WorkflowProcessAwareRoute
 {
-    /**
-     * @var string
-     */
-    private const ERROR_SIGNAL_NOT_FOUND = 'unknown signalType %s. KnownSignalTypes=[%s]';
-
     /**
      * @var LoopInterface
      */
@@ -43,32 +38,14 @@ final class InvokeSignal extends WorkflowProcessAwareRoute
     /**
      * {@inheritDoc}
      */
-    public function handle(array $payload, array $headers, Deferred $resolver): void
+    public function handle(RequestInterface $request, array $headers, Deferred $resolver): void
     {
-        ['runId' => $runId, 'name' => $name] = $payload;
+        $payload = $request->getOptions();
 
-        $instance = $this->findInstanceOrFail($runId);
-        $handler = $this->findSignalHandlerOrFail($instance, $name);
+        $instance = $this->findInstanceOrFail($payload['runId']);
+        $handler = $instance->getSignalHandler($payload['name']);
 
-        $executor = static fn() => $resolver->resolve($handler($payload['args'] ?? []));
-        $this->loop->once(TaskQueueInterface::ON_SIGNAL, $executor);
-    }
-
-    /**
-     * @param WorkflowInstanceInterface $instance
-     * @param string $name
-     * @return \Closure|null
-     */
-    private function findSignalHandlerOrFail(WorkflowInstanceInterface $instance, string $name): ?\Closure
-    {
-        $handler = $instance->findQueryHandler($name);
-
-        if ($handler === null) {
-            $available = \implode(' ', $instance->getSignalHandlerNames());
-
-            throw new \LogicException(\sprintf(self::ERROR_SIGNAL_NOT_FOUND, $name, $available));
-        }
-
-        return $handler;
+        // todo: handle serialization error, handle logic error
+        $resolver->resolve(EncodedValues::fromValues([$handler($request->getPayloads())]));
     }
 }

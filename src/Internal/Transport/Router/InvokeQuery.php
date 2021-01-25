@@ -9,10 +9,16 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Transport\Router;
+namespace Temporal\Internal\Transport\Router;
 
+use JetBrains\PhpStorm\Pure;
 use React\Promise\Deferred;
-use Temporal\Client\Internal\Declaration\WorkflowInstanceInterface;
+use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\Payload;
+use Temporal\Internal\Declaration\WorkflowInstanceInterface;
+use Temporal\Internal\Repository\RepositoryInterface;
+use Temporal\Worker\LoopInterface;
+use Temporal\Worker\Transport\Command\RequestInterface;
 
 final class InvokeQuery extends WorkflowProcessAwareRoute
 {
@@ -22,16 +28,45 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
     private const ERROR_QUERY_NOT_FOUND = 'unknown queryType %s. KnownQueryTypes=[%s]';
 
     /**
+     * @var LoopInterface
+     */
+    private LoopInterface $loop;
+
+    /**
+     * @param RepositoryInterface $running
+     * @param LoopInterface $loop
+     */
+    #[Pure]
+    public function __construct(
+        RepositoryInterface $running,
+        LoopInterface $loop
+    ) {
+        $this->loop = $loop;
+
+        parent::__construct($running);
+    }
+
+    /**
      * {@inheritDoc}
      */
-    public function handle(array $payload, array $headers, Deferred $resolver): void
+    public function handle(RequestInterface $request, array $headers, Deferred $resolver): void
     {
-        ['runId' => $runId, 'name' => $name] = $payload;
+        ['runId' => $runId, 'name' => $name] = $request->getOptions();
 
         $instance = $this->findInstanceOrFail($runId);
         $handler = $this->findQueryHandlerOrFail($instance, $name);
 
-        $resolver->resolve($handler($payload['args'] ?? []));
+        $this->loop->once(
+            LoopInterface::ON_QUERY,
+            static function () use ($request, $resolver, $handler) {
+                try {
+                    $result = $handler($request->getPayloads());
+                    $resolver->resolve(EncodedValues::fromValues([$result]));
+                } catch (\Throwable $e) {
+                    $resolver->reject($e);
+                }
+            }
+        );
     }
 
     /**

@@ -9,11 +9,11 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Transport;
+namespace Temporal\Internal\Transport;
 
-use Temporal\Client\Internal\Transport\Router\RouteInterface;
-use Temporal\Client\Worker\Command\RequestInterface;
-use Temporal\Client\Worker\DispatcherInterface;
+use Temporal\Internal\Transport\Router\RouteInterface;
+use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\DispatcherInterface;
 
 interface RouterInterface extends DispatcherInterface
 {

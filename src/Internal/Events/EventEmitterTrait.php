@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Events;
+namespace Temporal\Internal\Events;
 
 /**
  * @mixin EventEmitterInterface
@@ -34,6 +34,7 @@ trait EventEmitterTrait
 
     /**
      * {@inheritDoc}
+     * @todo: deprecate
      */
     public function on(string $event, callable $then): self
     {

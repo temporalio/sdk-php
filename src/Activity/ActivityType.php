@@ -9,9 +9,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Activity;
+namespace Temporal\Activity;
 
-use Temporal\Client\Internal\Marshaller\Meta\Marshal;
+use Temporal\Internal\Marshaller\Meta\Marshal;
 
 /**
  * ActivityType identifies a activity type.

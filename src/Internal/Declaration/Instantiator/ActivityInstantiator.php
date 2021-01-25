@@ -9,11 +9,12 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Declaration\Instantiator;
+namespace Temporal\Internal\Declaration\Instantiator;
 
-use Temporal\Client\Internal\Declaration\ActivityInstance;
-use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
-use Temporal\Client\Internal\Declaration\Prototype\PrototypeInterface;
+use Temporal\DataConverter\DataConverterInterface;
+use Temporal\Internal\Declaration\ActivityInstance;
+use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
+use Temporal\Internal\Declaration\Prototype\PrototypeInterface;
 
 /**
  * @template-implements InstantiatorInterface<ActivityPrototype, ActivityInstance>
@@ -27,9 +28,6 @@ final class ActivityInstantiator extends Instantiator
     {
         assert($prototype instanceof ActivityPrototype, 'Precondition failed');
 
-        // TODO
-        $instance = $this->getInstance($prototype);
-
-        return new ActivityInstance($prototype, $instance);
+        return new ActivityInstance($prototype, $this->getInstance($prototype));
     }
 }

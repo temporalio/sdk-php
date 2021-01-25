@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Client;
+namespace Temporal\Tests;
 
 use PHPUnit\Framework\TestCase as BaseTestCase;
 

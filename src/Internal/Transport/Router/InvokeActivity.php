@@ -9,17 +9,22 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Transport\Router;
+namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
-use Temporal\Client\Activity;
-use Temporal\Client\Activity\ActivityContext;
-use Temporal\Client\Activity\ActivityInfo;
-use Temporal\Client\Exception\DoNotCompleteOnResultException;
-use Temporal\Client\Internal\Declaration\Instantiator\ActivityInstantiator;
-use Temporal\Client\Internal\Declaration\Prototype\ActivityPrototype;
-use Temporal\Client\Internal\ServiceContainer;
-use Temporal\Client\Worker\Transport\RpcConnectionInterface;
+use Temporal\Activity;
+use Temporal\Activity\ActivityContext;
+use Temporal\Activity\ActivityInfo;
+use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\ValuesInterface;
+use Temporal\Exception\DoNotCompleteOnResultException;
+use Temporal\Internal\Declaration\Instantiator\ActivityInstantiator;
+use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
+use Temporal\Internal\ServiceContainer;
+use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Transport\RPCConnectionInterface;
+
+use function Amp\call;
 
 final class InvokeActivity extends Route
 {
@@ -28,26 +33,15 @@ final class InvokeActivity extends Route
      */
     private const ERROR_NOT_FOUND = 'Activity with the specified name "%s" was not registered';
 
-    /**
-     * @var ActivityInstantiator
-     */
     private ActivityInstantiator $instantiator;
-
-    /**
-     * @var ServiceContainer
-     */
     private ServiceContainer $services;
-
-    /**
-     * @var RpcConnectionInterface
-     */
-    private RpcConnectionInterface $rpc;
+    private RPCConnectionInterface $rpc;
 
     /**
      * @param ServiceContainer $services
-     * @param RpcConnectionInterface $rpc
+     * @param RPCConnectionInterface $rpc
      */
-    public function __construct(ServiceContainer $services, RpcConnectionInterface $rpc)
+    public function __construct(ServiceContainer $services, RPCConnectionInterface $rpc)
     {
         $this->rpc = $rpc;
         $this->services = $services;
@@ -57,10 +51,26 @@ final class InvokeActivity extends Route
     /**
      * {@inheritDoc}
      */
-    public function handle(array $payload, array $headers, Deferred $resolver): void
+    public function handle(RequestInterface $request, array $headers, Deferred $resolver): void
     {
-        $context = $this->services->marshaller->unmarshal($payload, new ActivityContext($this->rpc));
+        $options = $request->getOptions();
+        $payloads = $request->getPayloads();
+        $heartbeatDetails = null;
 
+        // always in binary format
+        $options['info']['TaskToken'] = base64_decode($options['info']['TaskToken']);
+
+        if (($options['heartbeatDetails'] ?? 0) !== 0) {
+            $offset = count($payloads) - ($options['heartbeatDetails'] ?? 0);
+
+            $heartbeatDetails = EncodedValues::sliceValues($this->services->dataConverter, $payloads, $offset);
+            $payloads = EncodedValues::sliceValues($this->services->dataConverter, $payloads, 0, $offset);
+        }
+
+        $context = new ActivityContext($this->rpc, $this->services->dataConverter, $heartbeatDetails);
+        $context = $this->services->marshaller->unmarshal($options, $context);
+
+        // todo: get from container
         $prototype = $this->findDeclarationOrFail($context->getInfo());
         $instance = $this->instantiator->instantiate($prototype);
 
@@ -68,13 +78,15 @@ final class InvokeActivity extends Route
             Activity::setCurrentContext($context);
 
             $handler = $instance->getHandler();
-            $result = $handler($context->getArguments());
+            $result = $handler($payloads);
 
             if ($context->isDoNotCompleteOnReturn()) {
                 $resolver->reject(DoNotCompleteOnResultException::create());
             } else {
-                $resolver->resolve($result);
+                $resolver->resolve(EncodedValues::fromValues([$result]));
             }
+        } catch (\Throwable $e) {
+            $resolver->reject($e);
         } finally {
             Activity::setCurrentContext(null);
         }

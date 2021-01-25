@@ -9,23 +9,29 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Internal\Declaration\Prototype;
+namespace Temporal\Internal\Declaration\Prototype;
 
-use Temporal\Client\Internal\Repository\Identifiable;
+use Temporal\Internal\Repository\Identifiable;
 
 interface PrototypeInterface extends Identifiable
 {
     /**
+     * Returns the name of the main handler.
+     *
      * @return string
      */
-    public function getId(): string;
+    public function getID(): string;
 
     /**
+     * Returns a link to the class within which the handler is defined.
+     *
      * @return \ReflectionClass|null
      */
     public function getClass(): ?\ReflectionClass;
 
     /**
+     * Returns the reflection of the handler function.
+     *
      * @return \ReflectionFunctionAbstract
      */
     public function getHandler(): \ReflectionFunctionAbstract;
