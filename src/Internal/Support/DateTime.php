@@ -67,7 +67,7 @@ final class DateTime
 
         if ($likeRfc3339WithAccuracy) {
             // $date is "YYYY-mm-dd HH:ii:ss"
-            // $accuracy is "PPPP+" where X is digit
+            // $accuracy is "PPPP+" where P is digit of [milli/micro/nano] seconds
             [$date, $accuracy] = \explode('.', \substr($time, 0, -1));
 
             if (\ctype_digit($accuracy)) {
