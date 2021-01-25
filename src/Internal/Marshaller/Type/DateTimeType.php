@@ -13,6 +13,7 @@ namespace Temporal\Internal\Marshaller\Type;
 
 use Carbon\Carbon;
 use Temporal\Internal\Marshaller\MarshallerInterface;
+use Temporal\Internal\Support\DateTime;
 use Temporal\Internal\Support\Inheritance;
 
 class DateTimeType extends Type implements DetectableTypeInterface
@@ -45,7 +46,7 @@ class DateTimeType extends Type implements DetectableTypeInterface
      */
     public function parse($value, $current): \DateTimeInterface
     {
-        return Carbon::parse($value);
+        return DateTime::parse($value);
     }
 
     /**
@@ -53,7 +54,7 @@ class DateTimeType extends Type implements DetectableTypeInterface
      */
     public function serialize($value): string
     {
-        return Carbon::parse($value)
+        return DateTime::parse($value)
             ->format($this->format);
     }
 }
