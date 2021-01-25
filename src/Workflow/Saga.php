@@ -75,7 +75,9 @@ final class Saga
                 }
 
                 $sagaException = null;
-                foreach ($this->compensate as $handler) {
+
+                for ($i = count($this->compensate) - 1; $i >= 0; $i--) {
+                    $handler = $this->compensate[$i];
                     try {
                         yield Workflow::newDetachedCancellationScope($handler);
                     } catch (\Throwable $e) {
