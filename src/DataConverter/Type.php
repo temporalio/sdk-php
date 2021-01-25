@@ -9,9 +9,6 @@
 
 namespace Temporal\DataConverter;
 
-/**
- * @psalm-type TypeHint = string | \ReflectionClass | \ReflectionType | Type
- */
 final class Type
 {
     public const STRING = 'string';
@@ -95,7 +92,7 @@ final class Type
     }
 
     /**
-     * @param TypeHint $type
+     * @param string|\ReflectionClass|\ReflectionType|Type $type
      * @return Type
      */
     public static function fromMixed($type): Type

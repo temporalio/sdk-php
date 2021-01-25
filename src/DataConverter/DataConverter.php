@@ -14,9 +14,6 @@ namespace Temporal\DataConverter;
 use Temporal\Api\Common\V1\Payload;
 use Temporal\Exception\DataConverterException;
 
-/**
- * @psalm-import-type TypeHint from Type
- */
 final class DataConverter implements DataConverterInterface
 {
     /**
@@ -35,9 +32,7 @@ final class DataConverter implements DataConverterInterface
     }
 
     /**
-     * @param Payload $payload
-     * @param TypeHint $type
-     * @return mixed
+     * {@inheritDoc}
      */
     public function fromPayload(Payload $payload, $type)
     {

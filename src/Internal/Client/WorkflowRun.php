@@ -16,12 +16,19 @@ use Temporal\Workflow\WorkflowRunInterface;
 
 final class WorkflowRun implements WorkflowRunInterface
 {
+    /**
+     * @var WorkflowStubInterface
+     */
     private WorkflowStubInterface $stub;
+
+    /**
+     * @var \ReflectionClass|\ReflectionType|string|Type|null
+     */
     private $returnType;
 
     /**
      * @param WorkflowStubInterface $stub
-     * @param $returnType
+     * @param string|\ReflectionClass|\ReflectionType|Type|null $returnType
      */
     public function __construct(WorkflowStubInterface $stub, $returnType = null)
     {
@@ -38,12 +45,10 @@ final class WorkflowRun implements WorkflowRunInterface
     }
 
     /**
-     * @param Type|string $returnType
-     * @param int $timeout
-     * @return mixed
+     * {@inheritDoc}
      */
-    public function getResult($returnType = null, int $timeout = self::DEFAULT_TIMEOUT)
+    public function getResult($type = null, int $timeout = self::DEFAULT_TIMEOUT)
     {
-        return $this->stub->getResult($returnType ?? $this->returnType, $timeout);
+        return $this->stub->getResult($type ?? $this->returnType, $timeout);
     }
 }

@@ -25,8 +25,8 @@ interface WorkflowRunInterface
     /**
      * Get execution result value.
      *
-     * @param Type|string $type
-     * @param int $timeout
+     * @param string|\ReflectionClass|\ReflectionType|Type|null $type
+     * @param positive-int $timeout
      * @return mixed
      */
     public function getResult($type = null, int $timeout = self::DEFAULT_TIMEOUT);

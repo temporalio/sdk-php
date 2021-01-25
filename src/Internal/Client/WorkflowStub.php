@@ -56,10 +56,6 @@ use Temporal\Exception\Client\WorkflowServiceException;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Workflow\WorkflowExecution;
 
-/**
- * @psalm-import-type TypeHint from Type
- * @see Type
- */
 final class WorkflowStub implements WorkflowStubInterface
 {
     private const ERROR_WORKFLOW_START_DUPLICATION =
@@ -115,10 +111,10 @@ final class WorkflowStub implements WorkflowStubInterface
     }
 
     /**
-     * {@inheritDoc}
-     * @internal
+     * @param WorkflowOptions $options
+     * @return void
      */
-    public function setOptions(WorkflowOptions $options)
+    public function setOptions(WorkflowOptions $options): void
     {
         // todo: replace with merge options
         $this->options = $options;
@@ -294,9 +290,7 @@ final class WorkflowStub implements WorkflowStubInterface
     }
 
     /**
-     * @param string $name
-     * @param array $args
-     * @return mixed|void
+     * {@inheritDoc}
      */
     public function query(string $name, array $args = []): ?EncodedValues
     {
@@ -322,6 +316,7 @@ final class WorkflowStub implements WorkflowStubInterface
         } catch (ServiceClientException $e) {
             if ($e->getCode() === StatusCode::NOT_FOUND) {
                 throw new WorkflowNotFoundException(null, $this->execution, $this->workflowType, $e);
+            // TODO Avoid "elseif" stmt
             } elseif ($e->getFailure(QueryFailedFailure::class) !== null) {
                 throw new WorkflowQueryException(null, $this->execution, $this->workflowType, $e);
             }
@@ -343,6 +338,7 @@ final class WorkflowStub implements WorkflowStubInterface
             $this->execution,
             $this->workflowType,
             $this->clientOptions->queryRejectionCondition,
+            // TODO Null Pointer Exception
             $result->getQueryRejected()->getStatus(),
             null
         );
@@ -385,26 +381,21 @@ final class WorkflowStub implements WorkflowStubInterface
     }
 
     /**
-     * Wait for the workflow completion and return it's result.
-     *
-     * @param TypeHint|null $returnType
-     * @param int $timeout Timeout in seconds.
-     * @return mixed|null
+     * {@inheritDoc}
      *
      * @throws \Throwable
      */
-    public function getResult($returnType = null, int $timeout = self::DEFAULT_TIMEOUT)
+    public function getResult($type = null, int $timeout = self::DEFAULT_TIMEOUT)
     {
         try {
             $result = $this->fetchResult($timeout);
+
             if ($result === null || $result->count() === 0) {
                 return $result;
             }
 
-            return $result->getValue(0, $returnType);
-        } catch (TimeoutException $e) {
-            throw $e;
-        } catch (IllegalStateException $e) {
+            return $result->getValue(0, $type);
+        } catch (TimeoutException|IllegalStateException $e) {
             throw $e;
         } catch (\Throwable $e) {
             throw $this->mapWorkflowFailureToException($e);
@@ -438,6 +429,7 @@ final class WorkflowStub implements WorkflowStubInterface
     /**
      * @param int|null $timeout
      * @return EncodedValues|null
+     * @throws \ErrorException
      */
     private function fetchResult(int $timeout = null): ?EncodedValues
     {
@@ -546,10 +538,12 @@ final class WorkflowStub implements WorkflowStubInterface
                 }
             }
 
+            // TODO Null Pointer Exception
             if ($response->getHistory()->getEvents()->count() === 0) {
                 continue;
             }
 
+            // TODO Null Pointer Exception
             /** @var HistoryEvent $closeEvent */
             $closeEvent = $response->getHistory()->getEvents()->offsetGet(0);
 
@@ -593,6 +587,7 @@ final class WorkflowStub implements WorkflowStubInterface
                         $this->workflowType,
                         $failure
                     );
+                // TODO Avoid "else" stmt
                 } else {
                     return new WorkflowServiceException(
                         null,
@@ -602,7 +597,7 @@ final class WorkflowStub implements WorkflowStubInterface
                     );
                 }
 
-            case $failure instanceof CanceledFailure || $failure instanceof WorkflowException :
+            case $failure instanceof CanceledFailure || $failure instanceof WorkflowException:
                 return $failure;
 
             default:

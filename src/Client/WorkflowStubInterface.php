@@ -26,8 +26,6 @@ use Temporal\Workflow\WorkflowRunInterface;
  * execution. Created through {@see WorkflowClient::newUntypedWorkflowStub()}.
  *
  * @psalm-import-type DateIntervalValue from DateInterval
- * @psalm-import-type TypeHint from Type
- * @see Type
  */
 interface WorkflowStubInterface extends WorkflowRunInterface
 {
@@ -94,12 +92,12 @@ interface WorkflowStubInterface extends WorkflowRunInterface
      * Behind the scene this call performs long poll on Temporal service waiting
      * for workflow completion notification.
      *
-     * @param TypeHint|null $returnType
+     * @param string|\ReflectionClass|\ReflectionType|Type|null $type
      * @param int $timeout Timeout in seconds.
      * @return mixed
      * @see DateInterval
      */
-    public function getResult($returnType = null, int $timeout = WorkflowRunInterface::DEFAULT_TIMEOUT);
+    public function getResult($type = null, int $timeout = WorkflowRunInterface::DEFAULT_TIMEOUT);
 
     /**
      * Request cancellation of a workflow execution.
