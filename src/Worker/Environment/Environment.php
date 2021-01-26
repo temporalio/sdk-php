@@ -14,6 +14,7 @@ namespace Temporal\Worker\Environment;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Carbon\CarbonTimeZone;
+use Temporal\Internal\Support\DateTime;
 
 class Environment implements EnvironmentInterface
 {
@@ -70,7 +71,7 @@ class Environment implements EnvironmentInterface
 
         // Intercept headers
         if (isset($headers[self::HEADER_TICK_TIME])) {
-            $this->tickTime = Carbon::parse($headers[self::HEADER_TICK_TIME], new CarbonTimeZone('UTC'));
+            $this->tickTime = DateTime::parse($headers[self::HEADER_TICK_TIME], new CarbonTimeZone('UTC'));
         }
     }
 }

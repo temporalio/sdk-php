@@ -234,6 +234,7 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
 
     /**
      * {@inheritDoc}
+     * @todo pass options
      */
     public function newWorker(string $taskQueue = self::DEFAULT_TASK_QUEUE): WorkerInterface
     {
@@ -299,7 +300,7 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
      */
     private function createCodec(): CodecInterface
     {
-        // todo: improve codec selection in test scenarios
+        // todo: make it better
         switch ($_SERVER['RR_CODEC'] ?? null) {
             case 'protobuf':
                 return new ProtoCodec($this->converter);
