@@ -63,6 +63,14 @@ interface WorkflowContextInterface extends EnvironmentInterface
     public function registerSignal(string $queryType, callable $handler): self;
 
     /**
+     * Exchanges data between worker and host process.
+     *
+     * @param RequestInterface $request
+     * @return PromiseInterface
+     */
+    public function request(RequestInterface $request): PromiseInterface;
+
+    /**
      * @param string $changeId
      * @param int $minSupported
      * @param int $maxSupported
@@ -94,11 +102,6 @@ interface WorkflowContextInterface extends EnvironmentInterface
     public function timer($interval): PromiseInterface;
 
     /**
-     * @return string
-     */
-    public function getLastTrace(): string;
-
-    /**
      * @param class-string|string $type
      * @param array $args
      * @param ContinueAsNewOptions|null $options
@@ -114,14 +117,17 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * Creates client stub that can be used to continue this workflow as new.
      *
      * @psalm-template T of object
-     * @psalm-param class-string<T> $class
+     * @psalm-param class-string<T> $type
      * @psalm-return object<T>|T
      *
-     * @param string $class
+     * @param string $type
      * @param ContinueAsNewOptions|null $options
      * @return object
      */
-    public function newContinueAsNewStub(string $class, ContinueAsNewOptions $options = null): object;
+    public function newContinueAsNewStub(
+        string $type,
+        ContinueAsNewOptions $options = null
+    ): object;
 
     /**
      * @param class-string|string $type
@@ -139,14 +145,17 @@ interface WorkflowContextInterface extends EnvironmentInterface
 
     /**
      * @psalm-template T of object
-     * @psalm-param class-string<T> $class
+     * @psalm-param class-string<T> $type
      * @psalm-return object<T>|T
      *
-     * @param string $class
+     * @param string $type
      * @param ChildWorkflowOptions|null $options
      * @return object
      */
-    public function newChildWorkflowStub(string $class, ChildWorkflowOptions $options = null): object;
+    public function newChildWorkflowStub(
+        string $type,
+        ChildWorkflowOptions $options = null
+    ): object;
 
     /**
      * @param string $name
@@ -181,16 +190,21 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @param ActivityOptions|null $options
      * @return object
      */
-    public function newActivityStub(string $class, ActivityOptions $options = null): object;
+    public function newActivityStub(
+        string $class,
+        ActivityOptions $options = null
+    ): object;
 
     /**
      * @param ActivityOptions|null $options
      * @return ActivityStubInterface
      */
-    public function newUntypedActivityStub(ActivityOptions $options = null): ActivityStubInterface;
+    public function newUntypedActivityStub(
+        ActivityOptions $options = null
+    ): ActivityStubInterface;
 
     /**
-     * {@inheritDoc}
+     * @return string
      */
-    public function request(RequestInterface $request): PromiseInterface;
+    public function getStackTrace(): string;
 }

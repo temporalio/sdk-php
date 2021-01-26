@@ -30,7 +30,7 @@ class CancelledSingleScopeWorkflow
 
         $this->status[] = 'start';
         try {
-            yield Workflow::newCancellationScope(
+            yield Workflow::async(
                 function () use ($simple) {
                     try {
                         $this->status[] = 'in scope';
