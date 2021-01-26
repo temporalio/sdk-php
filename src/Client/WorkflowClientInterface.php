@@ -101,7 +101,7 @@ interface WorkflowClientInterface
     /**
      * Starts untyped and typed workflow stubs in async mode. Sends signal on start.
      *
-     * @param $workflow
+     * @param object|WorkflowStubInterface $workflow
      * @param string $signal
      * @param array $signalArgs
      * @param array $startArgs

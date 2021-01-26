@@ -15,7 +15,6 @@ use Spiral\Attributes\AttributeReader;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
-use Temporal\Exception\IllegalStateException;
 use Temporal\Exception\InvalidArgumentException;
 use Temporal\Internal\Client\ActivityCompletionClient;
 use Temporal\Internal\Client\WorkflowRun;

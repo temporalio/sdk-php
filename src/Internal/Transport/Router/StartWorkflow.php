@@ -73,10 +73,12 @@ final class StartWorkflow extends Route
         $process = new Process($this->services, $context);
         $this->services->running->add($process);
 
-        $process->start($instance->getHandler(), $context->getInput());
-
-        // todo: fix test cases
-        //$resolver->resolve(EncodedValues::fromValues([spl_object_id($process)]));
+        try {
+            $process->start($instance->getHandler(), $context->getInput());
+            $resolver->resolve(EncodedValues::fromValues([null]));
+        } catch (\Throwable $e) {
+            $resolver->reject($e);
+        }
     }
 
     /**
