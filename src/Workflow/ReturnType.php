@@ -30,12 +30,21 @@ final class ReturnType implements NamedArgumentConstructorAttribute
     public string $name;
 
     /**
+     * @var bool
+     */
+    #[Immutable]
+    public bool $nullable;
+
+    /**
      * @param string $name
+     * @param bool $nullable
      */
     public function __construct(
         #[ExpectedValues(valuesFromClass: Type::class)]
-        string $name
+        string $name,
+        bool $nullable = false
     ) {
         $this->name = $name;
+        $this->nullable = $nullable;
     }
 }

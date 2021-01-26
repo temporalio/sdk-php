@@ -17,6 +17,7 @@ use Temporal\Internal\Declaration\Graph\ClassNode;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Workflow\QueryMethod;
+use Temporal\Workflow\ReturnType;
 use Temporal\Workflow\SignalMethod;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
@@ -221,7 +222,7 @@ class WorkflowReader extends Reader
      */
     private function getPrototype(ClassNode $graph, \ReflectionMethod $handler): ?WorkflowPrototype
     {
-        $lastCron = $previousRetry = $prototype = null;
+        $cronSchedule = $previousRetry = $prototype = $returnType = null;
 
         foreach ($graph->getMethods($handler->getName()) as $group) {
             //
@@ -242,7 +243,14 @@ class WorkflowReader extends Reader
                 }
 
                 // Last CronSchedule
-                $lastCron = $this->reader->firstFunctionMetadata($method, CronSchedule::class) ?? $lastCron;
+                $cronSchedule = $this->reader->firstFunctionMetadata($method, CronSchedule::class)
+                    ?? $cronSchedule
+                ;
+
+                // Last ReturnType
+                $returnType = $this->reader->firstFunctionMetadata($method, ReturnType::class)
+                    ?? $returnType
+                ;
 
                 //
                 // In the future, workflow methods are available only in
@@ -265,8 +273,12 @@ class WorkflowReader extends Reader
                     $prototype->setMethodRetry($retry);
                 }
 
-                if ($prototype !== null && $lastCron !== null) {
-                    $prototype->setCronSchedule($lastCron);
+                if ($prototype !== null && $cronSchedule !== null) {
+                    $prototype->setCronSchedule($cronSchedule);
+                }
+
+                if ($prototype !== null && $returnType !== null) {
+                    $prototype->setReturnType($returnType);
                 }
             }
 
