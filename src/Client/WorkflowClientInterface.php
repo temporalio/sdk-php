@@ -93,7 +93,26 @@ interface WorkflowClientInterface
      * @param mixed $args
      * @return WorkflowRunInterface
      */
-    public function start($workflow, ...$args): WorkflowRunInterface;
+    public function start(
+        $workflow,
+        ...$args
+    ): WorkflowRunInterface;
+
+    /**
+     * Starts untyped and typed workflow stubs in async mode. Sends signal on start.
+     *
+     * @param object|WorkflowStubInterface $workflow
+     * @param string $signal
+     * @param array $signalArgs
+     * @param array $startArgs
+     * @return WorkflowRunInterface
+     */
+    public function startWithSignal(
+        $workflow,
+        string $signal,
+        array $signalArgs = [],
+        array $startArgs = []
+    ): WorkflowRunInterface;
 
     /**
      * Creates workflow client stub that can be used to start a single workflow execution. The first
@@ -116,13 +135,42 @@ interface WorkflowClientInterface
      * After workflow is started it can be also used to send signals or queries to it. IMPORTANT! Stub
      * is per workflow instance. So new stub should be created for each new one.
      *
-     * @param string $name
+     * @param string $workflowType
      * @param WorkflowOptions|null $options
      * @return WorkflowStubInterface
      */
     public function newUntypedWorkflowStub(
-        string $name,
+        string $workflowType,
         WorkflowOptions $options = null
+    ): WorkflowStubInterface;
+
+    /**
+     * Returns workflow stub associated with running workflow.
+     *
+     * @psalm-template T of object
+     * @param string $class
+     * @param string $workflowID
+     * @param string|null $runID
+     * @return object<T>|T
+     */
+    public function newRunningWorkflowStub(
+        string $class,
+        string $workflowID,
+        ?string $runID = null
+    ): object;
+
+    /**
+     * Returns untyped workflow stub associated with running workflow.
+     *
+     * @param string $workflowID
+     * @param string|null $runID
+     * @param string|null $workflowType
+     * @return WorkflowStubInterface
+     */
+    public function newUntypedRunningWorkflowStub(
+        string $workflowID,
+        ?string $runID = null,
+        ?string $workflowType = null
     ): WorkflowStubInterface;
 
     /**

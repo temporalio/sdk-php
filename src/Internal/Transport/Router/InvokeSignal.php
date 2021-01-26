@@ -45,7 +45,9 @@ final class InvokeSignal extends WorkflowProcessAwareRoute
         $instance = $this->findInstanceOrFail($payload['runId']);
         $handler = $instance->getSignalHandler($payload['name']);
 
+        $handler($request->getPayloads());
+
         // todo: handle serialization error, handle logic error
-        $resolver->resolve(EncodedValues::fromValues([$handler($request->getPayloads())]));
+        $resolver->resolve(EncodedValues::fromValues([null]));
     }
 }

@@ -40,8 +40,8 @@ class WorkflowFailedException extends WorkflowException
 
         $this->message = self::buildMessage(
             [
-                'workflowId' => $execution->id,
-                'runId' => $execution->runId,
+                'workflowId' => $execution->getID(),
+                'runId' => $execution->getRunID(),
                 'workflowType' => $type,
                 'workflowTaskCompletedEventId' => $lastWorkflowTaskCompletedEventId,
                 'retryState' => $retryState

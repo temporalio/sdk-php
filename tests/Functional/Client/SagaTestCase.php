@@ -23,8 +23,8 @@ class SagaTestCase extends ClientTestCase
 {
     public function testGetResult()
     {
-        $w = $this->createClient();
-        $saga = $w->newWorkflowStub(SagaWorkflow::class);
+        $client = $this->createClient();
+        $saga = $client->newWorkflowStub(SagaWorkflow::class);
 
         try {
             $saga->run();

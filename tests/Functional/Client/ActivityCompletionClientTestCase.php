@@ -26,12 +26,12 @@ class ActivityCompletionClientTestCase extends ClientTestCase
 {
     public function testCompleteAsyncActivityById()
     {
-        $w = $this->createClient();
-        $simple = $w->newUntypedWorkflowStub('AsyncActivityWorkflow');
+        $client = $this->createClient();
+        $simple = $client->newUntypedWorkflowStub('AsyncActivityWorkflow');
 
-        $e = $simple->start(['hello world']);
-        $this->assertNotEmpty($e->id);
-        $this->assertNotEmpty($e->runId);
+        $e = $client->start($simple, 'hello world');
+        $this->assertNotEmpty($e->getExecution()->getID());
+        $this->assertNotEmpty($e->getExecution()->getRunID());
 
         sleep(1);
         $this->assertFileExists(__DIR__ . '/../../activityId');
@@ -39,7 +39,7 @@ class ActivityCompletionClientTestCase extends ClientTestCase
         unlink(__DIR__ . '/../../taskToken');
         unlink(__DIR__ . '/../../activityId');
 
-        $act = $w->newActivityCompletionClient();
+        $act = $client->newActivityCompletionClient();
 
         $act->complete($data->id, null, $data->activityId, 'Completed Externally by ID');
 
@@ -48,12 +48,12 @@ class ActivityCompletionClientTestCase extends ClientTestCase
 
     public function testCompleteAsyncActivityByIdExplicit()
     {
-        $w = $this->createClient();
-        $simple = $w->newUntypedWorkflowStub('AsyncActivityWorkflow');
+        $client = $this->createClient();
+        $simple = $client->newUntypedWorkflowStub('AsyncActivityWorkflow');
 
-        $e = $simple->start(['hello world']);
-        $this->assertNotEmpty($e->id);
-        $this->assertNotEmpty($e->runId);
+        $e = $client->start($simple, 'hello world');
+        $this->assertNotEmpty($e->getExecution()->getID());
+        $this->assertNotEmpty($e->getExecution()->getRunID());
 
         sleep(1);
         $this->assertFileExists(__DIR__ . '/../../activityId');
@@ -61,7 +61,7 @@ class ActivityCompletionClientTestCase extends ClientTestCase
         unlink(__DIR__ . '/../../taskToken');
         unlink(__DIR__ . '/../../activityId');
 
-        $act = $w->newActivityCompletionClient();
+        $act = $client->newActivityCompletionClient();
 
         $act->complete($data->id, $data->runId, $data->activityId, 'Completed Externally by ID explicit');
 
@@ -70,12 +70,12 @@ class ActivityCompletionClientTestCase extends ClientTestCase
 
     public function testCompleteAsyncActivityByIdInvalid()
     {
-        $w = $this->createClient();
-        $simple = $w->newUntypedWorkflowStub('AsyncActivityWorkflow');
+        $client = $this->createClient();
+        $simple = $client->newUntypedWorkflowStub('AsyncActivityWorkflow');
 
-        $e = $simple->start(['hello world']);
-        $this->assertNotEmpty($e->id);
-        $this->assertNotEmpty($e->runId);
+        $e = $client->start($simple, 'hello world');
+        $this->assertNotEmpty($e->getExecution()->getID());
+        $this->assertNotEmpty($e->getExecution()->getRunID());
 
         sleep(1);
         $this->assertFileExists(__DIR__ . '/../../activityId');
@@ -83,7 +83,7 @@ class ActivityCompletionClientTestCase extends ClientTestCase
         unlink(__DIR__ . '/../../taskToken');
         unlink(__DIR__ . '/../../activityId');
 
-        $act = $w->newActivityCompletionClient();
+        $act = $client->newActivityCompletionClient();
 
         $this->expectException(ActivityCompletionFailureException::class);
         $act->complete($data->id, null, "invalid activity id", 'Completed Externally by ID');
@@ -91,12 +91,12 @@ class ActivityCompletionClientTestCase extends ClientTestCase
 
     public function testCompleteAsyncActivityByToken()
     {
-        $w = $this->createClient();
-        $simple = $w->newUntypedWorkflowStub('AsyncActivityWorkflow');
+        $client = $this->createClient();
+        $simple = $client->newUntypedWorkflowStub('AsyncActivityWorkflow');
 
-        $e = $simple->start(['hello world']);
-        $this->assertNotEmpty($e->id);
-        $this->assertNotEmpty($e->runId);
+        $e = $client->start($simple, 'hello world');
+        $this->assertNotEmpty($e->getExecution()->getID());
+        $this->assertNotEmpty($e->getExecution()->getRunID());
 
         sleep(1);
         $this->assertFileExists(__DIR__ . '/../../taskToken');
@@ -104,7 +104,7 @@ class ActivityCompletionClientTestCase extends ClientTestCase
         unlink(__DIR__ . '/../../taskToken');
         unlink(__DIR__ . '/../../activityId');
 
-        $act = $w->newActivityCompletionClient();
+        $act = $client->newActivityCompletionClient();
 
         $act->completeByToken($taskToken, 'Completed Externally');
 
@@ -113,12 +113,12 @@ class ActivityCompletionClientTestCase extends ClientTestCase
 
     public function testCompleteAsyncActivityByTokenInvalid()
     {
-        $w = $this->createClient();
-        $simple = $w->newUntypedWorkflowStub('AsyncActivityWorkflow');
+        $client = $this->createClient();
+        $simple = $client->newUntypedWorkflowStub('AsyncActivityWorkflow');
 
-        $e = $simple->start(['hello world']);
-        $this->assertNotEmpty($e->id);
-        $this->assertNotEmpty($e->runId);
+        $e = $client->start($simple, 'hello world');
+        $this->assertNotEmpty($e->getExecution()->getID());
+        $this->assertNotEmpty($e->getExecution()->getRunID());
 
         sleep(1);
         $this->assertFileExists(__DIR__ . '/../../taskToken');
@@ -126,7 +126,7 @@ class ActivityCompletionClientTestCase extends ClientTestCase
         unlink(__DIR__ . '/../../taskToken');
         unlink(__DIR__ . '/../../activityId');
 
-        $act = $w->newActivityCompletionClient();
+        $act = $client->newActivityCompletionClient();
 
         $this->expectException(ActivityCompletionFailureException::class);
         $act->completeByToken('broken' . $taskToken, 'Completed Externally');
@@ -134,12 +134,12 @@ class ActivityCompletionClientTestCase extends ClientTestCase
 
     public function testCompleteAsyncActivityByTokenExceptionally()
     {
-        $w = $this->createClient();
-        $simple = $w->newUntypedWorkflowStub('AsyncActivityWorkflow');
+        $client = $this->createClient();
+        $simple = $client->newUntypedWorkflowStub('AsyncActivityWorkflow');
 
-        $e = $simple->start(['hello world']);
-        $this->assertNotEmpty($e->id);
-        $this->assertNotEmpty($e->runId);
+        $e = $client->start($simple, 'hello world');
+        $this->assertNotEmpty($e->getExecution()->getID());
+        $this->assertNotEmpty($e->getExecution()->getRunID());
 
         sleep(1);
         $this->assertFileExists(__DIR__ . '/../../taskToken');
@@ -147,7 +147,7 @@ class ActivityCompletionClientTestCase extends ClientTestCase
         unlink(__DIR__ . '/../../taskToken');
         unlink(__DIR__ . '/../../activityId');
 
-        $act = $w->newActivityCompletionClient();
+        $act = $client->newActivityCompletionClient();
 
         $act->completeExceptionallyByToken($taskToken, new \Error('manually triggered'));
         try {
@@ -165,12 +165,12 @@ class ActivityCompletionClientTestCase extends ClientTestCase
 
     public function testCompleteAsyncActivityByTokenExceptionallyById()
     {
-        $w = $this->createClient();
-        $simple = $w->newUntypedWorkflowStub('AsyncActivityWorkflow');
+        $client = $this->createClient();
+        $simple = $client->newUntypedWorkflowStub('AsyncActivityWorkflow');
 
-        $e = $simple->start(['hello world']);
-        $this->assertNotEmpty($e->id);
-        $this->assertNotEmpty($e->runId);
+        $e = $client->start($simple, 'hello world');
+        $this->assertNotEmpty($e->getExecution()->getID());
+        $this->assertNotEmpty($e->getExecution()->getRunID());
 
         sleep(1);
         $this->assertFileExists(__DIR__ . '/../../taskToken');
@@ -178,7 +178,7 @@ class ActivityCompletionClientTestCase extends ClientTestCase
         unlink(__DIR__ . '/../../taskToken');
         unlink(__DIR__ . '/../../activityId');
 
-        $act = $w->newActivityCompletionClient();
+        $act = $client->newActivityCompletionClient();
 
         $act->completeExceptionally(
             $data->id,
@@ -202,12 +202,12 @@ class ActivityCompletionClientTestCase extends ClientTestCase
 
     public function testHeartBeatByID()
     {
-        $w = $this->createClient();
-        $simple = $w->newUntypedWorkflowStub('AsyncActivityWorkflow');
+        $client = $this->createClient();
+        $simple = $client->newUntypedWorkflowStub('AsyncActivityWorkflow');
 
-        $e = $simple->start(['hello world']);
-        $this->assertNotEmpty($e->id);
-        $this->assertNotEmpty($e->runId);
+        $e = $client->start($simple, 'hello world');
+        $this->assertNotEmpty($e->getExecution()->getID());
+        $this->assertNotEmpty($e->getExecution()->getRunID());
 
         sleep(1);
         $this->assertFileExists(__DIR__ . '/../../taskToken');
@@ -215,7 +215,7 @@ class ActivityCompletionClientTestCase extends ClientTestCase
         unlink(__DIR__ . '/../../taskToken');
         unlink(__DIR__ . '/../../activityId');
 
-        $act = $w->newActivityCompletionClient();
+        $act = $client->newActivityCompletionClient();
 
         $act->recordHeartbeat(
             $data->id,
@@ -249,12 +249,12 @@ class ActivityCompletionClientTestCase extends ClientTestCase
 
     public function testHeartBeatByToken()
     {
-        $w = $this->createClient();
-        $simple = $w->newUntypedWorkflowStub('AsyncActivityWorkflow');
+        $client = $this->createClient();
+        $simple = $client->newUntypedWorkflowStub('AsyncActivityWorkflow');
 
-        $e = $simple->start(['hello world']);
-        $this->assertNotEmpty($e->id);
-        $this->assertNotEmpty($e->runId);
+        $e = $client->start($simple, 'hello world');
+        $this->assertNotEmpty($e->getExecution()->getID());
+        $this->assertNotEmpty($e->getExecution()->getRunID());
 
         sleep(1);
         $this->assertFileExists(__DIR__ . '/../../taskToken');
@@ -262,7 +262,7 @@ class ActivityCompletionClientTestCase extends ClientTestCase
         unlink(__DIR__ . '/../../taskToken');
         unlink(__DIR__ . '/../../activityId');
 
-        $act = $w->newActivityCompletionClient();
+        $act = $client->newActivityCompletionClient();
 
         $act->recordHeartbeatByToken($taskToken, 'heardbeatdata');
 
