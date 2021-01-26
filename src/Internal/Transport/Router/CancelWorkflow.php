@@ -51,7 +51,7 @@ class CancelWorkflow extends WorkflowProcessAwareRoute
 
         $this->cancel($runId);
 
-        $resolver->resolve(['OK']);
+        $resolver->resolve(EncodedValues::fromValues([null]));
     }
 
     /**
