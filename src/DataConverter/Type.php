@@ -16,7 +16,7 @@ use Temporal\Workflow\ReturnType;
  */
 final class Type
 {
-    public const TYPE_ANY       = null;
+    public const TYPE_ANY       = 'mixed';
     public const TYPE_STRING    = 'string';
     public const TYPE_BOOL      = 'bool';
     public const TYPE_INT       = 'int';
@@ -36,7 +36,7 @@ final class Type
      * @param TypeEnum|string|null $name
      * @param bool $allowsNull
      */
-    public function __construct(string $name = self::TYPE_ANY, bool $allowsNull = false)
+    public function __construct(string $name = null, bool $allowsNull = false)
     {
         $this->name = $name;
         $this->allowsNull = $allowsNull;
@@ -94,7 +94,7 @@ final class Type
             $name = $type->getName();
 
             // Traversable types (i.e. Generator) not allowed
-            if (! $name instanceof \Traversable && $name !== 'array') {
+            if (! $name instanceof \Traversable && $name !== 'array' && $name !== 'iterable') {
                 return new self($type->getName(), $type->allowsNull());
             }
         }

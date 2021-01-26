@@ -23,6 +23,12 @@ use Temporal\DataConverter\Type;
 #[\Attribute(\Attribute::TARGET_METHOD)]
 final class ReturnType implements NamedArgumentConstructorAttribute
 {
+    public const TYPE_ANY    = Type::TYPE_ANY;
+    public const TYPE_STRING = Type::TYPE_STRING;
+    public const TYPE_BOOL   = Type::TYPE_BOOL;
+    public const TYPE_INT    = Type::TYPE_INT;
+    public const TYPE_FLOAT  = Type::TYPE_FLOAT;
+
     /**
      * @var string
      */
