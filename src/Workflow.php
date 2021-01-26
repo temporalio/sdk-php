@@ -18,11 +18,13 @@ use Temporal\Internal\Transport\CompletableResultInterface;
 use Temporal\Internal\Workflow\ActivityProxy;
 use Temporal\Internal\Workflow\ChildWorkflowProxy;
 use Temporal\Internal\Workflow\ContinueAsNewProxy;
+use Temporal\Internal\Workflow\ExternalWorkflowProxy;
 use Temporal\Workflow\ActivityStubInterface;
 use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\ChildWorkflowOptions;
 use Temporal\Workflow\ChildWorkflowStubInterface;
 use Temporal\Workflow\ContinueAsNewOptions;
+use Temporal\Workflow\ExternalWorkflowStubInterface;
 use Temporal\Workflow\WorkflowContextInterface;
 use Temporal\Workflow\WorkflowInfo;
 
@@ -55,6 +57,9 @@ use Temporal\Workflow\WorkflowInfo;
  * @method static CompletableResultInterface executeChildWorkflow(string $name, array $args = [], ChildWorkflowOptions $options = null, \ReflectionType $returnType = null)
  * @method static ChildWorkflowProxy|object newChildWorkflowStub(string $class, ChildWorkflowOptions $options = null)
  * @method static ChildWorkflowStubInterface newUntypedChildWorkflowStub(string $name, ChildWorkflowOptions $options = null)
+ *
+ * @method static ExternalWorkflowProxy|object newExternalWorkflowStub(string $type, string $workflowId)
+ * @method static ExternalWorkflowStubInterface newUntypedExternalWorkflowStub(string $workflowId)
  */
 final class Workflow extends Facade
 {
