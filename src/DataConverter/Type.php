@@ -37,7 +37,7 @@ final class Type
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     public function getName(): ?string
     {
