@@ -11,30 +11,34 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
-use JetBrains\PhpStorm\Immutable;
 use Spiral\Attributes\AttributeReader;
-use Spiral\Attributes\ReaderInterface;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\Exception\IllegalStateException;
 use Temporal\Exception\InvalidArgumentException;
 use Temporal\Internal\Client\ActivityCompletionClient;
+use Temporal\Internal\Client\WorkflowRun;
+use Temporal\Internal\Client\WorkflowStarter;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
-use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
-use Temporal\Internal\Marshaller\Marshaller;
-use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Client\WorkflowProxy;
 use Temporal\Internal\Client\WorkflowStub;
+use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowRunInterface;
-use Temporal\Workflow\WorkflowInterface;
 
 class WorkflowClient implements WorkflowClientInterface
 {
+    private const ERROR_WORKFLOW_START_DUPLICATION =
+        'Cannot reuse a stub instance to start more than one workflow execution. ' .
+        'The stub points to already started execution. If you are trying to wait ' .
+        'for a workflow completion either change WorkflowIdReusePolicy from ' .
+        'AllowDuplicate or use WorkflowStub.getResult';
+
     private ServiceClientInterface $client;
     private ClientOptions $clientOptions;
     private DataConverterInterface $converter;
-    private ReaderInterface $reader;
-    private MarshallerInterface $marshaller;
+    private WorkflowStarter $starter;
+    private WorkflowReader $reader;
 
     /**
      * @param ServiceClientInterface $serviceClient
@@ -49,11 +53,8 @@ class WorkflowClient implements WorkflowClientInterface
         $this->client = $serviceClient;
         $this->clientOptions = $options ?? new ClientOptions();
         $this->converter = $converter ?? DataConverter::createDefault();
-
-        $this->reader = new AttributeReader();
-        $this->marshaller = new Marshaller(
-            new AttributeMapperFactory($this->reader)
-        );
+        $this->starter = new WorkflowStarter($serviceClient, $this->converter, $this->clientOptions);
+        $this->reader = new WorkflowReader(new AttributeReader());
     }
 
     /**
@@ -73,18 +74,75 @@ class WorkflowClient implements WorkflowClientInterface
      */
     public function start($workflow, ...$args): WorkflowRunInterface
     {
+        $workflowStub = WorkflowStub::fromWorkflow($workflow);
+
+        $returnType = null;
         if ($workflow instanceof WorkflowProxy) {
-            return $workflow->startAsync($args);
+            $returnType = $workflow->__getReturnType();
         }
 
-        if ($workflow instanceof WorkflowStubInterface) {
-            $workflow->start($args);
-            return $workflow;
+        if ($workflowStub->getWorkflowType() === null) {
+            throw new InvalidArgumentException(
+                \sprintf('Unable to start untyped workflow without given workflowType')
+            );
         }
 
-        throw new InvalidArgumentException(
-            \sprintf('Only workflow stubs can be started, %s given', \get_debug_type($workflow))
+        if ($workflowStub->hasExecution()) {
+            throw new InvalidArgumentException(self::ERROR_WORKFLOW_START_DUPLICATION);
+        }
+
+        $execution = $this->starter->start(
+            $workflowStub->getWorkflowType(),
+            $workflowStub->getOptions() ?? WorkflowOptions::new(),
+            $args
         );
+
+        $workflowStub->setExecution($execution);
+
+        return new WorkflowRun($workflowStub, $returnType);
+    }
+
+    /**
+     * @param object|WorkflowStubInterface $workflow
+     * @param string $signal
+     * @param array $signalArgs
+     * @param array $startArgs
+     * @return WorkflowRunInterface
+     */
+    public function startWithSignal(
+        $workflow,
+        string $signal,
+        array $signalArgs = [],
+        array $startArgs = []
+    ): WorkflowRunInterface {
+        $workflowStub = WorkflowStub::fromWorkflow($workflow);
+
+        $returnType = null;
+        if ($workflow instanceof WorkflowProxy) {
+            $returnType = $workflow->__getReturnType();
+        }
+
+        if ($workflowStub->getWorkflowType() === null) {
+            throw new InvalidArgumentException(
+                \sprintf('Unable to start untyped workflow without given workflowType')
+            );
+        }
+
+        if ($workflowStub->hasExecution()) {
+            throw new InvalidArgumentException(self::ERROR_WORKFLOW_START_DUPLICATION);
+        }
+
+        $execution = $this->starter->signalWithStart(
+            $workflowStub->getWorkflowType(),
+            $workflowStub->getOptions() ?? WorkflowOptions::new(),
+            $signal,
+            $signalArgs,
+            $startArgs
+        );
+
+        $workflowStub->setExecution($execution);
+
+        return new WorkflowRun($workflowStub, $returnType);
     }
 
     /**
@@ -92,19 +150,19 @@ class WorkflowClient implements WorkflowClientInterface
      */
     public function newWorkflowStub(string $class, WorkflowOptions $options = null): WorkflowProxy
     {
-        $workflow = (new WorkflowReader($this->reader))->fromClass($class);
+        $workflow = $this->reader->fromClass($class);
 
         return new WorkflowProxy(
+            $this,
             $this->newUntypedWorkflowStub($workflow->getID(), $options),
-            $workflow,
-            $class
+            $workflow
         );
     }
 
     /**
      * {@inheritDoc}
      */
-    public function newUntypedWorkflowStub(string $name, WorkflowOptions $options = null): WorkflowStubInterface
+    public function newUntypedWorkflowStub(string $workflowType, WorkflowOptions $options = null): WorkflowStubInterface
     {
         $options ??= new WorkflowOptions();
 
@@ -112,9 +170,40 @@ class WorkflowClient implements WorkflowClientInterface
             $this->client,
             $this->clientOptions,
             $this->converter,
-            $name,
+            $workflowType,
             $options
         );
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function newRunningWorkflowStub(
+        string $class,
+        string $workflowID,
+        ?string $runID = null
+    ): object {
+        $workflow = $this->reader->fromClass($class);
+
+        return new WorkflowProxy(
+            $this,
+            $this->newUntypedRunningWorkflowStub($workflowID, $runID, $workflow->getID()),
+            $workflow
+        );
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function newUntypedRunningWorkflowStub(
+        string $workflowID,
+        ?string $runID = null,
+        ?string $workflowType = null
+    ): WorkflowStubInterface {
+        $untyped = new WorkflowStub($this->client, $this->clientOptions, $this->converter, $workflowType);
+        $untyped->setExecution(new WorkflowExecution($workflowID, $runID));
+
+        return $untyped;
     }
 
     /**

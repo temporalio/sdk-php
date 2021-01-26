@@ -109,7 +109,7 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function getRunId(): string
     {
-        return $this->input->info->execution->runId;
+        return $this->input->info->execution->getRunID();
     }
 
     /**

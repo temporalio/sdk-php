@@ -11,10 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Client;
 
+use Temporal\Client\WorkflowClient;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Workflow\Proxy;
-use Temporal\Workflow\WorkflowRunInterface;
 
 /**
  * @template-covariant T of object
@@ -22,49 +22,36 @@ use Temporal\Workflow\WorkflowRunInterface;
 final class WorkflowProxy extends Proxy
 {
     private const ERROR_UNDEFINED_METHOD =
-        'The given stub class "%s" does not contain a workflow, query or signal method named "%s"';
-
-    private ?WorkflowStubInterface $stub;
-    private ?WorkflowPrototype $prototype;
-    private string $class;
+        'The given workflow class "%s" does not contain a workflow, query or signal method named "%s"';
 
     /**
+     * @var WorkflowClient
+     */
+    private WorkflowClient $client;
+
+    /**
+     * @var WorkflowStubInterface|null
+     */
+    private ?WorkflowStubInterface $stub;
+
+    /**
+     * @var WorkflowPrototype|null
+     */
+    private ?WorkflowPrototype $prototype;
+
+    /**
+     * @param WorkflowClient $client
      * @param WorkflowStubInterface $stub
      * @param WorkflowPrototype $prototype
-     * @param string $class
      */
-    public function __construct(WorkflowStubInterface $stub, WorkflowPrototype $prototype, string $class)
-    {
+    public function __construct(
+        WorkflowClient $client,
+        WorkflowStubInterface $stub,
+        WorkflowPrototype $prototype
+    ) {
+        $this->client = $client;
         $this->stub = $stub;
         $this->prototype = $prototype;
-        $this->class = $class;
-    }
-
-    /**
-     * @param array $args
-     * @return WorkflowRunInterface
-     */
-    public function startAsync(array $args = []): WorkflowRunInterface
-    {
-        // Merge options with defaults defined using attributes:
-        //  - #[MethodRetry]
-        //  - #[CronSchedule]
-        $this->stub->setOptions(
-            $this->stub->getOptions()->mergeWith(
-                $this->prototype->getMethodRetry(),
-                $this->prototype->getCronSchedule()
-            )
-        );
-
-        // If the proxy does not contain information about the running workflow,
-        // then we try to create a new stub from the workflow method and start
-        // the workflow.
-        $this->stub->start($args);
-
-        return new WorkflowRun(
-            $this->stub,
-            $this->prototype->getHandler()->getReturnType()
-        );
     }
 
     /**
@@ -76,13 +63,13 @@ final class WorkflowProxy extends Proxy
     {
         if ($method === $this->prototype->getHandler()->getName()) {
             // no timeout (use async mode to get it)
-            return $this->startAsync($args)->getResult(0);
+            return $this->client->start($this, ...$args)->getResult($this->__getReturnType());
         }
 
         // Otherwise, we try to find a suitable workflow "query" method.
         foreach ($this->prototype->getQueryHandlers() as $name => $query) {
             if ($query->getName() === $method) {
-                $result = $this->stub->query($name, $args);
+                $result = $this->stub->query($name, ...$args);
                 if ($result === null) {
                     return null;
                 }
@@ -94,14 +81,32 @@ final class WorkflowProxy extends Proxy
         // Otherwise, we try to find a suitable workflow "signal" method.
         foreach ($this->prototype->getSignalHandlers() as $name => $signal) {
             if ($signal->getName() === $method) {
-                $this->stub->signal($name, $args);
+                $this->stub->signal($name, ...$args);
 
                 return;
             }
         }
 
         throw new \BadMethodCallException(
-            \sprintf(self::ERROR_UNDEFINED_METHOD, $this->class, $method)
+            \sprintf(self::ERROR_UNDEFINED_METHOD, $this->prototype->getClass()->getName(), $method)
         );
+    }
+
+    /**
+     * @return WorkflowStubInterface
+     * @internal
+     */
+    public function __getUntypedStub(): WorkflowStubInterface
+    {
+        return $this->stub;
+    }
+
+    /**
+     * @return \ReflectionType|null
+     * @internal
+     */
+    public function __getReturnType()
+    {
+        return $this->prototype->getHandler()->getReturnType();
     }
 }

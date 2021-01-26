@@ -91,8 +91,8 @@ final class StartWorkflow extends Route
             throw new \OutOfRangeException(\sprintf(self::ERROR_NOT_FOUND, $info->type->name));
         }
 
-        if ($this->services->running->find($info->execution->runId) !== null) {
-            $message = \sprintf(self::ERROR_ALREADY_RUNNING, $info->type->name, $info->execution->runId);
+        if ($this->services->running->find($info->execution->getRunID()) !== null) {
+            $message = \sprintf(self::ERROR_ALREADY_RUNNING, $info->type->name, $info->execution->getRunID());
 
             throw new \LogicException($message);
         }

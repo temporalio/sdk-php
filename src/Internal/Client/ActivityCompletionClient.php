@@ -24,7 +24,7 @@ use Temporal\Exception\Client\ActivityNotExistsException;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Failure\FailureConverter;
 
-class ActivityCompletionClient implements ActivityCompletionClientInterface
+final class ActivityCompletionClient implements ActivityCompletionClientInterface
 {
     private ServiceClientInterface $client;
     private ClientOptions $clientOptions;

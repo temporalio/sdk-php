@@ -47,7 +47,7 @@ final class WorkflowRun implements WorkflowRunInterface
     /**
      * {@inheritDoc}
      */
-    public function getResult($type = null, int $timeout = self::DEFAULT_TIMEOUT)
+    public function getResult($type = null, int $timeout = null)
     {
         return $this->stub->getResult($type ?? $this->returnType, $timeout);
     }

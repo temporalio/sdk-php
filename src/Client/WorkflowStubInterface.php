@@ -12,27 +12,30 @@ declare(strict_types=1);
 namespace Temporal\Client;
 
 use Temporal\DataConverter\EncodedValues;
-use Temporal\DataConverter\Type;
 use Temporal\Exception\IllegalStateException;
 use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\QueryMethod;
 use Temporal\Workflow\WorkflowExecution;
-use Temporal\Internal\Support\DateInterval;
 use Temporal\Workflow\WorkflowRunInterface;
 
 /**
  * WorkflowStub is a client side stub to a single workflow instance. It can be
  * used to start, signal, query, wait for completion and cancel a workflow
  * execution. Created through {@see WorkflowClient::newUntypedWorkflowStub()}.
- *
- * @psalm-import-type DateIntervalValue from DateInterval
  */
 interface WorkflowStubInterface extends WorkflowRunInterface
 {
     /**
-     * @return WorkflowOptions
+     * @return string|null
      */
-    public function getOptions(): WorkflowOptions;
+    public function getWorkflowType(): ?string;
+
+    /**
+     * Returns associated workflow options. Empty for running workflows.
+     *
+     * @return WorkflowOptions|null
+     */
+    public function getOptions(): ?WorkflowOptions;
 
     /**
      * Get associated workflow execution (if any).
@@ -42,62 +45,32 @@ interface WorkflowStubInterface extends WorkflowRunInterface
     public function getExecution(): WorkflowExecution;
 
     /**
-     * Connects stub to running workflow.
-     *
-     * @param WorkflowExecution $execution
-     * @return WorkflowStubInterface
+     * @return bool
      */
-    public function setExecution(WorkflowExecution $execution): WorkflowStubInterface;
+    public function hasExecution(): bool;
 
     /**
-     * @return string
+     * Attaches running workflow context to the workflow stub.
+     *
+     * @param WorkflowExecution $execution
      */
-    public function getWorkflowType(): string;
+    public function setExecution(WorkflowExecution $execution): void;
 
     /**
      * @param string $name
-     * @param array $args
+     * @param ...mixed $args
      */
-    public function signal(string $name, array $args = []): void;
+    public function signal(string $name, ...$args): void;
 
     /**
      * Synchronously queries workflow by invoking its query handler. Usually a
      * query handler is a method annotated with {@see QueryMethod}.
      *
      * @param string $name
-     * @param array $args
+     * @param ...mixed $args
      * @return EncodedValues|null
      */
-    public function query(string $name, array $args = []): ?EncodedValues;
-
-    /**
-     * Starts workflow execution without blocking the thread. Use getResult to
-     * wait for the workflow execution result.
-     *
-     * @param array $args
-     * @return WorkflowExecution|null
-     */
-    public function start(array $args = []): ?WorkflowExecution;
-
-    /**
-     * @param string $signal
-     * @param array $signalArgs
-     * @param array $startArgs
-     * @return WorkflowExecution
-     */
-    public function signalWithStart(string $signal, array $signalArgs = [], array $startArgs = []): WorkflowExecution;
-
-    /**
-     * Returns workflow result potentially waiting for workflow to complete.
-     * Behind the scene this call performs long poll on Temporal service waiting
-     * for workflow completion notification.
-     *
-     * @param string|\ReflectionClass|\ReflectionType|Type|null $type
-     * @param int $timeout Timeout in seconds.
-     * @return mixed
-     * @see DateInterval
-     */
-    public function getResult($type = null, int $timeout = WorkflowRunInterface::DEFAULT_TIMEOUT);
+    public function query(string $name, ...$args): ?EncodedValues;
 
     /**
      * Request cancellation of a workflow execution.

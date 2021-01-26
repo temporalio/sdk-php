@@ -45,11 +45,6 @@ interface ActivityContextInterface
     public function doNotCompleteOnReturn(): void;
 
     /**
-     * @return bool
-     */
-    public function isDoNotCompleteOnReturn(): bool;
-
-    /**
      * Use to notify Simple Workflow that activity execution is alive.
      *
      * @param mixed $details In case of activity timeout details are returned  as a field of the exception thrown.

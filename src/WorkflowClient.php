@@ -111,7 +111,7 @@ final class WorkflowClient implements WorkflowClientInterface
     /**
      * {@inheritDoc}
      */
-    public function newUntypedWorkflowStub(string $name, WorkflowOptions $options = null): WorkflowStubInterface
+    public function newUntypedWorkflowStub(string $workflowType, WorkflowOptions $options = null): WorkflowStubInterface
     {
         $options ??= new WorkflowOptions();
 
@@ -119,7 +119,7 @@ final class WorkflowClient implements WorkflowClientInterface
             $this->client,
             $this->clientOptions,
             $this->converter,
-            $name,
+            $workflowType,
             $options
         );
     }

@@ -40,7 +40,7 @@ class WorkflowException extends TemporalException
             self::buildMessage(
                 [
                     'message' => $message,
-                    'runId' => $execution->runId,
+                    'runId' => $execution->getRunID(),
                     'workflowType' => $workflowType,
                 ]
             ),
