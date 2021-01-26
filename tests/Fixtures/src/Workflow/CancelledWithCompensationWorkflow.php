@@ -50,7 +50,7 @@ class CancelledWithCompensationWorkflow
                 $this->status[] = 'captured promise on cancelled';
             }
 
-            $scope = Workflow::newDetachedCancellationScope(
+            $scope = Workflow::asyncDetached(
                 function () use ($simple) {
                     $this->status[] = 'START rollback';
 

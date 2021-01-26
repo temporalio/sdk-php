@@ -28,7 +28,7 @@ class CancelSignalledChildWorkflow
         $this->status[] = 'start';
 
         // start execution
-        $scope = Workflow::newCancellationScope(
+        $scope = Workflow::async(
             function () use ($simple, $waitSignalled) {
                 $call = $simple->handler();
                 $this->status[] = 'child started';

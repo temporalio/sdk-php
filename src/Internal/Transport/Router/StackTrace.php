@@ -28,8 +28,8 @@ final class StackTrace extends WorkflowProcessAwareRoute
 
         $context = $process->getContext();
 
-        error_log($context->getLastTrace());
+        error_log($context->getStackTrace());
 
-        $resolver->resolve(EncodedValues::fromValues([$context->getLastTrace()]));
+        $resolver->resolve(EncodedValues::fromValues([$context->getStackTrace()]));
     }
 }

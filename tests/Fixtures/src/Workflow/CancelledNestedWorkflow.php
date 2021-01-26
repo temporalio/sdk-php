@@ -22,11 +22,11 @@ class CancelledNestedWorkflow
     {
         $this->status[] = 'begin';
         try {
-            yield Workflow::newCancellationScope(
+            yield Workflow::async(
                 function () {
                     $this->status[] = 'first scope';
 
-                    $scope = Workflow::newCancellationScope(
+                    $scope = Workflow::async(
                         function () {
                             $this->status[] = 'second scope';
 

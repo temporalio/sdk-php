@@ -268,13 +268,13 @@ class WorkflowContext implements WorkflowContextInterface
     /**
      * {@inheritDoc}
      */
-    public function newContinueAsNewStub(string $class, ContinueAsNewOptions $options = null): object
+    public function newContinueAsNewStub(string $type, ContinueAsNewOptions $options = null): object
     {
         $options ??= new ContinueAsNewOptions();
 
-        $workflow = $this->services->workflowsReader->fromClass($class);
+        $workflow = $this->services->workflowsReader->fromClass($type);
 
-        return new ContinueAsNewProxy($class, $workflow, $options, $this);
+        return new ContinueAsNewProxy($type, $workflow, $options, $this);
     }
 
     /**
@@ -312,12 +312,12 @@ class WorkflowContext implements WorkflowContextInterface
     /**
      * {@inheritDoc}
      */
-    public function newChildWorkflowStub(string $class, ChildWorkflowOptions $options = null): object
+    public function newChildWorkflowStub(string $type, ChildWorkflowOptions $options = null): object
     {
-        $workflow = $this->services->workflowsReader->fromClass($class);
+        $workflow = $this->services->workflowsReader->fromClass($type);
 
         return new ChildWorkflowProxy(
-            $class,
+            $type,
             $workflow,
             $options ?? new ChildWorkflowOptions(),
             $this
@@ -383,7 +383,7 @@ class WorkflowContext implements WorkflowContextInterface
     /**
      * {@inheritDoc}
      */
-    public function getLastTrace(): string
+    public function getStackTrace(): string
     {
         return StackRenderer::renderTrace($this->trace);
     }

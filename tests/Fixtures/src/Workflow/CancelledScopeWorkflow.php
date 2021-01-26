@@ -20,7 +20,7 @@ class CancelledScopeWorkflow
 
         $cancelled = 'not';
 
-        $scope = Workflow::newCancellationScope(
+        $scope = Workflow::async(
             function () use ($simple) {
                 yield Workflow::timer(2);
                 yield $simple->slow('hello');

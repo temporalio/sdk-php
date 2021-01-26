@@ -28,7 +28,7 @@ class CancelledMidflightWorkflow
 
         $this->status[] = 'start';
 
-        $scope = Workflow::newCancellationScope(
+        $scope = Workflow::async(
             function () use ($simple) {
                 $this->status[] = 'in scope';
                 $simple->slow('1');
