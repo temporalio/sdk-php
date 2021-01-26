@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Workflow;
 
 use React\Promise\PromiseInterface;
+use Temporal\DataConverter\Type;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Transport\CompletableResultInterface;
 use Temporal\Workflow\ChildWorkflowOptions;
@@ -111,7 +112,7 @@ final class ChildWorkflowProxy extends Proxy
 
             $this->stub = $this->context->newUntypedChildWorkflowStub($this->workflow->getID(), $options);
 
-            return $this->stub->execute($args);
+            return $this->stub->execute($args, $this->resolveReturnType($this->workflow));
         }
 
         // Otherwise, we try to find a suitable workflow "signal" method.
@@ -133,6 +134,21 @@ final class ChildWorkflowProxy extends Proxy
         throw new \BadMethodCallException(
             \sprintf(self::ERROR_UNDEFINED_METHOD, $this->class, $method)
         );
+    }
+
+    /**
+     * @param WorkflowPrototype $prototype
+     * @return Type|null
+     */
+    private function resolveReturnType(WorkflowPrototype $prototype): ?Type
+    {
+        if ($attribute = $prototype->getReturnType()) {
+            return Type::create($attribute);
+        }
+
+        $handler = $prototype->getHandler();
+
+        return Type::create($handler->getReturnType());
     }
 
     /**

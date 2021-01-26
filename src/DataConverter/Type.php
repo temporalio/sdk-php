@@ -9,6 +9,8 @@
 
 namespace Temporal\DataConverter;
 
+use Temporal\Workflow\ReturnType;
+
 /**
  * @psalm-type TypeEnum = Type::TYPE_*
  */
@@ -31,7 +33,7 @@ final class Type
     private bool $allowsNull;
 
     /**
-     * @param string|null $name
+     * @param TypeEnum|string|null $name
      * @param bool $allowsNull
      */
     public function __construct(string $name = self::TYPE_ANY, bool $allowsNull = false)
@@ -89,7 +91,12 @@ final class Type
     public static function fromReflectionType(\ReflectionType $type): self
     {
         if ($type instanceof \ReflectionNamedType) {
-            return new self($type->getName(), $type->allowsNull());
+            $name = $type->getName();
+
+            // Traversable types (i.e. Generator) not allowed
+            if (! $name instanceof \Traversable && $name !== 'array') {
+                return new self($type->getName(), $type->allowsNull());
+            }
         }
 
         return new self(null, $type->allowsNull());
@@ -102,6 +109,9 @@ final class Type
     public static function create($type): Type
     {
         switch (true) {
+            case $type instanceof ReturnType:
+                return new self($type->name, $type->nullable);
+
             case $type instanceof self:
                 return $type;
 
