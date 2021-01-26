@@ -35,6 +35,8 @@ use Temporal\Internal\Workflow\ActivityStub;
 use Temporal\Internal\Workflow\ChildWorkflowProxy;
 use Temporal\Internal\Workflow\ChildWorkflowStub;
 use Temporal\Internal\Workflow\ContinueAsNewProxy;
+use Temporal\Internal\Workflow\ExternalWorkflowProxy;
+use Temporal\Internal\Workflow\ExternalWorkflowStub;
 use Temporal\Internal\Workflow\Input;
 use Temporal\Promise;
 use Temporal\Worker\LoopInterface;
@@ -323,6 +325,29 @@ class WorkflowContext implements WorkflowContextInterface
             $this
         );
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function newExternalWorkflowStub(string $type, string $workflowId): object
+    {
+        $workflow = $this->services->workflowsReader->fromClass($type);
+
+        $stub = $this->newUntypedExternalWorkflowStub($workflowId);
+
+        return new ExternalWorkflowProxy($type, $workflow, $stub);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function newUntypedExternalWorkflowStub(string $workflowId): ExternalWorkflowStubInterface
+    {
+        return new ExternalWorkflowStub(
+            new WorkflowExecution($workflowId)
+        );
+    }
+
 
     /**
      * {@inheritDoc}

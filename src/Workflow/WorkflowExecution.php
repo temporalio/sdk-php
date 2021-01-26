@@ -27,7 +27,7 @@ class WorkflowExecution
     /**
      * @readonly
      * @psalm-allow-private-mutation
-     * @var string
+     * @var string|null
      */
     #[Marshal(name: 'RunID')]
     private ?string $runId;

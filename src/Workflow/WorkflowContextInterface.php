@@ -167,6 +167,30 @@ interface WorkflowContextInterface extends EnvironmentInterface
         ChildWorkflowOptions $options = null
     ): ChildWorkflowStubInterface;
 
+
+    /**
+     * Creates client stub that can be used to communicate to an existing
+     * workflow execution.
+     *
+     * @psalm-template T of object
+     * @psalm-param class-string<T> $type
+     * @psalm-return object<T>|T
+     *
+     * @param string $type
+     * @param string $workflowId
+     * @return object
+     */
+    public function newExternalWorkflowStub(string $type, string $workflowId): object;
+
+    /**
+     * Creates untyped client stub that can be used to signal or cancel a child
+     * workflow.
+     *
+     * @param string $workflowId
+     * @return ExternalWorkflowStubInterface
+     */
+    public function newUntypedExternalWorkflowStub(string $workflowId): ExternalWorkflowStubInterface;
+
     /**
      * @param string $type
      * @param array $args

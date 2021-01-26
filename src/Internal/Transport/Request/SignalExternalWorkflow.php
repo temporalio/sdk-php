@@ -16,6 +16,9 @@ use Temporal\Worker\Transport\Command\Request;
 
 final class SignalExternalWorkflow extends Request
 {
+    /**
+     * @var string
+     */
     public const NAME = 'SignalExternalWorkflow';
 
     /**
@@ -23,7 +26,7 @@ final class SignalExternalWorkflow extends Request
      * @param string $workflowId
      * @param string $runId
      * @param string $signal
-     * @param ValuesInterface $input
+     * @param ValuesInterface|null $input
      */
     public function __construct(
         string $namespace,
@@ -32,16 +35,14 @@ final class SignalExternalWorkflow extends Request
         string $signal,
         ValuesInterface $input = null
     ) {
-        parent::__construct(
-            self::NAME,
-            [
-                'namespace' => $namespace,
-                'workflowID' => $workflowId,
-                'runID' => $runId,
-                'signal' => $signal,
-                'childWorkflowOnly' => true,
-            ],
-            $input
-        );
+        $options = [
+            'namespace' => $namespace,
+            'workflowID' => $workflowId,
+            'runID' => $runId,
+            'signal' => $signal,
+            'childWorkflowOnly' => true,
+        ];
+
+        parent::__construct(self::NAME, $options, $input);
     }
 }
