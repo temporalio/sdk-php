@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
-use JetBrains\PhpStorm\Immutable;
 use Spiral\Attributes\AttributeReader;
 use Spiral\Attributes\ReaderInterface;
 use Temporal\Client\GRPC\ServiceClientInterface;
@@ -26,7 +25,6 @@ use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Client\WorkflowProxy;
 use Temporal\Internal\Client\WorkflowStub;
 use Temporal\Workflow\WorkflowRunInterface;
-use Temporal\Workflow\WorkflowInterface;
 
 class WorkflowClient implements WorkflowClientInterface
 {
