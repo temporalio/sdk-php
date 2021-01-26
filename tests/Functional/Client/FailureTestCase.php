@@ -24,13 +24,12 @@ class FailureTestCase extends ClientTestCase
 {
     public function testSimpleFailurePropagation()
     {
-        $w = $this->createClient();
-        $ex = $w->newUntypedWorkflowStub('ExceptionalWorkflow');
+        $client = $this->createClient();
+        $ex = $client->newUntypedWorkflowStub('ExceptionalWorkflow');
 
-        $e = $ex->start();
-
-        $this->assertNotEmpty($e->id);
-        $this->assertNotEmpty($e->runId);
+        $e = $client->start($ex);
+        $this->assertNotEmpty($e->getExecution()->getID());
+        $this->assertNotEmpty($e->getExecution()->getRunID());
 
         try {
             $this->assertSame('OK', $ex->getResult());
@@ -43,12 +42,12 @@ class FailureTestCase extends ClientTestCase
 
     public function testActivityFailurePropagation()
     {
-        $w = $this->createClient();
-        $ex = $w->newUntypedWorkflowStub('ExceptionalActivityWorkflow');
+        $client = $this->createClient();
+        $ex = $client->newUntypedWorkflowStub('ExceptionalActivityWorkflow');
 
-        $e = $ex->start();
-        $this->assertNotEmpty($e->id);
-        $this->assertNotEmpty($e->runId);
+        $e = $client->start($ex);
+        $this->assertNotEmpty($e->getExecution()->getID());
+        $this->assertNotEmpty($e->getExecution()->getRunID());
 
         $this->expectException(WorkflowFailedException::class);
         $ex->getResult();
@@ -56,12 +55,12 @@ class FailureTestCase extends ClientTestCase
 
     public function testChildWorkflowFailurePropagation()
     {
-        $w = $this->createClient();
-        $ex = $w->newUntypedWorkflowStub('ComplexExceptionalWorkflow');
+        $client = $this->createClient();
+        $ex = $client->newUntypedWorkflowStub('ComplexExceptionalWorkflow');
 
-        $e = $ex->start();
-        $this->assertNotEmpty($e->id);
-        $this->assertNotEmpty($e->runId);
+        $e = $client->start($ex);
+        $this->assertNotEmpty($e->getExecution()->getID());
+        $this->assertNotEmpty($e->getExecution()->getRunID());
 
         try {
             $ex->getResult();

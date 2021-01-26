@@ -36,8 +36,8 @@ class ChildWorkflowFailure extends TemporalFailure
         parent::__construct(
             self::buildMessage(
                 [
-                    'workflowId' => $execution->id,
-                    'runId' => $execution->runId,
+                    'workflowId' => $execution->getID(),
+                    'runId' => $execution->getRunID(),
                     'workflowType' => $workflowType,
                     'initiatedEventId' => $initiatedEventId,
                     'startedEventId' => $startedEventId,

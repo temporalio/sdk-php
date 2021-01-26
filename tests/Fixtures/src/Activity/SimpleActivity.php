@@ -76,8 +76,8 @@ class SimpleActivity
             'activityId',
             json_encode(
                 [
-                    'id' => Activity::getInfo()->workflowExecution->id,
-                    'runId' => Activity::getInfo()->workflowExecution->runId,
+                    'id' => Activity::getInfo()->workflowExecution->getID(),
+                    'runId' => Activity::getInfo()->workflowExecution->getRunID(),
                     'activityId' => Activity::getInfo()->id
                 ]
             )

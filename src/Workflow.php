@@ -36,10 +36,7 @@ use Temporal\Workflow\WorkflowInfo;
  * @method static \DateTimeInterface now()
  * @method static bool isReplaying()
  *
- * @method static CompletableResultInterface await(... $condition)
- *
- * @method static CancellationScopeInterface newCancellationScope(callable $handler)
- * @method static CancellationScopeInterface newDetachedCancellationScope(callable $handler)
+ * @method static CompletableResultInterface await(...$condition)
  *
  * @method static CompletableResultInterface sideEffect(callable $cb)
  * @method static CompletableResultInterface timer(string|int|float|\DateInterval $interval)
@@ -61,4 +58,21 @@ use Temporal\Workflow\WorkflowInfo;
  */
 final class Workflow extends Facade
 {
+    /**
+     * @param callable $handler
+     * @return CancellationScopeInterface
+     */
+    public static function async(callable $handler): CancellationScopeInterface
+    {
+        return self::getCurrentContext()->newCancellationScope($handler);
+    }
+
+    /**
+     * @param callable $handler
+     * @return CancellationScopeInterface
+     */
+    public static function asyncDetached(callable $handler): CancellationScopeInterface
+    {
+        return self::getCurrentContext()->newDetachedCancellationScope($handler);
+    }
 }

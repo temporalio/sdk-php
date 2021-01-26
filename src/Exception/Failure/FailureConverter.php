@@ -139,8 +139,8 @@ final class FailureConverter
                     ->setWorkflowExecution(
                         new WorkflowExecution(
                             [
-                                'workflow_id' => $e->getExecution()->id,
-                                'run_id' => $e->getExecution()->runId
+                                'workflow_id' => $e->getExecution()->getID(),
+                                'run_id' => $e->getExecution()->getRunID()
                             ]
                         )
                     );

@@ -22,7 +22,7 @@ class WorkflowExecution
      * @var string
      */
     #[Marshal(name: 'ID')]
-    public string $id;
+    private string $id;
 
     /**
      * @readonly
@@ -30,16 +30,32 @@ class WorkflowExecution
      * @var string
      */
     #[Marshal(name: 'RunID')]
-    public string $runId;
+    private ?string $runId;
 
     /**
      * @param string|null $id
      * @param string|null $runId
      */
-    public function __construct(string $id = null, string $runId = null)
+    public function __construct(string $id = null, ?string $runId = null)
     {
         $this->id = $id ?? Uuid::nil();
         $this->runId = $runId ?? Uuid::nil();
+    }
+
+    /**
+     * @return string
+     */
+    public function getID(): string
+    {
+        return $this->id;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getRunID(): ?string
+    {
+        return $this->runId;
     }
 
     /**

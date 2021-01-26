@@ -62,12 +62,12 @@ final class Saga
      */
     public function compensate(): CancellationScopeInterface
     {
-        return Workflow::newDetachedCancellationScope(
+        return Workflow::asyncDetached(
             function () {
                 if ($this->parallelCompensation) {
                     $scopes = [];
                     foreach ($this->compensate as $handler) {
-                        $scopes[] = Workflow::newDetachedCancellationScope($handler);
+                        $scopes[] = Workflow::asyncDetached($handler);
                     }
 
                     yield Promise::all($scopes);
@@ -75,9 +75,11 @@ final class Saga
                 }
 
                 $sagaException = null;
-                foreach ($this->compensate as $handler) {
+
+                for ($i = count($this->compensate) - 1; $i >= 0; $i--) {
+                    $handler = $this->compensate[$i];
                     try {
-                        yield Workflow::newDetachedCancellationScope($handler);
+                        yield Workflow::asyncDetached($handler);
                     } catch (\Throwable $e) {
                         if ($sagaException === null) {
                             $sagaException = new CompensationException($e->getMessage(), $e->getCode(), $e);

@@ -49,6 +49,7 @@ use Temporal\Exception\Failure\TerminatedFailure;
 use Temporal\Exception\Failure\TimeoutFailure;
 use Temporal\Exception\IllegalStateException;
 use Temporal\Exception\Client\TimeoutException;
+use Temporal\Exception\InvalidArgumentException;
 use Temporal\Exception\WorkflowExecutionFailedException;
 use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Client\WorkflowNotFoundException;
@@ -58,34 +59,28 @@ use Temporal\Workflow\WorkflowExecution;
 
 final class WorkflowStub implements WorkflowStubInterface
 {
-    private const ERROR_WORKFLOW_START_DUPLICATION =
-        'Cannot reuse a stub instance to start more than one workflow execution. ' .
-        'The stub points to already started execution. If you are trying to wait ' .
-        'for a workflow completion either change WorkflowIdReusePolicy from ' .
-        'AllowDuplicate or use WorkflowStub.getResult';
-
     private const ERROR_WORKFLOW_NOT_STARTED = 'Method "%s" cannot be called because the workflow has not been started';
 
     private ServiceClientInterface $serviceClient;
     private ClientOptions $clientOptions;
     private DataConverterInterface $converter;
-    private string $workflowType;
-    private WorkflowOptions $options;
+    private ?string $workflowType;
+    private ?WorkflowOptions $options;
     private ?WorkflowExecution $execution = null;
 
     /**
      * @param ServiceClientInterface $serviceClient
      * @param ClientOptions $clientOptions
      * @param DataConverterInterface $converter
-     * @param string $workflowType
-     * @param WorkflowOptions $options
+     * @param string|null $workflowType
+     * @param WorkflowOptions|null $options
      */
     public function __construct(
         ServiceClientInterface $serviceClient,
         ClientOptions $clientOptions,
         DataConverterInterface $converter,
-        string $workflowType,
-        WorkflowOptions $options
+        ?string $workflowType = null,
+        WorkflowOptions $options = null
     ) {
         $this->serviceClient = $serviceClient;
         $this->clientOptions = $clientOptions;
@@ -97,7 +92,7 @@ final class WorkflowStub implements WorkflowStubInterface
     /**
      * {@inheritDoc}
      */
-    public function getWorkflowType(): string
+    public function getWorkflowType(): ?string
     {
         return $this->workflowType;
     }
@@ -105,19 +100,9 @@ final class WorkflowStub implements WorkflowStubInterface
     /**
      * {@inheritDoc}
      */
-    public function getOptions(): WorkflowOptions
+    public function getOptions(): ?WorkflowOptions
     {
         return $this->options;
-    }
-
-    /**
-     * @param WorkflowOptions $options
-     * @return void
-     */
-    public function setOptions(WorkflowOptions $options): void
-    {
-        // todo: replace with merge options
-        $this->options = $options;
     }
 
     /**
@@ -134,134 +119,24 @@ final class WorkflowStub implements WorkflowStubInterface
      * Connects stub to running workflow.
      *
      * @param WorkflowExecution $execution
-     * @return $this
      */
-    public function setExecution(WorkflowExecution $execution): self
+    public function setExecution(WorkflowExecution $execution): void
     {
         $this->execution = $execution;
-        return $this;
     }
 
     /**
-     * {@inheritDoc}
+     * @return bool
      */
-    public function start(array $args = []): WorkflowExecution
+    public function hasExecution(): bool
     {
-        $r = new StartWorkflowExecutionRequest();
-        $r
-            ->setRequestId(Uuid::v4())
-            ->setIdentity($this->clientOptions->identity)
-            ->setNamespace($this->clientOptions->namespace)
-            ->setTaskQueue(new TaskQueue(['name' => $this->options->taskQueue]))
-            ->setWorkflowType(new WorkflowType(['name' => $this->workflowType]))
-            ->setWorkflowId($this->options->workflowId)
-            ->setCronSchedule($this->options->cronSchedule)
-            ->setRetryPolicy($this->options->toRetryPolicy())
-            ->setWorkflowIdReusePolicy($this->options->workflowIdReusePolicy)
-            ->setWorkflowRunTimeout(DateInterval::toDuration($this->options->workflowRunTimeout))
-            ->setWorkflowExecutionTimeout(DateInterval::toDuration($this->options->workflowExecutionTimeout))
-            ->setWorkflowTaskTimeout(DateInterval::toDuration($this->options->workflowTaskTimeout));
-
-        if ($this->options->memo !== null) {
-            $r->setMemo($this->options->toMemo());
-        }
-
-        if ($this->options->searchAttributes !== null) {
-            $r->setSearchAttributes($this->options->toSearchAttributes());
-        }
-
-        $input = EncodedValues::fromValues($args, $this->converter);
-        if (!$input->isEmpty()) {
-            $r->setInput($input->toPayloads());
-        }
-
-        try {
-            $response = $this->serviceClient->StartWorkflowExecution($r);
-        } catch (ServiceClientException $e) {
-            $f = $e->getFailure(WorkflowExecutionAlreadyStartedFailure::class);
-
-            if ($f instanceof WorkflowExecutionAlreadyStartedFailure) {
-                $this->execution = new WorkflowExecution($r->getWorkflowId(), $f->getRunId());
-
-                throw new WorkflowExecutionAlreadyStartedException(
-                    $this->execution,
-                    $this->workflowType,
-                    $e
-                );
-            }
-
-            throw $e;
-        }
-
-        return $this->execution = new WorkflowExecution($this->options->workflowId, $response->getRunId());
+        return $this->execution !== null;
     }
 
     /**
      * {@inheritDoc}
      */
-    public function signalWithStart(string $signal, array $signalArgs = [], array $startArgs = []): WorkflowExecution
-    {
-        $this->assertNotStarted();
-
-        $r = new SignalWithStartWorkflowExecutionRequest();
-        $r
-            ->setRequestId(Uuid::v4())
-            ->setIdentity($this->clientOptions->identity)
-            ->setNamespace($this->clientOptions->namespace)
-            ->setTaskQueue(new TaskQueue(['name' => $this->options->taskQueue]))
-            ->setWorkflowType(new WorkflowType(['name' => $this->workflowType]))
-            ->setWorkflowId($this->options->workflowId)
-            ->setCronSchedule($this->options->cronSchedule)
-            ->setRetryPolicy($this->options->toRetryPolicy())
-            ->setWorkflowIdReusePolicy($this->options->workflowIdReusePolicy)
-            ->setWorkflowRunTimeout(DateInterval::toDuration($this->options->workflowRunTimeout))
-            ->setWorkflowExecutionTimeout(DateInterval::toDuration($this->options->workflowExecutionTimeout))
-            ->setWorkflowTaskTimeout(DateInterval::toDuration($this->options->workflowTaskTimeout));
-
-        if ($this->options->memo !== null) {
-            $r->setMemo($this->options->toMemo());
-        }
-
-        if ($this->options->searchAttributes !== null) {
-            $r->setSearchAttributes($this->options->toSearchAttributes());
-        }
-
-        $input = EncodedValues::fromValues($startArgs, $this->converter);
-        if (!$input->isEmpty()) {
-            $r->setInput($input->toPayloads());
-        }
-
-        $r->setSignalName($signal);
-        $signalInput = EncodedValues::fromValues($signalArgs, $this->converter);
-        if (!$signalInput->isEmpty()) {
-            $r->setSignalInput($signalInput->toPayloads());
-        }
-
-        try {
-            $response = $this->serviceClient->SignalWithStartWorkflowExecution($r);
-        } catch (ServiceClientException $e) {
-            $f = $e->getFailure(WorkflowExecutionAlreadyStartedFailure::class);
-
-            if ($f instanceof WorkflowExecutionAlreadyStartedFailure) {
-                $this->execution = new WorkflowExecution($r->getWorkflowId(), $f->getRunId());
-
-                throw new WorkflowExecutionAlreadyStartedException(
-                    $this->execution,
-                    $this->workflowType,
-                    $e
-                );
-            }
-
-            throw $e;
-        }
-
-        return $this->execution = new WorkflowExecution($this->options->workflowId, $response->getRunId());
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function signal(string $name, array $args = []): void
+    public function signal(string $name, ...$args): void
     {
         $this->assertStarted(__FUNCTION__);
 
@@ -292,7 +167,7 @@ final class WorkflowStub implements WorkflowStubInterface
     /**
      * {@inheritDoc}
      */
-    public function query(string $name, array $args = []): ?EncodedValues
+    public function query(string $name, ...$args): ?EncodedValues
     {
         $this->assertStarted(__FUNCTION__);
 
@@ -316,8 +191,9 @@ final class WorkflowStub implements WorkflowStubInterface
         } catch (ServiceClientException $e) {
             if ($e->getCode() === StatusCode::NOT_FOUND) {
                 throw new WorkflowNotFoundException(null, $this->execution, $this->workflowType, $e);
-            // TODO Avoid "elseif" stmt
-            } elseif ($e->getFailure(QueryFailedFailure::class) !== null) {
+            }
+
+            if ($e->getFailure(QueryFailedFailure::class) !== null) {
                 throw new WorkflowQueryException(null, $this->execution, $this->workflowType, $e);
             }
 
@@ -338,7 +214,6 @@ final class WorkflowStub implements WorkflowStubInterface
             $this->execution,
             $this->workflowType,
             $this->clientOptions->queryRejectionCondition,
-            // TODO Null Pointer Exception
             $result->getQueryRejected()->getStatus(),
             null
         );
@@ -385,7 +260,7 @@ final class WorkflowStub implements WorkflowStubInterface
      *
      * @throws \Throwable
      */
-    public function getResult($type = null, int $timeout = self::DEFAULT_TIMEOUT)
+    public function getResult($type = null, int $timeout = null)
     {
         try {
             $result = $this->fetchResult($timeout);
@@ -395,7 +270,7 @@ final class WorkflowStub implements WorkflowStubInterface
             }
 
             return $result->getValue(0, $type);
-        } catch (TimeoutException|IllegalStateException $e) {
+        } catch (TimeoutException | IllegalStateException $e) {
             throw $e;
         } catch (\Throwable $e) {
             throw $this->mapWorkflowFailureToException($e);
@@ -403,15 +278,29 @@ final class WorkflowStub implements WorkflowStubInterface
     }
 
     /**
-     * @return void
+     * Get untyped workflow stub using provided workflow proxy or workflow stub instance.
+     *
+     * @param WorkflowStubInterface|object $workflow
+     * @return WorkflowStubInterface
      */
-    private function assertNotStarted(): void
+    public static function fromWorkflow($workflow): WorkflowStubInterface
     {
-        if ($this->execution === null) {
-            return;
+        $workflowStub = null;
+        if ($workflow instanceof WorkflowProxy) {
+            $workflowStub = $workflow->__getUntypedStub();
         }
 
-        throw new IllegalStateException(self::ERROR_WORKFLOW_START_DUPLICATION);
+        if ($workflow instanceof WorkflowStubInterface) {
+            $workflowStub = $workflow;
+        }
+
+        if ($workflowStub === null) {
+            throw new InvalidArgumentException(
+                \sprintf('Only workflow stubs can be started, %s given', \get_debug_type($workflow))
+            );
+        }
+
+        return $workflowStub;
     }
 
     /**
@@ -538,18 +427,16 @@ final class WorkflowStub implements WorkflowStubInterface
                 }
             }
 
-            // TODO Null Pointer Exception
             if ($response->getHistory()->getEvents()->count() === 0) {
                 continue;
             }
 
-            // TODO Null Pointer Exception
             /** @var HistoryEvent $closeEvent */
             $closeEvent = $response->getHistory()->getEvents()->offsetGet(0);
 
             if ($closeEvent->getEventType() === EventType::EVENT_TYPE_WORKFLOW_EXECUTION_CONTINUED_AS_NEW) {
                 $this->execution = new WorkflowExecution(
-                    $this->execution->id,
+                    $this->execution->getID(),
                     $closeEvent
                         ->getWorkflowExecutionContinuedAsNewEventAttributes()
                         ->getNewExecutionRunId()
@@ -587,15 +474,14 @@ final class WorkflowStub implements WorkflowStubInterface
                         $this->workflowType,
                         $failure
                     );
-                // TODO Avoid "else" stmt
-                } else {
-                    return new WorkflowServiceException(
-                        null,
-                        $this->execution,
-                        $this->workflowType,
-                        $failure
-                    );
                 }
+
+                return new WorkflowServiceException(
+                    null,
+                    $this->execution,
+                    $this->workflowType,
+                    $failure
+                );
 
             case $failure instanceof CanceledFailure || $failure instanceof WorkflowException:
                 return $failure;

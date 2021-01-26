@@ -22,33 +22,34 @@ class TypedStubTestCase extends ClientTestCase
 {
     public function testGetResult()
     {
-        $w = $this->createClient();
-        $simple = $w->newWorkflowStub(SimpleWorkflow::class);
+        $client = $this->createClient();
+        $simple = $client->newWorkflowStub(SimpleWorkflow::class);
 
         $this->assertSame('HELLO WORLD', $simple->handler('hello world'));
     }
 
     public function testStartAsync()
     {
-        $w = $this->createClient();
-        $simple = $w->newWorkflowStub(SimpleWorkflow::class);
+        $client = $this->createClient();
+        $simple = $client->newWorkflowStub(SimpleWorkflow::class);
 
-        $r = $w->start($simple, 'test');
+        $r = $client->start($simple, 'test');
 
-        $this->assertNotEmpty($r->getExecution()->id);
-        $this->assertNotEmpty($r->getExecution()->runId);
+        $this->assertNotEmpty($r->getExecution()->getID());
+        $this->assertNotEmpty($r->getExecution()->getRunID());
 
         $this->assertSame('TEST', $r->getResult());
     }
 
     public function testQueryWorkflow()
     {
-        $w = $this->createClient();
-        $simple = $w->newWorkflowStub(QueryWorkflow::class);
+        $client = $this->createClient();
+        $simple = $client->newWorkflowStub(QueryWorkflow::class);
 
-        $e = $simple->startAsync();
-        $this->assertNotEmpty($e->getExecution()->id);
-        $this->assertNotEmpty($e->getExecution()->runId);
+
+        $e = $client->start($simple);
+        $this->assertNotEmpty($e->getExecution()->getID());
+        $this->assertNotEmpty($e->getExecution()->getRunID());
 
         $simple->add(88);
 

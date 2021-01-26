@@ -29,7 +29,7 @@ final class ActivityContext implements ActivityContextInterface
     private bool $doNotCompleteOnReturn = false;
     private RPCConnectionInterface $rpc;
     private DataConverterInterface $converter;
-    private ?ValuesInterface $heartbeatDetails = null;
+    private ?ValuesInterface $heartbeatDetails;
 
     /**
      * @param RPCConnectionInterface $rpc

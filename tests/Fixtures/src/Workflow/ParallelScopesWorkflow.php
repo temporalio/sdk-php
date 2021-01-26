@@ -21,11 +21,11 @@ class ParallelScopesWorkflow
             ActivityOptions::new()->withStartToCloseTimeout(5)
         );
 
-        $a = Workflow::newCancellationScope(function () use ($simple, $input) {
+        $a = Workflow::async(function () use ($simple, $input) {
             return yield $simple->echo($input);
         });
 
-        $b = Workflow::newCancellationScope(function () use ($simple, $input) {
+        $b = Workflow::async(function () use ($simple, $input) {
             return yield $simple->lower($input);
         });
 

@@ -26,105 +26,111 @@ class UntypedWorkflowStubTestCase extends ClientTestCase
 {
     public function testUntypedStartAndWaitResult()
     {
-        $w = $this->createClient();
-        $simple = $w->newUntypedWorkflowStub('SimpleWorkflow');
+        $client = $this->createClient();
+        $simple = $client->newUntypedWorkflowStub('SimpleWorkflow');
 
-        $e = $simple->start(['hello world']);
-        $this->assertNotEmpty($e->id);
-        $this->assertNotEmpty($e->runId);
+        $e = $client->start($simple, 'hello world');
+        $this->assertNotEmpty($e->getExecution()->getID());
+        $this->assertNotEmpty($e->getExecution()->getRunID());
 
         $this->assertSame('HELLO WORLD', $simple->getResult());
     }
 
     public function testUntypedStartViaClient()
     {
-        $w = $this->createClient();
-        $simple = $w->newUntypedWorkflowStub('SimpleWorkflow');
-        $r = $w->start($simple, 'test');
+        $client = $this->createClient();
+        $simple = $client->newUntypedWorkflowStub('SimpleWorkflow');
+        $r = $client->start($simple, 'test');
 
-        $this->assertNotEmpty($r->getExecution()->id);
-        $this->assertNotEmpty($r->getExecution()->runId);
+        $this->assertNotEmpty($r->getExecution()->getID());
+        $this->assertNotEmpty($r->getExecution()->getRunID());
 
         $this->assertSame('TEST', $r->getResult());
     }
 
     public function testStartWithSameID()
     {
-        $w = $this->createClient();
-        $simple = $w->newUntypedWorkflowStub('SimpleWorkflow');
+        $client = $this->createClient();
+        $simple = $client->newUntypedWorkflowStub('SimpleWorkflow');
 
-        $e = $simple->start(['hello world']);
-        $this->assertNotEmpty($e->id);
-        $this->assertNotEmpty($e->runId);
+        $e = $client->start($simple, 'hello world');
+        $this->assertNotEmpty($e->getExecution()->getID());
+        $this->assertNotEmpty($e->getExecution()->getRunID());
 
-        $simple2 = $w->newUntypedWorkflowStub('SimpleWorkflow', WorkflowOptions::new()
-            ->withWorkflowId($e->id));
+        $simple2 = $client->newUntypedWorkflowStub(
+            'SimpleWorkflow',
+            WorkflowOptions::new()
+                ->withWorkflowId($e->getExecution()->getID())
+        );
 
         $this->expectException(WorkflowExecutionAlreadyStartedException::class);
-        $simple2->start(['hello world']);
+        $client->start($simple2, 'hello world');
     }
 
     public function testSignalWorkflowAndGetResult()
     {
-        $w = $this->createClient();
-        $simple = $w->newUntypedWorkflowStub('SimpleSignalledWorkflowWithSleep');
+        $client = $this->createClient();
+        $simple = $client->newUntypedWorkflowStub('SimpleSignalledWorkflowWithSleep');
 
-        $e = $simple->start();
-        $this->assertNotEmpty($e->id);
-        $this->assertNotEmpty($e->runId);
+        $e = $client->start($simple);
+        $this->assertNotEmpty($e->getExecution()->getID());
+        $this->assertNotEmpty($e->getExecution()->getRunID());
 
-        $simple->signal('add', [-1]);
+        $simple->signal('add', -1);
 
         $this->assertSame(-1, $simple->getResult());
     }
 
     public function testSignalWithStart()
     {
-        $w = $this->createClient();
-        $simple = $w->newUntypedWorkflowStub('SimpleSignalledWorkflowWithSleep');
+        $client = $this->createClient();
+        $simple = $client->newUntypedWorkflowStub('SimpleSignalledWorkflowWithSleep');
 
-        $e = $simple->signalWithStart('add', [-1]);
-        $this->assertNotEmpty($e->id);
-        $this->assertNotEmpty($e->runId);
+        $e = $client->startWithSignal($simple, 'add', [-1]);
+        $this->assertNotEmpty($e->getExecution()->getID());
+        $this->assertNotEmpty($e->getExecution()->getRunID());
 
-        $simple->signal('add', [-1]);
+        $simple->signal('add', -1);
 
         $this->assertSame(-2, $simple->getResult());
     }
 
     public function testSignalWithStartAlreadyStarted()
     {
-        $w = $this->createClient();
-        $simple = $w->newUntypedWorkflowStub('SimpleSignalledWorkflowWithSleep');
+        $client = $this->createClient();
+        $simple = $client->newUntypedWorkflowStub('SimpleSignalledWorkflowWithSleep');
 
-        $e = $simple->signalWithStart('add', [-1]);
-        $this->assertNotEmpty($e->id);
-        $this->assertNotEmpty($e->runId);
+        $e = $client->startWithSignal($simple, 'add', [-1]);
+        $this->assertNotEmpty($e->getExecution()->getID());
+        $this->assertNotEmpty($e->getExecution()->getRunID());
 
-        $simple->signal('add', [-1]);
+        $simple->signal('add', -1);
 
         $this->assertSame(-2, $simple->getResult());
 
-        $simple2 = $w->newUntypedWorkflowStub('SimpleWorkflow', WorkflowOptions::new()
-            ->withWorkflowId($e->id));
+        $simple2 = $client->newUntypedWorkflowStub(
+            'SimpleWorkflow',
+            WorkflowOptions::new()
+                ->withWorkflowId($e->getExecution()->getID())
+        );
 
         $this->expectException(WorkflowExecutionAlreadyStartedException::class);
-        $simple2->signalWithStart('add', [-1]);
+        $e = $client->startWithSignal($simple2, 'add', [-1]);
     }
 
     public function testSignalNotStarted()
     {
-        $w = $this->createClient();
-        $simple = $w->newUntypedWorkflowStub('SimpleSignalledWorkflowWithSleep');
+        $client = $this->createClient();
+        $simple = $client->newUntypedWorkflowStub('SimpleSignalledWorkflowWithSleep');
 
         $this->expectException(IllegalStateException::class);
-        $simple->signal('add', [-1]);
+        $simple->signal('add', -1);
     }
 
     public function testQueryNotStarted()
     {
-        $w = $this->createClient();
-        $simple = $w->newUntypedWorkflowStub('SimpleSignalledWorkflowWithSleep');
+        $client = $this->createClient();
+        $simple = $client->newUntypedWorkflowStub('SimpleSignalledWorkflowWithSleep');
 
         $this->expectException(IllegalStateException::class);
         $simple->query('get');
@@ -132,14 +138,14 @@ class UntypedWorkflowStubTestCase extends ClientTestCase
 
     public function testQueryWorkflow()
     {
-        $w = $this->createClient();
-        $simple = $w->newUntypedWorkflowStub('QueryWorkflow');
+        $client = $this->createClient();
+        $simple = $client->newUntypedWorkflowStub('QueryWorkflow');
 
-        $e = $simple->start();
-        $this->assertNotEmpty($e->id);
-        $this->assertNotEmpty($e->runId);
+        $e = $client->start($simple);
+        $this->assertNotEmpty($e->getExecution()->getID());
+        $this->assertNotEmpty($e->getExecution()->getRunID());
 
-        $simple->signal('add', [88]);
+        $simple->signal('add', 88);
 
         $this->assertSame(88, $simple->query('get')->getValue(0));
         $this->assertSame(88, $simple->getResult());
@@ -147,24 +153,24 @@ class UntypedWorkflowStubTestCase extends ClientTestCase
 
     public function testStartAsNewEventTrailing()
     {
-        $w = $this->createClient();
-        $simple = $w->newUntypedWorkflowStub('ContinuableWorkflow');
+        $client = $this->createClient();
+        $simple = $client->newUntypedWorkflowStub('ContinuableWorkflow');
 
-        $e = $simple->start([1]);
-        $this->assertNotEmpty($e->id);
-        $this->assertNotEmpty($e->runId);
+        $e = $client->start($simple, 1);
+        $this->assertNotEmpty($e->getExecution()->getID());
+        $this->assertNotEmpty($e->getExecution()->getRunID());
 
         $this->assertSame('OK6', $simple->getResult());
     }
 
     public function testCancelled()
     {
-        $w = $this->createClient();
-        $simple = $w->newUntypedWorkflowStub('SimpleSignalledWorkflowWithSleep');
+        $client = $this->createClient();
+        $simple = $client->newUntypedWorkflowStub('SimpleSignalledWorkflowWithSleep');
 
-        $e = $simple->start([-1]);
-        $this->assertNotEmpty($e->id);
-        $this->assertNotEmpty($e->runId);
+        $e = $client->start($simple, -1);
+        $this->assertNotEmpty($e->getExecution()->getID());
+        $this->assertNotEmpty($e->getExecution()->getRunID());
 
         $simple->cancel();
         try {
@@ -176,12 +182,12 @@ class UntypedWorkflowStubTestCase extends ClientTestCase
 
     public function testTerminated()
     {
-        $w = $this->createClient();
-        $simple = $w->newUntypedWorkflowStub('SimpleSignalledWorkflowWithSleep');
+        $client = $this->createClient();
+        $simple = $client->newUntypedWorkflowStub('SimpleSignalledWorkflowWithSleep');
 
-        $e = $simple->start([-1]);
-        $this->assertNotEmpty($e->id);
-        $this->assertNotEmpty($e->runId);
+        $e = $client->start($simple, -1);
+        $this->assertNotEmpty($e->getExecution()->getID());
+        $this->assertNotEmpty($e->getExecution()->getRunID());
 
         $simple->terminate('user triggered');
         try {

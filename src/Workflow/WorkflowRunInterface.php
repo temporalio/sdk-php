@@ -13,8 +13,6 @@ use Temporal\DataConverter\Type;
 
 interface WorkflowRunInterface
 {
-    public const DEFAULT_TIMEOUT = 30;
-
     /**
      * Returns attached workflow execution.
      *
@@ -23,11 +21,14 @@ interface WorkflowRunInterface
     public function getExecution(): WorkflowExecution;
 
     /**
-     * Get execution result value.
+     * Returns workflow result potentially waiting for workflow to complete.
+     * Behind the scene this call performs long poll on Temporal service waiting
+     * for workflow completion notification.
      *
      * @param string|\ReflectionClass|\ReflectionType|Type|null $type
-     * @param positive-int $timeout
+     * @param int|null $timeout Timeout in seconds. Infinite by the default.
      * @return mixed
+     * @see DateInterval
      */
-    public function getResult($type = null, int $timeout = self::DEFAULT_TIMEOUT);
+    public function getResult($type = null, int $timeout = null);
 }

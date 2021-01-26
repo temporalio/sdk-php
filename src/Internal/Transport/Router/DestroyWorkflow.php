@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
+use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Internal\Transport\ClientInterface;
@@ -51,7 +52,7 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
 
         $this->kill($runId);
 
-        $resolver->resolve(['OK']);
+        $resolver->resolve(EncodedValues::fromValues([null]));
     }
 
     /**

@@ -421,7 +421,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
                     $this->makeCurrent();
 
                     if ($e instanceof TemporalFailure && !$e->hasOriginalStackTrace()) {
-                        $e->setOriginalStackTrace($this->context->getLastTrace());
+                        $e->setOriginalStackTrace($this->context->getStackTrace());
                     }
 
                     try {
