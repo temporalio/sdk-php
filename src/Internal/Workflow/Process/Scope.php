@@ -48,11 +48,6 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     protected WorkflowContext $context;
 
     /**
-     * @var Workflow\WorkflowContextInterface
-     */
-    protected Workflow\WorkflowContextInterface $scopeContext;
-
-    /**
      * @var Deferred
      */
     protected Deferred $deferred;
@@ -131,11 +126,6 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     public function __construct(ServiceContainer $services, WorkflowContext $ctx)
     {
         $this->context = $ctx;
-        $this->scopeContext = ScopeContext::fromWorkflowContext(
-            $this->context,
-            $this,
-            \Closure::fromCallable([$this, 'onRequest'])
-        );
 
         $this->services = $services;
         $this->deferred = new Deferred();
@@ -351,7 +341,11 @@ class Scope implements CancellationScopeInterface, PromisorInterface
      */
     protected function makeCurrent(): void
     {
-        Workflow::setCurrentContext($this->scopeContext);
+        Workflow::setCurrentContext(ScopeContext::fromWorkflowContext(
+            $this->context,
+            $this,
+            \Closure::fromCallable([$this, 'onRequest'])
+        ));
     }
 
     /**

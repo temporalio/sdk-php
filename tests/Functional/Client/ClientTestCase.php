@@ -27,7 +27,7 @@ abstract class ClientTestCase extends FunctionalTestCase
     protected function createClient(string $connection = 'localhost:7233'): WorkflowClient
     {
         return new WorkflowClient(
-            ServiceClient::createInsecure($connection)
+            ServiceClient::create($connection)
         );
     }
 }
