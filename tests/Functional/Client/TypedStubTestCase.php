@@ -23,44 +23,43 @@ use Temporal\Tests\Workflow\SimpleWorkflow;
  */
 class TypedStubTestCase extends ClientTestCase
 {
-//    public function testGetResult()
-//    {
-//        $client = $this->createClient();
-//        $simple = $client->newWorkflowStub(SimpleWorkflow::class);
-//
-//        $this->assertSame('HELLO WORLD', $simple->handler('hello world'));
-//    }
-//
-//    public function testStartAsync()
-//    {
-//        $client = $this->createClient();
-//        $simple = $client->newWorkflowStub(SimpleWorkflow::class);
-//
-//        $r = $client->start($simple, 'test');
-//
-//        $this->assertNotEmpty($r->getExecution()->getID());
-//        $this->assertNotEmpty($r->getExecution()->getRunID());
-//
-//        $this->assertSame('TEST', $r->getResult());
-//    }
-//
-//    public function testQueryWorkflow()
-//    {
-//        $client = $this->createClient();
-//        $simple = $client->newWorkflowStub(QueryWorkflow::class);
-//
-//
-//        $e = $client->start($simple);
-//        $this->assertNotEmpty($e->getExecution()->getID());
-//        $this->assertNotEmpty($e->getExecution()->getRunID());
-//
-//        $simple->add(88);
-//
-//        $this->assertSame(88, $simple->get());
-//        $this->assertSame(88, $e->getResult());
-//    }
+    public function testGetResult()
+    {
+        $client = $this->createClient();
+        $simple = $client->newWorkflowStub(SimpleWorkflow::class);
 
-    // todo: fix return type
+        $this->assertSame('HELLO WORLD', $simple->handler('hello world'));
+    }
+
+    public function testStartAsync()
+    {
+        $client = $this->createClient();
+        $simple = $client->newWorkflowStub(SimpleWorkflow::class);
+
+        $r = $client->start($simple, 'test');
+
+        $this->assertNotEmpty($r->getExecution()->getID());
+        $this->assertNotEmpty($r->getExecution()->getRunID());
+
+        $this->assertSame('TEST', $r->getResult());
+    }
+
+    public function testQueryWorkflow()
+    {
+        $client = $this->createClient();
+        $simple = $client->newWorkflowStub(QueryWorkflow::class);
+
+
+        $e = $client->start($simple);
+        $this->assertNotEmpty($e->getExecution()->getID());
+        $this->assertNotEmpty($e->getExecution()->getRunID());
+
+        $simple->add(88);
+
+        $this->assertSame(88, $simple->get());
+        $this->assertSame(88, $e->getResult());
+    }
+
     public function testGetDTOResult()
     {
         $w = $this->createClient();
