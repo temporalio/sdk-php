@@ -87,12 +87,16 @@ final class WorkflowProxy extends Proxy
             }
         }
 
+        $class = $this->prototype->getClass();
+
         throw new \BadMethodCallException(
-            \sprintf(self::ERROR_UNDEFINED_METHOD, $this->prototype->getClass()->getName(), $method)
+            \sprintf(self::ERROR_UNDEFINED_METHOD, $class->getName(), $method)
         );
     }
 
     /**
+     * TODO rename: Method names cannot use underscore (PSR conflict)
+     *
      * @return WorkflowStubInterface
      * @internal
      */
@@ -102,6 +106,8 @@ final class WorkflowProxy extends Proxy
     }
 
     /**
+     * TODO rename: Method names cannot use underscore (PSR conflict)
+     *
      * @return \ReflectionType|null
      * @internal
      */
