@@ -21,6 +21,11 @@ final class ActivityPrototype extends Prototype
     private ?MethodRetry $methodRetry = null;
 
     /**
+     * @var object|null
+     */
+    private ?object $instance = null;
+
+    /**
      * @return MethodRetry|null
      */
     public function getMethodRetry(): ?MethodRetry
@@ -34,5 +39,21 @@ final class ActivityPrototype extends Prototype
     public function setMethodRetry(?MethodRetry $attribute): void
     {
         $this->methodRetry = $attribute;
+    }
+
+    /**
+     * @return object|null
+     */
+    public function getInstance(): ?object
+    {
+        return $this->instance;
+    }
+
+    /**
+     * @param object|null $instance
+     */
+    public function setInstance(?object $instance): void
+    {
+        $this->instance = $instance;
     }
 }
