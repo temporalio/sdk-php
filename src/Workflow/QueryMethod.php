@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Workflow;
 
 use Doctrine\Common\Annotations\Annotation\Target;
+use JetBrains\PhpStorm\Immutable;
 use Spiral\Attributes\NamedArgumentConstructorAttribute;
 
 /**
@@ -37,6 +38,7 @@ final class QueryMethod implements NamedArgumentConstructorAttribute
      *
      * @var string|null
      */
+    #[Immutable]
     public ?string $name = null;
 
     /**

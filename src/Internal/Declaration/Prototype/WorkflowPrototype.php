@@ -13,6 +13,7 @@ namespace Temporal\Internal\Declaration\Prototype;
 
 use Temporal\Common\CronSchedule;
 use Temporal\Common\MethodRetry;
+use Temporal\Workflow\ReturnType;
 
 final class WorkflowPrototype extends Prototype
 {
@@ -35,6 +36,11 @@ final class WorkflowPrototype extends Prototype
      * @var MethodRetry|null
      */
     private ?MethodRetry $methodRetry = null;
+
+    /**
+     * @var ReturnType|null
+     */
+    private ?ReturnType $returnType = null;
 
     /**
      * @return CronSchedule|null
@@ -66,6 +72,22 @@ final class WorkflowPrototype extends Prototype
     public function setMethodRetry(?MethodRetry $attribute): void
     {
         $this->methodRetry = $attribute;
+    }
+
+    /**
+     * @return ReturnType|null
+     */
+    public function getReturnType(): ?ReturnType
+    {
+        return $this->returnType;
+    }
+
+    /**
+     * @param ReturnType|null $attribute
+     */
+    public function setReturnType(?ReturnType $attribute): void
+    {
+        $this->returnType = $attribute;
     }
 
     /**

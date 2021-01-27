@@ -16,6 +16,7 @@ use React\Promise\PromiseInterface;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Payload;
+use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Transport\ClientInterface;
@@ -68,7 +69,7 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
     /**
      * {@inheritDoc}
      */
-    public function execute(array $args = [], \ReflectionType $returnType = null): PromiseInterface
+    public function execute(array $args = [], $returnType = null): PromiseInterface
     {
         if ($this->request !== null) {
             throw new \LogicException('Child workflow already has been executed');
