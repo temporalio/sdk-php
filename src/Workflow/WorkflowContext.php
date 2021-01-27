@@ -412,6 +412,21 @@ class WorkflowContext implements WorkflowContextInterface
     }
 
     /**
+     * Returns true if any of conditions were fired and false if timeout was reached.
+     *
+     * @param int|DateInterval $interval
+     * @param mixed ...$condition
+     * @return PromiseInterface
+     */
+    public function awaitWithTimeout($interval, ...$condition): PromiseInterface
+    {
+        $timer = static::timer($interval);
+        $condition[] = $timer;
+
+        return static::await(...$condition)->then(fn() => !$timer->isComplete());
+    }
+
+    /**
      * @param callable $condition
      * @return PromiseInterface
      */

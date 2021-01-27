@@ -107,6 +107,6 @@ final class WorkflowProxy extends Proxy
      */
     public function __getReturnType()
     {
-        return $this->prototype->getHandler()->getReturnType();
+        return $this->prototype->getReturnType();
     }
 }

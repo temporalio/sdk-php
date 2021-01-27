@@ -11,7 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Functional\Client;
 
+use Temporal\Tests\DTO\Message;
+use Temporal\Tests\DTO\User;
 use Temporal\Tests\Workflow\QueryWorkflow;
+use Temporal\Tests\Workflow\SimpleDTOWorkflow;
 use Temporal\Tests\Workflow\SimpleWorkflow;
 
 /**
@@ -57,19 +60,18 @@ class TypedStubTestCase extends ClientTestCase
         $this->assertSame(88, $e->getResult());
     }
 
-    // todo: fix return type
-//    public function testGetDTOResult()
-//    {
-//        $w = $this->createClient();
-//        $dto = $w->newWorkflowStub(SimpleDTOWorkflow::class);
-//
-//        $u = new User();
-//        $u->name = 'Antony';
-//        $u->email = 'email@domain.com';
-//
-//        $this->assertEquals(
-//            new Message(sprintf("Hello %s <%s>", $u->name, $u->email)),
-//            $dto->handler($u)
-//        );
-//    }
+    public function testGetDTOResult()
+    {
+        $w = $this->createClient();
+        $dto = $w->newWorkflowStub(SimpleDTOWorkflow::class);
+
+        $u = new User();
+        $u->name = 'Antony';
+        $u->email = 'email@domain.com';
+
+        $this->assertEquals(
+            new Message(sprintf("Hello %s <%s>", $u->name, $u->email)),
+            $dto->handler($u)
+        );
+    }
 }

@@ -37,7 +37,8 @@ use Temporal\Workflow\WorkflowInfo;
  * @method static bool isReplaying()
  *
  * @method static CompletableResultInterface await(...$condition)
- *
+ * @method static CompletableResultInterface awaitWithTimeout($interval, ...$condition)
+
  * @method static CompletableResultInterface sideEffect(callable $cb)
  * @method static CompletableResultInterface timer(string|int|float|\DateInterval $interval)
  * @method static CompletableResultInterface getVersion(string $changeID, int $minSupported, int $maxSupported)
