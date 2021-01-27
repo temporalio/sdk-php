@@ -57,6 +57,20 @@ class WorkflowClient implements WorkflowClientInterface
     }
 
     /**
+     * @param ServiceClientInterface $serviceClient
+     * @param ClientOptions|null $options
+     * @param DataConverterInterface|null $converter
+     * @return static
+     */
+    public static function create(
+        ServiceClientInterface $serviceClient,
+        ClientOptions $options = null,
+        DataConverterInterface $converter = null
+    ): self {
+        return new self($serviceClient, $options, $converter);
+    }
+
+    /**
      * @return ServiceClientInterface
      */
     public function getServiceClient(): ServiceClientInterface
