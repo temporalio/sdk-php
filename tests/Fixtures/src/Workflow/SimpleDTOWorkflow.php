@@ -14,7 +14,8 @@ use Temporal\Tests\DTO\User;
 #[Workflow\WorkflowInterface]
 class SimpleDTOWorkflow
 {
-    #[WorkflowMethod(name: 'SimpleDTOWorkflow')]//, returnType: Message::class)]
+    #[WorkflowMethod(name: 'SimpleDTOWorkflow')]
+    #[Workflow\ReturnType(Message::class)]
     public function handler(
         User $user
     ) {
