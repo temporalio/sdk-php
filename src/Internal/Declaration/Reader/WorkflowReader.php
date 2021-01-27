@@ -266,7 +266,7 @@ class WorkflowReader extends Reader
                 }
 
                 if ($prototype === null) {
-                    $prototype = $this->findProto($graph, $handler, $method);
+                    $prototype = $this->findProto($handler, $method);
                 }
 
                 if ($prototype !== null && $retry !== null) {
@@ -289,14 +289,13 @@ class WorkflowReader extends Reader
     }
 
     /**
-     * @param ClassNode $cls
      * @param \ReflectionMethod $handler
      * @param \ReflectionMethod $ctx
      * @return WorkflowPrototype|null
      */
-    private function findProto(ClassNode $cls, \ReflectionMethod $handler, \ReflectionMethod $ctx): ?WorkflowPrototype
+    private function findProto(\ReflectionMethod $handler, \ReflectionMethod $ctx): ?WorkflowPrototype
     {
-        $reflection = $cls->getReflection();
+        $reflection = $ctx->getDeclaringClass();
 
         //
         // The name of the workflow handler must be generated based

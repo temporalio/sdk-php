@@ -25,14 +25,14 @@ interface PrototypeInterface extends Identifiable
     /**
      * Returns a link to the class within which the handler is defined.
      *
-     * @return \ReflectionClass|null
+     * @return \ReflectionClass
      */
-    public function getClass(): ?\ReflectionClass;
+    public function getClass(): \ReflectionClass;
 
     /**
      * Returns the reflection of the handler function.
      *
-     * @return \ReflectionFunctionAbstract
+     * @return \ReflectionMethod
      */
-    public function getHandler(): \ReflectionFunctionAbstract;
+    public function getHandler(): \ReflectionMethod;
 }
