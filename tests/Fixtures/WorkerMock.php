@@ -62,7 +62,10 @@ class WorkerMock implements HostConnectionInterface
 
         // register all activity
         foreach ($this->getClasses(__DIR__ . '/src/Activity') as $name) {
-            $taskQueue->registerActivityType('Temporal\\Tests\\Activity\\' . $name);
+            $class = 'Temporal\\Tests\\Activity\\' . $name;
+            if (class_exists($class)) {
+                $taskQueue->registerActivityImplementations(new $class);
+            }
         }
     }
 
