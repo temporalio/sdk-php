@@ -34,6 +34,10 @@ class SimpleActivity
         string $prefix,
         string $input
     ): string {
+        if ($input === 'error') {
+            throw new \Error('activity error');
+        }
+
         return $prefix . $input;
     }
 

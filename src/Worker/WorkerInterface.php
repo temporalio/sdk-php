@@ -40,7 +40,7 @@ interface WorkerInterface
      * @param bool $overwrite
      * @return $this
      */
-    public function registerActivityImplementation(object $activity, bool $overwrite = false): self;
+    public function registerActivityInstance(object $activity, bool $overwrite = false): self;
 
     /**
      * @return iterable<ActivityPrototype>

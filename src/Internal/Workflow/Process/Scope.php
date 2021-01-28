@@ -491,7 +491,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
         }
 
         foreach ($this->onClose as $close) {
-            $close();
+            $close($this->result, $this->exception);
         }
     }
 

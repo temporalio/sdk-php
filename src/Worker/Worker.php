@@ -137,7 +137,7 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
     /**
      * {@inheritDoc}
      */
-    public function registerActivityImplementation(object $activity, bool $overwrite = false): WorkerInterface
+    public function registerActivityInstance(object $activity, bool $overwrite = false): WorkerInterface
     {
         $class = \get_class($activity);
 
@@ -149,8 +149,6 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
 
         return $this;
     }
-
-    // todo: add activity factory or container
 
     /**
      * {@inheritDoc}

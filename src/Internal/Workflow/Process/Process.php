@@ -37,6 +37,14 @@ class Process extends Scope implements ProcessInterface
         $this->getWorkflowInstance()->getSignalQueue()->onSignal(
             function (callable $handler) {
                 $scope = $this->createScope(true, LoopInterface::ON_SIGNAL);
+                $scope->onClose(
+                    function ($result, ?\Throwable $error) {
+                        if ($error !== null) {
+                            // we want to fail process when signal scope fails
+                            $this->complete($error);
+                        }
+                    }
+                );
 
                 try {
                     $scope->start($handler);
@@ -96,10 +104,6 @@ class Process extends Scope implements ProcessInterface
      */
     protected function complete($result)
     {
-        if ($this->context->isContinuedAsNew()) {
-            return;
-        }
-
         if ($result instanceof \Throwable) {
             if ($result instanceof DestructMemorizedInstanceException) {
                 // do not handle
@@ -107,8 +111,12 @@ class Process extends Scope implements ProcessInterface
             }
 
             $this->context->complete([], $result);
-        } else {
-            $this->context->complete($result);
         }
+
+        if ($this->context->isContinuedAsNew()) {
+            return;
+        }
+
+        $this->context->complete($result);
     }
 }

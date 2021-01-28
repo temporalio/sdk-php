@@ -11,6 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Functional\Client;
 
+use Temporal\Exception\Client\WorkflowFailedException;
+use Temporal\Exception\Failure\ActivityFailure;
+use Temporal\Exception\Failure\ApplicationFailure;
+use Temporal\Exception\Failure\ChildWorkflowFailure;
 use Temporal\Tests\Workflow\AggregatedWorkflow;
 use Temporal\Tests\Workflow\LoopWithSignalCoroutinesWorkflow;
 use Temporal\Tests\Workflow\LoopWorkflow;
@@ -142,5 +146,26 @@ class AwaitTestCase extends ClientTestCase
         );
     }
 
-    // todo: test failure in signal coroutine
+    public function testFailSignalErrored()
+    {
+        $client = $this->createClient();
+        $wait = $client->newWorkflowStub(LoopWithSignalCoroutinesWorkflow::class);
+
+        $run = $client->start($wait, 4);
+
+        $wait->addValue('error');
+
+        try {
+            $run->getResult();
+            $this->fail('unreachable');
+        } catch (WorkflowFailedException $e) {
+            $this->assertInstanceOf(ActivityFailure::class, $e->getPrevious());
+            $this->assertStringContainsString('SimpleActivity.prefix', $e->getPrevious()->getMessage());
+
+            $e = $e->getPrevious();
+
+            $this->assertInstanceOf(ApplicationFailure::class, $e->getPrevious());
+            $this->assertStringContainsString('activity error', $e->getPrevious()->getMessage());
+        }
+    }
 }
