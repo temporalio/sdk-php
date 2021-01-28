@@ -36,6 +36,13 @@ interface WorkerInterface
     public function registerActivityType(string $class, bool $overwrite = false): self;
 
     /**
+     * @param object $activity
+     * @param bool $overwrite
+     * @return $this
+     */
+    public function registerActivityImplementation(object $activity, bool $overwrite = false): self;
+
+    /**
      * @return iterable<ActivityPrototype>
      */
     public function getActivities(): iterable;
