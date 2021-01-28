@@ -14,7 +14,7 @@ interface AggregatedWorkflow
         string $value
     );
 
-    #[WorkflowMethod(name: 'AggregatedWorkflow')]
+    #[WorkflowMethod]
     public function run(
         int $count
     );

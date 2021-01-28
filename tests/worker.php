@@ -31,7 +31,7 @@ $worker = $factory->newWorker('default');
 foreach ($getClasses(__DIR__ . '/Fixtures/src/Workflow') as $name) {
     $class = 'Temporal\\Tests\\Workflow\\' . $name;
 
-    if (class_exists($class)) {
+    if (class_exists($class) && !interface_exists($class)) {
         $worker->registerWorkflowType($class);
     }
 }
