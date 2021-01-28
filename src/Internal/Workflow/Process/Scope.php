@@ -196,7 +196,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     }
 
     /**
-     * @param callable $then
+     * @param callable $then An exception instance is passed in case of error.
      * @return $this
      */
     public function onClose(callable $then): self
@@ -491,7 +491,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
         }
 
         foreach ($this->onClose as $close) {
-            $close($this->result, $this->exception);
+            $close($this->exception);
         }
     }
 

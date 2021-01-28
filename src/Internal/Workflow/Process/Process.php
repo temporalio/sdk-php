@@ -36,7 +36,7 @@ class Process extends Scope implements ProcessInterface
             function (callable $handler) {
                 $scope = $this->createScope(true, LoopInterface::ON_SIGNAL);
                 $scope->onClose(
-                    function ($result, ?\Throwable $error) {
+                    function (?\Throwable $error) {
                         if ($error !== null) {
                             // we want to fail process when signal scope fails
                             $this->complete($error);
