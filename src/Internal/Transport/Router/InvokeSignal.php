@@ -47,7 +47,6 @@ final class InvokeSignal extends WorkflowProcessAwareRoute
 
         $handler($request->getPayloads());
 
-        // todo: handle serialization error, handle logic error
         $resolver->resolve(EncodedValues::fromValues([null]));
     }
 }

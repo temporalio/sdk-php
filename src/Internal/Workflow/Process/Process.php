@@ -13,9 +13,12 @@ namespace Temporal\Internal\Workflow\Process;
 
 use JetBrains\PhpStorm\Pure;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Exception\DataConverterException;
 use Temporal\Exception\DestructMemorizedInstanceException;
+use Temporal\Exception\InvalidArgumentException;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\ServiceContainer;
+use Temporal\Internal\Transport\Router\DestroyWorkflow;
 use Temporal\Worker\LoopInterface;
 use Temporal\Workflow\ProcessInterface;
 use Temporal\Workflow\WorkflowContext;
@@ -32,7 +35,16 @@ class Process extends Scope implements ProcessInterface
         parent::__construct($services, $ctx);
 
         $this->getWorkflowInstance()->getSignalQueue()->onSignal(
-            fn(callable $handler) => $this->createScope($handler, true, LoopInterface::ON_SIGNAL)
+            function (callable $handler) {
+                $scope = $this->createScope(true, LoopInterface::ON_SIGNAL);
+
+                try {
+                    $scope->start($handler);
+                } catch (InvalidArgumentException $e) {
+                    // invalid signal invocation, destroy the scope with no traces
+                    $scope->unlock();
+                }
+            }
         );
 
         // unlike other scopes Process will notify the server when complete instead of pushing the result

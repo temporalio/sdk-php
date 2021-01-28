@@ -58,7 +58,6 @@ class LoopWithSignalCoroutinesWorkflow
             }
         }
 
-        asort($this->result);
-        return array_values($this->result);
+        return $this->result;
     }
 }

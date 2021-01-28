@@ -60,7 +60,7 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
      */
     public function async(callable $handler): CancellationScopeInterface
     {
-        return $this->scope->createScope($handler, false);
+        return $this->scope->startScope($handler, false);
     }
 
     /**
@@ -71,7 +71,7 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
      */
     public function asyncDetached(callable $handler): CancellationScopeInterface
     {
-        return $this->scope->createScope($handler, true);
+        return $this->scope->startScope($handler, true);
     }
 
     /**

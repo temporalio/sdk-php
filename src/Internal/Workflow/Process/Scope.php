@@ -228,12 +228,11 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     }
 
     /**
-     * @param callable $handler
      * @param bool $detached
      * @param string|null $layer
-     * @return CancellationScopeInterface
+     * @return self
      */
-    public function createScope(callable $handler, bool $detached, string $layer = null): CancellationScopeInterface
+    protected function createScope(bool $detached, string $layer = null): self
     {
         $scope = new Scope($this->services, $this->context);
         $scope->detached = $detached;
@@ -255,6 +254,18 @@ class Scope implements CancellationScopeInterface, PromisorInterface
             }
         );
 
+        return $scope;
+    }
+
+    /**
+     * @param callable $handler
+     * @param bool $detached
+     * @param string|null $layer
+     * @return CancellationScopeInterface
+     */
+    public function startScope(callable $handler, bool $detached, string $layer = null): CancellationScopeInterface
+    {
+        $scope = $this->createScope($detached, $layer);
         $scope->start($handler);
 
         return $scope;
@@ -341,11 +352,13 @@ class Scope implements CancellationScopeInterface, PromisorInterface
      */
     protected function makeCurrent(): void
     {
-        Workflow::setCurrentContext(ScopeContext::fromWorkflowContext(
-            $this->context,
-            $this,
-            \Closure::fromCallable([$this, 'onRequest'])
-        ));
+        Workflow::setCurrentContext(
+            ScopeContext::fromWorkflowContext(
+                $this->context,
+                $this,
+                \Closure::fromCallable([$this, 'onRequest'])
+            )
+        );
     }
 
     /**
@@ -456,7 +469,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     /**
      * Unlocks scope and pushes the result to the parent.
      */
-    private function unlock(): void
+    protected function unlock(): void
     {
         $this->makeCurrent();
         $this->context->resolveConditions();

@@ -69,6 +69,10 @@ class AwaitTestCase extends ClientTestCase
         $wait->addValue('test3');
         $wait->addValue('test4');
 
+        $result = $run->getResult();
+        asort($result);
+        $result = array_values($result);
+
         $this->assertSame(
             [
                 'TEST1',
@@ -76,7 +80,7 @@ class AwaitTestCase extends ClientTestCase
                 'TEST3',
                 'TEST4'
             ],
-            $run->getResult('string')
+            $result
         );
     }
 
@@ -92,6 +96,10 @@ class AwaitTestCase extends ClientTestCase
         $wait->addValue('test3');
         $wait->addValue('test4');
 
+        $result = $run->getResult();
+        asort($result);
+        $result = array_values($result);
+
         $this->assertSame(
             [
                 'IN SIGNAL 2 IN SIGNAL TEST1',
@@ -99,7 +107,38 @@ class AwaitTestCase extends ClientTestCase
                 'IN SIGNAL 2 IN SIGNAL TEST3',
                 'IN SIGNAL 2 IN SIGNAL TEST4'
             ],
-            $run->getResult('string')
+            $result
+        );
+    }
+
+    public function testFailSignalSerialization()
+    {
+        $client = $this->createClient();
+        $wait = $client->newWorkflowStub(LoopWithSignalCoroutinesWorkflow::class);
+
+        $run = $client->start($wait, 4);
+
+        $wait->addValue('test1');
+        $wait->addValue('test2');
+        $wait->addValue('test3');
+
+        // breaks the invocation
+        $wait->addValue(['hello'], 123);
+
+        $wait->addValue('test4');
+
+        $result = $run->getResult();
+        asort($result);
+        $result = array_values($result);
+
+        $this->assertSame(
+            [
+                'IN SIGNAL 2 IN SIGNAL TEST1',
+                'IN SIGNAL 2 IN SIGNAL TEST2',
+                'IN SIGNAL 2 IN SIGNAL TEST3',
+                'IN SIGNAL 2 IN SIGNAL TEST4'
+            ],
+            $result
         );
     }
 
