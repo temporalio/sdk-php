@@ -86,9 +86,9 @@ class ActivityFailure extends TemporalFailure
     }
 
     /**
-     * @return int
+     * @return string
      */
-    public function getActivityId(): int
+    public function getActivityId(): string
     {
         return $this->activityId;
     }
