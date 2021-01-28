@@ -14,6 +14,7 @@ namespace Temporal\Internal\Workflow\Process;
 use JetBrains\PhpStorm\Pure;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DestructMemorizedInstanceException;
+use Temporal\Exception\InvalidArgumentException;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Worker\LoopInterface;
@@ -32,7 +33,24 @@ class Process extends Scope implements ProcessInterface
         parent::__construct($services, $ctx);
 
         $this->getWorkflowInstance()->getSignalQueue()->onSignal(
-            fn(callable $handler) => $this->createScope($handler, true, LoopInterface::ON_SIGNAL)
+            function (callable $handler) {
+                $scope = $this->createScope(true, LoopInterface::ON_SIGNAL);
+                $scope->onClose(
+                    function (?\Throwable $error) {
+                        if ($error !== null) {
+                            // we want to fail process when signal scope fails
+                            $this->complete($error);
+                        }
+                    }
+                );
+
+                try {
+                    $scope->start($handler);
+                } catch (InvalidArgumentException $e) {
+                    // invalid signal invocation, destroy the scope with no traces
+                    $scope->unlock();
+                }
+            }
         );
 
         // unlike other scopes Process will notify the server when complete instead of pushing the result
@@ -84,10 +102,6 @@ class Process extends Scope implements ProcessInterface
      */
     protected function complete($result)
     {
-        if ($this->context->isContinuedAsNew()) {
-            return;
-        }
-
         if ($result instanceof \Throwable) {
             if ($result instanceof DestructMemorizedInstanceException) {
                 // do not handle
@@ -95,8 +109,13 @@ class Process extends Scope implements ProcessInterface
             }
 
             $this->context->complete([], $result);
-        } else {
-            $this->context->complete($result);
+            return;
         }
+
+        if ($this->context->isContinuedAsNew()) {
+            return;
+        }
+
+        $this->context->complete($result);
     }
 }

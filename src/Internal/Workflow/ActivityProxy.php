@@ -23,8 +23,7 @@ final class ActivityProxy extends Proxy
      * @var string
      */
     private const ERROR_UNDEFINED_ACTIVITY_METHOD =
-        'The given stub class "%s" does not contain an activity method named "%s"'
-    ;
+        'The given stub class "%s" does not contain an activity method named "%s"';
 
     /**
      * @var array<ActivityPrototype>
@@ -52,8 +51,12 @@ final class ActivityProxy extends Proxy
      * @param ActivityOptions $options
      * @param WorkflowContextInterface $ctx
      */
-    public function __construct(string $class, array $activities, ActivityOptions $options, WorkflowContextInterface $ctx)
-    {
+    public function __construct(
+        string $class,
+        array $activities,
+        ActivityOptions $options,
+        WorkflowContextInterface $ctx
+    ) {
         $this->activities = $activities;
         $this->class = $class;
         $this->options = $options;
@@ -71,11 +74,8 @@ final class ActivityProxy extends Proxy
 
         $type = $handler->getHandler()->getReturnType();
 
-        return $this->ctx->newUntypedActivityStub(
-            $this->options->mergeWith($handler->getMethodRetry())
-        )
-            ->execute($handler->getID(), $args, $type)
-        ;
+        return $this->ctx->newUntypedActivityStub($this->options->mergeWith($handler->getMethodRetry()))
+            ->execute($handler->getID(), $args, $type);
     }
 
     /**

@@ -36,8 +36,8 @@ class CronType extends Type implements DetectableTypeInterface
      */
     public function parse($value, $current)
     {
-        // todo: think about it
         if ($value === '') {
+            // by default empty cron string = no cron
             return null;
         }
 

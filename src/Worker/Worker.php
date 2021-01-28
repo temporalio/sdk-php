@@ -33,6 +33,11 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
     private string $name;
 
     /**
+     * @var WorkerOptions
+     */
+    private WorkerOptions $options;
+
+    /**
      * @var RouterInterface
      */
     private RouterInterface $router;
@@ -49,15 +54,21 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
 
     /**
      * @param string $taskQueue
-     * @param WorkerFactory $worker
+     * @param WorkerOptions $options
+     * @param ServiceContainer $serviceContainer
      * @param RPCConnectionInterface $rpc
      */
-    public function __construct(string $taskQueue, WorkerFactory $worker, RPCConnectionInterface $rpc)
-    {
+    public function __construct(
+        string $taskQueue,
+        WorkerOptions $options,
+        ServiceContainer $serviceContainer,
+        RPCConnectionInterface $rpc
+    ) {
         $this->rpc = $rpc;
         $this->name = $taskQueue;
+        $this->options = $options;
 
-        $this->services = ServiceContainer::fromWorker($worker);
+        $this->services = $serviceContainer;
         $this->router = $this->createRouter();
     }
 
@@ -105,11 +116,12 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
     /**
      * {@inheritDoc}
      */
-    public function registerWorkflowType(string $class, bool $overwrite = false): WorkerInterface
+    public function registerWorkflowTypes(string ...$class): WorkerInterface
     {
-        $proto = $this->services->workflowsReader->fromClass($class);
-
-        $this->services->workflows->add($proto, $overwrite);
+        foreach ($class as $workflow) {
+            $proto = $this->services->workflowsReader->fromClass($workflow);
+            $this->services->workflows->add($proto, false);
+        }
 
         return $this;
     }
@@ -125,32 +137,18 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
     /**
      * {@inheritDoc}
      */
-    public function registerActivityType(string $class, bool $overwrite = false): WorkerInterface
+    public function registerActivityImplementations(object ...$activity): WorkerInterface
     {
-        foreach ($this->services->activitiesReader->fromClass($class) as $proto) {
-            $this->services->activities->add($proto, $overwrite);
+        foreach ($activity as $act) {
+            $class = \get_class($act);
+
+            foreach ($this->services->activitiesReader->fromClass($class) as $proto) {
+                $this->services->activities->add($proto->withInstance($act), false);
+            }
         }
 
         return $this;
     }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function registerActivityImplementation(object $activity, bool $overwrite = false): WorkerInterface
-    {
-        $class = \get_class($activity);
-
-        foreach ($this->services->activitiesReader->fromClass($class) as $proto) {
-            $proto->setInstance($activity);
-
-            $this->services->activities->add($proto, $overwrite);
-        }
-
-        return $this;
-    }
-
-    // todo: add activity factory or container
 
     /**
      * {@inheritDoc}

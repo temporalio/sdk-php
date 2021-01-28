@@ -12,6 +12,7 @@ namespace Temporal\DataConverter;
 use React\Promise\PromiseInterface;
 use Temporal\Api\Common\V1\Payloads;
 use Temporal\Exception\DataConverterException;
+use Temporal\Workflow\ReturnType;
 
 class EncodedValues implements ValuesInterface
 {

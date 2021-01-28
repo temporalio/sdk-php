@@ -27,7 +27,7 @@ interface LoopInterface extends EventListenerInterface
      * processed and the internal state is ready to send new data to the server.
      *
      * ```php
-     * $loop->on('tick', function() {
+     * $loop->once('tick', function() {
      *     echo 'tick';
      * });
      * ```

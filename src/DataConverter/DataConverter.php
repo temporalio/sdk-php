@@ -45,7 +45,12 @@ final class DataConverter implements DataConverterInterface
             throw new DataConverterException(sprintf('Undefined payload encoding %s', $encoding));
         }
 
-        return $this->converters[$encoding]->fromPayload($payload, Type::create($type));
+        $type = Type::create($type);
+        if ($type->getName() === Type::TYPE_VOID) {
+            return null;
+        }
+
+        return $this->converters[$encoding]->fromPayload($payload, $type);
     }
 
     /**

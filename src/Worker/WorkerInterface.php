@@ -17,11 +17,10 @@ use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 interface WorkerInterface
 {
     /**
-     * @param class-string $class
-     * @param bool $overwrite
+     * @param class-string ...$class
      * @return $this
      */
-    public function registerWorkflowType(string $class, bool $overwrite = false): self;
+    public function registerWorkflowTypes(string ...$class): self;
 
     /**
      * @return iterable<WorkflowPrototype>
@@ -29,18 +28,10 @@ interface WorkerInterface
     public function getWorkflows(): iterable;
 
     /**
-     * @param class-string $class
-     * @param bool $overwrite
+     * @param object ...$activity
      * @return $this
      */
-    public function registerActivityType(string $class, bool $overwrite = false): self;
-
-    /**
-     * @param object $activity
-     * @param bool $overwrite
-     * @return $this
-     */
-    public function registerActivityImplementation(object $activity, bool $overwrite = false): self;
+    public function registerActivityImplementations(object ...$activity): self;
 
     /**
      * @return iterable<ActivityPrototype>

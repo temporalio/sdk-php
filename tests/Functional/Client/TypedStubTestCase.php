@@ -13,6 +13,7 @@ namespace Temporal\Tests\Functional\Client;
 
 use Temporal\Tests\DTO\Message;
 use Temporal\Tests\DTO\User;
+use Temporal\Tests\Workflow\ActivityReturnTypeWorkflow;
 use Temporal\Tests\Workflow\QueryWorkflow;
 use Temporal\Tests\Workflow\SimpleDTOWorkflow;
 use Temporal\Tests\Workflow\SimpleWorkflow;
@@ -72,6 +73,17 @@ class TypedStubTestCase extends ClientTestCase
         $this->assertEquals(
             new Message(sprintf("Hello %s <%s>", $u->name, $u->email)),
             $dto->handler($u)
+        );
+    }
+
+    public function testVoidReturnType()
+    {
+        $w = $this->createClient();
+        $dto = $w->newWorkflowStub(ActivityReturnTypeWorkflow::class);
+
+        $this->assertEquals(
+            100,
+            $dto->handler()
         );
     }
 }

@@ -9,12 +9,12 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Exception;
+namespace Temporal\Tests\Activity;
 
-/**
- * This interface marks an exception that is part of correct work and must be
- * explicitly handled.
- */
-interface NonThrowableExceptionInterface extends \Throwable
+#[\Temporal\Activity\ActivityInterface]
+interface SampleActivityInterface
 {
+    public function multiply(int $value): int;
+
+    public function store(int $value): void;
 }
