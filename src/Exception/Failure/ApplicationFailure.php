@@ -7,9 +7,12 @@
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace Temporal\Exception\Failure;
 
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
 
 /**
@@ -47,14 +50,14 @@ class ApplicationFailure extends TemporalFailure
      * @param string $message
      * @param string $type
      * @param bool $nonRetryable
-     * @param ValuesInterface $details
+     * @param ValuesInterface|null $details
      * @param \Throwable|null $previous
      */
     public function __construct(
         string $message,
         string $type,
         bool $nonRetryable,
-        ValuesInterface $details,
+        ValuesInterface $details = null,
         \Throwable $previous = null
     ) {
         parent::__construct(
@@ -65,7 +68,7 @@ class ApplicationFailure extends TemporalFailure
 
         $this->type = $type;
         $this->nonRetryable = $nonRetryable;
-        $this->details = $details;
+        $this->details = $details ?? EncodedValues::empty();
     }
 
     /**

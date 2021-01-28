@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Exception;
 
-class DoNotCompleteOnResultException extends TemporalException implements NonThrowableExceptionInterface
+class DoNotCompleteOnResultException extends TemporalException
 {
     /**
      * @var string

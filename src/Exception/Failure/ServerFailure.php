@@ -7,8 +7,9 @@
  * file that was distributed with this source code.
  */
 
-namespace Temporal\Exception\Failure;
+declare(strict_types=1);
 
+namespace Temporal\Exception\Failure;
 
 class ServerFailure extends TemporalFailure
 {

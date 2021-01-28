@@ -38,7 +38,6 @@ use Temporal\Workflow\WorkflowInfo;
  *
  * @method static CompletableResultInterface await(...$condition)
  * @method static CompletableResultInterface awaitWithTimeout($interval, ...$condition)
-
  * @method static CompletableResultInterface sideEffect(callable $cb)
  * @method static CompletableResultInterface timer(string|int|float|\DateInterval $interval)
  * @method static CompletableResultInterface getVersion(string $changeID, int $minSupported, int $maxSupported)
@@ -59,21 +58,4 @@ use Temporal\Workflow\WorkflowInfo;
  */
 final class Workflow extends Facade
 {
-    /**
-     * @param callable $handler
-     * @return CancellationScopeInterface
-     */
-    public static function async(callable $handler): CancellationScopeInterface
-    {
-        return self::getCurrentContext()->newCancellationScope($handler);
-    }
-
-    /**
-     * @param callable $handler
-     * @return CancellationScopeInterface
-     */
-    public static function asyncDetached(callable $handler): CancellationScopeInterface
-    {
-        return self::getCurrentContext()->newDetachedCancellationScope($handler);
-    }
 }
