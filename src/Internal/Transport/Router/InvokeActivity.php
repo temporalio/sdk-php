@@ -69,14 +69,10 @@ final class InvokeActivity extends Route
 
         $prototype = $this->findDeclarationOrFail($context->getInfo());
 
-        if (($instance = $prototype->getInstance()) === null) {
-            $instance = $this->instantiator->instantiate($prototype);
-        }
-
         try {
             Activity::setCurrentContext($context);
 
-            $handler = $instance->getHandler();
+            $handler = $prototype->getInstance()->getHandler();
             $result = $handler($payloads);
 
             if ($context->isDoNotCompleteOnReturn()) {

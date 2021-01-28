@@ -116,11 +116,12 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
     /**
      * {@inheritDoc}
      */
-    public function registerWorkflowType(string $class, bool $overwrite = false): WorkerInterface
+    public function registerWorkflowTypes(string ...$class): WorkerInterface
     {
-        $proto = $this->services->workflowsReader->fromClass($class);
-
-        $this->services->workflows->add($proto, $overwrite);
+        foreach ($class as $workflow) {
+            $proto = $this->services->workflowsReader->fromClass($workflow);
+            $this->services->workflows->add($proto, false);
+        }
 
         return $this;
     }
@@ -136,26 +137,14 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
     /**
      * {@inheritDoc}
      */
-    public function registerActivityType(string $class, bool $overwrite = false): WorkerInterface
+    public function registerActivityImplementations(object ...$activity): WorkerInterface
     {
-        foreach ($this->services->activitiesReader->fromClass($class) as $proto) {
-            $this->services->activities->add($proto, $overwrite);
-        }
+        foreach ($activity as $act) {
+            $class = \get_class($act);
 
-        return $this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function registerActivityInstance(object $activity, bool $overwrite = false): WorkerInterface
-    {
-        $class = \get_class($activity);
-
-        foreach ($this->services->activitiesReader->fromClass($class) as $proto) {
-            $proto->setInstance($activity);
-
-            $this->services->activities->add($proto, $overwrite);
+            foreach ($this->services->activitiesReader->fromClass($class) as $proto) {
+                $this->services->activities->add($proto->withInstance($act), false);
+            }
         }
 
         return $this;

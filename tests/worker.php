@@ -32,7 +32,7 @@ foreach ($getClasses(__DIR__ . '/Fixtures/src/Workflow') as $name) {
     $class = 'Temporal\\Tests\\Workflow\\' . $name;
 
     if (class_exists($class) && !interface_exists($class)) {
-        $worker->registerWorkflowType($class);
+        $worker->registerWorkflowTypes($class);
     }
 }
 
@@ -40,7 +40,7 @@ foreach ($getClasses(__DIR__ . '/Fixtures/src/Workflow') as $name) {
 foreach ($getClasses(__DIR__ . '/Fixtures/src/Activity') as $name) {
     $class = 'Temporal\\Tests\\Activity\\' . $name;
     if (class_exists($class) && !interface_exists($class)) {
-        $worker->registerActivityType('Temporal\\Tests\\Activity\\' . $name);
+        $worker->registerActivityImplementations(new $class());
     }
 }
 

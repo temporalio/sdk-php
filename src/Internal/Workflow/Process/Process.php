@@ -109,6 +109,7 @@ class Process extends Scope implements ProcessInterface
             }
 
             $this->context->complete([], $result);
+            return;
         }
 
         if ($this->context->isContinuedAsNew()) {
