@@ -27,7 +27,7 @@ final class WorkflowProxy extends Proxy
     /**
      * @var WorkflowClient
      */
-    private WorkflowClient $client;
+    public WorkflowClient $client;
 
     /**
      * @var WorkflowStubInterface|null

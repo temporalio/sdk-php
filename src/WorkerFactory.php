@@ -22,6 +22,7 @@ use Spiral\Attributes\ReaderInterface;
 use Spiral\Goridge\Relay;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\Internal\ServiceContainer;
 use Temporal\Worker\Transport\Codec\CodecInterface;
 use Temporal\Internal\Events\EventEmitterTrait;
 use Temporal\Internal\Queue\ArrayQueue;
@@ -45,6 +46,7 @@ use Temporal\Worker\Transport\Goridge;
 use Temporal\Worker\Transport\HostConnectionInterface;
 use Temporal\Worker\Transport\RoadRunner;
 use Temporal\Worker\Transport\RPCConnectionInterface;
+use Temporal\Worker\WorkerOptions;
 
 final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
 {
@@ -234,11 +236,17 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
 
     /**
      * {@inheritDoc}
-     * @todo pass options
      */
-    public function newWorker(string $taskQueue = self::DEFAULT_TASK_QUEUE): WorkerInterface
-    {
-        $worker = new Worker($taskQueue, $this, $this->rpc);
+    public function newWorker(
+        string $taskQueue = self::DEFAULT_TASK_QUEUE,
+        WorkerOptions $options = null
+    ): WorkerInterface {
+        $worker = new Worker(
+            $taskQueue,
+            $options ?? WorkerOptions::new(),
+            ServiceContainer::fromWorker($this),
+            $this->rpc
+        );
         $this->queues->add($worker);
 
         return $worker;

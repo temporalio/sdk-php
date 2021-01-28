@@ -33,6 +33,11 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
     private string $name;
 
     /**
+     * @var WorkerOptions
+     */
+    private WorkerOptions $options;
+
+    /**
      * @var RouterInterface
      */
     private RouterInterface $router;
@@ -49,15 +54,21 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
 
     /**
      * @param string $taskQueue
-     * @param WorkerFactory $worker
+     * @param WorkerOptions $options
+     * @param ServiceContainer $serviceContainer
      * @param RPCConnectionInterface $rpc
      */
-    public function __construct(string $taskQueue, WorkerFactory $worker, RPCConnectionInterface $rpc)
-    {
+    public function __construct(
+        string $taskQueue,
+        WorkerOptions $options,
+        ServiceContainer $serviceContainer,
+        RPCConnectionInterface $rpc
+    ) {
         $this->rpc = $rpc;
         $this->name = $taskQueue;
+        $this->options = $options;
 
-        $this->services = ServiceContainer::fromWorker($worker);
+        $this->services = $serviceContainer;
         $this->router = $this->createRouter();
     }
 

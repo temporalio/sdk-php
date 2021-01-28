@@ -25,23 +25,7 @@ trait EventEmitterTrait
     /**
      * @var array<string, array<callable>>
      */
-    protected array $events = [];
-
-    /**
-     * @var array<string, array<callable>>
-     */
     protected array $once = [];
-
-    /**
-     * {@inheritDoc}
-     * @todo: deprecate
-     */
-    public function on(string $event, callable $then): self
-    {
-        $this->events[$event][] = $then;
-
-        return $this;
-    }
 
     /**
      * {@inheritDoc}
@@ -58,10 +42,6 @@ trait EventEmitterTrait
      */
     public function emit(string $event, array $arguments = []): void
     {
-        foreach ($this->events[$event] ?? [] as $callback) {
-            $callback(...$arguments);
-        }
-
         while (($this->once[$event] ?? []) !== []) {
             $callback = \array_shift($this->once[$event]);
             $callback(...$arguments);

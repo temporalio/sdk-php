@@ -24,6 +24,7 @@ use Temporal\Internal\Client\WorkflowProxy;
 use Temporal\Internal\Client\WorkflowStub;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowRunInterface;
+use Temporal\Workflow\WorkflowStub as WorkflowStubConverter;
 
 class WorkflowClient implements WorkflowClientInterface
 {
@@ -87,7 +88,7 @@ class WorkflowClient implements WorkflowClientInterface
      */
     public function start($workflow, ...$args): WorkflowRunInterface
     {
-        $workflowStub = WorkflowStub::fromWorkflow($workflow);
+        $workflowStub = WorkflowStubConverter::fromWorkflow($workflow);
 
         $returnType = null;
         if ($workflow instanceof WorkflowProxy) {
@@ -128,7 +129,7 @@ class WorkflowClient implements WorkflowClientInterface
         array $signalArgs = [],
         array $startArgs = []
     ): WorkflowRunInterface {
-        $workflowStub = WorkflowStub::fromWorkflow($workflow);
+        $workflowStub = WorkflowStubConverter::fromWorkflow($workflow);
 
         $returnType = null;
         if ($workflow instanceof WorkflowProxy) {
@@ -161,7 +162,7 @@ class WorkflowClient implements WorkflowClientInterface
     /**
      * {@inheritDoc}
      */
-    public function newWorkflowStub(string $class, WorkflowOptions $options = null): WorkflowProxy
+    public function newWorkflowStub(string $class, WorkflowOptions $options = null): object
     {
         $workflow = $this->reader->fromClass($class);
 
