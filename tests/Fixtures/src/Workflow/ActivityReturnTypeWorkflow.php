@@ -11,24 +11,26 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Workflow;
 
+use Temporal\Activity\ActivityOptions;
+use Temporal\Tests\Activity\SampleActivityInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 
 #[Workflow\WorkflowInterface]
-class SignalChildViaStubWorkflow
+class ActivityReturnTypeWorkflow
 {
-    #[WorkflowMethod(name: 'SignalChildViaStubWorkflow')]
+    #[WorkflowMethod]
     public function handler()
     {
         // typed stub
-        $simple = Workflow::newChildWorkflowStub(SimpleSignalledWorkflow::class);
+        $act = Workflow::newActivityStub(
+            SampleActivityInterface::class,
+            ActivityOptions::new()->withStartToCloseTimeout(5)
+        );
 
-        // start execution
-        $call = $simple->handler();
+        $value = yield $act->multiply(10);
+        yield $act->store($value);
 
-        yield $simple->add(8);
-
-        // expects 8
-        return yield $call;
+        return $value;
     }
 }

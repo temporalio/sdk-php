@@ -38,7 +38,10 @@ foreach ($getClasses(__DIR__ . '/Fixtures/src/Workflow') as $name) {
 
 // register all activity
 foreach ($getClasses(__DIR__ . '/Fixtures/src/Activity') as $name) {
-    $worker->registerActivityType('Temporal\\Tests\\Activity\\' . $name);
+    $class = 'Temporal\\Tests\\Activity\\' . $name;
+    if (class_exists($class) && !interface_exists($class)) {
+        $worker->registerActivityType('Temporal\\Tests\\Activity\\' . $name);
+    }
 }
 
 $factory->run();
