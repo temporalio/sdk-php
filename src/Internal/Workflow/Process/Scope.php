@@ -187,6 +187,25 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     }
 
     /**
+     * @param iterable $generator
+     * @return self|null
+     */
+    public function attach(iterable $generator): ?self
+    {
+        try {
+            $this->awaitLock++;
+            $this->coroutine = new Stack($generator);
+            $this->context->resolveConditions();
+        } catch (\Throwable $e) {
+            $this->onException($e);
+            return null;
+        }
+
+        $this->next();
+        return $this;
+    }
+
+    /**
      * {@inheritDoc}
      */
     public function onCancel(callable $then): self
@@ -341,6 +360,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
 
         // do not cancel already complete promises
         $cleanup = function () use ($cancelID) {
+            $this->context->resolveConditions();
             unset($this->onCancel[$cancelID]);
         };
 
@@ -392,7 +412,10 @@ class Scope implements CancellationScopeInterface, PromisorInterface
 
             case $current instanceof \Generator:
             case $current instanceof CoroutineInterface:
-                $this->coroutine->push($current);
+                $scope = $this->createScope(false)->attach($current);
+                if ($scope !== null) {
+                    $this->nextPromise($scope);
+                }
                 break;
 
             default:
