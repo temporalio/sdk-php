@@ -188,18 +188,13 @@ class Scope implements CancellationScopeInterface, PromisorInterface
 
     /**
      * @param iterable $generator
-     * @return self|null
+     * @return self
      */
-    public function attach(iterable $generator): ?self
+    public function attach(iterable $generator): self
     {
-        try {
-            $this->awaitLock++;
-            $this->coroutine = new Stack($generator);
-            $this->context->resolveConditions();
-        } catch (\Throwable $e) {
-            $this->onException($e);
-            return null;
-        }
+        $this->awaitLock++;
+        $this->coroutine = new Stack($generator);
+        $this->context->resolveConditions();
 
         $this->next();
         return $this;
@@ -412,9 +407,10 @@ class Scope implements CancellationScopeInterface, PromisorInterface
 
             case $current instanceof \Generator:
             case $current instanceof CoroutineInterface:
-                $scope = $this->createScope(false)->attach($current);
-                if ($scope !== null) {
-                    $this->nextPromise($scope);
+                try {
+                    $this->nextPromise($this->createScope(false)->attach($current));
+                } catch (\Throwable $e) {
+                    $this->coroutine->throw($e);
                 }
                 break;
 
