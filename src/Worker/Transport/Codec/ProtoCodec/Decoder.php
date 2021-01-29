@@ -70,7 +70,12 @@ class Decoder
             $payloads = EncodedValues::fromPayloads($msg->getPayloads(), $this->converter);
         }
 
-        return new Request($msg->getCommand(), json_decode($msg->getOptions(), true), $payloads, $msg->getId());
+        return new Request(
+            $msg->getCommand(),
+            json_decode($msg->getOptions(), true),
+            $payloads,
+            (int)$msg->getId()
+        );
     }
 
     /**

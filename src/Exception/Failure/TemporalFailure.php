@@ -128,6 +128,7 @@ class TemporalFailure extends TemporalException
     {
         $mapped = [
             'timeoutType' => fn($value) => TimeoutType::name($value),
+            'timeoutWorkflowType' => fn($value) => TimeoutType::name($value),
             'retryState' => fn($value) => RetryState::name($value)
         ];
 
