@@ -65,7 +65,7 @@ final class ChildWorkflowOptions extends Options
      * Optional: the parent workflow task queue will be used if this is not
      * provided.
      */
-    #[Marshal(name: 'TaskQueue')]
+    #[Marshal(name: 'TaskQueueName')]
     public string $taskQueue = WorkerFactoryInterface::DEFAULT_TASK_QUEUE;
 
     /**
