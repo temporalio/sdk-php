@@ -26,7 +26,9 @@ class ExceptionalActivityWorkflow
         $simple = Workflow::newActivityStub(
             SimpleActivity::class,
             ActivityOptions::new()->withStartToCloseTimeout(5)
-                ->withRetryOptions((new RetryOptions())->withMaximumAttempts(1))
+                ->withRetryOptions(
+                    RetryOptions::new()->withMaximumAttempts(1)
+                )
         );
 
         return yield $simple->fail();

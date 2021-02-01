@@ -82,7 +82,7 @@ final class WorkflowOptions extends Options
      * The timeout for processing workflow task from the time the worker pulled
      * this task. If a workflow task is lost, it is retried after this timeout.
      *
-     * Optional: defaulted to 10 secs.
+     * Optional: defaulted to no limit
      */
     #[Marshal(name: 'WorkflowTaskTimeout', type: DateIntervalType::class)]
     public \DateInterval $workflowTaskTimeout;
@@ -135,9 +135,9 @@ final class WorkflowOptions extends Options
     public function __construct()
     {
         $this->workflowId = Uuid::v4();
-        $this->workflowExecutionTimeout = CarbonInterval::years(10);
-        $this->workflowRunTimeout = CarbonInterval::years(10);
-        $this->workflowTaskTimeout = CarbonInterval::seconds(10);
+        $this->workflowExecutionTimeout = CarbonInterval::seconds(0);
+        $this->workflowRunTimeout = CarbonInterval::seconds(0);
+        $this->workflowTaskTimeout = CarbonInterval::seconds(0);
         $this->retryOptions = new RetryOptions();
 
         parent::__construct();

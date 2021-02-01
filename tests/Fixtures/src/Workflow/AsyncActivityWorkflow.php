@@ -13,6 +13,7 @@ namespace Temporal\Tests\Workflow;
 
 use Temporal\Activity\ActivityCancellationType;
 use Temporal\Activity\ActivityOptions;
+use Temporal\Common\RetryOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 use Temporal\Tests\Activity\SimpleActivity;
@@ -28,6 +29,7 @@ class AsyncActivityWorkflow
             ActivityOptions::new()
                 ->withStartToCloseTimeout(20)
                 ->withCancellationType(ActivityCancellationType::WAIT_CANCELLATION_COMPLETED)
+                ->withRetryOptions(RetryOptions::new()->withMaximumAttempts(1))
         );
 
         return yield $simple->external();
