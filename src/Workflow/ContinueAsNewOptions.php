@@ -48,7 +48,7 @@ final class ContinueAsNewOptions
     /**
      * The workflow task timeout for the child workflow.
      *
-     * Optional: default is 10s if this is not provided (or if 0 is provided).
+     * Optional: default is no limit
      */
     #[Marshal(name: 'WorkflowTaskTimeout', type: DateIntervalType::class)]
     public \DateInterval $workflowTaskTimeout;
