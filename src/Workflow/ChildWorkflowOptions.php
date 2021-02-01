@@ -164,9 +164,9 @@ final class ChildWorkflowOptions extends Options
      */
     public function __construct()
     {
-        $this->workflowExecutionTimeout = CarbonInterval::years(10);
-        $this->workflowRunTimeout = CarbonInterval::years(10);
-        $this->workflowTaskTimeout = CarbonInterval::seconds(10);
+        $this->workflowExecutionTimeout = CarbonInterval::seconds(0);
+        $this->workflowRunTimeout = CarbonInterval::seconds(0);
+        $this->workflowTaskTimeout = CarbonInterval::seconds(0);
         $this->retryOptions = new RetryOptions();
 
         parent::__construct();

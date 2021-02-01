@@ -52,7 +52,7 @@ class RetryOptions extends Options
     /**
      * @var positive-int
      */
-    public const DEFAULT_MAXIMUM_ATTEMPTS = 0;
+    public const DEFAULT_MAXIMUM_ATTEMPTS = 1;
 
     /**
      * @psalm-var ExceptionsList

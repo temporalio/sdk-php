@@ -58,8 +58,8 @@ final class ContinueAsNewOptions
      */
     public function __construct()
     {
-        $this->workflowRunTimeout = CarbonInterval::years(10);
-        $this->workflowTaskTimeout = CarbonInterval::seconds(10);
+        $this->workflowRunTimeout = CarbonInterval::seconds(0);
+        $this->workflowTaskTimeout = CarbonInterval::seconds(0);
     }
 
     /**
