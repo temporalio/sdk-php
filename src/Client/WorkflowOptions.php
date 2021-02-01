@@ -21,6 +21,7 @@ use Temporal\Common\IdReusePolicy;
 use Temporal\Common\MethodRetry;
 use Temporal\Common\RetryOptions;
 use Temporal\Common\Uuid;
+use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Internal\Assert;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\ArrayType;
@@ -149,19 +150,21 @@ final class WorkflowOptions extends Options
      */
     public function mergeWith(MethodRetry $retry = null, CronSchedule $cron = null): self
     {
-        return immutable(function () use ($retry, $cron) {
-            if ($retry !== null && $this->diff->isPresent($this, 'retryOptions')) {
-                $this->retryOptions = $this->retryOptions->mergeWith($retry);
-            }
-
-            if ($cron !== null && $this->diff->isPresent($this, 'cronSchedule')) {
-                if ($this->cronSchedule === null) {
-                    $this->cronSchedule = clone $cron->interval;
+        return immutable(
+            function () use ($retry, $cron) {
+                if ($retry !== null && $this->diff->isPresent($this, 'retryOptions')) {
+                    $this->retryOptions = $this->retryOptions->mergeWith($retry);
                 }
 
-                $this->cronSchedule->setExpression($cron->interval->getExpression());
+                if ($cron !== null && $this->diff->isPresent($this, 'cronSchedule')) {
+                    if ($this->cronSchedule === null) {
+                        $this->cronSchedule = clone $cron->interval;
+                    }
+
+                    $this->cronSchedule->setExpression($cron->interval->getExpression());
+                }
             }
-        });
+        );
     }
 
     /**
@@ -316,25 +319,45 @@ final class WorkflowOptions extends Options
     }
 
     /**
-     * @return Memo
+     * @param DataConverterInterface $converter
+     * @return Memo|null
      * @internal
      */
-    public function toMemo(): Memo
+    public function toMemo(DataConverterInterface $converter): ?Memo
     {
+        if ($this->memo === null) {
+            return null;
+        }
+
+        $fields = [];
+        foreach ($this->memo as $key => $value) {
+            $fields[$key] = $converter->toPayload($value);
+        }
+
         $memo = new Memo();
-        $memo->setFields($this->memo);
+        $memo->setFields($fields);
 
         return $memo;
     }
 
     /**
-     * @return SearchAttributes
+     * @param DataConverterInterface $converter
+     * @return SearchAttributes|null
      * @internal
      */
-    public function toSearchAttributes(): SearchAttributes
+    public function toSearchAttributes(DataConverterInterface $converter): ?SearchAttributes
     {
+        if ($this->searchAttributes === null) {
+            return null;
+        }
+
+        $fields = [];
+        foreach ($this->searchAttributes as $key => $value) {
+            $fields[$key] = $converter->toPayload($value);
+        }
+
         $search = new SearchAttributes();
-        $search->setIndexedFields($this->searchAttributes);
+        $search->setIndexedFields($fields);
 
         return $search;
     }
