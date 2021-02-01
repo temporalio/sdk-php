@@ -11,13 +11,11 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
-use Temporal\Exception\Client\ActivityCanceledException;
-
 /**
  * Used to complete asynchronously activities that called {@link
  * ActivityContext->doNotCompleteOnReturn()}.
  *
- * <p>Use {@link WorkflowClient#newActivityCompletionClient()} to create an instance.
+ * <p>Use {@link WorkflowClient->newActivityCompletionClient()} to create an instance.
  */
 interface ActivityCompletionClientInterface
 {
