@@ -15,20 +15,31 @@ use React\Promise\Deferred;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Worker\WorkerInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 
 final class GetWorkerInfo extends Route
 {
+    /**
+     * @var RepositoryInterface
+     */
     private RepositoryInterface $queues;
 
     /**
-     * @param RepositoryInterface $queues
+     * @var MarshallerInterface
      */
-    public function __construct(RepositoryInterface $queues)
+    private MarshallerInterface $marshaller;
+
+    /**
+     * @param RepositoryInterface $queues
+     * @param MarshallerInterface $marshaller
+     */
+    public function __construct(RepositoryInterface $queues, MarshallerInterface $marshaller)
     {
         $this->queues = $queues;
+        $this->marshaller = $marshaller;
     }
 
     /**
@@ -37,6 +48,7 @@ final class GetWorkerInfo extends Route
     public function handle(RequestInterface $request, array $headers, Deferred $resolver): void
     {
         $result = [];
+
         foreach ($this->queues as $taskQueue) {
             $result[] = $this->workerToArray($taskQueue);
         }
@@ -45,28 +57,28 @@ final class GetWorkerInfo extends Route
     }
 
     /**
-     * @param WorkerInterface $taskQueue
+     * @param WorkerInterface $worker
      * @return array
      */
-    private function workerToArray(WorkerInterface $taskQueue): array
+    private function workerToArray(WorkerInterface $worker): array
     {
+        $workflowMap = function (WorkflowPrototype $workflow) {
+            return [
+                'Name'    => $workflow->getID(),
+                'Queries' => $this->keys($workflow->getQueryHandlers()),
+                'Signals' => $this->keys($workflow->getSignalHandlers()),
+            ];
+        };
+
+        $activityMap = static fn (ActivityPrototype $activity) => [
+            'Name' => $activity->getID(),
+        ];
+
         return [
-            'TaskQueue' => $taskQueue->getID(),
-            'Options' => new \stdClass(), // todo: set options
-            'Workflows' => $this->map(
-                $taskQueue->getWorkflows(),
-                function (WorkflowPrototype $workflow) {
-                    return [
-                        'Name' => $workflow->getID(),
-                        'Queries' => $this->keys($workflow->getQueryHandlers()),
-                        'Signals' => $this->keys($workflow->getSignalHandlers()),
-                    ];
-                }
-            ),
-            'Activities' => $this->map(
-                $taskQueue->getActivities(),
-                fn(ActivityPrototype $activity) => ['Name' => $activity->getID()]
-            ),
+            'TaskQueue'  => $worker->getID(),
+            'Options'    => $this->marshaller->marshal($worker->getOptions()),
+            'Workflows'  => $this->map($worker->getWorkflows(), $workflowMap),
+            'Activities' => $this->map($worker->getActivities(), $activityMap),
         ];
     }
 
