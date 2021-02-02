@@ -14,6 +14,7 @@ namespace PHPSTORM_META {
         '' => type(0),
     ]));
 
+
     override(\Temporal\Workflow\WorkflowContextInterface::newChildWorkflowStub(), map([
         '' => type(0),
     ]));
@@ -37,6 +38,20 @@ namespace PHPSTORM_META {
     override(\Temporal\Workflow::newContinueAsNewStub(), map([
         '' => type(0),
     ]));
+
+    override(\Temporal\Workflow\WorkflowContextInterface::newExternalWorkflowStub(), map([
+        '' => type(0),
+    ]));
+
+    override(\Temporal\Workflow\WorkflowContext::newExternalWorkflowStub(), map([
+        '' => type(0),
+    ]));
+
+    override(\Temporal\Workflow::newExternalWorkflowStub(), map([
+        '' => type(0),
+    ]));
+
+
 
     // RPC
     override(\Temporal\Client\WorkflowClientInterface::newWorkflowStub(), map([

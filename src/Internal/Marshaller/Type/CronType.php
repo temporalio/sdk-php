@@ -11,10 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Marshaller\Type;
 
-use Cron\CronExpression;
-use Temporal\Internal\Support\Inheritance;
-
-class CronType extends Type implements DetectableTypeInterface
+class CronType extends Type
 {
     /**
      * @var string
@@ -22,14 +19,6 @@ class CronType extends Type implements DetectableTypeInterface
     private const ERROR_INVALID_TYPE =
         'Passed value must be a type of ' .
         'cron-like string or cron expression, but %s given';
-
-    /**
-     * {@inheritDoc}
-     */
-    public static function match(\ReflectionNamedType $type): bool
-    {
-        return !$type->isBuiltin() && Inheritance::extends($type->getName(), CronExpression::class);
-    }
 
     /**
      * {@inheritDoc}
@@ -42,10 +31,6 @@ class CronType extends Type implements DetectableTypeInterface
         }
 
         if (\is_string($value)) {
-            return new CronExpression($value);
-        }
-
-        if ($value instanceof CronExpression) {
             return $value;
         }
 
@@ -57,14 +42,10 @@ class CronType extends Type implements DetectableTypeInterface
      */
     public function serialize($value)
     {
-        if (\is_string($value)) {
-            $value = new CronExpression($value);
+        if (\is_string($value) || $value instanceof \Stringable) {
+            return (string)$value;
         }
 
-        if (!$value instanceof CronExpression) {
-            throw new \InvalidArgumentException(\sprintf(self::ERROR_INVALID_TYPE, \get_debug_type($value)));
-        }
-
-        return (string)$value->getExpression();
+        throw new \InvalidArgumentException(\sprintf(self::ERROR_INVALID_TYPE, \get_debug_type($value)));
     }
 }

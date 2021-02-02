@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Common;
 
-use Cron\CronExpression;
 use JetBrains\PhpStorm\Immutable;
 use Spiral\Attributes\NamedArgumentConstructorAttribute;
 use Temporal\Internal\Support\DateInterval;
@@ -20,8 +19,8 @@ use Temporal\Internal\Support\DateInterval;
  * CronSchedule - Optional cron schedule for workflow. If a cron schedule is
  * specified, the workflow will run as a cron based on the schedule. The
  * scheduling will be based on UTC time. Schedule for next run only happen
- * after the current run is completed/failed/timeout. If a {@see RetryPolicy} is
- * also supplied, and the workflow failed or timeout, the workflow will be
+ * after the current run is completed/failed/timeout. If a {@see RetryPolicy}
+ * is also supplied, and the workflow failed or timeout, the workflow will be
  * retried based on the retry policy. While the workflow is retrying, it won't
  * schedule its next run. If next schedule is due while workflow is running
  * (or retrying), then it will skip that schedule. Cron workflow will not stop
@@ -37,17 +36,30 @@ use Temporal\Internal\Support\DateInterval;
 final class CronSchedule implements NamedArgumentConstructorAttribute, \Stringable
 {
     /**
-     * @var CronExpression
+     * The cron spec is as following:
+     *
+     * <code>
+     *  ┌───────────── minute (0 - 59)
+     *  │ ┌───────────── hour (0 - 23)
+     *  │ │ ┌───────────── day of the month (1 - 31)
+     *  │ │ │ ┌───────────── month (1 - 12)
+     *  │ │ │ │ ┌───────────── day of the week (0 - 6) (Sunday to Saturday)
+     *  │ │ │ │ │
+     *  │ │ │ │ │
+     *  * * * * *
+     * </code>
+     *
+     * @var string
      */
     #[Immutable]
-    public CronExpression $interval;
+    public string $interval;
 
     /**
      * @param string $interval
      */
     public function __construct(string $interval)
     {
-        $this->interval = new CronExpression($interval);
+        $this->interval = $interval;
     }
 
     /**
@@ -55,6 +67,6 @@ final class CronSchedule implements NamedArgumentConstructorAttribute, \Stringab
      */
     public function __toString(): string
     {
-        return (string)$this->interval->getExpression();
+        return (string)$this->interval;
     }
 }

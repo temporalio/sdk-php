@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Workflow;
 
 use Carbon\CarbonInterval;
+use JetBrains\PhpStorm\Pure;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Support\DateInterval;
@@ -73,12 +74,19 @@ final class ContinueAsNewOptions
      * specified when creating a {@see Worker} that hosts the
      * workflow code.
      *
+     * @psalm-suppress ImpureMethodCall
+     *
      * @param string $taskQueue
      * @return $this
      */
+    #[Pure]
     public function withTaskQueue(string $taskQueue): self
     {
-        return immutable(fn() => $this->taskQueue = $taskQueue);
+        $self = clone $this;
+
+        $self->taskQueue = $taskQueue;
+
+        return $self;
     }
 
     /**
@@ -86,35 +94,41 @@ final class ContinueAsNewOptions
      * Temporal service. Do not rely on the run timeout for business level
      * timeouts. It is preferred to use in workflow timers for this purpose.
      *
+     * @psalm-suppress ImpureMethodCall
+     *
      * @param DateIntervalValue $timeout
      * @return $this
      */
+    #[Pure]
     public function withWorkflowRunTimeout($timeout): self
     {
         assert(DateInterval::assert($timeout));
-
         $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
-
         assert($timeout->totalMicroseconds >= 0);
 
-        return immutable(fn() => $this->workflowRunTimeout = $timeout);
+        $self = clone $this;
+        $self->workflowRunTimeout = $timeout;
+        return $self;
     }
 
     /**
      * Maximum execution time of a single workflow task. Default is 10 seconds.
      * Maximum accepted value is 60 seconds.
      *
+     * @psalm-suppress ImpureMethodCall
+     *
      * @param DateIntervalValue $timeout
      * @return $this
      */
+    #[Pure]
     public function withWorkflowTaskTimeout($timeout): self
     {
         assert(DateInterval::assert($timeout));
-
         $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
-
         assert($timeout->totalMicroseconds >= 0 && $timeout->totalSeconds <= 60);
 
-        return immutable(fn() => $this->workflowTaskTimeout = $timeout);
+        $self = clone $this;
+        $self->workflowTaskTimeout = $timeout;
+        return $self;
     }
 }

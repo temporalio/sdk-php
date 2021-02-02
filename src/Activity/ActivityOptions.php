@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Activity;
 
 use Carbon\CarbonInterval;
+use JetBrains\PhpStorm\Pure;
 use Temporal\Common\MethodRetry;
 use Temporal\Common\RetryOptions;
 use Temporal\Internal\Assert;
@@ -125,11 +126,13 @@ class ActivityOptions extends Options
      */
     public function mergeWith(MethodRetry $retry = null): self
     {
-        return immutable(function () use ($retry): void {
-            if ($retry !== null && $this->diff->isPresent($this, 'retryOptions')) {
-                $this->retryOptions = $this->retryOptions->mergeWith($retry);
-            }
-        });
+        $self = clone $this;
+
+        if ($retry !== null && $this->diff->isPresent($self, 'retryOptions')) {
+            $self->retryOptions = $this->retryOptions->mergeWith($retry);
+        }
+
+        return $self;
     }
 
     /**
@@ -139,9 +142,14 @@ class ActivityOptions extends Options
      * @param string|null $taskQueue
      * @return $this
      */
+    #[Pure]
     public function withTaskQueue(?string $taskQueue): self
     {
-        return immutable(fn() => $this->taskQueue = $taskQueue ?? WorkerFactoryInterface::DEFAULT_TASK_QUEUE);
+        $self = clone $this;
+
+        $self->taskQueue = $taskQueue ?? WorkerFactoryInterface::DEFAULT_TASK_QUEUE;
+
+        return $self;
     }
 
     /**
@@ -157,18 +165,21 @@ class ActivityOptions extends Options
      * Either this option or both schedule to start and start to close are
      * required.
      *
+     * @psalm-suppress ImpureMethodCall
+     *
      * @param DateIntervalValue $timeout
      * @return $this
      */
+    #[Pure]
     public function withScheduleToCloseTimeout($timeout): self
     {
         assert(DateInterval::assert($timeout));
-
         $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
-
         assert($timeout->totalMicroseconds >= 0);
 
-        return immutable(fn() => $this->scheduleToCloseTimeout = $timeout);
+        $self = clone $this;
+        $self->scheduleToCloseTimeout = $timeout;
+        return $self;
     }
 
     /**
@@ -176,18 +187,21 @@ class ActivityOptions extends Options
      * If schedule to close is not provided then both this and start to close
      * are required.
      *
+     * @psalm-suppress ImpureMethodCall
+     *
      * @param DateIntervalValue $timeout
      * @return $this
      */
+    #[Pure]
     public function withScheduleToStartTimeout($timeout): self
     {
         assert(DateInterval::assert($timeout));
-
         $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
-
         assert($timeout->totalMicroseconds >= 0);
 
-        return immutable(fn() => $this->scheduleToStartTimeout = $timeout);
+        $self = clone $this;
+        $self->scheduleToStartTimeout = $timeout;
+        return $self;
     }
 
     /**
@@ -195,64 +209,85 @@ class ActivityOptions extends Options
      * schedule to close is not provided then both this and schedule to start
      * are required.
      *
+     * @psalm-suppress ImpureMethodCall
+     *
      * @param DateIntervalValue $timeout
      * @return $this
      */
+    #[Pure]
     public function withStartToCloseTimeout($timeout): self
     {
         assert(DateInterval::assert($timeout));
-
         $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
-
         assert($timeout->totalMicroseconds >= 0);
 
-        return immutable(fn() => $this->startToCloseTimeout = $timeout);
+        $self = clone $this;
+        $self->startToCloseTimeout = $timeout;
+        return $self;
     }
 
     /**
      * Heartbeat interval. Activity must heartbeat before this interval passes
      * after a last heartbeat or activity start.
      *
+     * @psalm-suppress ImpureMethodCall
+     *
      * @param DateIntervalValue $timeout
      * @return $this
      */
+    #[Pure]
     public function withHeartbeatTimeout($timeout): self
     {
         assert(DateInterval::assert($timeout));
-
         $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
-
         assert($timeout->totalMicroseconds >= 0);
 
-        return immutable(fn() => $this->heartbeatTimeout = $timeout);
+        $self = clone $this;
+        $self->heartbeatTimeout = $timeout;
+        return $self;
     }
 
     /**
+     * @psalm-suppress ImpureMethodCall
+     *
      * @param int $type
      * @return $this
      */
+    #[Pure]
     public function withCancellationType(int $type): self
     {
         assert(Assert::enum($type, ActivityCancellationType::class));
 
-        return immutable(fn() => $this->cancellationType = $type);
+        $self = clone $this;
+        $self->cancellationType = $type;
+        return $self;
     }
 
     /**
      * @param string $activityId
      * @return $this
      */
+    #[Pure]
     public function withActivityId(string $activityId): self
     {
-        return immutable(fn() => $this->activityId = $activityId);
+        $self = clone $this;
+
+        $self->activityId = $activityId;
+
+        return $self;
     }
 
     /**
      * @param RetryOptions|null $options
      * @return $this
      */
+    #[Pure]
     public function withRetryOptions(?RetryOptions $options): self
     {
-        return immutable(fn() => $this->retryOptions = $options ?? new RetryOptions());
+        $self = clone $this;
+
+        $self->retryOptions = $options ?? new RetryOptions();
+
+        return $self;
     }
 }

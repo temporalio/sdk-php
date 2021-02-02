@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Common;
 
+use JetBrains\PhpStorm\Pure;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Internal\Assert;
 use Temporal\Internal\Marshaller\Meta\Marshal;
@@ -109,71 +110,94 @@ class RetryOptions extends Options
      */
     public function mergeWith(MethodRetry $retry = null): self
     {
-        return immutable(function () use ($retry): void {
-            if ($retry !== null) {
-                foreach ($this->diff->getPresentPropertyNames($this) as $name) {
-                    $this->$name = $retry->$name;
-                }
+        $self = clone $this;
+
+        if ($retry !== null) {
+            foreach ($self->diff->getPresentPropertyNames($self) as $name) {
+                $self->$name = $retry->$name;
             }
-        });
+        }
+
+        return $self;
     }
 
     /**
+     * @psalm-suppress ImpureMethodCall
+     *
      * @param DateIntervalValue|null $interval
      * @return $this
      */
+    #[Pure]
     public function withInitialInterval($interval): self
     {
         assert(DateInterval::assert($interval) || $interval === null);
 
-        return immutable(
-            fn() => $this->initialInterval = DateInterval::parseOrNull($interval, DateInterval::FORMAT_SECONDS)
-        );
+        $self = clone $this;
+        $self->initialInterval = DateInterval::parseOrNull($interval, DateInterval::FORMAT_SECONDS);
+        return $self;
     }
 
     /**
+     * @psalm-suppress ImpureMethodCall
+     *
      * @param float $coefficient
      * @return $this
      */
+    #[Pure]
     public function withBackoffCoefficient(float $coefficient): self
     {
         assert($coefficient >= 1.0);
 
-        return immutable(fn() => $this->backoffCoefficient = $coefficient);
+        $self = clone $this;
+        $self->backoffCoefficient = $coefficient;
+        return $self;
     }
 
     /**
+     * @psalm-suppress ImpureMethodCall
+     *
      * @param DateIntervalValue|null $interval
      * @return $this
      */
+    #[Pure]
     public function withMaximumInterval($interval): self
     {
         assert(DateInterval::assert($interval) || $interval === null);
 
-        return immutable(
-            fn() => $this->initialInterval = DateInterval::parseOrNull($interval, DateInterval::FORMAT_SECONDS)
-        );
+        $self = clone $this;
+        $self->initialInterval = DateInterval::parseOrNull($interval, DateInterval::FORMAT_SECONDS);
+        return $self;
     }
 
     /**
+     * @psalm-suppress ImpureMethodCall
+     *
      * @param int $attempts
      * @return $this
      */
+    #[Pure]
     public function withMaximumAttempts(int $attempts): self
     {
         assert($attempts >= 0);
 
-        return immutable(fn() => $this->maximumAttempts = $attempts);
+        $self = clone $this;
+        $self->maximumAttempts = $attempts;
+        return $self;
     }
 
     /**
+     * @psalm-suppress ImpureMethodCall
+     *
      * @param mixed $exceptions
      * @return $this
      */
+    #[Pure]
     public function withNonRetryableExceptions(array $exceptions): self
     {
         assert(Assert::valuesInstanceOf($exceptions, \Throwable::class));
 
-        return immutable(fn() => $this->nonRetryableExceptions = $exceptions);
+        $self = clone $this;
+        $self->nonRetryableExceptions = $exceptions;
+        return $self;
     }
 }
