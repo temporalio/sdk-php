@@ -36,14 +36,14 @@ class SagaWorkflow
             yield $simple->echo('test');
             $saga->addCompensation(
                 function () use ($simple) {
-                    yield $simple->echo('compensate echo');
+                    yield $simple->slow('compensate echo');
                 }
             );
 
             yield $simple->lower('TEST');
             $saga->addCompensation(
                 function () use ($simple) {
-                    yield $simple->lower('COMPENSATE LOWER');
+                    yield $simple->prefix('prefix', 'COMPENSATE LOWER');
                 }
             );
 
