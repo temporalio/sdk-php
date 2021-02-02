@@ -11,8 +11,11 @@ declare(strict_types=1);
 
 namespace Temporal\Activity;
 
-use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Carbon\CarbonInterval;
+use JetBrains\PhpStorm\Immutable;
+use Temporal\Activity;
+use Temporal\Client\ActivityCompletionClientInterface;
 use Temporal\Common\Uuid;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
@@ -25,60 +28,56 @@ use Temporal\Workflow\WorkflowType;
 
 /**
  * ActivityInfo contains information about currently executing activity.
+ * Use {@see Activity::getInfo()} to access.
  */
-class ActivityInfo
+#[Immutable]
+final class ActivityInfo
 {
     /**
-     * @readonly
-     * @psalm-allow-private-mutation
+     * A correlation token that can be used to complete the activity
+     * through {@see ActivityCompletionClientInterface::complete()}.
+     *
      * @var string
      */
     #[Marshal(name: 'TaskToken')]
     public string $taskToken;
 
     /**
-     * @readonly
-     * @psalm-allow-private-mutation
      * @var WorkflowType|null
      */
     #[Marshal(name: 'WorkflowType', type: NullableType::class, of: WorkflowType::class)]
     public ?WorkflowType $workflowType = null;
 
     /**
-     * @readonly
-     * @psalm-allow-private-mutation
      * @var string
      */
     #[Marshal(name: 'WorkflowNamespace')]
     public string $workflowNamespace = 'default';
 
     /**
-     * @readonly
-     * @psalm-allow-private-mutation
      * @var WorkflowExecution|null
      */
     #[Marshal(name: 'WorkflowExecution', type: NullableType::class, of: WorkflowExecution::class)]
     public ?WorkflowExecution $workflowExecution = null;
 
     /**
-     * @readonly
-     * @psalm-allow-private-mutation
+     * An ID of the activity. This identifier can be used to complete the
+     * activity through {@see ActivityCompletionClientInterface::complete()}.
+     *
      * @var string
      */
     #[Marshal(name: 'ActivityID')]
     public string $id;
 
     /**
-     * @readonly
-     * @psalm-allow-private-mutation
+     * Type (name) of the activity.
+     *
      * @var ActivityType
      */
     #[Marshal(name: 'ActivityType', type: ObjectType::class, of: ActivityType::class)]
     public ActivityType $type;
 
     /**
-     * @readonly
-     * @psalm-allow-private-mutation
      * @var string
      */
     #[Marshal(name: 'TaskQueue')]
@@ -87,8 +86,6 @@ class ActivityInfo
     /**
      * Maximum time between heartbeats. 0 means no heartbeat needed.
      *
-     * @readonly
-     * @psalm-allow-private-mutation
      * @var \DateInterval
      */
     #[Marshal(name: 'HeartbeatTimeout', type: DateIntervalType::class)]
@@ -97,8 +94,6 @@ class ActivityInfo
     /**
      * Time of activity scheduled by a workflow
      *
-     * @readonly
-     * @psalm-allow-private-mutation
      * @var \DateTimeInterface
      */
     #[Marshal(name: 'ScheduledTime', type: DateTimeType::class)]
@@ -107,8 +102,6 @@ class ActivityInfo
     /**
      * Time of activity start
      *
-     * @readonly
-     * @psalm-allow-private-mutation
      * @var \DateTimeInterface
      */
     #[Marshal(name: 'StartedTime', type: DateTimeType::class)]
@@ -117,8 +110,6 @@ class ActivityInfo
     /**
      * Time of activity timeout
      *
-     * @readonly
-     * @psalm-allow-private-mutation
      * @var \DateTimeInterface
      */
     #[Marshal(name: 'Deadline', type: DateTimeType::class)]
@@ -128,17 +119,13 @@ class ActivityInfo
      * Attempt starts from 1, and increased by 1 for every retry if
      * retry policy is specified.
      *
-     * @readonly
-     * @psalm-allow-private-mutation
      * @var int
      */
     #[Marshal(name: 'Attempt')]
     public int $attempt = 1;
 
     /**
-     * @param string $taskToken
-     * @param string $id
-     * @param ActivityType $type
+     * ActivityInfo constructor.
      */
     public function __construct()
     {
@@ -147,8 +134,8 @@ class ActivityInfo
         $this->type = new ActivityType();
 
         $this->heartbeatTimeout = CarbonInterval::second(0);
-        $this->scheduledTime = Carbon::now();
-        $this->startedTime = Carbon::now();
-        $this->deadline = Carbon::now();
+        $this->scheduledTime = CarbonImmutable::now();
+        $this->startedTime = CarbonImmutable::now();
+        $this->deadline = CarbonImmutable::now();
     }
 }

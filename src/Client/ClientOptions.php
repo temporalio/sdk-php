@@ -11,8 +11,13 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
+use JetBrains\PhpStorm\ExpectedValues;
+use JetBrains\PhpStorm\Pure;
 use Temporal\Api\Enums\V1\QueryRejectCondition;
 
+/**
+ * @psalm-type QueryRejectionConditionType = QueryRejectCondition::QUERY_REJECT_CONDITION_*
+ */
 class ClientOptions
 {
     /**
@@ -33,6 +38,7 @@ class ClientOptions
     /**
      * @var int
      */
+    #[ExpectedValues(valuesFromClass: QueryRejectCondition::class)]
     public int $queryRejectionCondition = QueryRejectCondition::QUERY_REJECT_CONDITION_NONE;
 
     /**
@@ -40,39 +46,50 @@ class ClientOptions
      */
     public function __construct()
     {
-        $this->identity = \vsprintf(
-            '%d@%s',
-            [
-                \getmypid(),
-                \gethostname(),
-            ]
-        );
+        $this->identity = \sprintf('%d@%s', \getmypid(), \gethostname());
     }
 
     /**
      * @param string $namespace
      * @return $this
      */
+    #[Pure]
     public function withNamespace(string $namespace): self
     {
-        return immutable(fn() => $this->namespace = $namespace);
+        $self = clone $this;
+
+        $self->namespace = $namespace;
+
+        return $self;
     }
 
     /**
      * @param string $identity
      * @return $this
      */
+    #[Pure]
     public function withIdentity(string $identity): self
     {
-        return immutable(fn() => $this->identity = $identity);
+        $self = clone $this;
+
+        $self->identity = $identity;
+
+        return $self;
     }
 
     /**
-     * @param int $condition
+     * @param QueryRejectionConditionType $condition
      * @return $this
      */
-    public function withQueryRejectionCondition(int $condition): self
-    {
-        return immutable(fn() => $this->queryRejectionCondition = $condition);
+    #[Pure]
+    public function withQueryRejectionCondition(
+        #[ExpectedValues(valuesFromClass: QueryRejectCondition::class)]
+        int $condition
+    ): self {
+        $self = clone $this;
+
+        $self->queryRejectionCondition = $condition;
+
+        return $self;
     }
 }

@@ -102,7 +102,7 @@ class TypeFactory implements TypeFactoryInterface
                 continue;
             }
 
-            yield static fn(\ReflectionNamedType $type): ?string => $matcher::match($type) ? $matcher : null;
+            yield static fn (\ReflectionNamedType $type): ?string => $matcher::match($type) ? $matcher : null;
         }
     }
 
@@ -111,7 +111,6 @@ class TypeFactory implements TypeFactoryInterface
      */
     private function getDefaultMatchers(): iterable
     {
-        yield CronType::class;
         yield DateTimeType::class;
         yield DateIntervalType::class;
         yield ArrayType::class;
