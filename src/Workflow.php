@@ -27,6 +27,8 @@ use Temporal\Workflow\WorkflowContextInterface;
 use Temporal\Workflow\WorkflowInfo;
 
 /**
+ * This class provides coroutine specific access to active WorkflowContext.
+ *
  * @method static array getArguments()
  * @method static WorkflowInfo getInfo()
  * @method static mixed getLastCompletionResult($type = null)
