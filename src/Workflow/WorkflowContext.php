@@ -34,6 +34,8 @@ use Temporal\Internal\Workflow\ActivityStub;
 use Temporal\Internal\Workflow\ChildWorkflowProxy;
 use Temporal\Internal\Workflow\ChildWorkflowStub;
 use Temporal\Internal\Workflow\ContinueAsNewProxy;
+use Temporal\Internal\Workflow\ExternalWorkflowProxy;
+use Temporal\Internal\Workflow\ExternalWorkflowStub;
 use Temporal\Internal\Workflow\Input;
 use Temporal\Promise;
 use Temporal\Worker\Transport\Command\RequestInterface;
@@ -49,7 +51,7 @@ class WorkflowContext implements WorkflowContextInterface
     protected WorkflowInstanceInterface $workflowInstance;
     protected ?ValuesInterface $lastCompletionResult = null;
 
-    private array $awaits = [];
+    protected array $awaits = [];
 
     private array $trace = [];
     private bool $continueAsNew = false;
@@ -315,6 +317,26 @@ class WorkflowContext implements WorkflowContextInterface
     /**
      * {@inheritDoc}
      */
+    public function newExternalWorkflowStub(string $type, WorkflowExecution $execution): object
+    {
+        $workflow = $this->services->workflowsReader->fromClass($type);
+
+        $stub = $this->newUntypedExternalWorkflowStub($execution);
+
+        return new ExternalWorkflowProxy($type, $workflow, $stub);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function newUntypedExternalWorkflowStub(WorkflowExecution $execution): ExternalWorkflowStubInterface
+    {
+        return new ExternalWorkflowStub($execution);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function executeActivity(
         string $type,
         array $args = [],
@@ -418,10 +440,11 @@ class WorkflowContext implements WorkflowContextInterface
      * @param callable $condition
      * @return PromiseInterface
      */
-    public function addCondition(callable $condition): PromiseInterface
+    protected function addCondition(callable $condition): PromiseInterface
     {
         $deferred = new Deferred();
         $this->awaits[] = [$condition, $deferred];
+
         return $deferred->promise();
     }
 

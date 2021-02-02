@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Workflow;
 
+use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Internal\Transport\CompletableResult;
@@ -101,12 +102,16 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
      * @param callable $condition
      * @return PromiseInterface
      */
-    public function addCondition(callable $condition): PromiseInterface
+    protected function addCondition(callable $condition): PromiseInterface
     {
+        $deferred = new Deferred();
+        $this->parent->awaits[] = [$condition, $deferred];
+        $this->scope->onAwait($deferred);
+
         return new CompletableResult(
             $this,
             $this->services->loop,
-            $this->parent->addCondition($condition),
+            $deferred->promise(),
             $this->scope->getLayer()
         );
     }
