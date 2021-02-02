@@ -12,9 +12,9 @@ declare(strict_types=1);
 namespace Temporal\Workflow;
 
 use Carbon\CarbonInterval;
-use Cron\CronExpression;
 use JetBrains\PhpStorm\Immutable;
 use Temporal\Client\ClientOptions;
+use Temporal\Common\CronSchedule;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\ArrayType;
 use Temporal\Internal\Marshaller\Type\CronType;
@@ -78,10 +78,12 @@ final class WorkflowInfo
     public int $attempt = 1;
 
     /**
-     * @var CronExpression|null
+     * @see CronSchedule::$interval for more info about cron format.
+     *
+     * @var string|null
      */
     #[Marshal(name: 'CronSchedule', type: NullableType::class, of: CronType::class)]
-    public ?CronExpression $cronSchedule = null;
+    public ?string $cronSchedule = null;
 
     /**
      * @var string|null

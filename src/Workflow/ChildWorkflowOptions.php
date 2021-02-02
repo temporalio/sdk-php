@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Workflow;
 
 use Carbon\CarbonInterval;
-use Cron\CronExpression;
 use JetBrains\PhpStorm\ExpectedValues;
 use JetBrains\PhpStorm\Pure;
 use Temporal\Client\ClientOptions;
@@ -28,7 +27,6 @@ use Temporal\Internal\Marshaller\Type\CronType;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\NullableType;
 use Temporal\Internal\Marshaller\Type\ObjectType;
-use Temporal\Internal\Support\Cron;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\Options;
 use Temporal\Worker\WorkerFactoryInterface;
@@ -125,10 +123,11 @@ final class ChildWorkflowOptions extends Options
 
     /**
      * Optional cron schedule for workflow.
-     * @see Cron
+     *
+     * @see CronSchedule::$interval for more info about cron format.
      */
     #[Marshal(name: 'CronSchedule', type: NullableType::class, of: CronType::class)]
-    public ?CronExpression $cronSchedule = null;
+    public ?string $cronSchedule = null;
 
     /**
      * Optional policy to decide what to do for the child.
@@ -186,11 +185,7 @@ final class ChildWorkflowOptions extends Options
         }
 
         if ($cron !== null && $self->diff->isPresent($self, 'cronSchedule')) {
-            if ($self->cronSchedule === null) {
-                $self->cronSchedule = clone $cron->interval;
-            }
-
-            $self->cronSchedule->setExpression($cron->interval->getExpression());
+            $self->cronSchedule = $cron->interval;
         }
 
         return $self;
@@ -383,15 +378,17 @@ final class ChildWorkflowOptions extends Options
     }
 
     /**
-     * @param string|CronExpression|CronSchedule|null $expression
+     * @see CronSchedule::$interval for more info about cron format.
+     *
+     * @param string|null $expression
      * @return $this
      */
     #[Pure]
-    public function withCronSchedule($expression): self
+    public function withCronSchedule(?string $expression): self
     {
         $self = clone $this;
 
-        $self->cronSchedule = Cron::parseOrNull($expression);
+        $self->cronSchedule = $expression;
 
         return $self;
     }

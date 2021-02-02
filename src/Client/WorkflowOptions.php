@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Client;
 
 use Carbon\CarbonInterval;
-use Cron\CronExpression;
 use JetBrains\PhpStorm\ExpectedValues;
 use JetBrains\PhpStorm\Pure;
 use Temporal\Api\Common\V1\Memo;
@@ -108,9 +107,11 @@ final class WorkflowOptions extends Options
 
     /**
      * Optional cron schedule for workflow.
+     *
+     * @see CronSchedule::$interval for more info about cron format.
      */
     #[Marshal(name: 'CronSchedule', type: NullableType::class, of: CronType::class)]
-    public ?CronExpression $cronSchedule = null;
+    public ?string $cronSchedule = null;
 
     /**
      * Optional non-indexed info that will be shown in list workflow.
@@ -159,11 +160,7 @@ final class WorkflowOptions extends Options
         }
 
         if ($cron !== null && $self->diff->isPresent($self, 'cronSchedule')) {
-            if ($self->cronSchedule === null) {
-                $self->cronSchedule = clone $cron->interval;
-            }
-
-            $self->cronSchedule->setExpression($cron->interval->getExpression());
+            $self->cronSchedule = $cron->interval;
         }
 
         return $self;
@@ -321,17 +318,15 @@ final class WorkflowOptions extends Options
     }
 
     /**
-     * @psalm-suppress ImpureMethodCall
-     *
-     * @param string|CronExpression|CronSchedule|null $expression
+     * @param string|null $expression
      * @return $this
      */
     #[Pure]
-    public function withCronSchedule($expression): self
+    public function withCronSchedule(?string $expression): self
     {
         $self = clone $this;
 
-        $self->cronSchedule = Cron::parseOrNull($expression);
+        $self->cronSchedule = $expression;
 
         return $self;
     }
