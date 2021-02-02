@@ -51,7 +51,7 @@ class WorkflowContext implements WorkflowContextInterface
     protected WorkflowInstanceInterface $workflowInstance;
     protected ?ValuesInterface $lastCompletionResult = null;
 
-    private array $awaits = [];
+    protected array $awaits = [];
 
     private array $trace = [];
     private bool $continueAsNew = false;
@@ -317,11 +317,11 @@ class WorkflowContext implements WorkflowContextInterface
     /**
      * {@inheritDoc}
      */
-    public function newExternalWorkflowStub(string $type, string $workflowId): object
+    public function newExternalWorkflowStub(string $type, WorkflowExecution $execution): object
     {
         $workflow = $this->services->workflowsReader->fromClass($type);
 
-        $stub = $this->newUntypedExternalWorkflowStub($workflowId);
+        $stub = $this->newUntypedExternalWorkflowStub($execution);
 
         return new ExternalWorkflowProxy($type, $workflow, $stub);
     }
@@ -329,13 +329,10 @@ class WorkflowContext implements WorkflowContextInterface
     /**
      * {@inheritDoc}
      */
-    public function newUntypedExternalWorkflowStub(string $workflowId): ExternalWorkflowStubInterface
+    public function newUntypedExternalWorkflowStub(WorkflowExecution $execution): ExternalWorkflowStubInterface
     {
-        return new ExternalWorkflowStub(
-            new WorkflowExecution($workflowId)
-        );
+        return new ExternalWorkflowStub($execution);
     }
-
 
     /**
      * {@inheritDoc}
@@ -443,10 +440,11 @@ class WorkflowContext implements WorkflowContextInterface
      * @param callable $condition
      * @return PromiseInterface
      */
-    public function addCondition(callable $condition): PromiseInterface
+    protected function addCondition(callable $condition): PromiseInterface
     {
         $deferred = new Deferred();
         $this->awaits[] = [$condition, $deferred];
+
         return $deferred->promise();
     }
 

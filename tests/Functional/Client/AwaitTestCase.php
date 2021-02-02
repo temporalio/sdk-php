@@ -14,10 +14,12 @@ namespace Temporal\Tests\Functional\Client;
 use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Failure\ActivityFailure;
 use Temporal\Exception\Failure\ApplicationFailure;
+use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Tests\Workflow\AggregatedWorkflow;
 use Temporal\Tests\Workflow\LoopWithSignalCoroutinesWorkflow;
 use Temporal\Tests\Workflow\LoopWorkflow;
 use Temporal\Tests\Workflow\WaitWorkflow;
+use Temporal\Workflow\WorkflowStub;
 
 /**
  * @group client
@@ -165,6 +167,22 @@ class AwaitTestCase extends ClientTestCase
 
             $this->assertInstanceOf(ApplicationFailure::class, $e->getPrevious());
             $this->assertStringContainsString('activity error', $e->getPrevious()->getMessage());
+        }
+    }
+
+    public function testCancelAwait()
+    {
+        $client = $this->createClient();
+        $wait = $client->newWorkflowStub(LoopWithSignalCoroutinesWorkflow::class);
+
+        $run = $client->start($wait, 4);
+
+        WorkflowStub::fromWorkflow($wait)->cancel();;
+
+        try {
+            $run->getResult();
+        } catch (WorkflowFailedException $e) {
+            $this->assertInstanceOf(CanceledFailure::class, $e->getPrevious());
         }
     }
 }

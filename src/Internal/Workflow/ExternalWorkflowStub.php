@@ -14,6 +14,7 @@ namespace Temporal\Internal\Workflow;
 use React\Promise\PromiseInterface;
 use Temporal\Client\ClientOptions;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\Internal\Transport\Request\CancelExternalWorkflow;
 use Temporal\Internal\Transport\Request\SignalExternalWorkflow;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow;
@@ -49,13 +50,25 @@ final class ExternalWorkflowStub implements ExternalWorkflowStubInterface
     public function signal(string $name, array $args = []): PromiseInterface
     {
         $request = new SignalExternalWorkflow(
-            // TODO #1 External workflow has no namespace
-            // TODO #2 ClientOptions::DEFAULT_NAMESPACE is not a part of server worker options, did u mean "task queue"?
-            ClientOptions::DEFAULT_NAMESPACE,
+            '',
             $this->execution->getID(),
             $this->execution->getRunID(),
             $name,
             EncodedValues::fromValues($args)
+        );
+
+        return $this->request($request);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function cancel(): PromiseInterface
+    {
+        $request = new CancelExternalWorkflow(
+            '',
+            $this->execution->getID(),
+            $this->execution->getRunID()
         );
 
         return $this->request($request);
@@ -71,13 +84,5 @@ final class ExternalWorkflowStub implements ExternalWorkflowStubInterface
         $context = Workflow::getCurrentContext();
 
         return $context->request($request);
-    }
-
-    /**
-     * TODO It is not clear how to cancel a workflow by its identifier?
-     */
-    public function cancel(): PromiseInterface
-    {
-        throw new \LogicException(__METHOD__ . ' not implemented yet');
     }
 }

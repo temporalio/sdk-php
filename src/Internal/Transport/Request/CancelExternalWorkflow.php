@@ -11,40 +11,31 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport\Request;
 
-use Temporal\DataConverter\ValuesInterface;
 use Temporal\Worker\Transport\Command\Request;
 
-final class SignalExternalWorkflow extends Request
+class CancelExternalWorkflow extends Request
 {
     /**
      * @var string
      */
-    public const NAME = 'SignalExternalWorkflow';
+    public const NAME = 'CancelExternalWorkflow';
 
     /**
      * @param string $namespace
      * @param string $workflowId
      * @param string|null $runId
-     * @param string $signal
-     * @param ValuesInterface|null $input
-     * @param bool $childWorkflowOnly
      */
     public function __construct(
         string $namespace,
         string $workflowId,
-        ?string $runId,
-        string $signal,
-        ValuesInterface $input = null,
-        bool $childWorkflowOnly = false
+        ?string $runId
     ) {
         $options = [
             'namespace' => $namespace,
             'workflowID' => $workflowId,
             'runID' => $runId,
-            'signal' => $signal,
-            'childWorkflowOnly' => $childWorkflowOnly,
         ];
 
-        parent::__construct(self::NAME, $options, $input);
+        parent::__construct(self::NAME, $options, null);
     }
 }

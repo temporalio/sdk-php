@@ -114,7 +114,8 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
                     $execution->getID(),
                     $execution->getRunID(),
                     $name,
-                    EncodedValues::fromValues($args)
+                    EncodedValues::fromValues($args),
+                    true
                 );
 
                 return $this->request($request);

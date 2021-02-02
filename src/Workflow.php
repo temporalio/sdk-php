@@ -26,6 +26,7 @@ use Temporal\Workflow\ChildWorkflowStubInterface;
 use Temporal\Workflow\ContinueAsNewOptions;
 use Temporal\Workflow\ExternalWorkflowStubInterface;
 use Temporal\Workflow\WorkflowContextInterface;
+use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowInfo;
 
 /**
@@ -64,8 +65,8 @@ use Temporal\Workflow\WorkflowInfo;
  * @method static ChildWorkflowProxy|object newChildWorkflowStub(string $class, ChildWorkflowOptions $options = null)
  * @method static ChildWorkflowStubInterface newUntypedChildWorkflowStub(string $name, ChildWorkflowOptions $options = null)
  *
- * @method static ExternalWorkflowProxy|object newExternalWorkflowStub(string $type, string $workflowId)
- * @method static ExternalWorkflowStubInterface newUntypedExternalWorkflowStub(string $workflowId)
+ * @method static ExternalWorkflowProxy|object newExternalWorkflowStub(string $type, WorkflowExecution $execution)
+ * @method static ExternalWorkflowStubInterface newUntypedExternalWorkflowStub(WorkflowExecution $execution)
  */
 final class Workflow extends Facade
 {

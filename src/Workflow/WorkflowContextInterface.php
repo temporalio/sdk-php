@@ -177,19 +177,19 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @psalm-return object<T>|T
      *
      * @param string $type
-     * @param string $workflowId
+     * @param WorkflowExecution $execution
      * @return object
      */
-    public function newExternalWorkflowStub(string $type, string $workflowId): object;
+    public function newExternalWorkflowStub(string $type, WorkflowExecution $execution): object;
 
     /**
      * Creates untyped client stub that can be used to signal or cancel a child
      * workflow.
      *
-     * @param string $workflowId
+     * @param WorkflowExecution $execution
      * @return ExternalWorkflowStubInterface
      */
-    public function newUntypedExternalWorkflowStub(string $workflowId): ExternalWorkflowStubInterface;
+    public function newUntypedExternalWorkflowStub(WorkflowExecution $execution): ExternalWorkflowStubInterface;
 
     /**
      * @param string $type
