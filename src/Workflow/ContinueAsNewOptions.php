@@ -46,7 +46,7 @@ final class ContinueAsNewOptions
     /**
      * The workflow task timeout for the child workflow.
      *
-     * Optional: default is 10s if this is not provided (or if 0 is provided).
+     * Optional: default is no limit
      */
     #[Marshal(name: 'WorkflowTaskTimeout', type: DateIntervalType::class)]
     public \DateInterval $workflowTaskTimeout;
@@ -56,8 +56,8 @@ final class ContinueAsNewOptions
      */
     public function __construct()
     {
-        $this->workflowRunTimeout = CarbonInterval::years(10);
-        $this->workflowTaskTimeout = CarbonInterval::seconds(10);
+        $this->workflowRunTimeout = CarbonInterval::seconds(0);
+        $this->workflowTaskTimeout = CarbonInterval::seconds(0);
     }
 
     /**

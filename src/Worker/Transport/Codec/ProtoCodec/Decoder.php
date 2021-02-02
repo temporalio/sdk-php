@@ -72,7 +72,7 @@ class Decoder
 
         return new Request(
             $msg->getCommand(),
-            json_decode($msg->getOptions(), true),
+            json_decode($msg->getOptions(), true, 256, JSON_THROW_ON_ERROR),
             $payloads,
             (int)$msg->getId()
         );

@@ -21,6 +21,7 @@ use Temporal\Common\IdReusePolicy;
 use Temporal\Common\MethodRetry;
 use Temporal\Common\RetryOptions;
 use Temporal\Common\Uuid;
+use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Internal\Assert;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\ArrayType;
@@ -81,7 +82,7 @@ final class WorkflowOptions extends Options
      * The timeout for processing workflow task from the time the worker pulled
      * this task. If a workflow task is lost, it is retried after this timeout.
      *
-     * Optional: defaulted to 10 secs.
+     * Optional: defaulted to no limit
      */
     #[Marshal(name: 'WorkflowTaskTimeout', type: DateIntervalType::class)]
     public \DateInterval $workflowTaskTimeout;
@@ -134,9 +135,9 @@ final class WorkflowOptions extends Options
     public function __construct()
     {
         $this->workflowId = Uuid::v4();
-        $this->workflowExecutionTimeout = CarbonInterval::years(10);
-        $this->workflowRunTimeout = CarbonInterval::years(10);
-        $this->workflowTaskTimeout = CarbonInterval::seconds(10);
+        $this->workflowExecutionTimeout = CarbonInterval::seconds(0);
+        $this->workflowRunTimeout = CarbonInterval::seconds(0);
+        $this->workflowTaskTimeout = CarbonInterval::seconds(0);
         $this->retryOptions = new RetryOptions();
 
         parent::__construct();
@@ -149,19 +150,21 @@ final class WorkflowOptions extends Options
      */
     public function mergeWith(MethodRetry $retry = null, CronSchedule $cron = null): self
     {
-        return immutable(function () use ($retry, $cron): void {
-            if ($retry !== null && $this->diff->isPresent($this, 'retryOptions')) {
-                $this->retryOptions = $this->retryOptions->mergeWith($retry);
-            }
-
-            if ($cron !== null && $this->diff->isPresent($this, 'cronSchedule')) {
-                if ($this->cronSchedule === null) {
-                    $this->cronSchedule = clone $cron->interval;
+        return immutable(
+            function () use ($retry, $cron) {
+                if ($retry !== null && $this->diff->isPresent($this, 'retryOptions')) {
+                    $this->retryOptions = $this->retryOptions->mergeWith($retry);
                 }
 
-                $this->cronSchedule->setExpression($cron->interval->getExpression());
+                if ($cron !== null && $this->diff->isPresent($this, 'cronSchedule')) {
+                    if ($this->cronSchedule === null) {
+                        $this->cronSchedule = clone $cron->interval;
+                    }
+
+                    $this->cronSchedule->setExpression($cron->interval->getExpression());
+                }
             }
-        });
+        );
     }
 
     /**
@@ -316,25 +319,45 @@ final class WorkflowOptions extends Options
     }
 
     /**
-     * @return Memo
+     * @param DataConverterInterface $converter
+     * @return Memo|null
      * @internal
      */
-    public function toMemo(): Memo
+    public function toMemo(DataConverterInterface $converter): ?Memo
     {
+        if ($this->memo === null) {
+            return null;
+        }
+
+        $fields = [];
+        foreach ($this->memo as $key => $value) {
+            $fields[$key] = $converter->toPayload($value);
+        }
+
         $memo = new Memo();
-        $memo->setFields($this->memo);
+        $memo->setFields($fields);
 
         return $memo;
     }
 
     /**
-     * @return SearchAttributes
+     * @param DataConverterInterface $converter
+     * @return SearchAttributes|null
      * @internal
      */
-    public function toSearchAttributes(): SearchAttributes
+    public function toSearchAttributes(DataConverterInterface $converter): ?SearchAttributes
     {
+        if ($this->searchAttributes === null) {
+            return null;
+        }
+
+        $fields = [];
+        foreach ($this->searchAttributes as $key => $value) {
+            $fields[$key] = $converter->toPayload($value);
+        }
+
         $search = new SearchAttributes();
-        $search->setIndexedFields($this->searchAttributes);
+        $search->setIndexedFields($fields);
 
         return $search;
     }
