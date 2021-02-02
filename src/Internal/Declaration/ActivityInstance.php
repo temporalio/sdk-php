@@ -11,9 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration;
 
-use Temporal\DataConverter\DataConverterInterface;
-use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
-
 final class ActivityInstance extends Instance implements ActivityInstanceInterface
 {
 }

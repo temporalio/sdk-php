@@ -16,18 +16,17 @@ abstract class Route implements RouteInterface
     /**
      * @return string
      */
+    public function getName(): string
+    {
+        return $this->getShortClassName();
+    }
+    /**
+     * @return string
+     */
     private function getShortClassName(): string
     {
         $chunks = \explode('\\', static::class);
 
         return \array_pop($chunks);
-    }
-
-    /**
-     * @return string
-     */
-    public function getName(): string
-    {
-        return $this->getShortClassName();
     }
 }

@@ -12,9 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Activity;
 
 use Carbon\CarbonInterval;
-use JetBrains\PhpStorm\Pure;
-use Temporal\Client\WorkflowOptions;
-use Temporal\Common\CronSchedule;
 use Temporal\Common\MethodRetry;
 use Temporal\Common\RetryOptions;
 use Temporal\Internal\Assert;
@@ -41,7 +38,7 @@ class ActivityOptions extends Options
      * Optional: The default task queue with the same name as the workflow task
      * queue.
      */
-    #[Marshal(name: 'TaskQueue')]
+    #[Marshal(name: 'TaskQueueName')]
     public string $taskQueue = WorkerFactoryInterface::DEFAULT_TASK_QUEUE;
 
     /**
@@ -128,7 +125,7 @@ class ActivityOptions extends Options
      */
     public function mergeWith(MethodRetry $retry = null): self
     {
-        return immutable(function () use ($retry) {
+        return immutable(function () use ($retry): void {
             if ($retry !== null && $this->diff->isPresent($this, 'retryOptions')) {
                 $this->retryOptions = $this->retryOptions->mergeWith($retry);
             }

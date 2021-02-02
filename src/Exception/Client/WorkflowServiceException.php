@@ -7,10 +7,10 @@
  * file that was distributed with this source code.
  */
 
-namespace Temporal\Exception\Client;
+declare(strict_types=1);
 
+namespace Temporal\Exception\Client;
 
 class WorkflowServiceException extends WorkflowException
 {
-
 }

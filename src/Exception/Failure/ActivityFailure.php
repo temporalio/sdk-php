@@ -7,6 +7,8 @@
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace Temporal\Exception\Failure;
 
 class ActivityFailure extends TemporalFailure
@@ -84,9 +86,9 @@ class ActivityFailure extends TemporalFailure
     }
 
     /**
-     * @return int
+     * @return string
      */
-    public function getActivityId(): int
+    public function getActivityId(): string
     {
         return $this->activityId;
     }

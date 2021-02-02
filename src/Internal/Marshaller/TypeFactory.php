@@ -57,41 +57,11 @@ class TypeFactory implements TypeFactoryInterface
     }
 
     /**
-     * @param iterable<CallableTypeMatcher|DetectableTypeInterface> $matchers
-     * @return iterable<CallableTypeMatcher>
-     */
-    private function createMatchers(iterable $matchers): iterable
-    {
-        foreach ($matchers as $matcher) {
-            if ($matcher instanceof \Closure) {
-                yield $matcher;
-                continue;
-            }
-
-            yield static function (\ReflectionNamedType $type) use ($matcher): ?string {
-                return $matcher::match($type) ? $matcher : null;
-            };
-        }
-    }
-
-    /**
-     * @return iterable<class-string<DetectableTypeInterface>>
-     */
-    private function getDefaultMatchers(): iterable
-    {
-        yield CronType::class;
-        yield DateTimeType::class;
-        yield DateIntervalType::class;
-        yield ArrayType::class;
-        yield ObjectType::class;
-    }
-
-    /**
      * {@inheritDoc}
      */
     public function create(string $type, array $args): ?TypeInterface
     {
-        if (! \is_subclass_of($type, TypeInterface::class)) {
+        if (!\is_subclass_of($type, TypeInterface::class)) {
             throw new \InvalidArgumentException(\sprintf(self::ERROR_INVALID_TYPE, TypeInterface::class, $type));
         }
 
@@ -107,7 +77,7 @@ class TypeFactory implements TypeFactoryInterface
          * - Union types ({@see \ReflectionUnionType}) cannot be uniquely determined.
          * - The {@see null} type is an alias of "mixed" type.
          */
-        if (! $type instanceof \ReflectionNamedType) {
+        if (!$type instanceof \ReflectionNamedType) {
             return null;
         }
 
@@ -118,5 +88,33 @@ class TypeFactory implements TypeFactoryInterface
         }
 
         return null;
+    }
+
+    /**
+     * @param iterable<CallableTypeMatcher|DetectableTypeInterface> $matchers
+     * @return iterable<CallableTypeMatcher>
+     */
+    private function createMatchers(iterable $matchers): iterable
+    {
+        foreach ($matchers as $matcher) {
+            if ($matcher instanceof \Closure) {
+                yield $matcher;
+                continue;
+            }
+
+            yield static fn(\ReflectionNamedType $type): ?string => $matcher::match($type) ? $matcher : null;
+        }
+    }
+
+    /**
+     * @return iterable<class-string<DetectableTypeInterface>>
+     */
+    private function getDefaultMatchers(): iterable
+    {
+        yield CronType::class;
+        yield DateTimeType::class;
+        yield DateIntervalType::class;
+        yield ArrayType::class;
+        yield ObjectType::class;
     }
 }

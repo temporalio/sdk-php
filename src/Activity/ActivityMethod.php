@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Activity;
 
 use Doctrine\Common\Annotations\Annotation\Target;
+use JetBrains\PhpStorm\Immutable;
 use Spiral\Attributes\NamedArgumentConstructorAttribute;
 
 /**
@@ -28,6 +29,7 @@ final class ActivityMethod implements NamedArgumentConstructorAttribute
      * be used as metric tags. And systems like prometheus ignore metrics which
      * have tags with unsupported characters.
      */
+    #[Immutable]
     public ?string $name = null;
 
     /**

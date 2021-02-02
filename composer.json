@@ -29,7 +29,6 @@
         "grpc/grpc": "^1.34",
         "nesbot/carbon": "^2.41",
         "phpfn/immutable": "^2.0",
-        "psr/container": "^1.0",
         "psr/log": "^1.1",
         "react/promise": "^2.8",
         "spiral/attributes": "^2.7",
@@ -45,6 +44,7 @@
         }
     },
     "require-dev": {
+        "friendsofphp/php-cs-fixer": "^2.8",
         "composer/composer": "^2.0",
         "laminas/laminas-code": "^4.0",
         "doctrine/annotations": "^1.11",
@@ -71,6 +71,10 @@
             "phpunit --testsuite=Unit --testdox",
             "phpunit --testsuite=Feature --testdox",
             "phpunit --testsuite=Functional --testdox"
+        ],
+        "phpcs": [
+            "@putenv PHP_CS_FIXER_IGNORE_ENV=1",
+            "php-cs-fixer fix src"
         ],
         "check": "psalm"
     },

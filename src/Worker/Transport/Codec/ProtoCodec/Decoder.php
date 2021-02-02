@@ -48,7 +48,7 @@ class Decoder
     public function decode(Message $msg): CommandInterface
     {
         switch (true) {
-            case $msg->getCommand() !== "":
+            case $msg->getCommand() !== '':
                 return $this->parseRequest($msg);
 
             case $msg->hasFailure():
@@ -70,7 +70,12 @@ class Decoder
             $payloads = EncodedValues::fromPayloads($msg->getPayloads(), $this->converter);
         }
 
-        return new Request($msg->getCommand(), json_decode($msg->getOptions(), true), $payloads, $msg->getId());
+        return new Request(
+            $msg->getCommand(),
+            json_decode($msg->getOptions(), true, 256, JSON_THROW_ON_ERROR),
+            $payloads,
+            (int)$msg->getId()
+        );
     }
 
     /**

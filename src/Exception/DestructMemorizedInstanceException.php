@@ -7,6 +7,8 @@
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace Temporal\Exception;
 
 /**
@@ -16,5 +18,4 @@ namespace Temporal\Exception;
  */
 class DestructMemorizedInstanceException extends TemporalException
 {
-
 }

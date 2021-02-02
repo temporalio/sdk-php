@@ -31,14 +31,17 @@ $worker = $factory->newWorker('default');
 foreach ($getClasses(__DIR__ . '/Fixtures/src/Workflow') as $name) {
     $class = 'Temporal\\Tests\\Workflow\\' . $name;
 
-    if (class_exists($class)) {
-        $worker->registerWorkflowType($class);
+    if (class_exists($class) && !interface_exists($class)) {
+        $worker->registerWorkflowTypes($class);
     }
 }
 
 // register all activity
 foreach ($getClasses(__DIR__ . '/Fixtures/src/Activity') as $name) {
-    $worker->registerActivityType('Temporal\\Tests\\Activity\\' . $name);
+    $class = 'Temporal\\Tests\\Activity\\' . $name;
+    if (class_exists($class) && !interface_exists($class)) {
+        $worker->registerActivityImplementations(new $class());
+    }
 }
 
 $factory->run();

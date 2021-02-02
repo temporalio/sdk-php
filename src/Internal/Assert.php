@@ -43,7 +43,7 @@ final class Assert
     public static function keyTypeOf(array $values, string $type): bool
     {
         $fn = 'is_' . $type;
-        return self::all($values, fn ($_, $k) => $fn($k));
+        return self::all($values, fn($_, $k) => $fn($k));
     }
 
     /**
@@ -54,7 +54,7 @@ final class Assert
     public static function valueTypeOf(array $values, string $type): bool
     {
         $fn = 'is_' . $type;
-        return self::all($values, fn ($v) => $fn($v));
+        return self::all($values, fn($v) => $fn($v));
     }
 
     /**
@@ -64,7 +64,7 @@ final class Assert
      */
     public static function valuesInstanceOf(array $values, string $of): bool
     {
-        return self::all($values, fn ($v) => $v instanceof $of);
+        return self::all($values, fn($v) => $v instanceof $of);
     }
 
     /**
@@ -75,7 +75,7 @@ final class Assert
     public static function all(array $values, callable $filter): bool
     {
         foreach ($values as $key => $value) {
-            if (! $filter($value, $key)) {
+            if (!$filter($value, $key)) {
                 return false;
             }
         }

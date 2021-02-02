@@ -29,6 +29,8 @@ use Temporal\Workflow\WorkflowContextInterface;
 use Temporal\Workflow\WorkflowInfo;
 
 /**
+ * This class provides coroutine specific access to active WorkflowContext.
+ *
  * @method static array getArguments()
  * @method static WorkflowInfo getInfo()
  * @method static mixed getLastCompletionResult($type = null)
@@ -38,7 +40,11 @@ use Temporal\Workflow\WorkflowInfo;
  * @method static \DateTimeInterface now()
  * @method static bool isReplaying()
  *
+ * @method static CancellationScopeInterface async(callable $handler)
+ * @method static CancellationScopeInterface asyncDetached($handler)
+ *
  * @method static CompletableResultInterface await(...$condition)
+ * @method static CompletableResultInterface awaitWithTimeout($interval, ...$condition)
  *
  * @method static CompletableResultInterface sideEffect(callable $cb)
  * @method static CompletableResultInterface timer(string|int|float|\DateInterval $interval)
@@ -63,21 +69,4 @@ use Temporal\Workflow\WorkflowInfo;
  */
 final class Workflow extends Facade
 {
-    /**
-     * @param callable $handler
-     * @return CancellationScopeInterface
-     */
-    public static function async(callable $handler): CancellationScopeInterface
-    {
-        return self::getCurrentContext()->newCancellationScope($handler);
-    }
-
-    /**
-     * @param callable $handler
-     * @return CancellationScopeInterface
-     */
-    public static function asyncDetached(callable $handler): CancellationScopeInterface
-    {
-        return self::getCurrentContext()->newDetachedCancellationScope($handler);
-    }
 }

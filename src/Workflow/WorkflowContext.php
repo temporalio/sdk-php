@@ -21,7 +21,6 @@ use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\Support\StackRenderer;
 use Temporal\Internal\Transport\ClientInterface;
-use Temporal\Internal\Transport\CompletableResultInterface;
 use Temporal\Internal\Transport\Request\ContinueAsNew;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Internal\ServiceContainer;
@@ -39,7 +38,6 @@ use Temporal\Internal\Workflow\ExternalWorkflowProxy;
 use Temporal\Internal\Workflow\ExternalWorkflowStub;
 use Temporal\Internal\Workflow\Input;
 use Temporal\Promise;
-use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 
 use function React\Promise\reject;
@@ -49,11 +47,11 @@ class WorkflowContext implements WorkflowContextInterface
     protected ServiceContainer $services;
     protected ClientInterface $client;
 
-    private array $awaits = [];
-
     protected Input $input;
     protected WorkflowInstanceInterface $workflowInstance;
     protected ?ValuesInterface $lastCompletionResult = null;
+
+    private array $awaits = [];
 
     private array $trace = [];
     private bool $continueAsNew = false;
@@ -86,16 +84,6 @@ class WorkflowContext implements WorkflowContextInterface
     public function getWorkflowInstance(): WorkflowInstanceInterface
     {
         return $this->workflowInstance;
-    }
-
-    /**
-     * Record last stack trace of the call.
-     *
-     * @return void
-     */
-    protected function recordTrace(): void
-    {
-        $this->trace = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
     }
 
     /**
@@ -437,6 +425,21 @@ class WorkflowContext implements WorkflowContextInterface
     }
 
     /**
+     * Returns true if any of conditions were fired and false if timeout was reached.
+     *
+     * @param int|DateInterval $interval
+     * @param mixed ...$condition
+     * @return PromiseInterface
+     */
+    public function awaitWithTimeout($interval, ...$condition): PromiseInterface
+    {
+        $timer = $this->timer($interval);
+        $condition[] = $timer;
+
+        return $this->await(...$condition)->then(fn() => !$timer->isComplete());
+    }
+
+    /**
      * @param callable $condition
      * @return PromiseInterface
      */
@@ -450,7 +453,7 @@ class WorkflowContext implements WorkflowContextInterface
     /**
      * Calculate unblocked conditions.
      */
-    public function resolveConditions()
+    public function resolveConditions(): void
     {
         foreach ($this->awaits as $i => $cond) {
             [$condition, $deferred] = $cond;
@@ -459,5 +462,15 @@ class WorkflowContext implements WorkflowContextInterface
                 $deferred->resolve();
             }
         }
+    }
+
+    /**
+     * Record last stack trace of the call.
+     *
+     * @return void
+     */
+    protected function recordTrace(): void
+    {
+        $this->trace = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
     }
 }

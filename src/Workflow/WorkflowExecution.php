@@ -39,7 +39,7 @@ class WorkflowExecution
     public function __construct(string $id = null, ?string $runId = null)
     {
         $this->id = $id ?? Uuid::nil();
-        $this->runId = $runId ?? Uuid::nil();
+        $this->runId = $runId;
     }
 
     /**

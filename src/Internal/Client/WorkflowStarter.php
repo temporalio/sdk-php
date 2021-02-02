@@ -7,6 +7,8 @@
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace Temporal\Internal\Client;
 
 use Temporal\Api\Common\V1\WorkflowType;
@@ -84,20 +86,14 @@ final class WorkflowStarter
             ->setTaskQueue(new TaskQueue(['name' => $options->taskQueue]))
             ->setWorkflowType(new WorkflowType(['name' => $workflowType]))
             ->setWorkflowId($workflowId)
-            ->setCronSchedule($options->cronSchedule)
+            ->setCronSchedule($options->cronSchedule ? $options->cronSchedule->getExpression() : null)
             ->setRetryPolicy($options->toRetryPolicy())
             ->setWorkflowIdReusePolicy($options->workflowIdReusePolicy)
             ->setWorkflowRunTimeout(DateInterval::toDuration($options->workflowRunTimeout))
             ->setWorkflowExecutionTimeout(DateInterval::toDuration($options->workflowExecutionTimeout))
-            ->setWorkflowTaskTimeout(DateInterval::toDuration($options->workflowTaskTimeout));
-
-        if ($options->memo !== null) {
-            $r->setMemo($options->toMemo());
-        }
-
-        if ($options->searchAttributes !== null) {
-            $r->setSearchAttributes($options->toSearchAttributes());
-        }
+            ->setWorkflowTaskTimeout(DateInterval::toDuration($options->workflowTaskTimeout))
+            ->setMemo($options->toMemo($this->converter))
+            ->setSearchAttributes($options->toSearchAttributes($this->converter));
 
         $input = EncodedValues::fromValues($args, $this->converter);
         if (!$input->isEmpty()) {
@@ -156,20 +152,14 @@ final class WorkflowStarter
             ->setTaskQueue(new TaskQueue(['name' => $options->taskQueue]))
             ->setWorkflowType(new WorkflowType(['name' => $workflowType]))
             ->setWorkflowId($workflowId)
-            ->setCronSchedule($options->cronSchedule)
+            ->setCronSchedule($options->cronSchedule ? $options->cronSchedule->getExpression() : null)
             ->setRetryPolicy($options->toRetryPolicy())
             ->setWorkflowIdReusePolicy($options->workflowIdReusePolicy)
             ->setWorkflowRunTimeout(DateInterval::toDuration($options->workflowRunTimeout))
             ->setWorkflowExecutionTimeout(DateInterval::toDuration($options->workflowExecutionTimeout))
-            ->setWorkflowTaskTimeout(DateInterval::toDuration($options->workflowTaskTimeout));
-
-        if ($options->memo !== null) {
-            $r->setMemo($options->toMemo());
-        }
-
-        if ($options->searchAttributes !== null) {
-            $r->setSearchAttributes($options->toSearchAttributes());
-        }
+            ->setWorkflowTaskTimeout(DateInterval::toDuration($options->workflowTaskTimeout))
+            ->setMemo($options->toMemo($this->converter))
+            ->setSearchAttributes($options->toSearchAttributes($this->converter));
 
         $input = EncodedValues::fromValues($startArgs, $this->converter);
         if (!$input->isEmpty()) {

@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Internal\Declaration;
 
 use JetBrains\PhpStorm\Pure;
-use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\WorkflowInstance\SignalQueue;

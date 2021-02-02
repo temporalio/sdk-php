@@ -42,7 +42,7 @@ class DateIntervalType extends Type implements DetectableTypeInterface
      */
     public static function match(\ReflectionNamedType $type): bool
     {
-        return ! $type->isBuiltin() && Inheritance::extends($type->getName(), \DateInterval::class);
+        return !$type->isBuiltin() && Inheritance::extends($type->getName(), \DateInterval::class);
     }
 
     /**
@@ -53,10 +53,10 @@ class DateIntervalType extends Type implements DetectableTypeInterface
         $method = 'total' . \ucfirst($this->format);
 
         if ($this->format === DateInterval::FORMAT_NANOSECONDS) {
-            return DateInterval::parse($value, $this->format)->totalMicroseconds * 1000;
+            return (int)(DateInterval::parse($value, $this->format)->totalMicroseconds * 1000);
         }
 
-        return DateInterval::parse($value, $this->format)->$method;
+        return (int)(DateInterval::parse($value, $this->format)->$method);
     }
 
     /**

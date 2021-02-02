@@ -16,15 +16,12 @@ use Temporal\Activity;
 use Temporal\Activity\ActivityContext;
 use Temporal\Activity\ActivityInfo;
 use Temporal\DataConverter\EncodedValues;
-use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DoNotCompleteOnResultException;
 use Temporal\Internal\Declaration\Instantiator\ActivityInstantiator;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\RPCConnectionInterface;
-
-use function Amp\call;
 
 final class InvokeActivity extends Route
 {
@@ -70,14 +67,12 @@ final class InvokeActivity extends Route
         $context = new ActivityContext($this->rpc, $this->services->dataConverter, $heartbeatDetails);
         $context = $this->services->marshaller->unmarshal($options, $context);
 
-        // todo: get from container
         $prototype = $this->findDeclarationOrFail($context->getInfo());
-        $instance = $this->instantiator->instantiate($prototype);
 
         try {
             Activity::setCurrentContext($context);
 
-            $handler = $instance->getHandler();
+            $handler = $prototype->getInstance()->getHandler();
             $result = $handler($payloads);
 
             if ($context->isDoNotCompleteOnReturn()) {

@@ -45,28 +45,6 @@ class Marshaller implements MarshallerInterface
     }
 
     /**
-     * @param class-string $class
-     * @return MapperInterface
-     * @throws \ReflectionException
-     */
-    private function factory(string $class): MapperInterface
-    {
-        $reflection = new \ReflectionClass($class);
-
-        return $this->mapper->create($reflection, $this->type);
-    }
-
-    /**
-     * @param class-string $class
-     * @return MapperInterface
-     * @throws \ReflectionException
-     */
-    private function getMapper(string $class): MapperInterface
-    {
-        return $this->mappers[$class] ??= $this->factory($class);
-    }
-
-    /**
      * {@inheritDoc}
      *
      * @throws \ReflectionException
@@ -96,7 +74,7 @@ class Marshaller implements MarshallerInterface
         $result = $mapper->isCopyOnWrite() ? clone $to : $to;
 
         foreach ($mapper->getSetters() as $field => $setter) {
-            if (! \array_key_exists($field, $from)) {
+            if (!\array_key_exists($field, $from)) {
                 continue;
             }
 
@@ -104,5 +82,27 @@ class Marshaller implements MarshallerInterface
         }
 
         return $result;
+    }
+
+    /**
+     * @param class-string $class
+     * @return MapperInterface
+     * @throws \ReflectionException
+     */
+    private function factory(string $class): MapperInterface
+    {
+        $reflection = new \ReflectionClass($class);
+
+        return $this->mapper->create($reflection, $this->type);
+    }
+
+    /**
+     * @param class-string $class
+     * @return MapperInterface
+     * @throws \ReflectionException
+     */
+    private function getMapper(string $class): MapperInterface
+    {
+        return $this->mappers[$class] ??= $this->factory($class);
     }
 }

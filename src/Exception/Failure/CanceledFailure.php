@@ -7,12 +7,13 @@
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace Temporal\Exception\Failure;
 
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
-use Throwable;
 
 class CanceledFailure extends TemporalFailure
 {
@@ -21,11 +22,11 @@ class CanceledFailure extends TemporalFailure
     /**
      * @param string $message
      * @param ValuesInterface|null $details
-     * @param Throwable|null $previous
+     * @param \Throwable|null $previous
      */
-    public function __construct(string $message, ValuesInterface $details = null, Throwable $previous = null)
+    public function __construct(string $message, ValuesInterface $details = null, \Throwable $previous = null)
     {
-        parent::__construct($message, "", $previous);
+        parent::__construct($message, '', $previous);
         $this->details = $details ?? EncodedValues::empty();
     }
 

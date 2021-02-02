@@ -7,6 +7,8 @@
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace Temporal\Internal\Workflow;
 
 use React\Promise\PromiseInterface;
@@ -58,9 +60,9 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
      * @param callable $handler
      * @return CancellationScopeInterface
      */
-    public function newCancellationScope(callable $handler): CancellationScopeInterface
+    public function async(callable $handler): CancellationScopeInterface
     {
-        return $this->scope->createScope($handler, false);
+        return $this->scope->startScope($handler, false);
     }
 
     /**
@@ -69,9 +71,9 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
      * @param callable $handler
      * @return CancellationScopeInterface
      */
-    public function newDetachedCancellationScope(callable $handler): CancellationScopeInterface
+    public function asyncDetached(callable $handler): CancellationScopeInterface
     {
-        return $this->scope->createScope($handler, true);
+        return $this->scope->startScope($handler, true);
     }
 
     /**
@@ -81,7 +83,7 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
     public function request(RequestInterface $request): PromiseInterface
     {
         if ($this->scope->isCancelled()) {
-            throw new CanceledFailure("Attempt to send request to cancelled scope");
+            throw new CanceledFailure('Attempt to send request to cancelled scope');
         }
 
         $promise = $this->parent->request($request);

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * This file is part of Temporal package.
  *
@@ -52,7 +54,7 @@ final class Saga
     /**
      * @param callable $handler
      */
-    public function addCompensation(callable $handler)
+    public function addCompensation(callable $handler): void
     {
         $this->compensate[] = $handler;
     }

@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Declaration\Prototype;
 
 use Temporal\Common\MethodRetry;
+use Temporal\Internal\Declaration\ActivityInstance;
 
 final class ActivityPrototype extends Prototype
 {
@@ -19,6 +20,11 @@ final class ActivityPrototype extends Prototype
      * @var MethodRetry|null
      */
     private ?MethodRetry $methodRetry = null;
+
+    /**
+     * @var ActivityInstance|null
+     */
+    private ?ActivityInstance $instance = null;
 
     /**
      * @return MethodRetry|null
@@ -34,5 +40,25 @@ final class ActivityPrototype extends Prototype
     public function setMethodRetry(?MethodRetry $attribute): void
     {
         $this->methodRetry = $attribute;
+    }
+
+    /**
+     * @return ?ActivityInstance
+     */
+    public function getInstance(): ?ActivityInstance
+    {
+        return $this->instance;
+    }
+
+    /**
+     * @param object $instance
+     * @return $this
+     */
+    public function withInstance(object $instance): self
+    {
+        $proto = clone $this;
+        $proto->instance = new ActivityInstance($proto, $instance);
+
+        return $proto;
     }
 }

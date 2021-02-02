@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration;
 
-use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Declaration\Dispatcher\AutowiredPayloads;
 use Temporal\Internal\Declaration\Prototype\Prototype;
@@ -45,6 +44,14 @@ abstract class Instance implements InstanceInterface
     }
 
     /**
+     * {@inheritDoc}
+     */
+    public function getHandler(): callable
+    {
+        return $this->handler;
+    }
+
+    /**
      * @psalm-return DispatchableHandler
      *
      * @param \ReflectionFunctionAbstract $func
@@ -54,9 +61,7 @@ abstract class Instance implements InstanceInterface
     {
         $valueMapper = new AutowiredPayloads($func);
 
-        return function (ValuesInterface $values) use ($valueMapper) {
-            return $valueMapper->dispatchValues($this->context, $values);
-        };
+        return fn(ValuesInterface $values) => $valueMapper->dispatchValues($this->context, $values);
     }
 
     /**
@@ -67,13 +72,5 @@ abstract class Instance implements InstanceInterface
     protected function createCallableHandler(callable $handler): \Closure
     {
         return $this->createHandler(new \ReflectionFunction($handler));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getHandler(): callable
-    {
-        return $this->handler;
     }
 }

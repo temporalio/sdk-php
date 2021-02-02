@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration\Instantiator;
 
-use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Internal\Declaration\Prototype\PrototypeInterface;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\WorkflowInstance;
@@ -38,7 +37,9 @@ final class WorkflowInstantiator extends Instantiator
      */
     protected function getInstance(PrototypeInterface $prototype): ?object
     {
-        if ($class = $this->getClass($prototype)) {
+        $class = $prototype->getHandler()->getDeclaringClass();
+
+        if ($class !== null) {
             return $class->newInstanceWithoutConstructor();
         }
 

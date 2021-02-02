@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration\Instantiator;
 
-use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Internal\Declaration\ActivityInstance;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Declaration\Prototype\PrototypeInterface;

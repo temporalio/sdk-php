@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of Temporal package.
  *
@@ -6,9 +7,10 @@
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace Temporal\Exception\Client;
 
 class WorkflowNotFoundException extends WorkflowException
 {
-
 }

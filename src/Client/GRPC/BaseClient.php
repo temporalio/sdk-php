@@ -7,6 +7,8 @@
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace Temporal\Client\GRPC;
 
 use Carbon\CarbonInterval;
@@ -28,6 +30,14 @@ abstract class BaseClient implements ServiceClientInterface
     }
 
     /**
+     * Close connection and destruct client.
+     */
+    public function __destruct()
+    {
+        $this->close();
+    }
+
+    /**
      * Close the communication channel associated with this stub.
      */
     public function close(): void
@@ -36,11 +46,40 @@ abstract class BaseClient implements ServiceClientInterface
     }
 
     /**
-     * Close connection and destruct client.
+     * @param string $address
+     * @return ServiceClientInterface
+     * @psalm-suppress UndefinedClass
      */
-    public function __destruct()
+    public static function create(string $address): ServiceClientInterface
     {
-        $this->close();
+        $client = new WorkflowServiceClient(
+            $address,
+            ['credentials' => \Grpc\ChannelCredentials::createInsecure()]
+        );
+
+        return new static($client);
+    }
+
+    /**
+     * @param string $address
+     * @param string $crt Certificate or cert file in x509 format.
+     * @return ServiceClientInterface
+     *
+     * @psalm-suppress UndefinedClass
+     * @psalm-suppress UnusedVariable
+     */
+    public static function createSSL(string $address, string $crt): ServiceClientInterface
+    {
+        if (\is_file($crt)) {
+            $crt = \file_get_contents($crt);
+        }
+
+        $client = new WorkflowServiceClient(
+            $address,
+            ['credentials' => \Grpc\ChannelCredentials::createSsl($crt)]
+        );
+
+        return new static($client);
     }
 
     /**
@@ -72,7 +111,8 @@ abstract class BaseClient implements ServiceClientInterface
                 $options = $ctx->getOptions();
                 if ($ctx->getDeadline() !== null) {
                     $diff = (new \DateTime())->diff($ctx->getDeadline());
-                    $options['timeout'] = CarbonInterval::instance($diff)->totalMicroseconds;;
+                    $options['timeout'] = CarbonInterval::instance($diff)->totalMicroseconds;
+                    ;
                 }
 
                 /** @var UnaryCall $call */
@@ -99,7 +139,7 @@ abstract class BaseClient implements ServiceClientInterface
                 }
 
                 if ($ctx->getDeadline() !== null && $ctx->getDeadline()->getTimestamp() > time()) {
-                    throw new TimeoutException("Call timeout has been reached");
+                    throw new TimeoutException('Call timeout has been reached');
                 }
 
                 // wait till next call
@@ -114,42 +154,5 @@ abstract class BaseClient implements ServiceClientInterface
                 }
             }
         } while (true);
-    }
-
-    /**
-     * @param string $address
-     * @return ServiceClientInterface
-     * @psalm-suppress UndefinedClass
-     */
-    public static function createInsecure(string $address): ServiceClientInterface
-    {
-        $client = new WorkflowServiceClient(
-            $address,
-            ['credentials' => \Grpc\ChannelCredentials::createInsecure()]
-        );
-
-        return new static($client);
-    }
-
-    /**
-     * @param string $address
-     * @param string $crt Certificate or cert file in x509 format.
-     * @return ServiceClientInterface
-     *
-     * @psalm-suppress UndefinedClass
-     * @psalm-suppress UnusedVariable
-     */
-    public static function createWithCert(string $address, string $crt): ServiceClientInterface
-    {
-        if (\is_file($crt)) {
-            $crt = \file_get_contents($crt);
-        }
-
-        $client = new WorkflowServiceClient(
-            $address,
-            ['credentials' => \Grpc\ChannelCredentials::createSsl($crt)]
-        );
-
-        return new static($client);
     }
 }

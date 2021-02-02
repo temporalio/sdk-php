@@ -29,15 +29,6 @@ abstract class Options
     }
 
     /**
-     * @return static
-     */
-    #[Pure]
-    public static function new(): self
-    {
-        return new static();
-    }
-
-    /**
      * @return array
      */
     public function __debugInfo(): array
@@ -49,5 +40,14 @@ abstract class Options
         $properties['#changed'] = $this->diff->getChangedProperties($this);
 
         return $properties;
+    }
+
+    /**
+     * @return static
+     */
+    #[Pure]
+    public static function new(): self
+    {
+        return new static();
     }
 }

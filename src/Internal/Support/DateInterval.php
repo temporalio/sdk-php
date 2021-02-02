@@ -23,16 +23,6 @@ final class DateInterval
     /**
      * @var string
      */
-    private const ERROR_INVALID_DATETIME = 'Unrecognized date time interval format';
-
-    /**
-     * @var string
-     */
-    private const ERROR_INVALID_FORMAT = 'Invalid date interval format "%s", available formats: %s';
-
-    /**
-     * @var string
-     */
     public const FORMAT_YEARS = 'years';
 
     /**
@@ -81,6 +71,16 @@ final class DateInterval
     public const FORMAT_NANOSECONDS = 'nanoseconds';
 
     /**
+     * @var string
+     */
+    private const ERROR_INVALID_DATETIME = 'Unrecognized date time interval format';
+
+    /**
+     * @var string
+     */
+    private const ERROR_INVALID_FORMAT = 'Invalid date interval format "%s", available formats: %s';
+
+    /**
      * @var array<positive-int, DateIntervalFormat>
      */
     private const AVAILABLE_FORMATS = [
@@ -95,19 +95,6 @@ final class DateInterval
         self::FORMAT_MICROSECONDS,
         self::FORMAT_NANOSECONDS,
     ];
-
-    /**
-     * @param string $format
-     * @return string
-     */
-    private static function validateFormat(string $format): void
-    {
-        if (!\in_array($format, self::AVAILABLE_FORMATS, true)) {
-            $message = \sprintf(self::ERROR_INVALID_FORMAT, $format, \implode(', ', self::AVAILABLE_FORMATS));
-
-            throw new \InvalidArgumentException($message);
-        }
-    }
 
     /**
      * @param DateIntervalValue $interval
@@ -177,5 +164,18 @@ final class DateInterval
         $d->setSeconds(self::parse($i)->totalSeconds);
 
         return $d;
+    }
+
+    /**
+     * @param string $format
+     * @return string
+     */
+    private static function validateFormat(string $format): void
+    {
+        if (!\in_array($format, self::AVAILABLE_FORMATS, true)) {
+            $message = \sprintf(self::ERROR_INVALID_FORMAT, $format, \implode(', ', self::AVAILABLE_FORMATS));
+
+            throw new \InvalidArgumentException($message);
+        }
     }
 }

@@ -59,7 +59,7 @@ class Diff
      */
     public function isPresent(object $context, string $property = null): bool
     {
-        return ! $this->isChanged($context, $property);
+        return !$this->isChanged($context, $property);
     }
 
     /**
@@ -75,40 +75,12 @@ class Diff
             return $this->isChangedAnyProperty($context);
         }
 
-        if (! \array_key_exists($property, $this->properties)) {
+        if (!\array_key_exists($property, $this->properties)) {
             $message = \sprintf(self::ERROR_INVALID_PROPERTY, $this->class, $property);
             throw new \InvalidArgumentException($message);
         }
 
         return $this->properties[$property] !== $context->$property;
-    }
-
-    /**
-     * @param object $context
-     */
-    private function matchContext(object $context): void
-    {
-        $actual = \get_class($context);
-
-        if ($this->class !== $actual) {
-            $message = \sprintf(self::ERROR_INVALID_CONTEXT, $this->class, $actual);
-            throw new \InvalidArgumentException($message);
-        }
-    }
-
-    /**
-     * @param object $context
-     * @return bool
-     */
-    private function isChangedAnyProperty(object $context): bool
-    {
-        foreach ($this->properties as $name => $value) {
-            if ($context->$name !== $value) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**
@@ -135,7 +107,7 @@ class Diff
     public function getPresentProperties(object $context): array
     {
         $changed = $this->getChangedPropertyNames($context);
-        $filter = static fn($_, string $name): bool => ! \in_array($name, $changed, true);
+        $filter = static fn($_, string $name): bool => !\in_array($name, $changed, true);
 
         return \array_filter($this->properties, $filter, \ARRAY_FILTER_USE_BOTH);
     }
@@ -166,5 +138,33 @@ class Diff
         }
 
         return $result;
+    }
+
+    /**
+     * @param object $context
+     */
+    private function matchContext(object $context): void
+    {
+        $actual = \get_class($context);
+
+        if ($this->class !== $actual) {
+            $message = \sprintf(self::ERROR_INVALID_CONTEXT, $this->class, $actual);
+            throw new \InvalidArgumentException($message);
+        }
+    }
+
+    /**
+     * @param object $context
+     * @return bool
+     */
+    private function isChangedAnyProperty(object $context): bool
+    {
+        foreach ($this->properties as $name => $value) {
+            if ($context->$name !== $value) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -11,22 +11,17 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Client;
 
-use Temporal\Api\Common\V1\WorkflowType;
 use Temporal\Api\Enums\V1\EventType;
 use Temporal\Api\Enums\V1\HistoryEventFilterType;
 use Temporal\Api\Enums\V1\RetryState;
 use Temporal\Api\Enums\V1\TimeoutType;
 use Temporal\Api\Errordetails\V1\QueryFailedFailure;
-use Temporal\Api\Errordetails\V1\WorkflowExecutionAlreadyStartedFailure;
 use Temporal\Api\History\V1\HistoryEvent;
 use Temporal\Api\Query\V1\WorkflowQuery;
-use Temporal\Api\Taskqueue\V1\TaskQueue;
 use Temporal\Api\Workflowservice\V1\GetWorkflowExecutionHistoryRequest;
 use Temporal\Api\Workflowservice\V1\QueryWorkflowRequest;
 use Temporal\Api\Workflowservice\V1\RequestCancelWorkflowExecutionRequest;
-use Temporal\Api\Workflowservice\V1\SignalWithStartWorkflowExecutionRequest;
 use Temporal\Api\Workflowservice\V1\SignalWorkflowExecutionRequest;
-use Temporal\Api\Workflowservice\V1\StartWorkflowExecutionRequest;
 use Temporal\Api\Workflowservice\V1\TerminateWorkflowExecutionRequest;
 use Temporal\Client\ClientOptions;
 use Temporal\Client\GRPC\Context;
@@ -37,9 +32,7 @@ use Temporal\Client\WorkflowStubInterface;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
-use Temporal\DataConverter\Type;
 use Temporal\Exception\Client\WorkflowException;
-use Temporal\Exception\Client\WorkflowExecutionAlreadyStartedException;
 use Temporal\Exception\Client\WorkflowQueryException;
 use Temporal\Exception\Client\WorkflowQueryRejectedException;
 use Temporal\Exception\Client\ServiceClientException;
@@ -49,12 +42,10 @@ use Temporal\Exception\Failure\TerminatedFailure;
 use Temporal\Exception\Failure\TimeoutFailure;
 use Temporal\Exception\IllegalStateException;
 use Temporal\Exception\Client\TimeoutException;
-use Temporal\Exception\InvalidArgumentException;
 use Temporal\Exception\WorkflowExecutionFailedException;
 use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Client\WorkflowNotFoundException;
 use Temporal\Exception\Client\WorkflowServiceException;
-use Temporal\Internal\Support\DateInterval;
 use Temporal\Workflow\WorkflowExecution;
 
 final class WorkflowStub implements WorkflowStubInterface
@@ -278,32 +269,6 @@ final class WorkflowStub implements WorkflowStubInterface
     }
 
     /**
-     * Get untyped workflow stub using provided workflow proxy or workflow stub instance.
-     *
-     * @param WorkflowStubInterface|object $workflow
-     * @return WorkflowStubInterface
-     */
-    public static function fromWorkflow($workflow): WorkflowStubInterface
-    {
-        $workflowStub = null;
-        if ($workflow instanceof WorkflowProxy) {
-            $workflowStub = $workflow->__getUntypedStub();
-        }
-
-        if ($workflow instanceof WorkflowStubInterface) {
-            $workflowStub = $workflow;
-        }
-
-        if ($workflowStub === null) {
-            throw new InvalidArgumentException(
-                \sprintf('Only workflow stubs can be started, %s given', \get_debug_type($workflow))
-            );
-        }
-
-        return $workflowStub;
-    }
-
-    /**
      * @param string $method
      */
     private function assertStarted(string $method): void
@@ -359,7 +324,7 @@ final class WorkflowStub implements WorkflowStubInterface
                     0,
                     RetryState::RETRY_STATE_NON_RETRYABLE_FAILURE,
                     new CanceledFailure(
-                        "Workflow canceled",
+                        'Workflow canceled',
                         $details,
                         null
                     )
@@ -384,7 +349,7 @@ final class WorkflowStub implements WorkflowStubInterface
                     0,
                     $attr->getRetryState(),
                     new TimeoutFailure(
-                        "",
+                        '',
                         EncodedValues::empty(),
                         TimeoutType::TIMEOUT_TYPE_START_TO_CLOSE
                     )
@@ -392,7 +357,7 @@ final class WorkflowStub implements WorkflowStubInterface
 
             default:
                 throw new \RuntimeException(
-                    "Workflow end state is not completed: " . $closeEvent->serializeToJsonString()
+                    'Workflow end state is not completed: ' . $closeEvent->serializeToJsonString()
                 );
         }
     }
@@ -423,7 +388,7 @@ final class WorkflowStub implements WorkflowStubInterface
                 $timeout = max(0, $timeout - $elapsed);
 
                 if ($timeout === 0) {
-                    throw new TimeoutException("Unable to wait for workflow completion, deadline reached");
+                    throw new TimeoutException('Unable to wait for workflow completion, deadline reached');
                 }
             }
 

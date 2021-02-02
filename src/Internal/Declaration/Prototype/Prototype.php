@@ -21,21 +21,21 @@ abstract class Prototype implements PrototypeInterface
     protected string $name;
 
     /**
-     * @var \ReflectionFunctionAbstract
+     * @var \ReflectionMethod
      */
-    protected \ReflectionFunctionAbstract $handler;
+    protected \ReflectionMethod $handler;
 
     /**
-     * @var \ReflectionClass|null
+     * @var \ReflectionClass
      */
-    private ?\ReflectionClass $class;
+    private \ReflectionClass $class;
 
     /**
      * @param string $name
-     * @param \ReflectionFunctionAbstract $handler
-     * @param \ReflectionClass|null $class
+     * @param \ReflectionMethod $handler
+     * @param \ReflectionClass $class
      */
-    public function __construct(string $name, \ReflectionFunctionAbstract $handler, ?\ReflectionClass $class)
+    public function __construct(string $name, \ReflectionMethod $handler, \ReflectionClass $class)
     {
         $this->handler = $handler;
         $this->name = $name;
@@ -63,6 +63,30 @@ abstract class Prototype implements PrototypeInterface
     }
 
     /**
+     * @return string
+     */
+    public function getID(): string
+    {
+        return $this->name;
+    }
+
+    /**
+     * @return \ReflectionClass
+     */
+    public function getClass(): \ReflectionClass
+    {
+        return $this->class;
+    }
+
+    /**
+     * @return \ReflectionMethod
+     */
+    public function getHandler(): \ReflectionMethod
+    {
+        return $this->handler;
+    }
+
+    /**
      * @param PrototypeInterface $prototype
      * @param string $class
      * @return bool
@@ -84,29 +108,5 @@ abstract class Prototype implements PrototypeInterface
         $handler = $prototype->getHandler();
 
         return $handler->getName() === $method;
-    }
-
-    /**
-     * @return string
-     */
-    public function getID(): string
-    {
-        return $this->name;
-    }
-
-    /**
-     * @return \ReflectionClass|null
-     */
-    public function getClass(): ?\ReflectionClass
-    {
-        return $this->class;
-    }
-
-    /**
-     * @return \ReflectionFunctionAbstract
-     */
-    public function getHandler(): \ReflectionFunctionAbstract
-    {
-        return $this->handler;
     }
 }

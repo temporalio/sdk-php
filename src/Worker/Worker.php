@@ -19,7 +19,6 @@ use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Router;
 use Temporal\Internal\Transport\RouterInterface;
-use Temporal\WorkerFactory;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\RPCConnectionInterface;
 
@@ -31,6 +30,11 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
      * @var string
      */
     private string $name;
+
+    /**
+     * @var WorkerOptions
+     */
+    private WorkerOptions $options;
 
     /**
      * @var RouterInterface
@@ -49,37 +53,22 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
 
     /**
      * @param string $taskQueue
-     * @param WorkerFactory $worker
+     * @param WorkerOptions $options
+     * @param ServiceContainer $serviceContainer
      * @param RPCConnectionInterface $rpc
      */
-    public function __construct(string $taskQueue, WorkerFactory $worker, RPCConnectionInterface $rpc)
-    {
+    public function __construct(
+        string $taskQueue,
+        WorkerOptions $options,
+        ServiceContainer $serviceContainer,
+        RPCConnectionInterface $rpc
+    ) {
         $this->rpc = $rpc;
         $this->name = $taskQueue;
+        $this->options = $options;
 
-        $this->services = ServiceContainer::fromWorker($worker);
+        $this->services = $serviceContainer;
         $this->router = $this->createRouter();
-    }
-
-    /**
-     * @return RouterInterface
-     */
-    protected function createRouter(): RouterInterface
-    {
-        $router = new Router();
-
-        // Activity routes
-        $router->add(new Router\InvokeActivity($this->services, $this->rpc));
-
-        // Workflow routes
-        $router->add(new Router\StartWorkflow($this->services));
-        $router->add(new Router\InvokeQuery($this->services->running, $this->services->loop));
-        $router->add(new Router\InvokeSignal($this->services->running, $this->services->loop));
-        $router->add(new Router\CancelWorkflow($this->services->running, $this->services->client));
-        $router->add(new Router\DestroyWorkflow($this->services->running, $this->services->client));
-        $router->add(new Router\StackTrace($this->services->running));
-
-        return $router;
     }
 
     /**
@@ -105,11 +94,12 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
     /**
      * {@inheritDoc}
      */
-    public function registerWorkflowType(string $class, bool $overwrite = false): WorkerInterface
+    public function registerWorkflowTypes(string ...$class): WorkerInterface
     {
-        $workflow = $this->services->workflowsReader->fromClass($class);
-
-        $this->services->workflows->add($workflow, $overwrite);
+        foreach ($class as $workflow) {
+            $proto = $this->services->workflowsReader->fromClass($workflow);
+            $this->services->workflows->add($proto, false);
+        }
 
         return $this;
     }
@@ -125,16 +115,18 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
     /**
      * {@inheritDoc}
      */
-    public function registerActivityType(string $class, bool $overwrite = false): WorkerInterface
+    public function registerActivityImplementations(object ...$activity): WorkerInterface
     {
-        foreach ($this->services->activitiesReader->fromClass($class) as $activity) {
-            $this->services->activities->add($activity, $overwrite);
+        foreach ($activity as $act) {
+            $class = \get_class($act);
+
+            foreach ($this->services->activitiesReader->fromClass($class) as $proto) {
+                $this->services->activities->add($proto->withInstance($act), false);
+            }
         }
 
         return $this;
     }
-
-    // todo: add activity factory or container
 
     /**
      * {@inheritDoc}
@@ -142,5 +134,26 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
     public function getActivities(): RepositoryInterface
     {
         return $this->services->activities;
+    }
+
+    /**
+     * @return RouterInterface
+     */
+    protected function createRouter(): RouterInterface
+    {
+        $router = new Router();
+
+        // Activity routes
+        $router->add(new Router\InvokeActivity($this->services, $this->rpc));
+
+        // Workflow routes
+        $router->add(new Router\StartWorkflow($this->services));
+        $router->add(new Router\InvokeQuery($this->services->running, $this->services->loop));
+        $router->add(new Router\InvokeSignal($this->services->running, $this->services->loop));
+        $router->add(new Router\CancelWorkflow($this->services->running));
+        $router->add(new Router\DestroyWorkflow($this->services->running));
+        $router->add(new Router\StackTrace($this->services->running));
+
+        return $router;
     }
 }

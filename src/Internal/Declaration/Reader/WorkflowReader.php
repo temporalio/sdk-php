@@ -17,6 +17,7 @@ use Temporal\Internal\Declaration\Graph\ClassNode;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Workflow\QueryMethod;
+use Temporal\Workflow\ReturnType;
 use Temporal\Workflow\SignalMethod;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
@@ -94,6 +95,26 @@ class WorkflowReader extends Reader
 
     /**
      * @param ClassNode $graph
+     * @return \Traversable<ActivityPrototype>
+     * @throws \ReflectionException
+     */
+    protected function getWorkflowPrototypes(ClassNode $graph): \Traversable
+    {
+        $class = $graph->getReflection();
+
+        foreach ($class->getMethods() as $reflection) {
+            if (!$this->isValidMethod($reflection)) {
+                continue;
+            }
+
+            if ($prototype = $this->getPrototype($graph, $reflection)) {
+                yield $prototype;
+            }
+        }
+    }
+
+    /**
+     * @param ClassNode $graph
      * @param WorkflowPrototype $prototype
      * @return WorkflowPrototype
      * @throws \ReflectionException
@@ -110,12 +131,12 @@ class WorkflowReader extends Reader
 
             if ($signal !== null) {
                 // Validation
-                if (! $this->isValidMethod($ctx)) {
+                if (!$this->isValidMethod($ctx)) {
                     throw new \LogicException(
                         \vsprintf(self::ERROR_COMMON_METHOD_VISIBILITY, [
                             'signal',
                             $contextClass->getName(),
-                            $ctx->getName()
+                            $ctx->getName(),
                         ])
                     );
                 }
@@ -131,12 +152,12 @@ class WorkflowReader extends Reader
 
             if ($query !== null) {
                 // Validation
-                if (! $this->isValidMethod($ctx)) {
+                if (!$this->isValidMethod($ctx)) {
                     throw new \LogicException(
                         \vsprintf(self::ERROR_COMMON_METHOD_VISIBILITY, [
                             'query',
                             $contextClass->getName(),
-                            $ctx->getName()
+                            $ctx->getName(),
                         ])
                     );
                 }
@@ -173,26 +194,6 @@ class WorkflowReader extends Reader
 
     /**
      * @param ClassNode $graph
-     * @return \Traversable<ActivityPrototype>
-     * @throws \ReflectionException
-     */
-    protected function getWorkflowPrototypes(ClassNode $graph): \Traversable
-    {
-        $class = $graph->getReflection();
-
-        foreach ($class->getMethods() as $reflection) {
-            if (! $this->isValidMethod($reflection)) {
-                continue;
-            }
-
-            if ($prototype = $this->getPrototype($graph, $reflection)) {
-                yield $prototype;
-            }
-        }
-    }
-
-    /**
-     * @param ClassNode $graph
      * @param \ReflectionMethod $handler
      * @param string $name
      * @return object|null
@@ -221,7 +222,7 @@ class WorkflowReader extends Reader
      */
     private function getPrototype(ClassNode $graph, \ReflectionMethod $handler): ?WorkflowPrototype
     {
-        $lastCron = $previousRetry = $prototype = null;
+        $cronSchedule = $previousRetry = $prototype = $returnType = null;
 
         foreach ($graph->getMethods($handler->getName()) as $group) {
             //
@@ -242,7 +243,14 @@ class WorkflowReader extends Reader
                 }
 
                 // Last CronSchedule
-                $lastCron = $this->reader->firstFunctionMetadata($method, CronSchedule::class) ?? $lastCron;
+                $cronSchedule = $this->reader->firstFunctionMetadata($method, CronSchedule::class)
+                    ?? $cronSchedule
+                ;
+
+                // Last ReturnType
+                $returnType = $this->reader->firstFunctionMetadata($method, ReturnType::class)
+                    ?? $returnType
+                ;
 
                 //
                 // In the future, workflow methods are available only in
@@ -258,15 +266,19 @@ class WorkflowReader extends Reader
                 }
 
                 if ($prototype === null) {
-                    $prototype = $this->findProto($graph, $handler, $method);
+                    $prototype = $this->findProto($handler, $method);
                 }
 
                 if ($prototype !== null && $retry !== null) {
                     $prototype->setMethodRetry($retry);
                 }
 
-                if ($prototype !== null && $lastCron !== null) {
-                    $prototype->setCronSchedule($lastCron);
+                if ($prototype !== null && $cronSchedule !== null) {
+                    $prototype->setCronSchedule($cronSchedule);
+                }
+
+                if ($prototype !== null && $returnType !== null) {
+                    $prototype->setReturnType($returnType);
                 }
             }
 
@@ -277,14 +289,13 @@ class WorkflowReader extends Reader
     }
 
     /**
-     * @param ClassNode $cls
      * @param \ReflectionMethod $handler
      * @param \ReflectionMethod $ctx
      * @return WorkflowPrototype|null
      */
-    private function findProto(ClassNode $cls, \ReflectionMethod $handler, \ReflectionMethod $ctx): ?WorkflowPrototype
+    private function findProto(\ReflectionMethod $handler, \ReflectionMethod $ctx): ?WorkflowPrototype
     {
-        $reflection = $cls->getReflection();
+        $reflection = $ctx->getDeclaringClass();
 
         //
         // The name of the workflow handler must be generated based
@@ -317,7 +328,7 @@ class WorkflowReader extends Reader
          *  }
          * </code>
          */
-        if (! $this->isValidMethod($handler)) {
+        if (!$this->isValidMethod($handler)) {
             $contextClass = $ctx->getDeclaringClass();
 
             throw new \LogicException(

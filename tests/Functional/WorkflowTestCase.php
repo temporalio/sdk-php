@@ -209,4 +209,18 @@ class WorkflowTestCase extends FunctionalTestCase
 
         $worker->run($this, Splitter::create('Test_SignalSteps.log')->getQueue());
     }
+
+    public function testBatchedSignal_WithPauses()
+    {
+        $worker = WorkerMock::createMock();
+
+        $worker->run($this, Splitter::create('Test_BatchedSignal.log')->getQueue());
+    }
+
+    public function testBatchedSignal_Combined()
+    {
+        $worker = WorkerMock::createMock();
+
+        $worker->run($this, Splitter::create('Test_BatchedSignal_01.log')->getQueue());
+    }
 }

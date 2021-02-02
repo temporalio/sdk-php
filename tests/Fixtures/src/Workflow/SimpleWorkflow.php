@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * This file is part of Temporal package.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Temporal\Tests\Workflow;
@@ -21,10 +28,9 @@ class SimpleWorkflow
             SimpleActivity::class,
             ActivityOptions::new()
                 ->withStartToCloseTimeout(5)
-                // todo: update logs
-                //->withRetryOptions(
-                //    RetryOptions::new()->withMaximumAttempts(2)
-                //)
+                ->withRetryOptions(
+                    RetryOptions::new()->withMaximumAttempts(2)
+                )
         );
 
         return yield $simple->echo($input);

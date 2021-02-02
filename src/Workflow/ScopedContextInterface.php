@@ -7,6 +7,8 @@
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace Temporal\Workflow;
 
 /**
@@ -18,7 +20,7 @@ interface ScopedContextInterface extends WorkflowContextInterface
      * @param callable $handler
      * @return CancellationScopeInterface
      */
-    public function newCancellationScope(callable $handler): CancellationScopeInterface;
+    public function async(callable $handler): CancellationScopeInterface;
 
     /**
      * Cancellation scope which does not react to parent cancel and completes in background.
@@ -26,5 +28,5 @@ interface ScopedContextInterface extends WorkflowContextInterface
      * @param callable $handler
      * @return CancellationScopeInterface
      */
-    public function newDetachedCancellationScope(callable $handler): CancellationScopeInterface;
+    public function asyncDetached(callable $handler): CancellationScopeInterface;
 }

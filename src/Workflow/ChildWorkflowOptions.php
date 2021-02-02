@@ -14,7 +14,6 @@ namespace Temporal\Workflow;
 use Carbon\CarbonInterval;
 use Cron\CronExpression;
 use Temporal\Client\ClientOptions;
-use Temporal\Client\WorkflowOptions;
 use Temporal\Common\CronSchedule;
 use Temporal\Common\IdReusePolicy;
 use Temporal\Common\MethodRetry;
@@ -30,7 +29,6 @@ use Temporal\Internal\Marshaller\Type\ObjectType;
 use Temporal\Internal\Support\Cron;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\Options;
-use Temporal\WorkerFactory;
 use Temporal\Worker\WorkerFactoryInterface;
 
 /**
@@ -65,14 +63,14 @@ final class ChildWorkflowOptions extends Options
      * Optional: the parent workflow task queue will be used if this is not
      * provided.
      */
-    #[Marshal(name: 'TaskQueue')]
+    #[Marshal(name: 'TaskQueueName')]
     public string $taskQueue = WorkerFactoryInterface::DEFAULT_TASK_QUEUE;
 
     /**
      * The end to end timeout for the child workflow execution including
      * retries and continue as new.
      *
-     * Optional: defaults to 10 years
+     * Optional: defaults is no limit
      */
     #[Marshal(name: 'WorkflowExecutionTimeout', type: DateIntervalType::class)]
     public \DateInterval $workflowExecutionTimeout;
@@ -91,7 +89,7 @@ final class ChildWorkflowOptions extends Options
     /**
      * The workflow task timeout for the child workflow.
      *
-     * Optional: default is 10s if this is not provided (or if 0 is provided).
+     * Optional: default is no limit
      */
     #[Marshal(name: 'WorkflowTaskTimeout', type: DateIntervalType::class)]
     public \DateInterval $workflowTaskTimeout;
@@ -164,9 +162,9 @@ final class ChildWorkflowOptions extends Options
      */
     public function __construct()
     {
-        $this->workflowExecutionTimeout = CarbonInterval::years(10);
-        $this->workflowRunTimeout = CarbonInterval::years(10);
-        $this->workflowTaskTimeout = CarbonInterval::seconds(10);
+        $this->workflowExecutionTimeout = CarbonInterval::seconds(0);
+        $this->workflowRunTimeout = CarbonInterval::seconds(0);
+        $this->workflowTaskTimeout = CarbonInterval::seconds(0);
         $this->retryOptions = new RetryOptions();
 
         parent::__construct();
@@ -180,7 +178,7 @@ final class ChildWorkflowOptions extends Options
     public function mergeWith(MethodRetry $retry = null, CronSchedule $cron = null): self
     {
         return immutable(
-            function () use ($retry, $cron) {
+            function () use ($retry, $cron): void {
                 if ($retry !== null && $this->diff->isPresent($this, 'retryOptions')) {
                     $this->retryOptions = $this->retryOptions->mergeWith($retry);
                 }

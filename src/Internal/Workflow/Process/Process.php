@@ -14,6 +14,7 @@ namespace Temporal\Internal\Workflow\Process;
 use JetBrains\PhpStorm\Pure;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DestructMemorizedInstanceException;
+use Temporal\Exception\InvalidArgumentException;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Worker\LoopInterface;
@@ -32,16 +33,33 @@ class Process extends Scope implements ProcessInterface
         parent::__construct($services, $ctx);
 
         $this->getWorkflowInstance()->getSignalQueue()->onSignal(
-            fn(callable $handler) => $this->createScope($handler, true, LoopInterface::ON_SIGNAL)
+            function (callable $handler): void {
+                $scope = $this->createScope(true, LoopInterface::ON_SIGNAL);
+                $scope->onClose(
+                    function (?\Throwable $error): void {
+                        if ($error !== null) {
+                            // we want to fail process when signal scope fails
+                            $this->complete($error);
+                        }
+                    }
+                );
+
+                try {
+                    $scope->start($handler);
+                } catch (InvalidArgumentException $e) {
+                    // invalid signal invocation, destroy the scope with no traces
+                    $scope->unlock();
+                }
+            }
         );
 
         // unlike other scopes Process will notify the server when complete instead of pushing the result
         // to parent scope (there are no parent scope)
         $this->promise()->then(
-            function ($result) {
+            function ($result): void {
                 $this->complete([$result]);
             },
-            function (\Throwable $e) {
+            function (\Throwable $e): void {
                 $this->complete($e);
             }
         );
@@ -51,7 +69,7 @@ class Process extends Scope implements ProcessInterface
      * @param callable $handler
      * @param ValuesInterface|null $values
      */
-    public function start(callable $handler, ValuesInterface $values = null)
+    public function start(callable $handler, ValuesInterface $values = null): void
     {
         try {
             $this->makeCurrent();
@@ -82,12 +100,8 @@ class Process extends Scope implements ProcessInterface
     /**
      * @param $result
      */
-    protected function complete($result)
+    protected function complete($result): void
     {
-        if ($this->context->isContinuedAsNew()) {
-            return;
-        }
-
         if ($result instanceof \Throwable) {
             if ($result instanceof DestructMemorizedInstanceException) {
                 // do not handle
@@ -95,8 +109,13 @@ class Process extends Scope implements ProcessInterface
             }
 
             $this->context->complete([], $result);
-        } else {
-            $this->context->complete($result);
+            return;
         }
+
+        if ($this->context->isContinuedAsNew()) {
+            return;
+        }
+
+        $this->context->complete($result);
     }
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * This file is part of Temporal package.
  *
@@ -11,7 +13,6 @@ namespace Temporal\DataConverter;
 
 use React\Promise\PromiseInterface;
 use Temporal\Api\Common\V1\Payloads;
-use Temporal\Exception\DataConverterException;
 
 class EncodedValues implements ValuesInterface
 {
@@ -70,7 +71,7 @@ class EncodedValues implements ValuesInterface
         }
 
         if ($this->converter === null) {
-            throw new \LogicException("DataConverter is not set");
+            throw new \LogicException('DataConverter is not set');
         }
 
         return $this->converter->fromPayload(
@@ -89,7 +90,7 @@ class EncodedValues implements ValuesInterface
         }
 
         if ($this->converter === null) {
-            throw new \LogicException("DataConverter is not set");
+            throw new \LogicException('DataConverter is not set');
         }
 
         $data = [];
@@ -106,7 +107,7 @@ class EncodedValues implements ValuesInterface
     /**
      * @param DataConverterInterface $converter
      */
-    public function setDataConverter(DataConverterInterface $converter)
+    public function setDataConverter(DataConverterInterface $converter): void
     {
         $this->converter = $converter;
     }

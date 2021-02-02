@@ -11,6 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Functional\Client;
 
+use Temporal\Exception\Client\WorkflowFailedException;
+use Temporal\Exception\Failure\ActivityFailure;
+use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Tests\Workflow\AggregatedWorkflow;
 use Temporal\Tests\Workflow\LoopWithSignalCoroutinesWorkflow;
 use Temporal\Tests\Workflow\LoopWorkflow;
@@ -69,6 +72,10 @@ class AwaitTestCase extends ClientTestCase
         $wait->addValue('test3');
         $wait->addValue('test4');
 
+        $result = $run->getResult();
+        asort($result);
+        $result = array_values($result);
+
         $this->assertSame(
             [
                 'TEST1',
@@ -76,7 +83,7 @@ class AwaitTestCase extends ClientTestCase
                 'TEST3',
                 'TEST4'
             ],
-            $run->getResult('string')
+            $result
         );
     }
 
@@ -92,6 +99,10 @@ class AwaitTestCase extends ClientTestCase
         $wait->addValue('test3');
         $wait->addValue('test4');
 
+        $result = $run->getResult();
+        asort($result);
+        $result = array_values($result);
+
         $this->assertSame(
             [
                 'IN SIGNAL 2 IN SIGNAL TEST1',
@@ -99,9 +110,61 @@ class AwaitTestCase extends ClientTestCase
                 'IN SIGNAL 2 IN SIGNAL TEST3',
                 'IN SIGNAL 2 IN SIGNAL TEST4'
             ],
-            $run->getResult('string')
+            $result
         );
     }
 
-    // todo: test failure in signal coroutine
+    public function testFailSignalSerialization()
+    {
+        $client = $this->createClient();
+        $wait = $client->newWorkflowStub(LoopWithSignalCoroutinesWorkflow::class);
+
+        $run = $client->start($wait, 4);
+
+        $wait->addValue('test1');
+        $wait->addValue('test2');
+        $wait->addValue('test3');
+
+        // breaks the invocation
+        $wait->addValue(['hello'], 123);
+
+        $wait->addValue('test4');
+
+        $result = $run->getResult();
+        asort($result);
+        $result = array_values($result);
+
+        $this->assertSame(
+            [
+                'IN SIGNAL 2 IN SIGNAL TEST1',
+                'IN SIGNAL 2 IN SIGNAL TEST2',
+                'IN SIGNAL 2 IN SIGNAL TEST3',
+                'IN SIGNAL 2 IN SIGNAL TEST4'
+            ],
+            $result
+        );
+    }
+
+    public function testFailSignalErrored()
+    {
+        $client = $this->createClient();
+        $wait = $client->newWorkflowStub(LoopWithSignalCoroutinesWorkflow::class);
+
+        $run = $client->start($wait, 4);
+
+        $wait->addValue('error');
+
+        try {
+            $run->getResult();
+            $this->fail('unreachable');
+        } catch (WorkflowFailedException $e) {
+            $this->assertInstanceOf(ActivityFailure::class, $e->getPrevious());
+            $this->assertStringContainsString('SimpleActivity.prefix', $e->getPrevious()->getMessage());
+
+            $e = $e->getPrevious();
+
+            $this->assertInstanceOf(ApplicationFailure::class, $e->getPrevious());
+            $this->assertStringContainsString('activity error', $e->getPrevious()->getMessage());
+        }
+    }
 }

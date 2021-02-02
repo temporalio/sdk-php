@@ -7,6 +7,8 @@
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace Temporal\DataConverter;
 
 use Temporal\Api\Common\V1\Payloads;
@@ -21,15 +23,15 @@ interface ValuesInterface extends \Countable
     public function isEmpty(): bool;
 
     /**
-     * @param DataConverterInterface $dataConverter
+     * @param DataConverterInterface $converter
      */
-    public function setDataConverter(DataConverterInterface $dataConverter);
+    public function setDataConverter(DataConverterInterface $converter);
 
     /**
      * Get value by it's index.
      *
      * @param int $index
-     * @param $type
+     * @param mixed $type
      * @return mixed
      */
     public function getValue(int $index, $type);

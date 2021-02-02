@@ -13,12 +13,9 @@ namespace Temporal\Internal\Workflow;
 
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
-use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
-use Temporal\DataConverter\Payload;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Marshaller\MarshallerInterface;
-use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Transport\Request\ExecuteChildWorkflow;
 use Temporal\Internal\Transport\Request\GetChildWorkflowExecution;
 use Temporal\Internal\Transport\Request\SignalExternalWorkflow;
@@ -68,7 +65,7 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
     /**
      * {@inheritDoc}
      */
-    public function execute(array $args = [], \ReflectionType $returnType = null): PromiseInterface
+    public function execute(array $args = [], $returnType = null): PromiseInterface
     {
         if ($this->request !== null) {
             throw new \LogicException('Child workflow already has been executed');
@@ -93,14 +90,6 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
             );
 
         return EncodedValues::decodePromise($promise, $returnType);
-    }
-
-    /**
-     * @return array
-     */
-    private function getOptionsArray(): array
-    {
-        return $this->marshaller->marshal($this->getOptions());
     }
 
     /**
@@ -143,5 +132,13 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
         $context = Workflow::getCurrentContext();
 
         return $context->request($request);
+    }
+
+    /**
+     * @return array
+     */
+    private function getOptionsArray(): array
+    {
+        return $this->marshaller->marshal($this->getOptions());
     }
 }

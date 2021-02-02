@@ -77,6 +77,30 @@ class AttributeMapper implements MapperInterface
     }
 
     /**
+     * @return bool
+     */
+    public function isCopyOnWrite(): bool
+    {
+        return $this->scope->copyOnWrite;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getGetters(): iterable
+    {
+        return $this->getters;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getSetters(): iterable
+    {
+        return $this->setters;
+    }
+
+    /**
      * @return Scope
      */
     private function getScope(): Scope
@@ -95,7 +119,7 @@ class AttributeMapper implements MapperInterface
             $name = $property->getName();
 
             // Has marshal attribute
-            if ($marshal === null && ! $this->isValidScope($property, $scope)) {
+            if ($marshal === null && !$this->isValidScope($property, $scope)) {
                 continue;
             }
 
@@ -157,7 +181,7 @@ class AttributeMapper implements MapperInterface
      */
     private function createSetter(string $name, ?TypeInterface $type): \Closure
     {
-        return function ($value) use ($name, $type) {
+        return function ($value) use ($name, $type): void {
             try {
                 $source = $this->$name;
             } catch (\Error $_) {
@@ -166,29 +190,5 @@ class AttributeMapper implements MapperInterface
 
             $this->$name = $type ? $type->parse($value, $source) : $value;
         };
-    }
-
-    /**
-     * @return bool
-     */
-    public function isCopyOnWrite(): bool
-    {
-        return $this->scope->copyOnWrite;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getGetters(): iterable
-    {
-        return $this->getters;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getSetters(): iterable
-    {
-        return $this->setters;
     }
 }

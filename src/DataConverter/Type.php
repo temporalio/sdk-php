@@ -7,14 +7,23 @@
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace Temporal\DataConverter;
 
+use Temporal\Workflow\ReturnType;
+
+/**
+ * @psalm-type TypeEnum = Type::TYPE_*
+ */
 final class Type
 {
-    public const STRING = 'string';
-    public const BOOL = 'bool';
-    public const INT = 'int';
-    public const FLOAT = 'float';
+    public const TYPE_ANY       = 'mixed';
+    public const TYPE_STRING    = 'string';
+    public const TYPE_BOOL      = 'bool';
+    public const TYPE_INT       = 'int';
+    public const TYPE_FLOAT     = 'float';
+    public const TYPE_VOID      = 'void';
 
     /**
      * @var string|null
@@ -27,7 +36,7 @@ final class Type
     private bool $allowsNull;
 
     /**
-     * @param string|null $name
+     * @param TypeEnum|string|null $name
      * @param bool $allowsNull
      */
     public function __construct(string $name = null, bool $allowsNull = false)
@@ -37,7 +46,7 @@ final class Type
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     public function getName(): ?string
     {
@@ -69,35 +78,43 @@ final class Type
     }
 
     /**
-     * @param \ReflectionClass $r
-     * @param bool $allowsNull
+     * @param \ReflectionClass $class
+     * @param bool $nullable
      * @return Type
      */
-    public static function fromReflectionClass(\ReflectionClass $r, bool $allowsNull = false)
+    public static function fromReflectionClass(\ReflectionClass $class, bool $nullable = false): self
     {
-        return new self($r->getName(), $allowsNull);
+        return new self($class->getName(), $nullable);
     }
 
     /**
-     * @param \ReflectionType $r
+     * @param \ReflectionType $type
      * @return Type
      */
-    public static function fromReflectionType(\ReflectionType $r)
+    public static function fromReflectionType(\ReflectionType $type): self
     {
-        if ($r instanceof \ReflectionNamedType) {
-            return new self($r->getName(), $r->allowsNull());
+        if ($type instanceof \ReflectionNamedType) {
+            $name = $type->getName();
+
+            // Traversable types (i.e. Generator) not allowed
+            if (!$name instanceof \Traversable && $name !== 'array' && $name !== 'iterable') {
+                return new self($type->getName(), $type->allowsNull());
+            }
         }
 
-        return new self(null, $r->allowsNull());
+        return new self(null, $type->allowsNull());
     }
 
     /**
      * @param string|\ReflectionClass|\ReflectionType|Type $type
      * @return Type
      */
-    public static function fromMixed($type): Type
+    public static function create($type): Type
     {
         switch (true) {
+            case $type instanceof ReturnType:
+                return new self($type->name, $type->nullable);
+
             case $type instanceof self:
                 return $type;
 

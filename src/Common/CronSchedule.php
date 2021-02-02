@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Common;
 
-use Carbon\CarbonInterval;
 use Cron\CronExpression;
 use JetBrains\PhpStorm\Immutable;
 use Spiral\Attributes\NamedArgumentConstructorAttribute;
@@ -29,6 +28,7 @@ use Temporal\Internal\Support\DateInterval;
  * until it is terminated or canceled.
  *
  * @psalm-import-type DateIntervalValue from DateInterval
+ * @see DateInterval
  *
  * @Annotation
  * @Target({ "METHOD" })

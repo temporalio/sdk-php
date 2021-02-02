@@ -9,6 +9,8 @@
  * @see https://github.com/spiral/php-grpc/blob/master/src/StatusCode.php
  */
 
+declare(strict_types=1);
+
 namespace Temporal\Client\GRPC;
 
 /**

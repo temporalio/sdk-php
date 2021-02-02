@@ -52,6 +52,7 @@ final class GetWorkerInfo extends Route
     {
         return [
             'TaskQueue' => $taskQueue->getID(),
+            'Options' => new \stdClass(), // todo: set options
             'Workflows' => $this->map(
                 $taskQueue->getWorkflows(),
                 function (WorkflowPrototype $workflow) {
@@ -64,9 +65,7 @@ final class GetWorkerInfo extends Route
             ),
             'Activities' => $this->map(
                 $taskQueue->getActivities(),
-                function (ActivityPrototype $activity) {
-                    return ['Name' => $activity->getID()];
-                }
+                fn(ActivityPrototype $activity) => ['Name' => $activity->getID()]
             ),
         ];
     }

@@ -13,9 +13,7 @@ namespace Temporal\Internal\Workflow;
 
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
-use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
-use Temporal\DataConverter\Payload;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Transport\Request\ExecuteActivity;
 use Temporal\Worker\Transport\Command\RequestInterface;
@@ -38,7 +36,7 @@ final class ActivityStub implements ActivityStubInterface
     }
 
     /**
-     * @return ActivityOptions
+     * {@inheritDoc}
      */
     public function getOptions(): ActivityOptions
     {
@@ -54,12 +52,9 @@ final class ActivityStub implements ActivityStubInterface
     }
 
     /**
-     * @param string $name
-     * @param array $args
-     * @param \ReflectionType|null $returnType
-     * @return PromiseInterface
+     * {@inheritDoc}
      */
-    public function execute(string $name, array $args = [], \ReflectionType $returnType = null): PromiseInterface
+    public function execute(string $name, array $args = [], $returnType = null): PromiseInterface
     {
         $request = new ExecuteActivity(
             $name,
@@ -82,5 +77,3 @@ final class ActivityStub implements ActivityStubInterface
         return $context->request($request);
     }
 }
-
-

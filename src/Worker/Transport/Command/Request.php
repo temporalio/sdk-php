@@ -72,7 +72,7 @@ class Request extends Command implements RequestInterface
     /**
      * @param \Throwable|null $failure
      */
-    public function setFailure(?\Throwable $failure)
+    public function setFailure(?\Throwable $failure): void
     {
         $this->failure = $failure;
     }

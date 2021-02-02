@@ -25,24 +25,16 @@ abstract class Facade
     ;
 
     /**
-     * Facade constructor.
-     */
-    private function __construct()
-    {
-        // Unable to create new facade instance
-    }
-
-    /**
      * @var object<T>|null
      */
     private static ?object $ctx = null;
 
     /**
-     * @param object<T>|null $ctx
+     * Facade constructor.
      */
-    public static function setCurrentContext(?object $ctx): void
+    private function __construct()
     {
-        self::$ctx = $ctx;
+        // Unable to create new facade instance
     }
 
     /**
@@ -55,6 +47,14 @@ abstract class Facade
         $context = self::getCurrentContext();
 
         return $context->$name(...$arguments);
+    }
+
+    /**
+     * @param object<T>|null $ctx
+     */
+    public static function setCurrentContext(?object $ctx): void
+    {
+        self::$ctx = $ctx;
     }
 
     /**
