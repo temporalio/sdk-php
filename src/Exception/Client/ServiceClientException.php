@@ -7,12 +7,14 @@
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace Temporal\Exception\Client;
 
 use Google\Protobuf\Any;
 use Google\Protobuf\Internal\RepeatedField;
 use Google\Rpc\Status;
-use Throwable;
+use GPBMetadata\Temporal\Api\Errordetails\V1\Message;
 
 class ServiceClientException extends \RuntimeException
 {
@@ -23,12 +25,12 @@ class ServiceClientException extends \RuntimeException
 
     /**
      * @param \stdClass $status
-     * @param Throwable|null $previous
+     * @param \Throwable|null $previous
      * @throws \Exception
      */
-    public function __construct(\stdClass $status, Throwable $previous = null)
+    public function __construct(\stdClass $status, \Throwable $previous = null)
     {
-        $this->status = new \Google\Rpc\Status();
+        $this->status = new Status();
 
         if (isset($status->metadata['grpc-status-details-bin'][0])) {
             $this->status->mergeFromString($status->metadata['grpc-status-details-bin'][0]);
@@ -54,7 +56,8 @@ class ServiceClientException extends \RuntimeException
     }
 
     /**
-     * @see  https://dev.to/khepin/grpc-advanced-error-handling-from-go-to-php-1omc
+     * @link https://dev.to/khepin/grpc-advanced-error-handling-from-go-to-php-1omc
+     *
      * @param string $class
      * @return object|null
      * @throws \Exception
@@ -67,7 +70,7 @@ class ServiceClientException extends \RuntimeException
         }
 
         // ensures that message descriptor was added to the pool
-        \GPBMetadata\Temporal\Api\Errordetails\V1\Message::initOnce();
+        Message::initOnce();
 
         /** @var Any $detail */
         foreach ($details as $detail) {

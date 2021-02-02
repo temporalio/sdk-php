@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Marshaller\Type;
 
-use Carbon\Carbon;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Support\DateTime;
 use Temporal\Internal\Support\Inheritance;

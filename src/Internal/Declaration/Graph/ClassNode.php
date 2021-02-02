@@ -11,8 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration\Graph;
 
-use JetBrains\PhpStorm\Pure;
-
 final class ClassNode implements NodeInterface
 {
     /**
@@ -34,6 +32,14 @@ final class ClassNode implements NodeInterface
     }
 
     /**
+     * @return string
+     */
+    public function __toString(): string
+    {
+        return $this->class->getName();
+    }
+
+    /**
      * @return \ReflectionClass
      */
     public function getReflection(): \ReflectionClass
@@ -47,6 +53,38 @@ final class ClassNode implements NodeInterface
     public function count(): int
     {
         return \count(
+            $this->inheritance ??= $this->getClassInheritance()
+        );
+    }
+
+    /**
+     * @param string $name
+     * @param bool $reverse
+     * @return \Traversable<ClassNode, \ReflectionMethod>
+     * @throws \ReflectionException
+     */
+    public function getMethods(string $name, bool $reverse = true): \Traversable
+    {
+        $inheritance = $reverse
+            ? \array_reverse($this->getInheritance())
+            : $this->getInheritance()
+        ;
+
+        foreach ($inheritance as $classes) {
+            $result = $this->boxMethods($classes, $name);
+
+            if (\count($result)) {
+                yield $this->unboxMethods($result);
+            }
+        }
+    }
+
+    /**
+     * @return \Traversable<array<positive-int, ClassNode>>
+     */
+    public function getIterator(): \Traversable
+    {
+        return new \ArrayIterator(
             $this->inheritance ??= $this->getClassInheritance()
         );
     }
@@ -100,7 +138,7 @@ final class ClassNode implements NodeInterface
 
         // Interfaces
         foreach ($this->class->getInterfaces() as $interface) {
-            if (! $this->isDirectInterfaceImplementation($interface)) {
+            if (!$this->isDirectInterfaceImplementation($interface)) {
                 continue;
             }
 
@@ -115,7 +153,7 @@ final class ClassNode implements NodeInterface
     private function isDirectInterfaceImplementation(\ReflectionClass $interface): bool
     {
         if ($parent = $this->class->getParentClass()) {
-            return ! $parent->implementsInterface($interface);
+            return !$parent->implementsInterface($interface);
         }
 
         return $this->class->implementsInterface($interface);
@@ -149,28 +187,6 @@ final class ClassNode implements NodeInterface
         }
 
         return null;
-    }
-
-    /**
-     * @param string $name
-     * @param bool $reverse
-     * @return \Traversable<ClassNode, \ReflectionMethod>
-     * @throws \ReflectionException
-     */
-    public function getMethods(string $name, bool $reverse = true): \Traversable
-    {
-        $inheritance = $reverse
-            ? \array_reverse($this->getInheritance())
-            : $this->getInheritance()
-        ;
-
-        foreach ($inheritance as $classes) {
-            $result = $this->boxMethods($classes, $name);
-
-            if (\count($result)) {
-                yield $this->unboxMethods($result);
-            }
-        }
     }
 
     /**
@@ -213,23 +229,5 @@ final class ClassNode implements NodeInterface
         };
 
         return $unpack();
-    }
-
-    /**
-     * @return \Traversable<array<positive-int, ClassNode>>
-     */
-    public function getIterator(): \Traversable
-    {
-        return new \ArrayIterator(
-            $this->inheritance ??= $this->getClassInheritance()
-        );
-    }
-
-    /**
-     * @return string
-     */
-    public function __toString(): string
-    {
-        return $this->class->getName();
     }
 }

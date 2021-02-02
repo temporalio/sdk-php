@@ -61,14 +61,14 @@ final class FailureConverter
         $failure = new Failure();
 
         if ($e instanceof TemporalFailure && $e->getFailure() !== null) {
-            if ($e->hasOriginalStackTrace() && $e->getFailure()->getStackTrace() === "") {
+            if ($e->hasOriginalStackTrace() && $e->getFailure()->getStackTrace() === '') {
                 $e->getFailure()->setStackTrace($e->getOriginalStackTrace());
             }
 
             return $e->getFailure();
-        } else {
-            $failure->setMessage($e->getMessage());
         }
+
+        $failure->setMessage($e->getMessage());
 
         $failure->setSource('PHP_SDK')->setStackTrace((string)$e);
 
@@ -142,7 +142,7 @@ final class FailureConverter
                         new WorkflowExecution(
                             [
                                 'workflow_id' => $e->getExecution()->getID(),
-                                'run_id' => $e->getExecution()->getRunID()
+                                'run_id' => $e->getExecution()->getRunID(),
                             ]
                         )
                     );

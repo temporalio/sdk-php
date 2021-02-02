@@ -95,6 +95,26 @@ class WorkflowReader extends Reader
 
     /**
      * @param ClassNode $graph
+     * @return \Traversable<ActivityPrototype>
+     * @throws \ReflectionException
+     */
+    protected function getWorkflowPrototypes(ClassNode $graph): \Traversable
+    {
+        $class = $graph->getReflection();
+
+        foreach ($class->getMethods() as $reflection) {
+            if (!$this->isValidMethod($reflection)) {
+                continue;
+            }
+
+            if ($prototype = $this->getPrototype($graph, $reflection)) {
+                yield $prototype;
+            }
+        }
+    }
+
+    /**
+     * @param ClassNode $graph
      * @param WorkflowPrototype $prototype
      * @return WorkflowPrototype
      * @throws \ReflectionException
@@ -111,12 +131,12 @@ class WorkflowReader extends Reader
 
             if ($signal !== null) {
                 // Validation
-                if (! $this->isValidMethod($ctx)) {
+                if (!$this->isValidMethod($ctx)) {
                     throw new \LogicException(
                         \vsprintf(self::ERROR_COMMON_METHOD_VISIBILITY, [
                             'signal',
                             $contextClass->getName(),
-                            $ctx->getName()
+                            $ctx->getName(),
                         ])
                     );
                 }
@@ -132,12 +152,12 @@ class WorkflowReader extends Reader
 
             if ($query !== null) {
                 // Validation
-                if (! $this->isValidMethod($ctx)) {
+                if (!$this->isValidMethod($ctx)) {
                     throw new \LogicException(
                         \vsprintf(self::ERROR_COMMON_METHOD_VISIBILITY, [
                             'query',
                             $contextClass->getName(),
-                            $ctx->getName()
+                            $ctx->getName(),
                         ])
                     );
                 }
@@ -170,26 +190,6 @@ class WorkflowReader extends Reader
         throw new \LogicException(
             \sprintf(self::ERROR_WORKFLOW_INTERFACE_NOT_FOUND, $graph, WorkflowInterface::class)
         );
-    }
-
-    /**
-     * @param ClassNode $graph
-     * @return \Traversable<ActivityPrototype>
-     * @throws \ReflectionException
-     */
-    protected function getWorkflowPrototypes(ClassNode $graph): \Traversable
-    {
-        $class = $graph->getReflection();
-
-        foreach ($class->getMethods() as $reflection) {
-            if (! $this->isValidMethod($reflection)) {
-                continue;
-            }
-
-            if ($prototype = $this->getPrototype($graph, $reflection)) {
-                yield $prototype;
-            }
-        }
     }
 
     /**
@@ -328,7 +328,7 @@ class WorkflowReader extends Reader
          *  }
          * </code>
          */
-        if (! $this->isValidMethod($handler)) {
+        if (!$this->isValidMethod($handler)) {
             $contextClass = $ctx->getDeclaringClass();
 
             throw new \LogicException(

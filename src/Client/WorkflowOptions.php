@@ -151,7 +151,7 @@ final class WorkflowOptions extends Options
     public function mergeWith(MethodRetry $retry = null, CronSchedule $cron = null): self
     {
         return immutable(
-            function () use ($retry, $cron) {
+            function () use ($retry, $cron): void {
                 if ($retry !== null && $this->diff->isPresent($this, 'retryOptions')) {
                     $this->retryOptions = $this->retryOptions->mergeWith($retry);
                 }

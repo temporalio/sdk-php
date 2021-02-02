@@ -33,10 +33,10 @@ class Process extends Scope implements ProcessInterface
         parent::__construct($services, $ctx);
 
         $this->getWorkflowInstance()->getSignalQueue()->onSignal(
-            function (callable $handler) {
+            function (callable $handler): void {
                 $scope = $this->createScope(true, LoopInterface::ON_SIGNAL);
                 $scope->onClose(
-                    function (?\Throwable $error) {
+                    function (?\Throwable $error): void {
                         if ($error !== null) {
                             // we want to fail process when signal scope fails
                             $this->complete($error);
@@ -56,10 +56,10 @@ class Process extends Scope implements ProcessInterface
         // unlike other scopes Process will notify the server when complete instead of pushing the result
         // to parent scope (there are no parent scope)
         $this->promise()->then(
-            function ($result) {
+            function ($result): void {
                 $this->complete([$result]);
             },
-            function (\Throwable $e) {
+            function (\Throwable $e): void {
                 $this->complete($e);
             }
         );
@@ -69,7 +69,7 @@ class Process extends Scope implements ProcessInterface
      * @param callable $handler
      * @param ValuesInterface|null $values
      */
-    public function start(callable $handler, ValuesInterface $values = null)
+    public function start(callable $handler, ValuesInterface $values = null): void
     {
         try {
             $this->makeCurrent();
@@ -100,7 +100,7 @@ class Process extends Scope implements ProcessInterface
     /**
      * @param $result
      */
-    protected function complete($result)
+    protected function complete($result): void
     {
         if ($result instanceof \Throwable) {
             if ($result instanceof DestructMemorizedInstanceException) {

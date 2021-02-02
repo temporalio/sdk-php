@@ -7,6 +7,8 @@
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace Temporal\DataConverter;
 
 use Temporal\Workflow\ReturnType;
@@ -95,7 +97,7 @@ final class Type
             $name = $type->getName();
 
             // Traversable types (i.e. Generator) not allowed
-            if (! $name instanceof \Traversable && $name !== 'array' && $name !== 'iterable') {
+            if (!$name instanceof \Traversable && $name !== 'array' && $name !== 'iterable') {
                 return new self($type->getName(), $type->allowsNull());
             }
         }

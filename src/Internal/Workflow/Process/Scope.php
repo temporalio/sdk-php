@@ -131,7 +131,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
         $this->deferred = new Deferred();
 
         $this->awaitLock = 0;
-        $this->unlock = function () {
+        $this->unlock = function (): void {
             $this->unlock();
         };
     }
@@ -172,7 +172,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
      * @param callable $handler
      * @param ValuesInterface|null $values
      */
-    public function start(callable $handler, ValuesInterface $values = null)
+    public function start(callable $handler, ValuesInterface $values = null): void
     {
         try {
             $this->awaitLock++;
@@ -242,36 +242,6 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     }
 
     /**
-     * @param bool $detached
-     * @param string|null $layer
-     * @return self
-     */
-    protected function createScope(bool $detached, string $layer = null): self
-    {
-        $scope = new Scope($this->services, $this->context);
-        $scope->detached = $detached;
-
-        if ($layer !== null) {
-            $scope->layer = $layer;
-        }
-
-        // do not return parent scope result until inner scope complete
-        $this->awaitLock++;
-        $scope->promise()->then($this->unlock, $this->unlock);
-
-        $cancelID = ++$this->cancelID;
-        $this->onCancel[$cancelID] = \Closure::fromCallable([$scope, 'cancel']);
-
-        $scope->onClose(
-            function () use ($cancelID) {
-                unset($this->onCancel[$cancelID]);
-            }
-        );
-
-        return $scope;
-    }
-
-    /**
      * @param callable $handler
      * @param bool $detached
      * @param string|null $layer
@@ -307,6 +277,36 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     }
 
     /**
+     * @param bool $detached
+     * @param string|null $layer
+     * @return self
+     */
+    protected function createScope(bool $detached, string $layer = null): self
+    {
+        $scope = new Scope($this->services, $this->context);
+        $scope->detached = $detached;
+
+        if ($layer !== null) {
+            $scope->layer = $layer;
+        }
+
+        // do not return parent scope result until inner scope complete
+        $this->awaitLock++;
+        $scope->promise()->then($this->unlock, $this->unlock);
+
+        $cancelID = ++$this->cancelID;
+        $this->onCancel[$cancelID] = \Closure::fromCallable([$scope, 'cancel']);
+
+        $scope->onClose(
+            function () use ($cancelID): void {
+                unset($this->onCancel[$cancelID]);
+            }
+        );
+
+        return $scope;
+    }
+
+    /**
      * @param callable $handler
      * @param ValuesInterface|null $values
      * @return \Generator
@@ -329,13 +329,13 @@ class Scope implements CancellationScopeInterface, PromisorInterface
      * @param RequestInterface $request
      * @param PromiseInterface $promise
      */
-    protected function onRequest(RequestInterface $request, PromiseInterface $promise)
+    protected function onRequest(RequestInterface $request, PromiseInterface $promise): void
     {
         if (!$request->isCancellable()) {
             return;
         }
 
-        $this->onCancel[++$this->cancelID] = function (\Throwable $reason = null) use ($request) {
+        $this->onCancel[++$this->cancelID] = function (\Throwable $reason = null) use ($request): void {
             if ($reason instanceof DestructMemorizedInstanceException) {
                 // memory flush
                 $this->context->getClient()->reject($request, $reason);
@@ -357,7 +357,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
         $this->awaitLock++;
 
         // do not cancel already complete promises
-        $cleanup = function () use ($cancelID) {
+        $cleanup = function () use ($cancelID): void {
             $this->context->resolveConditions();
             unset($this->onCancel[$cancelID]);
             $this->unlock();
@@ -424,13 +424,42 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     }
 
     /**
+     * Unlocks scope and pushes the result to the parent.
+     */
+    protected function unlock(): void
+    {
+        $this->makeCurrent();
+        $this->context->resolveConditions();
+
+        $this->awaitLock--;
+        if ($this->awaitLock < 0) {
+            throw new \LogicException('Undefined wait lock removed');
+        }
+
+        if ($this->awaitLock !== 0) {
+            // not ready yes
+            return;
+        }
+
+        if ($this->exception !== null) {
+            $this->deferred->reject($this->exception);
+        } else {
+            $this->deferred->resolve($this->result);
+        }
+
+        foreach ($this->onClose as $close) {
+            $close($this->exception);
+        }
+    }
+
+    /**
      * @param PromiseInterface $promise
      */
     private function nextPromise(PromiseInterface $promise): void
     {
         $onFulfilled = function ($result) {
             $this->defer(
-                function () use ($result) {
+                function () use ($result): void {
                     $this->makeCurrent();
                     try {
                         $this->coroutine->send($result);
@@ -445,9 +474,9 @@ class Scope implements CancellationScopeInterface, PromisorInterface
             return $result;
         };
 
-        $onRejected = function (\Throwable $e) {
+        $onRejected = function (\Throwable $e): void {
             $this->defer(
-                function () use ($e) {
+                function () use ($e): void {
                     $this->makeCurrent();
 
                     if ($e instanceof TemporalFailure && !$e->hasOriginalStackTrace()) {
@@ -487,35 +516,6 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     {
         $this->result = $result;
         $this->unlock();
-    }
-
-    /**
-     * Unlocks scope and pushes the result to the parent.
-     */
-    protected function unlock(): void
-    {
-        $this->makeCurrent();
-        $this->context->resolveConditions();
-
-        $this->awaitLock--;
-        if ($this->awaitLock < 0) {
-            throw new \LogicException("Undefined wait lock removed");
-        }
-
-        if ($this->awaitLock !== 0) {
-            // not ready yes
-            return;
-        }
-
-        if ($this->exception !== null) {
-            $this->deferred->reject($this->exception);
-        } else {
-            $this->deferred->resolve($this->result);
-        }
-
-        foreach ($this->onClose as $close) {
-            $close($this->exception);
-        }
     }
 
     /**

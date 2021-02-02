@@ -62,6 +62,52 @@ final class RoadRunner implements HostConnectionInterface
     }
 
     /**
+     * {@inheritDoc}
+     */
+    public function waitBatch(): ?CommandBatch
+    {
+        /** @var Payload $payload */
+        $payload = $this->interceptErrors(
+            fn() => $this->worker->waitPayload()
+        );
+
+        if ($payload === null) {
+            return null;
+        }
+
+        return new CommandBatch(
+            $payload->body,
+            $this->decodeHeaders($payload->header)
+        );
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function send(string $frame, array $headers = []): void
+    {
+        $json = $this->encodeHeaders($headers);
+
+        try {
+            $this->worker->send($frame, $json);
+        } catch (\Throwable $e) {
+            throw new TransportException($e->getMessage(), $e->getCode(), $e);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function error(\Throwable $error): void
+    {
+        try {
+            $this->worker->error((string)$error);
+        } catch (\Throwable $e) {
+            throw new TransportException($e->getMessage(), $e->getCode(), $e);
+        }
+    }
+
+    /**
      * @return $this
      */
     private function bootStdoutHandlers(): self
@@ -79,7 +125,7 @@ final class RoadRunner implements HostConnectionInterface
 
         // Intercept all errors
         \set_error_handler(
-            function (int $code, string $message, string $file, int $line) {
+            function (int $code, string $message, string $file, int $line): void {
                 $this->writeException(
                     new \ErrorException($message, $code, $code, $file, $line)
                 );
@@ -111,7 +157,7 @@ final class RoadRunner implements HostConnectionInterface
      */
     private function interceptErrors(\Closure $expr)
     {
-        $handler = static function (int $code, string $message, string $file, int $line) {
+        $handler = static function (int $code, string $message, string $file, int $line): void {
             $error = new \ErrorException($message, $code, $code, $file, $line);
 
             throw new TransportException($message, $code, $error);
@@ -124,28 +170,6 @@ final class RoadRunner implements HostConnectionInterface
         } finally {
             \restore_error_handler();
         }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function waitBatch(): ?CommandBatch
-    {
-        /** @var Payload $payload */
-        $payload = $this->interceptErrors(
-            function () {
-                return $this->worker->waitPayload();
-            }
-        );
-
-        if ($payload === null) {
-            return null;
-        }
-
-        return new CommandBatch(
-            $payload->body,
-            $this->decodeHeaders($payload->header)
-        );
     }
 
     /**
@@ -174,20 +198,6 @@ final class RoadRunner implements HostConnectionInterface
     }
 
     /**
-     * {@inheritDoc}
-     */
-    public function send(string $frame, array $headers = []): void
-    {
-        $json = $this->encodeHeaders($headers);
-
-        try {
-            $this->worker->send($frame, $json);
-        } catch (\Throwable $e) {
-            throw new TransportException($e->getMessage(), $e->getCode(), $e);
-        }
-    }
-
-    /**
      * @param array<string, string> $headers
      * @return JsonHeaders|null
      */
@@ -201,18 +211,6 @@ final class RoadRunner implements HostConnectionInterface
             return $this->codec->encode($headers, \JSON_THROW_ON_ERROR);
         } catch (\Throwable $e) {
             throw new ProtocolException($e->getMessage(), $e->getCode(), $e);
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function error(\Throwable $error): void
-    {
-        try {
-            $this->worker->error((string)$error);
-        } catch (\Throwable $e) {
-            throw new TransportException($e->getMessage(), $e->getCode(), $e);
         }
     }
 }

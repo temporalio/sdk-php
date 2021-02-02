@@ -28,6 +28,6 @@ class TemporalException extends \RuntimeException
             }
         }
 
-        return join(', ', $result);
+        return implode(', ', $result);
     }
 }

@@ -48,7 +48,7 @@ class Decoder
     public function decode(Message $msg): CommandInterface
     {
         switch (true) {
-            case $msg->getCommand() !== "":
+            case $msg->getCommand() !== '':
                 return $this->parseRequest($msg);
 
             case $msg->hasFailure():

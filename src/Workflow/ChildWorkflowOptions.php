@@ -14,7 +14,6 @@ namespace Temporal\Workflow;
 use Carbon\CarbonInterval;
 use Cron\CronExpression;
 use Temporal\Client\ClientOptions;
-use Temporal\Client\WorkflowOptions;
 use Temporal\Common\CronSchedule;
 use Temporal\Common\IdReusePolicy;
 use Temporal\Common\MethodRetry;
@@ -30,7 +29,6 @@ use Temporal\Internal\Marshaller\Type\ObjectType;
 use Temporal\Internal\Support\Cron;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\Options;
-use Temporal\WorkerFactory;
 use Temporal\Worker\WorkerFactoryInterface;
 
 /**
@@ -180,7 +178,7 @@ final class ChildWorkflowOptions extends Options
     public function mergeWith(MethodRetry $retry = null, CronSchedule $cron = null): self
     {
         return immutable(
-            function () use ($retry, $cron) {
+            function () use ($retry, $cron): void {
                 if ($retry !== null && $this->diff->isPresent($this, 'retryOptions')) {
                     $this->retryOptions = $this->retryOptions->mergeWith($retry);
                 }

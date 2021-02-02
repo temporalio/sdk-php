@@ -203,7 +203,7 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
     /**
      * {@inheritDoc}
      */
-    public function recordHeartbeat(string $workflowId, ?string $runId, string $activityId, $details = null)
+    public function recordHeartbeat(string $workflowId, ?string $runId, string $activityId, $details = null): void
     {
         $r = new Proto\RecordActivityTaskHeartbeatByIdRequest();
         $r
@@ -234,7 +234,7 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
     /**
      * {@inheritDoc}
      */
-    public function recordHeartbeatByToken(string $taskToken, $details = null)
+    public function recordHeartbeatByToken(string $taskToken, $details = null): void
     {
         $r = new Proto\RecordActivityTaskHeartbeatRequest();
         $r

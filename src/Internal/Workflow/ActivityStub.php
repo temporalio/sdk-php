@@ -77,5 +77,3 @@ final class ActivityStub implements ActivityStubInterface
         return $context->request($request);
     }
 }
-
-

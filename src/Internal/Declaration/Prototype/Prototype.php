@@ -63,30 +63,6 @@ abstract class Prototype implements PrototypeInterface
     }
 
     /**
-     * @param PrototypeInterface $prototype
-     * @param string $class
-     * @return bool
-     */
-    private static function matchClass(PrototypeInterface $prototype, string $class): bool
-    {
-        $reflection = $prototype->getClass();
-
-        return $reflection && $reflection->getName() === \trim($class, '\\');
-    }
-
-    /**
-     * @param PrototypeInterface $prototype
-     * @param string $method
-     * @return bool
-     */
-    private static function matchMethod(PrototypeInterface $prototype, string $method): bool
-    {
-        $handler = $prototype->getHandler();
-
-        return $handler->getName() === $method;
-    }
-
-    /**
      * @return string
      */
     public function getID(): string
@@ -108,5 +84,29 @@ abstract class Prototype implements PrototypeInterface
     public function getHandler(): \ReflectionMethod
     {
         return $this->handler;
+    }
+
+    /**
+     * @param PrototypeInterface $prototype
+     * @param string $class
+     * @return bool
+     */
+    private static function matchClass(PrototypeInterface $prototype, string $class): bool
+    {
+        $reflection = $prototype->getClass();
+
+        return $reflection && $reflection->getName() === \trim($class, '\\');
+    }
+
+    /**
+     * @param PrototypeInterface $prototype
+     * @param string $method
+     * @return bool
+     */
+    private static function matchMethod(PrototypeInterface $prototype, string $method): bool
+    {
+        $handler = $prototype->getHandler();
+
+        return $handler->getName() === $method;
     }
 }
