@@ -14,8 +14,6 @@ namespace Temporal\Internal\Transport\Router;
 use React\Promise\Deferred;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\DestructMemorizedInstanceException;
-use Temporal\Internal\Repository\RepositoryInterface;
-use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Workflow\Process\Process;
 use Temporal\Worker\Transport\Command\RequestInterface;
 
