@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\DataConverter;
 
-final class Bytes
+final class Bytes implements \Stringable
 {
     /**
      * @var string
@@ -27,6 +27,14 @@ final class Bytes
     }
 
     /**
+     * @return string
+     */
+    public function __toString()
+    {
+        return $this->data;
+    }
+
+    /**
      * @return int
      */
     public function getSize(): int
@@ -38,14 +46,6 @@ final class Bytes
      * @return string
      */
     public function getData(): string
-    {
-        return $this->data;
-    }
-
-    /**
-     * @return string
-     */
-    public function __toString()
     {
         return $this->data;
     }

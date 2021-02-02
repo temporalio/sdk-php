@@ -7,6 +7,8 @@
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace Temporal\Exception\Client;
 
 use Temporal\Activity\ActivityInfo;
@@ -90,7 +92,7 @@ class ActivityCompletionException extends TemporalException
                     'workflowId' => $info->workflowExecution->getID(),
                     'runId' => $info->workflowExecution->getRunID(),
                     'activityId' => $info->id,
-                    'activityType' => $info->type->name
+                    'activityType' => $info->type->name,
                 ]
             ),
             $e === null ? 0 : $e->getCode(),

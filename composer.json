@@ -44,6 +44,7 @@
         }
     },
     "require-dev": {
+        "friendsofphp/php-cs-fixer": "^2.8",
         "composer/composer": "^2.0",
         "laminas/laminas-code": "^4.0",
         "doctrine/annotations": "^1.11",
@@ -70,6 +71,10 @@
             "phpunit --testsuite=Unit --testdox",
             "phpunit --testsuite=Feature --testdox",
             "phpunit --testsuite=Functional --testdox"
+        ],
+        "phpcs": [
+            "@putenv PHP_CS_FIXER_IGNORE_ENV=1",
+            "php-cs-fixer fix src"
         ],
         "check": "psalm"
     },

@@ -13,5 +13,4 @@ namespace Temporal\Exception;
 
 class IllegalStateException extends \LogicException
 {
-
 }

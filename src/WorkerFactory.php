@@ -19,7 +19,6 @@ use Spiral\Attributes\AnnotationReader;
 use Spiral\Attributes\AttributeReader;
 use Spiral\Attributes\Composite\SelectiveReader;
 use Spiral\Attributes\ReaderInterface;
-use Spiral\Goridge\Relay;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Internal\ServiceContainer;
@@ -157,6 +156,86 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     }
 
     /**
+     * {@inheritDoc}
+     */
+    public function newWorker(
+        string $taskQueue = self::DEFAULT_TASK_QUEUE,
+        WorkerOptions $options = null
+    ): WorkerInterface {
+        $worker = new Worker(
+            $taskQueue,
+            $options ?? WorkerOptions::new(),
+            ServiceContainer::fromWorker($this),
+            $this->rpc
+        );
+        $this->queues->add($worker);
+
+        return $worker;
+    }
+
+    /**
+     * @return ReaderInterface
+     */
+    public function getReader(): ReaderInterface
+    {
+        return $this->reader;
+    }
+
+    /**
+     * @return ClientInterface
+     */
+    public function getClient(): ClientInterface
+    {
+        return $this->client;
+    }
+
+    /**
+     * @return QueueInterface
+     */
+    public function getQueue(): QueueInterface
+    {
+        return $this->responses;
+    }
+
+    /**
+     * @return DataConverterInterface
+     */
+    public function getDataConverter(): DataConverterInterface
+    {
+        return $this->converter;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function run(HostConnectionInterface $host = null): int
+    {
+        $host ??= RoadRunner::create();
+        $this->codec = $this->createCodec();
+
+        while ($msg = $host->waitBatch()) {
+            try {
+                $host->send($this->dispatch($msg->messages, $msg->context));
+            } catch (\Throwable $e) {
+                $host->error($e);
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * @return void
+     */
+    public function tick(): void
+    {
+        $this->emit(LoopInterface::ON_SIGNAL);
+        $this->emit(LoopInterface::ON_CALLBACK);
+        $this->emit(LoopInterface::ON_QUERY);
+        $this->emit(LoopInterface::ON_TICK);
+    }
+
+    /**
      * @return void
      */
     private function boot(): void
@@ -235,75 +314,6 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     }
 
     /**
-     * {@inheritDoc}
-     */
-    public function newWorker(
-        string $taskQueue = self::DEFAULT_TASK_QUEUE,
-        WorkerOptions $options = null
-    ): WorkerInterface {
-        $worker = new Worker(
-            $taskQueue,
-            $options ?? WorkerOptions::new(),
-            ServiceContainer::fromWorker($this),
-            $this->rpc
-        );
-        $this->queues->add($worker);
-
-        return $worker;
-    }
-
-    /**
-     * @return ReaderInterface
-     */
-    public function getReader(): ReaderInterface
-    {
-        return $this->reader;
-    }
-
-    /**
-     * @return ClientInterface
-     */
-    public function getClient(): ClientInterface
-    {
-        return $this->client;
-    }
-
-    /**
-     * @return QueueInterface
-     */
-    public function getQueue(): QueueInterface
-    {
-        return $this->responses;
-    }
-
-    /**
-     * @return DataConverterInterface
-     */
-    public function getDataConverter(): DataConverterInterface
-    {
-        return $this->converter;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function run(HostConnectionInterface $host = null): int
-    {
-        $host ??= RoadRunner::create();
-        $this->codec = $this->createCodec();
-
-        while ($msg = $host->waitBatch()) {
-            try {
-                $host->send($this->dispatch($msg->messages, $msg->context));
-            } catch (\Throwable $e) {
-                $host->error($e);
-            }
-        }
-
-        return 0;
-    }
-
-    /**
      * @return CodecInterface
      */
     private function createCodec(): CodecInterface
@@ -337,17 +347,6 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         $this->tick();
 
         return $this->codec->encode($this->responses);
-    }
-
-    /**
-     * @return void
-     */
-    public function tick(): void
-    {
-        $this->emit(LoopInterface::ON_SIGNAL);
-        $this->emit(LoopInterface::ON_CALLBACK);
-        $this->emit(LoopInterface::ON_QUERY);
-        $this->emit(LoopInterface::ON_TICK);
     }
 
     /**
@@ -396,7 +395,7 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
                 self::ERROR_HEADER_NOT_STRING_TYPE,
                 [
                     self::HEADER_TASK_QUEUE,
-                    \get_debug_type($taskQueue)
+                    \get_debug_type($taskQueue),
                 ]
             );
 

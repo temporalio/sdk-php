@@ -62,4 +62,3 @@ interface RepositoryInterface extends \IteratorAggregate, \Countable
      */
     public function remove($id): void;
 }
-

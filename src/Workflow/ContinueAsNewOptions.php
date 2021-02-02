@@ -13,9 +13,7 @@ namespace Temporal\Workflow;
 
 use Carbon\CarbonInterval;
 use Temporal\Internal\Marshaller\Meta\Marshal;
-use Temporal\Internal\Marshaller\Type\ArrayType;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
-use Temporal\Internal\Marshaller\Type\NullableType;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Worker\Worker;

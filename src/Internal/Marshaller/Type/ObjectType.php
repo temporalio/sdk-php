@@ -56,6 +56,14 @@ class ObjectType extends Type implements DetectableTypeInterface
     }
 
     /**
+     * {@inheritDoc}
+     */
+    public function serialize($value): array
+    {
+        return $this->marshaller->marshal($value);
+    }
+
+    /**
      * @param array $data
      * @return object
      * @throws \ReflectionException
@@ -63,13 +71,5 @@ class ObjectType extends Type implements DetectableTypeInterface
     protected function instance(array $data): object
     {
         return $this->marshaller->unmarshal($data, $this->reflection->newInstanceWithoutConstructor());
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function serialize($value): array
-    {
-        return $this->marshaller->marshal($value);
     }
 }

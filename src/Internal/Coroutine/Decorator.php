@@ -35,27 +35,6 @@ class Decorator implements CoroutineInterface
     }
 
     /**
-     * @param iterable $iterable
-     * @return \Iterator
-     */
-    private function cast(iterable $iterable): \Iterator
-    {
-        switch (true) {
-            case $iterable instanceof \Iterator:
-                return $iterable;
-
-            case $iterable instanceof \Traversable:
-                return new \IteratorIterator($iterable);
-
-            case \is_array($iterable):
-                return new \ArrayIterator($iterable);
-
-            default:
-                throw new \InvalidArgumentException('Unrecognized iterator type ' . \get_debug_type($iterable));
-        }
-    }
-
-    /**
      * {@inheritDoc}
      */
     public function current()
@@ -131,5 +110,26 @@ class Decorator implements CoroutineInterface
         }
 
         throw $exception;
+    }
+
+    /**
+     * @param iterable $iterable
+     * @return \Iterator
+     */
+    private function cast(iterable $iterable): \Iterator
+    {
+        switch (true) {
+            case $iterable instanceof \Iterator:
+                return $iterable;
+
+            case $iterable instanceof \Traversable:
+                return new \IteratorIterator($iterable);
+
+            case \is_array($iterable):
+                return new \ArrayIterator($iterable);
+
+            default:
+                throw new \InvalidArgumentException('Unrecognized iterator type ' . \get_debug_type($iterable));
+        }
     }
 }

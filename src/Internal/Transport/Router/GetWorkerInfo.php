@@ -65,9 +65,7 @@ final class GetWorkerInfo extends Route
             ),
             'Activities' => $this->map(
                 $taskQueue->getActivities(),
-                function (ActivityPrototype $activity) {
-                    return ['Name' => $activity->getID()];
-                }
+                fn(ActivityPrototype $activity) => ['Name' => $activity->getID()]
             ),
         ];
     }

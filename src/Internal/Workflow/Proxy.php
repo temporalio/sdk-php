@@ -16,6 +16,12 @@ use Temporal\Internal\Declaration\Prototype\Prototype;
 abstract class Proxy
 {
     /**
+     * @param string $method
+     * @param array $args
+     */
+    abstract public function __call(string $method, array $args);
+
+    /**
      * @psalm-template T of Prototype
      *
      * @param array<T> $prototypes
@@ -34,10 +40,4 @@ abstract class Proxy
 
         return null;
     }
-
-    /**
-     * @param string $method
-     * @param array $args
-     */
-    abstract public function __call(string $method, array $args);
 }

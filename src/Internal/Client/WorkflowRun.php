@@ -7,6 +7,8 @@
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace Temporal\Internal\Client;
 
 use Temporal\Client\WorkflowStubInterface;

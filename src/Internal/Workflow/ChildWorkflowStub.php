@@ -13,13 +13,9 @@ namespace Temporal\Internal\Workflow;
 
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
-use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
-use Temporal\DataConverter\Payload;
-use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Marshaller\MarshallerInterface;
-use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Transport\Request\ExecuteChildWorkflow;
 use Temporal\Internal\Transport\Request\GetChildWorkflowExecution;
 use Temporal\Internal\Transport\Request\SignalExternalWorkflow;
@@ -97,14 +93,6 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
     }
 
     /**
-     * @return array
-     */
-    private function getOptionsArray(): array
-    {
-        return $this->marshaller->marshal($this->getOptions());
-    }
-
-    /**
      * @return ChildWorkflowOptions
      */
     public function getOptions(): ChildWorkflowOptions
@@ -144,5 +132,13 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
         $context = Workflow::getCurrentContext();
 
         return $context->request($request);
+    }
+
+    /**
+     * @return array
+     */
+    private function getOptionsArray(): array
+    {
+        return $this->marshaller->marshal($this->getOptions());
     }
 }

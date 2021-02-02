@@ -7,22 +7,22 @@
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace Temporal\Exception\Client;
 
 use Temporal\Workflow\WorkflowExecution;
-use Throwable;
 
 class WorkflowFailedException extends WorkflowException
 {
     private int $lastWorkflowTaskCompletedEventId;
-    private int $retryState;
 
     /**
      * @param WorkflowExecution $execution
      * @param string|null $type
      * @param int $lastWorkflowTaskCompletedEventId
      * @param int $retryState
-     * @param Throwable|null $previous
+     * @param \Throwable|null $previous
      */
     public function __construct(
         WorkflowExecution $execution,
@@ -44,12 +44,11 @@ class WorkflowFailedException extends WorkflowException
                 'runId' => $execution->getRunID(),
                 'workflowType' => $type,
                 'workflowTaskCompletedEventId' => $lastWorkflowTaskCompletedEventId,
-                'retryState' => $retryState
+                'retryState' => $retryState,
             ]
         );
 
         $this->lastWorkflowTaskCompletedEventId = $lastWorkflowTaskCompletedEventId;
-        $this->retryState = $retryState;
     }
 
     /**

@@ -45,14 +45,6 @@ class Stack implements AppendableInterface, \OuterIterator
     }
 
     /**
-     * @throws \Exception
-     */
-    private function iterator(): \Generator
-    {
-        return $this->current ??= $this->getInnerIterator();
-    }
-
-    /**
      * {@inheritDoc}
      */
     public function current()
@@ -65,7 +57,7 @@ class Stack implements AppendableInterface, \OuterIterator
     /**
      * {@inheritDoc}
      */
-    public function next()
+    public function next(): void
     {
         $current = $this->iterator();
 
@@ -95,7 +87,7 @@ class Stack implements AppendableInterface, \OuterIterator
     /**
      * {@inheritDoc}
      */
-    public function rewind()
+    public function rewind(): void
     {
         $current = $this->iterator();
 
@@ -168,5 +160,13 @@ class Stack implements AppendableInterface, \OuterIterator
         }
 
         return $result;
+    }
+
+    /**
+     * @throws \Exception
+     */
+    private function iterator(): \Generator
+    {
+        return $this->current ??= $this->getInnerIterator();
     }
 }

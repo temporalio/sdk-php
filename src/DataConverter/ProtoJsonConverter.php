@@ -1,11 +1,14 @@
 <?php
 
+
 /**
  * This file is part of Temporal package.
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
+declare(strict_types=1);
 
 namespace Temporal\DataConverter;
 
@@ -45,7 +48,7 @@ class ProtoJsonConverter extends Converter
     public function fromPayload(Payload $payload, Type $type)
     {
         if (!$type->isClass()) {
-            throw new DataConverterException("Unable to decode value using protobuf converter - ");
+            throw new DataConverterException('Unable to decode value using protobuf converter - ');
         }
 
         try {

@@ -15,7 +15,6 @@ use React\Promise\CancellablePromiseInterface;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\Worker\LoopInterface;
-use Temporal\Worker\WorkerInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowContextInterface;
 
@@ -133,7 +132,7 @@ class CompletableResult implements CompletableResultInterface
 
         $this->loop->once(
             $this->layer,//LoopInterface::ON_CALLBACK,
-            function () {
+            function (): void {
                 Workflow::setCurrentContext($this->context);
                 $this->deferred->resolve($this->value);
             }
@@ -149,7 +148,7 @@ class CompletableResult implements CompletableResultInterface
 
         $this->loop->once(
             $this->layer,//  LoopInterface::ON_CALLBACK,
-            function () use ($e) {
+            function () use ($e): void {
                 Workflow::setCurrentContext($this->context);
                 $this->deferred->reject($e);
             }

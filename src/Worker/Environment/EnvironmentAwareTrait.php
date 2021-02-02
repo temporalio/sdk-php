@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Worker\Environment;
 
 use Carbon\CarbonInterface;
-use Carbon\CarbonTimeZone;
 
 /**
  * @mixin EnvironmentInterface

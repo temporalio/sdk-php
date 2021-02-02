@@ -19,7 +19,7 @@ class CompensationException extends \RuntimeException
     /**
      * @param \Throwable $e
      */
-    public function addSuppressed(\Throwable $e)
+    public function addSuppressed(\Throwable $e): void
     {
         $this->suppressed[] = $e;
     }

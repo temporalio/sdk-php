@@ -42,7 +42,7 @@ class DateIntervalType extends Type implements DetectableTypeInterface
      */
     public static function match(\ReflectionNamedType $type): bool
     {
-        return ! $type->isBuiltin() && Inheritance::extends($type->getName(), \DateInterval::class);
+        return !$type->isBuiltin() && Inheritance::extends($type->getName(), \DateInterval::class);
     }
 
     /**

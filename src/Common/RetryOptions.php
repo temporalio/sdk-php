@@ -109,7 +109,7 @@ class RetryOptions extends Options
      */
     public function mergeWith(MethodRetry $retry = null): self
     {
-        return immutable(function () use ($retry) {
+        return immutable(function () use ($retry): void {
             if ($retry !== null) {
                 foreach ($this->diff->getPresentPropertyNames($this) as $name) {
                     $this->$name = $retry->$name;
@@ -126,8 +126,8 @@ class RetryOptions extends Options
     {
         assert(DateInterval::assert($interval) || $interval === null);
 
-        return immutable(fn() =>
-            $this->initialInterval = DateInterval::parseOrNull($interval, DateInterval::FORMAT_SECONDS)
+        return immutable(
+            fn() => $this->initialInterval = DateInterval::parseOrNull($interval, DateInterval::FORMAT_SECONDS)
         );
     }
 
@@ -139,7 +139,7 @@ class RetryOptions extends Options
     {
         assert($coefficient >= 1.0);
 
-        return immutable(fn () => $this->backoffCoefficient = $coefficient);
+        return immutable(fn() => $this->backoffCoefficient = $coefficient);
     }
 
     /**
@@ -150,8 +150,8 @@ class RetryOptions extends Options
     {
         assert(DateInterval::assert($interval) || $interval === null);
 
-        return immutable(fn() =>
-            $this->initialInterval = DateInterval::parseOrNull($interval, DateInterval::FORMAT_SECONDS)
+        return immutable(
+            fn() => $this->initialInterval = DateInterval::parseOrNull($interval, DateInterval::FORMAT_SECONDS)
         );
     }
 
@@ -163,7 +163,7 @@ class RetryOptions extends Options
     {
         assert($attempts >= 0);
 
-        return immutable(fn () => $this->maximumAttempts = $attempts);
+        return immutable(fn() => $this->maximumAttempts = $attempts);
     }
 
     /**
@@ -174,6 +174,6 @@ class RetryOptions extends Options
     {
         assert(Assert::valuesInstanceOf($exceptions, \Throwable::class));
 
-        return immutable(fn () => $this->nonRetryableExceptions = $exceptions);
+        return immutable(fn() => $this->nonRetryableExceptions = $exceptions);
     }
 }

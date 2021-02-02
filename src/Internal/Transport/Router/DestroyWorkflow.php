@@ -18,7 +18,6 @@ use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Workflow\Process\Process;
 use Temporal\Worker\Transport\Command\RequestInterface;
-use Temporal\Workflow;
 
 class DestroyWorkflow extends WorkflowProcessAwareRoute
 {
@@ -26,22 +25,6 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
      * @var string
      */
     private const ERROR_PROCESS_NOT_DEFINED = 'Unable to kill workflow because workflow process #%s was not found';
-
-    /**
-     * @var ClientInterface
-     */
-    private ClientInterface $client;
-
-    /**
-     * @param RepositoryInterface $running
-     * @param ClientInterface $client
-     */
-    public function __construct(RepositoryInterface $running, ClientInterface $client)
-    {
-        $this->client = $client;
-
-        parent::__construct($running);
-    }
 
     /**
      * {@inheritDoc}

@@ -29,7 +29,7 @@ use Temporal\Exception\TemporalException;
  * <p>Any unhandled exception thrown by an activity or workflow will be converted to an instance of
  * {@link ApplicationFailure}.
  */
-class TemporalFailure extends TemporalException
+class TemporalFailure extends TemporalException implements \Stringable
 {
     private ?Failure $failure = null;
     private string $originalMessage;
@@ -47,6 +47,18 @@ class TemporalFailure extends TemporalException
     ) {
         parent::__construct($message, 0, $previous);
         $this->originalMessage = $originalMessage ?? '';
+    }
+
+    /**
+     * @return string
+     */
+    public function __toString(): string
+    {
+        if ($this->hasOriginalStackTrace()) {
+            return (string)$this->getOriginalStackTrace();
+        }
+
+        return parent::__toString();
     }
 
     /**
@@ -76,7 +88,7 @@ class TemporalFailure extends TemporalException
     /**
      * @param string $stackTrace
      */
-    public function setOriginalStackTrace(string $stackTrace)
+    public function setOriginalStackTrace(string $stackTrace): void
     {
         $this->originalStackTrace = $stackTrace;
         $this->message .= "\nOriginalStackTrace:\n" . $this->originalStackTrace;
@@ -99,18 +111,6 @@ class TemporalFailure extends TemporalException
     }
 
     /**
-     * @return string
-     */
-    public function __toString(): string
-    {
-        if ($this->hasOriginalStackTrace()) {
-            return $this->getOriginalStackTrace();
-        }
-
-        return parent::__toString();
-    }
-
-    /**
      * @param DataConverterInterface $converter
      */
     public function setDataConverter(DataConverterInterface $converter): void
@@ -129,7 +129,7 @@ class TemporalFailure extends TemporalException
         $mapped = [
             'timeoutType' => fn($value) => TimeoutType::name($value),
             'timeoutWorkflowType' => fn($value) => TimeoutType::name($value),
-            'retryState' => fn($value) => RetryState::name($value)
+            'retryState' => fn($value) => RetryState::name($value),
         ];
 
         $result = [];

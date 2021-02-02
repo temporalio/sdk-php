@@ -18,5 +18,4 @@ namespace Temporal\Exception;
  */
 class DestructMemorizedInstanceException extends TemporalException
 {
-
 }

@@ -7,6 +7,8 @@
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace Temporal\Internal\Support;
 
 class StackRenderer
@@ -24,7 +26,7 @@ class StackRenderer
      * @param array $files
      * @internal please consult Temporal SDK prior to use of this function.
      */
-    public static function setIgnoredPaths(array $files)
+    public static function setIgnoredPaths(array $files): void
     {
         self::$ignorePaths = $files;
     }
@@ -52,12 +54,12 @@ class StackRenderer
             }
 
             $result[] = sprintf(
-                "%s:%s",
+                '%s:%s',
                 $line['file'] ?? '-',
                 $line['line'] ?? '-'
             );
         }
 
-        return join("\n", $result);
+        return implode("\n", $result);
     }
 }

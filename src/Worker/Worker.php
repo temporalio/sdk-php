@@ -19,7 +19,6 @@ use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Router;
 use Temporal\Internal\Transport\RouterInterface;
-use Temporal\WorkerFactory;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\RPCConnectionInterface;
 
@@ -70,27 +69,6 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
 
         $this->services = $serviceContainer;
         $this->router = $this->createRouter();
-    }
-
-    /**
-     * @return RouterInterface
-     */
-    protected function createRouter(): RouterInterface
-    {
-        $router = new Router();
-
-        // Activity routes
-        $router->add(new Router\InvokeActivity($this->services, $this->rpc));
-
-        // Workflow routes
-        $router->add(new Router\StartWorkflow($this->services));
-        $router->add(new Router\InvokeQuery($this->services->running, $this->services->loop));
-        $router->add(new Router\InvokeSignal($this->services->running, $this->services->loop));
-        $router->add(new Router\CancelWorkflow($this->services->running, $this->services->client));
-        $router->add(new Router\DestroyWorkflow($this->services->running, $this->services->client));
-        $router->add(new Router\StackTrace($this->services->running));
-
-        return $router;
     }
 
     /**
@@ -156,5 +134,26 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
     public function getActivities(): RepositoryInterface
     {
         return $this->services->activities;
+    }
+
+    /**
+     * @return RouterInterface
+     */
+    protected function createRouter(): RouterInterface
+    {
+        $router = new Router();
+
+        // Activity routes
+        $router->add(new Router\InvokeActivity($this->services, $this->rpc));
+
+        // Workflow routes
+        $router->add(new Router\StartWorkflow($this->services));
+        $router->add(new Router\InvokeQuery($this->services->running, $this->services->loop));
+        $router->add(new Router\InvokeSignal($this->services->running, $this->services->loop));
+        $router->add(new Router\CancelWorkflow($this->services->running));
+        $router->add(new Router\DestroyWorkflow($this->services->running));
+        $router->add(new Router\StackTrace($this->services->running));
+
+        return $router;
     }
 }

@@ -59,7 +59,7 @@ class ArrayType extends Type implements DetectableTypeInterface
      */
     public function parse($value, $current)
     {
-        if (! \is_array($value)) {
+        if (!\is_array($value)) {
             throw new \InvalidArgumentException(\sprintf(self::ERROR_INVALID_TYPE, \get_debug_type($value)));
         }
 

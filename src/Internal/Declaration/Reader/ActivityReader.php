@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration\Reader;
 
-use JetBrains\PhpStorm\Pure;
 use Temporal\Activity\ActivityInterface;
 use Temporal\Activity\ActivityMethod;
 use Temporal\Common\MethodRetry;
@@ -129,7 +128,7 @@ class ActivityReader extends Reader
                 $attribute = $this->reader->firstFunctionMetadata($method, ActivityMethod::class);
 
                 /** @var \ReflectionMethod $method */
-                if (! $this->isValidMethod($method)) {
+                if (!$this->isValidMethod($method)) {
                     if ($attribute !== null) {
                         $reflection = $method->getDeclaringClass();
 
@@ -192,7 +191,7 @@ class ActivityReader extends Reader
         \ReflectionClass $class,
         \ReflectionMethod $method
     ): void {
-        if (! isset($activities[$name])) {
+        if (!isset($activities[$name])) {
             return;
         }
 

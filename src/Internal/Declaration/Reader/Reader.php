@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration\Reader;
 
-use JetBrains\PhpStorm\Pure;
 use Spiral\Attributes\ReaderInterface;
 
 /**
@@ -33,17 +32,17 @@ abstract class Reader
     }
 
     /**
+     * @param class-string $class
+     * @return array<T>|T
+     */
+    abstract public function fromClass(string $class);
+
+    /**
      * @param \ReflectionMethod $method
      * @return bool
      */
     protected function isValidMethod(\ReflectionMethod $method): bool
     {
-        return ! $method->isStatic() && $method->isPublic();
+        return !$method->isStatic() && $method->isPublic();
     }
-
-    /**
-     * @param class-string $class
-     * @return array<T>|T
-     */
-    abstract public function fromClass(string $class);
 }

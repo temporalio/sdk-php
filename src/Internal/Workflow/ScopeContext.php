@@ -7,6 +7,8 @@
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace Temporal\Internal\Workflow;
 
 use React\Promise\PromiseInterface;
@@ -81,7 +83,7 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
     public function request(RequestInterface $request): PromiseInterface
     {
         if ($this->scope->isCancelled()) {
-            throw new CanceledFailure("Attempt to send request to cancelled scope");
+            throw new CanceledFailure('Attempt to send request to cancelled scope');
         }
 
         $promise = $this->parent->request($request);

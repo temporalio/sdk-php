@@ -7,11 +7,12 @@
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace Temporal\Exception\Client;
 
 use Temporal\Exception\TemporalException;
 
 class TimeoutException extends TemporalException
 {
-
 }

@@ -53,15 +53,6 @@ class Dispatcher implements DispatcherInterface
     }
 
     /**
-     * @param int $scope
-     * @return bool
-     */
-    private function scopeMatches(int $scope): bool
-    {
-        return ($this->scope & $scope) === $scope;
-    }
-
-    /**
      * @return bool
      */
     public function isObjectContextRequired(): bool
@@ -99,6 +90,25 @@ class Dispatcher implements DispatcherInterface
     public function getArgumentTypes(): array
     {
         return $this->types;
+    }
+
+    /**
+     * @param object|null $ctx
+     * @param array $arguments
+     * @return mixed
+     */
+    public function dispatch(?object $ctx, array $arguments)
+    {
+        return ($this->executor)($ctx, $arguments);
+    }
+
+    /**
+     * @param int $scope
+     * @return bool
+     */
+    private function scopeMatches(int $scope): bool
+    {
+        return ($this->scope & $scope) === $scope;
     }
 
     /**
@@ -188,15 +198,5 @@ class Dispatcher implements DispatcherInterface
         }
 
         throw new \InvalidArgumentException('Unsupported function implementation');
-    }
-
-    /**
-     * @param object|null $ctx
-     * @param array $arguments
-     * @return mixed
-     */
-    public function dispatch(?object $ctx, array $arguments)
-    {
-        return ($this->executor)($ctx, $arguments);
     }
 }

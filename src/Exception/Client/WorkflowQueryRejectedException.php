@@ -7,6 +7,8 @@
  * file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace Temporal\Exception\Client;
 
 use Temporal\Workflow\WorkflowExecution;
@@ -21,7 +23,7 @@ class WorkflowQueryRejectedException extends WorkflowQueryException
 
     /**
      * @param WorkflowExecution $execution
-     * @param string|null $type
+     * @param string $type
      * @param int $queryRejectCondition
      * @param int $workflowExecutionStatus
      * @param \Throwable|null $previous
