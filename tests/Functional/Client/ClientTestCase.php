@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Functional\Client;
 
+use Temporal\Api\Enums\V1\EventType;
+use Temporal\Api\History\V1\HistoryEvent;
 use Temporal\Api\Workflowservice\V1\GetWorkflowExecutionHistoryRequest;
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
@@ -30,6 +32,23 @@ abstract class ClientTestCase extends FunctionalTestCase
     {
         return new WorkflowClient(
             ServiceClient::create($connection)
+        );
+    }
+
+    protected function assertHistoryContainsActivity(
+        WorkflowClient $client,
+        WorkflowExecution $e,
+        string $activity
+    ) {
+        $this->assertHistoryContains(
+            $client,
+            $e,
+            function (HistoryEvent $e) use ($activity) {
+                return (
+                    $e->getEventType() === EventType::EVENT_TYPE_ACTIVITY_TASK_SCHEDULED
+                    && $e->getActivityTaskScheduledEventAttributes()->getActivityType()->getName() == $activity
+                );
+            }
         );
     }
 
