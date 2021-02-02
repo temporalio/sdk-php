@@ -13,6 +13,8 @@ namespace Temporal\Client;
 
 use Carbon\CarbonInterval;
 use Cron\CronExpression;
+use JetBrains\PhpStorm\ExpectedValues;
+use JetBrains\PhpStorm\Pure;
 use Temporal\Api\Common\V1\Memo;
 use Temporal\Api\Common\V1\RetryPolicy;
 use Temporal\Api\Common\V1\SearchAttributes;
@@ -150,21 +152,21 @@ final class WorkflowOptions extends Options
      */
     public function mergeWith(MethodRetry $retry = null, CronSchedule $cron = null): self
     {
-        return immutable(
-            function () use ($retry, $cron): void {
-                if ($retry !== null && $this->diff->isPresent($this, 'retryOptions')) {
-                    $this->retryOptions = $this->retryOptions->mergeWith($retry);
-                }
+        $self = clone $this;
 
-                if ($cron !== null && $this->diff->isPresent($this, 'cronSchedule')) {
-                    if ($this->cronSchedule === null) {
-                        $this->cronSchedule = clone $cron->interval;
-                    }
+        if ($retry !== null && $self->diff->isPresent($self, 'retryOptions')) {
+            $self->retryOptions = $self->retryOptions->mergeWith($retry);
+        }
 
-                    $this->cronSchedule->setExpression($cron->interval->getExpression());
-                }
+        if ($cron !== null && $self->diff->isPresent($self, 'cronSchedule')) {
+            if ($self->cronSchedule === null) {
+                $self->cronSchedule = clone $cron->interval;
             }
-        );
+
+            $self->cronSchedule->setExpression($cron->interval->getExpression());
+        }
+
+        return $self;
     }
 
     /**
@@ -176,9 +178,14 @@ final class WorkflowOptions extends Options
      * @param string $workflowId
      * @return $this
      */
+    #[Pure]
     public function withWorkflowId(string $workflowId): self
     {
-        return immutable(fn() => $this->workflowId = $workflowId);
+        $self = clone $this;
+
+        $self->workflowId = $workflowId;
+
+        return $self;
     }
 
     /**
@@ -189,9 +196,14 @@ final class WorkflowOptions extends Options
      * @param string $taskQueue
      * @return $this
      */
+    #[Pure]
     public function withTaskQueue(string $taskQueue): self
     {
-        return immutable(fn() => $this->taskQueue = $taskQueue);
+        $self = clone $this;
+
+        $self->taskQueue = $taskQueue;
+
+        return $self;
     }
 
     /**
@@ -199,18 +211,21 @@ final class WorkflowOptions extends Options
      * execution (which includes retries and continue as new calls). If exceeded
      * the child is automatically terminated by the Temporal service.
      *
+     * @psalm-suppress ImpureMethodCall
+     *
      * @param DateIntervalValue $timeout
      * @return $this
      */
+    #[Pure]
     public function withWorkflowExecutionTimeout($timeout): self
     {
         assert(DateInterval::assert($timeout));
-
         $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
-
         assert($timeout->totalMicroseconds >= 0);
 
-        return immutable(fn() => $this->workflowExecutionTimeout = $timeout);
+        $self = clone $this;
+        $self->workflowExecutionTimeout = $timeout;
+        return $self;
     }
 
     /**
@@ -218,36 +233,42 @@ final class WorkflowOptions extends Options
      * Temporal service. Do not rely on the run timeout for business level
      * timeouts. It is preferred to use in workflow timers for this purpose.
      *
+     * @psalm-suppress ImpureMethodCall
+     *
      * @param DateIntervalValue $timeout
      * @return $this
      */
+    #[Pure]
     public function withWorkflowRunTimeout($timeout): self
     {
         assert(DateInterval::assert($timeout));
-
         $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
-
         assert($timeout->totalMicroseconds >= 0);
 
-        return immutable(fn() => $this->workflowRunTimeout = $timeout);
+        $self = clone $this;
+        $self->workflowRunTimeout = $timeout;
+        return $self;
     }
 
     /**
      * Maximum execution time of a single workflow task. Default is 10 seconds.
      * Maximum accepted value is 60 seconds.
      *
+     * @psalm-suppress ImpureMethodCall
+     *
      * @param DateIntervalValue $timeout
      * @return $this
      */
+    #[Pure]
     public function withWorkflowTaskTimeout($timeout): self
     {
         assert(DateInterval::assert($timeout));
-
         $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
-
         assert($timeout->totalMicroseconds >= 0 && $timeout->totalSeconds <= 60);
 
-        return immutable(fn() => $this->workflowTaskTimeout = $timeout);
+        $self = clone $this;
+        $self->workflowTaskTimeout = $timeout;
+        return $self;
     }
 
     /**
@@ -265,14 +286,21 @@ final class WorkflowOptions extends Options
      * - {@see IdReusePolicy::POLICY_REJECT_DUPLICATE}: Doesn't allow new run
      *  independently of the previous run closure status.
      *
+     * @psalm-suppress ImpureMethodCall
+     *
      * @param IdReusePolicyEnum $policy
      * @return $this
      */
-    public function withWorkflowIdReusePolicy(int $policy): self
-    {
+    #[Pure]
+    public function withWorkflowIdReusePolicy(
+        #[ExpectedValues(valuesFromClass: IdReusePolicy::class)]
+        int $policy
+    ): self {
         assert(Assert::enum($policy, IdReusePolicy::class));
 
-        return immutable(fn() => $this->workflowIdReusePolicy = $policy);
+        $self = clone $this;
+        $self->workflowIdReusePolicy = $policy;
+        return $self;
     }
 
     /**
@@ -282,18 +310,30 @@ final class WorkflowOptions extends Options
      * @param RetryOptions|null $options
      * @return $this
      */
+    #[Pure]
     public function withRetryOptions(?RetryOptions $options): self
     {
-        return immutable(fn() => $this->retryOptions = $options ?? new RetryOptions());
+        $self = clone $this;
+
+        $self->retryOptions = $options ?? new RetryOptions();
+
+        return $self;
     }
 
     /**
+     * @psalm-suppress ImpureMethodCall
+     *
      * @param string|CronExpression|CronSchedule|null $expression
      * @return $this
      */
+    #[Pure]
     public function withCronSchedule($expression): self
     {
-        return immutable(fn() => $this->cronSchedule = Cron::parseOrNull($expression));
+        $self = clone $this;
+
+        $self->cronSchedule = Cron::parseOrNull($expression);
+
+        return $self;
     }
 
     /**
@@ -302,9 +342,14 @@ final class WorkflowOptions extends Options
      * @param array|null $memo
      * @return $this
      */
+    #[Pure]
     public function withMemo(?array $memo): self
     {
-        return immutable(fn() => $this->memo = $memo);
+        $self = clone $this;
+
+        $self->memo = $memo;
+
+        return $self;
     }
 
     /**
@@ -313,9 +358,14 @@ final class WorkflowOptions extends Options
      * @param array|null $searchAttributes
      * @return $this
      */
+    #[Pure]
     public function withSearchAttributes(?array $searchAttributes): self
     {
-        return immutable(fn() => $this->searchAttributes = $searchAttributes);
+        $self = clone $this;
+
+        $self->searchAttributes = $searchAttributes;
+
+        return $self;
     }
 
     /**
