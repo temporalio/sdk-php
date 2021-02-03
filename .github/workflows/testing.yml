@@ -117,7 +117,7 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           tools: composer:v2
-          extensions: [dom, grpc]
+          extensions: dom
 
       - name: Check Out Code
         uses: actions/checkout@v2
@@ -195,5 +195,12 @@ jobs:
           max_attempts: 5
           command: composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress --ignore-platform-reqs
 
+      - name: Download RoadRunner
+        run: |
+          vendor/bin/rr get
+
       - name: Run Tests
-        run: vendor/bin/phpunit --testsuite=Functional --testdox --verbose
+        run: |
+          docker-compose -f ./tests/docker-compose.yaml up -d
+          sleep 15
+          vendor/bin/phpunit --testsuite=Functional --testdox --verbose
