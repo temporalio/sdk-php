@@ -154,7 +154,7 @@ class ActivityCompletionClientTestCase extends ClientTestCase
             $simple->getResult();
         } catch (WorkflowFailedException $e) {
             $this->assertInstanceOf(ActivityFailure::class, $e->getPrevious());
-            $this->assertStringContainsString('\AsyncActivityWorkflow', $e->getPrevious()->getMessage());
+            $this->assertStringContainsString('AsyncActivityWorkflow', $e->getPrevious()->getMessage());
 
             $e = $e->getPrevious();
 
@@ -191,7 +191,7 @@ class ActivityCompletionClientTestCase extends ClientTestCase
             $simple->getResult();
         } catch (WorkflowFailedException $e) {
             $this->assertInstanceOf(ActivityFailure::class, $e->getPrevious());
-            $this->assertStringContainsString('\AsyncActivityWorkflow', $e->getPrevious()->getMessage());
+            $this->assertStringContainsString('AsyncActivityWorkflow', $e->getPrevious()->getMessage());
 
             $e = $e->getPrevious();
 
