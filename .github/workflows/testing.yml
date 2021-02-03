@@ -117,7 +117,7 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           tools: composer:v2
-          extensions: dom
+          extensions: [dom, grpc]
 
       - name: Check Out Code
         uses: actions/checkout@v2
