@@ -24,8 +24,6 @@ $ composer require temporal/sdk
 
 ## Usage
 
-See [example](/example) to get started.
-
-
+See [examples](https://github.com/temporalio/samples-php) to get started.
 
 No documentation available at this time.
