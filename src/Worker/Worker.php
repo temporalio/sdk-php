@@ -72,6 +72,14 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
     }
 
     /**
+     * @return WorkerOptions
+     */
+    public function getOptions(): WorkerOptions
+    {
+        return $this->options;
+    }
+
+    /**
      * @param RequestInterface $request
      * @param array $headers
      * @return PromiseInterface
