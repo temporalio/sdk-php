@@ -201,7 +201,7 @@ jobs:
       - name: Run Tests
         run: |
           docker-compose -f ./tests/docker-compose.yaml up -d
-          sleep 15
+          sleep 25
           chmod +x ./rr
           ./rr serve -c ./tests/.rr.yaml &
           sleep 10
