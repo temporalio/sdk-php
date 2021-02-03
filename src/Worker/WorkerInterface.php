@@ -17,6 +17,13 @@ use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 interface WorkerInterface
 {
     /**
+     * Returns info about worker
+     *
+     * @return WorkerOptions
+     */
+    public function getOptions(): WorkerOptions;
+
+    /**
      * @param class-string ...$class
      * @return $this
      */

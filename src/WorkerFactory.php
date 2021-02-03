@@ -21,6 +21,9 @@ use Spiral\Attributes\Composite\SelectiveReader;
 use Spiral\Attributes\ReaderInterface;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
+use Temporal\Internal\Marshaller\Marshaller;
+use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Worker\Transport\Codec\CodecInterface;
 use Temporal\Internal\Events\EventEmitterTrait;
@@ -129,6 +132,11 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     private RPCConnectionInterface $rpc;
 
     /**
+     * @var MarshallerInterface
+     */
+    private MarshallerInterface $marshaller;
+
+    /**
      * @param DataConverterInterface $dataConverter
      * @param RPCConnectionInterface $rpc
      */
@@ -206,6 +214,14 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     }
 
     /**
+     * @return MarshallerInterface
+     */
+    public function getMarshaller(): MarshallerInterface
+    {
+        return $this->marshaller;
+    }
+
+    /**
      * {@inheritDoc}
      */
     public function run(HostConnectionInterface $host = null): int
@@ -241,6 +257,7 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     private function boot(): void
     {
         $this->reader = $this->createReader();
+        $this->marshaller = $this->createMarshaller($this->reader);
         $this->queues = $this->createTaskQueue();
         $this->router = $this->createRouter();
         $this->responses = $this->createQueue();
@@ -258,12 +275,10 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
                 DoctrineReader::addGlobalIgnoredName($annotation);
             }
 
-            return new SelectiveReader(
-                [
-                    new AnnotationReader(),
-                    new AttributeReader(),
-                ]
-            );
+            return new SelectiveReader([
+                new AnnotationReader(),
+                new AttributeReader(),
+            ]);
         }
 
         return new AttributeReader();
@@ -283,7 +298,7 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     private function createRouter(): RouterInterface
     {
         $router = new Router();
-        $router->add(new Router\GetWorkerInfo($this->queues));
+        $router->add(new Router\GetWorkerInfo($this->queues, $this->marshaller));
 
         return $router;
     }
@@ -311,6 +326,15 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     private function createServer(): ServerInterface
     {
         return new Server($this->responses, \Closure::fromCallable([$this, 'onRequest']));
+    }
+
+    /**
+     * @param ReaderInterface $reader
+     * @return MarshallerInterface
+     */
+    private function createMarshaller(ReaderInterface $reader): MarshallerInterface
+    {
+        return new Marshaller(new AttributeMapperFactory($reader));
     }
 
     /**

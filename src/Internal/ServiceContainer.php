@@ -112,6 +112,7 @@ final class ServiceContainer
      * @param ClientInterface $client
      * @param ReaderInterface $reader
      * @param QueueInterface $queue
+     * @param MarshallerInterface $marshaller
      * @param DataConverterInterface $dataConverter
      */
     public function __construct(
@@ -119,20 +120,20 @@ final class ServiceContainer
         ClientInterface $client,
         ReaderInterface $reader,
         QueueInterface $queue,
+        MarshallerInterface $marshaller,
         DataConverterInterface $dataConverter
     ) {
         $this->loop = $loop;
         $this->client = $client;
         $this->reader = $reader;
         $this->queue = $queue;
+        $this->marshaller = $marshaller;
+        $this->dataConverter = $dataConverter;
 
         $this->env = new Environment();
         $this->workflows = new WorkflowCollection();
         $this->activities = new ActivityCollection();
         $this->running = new ProcessCollection($client);
-
-        $this->dataConverter = $dataConverter;
-        $this->marshaller = new Marshaller(new AttributeMapperFactory($this->reader));
 
         $this->workflowsReader = new WorkflowReader($this->reader);
         $this->activitiesReader = new ActivityReader($this->reader);
@@ -149,6 +150,7 @@ final class ServiceContainer
             $worker->getClient(),
             $worker->getReader(),
             $worker->getQueue(),
+            $worker->getMarshaller(),
             $worker->getDataConverter()
         );
     }
