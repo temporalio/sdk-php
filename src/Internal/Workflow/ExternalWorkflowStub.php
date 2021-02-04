@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Internal\Workflow;
 
 use React\Promise\PromiseInterface;
-use Temporal\Client\ClientOptions;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Internal\Transport\Request\CancelExternalWorkflow;
 use Temporal\Internal\Transport\Request\SignalExternalWorkflow;

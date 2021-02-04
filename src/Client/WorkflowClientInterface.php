@@ -28,10 +28,7 @@ interface WorkflowClientInterface
      * @param mixed $args
      * @return WorkflowRunInterface
      */
-    public function start(
-        $workflow,
-        ...$args
-    ): WorkflowRunInterface;
+    public function start($workflow, ...$args): WorkflowRunInterface;
 
     /**
      * Starts untyped and typed workflow stubs in async mode. Sends signal on start.
@@ -50,10 +47,13 @@ interface WorkflowClientInterface
     ): WorkflowRunInterface;
 
     /**
-     * Creates workflow client stub that can be used to start a single workflow execution. The first
-     * call must be to a method annotated with @WorkflowMethod. After workflow is started it can be
-     * also used to send signals or queries to it. IMPORTANT! Stub is per workflow instance. So new
-     * stub should be created for each new one.
+     * Creates workflow client stub that can be used to start a single workflow
+     * execution. The first call must be to a method annotated
+     * with {@see WorkflowMethod}. After workflow is started it can be also
+     * used to send signals or queries to it.
+     *
+     * IMPORTANT! Stub is per workflow instance. So new stub should be created
+     * for each new one.
      *
      * @psalm-template T of object
      * @param class-string<T> $class
@@ -66,9 +66,12 @@ interface WorkflowClientInterface
     ): object;
 
     /**
-     * Creates workflow untyped client stub that can be used to start a single workflow execution.
-     * After workflow is started it can be also used to send signals or queries to it. IMPORTANT! Stub
-     * is per workflow instance. So new stub should be created for each new one.
+     * Creates workflow untyped client stub that can be used to start a single
+     * workflow execution. After workflow is started it can be also used to send
+     * signals or queries to it.
+     *
+     * IMPORTANT! Stub is per workflow instance. So new stub should be created
+     * for each new one.
      *
      * @param string $workflowType
      * @param WorkflowOptions|null $options

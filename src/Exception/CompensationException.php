@@ -11,9 +11,11 @@ declare(strict_types=1);
 
 namespace Temporal\Exception;
 
-class CompensationException extends \RuntimeException
+class CompensationException extends TemporalException
 {
-    /** @var \Throwable[] */
+    /**
+     * @var array<\Throwable>
+     */
     private array $suppressed = [];
 
     /**

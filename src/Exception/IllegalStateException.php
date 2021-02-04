@@ -11,6 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Exception;
 
-class IllegalStateException extends \LogicException
+class IllegalStateException extends TemporalException
 {
 }
