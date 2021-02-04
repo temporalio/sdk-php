@@ -130,7 +130,7 @@ final class Workflow extends Facade
      *  $first = $arguments->getValue(0, Type::TYPE_INT);
      *
      *  // Contains the value passed as the second argument to the workflow
-     *  $second = $arguments->getValue(0, Type::TYPE_STRING);
+     *  $second = $arguments->getValue(1, Type::TYPE_STRING);
      * </code>
      *
      * @return ValuesInterface

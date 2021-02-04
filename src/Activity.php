@@ -14,6 +14,7 @@ namespace Temporal;
 use Temporal\Activity\ActivityContextInterface;
 use Temporal\Activity\ActivityInfo;
 use Temporal\DataConverter\Type;
+use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\OutOfContextException;
 use Temporal\Internal\Support\Facade;
 
@@ -38,6 +39,33 @@ final class Activity extends Facade
         $context = self::getCurrentContext();
 
         return $context->getInfo();
+    }
+
+    /**
+     * Returns activity execution input arguments.
+     *
+     * The data is equivalent to what is passed to the activity method handler.
+     *
+     * <code>
+     *  #[ActivityMethod]
+     *  public function activityMethod(int $first, string $second)
+     *  {
+     *      $arguments = Activity::getInput();
+     *
+     *      Assert::assertTrue($first,  $arguments->getValue(0, Type::TYPE_INT));
+     *      Assert::assertTrue($second, $arguments->getValue(1, Type::TYPE_STRING));
+     *  }
+     * </code>
+     *
+     * @return ValuesInterface
+     * @throws OutOfContextException in the absence of the activity execution context.
+     */
+    public static function getInput(): ValuesInterface
+    {
+        /** @var ActivityContextInterface $context */
+        $context = self::getCurrentContext();
+
+        return $context->getInput();
     }
 
     /**
@@ -100,5 +128,4 @@ final class Activity extends Facade
 
         $context->heartbeat($details);
     }
-
 }
