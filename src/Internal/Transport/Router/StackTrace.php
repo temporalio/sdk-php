@@ -19,7 +19,6 @@ final class StackTrace extends WorkflowProcessAwareRoute
 {
     /**
      * {@inheritDoc}
-     * @throws \JsonException
      */
     public function handle(RequestInterface $request, array $headers, Deferred $resolver): void
     {
@@ -27,8 +26,6 @@ final class StackTrace extends WorkflowProcessAwareRoute
         $process = $this->findProcessOrFail($payload['runId'] ?? null);
 
         $context = $process->getContext();
-
-        error_log($context->getStackTrace());
 
         $resolver->resolve(EncodedValues::fromValues([$context->getStackTrace()]));
     }
