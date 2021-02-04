@@ -11,42 +11,44 @@ declare(strict_types=1);
 
 namespace Temporal\Activity;
 
+use Temporal\Activity;
 use Temporal\DataConverter\Type;
-use Temporal\Worker\Transport\RPCConnectionInterface;
 
 interface ActivityContextInterface
 {
     /**
-     * Information about activity invocation and the caller workflow.
+     * @see Activity::getInfo()
      *
      * @return ActivityInfo
      */
     public function getInfo(): ActivityInfo;
 
     /**
+     * @see Activity::hasHeartbeatDetails()
+     *
      * @return bool
      */
     public function hasHeartbeatDetails(): bool;
 
     /**
+     * @see Activity::getHeartbeatDetails()
+     *
      * @param Type|string $type
      * @return mixed
      */
     public function getHeartbeatDetails($type = null);
 
     /**
-     * If this method is called during an activity execution then activity is
-     * not going to complete when its method returns. It is expected to be
-     * completed asynchronously using {@see RPCConnectionInterface::call()}.
+     * @see Activity::doNotCompleteOnReturn()
      *
      * @return void
      */
     public function doNotCompleteOnReturn(): void;
 
     /**
-     * Use to notify Simple Workflow that activity execution is alive.
+     * @see Activity::heartbeat()
      *
-     * @param mixed $details In case of activity timeout details are returned  as a field of the exception thrown.
+     * @param mixed $details
      */
     public function heartbeat($details): void;
 }

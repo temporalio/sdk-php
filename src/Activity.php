@@ -34,41 +34,71 @@ final class Activity extends Facade
      */
     public static function getInfo(): ActivityInfo
     {
-        throw new \LogicException(__METHOD__ . ' not implemented yet');
+        /** @var ActivityContextInterface $context */
+        $context = self::getCurrentContext();
+
+        return $context->getInfo();
     }
 
     /**
+     * Returns {@see true} when heartbeat's ({@see Activity::heartbeat()}) first
+     * argument has been passed
+     *
      * @return bool
      * @throws OutOfContextException in the absence of the activity execution context.
      */
     public static function hasHeartbeatDetails(): bool
     {
-        throw new \LogicException(__METHOD__ . ' not implemented yet');
+        /** @var ActivityContextInterface $context */
+        $context = self::getCurrentContext();
+
+        return $context->hasHeartbeatDetails();
     }
 
     /**
-     * @param null $type
+     * The method returns payload that has been passed into last
+     * heartbeat ({@see Activity::heartbeat()}) method.
+     *
+     * @param Type|string|\ReflectionType|\ReflectionClass|null $type
+     * @return mixed
      * @throws OutOfContextException in the absence of the activity execution context.
      */
     public static function getHeartbeatDetails($type = null)
     {
-        throw new \LogicException(__METHOD__ . ' not implemented yet');
+        /** @var ActivityContextInterface $context */
+        $context = self::getCurrentContext();
+
+        return $context->getHeartbeatDetails($type);
     }
 
     /**
+     * If this method is called during an activity execution then activity is
+     * not going to complete when its method returns. It is expected to be
+     * completed asynchronously using {@see ActivityCompletionClientInterface::complete()}.
+     *
      * @throws OutOfContextException in the absence of the activity execution context.
      */
     public static function doNotCompleteOnReturn(): void
     {
-        throw new \LogicException(__METHOD__ . ' not implemented yet');
+        /** @var ActivityContextInterface $context */
+        $context = self::getCurrentContext();
+
+        $context->doNotCompleteOnReturn();
     }
 
     /**
+     * Use to notify workflow that activity execution is alive.
+     *
+     * @param mixed $details In case of activity timeout details are returned
+     * as a field of the exception thrown.
      * @throws OutOfContextException in the absence of the activity execution context.
      */
     public static function heartbeat($details): void
     {
-        throw new \LogicException(__METHOD__ . ' not implemented yet');
+        /** @var ActivityContextInterface $context */
+        $context = self::getCurrentContext();
+
+        $context->heartbeat($details);
     }
 
 }
