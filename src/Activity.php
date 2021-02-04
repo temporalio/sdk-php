@@ -19,10 +19,6 @@ use Temporal\Exception\OutOfContextException;
 use Temporal\Internal\Support\Facade;
 
 /**
- * @method static array getArguments()
- *
- * @method static bool isDoNotCompleteOnReturn()
- *
  * @template-extends Facade<ActivityContextInterface>
  */
 final class Activity extends Facade
