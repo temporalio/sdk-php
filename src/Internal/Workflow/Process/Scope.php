@@ -376,7 +376,6 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     public function onAwait(Deferred $deferred)
     {
         $this->onCancel[++$this->cancelID] = function (\Throwable $e = null) use ($deferred) {
-            // todo: discuss with max
             $deferred->reject($e ?? new CanceledFailure(''));
         };
 
