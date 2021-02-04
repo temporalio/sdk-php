@@ -12,7 +12,11 @@ declare(strict_types=1);
 namespace Temporal\Workflow;
 
 use Temporal\DataConverter\Type;
+use Temporal\Exception\Client\WorkflowFailedException;
 
+/**
+ * Represents a running workflow execution. Can be used to wait for the completion result or error.
+ */
 interface WorkflowRunInterface
 {
     /**
@@ -30,6 +34,8 @@ interface WorkflowRunInterface
      * @param string|\ReflectionClass|\ReflectionType|Type|null $type
      * @param int|null $timeout Timeout in seconds. Infinite by the default.
      * @return mixed
+     * @throws WorkflowFailedException
+     *
      * @see DateInterval
      */
     public function getResult($type = null, int $timeout = null);

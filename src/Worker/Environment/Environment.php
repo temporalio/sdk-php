@@ -47,9 +47,9 @@ class Environment implements EnvironmentInterface
     }
 
     /**
-     * @return CarbonInterface
+     * @return \DateTimeInterface
      */
-    public function now(): CarbonInterface
+    public function now(): \DateTimeInterface
     {
         return $this->tickTime;
     }

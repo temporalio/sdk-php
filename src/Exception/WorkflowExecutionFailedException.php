@@ -13,7 +13,7 @@ namespace Temporal\Exception;
 
 use Temporal\Api\Failure\V1\Failure;
 
-class WorkflowExecutionFailedException extends \RuntimeException
+class WorkflowExecutionFailedException extends TemporalException
 {
     /**
      * @var Failure

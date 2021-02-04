@@ -15,6 +15,9 @@ use Temporal\Client\WorkflowStubInterface;
 use Temporal\Exception\InvalidArgumentException;
 use Temporal\Internal\Client\WorkflowProxy;
 
+/**
+ * Helper class used to convert typed workflow stubs to their untyped alternatives to gain access to cancel() and terminate() methods.
+ */
 class WorkflowStub
 {
     /**

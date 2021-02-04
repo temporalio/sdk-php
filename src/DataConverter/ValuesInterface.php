@@ -13,6 +13,9 @@ namespace Temporal\DataConverter;
 
 use Temporal\Api\Common\V1\Payloads;
 
+/**
+ * @psalm-import-type TypeEnum from Type
+ */
 interface ValuesInterface extends \Countable
 {
     /**
@@ -31,7 +34,7 @@ interface ValuesInterface extends \Countable
      * Get value by it's index.
      *
      * @param int $index
-     * @param mixed $type
+     * @param Type|TypeEnum|mixed $type
      * @return mixed
      */
     public function getValue(int $index, $type);

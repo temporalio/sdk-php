@@ -11,14 +11,12 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Environment;
 
-use Carbon\CarbonInterface;
-
 interface EnvironmentInterface
 {
     /**
-     * @return CarbonInterface
+     * @return \DateTimeInterface
      */
-    public function now(): CarbonInterface;
+    public function now(): \DateTimeInterface;
 
     /**
      * @return bool

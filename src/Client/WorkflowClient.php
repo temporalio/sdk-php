@@ -80,7 +80,8 @@ class WorkflowClient implements WorkflowClientInterface
     }
 
     /**
-     * Starts workflow in async mode.
+     * Starts workflow in async mode. Returns WorkflowRun object which can be used to wait for the execution result.
+     * WorkflowRun objects created by typed workflow stubs will attempt to type the execution result as well.
      *
      * @param object|WorkflowStubInterface $workflow
      * @param mixed ...$args

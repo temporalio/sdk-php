@@ -38,7 +38,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
     /**
      * Get value of last completion result, if any.
      *
-     * @param Type|string $type
+     * @param Type|string|null $type
      * @return mixed
      */
     public function getLastCompletionResult($type = null);
@@ -133,14 +133,14 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @param class-string|string $type
      * @param array $args
      * @param ChildWorkflowOptions|null $options
-     * @param \ReflectionType|null $returnType
+     * @param Type|string|\ReflectionType|\ReflectionClass|null $returnType
      * @return PromiseInterface
      */
     public function executeChildWorkflow(
         string $type,
         array $args = [],
         ChildWorkflowOptions $options = null,
-        \ReflectionType $returnType = null
+        $returnType = null
     ): PromiseInterface;
 
     /**

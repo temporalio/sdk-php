@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Exception;
 
+use JetBrains\PhpStorm\Pure;
+
 class DoNotCompleteOnResultException extends TemporalException
 {
     /**
@@ -21,6 +23,7 @@ class DoNotCompleteOnResultException extends TemporalException
     /**
      * @return static
      */
+    #[Pure]
     public static function create(): self
     {
         return new static(static::DEFAULT_ERROR_MESSAGE);
