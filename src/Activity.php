@@ -24,7 +24,7 @@ use Temporal\Internal\Support\Facade;
 final class Activity extends Facade
 {
     /**
-     * Returns information about current workflow execution.
+     * Returns information about current activity execution.
      *
      * @return ActivityInfo
      * @throws OutOfContextException in the absence of the activity execution context.
