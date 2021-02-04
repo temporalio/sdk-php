@@ -376,40 +376,6 @@ final class Workflow extends Facade
     }
 
     /**
-     * The method is used to explicitly end the workflow.
-     *
-     * <code>
-     *  #[WorkflowMethod]
-     *  public function handler()
-     *  {
-     *      Workflow::executeActivity('activity')
-     *          ->then(function($result) {
-     *              Workflow::complete([$result]);
-     *          })
-     *          ->otherwise(function(\Throwable $error) {
-     *              Workflow::complete(failure: $error);
-     *          })
-     *      ;
-     *  }
-     * </code>
-     *
-     * Please note that a workflow can return MULTIPLE results, so an array
-     * should be returned as the first argument (result).
-     *
-     * @param array|null $result
-     * @param \Throwable|null $failure
-     * @return PromiseInterface
-     * @throws OutOfContextException in the absence of the workflow execution context.
-     */
-    public static function complete(array $result = null, \Throwable $failure = null): PromiseInterface
-    {
-        /** @var ScopedContextInterface $context */
-        $context = self::getCurrentContext();
-
-        return $context->complete($result, $failure);
-    }
-
-    /**
      * Stops workflow execution work for a specified period.
      *
      * The first argument can take implementation of the {@see \DateInterval},
