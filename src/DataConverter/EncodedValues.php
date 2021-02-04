@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\DataConverter;
 
+use Google\Protobuf\Internal\RepeatedField;
 use React\Promise\PromiseInterface;
 use Temporal\Api\Common\V1\Payloads;
 
@@ -74,10 +75,9 @@ class EncodedValues implements ValuesInterface
             throw new \LogicException('DataConverter is not set');
         }
 
-        return $this->converter->fromPayload(
-            $this->payloads->getPayloads()->offsetGet($index),
-            $type
-        );
+        $payloads = $this->payloads->getPayloads();
+
+        return $this->converter->fromPayload($payloads[$index], $type);
     }
 
     /**

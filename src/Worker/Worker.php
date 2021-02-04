@@ -22,6 +22,10 @@ use Temporal\Internal\Transport\RouterInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\RPCConnectionInterface;
 
+/**
+ * Worker manages the execution of workflows and activities within the single TaskQueue. Activity and Workflow processing
+ * will be launched using separate processes.
+ */
 class Worker implements WorkerInterface, Identifiable, EventListenerInterface, DispatcherInterface
 {
     use EventEmitterTrait;

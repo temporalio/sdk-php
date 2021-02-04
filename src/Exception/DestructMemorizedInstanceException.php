@@ -12,7 +12,8 @@ declare(strict_types=1);
 namespace Temporal\Exception;
 
 /**
- * Internal exception used to guide coroutines on their path to offload from memory. Used by the DestroyWorkflow command.
+ * Internal exception used to guide coroutines on their path to offload from
+ * memory. Used by the DestroyWorkflow command.
  *
  * @internal
  */

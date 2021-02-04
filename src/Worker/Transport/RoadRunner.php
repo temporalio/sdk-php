@@ -18,7 +18,6 @@ use Spiral\RoadRunner\Environment;
 use Spiral\RoadRunner\EnvironmentInterface;
 use Spiral\RoadRunner\Payload;
 use Spiral\RoadRunner\Worker;
-use Symfony\Component\VarDumper\Dumper\CliDumper;
 use Temporal\Exception\ProtocolException;
 use Temporal\Exception\TransportException;
 use Spiral\RoadRunner\WorkerInterface as RoadRunnerWorker;
@@ -47,7 +46,6 @@ final class RoadRunner implements HostConnectionInterface
     {
         $this->worker = $worker;
         $this->codec = new JsonCodec();
-        $this->bootStdoutHandlers();
     }
 
     /**
@@ -67,9 +65,7 @@ final class RoadRunner implements HostConnectionInterface
     public function waitBatch(): ?CommandBatch
     {
         /** @var Payload $payload */
-        $payload = $this->interceptErrors(
-            fn() => $this->worker->waitPayload()
-        );
+        $payload = $this->worker->waitPayload();
 
         if ($payload === null) {
             return null;
@@ -104,71 +100,6 @@ final class RoadRunner implements HostConnectionInterface
             $this->worker->error((string)$error);
         } catch (\Throwable $e) {
             throw new TransportException($e->getMessage(), $e->getCode(), $e);
-        }
-    }
-
-    /**
-     * @return $this
-     */
-    private function bootStdoutHandlers(): self
-    {
-        // symfony/var-dumper interceptor
-        if (\class_exists(CliDumper::class)) {
-            CliDumper::$defaultOutput = 'php://stderr';
-        }
-
-        // Intercept all output messages
-        \ob_start(fn(string $chunk) => $this->write($chunk), 10 * 1024);
-
-        // Intercept all exceptions
-        \set_exception_handler(fn(\Throwable $e) => $this->writeException($e));
-
-        // Intercept all errors
-        \set_error_handler(
-            function (int $code, string $message, string $file, int $line): void {
-                $this->writeException(
-                    new \ErrorException($message, $code, $code, $file, $line)
-                );
-            }
-        );
-
-        return $this;
-    }
-
-    /**
-     * @param string $message
-     */
-    private function write(string $message): void
-    {
-        \file_put_contents('php://stderr', $message);
-    }
-
-    /**
-     * @param \Throwable $e
-     */
-    private function writeException(\Throwable $e): void
-    {
-        $this->write((string)$e);
-    }
-
-    /**
-     * @param \Closure $expr
-     * @return mixed
-     */
-    private function interceptErrors(\Closure $expr)
-    {
-        $handler = static function (int $code, string $message, string $file, int $line): void {
-            $error = new \ErrorException($message, $code, $code, $file, $line);
-
-            throw new TransportException($message, $code, $error);
-        };
-
-        \set_error_handler($handler);
-
-        try {
-            return $expr();
-        } finally {
-            \restore_error_handler();
         }
     }
 

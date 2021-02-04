@@ -129,7 +129,7 @@ class WorkflowContext implements WorkflowContextInterface
     /**
      * Get value of last completion result, if any.
      *
-     * @param Type|string $type
+     * @param Type|string|null $type
      * @return mixed
      */
     public function getLastCompletionResult($type = null)
@@ -282,9 +282,11 @@ class WorkflowContext implements WorkflowContextInterface
         string $type,
         array $args = [],
         ChildWorkflowOptions $options = null,
-        \ReflectionType $returnType = null
+        $returnType = null
     ): PromiseInterface {
-        return $this->newUntypedChildWorkflowStub($type, $options)->execute($args, $returnType);
+        return $this->newUntypedChildWorkflowStub($type, $options)
+            ->execute($args, $returnType)
+        ;
     }
 
     /**

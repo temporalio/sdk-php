@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Support;
 
+use Temporal\Exception\OutOfContextException;
+
 /**
  * @template T of object
  */
@@ -59,6 +61,7 @@ abstract class Facade
 
     /**
      * @return object<T>
+     * @throws OutOfContextException
      */
     public static function getCurrentContext(): object
     {
@@ -71,6 +74,7 @@ abstract class Facade
 
     /**
      * @return int
+     * @throws OutOfContextException
      */
     public static function getContextId(): int
     {
