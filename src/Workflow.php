@@ -280,15 +280,15 @@ final class Workflow extends Facade
      *  }
      * </code>
      *
-     * @param mixed ...$condition
+     * @param callable|PromiseInterface ...$conditions
      * @return PromiseInterface
      */
-    public static function await(...$condition): PromiseInterface
+    public static function await(...$conditions): PromiseInterface
     {
         /** @var WorkflowContext $context */
         $context = self::getCurrentContext();
 
-        return $context->await(...$condition);
+        return $context->await(...$conditions);
     }
 
     /**
@@ -311,15 +311,15 @@ final class Workflow extends Facade
      * </code>
      *
      * @param DateIntervalFormat|positive-int|float $interval
-     * @param mixed ...$condition
+     * @param callable|PromiseInterface ...$conditions
      * @return PromiseInterface
      */
-    public static function awaitWithTimeout($interval, ...$condition): PromiseInterface
+    public static function awaitWithTimeout($interval, ...$conditions): PromiseInterface
     {
         /** @var WorkflowContext $context */
         $context = self::getCurrentContext();
 
-        return $context->awaitWithTimeout($interval, ...$condition);
+        return $context->awaitWithTimeout($interval, ...$conditions);
     }
 
     /**
