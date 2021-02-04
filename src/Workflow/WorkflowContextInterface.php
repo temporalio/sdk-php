@@ -13,12 +13,12 @@ namespace Temporal\Workflow;
 
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
-use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Environment\EnvironmentInterface;
+use Temporal\Workflow;
 
 /**
  * @psalm-import-type DateIntervalFormat from DateInterval
@@ -26,11 +26,15 @@ use Temporal\Worker\Environment\EnvironmentInterface;
 interface WorkflowContextInterface extends EnvironmentInterface
 {
     /**
+     * @see Workflow::getInfo()
+     *
      * @return WorkflowInfo
      */
     public function getInfo(): WorkflowInfo;
 
     /**
+     * @see Workflow::getInput()
+     *
      * @return ValuesInterface
      */
     public function getInput(): ValuesInterface;
@@ -38,17 +42,16 @@ interface WorkflowContextInterface extends EnvironmentInterface
     /**
      * Get value of last completion result, if any.
      *
+     * @see Workflow::getLastCompletionResult()
+     *
      * @param Type|string|null $type
      * @return mixed
      */
     public function getLastCompletionResult($type = null);
 
     /**
-     * @return DataConverterInterface
-     */
-    public function getDataConverter(): DataConverterInterface;
-
-    /**
+     * @see Workflow::registerQuery()
+     *
      * @param string $queryType
      * @param callable $handler
      * @return $this
@@ -56,6 +59,8 @@ interface WorkflowContextInterface extends EnvironmentInterface
     public function registerQuery(string $queryType, callable $handler): self;
 
     /**
+     * @see Workflow::registerSignal()
+     *
      * @param string $queryType
      * @param callable $handler
      * @return $this
@@ -65,12 +70,16 @@ interface WorkflowContextInterface extends EnvironmentInterface
     /**
      * Exchanges data between worker and host process.
      *
+     * @internal This is an internal method
+     *
      * @param RequestInterface $request
      * @return PromiseInterface
      */
     public function request(RequestInterface $request): PromiseInterface;
 
     /**
+     * @see Workflow::getVersion()
+     *
      * @param string $changeId
      * @param int $minSupported
      * @param int $maxSupported
@@ -79,6 +88,8 @@ interface WorkflowContextInterface extends EnvironmentInterface
     public function getVersion(string $changeId, int $minSupported, int $maxSupported): PromiseInterface;
 
     /**
+     * @see Workflow::sideEffect()
+     *
      * @psalm-type SideEffectCallback = callable(): mixed
      * @psalm-param SideEffectCallback $context
      *
@@ -88,6 +99,8 @@ interface WorkflowContextInterface extends EnvironmentInterface
     public function sideEffect(callable $context): PromiseInterface;
 
     /**
+     * @internal This is an internal method
+     *
      * @param array|null $result
      * @param \Throwable|null $failure
      * @return PromiseInterface
@@ -95,6 +108,8 @@ interface WorkflowContextInterface extends EnvironmentInterface
     public function complete(array $result = null, \Throwable $failure = null): PromiseInterface;
 
     /**
+     * @see Workflow::timer()
+     *
      * @param DateIntervalFormat|int $interval
      * @return PromiseInterface
      * @see DateInterval
@@ -102,7 +117,9 @@ interface WorkflowContextInterface extends EnvironmentInterface
     public function timer($interval): PromiseInterface;
 
     /**
-     * @param class-string|string $type
+     * @see Workflow::continueAsNew()
+     *
+     * @param string $type
      * @param array $args
      * @param ContinueAsNewOptions|null $options
      * @return PromiseInterface
@@ -116,21 +133,19 @@ interface WorkflowContextInterface extends EnvironmentInterface
     /**
      * Creates client stub that can be used to continue this workflow as new.
      *
-     * @psalm-template T of object
-     * @psalm-param class-string<T> $type
-     * @psalm-return object<T>|T
+     * @see Workflow::newContinueAsNewStub()
      *
-     * @param string $type
+     * @psalm-template T of object
+     * @param class-string<T> $class
      * @param ContinueAsNewOptions|null $options
-     * @return object
+     * @return T
      */
-    public function newContinueAsNewStub(
-        string $type,
-        ContinueAsNewOptions $options = null
-    ): object;
+    public function newContinueAsNewStub(string $class, ContinueAsNewOptions $options = null): object;
 
     /**
-     * @param class-string|string $type
+     * @see Workflow::executeChildWorkflow()
+     *
+     * @param string $type
      * @param array $args
      * @param ChildWorkflowOptions|null $options
      * @param Type|string|\ReflectionType|\ReflectionClass|null $returnType
@@ -144,47 +159,45 @@ interface WorkflowContextInterface extends EnvironmentInterface
     ): PromiseInterface;
 
     /**
-     * @psalm-template T of object
-     * @psalm-param class-string<T> $type
-     * @psalm-return object<T>|T
+     * @see Workflow::newChildWorkflowStub()
      *
-     * @param string $type
+     * @psalm-template T of object
+     * @param class-string<T> $class
      * @param ChildWorkflowOptions|null $options
-     * @return object
+     * @return T
      */
-    public function newChildWorkflowStub(
-        string $type,
-        ChildWorkflowOptions $options = null
-    ): object;
+    public function newChildWorkflowStub(string $class, ChildWorkflowOptions $options = null): object;
 
     /**
-     * @param string $name
+     * @see Workflow::newUntypedChildWorkflowStub()
+     *
+     * @param string $type
      * @param ChildWorkflowOptions|null $options
      * @return ChildWorkflowStubInterface
      */
     public function newUntypedChildWorkflowStub(
-        string $name,
+        string $type,
         ChildWorkflowOptions $options = null
     ): ChildWorkflowStubInterface;
-
 
     /**
      * Creates client stub that can be used to communicate to an existing
      * workflow execution.
      *
-     * @psalm-template T of object
-     * @psalm-param class-string<T> $type
-     * @psalm-return object<T>|T
+     * @see Workflow::newExternalWorkflowStub()
      *
-     * @param string $type
+     * @psalm-template T of object
+     * @param class-string<T> $class
      * @param WorkflowExecution $execution
-     * @return object
+     * @return T
      */
-    public function newExternalWorkflowStub(string $type, WorkflowExecution $execution): object;
+    public function newExternalWorkflowStub(string $class, WorkflowExecution $execution): object;
 
     /**
      * Creates untyped client stub that can be used to signal or cancel a child
      * workflow.
+     *
+     * @see Workflow::newUntypedExternalWorkflowStub()
      *
      * @param WorkflowExecution $execution
      * @return ExternalWorkflowStubInterface
@@ -192,6 +205,8 @@ interface WorkflowContextInterface extends EnvironmentInterface
     public function newUntypedExternalWorkflowStub(WorkflowExecution $execution): ExternalWorkflowStubInterface;
 
     /**
+     * @see Workflow::executeActivity()
+     *
      * @param string $type
      * @param array $args
      * @param ActivityOptions|null $options
@@ -206,28 +221,46 @@ interface WorkflowContextInterface extends EnvironmentInterface
     ): PromiseInterface;
 
     /**
-     * @psalm-template TActivity
-     * @psalm-param class-string<TActivity> $class
-     * @psalm-return TActivity
+     * @see Workflow::newActivityStub()
      *
-     * @param string $class
+     * @psalm-template T of object
+     * @param class-string<T> $class
      * @param ActivityOptions|null $options
-     * @return object
+     * @return T
      */
-    public function newActivityStub(
-        string $class,
-        ActivityOptions $options = null
-    ): object;
+    public function newActivityStub(string $class, ActivityOptions $options = null): object;
 
     /**
+     * @see Workflow::newUntypedActivityStub()
+     *
      * @param ActivityOptions|null $options
      * @return ActivityStubInterface
      */
-    public function newUntypedActivityStub(
-        ActivityOptions $options = null
-    ): ActivityStubInterface;
+    public function newUntypedActivityStub(ActivityOptions $options = null): ActivityStubInterface;
 
     /**
+     * @see Workflow::await()
+     *
+     * @param callable|PromiseInterface ...$conditions
+     * @return PromiseInterface
+     */
+    public function await(...$conditions): PromiseInterface;
+
+    /**
+     * @see Workflow::awaitWithTimeout()
+     *
+     * Returns {@see true} if any of conditions were fired and {@see false} if
+     * timeout was reached.
+     *
+     * @param int|DateInterval $interval
+     * @param callable|PromiseInterface ...$conditions
+     * @return PromiseInterface
+     */
+    public function awaitWithTimeout($interval, ...$conditions): PromiseInterface;
+
+    /**
+     * @see Workflow::getStackTrace()
+     *
      * @return string
      */
     public function getStackTrace(): string;

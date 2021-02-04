@@ -30,21 +30,25 @@ final class ActivityContext implements ActivityContextInterface
     private RPCConnectionInterface $rpc;
     private DataConverterInterface $converter;
     private ?ValuesInterface $heartbeatDetails;
+    private ValuesInterface $input;
 
     /**
      * @param RPCConnectionInterface $rpc
      * @param DataConverterInterface $converter
+     * @param ValuesInterface $input
      * @param ValuesInterface|null $lastHeartbeatDetails
      */
     public function __construct(
         RPCConnectionInterface $rpc,
         DataConverterInterface $converter,
+        ValuesInterface $input,
         ValuesInterface $lastHeartbeatDetails = null
     ) {
         $this->info = new ActivityInfo();
         $this->rpc = $rpc;
         $this->converter = $converter;
         $this->heartbeatDetails = $lastHeartbeatDetails;
+        $this->input = $input;
     }
 
     /**
@@ -53,6 +57,14 @@ final class ActivityContext implements ActivityContextInterface
     public function getInfo(): ActivityInfo
     {
         return $this->info;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getInput(): ValuesInterface
+    {
+        return $this->input;
     }
 
     /**
