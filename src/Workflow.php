@@ -47,11 +47,11 @@ final class Workflow extends Facade
      * Returns current datetime.
      *
      * Unlike "real" system time, this method returns the time at which the
-     * given workflow started at a certain point in time.
+     * given workflow task started at a certain point in time.
      *
      * Thus, in the case of an execution error and when the workflow has been
      * restarted ({@see Workflow::isReplaying()}), the result of this method
-     * will return exactly the date and time at which this workflow was
+     * will return exactly the date and time at which this workflow task was
      * first started, which eliminates the problems of side effects.
      *
      * Please, use this method {@see Workflow::now()} instead of:
