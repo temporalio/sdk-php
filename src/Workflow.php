@@ -226,6 +226,8 @@ final class Workflow extends Facade
      *  $child->isCancelled(); // false
      * </code>
      *
+     * Use asyncDetached to handle cleanup and compensation logic.
+     *
      * @param callable $task
      * @return CancellationScopeInterface
      * @throws OutOfContextException in the absence of the workflow execution context.
