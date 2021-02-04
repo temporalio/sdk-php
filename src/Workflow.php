@@ -47,11 +47,11 @@ final class Workflow extends Facade
      * Returns current datetime.
      *
      * Unlike "real" system time, this method returns the time at which the
-     * given workflow started at a certain point in time.
+     * given workflow task started at a certain point in time.
      *
      * Thus, in the case of an execution error and when the workflow has been
      * restarted ({@see Workflow::isReplaying()}), the result of this method
-     * will return exactly the date and time at which this workflow was
+     * will return exactly the date and time at which this workflow task was
      * first started, which eliminates the problems of side effects.
      *
      * Please, use this method {@see Workflow::now()} instead of:
@@ -226,6 +226,8 @@ final class Workflow extends Facade
      *  $child->isCancelled(); // false
      * </code>
      *
+     * Use asyncDetached to handle cleanup and compensation logic.
+     *
      * @param callable $task
      * @return CancellationScopeInterface
      * @throws OutOfContextException in the absence of the workflow execution context.
@@ -373,40 +375,6 @@ final class Workflow extends Facade
         $context = self::getCurrentContext();
 
         return $context->sideEffect($value);
-    }
-
-    /**
-     * The method is used to explicitly end the workflow.
-     *
-     * <code>
-     *  #[WorkflowMethod]
-     *  public function handler()
-     *  {
-     *      Workflow::executeActivity('activity')
-     *          ->then(function($result) {
-     *              Workflow::complete([$result]);
-     *          })
-     *          ->otherwise(function(\Throwable $error) {
-     *              Workflow::complete(failure: $error);
-     *          })
-     *      ;
-     *  }
-     * </code>
-     *
-     * Please note that a workflow can return MULTIPLE results, so an array
-     * should be returned as the first argument (result).
-     *
-     * @param array|null $result
-     * @param \Throwable|null $failure
-     * @return PromiseInterface
-     * @throws OutOfContextException in the absence of the workflow execution context.
-     */
-    public static function complete(array $result = null, \Throwable $failure = null): PromiseInterface
-    {
-        /** @var ScopedContextInterface $context */
-        $context = self::getCurrentContext();
-
-        return $context->complete($result, $failure);
     }
 
     /**
