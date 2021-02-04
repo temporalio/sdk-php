@@ -33,6 +33,8 @@ use Temporal\Internal\Support\DateInterval;
  * This class provides coroutine specific access to active WorkflowContext. It is safe to use this Facade inside
  * your helper classes.
  *
+ * This is main class you can use in your workflow code.
+ *
  * @psalm-import-type TypeEnum from Type
  * @psalm-import-type DateIntervalFormat from DateInterval
  * @see DateInterval
