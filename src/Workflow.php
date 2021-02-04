@@ -25,6 +25,7 @@ use Temporal\Workflow\ChildWorkflowStubInterface;
 use Temporal\Workflow\ContinueAsNewOptions;
 use Temporal\Workflow\ExternalWorkflowStubInterface;
 use Temporal\Workflow\ScopedContextInterface;
+use Temporal\Workflow\WorkflowContext;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowInfo;
 use Temporal\Internal\Support\DateInterval;
@@ -241,6 +242,87 @@ final class Workflow extends Facade
     }
 
     /**
+     * Moves to the next step if the expression evaluates to {@see true}.
+     *
+     * Please note that a state change should ONLY occur if the internal
+     * workflow conditions are met.
+     *
+     * <code>
+     *  #[WorkflowMethod]
+     *  public function handler()
+     *  {
+     *      yield Workflow::await(
+     *          Workflow::executeActivity('shouldByContinued')
+     *      );
+     *
+     *      // ...do something
+     *  }
+     * </code>
+     *
+     * Or in the case of an explicit signal method execution of the specified
+     * workflow.
+     *
+     * <code>
+     *  private bool $continued = false;
+     *
+     *  #[WorkflowMethod]
+     *  public function handler()
+     *  {
+     *      yield Workflow::await(fn() => $this->continued);
+     *
+     *      // ...continue execution
+     *  }
+     *
+     *  #[SignalMethod]
+     *  public function continue()
+     *  {
+     *      $this->continued = true;
+     *  }
+     * </code>
+     *
+     * @param mixed ...$condition
+     * @return PromiseInterface
+     */
+    public static function await(...$condition): PromiseInterface
+    {
+        /** @var WorkflowContext $context */
+        $context = self::getCurrentContext();
+
+        return $context->await(...$condition);
+    }
+
+    /**
+     * Returns {@see true} if any of conditions were fired and {@see false} if
+     * timeout was reached.
+     *
+     * This method is similar to {@see Workflow::await()}, but in any case it
+     * will proceed to the next step either if the internal workflow conditions
+     * are met, or after the specified timer interval expires.
+     *
+     * <code>
+     *  #[WorkflowMethod]
+     *  public function handler()
+     *  {
+     *      // Continue after 42 seconds or when bool "continued" will be true.
+     *      yield Workflow::awaitWithTimeout(42, fn() => $this->continued);
+     *
+     *      // ...continue execution
+     *  }
+     * </code>
+     *
+     * @param DateIntervalFormat|positive-int|float $interval
+     * @param mixed ...$condition
+     * @return PromiseInterface
+     */
+    public static function awaitWithTimeout($interval, ...$condition): PromiseInterface
+    {
+        /** @var WorkflowContext $context */
+        $context = self::getCurrentContext();
+
+        return $context->awaitWithTimeout($interval, ...$condition);
+    }
+
+    /**
      * Returns value of last completion result, if any.
      *
      * @param Type|TypeEnum|mixed $type
@@ -416,9 +498,6 @@ final class Workflow extends Facade
      * Method atomically completes the current workflow execution and starts a
      * new execution of the Workflow with the same Workflow Id. The new
      * execution will not carry over any history from the old execution.
-     *
-     * This method is similar to {@see Workflow::complete()}
-     * and {@see Workflow::executeChildWorkflow()} that executes at same time.
      *
      * <code>
      *  #[WorkflowMethod]
