@@ -66,7 +66,7 @@ final class Activity extends Facade
 
     /**
      * Returns {@see true} when heartbeat's ({@see Activity::heartbeat()}) first
-     * argument has been passed
+     * argument has been passed.
      *
      * @return bool
      * @throws OutOfContextException in the absence of the activity execution context.
@@ -112,6 +112,22 @@ final class Activity extends Facade
 
     /**
      * Use to notify workflow that activity execution is alive.
+     *
+     * <code>
+     *  public function activityMethod()
+     *  {
+     *      // An example method of deferred request
+     *      $query = $this->db->query('SELECT * FROM table WHERE 1=1');
+     *
+     *      // Wait for response
+     *      while (!$query->isCompleted()) {
+     *          Activity::heartbeat('Waiting for activity response');
+     *      }
+     *
+     *      // Returns response of deferred request
+     *      return $query->getResult();
+     *  }
+     * </code>
      *
      * @param mixed $details In case of activity timeout details are returned
      * as a field of the exception thrown.
