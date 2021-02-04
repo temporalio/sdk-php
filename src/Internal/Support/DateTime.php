@@ -35,13 +35,7 @@ final class DateTime
 
             // Note: PHP does not support accuracy greater than 8 (microseconds)
             if (\strlen($accuracy) > 8) {
-                $rounded = \sprintf('%s.%sZ', $datetime, \substr($accuracy, 0, 8));
-
-                // Trigger warning
-                $message = \sprintf(self::NOTICE_PRECISION_LOSS, $time, $rounded);
-                @\trigger_error($message, \E_USER_NOTICE);
-
-                $time = $rounded;
+                $time = \sprintf('%s.%sZ', $datetime, \substr($accuracy, 0, 8));
             }
         }
 

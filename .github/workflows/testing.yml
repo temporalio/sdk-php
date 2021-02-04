@@ -154,8 +154,7 @@ jobs:
       fail-fast: false
       matrix:
         php: [7.4, 8.0]
-        os: [ubuntu-latest, windows-latest]
-        stability: [prefer-lowest, prefer-stable]
+        os: [ubuntu-latest]
 
     steps:
       - name: Set Git To Use LF
@@ -193,7 +192,17 @@ jobs:
         with:
           timeout_minutes: 5
           max_attempts: 5
-          command: composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress --ignore-platform-reqs
+          command: composer update --prefer-dist --no-interaction --no-progress --ignore-platform-reqs
+
+      - name: Download RoadRunner
+        run: |
+          vendor/bin/rr get
 
       - name: Run Tests
-        run: vendor/bin/phpunit --testsuite=Functional --testdox --verbose
+        run: |
+          docker-compose -f ./tests/docker-compose.yaml up -d
+          sleep 35
+          chmod +x ./rr
+          ./rr serve -c ./tests/.rr.silent.yaml &
+          sleep 10
+          vendor/bin/phpunit --testsuite=Functional --testdox --verbose
