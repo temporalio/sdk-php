@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\DataConverter;
 
-use Google\Protobuf\Internal\RepeatedField;
 use React\Promise\PromiseInterface;
 use Temporal\Api\Common\V1\Payloads;
 

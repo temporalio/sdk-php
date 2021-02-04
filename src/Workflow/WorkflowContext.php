@@ -424,7 +424,8 @@ class WorkflowContext implements WorkflowContextInterface
     }
 
     /**
-     * Returns true if any of conditions were fired and false if timeout was reached.
+     * Returns {@see true} if any of conditions were fired and {@see false} if
+     * timeout was reached.
      *
      * @param int|DateInterval $interval
      * @param mixed ...$condition
@@ -439,18 +440,6 @@ class WorkflowContext implements WorkflowContextInterface
     }
 
     /**
-     * @param callable $condition
-     * @return PromiseInterface
-     */
-    protected function addCondition(callable $condition): PromiseInterface
-    {
-        $deferred = new Deferred();
-        $this->awaits[] = [$condition, $deferred];
-
-        return $deferred->promise();
-    }
-
-    /**
      * Calculate unblocked conditions.
      */
     public function resolveConditions(): void
@@ -462,6 +451,18 @@ class WorkflowContext implements WorkflowContextInterface
                 $deferred->resolve();
             }
         }
+    }
+
+    /**
+     * @param callable $condition
+     * @return PromiseInterface
+     */
+    protected function addCondition(callable $condition): PromiseInterface
+    {
+        $deferred = new Deferred();
+        $this->awaits[] = [$condition, $deferred];
+
+        return $deferred->promise();
     }
 
     /**

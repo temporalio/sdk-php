@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Workflow\Process;
 
-use React\Promise\CancellablePromiseInterface;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use React\Promise\PromisorInterface;
@@ -279,6 +278,32 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     }
 
     /**
+     * Connects promise to scope context to be cancelled on promise cancel.
+     *
+     * @param Deferred $deferred
+     */
+    public function onAwait(Deferred $deferred): void
+    {
+        $this->onCancel[++$this->cancelID] = function (\Throwable $e = null) use ($deferred): void {
+            $deferred->reject($e ?? new CanceledFailure(''));
+        };
+
+        $cancelID = $this->cancelID;
+
+        // do not close the scope until all promises are complete
+        $this->awaitLock++;
+
+        // do not cancel already complete promises
+        $cleanup = function () use ($cancelID): void {
+            $this->context->resolveConditions();
+            unset($this->onCancel[$cancelID]);
+            $this->unlock();
+        };
+
+        $deferred->promise()->then($cleanup, $cleanup);
+    }
+
+    /**
      * @param bool $detached
      * @param string|null $layer
      * @return self
@@ -366,32 +391,6 @@ class Scope implements CancellationScopeInterface, PromisorInterface
         };
 
         $promise->then($cleanup, $cleanup);
-    }
-
-    /**
-     * Connects promise to scope context to be cancelled on promise cancel.
-     *
-     * @param Deferred $deferred
-     */
-    public function onAwait(Deferred $deferred)
-    {
-        $this->onCancel[++$this->cancelID] = function (\Throwable $e = null) use ($deferred) {
-            $deferred->reject($e ?? new CanceledFailure(''));
-        };
-
-        $cancelID = $this->cancelID;
-
-        // do not close the scope until all promises are complete
-        $this->awaitLock++;
-
-        // do not cancel already complete promises
-        $cleanup = function () use ($cancelID): void {
-            $this->context->resolveConditions();
-            unset($this->onCancel[$cancelID]);
-            $this->unlock();
-        };
-
-        $deferred->promise()->then($cleanup, $cleanup);
     }
 
     /**
