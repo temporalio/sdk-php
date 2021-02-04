@@ -18,7 +18,6 @@ use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\OutOfContextException;
 use Temporal\Internal\Support\Facade;
-use Temporal\Internal\Transport\Client;
 use Temporal\Workflow\ActivityStubInterface;
 use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\ChildWorkflowOptions;
@@ -31,7 +30,8 @@ use Temporal\Workflow\WorkflowInfo;
 use Temporal\Internal\Support\DateInterval;
 
 /**
- * This class provides coroutine specific access to active WorkflowContext.
+ * This class provides coroutine specific access to active WorkflowContext. It is safe to use this Facade inside
+ * your helper classes.
  *
  * @psalm-import-type TypeEnum from Type
  * @psalm-import-type DateIntervalFormat from DateInterval

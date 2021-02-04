@@ -52,6 +52,8 @@ interface WorkflowClientInterface
      * with {@see WorkflowMethod}. After workflow is started it can be also
      * used to send signals or queries to it.
      *
+     * Use WorkflowClient->start($workflowStub, ...$args) to start workflow asynchronously.
+     *
      * IMPORTANT! Stub is per workflow instance. So new stub should be created
      * for each new one.
      *
@@ -69,6 +71,8 @@ interface WorkflowClientInterface
      * Creates workflow untyped client stub that can be used to start a single
      * workflow execution. After workflow is started it can be also used to send
      * signals or queries to it.
+     *
+     * Use WorkflowClient->start($workflowStub, ...$args) to start workflow asynchronously.
      *
      * IMPORTANT! Stub is per workflow instance. So new stub should be created
      * for each new one.

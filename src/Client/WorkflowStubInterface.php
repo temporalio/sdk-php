@@ -31,7 +31,8 @@ interface WorkflowStubInterface extends WorkflowRunInterface
     public function getWorkflowType(): ?string;
 
     /**
-     * Returns associated workflow options. Empty for running workflows.
+     * Returns associated workflow options. Empty for running workflows. Workflow options are immutable and can
+     * not be changed after the workflow was created.
      *
      * @return WorkflowOptions|null
      */
@@ -45,6 +46,8 @@ interface WorkflowStubInterface extends WorkflowRunInterface
     public function getExecution(): WorkflowExecution;
 
     /**
+     * Check if workflow was stater and has associated execution.
+     *
      * @return bool
      */
     public function hasExecution(): bool;
@@ -57,6 +60,8 @@ interface WorkflowStubInterface extends WorkflowRunInterface
     public function setExecution(WorkflowExecution $execution): void;
 
     /**
+     * Sends named signal to the workflow execution.
+     *
      * @param string $name
      * @param ...mixed $args
      */
