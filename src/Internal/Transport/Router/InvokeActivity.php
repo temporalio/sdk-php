@@ -17,7 +17,6 @@ use Temporal\Activity\ActivityContext;
 use Temporal\Activity\ActivityInfo;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\DoNotCompleteOnResultException;
-use Temporal\Internal\Declaration\Instantiator\ActivityInstantiator;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Worker\Transport\Command\RequestInterface;
@@ -30,7 +29,6 @@ final class InvokeActivity extends Route
      */
     private const ERROR_NOT_FOUND = 'Activity with the specified name "%s" was not registered';
 
-    private ActivityInstantiator $instantiator;
     private ServiceContainer $services;
     private RPCConnectionInterface $rpc;
 
@@ -42,7 +40,6 @@ final class InvokeActivity extends Route
     {
         $this->rpc = $rpc;
         $this->services = $services;
-        $this->instantiator = new ActivityInstantiator();
     }
 
     /**
@@ -55,16 +52,16 @@ final class InvokeActivity extends Route
         $heartbeatDetails = null;
 
         // always in binary format
-        $options['info']['TaskToken'] = base64_decode($options['info']['TaskToken']);
+        $options['info']['TaskToken'] = \base64_decode($options['info']['TaskToken']);
 
         if (($options['heartbeatDetails'] ?? 0) !== 0) {
-            $offset = count($payloads) - ($options['heartbeatDetails'] ?? 0);
+            $offset = \count($payloads) - ($options['heartbeatDetails'] ?? 0);
 
             $heartbeatDetails = EncodedValues::sliceValues($this->services->dataConverter, $payloads, $offset);
             $payloads = EncodedValues::sliceValues($this->services->dataConverter, $payloads, 0, $offset);
         }
 
-        $context = new ActivityContext($this->rpc, $this->services->dataConverter, $heartbeatDetails);
+        $context = new ActivityContext($this->rpc, $this->services->dataConverter, $payloads, $heartbeatDetails);
         $context = $this->services->marshaller->unmarshal($options, $context);
 
         $prototype = $this->findDeclarationOrFail($context->getInfo());

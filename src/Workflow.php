@@ -25,6 +25,7 @@ use Temporal\Workflow\ChildWorkflowStubInterface;
 use Temporal\Workflow\ContinueAsNewOptions;
 use Temporal\Workflow\ExternalWorkflowStubInterface;
 use Temporal\Workflow\ScopedContextInterface;
+use Temporal\Workflow\WorkflowContext;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowInfo;
 use Temporal\Internal\Support\DateInterval;
@@ -47,11 +48,11 @@ final class Workflow extends Facade
      * Returns current datetime.
      *
      * Unlike "real" system time, this method returns the time at which the
-     * given workflow started at a certain point in time.
+     * given workflow task started at a certain point in time.
      *
      * Thus, in the case of an execution error and when the workflow has been
      * restarted ({@see Workflow::isReplaying()}), the result of this method
-     * will return exactly the date and time at which this workflow was
+     * will return exactly the date and time at which this workflow task was
      * first started, which eliminates the problems of side effects.
      *
      * Please, use this method {@see Workflow::now()} instead of:
@@ -129,7 +130,7 @@ final class Workflow extends Facade
      *  $first = $arguments->getValue(0, Type::TYPE_INT);
      *
      *  // Contains the value passed as the second argument to the workflow
-     *  $second = $arguments->getValue(0, Type::TYPE_STRING);
+     *  $second = $arguments->getValue(1, Type::TYPE_STRING);
      * </code>
      *
      * @return ValuesInterface
@@ -226,6 +227,8 @@ final class Workflow extends Facade
      *  $child->isCancelled(); // false
      * </code>
      *
+     * Use asyncDetached to handle cleanup and compensation logic.
+     *
      * @param callable $task
      * @return CancellationScopeInterface
      * @throws OutOfContextException in the absence of the workflow execution context.
@@ -236,6 +239,87 @@ final class Workflow extends Facade
         $context = self::getCurrentContext();
 
         return $context->asyncDetached($task);
+    }
+
+    /**
+     * Moves to the next step if the expression evaluates to {@see true}.
+     *
+     * Please note that a state change should ONLY occur if the internal
+     * workflow conditions are met.
+     *
+     * <code>
+     *  #[WorkflowMethod]
+     *  public function handler()
+     *  {
+     *      yield Workflow::await(
+     *          Workflow::executeActivity('shouldByContinued')
+     *      );
+     *
+     *      // ...do something
+     *  }
+     * </code>
+     *
+     * Or in the case of an explicit signal method execution of the specified
+     * workflow.
+     *
+     * <code>
+     *  private bool $continued = false;
+     *
+     *  #[WorkflowMethod]
+     *  public function handler()
+     *  {
+     *      yield Workflow::await(fn() => $this->continued);
+     *
+     *      // ...continue execution
+     *  }
+     *
+     *  #[SignalMethod]
+     *  public function continue()
+     *  {
+     *      $this->continued = true;
+     *  }
+     * </code>
+     *
+     * @param callable|PromiseInterface ...$conditions
+     * @return PromiseInterface
+     */
+    public static function await(...$conditions): PromiseInterface
+    {
+        /** @var WorkflowContext $context */
+        $context = self::getCurrentContext();
+
+        return $context->await(...$conditions);
+    }
+
+    /**
+     * Returns {@see true} if any of conditions were fired and {@see false} if
+     * timeout was reached.
+     *
+     * This method is similar to {@see Workflow::await()}, but in any case it
+     * will proceed to the next step either if the internal workflow conditions
+     * are met, or after the specified timer interval expires.
+     *
+     * <code>
+     *  #[WorkflowMethod]
+     *  public function handler()
+     *  {
+     *      // Continue after 42 seconds or when bool "continued" will be true.
+     *      yield Workflow::awaitWithTimeout(42, fn() => $this->continued);
+     *
+     *      // ...continue execution
+     *  }
+     * </code>
+     *
+     * @param DateIntervalFormat|positive-int|float $interval
+     * @param callable|PromiseInterface ...$conditions
+     * @return PromiseInterface
+     */
+    public static function awaitWithTimeout($interval, ...$conditions): PromiseInterface
+    {
+        /** @var WorkflowContext $context */
+        $context = self::getCurrentContext();
+
+        return $context->awaitWithTimeout($interval, ...$conditions);
     }
 
     /**
@@ -376,40 +460,6 @@ final class Workflow extends Facade
     }
 
     /**
-     * The method is used to explicitly end the workflow.
-     *
-     * <code>
-     *  #[WorkflowMethod]
-     *  public function handler()
-     *  {
-     *      Workflow::executeActivity('activity')
-     *          ->then(function($result) {
-     *              Workflow::complete([$result]);
-     *          })
-     *          ->otherwise(function(\Throwable $error) {
-     *              Workflow::complete(failure: $error);
-     *          })
-     *      ;
-     *  }
-     * </code>
-     *
-     * Please note that a workflow can return MULTIPLE results, so an array
-     * should be returned as the first argument (result).
-     *
-     * @param array|null $result
-     * @param \Throwable|null $failure
-     * @return PromiseInterface
-     * @throws OutOfContextException in the absence of the workflow execution context.
-     */
-    public static function complete(array $result = null, \Throwable $failure = null): PromiseInterface
-    {
-        /** @var ScopedContextInterface $context */
-        $context = self::getCurrentContext();
-
-        return $context->complete($result, $failure);
-    }
-
-    /**
      * Stops workflow execution work for a specified period.
      *
      * The first argument can take implementation of the {@see \DateInterval},
@@ -448,9 +498,6 @@ final class Workflow extends Facade
      * Method atomically completes the current workflow execution and starts a
      * new execution of the Workflow with the same Workflow Id. The new
      * execution will not carry over any history from the old execution.
-     *
-     * This method is similar to {@see Workflow::complete()}
-     * and {@see Workflow::executeChildWorkflow()} that executes at same time.
      *
      * <code>
      *  #[WorkflowMethod]

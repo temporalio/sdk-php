@@ -11,19 +11,26 @@ declare(strict_types=1);
 
 namespace Temporal\Workflow;
 
+use Temporal\Workflow;
+
 /**
  * Handles scope creation.
  */
 interface ScopedContextInterface extends WorkflowContextInterface
 {
     /**
+     * @see Workflow::async()
+     *
      * @param callable $handler
      * @return CancellationScopeInterface
      */
     public function async(callable $handler): CancellationScopeInterface;
 
     /**
-     * Cancellation scope which does not react to parent cancel and completes in background.
+     * Cancellation scope which does not react to parent cancel and completes
+     * in background.
+     *
+     * @see Workflow::asyncDetached()
      *
      * @param callable $handler
      * @return CancellationScopeInterface
