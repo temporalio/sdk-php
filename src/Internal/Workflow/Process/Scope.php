@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Workflow\Process;
 
-use React\Promise\CancellablePromiseInterface;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use React\Promise\PromisorInterface;
@@ -25,11 +24,11 @@ use Temporal\Internal\Coroutine\Stack;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Request\Cancel;
 use Temporal\Internal\Workflow\ScopeContext;
-use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Internal\Workflow\WorkflowContext;
 use Temporal\Worker\LoopInterface;
+use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\CancellationScopeInterface;
-use Temporal\Workflow\WorkflowContext;
 
 /**
  * Unlike Java implementation, PHP merged coroutine and cancellation scope into single instance.

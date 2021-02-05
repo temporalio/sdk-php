@@ -13,10 +13,10 @@ namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
 use Temporal\Activity;
-use Temporal\Activity\ActivityContext;
 use Temporal\Activity\ActivityInfo;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\DoNotCompleteOnResultException;
+use Temporal\Internal\Activity\ActivityContext;
 use Temporal\Internal\Declaration\Instantiator\ActivityInstantiator;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\ServiceContainer;

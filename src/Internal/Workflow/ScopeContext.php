@@ -19,7 +19,6 @@ use Temporal\Internal\Workflow\Process\Scope;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\ScopedContextInterface;
-use Temporal\Workflow\WorkflowContext;
 use Temporal\Workflow\WorkflowContextInterface;
 
 class ScopeContext extends WorkflowContext implements ScopedContextInterface
