@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Internal\Marshaller;
 
 use Temporal\Internal\Marshaller\Type\ArrayType;
-use Temporal\Internal\Marshaller\Type\CronType;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\DateTimeType;
 use Temporal\Internal\Marshaller\Type\DetectableTypeInterface;
@@ -102,7 +101,7 @@ class TypeFactory implements TypeFactoryInterface
                 continue;
             }
 
-            yield static fn (\ReflectionNamedType $type): ?string => $matcher::match($type) ? $matcher : null;
+            yield static fn(\ReflectionNamedType $type): ?string => $matcher::match($type) ? $matcher : null;
         }
     }
 

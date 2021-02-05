@@ -20,8 +20,6 @@ use Temporal\Internal\Declaration\Prototype\WorkflowCollection;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\Reader\ActivityReader;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
-use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
-use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Internal\Repository\RepositoryInterface;
@@ -109,6 +107,7 @@ final class ServiceContainer
 
     /**
      * @param LoopInterface $loop
+     * @param EnvironmentInterface $env
      * @param ClientInterface $client
      * @param ReaderInterface $reader
      * @param QueueInterface $queue
@@ -117,12 +116,14 @@ final class ServiceContainer
      */
     public function __construct(
         LoopInterface $loop,
+        EnvironmentInterface $env,
         ClientInterface $client,
         ReaderInterface $reader,
         QueueInterface $queue,
         MarshallerInterface $marshaller,
         DataConverterInterface $dataConverter
     ) {
+        $this->env = $env;
         $this->loop = $loop;
         $this->client = $client;
         $this->reader = $reader;
@@ -130,7 +131,6 @@ final class ServiceContainer
         $this->marshaller = $marshaller;
         $this->dataConverter = $dataConverter;
 
-        $this->env = new Environment();
         $this->workflows = new WorkflowCollection();
         $this->activities = new ActivityCollection();
         $this->running = new ProcessCollection($client);
@@ -147,6 +147,7 @@ final class ServiceContainer
     {
         return new self(
             $worker,
+            $worker->getEnviroment(),
             $worker->getClient(),
             $worker->getReader(),
             $worker->getQueue(),

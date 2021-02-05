@@ -90,8 +90,6 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
      */
     public function dispatch(RequestInterface $request, array $headers): PromiseInterface
     {
-        $this->services->env->update($headers);
-
         return $this->router->dispatch($request, $headers);
     }
 

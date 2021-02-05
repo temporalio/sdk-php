@@ -142,14 +142,6 @@ class WorkflowContext implements WorkflowContextInterface
     }
 
     /**
-     * @return DataConverterInterface
-     */
-    public function getDataConverter(): DataConverterInterface
-    {
-        return $this->services->dataConverter;
-    }
-
-    /**
      * @return ClientInterface
      */
     public function getClient(): ClientInterface
@@ -258,13 +250,13 @@ class WorkflowContext implements WorkflowContextInterface
     /**
      * {@inheritDoc}
      */
-    public function newContinueAsNewStub(string $type, ContinueAsNewOptions $options = null): object
+    public function newContinueAsNewStub(string $class, ContinueAsNewOptions $options = null): object
     {
         $options ??= new ContinueAsNewOptions();
 
-        $workflow = $this->services->workflowsReader->fromClass($type);
+        $workflow = $this->services->workflowsReader->fromClass($class);
 
-        return new ContinueAsNewProxy($type, $workflow, $options, $this);
+        return new ContinueAsNewProxy($class, $workflow, $options, $this);
     }
 
     /**
@@ -293,23 +285,23 @@ class WorkflowContext implements WorkflowContextInterface
      * {@inheritDoc}
      */
     public function newUntypedChildWorkflowStub(
-        string $name,
+        string $type,
         ChildWorkflowOptions $options = null
     ): ChildWorkflowStubInterface {
         $options ??= new ChildWorkflowOptions();
 
-        return new ChildWorkflowStub($this->services->marshaller, $name, $options);
+        return new ChildWorkflowStub($this->services->marshaller, $type, $options);
     }
 
     /**
      * {@inheritDoc}
      */
-    public function newChildWorkflowStub(string $type, ChildWorkflowOptions $options = null): object
+    public function newChildWorkflowStub(string $class, ChildWorkflowOptions $options = null): object
     {
-        $workflow = $this->services->workflowsReader->fromClass($type);
+        $workflow = $this->services->workflowsReader->fromClass($class);
 
         return new ChildWorkflowProxy(
-            $type,
+            $class,
             $workflow,
             $options ?? new ChildWorkflowOptions(),
             $this
@@ -319,13 +311,13 @@ class WorkflowContext implements WorkflowContextInterface
     /**
      * {@inheritDoc}
      */
-    public function newExternalWorkflowStub(string $type, WorkflowExecution $execution): object
+    public function newExternalWorkflowStub(string $class, WorkflowExecution $execution): object
     {
-        $workflow = $this->services->workflowsReader->fromClass($type);
+        $workflow = $this->services->workflowsReader->fromClass($class);
 
         $stub = $this->newUntypedExternalWorkflowStub($execution);
 
-        return new ExternalWorkflowProxy($type, $workflow, $stub);
+        return new ExternalWorkflowProxy($class, $workflow, $stub);
     }
 
     /**
@@ -401,53 +393,42 @@ class WorkflowContext implements WorkflowContextInterface
     }
 
     /**
-     * @param mixed ...$condition
-     * @return PromiseInterface
+     * {@inheritDoc}
      */
-    public function await(...$condition): PromiseInterface
+    public function await(...$conditions): PromiseInterface
     {
-        $conditions = [];
-        foreach ($condition as $cond) {
-            if ($cond instanceof PromiseInterface) {
-                $conditions[] = $cond;
+        $result = [];
+
+        foreach ($conditions as $condition) {
+            assert(\is_callable($condition) || $condition instanceof PromiseInterface);
+
+            if ($condition instanceof PromiseInterface) {
+                $result[] = $condition;
                 continue;
             }
 
-            $conditions[] = $this->addCondition($cond);
+            $result[] = $this->addCondition($condition);
         }
 
-        if (count($conditions) === 1) {
-            return $conditions[0];
+        if (\count($result) === 1) {
+            return $result[0];
         }
 
-        return Promise::any($conditions);
+        return Promise::any($result);
     }
 
     /**
-     * Returns true if any of conditions were fired and false if timeout was reached.
-     *
-     * @param int|DateInterval $interval
-     * @param mixed ...$condition
-     * @return PromiseInterface
+     * {@inheritDoc}
      */
-    public function awaitWithTimeout($interval, ...$condition): PromiseInterface
+    public function awaitWithTimeout($interval, ...$conditions): PromiseInterface
     {
         $timer = $this->timer($interval);
-        $condition[] = $timer;
 
-        return $this->await(...$condition)->then(fn() => !$timer->isComplete());
-    }
+        $conditions[] = $timer;
 
-    /**
-     * @param callable $condition
-     * @return PromiseInterface
-     */
-    protected function addCondition(callable $condition): PromiseInterface
-    {
-        $deferred = new Deferred();
-        $this->awaits[] = [$condition, $deferred];
-
-        return $deferred->promise();
+        return $this->await(...$conditions)
+            ->then(static fn(): bool => !$timer->isComplete())
+        ;
     }
 
     /**
@@ -462,6 +443,18 @@ class WorkflowContext implements WorkflowContextInterface
                 $deferred->resolve();
             }
         }
+    }
+
+    /**
+     * @param callable $condition
+     * @return PromiseInterface
+     */
+    protected function addCondition(callable $condition): PromiseInterface
+    {
+        $deferred = new Deferred();
+        $this->awaits[] = [$condition, $deferred];
+
+        return $deferred->promise();
     }
 
     /**
