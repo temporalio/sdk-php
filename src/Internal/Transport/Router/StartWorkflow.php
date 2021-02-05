@@ -18,8 +18,8 @@ use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Workflow\Input;
 use Temporal\Internal\Workflow\Process\Process;
+use Temporal\Internal\Workflow\WorkflowContext;
 use Temporal\Worker\Transport\Command\RequestInterface;
-use Temporal\Workflow\WorkflowContext;
 use Temporal\Workflow\WorkflowInfo;
 
 final class StartWorkflow extends Route

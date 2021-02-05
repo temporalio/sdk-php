@@ -9,36 +9,36 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Workflow;
+namespace Temporal\Internal\Workflow;
 
 use Carbon\CarbonInterface;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
+use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
-use Temporal\Internal\Support\StackRenderer;
-use Temporal\Internal\Transport\ClientInterface;
-use Temporal\Internal\Transport\Request\ContinueAsNew;
-use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Support\DateInterval;
+use Temporal\Internal\Support\StackRenderer;
+use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Transport\Request\CompleteWorkflow;
+use Temporal\Internal\Transport\Request\ContinueAsNew;
 use Temporal\Internal\Transport\Request\GetVersion;
 use Temporal\Internal\Transport\Request\NewTimer;
 use Temporal\Internal\Transport\Request\SideEffect;
-use Temporal\Internal\Workflow\ActivityProxy;
-use Temporal\Internal\Workflow\ActivityStub;
-use Temporal\Internal\Workflow\ChildWorkflowProxy;
-use Temporal\Internal\Workflow\ChildWorkflowStub;
-use Temporal\Internal\Workflow\ContinueAsNewProxy;
-use Temporal\Internal\Workflow\ExternalWorkflowProxy;
-use Temporal\Internal\Workflow\ExternalWorkflowStub;
-use Temporal\Internal\Workflow\Input;
 use Temporal\Promise;
 use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Workflow\ActivityStubInterface;
+use Temporal\Workflow\ChildWorkflowOptions;
+use Temporal\Workflow\ChildWorkflowStubInterface;
+use Temporal\Workflow\ContinueAsNewOptions;
+use Temporal\Workflow\ExternalWorkflowStubInterface;
+use Temporal\Workflow\WorkflowContextInterface;
+use Temporal\Workflow\WorkflowExecution;
+use Temporal\Workflow\WorkflowInfo;
 
 use function React\Promise\reject;
 
