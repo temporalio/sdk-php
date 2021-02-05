@@ -25,6 +25,8 @@ use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\ServiceContainer;
+use Temporal\Worker\Environment\Environment;
+use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Worker\Transport\Codec\CodecInterface;
 use Temporal\Internal\Events\EventEmitterTrait;
 use Temporal\Internal\Queue\ArrayQueue;
@@ -50,20 +52,6 @@ use Temporal\Worker\Transport\RoadRunner;
 use Temporal\Worker\Transport\RPCConnectionInterface;
 use Temporal\Worker\WorkerOptions;
 
-/**
- * WorkerFactory is primary entry point for the temporal application. This class is responsible for the communication
- * with parent RoadRunnner process and can be used to create taskQueue workflow and activity workers.
- *
- * <code>
- * $factory = WorkerFactory::create();
- *
- * $worker = $factory->newWorker('default');
- *
- * $worker->registerWorkflowTypes(WorkflowType::class);
- * $worker->registerActivityImplementations(new MyActivityImplementation());
- *
- * </code>
- */
 final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
 {
     use EventEmitterTrait;
@@ -151,6 +139,11 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     private MarshallerInterface $marshaller;
 
     /**
+     * @var EnvironmentInterface
+     */
+    private EnvironmentInterface $env;
+
+    /**
      * @param DataConverterInterface $dataConverter
      * @param RPCConnectionInterface $rpc
      */
@@ -236,6 +229,14 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     }
 
     /**
+     * @return EnvironmentInterface
+     */
+    public function getEnviroment(): EnvironmentInterface
+    {
+        return $this->env;
+    }
+
+    /**
      * {@inheritDoc}
      */
     public function run(HostConnectionInterface $host = null): int
@@ -277,6 +278,7 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         $this->responses = $this->createQueue();
         $this->client = $this->createClient();
         $this->server = $this->createServer();
+        $this->env = new Environment();
     }
 
     /**
@@ -375,6 +377,7 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     private function dispatch(string $messages, array $headers): string
     {
         $commands = $this->codec->decode($messages);
+        $this->env->update($headers);
 
         foreach ($commands as $command) {
             if ($command instanceof RequestInterface) {
