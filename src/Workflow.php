@@ -44,6 +44,8 @@ use Temporal\Internal\Support\DateInterval;
  */
 final class Workflow extends Facade
 {
+    public const DEFAULT_VERSION = -1;
+
     /**
      * Returns current datetime.
      *
