@@ -135,7 +135,7 @@ class JsonConverter extends Converter
                 return $data;
         }
 
-        if (\is_array($data) && $type->isClass()) {
+        if ((\is_object($data) || \is_array($data)) && $type->isClass()) {
             try {
                 $instance = (new \ReflectionClass($type->getName()))
                     ->newInstanceWithoutConstructor()
@@ -144,10 +144,29 @@ class JsonConverter extends Converter
                 throw new DataConverterException($e->getMessage(), $e->getCode(), $e);
             }
 
-            return $this->marshaller->unmarshal($data, $instance);
+            return $this->marshaller->unmarshal($this->toHashMap($data), $instance);
         }
 
         throw $this->errorInvalidTypeName($type);
+    }
+
+    /**
+     * @param object|array $context
+     * @return array
+     */
+    private function toHashMap($context): array
+    {
+        if (\is_object($context)) {
+            $context = (array)$context;
+        }
+
+        foreach ($context as $key => $value) {
+            if (\is_object($value) || \is_array($value)) {
+                $context[$key] = $this->toHashMap($value);
+            }
+        }
+
+        return $context;
     }
 
     /**
@@ -170,7 +189,7 @@ class JsonConverter extends Converter
      */
     private function errorInvalidType(Type $type, $data): DataConverterException
     {
-        $message = \vsprintf('The passed value of type %s can not be coerced to %s', [
+        $message = \vsprintf('The passed value of type "%s" can not be converted to required type "%s"', [
             \get_debug_type($data),
             $type->getName()
         ]);

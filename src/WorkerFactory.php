@@ -96,13 +96,6 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     private const HEADER_TASK_QUEUE = 'taskQueue';
 
     /**
-     * @var string
-     */
-    private const RESERVED_ANNOTATIONS = [
-        'readonly',
-    ];
-
-    /**
      * @var DataConverterInterface
      */
     private DataConverterInterface $converter;
@@ -301,16 +294,10 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     private function createReader(): ReaderInterface
     {
         if (\interface_exists(Reader::class)) {
-            foreach (self::RESERVED_ANNOTATIONS as $annotation) {
-                DoctrineReader::addGlobalIgnoredName($annotation);
-            }
-
-            return new SelectiveReader(
-                [
-                    new AnnotationReader(),
-                    new AttributeReader(),
-                ]
-            );
+            return new SelectiveReader([
+                new AnnotationReader(),
+                new AttributeReader(),
+            ]);
         }
 
         return new AttributeReader();

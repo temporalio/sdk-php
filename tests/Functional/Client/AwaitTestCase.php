@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Functional\Client;
 
+use Temporal\DataConverter\Type;
 use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Failure\ActivityFailure;
 use Temporal\Exception\Failure\ApplicationFailure;
@@ -58,7 +59,7 @@ class AwaitTestCase extends ClientTestCase
                 'test3',
                 'test4'
             ],
-            $run->getResult('string')
+            $run->getResult(Type::TYPE_ARRAY)
         );
     }
 

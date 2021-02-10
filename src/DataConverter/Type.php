@@ -79,7 +79,7 @@ final class Type
      */
     public function isClass(): bool
     {
-        return !$this->isUntyped() && \class_exists($this->name);
+        return \class_exists($this->name);
     }
 
     /**
