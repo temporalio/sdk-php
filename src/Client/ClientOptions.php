@@ -81,6 +81,8 @@ class ClientOptions
     /**
      * @param QueryRejectionConditionType $condition
      * @return $this
+     *
+     * @psalm-suppress ImpureMethodCall
      */
     #[Pure]
     public function withQueryRejectionCondition(
