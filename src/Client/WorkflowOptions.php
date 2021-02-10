@@ -30,7 +30,6 @@ use Temporal\Internal\Marshaller\Type\CronType;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\NullableType;
 use Temporal\Internal\Marshaller\Type\ObjectType;
-use Temporal\Internal\Support\Cron;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\Options;
 use Temporal\Worker\WorkerFactoryInterface;
@@ -375,6 +374,7 @@ final class WorkflowOptions extends Options
         }
 
         $fields = [];
+
         foreach ($this->memo as $key => $value) {
             $fields[$key] = $converter->toPayload($value);
         }

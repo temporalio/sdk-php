@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Unit\DTOMarshalling;
+namespace Temporal\Tests\Unit\DTO;
 
 use Spiral\Attributes\AttributeReader;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
@@ -41,11 +41,6 @@ abstract class DTOMarshallingTestCase extends UnitTestCase
             )
         );
     }
-
-    /**
-     * @return void
-     */
-    abstract public function testMarshalling(): void;
 
     /**
      * @param object $object

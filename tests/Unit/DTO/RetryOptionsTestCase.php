@@ -9,21 +9,25 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Unit\DTOMarshalling;
+namespace Temporal\Tests\Unit\DTO;
 
-use Temporal\Activity\ActivityType;
+use Temporal\Common\RetryOptions;
 
-class ActivityTypeTestCase extends DTOMarshallingTestCase
+class RetryOptionsTestCase extends DTOMarshallingTestCase
 {
     /**
      * @throws \ReflectionException
      */
     public function testMarshalling(): void
     {
-        $dto = new ActivityType();
+        $dto = new RetryOptions();
 
         $expected = [
-            'Name' => ''
+            'initial_interval' => null,
+            'backoff_coefficient' => 2.0,
+            'maximum_interval' => null,
+            'maximum_attempts' => 1,
+            'non_retryable_error_types' => [],
         ];
 
         $this->assertSame($expected, $this->marshal($dto));

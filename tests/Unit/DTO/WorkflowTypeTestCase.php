@@ -9,25 +9,21 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Unit\DTOMarshalling;
+namespace Temporal\Tests\Unit\DTO;
 
-use Temporal\Common\RetryOptions;
+use Temporal\Workflow\WorkflowType;
 
-class RetryOptionsTestCase extends DTOMarshallingTestCase
+class WorkflowTypeTestCase extends DTOMarshallingTestCase
 {
     /**
      * @throws \ReflectionException
      */
     public function testMarshalling(): void
     {
-        $dto = new RetryOptions();
+        $dto = new WorkflowType();
 
         $expected = [
-            'initial_interval' => null,
-            'backoff_coefficient' => 2.0,
-            'maximum_interval' => null,
-            'maximum_attempts' => 1,
-            'non_retryable_error_types' => [],
+            'Name' => ''
         ];
 
         $this->assertSame($expected, $this->marshal($dto));

@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Unit\DTOMarshalling;
+namespace Temporal\Tests\Unit\DTO;
 
 use Temporal\Workflow\WorkflowInfo;
 

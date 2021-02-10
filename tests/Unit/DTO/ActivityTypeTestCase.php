@@ -9,18 +9,18 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Unit\DTOMarshalling;
+namespace Temporal\Tests\Unit\DTO;
 
-use Temporal\Workflow\WorkflowType;
+use Temporal\Activity\ActivityType;
 
-class WorkflowTypeTestCase extends DTOMarshallingTestCase
+class ActivityTypeTestCase extends DTOMarshallingTestCase
 {
     /**
      * @throws \ReflectionException
      */
     public function testMarshalling(): void
     {
-        $dto = new WorkflowType();
+        $dto = new ActivityType();
 
         $expected = [
             'Name' => ''

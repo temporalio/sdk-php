@@ -9,22 +9,23 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Unit\DTOMarshalling;
+namespace Temporal\Tests\Unit\DTO;
 
-use Temporal\Workflow\WorkflowExecution;
+use Temporal\Workflow\ContinueAsNewOptions;
 
-class WorkflowExecutionTestCase extends DTOMarshallingTestCase
+class ContinueAsNewOptionsTestCase extends DTOMarshallingTestCase
 {
     /**
      * @throws \ReflectionException
      */
     public function testMarshalling(): void
     {
-        $dto = new WorkflowExecution();
+        $dto = new ContinueAsNewOptions();
 
         $expected = [
-            'ID' => '00000000-0000-0000-0000-000000000000',
-            'RunID' => null
+            'WorkflowRunTimeout'  => 0,
+            'TaskQueueName'       => 'default',
+            'WorkflowTaskTimeout' => 0,
         ];
 
         $this->assertSame($expected, $this->marshal($dto));
