@@ -17,9 +17,6 @@
         <include>
             <directory>src</directory>
         </include>
-        <exclude>
-            <directory>src/Internal</directory>
-        </exclude>
     </coverage>
     <testsuites>
         <testsuite name="Unit">
