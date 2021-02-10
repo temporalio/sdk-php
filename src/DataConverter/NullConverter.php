@@ -34,7 +34,7 @@ class NullConverter extends Converter
             return null;
         }
 
-        return self::create('');
+        return $this->create('');
     }
 
     /**

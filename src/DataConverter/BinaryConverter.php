@@ -34,7 +34,7 @@ class BinaryConverter extends Converter
             return null;
         }
 
-        return self::create($value->getData());
+        return $this->create($value->getData());
     }
 
     /**

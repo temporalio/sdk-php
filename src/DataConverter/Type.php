@@ -19,6 +19,8 @@ use Temporal\Workflow\ReturnType;
 final class Type
 {
     public const TYPE_ANY       = 'mixed';
+    public const TYPE_ARRAY     = 'array';
+    public const TYPE_OBJECT    = 'object';
     public const TYPE_STRING    = 'string';
     public const TYPE_BOOL      = 'bool';
     public const TYPE_INT       = 'int';
@@ -26,9 +28,9 @@ final class Type
     public const TYPE_VOID      = 'void';
 
     /**
-     * @var string|null
+     * @var string
      */
-    private ?string $name;
+    private string $name;
 
     /**
      * @var bool
@@ -36,19 +38,22 @@ final class Type
     private bool $allowsNull;
 
     /**
-     * @param TypeEnum|string|null $name
-     * @param bool $allowsNull
+     * @param TypeEnum|string $name
+     * @param bool|null $allowsNull
      */
-    public function __construct(string $name = null, bool $allowsNull = false)
+    public function __construct(string $name = Type::TYPE_ANY, bool $allowsNull = null)
     {
         $this->name = $name;
-        $this->allowsNull = $allowsNull;
+
+        $this->allowsNull = $allowsNull ?? (
+            $name === self::TYPE_ANY || $name === self::TYPE_VOID
+        );
     }
 
     /**
-     * @return string|null
+     * @return string
      */
-    public function getName(): ?string
+    public function getName(): string
     {
         return $this->name;
     }
@@ -66,7 +71,7 @@ final class Type
      */
     public function isUntyped(): bool
     {
-        return $this->name === null;
+        return $this->name === self::TYPE_ANY;
     }
 
     /**
@@ -74,7 +79,7 @@ final class Type
      */
     public function isClass(): bool
     {
-        return !$this->isUntyped() && class_exists($this->name);
+        return !$this->isUntyped() && \class_exists($this->name);
     }
 
     /**
@@ -102,7 +107,7 @@ final class Type
             }
         }
 
-        return new self(null, $type->allowsNull());
+        return new self(self::TYPE_ANY, $type->allowsNull());
     }
 
     /**
