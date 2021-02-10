@@ -12,10 +12,13 @@ declare(strict_types=1);
 namespace Temporal\Tests\Unit\DTO;
 
 use Carbon\CarbonInterval;
+use Temporal\Api\Common\V1\Memo;
+use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Common\IdReusePolicy;
 use Temporal\Common\RetryOptions;
 use Temporal\Common\Uuid;
+use Temporal\DataConverter\DataConverter;
 
 class WorkflowOptionsTestCase extends DTOMarshallingTestCase
 {
@@ -126,5 +129,39 @@ class WorkflowOptionsTestCase extends DTOMarshallingTestCase
         $dto = new WorkflowOptions();
 
         $this->assertNotSame($dto, $dto->withSearchAttributes([1, 2, 3]));
+    }
+
+    public function testEmptyMemoCasting(): void
+    {
+        $dto = new WorkflowOptions();
+        $this->assertNull($dto->toMemo(DataConverter::createDefault()));
+    }
+
+    public function testNonEmptyMemoCasting(): void
+    {
+        $dto = WorkflowOptions::new()
+            ->withMemo([])
+        ;
+
+        $this->assertInstanceOf(Memo::class, $dto->toMemo(DataConverter::createDefault()));
+    }
+
+    public function testEmptySearchAttributesCasting(): void
+    {
+        $dto = new WorkflowOptions();
+        $this->assertNull($dto->toSearchAttributes(
+            DataConverter::createDefault()
+        ));
+    }
+
+    public function testNonEmptySearchAttributesCasting(): void
+    {
+        $dto = WorkflowOptions::new()
+            ->withSearchAttributes([])
+        ;
+
+        $this->assertInstanceOf(SearchAttributes::class, $dto->toSearchAttributes(
+            DataConverter::createDefault()
+        ));
     }
 }

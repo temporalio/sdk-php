@@ -406,21 +406,4 @@ final class WorkflowOptions extends Options
 
         return $search;
     }
-
-    /**
-     * @return RetryPolicy
-     * @internal
-     */
-    public function toRetryPolicy(): RetryPolicy
-    {
-        $rt = new RetryPolicy();
-        $rt->setInitialInterval(DateInterval::toDuration($this->retryOptions->initialInterval));
-        $rt->setMaximumInterval(DateInterval::toDuration($this->retryOptions->maximumInterval));
-
-        $rt->setBackoffCoefficient($this->retryOptions->backoffCoefficient);
-        $rt->setMaximumAttempts($this->retryOptions->maximumAttempts);
-        $rt->setNonRetryableErrorTypes($this->retryOptions->nonRetryableExceptions);
-
-        return $rt;
-    }
 }

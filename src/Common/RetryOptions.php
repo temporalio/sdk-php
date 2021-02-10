@@ -13,6 +13,7 @@ namespace Temporal\Common;
 
 use JetBrains\PhpStorm\Pure;
 use Temporal\Activity\ActivityOptions;
+use Temporal\Api\Common\V1\RetryPolicy;
 use Temporal\Internal\Assert;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
@@ -199,5 +200,23 @@ class RetryOptions extends Options
         $self = clone $this;
         $self->nonRetryableExceptions = $exceptions;
         return $self;
+    }
+
+    /**
+     * Converts DTO to protobuf object
+     *
+     * @return RetryPolicy
+     */
+    public function toRetryPolicy(): RetryPolicy
+    {
+        $policy = new RetryPolicy();
+        $policy->setInitialInterval(DateInterval::toDuration($this->initialInterval));
+        $policy->setMaximumInterval(DateInterval::toDuration($this->maximumInterval));
+
+        $policy->setBackoffCoefficient($this->backoffCoefficient);
+        $policy->setMaximumAttempts($this->maximumAttempts);
+        $policy->setNonRetryableErrorTypes($this->nonRetryableExceptions);
+
+        return $policy;
     }
 }
