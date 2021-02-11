@@ -14,6 +14,7 @@ namespace Temporal\Client;
 use JetBrains\PhpStorm\ExpectedValues;
 use JetBrains\PhpStorm\Pure;
 use Temporal\Api\Enums\V1\QueryRejectCondition;
+use Temporal\Internal\Assert;
 
 /**
  * @psalm-type QueryRejectionConditionType = QueryRejectCondition::QUERY_REJECT_CONDITION_*
@@ -80,12 +81,16 @@ class ClientOptions
     /**
      * @param QueryRejectionConditionType $condition
      * @return $this
+     *
+     * @psalm-suppress ImpureMethodCall
      */
     #[Pure]
     public function withQueryRejectionCondition(
         #[ExpectedValues(valuesFromClass: QueryRejectCondition::class)]
         int $condition
     ): self {
+        assert(Assert::enum($condition, QueryRejectCondition::class));
+
         $self = clone $this;
 
         $self->queryRejectionCondition = $condition;

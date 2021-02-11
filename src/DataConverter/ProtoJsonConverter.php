@@ -1,6 +1,5 @@
 <?php
 
-
 /**
  * This file is part of Temporal package.
  *
@@ -36,7 +35,7 @@ class ProtoJsonConverter extends Converter
             return null;
         }
 
-        return self::create($value->serializeToJsonString());
+        return $this->create($value->serializeToJsonString());
     }
 
     /**

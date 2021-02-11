@@ -17,7 +17,7 @@ use Temporal\Internal\Marshaller\Meta\Marshal;
 class WorkflowExecution
 {
     /**
-     * @readonly
+     * @psalm-readonly
      * @psalm-allow-private-mutation
      * @var string
      */
@@ -25,7 +25,7 @@ class WorkflowExecution
     private string $id;
 
     /**
-     * @readonly
+     * @psalm-readonly
      * @psalm-allow-private-mutation
      * @var string|null
      */

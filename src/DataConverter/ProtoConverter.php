@@ -35,7 +35,7 @@ class ProtoConverter extends Converter
             return null;
         }
 
-        return self::create($value->serializeToString());
+        return $this->create($value->serializeToString());
     }
 
     /**
