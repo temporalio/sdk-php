@@ -19,7 +19,7 @@ use Temporal\Internal\Marshaller\Meta\Marshal;
 class ActivityType
 {
     /**
-     * @readonly
+     * @psalm-readonly
      * @psalm-allow-private-mutation
      * @var string
      */

@@ -9,8 +9,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Activity;
+namespace Temporal\Internal\Activity;
 
+use Temporal\Activity\ActivityContextInterface;
+use Temporal\Activity\ActivityInfo;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Type;

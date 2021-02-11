@@ -25,7 +25,7 @@ use Temporal\Workflow\ChildWorkflowStubInterface;
 use Temporal\Workflow\ContinueAsNewOptions;
 use Temporal\Workflow\ExternalWorkflowStubInterface;
 use Temporal\Workflow\ScopedContextInterface;
-use Temporal\Workflow\WorkflowContext;
+use Temporal\Internal\Workflow\WorkflowContext;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowInfo;
 use Temporal\Internal\Support\DateInterval;
@@ -44,6 +44,8 @@ use Temporal\Internal\Support\DateInterval;
  */
 final class Workflow extends Facade
 {
+    public const DEFAULT_VERSION = -1;
+
     /**
      * Returns current datetime.
      *

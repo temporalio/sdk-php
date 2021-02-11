@@ -62,8 +62,8 @@ class WorkerMock implements HostConnectionInterface
 
         // register all activity
         foreach ($this->getClasses(__DIR__ . '/src/Activity') as $name) {
-            $class = 'Temporal\\Tests\\Activity\\' . $name;
-            if (class_exists($class)) {
+            $class = '\\Temporal\\Tests\\Activity\\' . $name;
+            if (\class_exists($class)) {
                 $taskQueue->registerActivityImplementations(new $class);
             }
         }
@@ -129,6 +129,7 @@ class WorkerMock implements HostConnectionInterface
 
     /**
      * @param \Throwable $error
+     * @throws \Throwable
      */
     public function error(\Throwable $error): void
     {
@@ -137,10 +138,10 @@ class WorkerMock implements HostConnectionInterface
 
     private function getClasses(string $dir): iterable
     {
-        $files = glob($dir . '/*.php');
+        $files = \glob($dir . '/*.php');
 
         foreach ($files as $file) {
-            yield substr(basename($file), 0, -4);
+            yield \substr(\basename($file), 0, -4);
         }
     }
 }

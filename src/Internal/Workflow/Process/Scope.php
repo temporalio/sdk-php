@@ -24,11 +24,11 @@ use Temporal\Internal\Coroutine\Stack;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Request\Cancel;
 use Temporal\Internal\Workflow\ScopeContext;
-use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Internal\Workflow\WorkflowContext;
 use Temporal\Worker\LoopInterface;
+use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\CancellationScopeInterface;
-use Temporal\Workflow\WorkflowContext;
 
 /**
  * Unlike Java implementation, PHP merged coroutine and cancellation scope into single instance.

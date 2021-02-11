@@ -25,6 +25,8 @@ use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\ServiceContainer;
+use Temporal\Worker\Environment\Environment;
+use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Worker\Transport\Codec\CodecInterface;
 use Temporal\Internal\Events\EventEmitterTrait;
 use Temporal\Internal\Queue\ArrayQueue;
@@ -52,7 +54,7 @@ use Temporal\Worker\WorkerOptions;
 
 /**
  * WorkerFactory is primary entry point for the temporal application. This class is responsible for the communication
- * with parent RoadRunnner process and can be used to create taskQueue workflow and activity workers.
+ * with parent RoadRunner process and can be used to create taskQueue workflow and activity workers.
  *
  * <code>
  * $factory = WorkerFactory::create();
@@ -92,13 +94,6 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
      * @var string
      */
     private const HEADER_TASK_QUEUE = 'taskQueue';
-
-    /**
-     * @var string
-     */
-    private const RESERVED_ANNOTATIONS = [
-        'readonly',
-    ];
 
     /**
      * @var DataConverterInterface
@@ -149,6 +144,11 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
      * @var MarshallerInterface
      */
     private MarshallerInterface $marshaller;
+
+    /**
+     * @var EnvironmentInterface
+     */
+    private EnvironmentInterface $env;
 
     /**
      * @param DataConverterInterface $dataConverter
@@ -236,6 +236,14 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     }
 
     /**
+     * @return EnvironmentInterface
+     */
+    public function getEnviroment(): EnvironmentInterface
+    {
+        return $this->env;
+    }
+
+    /**
      * {@inheritDoc}
      */
     public function run(HostConnectionInterface $host = null): int
@@ -277,6 +285,7 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         $this->responses = $this->createQueue();
         $this->client = $this->createClient();
         $this->server = $this->createServer();
+        $this->env = new Environment();
     }
 
     /**
@@ -285,16 +294,10 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     private function createReader(): ReaderInterface
     {
         if (\interface_exists(Reader::class)) {
-            foreach (self::RESERVED_ANNOTATIONS as $annotation) {
-                DoctrineReader::addGlobalIgnoredName($annotation);
-            }
-
-            return new SelectiveReader(
-                [
-                    new AnnotationReader(),
-                    new AttributeReader(),
-                ]
-            );
+            return new SelectiveReader([
+                new AnnotationReader(),
+                new AttributeReader(),
+            ]);
         }
 
         return new AttributeReader();
@@ -375,6 +378,7 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     private function dispatch(string $messages, array $headers): string
     {
         $commands = $this->codec->decode($messages);
+        $this->env->update($headers);
 
         foreach ($commands as $command) {
             if ($command instanceof RequestInterface) {

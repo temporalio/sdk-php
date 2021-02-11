@@ -30,7 +30,6 @@ use Temporal\Internal\Marshaller\Type\CronType;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\NullableType;
 use Temporal\Internal\Marshaller\Type\ObjectType;
-use Temporal\Internal\Support\Cron;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\Options;
 use Temporal\Worker\WorkerFactoryInterface;
@@ -375,6 +374,7 @@ final class WorkflowOptions extends Options
         }
 
         $fields = [];
+
         foreach ($this->memo as $key => $value) {
             $fields[$key] = $converter->toPayload($value);
         }
@@ -405,22 +405,5 @@ final class WorkflowOptions extends Options
         $search->setIndexedFields($fields);
 
         return $search;
-    }
-
-    /**
-     * @return RetryPolicy
-     * @internal
-     */
-    public function toRetryPolicy(): RetryPolicy
-    {
-        $rt = new RetryPolicy();
-        $rt->setInitialInterval(DateInterval::toDuration($this->retryOptions->initialInterval));
-        $rt->setMaximumInterval(DateInterval::toDuration($this->retryOptions->maximumInterval));
-
-        $rt->setBackoffCoefficient($this->retryOptions->backoffCoefficient);
-        $rt->setMaximumAttempts($this->retryOptions->maximumAttempts);
-        $rt->setNonRetryableErrorTypes($this->retryOptions->nonRetryableExceptions);
-
-        return $rt;
     }
 }
