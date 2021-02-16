@@ -1,6 +1,7 @@
 # Temporal PHP SDK
 
 [![CI Status](https://github.com/temporalio/php-sdk/workflows/Unit/badge.svg)](https://github.com/temporalio/php-sdk/actions)
+[![Stable Release](https://poser.pugx.org/temporal/sdk/version)](https://packagist.org/packages/temporal/sdk)
 
 ## Introduction
 
@@ -24,4 +25,8 @@ $ composer require temporal/sdk
 
 See [examples](https://github.com/temporalio/samples-php) to get started.
 
-No documentation available at this time.
+## Documentation
+The documentation on how to use the Temporal PHP SDK and client is [here](https://docs.temporal.io/docs/php-sdk-overview).
+
+## License
+MIT License, please see [LICENSE](LICENSE.md) for details.
