@@ -21,6 +21,8 @@ following command in a root of your project:
 $ composer require temporal/sdk
 ```
 
+Make sure to install [RoadRunner](https://github.com/spiral/roadrunner) to enable workflow and activity consumption in your PHP workers.
+
 ## Usage
 
 See [examples](https://github.com/temporalio/samples-php) to get started.
