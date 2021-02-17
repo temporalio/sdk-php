@@ -19,8 +19,6 @@ use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\TemporalFailure;
-use Temporal\Internal\Coroutine\CoroutineInterface;
-use Temporal\Internal\Coroutine\Stack;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Request\Cancel;
 use Temporal\Internal\Workflow\ScopeContext;
@@ -60,9 +58,9 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     protected Deferred $deferred;
 
     /**
-     * @var CoroutineInterface
+     * @var \Generator
      */
-    protected CoroutineInterface $coroutine;
+    protected \Generator $coroutine;
 
     /**
      * Due nature of PHP generators the result of coroutine can be available before all child coroutines complete.
@@ -188,7 +186,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     {
         try {
             $this->awaitLock++;
-            $this->coroutine = new Stack($this->call($handler, $values ?? EncodedValues::empty()));
+            $this->coroutine = $this->call($handler, $values ?? EncodedValues::empty());//new Stack($this->call($handler, $values ?? EncodedValues::empty()));
             $this->context->resolveConditions();
         } catch (\Throwable $e) {
             $this->onException($e);
@@ -199,13 +197,13 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     }
 
     /**
-     * @param iterable $generator
+     * @param \Generator $generator
      * @return self
      */
-    public function attach(iterable $generator): self
+    public function attach(\Generator $generator): self
     {
         $this->awaitLock++;
-        $this->coroutine = new Stack($generator);
+        $this->coroutine = $generator;//new Stack($generator);
         $this->context->resolveConditions();
 
         $this->next();
@@ -354,7 +352,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
         $this->makeCurrent();
         $result = $handler($values);
 
-        if ($result instanceof \Generator || $result instanceof CoroutineInterface) {
+        if ($result instanceof \Generator) {
             yield from $result;
 
             return $result->getReturn();
@@ -442,7 +440,6 @@ class Scope implements CancellationScopeInterface, PromisorInterface
                 break;
 
             case $current instanceof \Generator:
-            case $current instanceof CoroutineInterface:
                 try {
                     $this->nextPromise($this->createScope(false)->attach($current));
                 } catch (\Throwable $e) {
