@@ -186,7 +186,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     {
         try {
             $this->awaitLock++;
-            $this->coroutine = $this->call($handler, $values ?? EncodedValues::empty());//new Stack($this->call($handler, $values ?? EncodedValues::empty()));
+            $this->coroutine = $this->call($handler, $values ?? EncodedValues::empty());
             $this->context->resolveConditions();
         } catch (\Throwable $e) {
             $this->onException($e);
