@@ -19,8 +19,6 @@ use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\TemporalFailure;
-use Temporal\Internal\Coroutine\CoroutineInterface;
-use Temporal\Internal\Coroutine\Stack;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Request\Cancel;
 use Temporal\Internal\Workflow\ScopeContext;
@@ -29,6 +27,7 @@ use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\CancellationScopeInterface;
+use Temporal\Workflow\WorkflowContextInterface;
 
 /**
  * Unlike Java implementation, PHP merged coroutine and cancellation scope into single instance.
@@ -44,9 +43,14 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     protected ServiceContainer $services;
 
     /**
-     * @var WorkflowContext
+     * @var WorkflowContextInterface
      */
-    protected WorkflowContext $context;
+    protected WorkflowContextInterface $context;
+
+    /**
+     * @var WorkflowContextInterface
+     */
+    protected WorkflowContextInterface $scopeContext;
 
     /**
      * @var Deferred
@@ -54,9 +58,9 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     protected Deferred $deferred;
 
     /**
-     * @var CoroutineInterface
+     * @var \Generator
      */
-    protected CoroutineInterface $coroutine;
+    protected \Generator $coroutine;
 
     /**
      * Due nature of PHP generators the result of coroutine can be available before all child coroutines complete.
@@ -121,12 +125,17 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     private bool $cancelled = false;
 
     /**
-     * @param WorkflowContext $ctx
+     * @param WorkflowContext  $ctx
      * @param ServiceContainer $services
      */
     public function __construct(ServiceContainer $services, WorkflowContext $ctx)
     {
         $this->context = $ctx;
+        $this->scopeContext = ScopeContext::fromWorkflowContext(
+            $this->context,
+            $this,
+            \Closure::fromCallable([$this, 'onRequest'])
+        );
 
         $this->services = $services;
         $this->deferred = new Deferred();
@@ -170,14 +179,14 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     }
 
     /**
-     * @param callable $handler
+     * @param callable             $handler
      * @param ValuesInterface|null $values
      */
     public function start(callable $handler, ValuesInterface $values = null): void
     {
         try {
             $this->awaitLock++;
-            $this->coroutine = new Stack($this->call($handler, $values ?? EncodedValues::empty()));
+            $this->coroutine = $this->call($handler, $values ?? EncodedValues::empty());
             $this->context->resolveConditions();
         } catch (\Throwable $e) {
             $this->onException($e);
@@ -188,13 +197,13 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     }
 
     /**
-     * @param iterable $generator
+     * @param \Generator $generator
      * @return self
      */
-    public function attach(iterable $generator): self
+    public function attach(\Generator $generator): self
     {
         $this->awaitLock++;
-        $this->coroutine = new Stack($generator);
+        $this->coroutine = $generator;
         $this->context->resolveConditions();
 
         $this->next();
@@ -243,8 +252,8 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     }
 
     /**
-     * @param callable $handler
-     * @param bool $detached
+     * @param callable    $handler
+     * @param bool        $detached
      * @param string|null $layer
      * @return CancellationScopeInterface
      */
@@ -304,7 +313,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     }
 
     /**
-     * @param bool $detached
+     * @param bool        $detached
      * @param string|null $layer
      * @return self
      */
@@ -334,7 +343,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     }
 
     /**
-     * @param callable $handler
+     * @param callable             $handler
      * @param ValuesInterface|null $values
      * @return \Generator
      */
@@ -343,7 +352,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
         $this->makeCurrent();
         $result = $handler($values);
 
-        if ($result instanceof \Generator || $result instanceof CoroutineInterface) {
+        if ($result instanceof \Generator) {
             yield from $result;
 
             return $result->getReturn();
@@ -398,13 +407,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
      */
     protected function makeCurrent(): void
     {
-        Workflow::setCurrentContext(
-            ScopeContext::fromWorkflowContext(
-                $this->context,
-                $this,
-                \Closure::fromCallable([$this, 'onRequest'])
-            )
-        );
+        Workflow::setCurrentContext($this->scopeContext);
     }
 
     /**
@@ -437,7 +440,6 @@ class Scope implements CancellationScopeInterface, PromisorInterface
                 break;
 
             case $current instanceof \Generator:
-            case $current instanceof CoroutineInterface:
                 try {
                     $this->nextPromise($this->createScope(false)->attach($current));
                 } catch (\Throwable $e) {
