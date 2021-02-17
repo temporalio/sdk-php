@@ -367,10 +367,6 @@ class Scope implements CancellationScopeInterface, PromisorInterface
      */
     protected function onRequest(RequestInterface $request, PromiseInterface $promise): void
     {
-        if (!$request->isCancellable()) {
-            return;
-        }
-
         $this->onCancel[++$this->cancelID] = function (\Throwable $reason = null) use ($request): void {
             if ($reason instanceof DestructMemorizedInstanceException) {
                 // memory flush
