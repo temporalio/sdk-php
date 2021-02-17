@@ -203,7 +203,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     public function attach(\Generator $generator): self
     {
         $this->awaitLock++;
-        $this->coroutine = $generator;//new Stack($generator);
+        $this->coroutine = $generator;
         $this->context->resolveConditions();
 
         $this->next();
