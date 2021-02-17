@@ -108,7 +108,7 @@ class Process extends Scope implements ProcessInterface
                 return;
             }
 
-            $this->scopeContext()->complete([], $result);
+            $this->scopeContext->complete([], $result);
             return;
         }
 
@@ -116,6 +116,6 @@ class Process extends Scope implements ProcessInterface
             return;
         }
 
-        $this->scopeContext()->complete($result);
+        $this->scopeContext->complete($result);
     }
 }

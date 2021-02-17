@@ -29,6 +29,7 @@ use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\CancellationScopeInterface;
+use Temporal\Workflow\WorkflowContextInterface;
 
 /**
  * Unlike Java implementation, PHP merged coroutine and cancellation scope into single instance.
@@ -44,9 +45,14 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     protected ServiceContainer $services;
 
     /**
-     * @var WorkflowContext
+     * @var WorkflowContextInterface
      */
-    protected WorkflowContext $context;
+    protected WorkflowContextInterface $context;
+
+    /**
+     * @var WorkflowContextInterface
+     */
+    protected WorkflowContextInterface $scopeContext;
 
     /**
      * @var Deferred
@@ -127,6 +133,11 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     public function __construct(ServiceContainer $services, WorkflowContext $ctx)
     {
         $this->context = $ctx;
+        $this->scopeContext = ScopeContext::fromWorkflowContext(
+            $this->context,
+            $this,
+            \Closure::fromCallable([$this, 'onRequest'])
+        );
 
         $this->services = $services;
         $this->deferred = new Deferred();
@@ -398,19 +409,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
      */
     protected function makeCurrent(): void
     {
-        Workflow::setCurrentContext($this->scopeContext());
-    }
-
-    /**
-     * @return Workflow\WorkflowContextInterface
-     */
-    protected function scopeContext(): Workflow\WorkflowContextInterface
-    {
-        return ScopeContext::fromWorkflowContext(
-            $this->context,
-            $this,
-            \Closure::fromCallable([$this, 'onRequest'])
-        );
+        Workflow::setCurrentContext($this->scopeContext);
     }
 
     /**
