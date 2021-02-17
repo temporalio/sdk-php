@@ -17,7 +17,6 @@ use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Exception\InvalidArgumentException;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\ServiceContainer;
-use Temporal\Internal\Workflow\ScopeContext;
 use Temporal\Internal\Workflow\WorkflowContext;
 use Temporal\Worker\LoopInterface;
 use Temporal\Workflow\ProcessInterface;
