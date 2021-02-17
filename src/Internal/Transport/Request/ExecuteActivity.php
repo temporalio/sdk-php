@@ -17,7 +17,6 @@ use Temporal\Worker\Transport\Command\Request;
 final class ExecuteActivity extends Request
 {
     public const NAME = 'ExecuteActivity';
-    protected const CANCELLABLE = true;
 
     /**
      * @param string $name

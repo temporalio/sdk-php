@@ -15,7 +15,6 @@ use Carbon\CarbonInterface;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
-use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
@@ -222,7 +221,7 @@ class WorkflowContext implements WorkflowContextInterface
             $values = EncodedValues::empty();
         }
 
-        return $this->services->client->request(
+        return $this->request(
             new CompleteWorkflow($values, $failure)
         );
     }
@@ -244,7 +243,7 @@ class WorkflowContext implements WorkflowContextInterface
         );
 
         // must not be captured
-        return $this->services->client->request($request);
+        return $this->request($request);
     }
 
     /**
