@@ -15,9 +15,6 @@ use Temporal\Worker\Transport\Command\Request;
 
 class CancelExternalWorkflow extends Request
 {
-    /**
-     * @var string
-     */
     public const NAME = 'CancelExternalWorkflow';
 
     /**

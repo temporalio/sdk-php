@@ -19,8 +19,6 @@ use Temporal\DataConverter\ValuesInterface;
  */
 class Request extends Command implements RequestInterface
 {
-    protected const CANCELLABLE = false;
-
     protected string $name;
     protected array $options;
     protected ValuesInterface $payloads;
@@ -83,13 +81,5 @@ class Request extends Command implements RequestInterface
     public function getFailure(): ?\Throwable
     {
         return $this->failure;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isCancellable(): bool
-    {
-        return static::CANCELLABLE;
     }
 }

@@ -16,9 +16,6 @@ use Temporal\Worker\Transport\Command\Request;
 
 final class SignalExternalWorkflow extends Request
 {
-    /**
-     * @var string
-     */
     public const NAME = 'SignalExternalWorkflow';
 
     /**

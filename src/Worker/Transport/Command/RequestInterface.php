@@ -16,11 +16,6 @@ use Temporal\DataConverter\ValuesInterface;
 interface RequestInterface extends CommandInterface
 {
     /**
-     * @return bool
-     */
-    public function isCancellable(): bool;
-
-    /**
      * @return string
      */
     public function getName(): string;
