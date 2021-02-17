@@ -121,7 +121,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     private bool $cancelled = false;
 
     /**
-     * @param WorkflowContext $ctx
+     * @param WorkflowContext  $ctx
      * @param ServiceContainer $services
      */
     public function __construct(ServiceContainer $services, WorkflowContext $ctx)
@@ -170,7 +170,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     }
 
     /**
-     * @param callable $handler
+     * @param callable             $handler
      * @param ValuesInterface|null $values
      */
     public function start(callable $handler, ValuesInterface $values = null): void
@@ -243,8 +243,8 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     }
 
     /**
-     * @param callable $handler
-     * @param bool $detached
+     * @param callable    $handler
+     * @param bool        $detached
      * @param string|null $layer
      * @return CancellationScopeInterface
      */
@@ -304,7 +304,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     }
 
     /**
-     * @param bool $detached
+     * @param bool        $detached
      * @param string|null $layer
      * @return self
      */
@@ -334,7 +334,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     }
 
     /**
-     * @param callable $handler
+     * @param callable             $handler
      * @param ValuesInterface|null $values
      * @return \Generator
      */
@@ -398,12 +398,18 @@ class Scope implements CancellationScopeInterface, PromisorInterface
      */
     protected function makeCurrent(): void
     {
-        Workflow::setCurrentContext(
-            ScopeContext::fromWorkflowContext(
-                $this->context,
-                $this,
-                \Closure::fromCallable([$this, 'onRequest'])
-            )
+        Workflow::setCurrentContext($this->scopeContext());
+    }
+
+    /**
+     * @return Workflow\WorkflowContextInterface
+     */
+    protected function scopeContext(): Workflow\WorkflowContextInterface
+    {
+        return ScopeContext::fromWorkflowContext(
+            $this->context,
+            $this,
+            \Closure::fromCallable([$this, 'onRequest'])
         );
     }
 

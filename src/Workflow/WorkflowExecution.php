@@ -65,7 +65,7 @@ class WorkflowExecution
     {
         $e = new \Temporal\Api\Common\V1\WorkflowExecution();
         $e->setWorkflowId($this->id);
-        $e->setRunId($this->runId);
+        $e->setRunId((string)$this->runId);
 
         return $e;
     }

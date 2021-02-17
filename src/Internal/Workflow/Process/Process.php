@@ -17,6 +17,7 @@ use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Exception\InvalidArgumentException;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\ServiceContainer;
+use Temporal\Internal\Workflow\ScopeContext;
 use Temporal\Internal\Workflow\WorkflowContext;
 use Temporal\Worker\LoopInterface;
 use Temporal\Workflow\ProcessInterface;
@@ -26,7 +27,7 @@ class Process extends Scope implements ProcessInterface
     /**
      * Process constructor.
      * @param ServiceContainer $services
-     * @param WorkflowContext $ctx
+     * @param WorkflowContext  $ctx
      */
     public function __construct(ServiceContainer $services, WorkflowContext $ctx)
     {
@@ -66,7 +67,7 @@ class Process extends Scope implements ProcessInterface
     }
 
     /**
-     * @param callable $handler
+     * @param callable             $handler
      * @param ValuesInterface|null $values
      */
     public function start(callable $handler, ValuesInterface $values = null): void
@@ -108,7 +109,7 @@ class Process extends Scope implements ProcessInterface
                 return;
             }
 
-            $this->context->complete([], $result);
+            $this->scopeContext()->complete([], $result);
             return;
         }
 
@@ -116,6 +117,6 @@ class Process extends Scope implements ProcessInterface
             return;
         }
 
-        $this->context->complete($result);
+        $this->scopeContext()->complete([], $result);
     }
 }
