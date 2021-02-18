@@ -117,7 +117,7 @@ class Process extends Scope implements ProcessInterface
             return;
         }
 
-        if ($this->context->isContinuedAsNew()) {
+        if ($this->scopeContext->isContinuedAsNew()) {
             return;
         }
 
