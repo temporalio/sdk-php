@@ -108,6 +108,11 @@ class Process extends Scope implements ProcessInterface
                 return;
             }
 
+            if ($this->services->exceptionInterceptor->isRetryable($result)) {
+                $this->scopeContext->panic($result);
+                return;
+            }
+
             $this->scopeContext->complete([], $result);
             return;
         }

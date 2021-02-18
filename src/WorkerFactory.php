@@ -71,6 +71,16 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     use EventEmitterTrait;
 
     /**
+     * @var array
+     */
+    private const DEFAULT_RETRYABLE_ERRORS = [
+        \Error::class,
+        \TypeError::class,
+        \ArgumentCountError::class,
+        \ArithmeticError::class,
+    ];
+
+    /**
      * @var string
      */
     private const ERROR_MESSAGE_TYPE = 'Received message type must be a string, but %s given';
@@ -182,12 +192,14 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
      */
     public function newWorker(
         string $taskQueue = self::DEFAULT_TASK_QUEUE,
-        WorkerOptions $options = null
+        WorkerOptions $options = null,
+        array $retryableErrors = self::DEFAULT_RETRYABLE_ERRORS
     ): WorkerInterface {
+
         $worker = new Worker(
             $taskQueue,
             $options ?? WorkerOptions::new(),
-            ServiceContainer::fromWorker($this),
+            ServiceContainer::fromWorker($this, $retryableErrors),
             $this->rpc
         );
         $this->queues->add($worker);
@@ -238,7 +250,7 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     /**
      * @return EnvironmentInterface
      */
-    public function getEnviroment(): EnvironmentInterface
+    public function getEnvironment(): EnvironmentInterface
     {
         return $this->env;
     }

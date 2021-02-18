@@ -9,7 +9,7 @@ server:
 
 # Workflow and activity mesh service
 temporal:
-    address: "localhost:7233"
+    address: "temporal:7233"
     activities:
       num_workers: 4
     debug_level: 2
