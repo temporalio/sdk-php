@@ -21,6 +21,8 @@ use Spiral\Attributes\Composite\SelectiveReader;
 use Spiral\Attributes\ReaderInterface;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\Exception\ExceptionInterceptor;
+use Temporal\Exception\ExceptionInterceptorInterface;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Marshaller\MarshallerInterface;
@@ -69,16 +71,6 @@ use Temporal\Worker\WorkerOptions;
 final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
 {
     use EventEmitterTrait;
-
-    /**
-     * @var array
-     */
-    private const DEFAULT_RETRYABLE_ERRORS = [
-        \Error::class,
-        \TypeError::class,
-        \ArgumentCountError::class,
-        \ArithmeticError::class,
-    ];
 
     /**
      * @var string
@@ -193,13 +185,16 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     public function newWorker(
         string $taskQueue = self::DEFAULT_TASK_QUEUE,
         WorkerOptions $options = null,
-        array $retryableErrors = self::DEFAULT_RETRYABLE_ERRORS
+        ExceptionInterceptorInterface $exceptionInterceptor = null
     ): WorkerInterface {
 
         $worker = new Worker(
             $taskQueue,
             $options ?? WorkerOptions::new(),
-            ServiceContainer::fromWorker($this, $retryableErrors),
+            ServiceContainer::fromWorkerFactory(
+                $this,
+                $exceptionInterceptor ?? ExceptionInterceptor::createDefault()
+            ),
             $this->rpc
         );
         $this->queues->add($worker);

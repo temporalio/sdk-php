@@ -15,6 +15,7 @@ use JetBrains\PhpStorm\Immutable;
 use Spiral\Attributes\ReaderInterface;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\ExceptionInterceptor;
+use Temporal\Exception\ExceptionInterceptorInterface;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Declaration\Prototype\ActivityCollection;
 use Temporal\Internal\Declaration\Prototype\WorkflowCollection;
@@ -107,9 +108,9 @@ final class ServiceContainer
     public ActivityReader $activitiesReader;
 
     /**
-     * @var ExceptionInterceptor
+     * @var ExceptionInterceptorInterface
      */
-    public ExceptionInterceptor $exceptionInterceptor;
+    public ExceptionInterceptorInterface $exceptionInterceptor;
 
     /**
      * @param LoopInterface $loop
@@ -119,7 +120,7 @@ final class ServiceContainer
      * @param QueueInterface $queue
      * @param MarshallerInterface $marshaller
      * @param DataConverterInterface $dataConverter
-     * @param ExceptionInterceptor $exceptionInterceptor
+     * @param ExceptionInterceptorInterface $exceptionInterceptor
      */
     public function __construct(
         LoopInterface $loop,
@@ -129,7 +130,7 @@ final class ServiceContainer
         QueueInterface $queue,
         MarshallerInterface $marshaller,
         DataConverterInterface $dataConverter,
-        ExceptionInterceptor $exceptionInterceptor
+        ExceptionInterceptorInterface $exceptionInterceptor
     ) {
         $this->env = $env;
         $this->loop = $loop;
@@ -149,10 +150,14 @@ final class ServiceContainer
     }
 
     /**
-     * @param WorkerFactory $worker
+     * @param WorkerFactory                 $worker
+     * @param ExceptionInterceptorInterface $exceptionInterceptor
      * @return static
      */
-    public static function fromWorker(WorkerFactory $worker, array $retryableErrors = []): self
+    public static function fromWorkerFactory(
+        WorkerFactory $worker,
+        ExceptionInterceptorInterface $exceptionInterceptor
+    ): self
     {
         return new self(
             $worker,
@@ -162,7 +167,7 @@ final class ServiceContainer
             $worker->getQueue(),
             $worker->getMarshaller(),
             $worker->getDataConverter(),
-            new ExceptionInterceptor($retryableErrors)
+            $exceptionInterceptor
         );
     }
 }

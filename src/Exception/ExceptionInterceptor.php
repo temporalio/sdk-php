@@ -15,7 +15,7 @@ namespace Temporal\Exception;
  * Exception interceptor provides the ability to let workflow know if exception should be treated as fatal (stops execution)
  * or must only fail the task execution (with consecutive retry).
  */
-class ExceptionInterceptor
+class ExceptionInterceptor implements ExceptionInterceptorInterface
 {
     /**
      * @var array
@@ -36,6 +36,20 @@ class ExceptionInterceptor
      */
     public function isRetryable(\Throwable $e): bool
     {
-        return in_array(get_class($e), $this->retryableErrors, true);
+        foreach ($this->retryableErrors as $retryableError) {
+            if ($e instanceof $retryableError) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return static
+     */
+    public static function createDefault(): self
+    {
+        return new self([\Error::class]);
     }
 }
