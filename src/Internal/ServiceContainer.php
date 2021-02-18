@@ -14,6 +14,8 @@ namespace Temporal\Internal;
 use JetBrains\PhpStorm\Immutable;
 use Spiral\Attributes\ReaderInterface;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\Exception\ExceptionInterceptor;
+use Temporal\Exception\ExceptionInterceptorInterface;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Declaration\Prototype\ActivityCollection;
 use Temporal\Internal\Declaration\Prototype\WorkflowCollection;
@@ -106,6 +108,11 @@ final class ServiceContainer
     public ActivityReader $activitiesReader;
 
     /**
+     * @var ExceptionInterceptorInterface
+     */
+    public ExceptionInterceptorInterface $exceptionInterceptor;
+
+    /**
      * @param LoopInterface $loop
      * @param EnvironmentInterface $env
      * @param ClientInterface $client
@@ -113,6 +120,7 @@ final class ServiceContainer
      * @param QueueInterface $queue
      * @param MarshallerInterface $marshaller
      * @param DataConverterInterface $dataConverter
+     * @param ExceptionInterceptorInterface $exceptionInterceptor
      */
     public function __construct(
         LoopInterface $loop,
@@ -121,7 +129,8 @@ final class ServiceContainer
         ReaderInterface $reader,
         QueueInterface $queue,
         MarshallerInterface $marshaller,
-        DataConverterInterface $dataConverter
+        DataConverterInterface $dataConverter,
+        ExceptionInterceptorInterface $exceptionInterceptor
     ) {
         $this->env = $env;
         $this->loop = $loop;
@@ -137,22 +146,28 @@ final class ServiceContainer
 
         $this->workflowsReader = new WorkflowReader($this->reader);
         $this->activitiesReader = new ActivityReader($this->reader);
+        $this->exceptionInterceptor = $exceptionInterceptor;
     }
 
     /**
-     * @param WorkerFactory $worker
+     * @param WorkerFactory                 $worker
+     * @param ExceptionInterceptorInterface $exceptionInterceptor
      * @return static
      */
-    public static function fromWorker(WorkerFactory $worker): self
+    public static function fromWorkerFactory(
+        WorkerFactory $worker,
+        ExceptionInterceptorInterface $exceptionInterceptor
+    ): self
     {
         return new self(
             $worker,
-            $worker->getEnviroment(),
+            $worker->getEnvironment(),
             $worker->getClient(),
             $worker->getReader(),
             $worker->getQueue(),
             $worker->getMarshaller(),
-            $worker->getDataConverter()
+            $worker->getDataConverter(),
+            $exceptionInterceptor
         );
     }
 }

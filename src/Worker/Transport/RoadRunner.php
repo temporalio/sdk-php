@@ -85,7 +85,7 @@ final class RoadRunner implements HostConnectionInterface
         $json = $this->encodeHeaders($headers);
 
         try {
-            $this->worker->send($frame, $json);
+            $this->worker->respond(new Payload($frame, $json));
         } catch (\Throwable $e) {
             throw new TransportException($e->getMessage(), $e->getCode(), $e);
         }
