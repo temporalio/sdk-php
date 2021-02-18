@@ -27,6 +27,7 @@ use Temporal\Internal\Transport\Request\CompleteWorkflow;
 use Temporal\Internal\Transport\Request\ContinueAsNew;
 use Temporal\Internal\Transport\Request\GetVersion;
 use Temporal\Internal\Transport\Request\NewTimer;
+use Temporal\Internal\Transport\Request\Panic;
 use Temporal\Internal\Transport\Request\SideEffect;
 use Temporal\Promise;
 use Temporal\Worker\Transport\Command\RequestInterface;
@@ -57,11 +58,11 @@ class WorkflowContext implements WorkflowContextInterface
 
     /**
      * WorkflowContext constructor.
-     * @param ServiceContainer $services
-     * @param ClientInterface $client
+     * @param ServiceContainer          $services
+     * @param ClientInterface           $client
      * @param WorkflowInstanceInterface $workflowInstance
-     * @param Input $input
-     * @param ValuesInterface|null $lastCompletionResult
+     * @param Input                     $input
+     * @param ValuesInterface|null      $lastCompletionResult
      */
     public function __construct(
         ServiceContainer $services,
@@ -221,9 +222,15 @@ class WorkflowContext implements WorkflowContextInterface
             $values = EncodedValues::empty();
         }
 
-        return $this->request(
-            new CompleteWorkflow($values, $failure)
-        );
+        return $this->request(new CompleteWorkflow($values, $failure), false);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function panic(\Throwable $failure = null): PromiseInterface
+    {
+        return $this->request(new Panic($failure), false);
     }
 
     /**
@@ -243,7 +250,7 @@ class WorkflowContext implements WorkflowContextInterface
         );
 
         // must not be captured
-        return $this->request($request);
+        return $this->request($request, false);
     }
 
     /**
@@ -276,8 +283,7 @@ class WorkflowContext implements WorkflowContextInterface
         $returnType = null
     ): PromiseInterface {
         return $this->newUntypedChildWorkflowStub($type, $options)
-            ->execute($args, $returnType)
-        ;
+            ->execute($args, $returnType);
     }
 
     /**
@@ -377,7 +383,7 @@ class WorkflowContext implements WorkflowContextInterface
     /**
      * {@inheritDoc}
      */
-    public function request(RequestInterface $request): PromiseInterface
+    public function request(RequestInterface $request, bool $cancellable = true): PromiseInterface
     {
         $this->recordTrace();
         return $this->client->request($request);
@@ -426,8 +432,7 @@ class WorkflowContext implements WorkflowContextInterface
         $conditions[] = $timer;
 
         return $this->await(...$conditions)
-            ->then(static fn(): bool => !$timer->isComplete())
-        ;
+            ->then(static fn(): bool => !$timer->isComplete());
     }
 
     /**

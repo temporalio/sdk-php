@@ -73,9 +73,10 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @internal This is an internal method
      *
      * @param RequestInterface $request
+     * @param bool $cancellable
      * @return PromiseInterface
      */
-    public function request(RequestInterface $request): PromiseInterface;
+    public function request(RequestInterface $request, bool $cancellable = true): PromiseInterface;
 
     /**
      * @see Workflow::getVersion()
@@ -106,6 +107,14 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @return PromiseInterface
      */
     public function complete(array $result = null, \Throwable $failure = null): PromiseInterface;
+
+    /**
+     * @internal This is an internal method
+     *
+     * @param \Throwable|null $failure
+     * @return PromiseInterface
+     */
+    public function panic(\Throwable $failure = null): PromiseInterface;
 
     /**
      * @see Workflow::timer()
