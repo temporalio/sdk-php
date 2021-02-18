@@ -76,7 +76,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @param bool $cancellable
      * @return PromiseInterface
      */
-    public function request(RequestInterface $request, bool $cancellable=true): PromiseInterface;
+    public function request(RequestInterface $request, bool $cancellable = true): PromiseInterface;
 
     /**
      * @see Workflow::getVersion()
