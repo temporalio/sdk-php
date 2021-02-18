@@ -31,6 +31,7 @@
         "react/promise": "^2.8",
         "spiral/attributes": "^2.7",
         "spiral/roadrunner-worker": "^2.0.2",
+        "spiral/roadrunner-cli": "^2.0",
         "symfony/polyfill-php80": "^1.18"
     },
     "autoload": {
