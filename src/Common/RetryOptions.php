@@ -91,7 +91,7 @@ class RetryOptions extends Options
      * expired yet. If not set or set to 0, it means unlimited, and rely on
      * activity {@see ActivityOptions::$scheduleToCloseTimeout} to stop.
      *
-     * @var positive-int
+     * @var positive-int|0
      */
     #[Marshal(name: 'maximum_attempts')]
     public int $maximumAttempts = self::DEFAULT_MAXIMUM_ATTEMPTS;
