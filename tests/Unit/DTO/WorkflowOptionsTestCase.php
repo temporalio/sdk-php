@@ -40,7 +40,7 @@ class WorkflowOptionsTestCase extends DTOMarshallingTestCase
                 'initial_interval'          => null,
                 'backoff_coefficient'       => 2.0,
                 'maximum_interval'          => null,
-                'maximum_attempts'          => 1,
+                'maximum_attempts'          => 0,
                 'non_retryable_error_types' => [],
             ],
             'CronSchedule'             => null,
