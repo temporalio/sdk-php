@@ -52,7 +52,7 @@ class RetryOptions extends Options
     public const DEFAULT_MAXIMUM_INTERVAL = null;
 
     /**
-     * @var int
+     * @var positive-int|0
      */
     public const DEFAULT_MAXIMUM_ATTEMPTS = 0;
 
