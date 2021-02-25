@@ -172,7 +172,7 @@ class ActivityCompletionClientTestCase extends ClientTestCase
         $this->assertNotEmpty($e->getExecution()->getID());
         $this->assertNotEmpty($e->getExecution()->getRunID());
 
-        sleep(1);
+        sleep(2);
         $this->assertFileExists(__DIR__ . '/../../taskToken');
         $data = json_decode(file_get_contents(__DIR__ . '/../../activityId'));
         unlink(__DIR__ . '/../../taskToken');
