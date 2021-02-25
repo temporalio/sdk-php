@@ -196,7 +196,7 @@ jobs:
 
       - name: Download RoadRunner
         run: |
-          vendor/bin/rr get
+          vendor/bin/rr get --stability=RC
 
       - name: Run Tests
         run: |
