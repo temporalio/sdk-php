@@ -21,6 +21,8 @@ use Spiral\Attributes\Composite\SelectiveReader;
 use Spiral\Attributes\ReaderInterface;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\Exception\ExceptionInterceptor;
+use Temporal\Exception\ExceptionInterceptorInterface;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Marshaller\MarshallerInterface;
@@ -182,12 +184,17 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
      */
     public function newWorker(
         string $taskQueue = self::DEFAULT_TASK_QUEUE,
-        WorkerOptions $options = null
+        WorkerOptions $options = null,
+        ExceptionInterceptorInterface $exceptionInterceptor = null
     ): WorkerInterface {
+
         $worker = new Worker(
             $taskQueue,
             $options ?? WorkerOptions::new(),
-            ServiceContainer::fromWorker($this),
+            ServiceContainer::fromWorkerFactory(
+                $this,
+                $exceptionInterceptor ?? ExceptionInterceptor::createDefault()
+            ),
             $this->rpc
         );
         $this->queues->add($worker);
@@ -238,7 +245,7 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     /**
      * @return EnvironmentInterface
      */
-    public function getEnviroment(): EnvironmentInterface
+    public function getEnvironment(): EnvironmentInterface
     {
         return $this->env;
     }
@@ -295,9 +302,9 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     {
         if (\interface_exists(Reader::class)) {
             return new SelectiveReader([
-                new AnnotationReader(),
-                new AttributeReader(),
-            ]);
+                                           new AnnotationReader(),
+                                           new AttributeReader(),
+                                       ]);
         }
 
         return new AttributeReader();

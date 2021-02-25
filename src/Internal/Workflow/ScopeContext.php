@@ -31,8 +31,8 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
      * Creates scope specific context.
      *
      * @param WorkflowContext $context
-     * @param Scope $scope
-     * @param callable $onRequest
+     * @param Scope           $scope
+     * @param callable        $onRequest
      *
      * @return WorkflowContextInterface
      */
@@ -78,11 +78,12 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
 
     /**
      * @param RequestInterface $request
+     * @param bool $cancellable
      * @return PromiseInterface
      */
-    public function request(RequestInterface $request): PromiseInterface
+    public function request(RequestInterface $request, bool $cancellable = true): PromiseInterface
     {
-        if ($this->scope->isCancelled()) {
+        if ($cancellable && $this->scope->isCancelled()) {
             throw new CanceledFailure('Attempt to send request to cancelled scope');
         }
 
