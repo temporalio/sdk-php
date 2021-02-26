@@ -2,6 +2,10 @@
 
 namespace PHPSTORM_META {
 
+    // -------------------------------------------------------------------------
+    //  Worker
+    // -------------------------------------------------------------------------
+
     override(\Temporal\Workflow\WorkflowContextInterface::newActivityStub(), map([
         '' => type(0),
     ]));
@@ -15,13 +19,10 @@ namespace PHPSTORM_META {
         '' => type(0),
     ]));
 
-    override(\Temporal\Internal\Workflow\WorkflowContext::newChildWorkflowStub(), map([
-        '' => type(0),
-    ]));
-
     override(\Temporal\Workflow::newChildWorkflowStub(), map([
         '' => type(0),
     ]));
+
 
     override(\Temporal\Workflow\WorkflowContextInterface::newContinueAsNewStub(), map([
         '' => type(0),
@@ -30,6 +31,7 @@ namespace PHPSTORM_META {
     override(\Temporal\Workflow::newContinueAsNewStub(), map([
         '' => type(0),
     ]));
+
 
     override(\Temporal\Workflow\WorkflowContextInterface::newExternalWorkflowStub(), map([
         '' => type(0),
@@ -40,13 +42,24 @@ namespace PHPSTORM_META {
     ]));
 
 
+    // -------------------------------------------------------------------------
+    //  Client
+    // -------------------------------------------------------------------------
 
-    // RPC
     override(\Temporal\Client\WorkflowClientInterface::newWorkflowStub(), map([
         '' => type(0),
     ]));
 
-    override(\Temporal\WorkflowClient::newWorkflowStub(), map([
+    override(\Temporal\Client\WorkflowClient::newWorkflowStub(), map([
+        '' => type(0),
+    ]));
+
+
+    override(\Temporal\Client\WorkflowClientInterface::newRunningWorkflowStub(), map([
+        '' => type(0),
+    ]));
+
+    override(\Temporal\Client\WorkflowClient::newRunningWorkflowStub(), map([
         '' => type(0),
     ]));
 }
