@@ -13,10 +13,13 @@ namespace Temporal\Tests\Functional\Client;
 
 use Temporal\Api\Workflow\V1\PendingActivityInfo;
 use Temporal\Api\Workflowservice\V1\DescribeWorkflowExecutionRequest;
+use Temporal\Client\WorkflowOptions;
+use Temporal\Common\RetryOptions;
 use Temporal\Exception\Client\ActivityCompletionFailureException;
 use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Failure\ActivityFailure;
 use Temporal\Exception\Failure\ApplicationFailure;
+use Temporal\Worker\WorkerOptions;
 
 /**
  * @group client
@@ -85,8 +88,13 @@ class ActivityCompletionClientTestCase extends ClientTestCase
 
         $act = $client->newActivityCompletionClient();
 
-        $this->expectException(ActivityCompletionFailureException::class);
-        $act->complete($data->id, null, "invalid activity id", 'Completed Externally by ID');
+        try {
+            $act->complete($data->id, null, "invalid activity id", 'Completed Externally by ID');
+        } catch (\Throwable $e) {
+            $this->assertInstanceOf(ActivityCompletionFailureException::class, $e);
+        }
+
+        $act->complete($data->id, $data->runId, $data->activityId, 'Completed Externally by ID explicit');
     }
 
     public function testCompleteAsyncActivityByToken()
@@ -123,13 +131,19 @@ class ActivityCompletionClientTestCase extends ClientTestCase
         sleep(1);
         $this->assertFileExists(__DIR__ . '/../../taskToken');
         $taskToken = file_get_contents(__DIR__ . '/../../taskToken');
+
         unlink(__DIR__ . '/../../taskToken');
         unlink(__DIR__ . '/../../activityId');
 
         $act = $client->newActivityCompletionClient();
 
-        $this->expectException(ActivityCompletionFailureException::class);
-        $act->completeByToken('broken' . $taskToken, 'Completed Externally');
+        try {
+            $act->completeByToken('broken' . $taskToken, 'Completed Externally');
+        } catch (\Throwable $e) {
+            $this->assertInstanceOf(ActivityCompletionFailureException::class, $e);
+        }
+
+        $act->completeByToken($taskToken, 'Completed Externally by broken token');
     }
 
     public function testCompleteAsyncActivityByTokenExceptionally()
@@ -172,7 +186,7 @@ class ActivityCompletionClientTestCase extends ClientTestCase
         $this->assertNotEmpty($e->getExecution()->getID());
         $this->assertNotEmpty($e->getExecution()->getRunID());
 
-        sleep(1);
+        sleep(2);
         $this->assertFileExists(__DIR__ . '/../../taskToken');
         $data = json_decode(file_get_contents(__DIR__ . '/../../activityId'));
         unlink(__DIR__ . '/../../taskToken');

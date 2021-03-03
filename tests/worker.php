@@ -25,7 +25,11 @@ $getClasses = static function (string $dir): iterable {
 
 $factory = WorkerFactory::create();
 
-$worker = $factory->newWorker('default');
+$worker = $factory->newWorker(
+    'default',
+    \Temporal\Worker\WorkerOptions::new()
+        ->withMaxConcurrentWorkflowTaskPollers(5)
+);
 
 // register all workflows
 foreach ($getClasses(__DIR__ . '/Fixtures/src/Workflow') as $name) {
