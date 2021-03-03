@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Workflow;
 
 use Temporal\Activity\ActivityOptions;
+use Temporal\Common\RetryOptions;
 use Temporal\Tests\Activity\SimpleActivity;
 use Temporal\Workflow;
 use Temporal\Workflow\SignalMethod;
@@ -28,7 +29,9 @@ class LoopWithSignalCoroutinesWorkflow
     {
         $this->simple = Workflow::newActivityStub(
             SimpleActivity::class,
-            ActivityOptions::new()->withStartToCloseTimeout(5)
+            ActivityOptions::new()
+                ->withStartToCloseTimeout(5)
+                ->withRetryOptions(RetryOptions::new()->withMaximumAttempts(1))
         );
     }
 
