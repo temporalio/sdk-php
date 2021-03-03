@@ -57,7 +57,8 @@ final class Client implements ClientInterface
     public function dispatch(ResponseInterface $response): void
     {
         if (!isset($this->requests[$response->getID()])) {
-            throw new \LogicException(sprintf('Got the response to undefined request %s', $response->getID()));
+            // undefined request, most likely cleanup de-sync
+            return;
         }
 
         $deferred = $this->fetch($response->getID());
