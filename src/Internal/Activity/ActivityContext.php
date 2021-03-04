@@ -107,7 +107,7 @@ final class ActivityContext implements ActivityContextInterface
     }
 
     /**
-     * {@inheritDoc}
+     * @return bool
      */
     public function isDoNotCompleteOnReturn(): bool
     {
