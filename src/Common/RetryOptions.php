@@ -180,14 +180,12 @@ class RetryOptions extends Options
      * @return $this
      */
     #[Pure]
-    public function withMaximumAttempts(
-        int $attempts
-    ): self {
+    public function withMaximumAttempts(int $attempts): self
+    {
         assert($attempts >= 0);
 
         $self = clone $this;
         $self->maximumAttempts = $attempts;
-        $self->maximumAttempsSet = true;
 
         return $self;
     }
@@ -216,18 +214,11 @@ class RetryOptions extends Options
     public function toWorkflowRetryPolicy(): RetryPolicy
     {
         $policy = new RetryPolicy();
+
         $policy->setInitialInterval(DateInterval::toDuration($this->initialInterval));
         $policy->setMaximumInterval(DateInterval::toDuration($this->maximumInterval));
-
         $policy->setBackoffCoefficient($this->backoffCoefficient);
-
-        if ($this->maximumAttempsSet) {
-            $policy->setMaximumAttempts($this->maximumAttempts);
-        } else {
-            // the default policy for workflow runs is single run without retries
-            $policy->setMaximumAttempts(1);
-        }
-
+        $policy->setMaximumAttempts($this->maximumAttempts);
         $policy->setNonRetryableErrorTypes($this->nonRetryableExceptions);
 
         return $policy;

@@ -34,13 +34,7 @@ class ActivityOptionsTestCase extends DTOMarshallingTestCase
             'HeartbeatTimeout'       => 0,
             'WaitForCancellation'    => false,
             'ActivityID'             => '',
-            'RetryPolicy'            => [
-                'initial_interval'          => null,
-                'backoff_coefficient'       => 2.0,
-                'maximum_interval'          => null,
-                'maximum_attempts'          => 0,
-                'non_retryable_error_types' => [],
-            ],
+            'RetryPolicy'            => null,
         ];
 
         $this->assertSame($expected, $this->marshal($dto));

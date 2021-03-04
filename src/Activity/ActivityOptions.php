@@ -18,7 +18,7 @@ use Temporal\Common\RetryOptions;
 use Temporal\Internal\Assert;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
-use Temporal\Internal\Marshaller\Type\ObjectType;
+use Temporal\Internal\Marshaller\Type\NullableType;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\Options;
 use Temporal\Worker\WorkerFactoryInterface;
@@ -103,8 +103,8 @@ class ActivityOptions extends Options
      * To disable retries set MaximumAttempts to 1. The default RetryPolicy
      * provided by the server can be overridden by the dynamic config.
      */
-    #[Marshal(name: 'RetryPolicy', type: ObjectType::class, of: RetryOptions::class)]
-    public RetryOptions $retryOptions;
+    #[Marshal(name: 'RetryPolicy', type: NullableType::class, of: RetryOptions::class)]
+    public ?RetryOptions $retryOptions = null;
 
     /**
      * ActivityOptions constructor.
@@ -115,7 +115,6 @@ class ActivityOptions extends Options
         $this->scheduleToCloseTimeout = CarbonInterval::seconds(0);
         $this->startToCloseTimeout = CarbonInterval::seconds(0);
         $this->heartbeatTimeout = CarbonInterval::seconds(0);
-        $this->retryOptions = new RetryOptions();
 
         parent::__construct();
     }
@@ -286,7 +285,7 @@ class ActivityOptions extends Options
     {
         $self = clone $this;
 
-        $self->retryOptions = $options ?? new RetryOptions();
+        $self->retryOptions = $options;
 
         return $self;
     }
