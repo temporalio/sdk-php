@@ -118,8 +118,8 @@ final class ChildWorkflowOptions extends Options
      *
      * Optional: default is no retry.
      */
-    #[Marshal(name: 'RetryPolicy', type: ObjectType::class, of: RetryOptions::class)]
-    public RetryOptions $retryOptions;
+    #[Marshal(name: 'RetryPolicy', type: NullableType::class, of: RetryOptions::class)]
+    public ?RetryOptions $retryOptions = null;
 
     /**
      * Optional cron schedule for workflow.
@@ -166,7 +166,6 @@ final class ChildWorkflowOptions extends Options
         $this->workflowExecutionTimeout = CarbonInterval::seconds(0);
         $this->workflowRunTimeout = CarbonInterval::seconds(0);
         $this->workflowTaskTimeout = CarbonInterval::seconds(0);
-        $this->retryOptions = new RetryOptions();
 
         parent::__construct();
     }
@@ -372,7 +371,7 @@ final class ChildWorkflowOptions extends Options
     {
         $self = clone $this;
 
-        $self->retryOptions = $options ?? new RetryOptions();
+        $self->retryOptions = $options;
 
         return $self;
     }

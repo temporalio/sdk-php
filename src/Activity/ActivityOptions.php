@@ -105,7 +105,7 @@ class ActivityOptions extends Options
      * provided by the server can be overridden by the dynamic config.
      */
     #[Marshal(name: 'RetryPolicy', type: NullableType::class, of: RetryOptions::class)]
-    public ?RetryOptions $retryOptions;
+    public ?RetryOptions $retryOptions = null;
 
     /**
      * ActivityOptions constructor.
