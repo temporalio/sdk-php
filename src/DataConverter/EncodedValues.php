@@ -74,6 +74,7 @@ class EncodedValues implements ValuesInterface
             throw new \LogicException('DataConverter is not set');
         }
 
+        /** @var \ArrayAccess $payloads */
         $payloads = $this->payloads->getPayloads();
 
         return $this->converter->fromPayload($payloads[$index], $type);
