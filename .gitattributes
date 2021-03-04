@@ -1,3 +1,12 @@
 * text=auto
 
+.buildkite/ export-ignore
+.github/ export-ignore
+docker/ export-ignore
+proto/ export-ignore
 tests/ export-ignore
+
+.php_cs.dist export-ignore
+Makefile export-ignore
+phpunit.xml export-ignore
+psalm.xml export-ignore
