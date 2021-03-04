@@ -22,6 +22,7 @@ class ObjectType extends Type implements DetectableTypeInterface
 
     /**
      * @param MarshallerInterface $marshaller
+     * @param string|null $class
      * @throws \ReflectionException
      */
     public function __construct(MarshallerInterface $marshaller, string $class = null)

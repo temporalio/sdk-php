@@ -57,7 +57,6 @@ class AttributeMapper implements MapperInterface
     /**
      * @param \ReflectionClass $class
      * @param TypeFactoryInterface $factory
-     * @param MarshallerInterface $marshaller
      * @param ReaderInterface $reader
      */
     public function __construct(\ReflectionClass $class, TypeFactoryInterface $factory, ReaderInterface $reader)
@@ -109,6 +108,7 @@ class AttributeMapper implements MapperInterface
     }
 
     /**
+     * @param Scope $scope
      * @return iterable<\ReflectionProperty, Marshal>
      */
     private function getPropertyMappings(Scope $scope): iterable

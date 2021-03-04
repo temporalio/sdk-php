@@ -343,8 +343,8 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     }
 
     /**
-     * @param callable             $handler
-     * @param ValuesInterface|null $values
+     * @param callable $handler
+     * @param ValuesInterface $values
      * @return \Generator
      */
     protected function call(callable $handler, ValuesInterface $values): \Generator

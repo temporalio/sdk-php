@@ -139,7 +139,7 @@ class EncodedValues implements ValuesInterface
 
     /**
      * @param Payloads $payloads
-     * @param DataConverterInterface|null $dataConverter
+     * @param DataConverterInterface $dataConverter
      * @return EncodedValues
      */
     public static function fromPayloads(Payloads $payloads, DataConverterInterface $dataConverter): EncodedValues

@@ -151,7 +151,7 @@ final class DateInterval
     }
 
     /**
-     * @param \DateInterval $i
+     * @param \DateInterval|null $i
      * @return Duration|null
      */
     public static function toDuration(\DateInterval $i = null): ?Duration
@@ -168,7 +168,7 @@ final class DateInterval
 
     /**
      * @param string $format
-     * @return string
+     * @return void
      */
     private static function validateFormat(string $format): void
     {
