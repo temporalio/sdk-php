@@ -89,7 +89,7 @@ class WorkflowContext implements WorkflowContextInterface
     /**
      * {@inheritDoc}
      */
-    public function now(): CarbonInterface
+    public function now(): \DateTimeInterface
     {
         return $this->services->env->now();
     }
