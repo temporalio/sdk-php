@@ -60,12 +60,9 @@ interface WorkflowClientInterface
      * @psalm-template T of object
      * @param class-string<T> $class
      * @param WorkflowOptions|null $options
-     * @return object<T>|T
+     * @return T
      */
-    public function newWorkflowStub(
-        string $class,
-        WorkflowOptions $options = null
-    ): object;
+    public function newWorkflowStub(string $class, WorkflowOptions $options = null): object;
 
     /**
      * Creates workflow untyped client stub that can be used to start a single
@@ -93,7 +90,7 @@ interface WorkflowClientInterface
      * @param string $class
      * @param string $workflowID
      * @param string|null $runID
-     * @return object<T>|T
+     * @return T
      */
     public function newRunningWorkflowStub(
         string $class,

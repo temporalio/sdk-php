@@ -36,6 +36,8 @@ class ProcessCollection extends ArrayRepository
     public function __construct(ClientInterface $client)
     {
         $this->client = $client;
+
+        parent::__construct();
     }
 
     /**

@@ -55,7 +55,6 @@ class ArrayType extends Type implements DetectableTypeInterface
      * @param array $value
      * @param array $current
      * @return array|mixed
-     * @throws \ReflectionException
      */
     public function parse($value, $current)
     {
