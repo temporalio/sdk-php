@@ -425,8 +425,9 @@ final class ChildWorkflowOptions extends Options
      * Specifies how this workflow reacts to the death of the parent workflow.
      *
      * @psalm-suppress ImpureMethodCall
+     * @psalm-type ParentClosePolicyType = ParentClosePolicy::POLICY_*
      *
-     * @param ParentClosePolicy::POLICY_* $policy
+     * @param ParentClosePolicyType $policy
      * @return $this
      */
     public function withParentClosePolicy(

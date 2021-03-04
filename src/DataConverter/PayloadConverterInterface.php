@@ -27,8 +27,7 @@ interface PayloadConverterInterface
      * Implements conversion of a single value to Payload. Must return null if value can't be encoded.
      *
      * @param mixed $value
-     * @return Payload
-     * |null
+     * @return Payload|null
      *
      * @throws DataConverterException
      */

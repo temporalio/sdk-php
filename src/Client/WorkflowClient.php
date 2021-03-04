@@ -13,7 +13,6 @@ namespace Temporal\Client;
 
 use Spiral\Attributes\AttributeReader;
 use Temporal\Client\GRPC\ServiceClientInterface;
-use Temporal\Common\MethodRetry;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\InvalidArgumentException;
@@ -194,11 +193,8 @@ class WorkflowClient implements WorkflowClientInterface
     /**
      * {@inheritDoc}
      */
-    public function newRunningWorkflowStub(
-        string $class,
-        string $workflowID,
-        ?string $runID = null
-    ): object {
+    public function newRunningWorkflowStub(string $class, string $workflowID, ?string $runID = null): object
+    {
         $workflow = $this->reader->fromClass($class);
 
         return new WorkflowProxy(

@@ -61,7 +61,7 @@ abstract class Instance implements InstanceInterface
     {
         $valueMapper = new AutowiredPayloads($func);
 
-        return fn(ValuesInterface $values) => $valueMapper->dispatchValues($this->context, $values);
+        return fn (ValuesInterface $values) => $valueMapper->dispatchValues($this->context, $values);
     }
 
     /**

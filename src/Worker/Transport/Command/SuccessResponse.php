@@ -20,7 +20,7 @@ class SuccessResponse extends Response implements SuccessResponseInterface
 
     /**
      * @param ValuesInterface|null $values
-     * @param int|null $id
+     * @param int $id
      */
     public function __construct(?ValuesInterface $values, int $id)
     {

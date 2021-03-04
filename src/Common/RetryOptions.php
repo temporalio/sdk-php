@@ -105,6 +105,9 @@ class RetryOptions extends Options
     #[Marshal(name: 'non_retryable_error_types')]
     public array $nonRetryableExceptions = self::DEFAULT_NON_RETRYABLE_EXCEPTIONS;
 
+    /** @var bool */
+    private bool $maximumAttempsSet = false;
+
     /**
      * @param MethodRetry|null $retry
      * @return $this

@@ -121,7 +121,9 @@ final class FailureConverter
                 $info = new ActivityFailureInfo();
                 $info
                     ->setActivityId($e->getActivityId())
-                    ->setActivityType(new ActivityType(['name' => $e->getActivityType()]))
+                    ->setActivityType(new ActivityType([
+                        'name' => $e->getActivityType()
+                    ]))
                     ->setIdentity($e->getIdentity())
                     ->setRetryState($e->getRetryState())
                     ->setScheduledEventId($e->getScheduledEventId())
@@ -137,15 +139,13 @@ final class FailureConverter
                     ->setStartedEventId($e->getStartedEventId())
                     ->setNamespace($e->getNamespace())
                     ->setRetryState($e->getRetryState())
-                    ->setWorkflowType(new WorkflowType(['name' => $e->getWorkflowType()]))
-                    ->setWorkflowExecution(
-                        new WorkflowExecution(
-                            [
-                                'workflow_id' => $e->getExecution()->getID(),
-                                'run_id' => $e->getExecution()->getRunID(),
-                            ]
-                        )
-                    );
+                    ->setWorkflowType(new WorkflowType([
+                        'name' => $e->getWorkflowType()
+                    ]))
+                    ->setWorkflowExecution(new WorkflowExecution([
+                        'workflow_id' => $e->getExecution()->getID(),
+                        'run_id' => $e->getExecution()->getRunID(),
+                    ]));
 
                 $failure->setChildWorkflowExecutionFailureInfo($info);
                 break;
@@ -177,11 +177,10 @@ final class FailureConverter
      * @param DataConverterInterface $converter
      * @return TemporalFailure
      */
-    private static function createFailureException(
-        Failure $failure,
-        DataConverterInterface $converter
-    ): TemporalFailure {
+    private static function createFailureException(Failure $failure, DataConverterInterface $converter): TemporalFailure
+    {
         $previous = null;
+
         if ($failure->hasCause()) {
             $previous = self::mapFailureToException($failure->getCause(), $converter);
         }
@@ -190,11 +189,10 @@ final class FailureConverter
             case $failure->hasApplicationFailureInfo():
                 $info = $failure->getApplicationFailureInfo();
 
-                if ($info->hasDetails()) {
-                    $details = EncodedValues::fromPayloads($info->getDetails(), $converter);
-                } else {
-                    $details = EncodedValues::empty();
-                }
+                $details = $info->hasDetails()
+                    ? EncodedValues::fromPayloads($info->getDetails(), $converter)
+                    : EncodedValues::empty()
+                ;
 
                 return new ApplicationFailure(
                     $failure->getMessage(),
@@ -206,26 +204,21 @@ final class FailureConverter
 
             case $failure->hasTimeoutFailureInfo():
                 $info = $failure->getTimeoutFailureInfo();
-                if ($info->hasLastHeartbeatDetails()) {
-                    $details = EncodedValues::fromPayloads($info->getLastHeartbeatDetails(), $converter);
-                } else {
-                    $details = EncodedValues::empty();
-                }
 
-                return new TimeoutFailure(
-                    $failure->getMessage(),
-                    $details,
-                    $info->getTimeoutType(),
-                    $previous
-                );
+                $details = $info->hasLastHeartbeatDetails()
+                    ? EncodedValues::fromPayloads($info->getLastHeartbeatDetails(), $converter)
+                    : EncodedValues::empty()
+                ;
+
+                return new TimeoutFailure($failure->getMessage(), $details, $info->getTimeoutType(), $previous);
 
             case $failure->hasCanceledFailureInfo():
                 $info = $failure->getCanceledFailureInfo();
-                if ($info->hasDetails()) {
-                    $details = EncodedValues::fromPayloads($info->getDetails(), $converter);
-                } else {
-                    $details = EncodedValues::empty();
-                }
+
+                $details = $info->hasDetails()
+                    ? EncodedValues::fromPayloads($info->getDetails(), $converter)
+                    : EncodedValues::empty()
+                ;
 
                 return new CanceledFailure($failure->getMessage(), $details, $previous);
 
@@ -238,11 +231,10 @@ final class FailureConverter
 
             case $failure->hasResetWorkflowFailureInfo():
                 $info = $failure->getResetWorkflowFailureInfo();
-                if ($info->hasLastHeartbeatDetails()) {
-                    $details = EncodedValues::fromPayloads($info->getLastHeartbeatDetails(), $converter);
-                } else {
-                    $details = EncodedValues::empty();
-                }
+                $details = $info->hasLastHeartbeatDetails()
+                    ? EncodedValues::fromPayloads($info->getLastHeartbeatDetails(), $converter)
+                    : EncodedValues::empty()
+                ;
 
                 return new ApplicationFailure(
                     $failure->getMessage(),
@@ -267,14 +259,15 @@ final class FailureConverter
 
             case $failure->hasChildWorkflowExecutionFailureInfo():
                 $info = $failure->getChildWorkflowExecutionFailureInfo();
+                $execution = $info->getWorkflowExecution();
 
                 return new ChildWorkflowFailure(
                     $info->getInitiatedEventId(),
                     $info->getStartedEventId(),
                     $info->getWorkflowType()->getName(),
                     new \Temporal\Workflow\WorkflowExecution(
-                        $info->getWorkflowExecution()->getWorkflowId(),
-                        $info->getWorkflowExecution()->getRunId(),
+                        $execution->getWorkflowId(),
+                        $execution->getRunId(),
                     ),
                     $info->getNamespace(),
                     $info->getRetryState(),

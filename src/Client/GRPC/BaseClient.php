@@ -143,7 +143,7 @@ abstract class BaseClient implements ServiceClientInterface
                 }
 
                 // wait till next call
-                usleep($waitRetry->totalMicroseconds);
+                \usleep((int)$waitRetry->totalMicroseconds);
 
                 $waitRetry = CarbonInterval::millisecond(
                     $waitRetry->totalMilliseconds + $retryOption->backoffCoefficient

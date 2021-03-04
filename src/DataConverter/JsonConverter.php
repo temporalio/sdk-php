@@ -93,42 +93,42 @@ class JsonConverter extends Converter
                 return $data;
 
             case Type::TYPE_STRING:
-                if (! \is_string($data)) {
+                if (!\is_string($data)) {
                     throw $this->errorInvalidType($type, $data);
                 }
 
                 return $data;
 
             case Type::TYPE_FLOAT:
-                if (! \is_float($data)) {
+                if (!\is_float($data)) {
                     throw $this->errorInvalidType($type, $data);
                 }
 
                 return $data;
 
             case Type::TYPE_INT:
-                if (! \is_int($data)) {
+                if (!\is_int($data)) {
                     throw $this->errorInvalidType($type, $data);
                 }
 
                 return $data;
 
             case Type::TYPE_BOOL:
-                if (! \is_bool($data)) {
+                if (!\is_bool($data)) {
                     throw $this->errorInvalidType($type, $data);
                 }
 
                 return $data;
 
             case Type::TYPE_ARRAY:
-                if (! \is_array($data)) {
+                if (!\is_array($data)) {
                     throw $this->errorInvalidType($type, $data);
                 }
 
                 return $data;
 
             case Type::TYPE_OBJECT:
-                if (! \is_object($data)) {
+                if (!\is_object($data)) {
                     throw $this->errorInvalidType($type, $data);
                 }
 
@@ -176,7 +176,7 @@ class JsonConverter extends Converter
     private function errorInvalidTypeName(Type $type): DataConverterException
     {
         $message = \vsprintf('Type named "%s" is not a valid type name', [
-            $type->getName()
+            $type->getName(),
         ]);
 
         return new DataConverterException($message);
@@ -191,7 +191,7 @@ class JsonConverter extends Converter
     {
         $message = \vsprintf('The passed value of type "%s" can not be converted to required type "%s"', [
             \get_debug_type($data),
-            $type->getName()
+            $type->getName(),
         ]);
 
         return new DataConverterException($message);
@@ -211,7 +211,7 @@ class JsonConverter extends Converter
     private static function createDefaultReader(): ReaderInterface
     {
         if (\interface_exists(Reader::class)) {
-           return new SelectiveReader([new AnnotationReader(), new AttributeReader()]);
+            return new SelectiveReader([new AnnotationReader(), new AttributeReader()]);
         }
 
         return new AttributeReader();

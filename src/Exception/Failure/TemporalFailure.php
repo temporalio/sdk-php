@@ -40,12 +40,10 @@ class TemporalFailure extends TemporalException implements \Stringable
      * @param string|null $originalMessage
      * @param \Throwable|null $previous
      */
-    public function __construct(
-        string $message,
-        string $originalMessage = null,
-        \Throwable $previous = null
-    ) {
+    public function __construct(string $message, string $originalMessage = null, \Throwable $previous = null)
+    {
         parent::__construct($message, 0, $previous);
+
         $this->originalMessage = $originalMessage ?? '';
     }
 
@@ -127,9 +125,9 @@ class TemporalFailure extends TemporalException implements \Stringable
     protected static function buildMessage(array $values): string
     {
         $mapped = [
-            'timeoutType' => fn($value) => TimeoutType::name($value),
-            'timeoutWorkflowType' => fn($value) => TimeoutType::name($value),
-            'retryState' => fn($value) => RetryState::name($value),
+            'timeoutType' => fn ($value) => TimeoutType::name($value),
+            'timeoutWorkflowType' => fn ($value) => TimeoutType::name($value),
+            'retryState' => fn ($value) => RetryState::name($value),
         ];
 
         $result = [];

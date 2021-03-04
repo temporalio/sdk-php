@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Marshaller\Type;
 
+use JetBrains\PhpStorm\Pure;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Support\DateTime;
 use Temporal\Internal\Support\Inheritance;
@@ -23,8 +24,10 @@ class DateTimeType extends Type implements DetectableTypeInterface
     private string $format;
 
     /**
+     * @param MarshallerInterface $marshaller
      * @param string $format
      */
+    #[Pure]
     public function __construct(MarshallerInterface $marshaller, string $format = \DateTimeInterface::RFC3339)
     {
         $this->format = $format;

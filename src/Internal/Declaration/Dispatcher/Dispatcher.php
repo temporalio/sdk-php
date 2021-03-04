@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration\Dispatcher;
 
+use JetBrains\PhpStorm\Pure;
 use ReflectionType;
 
 /**
@@ -63,6 +64,7 @@ class Dispatcher implements DispatcherInterface
     /**
      * @return bool
      */
+    #[Pure]
     public function isObjectContextAllowed(): bool
     {
         return $this->scopeMatches(static::SCOPE_OBJECT);
@@ -79,6 +81,7 @@ class Dispatcher implements DispatcherInterface
     /**
      * @return bool
      */
+    #[Pure]
     public function isStaticContextAllowed(): bool
     {
         return $this->scopeMatches(static::SCOPE_STATIC);
@@ -106,6 +109,7 @@ class Dispatcher implements DispatcherInterface
      * @param int $scope
      * @return bool
      */
+    #[Pure]
     private function scopeMatches(int $scope): bool
     {
         return ($this->scope & $scope) === $scope;
@@ -114,7 +118,7 @@ class Dispatcher implements DispatcherInterface
     /**
      * @psalm-return FunctionExecutor
      *
-     * @param \ReflectionFunctionAbstract $fun
+     * @param \ReflectionMethod $fun
      * @return \Closure
      */
     private function createExecutorFromMethod(\ReflectionMethod $fun): \Closure
@@ -131,7 +135,7 @@ class Dispatcher implements DispatcherInterface
     /**
      * @psalm-return FunctionExecutor
      *
-     * @param \ReflectionFunctionAbstract $fun
+     * @param \ReflectionFunction $fun
      * @return \Closure
      */
     private function createExecutorFromFunction(\ReflectionFunction $fun): \Closure
@@ -161,7 +165,7 @@ class Dispatcher implements DispatcherInterface
      * @psalm-return FunctionExecutor
      *
      * @param \ReflectionFunctionAbstract $fun
-     * @return \Closure
+     * @return void
      */
     private function boot(\ReflectionFunctionAbstract $fun): void
     {

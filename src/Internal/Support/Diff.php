@@ -107,7 +107,7 @@ class Diff
     public function getPresentProperties(object $context): array
     {
         $changed = $this->getChangedPropertyNames($context);
-        $filter = static fn($_, string $name): bool => !\in_array($name, $changed, true);
+        $filter = static fn ($_, string $name): bool => !\in_array($name, $changed, true);
 
         return \array_filter($this->properties, $filter, \ARRAY_FILTER_USE_BOTH);
     }

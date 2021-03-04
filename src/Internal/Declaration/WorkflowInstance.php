@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration;
 
-use JetBrains\PhpStorm\Pure;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\WorkflowInstance\SignalQueue;
@@ -86,6 +85,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     /**
      * @param string $name
      * @param callable $handler
+     * @throws \ReflectionException
      */
     public function addQueryHandler(string $name, callable $handler): void
     {
@@ -106,25 +106,17 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
      */
     public function getSignalHandler(string $name): \Closure
     {
-        return fn(ValuesInterface $values) => $this->signalQueue->push($name, $values);
+        return fn (ValuesInterface $values) => $this->signalQueue->push($name, $values);
     }
 
     /**
      * @param string $name
      * @param callable $handler
+     * @throws \ReflectionException
      */
     public function addSignalHandler(string $name, callable $handler): void
     {
         $this->signalHandlers[$name] = $this->createCallableHandler($handler);
         $this->signalQueue->attach($name, $this->signalHandlers[$name]);
-    }
-
-    /**
-     * @return string[]
-     */
-    #[Pure]
-    public function getSignalHandlerNames(): array
-    {
-        return \array_keys($this->signalHandlers);
     }
 }
