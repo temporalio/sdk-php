@@ -13,7 +13,6 @@ namespace Temporal\Client;
 
 use Spiral\Attributes\AttributeReader;
 use Temporal\Client\GRPC\ServiceClientInterface;
-use Temporal\Common\MethodRetry;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\InvalidArgumentException;

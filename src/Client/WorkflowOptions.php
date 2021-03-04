@@ -15,7 +15,6 @@ use Carbon\CarbonInterval;
 use JetBrains\PhpStorm\ExpectedValues;
 use JetBrains\PhpStorm\Pure;
 use Temporal\Api\Common\V1\Memo;
-use Temporal\Api\Common\V1\RetryPolicy;
 use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\Common\CronSchedule;
 use Temporal\Common\IdReusePolicy;

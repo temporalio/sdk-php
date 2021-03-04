@@ -86,9 +86,6 @@ class RetryOptions extends Options
     #[Marshal(name: 'maximum_interval', type: NullableType::class, of: DateIntervalType::class)]
     public ?\DateInterval $maximumInterval = self::DEFAULT_MAXIMUM_INTERVAL;
 
-    /** @var bool */
-    private bool $maximumAttempsSet = false;
-
     /**
      * Maximum number of attempts. When exceeded the retries stop even if not
      * expired yet. If not set or set to 0, it means unlimited, and rely on
@@ -107,6 +104,9 @@ class RetryOptions extends Options
      */
     #[Marshal(name: 'non_retryable_error_types')]
     public array $nonRetryableExceptions = self::DEFAULT_NON_RETRYABLE_EXCEPTIONS;
+
+    /** @var bool */
+    private bool $maximumAttempsSet = false;
 
     /**
      * @param MethodRetry|null $retry

@@ -14,7 +14,6 @@ namespace Temporal\Internal;
 use JetBrains\PhpStorm\Immutable;
 use Spiral\Attributes\ReaderInterface;
 use Temporal\DataConverter\DataConverterInterface;
-use Temporal\Exception\ExceptionInterceptor;
 use Temporal\Exception\ExceptionInterceptorInterface;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Declaration\Prototype\ActivityCollection;
@@ -28,7 +27,6 @@ use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Workflow\ProcessCollection;
 use Temporal\WorkerFactory;
-use Temporal\Worker\Environment\Environment;
 use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Worker\LoopInterface;
 
@@ -157,8 +155,7 @@ final class ServiceContainer
     public static function fromWorkerFactory(
         WorkerFactory $worker,
         ExceptionInterceptorInterface $exceptionInterceptor
-    ): self
-    {
+    ): self {
         return new self(
             $worker,
             $worker->getEnvironment(),

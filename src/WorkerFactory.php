@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal;
 
-use Doctrine\Common\Annotations\AnnotationReader as DoctrineReader;
 use Doctrine\Common\Annotations\Reader;
 use JetBrains\PhpStorm\Pure;
 use React\Promise\PromiseInterface;
@@ -187,7 +186,6 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         WorkerOptions $options = null,
         ExceptionInterceptorInterface $exceptionInterceptor = null
     ): WorkerInterface {
-
         $worker = new Worker(
             $taskQueue,
             $options ?? WorkerOptions::new(),
@@ -301,10 +299,7 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     private function createReader(): ReaderInterface
     {
         if (\interface_exists(Reader::class)) {
-            return new SelectiveReader([
-                                           new AnnotationReader(),
-                                           new AttributeReader(),
-                                       ]);
+            return new SelectiveReader([new AnnotationReader(), new AttributeReader()]);
         }
 
         return new AttributeReader();

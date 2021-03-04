@@ -432,7 +432,7 @@ class WorkflowContext implements WorkflowContextInterface
         $conditions[] = $timer;
 
         return $this->await(...$conditions)
-            ->then(static fn(): bool => !$timer->isComplete());
+            ->then(static fn (): bool => !$timer->isComplete());
     }
 
     /**

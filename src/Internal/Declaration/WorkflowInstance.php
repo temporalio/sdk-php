@@ -106,7 +106,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
      */
     public function getSignalHandler(string $name): \Closure
     {
-        return fn(ValuesInterface $values) => $this->signalQueue->push($name, $values);
+        return fn (ValuesInterface $values) => $this->signalQueue->push($name, $values);
     }
 
     /**

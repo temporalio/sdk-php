@@ -40,7 +40,7 @@ final class SignalQueue
     public function push(string $signal, ValuesInterface $values): void
     {
         if (isset($this->consumers[$signal])) {
-            ($this->onSignal)(fn() => ($this->consumers[$signal])($values));
+            ($this->onSignal)(fn () => ($this->consumers[$signal])($values));
             return;
         }
 
@@ -80,7 +80,7 @@ final class SignalQueue
         while ($this->queue[$signal] !== []) {
             $args = \array_shift($this->queue[$signal]);
 
-            ($this->onSignal)(fn() => ($this->consumers[$signal])($args));
+            ($this->onSignal)(fn () => ($this->consumers[$signal])($args));
         }
     }
 }

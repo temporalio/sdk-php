@@ -101,7 +101,7 @@ class TypeFactory implements TypeFactoryInterface
                 continue;
             }
 
-            yield static fn(\ReflectionNamedType $type): ?string => $matcher::match($type) ? $matcher : null;
+            yield static fn (\ReflectionNamedType $type): ?string => $matcher::match($type) ? $matcher : null;
         }
     }
 
