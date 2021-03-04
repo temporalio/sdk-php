@@ -15,7 +15,6 @@ use Carbon\CarbonInterval;
 use JetBrains\PhpStorm\ExpectedValues;
 use JetBrains\PhpStorm\Pure;
 use Temporal\Api\Common\V1\Memo;
-use Temporal\Api\Common\V1\RetryPolicy;
 use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\Common\CronSchedule;
 use Temporal\Common\IdReusePolicy;
@@ -29,7 +28,6 @@ use Temporal\Internal\Marshaller\Type\ArrayType;
 use Temporal\Internal\Marshaller\Type\CronType;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\NullableType;
-use Temporal\Internal\Marshaller\Type\ObjectType;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\Options;
 use Temporal\Worker\WorkerFactoryInterface;
@@ -101,8 +99,8 @@ final class WorkflowOptions extends Options
      * case of workflow failure server will start new workflow execution if
      * needed based on the retry policy.
      */
-    #[Marshal(name: 'RetryPolicy', type: ObjectType::class, of: RetryOptions::class)]
-    public RetryOptions $retryOptions;
+    #[Marshal(name: 'RetryPolicy', type: NullableType::class, of: RetryOptions::class)]
+    public ?RetryOptions $retryOptions = null;
 
     /**
      * Optional cron schedule for workflow.
@@ -140,7 +138,6 @@ final class WorkflowOptions extends Options
         $this->workflowExecutionTimeout = CarbonInterval::seconds(0);
         $this->workflowRunTimeout = CarbonInterval::seconds(0);
         $this->workflowTaskTimeout = CarbonInterval::seconds(0);
-        $this->retryOptions = new RetryOptions();
 
         parent::__construct();
     }
@@ -311,7 +308,7 @@ final class WorkflowOptions extends Options
     {
         $self = clone $this;
 
-        $self->retryOptions = $options ?? new RetryOptions();
+        $self->retryOptions = $options;
 
         return $self;
     }
