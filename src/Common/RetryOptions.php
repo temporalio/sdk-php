@@ -86,9 +86,6 @@ class RetryOptions extends Options
     #[Marshal(name: 'maximum_interval', type: NullableType::class, of: DateIntervalType::class)]
     public ?\DateInterval $maximumInterval = self::DEFAULT_MAXIMUM_INTERVAL;
 
-    /** @var bool */
-    private bool $maximumAttempsSet = false;
-
     /**
      * Maximum number of attempts. When exceeded the retries stop even if not
      * expired yet. If not set or set to 0, it means unlimited, and rely on
@@ -132,9 +129,8 @@ class RetryOptions extends Options
      * @return $this
      */
     #[Pure]
-    public function withInitialInterval(
-        $interval
-    ): self {
+    public function withInitialInterval($interval): self
+    {
         assert(DateInterval::assert($interval) || $interval === null);
 
         $self = clone $this;
@@ -149,9 +145,8 @@ class RetryOptions extends Options
      * @return $this
      */
     #[Pure]
-    public function withBackoffCoefficient(
-        float $coefficient
-    ): self {
+    public function withBackoffCoefficient(float $coefficient): self
+    {
         assert($coefficient >= 1.0);
 
         $self = clone $this;
@@ -166,9 +161,8 @@ class RetryOptions extends Options
      * @return $this
      */
     #[Pure]
-    public function withMaximumInterval(
-        $interval
-    ): self {
+    public function withMaximumInterval($interval): self
+    {
         assert(DateInterval::assert($interval) || $interval === null);
 
         $self = clone $this;
@@ -183,14 +177,12 @@ class RetryOptions extends Options
      * @return $this
      */
     #[Pure]
-    public function withMaximumAttempts(
-        int $attempts
-    ): self {
+    public function withMaximumAttempts(int $attempts): self
+    {
         assert($attempts >= 0);
 
         $self = clone $this;
         $self->maximumAttempts = $attempts;
-        $self->maximumAttempsSet = true;
 
         return $self;
     }
@@ -202,9 +194,8 @@ class RetryOptions extends Options
      * @return $this
      */
     #[Pure]
-    public function withNonRetryableExceptions(
-        array $exceptions
-    ): self {
+    public function withNonRetryableExceptions(array $exceptions): self
+    {
         assert(Assert::valuesInstanceOf($exceptions, \Throwable::class));
 
         $self = clone $this;
@@ -220,18 +211,11 @@ class RetryOptions extends Options
     public function toWorkflowRetryPolicy(): RetryPolicy
     {
         $policy = new RetryPolicy();
+
         $policy->setInitialInterval(DateInterval::toDuration($this->initialInterval));
         $policy->setMaximumInterval(DateInterval::toDuration($this->maximumInterval));
-
         $policy->setBackoffCoefficient($this->backoffCoefficient);
-
-        if ($this->maximumAttempsSet) {
-            $policy->setMaximumAttempts($this->maximumAttempts);
-        } else {
-            // the default policy for workflow runs is single run without retries
-            $policy->setMaximumAttempts(1);
-        }
-
+        $policy->setMaximumAttempts($this->maximumAttempts);
         $policy->setNonRetryableErrorTypes($this->nonRetryableExceptions);
 
         return $policy;
