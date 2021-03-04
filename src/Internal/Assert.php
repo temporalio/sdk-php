@@ -37,28 +37,6 @@ final class Assert
 
     /**
      * @param array<object> $values
-     * @param string $type
-     * @return bool
-     */
-    public static function keyTypeOf(array $values, string $type): bool
-    {
-        $fn = 'is_' . $type;
-        return self::all($values, fn ($_, $k) => $fn($k));
-    }
-
-    /**
-     * @param array<object> $values
-     * @param string $type
-     * @return bool
-     */
-    public static function valueTypeOf(array $values, string $type): bool
-    {
-        $fn = 'is_' . $type;
-        return self::all($values, fn ($v) => $fn($v));
-    }
-
-    /**
-     * @param array<object> $values
      * @param class-string $of
      * @return bool
      */
