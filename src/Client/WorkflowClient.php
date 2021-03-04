@@ -193,11 +193,8 @@ class WorkflowClient implements WorkflowClientInterface
     /**
      * {@inheritDoc}
      */
-    public function newRunningWorkflowStub(
-        string $class,
-        string $workflowID,
-        ?string $runID = null
-    ): object {
+    public function newRunningWorkflowStub(string $class, string $workflowID, ?string $runID = null): object
+    {
         $workflow = $this->reader->fromClass($class);
 
         return new WorkflowProxy(

@@ -25,21 +25,13 @@ interface ActivityCompletionClientInterface
      * @param string $activityId
      * @param mixed $result
      */
-    public function complete(
-        string $workflowId,
-        ?string $runId,
-        string $activityId,
-        $result = null
-    ): void;
+    public function complete(string $workflowId, ?string $runId, string $activityId, $result = null): void;
 
     /**
      * @param string $taskToken
      * @param mixed $result
      */
-    public function completeByToken(
-        string $taskToken,
-        $result = null
-    ): void;
+    public function completeByToken(string $taskToken, $result = null): void;
 
     /**
      * @param string $workflowId
@@ -58,10 +50,7 @@ interface ActivityCompletionClientInterface
      * @param string $taskToken
      * @param \Throwable $error
      */
-    public function completeExceptionallyByToken(
-        string $taskToken,
-        \Throwable $error
-    ): void;
+    public function completeExceptionallyByToken(string $taskToken, \Throwable $error): void;
 
     /**
      * @param string $workflowId
@@ -80,10 +69,7 @@ interface ActivityCompletionClientInterface
      * @param string $taskToken
      * @param $details
      */
-    public function reportCancellationByToken(
-        string $taskToken,
-        $details = null
-    ): void;
+    public function reportCancellationByToken(string $taskToken, $details = null): void;
 
     /**
      * @param string $workflowId
@@ -106,8 +92,5 @@ interface ActivityCompletionClientInterface
      *
      * @throw ActivityCanceledException
      */
-    public function recordHeartbeatByToken(
-        string $taskToken,
-        $details = null
-    );
+    public function recordHeartbeatByToken(string $taskToken, $details = null);
 }

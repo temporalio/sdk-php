@@ -132,9 +132,8 @@ class RetryOptions extends Options
      * @return $this
      */
     #[Pure]
-    public function withInitialInterval(
-        $interval
-    ): self {
+    public function withInitialInterval($interval): self
+    {
         assert(DateInterval::assert($interval) || $interval === null);
 
         $self = clone $this;
@@ -149,9 +148,8 @@ class RetryOptions extends Options
      * @return $this
      */
     #[Pure]
-    public function withBackoffCoefficient(
-        float $coefficient
-    ): self {
+    public function withBackoffCoefficient(float $coefficient): self
+    {
         assert($coefficient >= 1.0);
 
         $self = clone $this;
@@ -166,9 +164,8 @@ class RetryOptions extends Options
      * @return $this
      */
     #[Pure]
-    public function withMaximumInterval(
-        $interval
-    ): self {
+    public function withMaximumInterval($interval): self
+    {
         assert(DateInterval::assert($interval) || $interval === null);
 
         $self = clone $this;
@@ -202,9 +199,8 @@ class RetryOptions extends Options
      * @return $this
      */
     #[Pure]
-    public function withNonRetryableExceptions(
-        array $exceptions
-    ): self {
+    public function withNonRetryableExceptions(array $exceptions): self
+    {
         assert(Assert::valuesInstanceOf($exceptions, \Throwable::class));
 
         $self = clone $this;
