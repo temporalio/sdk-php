@@ -199,7 +199,7 @@ class RetryOptions extends Options
     #[Pure]
     public function withNonRetryableExceptions(array $exceptions): self
     {
-        assert(Assert::valuesSubclassOf($exceptions, \Throwable::class));
+        assert(Assert::valuesSubclassOfOrSameClass($exceptions, \Throwable::class));
 
         $self = clone $this;
         $self->nonRetryableExceptions = $exceptions;

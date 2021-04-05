@@ -50,9 +50,9 @@ final class Assert
      * @param class-string $of
      * @return bool
      */
-    public static function valuesSubclassOf(array $values, string $of): bool
+    public static function valuesSubclassOfOrSameClass(array $values, string $of): bool
     {
-        return self::all($values, fn ($v) => is_subclass_of($v, $of));
+        return self::all($values, fn ($v) => is_a($v, $of, true));
     }
 
     /**
