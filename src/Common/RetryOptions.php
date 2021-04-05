@@ -193,13 +193,13 @@ class RetryOptions extends Options
     /**
      * @psalm-suppress ImpureMethodCall
      *
-     * @param mixed $exceptions
+     * @param ExceptionsList $exceptions
      * @return $this
      */
     #[Pure]
     public function withNonRetryableExceptions(array $exceptions): self
     {
-        assert(Assert::valuesInstanceOf($exceptions, \Throwable::class));
+        assert(Assert::valuesSubclassOfOrSameClass($exceptions, \Throwable::class));
 
         $self = clone $this;
         $self->nonRetryableExceptions = $exceptions;

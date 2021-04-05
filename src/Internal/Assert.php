@@ -46,7 +46,17 @@ final class Assert
     }
 
     /**
-     * @param array<object> $values
+     * @param array<class-string> $values
+     * @param class-string $of
+     * @return bool
+     */
+    public static function valuesSubclassOfOrSameClass(array $values, string $of): bool
+    {
+        return self::all($values, fn ($v) => is_a($v, $of, true));
+    }
+
+    /**
+     * @param array<mixed> $values
      * @param callable $filter
      * @return bool
      */
