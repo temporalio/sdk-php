@@ -11,7 +11,12 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
+use Doctrine\Common\Annotations\Reader;
+use Spiral\Attributes\AnnotationReader;
 use Spiral\Attributes\AttributeReader;
+use Spiral\Attributes\Composite\Composite;
+use Spiral\Attributes\Composite\SelectiveReader;
+use Spiral\Attributes\ReaderInterface;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
@@ -54,7 +59,19 @@ class WorkflowClient implements WorkflowClientInterface
         $this->clientOptions = $options ?? new ClientOptions();
         $this->converter = $converter ?? DataConverter::createDefault();
         $this->starter = new WorkflowStarter($serviceClient, $this->converter, $this->clientOptions);
-        $this->reader = new WorkflowReader(new AttributeReader());
+        $this->reader = new WorkflowReader($this->createReader());
+    }
+
+    /**
+     * @return ReaderInterface
+     */
+    private function createReader(): ReaderInterface
+    {
+        if (\interface_exists(Reader::class)) {
+            return new SelectiveReader([new AnnotationReader(), new AttributeReader()]);
+        }
+
+        return new AttributeReader();
     }
 
     /**
