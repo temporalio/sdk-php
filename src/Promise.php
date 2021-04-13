@@ -31,7 +31,7 @@ final class Promise
      * promise will be an array containing the resolution values of each of the
      * items in `$promises`.
      *
-     * @param PromiseInterface[]|mixed[] $promises
+     * @param iterable<int, PromiseInterface|mixed> $promises
      * @return PromiseInterface
      */
     public static function all(iterable $promises): PromiseInterface
@@ -50,7 +50,7 @@ final class Promise
      * The returned promise will also reject with a {@see LengthException} if
      * `$promises` contains 0 items.
      *
-     * @param PromiseInterface[]|mixed[] $promises
+     * @param iterable<int, PromiseInterface|mixed> $promises
      * @return PromiseInterface
      */
     public static function any(iterable $promises): PromiseInterface
@@ -72,7 +72,7 @@ final class Promise
      * The returned promise will also reject with a {@see LengthException} if
      * `$promises` contains less items than `$count`.
      *
-     * @param PromiseInterface[]|mixed[] $promises
+     * @param iterable<int, PromiseInterface|mixed> $promises
      * @param int $count
      * @return PromiseInterface
      */
@@ -90,7 +90,7 @@ final class Promise
      * resolved value of a promise or value in `$promises`.
      *
      * @psalm-param PromiseMapCallback $map
-     * @param PromiseInterface[]|mixed[] $promises
+     * @param iterable<int, PromiseInterface|mixed> $promises
      * @param callable $map
      * @return PromiseInterface
      */
@@ -106,7 +106,7 @@ final class Promise
      * starting value.
      *
      * @psalm-param PromiseReduceCallback $reduce
-     * @param PromiseInterface[]|mixed[] $promises
+     * @param iterable<int, PromiseInterface|mixed> $promises
      * @param callable $reduce
      * @param mixed $initial
      * @return PromiseInterface
