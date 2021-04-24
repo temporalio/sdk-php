@@ -169,7 +169,7 @@ class RetryOptions extends Options
         assert(DateInterval::assert($interval) || $interval === null);
 
         $self = clone $this;
-        $self->initialInterval = DateInterval::parseOrNull($interval, DateInterval::FORMAT_SECONDS);
+        $self->maximumInterval = DateInterval::parseOrNull($interval, DateInterval::FORMAT_SECONDS);
         return $self;
     }
 
