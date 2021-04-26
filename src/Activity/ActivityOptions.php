@@ -90,7 +90,7 @@ class ActivityOptions extends Options
 
     /**
      * RetryPolicy specifies how to retry an Activity if an error occurs. More
-     * details are available at {@link https://docs.temporal.io}. RetryPolicy
+     * details are available at {@link https://docs.temporal.io/docs/concepts/activities}. RetryPolicy
      * is optional. If one is not specified a default RetryPolicy is provided
      * by the server.
      *
