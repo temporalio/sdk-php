@@ -14,7 +14,7 @@ PHP language.
 
 ## Installation
 
-SDK is available as composer package and can be installed using the 
+SDK is available as composer package and can be installed using the
 following command in a root of your project:
 
 ```bash
@@ -28,7 +28,7 @@ Make sure to install [RoadRunner](https://github.com/spiral/roadrunner) to enabl
 See [examples](https://github.com/temporalio/samples-php) to get started.
 
 ## Documentation
-The documentation on how to use the Temporal PHP SDK and client is [here](https://docs.temporal.io/docs/php-sdk-overview).
+The documentation on how to use the Temporal PHP SDK and client is [here](https://docs.temporal.io/docs/php/introduction).
 
 ## License
 MIT License, please see [LICENSE](LICENSE.md) for details.

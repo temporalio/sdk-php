@@ -16,7 +16,7 @@
     ],
     "support": {
         "forum": "https://community.temporal.io",
-        "docs": "https://docs.temporal.io/docs",
+        "docs": "https://docs.temporal.io",
         "issues": "https://github.com/temporalio/sdk-php/issues",
         "source": "https://github.com/temporalio/sdk-php"
     },
