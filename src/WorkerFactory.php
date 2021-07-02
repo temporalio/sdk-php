@@ -154,11 +154,16 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     /**
      * @param DataConverterInterface $dataConverter
      * @param RPCConnectionInterface $rpc
+     * @param ReaderInterface|null $reader
      */
-    public function __construct(DataConverterInterface $dataConverter, RPCConnectionInterface $rpc)
-    {
+    public function __construct(
+        DataConverterInterface $dataConverter,
+        RPCConnectionInterface $rpc,
+        ReaderInterface $reader = null
+    ) {
         $this->converter = $dataConverter;
         $this->rpc = $rpc;
+        $this->reader = $reader ?? $this->createReader();
 
         $this->boot();
     }
@@ -166,15 +171,18 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     /**
      * @param DataConverterInterface|null $converter
      * @param RPCConnectionInterface|null $rpc
+     * @param ReaderInterface|null $reader
      * @return WorkerFactoryInterface
      */
     public static function create(
         DataConverterInterface $converter = null,
-        RPCConnectionInterface $rpc = null
+        RPCConnectionInterface $rpc = null,
+        ReaderInterface $reader = null
     ): WorkerFactoryInterface {
         return new self(
             $converter ?? DataConverter::createDefault(),
-            $rpc ?? Goridge::create()
+            $rpc ?? Goridge::create(),
+            $reader
         );
     }
 
@@ -283,7 +291,6 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
      */
     private function boot(): void
     {
-        $this->reader = $this->createReader();
         $this->marshaller = $this->createMarshaller($this->reader);
         $this->queues = $this->createTaskQueue();
         $this->router = $this->createRouter();
