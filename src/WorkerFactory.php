@@ -67,7 +67,7 @@ use Temporal\Worker\WorkerOptions;
  *
  * </code>
  */
-final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
+class WorkerFactory implements WorkerFactoryInterface, LoopInterface
 {
     use EventEmitterTrait;
 
@@ -172,7 +172,7 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         DataConverterInterface $converter = null,
         RPCConnectionInterface $rpc = null
     ): WorkerFactoryInterface {
-        return new self(
+        return new static(
             $converter ?? DataConverter::createDefault(),
             $rpc ?? Goridge::create()
         );
@@ -296,7 +296,7 @@ final class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     /**
      * @return ReaderInterface
      */
-    private function createReader(): ReaderInterface
+    protected function createReader(): ReaderInterface
     {
         if (\interface_exists(Reader::class)) {
             return new SelectiveReader([new AnnotationReader(), new AttributeReader()]);
