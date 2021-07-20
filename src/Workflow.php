@@ -37,7 +37,7 @@ use Temporal\Internal\Support\DateInterval;
  * This is main class you can use in your workflow code.
  *
  * @psalm-import-type TypeEnum from Type
- * @psalm-import-type DateIntervalFormat from DateInterval
+ * @psalm-import-type DateIntervalValue from DateInterval
  * @see DateInterval
  *
  * @template-extends Facade<ScopedContextInterface>
@@ -312,7 +312,7 @@ final class Workflow extends Facade
      *  }
      * </code>
      *
-     * @param DateIntervalFormat|positive-int|float $interval
+     * @param DateIntervalValue $interval
      * @param callable|PromiseInterface ...$conditions
      * @return PromiseInterface
      */
@@ -484,7 +484,7 @@ final class Workflow extends Facade
      *  }
      * </code>
      *
-     * @param DateIntervalFormat|positive-int|float $interval
+     * @param DateIntervalValue $interval
      * @return PromiseInterface
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
