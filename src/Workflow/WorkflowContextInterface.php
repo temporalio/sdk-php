@@ -21,7 +21,7 @@ use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Workflow;
 
 /**
- * @psalm-import-type DateIntervalFormat from DateInterval
+ * @psalm-import-type DateIntervalValue from DateInterval
  */
 interface WorkflowContextInterface extends EnvironmentInterface
 {
@@ -119,7 +119,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
     /**
      * @see Workflow::timer()
      *
-     * @param DateIntervalFormat|int $interval
+     * @param DateIntervalValue $interval
      * @return PromiseInterface
      * @see DateInterval
      */
@@ -261,7 +261,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * Returns {@see true} if any of conditions were fired and {@see false} if
      * timeout was reached.
      *
-     * @param int|DateInterval $interval
+     * @param DateIntervalValue $interval
      * @param callable|PromiseInterface ...$conditions
      * @return PromiseInterface
      */
