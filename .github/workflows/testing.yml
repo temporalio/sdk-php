@@ -38,7 +38,7 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-
 
       - name: Install Composer Dependencies
-        run: composer install --prefer-dist --no-interaction --no-suggest --ignore-platform-reqs
+        run: composer install --prefer-dist --no-interaction --no-suggest
 
       - name: Verify
         run: composer require --dev roave/security-advisories:dev-latest
