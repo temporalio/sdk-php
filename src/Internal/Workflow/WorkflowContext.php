@@ -293,7 +293,7 @@ class WorkflowContext implements WorkflowContextInterface
         string $type,
         ChildWorkflowOptions $options = null
     ): ChildWorkflowStubInterface {
-        $options ??= new ChildWorkflowOptions();
+        $options ??= (new ChildWorkflowOptions())->withNamespace($this->getInfo()->namespace);
 
         return new ChildWorkflowStub($this->services->marshaller, $type, $options);
     }
@@ -304,11 +304,12 @@ class WorkflowContext implements WorkflowContextInterface
     public function newChildWorkflowStub(string $class, ChildWorkflowOptions $options = null): object
     {
         $workflow = $this->services->workflowsReader->fromClass($class);
+        $options = $options ?? (new ChildWorkflowOptions())->withNamespace($this->getInfo()->namespace);
 
         return new ChildWorkflowProxy(
             $class,
             $workflow,
-            $options ?? new ChildWorkflowOptions(),
+            $options,
             $this
         );
     }
