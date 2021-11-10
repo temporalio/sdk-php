@@ -65,7 +65,7 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           tools: composer:v2
-          extensions: dom
+          extensions: dom, sockets
 
       - name: Check Out Code
         uses: actions/checkout@v2
