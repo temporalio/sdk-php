@@ -93,6 +93,11 @@ class WorkflowReader extends Reader
         }
     }
 
+    public function fromObject(object $object): WorkflowPrototype
+    {
+        return $this->fromClass(get_class($object));
+    }
+
     /**
      * @param ClassNode $graph
      * @return \Traversable<ActivityPrototype>
