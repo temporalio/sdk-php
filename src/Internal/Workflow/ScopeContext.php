@@ -99,13 +99,14 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
     }
 
     /**
+     * @param string $conditionGroupId
      * @param callable $condition
      * @return PromiseInterface
      */
-    protected function addCondition(callable $condition): PromiseInterface
+    protected function addCondition(string $conditionGroupId, callable $condition): PromiseInterface
     {
         $deferred = new Deferred();
-        $this->parent->awaits[] = [$condition, $deferred];
+        $this->parent->awaits[$conditionGroupId][] = [$condition, $deferred];
         $this->scope->onAwait($deferred);
 
         return new CompletableResult(
@@ -114,5 +115,18 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
             $deferred->promise(),
             $this->scope->getLayer()
         );
+    }
+
+    /**
+     * Calculate unblocked conditions.
+     */
+    public function resolveConditions(): void
+    {
+        $this->parent->resolveConditions();
+    }
+
+    public function resolveConditionGroup(string $conditionGroupId): void
+    {
+        $this->parent->resolveConditionGroup($conditionGroupId);
     }
 }
