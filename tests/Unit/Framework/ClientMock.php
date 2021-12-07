@@ -56,10 +56,6 @@ final class ClientMock implements ClientInterface
         }
     }
 
-    /**
-     * @param RequestInterface $request
-     * @return PromiseInterface
-     */
     public function request(RequestInterface $request): PromiseInterface
     {
         $this->queue->push($request);
@@ -77,18 +73,12 @@ final class ClientMock implements ClientInterface
 
     /**
      * Check if command still in sending queue.
-     *
-     * @param CommandInterface $command
-     * @return bool
      */
     public function isQueued(CommandInterface $command): bool
     {
         return $this->queue->has($command->getID());
     }
 
-    /**
-     * @param CommandInterface $command
-     */
     public function cancel(CommandInterface $command): void
     {
         // remove from queue
@@ -98,9 +88,6 @@ final class ClientMock implements ClientInterface
 
     /**
      * Reject pending promise.
-     *
-     * @param CommandInterface $command
-     * @param \Throwable $reason
      */
     public function reject(CommandInterface $command, \Throwable $reason): void
     {
@@ -108,10 +95,6 @@ final class ClientMock implements ClientInterface
         $request->reject($reason);
     }
 
-    /**
-     * @param int $id
-     * @return Deferred
-     */
     private function fetch(int $id): Deferred
     {
         $request = $this->get($id);
@@ -123,10 +106,6 @@ final class ClientMock implements ClientInterface
         }
     }
 
-    /**
-     * @param int $id
-     * @return Deferred
-     */
     private function get(int $id): Deferred
     {
         if (!isset($this->requests[$id])) {
