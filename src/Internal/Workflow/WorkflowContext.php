@@ -11,10 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Workflow;
 
-use Carbon\CarbonInterface;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
+use Temporal\Common\Uuid;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
@@ -41,6 +41,7 @@ use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowInfo;
 
 use function React\Promise\reject;
+use function React\Promise\resolve;
 
 class WorkflowContext implements WorkflowContextInterface
 {
@@ -404,16 +405,25 @@ class WorkflowContext implements WorkflowContextInterface
     public function await(...$conditions): PromiseInterface
     {
         $result = [];
+        $conditionGroupId = Uuid::v4();
 
         foreach ($conditions as $condition) {
             assert(\is_callable($condition) || $condition instanceof PromiseInterface);
+
+            if ($condition instanceof \Closure) {
+                $callableResult = $condition($conditionGroupId);
+                if ($callableResult === true) {
+                    $this->resolveConditionGroup($conditionGroupId);
+                    return resolve(true);
+                }
+            }
 
             if ($condition instanceof PromiseInterface) {
                 $result[] = $condition;
                 continue;
             }
 
-            $result[] = $this->addCondition($condition);
+            $result[] = $this->addCondition($conditionGroupId, $condition);
         }
 
         if (\count($result) === 1) {
@@ -441,23 +451,27 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function resolveConditions(): void
     {
-        foreach ($this->awaits as $i => $cond) {
-            [$condition, $deferred] = $cond;
-            if ($condition()) {
-                unset($this->awaits[$i]);
-                $deferred->resolve();
+        foreach ($this->awaits as $awaitsGroupId => $awaitsGroup) {
+            foreach ($awaitsGroup as $i => $cond) {
+                [$condition, $deferred] = $cond;
+                if ($condition()) {
+                    $deferred->resolve();
+                    unset($this->awaits[$awaitsGroupId][$i]);
+                    $this->resolveConditionGroup($awaitsGroupId);
+                }
             }
         }
     }
 
     /**
+     * @param string $conditionGroupId
      * @param callable $condition
      * @return PromiseInterface
      */
-    protected function addCondition(callable $condition): PromiseInterface
+    protected function addCondition(string $conditionGroupId, callable $condition): PromiseInterface
     {
         $deferred = new Deferred();
-        $this->awaits[] = [$condition, $deferred];
+        $this->awaits[$conditionGroupId][] = [$condition, $deferred];
 
         return $deferred->promise();
     }
@@ -470,5 +484,19 @@ class WorkflowContext implements WorkflowContextInterface
     protected function recordTrace(): void
     {
         $this->trace = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
+    }
+
+    public function resolveConditionGroup(string $conditionGroupId): void
+    {
+        // Group is empty or already resolved
+        if (!isset($this->awaits[$conditionGroupId])) {
+            return;
+        }
+
+        foreach ($this->awaits[$conditionGroupId] as $i => $cond) {
+            [$_, $deferred] = $cond;
+            unset($this->awaits[$conditionGroupId][$i]);
+            $deferred->resolve();
+        }
     }
 }
