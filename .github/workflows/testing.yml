@@ -97,10 +97,11 @@ jobs:
 
 
   feature:
+    timeout-minutes: 20
     name: Feature Testing (PHP ${{ matrix.php }}, OS ${{ matrix.os }}, Stability ${{ matrix.stability }})
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         php: [7.4, 8.0]
         os: [ubuntu-latest, windows-latest]
