@@ -25,8 +25,12 @@ final class WorkflowResult implements ExpectationInterface
 
     public function matches(CommandInterface $command): bool
     {
+        if (!$command instanceof CompleteWorkflow) {
+            return false;
+        }
         $this->actualResult = $command->getPayloads()->getValue(0, null);
-        return $command instanceof CompleteWorkflow && $this->actualResult === $this->expectedResult;
+
+        return $this->actualResult === $this->expectedResult;
     }
 
     public function run(CommandInterface $command): CommandInterface
