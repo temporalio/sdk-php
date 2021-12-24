@@ -19,10 +19,10 @@ final class ActivityCall implements ExpectationInterface
     private string $name;
     private array $values;
 
-    public function __construct(string $activityClass, string $activityMethod, array $values)
+    public function __construct(string $activityClass, string $activityMethod, array $expectedValues)
     {
         $this->name = (new ReflectionClass($activityClass))->getShortName() . '.' . $activityMethod;
-        $this->values = $values;
+        $this->values = $expectedValues;
     }
 
     public function matches(CommandInterface $command): bool
