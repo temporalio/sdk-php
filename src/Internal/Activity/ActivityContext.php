@@ -122,7 +122,7 @@ final class ActivityContext implements ActivityContextInterface
      */
     public function heartbeat($details): void
     {
-        // we use native host process RPC here to avoid excessive GRPC connections and to handle trottling
+        // we use native host process RPC here to avoid excessive GRPC connections and to handle throttling
         // on Golang end
 
         $details = EncodedValues::fromValues([$details], $this->converter)
@@ -131,7 +131,7 @@ final class ActivityContext implements ActivityContextInterface
 
         try {
             $response = $this->rpc->call(
-                'activities.RecordActivityHeartbeat',
+                'temporal.RecordActivityHeartbeat',
                 [
                     'taskToken' => base64_encode($this->info->taskToken),
                     'details' => base64_encode($details),
