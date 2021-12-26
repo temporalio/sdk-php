@@ -10,7 +10,7 @@ Temporal is a distributed, scalable, durable, and highly available orchestration
 engine used to execute asynchronous long-running business logic in a scalable
 and resilient way.
 
-"Temporal PHP SDK" is the framework for authoring workflows and activities using
+"Temporal PHP SDK" is the framework for authoring Workflows and Activities using
 PHP language.
 
 ## Installation
@@ -22,7 +22,7 @@ following command in a root of your project:
 $ composer require temporal/sdk
 ```
 
-Make sure to install [RoadRunner](https://github.com/spiral/roadrunner) to enable workflow and activity consumption in your PHP workers.
+Make sure to install [RoadRunner](https://github.com/spiral/roadrunner) to enable Workflow and Activity consumption in your PHP Workers.
 
 ## Usage
 
@@ -52,7 +52,7 @@ composer run-script phpcs
 composer run-script tests
 ```
 
-Unit and functional tests can be run separately:
+Unit and functional tests can also be run separately:
 
 ```sh
 vendor/bin/phpunit --testsuite=Unit --testdox --verbose
