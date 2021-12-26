@@ -97,10 +97,11 @@ final class WorkflowProxy extends Proxy
     /**
      * TODO rename: Method names cannot use underscore (PSR conflict)
      *
-     * @return WorkflowStubInterface
+     * @return WorkflowStubInterface|null
+     *
      * @internal
      */
-    public function __getUntypedStub(): WorkflowStubInterface
+    public function __getUntypedStub(): ?WorkflowStubInterface
     {
         return $this->stub;
     }

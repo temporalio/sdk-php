@@ -98,6 +98,8 @@ final class WorkflowStub implements WorkflowStubInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @return WorkflowExecution
      */
     public function getExecution(): WorkflowExecution
     {

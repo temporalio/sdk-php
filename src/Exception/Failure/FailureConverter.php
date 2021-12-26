@@ -54,9 +54,10 @@ final class FailureConverter
     /**
      * @param \Throwable $e
      * @param DataConverterInterface $converter
-     * @return Failure
+     *
+     * @return Failure|null
      */
-    public static function mapExceptionToFailure(\Throwable $e, DataConverterInterface $converter): Failure
+    public static function mapExceptionToFailure(\Throwable $e, DataConverterInterface $converter): ?Failure
     {
         $failure = new Failure();
 
