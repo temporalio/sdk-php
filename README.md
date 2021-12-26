@@ -29,10 +29,38 @@ Make sure to install [RoadRunner](https://github.com/spiral/roadrunner) to enabl
 See [examples](https://github.com/temporalio/samples-php) to get started.
 
 ## Documentation
+
 The documentation on how to use the Temporal PHP SDK and client is [here](https://docs.temporal.io/docs/php/introduction).
 
-## License
-MIT License, please see [LICENSE](LICENSE.md) for details.
+## Contributing
 
+Install dependencies:
+
+```sh
+brew install php
+brew install composer
+git clone https://github.com/temporalio/sdk-php.git
+cd sdk-php
+composer install
+```
+
+Lint and test:
+
+```sh
+composer run-script check
+composer run-script phpcs
+composer run-script tests
+```
+
+Unit and functional tests can be run separately:
+
+```sh
+vendor/bin/phpunit --testsuite=Unit --testdox --verbose
+vendor/bin/phpunit --testsuite=Functional --testdox --verbose
+```
+
+## License
+
+MIT License, please see [LICENSE](LICENSE.md) for details.
 
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ftemporalio%2Fsdk-php.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Ftemporalio%2Fsdk-php?ref=badge_large)
