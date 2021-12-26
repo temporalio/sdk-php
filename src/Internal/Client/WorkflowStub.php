@@ -98,6 +98,8 @@ final class WorkflowStub implements WorkflowStubInterface
 
     /**
      * {@inheritDoc}
+     * 
+     * @psalm-suppress InvalidNullableReturnType
      *
      * @return WorkflowExecution
      */
