@@ -463,6 +463,20 @@ class WorkflowContext implements WorkflowContextInterface
         }
     }
 
+    public function resolveConditionGroup(string $conditionGroupId): void
+    {
+        // Group is empty or already resolved
+        if (!isset($this->awaits[$conditionGroupId])) {
+            return;
+        }
+
+        foreach ($this->awaits[$conditionGroupId] as $i => $cond) {
+            [$_, $deferred] = $cond;
+            unset($this->awaits[$conditionGroupId][$i]);
+            $deferred->resolve();
+        }
+    }
+
     /**
      * @param string $conditionGroupId
      * @param callable $condition
@@ -484,19 +498,5 @@ class WorkflowContext implements WorkflowContextInterface
     protected function recordTrace(): void
     {
         $this->trace = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
-    }
-
-    public function resolveConditionGroup(string $conditionGroupId): void
-    {
-        // Group is empty or already resolved
-        if (!isset($this->awaits[$conditionGroupId])) {
-            return;
-        }
-
-        foreach ($this->awaits[$conditionGroupId] as $i => $cond) {
-            [$_, $deferred] = $cond;
-            unset($this->awaits[$conditionGroupId][$i]);
-            $deferred->resolve();
-        }
     }
 }

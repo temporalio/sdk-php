@@ -99,6 +99,19 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
     }
 
     /**
+     * Calculate unblocked conditions.
+     */
+    public function resolveConditions(): void
+    {
+        $this->parent->resolveConditions();
+    }
+
+    public function resolveConditionGroup(string $conditionGroupId): void
+    {
+        $this->parent->resolveConditionGroup($conditionGroupId);
+    }
+
+    /**
      * @param string $conditionGroupId
      * @param callable $condition
      * @return PromiseInterface
@@ -115,18 +128,5 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
             $deferred->promise(),
             $this->scope->getLayer()
         );
-    }
-
-    /**
-     * Calculate unblocked conditions.
-     */
-    public function resolveConditions(): void
-    {
-        $this->parent->resolveConditions();
-    }
-
-    public function resolveConditionGroup(string $conditionGroupId): void
-    {
-        $this->parent->resolveConditionGroup($conditionGroupId);
     }
 }

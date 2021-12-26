@@ -279,6 +279,18 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     }
 
     /**
+     * @return ReaderInterface
+     */
+    protected function createReader(): ReaderInterface
+    {
+        if (\interface_exists(Reader::class)) {
+            return new SelectiveReader([new AnnotationReader(), new AttributeReader()]);
+        }
+
+        return new AttributeReader();
+    }
+
+    /**
      * @return void
      */
     private function boot(): void
@@ -291,18 +303,6 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         $this->client = $this->createClient();
         $this->server = $this->createServer();
         $this->env = new Environment();
-    }
-
-    /**
-     * @return ReaderInterface
-     */
-    protected function createReader(): ReaderInterface
-    {
-        if (\interface_exists(Reader::class)) {
-            return new SelectiveReader([new AnnotationReader(), new AttributeReader()]);
-        }
-
-        return new AttributeReader();
     }
 
     /**

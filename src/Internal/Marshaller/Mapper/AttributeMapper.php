@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Internal\Marshaller\Mapper;
 
 use Spiral\Attributes\ReaderInterface;
-use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Meta\Scope;
 use Temporal\Internal\Marshaller\Type\TypeInterface;

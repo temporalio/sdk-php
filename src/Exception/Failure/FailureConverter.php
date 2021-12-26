@@ -122,7 +122,7 @@ final class FailureConverter
                 $info
                     ->setActivityId($e->getActivityId())
                     ->setActivityType(new ActivityType([
-                        'name' => $e->getActivityType()
+                        'name' => $e->getActivityType(),
                     ]))
                     ->setIdentity($e->getIdentity())
                     ->setRetryState($e->getRetryState())
@@ -140,7 +140,7 @@ final class FailureConverter
                     ->setNamespace($e->getNamespace())
                     ->setRetryState($e->getRetryState())
                     ->setWorkflowType(new WorkflowType([
-                        'name' => $e->getWorkflowType()
+                        'name' => $e->getWorkflowType(),
                     ]))
                     ->setWorkflowExecution(new WorkflowExecution([
                         'workflow_id' => $e->getExecution()->getID(),
