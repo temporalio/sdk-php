@@ -418,8 +418,12 @@ class WorkflowContext implements WorkflowContextInterface
                 }
             }
 
-            if ($condition instanceof PromiseInterface) {
-                $result[] = $condition;
+            if ($condition instanceof PromiseInterface)
+            {
+                $result[] = $condition->then(function ($result) use ($conditionGroupId) {
+                    $this->resolveConditionGroup($conditionGroupId);
+                    return $result;
+                });
                 continue;
             }
 

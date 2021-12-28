@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Temporal\Tests\Unit\Framework\Server;
 
 use Carbon\Carbon;
-use Temporal\Tests\Unit\Framework\Assertion\AssertionInterface;
 use Temporal\Tests\Unit\Framework\CommandBatchMock;
 use Temporal\Tests\Unit\Framework\Expectation\ExpectationInterface;
 use Temporal\Tests\Unit\Framework\Server\CommandHandler\AffectsServerStateHandler;
@@ -20,8 +19,6 @@ final class ServerMock
 
     /** @var ExpectationInterface[] */
     private array $expectations = [];
-    /** @var AssertionInterface[] */
-    private array $assertions = [];
 
     public function __construct(CommandHandlerFactory $commandHandlerFactory)
     {
@@ -48,19 +45,12 @@ final class ServerMock
         $this->queue = array_merge($this->queue, $commands);
     }
 
-    public function addPayload($payload): void
-    {
-        $this->queue[] = $payload;
-    }
-
     public function handleCommand(CommandInterface $command): ?CommandInterface
     {
         $expectation = $this->checkExpectation($command);
         if ($expectation !== null) {
             return $expectation->run($command);
         }
-
-        $this->runAssertions($command);
 
         $handler = $this->commandHandlerFactory->getHandler($command);
         if ($handler instanceof AffectsServerStateHandler) {
@@ -82,15 +72,6 @@ final class ServerMock
         return null;
     }
 
-    private function runAssertions(CommandInterface $command): void
-    {
-        foreach ($this->assertions as $assertion) {
-            if ($assertion->matches($command)) {
-                $assertion->assert($command);
-            }
-        }
-    }
-
     public function checkWaitingExpectations(): void
     {
         foreach ($this->expectations as $expectation) {
@@ -101,10 +82,5 @@ final class ServerMock
     public function expect(ExpectationInterface $expectation): void
     {
         $this->expectations[] = $expectation;
-    }
-
-    public function assert(AssertionInterface $assert): void
-    {
-        $this->assertions[] = $assert;
     }
 }
