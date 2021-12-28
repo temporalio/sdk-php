@@ -48,11 +48,13 @@ final class AwaitWithTimeoutTestCase extends UnitTestCase
                 {
                     $result = yield Workflow::awaitWithTimeout(5, fn() => false);
                     assertFalse($result);
+                    return 'OK';
                 }
             }
         );
 
         $this->worker->runWorkflow('AwaitWorkflow');
+        $this->worker->assertWorkflowReturns('OK');
         $this->factory->run($this->worker);
     }
 
@@ -77,13 +79,14 @@ final class AwaitWithTimeoutTestCase extends UnitTestCase
                 public function handler(): iterable
                 {
                     yield Workflow::awaitWithTimeout(5, fn() => false);
-                    return true;
+                    return 'OK';
                 }
             }
         );
 
         $this->worker->runWorkflow('AwaitWorkflow');
         $this->worker->expectTimer(5);
+        $this->worker->assertWorkflowReturns('OK');
         $this->factory->run($this->worker);
     }
 
@@ -106,11 +109,13 @@ final class AwaitWithTimeoutTestCase extends UnitTestCase
                 {
                     $result = yield Workflow::awaitWithTimeout(5, fn() => true);
                     assertTrue($result);
+                    return 'OK';
                 }
             }
         );
 
         $this->worker->runWorkflow('AwaitWorkflow');
+        $this->worker->assertWorkflowReturns('OK');
         $this->factory->run($this->worker);
     }
 }

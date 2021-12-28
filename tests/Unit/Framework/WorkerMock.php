@@ -11,7 +11,7 @@ use Temporal\Internal\Repository\Identifiable;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Router;
 use Temporal\Internal\Transport\RouterInterface;
-use Temporal\Tests\Unit\Framework\Assertion\WorkflowResult;
+use Temporal\Tests\Unit\Framework\Expectation\WorkflowResult;
 use Temporal\Tests\Unit\Framework\Expectation\ActivityCall;
 use Temporal\Tests\Unit\Framework\Expectation\Timer;
 use Temporal\Tests\Unit\Framework\Requests\StartWorkflow;
@@ -161,7 +161,7 @@ final class WorkerMock implements Identifiable, WorkerInterface, DispatcherInter
 
     public function assertWorkflowReturns($value): void
     {
-        $this->server->assert(new WorkflowResult($value));
+        $this->server->expect(new WorkflowResult($value));
     }
 
     public function complete(): void
