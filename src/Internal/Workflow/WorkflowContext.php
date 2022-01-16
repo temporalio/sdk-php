@@ -23,6 +23,8 @@ use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\StackRenderer;
 use Temporal\Internal\Transport\ClientInterface;
+use Temporal\Internal\Transport\CompletableResult;
+use Temporal\Internal\Transport\CompletableResultInterface;
 use Temporal\Internal\Transport\Request\CompleteWorkflow;
 use Temporal\Internal\Transport\Request\ContinueAsNew;
 use Temporal\Internal\Transport\Request\GetVersion;
@@ -30,6 +32,7 @@ use Temporal\Internal\Transport\Request\NewTimer;
 use Temporal\Internal\Transport\Request\Panic;
 use Temporal\Internal\Transport\Request\SideEffect;
 use Temporal\Promise;
+use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow\ActivityStubInterface;
 use Temporal\Workflow\ChildWorkflowOptions;
@@ -53,6 +56,11 @@ class WorkflowContext implements WorkflowContextInterface
     protected ?ValuesInterface $lastCompletionResult = null;
 
     protected array $awaits = [];
+    protected array $asyncAwaits = [];
+    /**
+     * @var <CompletableResultInterface, CommandInterface>
+     */
+    protected \SplObjectStorage $timers;
 
     private array $trace = [];
     private bool $continueAsNew = false;
@@ -77,6 +85,7 @@ class WorkflowContext implements WorkflowContextInterface
         $this->workflowInstance = $workflowInstance;
         $this->input = $input;
         $this->lastCompletionResult = $lastCompletionResult;
+        $this->timers = new \SplObjectStorage();
     }
 
     /**
@@ -416,18 +425,13 @@ class WorkflowContext implements WorkflowContextInterface
                     $this->resolveConditionGroup($conditionGroupId);
                     return resolve(true);
                 }
+                $result[] = $this->addCondition($conditionGroupId, $condition);
             }
 
             if ($condition instanceof PromiseInterface)
             {
-                $result[] = $condition->then(function ($result) use ($conditionGroupId) {
-                    $this->resolveConditionGroup($conditionGroupId);
-                    return $result;
-                });
-                continue;
+                $result[] = $this->addAsyncCondition($conditionGroupId, $condition);
             }
-
-            $result[] = $this->addCondition($conditionGroupId, $condition);
         }
 
         if (\count($result) === 1) {
@@ -480,6 +484,15 @@ class WorkflowContext implements WorkflowContextInterface
         return $deferred->promise();
     }
 
+    protected function addAsyncCondition(string $conditionGroupId, PromiseInterface $condition): PromiseInterface
+    {
+        $this->asyncAwaits[$conditionGroupId][] = $condition;
+        return $condition->then(function ($result) use ($conditionGroupId) {
+            $this->resolveConditionGroup($conditionGroupId);
+            return $result;
+        });
+    }
+
     /**
      * Record last stack trace of the call.
      *
@@ -501,6 +514,22 @@ class WorkflowContext implements WorkflowContextInterface
             [$_, $deferred] = $cond;
             unset($this->awaits[$conditionGroupId][$i]);
             $deferred->resolve();
+        }
+
+        // We don't have pending timers in this group
+        if (!isset($this->asyncAwaits[$conditionGroupId])) {
+            return;
+        }
+
+        foreach ($this->asyncAwaits[$conditionGroupId] as $index => $awaitCondition) {
+            if (!$awaitCondition->isComplete()) {
+                $timer = $this->timers->offsetGet($awaitCondition);
+                if ($timer !== null) {
+                    $this->client->cancel($timer);
+                    $this->timers->offsetUnset($awaitCondition);
+                }
+            }
+            unset($this->asyncAwaits[$index]);
         }
     }
 }
