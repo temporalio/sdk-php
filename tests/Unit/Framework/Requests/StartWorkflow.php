@@ -13,12 +13,12 @@ use Temporal\Worker\Transport\Command\Request;
  */
 final class StartWorkflow extends Request
 {
-    public function __construct(string $workflowType, ...$args)
+    public function __construct(string $runId, string $workflowType, ...$args)
     {
         $info = [
             'WorkflowExecution' => [
                 'ID' => Uuid::v4(),
-                'RunID' => Uuid::v4(),
+                'RunID' => $runId,
             ],
             'WorkflowType' => [
                 'Name' => $this->extractClassShortName($workflowType),

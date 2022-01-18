@@ -6,7 +6,6 @@ namespace Temporal\Tests\Unit\Framework\Server\CommandHandler;
 
 use Temporal\Internal\Transport\Request\CompleteWorkflow;
 use Temporal\Worker\Transport\Command\CommandInterface;
-use Temporal\Worker\Transport\Command\Request;
 
 final class CompleteWorkflowHandler implements CommandHandlerInterface
 {
@@ -16,7 +15,9 @@ final class CompleteWorkflowHandler implements CommandHandlerInterface
             throw $command->getFailure();
         }
 
-        return new Request('DestroyWorkflow', ['runId' => '744fba1a-a9d9-4447-9aad-98d274dcfc27']);
+        return null;
+        // @TODO: somehow figure out runId
+        // return new Request('DestroyWorkflow', ['runId' => $this->runId]);
     }
 
     public function supports(CommandInterface $command): bool
