@@ -152,6 +152,5 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
         $this->parent->timers->attach($result, $request);
 
         return $result;
-
     }
 }

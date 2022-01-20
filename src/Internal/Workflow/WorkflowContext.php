@@ -386,9 +386,11 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function timer($interval): PromiseInterface
     {
-        return $this->request(
-            new NewTimer(DateInterval::parse($interval, DateInterval::FORMAT_SECONDS))
-        );
+        $request = new NewTimer(DateInterval::parse($interval, DateInterval::FORMAT_SECONDS));
+        $result = $this->request($request);
+        $this->timers->attach($result, $request);
+
+        return $result;
     }
 
     /**
