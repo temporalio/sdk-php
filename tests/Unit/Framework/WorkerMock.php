@@ -6,6 +6,7 @@ namespace Temporal\Tests\Unit\Framework;
 
 use PHPUnit\Framework\Exception;
 use React\Promise\PromiseInterface;
+use Temporal\Common\Uuid;
 use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Internal\Repository\Identifiable;
 use Temporal\Internal\ServiceContainer;
@@ -14,6 +15,7 @@ use Temporal\Internal\Transport\RouterInterface;
 use Temporal\Tests\Unit\Framework\Expectation\WorkflowResult;
 use Temporal\Tests\Unit\Framework\Expectation\ActivityCall;
 use Temporal\Tests\Unit\Framework\Expectation\Timer;
+use Temporal\Tests\Unit\Framework\Requests\InvokeSignal;
 use Temporal\Tests\Unit\Framework\Requests\StartWorkflow;
 use Temporal\Tests\Unit\Framework\Server\CommandHandler\CommandHandlerFactory;
 use Temporal\Tests\Unit\Framework\Server\ServerMock;
@@ -37,6 +39,12 @@ final class WorkerMock implements Identifiable, WorkerInterface, DispatcherInter
     private RouterInterface $router;
     private ServerMock $server;
 
+    /**
+     * Contains currently executing Workflow
+     * <string $workflowClass => string $uuid>
+     */
+    private array $execution = [];
+
     public function __construct(
         string $taskQueue,
         WorkerOptions $options,
@@ -55,13 +63,26 @@ final class WorkerMock implements Identifiable, WorkerInterface, DispatcherInter
         $router->add(new Router\StartWorkflow($this->services));
         $router->add(new Router\InvokeActivity($this->services, Goridge::create()));
         $router->add(new Router\DestroyWorkflow($this->services->running));
+        $router->add(new Router\InvokeSignal($this->services->running, $this->services->loop));
 
         return $router;
     }
 
     public function runWorkflow(string $workflowCLass, ...$args): void
     {
-        $this->server->addCommand(new StartWorkflow($workflowCLass, ...$args));
+        $runId = Uuid::v4();
+        $this->execution[$workflowCLass] = $runId;
+        $this->server->addCommand(new StartWorkflow($runId, $workflowCLass, ...$args));
+    }
+
+    public function sendSignal(string $workflow, string $name, ...$args): void
+    {
+        $workflowRunId = $this->execution[$workflow] ?? null;
+        if ($workflowRunId === null) {
+            throw new \LogicException("Cannot send signal to $workflow, it is not running.");
+
+        }
+        $this->server->addCommand(new InvokeSignal($workflowRunId, $name, ...$args));
     }
 
     public function waitBatch(): ?CommandBatchMock
@@ -167,5 +188,6 @@ final class WorkerMock implements Identifiable, WorkerInterface, DispatcherInter
     public function complete(): void
     {
         $this->server->checkWaitingExpectations();
+        $this->execution = [];
     }
 }

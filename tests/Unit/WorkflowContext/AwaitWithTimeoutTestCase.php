@@ -118,4 +118,57 @@ final class AwaitWithTimeoutTestCase extends UnitTestCase
         $this->worker->assertWorkflowReturns('OK');
         $this->factory->run($this->worker);
     }
+
+    public function testTimerIsCanceledOnceConditionIsMet(): void
+    {
+        $this->addToAssertionCount(1);
+        $this->worker->registerWorkflowObject(
+            new
+            /**
+             * Support for PHP7.4
+             * @Workflow\WorkflowInterface
+             */
+            #[Workflow\WorkflowInterface]
+            class {
+                /**
+                 * Support for PHP7.4
+                 * @Workflow\WorkflowMethod(name="AwaitWorkflow")
+                 */
+                #[WorkflowMethod(name: 'AwaitWorkflow')]
+                public function handler(): iterable
+                {
+                    $this->doCancel = false;
+
+                    yield Workflow::awaitWithTimeout(
+                        50,
+                        function() {
+                            return $this->doCancel;
+                        }
+                    );
+
+                    if ($this->doCancel) {
+                        return 'CANCEL';
+                    }
+
+                    return 'OK';
+                }
+
+                /**
+                 * Support for PHP7.4
+                 * @Workflow\SignalMethod()
+                 */
+                #[Workflow\SignalMethod]
+                public function cancel(): void
+                {
+                    $this->doCancel = true;
+                }
+            }
+        );
+
+        $this->worker->runWorkflow('AwaitWorkflow');
+        $this->worker->sendSignal('AwaitWorkflow', 'cancel');
+        $this->worker->assertWorkflowReturns('CANCEL');
+
+        $this->factory->run($this->worker);
+    }
 }
