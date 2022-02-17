@@ -17,3 +17,5 @@ Thumbs.db
 
 # Other
 *.exe
+rr
+.rr.yaml
