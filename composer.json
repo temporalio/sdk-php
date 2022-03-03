@@ -32,8 +32,7 @@
         "spiral/attributes": "^2.7",
         "spiral/roadrunner-worker": "^2.0.2",
         "spiral/roadrunner-cli": "^2.0",
-        "symfony/polyfill-php80": "^1.18",
-        "symfony/translation": "5.4.*"
+        "symfony/polyfill-php80": "^1.18"
     },
     "autoload": {
         "psr-4": {
@@ -52,6 +51,7 @@
         "jetbrains/phpstorm-attributes": "dev-master@dev",
         "monolog/monolog": "^2.1",
         "phpunit/phpunit": "^9.3",
+        "symfony/translation": "5.4.*",
         "symfony/var-dumper": "^5.1",
         "vimeo/psalm": "^4.1"
     },
