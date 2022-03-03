@@ -10,5 +10,5 @@ use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 
 interface WorkflowFactoryInterface
 {
-    public function create(string $workflowName): ?WorkflowPrototype;
+    public function create(string $workflowName): ?object;
 }

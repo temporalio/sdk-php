@@ -83,10 +83,7 @@ final class StartWorkflow extends Route
      */
     private function findWorkflowOrFail(WorkflowInfo $info): WorkflowPrototype
     {
-        $workflow = $this->services->workflows->find($info->type->name);
-        if ($workflow === null) {
-            $workflow = $this->workflowFactory->create($info->type->name);
-        }
+        $workflow = $this->findWorkflowPrototype($info->type->name);
 
         if ($workflow === null) {
             throw new \OutOfRangeException(\sprintf(self::ERROR_NOT_FOUND, $info->type->name));
@@ -99,5 +96,19 @@ final class StartWorkflow extends Route
         }
 
         return $workflow;
+    }
+
+    private function findWorkflowPrototype(string $workflowName): ?WorkflowPrototype
+    {
+        // Try to get from already defined workflows
+        $workflow = $this->services->workflows->find($workflowName);
+        if ($workflow !== null) {
+            return $workflow;
+        }
+
+        // Try to create from factory
+        $workflowObject = $this->workflowFactory->create($workflowName);
+
+        return $workflowObject !== null ? $this->services->workflowsReader->fromObject($workflowObject) : null;
     }
 }

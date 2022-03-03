@@ -32,19 +32,9 @@ final class WorkflowFactoryTestCase extends UnitTestCase
     public function testWorkflowFactoryCanCreateWorkflowInRuntime(): void
     {
         $workflowFactory = new class implements WorkflowFactoryInterface {
-            private WorkflowReader $reader;
-
-            public function __construct()
+            public function create(string $workflowName): ?object
             {
-                $this->reader = new WorkflowReader(
-                    new SelectiveReader([new AnnotationReader(), new AttributeReader()])
-                );
-            }
-
-            public function create(string $workflowName): ?WorkflowPrototype
-            {
-                return $this->reader->fromObject(
-                    new
+                return new
                     /**
                      * Support for PHP7.4
                      * @Workflow\WorkflowInterface
@@ -60,8 +50,7 @@ final class WorkflowFactoryTestCase extends UnitTestCase
                         {
                             return 'hello';
                         }
-                    }
-                );
+                    };
             }
         };
 
