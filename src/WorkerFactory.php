@@ -22,36 +22,38 @@ use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\ExceptionInterceptor;
 use Temporal\Exception\ExceptionInterceptorInterface;
+use Temporal\Internal\Events\EventEmitterTrait;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Marshaller\MarshallerInterface;
-use Temporal\Internal\ServiceContainer;
-use Temporal\Worker\Environment\Environment;
-use Temporal\Worker\Environment\EnvironmentInterface;
-use Temporal\Worker\Transport\Codec\CodecInterface;
-use Temporal\Internal\Events\EventEmitterTrait;
 use Temporal\Internal\Queue\ArrayQueue;
 use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Internal\Repository\ArrayRepository;
 use Temporal\Internal\Repository\RepositoryInterface;
+use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Client;
 use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Transport\Router;
 use Temporal\Internal\Transport\RouterInterface;
 use Temporal\Internal\Transport\Server;
 use Temporal\Internal\Transport\ServerInterface;
+use Temporal\Worker\Environment\Environment;
+use Temporal\Worker\Environment\EnvironmentInterface;
+use Temporal\Worker\LoopInterface;
+use Temporal\Worker\Transport\Codec\CodecInterface;
 use Temporal\Worker\Transport\Codec\JsonCodec;
 use Temporal\Worker\Transport\Codec\ProtoCodec;
 use Temporal\Worker\Transport\Command\RequestInterface;
-use Temporal\Worker\WorkerFactoryInterface;
-use Temporal\Worker\LoopInterface;
-use Temporal\Worker\Worker;
-use Temporal\Worker\WorkerInterface;
 use Temporal\Worker\Transport\Goridge;
 use Temporal\Worker\Transport\HostConnectionInterface;
 use Temporal\Worker\Transport\RoadRunner;
 use Temporal\Worker\Transport\RPCConnectionInterface;
+use Temporal\Worker\Worker;
+use Temporal\Worker\WorkerFactoryInterface;
+use Temporal\Worker\WorkerInterface;
 use Temporal\Worker\WorkerOptions;
+use Temporal\WorkflowFactory\EmptyWorkflowFactory;
+use Temporal\WorkflowFactory\WorkflowFactoryInterface;
 
 /**
  * WorkerFactory is primary entry point for the temporal application. This class is responsible for the communication
@@ -184,15 +186,19 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     public function newWorker(
         string $taskQueue = self::DEFAULT_TASK_QUEUE,
         WorkerOptions $options = null,
-        ExceptionInterceptorInterface $exceptionInterceptor = null
+        ExceptionInterceptorInterface $exceptionInterceptor = null,
+        WorkflowFactoryInterface $workflowFactory = null
     ): WorkerInterface {
+        $serviceContainer = ServiceContainer::fromWorkerFactory(
+            $this,
+            $exceptionInterceptor ?? ExceptionInterceptor::createDefault()
+        );
+
         $worker = new Worker(
             $taskQueue,
             $options ?? WorkerOptions::new(),
-            ServiceContainer::fromWorkerFactory(
-                $this,
-                $exceptionInterceptor ?? ExceptionInterceptor::createDefault()
-            ),
+            $serviceContainer,
+            $workflowFactory ?? new EmptyWorkflowFactory(),
             $this->rpc
         );
         $this->queues->add($worker);

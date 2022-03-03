@@ -21,6 +21,7 @@ use Temporal\Internal\Transport\Router;
 use Temporal\Internal\Transport\RouterInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\RPCConnectionInterface;
+use Temporal\WorkflowFactory\WorkflowFactoryInterface;
 
 /**
  * Worker manages the execution of workflows and activities within the single TaskQueue. Activity and Workflow processing
@@ -55,16 +56,20 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
      */
     private RPCConnectionInterface $rpc;
 
+    private WorkflowFactoryInterface $workflowFactory;
+
     /**
      * @param string $taskQueue
      * @param WorkerOptions $options
      * @param ServiceContainer $serviceContainer
+     * @param WorkflowFactoryInterface $workflowFactory
      * @param RPCConnectionInterface $rpc
      */
     public function __construct(
         string $taskQueue,
         WorkerOptions $options,
         ServiceContainer $serviceContainer,
+        WorkflowFactoryInterface $workflowFactory,
         RPCConnectionInterface $rpc
     ) {
         $this->rpc = $rpc;
@@ -72,6 +77,7 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
         $this->options = $options;
 
         $this->services = $serviceContainer;
+        $this->workflowFactory = $workflowFactory;
         $this->router = $this->createRouter();
     }
 
@@ -157,7 +163,7 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
         $router->add(new Router\InvokeActivity($this->services, $this->rpc));
 
         // Workflow routes
-        $router->add(new Router\StartWorkflow($this->services));
+        $router->add(new Router\StartWorkflow($this->services, $this->workflowFactory));
         $router->add(new Router\InvokeQuery($this->services->running, $this->services->loop));
         $router->add(new Router\InvokeSignal($this->services->running, $this->services->loop));
         $router->add(new Router\CancelWorkflow($this->services->running));

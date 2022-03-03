@@ -24,6 +24,7 @@ use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Goridge;
 use Temporal\Worker\WorkerInterface;
 use Temporal\Worker\WorkerOptions;
+use Temporal\WorkflowFactory\WorkflowFactoryInterface;
 use Throwable;
 
 use function get_class;
@@ -44,15 +45,18 @@ final class WorkerMock implements Identifiable, WorkerInterface, DispatcherInter
      * <string $workflowClass => string $uuid>
      */
     private array $execution = [];
+    private WorkflowFactoryInterface $workflowFactory;
 
     public function __construct(
         string $taskQueue,
         WorkerOptions $options,
-        ServiceContainer $serviceContainer
+        ServiceContainer $serviceContainer,
+        WorkflowFactoryInterface $workflowFactory
     ) {
         $this->name = $taskQueue;
         $this->options = $options;
         $this->services = $serviceContainer;
+        $this->workflowFactory = $workflowFactory;
         $this->router = $this->createRouter();
         $this->server = new ServerMock(CommandHandlerFactory::create());
     }
@@ -60,7 +64,7 @@ final class WorkerMock implements Identifiable, WorkerInterface, DispatcherInter
     private function createRouter(): RouterInterface
     {
         $router = new Router();
-        $router->add(new Router\StartWorkflow($this->services));
+        $router->add(new Router\StartWorkflow($this->services, $this->workflowFactory));
         $router->add(new Router\InvokeActivity($this->services, Goridge::create()));
         $router->add(new Router\DestroyWorkflow($this->services->running));
         $router->add(new Router\InvokeSignal($this->services->running, $this->services->loop));

@@ -11,6 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Worker;
 
+use Temporal\Exception\ExceptionInterceptorInterface;
+use Temporal\WorkflowFactory\WorkflowFactoryInterface;
+
 /**
  * The {@see WorkerFactoryInterface} is responsible for providing an
  * interface for registering all dependencies and creating a global
@@ -38,7 +41,9 @@ interface WorkerFactoryInterface
      */
     public function newWorker(
         string $taskQueue = self::DEFAULT_TASK_QUEUE,
-        WorkerOptions $options = null
+        WorkerOptions $options = null,
+        ExceptionInterceptorInterface $exceptionInterceptor = null,
+        WorkflowFactoryInterface $workflowFactory = null
     ): WorkerInterface;
 
     /**

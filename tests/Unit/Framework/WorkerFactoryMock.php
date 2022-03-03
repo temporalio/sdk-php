@@ -36,6 +36,8 @@ use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Worker\WorkerInterface;
 use Temporal\Worker\WorkerOptions;
+use Temporal\WorkflowFactory\EmptyWorkflowFactory;
+use Temporal\WorkflowFactory\WorkflowFactoryInterface;
 
 /**
  * @internal
@@ -81,7 +83,8 @@ class WorkerFactoryMock implements WorkerFactoryInterface, LoopInterface
     public function newWorker(
         string $taskQueue = self::DEFAULT_TASK_QUEUE,
         WorkerOptions $options = null,
-        ExceptionInterceptorInterface $exceptionInterceptor = null
+        ExceptionInterceptorInterface $exceptionInterceptor = null,
+        WorkflowFactoryInterface $workflowFactory = null
     ): WorkerInterface {
         $worker = new WorkerMock(
             $taskQueue,
@@ -90,7 +93,7 @@ class WorkerFactoryMock implements WorkerFactoryInterface, LoopInterface
                 $this,
                 $exceptionInterceptor ?? ExceptionInterceptor::createDefault()
             ),
-
+            $workflowFactory ?? new EmptyWorkflowFactory()
         );
         $this->queues->add($worker);
 

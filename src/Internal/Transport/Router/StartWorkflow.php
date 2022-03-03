@@ -21,6 +21,7 @@ use Temporal\Internal\Workflow\Process\Process;
 use Temporal\Internal\Workflow\WorkflowContext;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow\WorkflowInfo;
+use Temporal\WorkflowFactory\WorkflowFactoryInterface;
 
 final class StartWorkflow extends Route
 {
@@ -29,14 +30,13 @@ final class StartWorkflow extends Route
 
     private ServiceContainer $services;
     private WorkflowInstantiator $instantiator;
+    private WorkflowFactoryInterface $workflowFactory;
 
-    /**
-     * @param ServiceContainer $services
-     */
-    public function __construct(ServiceContainer $services)
+    public function __construct(ServiceContainer $services, WorkflowFactoryInterface $workflowFactory)
     {
         $this->services = $services;
         $this->instantiator = new WorkflowInstantiator();
+        $this->workflowFactory = $workflowFactory;
     }
 
     /**
@@ -84,6 +84,9 @@ final class StartWorkflow extends Route
     private function findWorkflowOrFail(WorkflowInfo $info): WorkflowPrototype
     {
         $workflow = $this->services->workflows->find($info->type->name);
+        if ($workflow === null) {
+            $workflow = $this->workflowFactory->create($info->type->name);
+        }
 
         if ($workflow === null) {
             throw new \OutOfRangeException(\sprintf(self::ERROR_NOT_FOUND, $info->type->name));
