@@ -270,7 +270,7 @@ class WorkflowContext implements WorkflowContextInterface
     {
         $options ??= new ContinueAsNewOptions();
 
-        $workflow = $this->services->workflowsReader->fromClass($class);
+        $workflow = $this->services->readers->workflowFromClass($class);
 
         return new ContinueAsNewProxy($class, $workflow, $options, $this);
     }
@@ -313,7 +313,7 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function newChildWorkflowStub(string $class, ChildWorkflowOptions $options = null): object
     {
-        $workflow = $this->services->workflowsReader->fromClass($class);
+        $workflow = $this->services->readers->workflowFromClass($class);
         $options = $options ?? (new ChildWorkflowOptions())->withNamespace($this->getInfo()->namespace);
 
         return new ChildWorkflowProxy(
@@ -329,7 +329,7 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function newExternalWorkflowStub(string $class, WorkflowExecution $execution): object
     {
-        $workflow = $this->services->workflowsReader->fromClass($class);
+        $workflow = $this->services->readers->workflowFromClass($class);
 
         $stub = $this->newUntypedExternalWorkflowStub($execution);
 
@@ -371,7 +371,7 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function newActivityStub(string $class, ActivityOptions $options = null): object
     {
-        $activities = $this->services->activitiesReader->fromClass($class);
+        $activities = $this->services->readers->activityFromClass($class);
 
         return new ActivityProxy(
             $class,

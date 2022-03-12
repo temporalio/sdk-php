@@ -19,7 +19,7 @@ use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Declaration\Prototype\ActivityCollection;
 use Temporal\Internal\Declaration\Prototype\WorkflowCollection;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
-use Temporal\Internal\Declaration\Reader\ActivityReader;
+use Temporal\Internal\Declaration\Reader\Readers;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Queue\QueueInterface;
@@ -50,7 +50,7 @@ final class ServiceContainer
      * @var ReaderInterface
      */
     #[Immutable]
-    public ReaderInterface $reader;
+    public Readers $readers;
 
     /**
      * @var EnvironmentInterface
@@ -95,18 +95,6 @@ final class ServiceContainer
     public DataConverterInterface $dataConverter;
 
     /**
-     * @var WorkflowReader
-     */
-    #[Immutable]
-    public WorkflowReader $workflowsReader;
-
-    /**
-     * @var ActivityReader
-     */
-    #[Immutable]
-    public ActivityReader $activitiesReader;
-
-    /**
      * @var ExceptionInterceptorInterface
      */
     public ExceptionInterceptorInterface $exceptionInterceptor;
@@ -134,7 +122,6 @@ final class ServiceContainer
         $this->env = $env;
         $this->loop = $loop;
         $this->client = $client;
-        $this->reader = $reader;
         $this->queue = $queue;
         $this->marshaller = $marshaller;
         $this->dataConverter = $dataConverter;
@@ -143,8 +130,7 @@ final class ServiceContainer
         $this->activities = new ActivityCollection();
         $this->running = new ProcessCollection($client);
 
-        $this->workflowsReader = new WorkflowReader($this->reader);
-        $this->activitiesReader = new ActivityReader($this->reader);
+        $this->readers = Readers::fromReader($reader);
         $this->exceptionInterceptor = $exceptionInterceptor;
     }
 

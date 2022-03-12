@@ -107,7 +107,7 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
     public function registerWorkflowTypes(string ...$class): WorkerInterface
     {
         foreach ($class as $workflow) {
-            $proto = $this->services->workflowsReader->fromClass($workflow);
+            $proto = $this->services->readers->workflowFromClass($workflow);
             $this->services->workflows->add($proto, false);
         }
 
@@ -130,7 +130,7 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
         foreach ($activity as $act) {
             $class = \get_class($act);
 
-            foreach ($this->services->activitiesReader->fromClass($class) as $proto) {
+            foreach ($this->services->readers->activityFromClass($class) as $proto) {
                 $this->services->activities->add($proto->withInstance($act), false);
             }
         }

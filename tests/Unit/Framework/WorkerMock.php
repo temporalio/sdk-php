@@ -87,7 +87,6 @@ final class WorkerMock implements Identifiable, WorkerInterface, DispatcherInter
         $workflowRunId = $this->execution[$workflow] ?? null;
         if ($workflowRunId === null) {
             throw new \LogicException("Cannot send signal to $workflow, it is not running.");
-
         }
         $this->server->addCommand(new InvokeSignal($workflowRunId, $name, ...$args));
     }
@@ -134,7 +133,7 @@ final class WorkerMock implements Identifiable, WorkerInterface, DispatcherInter
     public function registerWorkflowTypes(string ...$class): WorkerInterface
     {
         foreach ($class as $workflow) {
-            $proto = $this->services->workflowsReader->fromClass($workflow);
+            $proto = $this->services->readers->workflowFromClass($workflow);
             $this->services->workflows->add($proto, false);
         }
 
@@ -143,7 +142,7 @@ final class WorkerMock implements Identifiable, WorkerInterface, DispatcherInter
 
     public function registerWorkflowObject($object): self
     {
-        $proto = $this->services->workflowsReader->fromObject($object);
+        $proto = $this->services->readers->workflowFromObject($object);
         $this->services->workflows->add($proto, false);
 
         return $this;
@@ -159,7 +158,7 @@ final class WorkerMock implements Identifiable, WorkerInterface, DispatcherInter
         foreach ($activity as $act) {
             $class = get_class($act);
 
-            foreach ($this->services->activitiesReader->fromClass($class) as $proto) {
+            foreach ($this->services->readers->activityFromClass($class) as $proto) {
                 $this->services->activities->add($proto->withInstance($act), false);
             }
         }
