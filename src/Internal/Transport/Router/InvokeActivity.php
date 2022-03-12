@@ -14,11 +14,13 @@ namespace Temporal\Internal\Transport\Router;
 use React\Promise\Deferred;
 use Temporal\Activity;
 use Temporal\Activity\ActivityInfo;
+use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\DoNotCompleteOnResultException;
 use Temporal\Internal\Activity\ActivityContext;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
-use Temporal\Internal\ServiceContainer;
+use Temporal\Internal\Marshaller\MarshallerInterface;
+use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\RPCConnectionInterface;
 
@@ -29,17 +31,21 @@ final class InvokeActivity extends Route
      */
     private const ERROR_NOT_FOUND = 'Activity with the specified name "%s" was not registered';
 
-    private ServiceContainer $services;
+    private RepositoryInterface $activities;
+    private MarshallerInterface $marshaller;
+    private DataConverterInterface $dataConverter;
     private RPCConnectionInterface $rpc;
 
-    /**
-     * @param ServiceContainer $services
-     * @param RPCConnectionInterface $rpc
-     */
-    public function __construct(ServiceContainer $services, RPCConnectionInterface $rpc)
-    {
+    public function __construct(
+        RepositoryInterface $activities,
+        MarshallerInterface $marshaller,
+        DataConverterInterface $dataConverter,
+        RPCConnectionInterface $rpc
+    ) {
+        $this->activities = $activities;
+        $this->marshaller = $marshaller;
+        $this->dataConverter = $dataConverter;
         $this->rpc = $rpc;
-        $this->services = $services;
     }
 
     /**
@@ -57,12 +63,12 @@ final class InvokeActivity extends Route
         if (($options['heartbeatDetails'] ?? 0) !== 0) {
             $offset = \count($payloads) - ($options['heartbeatDetails'] ?? 0);
 
-            $heartbeatDetails = EncodedValues::sliceValues($this->services->dataConverter, $payloads, $offset);
-            $payloads = EncodedValues::sliceValues($this->services->dataConverter, $payloads, 0, $offset);
+            $heartbeatDetails = EncodedValues::sliceValues($this->dataConverter, $payloads, $offset);
+            $payloads = EncodedValues::sliceValues($this->dataConverter, $payloads, 0, $offset);
         }
 
-        $context = new ActivityContext($this->rpc, $this->services->dataConverter, $payloads, $heartbeatDetails);
-        $context = $this->services->marshaller->unmarshal($options, $context);
+        $context = new ActivityContext($this->rpc, $this->dataConverter, $payloads, $heartbeatDetails);
+        $context = $this->marshaller->unmarshal($options, $context);
 
         $prototype = $this->findDeclarationOrFail($context->getInfo());
 
@@ -90,7 +96,7 @@ final class InvokeActivity extends Route
      */
     private function findDeclarationOrFail(ActivityInfo $info): ActivityPrototype
     {
-        $activity = $this->services->activities->find($info->type->name);
+        $activity = $this->activities->find($info->type->name);
 
         if ($activity === null) {
             throw new \LogicException(\sprintf(self::ERROR_NOT_FOUND, $info->type->name));
