@@ -63,7 +63,9 @@ final class StartWorkflow extends Route
         $instance = $this->instantiator->instantiate($this->findWorkflowOrFail($input->info));
 
         $context = new WorkflowContext(
-            $this->services,
+            $this->services->env,
+            $this->services->marshaller,
+            $this->services->readers,
             $this->services->client,
             $instance,
             $input,

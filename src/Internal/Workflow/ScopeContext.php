@@ -44,7 +44,9 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
         callable $onRequest
     ): WorkflowContextInterface {
         $ctx = new self(
-            $context->services,
+            $context->environment,
+            $context->marshaller,
+            $context->readers,
             $context->client,
             $context->workflowInstance,
             $context->input,
@@ -94,7 +96,7 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
 
         return new CompletableResult(
             $this,
-            $this->services->loop,
+            $this->scope->getLoop(),
             $promise,
             $this->scope->getLayer()
         );
@@ -113,7 +115,7 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
 
         return new CompletableResult(
             $this,
-            $this->services->loop,
+            $this->scope->getLoop(),
             $deferred->promise(),
             $this->scope->getLayer()
         );

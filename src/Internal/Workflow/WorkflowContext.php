@@ -18,12 +18,12 @@ use Temporal\Common\Uuid;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Internal\Declaration\Reader\Readers;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
-use Temporal\Internal\ServiceContainer;
+use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\StackRenderer;
 use Temporal\Internal\Transport\ClientInterface;
-use Temporal\Internal\Transport\CompletableResult;
 use Temporal\Internal\Transport\CompletableResultInterface;
 use Temporal\Internal\Transport\Request\CompleteWorkflow;
 use Temporal\Internal\Transport\Request\ContinueAsNew;
@@ -32,6 +32,7 @@ use Temporal\Internal\Transport\Request\NewTimer;
 use Temporal\Internal\Transport\Request\Panic;
 use Temporal\Internal\Transport\Request\SideEffect;
 use Temporal\Promise;
+use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow\ActivityStubInterface;
@@ -48,7 +49,6 @@ use function React\Promise\resolve;
 
 class WorkflowContext implements WorkflowContextInterface
 {
-    protected ServiceContainer $services;
     protected ClientInterface $client;
 
     protected Input $input;
@@ -64,28 +64,27 @@ class WorkflowContext implements WorkflowContextInterface
 
     private array $trace = [];
     private bool $continueAsNew = false;
+    protected EnvironmentInterface $environment;
+    protected MarshallerInterface $marshaller;
+    protected Readers $readers;
 
-    /**
-     * WorkflowContext constructor.
-     * @param ServiceContainer          $services
-     * @param ClientInterface           $client
-     * @param WorkflowInstanceInterface $workflowInstance
-     * @param Input                     $input
-     * @param ValuesInterface|null      $lastCompletionResult
-     */
     public function __construct(
-        ServiceContainer $services,
+        EnvironmentInterface $environment,
+        MarshallerInterface $marshaller,
+        Readers $readers,
         ClientInterface $client,
         WorkflowInstanceInterface $workflowInstance,
         Input $input,
         ?ValuesInterface $lastCompletionResult
     ) {
-        $this->services = $services;
         $this->client = $client;
         $this->workflowInstance = $workflowInstance;
         $this->input = $input;
         $this->lastCompletionResult = $lastCompletionResult;
         $this->timers = new \SplObjectStorage();
+        $this->environment = $environment;
+        $this->marshaller = $marshaller;
+        $this->readers = $readers;
     }
 
     /**
@@ -101,7 +100,7 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function now(): \DateTimeInterface
     {
-        return $this->services->env->now();
+        return $this->environment->now();
     }
 
     /**
@@ -218,7 +217,7 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function isReplaying(): bool
     {
-        return $this->services->env->isReplaying();
+        return $this->environment->isReplaying();
     }
 
     /**
@@ -256,7 +255,7 @@ class WorkflowContext implements WorkflowContextInterface
         $request = new ContinueAsNew(
             $type,
             EncodedValues::fromValues($args),
-            $this->services->marshaller->marshal($options ?? new ContinueAsNewOptions())
+            $this->marshaller->marshal($options ?? new ContinueAsNewOptions())
         );
 
         // must not be captured
@@ -270,7 +269,7 @@ class WorkflowContext implements WorkflowContextInterface
     {
         $options ??= new ContinueAsNewOptions();
 
-        $workflow = $this->services->readers->workflowFromClass($class);
+        $workflow = $this->readers->workflowFromClass($class);
 
         return new ContinueAsNewProxy($class, $workflow, $options, $this);
     }
@@ -305,7 +304,7 @@ class WorkflowContext implements WorkflowContextInterface
     ): ChildWorkflowStubInterface {
         $options ??= (new ChildWorkflowOptions())->withNamespace($this->getInfo()->namespace);
 
-        return new ChildWorkflowStub($this->services->marshaller, $type, $options);
+        return new ChildWorkflowStub($this->marshaller, $type, $options);
     }
 
     /**
@@ -313,7 +312,7 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function newChildWorkflowStub(string $class, ChildWorkflowOptions $options = null): object
     {
-        $workflow = $this->services->readers->workflowFromClass($class);
+        $workflow = $this->readers->workflowFromClass($class);
         $options = $options ?? (new ChildWorkflowOptions())->withNamespace($this->getInfo()->namespace);
 
         return new ChildWorkflowProxy(
@@ -329,7 +328,7 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function newExternalWorkflowStub(string $class, WorkflowExecution $execution): object
     {
-        $workflow = $this->services->readers->workflowFromClass($class);
+        $workflow = $this->readers->workflowFromClass($class);
 
         $stub = $this->newUntypedExternalWorkflowStub($execution);
 
@@ -363,7 +362,7 @@ class WorkflowContext implements WorkflowContextInterface
     {
         $options ??= new ActivityOptions();
 
-        return new ActivityStub($this->services->marshaller, $options);
+        return new ActivityStub($this->marshaller, $options);
     }
 
     /**
@@ -371,7 +370,7 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function newActivityStub(string $class, ActivityOptions $options = null): object
     {
-        $activities = $this->services->readers->activityFromClass($class);
+        $activities = $this->readers->activityFromClass($class);
 
         return new ActivityProxy(
             $class,

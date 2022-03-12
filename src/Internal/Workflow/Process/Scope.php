@@ -355,6 +355,14 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     }
 
     /**
+     * @return LoopInterface
+     */
+    public function getLoop(): LoopInterface
+    {
+        return $this->loop;
+    }
+
+    /**
      * @param RequestInterface $request
      * @param PromiseInterface $promise
      */
