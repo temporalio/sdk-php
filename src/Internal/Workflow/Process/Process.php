@@ -14,8 +14,10 @@ namespace Temporal\Internal\Workflow\Process;
 use JetBrains\PhpStorm\Pure;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DestructMemorizedInstanceException;
+use Temporal\Exception\ExceptionInterceptor;
 use Temporal\Exception\InvalidArgumentException;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
+use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Workflow\WorkflowContext;
 use Temporal\Worker\LoopInterface;
@@ -23,14 +25,18 @@ use Temporal\Workflow\ProcessInterface;
 
 class Process extends Scope implements ProcessInterface
 {
-    /**
-     * Process constructor.
-     * @param ServiceContainer $services
-     * @param WorkflowContext  $ctx
-     */
-    public function __construct(ServiceContainer $services, WorkflowContext $ctx)
+    private ExceptionInterceptor $exceptionInterceptor;
+
+    public function __construct(
+        LoopInterface $loop,
+        QueueInterface $queue,
+        WorkflowContext $ctx,
+        ExceptionInterceptor $exceptionInterceptor
+    )
     {
-        parent::__construct($services, $ctx);
+        $this->exceptionInterceptor = $exceptionInterceptor;
+
+        parent::__construct($loop, $queue, $ctx);
 
         $this->getWorkflowInstance()->getSignalQueue()->onSignal(
             function (callable $handler): void {
@@ -108,7 +114,7 @@ class Process extends Scope implements ProcessInterface
                 return;
             }
 
-            if ($this->services->exceptionInterceptor->isRetryable($result)) {
+            if ($this->exceptionInterceptor->isRetryable($result)) {
                 $this->scopeContext->panic($result);
                 return;
             }

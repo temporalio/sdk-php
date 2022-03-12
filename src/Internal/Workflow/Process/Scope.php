@@ -17,8 +17,10 @@ use React\Promise\PromisorInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DestructMemorizedInstanceException;
+use Temporal\Exception\ExceptionInterceptorInterface;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\TemporalFailure;
+use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Request\Cancel;
 use Temporal\Internal\Workflow\ScopeContext;
@@ -37,11 +39,6 @@ use Temporal\Workflow\WorkflowContextInterface;
  */
 class Scope implements CancellationScopeInterface, PromisorInterface
 {
-    /**
-     * @var ServiceContainer
-     */
-    protected ServiceContainer $services;
-
     /**
      * @var WorkflowContextInterface
      */
@@ -114,21 +111,16 @@ class Scope implements CancellationScopeInterface, PromisorInterface
      */
     private array $onClose = [];
 
-    /**
-     * @var bool
-     */
     private bool $detached = false;
-
-    /**
-     * @var bool
-     */
     private bool $cancelled = false;
+    private LoopInterface $loop;
+    private QueueInterface $queue;
 
-    /**
-     * @param WorkflowContext  $ctx
-     * @param ServiceContainer $services
-     */
-    public function __construct(ServiceContainer $services, WorkflowContext $ctx)
+    public function __construct(
+        LoopInterface $loop,
+        QueueInterface $queue,
+        WorkflowContext $ctx
+    )
     {
         $this->context = $ctx;
         $this->scopeContext = ScopeContext::fromWorkflowContext(
@@ -137,7 +129,8 @@ class Scope implements CancellationScopeInterface, PromisorInterface
             \Closure::fromCallable([$this, 'onRequest'])
         );
 
-        $this->services = $services;
+        $this->loop = $loop;
+        $this->queue = $queue;
         $this->deferred = new Deferred();
 
         $this->awaitLock = 0;
@@ -319,7 +312,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
      */
     protected function createScope(bool $detached, string $layer = null): self
     {
-        $scope = new Scope($this->services, $this->context);
+        $scope = new Scope($this->loop, $this->queue, $this->context);
         $scope->detached = $detached;
 
         if ($layer !== null) {
@@ -549,10 +542,10 @@ class Scope implements CancellationScopeInterface, PromisorInterface
      */
     private function defer(\Closure $tick)
     {
-        $listener = $this->services->loop->once($this->layer, $tick);
+        $listener = $this->loop->once($this->layer, $tick);
 
-        if ($this->services->queue->count() === 0) {
-            $this->services->loop->tick();
+        if ($this->queue->count() === 0) {
+            $this->loop->tick();
         }
 
         return $listener;

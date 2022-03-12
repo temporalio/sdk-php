@@ -70,7 +70,12 @@ final class StartWorkflow extends Route
             $lastCompletionResult
         );
 
-        $process = new Process($this->services, $context);
+        $process = new Process(
+            $this->services->loop,
+            $this->services->queue,
+            $context,
+            $this->services->exceptionInterceptor
+        );
         $this->services->running->add($process);
         $resolver->resolve(EncodedValues::fromValues([null]));
 
