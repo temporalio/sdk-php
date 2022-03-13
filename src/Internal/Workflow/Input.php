@@ -17,7 +17,6 @@ use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Workflow\WorkflowInfo;
 
-#[Immutable]
 final class Input
 {
     /**
@@ -28,11 +27,6 @@ final class Input
     #[Immutable]
     public WorkflowInfo $info;
 
-    /**
-     * @var ValuesInterface
-     * @psalm-readonly
-     */
-    #[Immutable]
     public ValuesInterface $input;
 
     /**

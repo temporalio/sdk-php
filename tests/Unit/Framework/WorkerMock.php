@@ -60,7 +60,20 @@ final class WorkerMock implements Identifiable, WorkerInterface, DispatcherInter
     private function createRouter(): RouterInterface
     {
         $router = new Router();
-        $router->add(new Router\StartWorkflow($this->services));
+        $router->add(
+            new Router\StartWorkflow(
+                $this->services->loop,
+                $this->services->queue,
+                $this->services->exceptionInterceptor,
+                $this->services->env,
+                $this->services->marshaller,
+                $this->services->readers,
+                $this->services->client,
+                $this->services->dataConverter,
+                $this->services->workflows,
+                $this->services->running
+            )
+        );
         $router->add(
             new Router\InvokeActivity(
                 $this->services->activities,
