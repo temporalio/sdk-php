@@ -7,6 +7,7 @@ namespace Temporal\Tests\Unit\Framework;
 use PHPUnit\Framework\Exception;
 use React\Promise\PromiseInterface;
 use Temporal\Common\Uuid;
+use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Internal\Repository\Identifiable;
 use Temporal\Internal\ServiceContainer;
@@ -150,11 +151,21 @@ final class WorkerMock implements Identifiable, WorkerInterface, DispatcherInter
     public function registerActivityImplementations(object ...$activity): WorkerInterface
     {
         foreach ($activity as $act) {
-            $class = get_class($act);
+            $this->registerActivity(\get_class($act), fn() => $act);
+        }
 
-            foreach ($this->services->activitiesReader->fromClass($class) as $proto) {
-                $this->services->activities->add($proto->withInstance($act), false);
+        return $this;
+    }
+
+
+    public function registerActivity(string $type, callable $factory = null): WorkerInterface
+    {
+        foreach ($this->services->activitiesReader->fromClass($type) as $proto) {
+            /** @var ActivityPrototype $proto */
+            if ($factory !== null) {
+                $proto = $proto->withFactory($factory);
             }
+            $this->services->activities->add($proto, false);
         }
 
         return $this;

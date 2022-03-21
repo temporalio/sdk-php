@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration\Prototype;
 
+use Closure;
 use Temporal\Common\MethodRetry;
 use Temporal\Internal\Declaration\ActivityInstance;
 
@@ -25,6 +26,8 @@ final class ActivityPrototype extends Prototype
      * @var ActivityInstance|null
      */
     private ?ActivityInstance $instance = null;
+
+    private ?Closure $factory = null;
 
     /**
      * @return MethodRetry|null
@@ -42,12 +45,18 @@ final class ActivityPrototype extends Prototype
         $this->methodRetry = $attribute;
     }
 
-    /**
-     * @return ?ActivityInstance
-     */
-    public function getInstance(): ?ActivityInstance
+    public function getInstance(): ActivityInstance
     {
-        return $this->instance;
+        if ($this->instance !== null) {
+            return $this->instance;
+        }
+
+        if ($this->factory !== null) {
+            $instance = call_user_func($this->factory, $this->getClass());
+            return new ActivityInstance($this, $instance);
+        }
+
+        return new ActivityInstance($this, $this->getClass()->newInstance());
     }
 
     /**
@@ -58,6 +67,14 @@ final class ActivityPrototype extends Prototype
     {
         $proto = clone $this;
         $proto->instance = new ActivityInstance($proto, $instance);
+
+        return $proto;
+    }
+
+    public function withFactory(Closure $factory): self
+    {
+        $proto = clone $this;
+        $proto->factory = $factory;
 
         return $proto;
     }

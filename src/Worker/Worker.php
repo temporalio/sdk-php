@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Worker;
 
 use React\Promise\PromiseInterface;
+use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Events\EventEmitterTrait;
 use Temporal\Internal\Events\EventListenerInterface;
 use Temporal\Internal\Repository\Identifiable;
@@ -128,11 +129,19 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
     public function registerActivityImplementations(object ...$activity): WorkerInterface
     {
         foreach ($activity as $act) {
-            $class = \get_class($act);
+            $this->registerActivity(\get_class($act), fn() => $act);
+        }
 
-            foreach ($this->services->activitiesReader->fromClass($class) as $proto) {
-                $this->services->activities->add($proto->withInstance($act), false);
+        return $this;
+    }
+
+    public function registerActivity(string $type, callable $factory = null): WorkerInterface
+    {
+        foreach ($this->services->activitiesReader->fromClass($type) as $proto) {
+            if ($factory !== null) {
+                $proto = $proto->withFactory($factory);
             }
+            $this->services->activities->add($proto, false);
         }
 
         return $this;
