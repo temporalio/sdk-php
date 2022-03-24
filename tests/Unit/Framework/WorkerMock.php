@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Framework;
 
+use Closure;
 use PHPUnit\Framework\Exception;
 use React\Promise\PromiseInterface;
 use Temporal\Common\Uuid;
@@ -200,5 +201,12 @@ final class WorkerMock implements Identifiable, WorkerInterface, DispatcherInter
     {
         $this->server->checkWaitingExpectations();
         $this->execution = [];
+    }
+
+    public function registerActivityFinalizer(Closure $finalizer): WorkerInterface
+    {
+        $this->services->activities->addFinalizer($finalizer);
+
+        return $this;
     }
 }

@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration\Prototype;
 
+use Closure;
 use Temporal\Internal\Repository\ArrayRepository;
 
 /**
@@ -18,4 +19,15 @@ use Temporal\Internal\Repository\ArrayRepository;
  */
 final class ActivityCollection extends ArrayRepository
 {
+    private ?Closure $finaizer;
+
+    public function addFinalizer(Closure $finalizer): void
+    {
+        $this->finaizer = $finalizer;
+    }
+
+    public function getFinalizer(): ?Closure
+    {
+        return $this->finaizer;
+    }
 }
