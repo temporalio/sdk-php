@@ -80,6 +80,10 @@ final class InvokeActivity extends Route
         } catch (\Throwable $e) {
             $resolver->reject($e);
         } finally {
+            $finalizer = $this->services->activities->getFinalizer();
+            if ($finalizer !== null) {
+                call_user_func($finalizer);
+            }
             Activity::setCurrentContext(null);
         }
     }

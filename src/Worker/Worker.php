@@ -11,8 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Worker;
 
+use Closure;
 use React\Promise\PromiseInterface;
-use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Events\EventEmitterTrait;
 use Temporal\Internal\Events\EventListenerInterface;
 use Temporal\Internal\Repository\Identifiable;
@@ -143,6 +143,13 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
             }
             $this->services->activities->add($proto, false);
         }
+
+        return $this;
+    }
+
+    public function registerActivityFinalizer(Closure $finalizer): WorkerInterface
+    {
+        $this->services->activities->addFinalizer($finalizer);
 
         return $this;
     }

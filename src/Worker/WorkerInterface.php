@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Worker;
 
+use Closure;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 
@@ -35,6 +36,12 @@ interface WorkerInterface
      * @return $this
      */
     public function registerWorkflowTypes(string ...$class): self;
+
+    /**
+     * Register activity finalizer which is a callback being called after each activity. This
+     * can be used to clean up resources in your application.
+     */
+    public function registerActivityFinalizer(Closure $finalizer): self;
 
     /**
      * Returns list of registered workflow prototypes.

@@ -204,6 +204,6 @@ jobs:
           docker-compose -f ./tests/docker-compose.yaml up -d
           sleep 35
           chmod +x ./rr
-          ./rr serve -c .rr.silent.yaml -w tests &
+          ./rr serve -c ./tests/.rr.silent.yaml &
           sleep 10
           vendor/bin/phpunit --testsuite=Functional --testdox --verbose
