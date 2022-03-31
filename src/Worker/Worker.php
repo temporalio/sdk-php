@@ -171,6 +171,7 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
 
         // Activity routes
         $router->add(new Router\InvokeActivity($this->services, $this->rpc));
+        $router->add(new Router\InvokeLocalActivity($this->services, $this->rpc));
 
         // Workflow routes
         $router->add(new Router\StartWorkflow($this->services));
