@@ -14,6 +14,7 @@ namespace Temporal\Workflow;
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
 use Temporal\DataConverter\Type;
+use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Transport\CompletableResultInterface;
 
 interface ActivityStubInterface
@@ -26,10 +27,10 @@ interface ActivityStubInterface
     /**
      * Executes an activity asynchronously by its type name and arguments.
      *
-     * @param string $name name of an activity type to execute.
+     * @param ActivityPrototype $handler activity prototype to execute.
      * @param array $args arguments of the activity.
      * @param Type|string|null|\ReflectionClass|\ReflectionType $returnType
      * @return CompletableResultInterface Promise to the activity result.
      */
-    public function execute(string $name, array $args = [], $returnType = null): PromiseInterface;
+    public function execute(ActivityPrototype $handler, array $args = [], $returnType = null): PromiseInterface;
 }

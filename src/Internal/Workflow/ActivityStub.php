@@ -14,8 +14,10 @@ namespace Temporal\Internal\Workflow;
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Transport\Request\ExecuteActivity;
+use Temporal\Internal\Transport\Request\ExecuteLocalActivity;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\ActivityStubInterface;
@@ -54,13 +56,11 @@ final class ActivityStub implements ActivityStubInterface
     /**
      * {@inheritDoc}
      */
-    public function execute(string $name, array $args = [], $returnType = null): PromiseInterface
+    public function execute(ActivityPrototype $handler, array $args = [], $returnType = null): PromiseInterface
     {
-        $request = new ExecuteActivity(
-            $name,
-            EncodedValues::fromValues($args),
-            $this->getOptionsArray()
-        );
+        $request = $handler->isLocalActivity() ?
+            new ExecuteLocalActivity($handler->getID(), EncodedValues::fromValues($args), $this->getOptionsArray()) :
+            new ExecuteActivity($handler->getID(), EncodedValues::fromValues($args), $this->getOptionsArray());
 
         return EncodedValues::decodePromise($this->request($request), $returnType);
     }

@@ -75,7 +75,7 @@ final class ActivityProxy extends Proxy
         $type = $handler->getHandler()->getReturnType();
 
         return $this->ctx->newUntypedActivityStub($this->options->mergeWith($handler->getMethodRetry()))
-            ->execute($handler->getID(), $args, $type);
+            ->execute($handler, $args, $type);
     }
 
     /**
