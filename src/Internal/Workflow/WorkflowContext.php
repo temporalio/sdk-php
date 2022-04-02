@@ -13,7 +13,10 @@ namespace Temporal\Internal\Workflow;
 
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
+use RuntimeException;
 use Temporal\Activity\ActivityOptions;
+use Temporal\Activity\ActivityOptionsInterface;
+use Temporal\Activity\LocalActivityOptions;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Type;
@@ -359,7 +362,7 @@ class WorkflowContext implements WorkflowContextInterface
     /**
      * {@inheritDoc}
      */
-    public function newUntypedActivityStub(ActivityOptions $options = null): ActivityStubInterface
+    public function newUntypedActivityStub(ActivityOptionsInterface $options = null): ActivityStubInterface
     {
         $options ??= new ActivityOptions();
 
@@ -369,9 +372,13 @@ class WorkflowContext implements WorkflowContextInterface
     /**
      * {@inheritDoc}
      */
-    public function newActivityStub(string $class, ActivityOptions $options = null): object
+    public function newActivityStub(string $class, ActivityOptionsInterface $options = null): object
     {
         $activities = $this->services->activitiesReader->fromClass($class);
+
+        if ($activities[0]->isLocalActivity() && !$options instanceof LocalActivityOptions) {
+            throw new RuntimeException("Local activity can be used only with LocalActivityOptions");
+        }
 
         return new ActivityProxy(
             $class,

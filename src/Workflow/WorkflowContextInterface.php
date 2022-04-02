@@ -13,6 +13,7 @@ namespace Temporal\Workflow;
 
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
+use Temporal\Activity\ActivityOptionsInterface;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Support\DateInterval;
@@ -234,18 +235,18 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @psalm-template T of object
      * @param class-string<T> $class
-     * @param ActivityOptions|null $options
+     * @param ActivityOptionsInterface|null $options
      * @return T
      */
-    public function newActivityStub(string $class, ActivityOptions $options = null): object;
+    public function newActivityStub(string $class, ActivityOptionsInterface $options = null): object;
 
     /**
      * @see Workflow::newUntypedActivityStub()
      *
-     * @param ActivityOptions|null $options
+     * @param ActivityOptionsInterface|null $options
      * @return ActivityStubInterface
      */
-    public function newUntypedActivityStub(ActivityOptions $options = null): ActivityStubInterface;
+    public function newUntypedActivityStub(ActivityOptionsInterface $options = null): ActivityStubInterface;
 
     /**
      * @see Workflow::await()

@@ -13,6 +13,7 @@ namespace Temporal\Internal\Workflow;
 
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
+use Temporal\Activity\ActivityOptionsInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Marshaller\MarshallerInterface;
@@ -25,13 +26,13 @@ use Temporal\Workflow\ActivityStubInterface;
 final class ActivityStub implements ActivityStubInterface
 {
     private MarshallerInterface $marshaller;
-    private ActivityOptions $options;
+    private ActivityOptionsInterface $options;
 
     /**
      * @param MarshallerInterface $marshaller
-     * @param ActivityOptions $options
+     * @param ActivityOptionsInterface $options
      */
-    public function __construct(MarshallerInterface $marshaller, ActivityOptions $options)
+    public function __construct(MarshallerInterface $marshaller, ActivityOptionsInterface $options)
     {
         $this->marshaller = $marshaller;
         $this->options = $options;
@@ -40,7 +41,7 @@ final class ActivityStub implements ActivityStubInterface
     /**
      * {@inheritDoc}
      */
-    public function getOptions(): ActivityOptions
+    public function getOptions(): ActivityOptionsInterface
     {
         return $this->options;
     }

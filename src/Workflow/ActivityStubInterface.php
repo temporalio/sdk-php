@@ -13,6 +13,7 @@ namespace Temporal\Workflow;
 
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
+use Temporal\Activity\ActivityOptionsInterface;
 use Temporal\DataConverter\Type;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Transport\CompletableResultInterface;
@@ -20,9 +21,9 @@ use Temporal\Internal\Transport\CompletableResultInterface;
 interface ActivityStubInterface
 {
     /**
-     * @return ActivityOptions
+     * @return ActivityOptionsInterface
      */
-    public function getOptions(): ActivityOptions;
+    public function getOptions(): ActivityOptionsInterface;
 
     /**
      * Executes an activity asynchronously by its type name and arguments.
