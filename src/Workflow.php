@@ -815,7 +815,7 @@ final class Workflow extends Facade
     public static function executeActivity(
         string $type,
         array $args = [],
-        ActivityOptions $options = null,
+        ActivityOptionsInterface $options = null,
         \ReflectionType $returnType = null
     ): PromiseInterface {
         /** @var ScopedContextInterface $context */
@@ -884,11 +884,11 @@ final class Workflow extends Facade
      *  }
      * </code>
      *
-     * @param ActivityOptions|null $options
+     * @param ActivityOptionsInterface|null $options
      * @return ActivityStubInterface
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
-    public static function newUntypedActivityStub(ActivityOptions $options = null): ActivityStubInterface
+    public static function newUntypedActivityStub(ActivityOptionsInterface $options = null): ActivityStubInterface
     {
         /** @var ScopedContextInterface $context */
         $context = self::getCurrentContext();

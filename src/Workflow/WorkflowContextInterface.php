@@ -226,7 +226,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
     public function executeActivity(
         string $type,
         array $args = [],
-        ActivityOptions $options = null,
+        ActivityOptionsInterface $options = null,
         \ReflectionType $returnType = null
     ): PromiseInterface;
 
