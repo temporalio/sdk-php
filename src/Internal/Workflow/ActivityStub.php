@@ -57,7 +57,7 @@ final class ActivityStub implements ActivityStubInterface
     /**
      * {@inheritDoc}
      */
-    public function execute(string $name, bool $isLocalActivity, array $args = [], $returnType = null): PromiseInterface
+    public function execute(string $name, array $args = [], $returnType = null, bool $isLocalActivity = false): PromiseInterface
     {
         $request = $isLocalActivity ?
             new ExecuteLocalActivity($name, EncodedValues::fromValues($args), $this->getOptionsArray()) :

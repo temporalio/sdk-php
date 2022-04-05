@@ -41,7 +41,7 @@ class ActivityStubWorkflow
         // untyped stub
         $untyped = Workflow::newUntypedActivityStub(ActivityOptions::new()->withStartToCloseTimeout(1));
 
-        $result[] = yield $untyped->execute('SimpleActivity.echo', false, ['untyped']);
+        $result[] = yield $untyped->execute('SimpleActivity.echo', ['untyped']);
 
         return $result;
     }
