@@ -356,7 +356,7 @@ class WorkflowContext implements WorkflowContextInterface
         ActivityOptionsInterface $options = null,
         \ReflectionType $returnType = null
     ): PromiseInterface {
-        return $this->newUntypedActivityStub($options)->execute($type,  $args, $returnType);
+        return $this->newUntypedActivityStub($options)->execute($type, $args, $returnType);
     }
 
     /**
