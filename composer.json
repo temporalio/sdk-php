@@ -36,10 +36,10 @@
     },
     "autoload": {
         "psr-4": {
-            "GPBMetadata\\": "api/GPBMetadata",
+            "GPBMetadata\\": "api/v1/GPBMetadata",
             "Temporal\\": "src",
-            "Temporal\\Api\\": "api/Temporal/Api",
-            "Temporal\\Roadrunner\\": "api/Temporal/Roadrunner"
+            "Temporal\\Api\\": "api/v1/Temporal/Api",
+            "Temporal\\Roadrunner\\": "api/v1/Temporal/Roadrunner"
         }
     },
     "require-dev": {
