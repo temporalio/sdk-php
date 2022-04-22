@@ -1,5 +1,8 @@
 # default target
-default: generate-proto
+default: echo
+
+echo:
+	@echo "Hello world!"
 
 generate-proto:
 	php resources/scripts/generate-proto.php
