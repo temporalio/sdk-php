@@ -363,8 +363,8 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
      */
     private function createCodec(): CodecInterface
     {
-        // todo: make it better
         switch ($_SERVER['RR_CODEC'] ?? null) {
+            case 'proto':
             case 'protobuf':
                 return new ProtoCodec($this->converter);
             default:
