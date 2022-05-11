@@ -13,7 +13,10 @@ namespace Temporal\Internal\Workflow;
 
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
+use RuntimeException;
 use Temporal\Activity\ActivityOptions;
+use Temporal\Activity\ActivityOptionsInterface;
+use Temporal\Activity\LocalActivityOptions;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Type;
@@ -23,8 +26,8 @@ use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\StackRenderer;
 use Temporal\Internal\Transport\ClientInterface;
-use Temporal\Internal\Transport\CompletableResult;
 use Temporal\Internal\Transport\CompletableResultInterface;
+use Temporal\Internal\Transport\Request\Cancel;
 use Temporal\Internal\Transport\Request\CompleteWorkflow;
 use Temporal\Internal\Transport\Request\ContinueAsNew;
 use Temporal\Internal\Transport\Request\GetVersion;
@@ -350,7 +353,7 @@ class WorkflowContext implements WorkflowContextInterface
     public function executeActivity(
         string $type,
         array $args = [],
-        ActivityOptions $options = null,
+        ActivityOptionsInterface $options = null,
         \ReflectionType $returnType = null
     ): PromiseInterface {
         return $this->newUntypedActivityStub($options)->execute($type, $args, $returnType);
@@ -359,7 +362,7 @@ class WorkflowContext implements WorkflowContextInterface
     /**
      * {@inheritDoc}
      */
-    public function newUntypedActivityStub(ActivityOptions $options = null): ActivityStubInterface
+    public function newUntypedActivityStub(ActivityOptionsInterface $options = null): ActivityStubInterface
     {
         $options ??= new ActivityOptions();
 
@@ -369,9 +372,13 @@ class WorkflowContext implements WorkflowContextInterface
     /**
      * {@inheritDoc}
      */
-    public function newActivityStub(string $class, ActivityOptions $options = null): object
+    public function newActivityStub(string $class, ActivityOptionsInterface $options = null): object
     {
         $activities = $this->services->activitiesReader->fromClass($class);
+
+        if ($activities[0]->isLocalActivity() && !$options instanceof LocalActivityOptions) {
+            throw new RuntimeException("Local activity can be used only with LocalActivityOptions");
+        }
 
         return new ActivityProxy(
             $class,
@@ -507,31 +514,34 @@ class WorkflowContext implements WorkflowContextInterface
 
     public function resolveConditionGroup(string $conditionGroupId): void
     {
-        // Group is empty or already resolved
-        if (!isset($this->awaits[$conditionGroupId])) {
-            return;
+        // First resolve pending promises
+        if (isset($this->awaits[$conditionGroupId])) {
+            foreach ($this->awaits[$conditionGroupId] as $i => $cond) {
+                [$_, $deferred] = $cond;
+                unset($this->awaits[$conditionGroupId][$i]);
+                $deferred->resolve();
+            }
+            unset($this->awaits[$conditionGroupId]);
         }
 
-        foreach ($this->awaits[$conditionGroupId] as $i => $cond) {
-            [$_, $deferred] = $cond;
-            unset($this->awaits[$conditionGroupId][$i]);
-            $deferred->resolve();
-        }
-
-        // We don't have pending timers in this group
+        // Check pending timers in this group
         if (!isset($this->asyncAwaits[$conditionGroupId])) {
             return;
         }
 
+        // Then cancel any pending timers if exist
         foreach ($this->asyncAwaits[$conditionGroupId] as $index => $awaitCondition) {
             if (!$awaitCondition->isComplete()) {
+                /** @var NewTimer $timer */
                 $timer = $this->timers->offsetGet($awaitCondition);
                 if ($timer !== null) {
-                    $this->client->cancel($timer);
+                    $request = new Cancel($timer->getID());
+                    $this->request($request);
                     $this->timers->offsetUnset($awaitCondition);
                 }
             }
-            unset($this->asyncAwaits[$index]);
+            unset($this->asyncAwaits[$conditionGroupId][$index]);
         }
+        unset($this->asyncAwaits[$conditionGroupId]);
     }
 }

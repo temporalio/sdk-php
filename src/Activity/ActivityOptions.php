@@ -31,7 +31,7 @@ use Temporal\Worker\WorkerFactoryInterface;
  *
  * @psalm-import-type DateIntervalValue from DateInterval
  */
-class ActivityOptions extends Options
+class ActivityOptions extends Options implements ActivityOptionsInterface
 {
     /**
      * TaskQueue that the activity needs to be scheduled on.
