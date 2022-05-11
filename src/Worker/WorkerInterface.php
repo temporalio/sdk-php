@@ -71,7 +71,7 @@ interface WorkerInterface
      * that creates or builds a new activity instance. The factory should be a callable which accepts
      * an instance of ReflectionClass with an activity class which should be created.
      *
-     * $worker->registerActivity(MyActivity::class, fn(ReflectionClass $class) => $container->create($class->getClass()));
+     * $worker->registerActivity(MyActivity::class, fn(ReflectionClass $class) => $container->create($class->getName()));
      */
     public function registerActivity(string $type, callable $factory = null): self;
 
