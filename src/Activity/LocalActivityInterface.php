@@ -16,15 +16,15 @@ use JetBrains\PhpStorm\Immutable;
 use Spiral\Attributes\NamedArgumentConstructorAttribute;
 
 /**
- * Indicates that an interface is an activity interface. Only interfaces
+ * Indicates that an interface is a local activity interface. Only interfaces
  * annotated with this annotation can be used as parameters
  * to {@see Workflow::activity()}
  * and {@see WorkflowContextInterface::newActivityStub()} methods.
  *
- * Each method of the interface annotated with {@see ActivityInterface}
- * including inherited from interfaces is a separate activity. By default the
+ * Each method of the interface annotated with {@see LocalActivityInterface}
+ * including inherited from interfaces is a separate activity. By default, the
  * name of an activity type is its method name with the first letter
- * capitalized. Use {@see ActivityInterface::$prefix}
+ * capitalized. Use {@see LocalActivityInterface::$prefix}
  * or {@see ActivityMethod::$name} to make sure that activity type names are
  * distinct.
  *
@@ -32,7 +32,7 @@ use Spiral\Attributes\NamedArgumentConstructorAttribute;
  * @Target({ "CLASS" })
  */
 #[\Attribute(\Attribute::TARGET_CLASS)]
-class ActivityInterface implements NamedArgumentConstructorAttribute
+final class LocalActivityInterface extends ActivityInterface
 {
     /**
      * Prefix to prepend to method names to generate activity types. Default is

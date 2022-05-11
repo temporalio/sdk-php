@@ -13,9 +13,12 @@ namespace Temporal\Internal\Workflow;
 
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
+use Temporal\Activity\ActivityOptionsInterface;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Transport\Request\ExecuteActivity;
+use Temporal\Internal\Transport\Request\ExecuteLocalActivity;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\ActivityStubInterface;
@@ -23,13 +26,13 @@ use Temporal\Workflow\ActivityStubInterface;
 final class ActivityStub implements ActivityStubInterface
 {
     private MarshallerInterface $marshaller;
-    private ActivityOptions $options;
+    private ActivityOptionsInterface $options;
 
     /**
      * @param MarshallerInterface $marshaller
-     * @param ActivityOptions $options
+     * @param ActivityOptionsInterface $options
      */
-    public function __construct(MarshallerInterface $marshaller, ActivityOptions $options)
+    public function __construct(MarshallerInterface $marshaller, ActivityOptionsInterface $options)
     {
         $this->marshaller = $marshaller;
         $this->options = $options;
@@ -38,7 +41,7 @@ final class ActivityStub implements ActivityStubInterface
     /**
      * {@inheritDoc}
      */
-    public function getOptions(): ActivityOptions
+    public function getOptions(): ActivityOptionsInterface
     {
         return $this->options;
     }
@@ -54,13 +57,11 @@ final class ActivityStub implements ActivityStubInterface
     /**
      * {@inheritDoc}
      */
-    public function execute(string $name, array $args = [], $returnType = null): PromiseInterface
+    public function execute(string $name, array $args = [], $returnType = null, bool $isLocalActivity = false): PromiseInterface
     {
-        $request = new ExecuteActivity(
-            $name,
-            EncodedValues::fromValues($args),
-            $this->getOptionsArray()
-        );
+        $request = $isLocalActivity ?
+            new ExecuteLocalActivity($name, EncodedValues::fromValues($args), $this->getOptionsArray()) :
+            new ExecuteActivity($name, EncodedValues::fromValues($args), $this->getOptionsArray());
 
         return EncodedValues::decodePromise($this->request($request), $returnType);
     }
