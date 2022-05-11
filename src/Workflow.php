@@ -13,6 +13,7 @@ namespace Temporal;
 
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
+use Temporal\Activity\ActivityOptionsInterface;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
@@ -814,7 +815,7 @@ final class Workflow extends Facade
     public static function executeActivity(
         string $type,
         array $args = [],
-        ActivityOptions $options = null,
+        ActivityOptionsInterface $options = null,
         \ReflectionType $returnType = null
     ): PromiseInterface {
         /** @var ScopedContextInterface $context */
@@ -852,11 +853,11 @@ final class Workflow extends Facade
      * @psalm-template T of object
      *
      * @param class-string<T> $class
-     * @param ActivityOptions|null $options
+     * @param ActivityOptionsInterface|null $options
      * @return T
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
-    public static function newActivityStub(string $class, ActivityOptions $options = null): object
+    public static function newActivityStub(string $class, ActivityOptionsInterface $options = null): object
     {
         /** @var ScopedContextInterface $context */
         $context = self::getCurrentContext();
@@ -883,11 +884,11 @@ final class Workflow extends Facade
      *  }
      * </code>
      *
-     * @param ActivityOptions|null $options
+     * @param ActivityOptionsInterface|null $options
      * @return ActivityStubInterface
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
-    public static function newUntypedActivityStub(ActivityOptions $options = null): ActivityStubInterface
+    public static function newUntypedActivityStub(ActivityOptionsInterface $options = null): ActivityStubInterface
     {
         /** @var ScopedContextInterface $context */
         $context = self::getCurrentContext();

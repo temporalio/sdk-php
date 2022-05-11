@@ -12,6 +12,8 @@ declare(strict_types=1);
 namespace Temporal\Internal\Declaration\Prototype;
 
 use Closure;
+use Temporal\Activity\ActivityInterface;
+use Temporal\Activity\LocalActivityInterface;
 use Temporal\Common\MethodRetry;
 use Temporal\Internal\Declaration\ActivityInstance;
 
@@ -28,6 +30,15 @@ final class ActivityPrototype extends Prototype
     private ?ActivityInstance $instance = null;
 
     private ?Closure $factory = null;
+
+    private bool $isLocalActivity;
+
+    public function __construct(ActivityInterface $interface, string $name, \ReflectionMethod $handler, \ReflectionClass $class)
+    {
+        $this->isLocalActivity = $interface instanceof LocalActivityInterface;
+
+        parent::__construct($name, $handler, $class);
+    }
 
     /**
      * @return MethodRetry|null
@@ -77,5 +88,10 @@ final class ActivityPrototype extends Prototype
         $proto->factory = $factory;
 
         return $proto;
+    }
+
+    public function isLocalActivity(): bool
+    {
+        return $this->isLocalActivity;
     }
 }

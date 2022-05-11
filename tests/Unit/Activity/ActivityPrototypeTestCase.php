@@ -45,6 +45,15 @@ final class ActivityPrototypeTestCase extends UnitTestCase
         $this->assertInstanceOf(DummyActivity::class, $protoWithFactory->getInstance()->getContext());
     }
 
+    public function testLocalActivityFlag(): void
+    {
+        $proto = $this->activityReader->fromClass(DummyActivity::class)[0];
+        self::assertFalse($proto->isLocalActivity());
+
+        $proto = $this->activityReader->fromClass(DummyLocalActivity::class)[0];
+        self::assertTrue($proto->isLocalActivity());
+    }
+
     public function testFactoryCreatesNewInstances(): void
     {
         $proto = $this->activityReader->fromClass(DummyActivity::class)[0];

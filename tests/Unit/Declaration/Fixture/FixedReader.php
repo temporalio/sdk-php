@@ -14,6 +14,7 @@ namespace Temporal\Tests\Unit\Declaration\Fixture;
 use Spiral\Attributes\ReaderInterface;
 use Temporal\Activity\ActivityInterface;
 use Temporal\Activity\ActivityMethod;
+use Temporal\Activity\LocalActivityInterface;
 
 class FixedReader implements ReaderInterface
 {
@@ -26,6 +27,10 @@ class FixedReader implements ReaderInterface
     {
         if ($name === ActivityInterface::class) {
             return new ActivityInterface();
+        }
+
+        if ($name === LocalActivityInterface::class) {
+            return new LocalActivityInterface();
         }
 
         return null;

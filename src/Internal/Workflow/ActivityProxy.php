@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Workflow;
 
 use React\Promise\PromiseInterface;
-use Temporal\Activity\ActivityOptions;
+use Temporal\Activity\ActivityOptionsInterface;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Transport\CompletableResultInterface;
 use Temporal\Workflow\WorkflowContextInterface;
@@ -36,9 +36,9 @@ final class ActivityProxy extends Proxy
     private string $class;
 
     /**
-     * @var ActivityOptions
+     * @var ActivityOptionsInterface
      */
-    private ActivityOptions $options;
+    private ActivityOptionsInterface $options;
 
     /**
      * @var WorkflowContextInterface
@@ -48,13 +48,13 @@ final class ActivityProxy extends Proxy
     /**
      * @param string $class
      * @param array<ActivityPrototype> $activities
-     * @param ActivityOptions $options
+     * @param ActivityOptionsInterface $options
      * @param WorkflowContextInterface $ctx
      */
     public function __construct(
         string $class,
         array $activities,
-        ActivityOptions $options,
+        ActivityOptionsInterface $options,
         WorkflowContextInterface $ctx
     ) {
         $this->activities = $activities;
@@ -75,7 +75,7 @@ final class ActivityProxy extends Proxy
         $type = $handler->getHandler()->getReturnType();
 
         return $this->ctx->newUntypedActivityStub($this->options->mergeWith($handler->getMethodRetry()))
-            ->execute($handler->getID(), $args, $type);
+            ->execute($handler->getID(), $args, $type, $handler->isLocalActivity());
     }
 
     /**
