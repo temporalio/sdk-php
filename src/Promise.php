@@ -18,6 +18,9 @@ use function React\Promise\any;
 use function React\Promise\map;
 use function React\Promise\reduce;
 use function React\Promise\some;
+use function React\Promise\resolve;
+use function React\Promise\reject;
+use function React\Promise\race;
 
 /**
  * @psalm-type PromiseMapCallback = callable(mixed $value): mixed
@@ -114,5 +117,60 @@ final class Promise
     public static function reduce(iterable $promises, callable $reduce, $initial = null): PromiseInterface
     {
         return reduce([...$promises], $reduce, $initial);
+    }
+
+    /**
+     * Creates a fulfilled promise for the supplied `$promiseOrValue`.
+     *
+     * If `$promiseOrValue` is a value, it will be the resolution value of the
+     * returned promise.
+     *
+     * If `$promiseOrValue` is a thenable (any object that provides a `then()` method),
+     * a trusted promise that follows the state of the thenable is returned.
+     *
+     * If `$promiseOrValue` is a promise, it will be returned as is.
+     *
+     * @param $promiseOrValue
+     * @return PromiseInterface
+     */
+    public static function resolve($promiseOrValue = null): PromiseInterface
+    {
+        return resolve($promiseOrValue);
+    }
+
+    /**
+     * Creates a rejected promise for the supplied `$promiseOrValue`.
+     *
+     * If `$promiseOrValue` is a value, it will be the rejection value of the
+     * returned promise.
+     *
+     * If `$promiseOrValue` is a promise, its completion value will be the rejected
+     * value of the returned promise.
+     *
+     * This can be useful in situations where you need to reject a promise without
+     * throwing an exception. For example, it allows you to propagate a rejection with
+     * the value of another promise.
+     *
+     * @param $promiseOrValue
+     * @return PromiseInterface
+     */
+    public static function reject($promiseOrValue = null): PromiseInterface
+    {
+        return reject($promiseOrValue);
+    }
+
+    /**
+     * Initiates a competitive race that allows one winner. Returns a promise which is
+     * resolved in the same way the first settled promise resolves.
+     *
+     * The returned promise will become **infinitely pending** if  `$promisesOrValues`
+     * contains 0 items.
+     *
+     * @param iterable $promisesOrValues
+     * @return PromiseInterface
+     */
+    public static function race(iterable $promisesOrValues): PromiseInterface
+    {
+        return race([...$promisesOrValues]);
     }
 }
