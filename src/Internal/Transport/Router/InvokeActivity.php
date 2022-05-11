@@ -22,7 +22,7 @@ use Temporal\Internal\ServiceContainer;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\RPCConnectionInterface;
 
-final class InvokeActivity extends Route
+class InvokeActivity extends Route
 {
     /**
      * @var string
@@ -52,7 +52,8 @@ final class InvokeActivity extends Route
         $heartbeatDetails = null;
 
         // always in binary format
-        $options['info']['TaskToken'] = \base64_decode($options['info']['TaskToken']);
+        $taskToken = $options['info']['TaskToken'] ?? '';
+        $options['info']['TaskToken'] = \base64_decode($taskToken);
 
         if (($options['heartbeatDetails'] ?? 0) !== 0) {
             $offset = \count($payloads) - ($options['heartbeatDetails'] ?? 0);

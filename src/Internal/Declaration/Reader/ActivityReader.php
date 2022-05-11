@@ -99,6 +99,7 @@ class ActivityReader extends Reader
             // Each group of methods means one level of hierarchy in the
             // inheritance graph.
             //
+            /** @var ClassNode $ctx */
             foreach ($group as $ctx => $method) {
                 /** @var MethodRetry $retry */
                 $retry = $this->reader->firstFunctionMetadata($method, MethodRetry::class);
@@ -118,6 +119,7 @@ class ActivityReader extends Reader
                 // those classes that contain the attribute:
                 //
                 //  - #[ActivityInterface]
+                //  - #[LocalActivityInterface]
                 //
                 $interface = $this->reader->firstClassMetadata($ctx->getReflection(), ActivityInterface::class);
 
@@ -148,7 +150,7 @@ class ActivityReader extends Reader
                 //
                 $name = $this->activityName($method, $interface, $attribute);
 
-                $prototype = new ActivityPrototype($name, $root, $graph->getReflection());
+                $prototype = new ActivityPrototype($interface, $name, $root, $graph->getReflection());
 
                 if ($retry !== null) {
                     $prototype->setMethodRetry($retry);

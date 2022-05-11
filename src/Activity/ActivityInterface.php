@@ -32,7 +32,7 @@ use Spiral\Attributes\NamedArgumentConstructorAttribute;
  * @Target({ "CLASS" })
  */
 #[\Attribute(\Attribute::TARGET_CLASS)]
-final class ActivityInterface implements NamedArgumentConstructorAttribute
+class ActivityInterface implements NamedArgumentConstructorAttribute
 {
     /**
      * Prefix to prepend to method names to generate activity types. Default is
