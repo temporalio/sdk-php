@@ -76,7 +76,7 @@ try {
     echo "generating client files: ";
     $result = exec(
         sprintf(
-            'protoc --php_out=api --plugin=protoc-gen-grpc=%s --grpc_out=./api -Iproto %s',
+            'protoc --php_out=api/v1 --plugin=protoc-gen-grpc=%s --grpc_out=./api/v1 -Iproto %s',
             $plugin,
             join(' ', $files)
         )
@@ -105,7 +105,7 @@ try {
 
     $result = exec(
         sprintf(
-            'protoc --php_out=api --plugin=protoc-gen-grpc=%s --grpc_out=./api -Iproto %s',
+            'protoc --php_out=api/v1 --plugin=protoc-gen-grpc=%s --grpc_out=./api/v1 -Iproto %s',
             $plugin,
             'proto/dependencies/gogoproto/gogo.proto'
         )
@@ -132,7 +132,7 @@ try {
 
     $result = exec(
         sprintf(
-            'protoc --php_out=api --plugin=protoc-gen-grpc=%s --grpc_out=./api -Iproto %s',
+            'protoc --php_out=api/v1 --plugin=protoc-gen-grpc=%s --grpc_out=./api/v1 -Iproto %s',
             $plugin,
             'proto/protocol.proto'
         )
