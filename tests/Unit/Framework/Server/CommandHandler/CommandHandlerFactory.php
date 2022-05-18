@@ -35,6 +35,7 @@ final class CommandHandlerFactory
             new CompleteWorkflowHandler(),
             new FailureResponseHandler(),
             new SuccessResponseHandler(),
+            new GetVersionHandler(),
         );
     }
 }
