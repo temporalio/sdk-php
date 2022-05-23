@@ -29,7 +29,7 @@ Make sure to install [RoadRunner](https://github.com/spiral/roadrunner) to enabl
 See [examples](https://github.com/temporalio/samples-php) to get started.
 
 ## Documentation
-The documentation on how to use the Temporal PHP SDK and client is [here](https://docs.temporal.io/docs/php/introduction).
+The documentation on how to use the Temporal PHP SDK and client is [here](https://docs.temporal.io/php/introduction).
 
 ## License
 MIT License, please see [LICENSE](LICENSE.md) for details.
