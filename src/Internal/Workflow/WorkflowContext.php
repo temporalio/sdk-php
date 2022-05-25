@@ -187,8 +187,9 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function getVersion(string $changeId, int $minSupported, int $maxSupported): PromiseInterface
     {
-        return $this->request(
-            new GetVersion($changeId, $minSupported, $maxSupported)
+        return EncodedValues::decodePromise(
+            $this->request(new GetVersion($changeId, $minSupported, $maxSupported)),
+            Type::TYPE_ANY
         );
     }
 
