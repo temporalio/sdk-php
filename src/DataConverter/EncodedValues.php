@@ -66,7 +66,7 @@ class EncodedValues implements ValuesInterface
      */
     public function getValue(int $index, $type = null)
     {
-        if (isset($this->values[$index])) {
+        if (is_array($this->values) && array_key_exists($index, $this->values)) {
             return $this->values[$index];
         }
 
@@ -131,7 +131,7 @@ class EncodedValues implements ValuesInterface
     public static function fromValues(array $values, DataConverterInterface $dataConverter = null): EncodedValues
     {
         $ev = new self();
-        $ev->values = $values;
+        $ev->values = array_values($values);
         $ev->converter = $dataConverter;
 
         return $ev;
