@@ -19,3 +19,4 @@ Thumbs.db
 *.exe
 rr
 .rr.yaml
+temporal-test-server

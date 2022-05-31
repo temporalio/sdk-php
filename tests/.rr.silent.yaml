@@ -6,13 +6,13 @@ rpc:
 server:
     command: "php worker.php"
     env:
-        DEBUG: true
+        XDEBUG_SESSION: 1
 
 # Workflow and activity mesh service
 temporal:
     address: "localhost:7233"
     activities:
-      num_workers: 4
+      num_workers: 1
 
 logs:
     mode: none

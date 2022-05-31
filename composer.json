@@ -32,10 +32,15 @@
         "spiral/attributes": "^2.7",
         "spiral/roadrunner-worker": "^2.0.2",
         "spiral/roadrunner-cli": "^2.0",
-        "symfony/polyfill-php80": "^1.18"
+        "symfony/polyfill-php80": "^1.18",
+        "symfony/filesystem":"^v5.4",
+        "symfony/process": "^v5.4"
     },
     "autoload": {
         "psr-4": {
+            "Temporal\\Testing\\": "testing/src",
+            "GPBMetadata\\Temporal\\Api\\Testservice\\": "testing/api/testservice/GPBMetadata/Temporal/Api/Testservice",
+            "Temporal\\Api\\Testservice\\": "testing/api/testservice/Temporal/Api/Testservice",
             "GPBMetadata\\": "api/v1/GPBMetadata",
             "Temporal\\": "src",
             "Temporal\\Api\\": "api/v1/Temporal/Api",

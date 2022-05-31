@@ -13,13 +13,11 @@ namespace Temporal\Tests\Functional\Client;
 
 use Temporal\Api\Workflow\V1\PendingActivityInfo;
 use Temporal\Api\Workflowservice\V1\DescribeWorkflowExecutionRequest;
-use Temporal\Client\WorkflowOptions;
-use Temporal\Common\RetryOptions;
 use Temporal\Exception\Client\ActivityCompletionFailureException;
+use Temporal\Exception\Client\ActivityNotExistsException;
 use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Failure\ActivityFailure;
 use Temporal\Exception\Failure\ApplicationFailure;
-use Temporal\Worker\WorkerOptions;
 
 /**
  * @group client
@@ -91,7 +89,7 @@ class ActivityCompletionClientTestCase extends ClientTestCase
         try {
             $act->complete($data->id, null, "invalid activity id", 'Completed Externally by ID');
         } catch (\Throwable $e) {
-            $this->assertInstanceOf(ActivityCompletionFailureException::class, $e);
+            $this->assertInstanceOf(ActivityNotExistsException::class, $e);
         }
 
         $act->complete($data->id, $data->runId, $data->activityId, 'Completed Externally by ID explicit');

@@ -50,6 +50,7 @@ class UntypedWorkflowStubTestCase extends ClientTestCase
 
     public function testStartWithSameID()
     {
+        $this->markTestSkipped('Currently not supported "getStartRequestId" on test server');
         $client = $this->createClient();
         $simple = $client->newUntypedWorkflowStub('SimpleWorkflow');
 
@@ -97,6 +98,8 @@ class UntypedWorkflowStubTestCase extends ClientTestCase
 
     public function testSignalWithStartAlreadyStarted()
     {
+        $this->markTestSkipped('Currently not supported "getStartRequestId" on test server');
+
         $client = $this->createClient();
         $simple = $client->newUntypedWorkflowStub('SimpleSignalledWorkflowWithSleep');
 
