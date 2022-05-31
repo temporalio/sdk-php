@@ -12,7 +12,7 @@ final class SystemInfo
     private const PLATFORM_MAPPINGS = [
         'darwin' => 'macOS',
         'linux' => 'linux',
-        'win32' => 'windows'
+        'windows' => 'windows',
     ];
 
     private const ARCHITECTURE_MAPPINGS = [
@@ -24,13 +24,13 @@ final class SystemInfo
     private const TEMPORAL_EXECUTABLE_MAP = [
         'darwin' => './temporal-test-server',
         'linux' => './temporal-test-server',
-        'win32' => 'temporal-test-server.exe',
+        'windows' => 'temporal-test-server.exe',
     ];
 
     private const RR_EXECUTABLE_MAP = [
         'darwin' => './rr',
         'linux' => './rr',
-        'win32' => 'rr.exe',
+        'windows' => 'rr.exe',
     ];
 
     public string $arch;

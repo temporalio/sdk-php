@@ -9,7 +9,6 @@ use Symfony\Component\Console\Output\Output;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\Process\Process;
-use Temporal\Api\Testservice\V1\TestServiceClient;
 
 final class Environment
 {
@@ -43,7 +42,7 @@ final class Environment
         }
 
         $this->output->write('Starting Temporal test server... ');
-        $this->temporalServerProcess = new Process([$this->systemInfo->temporalServerExecutable, 7233, '--enable-time-skipping']);
+        $this->temporalServerProcess = new Process([$this->systemInfo->temporalServerExecutable, 7233,]);
         $this->temporalServerProcess->setTimeout(10);
         $this->temporalServerProcess->start();
         $this->output->writeln('<info>done.</info>');

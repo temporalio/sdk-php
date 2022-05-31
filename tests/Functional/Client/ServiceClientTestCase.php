@@ -30,7 +30,7 @@ class ServiceClientTestCase extends ClientTestCase
         $this->expectException(TimeoutException::class);
         $this->createClient()->getServiceClient()->ListClosedWorkflowExecutions(
             $ds,
-            Context::default()->withTimeout(CarbonInterval::millisecond(1))
+            Context::default()->withTimeout(CarbonInterval::millisecond(0))
         );
     }
 }

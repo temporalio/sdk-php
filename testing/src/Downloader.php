@@ -31,7 +31,7 @@ final class Downloader
             }
         }
 
-        throw new \RuntimeException("Asset not found");
+        throw new \RuntimeException("Asset for $systemPlatform not found");
     }
 
     public function download(SystemInfo $systemInfo): void
