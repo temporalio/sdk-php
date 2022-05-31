@@ -65,6 +65,43 @@ final class StartWorkflowTestCase extends UnitTestCase
         parent::setUp();
     }
 
+    public function testWorkflowIsStartedAndRunning(): void
+    {
+        $request = new Request(Uuid::v4(), DummyWorkflow::class, EncodedValues::fromValues([]));
+
+        $workflowInfo = new WorkflowInfo();
+        $workflowInfo->type->name = 'DummyWorkflow';
+        $workflowInfo->execution = new WorkflowExecution('123', (string)$request->getID());
+
+        $this->marshaller->expects($this->once())
+            ->method('unmarshal')
+            ->willReturn(new Input($workflowInfo));
+
+        $this->router->handle($request, [], new Deferred());
+        $this->assertNotNull($this->services->running->find($workflowInfo->execution->getRunID()));
+    }
+
+    public function testStartingAlreadyRunningWorkflow(): void
+    {
+        $request = new Request(Uuid::v4(), DummyWorkflow::class, EncodedValues::fromValues([]));
+
+        $workflowInfo = new WorkflowInfo();
+        $workflowInfo->type->name = 'DummyWorkflow';
+        $workflowInfo->execution = new WorkflowExecution('123', (string)$request->getID());
+
+        $this->marshaller->expects($this->once())
+            ->method('unmarshal')
+            ->willReturn(new Input($workflowInfo));
+
+        $this->services->running->add($request);
+
+        try {
+            $this->router->handle($request, [], new Deferred());
+        } catch (LogicException $exception) {
+            $this->fail($exception->getMessage());
+        }
+    }
+
     public function testAlreadyRunningWorkflowIsReturned(): void
     {
         $request = new Request(Uuid::v4(), DummyWorkflow::class, EncodedValues::fromValues([]));
