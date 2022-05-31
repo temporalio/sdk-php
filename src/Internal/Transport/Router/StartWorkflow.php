@@ -25,7 +25,6 @@ use Temporal\Workflow\WorkflowInfo;
 final class StartWorkflow extends Route
 {
     private const ERROR_NOT_FOUND = 'Workflow with the specified name "%s" was not registered';
-    private const ERROR_ALREADY_RUNNING = 'Workflow "%s" with run id "%s" has been already started';
 
     private ServiceContainer $services;
     private WorkflowInstantiator $instantiator;
@@ -84,15 +83,8 @@ final class StartWorkflow extends Route
     private function findWorkflowOrFail(WorkflowInfo $info): WorkflowPrototype
     {
         $workflow = $this->services->workflows->find($info->type->name);
-
         if ($workflow === null) {
             throw new \OutOfRangeException(\sprintf(self::ERROR_NOT_FOUND, $info->type->name));
-        }
-
-        if ($this->services->running->find($info->execution->getRunID()) !== null) {
-            $message = \sprintf(self::ERROR_ALREADY_RUNNING, $info->type->name, $info->execution->getRunID());
-
-            throw new \LogicException($message);
         }
 
         return $workflow;
