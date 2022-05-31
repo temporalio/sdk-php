@@ -11,6 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Protocol;
 
+use Temporal\DataConverter\DataConverter;
+use Temporal\DataConverter\EncodedValues;
+
 /**
  * @group unit
  * @group protocol
@@ -18,8 +21,9 @@ namespace Temporal\Tests\Unit\Protocol;
 class EncodingTestCase extends ProtocolTestCase
 {
     /** @test */
-    public function todo(): void
+    public function nullValuesAreReturned(): void
     {
-        $this->expectNotToPerformAssertions();
+        $encodedValues = EncodedValues::fromValues([null, 'something'], new DataConverter());
+        $this->assertNull($encodedValues->getValue(0));
     }
 }
