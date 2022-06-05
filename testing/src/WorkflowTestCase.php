@@ -7,11 +7,10 @@ namespace Temporal\Testing;
 use PHPUnit\Framework\TestCase;
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
-use Temporal\Client\WorkflowOptions;
 
 class WorkflowTestCase extends TestCase
 {
-    private WorkflowClient $workflowClient;
+    protected WorkflowClient $workflowClient;
 
     protected function setUp(): void
     {
@@ -20,10 +19,4 @@ class WorkflowTestCase extends TestCase
         );
         parent::setUp();
     }
-
-    protected function newWorkflowStub(string $class, WorkflowOptions $options = null): object
-    {
-        return $this->workflowClient->newWorkflowStub($class, $options);
-    }
-
 }
