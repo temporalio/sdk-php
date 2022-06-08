@@ -22,10 +22,6 @@ class ScheduleActivityTaskCommandAttributes extends \Google\Protobuf\Internal\Me
      */
     protected $activity_type = null;
     /**
-     * Generated from protobuf field <code>string namespace = 3;</code>
-     */
-    protected $namespace = '';
-    /**
      * Generated from protobuf field <code>.temporal.api.taskqueue.v1.TaskQueue task_queue = 4;</code>
      */
     protected $task_queue = null;
@@ -85,6 +81,13 @@ class ScheduleActivityTaskCommandAttributes extends \Google\Protobuf\Internal\Me
      * Generated from protobuf field <code>.temporal.api.common.v1.RetryPolicy retry_policy = 11;</code>
      */
     protected $retry_policy = null;
+    /**
+     * Request to start the activity directly bypassing matching service and worker polling
+     * The slot for executing the activity should be reserved when setting this field to true.
+     *
+     * Generated from protobuf field <code>bool request_eager_execution = 12;</code>
+     */
+    protected $request_eager_execution = false;
 
     /**
      * Constructor.
@@ -94,7 +97,6 @@ class ScheduleActivityTaskCommandAttributes extends \Google\Protobuf\Internal\Me
      *
      *     @type string $activity_id
      *     @type \Temporal\Api\Common\V1\ActivityType $activity_type
-     *     @type string $namespace
      *     @type \Temporal\Api\Taskqueue\V1\TaskQueue $task_queue
      *     @type \Temporal\Api\Common\V1\Header $header
      *     @type \Temporal\Api\Common\V1\Payloads $input
@@ -126,6 +128,9 @@ class ScheduleActivityTaskCommandAttributes extends \Google\Protobuf\Internal\Me
      *           Activities are provided by a default retry policy which is controlled through the service's
      *           dynamic configuration. Retries will be attempted until `schedule_to_close_timeout` has
      *           elapsed. To disable retries set retry_policy.maximum_attempts to 1.
+     *     @type bool $request_eager_execution
+     *           Request to start the activity directly bypassing matching service and worker polling
+     *           The slot for executing the activity should be reserved when setting this field to true.
      * }
      */
     public function __construct($data = NULL) {
@@ -183,28 +188,6 @@ class ScheduleActivityTaskCommandAttributes extends \Google\Protobuf\Internal\Me
     {
         GPBUtil::checkMessage($var, \Temporal\Api\Common\V1\ActivityType::class);
         $this->activity_type = $var;
-
-        return $this;
-    }
-
-    /**
-     * Generated from protobuf field <code>string namespace = 3;</code>
-     * @return string
-     */
-    public function getNamespace()
-    {
-        return $this->namespace;
-    }
-
-    /**
-     * Generated from protobuf field <code>string namespace = 3;</code>
-     * @param string $var
-     * @return $this
-     */
-    public function setNamespace($var)
-    {
-        GPBUtil::checkString($var, True);
-        $this->namespace = $var;
 
         return $this;
     }
@@ -517,6 +500,34 @@ class ScheduleActivityTaskCommandAttributes extends \Google\Protobuf\Internal\Me
     {
         GPBUtil::checkMessage($var, \Temporal\Api\Common\V1\RetryPolicy::class);
         $this->retry_policy = $var;
+
+        return $this;
+    }
+
+    /**
+     * Request to start the activity directly bypassing matching service and worker polling
+     * The slot for executing the activity should be reserved when setting this field to true.
+     *
+     * Generated from protobuf field <code>bool request_eager_execution = 12;</code>
+     * @return bool
+     */
+    public function getRequestEagerExecution()
+    {
+        return $this->request_eager_execution;
+    }
+
+    /**
+     * Request to start the activity directly bypassing matching service and worker polling
+     * The slot for executing the activity should be reserved when setting this field to true.
+     *
+     * Generated from protobuf field <code>bool request_eager_execution = 12;</code>
+     * @param bool $var
+     * @return $this
+     */
+    public function setRequestEagerExecution($var)
+    {
+        GPBUtil::checkBool($var);
+        $this->request_eager_execution = $var;
 
         return $this;
     }

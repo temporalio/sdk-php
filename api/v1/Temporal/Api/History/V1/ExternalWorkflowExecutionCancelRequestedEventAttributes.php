@@ -21,11 +21,16 @@ class ExternalWorkflowExecutionCancelRequestedEventAttributes extends \Google\Pr
      */
     protected $initiated_event_id = 0;
     /**
-     * namespace of the to-be-cancelled workflow
+     * Namespace of the to-be-cancelled workflow.
+     * SDKs and UI tools should use `namespace` field but server must use `namespace_id` only.
      *
      * Generated from protobuf field <code>string namespace = 2;</code>
      */
     protected $namespace = '';
+    /**
+     * Generated from protobuf field <code>string namespace_id = 4;</code>
+     */
+    protected $namespace_id = '';
     /**
      * Generated from protobuf field <code>.temporal.api.common.v1.WorkflowExecution workflow_execution = 3;</code>
      */
@@ -41,7 +46,9 @@ class ExternalWorkflowExecutionCancelRequestedEventAttributes extends \Google\Pr
      *           id of the `REQUEST_CANCEL_EXTERNAL_WORKFLOW_EXECUTION_INITIATED` event this event corresponds
      *           to
      *     @type string $namespace
-     *           namespace of the to-be-cancelled workflow
+     *           Namespace of the to-be-cancelled workflow.
+     *           SDKs and UI tools should use `namespace` field but server must use `namespace_id` only.
+     *     @type string $namespace_id
      *     @type \Temporal\Api\Common\V1\WorkflowExecution $workflow_execution
      * }
      */
@@ -79,7 +86,8 @@ class ExternalWorkflowExecutionCancelRequestedEventAttributes extends \Google\Pr
     }
 
     /**
-     * namespace of the to-be-cancelled workflow
+     * Namespace of the to-be-cancelled workflow.
+     * SDKs and UI tools should use `namespace` field but server must use `namespace_id` only.
      *
      * Generated from protobuf field <code>string namespace = 2;</code>
      * @return string
@@ -90,7 +98,8 @@ class ExternalWorkflowExecutionCancelRequestedEventAttributes extends \Google\Pr
     }
 
     /**
-     * namespace of the to-be-cancelled workflow
+     * Namespace of the to-be-cancelled workflow.
+     * SDKs and UI tools should use `namespace` field but server must use `namespace_id` only.
      *
      * Generated from protobuf field <code>string namespace = 2;</code>
      * @param string $var
@@ -100,6 +109,28 @@ class ExternalWorkflowExecutionCancelRequestedEventAttributes extends \Google\Pr
     {
         GPBUtil::checkString($var, True);
         $this->namespace = $var;
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>string namespace_id = 4;</code>
+     * @return string
+     */
+    public function getNamespaceId()
+    {
+        return $this->namespace_id;
+    }
+
+    /**
+     * Generated from protobuf field <code>string namespace_id = 4;</code>
+     * @param string $var
+     * @return $this
+     */
+    public function setNamespaceId($var)
+    {
+        GPBUtil::checkString($var, True);
+        $this->namespace_id = $var;
 
         return $this;
     }

@@ -30,6 +30,18 @@ class Capabilities extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>bool internal_error_differentiation = 2;</code>
      */
     protected $internal_error_differentiation = false;
+    /**
+     * True if RespondActivityTaskFailed API supports including heartbeat details
+     *
+     * Generated from protobuf field <code>bool activity_failure_include_heartbeat = 3;</code>
+     */
+    protected $activity_failure_include_heartbeat = false;
+    /**
+     * Supports scheduled workflow features.
+     *
+     * Generated from protobuf field <code>bool supports_schedules = 4;</code>
+     */
+    protected $supports_schedules = false;
 
     /**
      * Constructor.
@@ -44,6 +56,10 @@ class Capabilities extends \Google\Protobuf\Internal\Message
      *           retrying non-internal errors.
      *           When unset/false, clients retry all failures. When true, clients should only retry
      *           non-internal errors.
+     *     @type bool $activity_failure_include_heartbeat
+     *           True if RespondActivityTaskFailed API supports including heartbeat details
+     *     @type bool $supports_schedules
+     *           Supports scheduled workflow features.
      * }
      */
     public function __construct($data = NULL) {
@@ -105,6 +121,58 @@ class Capabilities extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkBool($var);
         $this->internal_error_differentiation = $var;
+
+        return $this;
+    }
+
+    /**
+     * True if RespondActivityTaskFailed API supports including heartbeat details
+     *
+     * Generated from protobuf field <code>bool activity_failure_include_heartbeat = 3;</code>
+     * @return bool
+     */
+    public function getActivityFailureIncludeHeartbeat()
+    {
+        return $this->activity_failure_include_heartbeat;
+    }
+
+    /**
+     * True if RespondActivityTaskFailed API supports including heartbeat details
+     *
+     * Generated from protobuf field <code>bool activity_failure_include_heartbeat = 3;</code>
+     * @param bool $var
+     * @return $this
+     */
+    public function setActivityFailureIncludeHeartbeat($var)
+    {
+        GPBUtil::checkBool($var);
+        $this->activity_failure_include_heartbeat = $var;
+
+        return $this;
+    }
+
+    /**
+     * Supports scheduled workflow features.
+     *
+     * Generated from protobuf field <code>bool supports_schedules = 4;</code>
+     * @return bool
+     */
+    public function getSupportsSchedules()
+    {
+        return $this->supports_schedules;
+    }
+
+    /**
+     * Supports scheduled workflow features.
+     *
+     * Generated from protobuf field <code>bool supports_schedules = 4;</code>
+     * @param bool $var
+     * @return $this
+     */
+    public function setSupportsSchedules($var)
+    {
+        GPBUtil::checkBool($var);
+        $this->supports_schedules = $var;
 
         return $this;
     }

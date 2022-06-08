@@ -14,12 +14,12 @@ class RequestResponse
         if (static::$is_initialized == true) {
           return;
         }
+        \GPBMetadata\Temporal\Api\Common\V1\Message::initOnce();
         \GPBMetadata\Temporal\Api\Enums\V1\Common::initOnce();
         $pool->internalAddGeneratedFile(
             '
-Ž
-
-6temporal/api/operatorservice/v1/request_response.prototemporal.api.operatorservice.v1"ì
+ï¿½
+6temporal/api/operatorservice/v1/request_response.prototemporal.api.operatorservice.v1"temporal/api/enums/v1/common.proto"ï¿½
 AddSearchAttributesRequestl
 search_attributes (2Q.temporal.api.operatorservice.v1.AddSearchAttributesRequest.SearchAttributesEntry`
 SearchAttributesEntry
@@ -27,9 +27,9 @@ class RequestResponse
 value (2\'.temporal.api.enums.v1.IndexedValueType:8"
 AddSearchAttributesResponse":
 RemoveSearchAttributesRequest
-search_attributes (	" 
+search_attributes (	"
 RemoveSearchAttributesResponse"
-ListSearchAttributesRequest"â
+ListSearchAttributesRequest"ï¿½
 ListSearchAttributesResponsen
 custom_attributes (2S.temporal.api.operatorservice.v1.ListSearchAttributesResponse.CustomAttributesEntryn
 system_attributes (2S.temporal.api.operatorservice.v1.ListSearchAttributesResponse.SystemAttributesEntryh
@@ -42,8 +42,16 @@ class RequestResponse
 value (2\'.temporal.api.enums.v1.IndexedValueType:84
 StorageSchemaEntry
 key (	
-value (	:8Bº
-"io.temporal.api.operatorservice.v1BRequestResponseProtoPZ5go.temporal.io/api/operatorservice/v1;operatorserviceªTemporal.Api.OperatorService.V1ê"Temporal::Api::OperatorService::V1bproto3'
+value (	:8"+
+DeleteNamespaceRequest
+	namespace (	"4
+DeleteNamespaceResponse
+deleted_namespace (	"z
+DeleteWorkflowExecutionRequest
+	namespace (	E
+workflow_execution (2).temporal.api.common.v1.WorkflowExecution"!
+DeleteWorkflowExecutionResponseBï¿½
+"io.temporal.api.operatorservice.v1BRequestResponseProtoPZ5go.temporal.io/api/operatorservice/v1;operatorserviceï¿½Temporal.Api.OperatorService.V1ï¿½"Temporal::Api::OperatorService::V1bproto3'
         , true);
 
         static::$is_initialized = true;

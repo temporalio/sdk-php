@@ -31,6 +31,21 @@ class WorkflowTaskStartedEventAttributes extends \Google\Protobuf\Internal\Messa
      * Generated from protobuf field <code>string request_id = 3;</code>
      */
     protected $request_id = '';
+    /**
+     * True if this workflow should continue-as-new soon because its history size (in
+     * either event count or bytes) is getting large.
+     *
+     * Generated from protobuf field <code>bool suggest_continue_as_new = 4;</code>
+     */
+    protected $suggest_continue_as_new = false;
+    /**
+     * Total history size in bytes, which the workflow might use to decide when to
+     * continue-as-new regardless of the suggestion. Note that history event count is
+     * just the event id of this event, so we don't include it explicitly here.
+     *
+     * Generated from protobuf field <code>int64 history_size_bytes = 5;</code>
+     */
+    protected $history_size_bytes = 0;
 
     /**
      * Constructor.
@@ -44,6 +59,13 @@ class WorkflowTaskStartedEventAttributes extends \Google\Protobuf\Internal\Messa
      *           Identity of the worker who picked up this task
      *     @type string $request_id
      *           TODO: ? Appears unused?
+     *     @type bool $suggest_continue_as_new
+     *           True if this workflow should continue-as-new soon because its history size (in
+     *           either event count or bytes) is getting large.
+     *     @type int|string $history_size_bytes
+     *           Total history size in bytes, which the workflow might use to decide when to
+     *           continue-as-new regardless of the suggestion. Note that history event count is
+     *           just the event id of this event, so we don't include it explicitly here.
      * }
      */
     public function __construct($data = NULL) {
@@ -125,6 +147,64 @@ class WorkflowTaskStartedEventAttributes extends \Google\Protobuf\Internal\Messa
     {
         GPBUtil::checkString($var, True);
         $this->request_id = $var;
+
+        return $this;
+    }
+
+    /**
+     * True if this workflow should continue-as-new soon because its history size (in
+     * either event count or bytes) is getting large.
+     *
+     * Generated from protobuf field <code>bool suggest_continue_as_new = 4;</code>
+     * @return bool
+     */
+    public function getSuggestContinueAsNew()
+    {
+        return $this->suggest_continue_as_new;
+    }
+
+    /**
+     * True if this workflow should continue-as-new soon because its history size (in
+     * either event count or bytes) is getting large.
+     *
+     * Generated from protobuf field <code>bool suggest_continue_as_new = 4;</code>
+     * @param bool $var
+     * @return $this
+     */
+    public function setSuggestContinueAsNew($var)
+    {
+        GPBUtil::checkBool($var);
+        $this->suggest_continue_as_new = $var;
+
+        return $this;
+    }
+
+    /**
+     * Total history size in bytes, which the workflow might use to decide when to
+     * continue-as-new regardless of the suggestion. Note that history event count is
+     * just the event id of this event, so we don't include it explicitly here.
+     *
+     * Generated from protobuf field <code>int64 history_size_bytes = 5;</code>
+     * @return int|string
+     */
+    public function getHistorySizeBytes()
+    {
+        return $this->history_size_bytes;
+    }
+
+    /**
+     * Total history size in bytes, which the workflow might use to decide when to
+     * continue-as-new regardless of the suggestion. Note that history event count is
+     * just the event id of this event, so we don't include it explicitly here.
+     *
+     * Generated from protobuf field <code>int64 history_size_bytes = 5;</code>
+     * @param int|string $var
+     * @return $this
+     */
+    public function setHistorySizeBytes($var)
+    {
+        GPBUtil::checkInt64($var);
+        $this->history_size_bytes = $var;
 
         return $this;
     }

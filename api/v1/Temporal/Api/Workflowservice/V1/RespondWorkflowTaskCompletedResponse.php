@@ -19,6 +19,12 @@ class RespondWorkflowTaskCompletedResponse extends \Google\Protobuf\Internal\Mes
      * Generated from protobuf field <code>.temporal.api.workflowservice.v1.PollWorkflowTaskQueueResponse workflow_task = 1;</code>
      */
     protected $workflow_task = null;
+    /**
+     * See `ScheduleActivityTaskCommandAttributes::request_start`
+     *
+     * Generated from protobuf field <code>repeated .temporal.api.workflowservice.v1.PollActivityTaskQueueResponse activity_tasks = 2;</code>
+     */
+    private $activity_tasks;
 
     /**
      * Constructor.
@@ -28,6 +34,8 @@ class RespondWorkflowTaskCompletedResponse extends \Google\Protobuf\Internal\Mes
      *
      *     @type \Temporal\Api\Workflowservice\V1\PollWorkflowTaskQueueResponse $workflow_task
      *           See `RespondWorkflowTaskCompletedResponse::return_new_workflow_task`
+     *     @type \Temporal\Api\Workflowservice\V1\PollActivityTaskQueueResponse[]|\Google\Protobuf\Internal\RepeatedField $activity_tasks
+     *           See `ScheduleActivityTaskCommandAttributes::request_start`
      * }
      */
     public function __construct($data = NULL) {
@@ -67,6 +75,32 @@ class RespondWorkflowTaskCompletedResponse extends \Google\Protobuf\Internal\Mes
     {
         GPBUtil::checkMessage($var, \Temporal\Api\Workflowservice\V1\PollWorkflowTaskQueueResponse::class);
         $this->workflow_task = $var;
+
+        return $this;
+    }
+
+    /**
+     * See `ScheduleActivityTaskCommandAttributes::request_start`
+     *
+     * Generated from protobuf field <code>repeated .temporal.api.workflowservice.v1.PollActivityTaskQueueResponse activity_tasks = 2;</code>
+     * @return \Google\Protobuf\Internal\RepeatedField
+     */
+    public function getActivityTasks()
+    {
+        return $this->activity_tasks;
+    }
+
+    /**
+     * See `ScheduleActivityTaskCommandAttributes::request_start`
+     *
+     * Generated from protobuf field <code>repeated .temporal.api.workflowservice.v1.PollActivityTaskQueueResponse activity_tasks = 2;</code>
+     * @param \Temporal\Api\Workflowservice\V1\PollActivityTaskQueueResponse[]|\Google\Protobuf\Internal\RepeatedField $var
+     * @return $this
+     */
+    public function setActivityTasks($var)
+    {
+        $arr = GPBUtil::checkRepeatedField($var, \Google\Protobuf\Internal\GPBType::MESSAGE, \Temporal\Api\Workflowservice\V1\PollActivityTaskQueueResponse::class);
+        $this->activity_tasks = $arr;
 
         return $this;
     }

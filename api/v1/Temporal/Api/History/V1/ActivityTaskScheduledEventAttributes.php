@@ -24,10 +24,6 @@ class ActivityTaskScheduledEventAttributes extends \Google\Protobuf\Internal\Mes
      */
     protected $activity_type = null;
     /**
-     * Generated from protobuf field <code>string namespace = 3;</code>
-     */
-    protected $namespace = '';
-    /**
      * Generated from protobuf field <code>.temporal.api.taskqueue.v1.TaskQueue task_queue = 4;</code>
      */
     protected $task_queue = null;
@@ -99,7 +95,6 @@ class ActivityTaskScheduledEventAttributes extends \Google\Protobuf\Internal\Mes
      *     @type string $activity_id
      *           The worker/user assigned identifier for the activity
      *     @type \Temporal\Api\Common\V1\ActivityType $activity_type
-     *     @type string $namespace
      *     @type \Temporal\Api\Taskqueue\V1\TaskQueue $task_queue
      *     @type \Temporal\Api\Common\V1\Header $header
      *     @type \Temporal\Api\Common\V1\Payloads $input
@@ -190,28 +185,6 @@ class ActivityTaskScheduledEventAttributes extends \Google\Protobuf\Internal\Mes
     {
         GPBUtil::checkMessage($var, \Temporal\Api\Common\V1\ActivityType::class);
         $this->activity_type = $var;
-
-        return $this;
-    }
-
-    /**
-     * Generated from protobuf field <code>string namespace = 3;</code>
-     * @return string
-     */
-    public function getNamespace()
-    {
-        return $this->namespace;
-    }
-
-    /**
-     * Generated from protobuf field <code>string namespace = 3;</code>
-     * @param string $var
-     * @return $this
-     */
-    public function setNamespace($var)
-    {
-        GPBUtil::checkString($var, True);
-        $this->namespace = $var;
 
         return $this;
     }

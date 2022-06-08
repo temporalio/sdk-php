@@ -12,9 +12,6 @@ namespace Temporal\Client\GRPC;
 use Temporal\Api\Workflowservice\V1;
 use Temporal\Exception\Client\ServiceClientException;
 
-/**
- * @codeCoverageIgnore
- */
 class ServiceClient extends BaseClient
 {
     /**

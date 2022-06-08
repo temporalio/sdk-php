@@ -20,11 +20,16 @@ class RequestCancelExternalWorkflowExecutionInitiatedEventAttributes extends \Go
      */
     protected $workflow_task_completed_event_id = 0;
     /**
-     * The namespace the workflow to be cancelled lives in
+     * The namespace the workflow to be cancelled lives in.
+     * SDKs and UI tools should use `namespace` field but server must use `namespace_id` only.
      *
      * Generated from protobuf field <code>string namespace = 2;</code>
      */
     protected $namespace = '';
+    /**
+     * Generated from protobuf field <code>string namespace_id = 7;</code>
+     */
+    protected $namespace_id = '';
     /**
      * Generated from protobuf field <code>.temporal.api.common.v1.WorkflowExecution workflow_execution = 3;</code>
      */
@@ -42,6 +47,12 @@ class RequestCancelExternalWorkflowExecutionInitiatedEventAttributes extends \Go
      * Generated from protobuf field <code>bool child_workflow_only = 5;</code>
      */
     protected $child_workflow_only = false;
+    /**
+     * Reason for requesting the cancellation
+     *
+     * Generated from protobuf field <code>string reason = 6;</code>
+     */
+    protected $reason = '';
 
     /**
      * Constructor.
@@ -52,13 +63,17 @@ class RequestCancelExternalWorkflowExecutionInitiatedEventAttributes extends \Go
      *     @type int|string $workflow_task_completed_event_id
      *           The `WORKFLOW_TASK_COMPLETED` event which this command was reported with
      *     @type string $namespace
-     *           The namespace the workflow to be cancelled lives in
+     *           The namespace the workflow to be cancelled lives in.
+     *           SDKs and UI tools should use `namespace` field but server must use `namespace_id` only.
+     *     @type string $namespace_id
      *     @type \Temporal\Api\Common\V1\WorkflowExecution $workflow_execution
      *     @type string $control
      *           Deprecated
      *     @type bool $child_workflow_only
      *           Workers are expected to set this to true if the workflow they are requesting to cancel is
      *           a child of the workflow which issued the request
+     *     @type string $reason
+     *           Reason for requesting the cancellation
      * }
      */
     public function __construct($data = NULL) {
@@ -93,7 +108,8 @@ class RequestCancelExternalWorkflowExecutionInitiatedEventAttributes extends \Go
     }
 
     /**
-     * The namespace the workflow to be cancelled lives in
+     * The namespace the workflow to be cancelled lives in.
+     * SDKs and UI tools should use `namespace` field but server must use `namespace_id` only.
      *
      * Generated from protobuf field <code>string namespace = 2;</code>
      * @return string
@@ -104,7 +120,8 @@ class RequestCancelExternalWorkflowExecutionInitiatedEventAttributes extends \Go
     }
 
     /**
-     * The namespace the workflow to be cancelled lives in
+     * The namespace the workflow to be cancelled lives in.
+     * SDKs and UI tools should use `namespace` field but server must use `namespace_id` only.
      *
      * Generated from protobuf field <code>string namespace = 2;</code>
      * @param string $var
@@ -114,6 +131,28 @@ class RequestCancelExternalWorkflowExecutionInitiatedEventAttributes extends \Go
     {
         GPBUtil::checkString($var, True);
         $this->namespace = $var;
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>string namespace_id = 7;</code>
+     * @return string
+     */
+    public function getNamespaceId()
+    {
+        return $this->namespace_id;
+    }
+
+    /**
+     * Generated from protobuf field <code>string namespace_id = 7;</code>
+     * @param string $var
+     * @return $this
+     */
+    public function setNamespaceId($var)
+    {
+        GPBUtil::checkString($var, True);
+        $this->namespace_id = $var;
 
         return $this;
     }
@@ -200,6 +239,32 @@ class RequestCancelExternalWorkflowExecutionInitiatedEventAttributes extends \Go
     {
         GPBUtil::checkBool($var);
         $this->child_workflow_only = $var;
+
+        return $this;
+    }
+
+    /**
+     * Reason for requesting the cancellation
+     *
+     * Generated from protobuf field <code>string reason = 6;</code>
+     * @return string
+     */
+    public function getReason()
+    {
+        return $this->reason;
+    }
+
+    /**
+     * Reason for requesting the cancellation
+     *
+     * Generated from protobuf field <code>string reason = 6;</code>
+     * @param string $var
+     * @return $this
+     */
+    public function setReason($var)
+    {
+        GPBUtil::checkString($var, True);
+        $this->reason = $var;
 
         return $this;
     }

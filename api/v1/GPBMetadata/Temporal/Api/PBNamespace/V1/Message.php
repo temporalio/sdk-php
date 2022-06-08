@@ -20,35 +20,39 @@ class Message
         \GPBMetadata\Temporal\Api\Enums\V1\PBNamespace::initOnce();
         $pool->internalAddGeneratedFile(
             '
-¾
-\'temporal/api/namespace/v1/message.prototemporal.api.namespace.v1google/protobuf/timestamp.proto!dependencies/gogoproto/gogo.proto%temporal/api/enums/v1/namespace.proto"ø
-NamespaceInfo
+ï¿½
+\'temporal/api/namespace/v1/message.prototemporal.api.namespace.v1google/protobuf/timestamp.proto!dependencies/gogoproto/gogo.proto%temporal/api/enums/v1/namespace.proto"ï¿½
+
+NamespaceInfo
 name (	4
 state (2%.temporal.api.enums.v1.NamespaceState
 description (	
 owner_email (	@
 data (22.temporal.api.namespace.v1.NamespaceInfo.DataEntry
 
-id (	+
+id (	
+supports_schedulesd (+
 	DataEntry
 key (	
-value (	:8"è
+value (	:8"ï¿½
 NamespaceConfigI
- workflow_execution_retention_ttl (2.google.protobuf.DurationB˜ß<
+ workflow_execution_retention_ttl (2.google.protobuf.DurationBï¿½ï¿½<
 bad_binaries (2&.temporal.api.namespace.v1.BadBinariesD
 history_archival_state (2$.temporal.api.enums.v1.ArchivalState
 history_archival_uri (	G
 visibility_archival_state (2$.temporal.api.enums.v1.ArchivalState
-visibility_archival_uri (	"°
+visibility_archival_uri (	"ï¿½
 BadBinariesF
 binaries (24.temporal.api.namespace.v1.BadBinaries.BinariesEntryY
-BinariesEntry
+
+BinariesEntry
 key (	7
 value (2(.temporal.api.namespace.v1.BadBinaryInfo:8"h
-BadBinaryInfo
+
+BadBinaryInfo
 reason (	
 operator (	5
-create_time (2.google.protobuf.TimestampBß"ê
+create_time (2.google.protobuf.TimestampBï¿½ï¿½"ï¿½
 UpdateNamespaceInfo
 description (	
 owner_email (	F
@@ -56,8 +60,10 @@ class Message
 state (2%.temporal.api.enums.v1.NamespaceState+
 	DataEntry
 key (	
-value (	:8B”
-io.temporal.api.namespace.v1BMessageProtoPZ)go.temporal.io/api/namespace/v1;namespaceªTemporal.Api.Namespace.V1êTemporal::Api::Namespace::V1bproto3'
+value (	:8"*
+NamespaceFilter
+include_deleted (Bï¿½
+io.temporal.api.namespace.v1BMessageProtoPZ)go.temporal.io/api/namespace/v1;namespaceï¿½Temporal.Api.Namespace.V1ï¿½Temporal::Api::Namespace::V1bproto3'
         , true);
 
         static::$is_initialized = true;

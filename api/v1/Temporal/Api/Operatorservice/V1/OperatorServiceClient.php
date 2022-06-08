@@ -46,8 +46,8 @@ class OperatorServiceClient extends \Grpc\BaseStub {
     /**
      * AddSearchAttributes add custom search attributes.
      *
-     * If successful, returns AddSearchAttributesResponse.
-     * If fails, returns INTERNAL code with temporal.api.errordetails.v1.SystemWorkflowFailure in Error Details
+     * Returns ALREADY_EXISTS status code if a Search Attribute with any of the specified names already exists
+     * Returns INTERNAL status code with temporal.api.errordetails.v1.SystemWorkflowFailure in Error Details if registration process fails,
      * @param \Temporal\Api\Operatorservice\V1\AddSearchAttributesRequest $argument input argument
      * @param array $metadata metadata
      * @param array $options call options
@@ -63,6 +63,8 @@ class OperatorServiceClient extends \Grpc\BaseStub {
 
     /**
      * RemoveSearchAttributes removes custom search attributes.
+     *
+     * Returns NOT_FOUND status code if a Search Attribute with any of the specified names is not registered
      * @param \Temporal\Api\Operatorservice\V1\RemoveSearchAttributesRequest $argument input argument
      * @param array $metadata metadata
      * @param array $options call options
@@ -77,7 +79,7 @@ class OperatorServiceClient extends \Grpc\BaseStub {
     }
 
     /**
-     * GetSearchAttributes returns comprehensive information about search attributes.
+     * ListSearchAttributes returns comprehensive information about search attributes.
      * @param \Temporal\Api\Operatorservice\V1\ListSearchAttributesRequest $argument input argument
      * @param array $metadata metadata
      * @param array $options call options
@@ -88,6 +90,45 @@ class OperatorServiceClient extends \Grpc\BaseStub {
         return $this->_simpleRequest('/temporal.api.operatorservice.v1.OperatorService/ListSearchAttributes',
         $argument,
         ['\Temporal\Api\Operatorservice\V1\ListSearchAttributesResponse', 'decode'],
+        $metadata, $options);
+    }
+
+    /**
+     * DeleteNamespace synchronously deletes a namespace and asynchronously reclaims all namespace resources.
+     * (-- api-linter: core::0135::method-signature=disabled
+     *     aip.dev/not-precedent: DeleteNamespace RPC doesn't follow Google API format. --)
+     * (-- api-linter: core::0135::response-message-name=disabled
+     *     aip.dev/not-precedent: DeleteNamespace RPC doesn't follow Google API format. --)
+     * @param \Temporal\Api\Operatorservice\V1\DeleteNamespaceRequest $argument input argument
+     * @param array $metadata metadata
+     * @param array $options call options
+     * @return \Grpc\UnaryCall
+     */
+    public function DeleteNamespace(\Temporal\Api\Operatorservice\V1\DeleteNamespaceRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/temporal.api.operatorservice.v1.OperatorService/DeleteNamespace',
+        $argument,
+        ['\Temporal\Api\Operatorservice\V1\DeleteNamespaceResponse', 'decode'],
+        $metadata, $options);
+    }
+
+    /**
+     * DeleteWorkflowExecution deletes a closed workflow execution asynchronously (workflow must be completed or terminated before).
+     * This method is EXPERIMENTAL and may be changed or removed in a later release.
+     * (-- api-linter: core::0135::method-signature=disabled
+     *     aip.dev/not-precedent: DeleteNamespace RPC doesn't follow Google API format. --)
+     * (-- api-linter: core::0135::response-message-name=disabled
+     *     aip.dev/not-precedent: DeleteNamespace RPC doesn't follow Google API format. --)
+     * @param \Temporal\Api\Operatorservice\V1\DeleteWorkflowExecutionRequest $argument input argument
+     * @param array $metadata metadata
+     * @param array $options call options
+     * @return \Grpc\UnaryCall
+     */
+    public function DeleteWorkflowExecution(\Temporal\Api\Operatorservice\V1\DeleteWorkflowExecutionRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/temporal.api.operatorservice.v1.OperatorService/DeleteWorkflowExecution',
+        $argument,
+        ['\Temporal\Api\Operatorservice\V1\DeleteWorkflowExecutionResponse', 'decode'],
         $metadata, $options);
     }
 

@@ -14,11 +14,16 @@ use Google\Protobuf\Internal\GPBUtil;
 class ChildWorkflowExecutionTerminatedEventAttributes extends \Google\Protobuf\Internal\Message
 {
     /**
-     * Namespace of the child workflow
+     * Namespace of the child workflow.
+     * SDKs and UI tools should use `namespace` field but server must use `namespace_id` only.
      *
      * Generated from protobuf field <code>string namespace = 1;</code>
      */
     protected $namespace = '';
+    /**
+     * Generated from protobuf field <code>string namespace_id = 6;</code>
+     */
+    protected $namespace_id = '';
     /**
      * Generated from protobuf field <code>.temporal.api.common.v1.WorkflowExecution workflow_execution = 2;</code>
      */
@@ -47,7 +52,9 @@ class ChildWorkflowExecutionTerminatedEventAttributes extends \Google\Protobuf\I
      *     Optional. Data for populating the Message object.
      *
      *     @type string $namespace
-     *           Namespace of the child workflow
+     *           Namespace of the child workflow.
+     *           SDKs and UI tools should use `namespace` field but server must use `namespace_id` only.
+     *     @type string $namespace_id
      *     @type \Temporal\Api\Common\V1\WorkflowExecution $workflow_execution
      *     @type \Temporal\Api\Common\V1\WorkflowType $workflow_type
      *     @type int|string $initiated_event_id
@@ -62,7 +69,8 @@ class ChildWorkflowExecutionTerminatedEventAttributes extends \Google\Protobuf\I
     }
 
     /**
-     * Namespace of the child workflow
+     * Namespace of the child workflow.
+     * SDKs and UI tools should use `namespace` field but server must use `namespace_id` only.
      *
      * Generated from protobuf field <code>string namespace = 1;</code>
      * @return string
@@ -73,7 +81,8 @@ class ChildWorkflowExecutionTerminatedEventAttributes extends \Google\Protobuf\I
     }
 
     /**
-     * Namespace of the child workflow
+     * Namespace of the child workflow.
+     * SDKs and UI tools should use `namespace` field but server must use `namespace_id` only.
      *
      * Generated from protobuf field <code>string namespace = 1;</code>
      * @param string $var
@@ -83,6 +92,28 @@ class ChildWorkflowExecutionTerminatedEventAttributes extends \Google\Protobuf\I
     {
         GPBUtil::checkString($var, True);
         $this->namespace = $var;
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>string namespace_id = 6;</code>
+     * @return string
+     */
+    public function getNamespaceId()
+    {
+        return $this->namespace_id;
+    }
+
+    /**
+     * Generated from protobuf field <code>string namespace_id = 6;</code>
+     * @param string $var
+     * @return $this
+     */
+    public function setNamespaceId($var)
+    {
+        GPBUtil::checkString($var, True);
+        $this->namespace_id = $var;
 
         return $this;
     }

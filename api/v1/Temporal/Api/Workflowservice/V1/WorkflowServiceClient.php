@@ -176,8 +176,8 @@ class WorkflowServiceClient extends \Grpc\BaseStub {
     }
 
     /**
-     * GetWorkflowExecutionHistoryReverse returns the history of specified workflow execution in reverse 
-     * order (starting from last event). Fails with`NotFound` if the specified workflow execution is 
+     * GetWorkflowExecutionHistoryReverse returns the history of specified workflow execution in reverse
+     * order (starting from last event). Fails with`NotFound` if the specified workflow execution is
      * unknown to the service.
      * @param \Temporal\Api\Workflowservice\V1\GetWorkflowExecutionHistoryReverseRequest $argument input argument
      * @param array $metadata metadata
@@ -439,9 +439,9 @@ class WorkflowServiceClient extends \Grpc\BaseStub {
      * RequestCancelWorkflowExecution is called by workers when they want to request cancellation of
      * a workflow execution.
      *
-     * This result in a new `WORKFLOW_EXECUTION_CANCEL_REQUESTED` event being written to the
-     * workflow history and a new workflow task created for the workflow. Fails with `NotFound` if
-     * the workflow is already completed or doesn't exist.
+     * This results in a new `WORKFLOW_EXECUTION_CANCEL_REQUESTED` event being written to the
+     * workflow history and a new workflow task created for the workflow. It returns success if the requested
+     * workflow is already closed. It fails with 'NotFound' if the requested workflow doesn't exist.
      * @param \Temporal\Api\Workflowservice\V1\RequestCancelWorkflowExecutionRequest $argument input argument
      * @param array $metadata metadata
      * @param array $options call options
@@ -765,6 +765,127 @@ class WorkflowServiceClient extends \Grpc\BaseStub {
         return $this->_simpleRequest('/temporal.api.workflowservice.v1.WorkflowService/ListTaskQueuePartitions',
         $argument,
         ['\Temporal\Api\Workflowservice\V1\ListTaskQueuePartitionsResponse', 'decode'],
+        $metadata, $options);
+    }
+
+    /**
+     * Creates a new schedule.
+     * (-- api-linter: core::0133::method-signature=disabled
+     *     aip.dev/not-precedent: CreateSchedule doesn't follow Google API format --)
+     * (-- api-linter: core::0133::response-message-name=disabled
+     *     aip.dev/not-precedent: CreateSchedule doesn't follow Google API format --)
+     * (-- api-linter: core::0133::http-uri-parent=disabled
+     *     aip.dev/not-precedent: CreateSchedule doesn't follow Google API format --)
+     * @param \Temporal\Api\Workflowservice\V1\CreateScheduleRequest $argument input argument
+     * @param array $metadata metadata
+     * @param array $options call options
+     * @return \Grpc\UnaryCall
+     */
+    public function CreateSchedule(\Temporal\Api\Workflowservice\V1\CreateScheduleRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/temporal.api.workflowservice.v1.WorkflowService/CreateSchedule',
+        $argument,
+        ['\Temporal\Api\Workflowservice\V1\CreateScheduleResponse', 'decode'],
+        $metadata, $options);
+    }
+
+    /**
+     * Returns the schedule description and current state of an existing schedule.
+     * @param \Temporal\Api\Workflowservice\V1\DescribeScheduleRequest $argument input argument
+     * @param array $metadata metadata
+     * @param array $options call options
+     * @return \Grpc\UnaryCall
+     */
+    public function DescribeSchedule(\Temporal\Api\Workflowservice\V1\DescribeScheduleRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/temporal.api.workflowservice.v1.WorkflowService/DescribeSchedule',
+        $argument,
+        ['\Temporal\Api\Workflowservice\V1\DescribeScheduleResponse', 'decode'],
+        $metadata, $options);
+    }
+
+    /**
+     * Changes the configuration or state of an existing schedule.
+     * (-- api-linter: core::0134::response-message-name=disabled
+     *     aip.dev/not-precedent: UpdateSchedule RPC doesn't follow Google API format. --)
+     * (-- api-linter: core::0134::method-signature=disabled
+     *     aip.dev/not-precedent: UpdateSchedule RPC doesn't follow Google API format. --)
+     * @param \Temporal\Api\Workflowservice\V1\UpdateScheduleRequest $argument input argument
+     * @param array $metadata metadata
+     * @param array $options call options
+     * @return \Grpc\UnaryCall
+     */
+    public function UpdateSchedule(\Temporal\Api\Workflowservice\V1\UpdateScheduleRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/temporal.api.workflowservice.v1.WorkflowService/UpdateSchedule',
+        $argument,
+        ['\Temporal\Api\Workflowservice\V1\UpdateScheduleResponse', 'decode'],
+        $metadata, $options);
+    }
+
+    /**
+     * Makes a specific change to a schedule or triggers an immediate action.
+     * (-- api-linter: core::0134::synonyms=disabled
+     *     aip.dev/not-precedent: we have both patch and update. --)
+     * @param \Temporal\Api\Workflowservice\V1\PatchScheduleRequest $argument input argument
+     * @param array $metadata metadata
+     * @param array $options call options
+     * @return \Grpc\UnaryCall
+     */
+    public function PatchSchedule(\Temporal\Api\Workflowservice\V1\PatchScheduleRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/temporal.api.workflowservice.v1.WorkflowService/PatchSchedule',
+        $argument,
+        ['\Temporal\Api\Workflowservice\V1\PatchScheduleResponse', 'decode'],
+        $metadata, $options);
+    }
+
+    /**
+     * Lists matching times within a range.
+     * @param \Temporal\Api\Workflowservice\V1\ListScheduleMatchingTimesRequest $argument input argument
+     * @param array $metadata metadata
+     * @param array $options call options
+     * @return \Grpc\UnaryCall
+     */
+    public function ListScheduleMatchingTimes(\Temporal\Api\Workflowservice\V1\ListScheduleMatchingTimesRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/temporal.api.workflowservice.v1.WorkflowService/ListScheduleMatchingTimes',
+        $argument,
+        ['\Temporal\Api\Workflowservice\V1\ListScheduleMatchingTimesResponse', 'decode'],
+        $metadata, $options);
+    }
+
+    /**
+     * Deletes a schedule, removing it from the system.
+     * (-- api-linter: core::0135::method-signature=disabled
+     *     aip.dev/not-precedent: DeleteSchedule doesn't follow Google API format --)
+     * (-- api-linter: core::0135::response-message-name=disabled
+     *     aip.dev/not-precedent: DeleteSchedule doesn't follow Google API format --)
+     * @param \Temporal\Api\Workflowservice\V1\DeleteScheduleRequest $argument input argument
+     * @param array $metadata metadata
+     * @param array $options call options
+     * @return \Grpc\UnaryCall
+     */
+    public function DeleteSchedule(\Temporal\Api\Workflowservice\V1\DeleteScheduleRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/temporal.api.workflowservice.v1.WorkflowService/DeleteSchedule',
+        $argument,
+        ['\Temporal\Api\Workflowservice\V1\DeleteScheduleResponse', 'decode'],
+        $metadata, $options);
+    }
+
+    /**
+     * List all schedules in a namespace.
+     * @param \Temporal\Api\Workflowservice\V1\ListSchedulesRequest $argument input argument
+     * @param array $metadata metadata
+     * @param array $options call options
+     * @return \Grpc\UnaryCall
+     */
+    public function ListSchedules(\Temporal\Api\Workflowservice\V1\ListSchedulesRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/temporal.api.workflowservice.v1.WorkflowService/ListSchedules',
+        $argument,
+        ['\Temporal\Api\Workflowservice\V1\ListSchedulesResponse', 'decode'],
         $metadata, $options);
     }
 

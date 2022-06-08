@@ -26,85 +26,93 @@ class Message
         \GPBMetadata\Temporal\Api\Taskqueue\V1\Message::initOnce();
         $pool->internalAddGeneratedFile(
             '
-Ñà
-%temporal/api/history/v1/message.prototemporal.api.history.v1google/protobuf/timestamp.proto!dependencies/gogoproto/gogo.proto&temporal/api/enums/v1/event_type.proto(temporal/api/enums/v1/failed_cause.proto$temporal/api/enums/v1/workflow.proto$temporal/api/common/v1/message.proto%temporal/api/failure/v1/message.proto&temporal/api/workflow/v1/message.proto\'temporal/api/taskqueue/v1/message.proto"¬
-
+«ã
+%temporal/api/history/v1/message.prototemporal.api.history.v1google/protobuf/timestamp.proto!dependencies/gogoproto/gogo.proto&temporal/api/enums/v1/event_type.proto(temporal/api/enums/v1/failed_cause.proto$temporal/api/enums/v1/workflow.proto$temporal/api/common/v1/message.proto%temporal/api/failure/v1/message.proto&temporal/api/workflow/v1/message.proto\'temporal/api/taskqueue/v1/message.proto"ÔøΩ
 \'WorkflowExecutionStartedEventAttributes;
-workflow_type (2$.temporal.api.common.v1.WorkflowType!
-parent_workflow_namespace (	L
+
+workflow_type (2$.temporal.api.common.v1.WorkflowType!
+parent_workflow_namespace (	$
+parent_workflow_namespace_id (	L
 parent_workflow_execution (2).temporal.api.common.v1.WorkflowExecution!
 parent_initiated_event_id (8
 
 task_queue (2$.temporal.api.taskqueue.v1.TaskQueue/
 input (2 .temporal.api.common.v1.PayloadsC
-workflow_execution_timeout (2.google.protobuf.DurationBòﬂ=
-workflow_run_timeout (2.google.protobuf.DurationBòﬂ>
-workflow_task_timeout	 (2.google.protobuf.DurationBòﬂ"
+workflow_execution_timeout (2.google.protobuf.DurationBÔøΩÔøΩ=
+workflow_run_timeout (2.google.protobuf.DurationBÔøΩÔøΩ>
+workflow_task_timeout	 (2.google.protobuf.DurationBÔøΩÔøΩ"
 continued_execution_run_id
  (	@
 	initiator (2-.temporal.api.enums.v1.ContinueAsNewInitiator;
 continued_failure (2 .temporal.api.failure.v1.Failure@
-last_completion_result (2 .temporal.api.common.v1.Payloads!
+last_completion_result
+ (2 .temporal.api.common.v1.Payloads!
 original_execution_run_id (	
 identity (	
 first_execution_run_id (	9
 retry_policy (2#.temporal.api.common.v1.RetryPolicy
 attempt (L
-"workflow_execution_expiration_time (2.google.protobuf.TimestampBêﬂ
-cron_schedule (	D
-first_workflow_task_backoff (2.google.protobuf.DurationBòﬂ*
+"workflow_execution_expiration_time (2.google.protobuf.TimestampBÔøΩÔøΩ
+
+cron_schedule (	D
+first_workflow_task_backoff (2.google.protobuf.DurationBÔøΩÔøΩ*
 memo (2.temporal.api.common.v1.MemoC
 search_attributes (2(.temporal.api.common.v1.SearchAttributesE
 prev_auto_reset_points (2%.temporal.api.workflow.v1.ResetPoints.
-header (2.temporal.api.common.v1.Header"•
+header (2.temporal.api.common.v1.Header&
+parent_initiated_event_version ("ÔøΩ
 )WorkflowExecutionCompletedEventAttributes0
 result (2 .temporal.api.common.v1.Payloads(
  workflow_task_completed_event_id (
-new_execution_run_id (	"€
+new_execution_run_id (	"ÔøΩ
 &WorkflowExecutionFailedEventAttributes1
 failure (2 .temporal.api.failure.v1.Failure6
 retry_state (2!.temporal.api.enums.v1.RetryState(
  workflow_task_completed_event_id (
-new_execution_run_id (	"Ä
+new_execution_run_id (	"ÔøΩ
 (WorkflowExecutionTimedOutEventAttributes6
 retry_state (2!.temporal.api.enums.v1.RetryState
-new_execution_run_id (	"∏
+new_execution_run_id (	"ÔøΩ
 .WorkflowExecutionContinuedAsNewEventAttributes
 new_execution_run_id (	;
-workflow_type (2$.temporal.api.common.v1.WorkflowType8
+
+workflow_type (2$.temporal.api.common.v1.WorkflowType8
 
 task_queue (2$.temporal.api.taskqueue.v1.TaskQueue/
 input (2 .temporal.api.common.v1.Payloads=
-workflow_run_timeout (2.google.protobuf.DurationBòﬂ>
-workflow_task_timeout (2.google.protobuf.DurationBòﬂ(
+workflow_run_timeout (2.google.protobuf.DurationBÔøΩÔøΩ>
+workflow_task_timeout (2.google.protobuf.DurationBÔøΩÔøΩ(
  workflow_task_completed_event_id (?
-backoff_start_interval (2.google.protobuf.DurationBòﬂ@
+backoff_start_interval (2.google.protobuf.DurationBÔøΩÔøΩ@
 	initiator	 (2-.temporal.api.enums.v1.ContinueAsNewInitiator1
 failure
  (2 .temporal.api.failure.v1.Failure@
 last_completion_result (2 .temporal.api.common.v1.Payloads.
 header (2.temporal.api.common.v1.Header*
-memo (2.temporal.api.common.v1.MemoC
-search_attributes (2(.temporal.api.common.v1.SearchAttributes"≤
+memo
+ (2.temporal.api.common.v1.MemoC
+search_attributes (2(.temporal.api.common.v1.SearchAttributes"ÔøΩ
 $WorkflowTaskScheduledEventAttributes8
 
 task_queue (2$.temporal.api.taskqueue.v1.TaskQueue?
-start_to_close_timeout (2.google.protobuf.DurationBòﬂ
-attempt ("f
+start_to_close_timeout (2.google.protobuf.DurationBÔøΩÔøΩ
+attempt ("ÔøΩ
 "WorkflowTaskStartedEventAttributes
 scheduled_event_id (
 identity (	
 
-request_id (	"á
+request_id (	
+suggest_continue_as_new (
+history_size_bytes ("ÔøΩ
 $WorkflowTaskCompletedEventAttributes
 scheduled_event_id (
 started_event_id (
 identity (	
-binary_checksum (	"ï
+binary_checksum (	"ÔøΩ
 #WorkflowTaskTimedOutEventAttributes
 scheduled_event_id (
 started_event_id (8
-timeout_type (2".temporal.api.enums.v1.TimeoutType"ª
+timeout_type (2".temporal.api.enums.v1.TimeoutType"ÔøΩ
 !WorkflowTaskFailedEventAttributes
 scheduled_event_id (
 started_event_id (=
@@ -115,40 +123,40 @@ $WorkflowTaskCompletedEventAttributes
 
 new_run_id (	
 fork_event_version (
-binary_checksum	 (	"ê
+binary_checksum	 (	"ÔøΩ
 $ActivityTaskScheduledEventAttributes
 activity_id (	;
-activity_type (2$.temporal.api.common.v1.ActivityType
-	namespace (	8
+
+activity_type (2$.temporal.api.common.v1.ActivityType8
 
 task_queue (2$.temporal.api.taskqueue.v1.TaskQueue.
 header (2.temporal.api.common.v1.Header/
 input (2 .temporal.api.common.v1.PayloadsB
-schedule_to_close_timeout (2.google.protobuf.DurationBòﬂB
-schedule_to_start_timeout (2.google.protobuf.DurationBòﬂ?
-start_to_close_timeout	 (2.google.protobuf.DurationBòﬂ:
+schedule_to_close_timeout (2.google.protobuf.DurationBÔøΩÔøΩB
+schedule_to_start_timeout (2.google.protobuf.DurationBÔøΩÔøΩ?
+start_to_close_timeout	 (2.google.protobuf.DurationBÔøΩÔøΩ:
 heartbeat_timeout
- (2.google.protobuf.DurationBòﬂ(
+ (2.google.protobuf.DurationBÔøΩÔøΩ(
  workflow_task_completed_event_id (9
-retry_policy (2#.temporal.api.common.v1.RetryPolicy"Ø
+retry_policy (2#.temporal.api.common.v1.RetryPolicyJ"ÔøΩ
 "ActivityTaskStartedEventAttributes
 scheduled_event_id (
 identity (	
 
 request_id (	
 attempt (6
-last_failure (2 .temporal.api.failure.v1.Failure"†
+last_failure (2 .temporal.api.failure.v1.Failure"ÔøΩ
 $ActivityTaskCompletedEventAttributes0
 result (2 .temporal.api.common.v1.Payloads
 scheduled_event_id (
 started_event_id (
-identity (	"÷
+identity (	"ÔøΩ
 !ActivityTaskFailedEventAttributes1
 failure (2 .temporal.api.failure.v1.Failure
 scheduled_event_id (
 started_event_id (
 identity (	6
-retry_state (2!.temporal.api.enums.v1.RetryState"∆
+retry_state (2!.temporal.api.enums.v1.RetryState"ÔøΩ
 #ActivityTaskTimedOutEventAttributes1
 failure (2 .temporal.api.failure.v1.Failure
 scheduled_event_id (
@@ -156,33 +164,33 @@ $ActivityTaskCompletedEventAttributes0
 retry_state (2!.temporal.api.enums.v1.RetryState"r
 *ActivityTaskCancelRequestedEventAttributes
 scheduled_event_id ((
- workflow_task_completed_event_id (" 
+ workflow_task_completed_event_id ("ÔøΩ
 #ActivityTaskCanceledEventAttributes1
 details (2 .temporal.api.common.v1.Payloads(
  latest_cancel_requested_event_id (
 scheduled_event_id (
 started_event_id (
-identity (	"ô
+identity (	"ÔøΩ
 TimerStartedEventAttributes
 timer_id (	>
-start_to_fire_timeout (2.google.protobuf.DurationBòﬂ(
+start_to_fire_timeout (2.google.protobuf.DurationBÔøΩÔøΩ(
  workflow_task_completed_event_id ("G
 TimerFiredEventAttributes
 timer_id (	
-started_event_id ("Ü
+started_event_id ("ÔøΩ
 TimerCanceledEventAttributes
 timer_id (	
 started_event_id ((
  workflow_task_completed_event_id (
-identity (	"«
+identity (	"ÔøΩ
 /WorkflowExecutionCancelRequestedEventAttributes
 cause (	#
 external_initiated_event_id (N
 external_workflow_execution (2).temporal.api.common.v1.WorkflowExecution
-identity (	"á
+identity (	"ÔøΩ
 (WorkflowExecutionCanceledEventAttributes(
  workflow_task_completed_event_id (1
-details (2 .temporal.api.common.v1.Payloads"È
+details (2 .temporal.api.common.v1.Payloads"ÔøΩ
 MarkerRecordedEventAttributes
 marker_name (	T
 details (2C.temporal.api.history.v1.MarkerRecordedEventAttributes.DetailsEntry(
@@ -191,130 +199,155 @@ $ActivityTaskCompletedEventAttributes0
 failure (2 .temporal.api.failure.v1.FailureP
 DetailsEntry
 key (	/
-value (2 .temporal.api.common.v1.Payloads:8"≤
+value (2 .temporal.api.common.v1.Payloads:8"ÔøΩ
 (WorkflowExecutionSignaledEventAttributes
 signal_name (	/
 input (2 .temporal.api.common.v1.Payloads
 identity (	.
-header (2.temporal.api.common.v1.Header"Å
+header (2.temporal.api.common.v1.Header"ÔøΩ
 *WorkflowExecutionTerminatedEventAttributes
 reason (	1
 details (2 .temporal.api.common.v1.Payloads
-identity (	"Ú
+identity (	"ÔøΩ
 >RequestCancelExternalWorkflowExecutionInitiatedEventAttributes(
  workflow_task_completed_event_id (
-	namespace (	E
+	namespace (	
+namespace_id (	E
 workflow_execution (2).temporal.api.common.v1.WorkflowExecution
 control (	
-child_workflow_only ("¿
+child_workflow_only (
+reason (	"ÔøΩ
 ;RequestCancelExternalWorkflowExecutionFailedEventAttributesP
 cause (2A.temporal.api.enums.v1.CancelExternalWorkflowExecutionFailedCause(
  workflow_task_completed_event_id (
-	namespace (	E
+	namespace (	
+namespace_id (	E
 workflow_execution (2).temporal.api.common.v1.WorkflowExecution
 initiated_event_id (
-control (	"Ø
+control (	"ÔøΩ
 7ExternalWorkflowExecutionCancelRequestedEventAttributes
 initiated_event_id (
-	namespace (	E
-workflow_execution (2).temporal.api.common.v1.WorkflowExecution"·
+	namespace (	
+namespace_id (	E
+workflow_execution (2).temporal.api.common.v1.WorkflowExecution"ÔøΩ
 7SignalExternalWorkflowExecutionInitiatedEventAttributes(
  workflow_task_completed_event_id (
-	namespace (	E
+	namespace (	
+namespace_id	 (	E
 workflow_execution (2).temporal.api.common.v1.WorkflowExecution
 signal_name (	/
 input (2 .temporal.api.common.v1.Payloads
 control (	
 child_workflow_only (.
-header (2.temporal.api.common.v1.Header"π
+header (2.temporal.api.common.v1.Header"ÔøΩ
 4SignalExternalWorkflowExecutionFailedEventAttributesP
 cause (2A.temporal.api.enums.v1.SignalExternalWorkflowExecutionFailedCause(
  workflow_task_completed_event_id (
-	namespace (	E
+	namespace (	
+namespace_id (	E
 workflow_execution (2).temporal.api.common.v1.WorkflowExecution
 initiated_event_id (
-control (	"π
+control (	"ÔøΩ
 0ExternalWorkflowExecutionSignaledEventAttributes
 initiated_event_id (
-	namespace (	E
+	namespace (	
+namespace_id (	E
 workflow_execution (2).temporal.api.common.v1.WorkflowExecution
-control (	"û
+control (	"ÔøΩ
 -UpsertWorkflowSearchAttributesEventAttributes(
  workflow_task_completed_event_id (C
-search_attributes (2(.temporal.api.common.v1.SearchAttributes"é
+search_attributes (2(.temporal.api.common.v1.SearchAttributes"ÔøΩ
 3StartChildWorkflowExecutionInitiatedEventAttributes
-	namespace (	
+	namespace (	
+namespace_id (	
 workflow_id (	;
-workflow_type (2$.temporal.api.common.v1.WorkflowType8
+
+workflow_type (2$.temporal.api.common.v1.WorkflowType8
 
 task_queue (2$.temporal.api.taskqueue.v1.TaskQueue/
 input (2 .temporal.api.common.v1.PayloadsC
-workflow_execution_timeout (2.google.protobuf.DurationBòﬂ=
-workflow_run_timeout (2.google.protobuf.DurationBòﬂ>
-workflow_task_timeout (2.google.protobuf.DurationBòﬂE
+workflow_execution_timeout (2.google.protobuf.DurationBÔøΩÔøΩ=
+workflow_run_timeout (2.google.protobuf.DurationBÔøΩÔøΩ>
+workflow_task_timeout (2.google.protobuf.DurationBÔøΩÔøΩE
 parent_close_policy	 (2(.temporal.api.enums.v1.ParentClosePolicy
 control
  (	(
  workflow_task_completed_event_id (N
 workflow_id_reuse_policy (2,.temporal.api.enums.v1.WorkflowIdReusePolicy9
-retry_policy (2#.temporal.api.common.v1.RetryPolicy
-cron_schedule (	.
+retry_policy
+ (2#.temporal.api.common.v1.RetryPolicy
+
+cron_schedule (	.
 header (2.temporal.api.common.v1.Header*
 memo (2.temporal.api.common.v1.MemoC
-search_attributes (2(.temporal.api.common.v1.SearchAttributes"º
+search_attributes (2(.temporal.api.common.v1.SearchAttributes"ÔøΩ
 0StartChildWorkflowExecutionFailedEventAttributes
-	namespace (	
+	namespace (	
+namespace_id (	
 workflow_id (	;
-workflow_type (2$.temporal.api.common.v1.WorkflowTypeL
+
+workflow_type (2$.temporal.api.common.v1.WorkflowTypeL
 cause (2=.temporal.api.enums.v1.StartChildWorkflowExecutionFailedCause
 control (	
 initiated_event_id ((
- workflow_task_completed_event_id ("ë
+ workflow_task_completed_event_id ("ÔøΩ
 ,ChildWorkflowExecutionStartedEventAttributes
-	namespace (	
+	namespace (	
+namespace_id (	
 initiated_event_id (E
 workflow_execution (2).temporal.api.common.v1.WorkflowExecution;
-workflow_type (2$.temporal.api.common.v1.WorkflowType.
-header (2.temporal.api.common.v1.Header"Ø
+
+workflow_type (2$.temporal.api.common.v1.WorkflowType.
+header (2.temporal.api.common.v1.Header"ÔøΩ
 .ChildWorkflowExecutionCompletedEventAttributes0
 result (2 .temporal.api.common.v1.Payloads
-	namespace (	E
+	namespace (	
+namespace_id (	E
 workflow_execution (2).temporal.api.common.v1.WorkflowExecution;
-workflow_type (2$.temporal.api.common.v1.WorkflowType
+
+workflow_type (2$.temporal.api.common.v1.WorkflowType
 initiated_event_id (
-started_event_id ("Â
+started_event_id ("ÔøΩ
 +ChildWorkflowExecutionFailedEventAttributes1
 failure (2 .temporal.api.failure.v1.Failure
-	namespace (	E
+	namespace (	
+namespace_id (	E
 workflow_execution (2).temporal.api.common.v1.WorkflowExecution;
-workflow_type (2$.temporal.api.common.v1.WorkflowType
+
+workflow_type (2$.temporal.api.common.v1.WorkflowType
 initiated_event_id (
 started_event_id (6
-retry_state (2!.temporal.api.enums.v1.RetryState"Ø
+retry_state (2!.temporal.api.enums.v1.RetryState"ÔøΩ
 -ChildWorkflowExecutionCanceledEventAttributes1
 details (2 .temporal.api.common.v1.Payloads
-	namespace (	E
+	namespace (	
+namespace_id (	E
 workflow_execution (2).temporal.api.common.v1.WorkflowExecution;
-workflow_type (2$.temporal.api.common.v1.WorkflowType
+
+workflow_type (2$.temporal.api.common.v1.WorkflowType
 initiated_event_id (
-started_event_id ("¥
+started_event_id ("ÔøΩ
 -ChildWorkflowExecutionTimedOutEventAttributes
-	namespace (	E
+	namespace (	
+namespace_id (	E
 workflow_execution (2).temporal.api.common.v1.WorkflowExecution;
-workflow_type (2$.temporal.api.common.v1.WorkflowType
+
+workflow_type (2$.temporal.api.common.v1.WorkflowType
 initiated_event_id (
 started_event_id (6
-retry_state (2!.temporal.api.enums.v1.RetryState"˛
+retry_state (2!.temporal.api.enums.v1.RetryState"ÔøΩ
 /ChildWorkflowExecutionTerminatedEventAttributes
-	namespace (	E
+	namespace (	
+namespace_id (	E
 workflow_execution (2).temporal.api.common.v1.WorkflowExecution;
-workflow_type (2$.temporal.api.common.v1.WorkflowType
+
+workflow_type (2$.temporal.api.common.v1.WorkflowType
 initiated_event_id (
-started_event_id ("â)
+started_event_id ("ÔøΩ)
 HistoryEvent
 event_id (4
 
-event_time (2.google.protobuf.TimestampBêﬂ4
+event_time (2.google.protobuf.TimestampBÔøΩÔøΩ4
 
 event_type (2 .temporal.api.enums.v1.EventType
 version (
@@ -327,7 +360,8 @@ event_type (2 .temporal.api.enums.v1.EventType
  (2=.temporal.api.history.v1.WorkflowTaskScheduledEventAttributesH m
 &workflow_task_started_event_attributes (2;.temporal.api.history.v1.WorkflowTaskStartedEventAttributesH q
 (workflow_task_completed_event_attributes (2=.temporal.api.history.v1.WorkflowTaskCompletedEventAttributesH p
-(workflow_task_timed_out_event_attributes (2<.temporal.api.history.v1.WorkflowTaskTimedOutEventAttributesH k
+(workflow_task_timed_out_event_attributes
+ (2<.temporal.api.history.v1.WorkflowTaskTimedOutEventAttributesH k
 %workflow_task_failed_event_attributes (2:.temporal.api.history.v1.WorkflowTaskFailedEventAttributesH q
 (activity_task_scheduled_event_attributes (2=.temporal.api.history.v1.ActivityTaskScheduledEventAttributesH m
 &activity_task_started_event_attributes (2;.temporal.api.history.v1.ActivityTaskStartedEventAttributesH q
@@ -341,30 +375,30 @@ event_type (2 .temporal.api.enums.v1.EventType
 timer_canceled_event_attributes (25.temporal.api.history.v1.TimerCanceledEventAttributesH b
  marker_recorded_event_attributes (26.temporal.api.history.v1.MarkerRecordedEventAttributesH y
 ,workflow_execution_signaled_event_attributes (2A.temporal.api.history.v1.WorkflowExecutionSignaledEventAttributesH }
-.workflow_execution_terminated_event_attributes (2C.temporal.api.history.v1.WorkflowExecutionTerminatedEventAttributesH à
+.workflow_execution_terminated_event_attributes (2C.temporal.api.history.v1.WorkflowExecutionTerminatedEventAttributesH ÔøΩ
 4workflow_execution_cancel_requested_event_attributes (2H.temporal.api.history.v1.WorkflowExecutionCancelRequestedEventAttributesH y
-,workflow_execution_canceled_event_attributes (2A.temporal.api.history.v1.WorkflowExecutionCanceledEventAttributesH ®
-Erequest_cancel_external_workflow_execution_initiated_event_attributes (2W.temporal.api.history.v1.RequestCancelExternalWorkflowExecutionInitiatedEventAttributesH ¢
-Brequest_cancel_external_workflow_execution_failed_event_attributes (2T.temporal.api.history.v1.RequestCancelExternalWorkflowExecutionFailedEventAttributesH ô
-=external_workflow_execution_cancel_requested_event_attributes  (2P.temporal.api.history.v1.ExternalWorkflowExecutionCancelRequestedEventAttributesH á
-4workflow_execution_continued_as_new_event_attributes! (2G.temporal.api.history.v1.WorkflowExecutionContinuedAsNewEventAttributesH ë
-9start_child_workflow_execution_initiated_event_attributes" (2L.temporal.api.history.v1.StartChildWorkflowExecutionInitiatedEventAttributesH ã
-6start_child_workflow_execution_failed_event_attributes# (2I.temporal.api.history.v1.StartChildWorkflowExecutionFailedEventAttributesH Ç
-1child_workflow_execution_started_event_attributes$ (2E.temporal.api.history.v1.ChildWorkflowExecutionStartedEventAttributesH Ü
-3child_workflow_execution_completed_event_attributes% (2G.temporal.api.history.v1.ChildWorkflowExecutionCompletedEventAttributesH Ä
-0child_workflow_execution_failed_event_attributes& (2D.temporal.api.history.v1.ChildWorkflowExecutionFailedEventAttributesH Ñ
-2child_workflow_execution_canceled_event_attributes\' (2F.temporal.api.history.v1.ChildWorkflowExecutionCanceledEventAttributesH Ö
-3child_workflow_execution_timed_out_event_attributes( (2F.temporal.api.history.v1.ChildWorkflowExecutionTimedOutEventAttributesH à
-4child_workflow_execution_terminated_event_attributes) (2H.temporal.api.history.v1.ChildWorkflowExecutionTerminatedEventAttributesH ô
-=signal_external_workflow_execution_initiated_event_attributes* (2P.temporal.api.history.v1.SignalExternalWorkflowExecutionInitiatedEventAttributesH ì
-:signal_external_workflow_execution_failed_event_attributes+ (2M.temporal.api.history.v1.SignalExternalWorkflowExecutionFailedEventAttributesH ä
-5external_workflow_execution_signaled_event_attributes, (2I.temporal.api.history.v1.ExternalWorkflowExecutionSignaledEventAttributesH Ñ
+,workflow_execution_canceled_event_attributes (2A.temporal.api.history.v1.WorkflowExecutionCanceledEventAttributesH ÔøΩ
+Erequest_cancel_external_workflow_execution_initiated_event_attributes (2W.temporal.api.history.v1.RequestCancelExternalWorkflowExecutionInitiatedEventAttributesH ÔøΩ
+Brequest_cancel_external_workflow_execution_failed_event_attributes (2T.temporal.api.history.v1.RequestCancelExternalWorkflowExecutionFailedEventAttributesH ÔøΩ
+=external_workflow_execution_cancel_requested_event_attributes  (2P.temporal.api.history.v1.ExternalWorkflowExecutionCancelRequestedEventAttributesH ÔøΩ
+4workflow_execution_continued_as_new_event_attributes! (2G.temporal.api.history.v1.WorkflowExecutionContinuedAsNewEventAttributesH ÔøΩ
+9start_child_workflow_execution_initiated_event_attributes" (2L.temporal.api.history.v1.StartChildWorkflowExecutionInitiatedEventAttributesH ÔøΩ
+6start_child_workflow_execution_failed_event_attributes# (2I.temporal.api.history.v1.StartChildWorkflowExecutionFailedEventAttributesH ÔøΩ
+1child_workflow_execution_started_event_attributes$ (2E.temporal.api.history.v1.ChildWorkflowExecutionStartedEventAttributesH ÔøΩ
+3child_workflow_execution_completed_event_attributes% (2G.temporal.api.history.v1.ChildWorkflowExecutionCompletedEventAttributesH ÔøΩ
+0child_workflow_execution_failed_event_attributes& (2D.temporal.api.history.v1.ChildWorkflowExecutionFailedEventAttributesH ÔøΩ
+2child_workflow_execution_canceled_event_attributes\' (2F.temporal.api.history.v1.ChildWorkflowExecutionCanceledEventAttributesH ÔøΩ
+3child_workflow_execution_timed_out_event_attributes( (2F.temporal.api.history.v1.ChildWorkflowExecutionTimedOutEventAttributesH ÔøΩ
+4child_workflow_execution_terminated_event_attributes) (2H.temporal.api.history.v1.ChildWorkflowExecutionTerminatedEventAttributesH ÔøΩ
+=signal_external_workflow_execution_initiated_event_attributes* (2P.temporal.api.history.v1.SignalExternalWorkflowExecutionInitiatedEventAttributesH ÔøΩ
+:signal_external_workflow_execution_failed_event_attributes+ (2M.temporal.api.history.v1.SignalExternalWorkflowExecutionFailedEventAttributesH ÔøΩ
+5external_workflow_execution_signaled_event_attributes, (2I.temporal.api.history.v1.ExternalWorkflowExecutionSignaledEventAttributesH ÔøΩ
 2upsert_workflow_search_attributes_event_attributes- (2F.temporal.api.history.v1.UpsertWorkflowSearchAttributesEventAttributesH B
 
 attributes"@
 History5
-events (2%.temporal.api.history.v1.HistoryEventBä
-io.temporal.api.history.v1BMessageProtoPZ%go.temporal.io/api/history/v1;history™Temporal.Api.History.V1ÍTemporal::Api::History::V1bproto3'
+events (2%.temporal.api.history.v1.HistoryEventBÔøΩ
+io.temporal.api.history.v1BMessageProtoPZ%go.temporal.io/api/history/v1;historyÔøΩTemporal.Api.History.V1ÔøΩTemporal::Api::History::V1bproto3'
         , true);
 
         static::$is_initialized = true;

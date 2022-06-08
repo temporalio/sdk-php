@@ -39,6 +39,13 @@ class NamespaceInfo extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>string id = 6;</code>
      */
     protected $id = '';
+    /**
+     * Whether scheduled workflows are supported on this namespace. This is only needed
+     * temporarily while the feature is experimental, so we can give it a high tag.
+     *
+     * Generated from protobuf field <code>bool supports_schedules = 100;</code>
+     */
+    protected $supports_schedules = false;
 
     /**
      * Constructor.
@@ -53,6 +60,9 @@ class NamespaceInfo extends \Google\Protobuf\Internal\Message
      *     @type array|\Google\Protobuf\Internal\MapField $data
      *           A key-value map for any customized purpose.
      *     @type string $id
+     *     @type bool $supports_schedules
+     *           Whether scheduled workflows are supported on this namespace. This is only needed
+     *           temporarily while the feature is experimental, so we can give it a high tag.
      * }
      */
     public function __construct($data = NULL) {
@@ -192,6 +202,34 @@ class NamespaceInfo extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkString($var, True);
         $this->id = $var;
+
+        return $this;
+    }
+
+    /**
+     * Whether scheduled workflows are supported on this namespace. This is only needed
+     * temporarily while the feature is experimental, so we can give it a high tag.
+     *
+     * Generated from protobuf field <code>bool supports_schedules = 100;</code>
+     * @return bool
+     */
+    public function getSupportsSchedules()
+    {
+        return $this->supports_schedules;
+    }
+
+    /**
+     * Whether scheduled workflows are supported on this namespace. This is only needed
+     * temporarily while the feature is experimental, so we can give it a high tag.
+     *
+     * Generated from protobuf field <code>bool supports_schedules = 100;</code>
+     * @param bool $var
+     * @return $this
+     */
+    public function setSupportsSchedules($var)
+    {
+        GPBUtil::checkBool($var);
+        $this->supports_schedules = $var;
 
         return $this;
     }
