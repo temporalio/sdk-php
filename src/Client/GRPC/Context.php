@@ -12,13 +12,14 @@ declare(strict_types=1);
 namespace Temporal\Client\GRPC;
 
 use Carbon\CarbonInterval;
+use Composer\InstalledVersions;
 use Temporal\Common\RetryOptions;
 use Temporal\Internal\Support\DateInterval;
 
 final class Context implements ContextInterface
 {
     private ?\DateTimeInterface $deadline = null;
-    private array $options = [];
+    private array $options;
     private array $metadata = [];
     private RetryOptions $retryOptions;
 
@@ -30,6 +31,11 @@ final class Context implements ContextInterface
         $this->retryOptions = RetryOptions::new()
             ->withMaximumAttempts(0)
             ->withInitialInterval(CarbonInterval::millisecond(500));
+
+        $this->options = [
+            'client-name' => 'temporal-php',
+            'client-version' => InstalledVersions::getVersion('temporal/sdk'),
+        ];
     }
 
     /**
