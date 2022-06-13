@@ -80,6 +80,6 @@ class WorkflowException extends TemporalException
         string $workflowType = null,
         \Throwable $previous = null
     ): WorkflowException {
-        return new self(null, $execution, $workflowType, $previous);
+        return new static(null, $execution, $workflowType, $previous);
     }
 }
