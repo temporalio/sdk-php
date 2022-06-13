@@ -65,7 +65,7 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           tools: composer:v2
-          extensions: dom, sockets
+          extensions: dom, sockets, curl
 
       - name: Check Out Code
         uses: actions/checkout@v2
@@ -118,7 +118,7 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           tools: composer:v2
-          extensions: dom
+          extensions: dom, curl
 
       - name: Check Out Code
         uses: actions/checkout@v2
@@ -168,7 +168,7 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           tools: composer:v2
-          extensions: dom, sockets, grpc
+          extensions: dom, sockets, grpc, curl
 
       - name: Check Out Code
         uses: actions/checkout@v2
@@ -201,9 +201,4 @@ jobs:
 
       - name: Run Tests
         run: |
-          docker-compose -f ./tests/docker-compose.yaml up -d
-          sleep 35
-          chmod +x ./rr
-          ./rr serve -c ./tests/.rr.silent.yaml &
-          sleep 10
           vendor/bin/phpunit --testsuite=Functional --testdox --verbose
