@@ -497,10 +497,15 @@ class WorkflowContext implements WorkflowContextInterface
     protected function addAsyncCondition(string $conditionGroupId, PromiseInterface $condition): PromiseInterface
     {
         $this->asyncAwaits[$conditionGroupId][] = $condition;
-        return $condition->then(function ($result) use ($conditionGroupId) {
-            $this->resolveConditionGroup($conditionGroupId);
-            return $result;
-        });
+        return $condition->then(
+            function ($result) use ($conditionGroupId) {
+                $this->resolveConditionGroup($conditionGroupId);
+                return $result;
+            },
+            function () use ($conditionGroupId) {
+                $this->rejectConditionGroup($conditionGroupId);
+            }
+        );
     }
 
     /**
@@ -525,6 +530,25 @@ class WorkflowContext implements WorkflowContextInterface
             unset($this->awaits[$conditionGroupId]);
         }
 
+        $this->clearAsyncAwaits($conditionGroupId);
+    }
+
+    public function rejectConditionGroup(string $conditionGroupId): void
+    {
+        if (isset($this->awaits[$conditionGroupId])) {
+            foreach ($this->awaits[$conditionGroupId] as $i => $cond) {
+                [$_, $deferred] = $cond;
+                unset($this->awaits[$conditionGroupId][$i]);
+                $deferred->reject();
+            }
+            unset($this->awaits[$conditionGroupId]);
+        }
+
+        $this->clearAsyncAwaits($conditionGroupId);
+    }
+
+    private function clearAsyncAwaits(string $conditionGroupId): void
+    {
         // Check pending timers in this group
         if (!isset($this->asyncAwaits[$conditionGroupId])) {
             return;

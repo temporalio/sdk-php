@@ -123,10 +123,15 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
     {
         $this->parent->asyncAwaits[$conditionGroupId][] = $condition;
 
-        return $condition->then(function ($result) use ($conditionGroupId) {
-            $this->resolveConditionGroup($conditionGroupId);
-            return $result;
-        });
+        return $condition->then(
+            function ($result) use ($conditionGroupId) {
+                $this->resolveConditionGroup($conditionGroupId);
+                return $result;
+            },
+            function () use ($conditionGroupId) {
+                $this->rejectConditionGroup($conditionGroupId);
+            }
+        );
     }
 
     /**
@@ -140,6 +145,11 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
     public function resolveConditionGroup(string $conditionGroupId): void
     {
         $this->parent->resolveConditionGroup($conditionGroupId);
+    }
+
+    public function rejectConditionGroup(string $conditionGroupId): void
+    {
+        $this->parent->rejectConditionGroup($conditionGroupId);
     }
 
     /**
