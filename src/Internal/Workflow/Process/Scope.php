@@ -485,6 +485,10 @@ class Scope implements CancellationScopeInterface, PromisorInterface
         $onFulfilled = function ($result) {
             $this->defer(
                 function () use ($result): void {
+                    if ($this->isCancelled()) {
+                        $this->unlock();
+                        return;
+                    }
                     $this->makeCurrent();
                     try {
                         $this->coroutine->send($result);
