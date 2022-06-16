@@ -21,17 +21,21 @@ use Temporal\Tests\Activity\SimpleActivity;
 #[Workflow\WorkflowInterface]
 class AsyncClosureWorkflow
 {
+    private array $result = [];
+
     #[WorkflowMethod(name: 'AsyncClosureWorkflow')]
     public function handler()
     {
         $promise = Workflow::async(
             function (): \Generator {
+                yield Workflow::async(fn () => $this->result[] = 'before');
                 yield Workflow::awaitWithTimeout(999, fn() => false);
+                yield Workflow::async(fn () => $this->result[] = 'after');
             }
         );
 
         $promise->cancel();
 
-        return 'Done';
+        return implode(' ', $this->result);
     }
 }

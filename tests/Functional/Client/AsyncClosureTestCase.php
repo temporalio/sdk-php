@@ -30,6 +30,6 @@ class AsyncClosureTestCase extends ClientTestCase
 
         $run = $client->start($workflow);
 
-        $this->assertSame('Done', $run->getResult('string'));
+        $this->assertSame('before', $run->getResult('string'));
     }
 }
