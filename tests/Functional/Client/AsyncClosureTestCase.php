@@ -25,7 +25,7 @@ class AsyncClosureTestCase extends ClientTestCase
         $client = $this->createClient();
         $workflow = $client->newWorkflowStub(
             AsyncClosureWorkflow::class,
-            WorkflowOptions::new()->withWorkflowExecutionTimeout(1)
+            WorkflowOptions::new()->withWorkflowExecutionTimeout(3)
         );
 
         $run = $client->start($workflow);
