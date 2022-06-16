@@ -11,12 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Workflow;
 
-use Temporal\Activity\ActivityCancellationType;
-use Temporal\Activity\ActivityOptions;
-use Temporal\Common\RetryOptions;
+use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
-use Temporal\Tests\Activity\SimpleActivity;
 
 #[Workflow\WorkflowInterface]
 class AsyncClosureWorkflow
@@ -40,6 +37,11 @@ class AsyncClosureWorkflow
                 $promise->cancel();
             }
         );
+
+        try {
+            yield $promise;
+        } catch(CanceledFailure $exception) {
+        }
 
         return implode(' ', $this->result);
     }
