@@ -33,6 +33,7 @@ class AsyncClosureWorkflow
 
         yield Workflow::async(
             function () use ($promise): \Generator {
+                yield Workflow::await(fn () => count($this->result)===1);
                 yield Workflow::timer(1);
                 $promise->cancel();
             }
