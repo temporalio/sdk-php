@@ -90,7 +90,7 @@ jobs:
         with:
           timeout_minutes: 5
           max_attempts: 5
-          command: composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress --ignore-platform-reqs
+          command: composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress
 
       - name: Run Tests
         run: vendor/bin/phpunit --testsuite=Unit --testdox --verbose
@@ -118,7 +118,7 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           tools: composer:v2
-          extensions: dom, curl
+          extensions: dom, sockets, curl
 
       - name: Check Out Code
         uses: actions/checkout@v2
@@ -143,7 +143,7 @@ jobs:
         with:
           timeout_minutes: 5
           max_attempts: 5
-          command: composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress --ignore-platform-reqs
+          command: composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress
 
       - name: Run Tests
         run: vendor/bin/phpunit --testsuite=Feature --testdox --verbose
