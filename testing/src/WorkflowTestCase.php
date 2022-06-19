@@ -11,12 +11,13 @@ use Temporal\Client\WorkflowClient;
 class WorkflowTestCase extends TestCase
 {
     protected WorkflowClient $workflowClient;
+    protected TestService $testingService;
 
     protected function setUp(): void
     {
-        $this->workflowClient = new WorkflowClient(
-            ServiceClient::create('localhost:7233')
-        );
+        $this->workflowClient = new WorkflowClient(ServiceClient::create('localhost:7233'));
+        $this->testingService = TestService::create('localhost:7233');
+
         parent::setUp();
     }
 }
