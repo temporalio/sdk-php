@@ -11,11 +11,13 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Functional\Client;
 
+use Temporal\Api\Testservice\V1\TestServiceClient;
 use Temporal\DataConverter\Type;
 use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Failure\ActivityFailure;
 use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Exception\Failure\CanceledFailure;
+use Temporal\Testing\TestService;
 use Temporal\Tests\Workflow\AggregatedWorkflow;
 use Temporal\Tests\Workflow\LoopWithSignalCoroutinesWorkflow;
 use Temporal\Tests\Workflow\LoopWorkflow;
@@ -28,6 +30,22 @@ use Temporal\Workflow\WorkflowStub;
  */
 class AwaitTestCase extends ClientTestCase
 {
+    private TestService $testService;
+
+    protected function setUp(): void
+    {
+        $this->testService = TestService::create('localhost:7233');
+        $this->testService->lockTimeSkipping();
+        parent::setUp();
+    }
+
+    protected function tearDown(): void
+    {
+        $this->testService->unlockTimeSkipping();
+        parent::tearDown();
+    }
+
+
     public function testSimpleAwait()
     {
         $client = $this->createClient();
