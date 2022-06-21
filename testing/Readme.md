@@ -83,7 +83,14 @@ In case you need to emulate some "waiting" on a test server, you can use `sleep(
 
 Current server time can be retrieved with `getCurrentTime(): Carbon` method.
 
+For convenience if you don't want to skip time in the whole `TestCase` class use `WithoutTimeSkipping`: 
 
+```php
+final class MyWorkflowTest extends TestCase 
+{
+    use WithoutTimeSkipping;
+}
+```
 
 
 

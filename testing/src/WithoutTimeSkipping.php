@@ -2,24 +2,22 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Testing\Traits;
+namespace Temporal\Testing;
 
-use Temporal\Testing\TestService;
-
-trait WithTimeSkipping
+trait WithoutTimeSkipping
 {
     private TestService $testService;
 
     protected function setUp(): void
     {
         $this->testService = TestService::create('localhost:7233');
-        $this->testService->unlockTimeSkipping();
+        $this->testService->lockTimeSkipping();
         parent::setUp();
     }
 
     protected function tearDown(): void
     {
-        $this->testService->lockTimeSkipping();
+        $this->testService->unlockTimeSkipping();
         parent::tearDown();
     }
 }
