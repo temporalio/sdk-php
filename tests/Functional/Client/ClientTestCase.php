@@ -16,6 +16,7 @@ use Temporal\Api\History\V1\HistoryEvent;
 use Temporal\Api\Workflowservice\V1\GetWorkflowExecutionHistoryRequest;
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
+use Temporal\Testing\TestService;
 use Temporal\Tests\Functional\FunctionalTestCase;
 use Temporal\Workflow\WorkflowExecution;
 
@@ -24,6 +25,21 @@ use Temporal\Workflow\WorkflowExecution;
  */
 abstract class ClientTestCase extends FunctionalTestCase
 {
+    private TestService $testService;
+
+    protected function setUp(): void
+    {
+        $this->testService = TestService::create('localhost:7233');
+        $this->testService->lockTimeSkipping();
+        parent::setUp();
+    }
+
+    protected function tearDown(): void
+    {
+        $this->testService->unlockTimeSkipping();
+        parent::tearDown();
+    }
+
     /**
      * @param string $connection
      * @return WorkflowClient

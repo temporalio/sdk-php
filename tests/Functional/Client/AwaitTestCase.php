@@ -30,22 +30,6 @@ use Temporal\Workflow\WorkflowStub;
  */
 class AwaitTestCase extends ClientTestCase
 {
-    private TestService $testService;
-
-    protected function setUp(): void
-    {
-        $this->testService = TestService::create('localhost:7233');
-        $this->testService->lockTimeSkipping();
-        parent::setUp();
-    }
-
-    protected function tearDown(): void
-    {
-        $this->testService->unlockTimeSkipping();
-        parent::tearDown();
-    }
-
-
     public function testSimpleAwait()
     {
         $client = $this->createClient();
