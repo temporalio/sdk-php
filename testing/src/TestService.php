@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Google\Protobuf\Duration;
 use Google\Protobuf\GPBEmpty;
 use Google\Protobuf\Timestamp;
+use Grpc\ChannelCredentials;
 use Temporal\Api\Testservice\V1\GetCurrentTimeResponse;
 use Temporal\Api\Testservice\V1\LockTimeSkippingRequest;
 use Temporal\Api\Testservice\V1\SleepRequest;
@@ -28,7 +29,7 @@ final class TestService
     public static function create(string $host): self
     {
         return new self(
-            new TestServiceClient($host, ['credentials' => \Grpc\ChannelCredentials::createInsecure()])
+            new TestServiceClient($host, ['credentials' => ChannelCredentials::createInsecure()])
         );
     }
 
@@ -94,10 +95,9 @@ final class TestService
      * If the current Test Server Time is beyond the specified timestamp, returns immediately.
      * This is an EXPERIMENTAL API.
      */
-    public function sleepUntil(int $seconds): void
+    public function sleepUntil(int $timestamp): void
     {
-        $timestamp = (new Timestamp())->setSeconds($seconds);
-        $request = (new SleepUntilRequest())->setTimestamp($timestamp);
+        $request = (new SleepUntilRequest())->setTimestamp((new Timestamp())->setSeconds($timestamp));
         $this->invoke('sleepUntil', $request);
     }
 

@@ -63,6 +63,28 @@ $worker->registerActivity(MyActvivityMock::class);
 $factory->run();
 ```
 
+### Time management 
+By default, the test server starts with `--enable-time-skipping` option. It means that if the 
+workflow has a timer, the server doesn't wait for it and continues immediately. To change
+this behaviour you can use `TestService` class:
+
+```php
+$testService = TestService::create('localhost:7233');
+$testService->lockTimeSkipping();
+
+// ...
+$testService->unlockTimeSkipping();
+```
+
+Class `TestService` communicates with a test server and provides method for "time management". Time skipping 
+can be switched on/off with `unlockTimeSkipping()` and `lockTimeSkipping()` method. 
+
+In case you need to emulate some "waiting" on a test server, you can use `sleep(int secods)` or `sleepUntil(int $timestamp)` methods.
+
+Current server time can be retrieved with `getCurrentTime(): Carbon` method.
+
+
+
 
 
 
