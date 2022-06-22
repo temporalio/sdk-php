@@ -42,7 +42,7 @@ final class Downloader
 
         $targetPath = getcwd() . DIRECTORY_SEPARATOR . $systemInfo->temporalServerExecutable;
         $this->filesystem->copy($pathToExtractedAsset . DIRECTORY_SEPARATOR . $systemInfo->temporalServerExecutable, $targetPath);
-        $this->filesystem->chmod($targetPath, 755);
+        $this->filesystem->chmod($targetPath, 0755);
         $this->filesystem->remove($pathToExtractedAsset);
     }
 
