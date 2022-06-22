@@ -18,7 +18,8 @@ final class Environment
     private ?Process $temporalServerProcess = null;
     private ?Process $roadRunnerProcess = null;
 
-    public function __construct(Output $output, Downloader $downloader, SystemInfo $systemInfo) {
+    public function __construct(Output $output, Downloader $downloader, SystemInfo $systemInfo)
+    {
         $this->downloader = $downloader;
         $this->systemInfo = $systemInfo;
         $this->output = $output;
@@ -42,7 +43,9 @@ final class Environment
         }
 
         $this->output->write('Starting Temporal test server... ');
-        $this->temporalServerProcess = new Process([$this->systemInfo->temporalServerExecutable, 7233,]);
+        $this->temporalServerProcess = new Process(
+            [$this->systemInfo->temporalServerExecutable, 7233, '--enable-time-skipping']
+        );
         $this->temporalServerProcess->setTimeout(10);
         $this->temporalServerProcess->start();
         $this->output->writeln('<info>done.</info>');

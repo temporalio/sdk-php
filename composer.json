@@ -40,6 +40,8 @@
     },
     "autoload": {
         "psr-4": {
+            "Temporal\\Api\\Testservice\\": "testing/api/testservice/Temporal/Api/Testservice",
+            "GPBMetadata\\Temporal\\Api\\Testservice\\": "testing/api/testservice/GPBMetadata/Temporal/Api/Testservice",
             "Temporal\\Testing\\": "testing/src",
             "GPBMetadata\\": "api/v1/GPBMetadata",
             "Temporal\\": "src",

@@ -11,11 +11,13 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Functional\Client;
 
+use Temporal\Api\Testservice\V1\TestServiceClient;
 use Temporal\DataConverter\Type;
 use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Failure\ActivityFailure;
 use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Exception\Failure\CanceledFailure;
+use Temporal\Testing\TestService;
 use Temporal\Tests\Workflow\AggregatedWorkflow;
 use Temporal\Tests\Workflow\LoopWithSignalCoroutinesWorkflow;
 use Temporal\Tests\Workflow\LoopWorkflow;

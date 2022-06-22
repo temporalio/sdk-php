@@ -16,6 +16,7 @@ use Temporal\Api\History\V1\HistoryEvent;
 use Temporal\Api\Workflowservice\V1\GetWorkflowExecutionHistoryRequest;
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
+use Temporal\Testing\WithoutTimeSkipping;
 use Temporal\Tests\Functional\FunctionalTestCase;
 use Temporal\Workflow\WorkflowExecution;
 
@@ -24,6 +25,8 @@ use Temporal\Workflow\WorkflowExecution;
  */
 abstract class ClientTestCase extends FunctionalTestCase
 {
+    use WithoutTimeSkipping;
+
     /**
      * @param string $connection
      * @return WorkflowClient
