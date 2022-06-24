@@ -51,7 +51,7 @@ class EnumType extends Type implements DetectableTypeInterface
         return ($this->classFQCN)::from($value);
     }
 
-    public function serialize($value): \UnitEnum
+    public function serialize($value): ?\UnitEnum
     {
         return $value;
     }
