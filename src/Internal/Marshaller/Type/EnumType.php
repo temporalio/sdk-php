@@ -52,6 +52,7 @@ class EnumType extends Type implements DetectableTypeInterface
     }
 
     /**
+     * @psalm-suppress UndefinedDocblockClass
      * @return \UnitEnum|null
      */
     public function serialize($value)
