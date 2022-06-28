@@ -12,16 +12,28 @@ declare(strict_types=1);
 namespace Temporal\Internal\Transport\Request;
 
 use Temporal\Worker\Transport\Command\Request;
+use Temporal\Workflow\ParentClosePolicy;
 
 final class GetChildWorkflowExecution extends Request
 {
     public const NAME = 'GetChildWorkflowExecution';
+    /** @see ParentClosePolicy */
+    private int $parentClosePolicy;
 
     /**
      * @param ExecuteChildWorkflow $execution
      */
     public function __construct(ExecuteChildWorkflow $execution)
     {
+        $this->parentClosePolicy = $execution->getOptions()['options']['ParentClosePolicy'] ?? ParentClosePolicy::POLICY_UNSPECIFIED;
         parent::__construct(self::NAME, ['id' => $execution->getID()]);
+    }
+
+    /**
+     * We don't wait for child workflow with parent close policy ABANDON
+     */
+    public function shouldBeWaitedFor(): bool
+    {
+        return $this->parentClosePolicy !== ParentClosePolicy::POLICY_ABANDON;
     }
 }

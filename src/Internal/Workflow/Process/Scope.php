@@ -386,7 +386,9 @@ class Scope implements CancellationScopeInterface, PromisorInterface
         $cancelID = $this->cancelID;
 
         // do not close the scope until all promises are complete
-        $this->awaitLock++;
+        if ($request->shouldBeWaitedFor()) {
+            $this->awaitLock++;
+        }
 
         // do not cancel already complete promises
         $cleanup = function () use ($cancelID): void {
