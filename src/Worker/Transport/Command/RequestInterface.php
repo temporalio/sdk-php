@@ -36,4 +36,6 @@ interface RequestInterface extends CommandInterface
      * @return \Throwable|null
      */
     public function getFailure(): ?\Throwable;
+
+    public function shouldBeWaitedFor(): bool;
 }
