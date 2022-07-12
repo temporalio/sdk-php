@@ -20,7 +20,7 @@ final class Context implements ContextInterface
 {
     private ?\DateTimeInterface $deadline = null;
     private array $options;
-    private array $metadata = [];
+    private array $metadata;
     private RetryOptions $retryOptions;
 
     /**
@@ -32,7 +32,7 @@ final class Context implements ContextInterface
             ->withMaximumAttempts(0)
             ->withInitialInterval(CarbonInterval::millisecond(500));
 
-        $this->options = [
+        $this->metadata = [
             'client-name' => 'temporal-php',
             'client-version' => InstalledVersions::getVersion('temporal/sdk'),
         ];
