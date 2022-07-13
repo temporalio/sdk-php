@@ -19,15 +19,15 @@ use Temporal\Internal\Repository\ArrayRepository;
  */
 final class ActivityCollection extends ArrayRepository
 {
-    private ?Closure $finaizer;
+    private ?Closure $finalizer = null;
 
     public function addFinalizer(Closure $finalizer): void
     {
-        $this->finaizer = $finalizer;
+        $this->finalizer = $finalizer;
     }
 
     public function getFinalizer(): ?Closure
     {
-        return $this->finaizer;
+        return $this->finalizer;
     }
 }
