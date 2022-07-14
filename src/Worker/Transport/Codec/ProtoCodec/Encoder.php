@@ -13,6 +13,7 @@ namespace Temporal\Worker\Transport\Codec\ProtoCodec;
 
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\Failure\FailureConverter;
+use Temporal\Exception\Failure\TemporalFailure;
 use Temporal\Roadrunner\Internal\Message;
 use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\FailureResponseInterface;
@@ -71,6 +72,9 @@ class Encoder
                 return $msg;
 
             case $cmd instanceof FailureResponseInterface:
+                if ($cmd->getFailure() instanceof TemporalFailure) {
+                    $cmd->getFailure()->setDataConverter($this->converter);
+                }
                 $msg->setFailure(FailureConverter::mapExceptionToFailure($cmd->getFailure(), $this->converter));
 
                 return $msg;

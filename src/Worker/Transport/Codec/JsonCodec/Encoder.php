@@ -13,6 +13,7 @@ namespace Temporal\Worker\Transport\Codec\JsonCodec;
 
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\Failure\FailureConverter;
+use Temporal\Exception\Failure\TemporalFailure;
 use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\FailureResponseInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
@@ -62,6 +63,9 @@ class Encoder
                 return $data;
 
             case $cmd instanceof FailureResponseInterface:
+                if ($cmd->getFailure() instanceof TemporalFailure) {
+                    $cmd->getFailure()->setDataConverter($this->converter);
+                }
                 $failure = FailureConverter::mapExceptionToFailure($cmd->getFailure(), $this->converter);
 
                 return [
