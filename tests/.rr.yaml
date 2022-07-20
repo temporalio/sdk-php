@@ -21,3 +21,9 @@ logs:
     channels:
         activities:
             mode: none
+
+kv:
+    test:
+        driver: memory
+        config:
+            interval: 10
