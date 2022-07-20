@@ -16,3 +16,9 @@ temporal:
 
 logs:
     mode: none
+
+kv:
+    test:
+        driver: memory
+        config:
+            interval: 10
