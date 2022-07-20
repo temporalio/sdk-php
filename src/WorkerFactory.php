@@ -186,7 +186,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         string $taskQueue = self::DEFAULT_TASK_QUEUE,
         WorkerOptions $options = null,
         ExceptionInterceptorInterface $exceptionInterceptor = null,
-        ActivityInvocationCache $activityInvocationCache = null,
+        ActivityInvocationCache $activityInvocationCache = null
     ): WorkerInterface {
         $worker = new Worker(
             $taskQueue,
