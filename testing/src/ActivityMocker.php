@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Temporal\Testing;
 
-use Temporal\Worker\ActivityInvocationCache\ActivityInvocationCache;
+use Temporal\Worker\ActivityInvocationCache\RoadRunnerActivityInvocationCache;
 use Throwable;
 
 final class ActivityMocker
 {
-    private ActivityInvocationCache $cache;
+    private RoadRunnerActivityInvocationCache $cache;
 
     public function __construct()
     {
-        $this->cache = ActivityInvocationCache::create();
+        $this->cache = RoadRunnerActivityInvocationCache::create();
     }
 
     public function clear(): void

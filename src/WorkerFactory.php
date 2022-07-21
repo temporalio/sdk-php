@@ -37,7 +37,8 @@ use Temporal\Internal\Transport\Router;
 use Temporal\Internal\Transport\RouterInterface;
 use Temporal\Internal\Transport\Server;
 use Temporal\Internal\Transport\ServerInterface;
-use Temporal\Worker\ActivityInvocationCache\ActivityInvocationCache;
+use Temporal\Worker\ActivityInvocationCache\ActivityInvocationCacheInterface;
+use Temporal\Worker\ActivityInvocationCache\RoadRunnerActivityInvocationCache;
 use Temporal\Worker\Environment\Environment;
 use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Worker\LoopInterface;
@@ -186,7 +187,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         string $taskQueue = self::DEFAULT_TASK_QUEUE,
         WorkerOptions $options = null,
         ExceptionInterceptorInterface $exceptionInterceptor = null,
-        ActivityInvocationCache $activityInvocationCache = null
+        ActivityInvocationCacheInterface $activityInvocationCache = null
     ): WorkerInterface {
         $worker = new Worker(
             $taskQueue,
@@ -196,7 +197,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
                 $exceptionInterceptor ?? ExceptionInterceptor::createDefault()
             ),
             $this->rpc,
-            $activityInvocationCache ?? ActivityInvocationCache::create()
+            $activityInvocationCache ?? RoadRunnerActivityInvocationCache::create()
         );
         $this->queues->add($worker);
 

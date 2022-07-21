@@ -9,17 +9,17 @@ use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\Failure\ActivityFailure;
 use Temporal\Tests\Unit\UnitTestCase;
-use Temporal\Worker\ActivityInvocationCache\ActivityInvocationCache;
+use Temporal\Worker\ActivityInvocationCache\RoadRunnerActivityInvocationCache;
 use Temporal\Worker\Transport\Command\Request;
 use Temporal\Worker\Transport\Command\RequestInterface;
 
 class ActivityInvocationCacheTestCase extends UnitTestCase
 {
-    private ActivityInvocationCache $cache;
+    private RoadRunnerActivityInvocationCache $cache;
 
     protected function setUp(): void
     {
-        $this->cache = ActivityInvocationCache::create();
+        $this->cache = RoadRunnerActivityInvocationCache::create();
         parent::setUp();
     }
 

@@ -20,7 +20,7 @@ use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Router;
 use Temporal\Internal\Transport\RouterInterface;
-use Temporal\Worker\ActivityInvocationCache\ActivityInvocationCache;
+use Temporal\Worker\ActivityInvocationCache\ActivityInvocationCacheInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\RPCConnectionInterface;
 
@@ -56,7 +56,7 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
      * @var RPCConnectionInterface
      */
     private RPCConnectionInterface $rpc;
-    private ActivityInvocationCache $activityInvocationCache;
+    private ActivityInvocationCacheInterface $activityInvocationCache;
 
     /**
      * @param string $taskQueue
@@ -69,7 +69,7 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
         WorkerOptions $options,
         ServiceContainer $serviceContainer,
         RPCConnectionInterface $rpc,
-        ActivityInvocationCache $activityInvocationCache
+        ActivityInvocationCacheInterface $activityInvocationCache
     ) {
         $this->rpc = $rpc;
         $this->name = $taskQueue;

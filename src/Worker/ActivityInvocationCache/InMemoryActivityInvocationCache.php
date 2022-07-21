@@ -15,34 +15,23 @@ use Throwable;
 use function React\Promise\reject;
 use function React\Promise\resolve;
 
-final class ActivityInvocationCache
+final class InMemoryActivityInvocationCache implements ActivityInvocationCacheInterface
 {
-    private const CACHE_NAME = 'test';
-    private StorageInterface $cache;
-
-    public function __construct(string $host, string $cacheName)
-    {
-        $this->cache = (new Factory(RPC::create($host)))->select($cacheName);
-    }
+    private array $cache = [];
 
     public function clear(): void
     {
-        $this->cache->clear();
-    }
-
-    public static function create(): self
-    {
-        return new self('tcp://127.0.0.1:6001', self::CACHE_NAME);
+        $this->cache = [];
     }
 
     public function saveCompletion(string $activityMethodName, $value): void
     {
-        $this->cache->set($activityMethodName, $value);
+        $this->cache[$activityMethodName] = $value;
     }
 
     public function saveFailure(string $activityMethodName, Throwable $error): void
     {
-        $this->cache->set($activityMethodName, ActivityInvocationFailure::fromThrowable($error));
+        $this->cache[$activityMethodName] = ActivityInvocationFailure::fromThrowable($error);
     }
 
     public function canHandle(RequestInterface $request): bool
@@ -53,13 +42,13 @@ final class ActivityInvocationCache
 
         $activityMethodName = $request->getOptions()['name'] ?? '';
 
-        return $this->cache->has($activityMethodName);
+        return isset($this->cache[$activityMethodName]);
     }
 
     public function execute(RequestInterface $request): PromiseInterface
     {
         $activityMethodName = $request->getOptions()['name'];
-        $value = $this->cache->get($activityMethodName);
+        $value = $this->cache[$activityMethodName];
 
         if ($value instanceof ActivityInvocationFailure) {
             return reject($value->toThrowable());
