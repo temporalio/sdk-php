@@ -60,6 +60,10 @@ final class FailureConverter
     {
         $failure = new Failure();
 
+        if ($e instanceof TemporalFailure) {
+            $e->setDataConverter($converter);
+        }
+
         if ($e instanceof TemporalFailure && $e->getFailure() !== null) {
             if ($e->hasOriginalStackTrace() && $e->getFailure()->getStackTrace() === '') {
                 $e->getFailure()->setStackTrace($e->getOriginalStackTrace());
