@@ -92,6 +92,70 @@ final class MyWorkflowTest extends TestCase
 }
 ```
 
+### Mocking activities
 
+We consider activities as implementation details of workflows. Thus, we don't want to unit test them when
+testing workflows. So, we can mock them in order to unit test different flows of the workflow. To mock an activity use 
+`ActivityMocker` class. Assume we have the following activity:
 
+```php
+#[ActivityInterface(prefix: "SimpleActivity.")]
+interface SimpleActivityInterface
+{
+    #[ActivityMethod('doSomething')]
+    public function doSomething(string $input): string;
+```
 
+To mock it in the test you can do this:
+
+```php
+final class SimpleWorkflowTestCase extends TestCase
+{
+    private WorkflowClient $workflowClient;
+    private ActivityMocker $activityMocks;
+
+    protected function setUp(): void
+    {
+        $this->workflowClient = new WorkflowClient(ServiceClient::create('localhost:7233'));
+        $this->activityMocks = new ActivityMocker();
+
+        parent::setUp();
+    }
+
+    protected function tearDown(): void
+    {
+        $this->activityMocks->clear();
+        parent::tearDown();
+    }
+
+    public function testWorkflowReturnsUpperCasedInput(): void
+    {
+        $this->activityMocks->expectCompletion('SimpleActivity.doSomething', 'world');
+        $workflow = $this->workflowClient->newWorkflowStub(SimpleWorkflow::class);
+        $run = $this->workflowClient->start($workflow, 'hello');
+        $this->assertSame('world', $run->getResult('string'));
+    }
+}
+```
+
+In the test case above we:
+1. Instantiate instance of `ActivityMocker` class in `setUp()` method of the test.
+2. Don't forget to clear the cache after each test in `tearDown()`.
+3. Mock an activity call to return a string `world`.
+
+To mock a failure use `expectFailure()` method:
+
+```php
+$this->activityMocks->expectFailure('SimpleActivity.echo', new \LogicException('something went wrong'));
+```
+
+Under the hood activity mocking uses [RoarRunner Key-Value storage](https://github.com/spiral/roadrunner-kv), so you need to
+add the following lines to your `rr.yaml` for testing:
+
+```yaml
+kv:
+  test:
+    driver: memory
+    config:
+        interval: 10
+```

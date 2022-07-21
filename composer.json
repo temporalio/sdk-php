@@ -32,6 +32,7 @@
         "react/promise": "^2.8",
         "spiral/attributes": "^2.7 || ^3.0",
         "spiral/roadrunner-cli": "^2.0",
+        "spiral/roadrunner-kv": "^2.1",
         "spiral/roadrunner-worker": "^2.0.2",
         "symfony/filesystem": "^4.4|^5.3|^6.0",
         "symfony/http-client": "^4.4|^5.3|^6.0",
