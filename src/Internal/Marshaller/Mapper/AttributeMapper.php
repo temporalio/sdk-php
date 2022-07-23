@@ -170,7 +170,7 @@ class AttributeMapper implements MapperInterface
                 return null;
             }
 
-            return $type ? $type->serialize($result) : $result;
+            return $type && $result !== null ? $type->serialize($result) : $result;
         };
     }
 
