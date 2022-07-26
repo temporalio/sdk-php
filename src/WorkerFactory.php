@@ -22,35 +22,37 @@ use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\ExceptionInterceptor;
 use Temporal\Exception\ExceptionInterceptorInterface;
+use Temporal\Internal\Events\EventEmitterTrait;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Marshaller\MarshallerInterface;
-use Temporal\Internal\ServiceContainer;
-use Temporal\Worker\Environment\Environment;
-use Temporal\Worker\Environment\EnvironmentInterface;
-use Temporal\Worker\Transport\Codec\CodecInterface;
-use Temporal\Internal\Events\EventEmitterTrait;
 use Temporal\Internal\Queue\ArrayQueue;
 use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Internal\Repository\ArrayRepository;
 use Temporal\Internal\Repository\RepositoryInterface;
+use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Client;
 use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Transport\Router;
 use Temporal\Internal\Transport\RouterInterface;
 use Temporal\Internal\Transport\Server;
 use Temporal\Internal\Transport\ServerInterface;
+use Temporal\Worker\ActivityInvocationCache\ActivityInvocationCacheInterface;
+use Temporal\Worker\ActivityInvocationCache\RoadRunnerActivityInvocationCache;
+use Temporal\Worker\Environment\Environment;
+use Temporal\Worker\Environment\EnvironmentInterface;
+use Temporal\Worker\LoopInterface;
+use Temporal\Worker\Transport\Codec\CodecInterface;
 use Temporal\Worker\Transport\Codec\JsonCodec;
 use Temporal\Worker\Transport\Codec\ProtoCodec;
 use Temporal\Worker\Transport\Command\RequestInterface;
-use Temporal\Worker\WorkerFactoryInterface;
-use Temporal\Worker\LoopInterface;
-use Temporal\Worker\Worker;
-use Temporal\Worker\WorkerInterface;
 use Temporal\Worker\Transport\Goridge;
 use Temporal\Worker\Transport\HostConnectionInterface;
 use Temporal\Worker\Transport\RoadRunner;
 use Temporal\Worker\Transport\RPCConnectionInterface;
+use Temporal\Worker\Worker;
+use Temporal\Worker\WorkerFactoryInterface;
+use Temporal\Worker\WorkerInterface;
 use Temporal\Worker\WorkerOptions;
 
 /**
@@ -184,7 +186,8 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     public function newWorker(
         string $taskQueue = self::DEFAULT_TASK_QUEUE,
         WorkerOptions $options = null,
-        ExceptionInterceptorInterface $exceptionInterceptor = null
+        ExceptionInterceptorInterface $exceptionInterceptor = null,
+        ActivityInvocationCacheInterface $activityInvocationCache = null
     ): WorkerInterface {
         $worker = new Worker(
             $taskQueue,
@@ -193,7 +196,8 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
                 $this,
                 $exceptionInterceptor ?? ExceptionInterceptor::createDefault()
             ),
-            $this->rpc
+            $this->rpc,
+            $activityInvocationCache ?? RoadRunnerActivityInvocationCache::create()
         );
         $this->queues->add($worker);
 
