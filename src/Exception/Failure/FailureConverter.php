@@ -62,14 +62,14 @@ final class FailureConverter
 
         if ($e instanceof TemporalFailure) {
             $e->setDataConverter($converter);
-        }
 
-        if ($e instanceof TemporalFailure && $e->getFailure() !== null) {
-            if ($e->hasOriginalStackTrace() && $e->getFailure()->getStackTrace() === '') {
-                $e->getFailure()->setStackTrace($e->getOriginalStackTrace());
+            if ($e->getFailure() !== null) {
+                if ($e->hasOriginalStackTrace() && $e->getFailure()->getStackTrace() === '') {
+                    $e->getFailure()->setStackTrace($e->getOriginalStackTrace());
+                }
+
+                return $e->getFailure();
             }
-
-            return $e->getFailure();
         }
 
         $failure->setMessage($e->getMessage());
