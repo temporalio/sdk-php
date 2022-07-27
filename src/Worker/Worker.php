@@ -56,7 +56,6 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
      * @var RPCConnectionInterface
      */
     private RPCConnectionInterface $rpc;
-    private ActivityInvocationCacheInterface $activityInvocationCache;
 
     /**
      * @param string $taskQueue
@@ -68,8 +67,7 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
         string $taskQueue,
         WorkerOptions $options,
         ServiceContainer $serviceContainer,
-        RPCConnectionInterface $rpc,
-        ActivityInvocationCacheInterface $activityInvocationCache
+        RPCConnectionInterface $rpc
     ) {
         $this->rpc = $rpc;
         $this->name = $taskQueue;
@@ -77,7 +75,6 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
 
         $this->services = $serviceContainer;
         $this->router = $this->createRouter();
-        $this->activityInvocationCache = $activityInvocationCache;
     }
 
     /**
@@ -95,10 +92,6 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
      */
     public function dispatch(RequestInterface $request, array $headers): PromiseInterface
     {
-        if ($this->activityInvocationCache->canHandle($request)) {
-            return $this->activityInvocationCache->execute($request);
-        }
-
         return $this->router->dispatch($request, $headers);
     }
 

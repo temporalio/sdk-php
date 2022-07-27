@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Temporal\WorkerFactory;
+use Temporal\Testing\WorkerFactory;
 
 require __DIR__ . '/../vendor/autoload.php';
 
