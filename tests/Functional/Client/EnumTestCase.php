@@ -22,6 +22,15 @@ use Temporal\Tests\Unit\DTO\Enum\ScalarEnum;
  */
 class EnumTestCase extends ClientTestCase
 {
+    public function setUp(): void
+    {
+        parent::setUp();
+        
+        if (PHP_VERSION_ID < 80104) {
+            $this->markTestSkipped();
+        }
+    }
+
     public function testSimpleEnum(): void
     {
         $client = $this->createClient();
