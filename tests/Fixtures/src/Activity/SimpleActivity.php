@@ -18,6 +18,8 @@ use Temporal\Api\Common\V1\WorkflowExecution;
 use Temporal\DataConverter\Bytes;
 use Temporal\Tests\DTO\Message;
 use Temporal\Tests\DTO\User;
+use Temporal\Tests\Unit\DTO\Enum\SimpleEnum;
+use Temporal\Tests\Unit\DTO\Enum\ScalarEnum;
 
 #[ActivityInterface(prefix: "SimpleActivity.")]
 class SimpleActivity
@@ -98,5 +100,17 @@ class SimpleActivity
     public function fail()
     {
         throw new \Error("failed activity");
+    }
+
+    #[ActivityMethod]
+    public function simpleEnum(SimpleEnum $enum): SimpleEnum
+    {
+        return $enum;
+    }
+
+    #[ActivityMethod]
+    public function scalarEnum(ScalarEnum $enum): ScalarEnum
+    {
+        return $enum;
     }
 }
