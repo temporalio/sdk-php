@@ -101,6 +101,7 @@ final class Type
         if ($type instanceof \ReflectionNamedType) {
             $name = $type->getName();
 
+            /** @psalm-suppress UndefinedClass */
             if (PHP_VERSION_ID >= 80104 && is_subclass_of($name, \UnitEnum::class)) {
                 return new self($type->getName(), true);
             }
