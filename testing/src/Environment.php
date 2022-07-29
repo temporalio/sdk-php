@@ -34,7 +34,7 @@ final class Environment
         );
     }
 
-    public function start(string $rrCommand = null): void
+    public function start(string $rrCommand = null, int $temporalTestServerPort = 7233): void
     {
         if (!$this->downloader->check($this->systemInfo->temporalServerExecutable)) {
             $this->output->write('Download temporal test server... ');
@@ -44,7 +44,7 @@ final class Environment
 
         $this->output->write('Starting Temporal test server... ');
         $this->temporalServerProcess = new Process(
-            [$this->systemInfo->temporalServerExecutable, 7233, '--enable-time-skipping']
+            [$this->systemInfo->temporalServerExecutable, $temporalTestServerPort, '--enable-time-skipping']
         );
         $this->temporalServerProcess->setTimeout(10);
         $this->temporalServerProcess->start();

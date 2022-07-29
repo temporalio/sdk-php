@@ -10,9 +10,16 @@ trait WithoutTimeSkipping
 
     protected function setUp(): void
     {
-        $this->testService = TestService::create('localhost:7233');
+        $this->testService = TestService::create(
+            $this->testServiceHost()
+        );
         $this->testService->lockTimeSkipping();
         parent::setUp();
+    }
+
+    protected function testServiceHost(): string
+    {
+        return 'localhost:7233';
     }
 
     protected function tearDown(): void
