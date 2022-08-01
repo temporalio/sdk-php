@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Functional\Client;
 
 use Temporal\Client\WorkflowOptions;
+use Temporal\Testing\WithoutTimeSkipping;
 use Temporal\Tests\Workflow\AsyncClosureWorkflow;
 
 /**
@@ -20,6 +21,8 @@ use Temporal\Tests\Workflow\AsyncClosureWorkflow;
  */
 class AsyncClosureTestCase extends ClientTestCase
 {
+    use WithoutTimeSkipping;
+
     public function testAsyncIsCancelledWithTimer()
     {
         $client = $this->createClient();

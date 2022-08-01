@@ -25,8 +25,6 @@ use Temporal\Workflow\WorkflowExecution;
  */
 abstract class ClientTestCase extends FunctionalTestCase
 {
-    use WithoutTimeSkipping;
-
     /**
      * @param string $connection
      * @return WorkflowClient

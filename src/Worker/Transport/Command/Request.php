@@ -82,9 +82,4 @@ class Request extends Command implements RequestInterface
     {
         return $this->failure;
     }
-
-    public function shouldBeWaitedFor(): bool
-    {
-        return true;
-    }
 }

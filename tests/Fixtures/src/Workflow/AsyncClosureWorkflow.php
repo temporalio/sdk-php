@@ -39,7 +39,10 @@ class AsyncClosureWorkflow
             }
         );
 
-        yield $promise;
+        try {
+            yield $promise;
+        } catch (CanceledFailure $exception) {
+        }
 
         return implode(' ', $this->result);
     }
