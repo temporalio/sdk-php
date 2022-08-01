@@ -303,8 +303,6 @@ class Scope implements CancellationScopeInterface, PromisorInterface
             $scope->layer = $layer;
         }
 
-        // do not return parent scope result until inner scope complete
-
         $cancelID = ++$this->cancelID;
         $this->onCancel[$cancelID] = \Closure::fromCallable([$scope, 'cancel']);
 
