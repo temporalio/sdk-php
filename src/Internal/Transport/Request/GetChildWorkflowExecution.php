@@ -28,12 +28,4 @@ final class GetChildWorkflowExecution extends Request
         $this->parentClosePolicy = $execution->getOptions()['options']['ParentClosePolicy'] ?? ParentClosePolicy::POLICY_UNSPECIFIED;
         parent::__construct(self::NAME, ['id' => $execution->getID()]);
     }
-
-    /**
-     * We don't wait for child workflow with parent close policy ABANDON
-     */
-    public function shouldBeWaitedFor(): bool
-    {
-        return $this->parentClosePolicy !== ParentClosePolicy::POLICY_ABANDON;
-    }
 }

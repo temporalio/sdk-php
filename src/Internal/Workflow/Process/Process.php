@@ -48,7 +48,6 @@ class Process extends Scope implements ProcessInterface
                     $scope->start($handler);
                 } catch (InvalidArgumentException $e) {
                     // invalid signal invocation, destroy the scope with no traces
-                    $scope->unlock();
                 }
             }
         );
