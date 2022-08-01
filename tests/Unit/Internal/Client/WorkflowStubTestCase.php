@@ -4,6 +4,13 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Internal\Client;
 
+use Temporal\Api\Common\V1\Payload;
+use Temporal\Api\Common\V1\Payloads;
+use Temporal\Api\Enums\V1\EventType;
+use Temporal\Api\History\V1\History;
+use Temporal\Api\History\V1\HistoryEvent;
+use Temporal\Api\History\V1\WorkflowExecutionCompletedEventAttributes;
+use Temporal\Api\Workflowservice\V1\GetWorkflowExecutionHistoryResponse;
 use Temporal\Client\ClientOptions;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Client\GRPC\StatusCode;
@@ -21,7 +28,7 @@ use Temporal\Workflow\WorkflowExecution;
  *
  * @covers \Temporal\Internal\Client\WorkflowStub
  */
-final class WorkflowStubTest extends TestCase
+final class WorkflowStubTestCase extends TestCase
 {
     private WorkflowStub $workflowStub;
     /** @var MockObject|ServiceClientInterface */
@@ -68,5 +75,34 @@ final class WorkflowStubTest extends TestCase
         static::expectException(WorkflowServiceException::class);
 
         $this->workflowStub->signal('signalName');
+    }
+
+    public function testEmptyHistoryContinuesWaitingForHistoryEvents(): void
+    {
+        $responseWithHistory = (new GetWorkflowExecutionHistoryResponse())
+            ->setHistory(
+                (new History)->setEvents(
+                    [
+                        (new HistoryEvent())
+                            ->setEventType(EventType::EVENT_TYPE_WORKFLOW_EXECUTION_COMPLETED)
+                            ->setWorkflowExecutionCompletedEventAttributes(
+                                (new WorkflowExecutionCompletedEventAttributes())->setResult(
+                                    (new Payloads())->setPayloads([(new Payload())->setData('hello')])
+                                )
+                            )
+                    ]
+                )
+            );
+
+        $this->serviceClient
+            ->expects(static::exactly(2))
+            ->method('GetWorkflowExecutionHistory')
+            ->willReturnOnConsecutiveCalls(
+                new GetWorkflowExecutionHistoryResponse(),
+                $responseWithHistory
+            );
+
+        $result = $this->workflowStub->getResult();
+        $this->assertNull($result);
     }
 }

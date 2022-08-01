@@ -392,6 +392,10 @@ final class WorkflowStub implements WorkflowStubInterface
                 }
             }
 
+            if ($response->getHistory() === null) {
+                continue;
+            }
+
             if ($response->getHistory()->getEvents()->count() === 0) {
                 continue;
             }
