@@ -8,7 +8,6 @@ use Exception;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\Failure\ActivityFailure;
-use Temporal\Tests\Unit\UnitTestCase;
 use Temporal\Worker\ActivityInvocationCache\RoadRunnerActivityInvocationCache;
 use Temporal\Worker\Transport\Command\Request;
 use Temporal\Worker\Transport\Command\RequestInterface;
