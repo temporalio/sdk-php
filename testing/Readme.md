@@ -42,24 +42,32 @@ $environment->start('./rr serve -c .rr.test.yaml -w tests');
 ```
 
 The snippet above will start Temporal test server and RoadRunner with `.rr.test.yaml` config and `tests` working
-directory. Having a separate RoadRunner config file for tests can be useful to mock you activities. For 
-example, you can create a separate *worker* that registers activity implementations mocks:
+directory. Having a separate RoadRunner config file for tests can be useful for activities mocking:
 
 ```yaml
-# test/.rr.test.yaml
+# tests/.rr.test.yaml
 server:
     command: "php worker.test.php"
+
+kv:
+    test:
+        driver: memory
+        config:
+            interval: 10
+
 ```
 
-And within the worker you register your workflows and mock activities:
+And within the worker you register your workflows and activities:
 
 ```php
 // worker.test.php 
+use Temporal\Testing\WorkerFactory;
+
 $factory = WorkerFactory::create();
 
 $worker = $factory->newWorker();
 $worker->registerWorkflowTypes(MyWorkflow::class);
-$worker->registerActivity(MyActvivityMock::class);
+$worker->registerActivity(MyActivity::class);
 $factory->run();
 ```
 
@@ -95,8 +103,39 @@ final class MyWorkflowTest extends TestCase
 ### Mocking activities
 
 We consider activities as implementation details of workflows. Thus, we don't want to unit test them when
-testing workflows. So, we can mock them in order to unit test different flows of the workflow. To mock an activity use 
-`ActivityMocker` class. Assume we have the following activity:
+testing workflows. So, we can mock them in order to unit test different flows of the workflow. 
+
+#### RoadRunner config
+
+Under the hood activity mocking uses [RoarRunner Key-Value storage](https://github.com/spiral/roadrunner-kv), so you need to
+add the following lines to your `tests/.rr.test.yaml` for testing:
+
+```yaml
+# tests/.rr.test.yaml
+kv:
+  test:
+    driver: memory
+    config:
+        interval: 10
+```
+
+
+Notice, that if you want to have ability to mock activities you should use `WorkerFactory` from `Temporal\Testing` namespace
+in your PHP worker:
+
+```php
+// worker.test.php 
+use Temporal\Testing\WorkerFactory;
+
+$factory = WorkerFactory::create();
+$worker = $factory->newWorker();
+
+$worker->registerWorkflowTypes(MyWorkflow::class);
+$worker->registerActivity(MyActivity::class);
+$factory->run();
+```
+
+Then, in your tests to mock an activity use `ActivityMocker` class. Assume we have the following activity:
 
 ```php
 #[ActivityInterface(prefix: "SimpleActivity.")]
@@ -147,15 +186,4 @@ To mock a failure use `expectFailure()` method:
 
 ```php
 $this->activityMocks->expectFailure('SimpleActivity.echo', new \LogicException('something went wrong'));
-```
-
-Under the hood activity mocking uses [RoarRunner Key-Value storage](https://github.com/spiral/roadrunner-kv), so you need to
-add the following lines to your `rr.yaml` for testing:
-
-```yaml
-kv:
-  test:
-    driver: memory
-    config:
-        interval: 10
 ```
