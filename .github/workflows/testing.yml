@@ -91,6 +91,10 @@ jobs:
           timeout_minutes: 5
           max_attempts: 5
           command: composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress
+      
+      - name: Download RoadRunner
+        run: |
+          vendor/bin/rr get --no-interaction
 
       - name: Run Tests
         run: vendor/bin/phpunit --testsuite=Unit --testdox --verbose
@@ -144,6 +148,10 @@ jobs:
           timeout_minutes: 5
           max_attempts: 5
           command: composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress
+      
+      - name: Download RoadRunner
+        run: |
+          vendor/bin/rr get --no-interaction
 
       - name: Run Tests
         run: vendor/bin/phpunit --testsuite=Feature --testdox --verbose
