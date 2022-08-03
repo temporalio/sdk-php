@@ -33,5 +33,6 @@
     <php>
         <ini name="error_reporting" value="-1"/>
         <ini name="memory_limit" value="-1"/>
+        <env name="TEMPORAL_ADDRESS" value="127.0.0.1:7233" />
     </php>
 </phpunit>

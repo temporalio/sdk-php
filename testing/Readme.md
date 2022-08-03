@@ -14,12 +14,15 @@ $environment->start();
 register_shutdown_function(fn () => $environment->stop());
 ```
 
-2. Add `bootstrap.php` to your `phpunit.xml`:
+2. Add environment variable and `bootstrap.php` to your `phpunit.xml`:
 ```xml
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd"
          bootstrap="tests/bootstrap.php"
 >
+    <php>
+        <env name="TEMPORAL_ADDRESS" value="127.0.0.1:7233" />
+    </php>
 </phpunit>
 ```
 

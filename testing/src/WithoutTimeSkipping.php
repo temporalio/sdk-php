@@ -11,15 +11,10 @@ trait WithoutTimeSkipping
     protected function setUp(): void
     {
         $this->testService = TestService::create(
-            $this->testServiceHost()
+            getenv('TEMPORAL_ADDRESS')
         );
         $this->testService->lockTimeSkipping();
         parent::setUp();
-    }
-
-    protected function testServiceHost(): string
-    {
-        return 'localhost:7233';
     }
 
     protected function tearDown(): void

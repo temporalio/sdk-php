@@ -15,14 +15,10 @@ class WorkflowTestCase extends TestCase
 
     protected function setUp(): void
     {
-        $this->workflowClient = new WorkflowClient(ServiceClient::create($this->testServiceHost()));
-        $this->testingService = TestService::create($this->testServiceHost());
+        $temporalAddress = getenv('TEMPORAL_ADDRESS');
+        $this->workflowClient = new WorkflowClient(ServiceClient::create($temporalAddress));
+        $this->testingService = TestService::create($temporalAddress);
 
         parent::setUp();
-    }
-
-    protected function testServiceHost(): string
-    {
-        return 'localhost:7233';
     }
 }
