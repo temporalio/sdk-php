@@ -25,20 +25,18 @@ jobs:
           fetch-depth: 1
 
       - name: Get Composer Cache Directory
-        # Docs: <https://github.com/actions/cache/blob/master/examples.md#php---composer>
         id: composer-cache
         run: echo "::set-output name=dir::$(composer config cache-files-dir)"
 
       - name: Cache Dependencies
-        # Docs: <https://github.com/actions/cache/blob/master/examples.md#php---composer>
-        uses: actions/cache@v1
+        uses: actions/cache@v3
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.json') }}
-          restore-keys: ${{ runner.os }}-composer-
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: php-${{ matrix.php }}-${{ runner.os }}-composer-
 
       - name: Install Composer Dependencies
-        run: composer install --prefer-dist --no-interaction --no-suggest
+        run: composer install --prefer-dist --no-interaction
 
       - name: Run Tests
         run: vendor/bin/psalm
