@@ -1,0 +1,77 @@
+on:
+  workflow_call:
+    inputs:
+      test-suite:
+        required: true
+        type: string
+      fail-fast:
+        required: true
+        type: boolean
+        default: true
+      test-timeout:
+        required: false
+        type: number
+        default: 10
+
+jobs:
+  test:
+    name: (PHP ${{ matrix.php }}, OS ${{ matrix.os }}, with ${{ matrix.dependencies }} deps
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: ${{ inputs.test-timeout }}
+    strategy:
+      fail-fast: ${{ inputs.fail-fast }}
+      matrix:
+        php: [ 7.4, 8.0 ]
+        os: [ ubuntu-latest , windows-latest]
+        dependencies: [ lowest , highest ]
+    steps:
+      - name: Set Git To Use LF
+        run: |
+          git config --global core.autocrlf false
+          git config --global core.eol lf
+
+      - name: Setup PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: composer:v2
+          extensions: dom, sockets, grpc, curl
+
+      - name: Check Out Code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
+      - name: Validate composer.json and composer.lock
+        run: composer validate --strict
+
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: |
+          echo "::set-output name=dir::$(composer config cache-files-dir)"
+
+      - uses: actions/cache@v3
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: php-${{ matrix.php }}-${{ matrix.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            php-${{ matrix.php }}-${{ matrix.os }}-composer-
+
+      - name: Install lowest dependencies from composer.json
+        if: matrix.dependencies == 'lowest'
+        run: composer update --no-interaction --no-progress --prefer-lowest
+
+      - name: Validate lowest dependencies
+        if: matrix.dependencies == 'lowest'
+        run: vendor/bin/validate-prefer-lowest
+
+      - name: Install highest dependencies from composer.json
+        if: matrix.dependencies == 'highest'
+        run: composer update --no-interaction --no-progress
+
+      - name: Download RoadRunner
+        run: |
+          vendor/bin/rr get --no-interaction
+
+      - name: Run Tests
+        run: vendor/bin/phpunit --testsuite=${{ inputs.test-suite }} --testdox --verbose

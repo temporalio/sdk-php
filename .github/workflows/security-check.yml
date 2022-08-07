@@ -1,0 +1,42 @@
+name: Security
+
+on: [push, pull_request]
+
+jobs:
+  security:
+    name: Security Checks (PHP ${{ matrix.php }}, OS ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Note: This workflow requires only the LATEST version of PHP
+        php: [ 7.4, 8.0 ]
+        os: [ ubuntu-latest ]
+    steps:
+      - name: Set up PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: dom, sockets, grpc, curl
+
+      - name: Check Out Code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+
+      - name: Cache Dependencies
+        uses: actions/cache@v1
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: php-${{ matrix.php }}-${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: php-${{ matrix.php }}-${{ runner.os }}-composer-
+
+      - name: Install Composer Dependencies
+        run: composer install --prefer-dist --no-interaction
+
+      - name: Verify
+        run: composer require --dev roave/security-advisories:dev-latest
