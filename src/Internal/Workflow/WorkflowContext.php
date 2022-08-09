@@ -377,7 +377,7 @@ class WorkflowContext implements WorkflowContextInterface
     {
         $activities = $this->services->activitiesReader->fromClass($class);
 
-        if ($activities[0]->isLocalActivity() && !$options instanceof LocalActivityOptions) {
+        if (isset($activities[0]) && $activities[0]->isLocalActivity() && !$options instanceof LocalActivityOptions) {
             throw new RuntimeException("Local activity can be used only with LocalActivityOptions");
         }
 
