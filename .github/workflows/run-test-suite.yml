@@ -5,13 +5,17 @@ on:
         required: true
         type: string
       fail-fast:
-        required: true
+        required: false
         type: boolean
         default: true
       test-timeout:
         required: false
         type: number
         default: 10
+      run-temporal-test-server:
+        required: false
+        type: boolean
+        default: true
 
 jobs:
   test:
@@ -50,7 +54,8 @@ jobs:
         run: |
           echo "::set-output name=dir::$(composer config cache-files-dir)"
 
-      - uses: actions/cache@v3
+      - name: Cache Composer Dependencies
+        uses: actions/cache@v3
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: php-${{ matrix.php }}-${{ matrix.os }}-composer-${{ hashFiles('**/composer.lock') }}
@@ -69,9 +74,29 @@ jobs:
         if: matrix.dependencies == 'highest'
         run: composer update --no-interaction --no-progress
 
+      - name: Cache Roadrunner
+        id: cache-roadrunner
+        uses: actions/cache@v3
+        if: inputs.run-temporal-test-server == true
+        with:
+          path: |
+            ./rr*
+            .rr.yaml
+          key: ${{ matrix.os }}-roadrunner-${{ hashFiles('**/rr') }}
+          restore-keys: |
+            ${{ matrix.os }}-roadrunner-
+
       - name: Download RoadRunner
+        if: inputs.run-temporal-test-server == true && steps.cache-roadrunner.outputs.cache-hit != 'true'
         run: |
           vendor/bin/rr get --no-interaction
 
-      - name: Run Tests
+      - name: Run tests with Temporal test server
+        if: inputs.run-temporal-test-server == true
+        run: vendor/bin/phpunit --testsuite=${{ inputs.test-suite }} --testdox --verbose
+        env:
+          RUN_TEMPORAL_TEST_SERVER: ${{ inputs.run-temporal-test-server }}
+
+      - name: Run tests without Temporal test server
+        if: inputs.run-temporal-test-server == false
         run: vendor/bin/phpunit --testsuite=${{ inputs.test-suite }} --testdox --verbose

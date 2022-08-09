@@ -9,6 +9,7 @@ jobs:
     with:
       fail-fast: false
       test-suite: Unit
+      run-temporal-test-server: false
 
   feature:
     name: Feature Testing
