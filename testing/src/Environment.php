@@ -34,7 +34,7 @@ final class Environment
         );
     }
 
-    public function start(string $rrCommand = null): void
+    public function start(string $rrCommand = null, int $commandTimeout = 10): void
     {
         if (!$this->downloader->check($this->systemInfo->temporalServerExecutable)) {
             $this->output->write('Download temporal test server... ');
@@ -48,7 +48,7 @@ final class Environment
         $this->temporalServerProcess = new Process(
             [$this->systemInfo->temporalServerExecutable, $temporalAddress, '--enable-time-skipping']
         );
-        $this->temporalServerProcess->setTimeout(10);
+        $this->temporalServerProcess->setTimeout($commandTimeout);
         $this->temporalServerProcess->start();
         $this->output->writeln('<info>done.</info>');
         sleep(1);
@@ -56,7 +56,7 @@ final class Environment
         $this->roadRunnerProcess = new Process(
             $rrCommand ? explode(' ', $rrCommand) : [$this->systemInfo->rrExecutable, 'serve']
         );
-        $this->roadRunnerProcess->setTimeout(10);
+        $this->roadRunnerProcess->setTimeout($commandTimeout);
 
         $this->output->write('Starting RoadRunner... ');
         $this->roadRunnerProcess->start();
