@@ -1,0 +1,102 @@
+on:
+  workflow_call:
+    inputs:
+      test-suite:
+        required: true
+        type: string
+      fail-fast:
+        required: false
+        type: boolean
+        default: true
+      test-timeout:
+        required: false
+        type: number
+        default: 10
+      run-temporal-test-server:
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  test:
+    name: (PHP ${{ matrix.php }}, OS ${{ matrix.os }}, with ${{ matrix.dependencies }} deps
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: ${{ inputs.test-timeout }}
+    strategy:
+      fail-fast: ${{ inputs.fail-fast }}
+      matrix:
+        php: [ 7.4, 8.0 ]
+        os: [ ubuntu-latest , windows-latest]
+        dependencies: [ lowest , highest ]
+    steps:
+      - name: Set Git To Use LF
+        run: |
+          git config --global core.autocrlf false
+          git config --global core.eol lf
+
+      - name: Setup PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: composer:v2
+          extensions: dom, sockets, grpc, curl
+
+      - name: Check Out Code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
+      - name: Validate composer.json and composer.lock
+        run: composer validate --strict
+
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: |
+          echo "::set-output name=dir::$(composer config cache-files-dir)"
+
+      - name: Cache Composer Dependencies
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: php-${{ matrix.php }}-${{ matrix.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            php-${{ matrix.php }}-${{ matrix.os }}-composer-
+
+      - name: Install lowest dependencies from composer.json
+        if: matrix.dependencies == 'lowest'
+        run: composer update --no-interaction --no-progress --prefer-lowest
+
+      - name: Validate lowest dependencies
+        if: matrix.dependencies == 'lowest'
+        run: vendor/bin/validate-prefer-lowest
+
+      - name: Install highest dependencies from composer.json
+        if: matrix.dependencies == 'highest'
+        run: composer update --no-interaction --no-progress
+
+      - name: Cache Roadrunner
+        id: cache-roadrunner
+        uses: actions/cache@v3
+        if: inputs.run-temporal-test-server == true
+        with:
+          path: |
+            ./rr*
+            .rr.yaml
+          key: ${{ matrix.os }}-roadrunner-${{ hashFiles('**/rr') }}
+          restore-keys: |
+            ${{ matrix.os }}-roadrunner-
+
+      - name: Download RoadRunner
+        if: inputs.run-temporal-test-server == true && steps.cache-roadrunner.outputs.cache-hit != 'true'
+        run: |
+          vendor/bin/rr get --no-interaction
+
+      - name: Run tests with Temporal test server
+        if: inputs.run-temporal-test-server == true
+        run: vendor/bin/phpunit --testsuite=${{ inputs.test-suite }} --testdox --verbose
+        env:
+          RUN_TEMPORAL_TEST_SERVER: ${{ inputs.run-temporal-test-server }}
+
+      - name: Run tests without Temporal test server
+        if: inputs.run-temporal-test-server == false
+        run: vendor/bin/phpunit --testsuite=${{ inputs.test-suite }} --testdox --verbose
