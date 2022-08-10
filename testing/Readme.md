@@ -14,6 +14,17 @@ $environment->start();
 register_shutdown_function(fn () => $environment->stop());
 ```
 
+If you don't want to run temporal test server with all of your tests you can set, for example,
+add condition to start it only if `RUN_TEMPORAL_TEST_SERVER` environment variable is present:
+
+```php
+if (getenv('RUN_TEMPORAL_TEST_SERVER') !== false) {
+    $environment = Environment::create();
+    $environment->start('./rr serve -c .rr.silent.yaml -w tests');
+    register_shutdown_function(fn() => $environment->stop());
+}
+```
+
 2. Add `bootstrap.php` to your `phpunit.xml`:
 ```xml
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -36,7 +47,9 @@ The code in `bootstrap.php` will start/stop (and download if it doesn't exist) T
 server and RoadRunner for every phpunit run. Test server runs as a regular server on 7233 port. 
 Thus, if you use default connection settings, there is no need to change them.
 
-Under the hood RoadRunner is started with `rr serve` command. You can specify your own command in `bootstrap.php`:
+Under the hood RoadRunner is started with `rr serve` command. So make sure you have the binary.
+
+You can specify your own command in `bootstrap.php`:
 ```php
 $environment->start('./rr serve -c .rr.test.yaml -w tests');
 ```
