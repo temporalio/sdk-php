@@ -67,9 +67,16 @@ final class Environment
             exit(1);
         }
 
-        $this->roadRunnerProcess->waitUntil(
+        $roadRunnerStarted = $this->roadRunnerProcess->waitUntil(
             fn($type, $output) => strpos($output, 'RoadRunner server started') !== false
         );
+
+        if (!$roadRunnerStarted) {
+            $this->output->writeln('<error>error</error>');
+            $this->output->writeln('Error starting RoadRunner: ' . $this->roadRunnerProcess->getErrorOutput());
+            exit(1);
+        }
+        
         $this->output->writeln('<info>done.</info>');
     }
 
