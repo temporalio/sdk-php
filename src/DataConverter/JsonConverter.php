@@ -83,7 +83,12 @@ class JsonConverter extends Converter
     public function fromPayload(Payload $payload, Type $type)
     {
         try {
-            $data = \json_decode($payload->getData(), false, 512, self::JSON_FLAGS);
+            $data = \json_decode(
+                $payload->getData(),
+                $type->getName() === Type::TYPE_ARRAY,
+                512,
+                self::JSON_FLAGS
+            );
         } catch (\Throwable $e) {
             throw new DataConverterException($e->getMessage(), $e->getCode(), $e);
         }

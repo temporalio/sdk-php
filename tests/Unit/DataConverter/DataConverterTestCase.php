@@ -45,6 +45,8 @@ class DataConverterTestCase extends UnitTestCase
             Type::TYPE_INT    => [Type::TYPE_INT, 42],
             Type::TYPE_FLOAT  => [Type::TYPE_FLOAT, 0.1],
             Type::TYPE_VOID   => [Type::TYPE_VOID, null],
+
+            Type::TYPE_ARRAY . ' (associative)  => ' . Type::TYPE_ARRAY => [Type::TYPE_ARRAY, ['field' => 'value']],
         ];
     }
 
@@ -89,7 +91,6 @@ class DataConverterTestCase extends UnitTestCase
             Type::TYPE_BOOL . ' => ' . Type::TYPE_OBJECT   => [Type::TYPE_OBJECT, true],
             Type::TYPE_VOID . ' => ' . Type::TYPE_OBJECT   => [Type::TYPE_OBJECT, null],
 
-            Type::TYPE_OBJECT . ' => ' . Type::TYPE_ARRAY => [Type::TYPE_ARRAY, (object)['field' => 'value']],
             Type::TYPE_FLOAT . ' => ' . Type::TYPE_ARRAY  => [Type::TYPE_ARRAY, .42],
             Type::TYPE_INT . ' => ' . Type::TYPE_ARRAY    => [Type::TYPE_ARRAY, 42],
             Type::TYPE_STRING . ' => ' . Type::TYPE_ARRAY => [Type::TYPE_ARRAY, 'string'],
