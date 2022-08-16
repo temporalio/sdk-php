@@ -107,7 +107,7 @@ final class Type
             }
 
             // Traversable types (i.e. Generator) not allowed
-            if (!$name instanceof \Traversable && $name !== 'array' && $name !== 'iterable') {
+            if (!$name instanceof \Traversable && $name !== 'iterable') {
                 return new self($type->getName(), $type->allowsNull());
             }
         }
