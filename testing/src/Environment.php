@@ -42,11 +42,11 @@ final class Environment
             $this->output->writeln('<info>done.</info>');
         }
 
-        $temporalAddress = getenv('TEMPORAL_ADDRESS') ?: '127.0.0.1:7233';
+        $temporalPort = parse_url(getenv('TEMPORAL_ADDRESS') ?: '127.0.0.1:7233',PHP_URL_PORT);
 
         $this->output->write('Starting Temporal test server... ');
         $this->temporalServerProcess = new Process(
-            [$this->systemInfo->temporalServerExecutable, $temporalAddress, '--enable-time-skipping']
+            [$this->systemInfo->temporalServerExecutable, $temporalPort, '--enable-time-skipping']
         );
         $this->temporalServerProcess->setTimeout($commandTimeout);
         $this->temporalServerProcess->start();
