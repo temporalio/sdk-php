@@ -42,7 +42,7 @@ final class Environment
             $this->output->writeln('<info>done.</info>');
         }
 
-        $temporalPort = parse_url(getenv('TEMPORAL_ADDRESS') ?: '127.0.0.1:7233',PHP_URL_PORT);
+        $temporalPort = parse_url(getenv('TEMPORAL_ADDRESS') ?: '127.0.0.1:7233', PHP_URL_PORT);
 
         $this->output->write('Starting Temporal test server... ');
         $this->temporalServerProcess = new Process(
