@@ -53,6 +53,12 @@ final class Environment
         $this->output->writeln('<info>done.</info>');
         sleep(1);
 
+        if (!$this->temporalServerProcess->isRunning()) {
+            $this->output->writeln('<error>error</error>');
+            $this->output->writeln('Error starting Temporal server: ' . $this->temporalServerProcess->getErrorOutput());
+            exit(1);
+        }
+
         $this->roadRunnerProcess = new Process(
             $rrCommand ? explode(' ', $rrCommand) : [$this->systemInfo->rrExecutable, 'serve']
         );
