@@ -25,6 +25,7 @@ use Temporal\Workflow\ChildWorkflowOptions;
 use Temporal\Workflow\ChildWorkflowStubInterface;
 use Temporal\Workflow\ContinueAsNewOptions;
 use Temporal\Workflow\ExternalWorkflowStubInterface;
+use Temporal\Workflow\ParentClosePolicy;
 use Temporal\Workflow\ScopedContextInterface;
 use Temporal\Internal\Workflow\WorkflowContext;
 use Temporal\Workflow\WorkflowExecution;
@@ -634,6 +635,7 @@ final class Workflow extends Facade
      * This method is equivalent to {@see Workflow::executeChildWorkflow}, but
      * it takes the workflow class as the first argument, and the further api
      * is built on the basis of calls to the methods of the passed workflow.
+     * For starting abandon child workflow {@see Workflow::newUntypedChildWorkflowStub()}.
      *
      * <code>
      *  // Any workflow interface example:
@@ -693,6 +695,23 @@ final class Workflow extends Facade
      *      $workflow->signal('name');
      *
      *      // etc ...
+     *  }
+     * </code>
+     *
+     * To start abandoned child workflow use `yield` and method `start()`:
+     *
+     * <code>
+     *  #[WorkflowMethod]
+     *  public function handler()
+     *  {
+     *      // ExampleWorkflow proxy
+     *      $workflow = Workflow::newUntypedChildWorkflowStub(
+     *                      'WorkflowName',
+     *                      ChildWorkflowOptions::new()->withParentClosePolicy(ParentClosePolicy::POLICY_ABANDON)
+     *                  );
+     *
+     *      // Start child workflow
+     *      yield $workflow->start(42);
      *  }
      * </code>
      *
