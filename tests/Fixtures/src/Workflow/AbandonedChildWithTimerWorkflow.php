@@ -14,7 +14,7 @@ use Temporal\Workflow\WorkflowMethod;
 #[WorkflowInterface]
 class AbandonedChildWithTimerWorkflow
 {
-    #[WorkflowMethod]
+    #[WorkflowMethod('abandoned_workflow')]
     public function wait(int $timeoutInSeconds)
     {
         Workflow::timer($timeoutInSeconds);

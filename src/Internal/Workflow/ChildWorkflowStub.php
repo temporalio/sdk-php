@@ -62,6 +62,21 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
         return $this->execution->promise();
     }
 
+    public function start(... $args): PromiseInterface
+    {
+        if ($this->request !== null) {
+            throw new \LogicException('Child workflow already has been executed');
+        }
+
+        $this->request = new ExecuteChildWorkflow(
+            $this->workflow,
+            EncodedValues::fromValues($args),
+            $this->getOptionsArray()
+        );
+
+        return $this->request($this->request);
+    }
+
     /**
      * {@inheritDoc}
      */
