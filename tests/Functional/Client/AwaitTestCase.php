@@ -16,6 +16,7 @@ use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Failure\ActivityFailure;
 use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Exception\Failure\CanceledFailure;
+use Temporal\Testing\WithoutTimeSkipping;
 use Temporal\Tests\Workflow\AggregatedWorkflow;
 use Temporal\Tests\Workflow\LoopWithSignalCoroutinesWorkflow;
 use Temporal\Tests\Workflow\LoopWorkflow;
@@ -28,6 +29,8 @@ use Temporal\Workflow\WorkflowStub;
  */
 class AwaitTestCase extends ClientTestCase
 {
+    use WithoutTimeSkipping;
+
     public function testSimpleAwait()
     {
         $client = $this->createClient();
