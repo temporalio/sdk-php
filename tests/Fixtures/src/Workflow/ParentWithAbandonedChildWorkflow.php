@@ -16,13 +16,13 @@ class ParentWithAbandonedChildWorkflow
     #[WorkflowMethod]
     public function start(int $childTimeoutInSeconds)
     {
-        $child = Workflow::newChildWorkflowStub(
-            AbandonedChildWithTimerWorkflow::class,
+        $child = Workflow::newUntypedChildWorkflowStub(
+            'abandoned_workflow',
             ChildWorkflowOptions::new()
                 ->withParentClosePolicy(ParentClosePolicy::POLICY_ABANDON)
         );
 
-        $child->wait($childTimeoutInSeconds);
+        yield $child->start($childTimeoutInSeconds);
 
         return 'Welcome from parent';
     }

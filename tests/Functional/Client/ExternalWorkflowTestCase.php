@@ -13,12 +13,15 @@ namespace Temporal\Tests\Functional\Client;
 
 use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Failure\CanceledFailure;
+use Temporal\Testing\WithoutTimeSkipping;
 use Temporal\Tests\Workflow\LoopKillerWorkflow;
 use Temporal\Tests\Workflow\LoopSignallingWorkflow;
 use Temporal\Tests\Workflow\LoopWorkflow;
 
 class ExternalWorkflowTestCase extends ClientTestCase
 {
+    use WithoutTimeSkipping;
+
     public function testSignalWorkflowExecution()
     {
         $client = $this->createClient();
