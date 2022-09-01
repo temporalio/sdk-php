@@ -92,7 +92,7 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
 
     public function getResult($returnType = null): PromiseInterface
     {
-        return EncodedValues::decodePromise($this->result, $returnType = null);
+        return EncodedValues::decodePromise($this->result, $returnType);
     }
 
     /**

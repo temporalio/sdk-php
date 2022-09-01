@@ -82,7 +82,7 @@ final class Environment
             $this->output->writeln('Error starting RoadRunner: ' . $this->roadRunnerProcess->getErrorOutput());
             exit(1);
         }
-        
+
         $this->output->writeln('<info>done.</info>');
     }
 

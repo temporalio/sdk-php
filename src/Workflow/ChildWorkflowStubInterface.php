@@ -46,7 +46,7 @@ interface ChildWorkflowStubInterface
      */
     public function start(... $args): PromiseInterface;
 
-    public function getResult(): PromiseInterface;
+    public function getResult($returnType = null): PromiseInterface;
 
     /**
      * @param string $name
