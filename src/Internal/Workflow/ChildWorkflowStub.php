@@ -32,6 +32,7 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
     private ChildWorkflowOptions $options;
     private MarshallerInterface $marshaller;
     private ?ExecuteChildWorkflow $request = null;
+    private ?PromiseInterface $result = null;
 
     /**
      * @param MarshallerInterface $marshaller
@@ -74,27 +75,9 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
             $this->getOptionsArray()
         );
 
-        return $this->request($this->request);
-    }
+        $this->result = $this->request($this->request);
 
-    /**
-     * {@inheritDoc}
-     */
-    public function execute(array $args = [], $returnType = null): PromiseInterface
-    {
-        if ($this->request !== null) {
-            throw new \LogicException('Child workflow already has been executed');
-        }
-
-        $this->request = new ExecuteChildWorkflow(
-            $this->workflow,
-            EncodedValues::fromValues($args),
-            $this->getOptionsArray()
-        );
-
-        $promise = $this->request($this->request);
-
-        $this->request(new GetChildWorkflowExecution($this->request))
+        $started = $this->request(new GetChildWorkflowExecution($this->request))
             ->then(
                 function (ValuesInterface $values) {
                     $execution = $values->getValue(0, WorkflowExecution::class);
@@ -104,7 +87,20 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
                 }
             );
 
-        return EncodedValues::decodePromise($promise, $returnType);
+        return EncodedValues::decodePromise($started);
+    }
+
+    public function getResult($returnType = null): PromiseInterface
+    {
+        return EncodedValues::decodePromise($this->result, $returnType = null);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function execute(array $args = [], $returnType = null): PromiseInterface
+    {
+        return $this->start(...$args)->then(fn() => $this->getResult($returnType));
     }
 
     /**

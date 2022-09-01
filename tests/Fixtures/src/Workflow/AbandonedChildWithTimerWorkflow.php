@@ -18,5 +18,6 @@ class AbandonedChildWithTimerWorkflow
     public function wait(int $timeoutInSeconds)
     {
         Workflow::timer($timeoutInSeconds);
+        return 'Hello from child';
     }
 }
