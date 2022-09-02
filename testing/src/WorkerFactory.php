@@ -29,6 +29,7 @@ use Temporal\Internal\Transport\Router;
 use Temporal\Internal\Transport\RouterInterface;
 use Temporal\Internal\Transport\Server;
 use Temporal\Internal\Transport\ServerInterface;
+use Temporal\Worker\ActivityInvocationCache\ActivityInvocationCacheInterface;
 use Temporal\Worker\ActivityInvocationCache\RoadRunnerActivityInvocationCache;
 use Temporal\Worker\Environment\Environment;
 use Temporal\Worker\Environment\EnvironmentInterface;
@@ -69,18 +70,28 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     private MarshallerInterface $marshaller;
     private EnvironmentInterface $env;
     private RPCConnectionInterface $rpc;
+    private ActivityInvocationCacheInterface $activityCache;
 
-    public function __construct(DataConverterInterface $dataConverter, RPCConnectionInterface $rpc)
+    public function __construct(DataConverterInterface $dataConverter, RPCConnectionInterface $rpc, ActivityInvocationCacheInterface $activityCache)
     {
         $this->converter = $dataConverter;
         $this->rpc = $rpc;
+        $this->activityCache = $activityCache;
 
         $this->boot();
     }
 
-    public static function create(): WorkerFactoryInterface
+    public static function create(
+        ?DataConverterInterface $dataConverter = null,
+        ?RPCConnectionInterface $rpc = null,
+        ?ActivityInvocationCacheInterface $activityCache = null
+    ): WorkerFactoryInterface
     {
-        return new static(DataConverter::createDefault(), Goridge::create());
+        return new static(
+            $dataConverter ?? DataConverter::createDefault(),
+            $rpc ?? Goridge::create(),
+            $activityCache ?? RoadRunnerActivityInvocationCache::create($dataConverter)
+        );
     }
 
     /**
@@ -99,7 +110,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
                 $exceptionInterceptor ?? ExceptionInterceptor::createDefault()
             ),
             $this->rpc,
-        ), RoadRunnerActivityInvocationCache::create());
+        ), $this->activityCache);
         $this->queues->add($worker);
 
         return $worker;

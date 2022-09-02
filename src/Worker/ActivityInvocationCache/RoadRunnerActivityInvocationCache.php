@@ -8,10 +8,11 @@ use React\Promise\PromiseInterface;
 use Spiral\Goridge\RPC\RPC;
 use Spiral\RoadRunner\KeyValue\Factory;
 use Spiral\RoadRunner\KeyValue\StorageInterface;
-use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\DataConverter;
+use Temporal\DataConverter\DataConverterInterface;
+use Temporal\Exception\InvalidArgumentException;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Throwable;
-
 use function React\Promise\reject;
 use function React\Promise\resolve;
 
@@ -19,10 +20,12 @@ final class RoadRunnerActivityInvocationCache implements ActivityInvocationCache
 {
     private const CACHE_NAME = 'test';
     private StorageInterface $cache;
+    private DataConverterInterface $dataConverter;
 
-    public function __construct(string $host, string $cacheName)
+    public function __construct(string $host, string $cacheName, DataConverterInterface $dataConverter = null)
     {
         $this->cache = (new Factory(RPC::create($host)))->select($cacheName);
+        $this->dataConverter = $dataConverter ?? DataConverter::createDefault();
     }
 
     public function clear(): void
@@ -30,14 +33,13 @@ final class RoadRunnerActivityInvocationCache implements ActivityInvocationCache
         $this->cache->clear();
     }
 
-    public static function create(): self
-    {
-        return new self('tcp://127.0.0.1:6001', self::CACHE_NAME);
+    public static function create(DataConverterInterface $dataConverter = null): self {
+        return new self('tcp://127.0.0.1:6001', self::CACHE_NAME, $dataConverter);
     }
 
     public function saveCompletion(string $activityMethodName, $value): void
     {
-        $this->cache->set($activityMethodName, $value);
+        $this->cache->set($activityMethodName, ActivityInvocationResult::fromValue($value, $this->dataConverter));
     }
 
     public function saveFailure(string $activityMethodName, Throwable $error): void
@@ -65,6 +67,10 @@ final class RoadRunnerActivityInvocationCache implements ActivityInvocationCache
             return reject($value->toThrowable());
         }
 
-        return resolve(EncodedValues::fromValues([$value]));
+        if ($value instanceof ActivityInvocationResult) {
+            return resolve($value->toEncodedValues($this->dataConverter));
+        }
+
+        return reject(new InvalidArgumentException('Invalid cache value'));
     }
 }
