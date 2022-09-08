@@ -20,7 +20,6 @@ use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Router;
 use Temporal\Internal\Transport\RouterInterface;
-use Temporal\Worker\ActivityInvocationCache\ActivityInvocationCacheInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\RPCConnectionInterface;
 
