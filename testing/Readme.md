@@ -14,15 +14,26 @@ $environment->start();
 register_shutdown_function(fn () => $environment->stop());
 ```
 
-If you don't want to run temporal test server with all of your tests you can set, for example,
-add condition to start it only if `RUN_TEMPORAL_TEST_SERVER` environment variable is present:
+`$environment->start();` is a shortcut to run Temporal test server and RoadRunner worker.
+You can start them separately if you need to customize the configuration:
 
 ```php
+$this->startTemporalTestServer(); // starts Temporal server
+$this->startRoadRunner(); // starts RoadRunner worker
+```
+
+So if, for example, you only need roadrunner worker and not the server you can
+set condition to start it only if `RUN_TEMPORAL_TEST_SERVER` environment variable is present:
+
+```php
+$environment = Environment::create();
+
 if (getenv('RUN_TEMPORAL_TEST_SERVER') !== false) {
-    $environment = Environment::create();
-    $environment->start('./rr serve -c .rr.silent.yaml -w tests');
-    register_shutdown_function(fn() => $environment->stop());
+    $this->startTemporalTestServer();
 }
+
+$environment->startRoadRunner('./rr serve -c .rr.silent.yaml -w tests');
+register_shutdown_function(fn() => $environment->stop());
 ```
 
 2. Add environment variable and `bootstrap.php` to your `phpunit.xml`:

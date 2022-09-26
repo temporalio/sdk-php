@@ -36,6 +36,12 @@ final class Environment
 
     public function start(string $rrCommand = null, int $commandTimeout = 10): void
     {
+        $this->startTemporalTestServer($commandTimeout);
+        $this->startRoadRunner($rrCommand, $commandTimeout);
+    }
+
+    public function startTemporalTestServer(int $commandTimeout = 10): void
+    {
         if (!$this->downloader->check($this->systemInfo->temporalServerExecutable)) {
             $this->output->write('Download temporal test server... ');
             $this->downloader->download($this->systemInfo);
@@ -58,7 +64,10 @@ final class Environment
             $this->output->writeln('Error starting Temporal server: ' . $this->temporalServerProcess->getErrorOutput());
             exit(1);
         }
+    }
 
+    public function startRoadRunner(string $rrCommand = null, int $commandTimeout = 10): void
+    {
         $this->roadRunnerProcess = new Process(
             $rrCommand ? explode(' ', $rrCommand) : [$this->systemInfo->rrExecutable, 'serve']
         );
