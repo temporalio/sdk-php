@@ -24,7 +24,8 @@ class UpsertSearchAttributesWorkflow
     {
         Workflow::upsertSearchAttributes(
             [
-                'test' => 'test'
+                'attr1' => 'attr1-value',
+                'attr2' => true,
             ]
         );
 
