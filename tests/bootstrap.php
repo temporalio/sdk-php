@@ -7,7 +7,6 @@ use Temporal\Tests\SearchAttributeTestInvoker;
 
 require __DIR__ . '/../vendor/autoload.php';
 
-
 if (getenv('RUN_TEMPORAL_TEST_SERVER') !== false) {
     (new SearchAttributeTestInvoker)();
     $environment = Environment::create();
