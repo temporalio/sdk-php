@@ -928,4 +928,16 @@ final class Workflow extends Facade
 
         return $context->getStackTrace();
     }
+
+    /**
+     * Upsert search attributes
+     *
+     * @param array<string, mixed> $searchAttributes
+     */
+    public static function upsertSearchAttributes(array $searchAttributes): void
+    {
+        /** @var ScopedContextInterface $context */
+        $context = self::getCurrentContext();
+        $context->upsertSearchAttributes($searchAttributes);
+    }
 }
