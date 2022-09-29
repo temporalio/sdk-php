@@ -106,6 +106,10 @@ class WorkflowClient implements WorkflowClientInterface
      */
     public function start($workflow, ...$args): WorkflowRunInterface
     {
+        if ($workflow instanceof WorkflowProxy && !$workflow->hasHandler()) {
+            throw new InvalidArgumentException('Unable to start workflow without workflow method');
+        }
+
         $workflowStub = WorkflowStubConverter::fromWorkflow($workflow);
 
         $returnType = null;
@@ -147,6 +151,10 @@ class WorkflowClient implements WorkflowClientInterface
         array $signalArgs = [],
         array $startArgs = []
     ): WorkflowRunInterface {
+        if ($workflow instanceof WorkflowProxy && !$workflow->hasHandler()) {
+            throw new InvalidArgumentException('Unable to start workflow without workflow method');
+        }
+
         $workflowStub = WorkflowStubConverter::fromWorkflow($workflow);
 
         $returnType = null;

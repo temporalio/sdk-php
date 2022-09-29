@@ -30,9 +30,18 @@ abstract class Instance implements InstanceInterface
      */
     public function __construct(Prototype $prototype, ?object $context)
     {
+        $handler = $prototype->getHandler();
+
+        if ($handler === null) {
+            throw new \InvalidArgumentException(\sprintf(
+                'Unable to instantiate "%s" without handler method',
+                $prototype->getID(),
+            ));
+        }
+
         $this->prototype = $prototype;
         $this->context = $context;
-        $this->handler = $this->createHandler($prototype->getHandler());
+        $this->handler = $this->createHandler($handler);
     }
 
     /**

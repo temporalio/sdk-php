@@ -38,13 +38,6 @@ class WorkflowReader extends Reader
     /**
      * @var string
      */
-    private const ERROR_HANDLER_NOT_FOUND =
-        'Can not find workflow handler, because class %s has no method marked with #[%s] attribute'
-    ;
-
-    /**
-     * @var string
-     */
     private const ERROR_HANDLER_DUPLICATE =
         'Workflow class %s must contain only one handler marked by #[%s] attribute, but %d has been found'
     ;
@@ -81,8 +74,7 @@ class WorkflowReader extends Reader
 
         switch (\count($prototypes)) {
             case 0:
-                $message = \sprintf(self::ERROR_HANDLER_NOT_FOUND, $graph, WorkflowMethod::class);
-                throw new \LogicException($message);
+                return $this->withSignalsAndQueries($graph, $this->getDefaultPrototype($graph));
 
             case 1:
                 return $this->withSignalsAndQueries($graph, \reset($prototypes));
@@ -291,6 +283,11 @@ class WorkflowReader extends Reader
         }
 
         return $prototype;
+    }
+
+    private function getDefaultPrototype(ClassNode $graph): WorkflowPrototype
+    {
+        return new WorkflowPrototype($graph->getReflection()->getName(), null, $graph->getReflection());
     }
 
     /**

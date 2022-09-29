@@ -9,22 +9,16 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Unit\Declaration\Fixture;
+namespace Temporal\Tests\Workflow;
 
 use Temporal\Workflow\SignalMethod;
 use Temporal\Workflow\WorkflowInterface;
 
-/** @WorkflowInterface */
 #[WorkflowInterface]
-class WorkflowWithoutHandler
+interface SignalledWorkflowReusable
 {
-    public function handler()
-    {
-        return 42;
-    }
-
     #[SignalMethod]
-    public function signal()
-    {
-    }
+    public function addValue(
+        string $value
+    );
 }

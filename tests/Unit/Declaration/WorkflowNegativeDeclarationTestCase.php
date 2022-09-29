@@ -46,27 +46,6 @@ class WorkflowNegativeDeclarationTestCase extends DeclarationTestCase
     }
 
     /**
-     * @testdox Validate errors while loading workflow without WorkflowInterface attribute
-     * @dataProvider workflowReaderDataProvider
-     *
-     * @param WorkflowReader $reader
-     * @throws \ReflectionException
-     */
-    public function testWorkflowWithoutHandler(WorkflowReader $reader): void
-    {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage(\vsprintf(
-            'Can not find workflow handler, because class %s has no method marked with #[%s] attribute',
-            [
-                WorkflowWithoutHandler::class,
-                WorkflowMethod::class,
-            ]
-        ));
-
-        $reader->fromClass(WorkflowWithoutHandler::class);
-    }
-
-    /**
      * @testdox Workflow handlers duplication
      * @dataProvider workflowReaderDataProvider
      *

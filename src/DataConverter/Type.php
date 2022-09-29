@@ -116,7 +116,7 @@ final class Type
     }
 
     /**
-     * @param string|\ReflectionClass|\ReflectionType|Type $type
+     * @param string|\ReflectionClass|\ReflectionType|Type|ReturnType $type
      * @return Type
      */
     public static function create($type): Type

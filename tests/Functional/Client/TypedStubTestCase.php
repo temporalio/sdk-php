@@ -11,11 +11,15 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Functional\Client;
 
+use Temporal\Exception\InvalidArgumentException;
 use Temporal\Tests\DTO\Message;
 use Temporal\Tests\DTO\User;
+use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithoutHandler;
 use Temporal\Tests\Workflow\ActivityReturnTypeWorkflow;
 use Temporal\Tests\Workflow\GeneratorWorkflow;
 use Temporal\Tests\Workflow\QueryWorkflow;
+use Temporal\Tests\Workflow\SignalledWorkflowReusable;
+use Temporal\Tests\Workflow\SignalledWorkflowWithInheritance;
 use Temporal\Tests\Workflow\SimpleDTOWorkflow;
 use Temporal\Tests\Workflow\SimpleWorkflow;
 
@@ -44,6 +48,28 @@ class TypedStubTestCase extends ClientTestCase
         $this->assertNotEmpty($r->getExecution()->getRunID());
 
         $this->assertSame('TEST', $r->getResult());
+    }
+
+    public function testStartWithoutHandler()
+    {
+        $client = $this->createClient();
+        $workflow = $client->newWorkflowStub(WorkflowWithoutHandler::class);
+
+        $this->expectExceptionMessage(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unable to start workflow without workflow method');
+
+        $client->start($workflow);
+    }
+
+    public function testStartWithSignalWithoutHandler()
+    {
+        $client = $this->createClient();
+        $workflow = $client->newWorkflowStub(WorkflowWithoutHandler::class);
+
+        $this->expectExceptionMessage(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unable to start workflow without workflow method');
+
+        $client->startWithSignal($workflow, 'signal');
     }
 
     public function testQueryWorkflow()
@@ -100,5 +126,37 @@ class TypedStubTestCase extends ClientTestCase
             ],
             $simple->handler('hello world')
         );
+    }
+
+    public function testSignalRunningWorkflowWithInheritedSignal()
+    {
+        $client = $this->createClient();
+
+        $workflow = $client->newWorkflowStub(SignalledWorkflowWithInheritance::class);
+        $workflowRun = $client->start($workflow, 1);
+        $workflowId = $workflowRun->getExecution()->getID();
+        $workflowRunId = $workflowRun->getExecution()->getRunID();
+
+        $signaller = $client->newRunningWorkflowStub(SignalledWorkflowWithInheritance::class, $workflowId, $workflowRunId);
+        $signaller->addValue('test1');
+
+        $result = $workflowRun->getResult();
+        $this->assertEquals(['test1'], $result);
+    }
+
+    public function testSignalRunningWorkflowWithInheritedSignalViaParentInterface()
+    {
+        $client = $this->createClient();
+
+        $workflow = $client->newWorkflowStub(SignalledWorkflowWithInheritance::class);
+        $workflowRun = $client->start($workflow, 1);
+        $workflowId = $workflowRun->getExecution()->getID();
+        $workflowRunId = $workflowRun->getExecution()->getRunID();
+
+        $signaller = $client->newRunningWorkflowStub(SignalledWorkflowReusable::class, $workflowId, $workflowRunId);
+        $signaller->addValue('test1');
+
+        $result = $workflowRun->getResult();
+        $this->assertEquals(['test1'], $result);
     }
 }
