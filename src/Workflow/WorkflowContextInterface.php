@@ -274,4 +274,9 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @return string
      */
     public function getStackTrace(): string;
+
+    /**
+     * @param array<string, mixed> $searchAttributes
+     */
+    public function upsertSearchAttributes(array $searchAttributes): void;
 }
