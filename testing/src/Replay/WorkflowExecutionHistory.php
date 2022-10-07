@@ -6,13 +6,10 @@ namespace Temporal\Testing\Replay;
 
 use Google\Protobuf\Internal\RepeatedField;
 use InvalidArgumentException;
-use Spiral\Attributes\AttributeReader;
-use Spiral\Attributes\Factory;
-use Temporal\Api\Common\V1\Payload;
-use Temporal\Api\Common\V1\Payloads;
 use Temporal\Api\Enums\V1\EventType;
 use Temporal\Api\History\V1\History;
 use Temporal\Api\History\V1\HistoryEvent;
+use Temporal\Workflow\WorkflowExecution;
 
 /**
  * Provides a wrapper with convenience methods over raw protobuf {@link History} object representing
@@ -21,11 +18,13 @@ use Temporal\Api\History\V1\HistoryEvent;
 final class WorkflowExecutionHistory
 {
     private History $history;
+    private WorkflowExecution $workflowExecution;
 
     public function __construct(History $history)
     {
         self::checkHistory($history);
         $this->history = $history;
+        $this->workflowExecution = new WorkflowExecution('workflow_id_in_replay', 'run_id_in_replay',);
     }
 
     public function getHistory(): History
@@ -46,6 +45,16 @@ final class WorkflowExecutionHistory
         $history->mergeFromJsonString($json, true);
 
         return new self($history);
+    }
+
+    public static function fromEvents(HistoryEvent ...$events): self
+    {
+        $events = new RepeatedField(HistoryEvent::class);
+        foreach ($events as $index => $event) {
+            $events->offsetSet($index, $event);
+        }
+
+        return new self(new History($events));
     }
 
     private static function checkHistory(History $history): void
@@ -83,8 +92,23 @@ final class WorkflowExecutionHistory
         return $events->offsetGet($events->count() - 1);
     }
 
+    public function getEventsCount(): int
+    {
+        return $this->history->getEvents()->count();
+    }
+
     public function getFirstEvent(): HistoryEvent
     {
         return $this->history->getEvents()->offsetGet(0);
+    }
+
+    public function getWorkflowExecution(): WorkflowExecution
+    {
+        return $this->workflowExecution;
+    }
+
+    public function isEmpty(): bool
+    {
+        return $this->history->getEvents() === null;
     }
 }
