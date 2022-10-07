@@ -75,7 +75,7 @@ jobs:
         run: composer update --no-interaction --no-progress
 
       - name: Download RoadRunner
-        if: inputs.run-temporal-test-server == true && steps.cache-roadrunner.outputs.cache-hit != 'true'
+        if: inputs.run-temporal-test-server == true
         run: |
           vendor/bin/rr get --no-interaction
 
