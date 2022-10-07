@@ -74,18 +74,6 @@ jobs:
         if: matrix.dependencies == 'highest'
         run: composer update --no-interaction --no-progress
 
-      - name: Cache Roadrunner
-        id: cache-roadrunner
-        uses: actions/cache@v3
-        if: inputs.run-temporal-test-server == true
-        with:
-          path: |
-            ./rr*
-            .rr.yaml
-          key: ${{ matrix.os }}-roadrunner-${{ hashFiles('**/rr') }}
-          restore-keys: |
-            ${{ matrix.os }}-roadrunner-
-
       - name: Download RoadRunner
         if: inputs.run-temporal-test-server == true && steps.cache-roadrunner.outputs.cache-hit != 'true'
         run: |
