@@ -215,3 +215,20 @@ To mock a failure use `expectFailure()` method:
 ```php
 $this->activityMocks->expectFailure('SimpleActivity.echo', new \LogicException('something went wrong'));
 ```
+
+### Troubleshooting
+
+#### Error starting Temporal server: `sh: exec: line 0: ./temporal-test-server: not found`
+
+On `alpine`-based image *not found* might be caused by dynamic link failure.
+Because `temporal-test-server` is
+[built against `glibc`](https://github.com/temporalio/sdk-java/blob/master/temporal-test-server/build.gradle#L128)
+and `alpine` uses [musl](https://musl.libc.org/) libc library.
+
+To fix this you need to install one the glibc compatibility packages, for example `gcompat`.
+
+```bash
+apk add gcompat
+```
+
+> More info could be found in this [stackoverflow answer](https://stackoverflow.com/a/66974607/2457191)
