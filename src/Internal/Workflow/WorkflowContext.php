@@ -45,6 +45,7 @@ use Temporal\Workflow\ExternalWorkflowStubInterface;
 use Temporal\Workflow\WorkflowContextInterface;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowInfo;
+use Temporal\Internal\Transport\Request\UpsertSearchAttributes;
 
 use function React\Promise\reject;
 use function React\Promise\resolve;
@@ -416,6 +417,16 @@ class WorkflowContext implements WorkflowContextInterface
     public function getStackTrace(): string
     {
         return StackRenderer::renderTrace($this->trace);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function upsertSearchAttributes(array $searchAttributes): void
+    {
+        $this->services->client->request(
+            new UpsertSearchAttributes($searchAttributes)
+        );
     }
 
     /**
