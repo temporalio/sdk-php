@@ -17,16 +17,14 @@ class SignalWorkflowWithInheritanceImpl implements SignalledWorkflowWithInherita
 {
     private array $values = [];
 
-    public function addValue(
-        string $value
-    ) {
+    public function addValue(string $value)
+    {
         $this->values[] = $value;
     }
 
-    public function run(
-        int $count
-    ) {
-        yield Workflow::await(fn() => count($this->values) === $count);
+    public function run(int $count)
+    {
+        yield Workflow::await(fn() => \count($this->values) === $count);
 
         return $this->values;
     }

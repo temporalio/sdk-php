@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration\Instantiator;
 
+use Temporal\Exception\InstantiationException;
 use Temporal\Internal\Declaration\Prototype\PrototypeInterface;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\WorkflowInstance;
@@ -40,7 +41,7 @@ final class WorkflowInstantiator extends Instantiator
         $handler = $prototype->getHandler();
 
         if ($handler === null) {
-            throw new \InvalidArgumentException(\sprintf(
+            throw new InstantiationException(\sprintf(
                 'Unable to instantiate workflow "%s" without handler method',
                 $prototype->getID(),
             ));

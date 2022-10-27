@@ -107,6 +107,6 @@ abstract class Prototype implements PrototypeInterface
     {
         $handler = $prototype->getHandler();
 
-        return $handler !== null && $handler->getName() === $method;
+        return $handler?->getName() === $method;
     }
 }

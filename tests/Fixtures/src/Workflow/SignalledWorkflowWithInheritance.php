@@ -18,7 +18,5 @@ use Temporal\Workflow\WorkflowMethod;
 interface SignalledWorkflowWithInheritance extends SignalledWorkflowReusable
 {
     #[WorkflowMethod(name: 'SignalledWorkflowWithInheritance')]
-    public function run(
-        int $count
-    );
+    public function run(int $count);
 }

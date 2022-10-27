@@ -96,7 +96,7 @@ final class ChildWorkflowProxy extends Proxy
         if (!$this->isRunning()) {
             $handler = $this->workflow->getHandler();
 
-            if ($handler === null || $handler->getName() !== $method) {
+            if ($method !== $handler?->getName()) {
                 throw new \BadMethodCallException(
                     \sprintf(self::ERROR_UNDEFINED_WORKFLOW_METHOD, $this->class, $method)
                 );

@@ -14,7 +14,6 @@ namespace Temporal\Client;
 use Doctrine\Common\Annotations\Reader;
 use Spiral\Attributes\AnnotationReader;
 use Spiral\Attributes\AttributeReader;
-use Spiral\Attributes\Composite\Composite;
 use Spiral\Attributes\Composite\SelectiveReader;
 use Spiral\Attributes\ReaderInterface;
 use Temporal\Client\GRPC\ServiceClientInterface;
@@ -107,7 +106,7 @@ class WorkflowClient implements WorkflowClientInterface
     public function start($workflow, ...$args): WorkflowRunInterface
     {
         if ($workflow instanceof WorkflowProxy && !$workflow->hasHandler()) {
-            throw new InvalidArgumentException('Unable to start workflow without workflow method');
+            throw new InvalidArgumentException('Unable to start workflow without workflow handler');
         }
 
         $workflowStub = WorkflowStubConverter::fromWorkflow($workflow);
@@ -152,7 +151,7 @@ class WorkflowClient implements WorkflowClientInterface
         array $startArgs = []
     ): WorkflowRunInterface {
         if ($workflow instanceof WorkflowProxy && !$workflow->hasHandler()) {
-            throw new InvalidArgumentException('Unable to start workflow without workflow method');
+            throw new InvalidArgumentException('Unable to start workflow without workflow handler');
         }
 
         $workflowStub = WorkflowStubConverter::fromWorkflow($workflow);

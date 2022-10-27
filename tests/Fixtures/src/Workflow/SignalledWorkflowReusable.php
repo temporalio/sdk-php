@@ -18,7 +18,5 @@ use Temporal\Workflow\WorkflowInterface;
 interface SignalledWorkflowReusable
 {
     #[SignalMethod]
-    public function addValue(
-        string $value
-    );
+    public function addValue(string $value);
 }

@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Declaration;
 
+use Temporal\Exception\InstantiationException;
+use Temporal\Internal\Declaration\Instantiator\WorkflowInstantiator;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
 use Temporal\Tests\Unit\Declaration\Fixture\UnannotatedClass;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithMultipleMethods;
@@ -57,5 +59,24 @@ class WorkflowNegativeDeclarationTestCase extends DeclarationTestCase
         $this->expectException(\LogicException::class);
 
         $reader->fromClass(WorkflowWithMultipleMethods::class);
+    }
+
+    /**
+     * @testdox Workflow without handler instantiation
+     * @dataProvider workflowReaderDataProvider
+     *
+     * @param WorkflowReader $reader
+     * @throws \ReflectionException
+     */
+    public function testWorkflowWithoutHandlerInstantiation(WorkflowReader $reader): void
+    {
+        $this->expectException(InstantiationException::class);
+        $this->expectExceptionMessage(
+            \sprintf('Unable to instantiate workflow "%s" without handler method', WorkflowWithoutHandler::class),
+        );
+
+        $protorype = $reader->fromClass(WorkflowWithoutHandler::class);
+
+        (new WorkflowInstantiator())->instantiate($protorype);
     }
 }

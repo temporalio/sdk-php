@@ -56,7 +56,7 @@ class TypedStubTestCase extends ClientTestCase
         $workflow = $client->newWorkflowStub(WorkflowWithoutHandler::class);
 
         $this->expectExceptionMessage(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Unable to start workflow without workflow method');
+        $this->expectExceptionMessage('Unable to start workflow without workflow handler');
 
         $client->start($workflow);
     }
@@ -67,7 +67,7 @@ class TypedStubTestCase extends ClientTestCase
         $workflow = $client->newWorkflowStub(WorkflowWithoutHandler::class);
 
         $this->expectExceptionMessage(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Unable to start workflow without workflow method');
+        $this->expectExceptionMessage('Unable to start workflow without workflow handler');
 
         $client->startWithSignal($workflow, 'signal');
     }
