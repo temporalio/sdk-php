@@ -41,6 +41,17 @@ final class ActivityPrototype extends Prototype
     }
 
     /**
+     * @return \ReflectionMethod
+     */
+    public function getHandler(): \ReflectionMethod
+    {
+        $handler = parent::getHandler();
+        assert($handler !== null);
+
+        return $handler;
+    }
+
+    /**
      * @return MethodRetry|null
      */
     public function getMethodRetry(): ?MethodRetry

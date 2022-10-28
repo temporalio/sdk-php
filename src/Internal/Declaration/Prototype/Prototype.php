@@ -21,9 +21,9 @@ abstract class Prototype implements PrototypeInterface
     protected string $name;
 
     /**
-     * @var \ReflectionMethod
+     * @var \ReflectionMethod|null
      */
-    protected \ReflectionMethod $handler;
+    protected ?\ReflectionMethod $handler;
 
     /**
      * @var \ReflectionClass
@@ -32,10 +32,10 @@ abstract class Prototype implements PrototypeInterface
 
     /**
      * @param string $name
-     * @param \ReflectionMethod $handler
+     * @param \ReflectionMethod|null $handler
      * @param \ReflectionClass $class
      */
-    public function __construct(string $name, \ReflectionMethod $handler, \ReflectionClass $class)
+    public function __construct(string $name, ?\ReflectionMethod $handler, \ReflectionClass $class)
     {
         $this->handler = $handler;
         $this->name = $name;
@@ -79,9 +79,9 @@ abstract class Prototype implements PrototypeInterface
     }
 
     /**
-     * @return \ReflectionMethod
+     * @return \ReflectionMethod|null
      */
-    public function getHandler(): \ReflectionMethod
+    public function getHandler(): ?\ReflectionMethod
     {
         return $this->handler;
     }
@@ -107,6 +107,6 @@ abstract class Prototype implements PrototypeInterface
     {
         $handler = $prototype->getHandler();
 
-        return $handler->getName() === $method;
+        return $handler?->getName() === $method;
     }
 }

@@ -32,7 +32,7 @@ interface PrototypeInterface extends Identifiable
     /**
      * Returns the reflection of the handler function.
      *
-     * @return \ReflectionMethod
+     * @return \ReflectionMethod|null
      */
-    public function getHandler(): \ReflectionMethod;
+    public function getHandler(): ?\ReflectionMethod;
 }

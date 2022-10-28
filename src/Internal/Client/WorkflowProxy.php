@@ -61,7 +61,7 @@ final class WorkflowProxy extends Proxy
      */
     public function __call(string $method, array $args)
     {
-        if ($method === $this->prototype->getHandler()->getName()) {
+        if ($method === $this->prototype->getHandler()?->getName()) {
             // no timeout (use async mode to get it)
             return $this->client->start($this, ...$args)->getResult($this->__getReturnType());
         }
@@ -114,5 +114,14 @@ final class WorkflowProxy extends Proxy
     public function __getReturnType()
     {
         return $this->prototype->getReturnType();
+    }
+
+    /**
+     * @return bool
+     * @internal
+     */
+    public function hasHandler(): bool
+    {
+        return $this->prototype->getHandler() !== null;
     }
 }

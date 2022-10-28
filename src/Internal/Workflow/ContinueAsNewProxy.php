@@ -88,7 +88,7 @@ class ContinueAsNewProxy extends Proxy
 
         $handler = $this->workflow->getHandler();
 
-        if ($method !== $handler->getName()) {
+        if ($method !== $handler?->getName()) {
             throw new \BadMethodCallException(
                 \sprintf(self::ERROR_UNDEFINED_WORKFLOW_METHOD, $this->class, $method)
             );

@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Declaration;
 
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Exception\InstantiationException;
 use Temporal\Internal\Declaration\Dispatcher\AutowiredPayloads;
 use Temporal\Internal\Declaration\Prototype\Prototype;
 
@@ -30,9 +31,18 @@ abstract class Instance implements InstanceInterface
      */
     public function __construct(Prototype $prototype, ?object $context)
     {
+        $handler = $prototype->getHandler();
+
+        if ($handler === null) {
+            throw new InstantiationException(\sprintf(
+                'Unable to instantiate "%s" without handler method',
+                $prototype->getID(),
+            ));
+        }
+
         $this->prototype = $prototype;
         $this->context = $context;
-        $this->handler = $this->createHandler($prototype->getHandler());
+        $this->handler = $this->createHandler($handler);
     }
 
     /**
