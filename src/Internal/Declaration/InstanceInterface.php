@@ -11,8 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration;
 
+use Temporal\DataConverter\ValuesInterface;
+
 /**
- * @psalm-type DispatchableHandler = callable(array): mixed
+ * @psalm-type DispatchableHandler = \Closure(ValuesInterface): mixed
  */
 interface InstanceInterface
 {

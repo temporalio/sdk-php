@@ -23,6 +23,9 @@ abstract class Instance implements InstanceInterface
 {
     protected Prototype $prototype;
     protected ?object $context;
+    /**
+     * @var \Closure(ValuesInterface): mixed
+     */
     private \Closure $handler;
 
     /**
@@ -62,25 +65,30 @@ abstract class Instance implements InstanceInterface
     }
 
     /**
-     * @psalm-return DispatchableHandler
-     *
      * @param \ReflectionFunctionAbstract $func
-     * @return \Closure
+     * @return \Closure(ValuesInterface): mixed
+     *
+     * @psalm-return DispatchableHandler
      */
     protected function createHandler(\ReflectionFunctionAbstract $func): \Closure
     {
         $valueMapper = new AutowiredPayloads($func);
 
-        return fn (ValuesInterface $values) => $valueMapper->dispatchValues($this->context, $values);
+        return fn (ValuesInterface $values): mixed => $valueMapper->dispatchValues($this->context, $values);
     }
 
     /**
      * @param callable $handler
-     * @return \Closure
+     *
+     * @return \Closure(ValuesInterface): mixed
      * @throws \ReflectionException
+     *
+     * @psalm-return DispatchableHandler
      */
     protected function createCallableHandler(callable $handler): \Closure
     {
-        return $this->createHandler(new \ReflectionFunction($handler));
+        return $this->createHandler(
+            new \ReflectionFunction($handler instanceof \Closure ? $handler : \Closure::fromCallable($handler)),
+        );
     }
 }

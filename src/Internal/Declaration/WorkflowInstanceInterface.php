@@ -11,9 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration;
 
-/**
- * @psalm-import-type DispatchableHandler from InstanceInterface
- */
 interface WorkflowInstanceInterface extends InstanceInterface
 {
     /**
