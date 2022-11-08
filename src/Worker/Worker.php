@@ -139,7 +139,7 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
     {
         foreach ($this->services->activitiesReader->fromClass($type) as $proto) {
             if ($factory !== null) {
-                $proto = $proto->withFactory($factory);
+                $proto = $proto->withFactory($factory instanceof Closure ? $factory : Closure::fromCallable($factory));
             }
             $this->services->activities->add($proto, false);
         }
