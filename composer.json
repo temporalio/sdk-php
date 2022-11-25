@@ -59,8 +59,8 @@
         "laminas/laminas-code": "^4.0",
         "monolog/monolog": "^2.1 || ^3.0",
         "phpunit/phpunit": "^9.5.21",
-        "symfony/translation": "^5.4 || ^6.0",
-        "symfony/var-dumper": "^5.1 || ^6.0",
+        "symfony/translation": "^4.4.20 || ^5.0 || ^6.0",
+        "symfony/var-dumper": "^4.4.20 || ^5.0 || ^6.0",
         "vimeo/psalm": "^4.1"
     },
     "autoload-dev": {
