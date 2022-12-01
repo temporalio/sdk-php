@@ -14,12 +14,12 @@ namespace Temporal\Internal\Declaration\WorkflowInstance;
 use Temporal\DataConverter\ValuesInterface;
 
 /**
- * @psalm-type Consumer = callable(array): mixed
+ * @psalm-type Consumer = callable(ValuesInterface): mixed
  */
 final class SignalQueue
 {
     /**
-     * @var array<string, array<array>>
+     * @var array<string, list<ValuesInterface>>
      */
     private array $queue = [];
 

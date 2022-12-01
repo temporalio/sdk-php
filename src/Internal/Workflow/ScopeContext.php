@@ -22,6 +22,7 @@ use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\ScopedContextInterface;
 use Temporal\Workflow\WorkflowContextInterface;
+use Temporal\Internal\Transport\Request\UpsertSearchAttributes;
 
 class ScopeContext extends WorkflowContext implements ScopedContextInterface
 {
@@ -162,5 +163,15 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
         $this->parent->timers->attach($result, $request);
 
         return $result;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function upsertSearchAttributes(array $searchAttributes): void
+    {
+        $this->request(
+            new UpsertSearchAttributes($searchAttributes)
+        );
     }
 }

@@ -9,22 +9,14 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Unit\Declaration\Fixture;
+namespace Temporal\Tests\Workflow;
 
-use Temporal\Workflow\SignalMethod;
 use Temporal\Workflow\WorkflowInterface;
+use Temporal\Workflow\WorkflowMethod;
 
-/** @WorkflowInterface */
 #[WorkflowInterface]
-class WorkflowWithoutHandler
+interface SignalledWorkflowWithInheritance extends SignalledWorkflowReusable
 {
-    public function handler()
-    {
-        return 42;
-    }
-
-    #[SignalMethod]
-    public function signal()
-    {
-    }
+    #[WorkflowMethod(name: 'SignalledWorkflowWithInheritance')]
+    public function run(int $count);
 }

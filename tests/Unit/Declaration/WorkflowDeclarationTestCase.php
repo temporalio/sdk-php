@@ -19,6 +19,7 @@ use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithCron;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithCronAndRetry;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithCustomName;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithInterface;
+use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithoutHandler;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithQueries;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithRetry;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithSignals;
@@ -29,6 +30,20 @@ use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithSignals;
  */
 class WorkflowDeclarationTestCase extends DeclarationTestCase
 {
+    /**
+     * @testdox Reading workflow without handler
+     * @dataProvider workflowReaderDataProvider
+     *
+     * @param WorkflowReader $reader
+     * @throws \ReflectionException
+     */
+    public function testWorkflowWithoutHandler(WorkflowReader $reader): void
+    {
+        $prototype = $reader->fromClass(WorkflowWithoutHandler::class);
+
+        $this->assertNull($prototype->getHandler());
+    }
+
     /**
      * @testdox Reading workflow without cron attribute (cron prototype value should be null)
      * @dataProvider workflowReaderDataProvider

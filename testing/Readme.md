@@ -14,15 +14,26 @@ $environment->start();
 register_shutdown_function(fn () => $environment->stop());
 ```
 
-If you don't want to run temporal test server with all of your tests you can set, for example,
-add condition to start it only if `RUN_TEMPORAL_TEST_SERVER` environment variable is present:
+`$environment->start();` is a shortcut to run Temporal test server and RoadRunner worker.
+You can start them separately if you need to customize the configuration:
 
 ```php
+$this->startTemporalTestServer(); // starts Temporal server
+$this->startRoadRunner(); // starts RoadRunner worker
+```
+
+So if, for example, you only need roadrunner worker and not the server you can
+set condition to start it only if `RUN_TEMPORAL_TEST_SERVER` environment variable is present:
+
+```php
+$environment = Environment::create();
+
 if (getenv('RUN_TEMPORAL_TEST_SERVER') !== false) {
-    $environment = Environment::create();
-    $environment->start('./rr serve -c .rr.silent.yaml -w tests');
-    register_shutdown_function(fn() => $environment->stop());
+    $this->startTemporalTestServer();
 }
+
+$environment->startRoadRunner('./rr serve -c .rr.silent.yaml -w tests');
+register_shutdown_function(fn() => $environment->stop());
 ```
 
 2. Add environment variable and `bootstrap.php` to your `phpunit.xml`:
@@ -204,3 +215,20 @@ To mock a failure use `expectFailure()` method:
 ```php
 $this->activityMocks->expectFailure('SimpleActivity.echo', new \LogicException('something went wrong'));
 ```
+
+### Troubleshooting
+
+#### Error starting Temporal server: `sh: exec: line 0: ./temporal-test-server: not found`
+
+On `alpine`-based image *not found* might be caused by dynamic link failure.
+Because `temporal-test-server` is
+[built against `glibc`](https://github.com/temporalio/sdk-java/blob/master/temporal-test-server/build.gradle#L128)
+and `alpine` uses [musl](https://musl.libc.org/) libc library.
+
+To fix this you need to install one the glibc compatibility packages, for example `gcompat`.
+
+```bash
+apk add gcompat
+```
+
+> More info could be found in this [stackoverflow answer](https://stackoverflow.com/a/66974607/2457191)

@@ -18,12 +18,12 @@ use Temporal\Workflow\ReturnType;
 final class WorkflowPrototype extends Prototype
 {
     /**
-     * @var array<string, \ReflectionFunctionAbstract>
+     * @var array<non-empty-string, \ReflectionFunctionAbstract>
      */
     private array $queryHandlers = [];
 
     /**
-     * @var array<string, \ReflectionFunctionAbstract>
+     * @var array<non-empty-string, \ReflectionFunctionAbstract>
      */
     private array $signalHandlers = [];
 
@@ -100,7 +100,7 @@ final class WorkflowPrototype extends Prototype
     }
 
     /**
-     * @return iterable<string, \ReflectionFunctionAbstract>
+     * @return iterable<non-empty-string, \ReflectionFunctionAbstract>
      */
     public function getQueryHandlers(): iterable
     {
@@ -117,7 +117,7 @@ final class WorkflowPrototype extends Prototype
     }
 
     /**
-     * @return iterable<string, \ReflectionFunctionAbstract>
+     * @return iterable<non-empty-string, \ReflectionFunctionAbstract>
      */
     public function getSignalHandlers(): iterable
     {

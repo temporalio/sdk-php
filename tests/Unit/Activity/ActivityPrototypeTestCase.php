@@ -9,6 +9,7 @@ use Spiral\Attributes\AttributeReader;
 use Spiral\Attributes\Composite\SelectiveReader;
 use Temporal\Internal\Declaration\Reader\ActivityReader;
 use Temporal\Tests\Unit\UnitTestCase;
+use WeakReference;
 
 final class ActivityPrototypeTestCase extends UnitTestCase
 {
@@ -20,6 +21,45 @@ final class ActivityPrototypeTestCase extends UnitTestCase
         parent::setUp();
     }
 
+    public function testInstanceLeaks(): void
+    {
+        $instance = new DummyActivity();
+        $proto = $this->activityReader
+            ->fromClass(DummyActivity::class)[0];
+
+        $refProto = WeakReference::create($proto);
+        $refInstance = WeakReference::create($proto->getInstance());
+        $refHandler = WeakReference::create($proto->getHandler());
+        $refInstanceHandler = WeakReference::create($proto->getInstance()->getHandler());
+        $refActivity = WeakReference::create($proto->getInstance()->getContext());
+
+        unset($proto, $instance);
+
+        $this->assertNull($refInstanceHandler->get());
+        $this->assertNull($refActivity->get());
+        $this->assertNull($refProto->get());
+        $this->assertNull($refHandler->get());
+        $this->assertNull($refInstance->get());
+    }
+
+    public function testProtoWithInstanceImmutabilityAndLeaks(): void
+    {
+        $instance = new DummyActivity();
+        $proto = $this->activityReader
+            ->fromClass(DummyActivity::class)[0];
+        $newProto = $proto->withInstance($instance);
+        // References
+        $refProto = WeakReference::create($proto);
+        $refNewProto = WeakReference::create($newProto);
+
+        // New object is result of clone operation
+        $this->assertNotSame($proto, $newProto);
+
+        // There is no leaks after scope destroying
+        unset($proto, $newProto);
+        $this->assertNull($refProto->get());
+        $this->assertNull($refNewProto->get());
+    }
 
     public function testGetInstanceFromObject(): void
     {

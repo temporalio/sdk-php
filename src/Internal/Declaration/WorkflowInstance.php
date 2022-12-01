@@ -21,7 +21,7 @@ use Temporal\Internal\Declaration\WorkflowInstance\SignalQueue;
 final class WorkflowInstance extends Instance implements WorkflowInstanceInterface
 {
     /**
-     * @var array<string, DispatchableHandler>
+     * @var array<non-empty-string, DispatchableHandler>
      */
     private array $queryHandlers = [];
 
@@ -74,8 +74,10 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     }
 
     /**
-     * @param string $name
-     * @return \Closure|null
+     * @param non-empty-string $name
+     * @return null|\Closure(ValuesInterface):mixed
+     *
+     * @psalm-return DispatchableHandler|null
      */
     public function findQueryHandler(string $name): ?\Closure
     {
@@ -84,7 +86,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
 
     /**
      * @param string $name
-     * @param callable $handler
+     * @param callable(ValuesInterface):mixed $handler
      * @throws \ReflectionException
      */
     public function addQueryHandler(string $name, callable $handler): void

@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Declaration;
 
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Exception\InstantiationException;
 use Temporal\Internal\Declaration\Dispatcher\AutowiredPayloads;
 use Temporal\Internal\Declaration\Prototype\Prototype;
 
@@ -20,8 +21,10 @@ use Temporal\Internal\Declaration\Prototype\Prototype;
  */
 abstract class Instance implements InstanceInterface
 {
-    protected Prototype $prototype;
     protected ?object $context;
+    /**
+     * @var \Closure(ValuesInterface): mixed
+     */
     private \Closure $handler;
 
     /**
@@ -30,9 +33,17 @@ abstract class Instance implements InstanceInterface
      */
     public function __construct(Prototype $prototype, ?object $context)
     {
-        $this->prototype = $prototype;
+        $handler = $prototype->getHandler();
+
+        if ($handler === null) {
+            throw new InstantiationException(\sprintf(
+                'Unable to instantiate "%s" without handler method',
+                $prototype->getID(),
+            ));
+        }
+
         $this->context = $context;
-        $this->handler = $this->createHandler($prototype->getHandler());
+        $this->handler = $this->createHandler($handler);
     }
 
     /**
@@ -52,25 +63,31 @@ abstract class Instance implements InstanceInterface
     }
 
     /**
-     * @psalm-return DispatchableHandler
-     *
      * @param \ReflectionFunctionAbstract $func
-     * @return \Closure
+     * @return \Closure(ValuesInterface): mixed
+     *
+     * @psalm-return DispatchableHandler
      */
     protected function createHandler(\ReflectionFunctionAbstract $func): \Closure
     {
         $valueMapper = new AutowiredPayloads($func);
 
-        return fn (ValuesInterface $values) => $valueMapper->dispatchValues($this->context, $values);
+        $context = $this->context;
+        return static fn (ValuesInterface $values): mixed => $valueMapper->dispatchValues($context, $values);
     }
 
     /**
      * @param callable $handler
-     * @return \Closure
+     *
+     * @return \Closure(ValuesInterface): mixed
      * @throws \ReflectionException
+     *
+     * @psalm-return DispatchableHandler
      */
     protected function createCallableHandler(callable $handler): \Closure
     {
-        return $this->createHandler(new \ReflectionFunction($handler));
+        return $this->createHandler(
+            new \ReflectionFunction($handler instanceof \Closure ? $handler : \Closure::fromCallable($handler)),
+        );
     }
 }

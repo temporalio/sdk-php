@@ -17,6 +17,8 @@ use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\TerminatedFailure;
 use Temporal\Exception\IllegalStateException;
+use Temporal\Exception\InvalidArgumentException;
+use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithoutHandler;
 
 /**
  * @group client
@@ -198,5 +200,21 @@ class UntypedWorkflowStubTestCase extends ClientTestCase
         } catch (WorkflowFailedException $e) {
             $this->assertInstanceOf(TerminatedFailure::class, $e->getPrevious());
         }
+    }
+
+    public function testSignalRunningWorkflowWithInheritedSignal()
+    {
+        $client = $this->createClient();
+
+        $workflow = $client->newUntypedWorkflowStub('SignalledWorkflowWithInheritance');
+        $workflowRun = $client->start($workflow, 1);
+        $workflowId = $workflowRun->getExecution()->getID();
+        $workflowRunId = $workflowRun->getExecution()->getRunID();
+
+        $signaller = $client->newUntypedRunningWorkflowStub($workflowId, $workflowRunId);
+        $signaller->signal('addValue', 'test1');
+
+        $result = $workflowRun->getResult();
+        $this->assertEquals(['test1'], $result);
     }
 }
