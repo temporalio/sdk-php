@@ -21,7 +21,6 @@ use Temporal\Internal\Declaration\Prototype\Prototype;
  */
 abstract class Instance implements InstanceInterface
 {
-    protected Prototype $prototype;
     protected ?object $context;
     /**
      * @var \Closure(ValuesInterface): mixed
@@ -43,7 +42,6 @@ abstract class Instance implements InstanceInterface
             ));
         }
 
-        $this->prototype = $prototype;
         $this->context = $context;
         $this->handler = $this->createHandler($handler);
     }
@@ -74,7 +72,8 @@ abstract class Instance implements InstanceInterface
     {
         $valueMapper = new AutowiredPayloads($func);
 
-        return fn (ValuesInterface $values): mixed => $valueMapper->dispatchValues($this->context, $values);
+        $context = $this->context;
+        return static fn (ValuesInterface $values): mixed => $valueMapper->dispatchValues($context, $values);
     }
 
     /**
