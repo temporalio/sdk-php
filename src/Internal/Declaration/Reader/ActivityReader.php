@@ -37,7 +37,7 @@ class ActivityReader extends Reader
         'been previously registered in %s:%d';
 
     /**
-     * @param string $class
+     * @param class-string $class
      * @return array<ActivityPrototype>
      * @throws \ReflectionException
      */
