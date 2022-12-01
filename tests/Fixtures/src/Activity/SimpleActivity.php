@@ -18,8 +18,8 @@ use Temporal\Api\Common\V1\WorkflowExecution;
 use Temporal\DataConverter\Bytes;
 use Temporal\Tests\DTO\Message;
 use Temporal\Tests\DTO\User;
-use Temporal\Tests\Unit\DTO\Enum\SimpleEnum;
-use Temporal\Tests\Unit\DTO\Enum\ScalarEnum;
+use Temporal\Tests\Unit\DTO\Type\EnumType\ScalarEnum;
+use Temporal\Tests\Unit\DTO\Type\EnumType\SimpleEnum;
 
 #[ActivityInterface(prefix: "SimpleActivity.")]
 class SimpleActivity

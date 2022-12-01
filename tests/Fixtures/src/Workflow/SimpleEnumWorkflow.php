@@ -11,12 +11,12 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Workflow;
 
-use Temporal\Workflow\WorkflowMethod;
-use Temporal\Workflow;
-use Temporal\Tests\Activity\SimpleActivity;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Common\RetryOptions;
-use Temporal\Tests\Unit\DTO\Enum\SimpleEnum;
+use Temporal\Tests\Activity\SimpleActivity;
+use Temporal\Tests\Unit\DTO\Type\EnumType\SimpleEnum;
+use Temporal\Workflow;
+use Temporal\Workflow\WorkflowMethod;
 
 #[Workflow\WorkflowInterface]
 class SimpleEnumWorkflow
