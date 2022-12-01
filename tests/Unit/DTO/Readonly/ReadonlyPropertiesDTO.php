@@ -11,8 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\DTO\Readonly;
 
-use Temporal\Tests\Unit\DTO\Enum\ScalarEnum;
-
 class ReadonlyPropertiesDTO
 {
     readonly public string $propertiesString;

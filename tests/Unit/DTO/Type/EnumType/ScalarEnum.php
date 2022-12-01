@@ -9,9 +9,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Unit\DTO\Enum;
+namespace Temporal\Tests\Unit\DTO\Type\EnumType;
 
-enum SimpleEnum
+enum ScalarEnum: string
 {
-    case TEST;
+    case TESTED_ENUM = 'tested';
 }

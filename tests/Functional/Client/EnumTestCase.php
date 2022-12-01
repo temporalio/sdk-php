@@ -11,26 +11,19 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Functional\Client;
 
-use Temporal\Tests\Workflow\SimpleEnumWorkflow;
-use Temporal\Tests\Unit\DTO\Enum\SimpleEnum;
+use Temporal\Tests\Unit\DTO\Type\EnumType\ScalarEnum;
+use Temporal\Tests\Unit\DTO\Type\EnumType\SimpleEnum;
 use Temporal\Tests\Workflow\ScalarEnumWorkflow;
-use Temporal\Tests\Unit\DTO\Enum\ScalarEnum;
+use Temporal\Tests\Workflow\SimpleEnumWorkflow;
 
 /**
  * @group client
  * @group functional
+ *
+ * @requires PHP >= 8.1
  */
 class EnumTestCase extends ClientTestCase
 {
-    public function setUp(): void
-    {
-        parent::setUp();
-        
-        if (PHP_VERSION_ID < 80104) {
-            $this->markTestSkipped();
-        }
-    }
-
     public function testSimpleEnum(): void
     {
         $client = $this->createClient();
