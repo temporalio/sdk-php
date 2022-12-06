@@ -19,6 +19,7 @@ use Temporal\Activity\ActivityOptionsInterface;
 use Temporal\Activity\LocalActivityOptions;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\HeaderInterface;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
@@ -122,6 +123,16 @@ class WorkflowContext implements WorkflowContextInterface
     public function getInfo(): WorkflowInfo
     {
         return $this->input->info;
+    }
+
+    /**
+     * @see Workflow::getHeader()
+     *
+     * @return HeaderInterface
+     */
+    public function getHeader(): HeaderInterface
+    {
+        return $this->input->header;
     }
 
     /**

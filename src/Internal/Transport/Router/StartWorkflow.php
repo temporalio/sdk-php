@@ -58,6 +58,8 @@ final class StartWorkflow extends Route
         $input = $this->services->marshaller->unmarshal($options, new Input());
         /** @psalm-suppress InaccessibleProperty */
         $input->input = $payloads;
+        /** @psalm-suppress InaccessibleProperty */
+        $input->header = $request->getHeader();
 
         $instance = $this->instantiator->instantiate($this->findWorkflowOrFail($input->info));
 

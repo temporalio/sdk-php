@@ -14,6 +14,7 @@ namespace Temporal\Workflow;
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Activity\ActivityOptionsInterface;
+use Temporal\DataConverter\HeaderInterface;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Support\DateInterval;
@@ -39,6 +40,13 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @return ValuesInterface
      */
     public function getInput(): ValuesInterface;
+
+    /**
+     * @see Workflow::getHeader()
+     *
+     * @return HeaderInterface
+     */
+    public function getHeader(): HeaderInterface;
 
     /**
      * Get value of last completion result, if any.

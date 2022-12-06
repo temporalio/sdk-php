@@ -15,6 +15,7 @@ use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Activity\ActivityOptionsInterface;
 use Temporal\Client\WorkflowStubInterface;
+use Temporal\DataConverter\HeaderInterface;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\OutOfContextException;
@@ -146,6 +147,20 @@ final class Workflow extends Facade
         $context = self::getCurrentContext();
 
         return $context->getInput();
+    }
+
+    /**
+     * TODO: add docs
+     *
+     * @return HeaderInterface
+     * @throws OutOfContextException in the absence of the workflow execution context.
+     */
+    public static function getHeader(): HeaderInterface
+    {
+        /** @var ScopedContextInterface $context */
+        $context = self::getCurrentContext();
+
+        return $context->getHeader();
     }
 
     /**
