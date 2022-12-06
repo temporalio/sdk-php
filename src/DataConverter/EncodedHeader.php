@@ -11,6 +11,13 @@ declare(strict_types=1);
 
 namespace Temporal\DataConverter;
 
+/**
+ * @extends EncodedPayloads<array-key, string>
+ */
 class EncodedHeader extends EncodedPayloads implements HeaderInterface
 {
+    public function getValue(int|string $index): string
+    {
+        return parent::getValue($index);
+    }
 }

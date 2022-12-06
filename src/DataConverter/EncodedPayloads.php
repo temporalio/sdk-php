@@ -11,27 +11,28 @@ declare(strict_types=1);
 
 namespace Temporal\DataConverter;
 
+use ArrayAccess;
 use Countable;
 use Temporal\Api\Common\V1\Payload;
-use Temporal\Api\Common\V1\Payloads;
+use Traversable;
 
 /**
  * Collection of {@see Payload} instances.
+ *
+ * @template TKey of array-key
+ * @template TValue of string
+ *
+ * @psalm-type TPayloadsCollection = Traversable<TKey, Payload>&ArrayAccess&Countable
  */
-class EncodedPayloads
+abstract class EncodedPayloads
 {
     /**
-     * @var DataConverterInterface|null
+     * @var TPayloadsCollection
      */
-    protected ?DataConverterInterface $converter = null;
+    protected ?Traversable $payloads = null;
 
     /**
-     * @var iterable<array-key, Payloads>|null
-     */
-    protected ?iterable $payloads = null;
-
-    /**
-     * @var array|null
+     * @var array<TKey, TValue>|null
      */
     protected ?array $values = null;
 
@@ -65,32 +66,21 @@ class EncodedPayloads
     }
 
     /**
-     * @param Type|string|null $type
-     * @return mixed
+     * @param TKey $index
+     *
+     * @return TValue
      */
-    public function getValue(int|string $index, $type = null): mixed
+    public function getValue(int|string $index): mixed
     {
         if (\is_array($this->values) && \array_key_exists($index, $this->values)) {
             return $this->values[$index];
         }
 
-        if ($this->converter === null) {
-            throw new \LogicException('DataConverter is not set');
-        }
-
-        return $this->converter->fromPayload($this->payloads[$index], $type);
+        return $this->payloads[$index]->getData();
     }
 
     /**
-     * @param DataConverterInterface $converter
-     */
-    public function setDataConverter(DataConverterInterface $converter): void
-    {
-        $this->converter = $converter;
-    }
-
-    /**
-     * @return EncodedValues
+     * @return static
      */
     public static function empty(): static
     {
@@ -101,35 +91,30 @@ class EncodedPayloads
     }
 
     /**
-     * @param array $values
-     * @param DataConverterInterface|null $dataConverter
-     * @return EncodedValues
+     * @param array<TKey, TValue> $values
+     *
+     * @return static
      */
-    public static function fromValues(array $values, DataConverterInterface $dataConverter = null): static
+    public static function fromValues(array $values): static
     {
         $ev = new static();
         $ev->values = \array_values($values);
-        $ev->converter = $dataConverter;
 
         return $ev;
     }
 
     /**
-     * @param iterable<array-key, Payload> $payloads
-     * @param DataConverterInterface $dataConverter
-     * @return EncodedValues
+     * @param TPayloadsCollection $payloads
+     *
+     * @return static
      */
-    public static function fromPayloadCollection(
-        iterable $payloads,
-        DataConverterInterface $dataConverter,
-    ): static {
+    public static function fromPayloadCollection(Traversable $payloads): static
+    {
         $ev = new static();
         $ev->payloads = $payloads;
-        $ev->converter = $dataConverter;
 
         return $ev;
     }
-
 
     /**
      * @return array<array-key, Payload>
@@ -140,15 +125,16 @@ class EncodedPayloads
             return $this->payloads;
         }
 
-        if ($this->converter === null) {
-            throw new \LogicException('DataConverter is not set');
-        }
-
         $data = [];
         foreach ($this->values as $value) {
-            $data[] = $this->converter->toPayload($value);
+            $data[] = $this->valueToPayload($value);
         }
 
         return $data;
+    }
+
+    protected function valueToPayload(string $value): Payload
+    {
+        return new Payload(['data' => $value]);
     }
 }

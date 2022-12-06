@@ -20,21 +20,13 @@ interface HeaderInterface extends \Countable
 {
     /**
      * Checks if any value present.
-     *
-     * @return bool
      */
     public function isEmpty(): bool;
 
     /**
-     * @param DataConverterInterface $converter
+     * @param array-key $index
      */
-    public function setDataConverter(DataConverterInterface $converter);
-
-    /**
-     * @param Type|TypeEnum|mixed $type
-     * @return mixed
-     */
-    public function getValue(string $index, $type): mixed;
+    public function getValue(int|string $index): string;
 
     /**
      * Returns collection of {@see Payloads}.
