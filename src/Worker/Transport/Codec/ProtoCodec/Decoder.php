@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Worker\Transport\Codec\ProtoCodec;
 
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\EncodedHeader;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Roadrunner\Internal\Message;
@@ -69,12 +70,16 @@ class Decoder
         if ($msg->hasPayloads()) {
             $payloads = EncodedValues::fromPayloads($msg->getPayloads(), $this->converter);
         }
+        $header = $msg->hasHeader()
+            ? EncodedHeader::fromPayloadCollection($msg->getHeader()->getFields(), $this->converter)
+            : null;
 
         return new Request(
             $msg->getCommand(),
-            json_decode($msg->getOptions(), true, 256, JSON_THROW_ON_ERROR),
+            \json_decode($msg->getOptions(), true, 256, JSON_THROW_ON_ERROR),
             $payloads,
-            (int)$msg->getId()
+            (int)$msg->getId(),
+            $header,
         );
     }
 
