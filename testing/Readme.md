@@ -36,7 +36,7 @@ $environment->startRoadRunner('./rr serve -c .rr.silent.yaml -w tests');
 register_shutdown_function(fn() => $environment->stop());
 ```
 
-Alternatively, if you have multiple workers because of task-queue separation, you can use below wrapper:
+Alternatively, if you have multiple workers because of task-queue separation, you can use the following solution:
 ```php
 
 $environment1 = Environment::create();
