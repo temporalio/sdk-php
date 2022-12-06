@@ -43,6 +43,12 @@ class Message extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>.temporal.api.common.v1.Payloads payloads = 5;</code>
      */
     protected $payloads = null;
+    /**
+     * invocation or result payloads.
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.Header header = 6;</code>
+     */
+    protected $header = null;
 
     /**
      * Constructor.
@@ -58,6 +64,8 @@ class Message extends \Google\Protobuf\Internal\Message
      *     @type \Temporal\Api\Failure\V1\Failure $failure
      *           error response.
      *     @type \Temporal\Api\Common\V1\Payloads $payloads
+     *           invocation or result payloads.
+     *     @type \Temporal\Api\Common\V1\Header $header
      *           invocation or result payloads.
      * }
      */
@@ -208,6 +216,42 @@ class Message extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkMessage($var, \Temporal\Api\Common\V1\Payloads::class);
         $this->payloads = $var;
+
+        return $this;
+    }
+
+    /**
+     * invocation or result payloads.
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.Header header = 6;</code>
+     * @return \Temporal\Api\Common\V1\Header|null
+     */
+    public function getHeader()
+    {
+        return $this->header;
+    }
+
+    public function hasHeader()
+    {
+        return isset($this->header);
+    }
+
+    public function clearHeader()
+    {
+        unset($this->header);
+    }
+
+    /**
+     * invocation or result payloads.
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.Header header = 6;</code>
+     * @param \Temporal\Api\Common\V1\Header $var
+     * @return $this
+     */
+    public function setHeader($var)
+    {
+        GPBUtil::checkMessage($var, \Temporal\Api\Common\V1\Header::class);
+        $this->header = $var;
 
         return $this;
     }

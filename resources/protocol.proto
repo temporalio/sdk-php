@@ -24,4 +24,7 @@ message Message {
 
     // invocation or result payloads.
     temporal.api.common.v1.Payloads payloads = 5;
+
+    // invocation or result payloads.
+    temporal.api.common.v1.Header header = 6;
 }
