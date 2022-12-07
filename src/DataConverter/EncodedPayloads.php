@@ -13,6 +13,7 @@ namespace Temporal\DataConverter;
 
 use ArrayAccess;
 use Countable;
+use IteratorAggregate;
 use Temporal\Api\Common\V1\Payload;
 use Traversable;
 
@@ -23,8 +24,9 @@ use Traversable;
  * @template TValue of string
  *
  * @psalm-type TPayloadsCollection = Traversable<TKey, Payload>&ArrayAccess&Countable
+ * @implements IteratorAggregate<TKey, TValue>
  */
-abstract class EncodedPayloads
+abstract class EncodedPayloads implements Countable, IteratorAggregate
 {
     /**
      * @var TPayloadsCollection
@@ -58,6 +60,20 @@ abstract class EncodedPayloads
         }
 
         return 0;
+    }
+
+    /**
+     * @return Traversable<TKey, TValue>
+     */
+    public function getIterator(): Traversable
+    {
+        if ($this->values !== null) {
+            yield from $this->values;
+        } else {
+            foreach ($this->payloads as $key => $payload) {
+                yield $key => $payload->getData();
+            }
+        }
     }
 
     public function isEmpty(): bool
@@ -98,7 +114,7 @@ abstract class EncodedPayloads
     public static function fromValues(array $values): static
     {
         $ev = new static();
-        $ev->values = \array_values($values);
+        $ev->values = $values;
 
         return $ev;
     }
@@ -122,18 +138,18 @@ abstract class EncodedPayloads
     public function toProtoCollection(): array
     {
         if ($this->payloads !== null) {
-            return $this->payloads;
+            return \iterator_to_array($this->payloads);
         }
 
         $data = [];
-        foreach ($this->values as $value) {
-            $data[] = $this->valueToPayload($value);
+        foreach ($this->values as $key => $value) {
+            $data[$key] = $this->valueToPayload($value);
         }
 
         return $data;
     }
 
-    protected function valueToPayload(string $value): Payload
+    protected function valueToPayload(mixed $value): Payload
     {
         return new Payload(['data' => $value]);
     }

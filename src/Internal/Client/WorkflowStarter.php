@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Client;
 
+use Temporal\Api\Common\V1\Header;
 use Temporal\Api\Common\V1\WorkflowType;
 use Temporal\Api\Errordetails\V1\WorkflowExecutionAlreadyStartedFailure;
 use Temporal\Api\Taskqueue\V1\TaskQueue;
@@ -93,7 +94,8 @@ final class WorkflowStarter
             ->setWorkflowExecutionTimeout(DateInterval::toDuration($options->workflowExecutionTimeout))
             ->setWorkflowTaskTimeout(DateInterval::toDuration($options->workflowTaskTimeout))
             ->setMemo($options->toMemo($this->converter))
-            ->setSearchAttributes($options->toSearchAttributes($this->converter));
+            ->setSearchAttributes($options->toSearchAttributes($this->converter))
+            ->setHeader(new Header(['fields' => $options->header->toProtoCollection()]));
 
         $input = EncodedValues::fromValues($args, $this->converter);
         if (!$input->isEmpty()) {
@@ -120,7 +122,7 @@ final class WorkflowStarter
 
         return new WorkflowExecution(
             $workflowId,
-            $response->getRunId()
+            $response->getRunId(),
         );
     }
 

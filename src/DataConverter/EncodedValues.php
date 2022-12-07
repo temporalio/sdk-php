@@ -124,7 +124,8 @@ class EncodedValues extends EncodedPayloads implements ValuesInterface
      */
     public static function fromValues(array $values, DataConverterInterface $dataConverter = null): static
     {
-        $ev = parent::fromValues($values);
+        $ev = new static();
+        $ev->values = \array_values($values);
         $ev->converter = $dataConverter;
 
         return $ev;
