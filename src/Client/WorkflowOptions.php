@@ -131,7 +131,6 @@ final class WorkflowOptions extends Options
     #[Marshal(name: 'SearchAttributes', type: NullableType::class, of: ArrayType::class)]
     public ?array $searchAttributes = null;
 
-    #[Marshal(name: 'Header')]
     public HeaderInterface $header;
 
     /**

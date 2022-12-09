@@ -19,6 +19,8 @@ use Temporal\Common\CronSchedule;
 use Temporal\Common\IdReusePolicy;
 use Temporal\Common\MethodRetry;
 use Temporal\Common\RetryOptions;
+use Temporal\DataConverter\EncodedHeader;
+use Temporal\DataConverter\HeaderInterface;
 use Temporal\Exception\FailedCancellationException;
 use Temporal\Internal\Assert;
 use Temporal\Internal\Marshaller\Meta\Marshal;
@@ -29,10 +31,10 @@ use Temporal\Internal\Marshaller\Type\NullableType;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\Options;
 use Temporal\Worker\WorkerFactoryInterface;
+use Temporal\Workflow;
 
 /**
  * @psalm-import-type DateIntervalValue from DateInterval
- *
  * @psalm-import-type IdReusePolicyEnum from IdReusePolicy
  * @psalm-import-type ChildWorkflowCancellationEnum from ChildWorkflowCancellationType
  */
@@ -157,14 +159,24 @@ final class ChildWorkflowOptions extends Options
     #[Marshal(name: 'SearchAttributes', type: NullableType::class, of: ArrayType::class)]
     public ?array $searchAttributes = null;
 
+    public HeaderInterface $header;
+
+    #[Pure]
+    public static function new(): static
+    {
+        return new self(header: Workflow::getHeader());
+    }
+
     /**
      * @throws \Exception
      */
-    public function __construct()
-    {
+    public function __construct(
+        ?HeaderInterface $header = null,
+    ) {
         $this->workflowExecutionTimeout = CarbonInterval::seconds(0);
         $this->workflowRunTimeout = CarbonInterval::seconds(0);
         $this->workflowTaskTimeout = CarbonInterval::seconds(0);
+        $this->header = $header ?? EncodedHeader::empty();
 
         parent::__construct();
     }
@@ -403,6 +415,28 @@ final class ChildWorkflowOptions extends Options
 
         $self->memo = $memo;
 
+        return $self;
+    }
+
+    /**
+     * TODO: docs
+     *
+     * @param iterable<array-key, string> $values
+     *
+     * @psalm-immutable
+     */
+    public function withHeader(iterable $values): self
+    {
+        $self = clone $this;
+
+        if ($values instanceof HeaderInterface) {
+            $self->header = $values;
+            return $self;
+        }
+
+        foreach ($values as $key => $value) {
+            $self->header = $self->header->withValue($key, $value);
+        }
         return $self;
     }
 

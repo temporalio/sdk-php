@@ -95,7 +95,7 @@ final class WorkflowStarter
             ->setWorkflowTaskTimeout(DateInterval::toDuration($options->workflowTaskTimeout))
             ->setMemo($options->toMemo($this->converter))
             ->setSearchAttributes($options->toSearchAttributes($this->converter))
-            ->setHeader(new Header(['fields' => $options->header->toProtoCollection()]));
+            ->setHeader($options->header->toHeader());
 
         $input = EncodedValues::fromValues($args, $this->converter);
         if (!$input->isEmpty()) {

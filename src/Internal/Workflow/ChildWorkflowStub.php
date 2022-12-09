@@ -72,7 +72,8 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
         $this->request = new ExecuteChildWorkflow(
             $this->workflow,
             EncodedValues::fromValues($args),
-            $this->getOptionsArray()
+            $this->getOptionsArray(),
+            $this->options->header,
         );
 
         $this->result = $this->request($this->request);
@@ -151,6 +152,9 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
      */
     private function getOptionsArray(): array
     {
-        return $this->marshaller->marshal($this->getOptions());
+        $result = $this->marshaller->marshal($this->getOptions());
+        // Todo: to think about how to avoid it
+        unset($result['header']);
+        return $result;
     }
 }
