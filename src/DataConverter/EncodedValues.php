@@ -17,8 +17,9 @@ use Temporal\Api\Common\V1\Payloads;
 use Traversable;
 
 /**
- * @extends EncodedPayloads<int, mixed>
  * @psalm-import-type TPayloadsCollection from EncodedPayloads
+ *
+ * @extends EncodedPayloads<int, mixed>
  */
 class EncodedValues extends EncodedPayloads implements ValuesInterface
 {
@@ -43,9 +44,7 @@ class EncodedValues extends EncodedPayloads implements ValuesInterface
      */
     public function toPayloads(): Payloads
     {
-        $payloads = new Payloads();
-        $payloads->setPayloads($this->toProtoCollection());
-        return $payloads;
+        return new Payloads(['payloads' => $this->toProtoCollection()]);
     }
 
     /**

@@ -13,7 +13,7 @@ namespace Temporal\DataConverter;
 
 use ArrayAccess;
 use Countable;
-use IteratorAggregate;
+use JetBrains\PhpStorm\Pure;
 use Temporal\Api\Common\V1\Payload;
 use Traversable;
 
@@ -23,13 +23,12 @@ use Traversable;
  * @template TKey of array-key
  * @template TValue of string
  *
- * @psalm-type TPayloadsCollection = Traversable<TKey, Payload>&ArrayAccess&Countable
- * @implements IteratorAggregate<TKey, TValue>
+ * @psalm-type TPayloadsCollection = Traversable&ArrayAccess&Countable
  */
-abstract class EncodedPayloads implements Countable, IteratorAggregate
+abstract class EncodedPayloads
 {
     /**
-     * @var TPayloadsCollection
+     * @var TPayloadsCollection|null
      */
     protected ?Traversable $payloads = null;
 
@@ -37,63 +36,6 @@ abstract class EncodedPayloads implements Countable, IteratorAggregate
      * @var array<TKey, TValue>|null
      */
     protected ?array $values = null;
-
-    /**
-     * Can not be constructed directly.
-     */
-    protected function __construct()
-    {
-    }
-
-    /**
-     * @return int
-     */
-    public function count(): int
-    {
-        if ($this->values !== null) {
-            return \count($this->values);
-        }
-
-        if ($this->payloads !== null) {
-            \assert($this->payloads instanceof Countable);
-            return $this->payloads->count();
-        }
-
-        return 0;
-    }
-
-    /**
-     * @return Traversable<TKey, TValue>
-     */
-    public function getIterator(): Traversable
-    {
-        if ($this->values !== null) {
-            yield from $this->values;
-        } else {
-            foreach ($this->payloads as $key => $payload) {
-                yield $key => $payload->getData();
-            }
-        }
-    }
-
-    public function isEmpty(): bool
-    {
-        return $this->count() === 0;
-    }
-
-    /**
-     * @param TKey $index
-     *
-     * @return TValue
-     */
-    public function getValue(int|string $index): mixed
-    {
-        if (\is_array($this->values) && \array_key_exists($index, $this->values)) {
-            return $this->values[$index];
-        }
-
-        return $this->payloads[$index]->getData();
-    }
 
     /**
      * @return static
@@ -107,41 +49,48 @@ abstract class EncodedPayloads implements Countable, IteratorAggregate
     }
 
     /**
-     * @param array<TKey, TValue> $values
-     *
-     * @return static
+     * Can not be constructed directly.
      */
-    public static function fromValues(array $values): static
+    protected function __construct()
     {
-        $ev = new static();
-        $ev->values = $values;
-
-        return $ev;
     }
 
     /**
-     * @param TPayloadsCollection $payloads
-     *
-     * @return static
+     * @return int<0, max>
      */
-    public static function fromPayloadCollection(Traversable $payloads): static
+    #[Pure]
+    public function count(): int
     {
-        $ev = new static();
-        $ev->payloads = $payloads;
+        return match (true) {
+            $this->values !== null => \count($this->values),
+            $this->payloads !== null => \count($this->payloads),
+            default => 0,
+        };
+    }
 
-        return $ev;
+    #[Pure]
+    public function isEmpty(): bool
+    {
+        return $this->count() === 0;
     }
 
     /**
-     * @return array<array-key, Payload>
+     * Returns collection of {@see Payloads}.
+     *
+     * @return array<TKey, Payload>
      */
-    public function toProtoCollection(): array
+    #[Pure]
+    protected function toProtoCollection(): array
     {
+        $data = [];
+
         if ($this->payloads !== null) {
-            return \iterator_to_array($this->payloads);
+            foreach ($this->payloads as $key => $payload) {
+                $data[$key] = $payload;
+            }
+            return $data;
         }
 
-        $data = [];
         foreach ($this->values as $key => $value) {
             $data[$key] = $this->valueToPayload($value);
         }
@@ -149,6 +98,7 @@ abstract class EncodedPayloads implements Countable, IteratorAggregate
         return $data;
     }
 
+    #[Pure]
     protected function valueToPayload(mixed $value): Payload
     {
         return new Payload(['data' => $value]);

@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport\Request;
 
+use Temporal\DataConverter\HeaderInterface;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Worker\Transport\Command\Request;
 
@@ -23,8 +24,8 @@ final class ExecuteChildWorkflow extends Request
      * @param ValuesInterface $input
      * @param array $options
      */
-    public function __construct(string $name, ValuesInterface $input, array $options)
+    public function __construct(string $name, ValuesInterface $input, array $options, HeaderInterface $header)
     {
-        parent::__construct(self::NAME, ['name' => $name, 'options' => $options], $input);
+        parent::__construct(self::NAME, ['name' => $name, 'options' => $options], $input, header: $header);
     }
 }

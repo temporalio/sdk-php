@@ -52,6 +52,7 @@ class Encoder
                     'command' => $cmd->getName(),
                     'options' => $options,
                     'payloads' => base64_encode($cmd->getPayloads()->toPayloads()->serializeToString()),
+                    'header' => base64_encode($cmd->getHeader()->toHeader()->serializeToString()),
                 ];
 
                 if ($cmd->getFailure() !== null) {

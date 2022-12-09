@@ -11,12 +11,16 @@ declare(strict_types=1);
 
 namespace Temporal\DataConverter;
 
-use Temporal\Api\Common\V1\Payloads;
+use IteratorAggregate;
+use Temporal\Api\Common\V1\Header;
 
 /**
- * @psalm-import-type TypeEnum from Type
+ * @psalm-type TKey=array-key
+ * @psalm-type TValue=string
+ * @extends IteratorAggregate<TKey, string>
+ * @psalm-immutable
  */
-interface HeaderInterface extends \Countable
+interface HeaderInterface extends \Countable, IteratorAggregate
 {
     /**
      * Checks if any value present.
@@ -24,14 +28,15 @@ interface HeaderInterface extends \Countable
     public function isEmpty(): bool;
 
     /**
-     * @param array-key $index
+     * @param TKey $index
      */
-    public function getValue(int|string $index): string;
+    public function getValue(int|string $index): ?string;
 
     /**
-     * Returns collection of {@see Payloads}.
-     *
-     * @return iterable<string, Payloads>
+     * @param TKey $key
+     * @param TValue $value
      */
-    public function toProtoCollection(): iterable;
+    public function withValue(int|string $key, string $value): self;
+
+    public function toHeader(): Header;
 }

@@ -43,7 +43,7 @@ class Request extends Command implements RequestInterface
         $this->name = $name;
         $this->options = $options;
         $this->payloads = $payloads ?? EncodedValues::empty();
-        $this->header = $header;
+        $this->header = $header ?? EncodedHeader::empty();
 
         parent::__construct($id);
     }
@@ -89,9 +89,9 @@ class Request extends Command implements RequestInterface
     }
 
     /**
-     * @return null|EncodedHeader
+     * @return EncodedHeader
      */
-    public function getHeader(): ?EncodedHeader
+    public function getHeader(): EncodedHeader
     {
         return $this->header;
     }

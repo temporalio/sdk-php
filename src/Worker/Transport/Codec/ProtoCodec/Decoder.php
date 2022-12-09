@@ -71,7 +71,7 @@ class Decoder
             $payloads = EncodedValues::fromPayloads($msg->getPayloads(), $this->converter);
         }
         $header = $msg->hasHeader()
-            ? EncodedHeader::fromPayloadCollection($msg->getHeader()->getFields(), $this->converter)
+            ? EncodedHeader::fromPayloadCollection($msg->getHeader()->getFields())
             : null;
 
         return new Request(
