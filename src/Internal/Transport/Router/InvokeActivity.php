@@ -83,7 +83,7 @@ class InvokeActivity extends Route
         } finally {
             $finalizer = $this->services->activities->getFinalizer();
             if ($finalizer !== null) {
-                call_user_func($finalizer);
+                call_user_func($finalizer, $e ?? null);
             }
             Activity::setCurrentContext(null);
         }
