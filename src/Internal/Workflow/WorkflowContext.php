@@ -500,6 +500,15 @@ class WorkflowContext implements WorkflowContextInterface
                 }
             }
         }
+        // foreach ($this->awaits as $awaitsGroupId => $awaitsGroup) {
+        //     foreach ($awaitsGroup as $i => [$condition, $_]) {
+        //         if ($condition()) {
+        //             unset($this->awaits[$awaitsGroupId][$i]);
+        //             $this->resolveConditionGroup($awaitsGroupId);
+        //             break;
+        //         }
+        //     }
+        // }
     }
 
     /**
@@ -527,11 +536,26 @@ class WorkflowContext implements WorkflowContextInterface
 
     public function resolveConditionGroup(string $conditionGroupId): void
     {
-        unset($this->awaits[$conditionGroupId]);
+        // First resolve pending promises
+        if (isset($this->awaits[$conditionGroupId])) {
+            foreach ($this->awaits[$conditionGroupId] as $i => $cond) {
+                [$_, $deferred] = $cond;
+                unset($this->awaits[$conditionGroupId][$i]);
+                $deferred->resolve();
+            }
+            unset($this->awaits[$conditionGroupId]);
+        }
     }
 
     public function rejectConditionGroup(string $conditionGroupId): void
     {
-        unset($this->awaits[$conditionGroupId]);
+        if (isset($this->awaits[$conditionGroupId])) {
+            foreach ($this->awaits[$conditionGroupId] as $i => $cond) {
+                [$_, $deferred] = $cond;
+                unset($this->awaits[$conditionGroupId][$i]);
+                $deferred->reject();
+            }
+            unset($this->awaits[$conditionGroupId]);
+        }
     }
 }
