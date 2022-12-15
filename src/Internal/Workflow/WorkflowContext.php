@@ -449,10 +449,10 @@ class WorkflowContext implements WorkflowContextInterface
                 $result[] = $this->addCondition($conditionGroupId, $condition);
             }
 
-            if ($condition instanceof PromiseInterface)
-            {
-                $result[] = $this->addAsyncCondition($conditionGroupId, $condition);
-            }
+            // if ($condition instanceof PromiseInterface)
+            // {
+            //     $result[] = $this->addAsyncCondition($conditionGroupId, $condition);
+            // }
         }
 
         if (\count($result) === 1) {
@@ -472,6 +472,7 @@ class WorkflowContext implements WorkflowContextInterface
         $conditions[] = $timer;
 
         return $this->await(...$conditions)
+            // is internal timer is not complete then cancel it
             ->then(static fn (): bool => !$timer->isComplete());
     }
 
@@ -505,19 +506,19 @@ class WorkflowContext implements WorkflowContextInterface
         return $deferred->promise();
     }
 
-    protected function addAsyncCondition(string $conditionGroupId, PromiseInterface $condition): PromiseInterface
-    {
-        $this->asyncAwaits[$conditionGroupId][] = $condition;
-        return $condition->then(
-            function ($result) use ($conditionGroupId) {
-                $this->resolveConditionGroup($conditionGroupId);
-                return $result;
-            },
-            function () use ($conditionGroupId) {
-                $this->rejectConditionGroup($conditionGroupId);
-            }
-        );
-    }
+    // protected function addAsyncCondition(string $conditionGroupId, PromiseInterface $condition): PromiseInterface
+    // {
+    //     $this->asyncAwaits[$conditionGroupId][] = $condition;
+    //     return $condition->then(
+    //         function ($result) use ($conditionGroupId) {
+    //             $this->resolveConditionGroup($conditionGroupId);
+    //             return $result;
+    //         },
+    //         function () use ($conditionGroupId) {
+    //             $this->rejectConditionGroup($conditionGroupId);
+    //         }
+    //     );
+    // }
 
     /**
      * Record last stack trace of the call.
@@ -560,24 +561,24 @@ class WorkflowContext implements WorkflowContextInterface
 
     private function clearAsyncAwaits(string $conditionGroupId): void
     {
-        // Check pending timers in this group
-        if (!isset($this->asyncAwaits[$conditionGroupId])) {
-            return;
-        }
-
-        // Then cancel any pending timers if exist
-        foreach ($this->asyncAwaits[$conditionGroupId] as $index => $awaitCondition) {
-            if (!$awaitCondition->isComplete()) {
-                /** @var NewTimer $timer */
-                $timer = $this->timers->offsetGet($awaitCondition);
-                if ($timer !== null) {
-                    $request = new Cancel($timer->getID());
-                    $this->request($request);
-                    $this->timers->offsetUnset($awaitCondition);
-                }
-            }
-            unset($this->asyncAwaits[$conditionGroupId][$index]);
-        }
-        unset($this->asyncAwaits[$conditionGroupId]);
+        // // Check pending timers in this group
+        // if (!isset($this->asyncAwaits[$conditionGroupId])) {
+        //     return;
+        // }
+        //
+        // // Then cancel any pending timers if exist
+        // foreach ($this->asyncAwaits[$conditionGroupId] as $index => $awaitCondition) {
+        //     if (!$awaitCondition->isComplete()) {
+        //         /** @var NewTimer $timer */
+        //         $timer = $this->timers->offsetGet($awaitCondition);
+        //         if ($timer !== null) {
+        //             $request = new Cancel($timer->getID());
+        //             $this->request($request);
+        //             $this->timers->offsetUnset($awaitCondition);
+        //         }
+        //     }
+        //     unset($this->asyncAwaits[$conditionGroupId][$index]);
+        // }
+        // unset($this->asyncAwaits[$conditionGroupId]);
     }
 }
