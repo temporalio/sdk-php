@@ -26,6 +26,7 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
 {
     private WorkflowContext $parent;
     private Scope $scope;
+    /** @var callable */
     private $onRequest;
 
     /**

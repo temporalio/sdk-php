@@ -60,7 +60,7 @@ class WorkflowContext implements WorkflowContextInterface
 
     /**
      * Contains conditional groups
-     * @var array<non-empty-string, array{callable, Deferred}>
+     * @var array<non-empty-string, array<int<0, max>, array{callable, Deferred}>>
      */
     protected array $awaits = [];
 
@@ -445,7 +445,15 @@ class WorkflowContext implements WorkflowContextInterface
             }
 
             if ($condition instanceof PromiseInterface) {
-                $result[] = $condition;
+                $result[] = $condition->then(
+                    function ($result) use ($conditionGroupId) {
+                        $this->resolveConditionGroup($conditionGroupId);
+                        return $result;
+                    },
+                    function () use ($conditionGroupId) {
+                        $this->rejectConditionGroup($conditionGroupId);
+                    },
+                );
             }
         }
 
@@ -461,20 +469,18 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function awaitWithTimeout($interval, ...$conditions): PromiseInterface
     {
+        /** Bypassing {@see timer()} to acquire a timer request ID */
         $request = new NewTimer(DateInterval::parse($interval, DateInterval::FORMAT_SECONDS));
         $requestId = $request->getID();
         $timer = $this->request($request);
         \assert($timer instanceof CompletableResultInterface);
 
-        $conditions[] = $timer;
-
-        return $this->await(...$conditions)
+        return $this->await($timer, ...$conditions)
             ->then(function () use ($timer, $requestId): bool {
-                // If internal timer was not completed then cancel it
                 $isCompleted = $timer->isComplete();
                 if (!$isCompleted) {
-                    $request = new Cancel($requestId);
-                    $this->request($request);
+                    // If internal timer was not completed then cancel it
+                    $this->request(new Cancel($requestId));
                 }
                 return !$isCompleted;
             });
@@ -497,7 +503,7 @@ class WorkflowContext implements WorkflowContextInterface
     }
 
     /**
-     * @param string $conditionGroupId
+     * @param non-empty-string $conditionGroupId
      * @param callable $condition
      * @return PromiseInterface
      */
@@ -521,26 +527,11 @@ class WorkflowContext implements WorkflowContextInterface
 
     public function resolveConditionGroup(string $conditionGroupId): void
     {
-        // First resolve pending promises
-        if (isset($this->awaits[$conditionGroupId])) {
-            foreach ($this->awaits[$conditionGroupId] as $i => $cond) {
-                [$_, $deferred] = $cond;
-                unset($this->awaits[$conditionGroupId][$i]);
-                $deferred->resolve();
-            }
-            unset($this->awaits[$conditionGroupId]);
-        }
+        unset($this->awaits[$conditionGroupId]);
     }
 
     public function rejectConditionGroup(string $conditionGroupId): void
     {
-        if (isset($this->awaits[$conditionGroupId])) {
-            foreach ($this->awaits[$conditionGroupId] as $i => $cond) {
-                [$_, $deferred] = $cond;
-                unset($this->awaits[$conditionGroupId][$i]);
-                $deferred->reject();
-            }
-            unset($this->awaits[$conditionGroupId]);
-        }
+        unset($this->awaits[$conditionGroupId]);
     }
 }
