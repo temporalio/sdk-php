@@ -59,7 +59,7 @@ class WorkflowContext implements WorkflowContextInterface
     protected ?ValuesInterface $lastCompletionResult = null;
 
     /**
-     * Contains conditional groups
+     * Contains conditional groups that contains tuple of a condition callable and its promise
      * @var array<non-empty-string, array<int<0, max>, array{callable, Deferred}>>
      */
     protected array $awaits = [];
@@ -445,15 +445,7 @@ class WorkflowContext implements WorkflowContextInterface
             }
 
             if ($condition instanceof PromiseInterface) {
-                $result[] = $condition->then(
-                    function ($result) use ($conditionGroupId) {
-                        $this->resolveConditionGroup($conditionGroupId);
-                        return $result;
-                    },
-                    function () use ($conditionGroupId) {
-                        $this->rejectConditionGroup($conditionGroupId);
-                    },
-                );
+                $result[] = $condition;
             }
         }
 
@@ -461,7 +453,15 @@ class WorkflowContext implements WorkflowContextInterface
             return $result[0];
         }
 
-        return Promise::any($result);
+        return Promise::any($result)->then(
+            function ($result) use ($conditionGroupId) {
+                $this->resolveConditionGroup($conditionGroupId);
+                return $result;
+            },
+            function () use ($conditionGroupId) {
+                $this->rejectConditionGroup($conditionGroupId);
+            },
+        );
     }
 
     /**
@@ -536,26 +536,11 @@ class WorkflowContext implements WorkflowContextInterface
 
     public function resolveConditionGroup(string $conditionGroupId): void
     {
-        // First resolve pending promises
-        if (isset($this->awaits[$conditionGroupId])) {
-            foreach ($this->awaits[$conditionGroupId] as $i => $cond) {
-                [$_, $deferred] = $cond;
-                unset($this->awaits[$conditionGroupId][$i]);
-                $deferred->resolve();
-            }
-            unset($this->awaits[$conditionGroupId]);
-        }
+        unset($this->awaits[$conditionGroupId]);
     }
 
     public function rejectConditionGroup(string $conditionGroupId): void
     {
-        if (isset($this->awaits[$conditionGroupId])) {
-            foreach ($this->awaits[$conditionGroupId] as $i => $cond) {
-                [$_, $deferred] = $cond;
-                unset($this->awaits[$conditionGroupId][$i]);
-                $deferred->reject();
-            }
-            unset($this->awaits[$conditionGroupId]);
-        }
+        unset($this->awaits[$conditionGroupId]);
     }
 }

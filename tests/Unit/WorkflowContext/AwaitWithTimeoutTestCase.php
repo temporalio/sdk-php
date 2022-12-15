@@ -106,10 +106,11 @@ final class AwaitWithTimeoutTestCase extends UnitTestCase
                 #[WorkflowMethod(name: 'AwaitWorkflow')]
                 public function handler(): iterable
                 {
-                    yield Workflow::awaitWithTimeout(
+                    $result = yield Workflow::awaitWithTimeout(
                         50,
                         fn () => $this->doCancel,
                     );
+                    assertTrue($result);
 
                     if ($this->doCancel) {
                         return 'CANCEL';
