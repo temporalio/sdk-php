@@ -35,7 +35,6 @@ use Temporal\Internal\Transport\Request\NewTimer;
 use Temporal\Internal\Transport\Request\Panic;
 use Temporal\Internal\Transport\Request\SideEffect;
 use Temporal\Promise;
-use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow\ActivityStubInterface;
 use Temporal\Workflow\ChildWorkflowOptions;
@@ -59,12 +58,11 @@ class WorkflowContext implements WorkflowContextInterface
     protected WorkflowInstanceInterface $workflowInstance;
     protected ?ValuesInterface $lastCompletionResult = null;
 
-    protected array $awaits = [];
-    protected array $asyncAwaits = [];
     /**
-     * @var <CompletableResultInterface, CommandInterface>
+     * Contains conditional groups
+     * @var array<non-empty-string, array{callable, Deferred}>
      */
-    protected \SplObjectStorage $timers;
+    protected array $awaits = [];
 
     private array $trace = [];
     private bool $continueAsNew = false;
@@ -89,7 +87,6 @@ class WorkflowContext implements WorkflowContextInterface
         $this->workflowInstance = $workflowInstance;
         $this->input = $input;
         $this->lastCompletionResult = $lastCompletionResult;
-        $this->timers = new \SplObjectStorage();
     }
 
     /**
@@ -396,10 +393,7 @@ class WorkflowContext implements WorkflowContextInterface
     public function timer($interval): PromiseInterface
     {
         $request = new NewTimer(DateInterval::parse($interval, DateInterval::FORMAT_SECONDS));
-        $result = $this->request($request);
-        $this->timers->attach($result, $request);
-
-        return $result;
+        return $this->request($request);
     }
 
     /**
@@ -447,12 +441,12 @@ class WorkflowContext implements WorkflowContextInterface
                     return resolve(true);
                 }
                 $result[] = $this->addCondition($conditionGroupId, $condition);
+                continue;
             }
 
-            // if ($condition instanceof PromiseInterface)
-            // {
-            //     $result[] = $this->addAsyncCondition($conditionGroupId, $condition);
-            // }
+            if ($condition instanceof PromiseInterface) {
+                $result[] = $condition;
+            }
         }
 
         if (\count($result) === 1) {
@@ -467,13 +461,23 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function awaitWithTimeout($interval, ...$conditions): PromiseInterface
     {
-        $timer = $this->timer($interval);
+        $request = new NewTimer(DateInterval::parse($interval, DateInterval::FORMAT_SECONDS));
+        $requestId = $request->getID();
+        $timer = $this->request($request);
+        \assert($timer instanceof CompletableResultInterface);
 
         $conditions[] = $timer;
 
         return $this->await(...$conditions)
-            // is internal timer is not complete then cancel it
-            ->then(static fn (): bool => !$timer->isComplete());
+            ->then(function () use ($timer, $requestId): bool {
+                // If internal timer was not completed then cancel it
+                $isCompleted = $timer->isComplete();
+                if (!$isCompleted) {
+                    $request = new Cancel($requestId);
+                    $this->request($request);
+                }
+                return !$isCompleted;
+            });
     }
 
     /**
@@ -482,8 +486,7 @@ class WorkflowContext implements WorkflowContextInterface
     public function resolveConditions(): void
     {
         foreach ($this->awaits as $awaitsGroupId => $awaitsGroup) {
-            foreach ($awaitsGroup as $i => $cond) {
-                [$condition, $deferred] = $cond;
+            foreach ($awaitsGroup as $i => [$condition, $deferred]) {
                 if ($condition()) {
                     $deferred->resolve();
                     unset($this->awaits[$awaitsGroupId][$i]);
@@ -506,20 +509,6 @@ class WorkflowContext implements WorkflowContextInterface
         return $deferred->promise();
     }
 
-    // protected function addAsyncCondition(string $conditionGroupId, PromiseInterface $condition): PromiseInterface
-    // {
-    //     $this->asyncAwaits[$conditionGroupId][] = $condition;
-    //     return $condition->then(
-    //         function ($result) use ($conditionGroupId) {
-    //             $this->resolveConditionGroup($conditionGroupId);
-    //             return $result;
-    //         },
-    //         function () use ($conditionGroupId) {
-    //             $this->rejectConditionGroup($conditionGroupId);
-    //         }
-    //     );
-    // }
-
     /**
      * Record last stack trace of the call.
      *
@@ -541,8 +530,6 @@ class WorkflowContext implements WorkflowContextInterface
             }
             unset($this->awaits[$conditionGroupId]);
         }
-
-        $this->clearAsyncAwaits($conditionGroupId);
     }
 
     public function rejectConditionGroup(string $conditionGroupId): void
@@ -555,30 +542,5 @@ class WorkflowContext implements WorkflowContextInterface
             }
             unset($this->awaits[$conditionGroupId]);
         }
-
-        $this->clearAsyncAwaits($conditionGroupId);
-    }
-
-    private function clearAsyncAwaits(string $conditionGroupId): void
-    {
-        // // Check pending timers in this group
-        // if (!isset($this->asyncAwaits[$conditionGroupId])) {
-        //     return;
-        // }
-        //
-        // // Then cancel any pending timers if exist
-        // foreach ($this->asyncAwaits[$conditionGroupId] as $index => $awaitCondition) {
-        //     if (!$awaitCondition->isComplete()) {
-        //         /** @var NewTimer $timer */
-        //         $timer = $this->timers->offsetGet($awaitCondition);
-        //         if ($timer !== null) {
-        //             $request = new Cancel($timer->getID());
-        //             $this->request($request);
-        //             $this->timers->offsetUnset($awaitCondition);
-        //         }
-        //     }
-        //     unset($this->asyncAwaits[$conditionGroupId][$index]);
-        // }
-        // unset($this->asyncAwaits[$conditionGroupId]);
     }
 }
