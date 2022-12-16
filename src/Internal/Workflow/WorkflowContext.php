@@ -449,9 +449,9 @@ class WorkflowContext implements WorkflowContextInterface
             }
         }
 
-        // if (\count($result) === 1) {
-        //     return $result[0];
-        // }
+        if (\count($result) === 1) {
+            return $result[0];
+        }
 
         return Promise::any($result)->then(
             function ($result) use ($conditionGroupId) {
