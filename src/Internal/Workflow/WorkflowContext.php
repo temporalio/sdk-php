@@ -449,17 +449,26 @@ class WorkflowContext implements WorkflowContextInterface
             }
         }
 
-        if (\count($result) === 1) {
-            return $result[0];
-        }
+        // if (\count($result) === 1) {
+        //     return $result[0];
+        // }
 
         return Promise::any($result)->then(
             function ($result) use ($conditionGroupId) {
                 $this->resolveConditionGroup($conditionGroupId);
                 return $result;
             },
-            function () use ($conditionGroupId) {
+            function ($reason) use ($conditionGroupId) {
                 $this->rejectConditionGroup($conditionGroupId);
+                // Throw the first reason
+                // It need to avoid memory leak when the related workflow is destroyed
+                if (\is_iterable($reason)) {
+                    foreach ($reason as $exception) {
+                        if ($exception instanceof \Throwable) {
+                            throw $exception;
+                        }
+                    }
+                }
             },
         );
     }
@@ -500,15 +509,6 @@ class WorkflowContext implements WorkflowContextInterface
                 }
             }
         }
-        // foreach ($this->awaits as $awaitsGroupId => $awaitsGroup) {
-        //     foreach ($awaitsGroup as $i => [$condition, $_]) {
-        //         if ($condition()) {
-        //             unset($this->awaits[$awaitsGroupId][$i]);
-        //             $this->resolveConditionGroup($awaitsGroupId);
-        //             break;
-        //         }
-        //     }
-        // }
     }
 
     /**
