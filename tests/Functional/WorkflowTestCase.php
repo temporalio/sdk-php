@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Functional;
 
+use Temporal\Common\Uuid;
+use Temporal\Tests\Fixtures\CommandResetter;
 use Temporal\Tests\Fixtures\Splitter;
 use Temporal\Tests\Fixtures\WorkerMock;
 
@@ -222,5 +224,89 @@ class WorkflowTestCase extends FunctionalTestCase
         $worker = WorkerMock::createMock();
 
         $worker->run($this, Splitter::create('Test_BatchedSignal_01.log')->getQueue());
+    }
+
+    /**
+     * Destroy workflow with a started awaitWithTimeout promise inside.
+     */
+    public function testAwaitWithTimeout()
+    {
+        $worker = WorkerMock::createMock();
+
+        $id = 9001;
+        $uuid1 = Uuid::v4();
+        $uuid2 = Uuid::v4();
+        $log = <<<LOG
+            2021/01/12 15:21:52	[97mDEBUG[0m	[{"id":1,"command":"StartWorkflow","options":{"info":{"WorkflowExecution":{"ID":"$uuid1","RunID":"$uuid2"},"WorkflowType":{"Name":"AwaitWithTimeoutWorkflow"},"TaskQueueName":"default","WorkflowExecutionTimeout":315360000000000000,"WorkflowRunTimeout":315360000000000000,"WorkflowTaskTimeout":0,"Namespace":"default","Attempt":1,"CronSchedule":"","ContinuedExecutionRunID":"","ParentWorkflowNamespace":"","ParentWorkflowExecution":null,"Memo":null,"SearchAttributes":null,"BinaryChecksum":"4301710877bf4b107429ee12de0922be"}},"payloads":"CicKFgoIZW5jb2RpbmcSCmpzb24vcGxhaW4SDSJIZWxsbyBXb3JsZCI="}] {"taskQueue":"default","tickTime":"2021-01-12T15:21:52.2672785Z"}
+            2021/01/12 15:21:52	[97mDEBUG[0m	[{"id":$id,"command":"NewTimer","options":{"ms":999000},"payloads":""},{"id":1,"payloads":"ChkKFwoIZW5jb2RpbmcSC2JpbmFyeS9udWxs"}]	{"receive": true}
+            2021/01/12 15:21:53	[97mDEBUG[0m	[{"id":2,"command":"DestroyWorkflow","options":{"runId":"$uuid2"}}] {"taskQueue":"default","tickTime":"2021-01-12T15:21:53.3838443Z","replay":true}
+            2021/01/12 15:21:53	[97mDEBUG[0m	[{"id":2,"payloads":"ChkKFwoIZW5jb2RpbmcSC2JpbmFyeS9udWxs"}]	{"receive": true}
+            LOG;
+
+        $worker->run($this, Splitter::createFromString($log)->getQueue());
+    }
+
+    /**
+     * Destroy 100 workflows with a started awaitWithTimeout promise inside.
+     * The promise will be annihilated on the workflow destroy.
+     * There mustn't be any leaks.
+     */
+    public function testAwaitWithTimeout_Leaks()
+    {
+        $worker = WorkerMock::createMock();
+
+        // Run the workflow $i times
+        for ($id = 9001, $i = 0; $i < 100; ++$i, ++$id) {
+            $uuid1 = Uuid::v4();
+            $uuid2 = Uuid::v4();
+            $log = <<<LOG
+                [0m	[{"id":1,"command":"StartWorkflow","options":{"info":{"WorkflowExecution":{"ID":"$uuid1","RunID":"$uuid2"},"WorkflowType":{"Name":"AwaitWithTimeoutWorkflow"},"TaskQueueName":"default","WorkflowExecutionTimeout":315360000000000000,"WorkflowRunTimeout":315360000000000000,"WorkflowTaskTimeout":0,"Namespace":"default","Attempt":1,"CronSchedule":"","ContinuedExecutionRunID":"","ParentWorkflowNamespace":"","ParentWorkflowExecution":null,"Memo":null,"SearchAttributes":null,"BinaryChecksum":"4301710877bf4b107429ee12de0922be"}},"payloads":"CicKFgoIZW5jb2RpbmcSCmpzb24vcGxhaW4SDSJIZWxsbyBXb3JsZCI="}] {"taskQueue":"default","tickTime":"2021-01-12T15:21:52.2672785Z"}
+                [0m	[{"id":$id,"command":"NewTimer","options":{"ms":999000},"payloads":""},{"id":1,"payloads":"ChkKFwoIZW5jb2RpbmcSC2JpbmFyeS9udWxs"}]	{"receive": true}
+                [0m	[{"id":2,"command":"DestroyWorkflow","options":{"runId":"$uuid2"}}] {"taskQueue":"default","tickTime":"2021-01-12T15:21:53.3838443Z","replay":true}
+                [0m	[{"id":2,"payloads":"ChkKFwoIZW5jb2RpbmcSC2JpbmFyeS9udWxs"}]	{"receive": true}
+                LOG;
+
+            $worker->run($this, Splitter::createFromString($log)->getQueue());
+            $before ??= \memory_get_usage();
+        }
+        $after = \memory_get_usage();
+
+        $this->assertSame(0, $after - $before);
+    }
+
+    /**
+     * Destroy 100 workflows with started few awaitWithTimeout promises inside.
+     * The promises will be annihilated on the workflow destroy.
+     * There mustn't be any leaks.
+     */
+    public function testAwaitWithFewParallelTimeouts_Leaks()
+    {
+        $worker = WorkerMock::createMock();
+
+        // Run the workflow $i times
+        for ($id = 9001, $i = 0; $i < 100; ++$i, ++$id) {
+            $uuid1 = Uuid::v4();
+            $uuid2 = Uuid::v4();
+            $id1 = $id;
+            $id2 = ++$id;
+            $id3 = ++$id;
+            $id4 = ++$id;
+            $log = <<<LOG
+                [0m	[{"id":1,"command":"StartWorkflow","options":{"info":{"WorkflowExecution":{"ID":"$uuid1","RunID":"$uuid2"},"WorkflowType":{"Name":"AwaitWithTimeoutWorkflow"},"TaskQueueName":"default","WorkflowExecutionTimeout":315360000000000000,"WorkflowRunTimeout":315360000000000000,"WorkflowTaskTimeout":0,"Namespace":"default","Attempt":1,"CronSchedule":"","ContinuedExecutionRunID":"","ParentWorkflowNamespace":"","ParentWorkflowExecution":null,"Memo":null,"SearchAttributes":null,"BinaryChecksum":"4301710877bf4b107429ee12de0922be"}},"payloads":"CicKFgoIZW5jb2RpbmcSCmpzb24vcGxhaW4SDSJIZWxsbyBXb3JsZCI="}] {"taskQueue":"default","tickTime":"2021-01-12T15:21:52.2672785Z"}
+                [0m	[{"id":$id1,"command":"NewTimer","options":{"ms":999000},"payloads":""},{"id":1,"payloads":"ChkKFwoIZW5jb2RpbmcSC2JpbmFyeS9udWxs"}]	{"receive": true}
+                [0m	[{"id":$id1}] {"taskQueue":"default","tickTime":"2021-01-12T15:21:53.3204026Z"}
+                # Run three async timers
+                [0m	[{"id":{$id2},"command":"NewTimer","options":{"ms":500000},"payloads":""},{"id":$id3,"command":"NewTimer","options":{"ms":120000},"payloads":""},{"id":$id4,"command":"NewTimer","options":{"ms":20000},"payloads":""}]	{"receive": true}
+                # Destroy worker
+                [0m	[{"id":2,"command":"DestroyWorkflow","options":{"runId":"$uuid2"}}] {"taskQueue":"default","tickTime":"2021-01-12T15:21:53.3838443Z","replay":true}
+                [0m	[{"id":2,"payloads":"ChkKFwoIZW5jb2RpbmcSC2JpbmFyeS9udWxs"}]	{"receive": true}
+                LOG;
+
+            $worker->run($this, Splitter::createFromString($log)->getQueue());
+            $before ??= \memory_get_usage();
+        }
+        $after = \memory_get_usage();
+
+        $this->assertSame(0, $after - $before);
     }
 }
