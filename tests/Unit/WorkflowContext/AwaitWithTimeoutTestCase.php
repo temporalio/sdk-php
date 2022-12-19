@@ -33,16 +33,8 @@ final class AwaitWithTimeoutTestCase extends UnitTestCase
     {
         $this->worker->registerWorkflowObject(
             new
-            /**
-             * Support for PHP7.4
-             * @Workflow\WorkflowInterface
-             */
             #[Workflow\WorkflowInterface]
             class {
-                /**
-                 * Support for PHP7.4
-                 * @Workflow\WorkflowMethod(name="AwaitWorkflow")
-                 */
                 #[WorkflowMethod(name: 'AwaitWorkflow')]
                 public function handler(): iterable
                 {
@@ -65,16 +57,8 @@ final class AwaitWithTimeoutTestCase extends UnitTestCase
 
         $this->worker->registerWorkflowObject(
             new
-            /**
-             * Support for PHP7.4
-             * @Workflow\WorkflowInterface
-             */
             #[Workflow\WorkflowInterface]
             class {
-                /**
-                 * Support for PHP7.4
-                 * @Workflow\WorkflowMethod(name="AwaitWorkflow")
-                 */
                 #[WorkflowMethod(name: 'AwaitWorkflow')]
                 public function handler(): iterable
                 {
@@ -94,16 +78,8 @@ final class AwaitWithTimeoutTestCase extends UnitTestCase
     {
         $this->worker->registerWorkflowObject(
             new
-            /**
-             * Support for PHP7.4
-             * @Workflow\WorkflowInterface
-             */
             #[Workflow\WorkflowInterface]
             class {
-                /**
-                 * Support for PHP7.4
-                 * @Workflow\WorkflowMethod(name="AwaitWorkflow")
-                 */
                 #[WorkflowMethod(name: 'AwaitWorkflow')]
                 public function handler(): iterable
                 {
@@ -124,27 +100,17 @@ final class AwaitWithTimeoutTestCase extends UnitTestCase
         $this->addToAssertionCount(1);
         $this->worker->registerWorkflowObject(
             new
-            /**
-             * Support for PHP7.4
-             * @Workflow\WorkflowInterface
-             */
             #[Workflow\WorkflowInterface]
             class {
-                /**
-                 * Support for PHP7.4
-                 * @Workflow\WorkflowMethod(name="AwaitWorkflow")
-                 */
+                private bool $doCancel = false;
                 #[WorkflowMethod(name: 'AwaitWorkflow')]
                 public function handler(): iterable
                 {
-                    $this->doCancel = false;
-
-                    yield Workflow::awaitWithTimeout(
+                    $result = yield Workflow::awaitWithTimeout(
                         50,
-                        function() {
-                            return $this->doCancel;
-                        }
+                        fn () => $this->doCancel,
                     );
+                    assertTrue($result);
 
                     if ($this->doCancel) {
                         return 'CANCEL';
@@ -153,10 +119,6 @@ final class AwaitWithTimeoutTestCase extends UnitTestCase
                     return 'OK';
                 }
 
-                /**
-                 * Support for PHP7.4
-                 * @Workflow\SignalMethod()
-                 */
                 #[Workflow\SignalMethod]
                 public function cancel(): void
                 {

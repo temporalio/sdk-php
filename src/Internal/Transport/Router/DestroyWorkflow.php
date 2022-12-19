@@ -34,6 +34,8 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
         $this->kill($runId);
 
         $resolver->resolve(EncodedValues::fromValues([null]));
+
+        \gc_collect_cycles();
     }
 
     /**

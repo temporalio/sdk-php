@@ -37,17 +37,14 @@ final class Client implements ClientInterface
         'a request with that identifier was not sent';
 
     private QueueInterface $queue;
-    private LoopInterface $loop;
     private array $requests = [];
 
     /**
      * @param QueueInterface $queue
-     * @param LoopInterface $loop
      */
-    public function __construct(QueueInterface $queue, LoopInterface $loop)
+    public function __construct(QueueInterface $queue)
     {
         $this->queue = $queue;
-        $this->loop = $loop;
     }
 
     /**

@@ -14,9 +14,7 @@ namespace Temporal\Internal\Workflow;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\Exception\Failure\CanceledFailure;
-use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Transport\CompletableResult;
-use Temporal\Internal\Transport\Request\NewTimer;
 use Temporal\Internal\Workflow\Process\Scope;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow\CancellationScopeInterface;
@@ -28,6 +26,7 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
 {
     private WorkflowContext $parent;
     private Scope $scope;
+    /** @var callable */
     private $onRequest;
 
     /**
@@ -120,21 +119,6 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
         );
     }
 
-    protected function addAsyncCondition(string $conditionGroupId, PromiseInterface $condition): PromiseInterface
-    {
-        $this->parent->asyncAwaits[$conditionGroupId][] = $condition;
-
-        return $condition->then(
-            function ($result) use ($conditionGroupId) {
-                $this->resolveConditionGroup($conditionGroupId);
-                return $result;
-            },
-            function () use ($conditionGroupId) {
-                $this->rejectConditionGroup($conditionGroupId);
-            }
-        );
-    }
-
     /**
      * Calculate unblocked conditions.
      */
@@ -151,18 +135,6 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
     public function rejectConditionGroup(string $conditionGroupId): void
     {
         $this->parent->rejectConditionGroup($conditionGroupId);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function timer($interval): PromiseInterface
-    {
-        $request = new NewTimer(DateInterval::parse($interval, DateInterval::FORMAT_SECONDS));
-        $result = $this->request($request);
-        $this->parent->timers->attach($result, $request);
-
-        return $result;
     }
 
     /**

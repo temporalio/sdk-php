@@ -16,6 +16,9 @@ use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 use Temporal\Tests\Activity\SimpleActivity;
 
+/**
+ * @see \Temporal\Tests\Functional\WorkflowTestCase::testTimer()
+ */
 #[Workflow\WorkflowInterface]
 class TimerWorkflow
 {
