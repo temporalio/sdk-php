@@ -46,24 +46,29 @@ class HeaderWorkflow
     /**
      * @param array|bool $subWorkflowHeader Header for child workflow:
      *  - false: don't run child workflow
-     *  - true: run child workflow without ChildWorkflowOptions
-     *  - array: run child workflow with ChildWorkflowOptions. The array value will be passed into it the options
-     *  - stdClass will be converted to array
+     *  - true: run child workflow without passing header set
+     *  - array: will be passed into child workflow as is without merging with parent header
+     *  - stdClass: will be converted to array and merged with parent workflow header
      */
     #[WorkflowMethod(name: 'HeaderWorkflow')]
-    public function handler(array|\stdClass|bool $subWorkflowHeader = false): iterable
+    public function handler(\stdClass|array|bool $subWorkflowHeader = false): iterable
     {
         // Run child workflow
         if ($subWorkflowHeader !== false) {
             // Child workflow header
-            if ($subWorkflowHeader !== true) {
-                $options = Workflow\ChildWorkflowOptions::new()
-                    ->withHeader((array)$subWorkflowHeader);
-            }
+            $header = match (true) {
+                $subWorkflowHeader === true => null,
+                \is_array($subWorkflowHeader) => $subWorkflowHeader,
+                // Merge stdClass values with parent workflow header
+                \is_object($subWorkflowHeader) => \array_merge(
+                    \iterator_to_array(Workflow::getHeader()->getIterator()),
+                    (array) $subWorkflowHeader,
+                ),
+            };
             // Run
             $subWorkflowResult = yield Workflow::newChildWorkflowStub(
                 HeaderWorkflow::class,
-                $options ?? null,
+                header: $header,
             )->handler();
         } else {
             $subWorkflowResult = [];

@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal;
 
+use JetBrains\PhpStorm\Pure;
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Activity\ActivityOptionsInterface;
@@ -155,6 +156,7 @@ final class Workflow extends Facade
      * @return HeaderInterface
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
+    #[Pure]
     public static function getHeader(): HeaderInterface
     {
         /** @var ScopedContextInterface $context */
@@ -638,12 +640,13 @@ final class Workflow extends Facade
         string $type,
         array $args = [],
         ChildWorkflowOptions $options = null,
-        $returnType = null
+        $returnType = null,
+        HeaderInterface|array|null $header = null,
     ): PromiseInterface {
         /** @var ScopedContextInterface $context */
         $context = self::getCurrentContext();
 
-        return $context->executeChildWorkflow($type, $args, $options, $returnType);
+        return $context->executeChildWorkflow($type, $args, $options, $returnType, $header);
     }
 
     /**
@@ -684,12 +687,15 @@ final class Workflow extends Facade
      * @return T
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
-    public static function newChildWorkflowStub(string $class, ChildWorkflowOptions $options = null): object
-    {
+    public static function newChildWorkflowStub(
+        string $class,
+        ChildWorkflowOptions $options = null,
+        HeaderInterface|array|null $header = null,
+    ): object {
         /** @var ScopedContextInterface $context */
         $context = self::getCurrentContext();
 
-        return $context->newChildWorkflowStub($class, $options);
+        return $context->newChildWorkflowStub($class, $options, $header);
     }
 
     /**
@@ -737,12 +743,13 @@ final class Workflow extends Facade
      */
     public static function newUntypedChildWorkflowStub(
         string $name,
-        ChildWorkflowOptions $options = null
+        ChildWorkflowOptions $options = null,
+        HeaderInterface|array|null $header = null,
     ): ChildWorkflowStubInterface {
         /** @var ScopedContextInterface $context */
         $context = self::getCurrentContext();
 
-        return $context->newUntypedChildWorkflowStub($name, $options);
+        return $context->newUntypedChildWorkflowStub($name, $options, $header);
     }
 
     /**

@@ -19,6 +19,7 @@ use Spiral\Attributes\ReaderInterface;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\HeaderInterface;
 use Temporal\Exception\InvalidArgumentException;
 use Temporal\Internal\Client\ActivityCompletionClient;
 use Temporal\Internal\Client\WorkflowRun;
@@ -129,7 +130,8 @@ class WorkflowClient implements WorkflowClientInterface
         $execution = $this->starter->start(
             $workflowStub->getWorkflowType(),
             $workflowStub->getOptions() ?? WorkflowOptions::new(),
-            $args
+            $args,
+            $workflowStub->getHeader(),
         );
 
         $workflowStub->setExecution($execution);
@@ -176,7 +178,8 @@ class WorkflowClient implements WorkflowClientInterface
             $workflowStub->getOptions() ?? WorkflowOptions::new(),
             $signal,
             $signalArgs,
-            $startArgs
+            $startArgs,
+            $workflowStub->getHeader(),
         );
 
         $workflowStub->setExecution($execution);
@@ -187,13 +190,16 @@ class WorkflowClient implements WorkflowClientInterface
     /**
      * {@inheritDoc}
      */
-    public function newWorkflowStub(string $class, WorkflowOptions $options = null): object
-    {
+    public function newWorkflowStub(
+        string $class,
+        WorkflowOptions $options = null,
+        array|HeaderInterface $header = [],
+    ): object {
         $workflow = $this->reader->fromClass($class);
 
         return new WorkflowProxy(
             $this,
-            $this->newUntypedWorkflowStub($workflow->getID(), $options),
+            $this->newUntypedWorkflowStub($workflow->getID(), $options, $header),
             $workflow
         );
     }
@@ -201,8 +207,11 @@ class WorkflowClient implements WorkflowClientInterface
     /**
      * {@inheritDoc}
      */
-    public function newUntypedWorkflowStub(string $workflowType, WorkflowOptions $options = null): WorkflowStubInterface
-    {
+    public function newUntypedWorkflowStub(
+        string $workflowType,
+        WorkflowOptions $options = null,
+        HeaderInterface|array $header = [],
+    ): WorkflowStubInterface {
         $options ??= new WorkflowOptions();
 
         return new WorkflowStub(
@@ -210,7 +219,8 @@ class WorkflowClient implements WorkflowClientInterface
             $this->clientOptions,
             $this->converter,
             $workflowType,
-            $options
+            $options,
+            $header,
         );
     }
 

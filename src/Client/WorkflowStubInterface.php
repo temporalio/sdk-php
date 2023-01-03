@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client;
 
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\HeaderInterface;
 use Temporal\Exception\IllegalStateException;
 use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\QueryMethod;
@@ -37,6 +38,13 @@ interface WorkflowStubInterface extends WorkflowRunInterface
      * @return WorkflowOptions|null
      */
     public function getOptions(): ?WorkflowOptions;
+
+    /**
+     * Get configured Header set.
+     *
+     * @return HeaderInterface
+     */
+    public function getHeader(): HeaderInterface;
 
     /**
      * Get associated workflow execution (if any).

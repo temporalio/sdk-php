@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client;
 
 use Temporal\Client\GRPC\ServiceClientInterface;
+use Temporal\DataConverter\HeaderInterface;
 use Temporal\Workflow\WorkflowRunInterface;
 
 interface WorkflowClientInterface
@@ -60,9 +61,14 @@ interface WorkflowClientInterface
      * @psalm-template T of object
      * @param class-string<T> $class
      * @param WorkflowOptions|null $options
+     * @param HeaderInterface|array $header
      * @return T
      */
-    public function newWorkflowStub(string $class, WorkflowOptions $options = null): object;
+    public function newWorkflowStub(
+        string $class,
+        WorkflowOptions $options = null,
+        HeaderInterface|array $header = [],
+    ): object;
 
     /**
      * Creates workflow untyped client stub that can be used to start a single
@@ -80,7 +86,8 @@ interface WorkflowClientInterface
      */
     public function newUntypedWorkflowStub(
         string $workflowType,
-        WorkflowOptions $options = null
+        WorkflowOptions $options = null,
+        HeaderInterface|array $header = [],
     ): WorkflowStubInterface;
 
     /**

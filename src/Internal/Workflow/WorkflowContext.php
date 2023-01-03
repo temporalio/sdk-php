@@ -306,9 +306,10 @@ class WorkflowContext implements WorkflowContextInterface
         string $type,
         array $args = [],
         ChildWorkflowOptions $options = null,
-        $returnType = null
+        $returnType = null,
+        HeaderInterface|array|null $header = null,
     ): PromiseInterface {
-        return $this->newUntypedChildWorkflowStub($type, $options)
+        return $this->newUntypedChildWorkflowStub($type, $options, $header)
             ->execute($args, $returnType);
     }
 
@@ -317,28 +318,35 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function newUntypedChildWorkflowStub(
         string $type,
-        ChildWorkflowOptions $options = null
+        ChildWorkflowOptions $options = null,
+        HeaderInterface|array|null $header = null,
     ): ChildWorkflowStubInterface {
-        $options ??= (new ChildWorkflowOptions(header: $this->getHeader()))
+        $options ??= (new ChildWorkflowOptions())
             ->withNamespace($this->getInfo()->namespace);
+        $header ??= $this->getHeader();
 
-        return new ChildWorkflowStub($this->services->marshaller, $type, $options);
+        return new ChildWorkflowStub($this->services->marshaller, $type, $options, $header);
     }
 
     /**
      * {@inheritDoc}
      */
-    public function newChildWorkflowStub(string $class, ChildWorkflowOptions $options = null): object
-    {
+    public function newChildWorkflowStub(
+        string $class,
+        ChildWorkflowOptions $options = null,
+        HeaderInterface|array|null $header = null,
+    ): object {
         $workflow = $this->services->workflowsReader->fromClass($class);
-        $options = $options ?? (new ChildWorkflowOptions(header: $this->getHeader()))
+        $options = $options ?? (new ChildWorkflowOptions())
             ->withNamespace($this->getInfo()->namespace);
+        $header ??= $this->getHeader();
 
         return new ChildWorkflowProxy(
             $class,
             $workflow,
             $options,
-            $this
+            $this,
+            $header,
         );
     }
 

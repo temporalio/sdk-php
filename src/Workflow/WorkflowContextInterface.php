@@ -167,13 +167,16 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @param array $args
      * @param ChildWorkflowOptions|null $options
      * @param Type|string|\ReflectionType|\ReflectionClass|null $returnType
+     * @param HeaderInterface|array|null $header Header set to be passed to the child workflow.
+     *        The {@see null} value means that the header will be inherited from the parent workflow.
      * @return PromiseInterface
      */
     public function executeChildWorkflow(
         string $type,
         array $args = [],
         ChildWorkflowOptions $options = null,
-        $returnType = null
+        $returnType = null,
+        HeaderInterface|array|null $header = null,
     ): PromiseInterface;
 
     /**
@@ -182,20 +185,29 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @psalm-template T of object
      * @param class-string<T> $class
      * @param ChildWorkflowOptions|null $options
+     * @param HeaderInterface|array|null $header Header set to be passed to the child workflow.
+     *        The {@see null} value means that the header will be inherited from the parent workflow.
      * @return T
      */
-    public function newChildWorkflowStub(string $class, ChildWorkflowOptions $options = null): object;
+    public function newChildWorkflowStub(
+        string $class,
+        ChildWorkflowOptions $options = null,
+        HeaderInterface|array|null $header = null,
+    ): object;
 
     /**
      * @see Workflow::newUntypedChildWorkflowStub()
      *
      * @param string $type
      * @param ChildWorkflowOptions|null $options
+     * @param HeaderInterface|array|null $header Header set to be passed to the child workflow.
+     *        The {@see null} value means that the header will be inherited from the parent workflow.
      * @return ChildWorkflowStubInterface
      */
     public function newUntypedChildWorkflowStub(
         string $type,
-        ChildWorkflowOptions $options = null
+        ChildWorkflowOptions $options = null,
+        HeaderInterface|array|null $header = null,
     ): ChildWorkflowStubInterface;
 
     /**

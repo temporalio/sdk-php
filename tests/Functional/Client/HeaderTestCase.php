@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Functional\Client;
 
+use stdClass;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Tests\Workflow\HeaderWorkflow;
 use Temporal\Workflow\ChildWorkflowOptions;
@@ -26,8 +27,8 @@ class HeaderTestCase extends ClientTestCase
         $client = $this->createClient();
         $simple = $client->newWorkflowStub(
             HeaderWorkflow::class,
-            WorkflowOptions::new()
-                ->withHeader([])
+            WorkflowOptions::new(),
+            [],
         );
 
         $this->assertSame([], (array)$simple->handler()[0]);
@@ -38,8 +39,8 @@ class HeaderTestCase extends ClientTestCase
         $client = $this->createClient();
         $simple = $client->newWorkflowStub(
             HeaderWorkflow::class,
-            WorkflowOptions::new()
-                ->withHeader(['fooo' => 'bar'])
+            WorkflowOptions::new(),
+            ['fooo' => 'bar'],
         );
 
         $this->assertSame(['fooo' => 'bar'], (array)$simple->handler()[0]);
@@ -53,13 +54,13 @@ class HeaderTestCase extends ClientTestCase
         $client = $this->createClient();
         $simple = $client->newWorkflowStub(
             HeaderWorkflow::class,
-            WorkflowOptions::new()
-                ->withHeader([
-                    'foo' => 'bar',
-                    123 => 123,
-                    '' => null,
-                    'false' => false,
-                ])
+            WorkflowOptions::new(),
+            [
+                'foo' => 'bar',
+                123 => 123,
+                '' => null,
+                'false' => false,
+            ],
         );
 
         $this->assertEquals([
@@ -93,15 +94,15 @@ class HeaderTestCase extends ClientTestCase
      * ChildWorkflow should inherit headers from his parent
      * Case when {@see ChildWorkflowOptions} is not passed
      */
-    public function testChildWorkflowHeaderInheritanceWithoutOptions(): void
+    public function testChildWorkflowHeaderInheritance(): void
     {
         $client = $this->createClient();
         $simple = $client->newWorkflowStub(
             HeaderWorkflow::class,
-            WorkflowOptions::new()
-                ->withHeader([
-                    'foo' => 'bar',
-                ])
+            WorkflowOptions::new(),
+            [
+                'foo' => 'bar',
+            ],
         );
 
         $result = $simple->handler(true);
@@ -118,15 +119,15 @@ class HeaderTestCase extends ClientTestCase
      * ChildWorkflow should inherit headers from his parent
      * Case when {@see ChildWorkflowOptions} without headers is passed
      */
-    public function testChildWorkflowHeaderInheritanceWithOptions(): void
+    public function testChildWorkflowHeaderOverwriteByEmpty(): void
     {
         $client = $this->createClient();
         $simple = $client->newWorkflowStub(
             HeaderWorkflow::class,
-            WorkflowOptions::new()
-                ->withHeader([
-                    'foo' => 'bar',
-                ])
+            WorkflowOptions::new(),
+            [
+                'foo' => 'bar',
+            ],
         );
 
         $result = $simple->handler([]);
@@ -134,9 +135,7 @@ class HeaderTestCase extends ClientTestCase
             'foo' => 'bar',
         ], (array)$result[0]);
 
-        $this->assertEquals([
-            'foo' => 'bar',
-        ], (array)$result[2]);
+        $this->assertEquals([], (array)$result[2]);
     }
 
     /**
@@ -147,44 +146,19 @@ class HeaderTestCase extends ClientTestCase
         $client = $this->createClient();
         $simple = $client->newWorkflowStub(
             HeaderWorkflow::class,
-            WorkflowOptions::new()
-                ->withHeader([
-                    'foo' => 'bar',
-                ])
+            WorkflowOptions::new(),
+            [
+                'foo' => 'bar',
+            ],
         );
 
-        $result = $simple->handler(['test' => 'best']);
+        $result = $simple->handler((object) ['test' => 'best']);
         $this->assertEquals([
             'foo' => 'bar',
         ], (array)$result[0]);
 
         $this->assertEquals([
             'foo' => 'bar',
-            'test' => 'best',
-        ], (array)$result[2]);
-    }
-
-    /**
-     * ChildWorkflow should override headers from his parent on key conflict
-     */
-    public function testChildWorkflowHeaderRewrite(): void
-    {
-        $client = $this->createClient();
-        $simple = $client->newWorkflowStub(
-            HeaderWorkflow::class,
-            WorkflowOptions::new()
-                ->withHeader([
-                    'foo' => 'bar',
-                ])
-        );
-
-        $result = $simple->handler(['test' => 'best', 'foo' => 'baz']);
-        $this->assertEquals([
-            'foo' => 'bar',
-        ], (array)$result[0]);
-
-        $this->assertEquals([
-            'foo' => 'baz',
             'test' => 'best',
         ], (array)$result[2]);
     }

@@ -22,8 +22,6 @@ use Temporal\Common\MethodRetry;
 use Temporal\Common\RetryOptions;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverterInterface;
-use Temporal\DataConverter\EncodedHeader;
-use Temporal\DataConverter\HeaderInterface;
 use Temporal\Internal\Assert;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\ArrayType;
@@ -131,8 +129,6 @@ final class WorkflowOptions extends Options
     #[Marshal(name: 'SearchAttributes', type: NullableType::class, of: ArrayType::class)]
     public ?array $searchAttributes = null;
 
-    public HeaderInterface $header;
-
     /**
      * @throws \Exception
      */
@@ -142,7 +138,6 @@ final class WorkflowOptions extends Options
         $this->workflowExecutionTimeout = CarbonInterval::seconds(0);
         $this->workflowRunTimeout = CarbonInterval::seconds(0);
         $this->workflowTaskTimeout = CarbonInterval::seconds(0);
-        $this->header = EncodedHeader::empty();
 
         parent::__construct();
     }
@@ -360,20 +355,6 @@ final class WorkflowOptions extends Options
         $self = clone $this;
 
         $self->searchAttributes = $searchAttributes;
-
-        return $self;
-    }
-
-    /**
-     * @param array<array-key, string> $values
-     *
-     * @psalm-immutable
-     */
-    public function withHeader(array $values): self
-    {
-        $self = clone $this;
-
-        $self->header = EncodedHeader::fromValues($values);
 
         return $self;
     }
