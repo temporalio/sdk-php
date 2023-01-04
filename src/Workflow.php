@@ -151,12 +151,11 @@ final class Workflow extends Facade
     }
 
     /**
-     * TODO: add docs
+     * Get header values from the current workflow context.
      *
      * @return HeaderInterface
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
-    #[Pure]
     public static function getHeader(): HeaderInterface
     {
         /** @var ScopedContextInterface $context */
@@ -633,6 +632,9 @@ final class Workflow extends Facade
      * @param array $args
      * @param ChildWorkflowOptions|null $options
      * @param Type|string|\ReflectionType|\ReflectionClass|null $returnType
+     * @param HeaderInterface|array<non-empty-string, scalar>|null $header Optional header values.
+     *        The default {@see null} value means that header values will be inherited from the current context.
+     *
      * @return PromiseInterface
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
@@ -684,6 +686,9 @@ final class Workflow extends Facade
      *
      * @param class-string<T> $class
      * @param ChildWorkflowOptions|null $options
+     * @param HeaderInterface|array<non-empty-string, scalar>|null $header Optional header values.
+     *        The default {@see null} value means that header values will be inherited from the current context.
+     *
      * @return T
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
@@ -738,6 +743,9 @@ final class Workflow extends Facade
      *
      * @param string $name
      * @param ChildWorkflowOptions|null $options
+     * @param HeaderInterface|array<non-empty-string, scalar>|null $header Optional header values.
+     *        The default {@see null} value means that header values will be inherited from the current context.
+     *
      * @return ChildWorkflowStubInterface
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
@@ -850,6 +858,9 @@ final class Workflow extends Facade
      * @param array $args
      * @param ActivityOptions|null $options
      * @param \ReflectionType|null $returnType
+     * @param HeaderInterface|array<non-empty-string, scalar>|null $header Optional header values.
+     *        The default {@see null} value means that header values will be inherited from the current context.
+     *
      * @return PromiseInterface
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
@@ -857,12 +868,13 @@ final class Workflow extends Facade
         string $type,
         array $args = [],
         ActivityOptionsInterface $options = null,
-        \ReflectionType $returnType = null
+        \ReflectionType $returnType = null,
+        HeaderInterface|array|null $header = null,
     ): PromiseInterface {
         /** @var ScopedContextInterface $context */
         $context = self::getCurrentContext();
 
-        return $context->executeActivity($type, $args, $options, $returnType);
+        return $context->executeActivity($type, $args, $options, $returnType, $header);
     }
 
     /**
@@ -895,15 +907,21 @@ final class Workflow extends Facade
      *
      * @param class-string<T> $class
      * @param ActivityOptionsInterface|null $options
+     * @param HeaderInterface|array<non-empty-string, scalar>|null $header Optional header values.
+     *        The default {@see null} value means that header values will be inherited from the current context.
+     *
      * @return T
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
-    public static function newActivityStub(string $class, ActivityOptionsInterface $options = null): object
-    {
+    public static function newActivityStub(
+        string $class,
+        ActivityOptionsInterface $options = null,
+        HeaderInterface|array|null $header = null,
+    ): object {
         /** @var ScopedContextInterface $context */
         $context = self::getCurrentContext();
 
-        return $context->newActivityStub($class, $options);
+        return $context->newActivityStub($class, $options, $header);
     }
 
     /**
@@ -926,15 +944,20 @@ final class Workflow extends Facade
      * </code>
      *
      * @param ActivityOptionsInterface|null $options
+     * @param HeaderInterface|array<non-empty-string, scalar>|null $header Optional header values.
+     *        The default {@see null} value means that header values will be inherited from the current context.
+     *
      * @return ActivityStubInterface
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
-    public static function newUntypedActivityStub(ActivityOptionsInterface $options = null): ActivityStubInterface
-    {
+    public static function newUntypedActivityStub(
+        ActivityOptionsInterface $options = null,
+        HeaderInterface|array|null $header = null,
+    ): ActivityStubInterface {
         /** @var ScopedContextInterface $context */
         $context = self::getCurrentContext();
 
-        return $context->newUntypedActivityStub($options);
+        return $context->newUntypedActivityStub($options, $header);
     }
 
     /**

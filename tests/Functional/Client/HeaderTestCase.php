@@ -162,4 +162,65 @@ class HeaderTestCase extends ClientTestCase
             'test' => 'best',
         ], (array)$result[2]);
     }
+
+    public function testActivityHeaderOnly(): void
+    {
+        $client = $this->createClient();
+        $simple = $client->newWorkflowStub(
+            HeaderWorkflow::class,
+            WorkflowOptions::new(),
+        );
+
+        $result = $simple->handler(false, ['test' => 'best']);
+        $this->assertEquals([], (array)$result[0]);
+
+        $this->assertEquals([
+            'test' => 'best',
+        ], (array)$result[1]);
+    }
+
+    public function testActivityHeaderInheritance(): void
+    {
+        $client = $this->createClient();
+        $simple = $client->newWorkflowStub(
+            HeaderWorkflow::class,
+            WorkflowOptions::new(),
+            ['test' => 'best']
+        );
+
+        $result = $simple->handler(false, null);
+
+        $this->assertEquals(['test' => 'best'], (array)$result[0]);
+        $this->assertEquals(['test' => 'best'], (array)$result[1]);
+    }
+
+    public function testActivityHeaderOverwriteByEmpty(): void
+    {
+        $client = $this->createClient();
+        $simple = $client->newWorkflowStub(
+            HeaderWorkflow::class,
+            WorkflowOptions::new(),
+            ['test' => 'best']
+        );
+
+        $result = $simple->handler(false, []);
+
+        $this->assertEquals(['test' => 'best'], (array)$result[0]);
+        $this->assertEquals([], (array)$result[1]);
+    }
+
+    public function testActivityHeaderMerge(): void
+    {
+        $client = $this->createClient();
+        $simple = $client->newWorkflowStub(
+            HeaderWorkflow::class,
+            WorkflowOptions::new(),
+            ['foo' => 'bar',]
+        );
+
+        $result = $simple->handler(false, ['test' => 'best']);
+
+        $this->assertEquals(['foo' => 'bar'], (array)$result[0]);
+        $this->assertEquals(['foo' => 'bar', 'test' => 'best'], (array)$result[1]);
+    }
 }

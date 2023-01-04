@@ -10,6 +10,7 @@ use Spiral\Attributes\AttributeReader;
 use Spiral\Attributes\Composite\SelectiveReader;
 use Spiral\Attributes\ReaderInterface;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\EncodedHeader;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\ExceptionInterceptorInterface;
 use Temporal\Internal\Activity\ActivityContext;
@@ -36,7 +37,12 @@ final class InvokeActivityTestCase extends UnitTestCase
 
         $dataConverter = $this->createMock(DataConverterInterface::class);
         $marshaller = $this->createMock(MarshallerInterface::class);
-        $this->activityContext = new ActivityContext($rpc, $dataConverter, EncodedValues::empty());
+        $this->activityContext = new ActivityContext(
+            $rpc,
+            $dataConverter,
+            EncodedValues::empty(),
+            EncodedHeader::empty(),
+        );
         $marshaller->expects($this->once())
             ->method('unmarshal')
             ->willReturn($this->activityContext);

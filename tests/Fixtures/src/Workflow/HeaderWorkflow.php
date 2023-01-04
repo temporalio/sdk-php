@@ -29,30 +29,27 @@ use Temporal\Workflow\WorkflowMethod;
 #[Workflow\WorkflowInterface]
 class HeaderWorkflow
 {
-    private SimpleActivity|ActivityProxy $activity;
-
-    public function __construct()
-    {
-        $this->activity = Workflow::newActivityStub(
-            SimpleActivity::class,
-            ActivityOptions::new()
-                ->withStartToCloseTimeout(5)
-                ->withRetryOptions(
-                    RetryOptions::new()->withMaximumAttempts(2),
-                ),
-        );
-    }
-
     /**
      * @param array|bool $subWorkflowHeader Header for child workflow:
-     *  - false: don't run child workflow
-     *  - true: run child workflow without passing header set
-     *  - array: will be passed into child workflow as is without merging with parent header
-     *  - stdClass: will be converted to array and merged with parent workflow header
+     *        - false: don't run child workflow
+     *        - true: run child workflow without passing header set
+     *        - array: will be passed into child workflow as is without merging with parent header
+     *        - stdClass: will be converted to array and merged with parent workflow header
+     * @param array|bool $activityHeader Header for activity:
+     *        - null: run activity with {@see null} header value
+     *        - array: will be passed into activity as is without merging with workflow header
+     *        - stdClass: will be converted to array and merged with workflow header
+     *
+     * @return Generator<mixed, mixed, mixed, array{array, array, array}> Returns array of headers:
+     *         - [0] - header from parent workflow
+     *         - [1] - header from activity
+     *         - [2] - header from child workflow
      */
     #[WorkflowMethod(name: 'HeaderWorkflow')]
-    public function handler(\stdClass|array|bool $subWorkflowHeader = false): iterable
-    {
+    public function handler(
+        \stdClass|array|bool $subWorkflowHeader = false,
+        \stdClass|array|null $activityHeader = null,
+    ): iterable {
         // Run child workflow
         if ($subWorkflowHeader !== false) {
             // Child workflow header
@@ -74,13 +71,27 @@ class HeaderWorkflow
             $subWorkflowResult = [];
         }
 
-        yield $this->activity->echo('foo');
-        $activityHeader = [];
+        // Run activity
+        $activityHeader = \is_object($activityHeader)
+            ? \array_merge(
+                \iterator_to_array(Workflow::getHeader()->getIterator()),
+                (array) $activityHeader,
+            )
+            : $activityHeader;
+        $activityResult = yield Workflow::newActivityStub(
+            SimpleActivity::class,
+            ActivityOptions::new()
+                ->withStartToCloseTimeout(5)
+                ->withRetryOptions(
+                    RetryOptions::new()->withMaximumAttempts(2),
+                ),
+            $activityHeader,
+        )->header();
 
         return [
             \iterator_to_array(Workflow::getHeader()),
-            $activityHeader,
-            $subWorkflowResult[0],
+            $activityResult,
+            $subWorkflowResult[0] ?? [],
         ];
     }
 }

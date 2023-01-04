@@ -41,6 +41,7 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
      * @param MarshallerInterface $marshaller
      * @param string $workflow
      * @param ChildWorkflowOptions $options
+     * @param HeaderInterface|array $header
      */
     public function __construct(
         MarshallerInterface $marshaller,

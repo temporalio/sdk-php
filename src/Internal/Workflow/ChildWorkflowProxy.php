@@ -73,6 +73,7 @@ final class ChildWorkflowProxy extends Proxy
      * @param WorkflowPrototype $workflow
      * @param ChildWorkflowOptions $options
      * @param WorkflowContextInterface $context
+     * @param HeaderInterface|array $header
      */
     public function __construct(
         string $class,

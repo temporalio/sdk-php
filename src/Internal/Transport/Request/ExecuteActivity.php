@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport\Request;
 
+use Temporal\DataConverter\HeaderInterface;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Worker\Transport\Command\Request;
 
@@ -22,9 +23,10 @@ final class ExecuteActivity extends Request
      * @param string $name
      * @param ValuesInterface $args
      * @param array $options
+     * @param HeaderInterface $header
      */
-    public function __construct(string $name, ValuesInterface $args, array $options)
+    public function __construct(string $name, ValuesInterface $args, array $options, HeaderInterface $header)
     {
-        parent::__construct(self::NAME, ['name' => $name, 'options' => $options], $args);
+        parent::__construct(self::NAME, ['name' => $name, 'options' => $options], $args, header: $header);
     }
 }

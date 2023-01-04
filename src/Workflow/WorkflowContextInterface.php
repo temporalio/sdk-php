@@ -167,8 +167,9 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @param array $args
      * @param ChildWorkflowOptions|null $options
      * @param Type|string|\ReflectionType|\ReflectionClass|null $returnType
-     * @param HeaderInterface|array|null $header Header set to be passed to the child workflow.
-     *        The {@see null} value means that the header will be inherited from the parent workflow.
+     * @param HeaderInterface|array<non-empty-string, scalar>|null $header Optional header values.
+     *        The default {@see null} value means that header values will be inherited from the current context.
+     *
      * @return PromiseInterface
      */
     public function executeChildWorkflow(
@@ -185,8 +186,9 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @psalm-template T of object
      * @param class-string<T> $class
      * @param ChildWorkflowOptions|null $options
-     * @param HeaderInterface|array|null $header Header set to be passed to the child workflow.
-     *        The {@see null} value means that the header will be inherited from the parent workflow.
+     * @param HeaderInterface|array<non-empty-string, scalar>|null $header Optional header values.
+     *        The default {@see null} value means that header values will be inherited from the current context.
+     *
      * @return T
      */
     public function newChildWorkflowStub(
@@ -200,8 +202,9 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @param string $type
      * @param ChildWorkflowOptions|null $options
-     * @param HeaderInterface|array|null $header Header set to be passed to the child workflow.
-     *        The {@see null} value means that the header will be inherited from the parent workflow.
+     * @param HeaderInterface|array<non-empty-string, scalar>|null $header Optional header values.
+     *        The default {@see null} value means that header values will be inherited from the current context.
+     *
      * @return ChildWorkflowStubInterface
      */
     public function newUntypedChildWorkflowStub(
@@ -241,13 +244,17 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @param array $args
      * @param ActivityOptions|null $options
      * @param \ReflectionType|null $returnType
+     * @param HeaderInterface|array<non-empty-string, scalar>|null $header Optional header values.
+     *        The default {@see null} value means that header values will be inherited from the current context.
+     *
      * @return PromiseInterface
      */
     public function executeActivity(
         string $type,
         array $args = [],
         ActivityOptionsInterface $options = null,
-        \ReflectionType $returnType = null
+        \ReflectionType $returnType = null,
+        HeaderInterface|array|null $header = null,
     ): PromiseInterface;
 
     /**
@@ -256,17 +263,29 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @psalm-template T of object
      * @param class-string<T> $class
      * @param ActivityOptionsInterface|null $options
+     * @param HeaderInterface|array<non-empty-string, scalar>|null $header Optional header values.
+     *        The default {@see null} value means that header values will be inherited from the current context.
+     *
      * @return T
      */
-    public function newActivityStub(string $class, ActivityOptionsInterface $options = null): object;
+    public function newActivityStub(string $class,
+        ActivityOptionsInterface $options = null,
+        HeaderInterface|array|null $header = null,
+    ): object;
 
     /**
      * @see Workflow::newUntypedActivityStub()
      *
      * @param ActivityOptionsInterface|null $options
+     * @param HeaderInterface|array<non-empty-string, scalar>|null $header Optional header values.
+     *        The default {@see null} value means that header values will be inherited from the current context.
+     *
      * @return ActivityStubInterface
      */
-    public function newUntypedActivityStub(ActivityOptionsInterface $options = null): ActivityStubInterface;
+    public function newUntypedActivityStub(
+        ActivityOptionsInterface $options = null,
+        HeaderInterface|array|null $header = null,
+    ): ActivityStubInterface;
 
     /**
      * @see Workflow::await()

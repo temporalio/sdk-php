@@ -13,6 +13,7 @@ namespace Temporal;
 
 use Temporal\Activity\ActivityContextInterface;
 use Temporal\Activity\ActivityInfo;
+use Temporal\DataConverter\HeaderInterface;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\OutOfContextException;
@@ -62,6 +63,19 @@ final class Activity extends Facade
         $context = self::getCurrentContext();
 
         return $context->getInput();
+    }
+
+    /**
+     * Returns passed header values.
+     *
+     * @return HeaderInterface
+     */
+    public static function getHeader(): HeaderInterface
+    {
+        /** @var ActivityContextInterface $context */
+        $context = self::getCurrentContext();
+
+        return $context->getHeader();
     }
 
     /**
