@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Functional\Client;
 
-use stdClass;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Tests\Workflow\HeaderWorkflow;
 use Temporal\Workflow\ChildWorkflowOptions;
