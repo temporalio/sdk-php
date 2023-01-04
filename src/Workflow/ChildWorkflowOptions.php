@@ -156,12 +156,6 @@ final class ChildWorkflowOptions extends Options
     #[Marshal(name: 'SearchAttributes', type: NullableType::class, of: ArrayType::class)]
     public ?array $searchAttributes = null;
 
-    #[Pure]
-    public static function new(): static
-    {
-        return new self();
-    }
-
     /**
      * @throws \Exception
      */

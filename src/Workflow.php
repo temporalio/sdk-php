@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal;
 
-use JetBrains\PhpStorm\Pure;
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Activity\ActivityOptionsInterface;
@@ -27,7 +26,6 @@ use Temporal\Workflow\ChildWorkflowOptions;
 use Temporal\Workflow\ChildWorkflowStubInterface;
 use Temporal\Workflow\ContinueAsNewOptions;
 use Temporal\Workflow\ExternalWorkflowStubInterface;
-use Temporal\Workflow\ParentClosePolicy;
 use Temporal\Workflow\ScopedContextInterface;
 use Temporal\Internal\Workflow\WorkflowContext;
 use Temporal\Workflow\WorkflowExecution;
