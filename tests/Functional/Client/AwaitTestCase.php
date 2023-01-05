@@ -20,6 +20,7 @@ use Temporal\Testing\WithoutTimeSkipping;
 use Temporal\Tests\Workflow\AggregatedWorkflow;
 use Temporal\Tests\Workflow\LoopWithSignalCoroutinesWorkflow;
 use Temporal\Tests\Workflow\LoopWorkflow;
+use Temporal\Tests\Workflow\TimerWayWorkflow;
 use Temporal\Tests\Workflow\WaitWorkflow;
 use Temporal\Workflow\WorkflowStub;
 
@@ -188,5 +189,14 @@ class AwaitTestCase extends ClientTestCase
         } catch (WorkflowFailedException $e) {
             $this->assertInstanceOf(CanceledFailure::class, $e->getPrevious());
         }
+    }
+
+    public function testTimer(): void
+    {
+        $client = $this->createClient();
+        $wait = $client->newWorkflowStub(TimerWayWorkflow::class);
+        $run = $client->start($wait);
+
+        $this->assertFalse($run->getResult());
     }
 }

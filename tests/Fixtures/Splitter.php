@@ -16,8 +16,8 @@ namespace Temporal\Tests\Fixtures;
  */
 class Splitter
 {
-    /** @var string */
-    private string $filename;
+    /** @var string[] */
+    private array $lines;
 
     /** @var array */
     private array $in = [];
@@ -28,9 +28,9 @@ class Splitter
     /**
      * @param string $filename
      */
-    public function __construct(string $filename)
+    public function __construct(array $lines)
     {
-        $this->filename = $filename;
+        $this->lines = $lines;
         $this->parse();
     }
 
@@ -49,12 +49,10 @@ class Splitter
      */
     private function parse()
     {
-        $lines = file($this->filename);
-
         // skip get worker info
         $offset = 0;
-        while (isset($lines[$offset])) {
-            $line = $lines[$offset];
+        while (isset($this->lines[$offset])) {
+            $line = $this->lines[$offset];
 
             if (preg_match('/(?:\[0m\t)(\[.*\])\s*({.*})(?:[\r\n]*)$/', $line, $matches)) {
                 $ctx = json_decode($matches[2], true);
@@ -72,10 +70,22 @@ class Splitter
     }
 
     /**
+     * Create from file
+     *
      * @return Splitter
      */
-    public static function create(string $name)
+    public static function create(string $name): self
     {
-        return new self(__DIR__ . '/data/' . $name);
+        return new self(file(__DIR__ . '/data/' . $name));
+    }
+
+    /**
+     * Create from text block
+     *
+     * @return Splitter
+     */
+    public static function createFromString(string $text): self
+    {
+        return new self(\explode("\n", $text));
     }
 }
