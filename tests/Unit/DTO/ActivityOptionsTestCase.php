@@ -27,7 +27,7 @@ class ActivityOptionsTestCase extends DTOMarshallingTestCase
         $dto = new ActivityOptions();
 
         $expected = [
-            'TaskQueueName'          => 'default',
+            'TaskQueueName'          => null,
             'ScheduleToCloseTimeout' => 0,
             'ScheduleToStartTimeout' => 0,
             'StartToCloseTimeout'    => 0,
