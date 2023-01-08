@@ -50,7 +50,7 @@ class ObjectType extends Type implements DetectableTypeInterface
         }
 
         if ($current === null) {
-            $current = $this->instance((array)$value);
+            $current = $this->instance();
         }
 
         return $this->marshaller->unmarshal($value, $current);
@@ -65,12 +65,11 @@ class ObjectType extends Type implements DetectableTypeInterface
     }
 
     /**
-     * @param array $data
      * @return object
      * @throws \ReflectionException
      */
-    protected function instance(array $data): object
+    protected function instance(): object
     {
-        return $this->marshaller->unmarshal($data, $this->reflection->newInstanceWithoutConstructor());
+        return $this->reflection->newInstanceWithoutConstructor();
     }
 }
