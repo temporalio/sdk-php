@@ -21,6 +21,6 @@ final class ExecuteLocalActivity extends Request
 
     public function __construct(string $name, ValuesInterface $args, array $options, HeaderInterface $header)
     {
-        parent::__construct(self::NAME, ['name' => $name, 'options' => $options], $args);
+        parent::__construct(self::NAME, ['name' => $name, 'options' => $options], $args, header: $header);
     }
 }
