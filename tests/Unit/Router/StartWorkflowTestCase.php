@@ -14,7 +14,7 @@ use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\ExceptionInterceptorInterface;
-use Temporal\Internal\Declaration\Reader\ActivityReader;
+use Temporal\Interceptor\Provider\SimpleInterceptorProvider;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\Marshaller\MarshallerInterface;
@@ -50,6 +50,7 @@ final class StartWorkflowTestCase extends UnitTestCase
             $this->marshaller,
             $dataConverter,
             $this->createMock(ExceptionInterceptorInterface::class),
+            new SimpleInterceptorProvider(),
         );
         $workflowReader = new WorkflowReader(new SelectiveReader([new AnnotationReader(), new AttributeReader()]));
         $this->services->workflows->add($workflowReader->fromClass(DummyWorkflow::class));

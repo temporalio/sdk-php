@@ -57,6 +57,7 @@ final class InvokeActivityTestCase extends UnitTestCase
             $marshaller,
             $dataConverter,
             $this->createMock(ExceptionInterceptorInterface::class),
+            new SimpleInterceptorProvider(),
         );
         $activityReader = new ActivityReader(new SelectiveReader([new AnnotationReader(), new AttributeReader()]));
         foreach ($activityReader->fromClass(DummyActivity::class) as $proto) {

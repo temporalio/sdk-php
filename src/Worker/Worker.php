@@ -13,7 +13,6 @@ namespace Temporal\Worker;
 
 use Closure;
 use React\Promise\PromiseInterface;
-use Temporal\Interceptor\InterceptorProvider;
 use Temporal\Internal\Events\EventEmitterTrait;
 use Temporal\Internal\Events\EventListenerInterface;
 use Temporal\Internal\Repository\Identifiable;
@@ -58,30 +57,22 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
     private RPCConnectionInterface $rpc;
 
     /**
-     * @var InterceptorProvider
-     */
-    private InterceptorProvider $interceptorProvider;
-
-    /**
      * @param string $taskQueue
      * @param WorkerOptions $options
      * @param ServiceContainer $serviceContainer
      * @param RPCConnectionInterface $rpc
-     * @param InterceptorProvider $interceptorProvider
      */
     public function __construct(
         string $taskQueue,
         WorkerOptions $options,
         ServiceContainer $serviceContainer,
         RPCConnectionInterface $rpc,
-        InterceptorProvider $interceptorProvider,
     ) {
         $this->rpc = $rpc;
         $this->name = $taskQueue;
         $this->options = $options;
 
         $this->services = $serviceContainer;
-        $this->interceptorProvider = $interceptorProvider;
         $this->router = $this->createRouter();
     }
 
@@ -179,8 +170,8 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
         $router = new Router();
 
         // Activity routes
-        $router->add(new Router\InvokeActivity($this->services, $this->rpc, $this->interceptorProvider));
-        $router->add(new Router\InvokeLocalActivity($this->services, $this->rpc, $this->interceptorProvider));
+        $router->add(new Router\InvokeActivity($this->services, $this->rpc, $this->services->interceptorProvider));
+        $router->add(new Router\InvokeLocalActivity($this->services, $this->rpc, $this->services->interceptorProvider));
 
         // Workflow routes
         $router->add(new Router\StartWorkflow($this->services));

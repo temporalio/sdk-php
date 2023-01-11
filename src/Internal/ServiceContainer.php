@@ -15,6 +15,7 @@ use JetBrains\PhpStorm\Immutable;
 use Spiral\Attributes\ReaderInterface;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\ExceptionInterceptorInterface;
+use Temporal\Interceptor\InterceptorProvider;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Declaration\Prototype\ActivityCollection;
 use Temporal\Internal\Declaration\Prototype\WorkflowCollection;
@@ -112,6 +113,11 @@ final class ServiceContainer
     public ExceptionInterceptorInterface $exceptionInterceptor;
 
     /**
+     * @var InterceptorProvider
+     */
+    public InterceptorProvider $interceptorProvider;
+
+    /**
      * @param LoopInterface $loop
      * @param EnvironmentInterface $env
      * @param ClientInterface $client
@@ -120,6 +126,7 @@ final class ServiceContainer
      * @param MarshallerInterface $marshaller
      * @param DataConverterInterface $dataConverter
      * @param ExceptionInterceptorInterface $exceptionInterceptor
+     * @param InterceptorProvider $interceptorProvider
      */
     public function __construct(
         LoopInterface $loop,
@@ -129,7 +136,8 @@ final class ServiceContainer
         QueueInterface $queue,
         MarshallerInterface $marshaller,
         DataConverterInterface $dataConverter,
-        ExceptionInterceptorInterface $exceptionInterceptor
+        ExceptionInterceptorInterface $exceptionInterceptor,
+        InterceptorProvider $interceptorProvider,
     ) {
         $this->env = $env;
         $this->loop = $loop;
@@ -138,6 +146,7 @@ final class ServiceContainer
         $this->queue = $queue;
         $this->marshaller = $marshaller;
         $this->dataConverter = $dataConverter;
+        $this->interceptorProvider = $interceptorProvider;
 
         $this->workflows = new WorkflowCollection();
         $this->activities = new ActivityCollection();
@@ -155,7 +164,8 @@ final class ServiceContainer
      */
     public static function fromWorkerFactory(
         WorkerFactoryInterface $worker,
-        ExceptionInterceptorInterface $exceptionInterceptor
+        ExceptionInterceptorInterface $exceptionInterceptor,
+        InterceptorProvider $interceptorProvider,
     ): self {
         return new self(
             $worker,
@@ -165,7 +175,8 @@ final class ServiceContainer
             $worker->getQueue(),
             $worker->getMarshaller(),
             $worker->getDataConverter(),
-            $exceptionInterceptor
+            $exceptionInterceptor,
+            $interceptorProvider,
         );
     }
 }

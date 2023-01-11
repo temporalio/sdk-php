@@ -73,18 +73,15 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     private EnvironmentInterface $env;
     private RPCConnectionInterface $rpc;
     private ActivityInvocationCacheInterface $activityCache;
-    private InterceptorProvider $interceptorProvider;
 
     public function __construct(
         DataConverterInterface $dataConverter,
         RPCConnectionInterface $rpc,
         ActivityInvocationCacheInterface $activityCache,
-        InterceptorProvider $interceptorProvider,
     ) {
         $this->converter = $dataConverter;
         $this->rpc = $rpc;
         $this->activityCache = $activityCache;
-        $this->interceptorProvider = $interceptorProvider;
 
         $this->boot();
     }
@@ -93,14 +90,12 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         ?DataConverterInterface $dataConverter = null,
         ?RPCConnectionInterface $rpc = null,
         ?ActivityInvocationCacheInterface $activityCache = null,
-        InterceptorProvider $interceptorProvider = null,
     ): WorkerFactoryInterface
     {
         return new static(
             $dataConverter ?? DataConverter::createDefault(),
             $rpc ?? Goridge::create(),
             $activityCache ?? RoadRunnerActivityInvocationCache::create($dataConverter),
-            $interceptorProvider ?? new SimpleInterceptorProvider(),
         );
     }
 
@@ -110,17 +105,18 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     public function newWorker(
         string $taskQueue = self::DEFAULT_TASK_QUEUE,
         WorkerOptions $options = null,
-        ExceptionInterceptorInterface $exceptionInterceptor = null
+        ExceptionInterceptorInterface $exceptionInterceptor = null,
+        InterceptorProvider $interceptorProvider = null,
     ): WorkerInterface {
         $worker = new WorkerMock(new Worker(
             $taskQueue,
             $options ?? WorkerOptions::new(),
             ServiceContainer::fromWorkerFactory(
                 $this,
-                $exceptionInterceptor ?? ExceptionInterceptor::createDefault()
+                $exceptionInterceptor ?? ExceptionInterceptor::createDefault(),
+                $interceptorProvider ?? new SimpleInterceptorProvider(),
             ),
             $this->rpc,
-            $this->interceptorProvider,
         ), $this->activityCache);
         $this->queues->add($worker);
 
