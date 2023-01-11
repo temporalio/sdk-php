@@ -14,6 +14,8 @@ use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\ExceptionInterceptor;
 use Temporal\Exception\ExceptionInterceptorInterface;
+use Temporal\Interceptor\InterceptorProvider;
+use Temporal\Interceptor\Provider\SimpleInterceptorProvider;
 use Temporal\Internal\Events\EventEmitterTrait;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
@@ -71,12 +73,18 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     private EnvironmentInterface $env;
     private RPCConnectionInterface $rpc;
     private ActivityInvocationCacheInterface $activityCache;
+    private InterceptorProvider $interceptorProvider;
 
-    public function __construct(DataConverterInterface $dataConverter, RPCConnectionInterface $rpc, ActivityInvocationCacheInterface $activityCache)
-    {
+    public function __construct(
+        DataConverterInterface $dataConverter,
+        RPCConnectionInterface $rpc,
+        ActivityInvocationCacheInterface $activityCache,
+        InterceptorProvider $interceptorProvider,
+    ) {
         $this->converter = $dataConverter;
         $this->rpc = $rpc;
         $this->activityCache = $activityCache;
+        $this->interceptorProvider = $interceptorProvider;
 
         $this->boot();
     }
@@ -84,13 +92,15 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     public static function create(
         ?DataConverterInterface $dataConverter = null,
         ?RPCConnectionInterface $rpc = null,
-        ?ActivityInvocationCacheInterface $activityCache = null
+        ?ActivityInvocationCacheInterface $activityCache = null,
+        InterceptorProvider $interceptorProvider = null,
     ): WorkerFactoryInterface
     {
         return new static(
             $dataConverter ?? DataConverter::createDefault(),
             $rpc ?? Goridge::create(),
-            $activityCache ?? RoadRunnerActivityInvocationCache::create($dataConverter)
+            $activityCache ?? RoadRunnerActivityInvocationCache::create($dataConverter),
+            $interceptorProvider ?? new SimpleInterceptorProvider(),
         );
     }
 
@@ -110,6 +120,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
                 $exceptionInterceptor ?? ExceptionInterceptor::createDefault()
             ),
             $this->rpc,
+            $this->interceptorProvider,
         ), $this->activityCache);
         $this->queues->add($worker);
 

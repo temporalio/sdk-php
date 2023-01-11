@@ -16,6 +16,7 @@ use Temporal\Activity;
 use Temporal\Activity\ActivityInfo;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\DoNotCompleteOnResultException;
+use Temporal\Interceptor\InterceptorProvider;
 use Temporal\Internal\Activity\ActivityContext;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\ServiceContainer;
@@ -31,15 +32,21 @@ class InvokeActivity extends Route
 
     private ServiceContainer $services;
     private RPCConnectionInterface $rpc;
+    private InterceptorProvider $interceptorProvider;
 
     /**
      * @param ServiceContainer $services
      * @param RPCConnectionInterface $rpc
+     * @param InterceptorProvider $interceptorProvider
      */
-    public function __construct(ServiceContainer $services, RPCConnectionInterface $rpc)
-    {
+    public function __construct(
+        ServiceContainer $services,
+        RPCConnectionInterface $rpc,
+        InterceptorProvider $interceptorProvider,
+    ) {
         $this->rpc = $rpc;
         $this->services = $services;
+        $this->interceptorProvider = $interceptorProvider;
     }
 
     /**
@@ -77,6 +84,7 @@ class InvokeActivity extends Route
         try {
             Activity::setCurrentContext($context);
 
+            $interceptors = $this->interceptorProvider->getInterceptors($prototype);
             $handler = $prototype->getInstance()->getHandler();
             $result = $handler($payloads);
 

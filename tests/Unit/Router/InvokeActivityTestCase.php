@@ -13,6 +13,7 @@ use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedHeader;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\ExceptionInterceptorInterface;
+use Temporal\Interceptor\Provider\SimpleInterceptorProvider;
 use Temporal\Internal\Activity\ActivityContext;
 use Temporal\Internal\Declaration\Reader\ActivityReader;
 use Temporal\Internal\Marshaller\MarshallerInterface;
@@ -62,7 +63,7 @@ final class InvokeActivityTestCase extends UnitTestCase
             $this->services->activities->add($proto);
         }
 
-        $this->router = new InvokeActivity($this->services, $rpc);
+        $this->router = new InvokeActivity($this->services, $rpc, new SimpleInterceptorProvider());
 
         parent::setUp();
     }
