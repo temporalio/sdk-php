@@ -24,8 +24,10 @@ class SimpleInterceptorProvider implements InterceptorProvider
     /**
      * @inheritDoc
      */
-    public function getInterceptors(PrototypeInterface $prototype): array
+    public function getInterceptors(PrototypeInterface $prototype, ?string $type = null): array
     {
-        return $this->interceptors;
+        return $type === null
+            ? $this->interceptors
+            : \array_filter($this->interceptors, static fn(Interceptor $i): bool => $i instanceof $type);
     }
 }
