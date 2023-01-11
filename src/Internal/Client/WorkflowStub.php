@@ -31,7 +31,9 @@ use Temporal\Client\WorkflowOptions;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\EncodedHeader;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\HeaderInterface;
 use Temporal\Exception\Client\WorkflowException;
 use Temporal\Exception\Client\WorkflowQueryException;
 use Temporal\Exception\Client\WorkflowQueryRejectedException;
@@ -58,6 +60,7 @@ final class WorkflowStub implements WorkflowStubInterface
     private ?string $workflowType;
     private ?WorkflowOptions $options;
     private ?WorkflowExecution $execution = null;
+    private HeaderInterface $header;
 
     /**
      * @param ServiceClientInterface $serviceClient
@@ -71,13 +74,15 @@ final class WorkflowStub implements WorkflowStubInterface
         ClientOptions $clientOptions,
         DataConverterInterface $converter,
         ?string $workflowType = null,
-        WorkflowOptions $options = null
+        WorkflowOptions $options = null,
+        HeaderInterface|array $header = [],
     ) {
         $this->serviceClient = $serviceClient;
         $this->clientOptions = $clientOptions;
         $this->converter = $converter;
         $this->workflowType = $workflowType;
         $this->options = $options;
+        $this->header = \is_array($header) ? EncodedHeader::fromValues($header) : $header;
     }
 
     /**
@@ -94,6 +99,14 @@ final class WorkflowStub implements WorkflowStubInterface
     public function getOptions(): ?WorkflowOptions
     {
         return $this->options;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getHeader(): HeaderInterface
+    {
+        return $this->header;
     }
 
     /**

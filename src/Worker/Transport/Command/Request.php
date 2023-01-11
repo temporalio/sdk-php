@@ -11,7 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Transport\Command;
 
+use Temporal\DataConverter\EncodedHeader;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\HeaderInterface;
 use Temporal\DataConverter\ValuesInterface;
 
 /**
@@ -22,6 +24,7 @@ class Request extends Command implements RequestInterface
     protected string $name;
     protected array $options;
     protected ValuesInterface $payloads;
+    protected ?HeaderInterface $header = null;
     protected ?\Throwable $failure = null;
 
     /**
@@ -34,11 +37,13 @@ class Request extends Command implements RequestInterface
         string $name,
         array $options = [],
         ValuesInterface $payloads = null,
-        int $id = null
+        int $id = null,
+        ?HeaderInterface $header = null,
     ) {
         $this->name = $name;
         $this->options = $options;
         $this->payloads = $payloads ?? EncodedValues::empty();
+        $this->header = $header ?? EncodedHeader::empty();
 
         parent::__construct($id);
     }
@@ -81,5 +86,13 @@ class Request extends Command implements RequestInterface
     public function getFailure(): ?\Throwable
     {
         return $this->failure;
+    }
+
+    /**
+     * @return EncodedHeader
+     */
+    public function getHeader(): EncodedHeader
+    {
+        return $this->header;
     }
 }

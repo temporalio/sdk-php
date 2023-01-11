@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Transport\Command;
 
+use Temporal\DataConverter\HeaderInterface;
 use Temporal\DataConverter\ValuesInterface;
 
 interface RequestInterface extends CommandInterface
@@ -29,6 +30,11 @@ interface RequestInterface extends CommandInterface
      * @return ValuesInterface
      */
     public function getPayloads(): ValuesInterface;
+
+    /**
+     * @return HeaderInterface
+     */
+    public function getHeader(): HeaderInterface;
 
     /**
      * Optional failure.

@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Client;
 
+use Temporal\Api\Common\V1\Header;
 use Temporal\Api\Common\V1\WorkflowType;
 use Temporal\Api\Errordetails\V1\WorkflowExecutionAlreadyStartedFailure;
 use Temporal\Api\Taskqueue\V1\TaskQueue;
@@ -21,7 +22,9 @@ use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\EncodedHeader;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\HeaderInterface;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Client\WorkflowExecutionAlreadyStartedException;
 use Temporal\Internal\Support\DateInterval;
@@ -74,9 +77,11 @@ final class WorkflowStarter
     public function start(
         string $workflowType,
         WorkflowOptions $options,
-        array $args = []
+        array $args = [],
+        HeaderInterface $header = null,
     ): WorkflowExecution {
         $workflowId = $options->workflowId ?? Uuid::v4();
+        $header ??= EncodedHeader::empty();
 
         $r = new StartWorkflowExecutionRequest();
         $r
@@ -93,7 +98,8 @@ final class WorkflowStarter
             ->setWorkflowExecutionTimeout(DateInterval::toDuration($options->workflowExecutionTimeout))
             ->setWorkflowTaskTimeout(DateInterval::toDuration($options->workflowTaskTimeout))
             ->setMemo($options->toMemo($this->converter))
-            ->setSearchAttributes($options->toSearchAttributes($this->converter));
+            ->setSearchAttributes($options->toSearchAttributes($this->converter))
+            ->setHeader($header->toHeader());
 
         $input = EncodedValues::fromValues($args, $this->converter);
         if (!$input->isEmpty()) {
@@ -120,7 +126,7 @@ final class WorkflowStarter
 
         return new WorkflowExecution(
             $workflowId,
-            $response->getRunId()
+            $response->getRunId(),
         );
     }
 
@@ -140,9 +146,11 @@ final class WorkflowStarter
         WorkflowOptions $options,
         string $signal,
         array $signalArgs = [],
-        array $startArgs = []
+        array $startArgs = [],
+        HeaderInterface $header = null,
     ): WorkflowExecution {
         $workflowId = $options->workflowId ?? Uuid::v4();
+        $header ??= EncodedHeader::empty();
 
         $r = new SignalWithStartWorkflowExecutionRequest();
         $r
@@ -159,7 +167,8 @@ final class WorkflowStarter
             ->setWorkflowExecutionTimeout(DateInterval::toDuration($options->workflowExecutionTimeout))
             ->setWorkflowTaskTimeout(DateInterval::toDuration($options->workflowTaskTimeout))
             ->setMemo($options->toMemo($this->converter))
-            ->setSearchAttributes($options->toSearchAttributes($this->converter));
+            ->setSearchAttributes($options->toSearchAttributes($this->converter))
+            ->setHeader($header->toHeader());
 
         $input = EncodedValues::fromValues($startArgs, $this->converter);
         if (!$input->isEmpty()) {

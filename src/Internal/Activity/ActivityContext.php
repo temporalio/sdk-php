@@ -15,6 +15,7 @@ use Temporal\Activity\ActivityContextInterface;
 use Temporal\Activity\ActivityInfo;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\HeaderInterface;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\Client\ActivityCanceledException;
@@ -33,6 +34,7 @@ final class ActivityContext implements ActivityContextInterface
     private DataConverterInterface $converter;
     private ?ValuesInterface $heartbeatDetails;
     private ValuesInterface $input;
+    private HeaderInterface $header;
 
     /**
      * @param RPCConnectionInterface $rpc
@@ -44,6 +46,7 @@ final class ActivityContext implements ActivityContextInterface
         RPCConnectionInterface $rpc,
         DataConverterInterface $converter,
         ValuesInterface $input,
+        HeaderInterface $header,
         ValuesInterface $lastHeartbeatDetails = null
     ) {
         $this->info = new ActivityInfo();
@@ -51,6 +54,7 @@ final class ActivityContext implements ActivityContextInterface
         $this->converter = $converter;
         $this->heartbeatDetails = $lastHeartbeatDetails;
         $this->input = $input;
+        $this->header = $header;
     }
 
     /**
@@ -67,6 +71,14 @@ final class ActivityContext implements ActivityContextInterface
     public function getInput(): ValuesInterface
     {
         return $this->input;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getHeader(): HeaderInterface
+    {
+        return $this->header;
     }
 
     /**

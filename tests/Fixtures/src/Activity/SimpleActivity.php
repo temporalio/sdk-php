@@ -74,6 +74,12 @@ class SimpleActivity
     }
 
     #[ActivityMethod]
+    public function header(): array
+    {
+        return \iterator_to_array(Activity::getHeader());
+    }
+
+    #[ActivityMethod]
     public function external()
     {
         Activity::doNotCompleteOnReturn();

@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Activity;
 
 use Temporal\Activity;
+use Temporal\DataConverter\HeaderInterface;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 
@@ -30,6 +31,13 @@ interface ActivityContextInterface
      * @return ValuesInterface
      */
     public function getInput(): ValuesInterface;
+
+    /**
+     * @see Activity::getHeader()
+     *
+     * @return HeaderInterface
+     */
+    public function getHeader(): HeaderInterface;
 
     /**
      * @see Activity::hasHeartbeatDetails()

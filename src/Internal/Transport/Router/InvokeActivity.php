@@ -49,6 +49,7 @@ class InvokeActivity extends Route
     {
         $options = $request->getOptions();
         $payloads = $request->getPayloads();
+        $header = $request->getHeader();
         $heartbeatDetails = null;
 
         // always in binary format
@@ -62,7 +63,13 @@ class InvokeActivity extends Route
             $payloads = EncodedValues::sliceValues($this->services->dataConverter, $payloads, 0, $offset);
         }
 
-        $context = new ActivityContext($this->rpc, $this->services->dataConverter, $payloads, $heartbeatDetails);
+        $context = new ActivityContext(
+            $this->rpc,
+            $this->services->dataConverter,
+            $payloads,
+            $header,
+            $heartbeatDetails,
+        );
         $context = $this->services->marshaller->unmarshal($options, $context);
 
         $prototype = $this->findDeclarationOrFail($context->getInfo());
