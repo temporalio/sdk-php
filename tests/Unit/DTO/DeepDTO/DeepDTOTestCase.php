@@ -18,10 +18,6 @@ final class DeepDTOTestCase extends DTOMarshallingTestCase
      */
     public function testMarshalAndUnmarshal(): void
     {
-        if (PHP_VERSION_ID < 80104) {
-            $this->markTestSkipped();
-        }
-
         $manuallyCreatedParent = new ParentDTO(
             new ChildDTO('foo')
         );

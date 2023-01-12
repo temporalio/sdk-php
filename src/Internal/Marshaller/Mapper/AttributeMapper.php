@@ -153,7 +153,7 @@ class AttributeMapper implements MapperInterface
             return null;
         }
 
-        // For object-typed properties: remember property type FQCN to make object nesting possible
+        // For object-typed properties: remember property type FQN to make object nesting possible
         if ($type === ObjectType::class && $meta->of === null) {
             $meta->of = $property->getType()?->getName();
         }
