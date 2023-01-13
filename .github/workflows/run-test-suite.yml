@@ -22,7 +22,6 @@ jobs:
     name: (PHP ${{ matrix.php }}, OS ${{ matrix.os }}, with ${{ matrix.dependencies }} deps
     runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ inputs.test-timeout }}
-    env: {GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'}
     strategy:
       fail-fast: ${{ inputs.fail-fast }}
       matrix:
@@ -77,6 +76,7 @@ jobs:
 
       - name: Download RoadRunner
         if: inputs.run-temporal-test-server == true
+        env: {GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'}
         run: |
           vendor/bin/rr get --no-interaction
 
