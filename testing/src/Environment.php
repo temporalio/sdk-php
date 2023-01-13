@@ -27,9 +27,15 @@ final class Environment
 
     public static function create(): self
     {
+        $token = \getenv('GITHUB_TOKEN');
+
         return new self(
             new ConsoleOutput(),
-            new Downloader(new Filesystem(), HttpClient::create()),
+            new Downloader(new Filesystem(), HttpClient::create([
+                'headers' => [
+                    'authorization' => $token ? 'token ' . $token : null
+                ],
+            ])),
             SystemInfo::detect(),
         );
     }
