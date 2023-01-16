@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Marshaller;
 
+use Temporal\Internal\Marshaller\Type\TypeDto;
 use Temporal\Internal\Marshaller\Type\TypeInterface;
 
 interface TypeFactoryInterface
@@ -23,8 +24,9 @@ interface TypeFactoryInterface
     public function create(string $type, array $args): ?TypeInterface;
 
     /**
-     * @param \ReflectionType|null $type
-     * @return class-string<TypeInterface>|null
+     * @param \ReflectionProperty|null $property
+     *
+     * @return TypeDto|null
      */
-    public function detect(?\ReflectionType $type): ?string;
+    public function detect(\ReflectionProperty $property): ?TypeDto;
 }

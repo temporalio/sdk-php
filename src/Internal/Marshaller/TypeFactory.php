@@ -15,6 +15,7 @@ use Temporal\Internal\Marshaller\Type\ArrayType;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\DateTimeType;
 use Temporal\Internal\Marshaller\Type\DetectableTypeInterface;
+use Temporal\Internal\Marshaller\Type\TypeDto;
 use Temporal\Internal\Marshaller\Type\ObjectType;
 use Temporal\Internal\Marshaller\Type\TypeInterface;
 
@@ -70,8 +71,9 @@ class TypeFactory implements TypeFactoryInterface
     /**
      * {@inheritDoc}
      */
-    public function detect(?\ReflectionType $type): ?string
+    public function detect(\ReflectionProperty $property): ?TypeDto
     {
+        $type = $property->getType();
         /**
          * - Union types ({@see \ReflectionUnionType}) cannot be uniquely determined.
          * - The {@see null} type is an alias of "mixed" type.
@@ -82,7 +84,7 @@ class TypeFactory implements TypeFactoryInterface
 
         foreach ($this->matchers as $matcher) {
             if ($result = $matcher($type)) {
-                return $result;
+                return new TypeDto($property->getName(), $result);
             }
         }
 
