@@ -54,4 +54,13 @@ class ArrayTestCase extends DTOMarshallingTestCase
         $this->assertSame(['bar'], $dto->nullableFoo);
         $this->assertSame(null, $dto->nullableBar);
     }
+
+    public function testSetNullToNotNullable(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Passed value must be a type of array, but null given');
+        $this->unmarshal([
+            'foo' => null,
+        ], new ArrayDTO());
+    }
 }

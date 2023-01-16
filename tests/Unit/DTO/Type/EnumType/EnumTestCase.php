@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\DTO\Type\EnumType;
 
+use Temporal\Internal\Marshaller\Type\EnumType;
 use Temporal\Tests\Unit\DTO\DTOMarshallingTestCase;
 
 /**
@@ -18,6 +19,21 @@ use Temporal\Tests\Unit\DTO\DTOMarshallingTestCase;
  */
 class EnumTestCase extends DTOMarshallingTestCase
 {
+    public function testMarshal(): void
+    {
+        $dto = new EnumDTO();
+        $dto->simpleEnum = SimpleEnum::TEST;
+        $dto->scalarEnum = ScalarEnum::TESTED_ENUM;
+        $dto->autoSimpleEnum = SimpleEnum::TEST;
+        $dto->autoScalarEnum = ScalarEnum::TESTED_ENUM;
+
+        $result = $this->marshal($dto);
+        $this->assertEquals($dto->simpleEnum, $result['simpleEnum']);
+        $this->assertEquals($dto->scalarEnum, $result['scalarEnum']);
+        $this->assertEquals($dto->autoSimpleEnum, $result['autoSimpleEnum']);
+        $this->assertEquals($dto->autoScalarEnum, $result['autoScalarEnum']);
+    }
+
     public function testUnmarshalBackedEnum(): void
     {
         $dto = $this->unmarshal([
@@ -34,5 +50,12 @@ class EnumTestCase extends DTOMarshallingTestCase
         $this->unmarshal([
             'simpleEnum' => SimpleEnum::TEST->name,
         ], new EnumDTO());
+    }
+
+    protected function getTypeMatchers(): array
+    {
+        return [
+            static fn (\ReflectionNamedType $type): ?string => EnumType::match($type) ? EnumType::class : null,
+        ];
     }
 }
