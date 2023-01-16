@@ -12,9 +12,9 @@ declare(strict_types=1);
 namespace Temporal\Internal\Marshaller\Mapper;
 
 use Spiral\Attributes\ReaderInterface;
-use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Meta\Scope;
+use Temporal\Internal\Marshaller\ReflectionTypeFactoryInterface;
 use Temporal\Internal\Marshaller\Type\TypeDto;
 use Temporal\Internal\Marshaller\Type\TypeInterface;
 use Temporal\Internal\Marshaller\TypeFactoryInterface;
@@ -149,10 +149,11 @@ class AttributeMapper implements MapperInterface
      */
     private function detectType(\ReflectionProperty $property, ?Marshal &$meta): ?TypeInterface
     {
-        $detected = $this->factory->detect($property);
-
-        $meta ??= $detected ?? new Marshal($property->getName());
-        $meta->type ??= $detected?->type;
+        if ($this->factory instanceof ReflectionTypeFactoryInterface) {
+            $meta ??= $this->factory->detectType($property);
+        }
+        $meta ??= new Marshal($property->getName());
+        $meta->type ??= $this->factory->detect($property->getType());
 
         if ($meta->type === null) {
             return null;

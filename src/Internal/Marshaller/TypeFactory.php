@@ -15,6 +15,7 @@ use Temporal\Internal\Marshaller\Type\ArrayType;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\DateTimeType;
 use Temporal\Internal\Marshaller\Type\DetectableTypeInterface;
+use Temporal\Internal\Marshaller\Type\MarshalReflectionInterface;
 use Temporal\Internal\Marshaller\Type\TypeDto;
 use Temporal\Internal\Marshaller\Type\ObjectType;
 use Temporal\Internal\Marshaller\Type\TypeInterface;
@@ -22,7 +23,7 @@ use Temporal\Internal\Marshaller\Type\TypeInterface;
 /**
  * @psalm-type CallableTypeMatcher = \Closure(\ReflectionNamedType): ?string
  */
-class TypeFactory implements TypeFactoryInterface
+class TypeFactory implements TypeFactoryInterface, ReflectionTypeFactoryInterface
 {
     /**
      * @var string
@@ -41,19 +42,14 @@ class TypeFactory implements TypeFactoryInterface
 
     /**
      * @param MarshallerInterface $marshaller
-     * @param array<CallableTypeMatcher|DetectableTypeInterface> $matchers
+     * @param array<CallableTypeMatcher|DetectableTypeInterface|MarshalReflectionInterface> $matchers
      */
     public function __construct(MarshallerInterface $marshaller, array $matchers)
     {
         $this->marshaller = $marshaller;
 
-        foreach ($this->createMatchers($matchers) as $matcher) {
-            $this->matchers[] = $matcher;
-        }
-
-        foreach ($this->createMatchers($this->getDefaultMatchers()) as $matcher) {
-            $this->matchers[] = $matcher;
-        }
+        $this->createMatchers($matchers);
+        $this->createMatchers($this->getDefaultMatchers());
     }
 
     /**
@@ -71,7 +67,29 @@ class TypeFactory implements TypeFactoryInterface
     /**
      * {@inheritDoc}
      */
-    public function detect(\ReflectionProperty $property): ?TypeDto
+    public function detect(?\ReflectionType $type): ?string
+    {
+        /**
+         * - Union types ({@see \ReflectionUnionType}) cannot be uniquely determined.
+         * - The {@see null} type is an alias of "mixed" type.
+         */
+        if (!$type instanceof \ReflectionNamedType) {
+            return null;
+        }
+
+        foreach ($this->matchers as $matcher) {
+            if ($result = $matcher($type)) {
+                return $result;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function detectType(\ReflectionProperty $property): ?TypeDto
     {
         $type = $property->getType();
         /**
@@ -92,18 +110,19 @@ class TypeFactory implements TypeFactoryInterface
     }
 
     /**
-     * @param iterable<CallableTypeMatcher|DetectableTypeInterface> $matchers
-     * @return iterable<CallableTypeMatcher>
+     * @param iterable<CallableTypeMatcher|DetectableTypeInterface|MarshalReflectionInterface> $matchers
      */
-    private function createMatchers(iterable $matchers): iterable
+    private function createMatchers(iterable $matchers): void
     {
         foreach ($matchers as $matcher) {
             if ($matcher instanceof \Closure) {
-                yield $matcher;
+                $this->matchers[] = $matcher;
                 continue;
             }
 
-            yield static fn (\ReflectionNamedType $type): ?string => $matcher::match($type) ? $matcher : null;
+            $this->matchers[] = static fn (\ReflectionNamedType $type): ?string => $matcher::match($type)
+                ? $matcher
+                : null;
         }
     }
 
