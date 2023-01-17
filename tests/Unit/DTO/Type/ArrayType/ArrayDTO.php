@@ -29,4 +29,8 @@ class ArrayDTO
     public ?array $nullableFoo;
 
     public ?array $nullableBar;
+
+    public iterable $iterable;
+
+    public ?iterable $iterableNullable;
 }

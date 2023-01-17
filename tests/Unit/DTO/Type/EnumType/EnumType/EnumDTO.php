@@ -25,4 +25,6 @@ class EnumDTO
     public SimpleEnum $autoSimpleEnum;
 
     public ScalarEnum $autoScalarEnum;
+
+    public ?ScalarEnum $nullable;
 }

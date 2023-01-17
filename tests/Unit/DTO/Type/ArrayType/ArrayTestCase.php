@@ -24,6 +24,10 @@ class ArrayTestCase extends DTOMarshallingTestCase
         $dto->autoArray = ['foo'];
         $dto->nullableFoo = ['bar'];
         $dto->nullableBar = null;
+        $dto->iterable = (static function (): \Generator {
+            yield 'foo';
+        })();
+        $dto->iterableNullable = null;
 
         $result = $this->marshal($dto);
         $this->assertSame([
@@ -33,6 +37,8 @@ class ArrayTestCase extends DTOMarshallingTestCase
             'autoArray' => ['foo'],
             'nullableFoo' => ['bar'],
             'nullableBar' => null,
+            'iterable' => ['foo'],
+            'iterableNullable' => null,
         ], $result);
     }
 
@@ -45,6 +51,8 @@ class ArrayTestCase extends DTOMarshallingTestCase
             'autoArray' => ['foo'],
             'nullableFoo' => ['bar'],
             'nullableBar' => null,
+            'iterable' => ['it'],
+            'iterableNullable' => ['itn'],
         ], new ArrayDTO());
 
         $this->assertSame(['foo'], $dto->foo);
@@ -52,6 +60,8 @@ class ArrayTestCase extends DTOMarshallingTestCase
         $this->assertSame(null, $dto->baz);
         $this->assertSame(['foo'], $dto->autoArray);
         $this->assertSame(['bar'], $dto->nullableFoo);
+        $this->assertSame(['it'], $dto->iterable);
+        $this->assertSame(['itn'], $dto->iterableNullable);
         $this->assertSame(null, $dto->nullableBar);
     }
 

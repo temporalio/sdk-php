@@ -29,12 +29,23 @@ class EnumTestCase extends DTOMarshallingTestCase
         $dto->scalarEnum = ScalarEnum::TESTED_ENUM;
         $dto->autoSimpleEnum = SimpleEnum::TEST;
         $dto->autoScalarEnum = ScalarEnum::TESTED_ENUM;
+        $dto->nullable = null;
 
         $result = $this->marshal($dto);
         $this->assertEquals($dto->simpleEnum, $result['simpleEnum']);
         $this->assertEquals($dto->scalarEnum, $result['scalarEnum']);
         $this->assertEquals($dto->autoSimpleEnum, $result['autoSimpleEnum']);
         $this->assertEquals($dto->autoScalarEnum, $result['autoScalarEnum']);
+        $this->assertNull($result['nullable']);
+    }
+
+    public function testMarshalEnumIntoNullable(): void
+    {
+        $dto = new EnumDTO();
+        $dto->nullable = ScalarEnum::TESTED_ENUM;
+
+        $result = $this->marshal($dto);
+        $this->assertEquals(ScalarEnum::TESTED_ENUM, $result['nullable']);
     }
 
     public function testUnmarshalBackedEnum(): void
