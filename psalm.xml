@@ -19,6 +19,11 @@
         </ignoreFiles>
     </projectFiles>
     <issueHandlers>
+        <UndefinedDocblockClass>
+            <errorLevel type="suppress">
+                <referencedClass name="UnitEnum" />
+            </errorLevel>
+        </UndefinedDocblockClass>
         <UndefinedClass>
             <errorLevel type="suppress">
                 <referencedClass name="BackedEnum" />
