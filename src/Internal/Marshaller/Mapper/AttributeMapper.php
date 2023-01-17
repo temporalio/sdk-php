@@ -14,7 +14,9 @@ namespace Temporal\Internal\Marshaller\Mapper;
 use Spiral\Attributes\ReaderInterface;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Meta\Scope;
+use Temporal\Internal\Marshaller\ReflectionTypeFactoryInterface;
 use Temporal\Internal\Marshaller\Type\ObjectType;
+use Temporal\Internal\Marshaller\Type\TypeDto;
 use Temporal\Internal\Marshaller\Type\TypeInterface;
 use Temporal\Internal\Marshaller\TypeFactoryInterface;
 
@@ -108,23 +110,23 @@ class AttributeMapper implements MapperInterface
     }
 
     /**
+     * Generates property name as key and related {@see TypeDto} or {@see null} (if no {@see Marshal} attributes found)
+     * as value.
+     *
      * @param Scope $scope
-     * @return iterable<\ReflectionProperty, Marshal>
+     *
+     * @return iterable<\ReflectionProperty, TypeDto|null>
      */
     private function getPropertyMappings(Scope $scope): iterable
     {
         foreach ($this->class->getProperties() as $property) {
             /** @var Marshal $marshal */
             $marshal = $this->reader->firstPropertyMetadata($property, Marshal::class);
-            $name = $property->getName();
 
             // Has marshal attribute
             if ($marshal === null && !$this->isValidScope($property, $scope)) {
                 continue;
             }
-
-            $marshal ??= new Marshal();
-            $marshal->name ??= $name;
 
             yield $property => $marshal;
         }
@@ -143,22 +145,29 @@ class AttributeMapper implements MapperInterface
     /**
      * @param \ReflectionProperty $property
      * @param Marshal $meta
+     *
      * @return TypeInterface|null
      */
-    private function detectType(\ReflectionProperty $property, Marshal $meta): ?TypeInterface
+    private function detectType(\ReflectionProperty $property, ?Marshal &$meta): ?TypeInterface
     {
-        $type = $meta->type ?? $this->factory->detect($property->getType());
+        if ($this->factory instanceof ReflectionTypeFactoryInterface) {
+            $meta ??= $this->factory->detectType($property);
+        }
+        $meta ??= new Marshal($property->getName());
+        $meta->type ??= $this->factory->detect($property->getType());
 
-        if ($type === null) {
+        if ($meta->type === null) {
             return null;
         }
 
-        // For object-typed properties: remember property type FQN to make object nesting possible
-        if ($type === ObjectType::class && $meta->of === null) {
-            $meta->of = $property->getType()?->getName();
-        }
-
-        return $this->factory->create($type, $meta->of ? [$meta->of] : []);
+// todo
+//        // For object-typed properties: remember property type FQN to make object nesting possible
+//        if ($type === ObjectType::class && $meta->of === null) {
+//            $meta->of = $property->getType()?->getName();
+//        }
+//
+//        return $this->factory->create($type, $meta->of ? [$meta->of] : []);
+        return $this->factory->create($meta->type, $meta->of ? [$meta->of] : []);
     }
 
     /**

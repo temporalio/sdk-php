@@ -14,7 +14,7 @@ namespace Temporal\Internal\Marshaller\Type;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Support\Inheritance;
 
-class ArrayType extends Type implements DetectableTypeInterface
+class ArrayType extends Type implements DetectableTypeInterface, MarshalReflectionInterface
 {
     /**
      * @var string
@@ -48,7 +48,18 @@ class ArrayType extends Type implements DetectableTypeInterface
      */
     public static function match(\ReflectionNamedType $type): bool
     {
-        return $type->getName() === 'array';
+        return $type->getName() === 'array' || $type->getName() === 'iterable';
+    }
+
+    public static function reflectMarshal(\ReflectionProperty $property): ?TypeDto
+    {
+        $type = $property->getType();
+
+        if (!$type instanceof \ReflectionNamedType || !\in_array($type->getName(), ['array', 'iterable'], true)) {
+            return null;
+        }
+
+        return new TypeDto($property->getName(), self::class);
     }
 
     /**
@@ -80,7 +91,8 @@ class ArrayType extends Type implements DetectableTypeInterface
     }
 
     /**
-     * @param array $value
+     * @param iterable $value
+     *
      * @return array
      */
     public function serialize($value): array
@@ -95,6 +107,15 @@ class ArrayType extends Type implements DetectableTypeInterface
             return $result;
         }
 
-        return $value;
+        if (\is_array($value)) {
+            return $value;
+        }
+
+        // Convert iterable to array
+        $result = [];
+        foreach ($value as $i => $item) {
+            $result[$i] = $item;
+        }
+        return $result;
     }
 }

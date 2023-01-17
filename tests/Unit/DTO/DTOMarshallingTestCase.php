@@ -15,11 +15,15 @@ use Spiral\Attributes\AttributeReader;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Marshaller\MarshallerInterface;
+use Temporal\Internal\Marshaller\Type\DetectableTypeInterface;
+use Temporal\Internal\Marshaller\TypeFactory;
 use Temporal\Tests\Unit\UnitTestCase;
 
 /**
  * @group unit
  * @group dto-marshalling
+ *
+ * @psalm-import-type CallableTypeMatcher from TypeFactory
  */
 abstract class DTOMarshallingTestCase extends UnitTestCase
 {
@@ -38,8 +42,19 @@ abstract class DTOMarshallingTestCase extends UnitTestCase
         $this->marshaller = new Marshaller(
             new AttributeMapperFactory(
                 new AttributeReader()
-            )
+            ),
+            $this->getTypeMatchers(),
         );
+    }
+
+    /**
+     * Define custom type matchers for test case.
+     *
+     * @return array<CallableTypeMatcher|DetectableTypeInterface>
+     */
+    protected function getTypeMatchers(): array
+    {
+        return [];
     }
 
     /**

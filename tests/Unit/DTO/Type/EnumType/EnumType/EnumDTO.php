@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Unit\DTO\Type\EnumType;
+namespace Temporal\Tests\Unit\DTO\Type\EnumType\EnumType;
 
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\EnumType;
@@ -25,4 +25,6 @@ class EnumDTO
     public SimpleEnum $autoSimpleEnum;
 
     public ScalarEnum $autoScalarEnum;
+
+    public ?ScalarEnum $nullable;
 }
