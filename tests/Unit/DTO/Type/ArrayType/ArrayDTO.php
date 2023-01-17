@@ -15,13 +15,13 @@ use Temporal\Internal\Marshaller\Meta\MarshalArray;
 
 class ArrayDTO
 {
-    #[MarshalArray(name: 'foo')]
+    #[MarshalArray(name: 'foo', nullable: false)]
     public array $foo;
 
-    #[MarshalArray(name: 'bar')]
+    #[MarshalArray(name: 'bar', nullable: true)]
     public ?array $bar;
 
-    #[MarshalArray(name: 'baz')]
+    #[MarshalArray(name: 'baz', nullable: true)]
     public ?array $baz;
 
     public array $autoArray;

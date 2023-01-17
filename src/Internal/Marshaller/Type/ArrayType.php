@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Internal\Marshaller\Type;
 
 use Temporal\Internal\Marshaller\MarshallerInterface;
-use Temporal\Internal\Support\Inheritance;
 
 class ArrayType extends Type implements DetectableTypeInterface, MarshalReflectionInterface
 {
@@ -34,10 +33,7 @@ class ArrayType extends Type implements DetectableTypeInterface, MarshalReflecti
     public function __construct(MarshallerInterface $marshaller, string $typeOrClass = null)
     {
         if ($typeOrClass !== null) {
-            $this->type = Inheritance::implements($typeOrClass, TypeInterface::class)
-                ? new $typeOrClass($marshaller)
-                : new ObjectType($marshaller, $typeOrClass)
-            ;
+            $this->type = $this->ofType($marshaller, $typeOrClass);
         }
 
         parent::__construct($marshaller);
@@ -62,7 +58,9 @@ class ArrayType extends Type implements DetectableTypeInterface, MarshalReflecti
             return null;
         }
 
-        return new TypeDto($property->getName(), self::class);
+        return $type->allowsNull()
+            ? new TypeDto($property->getName(), NullableType::class, self::class)
+            : new TypeDto($property->getName(), self::class);
     }
 
     /**
@@ -72,10 +70,6 @@ class ArrayType extends Type implements DetectableTypeInterface, MarshalReflecti
      */
     public function parse($value, $current)
     {
-        if ($value === null) {
-            return null;
-        }
-
         if (!\is_array($value)) {
             throw new \InvalidArgumentException(\sprintf(self::ERROR_INVALID_TYPE, \get_debug_type($value)));
         }

@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\DTO\Type\EnumType;
 
+use Error;
 use Temporal\Internal\Marshaller\Type\EnumType;
 use Temporal\Tests\Unit\DTO\DTOMarshallingTestCase;
 use Temporal\Tests\Unit\DTO\Type\EnumType\Stub\EnumDTO;
@@ -59,11 +60,15 @@ class EnumTestCase extends DTOMarshallingTestCase
 
     public function testUnmarshalNonBackedEnum(): void
     {
-        $this->expectError();
+        try {
+            $this->unmarshal([
+                'simpleEnum' => SimpleEnum::TEST->name,
+            ], new EnumDTO());
 
-        $this->unmarshal([
-            'simpleEnum' => SimpleEnum::TEST->name,
-        ], new EnumDTO());
+            $this->fail('Expected exception');
+        }catch (\Throwable $e) {
+            $this->assertInstanceOf(Error::class, $e->getPrevious());
+        }
     }
 
     protected function getTypeMatchers(): array
@@ -72,4 +77,19 @@ class EnumTestCase extends DTOMarshallingTestCase
             EnumType::class,
         ];
     }
+
+    // public function testMarshalAndUnmarshalSame(): void
+    // {
+    //     $dto = new EnumDTO();
+    //     $dto->simpleEnum = SimpleEnum::TEST;
+    //     $dto->scalarEnum = ScalarEnum::TESTED_ENUM;
+    //     $dto->autoSimpleEnum = SimpleEnum::TEST;
+    //     $dto->autoScalarEnum = ScalarEnum::TESTED_ENUM;
+    //     $dto->nullable = null;
+    //
+    //     $result = $this->marshal($dto);
+    //     $unmarshal = $this->unmarshal($result, new EnumDTO());
+    //
+    //     $this->assertEquals($dto, $unmarshal);
+    // }
 }

@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\DTO\Type\ArrayType;
 
+use Temporal\Internal\Marshaller\Type\ArrayType;
 use Temporal\Tests\Unit\DTO\DTOMarshallingTestCase;
 
 class ArrayTestCase extends DTOMarshallingTestCase
@@ -67,10 +68,25 @@ class ArrayTestCase extends DTOMarshallingTestCase
 
     public function testSetNullToNotNullable(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Passed value must be a type of array, but null given');
-        $this->unmarshal([
-            'foo' => null,
-        ], new ArrayDTO());
+        try {
+            $this->unmarshal([
+                'foo' => null,
+            ], new ArrayDTO());
+
+            $this->fail('Null value should not be allowed.');
+        } catch (\Throwable $e) {
+            $this->assertInstanceOf(\InvalidArgumentException::class, $e->getPrevious());
+            $this->assertStringContainsString(
+                $e->getPrevious()->getMessage(),
+                'Passed value must be a type of array, but null given',
+            );
+        }
+    }
+
+    protected function getTypeMatchers(): array
+    {
+        return [
+            ArrayType::class,
+        ];
     }
 }

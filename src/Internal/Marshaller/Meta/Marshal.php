@@ -21,4 +21,11 @@ use Temporal\Internal\Marshaller\Type\TypeDto;
 #[\Attribute(\Attribute::TARGET_PROPERTY)]
 class Marshal extends TypeDto implements NamedArgumentConstructorAttribute
 {
+    /**
+     * @return TypeDto
+     */
+    public function toTypeDto(): TypeDto
+    {
+        return $this;
+    }
 }

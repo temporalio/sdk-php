@@ -128,7 +128,7 @@ class AttributeMapper implements MapperInterface
                 continue;
             }
 
-            yield $property => $marshal;
+            yield $property => $marshal?->toTypeDto();
         }
     }
 
@@ -148,7 +148,7 @@ class AttributeMapper implements MapperInterface
      *
      * @return TypeInterface|null
      */
-    private function detectType(\ReflectionProperty $property, ?Marshal &$meta): ?TypeInterface
+    private function detectType(\ReflectionProperty $property, ?TypeDto &$meta): ?TypeInterface
     {
         if ($this->factory instanceof ReflectionTypeFactoryInterface) {
             $meta ??= $this->factory->detectType($property);
