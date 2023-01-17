@@ -13,16 +13,19 @@ namespace Temporal\Internal\Marshaller\Type;
 
 use Temporal\Internal\Marshaller\MarshallerInterface;
 
+/**
+ * @template TClass
+ */
 class ObjectType extends Type implements DetectableTypeInterface
 {
     /**
-     * @var \ReflectionClass
+     * @var \ReflectionClass<TClass>
      */
     private \ReflectionClass $reflection;
 
     /**
      * @param MarshallerInterface $marshaller
-     * @param string|null $class
+     * @param class-string<TClass>|null $class
      * @throws \ReflectionException
      */
     public function __construct(MarshallerInterface $marshaller, string $class = null)
@@ -50,7 +53,7 @@ class ObjectType extends Type implements DetectableTypeInterface
         }
 
         if ($current === null) {
-            $current = $this->instance((array)$value);
+            $current = $this->emptyInstance();
         }
 
         return $this->marshaller->unmarshal($value, $current);
@@ -65,9 +68,21 @@ class ObjectType extends Type implements DetectableTypeInterface
     }
 
     /**
-     * @param array $data
-     * @return object
+     * @return TClass
      * @throws \ReflectionException
+     */
+    protected function emptyInstance(): object
+    {
+        return $this->reflection->newInstanceWithoutConstructor();
+    }
+
+    /**
+     * @param array $data
+     *
+     * @return TClass
+     * @throws \ReflectionException
+     *
+     * @deprecated This method is not used anymore and will be removed in the next major release.
      */
     protected function instance(array $data): object
     {

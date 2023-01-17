@@ -15,6 +15,7 @@ use Spiral\Attributes\ReaderInterface;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Meta\Scope;
 use Temporal\Internal\Marshaller\ReflectionTypeFactoryInterface;
+use Temporal\Internal\Marshaller\Type\ObjectType;
 use Temporal\Internal\Marshaller\Type\TypeDto;
 use Temporal\Internal\Marshaller\Type\TypeInterface;
 use Temporal\Internal\Marshaller\TypeFactoryInterface;
@@ -159,6 +160,13 @@ class AttributeMapper implements MapperInterface
             return null;
         }
 
+// todo
+//        // For object-typed properties: remember property type FQN to make object nesting possible
+//        if ($type === ObjectType::class && $meta->of === null) {
+//            $meta->of = $property->getType()?->getName();
+//        }
+//
+//        return $this->factory->create($type, $meta->of ? [$meta->of] : []);
         return $this->factory->create($meta->type, $meta->of ? [$meta->of] : []);
     }
 
