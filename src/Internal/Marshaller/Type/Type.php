@@ -39,7 +39,7 @@ abstract class Type implements TypeInterface
     protected function ofType(MarshallerInterface $marshaller, TypeDto|string $type): ?TypeInterface
     {
         $of = $type instanceof TypeDto && $type->of !== null
-            ? $this->ofType($marshaller, $type->of)
+            ? $type->of
             : null;
         $typeClass = $type instanceof TypeDto ? $type->type : $type;
 

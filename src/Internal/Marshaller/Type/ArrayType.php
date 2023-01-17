@@ -27,10 +27,10 @@ class ArrayType extends Type implements DetectableTypeInterface, MarshalReflecti
 
     /**
      * @param MarshallerInterface $marshaller
-     * @param string|null $typeOrClass
+     * @param TypeDto|string|null $typeOrClass
      * @throws \ReflectionException
      */
-    public function __construct(MarshallerInterface $marshaller, string $typeOrClass = null)
+    public function __construct(MarshallerInterface $marshaller, TypeDto|string $typeOrClass = null)
     {
         if ($typeOrClass !== null) {
             $this->type = $this->ofType($marshaller, $typeOrClass);

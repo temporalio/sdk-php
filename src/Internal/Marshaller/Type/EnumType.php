@@ -15,6 +15,9 @@ use Temporal\Internal\Marshaller\MarshallerInterface;
 
 class EnumType extends Type implements MarshalReflectionInterface
 {
+    private const ERROR_INVALID_TYPE = 'Invalid Enum value. Expected: int or string scalar value for BackedEnum; '
+        . 'array with `name` or `value` keys; a case of the Enum. %s given.';
+
     /** @var class-string<\UnitEnum> */
     private string $classFQCN;
 
@@ -39,11 +42,17 @@ class EnumType extends Type implements MarshalReflectionInterface
     {
         $type = $property->getType();
 
-        if (!$type instanceof \ReflectionNamedType || !\is_a($type->getName(), \UnitEnum::class, true)) {
+        if (!$type instanceof \ReflectionNamedType || !\is_subclass_of($type->getName(), \UnitEnum::class)) {
             return null;
         }
 
-        return new TypeDto($property->getName(), self::class, $type->getName());
+        return $type->allowsNull()
+            ? new TypeDto(
+                $property->getName(),
+                NullableType::class,
+                new TypeDto(type: self::class, of: $type->getName()),
+            )
+            : new TypeDto($property->getName(), self::class, $type->getName());
     }
 
     /**
@@ -51,19 +60,33 @@ class EnumType extends Type implements MarshalReflectionInterface
      */
     public function parse($value, $current)
     {
-        if ($value === null) {
-            return null;
+        if (\is_object($value)) {
+            return $value;
+        }
+
+        if (\is_scalar($value)) {
+            return $this->classFQCN::from($value);
         }
 
         if (\is_array($value)) {
-            $value = $value['name'];
+           // Process the `value` key
+            if (\array_key_exists('value', $value)) {
+                return $this->classFQCN::from($value['value']);
+            }
+
+            // Process the `name` key
+            if (\array_key_exists('name', $value)) {
+                return (new \ReflectionClass($this->classFQCN))
+                    ->getConstant($value['name']);
+            }
         }
 
-        return ($this->classFQCN)::from($value);
+        throw new \InvalidArgumentException(\sprintf(self::ERROR_INVALID_TYPE, \ucfirst(\get_debug_type($value))));
     }
 
     /**
      * @psalm-suppress UndefinedDocblockClass
+     *
      * @return \UnitEnum|null
      */
     public function serialize($value)

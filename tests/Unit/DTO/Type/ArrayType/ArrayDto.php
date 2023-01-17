@@ -13,7 +13,7 @@ namespace Temporal\Tests\Unit\DTO\Type\ArrayType;
 
 use Temporal\Internal\Marshaller\Meta\MarshalArray;
 
-class ArrayDTO
+class ArrayDto
 {
     #[MarshalArray(name: 'foo', nullable: false)]
     public array $foo;

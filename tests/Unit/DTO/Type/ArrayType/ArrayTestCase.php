@@ -18,7 +18,7 @@ class ArrayTestCase extends DTOMarshallingTestCase
 {
     public function testMarshalling(): void
     {
-        $dto = new ArrayDTO();
+        $dto = new ArrayDto();
         $dto->foo = ['foo'];
         $dto->bar = ['bar'];
         $dto->baz = null;
@@ -54,7 +54,7 @@ class ArrayTestCase extends DTOMarshallingTestCase
             'nullableBar' => null,
             'iterable' => ['it'],
             'iterableNullable' => ['itn'],
-        ], new ArrayDTO());
+        ], new ArrayDto());
 
         $this->assertSame(['foo'], $dto->foo);
         $this->assertSame(['bar'], $dto->bar);
@@ -71,14 +71,18 @@ class ArrayTestCase extends DTOMarshallingTestCase
         try {
             $this->unmarshal([
                 'foo' => null,
-            ], new ArrayDTO());
+            ], new ArrayDto());
 
             $this->fail('Null value should not be allowed.');
         } catch (\Throwable $e) {
+            $this->assertStringContainsString(
+                '`foo`',
+                $e->getMessage(),
+            );
             $this->assertInstanceOf(\InvalidArgumentException::class, $e->getPrevious());
             $this->assertStringContainsString(
-                $e->getPrevious()->getMessage(),
                 'Passed value must be a type of array, but null given',
+                $e->getPrevious()->getMessage(),
             );
         }
     }

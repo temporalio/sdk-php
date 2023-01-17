@@ -81,7 +81,7 @@ class Marshaller implements MarshallerInterface
             try {
                 $setter->call($result, $from[$field] ?? null);
             } catch (\Throwable $e) {
-                throw new \RuntimeException(
+                throw new \InvalidArgumentException(
                     \sprintf('Unable to unmarshal field `%s` of class %s', $field, $to::class),
                     previous: $e
                 );
