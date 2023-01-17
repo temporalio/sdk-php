@@ -16,7 +16,7 @@ use Temporal\Internal\Marshaller\MarshallerInterface;
 /**
  * @template TClass
  */
-class ObjectType extends Type implements DetectableTypeInterface
+class ObjectType extends Type implements DetectableTypeInterface, MarshalReflectionInterface
 {
     /**
      * @var \ReflectionClass<TClass>
@@ -41,6 +41,20 @@ class ObjectType extends Type implements DetectableTypeInterface
     public static function match(\ReflectionNamedType $type): bool
     {
         return !$type->isBuiltin();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public static function reflectMarshal(\ReflectionProperty $property): ?TypeDto
+    {
+        $type = $property->getType();
+
+        if (!$type instanceof \ReflectionNamedType || $type->isBuiltin()) {
+            return null;
+        }
+
+        return new TypeDto($property->getName(), self::class, $type->getName());
     }
 
     /**

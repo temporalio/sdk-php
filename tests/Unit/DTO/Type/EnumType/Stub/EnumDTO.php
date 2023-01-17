@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Unit\DTO\Type\EnumType\EnumType;
+namespace Temporal\Tests\Unit\DTO\Type\EnumType\Stub;
 
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\EnumType;

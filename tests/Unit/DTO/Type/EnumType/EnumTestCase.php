@@ -13,9 +13,9 @@ namespace Temporal\Tests\Unit\DTO\Type\EnumType;
 
 use Temporal\Internal\Marshaller\Type\EnumType;
 use Temporal\Tests\Unit\DTO\DTOMarshallingTestCase;
-use Temporal\Tests\Unit\DTO\Type\EnumType\EnumType\EnumDTO;
-use Temporal\Tests\Unit\DTO\Type\EnumType\EnumType\ScalarEnum;
-use Temporal\Tests\Unit\DTO\Type\EnumType\EnumType\SimpleEnum;
+use Temporal\Tests\Unit\DTO\Type\EnumType\Stub\EnumDTO;
+use Temporal\Tests\Unit\DTO\Type\EnumType\Stub\ScalarEnum;
+use Temporal\Tests\Unit\DTO\Type\EnumType\Stub\SimpleEnum;
 
 /**
  * @requires PHP >= 8.1

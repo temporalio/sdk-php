@@ -32,6 +32,9 @@ class EnumType extends Type implements MarshalReflectionInterface
         parent::__construct($marshaller);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public static function reflectMarshal(\ReflectionProperty $property): ?TypeDto
     {
         $type = $property->getType();
@@ -43,6 +46,9 @@ class EnumType extends Type implements MarshalReflectionInterface
         return new TypeDto($property->getName(), self::class, $type->getName());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function parse($value, $current)
     {
         if ($value === null) {

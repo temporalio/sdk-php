@@ -51,6 +51,9 @@ class ArrayType extends Type implements DetectableTypeInterface, MarshalReflecti
         return $type->getName() === 'array' || $type->getName() === 'iterable';
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public static function reflectMarshal(\ReflectionProperty $property): ?TypeDto
     {
         $type = $property->getType();
