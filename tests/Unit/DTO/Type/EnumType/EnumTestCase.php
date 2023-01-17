@@ -58,7 +58,7 @@ class EnumTestCase extends DTOMarshallingTestCase
     protected function getTypeMatchers(): array
     {
         return [
-            static fn (\ReflectionNamedType $type): ?string => EnumType::match($type) ? EnumType::class : null,
+            EnumType::class,
         ];
     }
 }

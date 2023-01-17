@@ -22,6 +22,7 @@ use Temporal\Internal\Marshaller\Type\TypeInterface;
 
 /**
  * @psalm-type CallableTypeMatcher = \Closure(\ReflectionNamedType): ?string
+ * @psalm-type CallableTypeDtoMatcher = \Closure(\ReflectionProperty): ?TypeDto
  */
 class TypeFactory implements TypeFactoryInterface, ReflectionTypeFactoryInterface
 {
@@ -31,9 +32,14 @@ class TypeFactory implements TypeFactoryInterface, ReflectionTypeFactoryInterfac
     private const ERROR_INVALID_TYPE = 'Mapping type must implement %s, but %s given';
 
     /**
-     * @var array<CallableTypeMatcher>
+     * @var list<CallableTypeMatcher>
      */
-    private array $matchers;
+    private array $matchers = [];
+
+    /**
+     * @var list<MarshalReflectionInterface>
+     */
+    private array $typeDtoMatchers = [];
 
     /**
      * @var MarshallerInterface
@@ -91,18 +97,10 @@ class TypeFactory implements TypeFactoryInterface, ReflectionTypeFactoryInterfac
      */
     public function detectType(\ReflectionProperty $property): ?TypeDto
     {
-        $type = $property->getType();
-        /**
-         * - Union types ({@see \ReflectionUnionType}) cannot be uniquely determined.
-         * - The {@see null} type is an alias of "mixed" type.
-         */
-        if (!$type instanceof \ReflectionNamedType) {
-            return null;
-        }
-
-        foreach ($this->matchers as $matcher) {
-            if ($result = $matcher($type)) {
-                return new TypeDto($property->getName(), $result);
+        foreach ($this->typeDtoMatchers as $matcher) {
+            $result = $matcher::reflectMarshal($property);
+            if ($result !== null) {
+                return $result;
             }
         }
 
@@ -120,9 +118,15 @@ class TypeFactory implements TypeFactoryInterface, ReflectionTypeFactoryInterfac
                 continue;
             }
 
-            $this->matchers[] = static fn (\ReflectionNamedType $type): ?string => $matcher::match($type)
-                ? $matcher
-                : null;
+            if (\is_a($matcher, MarshalReflectionInterface::class, true)) {
+                $this->typeDtoMatchers[] = $matcher;
+            }
+
+            if (\is_a($matcher, DetectableTypeInterface::class, true)) {
+                $this->matchers[] = static fn (\ReflectionNamedType $type): ?string => $matcher::match($type)
+                    ? $matcher
+                    : null;
+            }
         }
     }
 

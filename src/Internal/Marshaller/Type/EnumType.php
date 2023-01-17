@@ -13,10 +13,9 @@ namespace Temporal\Internal\Marshaller\Type;
 
 use Temporal\Internal\Marshaller\MarshallerInterface;
 
-use function is_array;
-
-class EnumType extends Type implements DetectableTypeInterface
+class EnumType extends Type implements MarshalReflectionInterface
 {
+    /** @var class-string<\UnitEnum> */
     private string $classFQCN;
 
     public function __construct(MarshallerInterface $marshaller, string $class = null)
@@ -33,9 +32,15 @@ class EnumType extends Type implements DetectableTypeInterface
         parent::__construct($marshaller);
     }
 
-    public static function match(\ReflectionNamedType $type): bool
+    public static function reflectMarshal(\ReflectionProperty $property): ?TypeDto
     {
-        return $type->getName() === 'enum';
+        $type = $property->getType();
+
+        if (!$type instanceof \ReflectionNamedType || !\is_a($type->getName(), \UnitEnum::class, true)) {
+            return null;
+        }
+
+        return new TypeDto($property->getName(), self::class, $type->getName());
     }
 
     public function parse($value, $current)
@@ -44,7 +49,7 @@ class EnumType extends Type implements DetectableTypeInterface
             return null;
         }
 
-        if (is_array($value)) {
+        if (\is_array($value)) {
             $value = $value['name'];
         }
 
