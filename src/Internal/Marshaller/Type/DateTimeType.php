@@ -13,6 +13,7 @@ namespace Temporal\Internal\Marshaller\Type;
 
 use JetBrains\PhpStorm\Pure;
 use Temporal\Internal\Marshaller\MarshallerInterface;
+use Temporal\Internal\Marshaller\MarshallingRule;
 use Temporal\Internal\Support\DateTime;
 use Temporal\Internal\Support\Inheritance;
 
@@ -41,6 +42,22 @@ class DateTimeType extends Type implements DetectableTypeInterface
     public static function match(\ReflectionNamedType $type): bool
     {
         return !$type->isBuiltin() && Inheritance::implements($type->getName(), \DateTimeInterface::class);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public static function makeRule(\ReflectionProperty $property): ?MarshallingRule
+    {
+        $type = $property->getType();
+
+        if (!$type instanceof \ReflectionNamedType || !\is_subclass_of($type->getName(), \DateTimeInterface::class)) {
+            return null;
+        }
+
+        return $type->allowsNull()
+            ? new MarshallingRule($property->getName(), NullableType::class, self::class)
+            : new MarshallingRule($property->getName(), self::class);
     }
 
     /**

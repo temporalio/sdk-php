@@ -19,6 +19,8 @@ use Temporal\Internal\Marshaller\MarshallingRule;
 interface RuleFactoryInterface extends TypeInterface
 {
     /**
+     * Make a marshalling rule for the given property.
+     *
      * @param \ReflectionProperty $property
      *
      * @return null|MarshallingRule

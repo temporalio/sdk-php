@@ -152,7 +152,8 @@ class AttributeMapper implements MapperInterface
         if ($this->factory instanceof RuleFactoryInterface) {
             $rule ??= $this->factory->makeRule($property);
         }
-        $rule ??= new Marshal($property->getName());
+        $rule ??= new MarshallingRule();
+        $rule->name ??= $property->getName();
         $rule->type ??= $this->factory->detect($property->getType());
 
         if ($rule->type === null) {

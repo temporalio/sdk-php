@@ -63,7 +63,7 @@ class ObjectType extends Type implements DetectableTypeInterface, RuleFactoryInt
      */
     public function parse($value, $current): object
     {
-        if (is_object($value)) {
+        if (\is_object($value)) {
             return $value;
         }
 
