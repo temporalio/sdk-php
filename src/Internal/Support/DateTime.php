@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Support;
 
 use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 
 final class DateTime
@@ -28,7 +29,7 @@ final class DateTime
      * @param \DateTimeZone|string|null $tz
      * @return CarbonInterface
      */
-    public static function parse($time = null, $tz = null): CarbonInterface
+    public static function parse($time = null, $tz = null, string $class = \DateTimeInterface::class): \DateTimeInterface
     {
         if (\is_string($time) && $matched = self::extractRfc3339Accuracy($time)) {
             [$datetime, $accuracy] = $matched;
@@ -39,7 +40,12 @@ final class DateTime
             }
         }
 
-        return Carbon::parse($time, $tz);
+        return match ($class) {
+            \DateTimeImmutable::class => new \DateTimeImmutable($time, $tz),
+            \DateTime::class => new \DateTime($time, $tz),
+            CarbonImmutable::class => CarbonImmutable::parse($time, $tz),
+            default => Carbon::parse($time, $tz),
+        };
     }
 
     /**

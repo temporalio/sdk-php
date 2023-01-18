@@ -68,9 +68,10 @@ abstract class DTOMarshallingTestCase extends UnitTestCase
     }
 
     /**
+     * @template T of object
      * @param array $payload
-     * @param object $to
-     * @return object
+     * @param T $to
+     * @return T
      * @throws \ReflectionException
      */
     protected function unmarshal(array $payload, object $to): object
