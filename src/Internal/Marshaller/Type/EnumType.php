@@ -12,8 +12,9 @@ declare(strict_types=1);
 namespace Temporal\Internal\Marshaller\Type;
 
 use Temporal\Internal\Marshaller\MarshallerInterface;
+use Temporal\Internal\Marshaller\MarshallingRule;
 
-class EnumType extends Type implements MarshalReflectionInterface
+class EnumType extends Type implements RuleFactoryInterface
 {
     private const ERROR_INVALID_TYPE = 'Invalid Enum value. Expected: int or string scalar value for BackedEnum; '
         . 'array with `name` or `value` keys; a case of the Enum. %s given.';
@@ -38,7 +39,7 @@ class EnumType extends Type implements MarshalReflectionInterface
     /**
      * {@inheritDoc}
      */
-    public static function reflectMarshal(\ReflectionProperty $property): ?TypeDto
+    public static function makeRule(\ReflectionProperty $property): ?MarshallingRule
     {
         $type = $property->getType();
 
@@ -47,12 +48,12 @@ class EnumType extends Type implements MarshalReflectionInterface
         }
 
         return $type->allowsNull()
-            ? new TypeDto(
+            ? new MarshallingRule(
                 $property->getName(),
                 NullableType::class,
-                new TypeDto(type: self::class, of: $type->getName()),
+                new MarshallingRule(type: self::class, of: $type->getName()),
             )
-            : new TypeDto($property->getName(), self::class, $type->getName());
+            : new MarshallingRule($property->getName(), self::class, $type->getName());
     }
 
     /**

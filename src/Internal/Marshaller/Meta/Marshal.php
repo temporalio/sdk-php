@@ -12,15 +12,15 @@ declare(strict_types=1);
 namespace Temporal\Internal\Marshaller\Meta;
 
 use Spiral\Attributes\NamedArgumentConstructorAttribute;
+use Temporal\Internal\Marshaller\MarshallingRule;
 use Temporal\Internal\Marshaller\Type\NullableType;
-use Temporal\Internal\Marshaller\Type\TypeDto;
 
 /**
  * @Annotation
  * @Target({ "PROPERTY" })
  */
 #[\Attribute(\Attribute::TARGET_PROPERTY)]
-class Marshal extends TypeDto implements NamedArgumentConstructorAttribute
+class Marshal extends MarshallingRule implements NamedArgumentConstructorAttribute
 {
     /**
      * @param string|null $name
@@ -38,15 +38,15 @@ class Marshal extends TypeDto implements NamedArgumentConstructorAttribute
     }
 
     /**
-     * @return TypeDto
+     * @return MarshallingRule
      */
-    public function toTypeDto(): TypeDto
+    public function toTypeDto(): MarshallingRule
     {
         if (!$this->nullable) {
             return $this;
         }
 
-        return new TypeDto(
+        return new MarshallingRule(
             $this->name,
             NullableType::class,
             $this->of === null ? $this->type : $this,

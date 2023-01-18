@@ -12,11 +12,12 @@ declare(strict_types=1);
 namespace Temporal\Internal\Marshaller\Type;
 
 use Temporal\Internal\Marshaller\MarshallerInterface;
+use Temporal\Internal\Marshaller\MarshallingRule;
 
 /**
  * @template TClass
  */
-class ObjectType extends Type implements DetectableTypeInterface, MarshalReflectionInterface
+class ObjectType extends Type implements DetectableTypeInterface, RuleFactoryInterface
 {
     /**
      * @var \ReflectionClass<TClass>
@@ -46,7 +47,7 @@ class ObjectType extends Type implements DetectableTypeInterface, MarshalReflect
     /**
      * {@inheritDoc}
      */
-    public static function reflectMarshal(\ReflectionProperty $property): ?TypeDto
+    public static function makeRule(\ReflectionProperty $property): ?MarshallingRule
     {
         $type = $property->getType();
 
@@ -54,7 +55,7 @@ class ObjectType extends Type implements DetectableTypeInterface, MarshalReflect
             return null;
         }
 
-        return new TypeDto($property->getName(), self::class, $type->getName());
+        return new MarshallingRule($property->getName(), self::class, $type->getName());
     }
 
     /**

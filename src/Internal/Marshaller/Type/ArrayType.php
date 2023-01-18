@@ -12,8 +12,9 @@ declare(strict_types=1);
 namespace Temporal\Internal\Marshaller\Type;
 
 use Temporal\Internal\Marshaller\MarshallerInterface;
+use Temporal\Internal\Marshaller\MarshallingRule;
 
-class ArrayType extends Type implements DetectableTypeInterface, MarshalReflectionInterface
+class ArrayType extends Type implements DetectableTypeInterface, RuleFactoryInterface
 {
     /**
      * @var string
@@ -27,10 +28,11 @@ class ArrayType extends Type implements DetectableTypeInterface, MarshalReflecti
 
     /**
      * @param MarshallerInterface $marshaller
-     * @param TypeDto|string|null $typeOrClass
+     * @param MarshallingRule|string|null $typeOrClass
+     *
      * @throws \ReflectionException
      */
-    public function __construct(MarshallerInterface $marshaller, TypeDto|string $typeOrClass = null)
+    public function __construct(MarshallerInterface $marshaller, MarshallingRule|string $typeOrClass = null)
     {
         if ($typeOrClass !== null) {
             $this->type = $this->ofType($marshaller, $typeOrClass);
@@ -50,7 +52,7 @@ class ArrayType extends Type implements DetectableTypeInterface, MarshalReflecti
     /**
      * {@inheritDoc}
      */
-    public static function reflectMarshal(\ReflectionProperty $property): ?TypeDto
+    public static function makeRule(\ReflectionProperty $property): ?MarshallingRule
     {
         $type = $property->getType();
 
@@ -59,8 +61,8 @@ class ArrayType extends Type implements DetectableTypeInterface, MarshalReflecti
         }
 
         return $type->allowsNull()
-            ? new TypeDto($property->getName(), NullableType::class, self::class)
-            : new TypeDto($property->getName(), self::class);
+            ? new MarshallingRule($property->getName(), NullableType::class, self::class)
+            : new MarshallingRule($property->getName(), self::class);
     }
 
     /**

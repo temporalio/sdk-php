@@ -15,16 +15,15 @@ use Temporal\Internal\Marshaller\Type\ArrayType;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\DateTimeType;
 use Temporal\Internal\Marshaller\Type\DetectableTypeInterface;
-use Temporal\Internal\Marshaller\Type\MarshalReflectionInterface;
-use Temporal\Internal\Marshaller\Type\TypeDto;
 use Temporal\Internal\Marshaller\Type\ObjectType;
+use Temporal\Internal\Marshaller\Type\RuleFactoryInterface as TypeRuleFactoryInterface;
 use Temporal\Internal\Marshaller\Type\TypeInterface;
 
 /**
  * @psalm-type CallableTypeMatcher = \Closure(\ReflectionNamedType): ?string
- * @psalm-type CallableTypeDtoMatcher = \Closure(\ReflectionProperty): ?TypeDto
+ * @psalm-type CallableTypeDtoMatcher = \Closure(\ReflectionProperty): ?MarshallingRule
  */
-class TypeFactory implements TypeFactoryInterface, ReflectionTypeFactoryInterface
+class TypeFactory implements RuleFactoryInterface
 {
     /**
      * @var string
@@ -37,7 +36,7 @@ class TypeFactory implements TypeFactoryInterface, ReflectionTypeFactoryInterfac
     private array $matchers = [];
 
     /**
-     * @var list<MarshalReflectionInterface>
+     * @var list<TypeRuleFactoryInterface>
      */
     private array $typeDtoMatchers = [];
 
@@ -48,7 +47,7 @@ class TypeFactory implements TypeFactoryInterface, ReflectionTypeFactoryInterfac
 
     /**
      * @param MarshallerInterface $marshaller
-     * @param array<CallableTypeMatcher|DetectableTypeInterface|MarshalReflectionInterface> $matchers
+     * @param array<CallableTypeMatcher|DetectableTypeInterface|TypeRuleFactoryInterface> $matchers
      */
     public function __construct(MarshallerInterface $marshaller, array $matchers)
     {
@@ -95,10 +94,10 @@ class TypeFactory implements TypeFactoryInterface, ReflectionTypeFactoryInterfac
     /**
      * {@inheritDoc}
      */
-    public function detectType(\ReflectionProperty $property): ?TypeDto
+    public function makeRule(\ReflectionProperty $property): ?MarshallingRule
     {
         foreach ($this->typeDtoMatchers as $matcher) {
-            $result = $matcher::reflectMarshal($property);
+            $result = $matcher::makeRule($property);
             if ($result !== null) {
                 return $result;
             }
@@ -108,7 +107,7 @@ class TypeFactory implements TypeFactoryInterface, ReflectionTypeFactoryInterfac
     }
 
     /**
-     * @param iterable<CallableTypeMatcher|DetectableTypeInterface|MarshalReflectionInterface> $matchers
+     * @param iterable<CallableTypeMatcher|DetectableTypeInterface|TypeRuleFactoryInterface> $matchers
      */
     private function createMatchers(iterable $matchers): void
     {
@@ -118,11 +117,11 @@ class TypeFactory implements TypeFactoryInterface, ReflectionTypeFactoryInterfac
                 continue;
             }
 
-            if (\is_a($matcher, MarshalReflectionInterface::class, true)) {
+            if (\is_subclass_of($matcher, TypeRuleFactoryInterface::class, true)) {
                 $this->typeDtoMatchers[] = $matcher;
             }
 
-            if (\is_a($matcher, DetectableTypeInterface::class, true)) {
+            if (\is_subclass_of($matcher, DetectableTypeInterface::class, true)) {
                 $this->matchers[] = static fn (\ReflectionNamedType $type): ?string => $matcher::match($type)
                     ? $matcher
                     : null;

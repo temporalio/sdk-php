@@ -11,14 +11,16 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Marshaller;
 
-use Temporal\Internal\Marshaller\Type\TypeDto;
-
-interface ReflectionTypeFactoryInterface extends TypeFactoryInterface
+/**
+ * Defines ability for {@see TypeFactoryInterface} to produce {@see MarshallingRule}
+ * using {@see Type\RuleFactoryInterface}.
+ */
+interface RuleFactoryInterface extends TypeFactoryInterface
 {
     /**
      * @param \ReflectionProperty $property
      *
-     * @return null|TypeDto
+     * @return null|MarshallingRule
      */
-    public function detectType(\ReflectionProperty $property): ?TypeDto;
+    public function makeRule(\ReflectionProperty $property): ?MarshallingRule;
 }

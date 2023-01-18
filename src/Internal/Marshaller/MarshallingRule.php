@@ -9,12 +9,14 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Internal\Marshaller\Type;
+namespace Temporal\Internal\Marshaller;
+
+use Temporal\Internal\Marshaller\Type\TypeInterface;
 
 /**
  * @internal
  */
-class TypeDto
+class MarshallingRule
 {
     /**
      * @param string|null $name

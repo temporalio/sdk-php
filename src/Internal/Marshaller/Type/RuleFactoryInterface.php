@@ -11,17 +11,17 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Marshaller\Type;
 
-use Temporal\Internal\Marshaller\Meta\Marshal;
+use Temporal\Internal\Marshaller\MarshallingRule;
 
 /**
  * The type can detect the property type information from its reflection.
  */
-interface MarshalReflectionInterface extends TypeInterface
+interface RuleFactoryInterface extends TypeInterface
 {
     /**
      * @param \ReflectionProperty $property
      *
-     * @return Marshal|null
+     * @return null|MarshallingRule
      */
-    public static function reflectMarshal(\ReflectionProperty $property): ?TypeDto;
+    public static function makeRule(\ReflectionProperty $property): ?MarshallingRule;
 }

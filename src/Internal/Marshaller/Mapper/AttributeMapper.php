@@ -12,11 +12,10 @@ declare(strict_types=1);
 namespace Temporal\Internal\Marshaller\Mapper;
 
 use Spiral\Attributes\ReaderInterface;
+use Temporal\Internal\Marshaller\MarshallingRule;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Meta\Scope;
-use Temporal\Internal\Marshaller\ReflectionTypeFactoryInterface;
-use Temporal\Internal\Marshaller\Type\ObjectType;
-use Temporal\Internal\Marshaller\Type\TypeDto;
+use Temporal\Internal\Marshaller\RuleFactoryInterface;
 use Temporal\Internal\Marshaller\Type\TypeInterface;
 use Temporal\Internal\Marshaller\TypeFactoryInterface;
 
@@ -110,12 +109,12 @@ class AttributeMapper implements MapperInterface
     }
 
     /**
-     * Generates property name as key and related {@see TypeDto} or {@see null} (if no {@see Marshal} attributes found)
-     * as value.
+     * Generates property name as key and related {@see MarshallingRule} or {@see null} (if no {@see Marshal}
+     * attributes found) as value.
      *
      * @param Scope $scope
      *
-     * @return iterable<\ReflectionProperty, TypeDto|null>
+     * @return iterable<\ReflectionProperty, MarshallingRule|null>
      */
     private function getPropertyMappings(Scope $scope): iterable
     {
@@ -144,23 +143,23 @@ class AttributeMapper implements MapperInterface
 
     /**
      * @param \ReflectionProperty $property
-     * @param Marshal $meta
+     * @param MarshallingRule|null $rule
      *
      * @return TypeInterface|null
      */
-    private function detectType(\ReflectionProperty $property, ?TypeDto &$meta): ?TypeInterface
+    private function detectType(\ReflectionProperty $property, ?MarshallingRule &$rule): ?TypeInterface
     {
-        if ($this->factory instanceof ReflectionTypeFactoryInterface) {
-            $meta ??= $this->factory->detectType($property);
+        if ($this->factory instanceof RuleFactoryInterface) {
+            $rule ??= $this->factory->makeRule($property);
         }
-        $meta ??= new Marshal($property->getName());
-        $meta->type ??= $this->factory->detect($property->getType());
+        $rule ??= new Marshal($property->getName());
+        $rule->type ??= $this->factory->detect($property->getType());
 
-        if ($meta->type === null) {
+        if ($rule->type === null) {
             return null;
         }
 
-        return $this->factory->create($meta->type, $meta->of ? [$meta->of] : []);
+        return $this->factory->create($rule->type, $rule->of ? [$rule->of] : []);
     }
 
     /**
