@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Marshaller;
 
+use Temporal\Exception\InvalidArgumentException;
 use Temporal\Internal\Marshaller\Mapper\MapperFactoryInterface;
 use Temporal\Internal\Marshaller\Mapper\MapperInterface;
 
@@ -78,7 +79,14 @@ class Marshaller implements MarshallerInterface
                 continue;
             }
 
-            $setter->call($result, $from[$field] ?? null);
+            try {
+                $setter->call($result, $from[$field] ?? null);
+            } catch (\Throwable $e) {
+                throw new InvalidArgumentException(
+                    \sprintf('Unable to unmarshal field `%s` of class %s', $field, $to::class),
+                    previous: $e
+                );
+            }
         }
 
         return $result;

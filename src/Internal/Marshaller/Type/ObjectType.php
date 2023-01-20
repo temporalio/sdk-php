@@ -12,17 +12,21 @@ declare(strict_types=1);
 namespace Temporal\Internal\Marshaller\Type;
 
 use Temporal\Internal\Marshaller\MarshallerInterface;
+use Temporal\Internal\Marshaller\MarshallingRule;
 
-class ObjectType extends Type implements DetectableTypeInterface
+/**
+ * @template TClass
+ */
+class ObjectType extends Type implements DetectableTypeInterface, RuleFactoryInterface
 {
     /**
-     * @var \ReflectionClass
+     * @var \ReflectionClass<TClass>
      */
     private \ReflectionClass $reflection;
 
     /**
      * @param MarshallerInterface $marshaller
-     * @param string|null $class
+     * @param class-string<TClass>|null $class
      * @throws \ReflectionException
      */
     public function __construct(MarshallerInterface $marshaller, string $class = null)
@@ -43,14 +47,28 @@ class ObjectType extends Type implements DetectableTypeInterface
     /**
      * {@inheritDoc}
      */
+    public static function makeRule(\ReflectionProperty $property): ?MarshallingRule
+    {
+        $type = $property->getType();
+
+        if (!$type instanceof \ReflectionNamedType || $type->isBuiltin()) {
+            return null;
+        }
+
+        return new MarshallingRule($property->getName(), self::class, $type->getName());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function parse($value, $current): object
     {
-        if (is_object($value)) {
+        if (\is_object($value)) {
             return $value;
         }
 
         if ($current === null) {
-            $current = $this->instance((array)$value);
+            $current = $this->emptyInstance();
         }
 
         return $this->marshaller->unmarshal($value, $current);
@@ -65,9 +83,21 @@ class ObjectType extends Type implements DetectableTypeInterface
     }
 
     /**
-     * @param array $data
-     * @return object
+     * @return TClass
      * @throws \ReflectionException
+     */
+    protected function emptyInstance(): object
+    {
+        return $this->reflection->newInstanceWithoutConstructor();
+    }
+
+    /**
+     * @param array $data
+     *
+     * @return TClass
+     * @throws \ReflectionException
+     *
+     * @deprecated This method is not used anymore and will be removed in the next major release.
      */
     protected function instance(array $data): object
     {

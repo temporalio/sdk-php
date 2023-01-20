@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Marshaller\Type;
 
 use Temporal\Internal\Marshaller\MarshallerInterface;
+use Temporal\Internal\Marshaller\MarshallingRule;
 
 class NullableType extends Type
 {
@@ -22,10 +23,11 @@ class NullableType extends Type
 
     /**
      * @param MarshallerInterface $marshaller
-     * @param string|null $typeOrClass
+     * @param MarshallingRule|string|null $typeOrClass
+     *
      * @throws \ReflectionException
      */
-    public function __construct(MarshallerInterface $marshaller, string $typeOrClass = null)
+    public function __construct(MarshallerInterface $marshaller, MarshallingRule|string $typeOrClass = null)
     {
         if ($typeOrClass !== null) {
             $this->type = $this->ofType($marshaller, $typeOrClass);

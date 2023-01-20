@@ -9,9 +9,12 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Unit\DTO\Type\EnumType;
+namespace Temporal\Tests\Unit\DTO\Type\ObjectType\Stub;
 
-enum SimpleEnum
+final class ChildDto
 {
-    case TEST;
+    public function __construct(
+        public string $foo,
+    ) {
+    }
 }

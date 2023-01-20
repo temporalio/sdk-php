@@ -11,8 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Functional\Client;
 
-use Temporal\Tests\Unit\DTO\Type\EnumType\ScalarEnum;
-use Temporal\Tests\Unit\DTO\Type\EnumType\SimpleEnum;
+use Temporal\Tests\Unit\DTO\Type\EnumType\Stub\ScalarEnum;
+use Temporal\Tests\Unit\DTO\Type\EnumType\Stub\SimpleEnum;
 use Temporal\Tests\Workflow\ScalarEnumWorkflow;
 use Temporal\Tests\Workflow\SimpleEnumWorkflow;
 

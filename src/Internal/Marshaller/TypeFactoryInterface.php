@@ -18,12 +18,14 @@ interface TypeFactoryInterface
     /**
      * @param class-string<TypeInterface> $type
      * @param array $args
+     *
      * @return TypeInterface|null
      */
     public function create(string $type, array $args): ?TypeInterface;
 
     /**
      * @param \ReflectionType|null $type
+     *
      * @return class-string<TypeInterface>|null
      */
     public function detect(?\ReflectionType $type): ?string;

@@ -16,12 +16,14 @@ use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\DateTimeType;
 use Temporal\Internal\Marshaller\Type\DetectableTypeInterface;
 use Temporal\Internal\Marshaller\Type\ObjectType;
+use Temporal\Internal\Marshaller\Type\RuleFactoryInterface as TypeRuleFactoryInterface;
 use Temporal\Internal\Marshaller\Type\TypeInterface;
 
 /**
  * @psalm-type CallableTypeMatcher = \Closure(\ReflectionNamedType): ?string
+ * @psalm-type CallableTypeDtoMatcher = \Closure(\ReflectionProperty): ?MarshallingRule
  */
-class TypeFactory implements TypeFactoryInterface
+class TypeFactory implements RuleFactoryInterface
 {
     /**
      * @var string
@@ -29,9 +31,14 @@ class TypeFactory implements TypeFactoryInterface
     private const ERROR_INVALID_TYPE = 'Mapping type must implement %s, but %s given';
 
     /**
-     * @var array<CallableTypeMatcher>
+     * @var list<CallableTypeMatcher>
      */
-    private array $matchers;
+    private array $matchers = [];
+
+    /**
+     * @var list<TypeRuleFactoryInterface>
+     */
+    private array $typeDtoMatchers = [];
 
     /**
      * @var MarshallerInterface
@@ -40,19 +47,14 @@ class TypeFactory implements TypeFactoryInterface
 
     /**
      * @param MarshallerInterface $marshaller
-     * @param array<CallableTypeMatcher|DetectableTypeInterface> $matchers
+     * @param array<CallableTypeMatcher|DetectableTypeInterface|TypeRuleFactoryInterface> $matchers
      */
     public function __construct(MarshallerInterface $marshaller, array $matchers)
     {
         $this->marshaller = $marshaller;
 
-        foreach ($this->createMatchers($matchers) as $matcher) {
-            $this->matchers[] = $matcher;
-        }
-
-        foreach ($this->createMatchers($this->getDefaultMatchers()) as $matcher) {
-            $this->matchers[] = $matcher;
-        }
+        $this->createMatchers($matchers);
+        $this->createMatchers($this->getDefaultMatchers());
     }
 
     /**
@@ -90,18 +92,40 @@ class TypeFactory implements TypeFactoryInterface
     }
 
     /**
-     * @param iterable<CallableTypeMatcher|DetectableTypeInterface> $matchers
-     * @return iterable<CallableTypeMatcher>
+     * {@inheritDoc}
      */
-    private function createMatchers(iterable $matchers): iterable
+    public function makeRule(\ReflectionProperty $property): ?MarshallingRule
+    {
+        foreach ($this->typeDtoMatchers as $matcher) {
+            $result = $matcher::makeRule($property);
+            if ($result !== null) {
+                return $result;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param iterable<CallableTypeMatcher|DetectableTypeInterface|TypeRuleFactoryInterface> $matchers
+     */
+    private function createMatchers(iterable $matchers): void
     {
         foreach ($matchers as $matcher) {
             if ($matcher instanceof \Closure) {
-                yield $matcher;
+                $this->matchers[] = $matcher;
                 continue;
             }
 
-            yield static fn (\ReflectionNamedType $type): ?string => $matcher::match($type) ? $matcher : null;
+            if (\is_subclass_of($matcher, TypeRuleFactoryInterface::class, true)) {
+                $this->typeDtoMatchers[] = $matcher;
+            }
+
+            if (\is_subclass_of($matcher, DetectableTypeInterface::class, true)) {
+                $this->matchers[] = static fn (\ReflectionNamedType $type): ?string => $matcher::match($type)
+                    ? $matcher
+                    : null;
+            }
         }
     }
 

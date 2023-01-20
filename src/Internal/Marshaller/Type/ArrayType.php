@@ -12,9 +12,9 @@ declare(strict_types=1);
 namespace Temporal\Internal\Marshaller\Type;
 
 use Temporal\Internal\Marshaller\MarshallerInterface;
-use Temporal\Internal\Support\Inheritance;
+use Temporal\Internal\Marshaller\MarshallingRule;
 
-class ArrayType extends Type implements DetectableTypeInterface
+class ArrayType extends Type implements DetectableTypeInterface, RuleFactoryInterface
 {
     /**
      * @var string
@@ -28,16 +28,14 @@ class ArrayType extends Type implements DetectableTypeInterface
 
     /**
      * @param MarshallerInterface $marshaller
-     * @param string|null $typeOrClass
+     * @param MarshallingRule|string|null $typeOrClass
+     *
      * @throws \ReflectionException
      */
-    public function __construct(MarshallerInterface $marshaller, string $typeOrClass = null)
+    public function __construct(MarshallerInterface $marshaller, MarshallingRule|string $typeOrClass = null)
     {
         if ($typeOrClass !== null) {
-            $this->type = Inheritance::implements($typeOrClass, TypeInterface::class)
-                ? new $typeOrClass($marshaller)
-                : new ObjectType($marshaller, $typeOrClass)
-            ;
+            $this->type = $this->ofType($marshaller, $typeOrClass);
         }
 
         parent::__construct($marshaller);
@@ -48,7 +46,23 @@ class ArrayType extends Type implements DetectableTypeInterface
      */
     public static function match(\ReflectionNamedType $type): bool
     {
-        return $type->getName() === 'array';
+        return $type->getName() === 'array' || $type->getName() === 'iterable';
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public static function makeRule(\ReflectionProperty $property): ?MarshallingRule
+    {
+        $type = $property->getType();
+
+        if (!$type instanceof \ReflectionNamedType || !\in_array($type->getName(), ['array', 'iterable'], true)) {
+            return null;
+        }
+
+        return $type->allowsNull()
+            ? new MarshallingRule($property->getName(), NullableType::class, self::class)
+            : new MarshallingRule($property->getName(), self::class);
     }
 
     /**
@@ -58,10 +72,6 @@ class ArrayType extends Type implements DetectableTypeInterface
      */
     public function parse($value, $current)
     {
-        if ($value === null) {
-            return null;
-        }
-
         if (!\is_array($value)) {
             throw new \InvalidArgumentException(\sprintf(self::ERROR_INVALID_TYPE, \get_debug_type($value)));
         }
@@ -80,7 +90,8 @@ class ArrayType extends Type implements DetectableTypeInterface
     }
 
     /**
-     * @param array $value
+     * @param iterable $value
+     *
      * @return array
      */
     public function serialize($value): array
@@ -95,6 +106,15 @@ class ArrayType extends Type implements DetectableTypeInterface
             return $result;
         }
 
-        return $value;
+        if (\is_array($value)) {
+            return $value;
+        }
+
+        // Convert iterable to array
+        $result = [];
+        foreach ($value as $i => $item) {
+            $result[$i] = $item;
+        }
+        return $result;
     }
 }
