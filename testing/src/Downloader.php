@@ -12,11 +12,13 @@ final class Downloader
     private const LATEST_JAVA_SDK_RELEASE = 'https://api.github.com/repos/temporalio/sdk-java/releases/latest';
     private Filesystem $filesystem;
     private HttpClientInterface $httpClient;
+    private string $javaSdkReleaseUrl;
 
-    public function __construct(Filesystem $filesystem, HttpClientInterface $httpClient)
+    public function __construct(Filesystem $filesystem, HttpClientInterface $httpClient, ?string $javaSdkReleaseUrl = null)
     {
         $this->filesystem = $filesystem;
         $this->httpClient = $httpClient;
+        $this->javaSdkReleaseUrl = $javaSdkReleaseUrl ?? self::LATEST_JAVA_SDK_RELEASE;
     }
 
     private function findAsset(array $assets, string $systemPlatform, string $systemArch): array
@@ -74,7 +76,7 @@ final class Downloader
 
     private function getAsset(string $systemPlatform, string $systemArch): array
     {
-        $response = $this->httpClient->request('GET', self::LATEST_JAVA_SDK_RELEASE);
+        $response = $this->httpClient->request('GET', $this->javaSdkReleaseUrl);
         $assets = $response->toArray()['assets'];
 
         return $this->findAsset($assets, $systemPlatform, $systemArch);
