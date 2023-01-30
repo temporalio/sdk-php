@@ -14,11 +14,14 @@ final class Downloader
     private HttpClientInterface $httpClient;
     private string $javaSdkReleaseUrl;
 
-    public function __construct(Filesystem $filesystem, HttpClientInterface $httpClient, ?string $javaSdkReleaseUrl = null)
-    {
+    public function __construct(
+        Filesystem $filesystem,
+        HttpClientInterface $httpClient,
+        string $javaSdkReleaseUrl = self::LATEST_JAVA_SDK_RELEASE,
+    ) {
         $this->filesystem = $filesystem;
         $this->httpClient = $httpClient;
-        $this->javaSdkReleaseUrl = $javaSdkReleaseUrl ?? self::LATEST_JAVA_SDK_RELEASE;
+        $this->javaSdkReleaseUrl = $javaSdkReleaseUrl;
     }
 
     private function findAsset(array $assets, string $systemPlatform, string $systemArch): array
