@@ -15,6 +15,7 @@ use Temporal\Internal\Marshaller\Type\ArrayType;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\DateTimeType;
 use Temporal\Internal\Marshaller\Type\DetectableTypeInterface;
+use Temporal\Internal\Marshaller\Type\EnumType;
 use Temporal\Internal\Marshaller\Type\ObjectType;
 use Temporal\Internal\Marshaller\Type\RuleFactoryInterface as TypeRuleFactoryInterface;
 use Temporal\Internal\Marshaller\Type\TypeInterface;
@@ -134,6 +135,10 @@ class TypeFactory implements RuleFactoryInterface
      */
     private function getDefaultMatchers(): iterable
     {
+        if (PHP_VERSION_ID >= 80104) {
+            yield EnumType::class;
+        }
+
         yield DateTimeType::class;
         yield DateIntervalType::class;
         yield ArrayType::class;

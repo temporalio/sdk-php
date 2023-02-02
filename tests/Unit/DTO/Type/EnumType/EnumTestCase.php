@@ -33,10 +33,10 @@ class EnumTestCase extends DTOMarshallingTestCase
         $dto->nullable = null;
 
         $result = $this->marshal($dto);
-        $this->assertEquals($dto->simpleEnum, $result['simpleEnum']);
-        $this->assertEquals($dto->scalarEnum, $result['scalarEnum']);
-        $this->assertEquals($dto->autoSimpleEnum, $result['autoSimpleEnum']);
-        $this->assertEquals($dto->autoScalarEnum, $result['autoScalarEnum']);
+        $this->assertSame(['name' => 'TEST'], $result['simpleEnum']);
+        $this->assertSame(['name' => 'TESTED_ENUM', 'value' => 'tested'], $result['scalarEnum']);
+        $this->assertSame(['name' => 'TEST'], $result['autoSimpleEnum']);
+        $this->assertSame(['name' => 'TESTED_ENUM', 'value' => 'tested'], $result['autoScalarEnum']);
         $this->assertNull($result['nullable']);
     }
 
@@ -46,7 +46,7 @@ class EnumTestCase extends DTOMarshallingTestCase
         $dto->nullable = ScalarEnum::TESTED_ENUM;
 
         $result = $this->marshal($dto);
-        $this->assertEquals(ScalarEnum::TESTED_ENUM, $result['nullable']);
+        $this->assertSame(['name' => 'TESTED_ENUM', 'value' => 'tested'], $result['nullable']);
     }
 
     public function testUnmarshalBackedEnumUsingScalarValue(): void
