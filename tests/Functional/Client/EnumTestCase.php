@@ -11,8 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Functional\Client;
 
+use Temporal\Tests\DTO\WithEnum;
 use Temporal\Tests\Unit\DTO\Type\EnumType\Stub\ScalarEnum;
 use Temporal\Tests\Unit\DTO\Type\EnumType\Stub\SimpleEnum;
+use Temporal\Tests\Workflow\EnumDtoWorkflow;
 use Temporal\Tests\Workflow\ScalarEnumWorkflow;
 use Temporal\Tests\Workflow\SimpleEnumWorkflow;
 
@@ -42,5 +44,15 @@ class EnumTestCase extends ClientTestCase
         $result = $client->start($workflow, ScalarEnum::TESTED_ENUM);
 
         $this->assertSame(ScalarEnum::TESTED_ENUM, $result->getResult(ScalarEnum::class));
+    }
+
+    public function testDtoNestedEnum(): void
+    {
+        $client = $this->createClient();
+        $workflow = $client->newWorkflowStub(EnumDtoWorkflow::class);
+
+        $result = $client->start($workflow, $input = new WithEnum(SimpleEnum::TEST));
+
+        $this->assertEquals($input, $result->getResult(WithEnum::class));
     }
 }

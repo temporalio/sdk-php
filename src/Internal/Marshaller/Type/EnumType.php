@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Marshaller\Type;
 
+use BackedEnum;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Marshaller\MarshallingRule;
 
@@ -90,8 +91,15 @@ class EnumType extends Type implements RuleFactoryInterface
      *
      * @return \UnitEnum|null
      */
-    public function serialize($value)
+    public function serialize($value): array
     {
-        return $value;
+        return $value instanceof BackedEnum
+            ? [
+                'name' => $value->name,
+                'value' => $value->value,
+            ]
+            : [
+                'name' => $value->name,
+            ];
     }
 }

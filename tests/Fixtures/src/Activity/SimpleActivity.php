@@ -18,6 +18,7 @@ use Temporal\Api\Common\V1\WorkflowExecution;
 use Temporal\DataConverter\Bytes;
 use Temporal\Tests\DTO\Message;
 use Temporal\Tests\DTO\User;
+use Temporal\Tests\DTO\WithEnum;
 use Temporal\Tests\Unit\DTO\Type\EnumType\Stub\ScalarEnum;
 use Temporal\Tests\Unit\DTO\Type\EnumType\Stub\SimpleEnum;
 
@@ -112,5 +113,11 @@ class SimpleActivity
     public function scalarEnum(ScalarEnum $enum): ScalarEnum
     {
         return $enum;
+    }
+
+    #[ActivityMethod]
+    public function simpleEnumDto(WithEnum $dto): WithEnum
+    {
+        return $dto;
     }
 }
