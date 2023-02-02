@@ -9,19 +9,23 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 final class Downloader
 {
-    private const LATEST_JAVA_SDK_RELEASE = 'https://api.github.com/repos/temporalio/sdk-java/releases/latest';
+    public const TAG_LATEST = 'latest';
+    private const JAVA_SDK_URL_RELEASES = 'https://api.github.com/repos/temporalio/sdk-java/releases/';
     private Filesystem $filesystem;
     private HttpClientInterface $httpClient;
-    private string $javaSdkReleaseUrl;
+    private string $javaSdkUrl;
 
     public function __construct(
         Filesystem $filesystem,
         HttpClientInterface $httpClient,
-        string $javaSdkReleaseUrl = self::LATEST_JAVA_SDK_RELEASE,
+        string $javaSdkVersion = self::TAG_LATEST,
     ) {
         $this->filesystem = $filesystem;
         $this->httpClient = $httpClient;
-        $this->javaSdkReleaseUrl = $javaSdkReleaseUrl;
+        $this->javaSdkUrl = self::JAVA_SDK_URL_RELEASES . match (true) {
+            $javaSdkVersion === self::TAG_LATEST => self::TAG_LATEST,
+            default => "tags/$javaSdkVersion",
+        };
     }
 
     private function findAsset(array $assets, string $systemPlatform, string $systemArch): array
@@ -79,7 +83,7 @@ final class Downloader
 
     private function getAsset(string $systemPlatform, string $systemArch): array
     {
-        $response = $this->httpClient->request('GET', $this->javaSdkReleaseUrl);
+        $response = $this->httpClient->request('GET', $this->javaSdkUrl);
         $assets = $response->toArray()['assets'];
 
         return $this->findAsset($assets, $systemPlatform, $systemArch);

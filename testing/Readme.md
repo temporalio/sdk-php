@@ -43,7 +43,7 @@ $environment = new Environment(
     new Downloader(
         new Filesystem(),
         HttpClient::create(),
-        'https://api.github.com/repos/temporalio/sdk-java/releases/tags/v1.17.0',
+        'v1.17.0',  // use a specific release tag or `latest` to get the latest version
     ),
     SystemInfo::detect(),
 );
