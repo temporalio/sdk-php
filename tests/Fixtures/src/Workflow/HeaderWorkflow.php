@@ -14,18 +14,10 @@ namespace Temporal\Tests\Workflow;
 use Generator;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Common\RetryOptions;
-use Temporal\Internal\Workflow\ActivityProxy;
 use Temporal\Tests\Activity\SimpleActivity;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 
-/**
- * @return Generator<mixed, mixed, mixed, array{
- *     array<array-key, string>,
- *     array<array-key, string>,
- *     array<array-key, string>
- * }>
- */
 #[Workflow\WorkflowInterface]
 class HeaderWorkflow
 {

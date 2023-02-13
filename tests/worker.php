@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use Temporal\Interceptor\Interceptor;
 use Temporal\Testing\WorkerFactory;
+use Temporal\Tests\Fixtures\InterceptorProvider;
 
 require __DIR__ . '/../vendor/autoload.php';
 
@@ -20,10 +22,21 @@ $getClasses = static function (string $dir): iterable {
 
 $factory = WorkerFactory::create();
 
+// Collect interceptors
+$interceptors = [];
+foreach ($getClasses(__DIR__ . '/Fixtures/src/Interceptor') as $name) {
+    $class = 'Temporal\\Tests\\Interceptor\\' . $name;
+
+    if (\class_exists($class) && !\interface_exists($class) && \is_a($class, Interceptor::class, true)) {
+        $interceptors[] = $class;
+    }
+}
+
 $worker = $factory->newWorker(
     'default',
     \Temporal\Worker\WorkerOptions::new()
-        ->withMaxConcurrentWorkflowTaskPollers(5)
+        ->withMaxConcurrentWorkflowTaskPollers(5),
+    interceptorProvider: new InterceptorProvider($interceptors),
 );
 
 // register all workflows
