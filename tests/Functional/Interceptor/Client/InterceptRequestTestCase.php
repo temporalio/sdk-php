@@ -28,6 +28,21 @@ final class InterceptRequestTestCase extends InterceptorTestCase
             WorkflowOptions::new(),
         );
 
-        $this->assertSame(['Foo' => '1'], (array)$workflow->handler()[1]);
+        $result = (array)$workflow->handler();
+
+        // Workflow header
+        $this->assertSame([
+            /** @see \Temporal\Tests\Interceptor\FooHeaderIterator::execute() */
+            'execute' => '1',
+        ], (array)$result[0]);
+        // Activity header
+        $this->assertSame([
+            /** @see \Temporal\Tests\Interceptor\FooHeaderIterator::execute() */
+            'execute' => '1',
+            /** @see \Temporal\Tests\Interceptor\FooHeaderIterator::handleOutboundRequest() */
+            'handleOutboundRequest' => '1',
+            /** @see \Temporal\Tests\Interceptor\FooHeaderIterator::handleActivityInbound() */
+            'handleActivityInbound' => '1',
+        ], (array)$result[1]);
     }
 }

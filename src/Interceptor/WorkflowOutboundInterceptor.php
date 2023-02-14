@@ -11,7 +11,7 @@ interface WorkflowOutboundInterceptor extends Interceptor
 {
     /**
      * @param RequestInterface $request
-     * @param callable(RequestInterface $request): PromiseInterface $next
+     * @param callable(): PromiseInterface $next
      *
      * @return PromiseInterface
      */

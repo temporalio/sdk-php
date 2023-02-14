@@ -13,6 +13,7 @@ namespace Temporal\Tests\Fixtures;
 
 use Temporal\Interceptor\ActivityInboundInterceptor;
 use Temporal\Interceptor\Interceptor;
+use Temporal\Interceptor\WorkflowInboundInterceptor;
 use Temporal\Interceptor\WorkflowOutboundInterceptor;
 use Temporal\Internal\Declaration\Prototype\PrototypeInterface;
 
@@ -23,6 +24,7 @@ final class InterceptorProvider implements \Temporal\Interceptor\InterceptorProv
      * @param array<class-string<Type>, array<class-string<Type>>> $classes
      */
     private array $classes = [
+        WorkflowInboundInterceptor::class => [],
         WorkflowOutboundInterceptor::class => [],
         ActivityInboundInterceptor::class => [],
     ];
