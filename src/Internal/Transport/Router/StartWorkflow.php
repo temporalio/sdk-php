@@ -13,6 +13,7 @@ namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\Interceptor\WorkflowInboundInterceptor;
 use Temporal\Internal\Declaration\Instantiator\WorkflowInstantiator;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\ServiceContainer;
@@ -61,7 +62,7 @@ final class StartWorkflow extends Route
         /** @psalm-suppress InaccessibleProperty */
         $input->header = $request->getHeader();
 
-        $instance = $this->instantiator->instantiate($this->findWorkflowOrFail($input->info));
+        $instance = $this->instantiator->instantiate($prototype = $this->findWorkflowOrFail($input->info));
 
         $context = new WorkflowContext(
             $this->services,
@@ -71,11 +72,30 @@ final class StartWorkflow extends Route
             $lastCompletionResult
         );
 
-        $process = new Process($this->services, $context);
-        $this->services->running->add($process);
-        $resolver->resolve(EncodedValues::fromValues([null]));
+        // Find interceptors
+        /** @var WorkflowInboundInterceptor[] $interceptors for IDE */
+        $interceptors = $this->services->interceptorProvider->getInterceptors($prototype, WorkflowInboundInterceptor::class);
 
-        $process->start($instance->getHandler(), $context->getInput());
+        $starter = function (WorkflowContext $context) use (
+            $resolver,
+            $instance
+        ) {
+            $process = new Process($this->services, $context);
+            $this->services->running->add($process);
+            $resolver->resolve(EncodedValues::fromValues([null]));
+
+            $process->start($instance->getHandler(), $context->getInput());
+        };
+
+        if ($interceptors !== []) {
+            // todo: replace with true pipeline
+            $pipeline = static fn (WorkflowContext $context): mixed
+                => $interceptors[0]->execute($context, $starter);
+
+            $pipeline($context);
+        } else {
+            $starter($context);
+        }
     }
 
     /**

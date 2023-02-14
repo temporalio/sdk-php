@@ -22,6 +22,7 @@ use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\HeaderInterface;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Interceptor\WorkflowOutboundInterceptor;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Support\DateInterval;
@@ -55,7 +56,8 @@ class WorkflowContext implements WorkflowContextInterface
     protected ServiceContainer $services;
     protected ClientInterface $client;
 
-    protected Input $input;
+    // todo: temporary
+    public Input $input;
     protected WorkflowInstanceInterface $workflowInstance;
     protected ?ValuesInterface $lastCompletionResult = null;
 
@@ -432,6 +434,26 @@ class WorkflowContext implements WorkflowContextInterface
     public function request(RequestInterface $request, bool $cancellable = true): PromiseInterface
     {
         $this->recordTrace();
+
+        // todo optimize? (we can store the prototype in the WorkflowInstance)
+        $prototype = $this->services->workflows->find($this->input->info->type->name);
+        $interceptors = $this->services->interceptorProvider->getInterceptors(
+            $prototype,
+            WorkflowOutboundInterceptor::class,
+        );
+
+        // Intercept workflow outbound calls
+        if ($interceptors !== []) {
+            $next = fn (RequestInterface $request): PromiseInterface => $this->client->request($request);
+            // todo: make a pipeline
+
+            // todo: replace with true pipeline
+            $pipeline = static fn (RequestInterface $request): mixed
+                => $interceptors[0]->handleOutboundRequest($request, $next);
+
+            return $pipeline($request);
+        }
+
         return $this->client->request($request);
     }
 

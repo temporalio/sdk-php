@@ -13,9 +13,11 @@ namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
 use Temporal\Activity;
+use Temporal\Activity\ActivityContextInterface;
 use Temporal\Activity\ActivityInfo;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\DoNotCompleteOnResultException;
+use Temporal\Interceptor\ActivityInboundInterceptor;
 use Temporal\Interceptor\InterceptorProvider;
 use Temporal\Internal\Activity\ActivityContext;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
@@ -84,9 +86,31 @@ class InvokeActivity extends Route
         try {
             Activity::setCurrentContext($context);
 
-            $interceptors = $this->interceptorProvider->getInterceptors($prototype);
+            /** @var ActivityInboundInterceptor[] $interceptors required for IDE */
+            $interceptors = $this->interceptorProvider->getInterceptors($prototype, ActivityInboundInterceptor::class);
             $handler = $prototype->getInstance()->getHandler();
-            $result = $handler($payloads);
+            if ($interceptors !== []) {
+                $next = static function (ActivityContextInterface $context) use ($handler): mixed {
+                    Activity::setCurrentContext($context);
+                    return $handler($context->getInput());
+                };
+                /**
+                 * todo make a pipeline
+                 *
+                 * @var callable(callable $next): mixed $pipeline
+                 *
+                 * @see ActivityInboundInterceptor::handleActivityInbound
+                 */
+                // $result = $pipeline($next);
+
+                // todo: replace with true pipeline
+                $pipeline = static fn (ActivityContextInterface $context): mixed
+                    => $interceptors[0]->handleActivityInbound($context, $next);
+
+                $result = $pipeline($context);
+            } else {
+                $result = $handler($payloads);
+            }
 
             if ($context->isDoNotCompleteOnReturn()) {
                 $resolver->reject(DoNotCompleteOnResultException::create());
@@ -98,7 +122,7 @@ class InvokeActivity extends Route
         } finally {
             $finalizer = $this->services->activities->getFinalizer();
             if ($finalizer !== null) {
-                call_user_func($finalizer);
+                \call_user_func($finalizer);
             }
             Activity::setCurrentContext(null);
         }
