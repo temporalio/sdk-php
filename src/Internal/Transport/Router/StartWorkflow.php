@@ -74,7 +74,10 @@ final class StartWorkflow extends Route
 
         // Find interceptors
         /** @var WorkflowInboundInterceptor[] $interceptors for IDE */
-        $interceptors = $this->services->interceptorProvider->getInterceptors($prototype, WorkflowInboundInterceptor::class);
+        $interceptors = $this->services->interceptorProvider->getInterceptors(
+            $prototype,
+            WorkflowInboundInterceptor::class,
+        );
 
         $starter = function (WorkflowContext $context) use (
             $resolver,

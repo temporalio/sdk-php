@@ -39,8 +39,10 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
      * @param WorkflowPrototype $prototype
      * @param object $context
      */
-    public function __construct(WorkflowPrototype $prototype, object $context)
-    {
+    public function __construct(
+        private WorkflowPrototype $prototype,
+        object $context,
+    ) {
         parent::__construct($prototype, $context);
 
         $this->signalQueue = new SignalQueue();
@@ -53,6 +55,14 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
         foreach ($prototype->getQueryHandlers() as $method => $reflection) {
             $this->queryHandlers[$method] = $this->createHandler($reflection);
         }
+    }
+
+    /**
+     * @return WorkflowPrototype
+     */
+    public function getPrototype(): WorkflowPrototype
+    {
+        return $this->prototype;
     }
 
     /**

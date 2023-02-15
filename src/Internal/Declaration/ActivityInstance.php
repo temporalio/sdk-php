@@ -11,6 +11,26 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration;
 
+use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
+
 final class ActivityInstance extends Instance implements ActivityInstanceInterface
 {
+    /**
+     * @param ActivityPrototype $prototype
+     * @param object $context
+     */
+    public function __construct(
+        private ActivityPrototype $prototype,
+        object $context,
+    ) {
+        parent::__construct($prototype, $context);
+    }
+
+    /**
+     * @return ActivityPrototype
+     */
+    public function getPrototype(): ActivityPrototype
+    {
+        return $this->prototype;
+    }
 }

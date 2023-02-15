@@ -56,7 +56,7 @@ class WorkflowContext implements WorkflowContextInterface
     protected ServiceContainer $services;
     protected ClientInterface $client;
 
-    // todo: temporary
+    // todo: temporary; make protected
     public Input $input;
     protected WorkflowInstanceInterface $workflowInstance;
     protected ?ValuesInterface $lastCompletionResult = null;
@@ -435,10 +435,8 @@ class WorkflowContext implements WorkflowContextInterface
     {
         $this->recordTrace();
 
-        // todo optimize? (we can store the prototype in the WorkflowInstance)
-        $prototype = $this->services->workflows->find($this->input->info->type->name);
         $interceptors = $this->services->interceptorProvider->getInterceptors(
-            $prototype,
+            $this->workflowInstance->getPrototype(),
             WorkflowOutboundInterceptor::class,
         );
 
