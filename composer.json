@@ -25,7 +25,7 @@
         "ext-curl": "*",
         "ext-json": "*",
         "google/common-protos": "^3.2",
-        "google/protobuf": "^3.21.12",
+        "google/protobuf": "^3.22",
         "grpc/grpc": "^1.42",
         "nesbot/carbon": "^2.66",
         "psr/log": "^1.0.1 || ^2.0 || ^3.0",
