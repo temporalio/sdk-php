@@ -19,6 +19,7 @@ use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\DoNotCompleteOnResultException;
 use Temporal\Interceptor\ActivityInboundInterceptor;
 use Temporal\Interceptor\InterceptorProvider;
+use Temporal\Interceptor\Pipeline;
 use Temporal\Internal\Activity\ActivityContext;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\ServiceContainer;
@@ -84,31 +85,23 @@ class InvokeActivity extends Route
         $prototype = $this->findDeclarationOrFail($context->getInfo());
 
         try {
-            Activity::setCurrentContext($context);
-
             /** @var ActivityInboundInterceptor[] $interceptors required for IDE */
             $interceptors = $this->interceptorProvider->getInterceptors($prototype, ActivityInboundInterceptor::class);
             $handler = $prototype->getInstance()->getHandler();
+
             if ($interceptors !== []) {
-                $next = static function (ActivityContextInterface $context) use ($handler): mixed {
-                    Activity::setCurrentContext($context);
-                    return $handler($context->getInput());
-                };
-                /**
-                 * todo make a pipeline
-                 *
-                 * @var callable(callable $next): mixed $pipeline
-                 *
-                 * @see ActivityInboundInterceptor::handleActivityInbound
-                 */
-                // $result = $pipeline($next);
-
-                // todo: replace with true pipeline
-                $pipeline = static fn (ActivityContextInterface $context): mixed
-                    => $interceptors[0]->handleActivityInbound($context, $next);
-
-                $result = $pipeline($context);
+                /** @see ActivityInboundInterceptor::handleActivityInbound() */
+                $result = Pipeline::prepare($interceptors)
+                    ->execute(
+                        'handleActivityInbound',
+                        static function (ActivityContextInterface $context) use ($handler): mixed {
+                            Activity::setCurrentContext($context);
+                            return $handler($context->getInput());
+                        },
+                        $request,
+                    );
             } else {
+                Activity::setCurrentContext($context);
                 $result = $handler($payloads);
             }
 

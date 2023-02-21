@@ -22,6 +22,7 @@ use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\HeaderInterface;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Interceptor\Pipeline;
 use Temporal\Interceptor\WorkflowOutboundInterceptor;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\ServiceContainer;
@@ -442,14 +443,13 @@ class WorkflowContext implements WorkflowContextInterface
 
         // Intercept workflow outbound calls
         if ($interceptors !== []) {
-            $next = fn (RequestInterface $request): PromiseInterface => $this->client->request($request);
-            // todo: make a pipeline
-
-            // todo: replace with true pipeline
-            $pipeline = static fn (RequestInterface $request): mixed
-                => $interceptors[0]->handleOutboundRequest($request, $next);
-
-            return $pipeline($request);
+            /** @see WorkflowOutboundInterceptor::handleOutboundRequest() */
+            return Pipeline::prepare($interceptors)
+                ->execute(
+                    'handleOutboundRequest',
+                    fn (RequestInterface $request): PromiseInterface => $this->client->request($request),
+                    $request,
+                );
         }
 
         return $this->client->request($request);
