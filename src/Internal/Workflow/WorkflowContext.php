@@ -436,20 +436,16 @@ class WorkflowContext implements WorkflowContextInterface
     {
         $this->recordTrace();
 
-        $interceptors = $this->services->interceptorProvider->getInterceptors(
-            $this->workflowInstance->getPrototype(),
-            WorkflowOutboundInterceptor::class,
-        );
+        $interceptors = $this->services->interceptorProvider->getInterceptors(WorkflowOutboundInterceptor::class);
 
         // Intercept workflow outbound calls
         if ($interceptors !== []) {
             /** @see WorkflowOutboundInterceptor::handleOutboundRequest() */
             return Pipeline::prepare($interceptors)
-                ->execute(
-                    'handleOutboundRequest',
+                ->with(
                     fn (RequestInterface $request): PromiseInterface => $this->client->request($request),
-                    $request,
-                );
+                    'handleOutboundRequest',
+                )($request);
         }
 
         return $this->client->request($request);

@@ -15,12 +15,12 @@ use Temporal\Interceptor\ActivityInboundInterceptor;
 use Temporal\Interceptor\Interceptor;
 use Temporal\Interceptor\WorkflowInboundInterceptor;
 use Temporal\Interceptor\WorkflowOutboundInterceptor;
-use Temporal\Internal\Declaration\Prototype\PrototypeInterface;
 
 final class InterceptorProvider implements \Temporal\Interceptor\InterceptorProvider
 {
     /**
      * @template Type of Interceptor
+     *
      * @param array<class-string<Type>, array<class-string<Type>>> $classes
      */
     private array $classes = [
@@ -32,7 +32,8 @@ final class InterceptorProvider implements \Temporal\Interceptor\InterceptorProv
     /**
      * @param array<class-string<Interceptor>> $classes
      */
-    public function __construct(array $classes) {
+    public function __construct(array $classes)
+    {
         // Fill classes list
         foreach ($this->classes as $type => &$list) {
             foreach ($classes as $class) {
@@ -43,11 +44,8 @@ final class InterceptorProvider implements \Temporal\Interceptor\InterceptorProv
         }
     }
 
-    public function getInterceptors(PrototypeInterface $prototype, ?string $type = null): array
+    public function getInterceptors(?string $type = null): array
     {
-        // TODO
-        // $attributes = $prototype->getClass()->getAttributes();
-
         $result = [];
         foreach ($this->classes[$type] ?? [] as $class) {
             $result[] = new $class();

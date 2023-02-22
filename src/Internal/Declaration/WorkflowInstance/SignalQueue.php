@@ -15,6 +15,8 @@ use Temporal\DataConverter\ValuesInterface;
 
 /**
  * @psalm-type Consumer = callable(ValuesInterface): mixed
+ *
+ * @psalm-type OnSignalCallable = callable(non-empty-string $name, callable $handler, ValuesInterface $arguments): void
  */
 final class SignalQueue
 {
@@ -29,7 +31,7 @@ final class SignalQueue
     private array $consumers = [];
 
     /**
-     * @var callable
+     * @var OnSignalCallable
      */
     private $onSignal;
 
@@ -40,7 +42,7 @@ final class SignalQueue
     public function push(string $signal, ValuesInterface $values): void
     {
         if (isset($this->consumers[$signal])) {
-            ($this->onSignal)(fn () => ($this->consumers[$signal])($values));
+            ($this->onSignal)($signal, $this->consumers[$signal], $values);
             return;
         }
 
@@ -49,7 +51,7 @@ final class SignalQueue
     }
 
     /**
-     * @param callable $handler
+     * @param OnSignalCallable $handler
      */
     public function onSignal(callable $handler): void
     {
@@ -80,7 +82,7 @@ final class SignalQueue
         while ($this->queue[$signal] !== []) {
             $args = \array_shift($this->queue[$signal]);
 
-            ($this->onSignal)(fn () => ($this->consumers[$signal])($args));
+            ($this->onSignal)($signal, $this->consumers[$signal], $args);
         }
     }
 }

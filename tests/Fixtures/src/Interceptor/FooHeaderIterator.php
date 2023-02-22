@@ -57,7 +57,7 @@ final class FooHeaderIterator implements
         $next($context);
     }
 
-    public function handleSignal(WorkflowContextInterface $context, callable $next): void
+    public function handleSignal(WorkflowContextInterface $context, string $signal, callable $next): void
     {
         // Todo: replace with some think like $context->withHeader($header);
         $context->input->header = $this->increment($context->getHeader(), __FUNCTION__);

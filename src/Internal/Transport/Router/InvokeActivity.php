@@ -85,21 +85,19 @@ class InvokeActivity extends Route
         $prototype = $this->findDeclarationOrFail($context->getInfo());
 
         try {
-            /** @var ActivityInboundInterceptor[] $interceptors required for IDE */
-            $interceptors = $this->interceptorProvider->getInterceptors($prototype, ActivityInboundInterceptor::class);
+            $interceptors = $this->interceptorProvider->getInterceptors(ActivityInboundInterceptor::class);
             $handler = $prototype->getInstance()->getHandler();
 
             if ($interceptors !== []) {
                 /** @see ActivityInboundInterceptor::handleActivityInbound() */
                 $result = Pipeline::prepare($interceptors)
-                    ->execute(
-                        'handleActivityInbound',
+                    ->with(
                         static function (ActivityContextInterface $context) use ($handler): mixed {
                             Activity::setCurrentContext($context);
                             return $handler($context->getInput());
                         },
-                        $request,
-                    );
+                        'handleActivityInbound',
+                    )($request);
             } else {
                 Activity::setCurrentContext($context);
                 $result = $handler($payloads);

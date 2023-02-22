@@ -11,8 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Functional\Interceptor\Client;
 
+use Carbon\CarbonInterval;
 use Temporal\Client\WorkflowOptions;
-use Temporal\Tests\Workflow\Interceptor\FooWorkflow;
+use Temporal\Tests\Workflow\Interceptor\HeadersWorkflow;
+use Temporal\Tests\Workflow\Interceptor\SignalHeadersWorkflow;
 
 /**
  * @group workflow
@@ -24,8 +26,9 @@ final class InterceptRequestTestCase extends InterceptorTestCase
     {
         $client = $this->createClient();
         $workflow = $client->newWorkflowStub(
-            FooWorkflow::class,
-            WorkflowOptions::new(),
+            HeadersWorkflow::class,
+            WorkflowOptions::new()
+                ->withWorkflowExecutionTimeout(CarbonInterval::seconds(5)),
         );
 
         $result = (array)$workflow->handler();
@@ -44,5 +47,29 @@ final class InterceptRequestTestCase extends InterceptorTestCase
             /** @see \Temporal\Tests\Interceptor\FooHeaderIterator::handleActivityInbound() */
             'handleActivityInbound' => '1',
         ], (array)$result[1]);
+    }
+
+    public function testSignalMethod(): void
+    {
+        $client = $this->createClient();
+        $workflow = $client->newWorkflowStub(
+            SignalHeadersWorkflow::class,
+            WorkflowOptions::new()
+                ->withWorkflowExecutionTimeout(CarbonInterval::seconds(5)),
+        );
+
+        $run = $client->start($workflow);
+        $workflow->signal();
+
+        // Workflow header
+        $this->assertSame([
+            /**
+             * Inherited from handler run
+             * @see \Temporal\Tests\Interceptor\FooHeaderIterator::execute()
+             */
+            'execute' => '1',
+            /** @see \Temporal\Tests\Interceptor\FooHeaderIterator::handleSignal() */
+            'handleSignal' => '1',
+        ], (array)$run->getResult());
     }
 }

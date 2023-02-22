@@ -67,7 +67,7 @@ final class WorkerMock implements Identifiable, WorkerInterface, DispatcherInter
         $router->add(new Router\StartWorkflow($this->services));
         $router->add(new Router\InvokeActivity($this->services, Goridge::create(), $this->interceptorProvider));
         $router->add(new Router\DestroyWorkflow($this->services->running));
-        $router->add(new Router\InvokeSignal($this->services->running, $this->services->loop));
+        $router->add(new Router\InvokeSignal($this->services->running));
 
         return $router;
     }

@@ -6,7 +6,6 @@ namespace Temporal\Interceptor\Provider;
 
 use Temporal\Interceptor\Interceptor;
 use Temporal\Interceptor\InterceptorProvider;
-use Temporal\Internal\Declaration\Prototype\PrototypeInterface;
 
 /**
  * Provide the same static list of interceptors for all instance types.
@@ -24,7 +23,7 @@ class SimpleInterceptorProvider implements InterceptorProvider
     /**
      * @inheritDoc
      */
-    public function getInterceptors(PrototypeInterface $prototype, ?string $type = null): array
+    public function getInterceptors(?string $type = null): array
     {
         return $type === null
             ? $this->interceptors

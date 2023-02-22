@@ -18,9 +18,9 @@ use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 
 #[Workflow\WorkflowInterface]
-class FooWorkflow
+class HeadersWorkflow
 {
-    #[WorkflowMethod(name: 'HeaderWorkflow')]
+    #[WorkflowMethod(name: 'InterceptorHeaderWorkflow')]
     public function handler(
         \stdClass|array|null $activityHeader = null,
     ): iterable {

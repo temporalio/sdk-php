@@ -13,28 +13,10 @@ namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
 use Temporal\DataConverter\EncodedValues;
-use Temporal\Internal\Repository\RepositoryInterface;
-use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 
 final class InvokeSignal extends WorkflowProcessAwareRoute
 {
-    /**
-     * @var LoopInterface
-     */
-    private LoopInterface $loop;
-
-    /**
-     * @param RepositoryInterface $running
-     * @param LoopInterface $loop
-     */
-    public function __construct(RepositoryInterface $running, LoopInterface $loop)
-    {
-        $this->loop = $loop;
-
-        parent::__construct($running);
-    }
-
     /**
      * {@inheritDoc}
      */

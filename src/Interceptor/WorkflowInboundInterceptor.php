@@ -17,9 +17,8 @@ interface WorkflowInboundInterceptor extends Interceptor
     /**
      * @param WorkflowContextInterface $context
      * @param callable(WorkflowContextInterface): void $next
-     * todo: add some context about signal name
      */
-    public function handleSignal(WorkflowContextInterface $context, callable $next): void;
+    public function handleSignal(WorkflowContextInterface $context, string $signal, callable $next): void;
 
     /**
      * @param WorkflowContextInterface $context

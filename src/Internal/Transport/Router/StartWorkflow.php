@@ -27,15 +27,14 @@ final class StartWorkflow extends Route
 {
     private const ERROR_NOT_FOUND = 'Workflow with the specified name "%s" was not registered';
 
-    private ServiceContainer $services;
     private WorkflowInstantiator $instantiator;
 
     /**
      * @param ServiceContainer $services
      */
-    public function __construct(ServiceContainer $services)
-    {
-        $this->services = $services;
+    public function __construct(
+        private ServiceContainer $services,
+    ) {
         $this->instantiator = new WorkflowInstantiator();
     }
 
@@ -73,11 +72,7 @@ final class StartWorkflow extends Route
         );
 
         // Find interceptors
-        /** @var WorkflowInboundInterceptor[] $interceptors for IDE */
-        $interceptors = $this->services->interceptorProvider->getInterceptors(
-            $prototype,
-            WorkflowInboundInterceptor::class,
-        );
+        $interceptors = $this->services->interceptorProvider->getInterceptors(WorkflowInboundInterceptor::class);
 
         $starter = function (WorkflowContext $context) use (
             $resolver,

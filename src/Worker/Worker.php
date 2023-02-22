@@ -176,7 +176,7 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
         // Workflow routes
         $router->add(new Router\StartWorkflow($this->services));
         $router->add(new Router\InvokeQuery($this->services->running, $this->services->loop));
-        $router->add(new Router\InvokeSignal($this->services->running, $this->services->loop));
+        $router->add(new Router\InvokeSignal($this->services->running));
         $router->add(new Router\CancelWorkflow($this->services->running));
         $router->add(new Router\DestroyWorkflow($this->services->running));
         $router->add(new Router\StackTrace($this->services->running));

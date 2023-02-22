@@ -21,7 +21,7 @@ class PipelineTestCase extends TestCase
             fn (string $s, callable $next) => $next($s . 'd') . 'z',
         ]);
 
-        self::assertSame('-abcdzyxw', $pipeline->execute('__invoke', fn (string $i) => $i, '-'));
+        self::assertSame('-abcdzyxw', $pipeline->with(fn(string $i) => $i, '__invoke')('-'));
     }
 
     public function testPipelineMultipleArgs(): void
@@ -38,9 +38,10 @@ class PipelineTestCase extends TestCase
             $middleware,
         ]);
 
-        $int = $pipeline->execute(
-            '__invoke',
+        $int = $pipeline->with(
             fn(int $i, stdClass $class, DateTimeInterface $date) => $i,
+            '__invoke',
+        )(
             1,
             new stdClass(),
             new \DateTimeImmutable(),
