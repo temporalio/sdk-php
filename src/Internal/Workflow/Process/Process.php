@@ -15,7 +15,6 @@ use JetBrains\PhpStorm\Pure;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Exception\InvalidArgumentException;
-use Temporal\Interceptor\Pipeline;
 use Temporal\Interceptor\WorkflowInboundInterceptor;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\ServiceContainer;
@@ -34,10 +33,9 @@ class Process extends Scope implements ProcessInterface
     {
         parent::__construct($services, $ctx);
 
-        $inboundPipeline = Pipeline::prepare(
-            $services->interceptorProvider->getInterceptors(WorkflowInboundInterceptor::class),
-        );
+        $inboundPipeline = $services->interceptorProvider->getPipeline(WorkflowInboundInterceptor::class);
 
+        // Configure signal handler
         $this->getWorkflowInstance()->getSignalQueue()->onSignal(
             function (string $name, callable $handler, ValuesInterface $arguments) use ($inboundPipeline): void {
                 $scope = $this->createScope(true, LoopInterface::ON_SIGNAL);
@@ -51,10 +49,9 @@ class Process extends Scope implements ProcessInterface
                 );
 
                 try {
-                    // $scope->start($handler, $arguments);
-                    /** @see WorkflowInboundInterceptor::handleSignal() */
                     $inboundPipeline->with(
                         static fn() => $scope->start($handler, $arguments),
+                        /** @see WorkflowInboundInterceptor::handleSignal() */
                         'handleSignal',
                     )($this->scopeContext, $name);
                 } catch (InvalidArgumentException) {

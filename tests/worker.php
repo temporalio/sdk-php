@@ -1,10 +1,17 @@
 <?php
 
+/**
+ * This file is part of Temporal package.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
-use Temporal\Interceptor\Interceptor;
+use Temporal\Internal\Interceptor\Interceptor;
 use Temporal\Testing\WorkerFactory;
-use Temporal\Tests\Fixtures\InterceptorProvider;
+use Temporal\Tests\Fixtures\PipelineProvider;
 
 require __DIR__ . '/../vendor/autoload.php';
 
@@ -40,7 +47,7 @@ $worker = $factory->newWorker(
     'default',
     \Temporal\Worker\WorkerOptions::new()
         ->withMaxConcurrentWorkflowTaskPollers(5),
-    interceptorProvider: new InterceptorProvider($interceptors),
+    interceptorProvider: new PipelineProvider($interceptors),
 );
 
 // register all workflows

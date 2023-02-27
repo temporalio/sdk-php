@@ -33,7 +33,6 @@ use Temporal\Workflow\WorkflowContextInterface;
  * Unlike Java implementation, PHP merged coroutine and cancellation scope into single instance.
  *
  * @internal CoroutineScope is an internal library class, please do not use it in your code.
- * @psalm-internal Temporal\Client
  */
 class Scope implements CancellationScopeInterface, PromisorInterface
 {

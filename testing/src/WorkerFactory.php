@@ -14,9 +14,9 @@ use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\ExceptionInterceptor;
 use Temporal\Exception\ExceptionInterceptorInterface;
-use Temporal\Interceptor\InterceptorProvider;
-use Temporal\Interceptor\Provider\SimpleInterceptorProvider;
+use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Internal\Events\EventEmitterTrait;
+use Temporal\Internal\Interceptor\PipelineProvider;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Marshaller\MarshallerInterface;
@@ -106,7 +106,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         string $taskQueue = self::DEFAULT_TASK_QUEUE,
         WorkerOptions $options = null,
         ExceptionInterceptorInterface $exceptionInterceptor = null,
-        InterceptorProvider $interceptorProvider = null,
+        PipelineProvider $interceptorProvider = null,
     ): WorkerInterface {
         $worker = new WorkerMock(new Worker(
             $taskQueue,
@@ -114,7 +114,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
             ServiceContainer::fromWorkerFactory(
                 $this,
                 $exceptionInterceptor ?? ExceptionInterceptor::createDefault(),
-                $interceptorProvider ?? new SimpleInterceptorProvider(),
+                $interceptorProvider ?? new SimplePipelineProvider(),
             ),
             $this->rpc,
         ), $this->activityCache);

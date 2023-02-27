@@ -71,8 +71,6 @@ final class StartWorkflow extends Route
             $lastCompletionResult
         );
 
-        // Find interceptors
-        $interceptors = $this->services->interceptorProvider->getInterceptors(WorkflowInboundInterceptor::class);
 
         $starter = function (WorkflowContext $context) use (
             $resolver,
@@ -85,15 +83,15 @@ final class StartWorkflow extends Route
             $process->start($instance->getHandler(), $context->getInput());
         };
 
-        if ($interceptors !== []) {
-            // todo: replace with true pipeline
-            $pipeline = static fn (WorkflowContext $context): mixed
-                => $interceptors[0]->execute($context, $starter);
-
-            $pipeline($context);
-        } else {
-            $starter($context);
-        }
+        // Run workflow handler in an interceptor pipeline
+        $this->services->interceptorProvider
+            ->getPipeline(WorkflowInboundInterceptor::class)
+            ->with(
+                // static fn(WorkflowContext $context): mixed => $starter($context),
+                $starter,
+                /** @see WorkflowInboundInterceptor::execute() */
+                'execute',
+            )($context);
     }
 
     /**

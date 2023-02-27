@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Interceptor;
 
 use React\Promise\PromiseInterface;
+use Temporal\Internal\Interceptor\Interceptor;
 use Temporal\Worker\Transport\Command\RequestInterface;
 
 interface WorkflowOutboundInterceptor extends Interceptor

@@ -22,7 +22,6 @@ use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\HeaderInterface;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
-use Temporal\Interceptor\Pipeline;
 use Temporal\Interceptor\WorkflowOutboundInterceptor;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\ServiceContainer;
@@ -37,6 +36,7 @@ use Temporal\Internal\Transport\Request\GetVersion;
 use Temporal\Internal\Transport\Request\NewTimer;
 use Temporal\Internal\Transport\Request\Panic;
 use Temporal\Internal\Transport\Request\SideEffect;
+use Temporal\Internal\Transport\Request\UpsertSearchAttributes;
 use Temporal\Promise;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow\ActivityStubInterface;
@@ -47,7 +47,6 @@ use Temporal\Workflow\ExternalWorkflowStubInterface;
 use Temporal\Workflow\WorkflowContextInterface;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowInfo;
-use Temporal\Internal\Transport\Request\UpsertSearchAttributes;
 
 use function React\Promise\reject;
 use function React\Promise\resolve;
@@ -436,19 +435,14 @@ class WorkflowContext implements WorkflowContextInterface
     {
         $this->recordTrace();
 
-        $interceptors = $this->services->interceptorProvider->getInterceptors(WorkflowOutboundInterceptor::class);
-
         // Intercept workflow outbound calls
-        if ($interceptors !== []) {
-            /** @see WorkflowOutboundInterceptor::handleOutboundRequest() */
-            return Pipeline::prepare($interceptors)
-                ->with(
-                    fn (RequestInterface $request): PromiseInterface => $this->client->request($request),
-                    'handleOutboundRequest',
-                )($request);
-        }
-
-        return $this->client->request($request);
+        return $this->services->interceptorProvider
+            ->getPipeline(WorkflowOutboundInterceptor::class)
+            ->with(
+                fn (RequestInterface $request): PromiseInterface => $this->client->request($request),
+                /** @see WorkflowOutboundInterceptor::handleOutboundRequest() */
+                'handleOutboundRequest',
+            )($request);
     }
 
     /**

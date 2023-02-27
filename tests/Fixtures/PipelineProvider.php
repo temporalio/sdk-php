@@ -12,11 +12,12 @@ declare(strict_types=1);
 namespace Temporal\Tests\Fixtures;
 
 use Temporal\Interceptor\ActivityInboundInterceptor;
-use Temporal\Interceptor\Interceptor;
 use Temporal\Interceptor\WorkflowInboundInterceptor;
 use Temporal\Interceptor\WorkflowOutboundInterceptor;
+use Temporal\Internal\Interceptor\Interceptor;
+use Temporal\Internal\Interceptor\Pipeline;
 
-final class InterceptorProvider implements \Temporal\Interceptor\InterceptorProvider
+final class PipelineProvider implements \Temporal\Internal\Interceptor\PipelineProvider
 {
     /**
      * @template Type of Interceptor
@@ -44,13 +45,13 @@ final class InterceptorProvider implements \Temporal\Interceptor\InterceptorProv
         }
     }
 
-    public function getInterceptors(?string $type = null): array
+    public function getPipeline(string $interceptorClass): Pipeline
     {
         $result = [];
-        foreach ($this->classes[$type] ?? [] as $class) {
+        foreach ($this->classes[$interceptorClass] ?? [] as $class) {
             $result[] = new $class();
         }
 
-        return $result;
+        return Pipeline::prepare($result);
     }
 }

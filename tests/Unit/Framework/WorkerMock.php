@@ -8,17 +8,17 @@ use Closure;
 use PHPUnit\Framework\Exception;
 use React\Promise\PromiseInterface;
 use Temporal\Common\Uuid;
-use Temporal\Interceptor\InterceptorProvider;
-use Temporal\Interceptor\Provider\SimpleInterceptorProvider;
+use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
+use Temporal\Internal\Interceptor\PipelineProvider;
 use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Internal\Repository\Identifiable;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Router;
 use Temporal\Internal\Transport\RouterInterface;
-use Temporal\Tests\Unit\Framework\Expectation\WorkflowResult;
 use Temporal\Tests\Unit\Framework\Expectation\ActivityCall;
 use Temporal\Tests\Unit\Framework\Expectation\Timer;
+use Temporal\Tests\Unit\Framework\Expectation\WorkflowResult;
 use Temporal\Tests\Unit\Framework\Requests\InvokeSignal;
 use Temporal\Tests\Unit\Framework\Requests\StartWorkflow;
 use Temporal\Tests\Unit\Framework\Server\CommandHandler\CommandHandlerFactory;
@@ -40,7 +40,7 @@ final class WorkerMock implements Identifiable, WorkerInterface, DispatcherInter
     private ServiceContainer $services;
     private RouterInterface $router;
     private ServerMock $server;
-    private InterceptorProvider $interceptorProvider;
+    private PipelineProvider $interceptorProvider;
 
     /**
      * Contains currently executing Workflow
@@ -56,7 +56,7 @@ final class WorkerMock implements Identifiable, WorkerInterface, DispatcherInter
         $this->name = $taskQueue;
         $this->options = $options;
         $this->services = $serviceContainer;
-        $this->interceptorProvider = new SimpleInterceptorProvider();
+        $this->interceptorProvider = new SimplePipelineProvider();
         $this->router = $this->createRouter();
         $this->server = new ServerMock(CommandHandlerFactory::create());
     }

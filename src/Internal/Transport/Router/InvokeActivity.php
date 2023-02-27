@@ -18,10 +18,9 @@ use Temporal\Activity\ActivityInfo;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\DoNotCompleteOnResultException;
 use Temporal\Interceptor\ActivityInboundInterceptor;
-use Temporal\Interceptor\InterceptorProvider;
-use Temporal\Interceptor\Pipeline;
 use Temporal\Internal\Activity\ActivityContext;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
+use Temporal\Internal\Interceptor\PipelineProvider;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\RPCConnectionInterface;
@@ -35,17 +34,17 @@ class InvokeActivity extends Route
 
     private ServiceContainer $services;
     private RPCConnectionInterface $rpc;
-    private InterceptorProvider $interceptorProvider;
+    private PipelineProvider $interceptorProvider;
 
     /**
      * @param ServiceContainer $services
      * @param RPCConnectionInterface $rpc
-     * @param InterceptorProvider $interceptorProvider
+     * @param PipelineProvider $interceptorProvider
      */
     public function __construct(
         ServiceContainer $services,
         RPCConnectionInterface $rpc,
-        InterceptorProvider $interceptorProvider,
+        PipelineProvider $interceptorProvider,
     ) {
         $this->rpc = $rpc;
         $this->services = $services;
@@ -85,23 +84,19 @@ class InvokeActivity extends Route
         $prototype = $this->findDeclarationOrFail($context->getInfo());
 
         try {
-            $interceptors = $this->interceptorProvider->getInterceptors(ActivityInboundInterceptor::class);
             $handler = $prototype->getInstance()->getHandler();
 
-            if ($interceptors !== []) {
-                /** @see ActivityInboundInterceptor::handleActivityInbound() */
-                $result = Pipeline::prepare($interceptors)
-                    ->with(
-                        static function (ActivityContextInterface $context) use ($handler): mixed {
-                            Activity::setCurrentContext($context);
-                            return $handler($context->getInput());
-                        },
-                        'handleActivityInbound',
-                    )($request);
-            } else {
-                Activity::setCurrentContext($context);
-                $result = $handler($payloads);
-            }
+            // Run Activity in an interceptors pipeline
+            $result = $this->interceptorProvider
+                ->getPipeline(ActivityInboundInterceptor::class)
+                ->with(
+                    static function (ActivityContextInterface $context) use ($handler): mixed {
+                        Activity::setCurrentContext($context);
+                        return $handler($context->getInput());
+                    },
+                    /** @see ActivityInboundInterceptor::handleActivityInbound() */
+                    'handleActivityInbound',
+                )($context);
 
             if ($context->isDoNotCompleteOnReturn()) {
                 $resolver->reject(DoNotCompleteOnResultException::create());

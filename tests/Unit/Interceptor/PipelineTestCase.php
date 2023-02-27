@@ -5,7 +5,7 @@ namespace Temporal\Tests\Unit\Interceptor;
 use DateTimeInterface;
 use PHPUnit\Framework\TestCase;
 use stdClass;
-use Temporal\Interceptor\Pipeline;
+use Temporal\Internal\Interceptor\Pipeline;
 
 class PipelineTestCase extends TestCase
 {

@@ -21,7 +21,7 @@ use Temporal\Internal\Declaration\Prototype\Prototype;
  */
 abstract class Instance implements InstanceInterface
 {
-    protected ?object $context;
+    protected object $context;
     /**
      * @var \Closure(ValuesInterface): mixed
      */
@@ -29,9 +29,9 @@ abstract class Instance implements InstanceInterface
 
     /**
      * @param Prototype $prototype
-     * @param object|null $context
+     * @param object $context
      */
-    public function __construct(Prototype $prototype, ?object $context)
+    public function __construct(Prototype $prototype, object $context)
     {
         $handler = $prototype->getHandler();
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Interceptor;
 
+use Temporal\Internal\Interceptor\Interceptor;
 use Temporal\Workflow\WorkflowContextInterface;
 
 interface WorkflowInboundInterceptor extends Interceptor

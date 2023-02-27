@@ -15,22 +15,22 @@ use JetBrains\PhpStorm\Immutable;
 use Spiral\Attributes\ReaderInterface;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\ExceptionInterceptorInterface;
-use Temporal\Interceptor\InterceptorProvider;
-use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Declaration\Prototype\ActivityCollection;
+use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Declaration\Prototype\WorkflowCollection;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\Reader\ActivityReader;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
+use Temporal\Internal\Interceptor\PipelineProvider;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Workflow\ProcessCollection;
-use Temporal\Worker\WorkerFactoryInterface;
-use Temporal\WorkerFactory;
 use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Worker\LoopInterface;
+use Temporal\Worker\WorkerFactoryInterface;
+use Temporal\WorkerFactory;
 
 #[Immutable]
 final class ServiceContainer
@@ -113,9 +113,9 @@ final class ServiceContainer
     public ExceptionInterceptorInterface $exceptionInterceptor;
 
     /**
-     * @var InterceptorProvider
+     * @var PipelineProvider
      */
-    public InterceptorProvider $interceptorProvider;
+    public PipelineProvider $interceptorProvider;
 
     /**
      * @param LoopInterface $loop
@@ -126,7 +126,7 @@ final class ServiceContainer
      * @param MarshallerInterface $marshaller
      * @param DataConverterInterface $dataConverter
      * @param ExceptionInterceptorInterface $exceptionInterceptor
-     * @param InterceptorProvider $interceptorProvider
+     * @param PipelineProvider $interceptorProvider
      */
     public function __construct(
         LoopInterface $loop,
@@ -137,7 +137,7 @@ final class ServiceContainer
         MarshallerInterface $marshaller,
         DataConverterInterface $dataConverter,
         ExceptionInterceptorInterface $exceptionInterceptor,
-        InterceptorProvider $interceptorProvider,
+        PipelineProvider $interceptorProvider,
     ) {
         $this->env = $env;
         $this->loop = $loop;
@@ -165,7 +165,7 @@ final class ServiceContainer
     public static function fromWorkerFactory(
         WorkerFactoryInterface $worker,
         ExceptionInterceptorInterface $exceptionInterceptor,
-        InterceptorProvider $interceptorProvider,
+        PipelineProvider $interceptorProvider,
     ): self {
         return new self(
             $worker,

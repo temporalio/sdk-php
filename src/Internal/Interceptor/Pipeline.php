@@ -1,8 +1,15 @@
 <?php
 
+/**
+ * This file is part of Temporal package.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
-namespace Temporal\Interceptor;
+namespace Temporal\Internal\Interceptor;
 
 use Closure;
 use Temporal\Exception\InterceptorCallException;
@@ -53,7 +60,7 @@ final class Pipeline
     }
 
     /**
-     * @param TLast $last
+     * @param Closure $last
      * @param non-empty-string $method Method name of the all interceptors.
      *
      * @return TCallable

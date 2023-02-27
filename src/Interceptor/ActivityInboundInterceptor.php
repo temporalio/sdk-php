@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Interceptor;
 
 use Temporal\Activity\ActivityContextInterface;
+use Temporal\Internal\Interceptor\Interceptor;
 
 interface ActivityInboundInterceptor extends Interceptor
 {
