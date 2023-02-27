@@ -11,15 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration;
 
-use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
-
 interface WorkflowInstanceInterface extends InstanceInterface
 {
-    /**
-     * @return WorkflowPrototype
-     */
-    public function getPrototype(): WorkflowPrototype;
-
     /**
      * Trigger constructor in Process context.
      */

@@ -11,12 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration;
 
-use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
-
 interface ActivityInstanceInterface extends InstanceInterface
 {
-    /**
-     * @return ActivityPrototype
-     */
-    public function getPrototype(): ActivityPrototype;
 }

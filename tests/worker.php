@@ -12,11 +12,17 @@ require __DIR__ . '/../vendor/autoload.php';
  * @param string $dir
  * @return array<string>
  */
-$getClasses = static function (string $dir): iterable {
-    $files = glob($dir . '/*.php');
+$getClasses = static function (string $dir, string $namespace): iterable {
+    $dir = realpath($dir);
+    $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS));
 
-    foreach ($files as $file) {
-        yield substr(basename($file), 0, -4);
+    /** @var SplFileInfo $_ */
+    foreach ($files as $path => $_) {
+        if (!\is_file($path) || !\str_ends_with($path, '.php')) {
+            continue;
+        }
+
+        yield \str_replace(['/', '\\\\'], '\\', $namespace . \substr($path, \strlen($dir), -4));
     }
 };
 
@@ -24,9 +30,7 @@ $factory = WorkerFactory::create();
 
 // Collect interceptors
 $interceptors = [];
-foreach ($getClasses(__DIR__ . '/Fixtures/src/Interceptor') as $name) {
-    $class = 'Temporal\\Tests\\Interceptor\\' . $name;
-
+foreach ($getClasses(__DIR__ . '/Fixtures/src/Interceptor', 'Temporal\\Tests\\Interceptor\\') as $class) {
     if (\class_exists($class) && !\interface_exists($class) && \is_a($class, Interceptor::class, true)) {
         $interceptors[] = $class;
     }
@@ -40,17 +44,14 @@ $worker = $factory->newWorker(
 );
 
 // register all workflows
-foreach ($getClasses(__DIR__ . '/Fixtures/src/Workflow') as $name) {
-    $class = 'Temporal\\Tests\\Workflow\\' . $name;
-
+foreach ($getClasses(__DIR__ . '/Fixtures/src/Workflow', 'Temporal\\Tests\\Workflow\\') as $class) {
     if (class_exists($class) && !interface_exists($class)) {
         $worker->registerWorkflowTypes($class);
     }
 }
 
 // register all activity
-foreach ($getClasses(__DIR__ . '/Fixtures/src/Activity') as $name) {
-    $class = 'Temporal\\Tests\\Activity\\' . $name;
+foreach ($getClasses(__DIR__ . '/Fixtures/src/Activity', 'Temporal\\Tests\\Activity\\') as $class) {
     if (class_exists($class) && !interface_exists($class)) {
         $worker->registerActivityImplementations(new $class());
     }

@@ -75,19 +75,4 @@ abstract class Instance implements InstanceInterface
         $context = $this->context;
         return static fn (ValuesInterface $values): mixed => $valueMapper->dispatchValues($context, $values);
     }
-
-    /**
-     * @param callable $handler
-     *
-     * @return \Closure(ValuesInterface): mixed
-     * @throws \ReflectionException
-     *
-     * @psalm-return DispatchableHandler
-     */
-    protected function createCallableHandler(callable $handler): \Closure
-    {
-        return $this->createHandler(
-            new \ReflectionFunction($handler instanceof \Closure ? $handler : \Closure::fromCallable($handler)),
-        );
-    }
 }

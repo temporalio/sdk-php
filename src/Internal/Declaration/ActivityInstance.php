@@ -20,17 +20,9 @@ final class ActivityInstance extends Instance implements ActivityInstanceInterfa
      * @param object $context
      */
     public function __construct(
-        private ActivityPrototype $prototype,
+        ActivityPrototype $prototype,
         object $context,
     ) {
         parent::__construct($prototype, $context);
-    }
-
-    /**
-     * @return ActivityPrototype
-     */
-    public function getPrototype(): ActivityPrototype
-    {
-        return $this->prototype;
     }
 }

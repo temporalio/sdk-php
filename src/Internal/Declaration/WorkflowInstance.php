@@ -40,7 +40,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
      * @param object $context
      */
     public function __construct(
-        private WorkflowPrototype $prototype,
+        WorkflowPrototype $prototype,
         object $context,
     ) {
         parent::__construct($prototype, $context);
@@ -55,14 +55,6 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
         foreach ($prototype->getQueryHandlers() as $method => $reflection) {
             $this->queryHandlers[$method] = $this->createHandler($reflection);
         }
-    }
-
-    /**
-     * @return WorkflowPrototype
-     */
-    public function getPrototype(): WorkflowPrototype
-    {
-        return $this->prototype;
     }
 
     /**
@@ -130,5 +122,22 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     {
         $this->signalHandlers[$name] = $this->createCallableHandler($handler);
         $this->signalQueue->attach($name, $this->signalHandlers[$name]);
+    }
+
+    /**
+     * Make a Closure from a callable.
+     *
+     * @param callable $handler
+     *
+     * @return \Closure(ValuesInterface): mixed
+     * @throws \ReflectionException
+     *
+     * @psalm-return DispatchableHandler
+     */
+    protected function createCallableHandler(callable $handler): \Closure
+    {
+        return $this->createHandler(
+            new \ReflectionFunction($handler instanceof \Closure ? $handler : \Closure::fromCallable($handler)),
+        );
     }
 }
