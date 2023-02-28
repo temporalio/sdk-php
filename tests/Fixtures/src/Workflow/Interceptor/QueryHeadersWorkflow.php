@@ -15,22 +15,25 @@ use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 
 #[Workflow\WorkflowInterface]
-class SignalHeadersWorkflow
+class QueryHeadersWorkflow
 {
-    private ?array $headers = null;
     private bool $signalled = false;
 
-    #[WorkflowMethod(name: 'InterceptorSignalHeadersWorkflow')]
+    #[WorkflowMethod(name: 'InterceptorQueryHeadersWorkflow')]
     public function handler(): mixed
     {
         yield Workflow::await(fn() => $this->signalled);
-        return $this->headers;
     }
 
     #[Workflow\SignalMethod]
     public function signal(): void
     {
         $this->signalled = true;
-        $this->headers = \iterator_to_array(Workflow::getHeader()->getIterator());
+    }
+
+    #[Workflow\QueryMethod]
+    public function query(): array
+    {
+        return \iterator_to_array(Workflow::getHeader()->getIterator());
     }
 }

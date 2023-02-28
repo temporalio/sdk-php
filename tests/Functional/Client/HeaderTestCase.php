@@ -16,6 +16,7 @@ use Temporal\Tests\Workflow\HeaderWorkflow;
 use Temporal\Workflow\ChildWorkflowOptions;
 
 /**
+ * todo: rewrite for interceptors and hidden headers
  * @group client
  * @group functional
  */
