@@ -1,30 +1,39 @@
 <?php
 
+/**
+ * This file is part of Temporal package.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Temporal\Interceptor;
 
+use Temporal\Interceptor\WorkflowInbound\QueryInput;
+use Temporal\Interceptor\WorkflowInbound\SignalInput;
+use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
 use Temporal\Internal\Interceptor\Interceptor;
-use Temporal\Workflow\WorkflowContextInterface;
 
 interface WorkflowInboundInterceptor extends Interceptor
 {
     /**
-     * @param WorkflowContextInterface $context
-     * @param callable(WorkflowContextInterface): void $next
+     * @param WorkflowInput $input
+     * @param callable(WorkflowInput): void $next
      */
-    public function execute(WorkflowContextInterface $context, callable $next): void;
+    public function execute(WorkflowInput $input, callable $next): void;
 
     /**
-     * @param WorkflowContextInterface $context
-     * @param callable(WorkflowContextInterface): void $next
+     * @param SignalInput $input
+     * @param callable(SignalInput): void $next
      */
-    public function handleSignal(WorkflowContextInterface $context, string $signal, callable $next): void;
+    public function handleSignal(SignalInput $input, callable $next): void;
 
     /**
-     * @param WorkflowContextInterface $context
-     * @param callable(WorkflowContextInterface): void $next
+     * @param QueryInput $input
+     * @param callable(QueryInput): void $next
      * todo: add some context about query name
      */
-    public function handleQuery(WorkflowContextInterface $context, callable $next): void;
+    public function handleQuery(QueryInput $input, callable $next): mixed;
 }

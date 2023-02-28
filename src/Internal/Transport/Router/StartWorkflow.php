@@ -13,6 +13,7 @@ namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
 use Temporal\Interceptor\WorkflowInboundInterceptor;
 use Temporal\Internal\Declaration\Instantiator\WorkflowInstantiator;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
@@ -35,7 +36,7 @@ final class StartWorkflow extends Route
     public function __construct(
         private ServiceContainer $services,
     ) {
-        $this->instantiator = new WorkflowInstantiator();
+        $this->instantiator = new WorkflowInstantiator($services->interceptorProvider);
     }
 
     /**
@@ -72,9 +73,10 @@ final class StartWorkflow extends Route
         );
 
 
-        $starter = function (WorkflowContext $context) use (
+        $starter = function (WorkflowInput $input) use (
             $resolver,
-            $instance
+            $instance,
+            $context,
         ) {
             $process = new Process($this->services, $context);
             $this->services->running->add($process);
@@ -87,11 +89,10 @@ final class StartWorkflow extends Route
         $this->services->interceptorProvider
             ->getPipeline(WorkflowInboundInterceptor::class)
             ->with(
-                // static fn(WorkflowContext $context): mixed => $starter($context),
                 $starter,
                 /** @see WorkflowInboundInterceptor::execute() */
                 'execute',
-            )($context);
+            )(new WorkflowInput($context->input->input, $context->input->header));
     }
 
     /**

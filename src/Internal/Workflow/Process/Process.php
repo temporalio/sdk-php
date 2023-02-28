@@ -15,6 +15,7 @@ use JetBrains\PhpStorm\Pure;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Exception\InvalidArgumentException;
+use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInboundInterceptor;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\ServiceContainer;
@@ -53,7 +54,7 @@ class Process extends Scope implements ProcessInterface
                         static fn() => $scope->start($handler, $arguments),
                         /** @see WorkflowInboundInterceptor::handleSignal() */
                         'handleSignal',
-                    )($this->scopeContext, $name);
+                    )(new SignalInput($name, $this->scopeContext->getInput(), $this->scopeContext->getHeader()));
                 } catch (InvalidArgumentException) {
                     // invalid signal invocation, destroy the scope with no traces
                 }

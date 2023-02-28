@@ -15,6 +15,9 @@ use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityContextInterface;
 use Temporal\DataConverter\HeaderInterface;
 use Temporal\Interceptor\ActivityInboundInterceptor;
+use Temporal\Interceptor\WorkflowInbound\QueryInput;
+use Temporal\Interceptor\WorkflowInbound\SignalInput;
+use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
 use Temporal\Interceptor\WorkflowInboundInterceptor;
 use Temporal\Interceptor\WorkflowOutboundInterceptor;
 use Temporal\Worker\Transport\Command\RequestInterface;
@@ -44,32 +47,32 @@ final class FooHeaderIterator implements
     public function handleActivityInbound(ActivityContextInterface $context, callable $next): mixed
     {
         // Todo: replace with some think like $context->withHeader($header);
-        $context->header = $this->increment($context->getHeader(), __FUNCTION__);
+        // $context->header = $this->increment($context->getHeader(), __FUNCTION__);
 
         return $next($context);
     }
 
-    public function execute(WorkflowContextInterface $context, callable $next): void
+    public function execute(WorkflowInput $input, callable $next): void
     {
         // Todo: replace with some think like $context->withHeader($header);
-        $context->input->header = $this->increment($context->getHeader(), __FUNCTION__);
+        // $input->input->header = $this->increment($input->getHeader(), __FUNCTION__);
 
-        $next($context);
+        $next($input);
     }
 
-    public function handleSignal(WorkflowContextInterface $context, string $signal, callable $next): void
+    public function handleSignal(SignalInput $input, callable $next): void
     {
         // Todo: replace with some think like $context->withHeader($header);
-        $context->input->header = $this->increment($context->getHeader(), __FUNCTION__);
+        // $input->input->header = $this->increment($input->getHeader(), __FUNCTION__);
 
-        $next($context);
+        $next($input);
     }
 
-    public function handleQuery(WorkflowContextInterface $context, callable $next): void
+    public function handleQuery(QueryInput $input, callable $next): mixed
     {
         // Todo: replace with some think like $context->withHeader($header);
-        $context->input->header = $this->increment($context->getHeader(), __FUNCTION__);
+        // $input->input->header = $this->increment($input->getHeader(), __FUNCTION__);
 
-        $next($context);
+        return $next($input);
     }
 }

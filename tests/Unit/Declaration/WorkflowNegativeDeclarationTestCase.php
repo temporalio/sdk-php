@@ -14,6 +14,7 @@ namespace Temporal\Tests\Unit\Declaration;
 use Temporal\Exception\InstantiationException;
 use Temporal\Internal\Declaration\Instantiator\WorkflowInstantiator;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
+use Temporal\Tests\Fixtures\PipelineProvider;
 use Temporal\Tests\Unit\Declaration\Fixture\UnannotatedClass;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithMultipleMethods;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithoutHandler;
@@ -77,6 +78,6 @@ class WorkflowNegativeDeclarationTestCase extends DeclarationTestCase
 
         $protorype = $reader->fromClass(WorkflowWithoutHandler::class);
 
-        (new WorkflowInstantiator())->instantiate($protorype);
+        (new WorkflowInstantiator(new PipelineProvider([])))->instantiate($protorype);
     }
 }
