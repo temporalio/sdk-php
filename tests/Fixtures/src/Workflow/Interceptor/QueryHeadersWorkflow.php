@@ -32,8 +32,18 @@ class QueryHeadersWorkflow
     }
 
     #[Workflow\QueryMethod]
-    public function query(): array
+    public function getHeaders(): array
     {
         return \iterator_to_array(Workflow::getHeader()->getIterator());
+    }
+
+    #[Workflow\QueryMethod]
+    public function getContext(): array
+    {
+        return [
+            'RunId' => Workflow::getRunId(),
+            'ContextId' => Workflow::getContextId(),
+            'Info' => Workflow::getInfo(),
+        ];
     }
 }
