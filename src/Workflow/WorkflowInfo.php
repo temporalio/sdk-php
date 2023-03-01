@@ -112,7 +112,7 @@ final class WorkflowInfo
     /**
      * @var array|null
      */
-    #[Marshal(name: 'SearchAttributes', type: NullableType::class, of: ArrayType::class)]
+    #[Marshal(name: 'Memo', type: NullableType::class, of: ArrayType::class)]
     public ?array $memo = null;
 
     /**
