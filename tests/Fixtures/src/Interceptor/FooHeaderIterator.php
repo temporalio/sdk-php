@@ -59,10 +59,7 @@ final class FooHeaderIterator implements
 
     public function handleSignal(SignalInput $input, callable $next): void
     {
-        // Todo: replace with some think like $context->withHeader($header);
-        // $input->input->header = $this->increment($input->getHeader(), __FUNCTION__);
-
-        $next($input);
+        $next($input->with(header: $this->increment($input->header, __FUNCTION__)));
     }
 
     public function handleQuery(QueryInput $input, callable $next): mixed

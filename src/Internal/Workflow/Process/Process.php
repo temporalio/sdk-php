@@ -19,6 +19,7 @@ use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInboundInterceptor;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\ServiceContainer;
+use Temporal\Internal\Workflow\Input;
 use Temporal\Internal\Workflow\WorkflowContext;
 use Temporal\Worker\LoopInterface;
 use Temporal\Workflow\ProcessInterface;
@@ -39,22 +40,30 @@ class Process extends Scope implements ProcessInterface
         // Configure signal handler
         $this->getWorkflowInstance()->getSignalQueue()->onSignal(
             function (string $name, callable $handler, ValuesInterface $arguments) use ($inboundPipeline): void {
-                $scope = $this->createScope(true, LoopInterface::ON_SIGNAL);
-                $scope->onClose(
-                    function (?\Throwable $error): void {
-                        if ($error !== null) {
-                            // we want to fail process when signal scope fails
-                            $this->complete($error);
-                        }
-                    }
-                );
-
                 try {
                     $inboundPipeline->with(
-                        static fn(SignalInput $input) => $scope->start($handler, $input->arguments),
+                        function (SignalInput $input) use ($handler) {
+                            $this->createScope(
+                                true,
+                                LoopInterface::ON_SIGNAL,
+                                $this->scopeContext->withInput(
+                                    new Input($input->info, $input->arguments, $input->header),
+                                ),
+                            )->onClose(
+                                function (?\Throwable $error): void {
+                                    if ($error !== null) {
+                                        // we want to fail process when signal scope fails
+                                        $this->complete($error);
+                                    }
+                                }
+                            )->start(
+                                $handler,
+                                $input->arguments
+                            );
+                        },
                         /** @see WorkflowInboundInterceptor::handleSignal() */
                         'handleSignal',
-                    )(new SignalInput($name, $arguments, $this->scopeContext->getHeader()));
+                    )(new SignalInput($name, $this->scopeContext->getInfo(), $arguments, $this->scopeContext->getHeader()));
                 } catch (InvalidArgumentException) {
                     // invalid signal invocation, destroy the scope with no traces
                 }

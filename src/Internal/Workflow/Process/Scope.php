@@ -49,7 +49,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     /**
      * @var WorkflowContextInterface
      */
-    protected WorkflowContextInterface $scopeContext;
+    protected WorkflowContext $scopeContext;
 
     /**
      * @var Deferred
@@ -294,9 +294,9 @@ class Scope implements CancellationScopeInterface, PromisorInterface
      * @param string|null $layer
      * @return self
      */
-    protected function createScope(bool $detached, string $layer = null): self
+    protected function createScope(bool $detached, string $layer = null, WorkflowContextInterface $context = null): self
     {
-        $scope = new Scope($this->services, $this->context);
+        $scope = new Scope($this->services, $context ?? $this->context);
         $scope->detached = $detached;
 
         if ($layer !== null) {
