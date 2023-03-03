@@ -13,11 +13,11 @@ namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
 use Temporal\Activity;
-use Temporal\Activity\ActivityContextInterface;
 use Temporal\Activity\ActivityInfo;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\DoNotCompleteOnResultException;
 use Temporal\Interceptor\ActivityInboundInterceptor;
+use Temporal\Interceptor\WorkflowClient\ActivityInput;
 use Temporal\Internal\Activity\ActivityContext;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Interceptor\PipelineProvider;
@@ -79,6 +79,7 @@ class InvokeActivity extends Route
             $header,
             $heartbeatDetails,
         );
+        /** @var ActivityContext $context */
         $context = $this->services->marshaller->unmarshal($options, $context);
 
         $prototype = $this->findDeclarationOrFail($context->getInfo());
@@ -90,13 +91,15 @@ class InvokeActivity extends Route
             $result = $this->interceptorProvider
                 ->getPipeline(ActivityInboundInterceptor::class)
                 ->with(
-                    static function (ActivityContextInterface $context) use ($handler): mixed {
-                        Activity::setCurrentContext($context);
-                        return $handler($context->getInput());
+                    static function (ActivityInput $input) use ($handler, $context): mixed {
+                        Activity::setCurrentContext(
+                            $context->withInput($input->arguments)->withHeader($input->header),
+                        );
+                        return $handler($input->arguments);
                     },
                     /** @see ActivityInboundInterceptor::handleActivityInbound() */
                     'handleActivityInbound',
-                )($context);
+                )(new ActivityInput($context->getInput(), $context->getHeader()));
 
             if ($context->isDoNotCompleteOnReturn()) {
                 $resolver->reject(DoNotCompleteOnResultException::create());

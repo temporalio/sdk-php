@@ -445,7 +445,7 @@ class WorkflowContext implements WorkflowContextInterface
         return $this->services->interceptorProvider
             ->getPipeline(WorkflowOutboundInterceptor::class)
             ->with(
-                fn (RequestInterface $request): PromiseInterface => $this->client->request($request),
+                fn(RequestInterface $request): PromiseInterface => $this->client->request($request),
                 /** @see WorkflowOutboundInterceptor::handleOutboundRequest() */
                 'handleOutboundRequest',
             )($request);

@@ -12,16 +12,15 @@ declare(strict_types=1);
 namespace Temporal\Tests\Interceptor;
 
 use React\Promise\PromiseInterface;
-use Temporal\Activity\ActivityContextInterface;
 use Temporal\DataConverter\HeaderInterface;
 use Temporal\Interceptor\ActivityInboundInterceptor;
+use Temporal\Interceptor\WorkflowClient\ActivityInput;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
 use Temporal\Interceptor\WorkflowInboundInterceptor;
 use Temporal\Interceptor\WorkflowOutboundInterceptor;
 use Temporal\Worker\Transport\Command\RequestInterface;
-use Temporal\Workflow\WorkflowContextInterface;
 
 final class FooHeaderIterator implements
     WorkflowOutboundInterceptor,
@@ -38,18 +37,12 @@ final class FooHeaderIterator implements
 
     public function handleOutboundRequest(RequestInterface $request, callable $next): PromiseInterface
     {
-        // Todo: replace with some think like $request->withHeader($header);
-        $request->header = $this->increment($request->getHeader(), __FUNCTION__);
-
-        return $next($request);
+        return $next($request->withHeader($this->increment($request->getHeader(), __FUNCTION__)));
     }
 
-    public function handleActivityInbound(ActivityContextInterface $context, callable $next): mixed
+    public function handleActivityInbound(ActivityInput $input, callable $next): mixed
     {
-        // Todo: replace with some think like $context->withHeader($header);
-        // $context->header = $this->increment($context->getHeader(), __FUNCTION__);
-
-        return $next($context);
+        return $next($input->with(header: $this->increment($input->header, __FUNCTION__)));
     }
 
     public function execute(WorkflowInput $input, callable $next): void

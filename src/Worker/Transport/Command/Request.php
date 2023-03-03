@@ -95,4 +95,11 @@ class Request extends Command implements RequestInterface
     {
         return $this->header;
     }
+
+    public function withHeader(HeaderInterface $header): self
+    {
+        $clone = clone $this;
+        $clone->header = $header;
+        return $clone;
+    }
 }

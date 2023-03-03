@@ -14,6 +14,9 @@ namespace Temporal\Worker\Transport\Command;
 use Temporal\DataConverter\HeaderInterface;
 use Temporal\DataConverter\ValuesInterface;
 
+/**
+ * @psalm-immutable
+ */
 interface RequestInterface extends CommandInterface
 {
     /**
@@ -42,4 +45,6 @@ interface RequestInterface extends CommandInterface
      * @return \Throwable|null
      */
     public function getFailure(): ?\Throwable;
+
+    public function withHeader(HeaderInterface $header): self;
 }
