@@ -65,7 +65,7 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
                 } catch (\Throwable $e) {
                     $resolver->reject($e);
                 }
-            }
+            },
         );
     }
 

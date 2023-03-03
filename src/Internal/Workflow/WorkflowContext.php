@@ -56,8 +56,7 @@ class WorkflowContext implements WorkflowContextInterface
     protected ServiceContainer $services;
     protected ClientInterface $client;
 
-    // todo: temporary; make protected
-    public Input $input;
+    protected Input $input;
     protected WorkflowInstanceInterface $workflowInstance;
     protected ?ValuesInterface $lastCompletionResult = null;
 
@@ -140,6 +139,13 @@ class WorkflowContext implements WorkflowContextInterface
     public function getInput(): ValuesInterface
     {
         return $this->input->input;
+    }
+
+    public function withInput(Input $input): self
+    {
+        $clone = clone $this;
+        $clone->input = $input;
+        return $clone;
     }
 
     /**

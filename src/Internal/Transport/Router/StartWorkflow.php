@@ -78,6 +78,7 @@ final class StartWorkflow extends Route
             $instance,
             $context,
         ) {
+            $context = $context->withInput(new Input($input->info, $input->arguments, $input->header));
             $process = new Process($this->services, $context);
             $this->services->running->add($process);
             $resolver->resolve(EncodedValues::fromValues([null]));
@@ -92,7 +93,9 @@ final class StartWorkflow extends Route
                 $starter,
                 /** @see WorkflowInboundInterceptor::execute() */
                 'execute',
-            )(new WorkflowInput($context->input->input, $context->input->header));
+            )(
+                new WorkflowInput($context->getInfo(), $context->getInput(), $context->getHeader()),
+            );
     }
 
     /**

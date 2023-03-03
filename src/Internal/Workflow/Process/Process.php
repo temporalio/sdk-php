@@ -51,10 +51,10 @@ class Process extends Scope implements ProcessInterface
 
                 try {
                     $inboundPipeline->with(
-                        static fn() => $scope->start($handler, $arguments),
+                        static fn(SignalInput $input) => $scope->start($handler, $input->arguments),
                         /** @see WorkflowInboundInterceptor::handleSignal() */
                         'handleSignal',
-                    )(new SignalInput($name, $this->scopeContext->getInput(), $this->scopeContext->getHeader()));
+                    )(new SignalInput($name, $arguments, $this->scopeContext->getHeader()));
                 } catch (InvalidArgumentException) {
                     // invalid signal invocation, destroy the scope with no traces
                 }
@@ -85,6 +85,8 @@ class Process extends Scope implements ProcessInterface
             parent::start($handler, $values);
         } catch (\Throwable $e) {
             $this->complete($e);
+        } finally {
+            $this->cleanContext();
         }
     }
 
