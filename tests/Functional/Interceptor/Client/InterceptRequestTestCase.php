@@ -88,11 +88,6 @@ final class InterceptRequestTestCase extends InterceptorTestCase
 
         // Workflow header
         $this->assertEquals([
-            /**
-             * Inherited from handler run
-             * @see \Temporal\Tests\Interceptor\FooHeaderIterator::execute()
-             */
-            'execute' => '1',
             /** @see \Temporal\Tests\Interceptor\FooHeaderIterator::handleQuery() */
             'handleQuery' => '1',
         ], $result);

@@ -15,13 +15,16 @@ use JetBrains\PhpStorm\Pure;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Exception\InvalidArgumentException;
+use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInboundInterceptor;
+use Temporal\Internal\Declaration\WorkflowInstance;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Workflow\Input;
 use Temporal\Internal\Workflow\WorkflowContext;
 use Temporal\Worker\LoopInterface;
+use Temporal\Workflow;
 use Temporal\Workflow\ProcessInterface;
 
 class Process extends Scope implements ProcessInterface
@@ -36,9 +39,29 @@ class Process extends Scope implements ProcessInterface
         parent::__construct($services, $ctx);
 
         $inboundPipeline = $services->interceptorProvider->getPipeline(WorkflowInboundInterceptor::class);
+        $wfInstance = $this->getWorkflowInstance();
+        \assert($wfInstance instanceof WorkflowInstance);
+
+        // Configure query signal handler
+        $wfInstance->setQueryExecutor(function (QueryInput $input, callable $handler): mixed {
+            try {
+                $context = $this->scopeContext->withInput(
+                    new Input(
+                        $this->scopeContext->getInfo(),
+                        $input->arguments,
+                        $input->header,
+                    )
+                );
+                Workflow::setCurrentContext($context);
+
+                return $handler($input->arguments);
+            } finally {
+                Workflow::setCurrentContext(null);
+            }
+        });
 
         // Configure signal handler
-        $this->getWorkflowInstance()->getSignalQueue()->onSignal(
+        $wfInstance->getSignalQueue()->onSignal(
             function (string $name, callable $handler, ValuesInterface $arguments) use ($inboundPipeline): void {
                 try {
                     $inboundPipeline->with(
@@ -63,7 +86,12 @@ class Process extends Scope implements ProcessInterface
                         },
                         /** @see WorkflowInboundInterceptor::handleSignal() */
                         'handleSignal',
-                    )(new SignalInput($name, $this->scopeContext->getInfo(), $arguments, $this->scopeContext->getHeader()));
+                    )(new SignalInput(
+                        $name,
+                        $this->scopeContext->getInfo(),
+                        $arguments,
+                        $this->scopeContext->getHeader(),
+                    ));
                 } catch (InvalidArgumentException) {
                     // invalid signal invocation, destroy the scope with no traces
                 }

@@ -47,7 +47,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     protected WorkflowContextInterface $context;
 
     /**
-     * @var WorkflowContextInterface
+     * @var WorkflowContext
      */
     protected WorkflowContext $scopeContext;
 

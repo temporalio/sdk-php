@@ -17,7 +17,19 @@ class QueryInput
     public function __construct(
         public string $queryName,
         public ValuesInterface $arguments,
+        // todo: remove headers
         public HeaderInterface $header,
     ) {
+    }
+
+    public function with(
+        ValuesInterface $arguments = null,
+        HeaderInterface $header = null,
+    ): self {
+        return new self(
+            $this->queryName,
+            $arguments ?? $this->arguments,
+            $header ?? $this->header
+        );
     }
 }

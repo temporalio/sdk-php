@@ -21,6 +21,7 @@ use Temporal\Internal\Interceptor;
 /**
  * @psalm-import-type DispatchableHandler from InstanceInterface
  * @psalm-type QueryHandler = \Closure(QueryInput): mixed
+ * @psalm-type QueryExecutor = \Closure(QueryInput, callable(ValuesInterface): mixed): mixed
  */
 final class WorkflowInstance extends Instance implements WorkflowInstanceInterface
 {
@@ -38,6 +39,9 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
      * @var SignalQueue
      */
     private SignalQueue $signalQueue;
+
+    /** @var QueryExecutor */
+    private \Closure $queryExecutor;
 
     /**
      * @param WorkflowPrototype $prototype
@@ -61,13 +65,24 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
         foreach ($prototype->getQueryHandlers() as $method => $reflection) {
             $fn = $this->createHandler($reflection);
             $this->queryHandlers[$method] = \Closure::fromCallable($this->pipeline->with(
-                static function (QueryInput $input) use ($fn) {
-                    return $fn($input->arguments);
+                function (QueryInput $input) use ($fn) {
+                    return ($this->queryExecutor)($input, $fn);
                 },
                 /** @see WorkflowInboundInterceptor::handleQuery() */
                 'handleQuery',
             ));
         }
+    }
+
+    /**
+     * @param QueryExecutor $executor
+     *
+     * @return $this
+     */
+    public function setQueryExecutor(\Closure $executor): self
+    {
+        $this->queryExecutor = $executor;
+        return $this;
     }
 
     /**
@@ -109,8 +124,8 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
         $fn = $this->createCallableHandler($handler);
 
         $this->queryHandlers[$name] = \Closure::fromCallable($this->pipeline->with(
-            static function (QueryInput $input) use ($fn) {
-                return $fn($input->arguments);
+            function (QueryInput $input) use ($fn) {
+                return ($this->queryExecutor)($input, $fn);
             },
             /** @see WorkflowInboundInterceptor::handleQuery() */
             'handleQuery',
