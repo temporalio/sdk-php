@@ -228,7 +228,6 @@ class Scope implements CancellationScopeInterface, PromisorInterface
             $handler($reason);
             unset($this->onCancel[$i]);
         }
-        $this->cleanContext();
     }
 
     /**
@@ -331,7 +330,6 @@ class Scope implements CancellationScopeInterface, PromisorInterface
             return $result->getReturn();
         }
 
-        $this->cleanContext();
         return $result;
     }
 
@@ -378,54 +376,42 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     /**
      * @return void
      */
-    protected function cleanContext(): void
-    {
-        Workflow::setCurrentContext(null);
-    }
-
-    /**
-     * @return void
-     */
     protected function next(): void
     {
-        try {
-            $this->makeCurrent();
-            $this->context->resolveConditions();
+        $this->makeCurrent();
+        $this->context->resolveConditions();
 
-            if (!$this->coroutine->valid()) {
-                $this->onResult($this->coroutine->getReturn());
+        if (!$this->coroutine->valid()) {
+            $this->onResult($this->coroutine->getReturn());
 
-                return;
-            }
+            return;
+        }
 
-            $current = $this->coroutine->current();
+        $current = $this->coroutine->current();
 
-            switch (true) {
-                case $current instanceof PromiseInterface:
-                    $this->nextPromise($current);
-                    break;
+        switch (true) {
+            case $current instanceof PromiseInterface:
+                $this->nextPromise($current);
+                break;
 
-                case $current instanceof PromisorInterface:
-                    $this->nextPromise($current->promise());
-                    break;
+            case $current instanceof PromisorInterface:
+                $this->nextPromise($current->promise());
+                break;
 
-                case $current instanceof RequestInterface:
-                    $this->nextPromise($this->context->getClient()->request($current));
-                    break;
+            case $current instanceof RequestInterface:
+                $this->nextPromise($this->context->getClient()->request($current));
+                break;
 
-                case $current instanceof \Generator:
-                    try {
-                        $this->nextPromise($this->createScope(false)->attach($current));
-                    } catch (\Throwable $e) {
-                        $this->coroutine->throw($e);
-                    }
-                    break;
+            case $current instanceof \Generator:
+                try {
+                    $this->nextPromise($this->createScope(false)->attach($current));
+                } catch (\Throwable $e) {
+                    $this->coroutine->throw($e);
+                }
+                break;
 
-                default:
-                    $this->coroutine->send($current);
-            }
-        } finally {
-            $this->cleanContext();
+            default:
+                $this->coroutine->send($current);
         }
     }
 
@@ -449,8 +435,6 @@ class Scope implements CancellationScopeInterface, PromisorInterface
                     } catch (\Throwable $e) {
                         $this->onException($e);
                         return;
-                    } finally {
-                        $this->cleanContext();
                     }
                 }
             );
@@ -489,8 +473,6 @@ class Scope implements CancellationScopeInterface, PromisorInterface
         } catch (\Throwable $e) {
             $this->onException($e);
             return;
-        } finally {
-            $this->cleanContext();
         }
 
         $this->next();
@@ -505,14 +487,10 @@ class Scope implements CancellationScopeInterface, PromisorInterface
         $this->deferred->reject($e);
 
         $this->makeCurrent();
-        try {
-            $this->context->resolveConditions();
+        $this->context->resolveConditions();
 
-            foreach ($this->onClose as $close) {
-                $close($this->exception);
-            }
-        } finally {
-            $this->cleanContext();
+        foreach ($this->onClose as $close) {
+            $close($this->exception);
         }
     }
 
@@ -525,14 +503,10 @@ class Scope implements CancellationScopeInterface, PromisorInterface
         $this->deferred->resolve($result);
 
         $this->makeCurrent();
-        try {
-            $this->context->resolveConditions();
+        $this->context->resolveConditions();
 
-            foreach ($this->onClose as $close) {
-                $close($this->result);
-            }
-        } finally {
-            $this->cleanContext();
+        foreach ($this->onClose as $close) {
+            $close($this->result);
         }
     }
 

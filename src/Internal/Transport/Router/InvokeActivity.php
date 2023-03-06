@@ -101,6 +101,7 @@ class InvokeActivity extends Route
                     'handleActivityInbound',
                 )(new ActivityInput($context->getInput(), $context->getHeader()));
 
+            $context = Activity::getCurrentContext();
             if ($context->isDoNotCompleteOnReturn()) {
                 $resolver->reject(DoNotCompleteOnResultException::create());
             } else {

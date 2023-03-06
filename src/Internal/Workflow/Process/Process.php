@@ -69,7 +69,7 @@ class Process extends Scope implements ProcessInterface
                             $this->createScope(
                                 true,
                                 LoopInterface::ON_SIGNAL,
-                                $this->scopeContext->withInput(
+                                $this->context->withInput(
                                     new Input($input->info, $input->arguments, $input->header),
                                 ),
                             )->onClose(
@@ -123,7 +123,7 @@ class Process extends Scope implements ProcessInterface
         } catch (\Throwable $e) {
             $this->complete($e);
         } finally {
-            $this->cleanContext();
+            Workflow::setCurrentContext(null);
         }
     }
 

@@ -144,6 +144,8 @@ class WorkflowContext implements WorkflowContextInterface
     public function withInput(Input $input): self
     {
         $clone = clone $this;
+        $clone->awaits = &$this->awaits;
+        $clone->trace = &$this->trace;
         $clone->input = $input;
         return $clone;
     }

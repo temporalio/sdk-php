@@ -34,7 +34,7 @@ class QueryHeadersWorkflow
     #[Workflow\QueryMethod]
     public function getHeaders(): array
     {
-        return \iterator_to_array(Workflow::getHeader()->getIterator());
+        return \iterator_to_array(Workflow::getCurrentContext()->getHeader()->getIterator());
     }
 
     #[Workflow\QueryMethod]
