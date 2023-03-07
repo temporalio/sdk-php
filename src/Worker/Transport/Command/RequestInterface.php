@@ -16,6 +16,7 @@ use Temporal\DataConverter\ValuesInterface;
 
 /**
  * @psalm-immutable
+ * @psalm-type RequestOptions = array<non-empty-string, mixed>
  */
 interface RequestInterface extends CommandInterface
 {
@@ -25,7 +26,7 @@ interface RequestInterface extends CommandInterface
     public function getName(): string;
 
     /**
-     * @return array
+     * @return RequestOptions
      */
     public function getOptions(): array;
 

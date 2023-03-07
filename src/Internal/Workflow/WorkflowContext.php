@@ -22,7 +22,7 @@ use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\HeaderInterface;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
-use Temporal\Interceptor\WorkflowOutboundInterceptor;
+use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Support\DateInterval;
@@ -445,10 +445,10 @@ class WorkflowContext implements WorkflowContextInterface
 
         // Intercept workflow outbound calls
         return $this->services->interceptorProvider
-            ->getPipeline(WorkflowOutboundInterceptor::class)
+            ->getPipeline(WorkflowOutboundRequestInterceptor::class)
             ->with(
                 fn(RequestInterface $request): PromiseInterface => $this->client->request($request),
-                /** @see WorkflowOutboundInterceptor::handleOutboundRequest() */
+                /** @see WorkflowOutboundRequestInterceptor::handleOutboundRequest() */
                 'handleOutboundRequest',
             )($request);
     }

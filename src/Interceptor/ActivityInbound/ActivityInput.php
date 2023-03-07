@@ -19,6 +19,10 @@ use Temporal\DataConverter\ValuesInterface;
 #[Immutable]
 class ActivityInput
 {
+    /**
+     * @no-named-arguments
+     * @internal Don't use the constructor. Use {@see self::with()} instead.
+     */
     public function __construct(
         #[Immutable]
         public ValuesInterface $arguments,

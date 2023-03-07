@@ -9,12 +9,23 @@
 
 namespace Temporal\Interceptor\WorkflowInbound;
 
+use JetBrains\PhpStorm\Immutable;
 use Temporal\DataConverter\ValuesInterface;
 
+/**
+ * @psalm-immutable
+ */
+#[Immutable]
 class QueryInput
 {
+    /**
+     * @no-named-arguments
+     * @internal Don't use the constructor. Use {@see self::with()} instead.
+     */
     public function __construct(
+        #[Immutable]
         public string $queryName,
+        #[Immutable]
         public ValuesInterface $arguments,
     ) {
     }

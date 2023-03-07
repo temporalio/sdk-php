@@ -18,6 +18,9 @@ use Temporal\DataConverter\ValuesInterface;
 
 /**
  * Carries request to perform host action with payloads and failure as context. Can be cancelled if allows
+ *
+ * @psalm-import-type RequestOptions from RequestInterface
+ * @psalm-immutable
  */
 class Request extends Command implements RequestInterface
 {
@@ -29,7 +32,7 @@ class Request extends Command implements RequestInterface
 
     /**
      * @param string $name
-     * @param array $options
+     * @param RequestOptions $options
      * @param ValuesInterface|null $payloads
      * @param int|null $id
      */
@@ -57,7 +60,7 @@ class Request extends Command implements RequestInterface
     }
 
     /**
-     * @return array
+     * @return RequestOptions
      */
     public function getOptions(): array
     {

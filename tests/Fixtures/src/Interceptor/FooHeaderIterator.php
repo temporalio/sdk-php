@@ -19,11 +19,11 @@ use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
 use Temporal\Interceptor\WorkflowInboundInterceptor;
-use Temporal\Interceptor\WorkflowOutboundInterceptor;
+use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
 use Temporal\Worker\Transport\Command\RequestInterface;
 
 final class FooHeaderIterator implements
-    WorkflowOutboundInterceptor,
+    WorkflowOutboundRequestInterceptor,
     ActivityInboundInterceptor,
     WorkflowInboundInterceptor
 {

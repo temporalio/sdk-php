@@ -1,10 +1,10 @@
 <?php
 
 /**
- * Spiral Framework.
+ * This file is part of Temporal package.
  *
- * @license   MIT
- * @author    Anton Titov (Wolfy-J)
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
  */
 
 declare(strict_types=1);
@@ -18,19 +18,46 @@ final class GetVersion extends Request
     public const NAME = 'GetVersion';
 
     /**
-     * @param string $changeID
+     * @param string $changeId
      * @param positive-int $minSupported
      * @param positive-int $maxSupported
      */
-    public function __construct(string $changeID, int $minSupported, int $maxSupported)
-    {
+    public function __construct(
+        private string $changeId,
+        private int $minSupported,
+        private int $maxSupported
+    ) {
         parent::__construct(
             self::NAME,
             [
-                'changeID' => $changeID,
+                'changeID' => $changeId,
                 'minSupported' => $minSupported,
                 'maxSupported' => $maxSupported,
             ]
         );
+    }
+
+    /**
+     * @return string
+     */
+    public function getChangeId(): string
+    {
+        return $this->changeId;
+    }
+
+    /**
+     * @return int
+     */
+    public function getMinSupported(): int
+    {
+        return $this->minSupported;
+    }
+
+    /**
+     * @return int
+     */
+    public function getMaxSupported(): int
+    {
+        return $this->maxSupported;
     }
 }

@@ -20,6 +20,10 @@ use Temporal\Workflow\WorkflowInfo;
 #[Immutable]
 class SignalInput
 {
+    /**
+     * @no-named-arguments
+     * @internal Don't use the constructor. Use {@see self::with()} instead.
+     */
     public function __construct(
         #[Immutable]
         public string $signalName,

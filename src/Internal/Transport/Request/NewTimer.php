@@ -14,6 +14,9 @@ namespace Temporal\Internal\Transport\Request;
 use Carbon\CarbonInterval;
 use Temporal\Worker\Transport\Command\Request;
 
+/**
+ * @psalm-immutable
+ */
 final class NewTimer extends Request
 {
     public const NAME = 'NewTimer';
@@ -21,8 +24,16 @@ final class NewTimer extends Request
     /**
      * @param \DateInterval $interval
      */
-    public function __construct(\DateInterval $interval)
+    public function __construct(private \DateInterval $interval)
     {
         parent::__construct(self::NAME, ['ms' => (int)CarbonInterval::make($interval)->totalMilliseconds]);
+    }
+
+    /**
+     * @return \DateInterval
+     */
+    public function getInterval(): \DateInterval
+    {
+        return $this->interval;
     }
 }
