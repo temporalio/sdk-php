@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Temporal\Interceptor\WorkflowClient;
+namespace Temporal\Interceptor\ActivityInbound;
 
 use JetBrains\PhpStorm\Immutable;
 use Temporal\DataConverter\HeaderInterface;

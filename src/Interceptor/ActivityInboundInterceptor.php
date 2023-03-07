@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Interceptor;
 
-use Temporal\Interceptor\WorkflowClient\ActivityInput;
+use Temporal\Interceptor\ActivityInbound\ActivityInput;
 use Temporal\Internal\Interceptor\Interceptor;
 
 interface ActivityInboundInterceptor extends Interceptor

@@ -60,7 +60,7 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
             LoopInterface::ON_QUERY,
             static function () use ($name, $request, $resolver, $handler): void {
                 try {
-                    $result = $handler(new QueryInput($name, $request->getPayloads(), $request->getHeader()));
+                    $result = $handler(new QueryInput($name, $request->getPayloads()));
                     $resolver->resolve(EncodedValues::fromValues([$result]));
                 } catch (\Throwable $e) {
                     $resolver->reject($e);

@@ -33,7 +33,6 @@ interface WorkflowInboundInterceptor extends Interceptor
     /**
      * @param QueryInput $input
      * @param callable(QueryInput): void $next
-     * todo: add some context about query name
      */
     public function handleQuery(QueryInput $input, callable $next): mixed;
 }

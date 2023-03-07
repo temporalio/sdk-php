@@ -13,8 +13,8 @@ namespace Temporal\Tests\Interceptor;
 
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\HeaderInterface;
+use Temporal\Interceptor\ActivityInbound\ActivityInput;
 use Temporal\Interceptor\ActivityInboundInterceptor;
-use Temporal\Interceptor\WorkflowClient\ActivityInput;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
@@ -57,6 +57,6 @@ final class FooHeaderIterator implements
 
     public function handleQuery(QueryInput $input, callable $next): mixed
     {
-        return $next($input->with(header: $this->increment($input->header, __FUNCTION__)));
+        return $next($input);
     }
 }
