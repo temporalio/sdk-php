@@ -15,17 +15,23 @@ use React\Promise\PromiseInterface;
 use Temporal\DataConverter\HeaderInterface;
 use Temporal\Interceptor\ActivityInbound\ActivityInput;
 use Temporal\Interceptor\ActivityInboundInterceptor;
+use Temporal\Interceptor\WorkflowClient\CancelInput;
+use Temporal\Interceptor\WorkflowClient\StartInput;
+use Temporal\Interceptor\WorkflowClient\TerminateInput;
+use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
 use Temporal\Interceptor\WorkflowInboundInterceptor;
 use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
 use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Workflow\WorkflowExecution;
 
 final class FooHeaderIterator implements
     WorkflowOutboundRequestInterceptor,
     ActivityInboundInterceptor,
-    WorkflowInboundInterceptor
+    WorkflowInboundInterceptor,
+    WorkflowClientCallsInterceptor
 {
     private function increment(HeaderInterface $header, string $key): HeaderInterface
     {
@@ -58,5 +64,42 @@ final class FooHeaderIterator implements
     public function handleQuery(QueryInput $input, callable $next): mixed
     {
         return $next($input);
+    }
+
+    public function start(StartInput $input, callable $next): WorkflowExecution
+    {
+        return $next($input->with(header: $this->increment($input->header, __FUNCTION__)));
+    }
+
+    public function signal(\Temporal\Interceptor\WorkflowClient\SignalInput $input, callable $next): void
+    {
+        $next($input);
+    }
+
+    public function signalWithStart(
+        \Temporal\Interceptor\WorkflowClient\QueryInput $input,
+        callable $next
+    ): WorkflowExecution {
+        return $next($input);
+    }
+
+    public function getResult(\Temporal\Interceptor\WorkflowClient\QueryInput $input, callable $next): mixed
+    {
+        return $next($input);
+    }
+
+    public function query(\Temporal\Interceptor\WorkflowClient\QueryInput $input, callable $next): mixed
+    {
+        return $next($input);
+    }
+
+    public function cancel(CancelInput $input, callable $next): void
+    {
+        $next($input);
+    }
+
+    public function terminate(TerminateInput $input, callable $next): void
+    {
+        $next($input);
     }
 }

@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Fixtures;
 
 use Temporal\Interceptor\ActivityInboundInterceptor;
+use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Interceptor\WorkflowInboundInterceptor;
 use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
 use Temporal\Internal\Interceptor\Interceptor;
@@ -28,6 +29,7 @@ final class PipelineProvider implements \Temporal\Internal\Interceptor\PipelineP
         WorkflowInboundInterceptor::class => [],
         WorkflowOutboundRequestInterceptor::class => [],
         ActivityInboundInterceptor::class => [],
+        WorkflowClientCallsInterceptor::class => [],
     ];
 
     /**

@@ -13,7 +13,9 @@ namespace Temporal\Tests\Functional\Interceptor\Client;
 
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
+use Temporal\Tests\Fixtures\PipelineProvider;
 use Temporal\Tests\Functional\FunctionalTestCase;
+use Temporal\Tests\Interceptor\FooHeaderIterator;
 
 /**
  * @group client
@@ -27,7 +29,8 @@ abstract class InterceptorTestCase extends FunctionalTestCase
     protected function createClient(string $connection = 'localhost:7233'): WorkflowClient
     {
         return new WorkflowClient(
-            ServiceClient::create($connection)
+            ServiceClient::create($connection),
+            interceptorProvider: new PipelineProvider([FooHeaderIterator::class]),
         );
     }
 }

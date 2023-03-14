@@ -39,11 +39,15 @@ final class InterceptRequestTestCase extends InterceptorTestCase
 
         // Workflow header
         $this->assertSame([
+            /** @see \Temporal\Tests\Interceptor\FooHeaderIterator::start */
+            'start' => '1',
             /** @see \Temporal\Tests\Interceptor\FooHeaderIterator::execute() */
             'execute' => '1',
         ], (array)$result[0]);
         // Activity header
         $this->assertEquals([
+            /** @see \Temporal\Tests\Interceptor\FooHeaderIterator::start */
+            'start' => '1',
             /** @see \Temporal\Tests\Interceptor\FooHeaderIterator::execute() */
             'execute' => '1',
             /** @see \Temporal\Tests\Interceptor\FooHeaderIterator::handleOutboundRequest() */
@@ -67,6 +71,8 @@ final class InterceptRequestTestCase extends InterceptorTestCase
 
         // Workflow header
         $this->assertSame([
+            /** @see \Temporal\Tests\Interceptor\FooHeaderIterator::start */
+            'start' => '1',
             /**
              * Inherited from handler run
              * @see \Temporal\Tests\Interceptor\FooHeaderIterator::execute()
