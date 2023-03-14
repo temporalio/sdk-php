@@ -49,7 +49,6 @@ class Process extends Scope implements ProcessInterface
                     new Input(
                         $this->scopeContext->getInfo(),
                         $input->arguments,
-                        $input->header,
                     )
                 );
                 Workflow::setCurrentContext($context);

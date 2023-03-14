@@ -38,6 +38,7 @@ use Temporal\Worker\Worker;
  *
  * @psalm-import-type DateIntervalValue from DateInterval
  * @psalm-import-type IdReusePolicyEnum from IdReusePolicy
+ * @psalm-immutable
  */
 final class WorkflowOptions extends Options
 {

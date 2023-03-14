@@ -24,7 +24,7 @@ use Temporal\Internal\Interceptor;
 final class WorkflowInstantiator extends Instantiator
 {
     public function __construct(
-        private Interceptor\PipelineProvider $interceptors,
+        private Interceptor\PipelineProvider $interceptorProvider,
     ) {
     }
 
@@ -38,7 +38,7 @@ final class WorkflowInstantiator extends Instantiator
         return new WorkflowInstance(
             $prototype,
             $this->getInstance($prototype),
-            $this->interceptors->getPipeline(WorkflowInboundInterceptor::class),
+            $this->interceptorProvider->getPipeline(WorkflowInboundInterceptor::class),
         );
     }
 

@@ -21,12 +21,15 @@ use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\HeaderInterface;
 use Temporal\Exception\InvalidArgumentException;
+use Temporal\Interceptor\SimplePipelineProvider;
+use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Internal\Client\ActivityCompletionClient;
 use Temporal\Internal\Client\WorkflowRun;
 use Temporal\Internal\Client\WorkflowStarter;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
 use Temporal\Internal\Client\WorkflowProxy;
 use Temporal\Internal\Client\WorkflowStub;
+use Temporal\Internal\Interceptor\PipelineProvider;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowRunInterface;
 use Temporal\Workflow\WorkflowStub as WorkflowStubConverter;
@@ -44,21 +47,30 @@ class WorkflowClient implements WorkflowClientInterface
     private DataConverterInterface $converter;
     private WorkflowStarter $starter;
     private WorkflowReader $reader;
+    private PipelineProvider $interceptorProvider;
 
     /**
      * @param ServiceClientInterface $serviceClient
      * @param ClientOptions|null $options
      * @param DataConverterInterface|null $converter
+     * @param PipelineProvider|null $interceptorProvider
      */
     public function __construct(
         ServiceClientInterface $serviceClient,
         ClientOptions $options = null,
-        DataConverterInterface $converter = null
+        DataConverterInterface $converter = null,
+        PipelineProvider $interceptorProvider = null,
     ) {
         $this->client = $serviceClient;
+        $this->interceptorProvider = $interceptorProvider ?? new SimplePipelineProvider();
         $this->clientOptions = $options ?? new ClientOptions();
         $this->converter = $converter ?? DataConverter::createDefault();
-        $this->starter = new WorkflowStarter($serviceClient, $this->converter, $this->clientOptions);
+        $this->starter = new WorkflowStarter(
+            $serviceClient,
+            $this->converter,
+            $this->clientOptions,
+            $this->interceptorProvider->getPipeline(WorkflowClientCallsInterceptor::class),
+        );
         $this->reader = new WorkflowReader($this->createReader());
     }
 

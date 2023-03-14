@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Client;
 
-use Temporal\Api\Common\V1\Header;
 use Temporal\Api\Common\V1\WorkflowType;
 use Temporal\Api\Errordetails\V1\WorkflowExecutionAlreadyStartedFailure;
 use Temporal\Api\Taskqueue\V1\TaskQueue;
@@ -27,6 +26,10 @@ use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\HeaderInterface;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Client\WorkflowExecutionAlreadyStartedException;
+use Temporal\Interceptor\WorkflowClient\SignalWithStartInput;
+use Temporal\Interceptor\WorkflowClient\StartInput;
+use Temporal\Interceptor\WorkflowClientCallsInterceptor;
+use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Workflow\WorkflowExecution;
 
@@ -36,39 +39,25 @@ use Temporal\Workflow\WorkflowExecution;
 final class WorkflowStarter
 {
     /**
-     * @var ServiceClientInterface
-     */
-    private ServiceClientInterface $serviceClient;
-
-    /**
-     * @var DataConverterInterface
-     */
-    private DataConverterInterface $converter;
-
-    /**
-     * @var ClientOptions
-     */
-    private ClientOptions $clientOptions;
-
-    /**
      * @param ServiceClientInterface $serviceClient
      * @param DataConverterInterface $converter
      * @param ClientOptions $clientOptions
+     * @param Pipeline<WorkflowClientCallsInterceptor, WorkflowExecution> $interceptors
      */
     public function __construct(
-        ServiceClientInterface $serviceClient,
-        DataConverterInterface $converter,
-        ClientOptions $clientOptions
+        private ServiceClientInterface $serviceClient,
+        private DataConverterInterface $converter,
+        private ClientOptions $clientOptions,
+        private Pipeline $interceptors,
     ) {
-        $this->clientOptions = $clientOptions;
-        $this->serviceClient = $serviceClient;
-        $this->converter = $converter;
     }
 
     /**
      * @param string $workflowType
      * @param WorkflowOptions $options
      * @param array $args
+     * @param HeaderInterface|null $header
+     *
      * @return WorkflowExecution
      *
      * @throws ServiceClientException
@@ -80,54 +69,16 @@ final class WorkflowStarter
         array $args = [],
         HeaderInterface $header = null,
     ): WorkflowExecution {
-        $workflowId = $options->workflowId ?? Uuid::v4();
         $header ??= EncodedHeader::empty();
+        $arguments = EncodedValues::fromValues($args, $this->converter);
 
-        $r = new StartWorkflowExecutionRequest();
-        $r
-            ->setRequestId(Uuid::v4())
-            ->setIdentity($this->clientOptions->identity)
-            ->setNamespace($this->clientOptions->namespace)
-            ->setTaskQueue(new TaskQueue(['name' => $options->taskQueue]))
-            ->setWorkflowType(new WorkflowType(['name' => $workflowType]))
-            ->setWorkflowId($workflowId)
-            ->setCronSchedule($options->cronSchedule ?? '')
-            ->setRetryPolicy($options->retryOptions ? $options->retryOptions->toWorkflowRetryPolicy() : null)
-            ->setWorkflowIdReusePolicy($options->workflowIdReusePolicy)
-            ->setWorkflowRunTimeout(DateInterval::toDuration($options->workflowRunTimeout))
-            ->setWorkflowExecutionTimeout(DateInterval::toDuration($options->workflowExecutionTimeout))
-            ->setWorkflowTaskTimeout(DateInterval::toDuration($options->workflowTaskTimeout))
-            ->setMemo($options->toMemo($this->converter))
-            ->setSearchAttributes($options->toSearchAttributes($this->converter))
-            ->setHeader($header->toHeader());
-
-        $input = EncodedValues::fromValues($args, $this->converter);
-        if (!$input->isEmpty()) {
-            $r->setInput($input->toPayloads());
-        }
-
-        try {
-            $response = $this->serviceClient->StartWorkflowExecution($r);
-        } catch (ServiceClientException $e) {
-            $f = $e->getFailure(WorkflowExecutionAlreadyStartedFailure::class);
-
-            if ($f instanceof WorkflowExecutionAlreadyStartedFailure) {
-                $execution = new WorkflowExecution($r->getWorkflowId(), $f->getRunId());
-
-                throw new WorkflowExecutionAlreadyStartedException(
-                    $execution,
-                    $workflowType,
-                    $e
-                );
-            }
-
-            throw $e;
-        }
-
-        return new WorkflowExecution(
-            $workflowId,
-            $response->getRunId(),
-        );
+        return $this->interceptors->with(
+            fn (StartInput $input): WorkflowExecution => $this->executeRequest(
+                $this->configureExecutionRequest(new StartWorkflowExecutionRequest(), $input)
+            ),
+            /** @see WorkflowClientCallsInterceptor::start */
+            'start',
+        )(new StartInput($options->workflowId, $workflowType, $header, $arguments, $options));
     }
 
     /**
@@ -136,6 +87,8 @@ final class WorkflowStarter
      * @param string $signal
      * @param array $signalArgs
      * @param array $startArgs
+     * @param HeaderInterface|null $header
+     *
      * @return WorkflowExecution
      *
      * @throws ServiceClientException
@@ -149,17 +102,90 @@ final class WorkflowStarter
         array $startArgs = [],
         HeaderInterface $header = null,
     ): WorkflowExecution {
-        $workflowId = $options->workflowId ?? Uuid::v4();
         $header ??= EncodedHeader::empty();
+        $arguments = EncodedValues::fromValues($startArgs, $this->converter);
+        $signalArguments = EncodedValues::fromValues($signalArgs, $this->converter);
 
-        $r = new SignalWithStartWorkflowExecutionRequest();
-        $r
-            ->setRequestId(Uuid::v4())
+        return $this->interceptors->with(
+            function (SignalWithStartInput $input): WorkflowExecution {
+                $request = $this->configureExecutionRequest(
+                    new SignalWithStartWorkflowExecutionRequest(),
+                    $input->workflowStartInput,
+                );
+
+                $request->setSignalName($input->signalName);
+                if (!$input->signalArguments->isEmpty()) {
+                    $request->setSignalInput($input->signalArguments->toPayloads());
+                }
+
+
+                return $this->executeRequest($request);
+            },
+            /** @see WorkflowClientCallsInterceptor::signalWithStart */
+            'signalWithStart',
+        )(
+            new SignalWithStartInput(
+                new StartInput($options->workflowId, $workflowType, $header, $arguments, $options),
+                $signal,
+                $signalArguments,
+            ),
+        );
+    }
+
+    /**
+     * @param StartWorkflowExecutionRequest|SignalWithStartWorkflowExecutionRequest $request
+     *        use {@see configureExecutionRequest()} to prepare request
+     *
+     * @throws ServiceClientException
+     * @throws WorkflowExecutionAlreadyStartedException
+     */
+    private function executeRequest(StartWorkflowExecutionRequest|SignalWithStartWorkflowExecutionRequest $request,
+    ): WorkflowExecution {
+        try {
+            $response = $this->serviceClient->StartWorkflowExecution($request);
+        } catch (ServiceClientException $e) {
+            $f = $e->getFailure(WorkflowExecutionAlreadyStartedFailure::class);
+
+            if ($f instanceof WorkflowExecutionAlreadyStartedFailure) {
+                $execution = new WorkflowExecution($request->getWorkflowId(), $f->getRunId());
+
+                throw new WorkflowExecutionAlreadyStartedException(
+                    $execution,
+                    $request->getWorkflowType()->getName(),
+                    $e
+                );
+            }
+
+            throw $e;
+        }
+
+        return new WorkflowExecution(
+            $request->getWorkflowId(),
+            $response->getRunId(),
+        );
+    }
+
+    /**
+     * @template TRequest of StartWorkflowExecutionRequest|SignalWithStartWorkflowExecutionRequest
+     *
+     * @param TRequest $req
+     * @param StartInput $input
+     *
+     * @return TRequest
+     *
+     * @throws \Exception
+     */
+    private function configureExecutionRequest(
+        StartWorkflowExecutionRequest|SignalWithStartWorkflowExecutionRequest $req,
+        StartInput $input,
+    ): StartWorkflowExecutionRequest|SignalWithStartWorkflowExecutionRequest {
+        $options = $input->options;
+        $req->setRequestId(Uuid::v4())
             ->setIdentity($this->clientOptions->identity)
             ->setNamespace($this->clientOptions->namespace)
             ->setTaskQueue(new TaskQueue(['name' => $options->taskQueue]))
-            ->setWorkflowType(new WorkflowType(['name' => $workflowType]))
-            ->setWorkflowId($workflowId)
+            ->setWorkflowType(new WorkflowType(['name' => $input->workflowType]))
+            ->setWorkflowId($input->workflowId)
             ->setCronSchedule($options->cronSchedule ?? '')
             ->setRetryPolicy($options->retryOptions ? $options->retryOptions->toWorkflowRetryPolicy() : null)
             ->setWorkflowIdReusePolicy($options->workflowIdReusePolicy)
@@ -168,37 +194,12 @@ final class WorkflowStarter
             ->setWorkflowTaskTimeout(DateInterval::toDuration($options->workflowTaskTimeout))
             ->setMemo($options->toMemo($this->converter))
             ->setSearchAttributes($options->toSearchAttributes($this->converter))
-            ->setHeader($header->toHeader());
+            ->setHeader($input->header->toHeader());
 
-        $input = EncodedValues::fromValues($startArgs, $this->converter);
-        if (!$input->isEmpty()) {
-            $r->setInput($input->toPayloads());
+        if (!$input->arguments->isEmpty()) {
+            $req->setInput($input->arguments->toPayloads());
         }
 
-        $r->setSignalName($signal);
-        $signalInput = EncodedValues::fromValues($signalArgs, $this->converter);
-        if (!$signalInput->isEmpty()) {
-            $r->setSignalInput($signalInput->toPayloads());
-        }
-
-        try {
-            $response = $this->serviceClient->SignalWithStartWorkflowExecution($r);
-        } catch (ServiceClientException $e) {
-            $f = $e->getFailure(WorkflowExecutionAlreadyStartedFailure::class);
-
-            if ($f instanceof WorkflowExecutionAlreadyStartedFailure) {
-                $execution = new WorkflowExecution($r->getWorkflowId(), $f->getRunId());
-
-                throw new WorkflowExecutionAlreadyStartedException(
-                    $execution,
-                    $workflowType,
-                    $e
-                );
-            }
-
-            throw $e;
-        }
-
-        return new WorkflowExecution($workflowId, $response->getRunId());
+        return $req;
     }
 }
