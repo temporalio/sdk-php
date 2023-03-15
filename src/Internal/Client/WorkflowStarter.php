@@ -142,7 +142,9 @@ final class WorkflowStarter
     private function executeRequest(StartWorkflowExecutionRequest|SignalWithStartWorkflowExecutionRequest $request,
     ): WorkflowExecution {
         try {
-            $response = $this->serviceClient->StartWorkflowExecution($request);
+            $response = $request instanceof StartWorkflowExecutionRequest
+                ? $this->serviceClient->StartWorkflowExecution($request)
+                : $this->serviceClient->SignalWithStartWorkflowExecution($request);
         } catch (ServiceClientException $e) {
             $f = $e->getFailure(WorkflowExecutionAlreadyStartedFailure::class);
 

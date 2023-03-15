@@ -12,8 +12,10 @@ declare(strict_types=1);
 namespace Temporal\Interceptor;
 
 use Temporal\Interceptor\WorkflowClient\CancelInput;
+use Temporal\Interceptor\WorkflowClient\GetResultInput;
 use Temporal\Interceptor\WorkflowClient\QueryInput;
 use Temporal\Interceptor\WorkflowClient\SignalInput;
+use Temporal\Interceptor\WorkflowClient\SignalWithStartInput;
 use Temporal\Interceptor\WorkflowClient\StartInput;
 use Temporal\Interceptor\WorkflowClient\TerminateInput;
 use Temporal\Internal\Interceptor\Interceptor;
@@ -38,15 +40,15 @@ interface WorkflowClientCallsInterceptor extends Interceptor
     public function signal(SignalInput $input, callable $next): void;
 
     /**
-     * @param QueryInput $input
-     * @param callable(QueryInput): WorkflowExecution $next
+     * @param SignalWithStartInput $input
+     * @param callable(SignalWithStartInput): WorkflowExecution $next
      *
      * @return WorkflowExecution
      */
-    public function signalWithStart(QueryInput $input, callable $next): WorkflowExecution;
+    public function signalWithStart(SignalWithStartInput $input, callable $next): WorkflowExecution;
 
     // todo
-    public function getResult(QueryInput $input, callable $next): mixed;
+    public function getResult(GetResultInput $input, callable $next): mixed;
 
     // WorkflowExecutionStatus + result
     public function query(QueryInput $input, callable $next): mixed;

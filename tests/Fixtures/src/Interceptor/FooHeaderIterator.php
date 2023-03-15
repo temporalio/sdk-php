@@ -16,6 +16,8 @@ use Temporal\DataConverter\HeaderInterface;
 use Temporal\Interceptor\ActivityInbound\ActivityInput;
 use Temporal\Interceptor\ActivityInboundInterceptor;
 use Temporal\Interceptor\WorkflowClient\CancelInput;
+use Temporal\Interceptor\WorkflowClient\GetResultInput;
+use Temporal\Interceptor\WorkflowClient\SignalWithStartInput;
 use Temporal\Interceptor\WorkflowClient\StartInput;
 use Temporal\Interceptor\WorkflowClient\TerminateInput;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
@@ -76,14 +78,18 @@ final class FooHeaderIterator implements
         $next($input);
     }
 
-    public function signalWithStart(
-        \Temporal\Interceptor\WorkflowClient\QueryInput $input,
-        callable $next
-    ): WorkflowExecution {
-        return $next($input);
+    public function signalWithStart(SignalWithStartInput $input, callable $next): WorkflowExecution
+    {
+        return $next(
+            $input->with(
+                workflowStartInput: $input->workflowStartInput->with(
+                    header: $this->increment($input->workflowStartInput->header, __FUNCTION__),
+                ),
+            ),
+        );
     }
 
-    public function getResult(\Temporal\Interceptor\WorkflowClient\QueryInput $input, callable $next): mixed
+    public function getResult(GetResultInput $input, callable $next): mixed
     {
         return $next($input);
     }

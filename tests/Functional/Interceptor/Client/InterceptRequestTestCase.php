@@ -71,8 +71,33 @@ final class InterceptRequestTestCase extends InterceptorTestCase
 
         // Workflow header
         $this->assertSame([
-            /** @see \Temporal\Tests\Interceptor\FooHeaderIterator::start */
+            /** @see \Temporal\Tests\Interceptor\FooHeaderIterator::start() */
             'start' => '1',
+            /**
+             * Inherited from handler run
+             * @see \Temporal\Tests\Interceptor\FooHeaderIterator::execute()
+             */
+            'execute' => '1',
+            /** @see \Temporal\Tests\Interceptor\FooHeaderIterator::handleSignal() */
+            'handleSignal' => '1',
+        ], (array)$run->getResult());
+    }
+
+    public function testSignalWithStartMethod(): void
+    {
+        $client = $this->createClient();
+        $workflow = $client->newWorkflowStub(
+            SignalHeadersWorkflow::class,
+            WorkflowOptions::new()
+                ->withWorkflowExecutionTimeout(CarbonInterval::seconds(5)),
+        );
+
+        $run = $client->startWithSignal($workflow, 'signal');
+
+        // Workflow header
+        $this->assertSame([
+            /** @see \Temporal\Tests\Interceptor\FooHeaderIterator::signalWithStart() */
+            'signalWithStart' => '1',
             /**
              * Inherited from handler run
              * @see \Temporal\Tests\Interceptor\FooHeaderIterator::execute()
