@@ -18,9 +18,11 @@ use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Client\WorkflowNotFoundException;
 use Temporal\Exception\Client\WorkflowServiceException;
+use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Internal\Client\WorkflowStub;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Temporal\Tests\Fixtures\PipelineProvider;
 use Temporal\Workflow\WorkflowExecution;
 
 /**
@@ -41,6 +43,7 @@ final class WorkflowStubTestCase extends TestCase
             $this->serviceClient,
             new ClientOptions(),
             $this->createMock(DataConverterInterface::class),
+            (new PipelineProvider([]))->getPipeline(WorkflowClientCallsInterceptor::class),
         );
         $this->workflowStub->setExecution(new WorkflowExecution());
     }

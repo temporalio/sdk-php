@@ -48,17 +48,15 @@ use Temporal\Exception\WorkflowExecutionFailedException;
 use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Client\WorkflowNotFoundException;
 use Temporal\Exception\Client\WorkflowServiceException;
+use Temporal\Interceptor\WorkflowClient\SignalInput;
+use Temporal\Interceptor\WorkflowClientCallsInterceptor;
+use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Workflow\WorkflowExecution;
 
 final class WorkflowStub implements WorkflowStubInterface
 {
     private const ERROR_WORKFLOW_NOT_STARTED = 'Method "%s" cannot be called because the workflow has not been started';
 
-    private ServiceClientInterface $serviceClient;
-    private ClientOptions $clientOptions;
-    private DataConverterInterface $converter;
-    private ?string $workflowType;
-    private ?WorkflowOptions $options;
     private ?WorkflowExecution $execution = null;
     private HeaderInterface $header;
 
@@ -66,22 +64,19 @@ final class WorkflowStub implements WorkflowStubInterface
      * @param ServiceClientInterface $serviceClient
      * @param ClientOptions $clientOptions
      * @param DataConverterInterface $converter
-     * @param string|null $workflowType
+     * @param Pipeline<WorkflowClientCallsInterceptor, void> $interceptors
+     * @param non-empty-string|null $workflowType
      * @param WorkflowOptions|null $options
      */
     public function __construct(
-        ServiceClientInterface $serviceClient,
-        ClientOptions $clientOptions,
-        DataConverterInterface $converter,
-        ?string $workflowType = null,
-        WorkflowOptions $options = null,
+        private ServiceClientInterface $serviceClient,
+        private ClientOptions $clientOptions,
+        private DataConverterInterface $converter,
+        private Pipeline $interceptors,
+        private ?string $workflowType = null,
+        private ?WorkflowOptions $options = null,
         HeaderInterface|array $header = [],
     ) {
-        $this->serviceClient = $serviceClient;
-        $this->clientOptions = $clientOptions;
-        $this->converter = $converter;
-        $this->workflowType = $workflowType;
-        $this->options = $options;
         $this->header = \is_array($header) ? EncodedHeader::fromValues($header) : $header;
     }
 
@@ -144,28 +139,43 @@ final class WorkflowStub implements WorkflowStubInterface
     {
         $this->assertStarted(__FUNCTION__);
 
-        $r = new SignalWorkflowExecutionRequest();
-        $r->setRequestId(Uuid::v4());
-        $r->setIdentity($this->clientOptions->identity);
-        $r->setNamespace($this->clientOptions->namespace);
+        $request = new SignalWorkflowExecutionRequest();
+        $request->setRequestId(Uuid::v4());
+        $request->setIdentity($this->clientOptions->identity);
+        $request->setNamespace($this->clientOptions->namespace);
+        $serviceClient = $this->serviceClient;
 
-        $r->setWorkflowExecution($this->execution->toProtoWorkflowExecution());
-        $r->setSignalName($name);
+        $this->interceptors->with(
+            static function (SignalInput $input) use ($request, $serviceClient): void {
+                $request->setWorkflowExecution($input->workflowExecution->toProtoWorkflowExecution());
+                $request->setSignalName($input->signalName);
 
-        $input = EncodedValues::fromValues($args, $this->converter);
-        if (!$input->isEmpty()) {
-            $r->setInput($input->toPayloads());
-        }
+                if (!$input->arguments->isEmpty()) {
+                    $request->setInput($input->arguments->toPayloads());
+                }
 
-        try {
-            $this->serviceClient->SignalWorkflowExecution($r);
-        } catch (ServiceClientException $e) {
-            if ($e->getCode() === StatusCode::NOT_FOUND) {
-                throw WorkflowNotFoundException::withoutMessage($this->execution, $this->workflowType, $e);
-            }
+                try {
+                    $serviceClient->SignalWorkflowExecution($request);
+                } catch (ServiceClientException $e) {
+                    if ($e->getCode() === StatusCode::NOT_FOUND) {
+                        throw WorkflowNotFoundException::withoutMessage(
+                            $input->workflowExecution,
+                            $input->workflowType,
+                            $e,
+                        );
+                    }
 
-            throw WorkflowServiceException::withoutMessage($this->execution, $this->workflowType, $e);
-        }
+                    throw WorkflowServiceException::withoutMessage($input->workflowExecution, $input->workflowType, $e);
+                }
+            },
+            /** @see WorkflowClientCallsInterceptor::signal() */
+            'signal',
+        )(new SignalInput(
+            $this->getExecution(),
+            $this->workflowType,
+            $name,
+            EncodedValues::fromValues($args, $this->converter),
+        ));
     }
 
     /**
@@ -283,6 +293,7 @@ final class WorkflowStub implements WorkflowStubInterface
 
     /**
      * @param string $method
+     * @psalm-assert !null $this->execution
      */
     private function assertStarted(string $method): void
     {

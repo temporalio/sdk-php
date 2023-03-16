@@ -230,6 +230,7 @@ class WorkflowClient implements WorkflowClientInterface
             $this->client,
             $this->clientOptions,
             $this->converter,
+            $this->interceptorProvider->getPipeline(WorkflowClientCallsInterceptor::class),
             $workflowType,
             $options,
             $header,
@@ -258,7 +259,13 @@ class WorkflowClient implements WorkflowClientInterface
         ?string $runID = null,
         ?string $workflowType = null
     ): WorkflowStubInterface {
-        $untyped = new WorkflowStub($this->client, $this->clientOptions, $this->converter, $workflowType);
+        $untyped = new WorkflowStub(
+            $this->client,
+            $this->clientOptions,
+            $this->converter,
+            $this->interceptorProvider->getPipeline(WorkflowClientCallsInterceptor::class),
+            $workflowType,
+        );
         $untyped->setExecution(new WorkflowExecution($workflowID, $runID));
 
         return $untyped;

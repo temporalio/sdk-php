@@ -27,6 +27,8 @@ class SignalInput
         #[Immutable]
         public WorkflowExecution $workflowExecution,
         #[Immutable]
+        public ?string $workflowType,
+        #[Immutable]
         public string $signalName,
         #[Immutable]
         public ValuesInterface $arguments,
@@ -34,12 +36,12 @@ class SignalInput
     }
 
     public function with(
-        WorkflowExecution $workflowExecution = null,
         string $signalName = null,
         ValuesInterface $arguments = null,
     ): self {
         return new self(
-            $workflowExecution ?? $this->workflowExecution,
+            $this->workflowExecution,
+            $this->workflowType,
             $signalName ?? $this->signalName,
             $arguments ?? $this->arguments,
         );

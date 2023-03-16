@@ -84,13 +84,13 @@ final class Pipeline
      */
     public function __invoke(mixed ...$arguments): mixed
     {
+        $interceptor = $this->interceptors[$this->current] ?? null;
+
+        if ($interceptor === null) {
+            return ($this->last)(...$arguments);
+        }
+
         try {
-            $interceptor = $this->interceptors[$this->current] ?? null;
-
-            if ($interceptor === null) {
-                return ($this->last)(...$arguments);
-            }
-
             $next = $this->next();
             $arguments[] = $next;
 
