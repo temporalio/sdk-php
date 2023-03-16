@@ -12,16 +12,17 @@ declare(strict_types=1);
 namespace Temporal\Internal\Marshaller\Meta;
 
 use JetBrains\PhpStorm\ExpectedValues;
-use Spiral\Attributes\NamedArgumentConstructorAttribute;
+use Spiral\Attributes\NamedArgumentConstructor;
 
 /**
  * @psalm-type ExportScope = Scope::VISIBILITY_*
  *
  * @Annotation
+ * @NamedArgumentConstructor
  * @Target({ "CLASS" })
  */
-#[\Attribute(\Attribute::TARGET_CLASS)]
-class Scope implements NamedArgumentConstructorAttribute
+#[\Attribute(\Attribute::TARGET_CLASS), NamedArgumentConstructor]
+class Scope
 {
     /**
      * @var int

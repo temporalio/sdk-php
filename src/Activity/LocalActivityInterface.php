@@ -13,7 +13,7 @@ namespace Temporal\Activity;
 
 use Doctrine\Common\Annotations\Annotation\Target;
 use JetBrains\PhpStorm\Immutable;
-use Spiral\Attributes\NamedArgumentConstructorAttribute;
+use Spiral\Attributes\NamedArgumentConstructor;
 
 /**
  * Indicates that an interface is a local activity interface. Only interfaces
@@ -29,9 +29,10 @@ use Spiral\Attributes\NamedArgumentConstructorAttribute;
  * distinct.
  *
  * @Annotation
+ * @NamedArgumentConstructor
  * @Target({ "CLASS" })
  */
-#[\Attribute(\Attribute::TARGET_CLASS)]
+#[\Attribute(\Attribute::TARGET_CLASS), NamedArgumentConstructor]
 final class LocalActivityInterface extends ActivityInterface
 {
     /**

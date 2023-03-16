@@ -13,14 +13,15 @@ namespace Temporal\Activity;
 
 use Doctrine\Common\Annotations\Annotation\Target;
 use JetBrains\PhpStorm\Immutable;
-use Spiral\Attributes\NamedArgumentConstructorAttribute;
+use Spiral\Attributes\NamedArgumentConstructor;
 
 /**
  * @Annotation
+ * @NamedArgumentConstructor
  * @Target({ "METHOD" })
  */
-#[\Attribute(\Attribute::TARGET_METHOD)]
-final class ActivityMethod implements NamedArgumentConstructorAttribute
+#[\Attribute(\Attribute::TARGET_METHOD), NamedArgumentConstructor]
+final class ActivityMethod
 {
     /**
      * Name of the activity type.

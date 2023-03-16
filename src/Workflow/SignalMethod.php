@@ -13,7 +13,7 @@ namespace Temporal\Workflow;
 
 use Doctrine\Common\Annotations\Annotation\Target;
 use JetBrains\PhpStorm\Immutable;
-use Spiral\Attributes\NamedArgumentConstructorAttribute;
+use Spiral\Attributes\NamedArgumentConstructor;
 
 /**
  * Indicates that the method is a signal handler method. Signal method is
@@ -21,10 +21,11 @@ use Spiral\Attributes\NamedArgumentConstructorAttribute;
  * workflow interface methods.
  *
  * @Annotation
+ * @NamedArgumentConstructor
  * @Target({ "METHOD" })
  */
-#[\Attribute(\Attribute::TARGET_METHOD)]
-final class SignalMethod implements NamedArgumentConstructorAttribute
+#[\Attribute(\Attribute::TARGET_METHOD), NamedArgumentConstructor]
+final class SignalMethod
 {
     /**
      * Name of the signal type. Default is method name.
