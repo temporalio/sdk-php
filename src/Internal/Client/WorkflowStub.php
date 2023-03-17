@@ -49,6 +49,7 @@ use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Client\WorkflowNotFoundException;
 use Temporal\Exception\Client\WorkflowServiceException;
 use Temporal\Interceptor\WorkflowClient\CancelInput;
+use Temporal\Interceptor\WorkflowClient\GetResultInput;
 use Temporal\Interceptor\WorkflowClient\QueryInput;
 use Temporal\Interceptor\WorkflowClient\SignalInput;
 use Temporal\Interceptor\WorkflowClient\TerminateInput;
@@ -315,21 +316,32 @@ final class WorkflowStub implements WorkflowStubInterface
      *
      * @throws \Throwable
      */
-    public function getResult($type = null, int $timeout = null)
+    public function getResult($type = null, int $timeout = null): mixed
     {
-        try {
-            $result = $this->fetchResult($timeout);
+        $result = $this->interceptors->with(
+            function (GetResultInput $input): ?EncodedValues {
+                try {
+                    return $this->fetchResult($input->timeout);
+                } catch (TimeoutException | IllegalStateException $e) {
+                    throw $e;
+                } catch (\Throwable $e) {
+                    throw $this->mapWorkflowFailureToException($e);
+                }
+            },
+            /** @see WorkflowClientCallsInterceptor::getResult() */
+            'getResult',
+        )(new GetResultInput(
+            $this->getExecution(),
+            $this->workflowType,
+            $timeout,
+            $type,
+        ));
 
-            if ($result === null || $result->count() === 0) {
-                return $result;
-            }
-
-            return $result->getValue(0, $type);
-        } catch (TimeoutException | IllegalStateException $e) {
-            throw $e;
-        } catch (\Throwable $e) {
-            throw $this->mapWorkflowFailureToException($e);
+        if ($result === null || $result->count() === 0) {
+            return $result;
         }
+
+        return $result->getValue(0, $type);
     }
 
     /**

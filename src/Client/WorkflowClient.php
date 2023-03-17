@@ -29,6 +29,7 @@ use Temporal\Internal\Client\WorkflowStarter;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
 use Temporal\Internal\Client\WorkflowProxy;
 use Temporal\Internal\Client\WorkflowStub;
+use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Internal\Interceptor\PipelineProvider;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowRunInterface;
@@ -47,7 +48,8 @@ class WorkflowClient implements WorkflowClientInterface
     private DataConverterInterface $converter;
     private WorkflowStarter $starter;
     private WorkflowReader $reader;
-    private PipelineProvider $interceptorProvider;
+    /** @var Pipeline<WorkflowClientCallsInterceptor, mixed> */
+    private Pipeline $interceptorPipeline;
 
     /**
      * @param ServiceClientInterface $serviceClient
@@ -62,14 +64,15 @@ class WorkflowClient implements WorkflowClientInterface
         PipelineProvider $interceptorProvider = null,
     ) {
         $this->client = $serviceClient;
-        $this->interceptorProvider = $interceptorProvider ?? new SimplePipelineProvider();
+        $this->interceptorPipeline = ($interceptorProvider ?? new SimplePipelineProvider())
+            ->getPipeline(WorkflowClientCallsInterceptor::class);
         $this->clientOptions = $options ?? new ClientOptions();
         $this->converter = $converter ?? DataConverter::createDefault();
         $this->starter = new WorkflowStarter(
             $serviceClient,
             $this->converter,
             $this->clientOptions,
-            $this->interceptorProvider->getPipeline(WorkflowClientCallsInterceptor::class),
+            $this->interceptorPipeline,
         );
         $this->reader = new WorkflowReader($this->createReader());
     }
@@ -230,7 +233,7 @@ class WorkflowClient implements WorkflowClientInterface
             $this->client,
             $this->clientOptions,
             $this->converter,
-            $this->interceptorProvider->getPipeline(WorkflowClientCallsInterceptor::class),
+            $this->interceptorPipeline,
             $workflowType,
             $options,
             $header,
@@ -263,7 +266,7 @@ class WorkflowClient implements WorkflowClientInterface
             $this->client,
             $this->clientOptions,
             $this->converter,
-            $this->interceptorProvider->getPipeline(WorkflowClientCallsInterceptor::class),
+            $this->interceptorPipeline,
             $workflowType,
         );
         $untyped->setExecution(new WorkflowExecution($workflowID, $runID));

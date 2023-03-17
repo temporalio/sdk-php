@@ -48,8 +48,13 @@ interface WorkflowClientCallsInterceptor extends Interceptor
      */
     public function signalWithStart(SignalWithStartInput $input, callable $next): WorkflowExecution;
 
-    // todo
-    public function getResult(GetResultInput $input, callable $next): mixed;
+    /**
+     * @param GetResultInput $input
+     * @param callable(GetResultInput): ?EncodedValues $next
+     *
+     * @return EncodedValues|null
+     */
+    public function getResult(GetResultInput $input, callable $next): ?EncodedValues;
 
     /**
      * @param QueryInput $input
@@ -59,7 +64,19 @@ interface WorkflowClientCallsInterceptor extends Interceptor
      */
     public function query(QueryInput $input, callable $next): ?EncodedValues;
 
+    /**
+     * @param CancelInput $input
+     * @param callable(CancelInput): void $next
+     *
+     * @return void
+     */
     public function cancel(CancelInput $input, callable $next): void;
 
+    /**
+     * @param TerminateInput $input
+     * @param callable(TerminateInput): void $next
+     *
+     * @return void
+     */
     public function terminate(TerminateInput $input, callable $next): void;
 }

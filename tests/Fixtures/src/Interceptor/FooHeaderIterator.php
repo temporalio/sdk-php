@@ -90,7 +90,7 @@ final class FooHeaderIterator implements
         );
     }
 
-    public function getResult(GetResultInput $input, callable $next): mixed
+    public function getResult(GetResultInput $input, callable $next): ?EncodedValues
     {
         return $next($input);
     }

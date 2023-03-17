@@ -10,18 +10,10 @@
 namespace Temporal\Interceptor\WorkflowClient;
 
 use JetBrains\PhpStorm\Immutable;
-use Temporal\DataConverter\ValuesInterface;
 use Temporal\Workflow\WorkflowExecution;
 
 /**
  * @psalm-immutable
- * todo
- *     private final WorkflowExecution workflowExecution;
- *     private final Optional<String> workflowType;
- *     private final long timeout;
- *     private final TimeUnit timeoutUnit;
- *     private final Class<R> resultClass;
- *     private final Type resultType;
  */
 #[Immutable]
 class GetResultInput
@@ -36,19 +28,22 @@ class GetResultInput
         #[Immutable]
         public ?string $workflowType,
         #[Immutable]
-        public ValuesInterface $arguments,
+        public ?int $timeout,
+        #[Immutable]
+        public mixed $type,
     ) {
     }
 
     public function with(
         WorkflowExecution $workflowExecution = null,
         string $workflowType = null,
-        ValuesInterface $arguments = null,
+        int $timeout = null,
     ): self {
         return new self(
             $workflowExecution ?? $this->workflowExecution,
             $workflowType ?? $this->workflowType,
-            $arguments ?? $this->arguments,
+            $timeout ?? $this->timeout,
+            $this->type,
         );
     }
 }
