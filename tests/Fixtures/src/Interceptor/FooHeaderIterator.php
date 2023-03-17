@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Interceptor;
 
 use React\Promise\PromiseInterface;
+use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\HeaderInterface;
 use Temporal\Interceptor\ActivityInbound\ActivityInput;
 use Temporal\Interceptor\ActivityInboundInterceptor;
@@ -94,7 +95,7 @@ final class FooHeaderIterator implements
         return $next($input);
     }
 
-    public function query(\Temporal\Interceptor\WorkflowClient\QueryInput $input, callable $next): mixed
+    public function query(\Temporal\Interceptor\WorkflowClient\QueryInput $input, callable $next): ?EncodedValues
     {
         return $next($input);
     }

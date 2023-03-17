@@ -48,8 +48,10 @@ use Temporal\Exception\WorkflowExecutionFailedException;
 use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Client\WorkflowNotFoundException;
 use Temporal\Exception\Client\WorkflowServiceException;
+use Temporal\Interceptor\WorkflowClient\CancelInput;
 use Temporal\Interceptor\WorkflowClient\QueryInput;
 use Temporal\Interceptor\WorkflowClient\SignalInput;
+use Temporal\Interceptor\WorkflowClient\TerminateInput;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Workflow\WorkflowExecution;
@@ -255,13 +257,24 @@ final class WorkflowStub implements WorkflowStubInterface
     {
         $this->assertStarted(__FUNCTION__);
 
-        $r = new RequestCancelWorkflowExecutionRequest();
-        $r->setRequestId(Uuid::v4());
-        $r->setIdentity($this->clientOptions->identity);
-        $r->setNamespace($this->clientOptions->namespace);
-        $r->setWorkflowExecution($this->execution->toProtoWorkflowExecution());
+        $serviceClient = $this->serviceClient;
+        $clientOptions = $this->clientOptions;
 
-        $this->serviceClient->RequestCancelWorkflowExecution($r);
+        $this->interceptors->with(
+            static function (CancelInput $input) use ($serviceClient, $clientOptions): void {
+                $request = new RequestCancelWorkflowExecutionRequest();
+                $request->setRequestId(Uuid::v4());
+                $request->setIdentity($clientOptions->identity);
+                $request->setNamespace($clientOptions->namespace);
+                $request->setWorkflowExecution($input->workflowExecution->toProtoWorkflowExecution());
+
+                $serviceClient->RequestCancelWorkflowExecution($request);
+            },
+            /** @see WorkflowClientCallsInterceptor::cancel() */
+            'cancel',
+        )(new CancelInput(
+            $this->getExecution(),
+        ));
     }
 
     /**
@@ -271,17 +284,30 @@ final class WorkflowStub implements WorkflowStubInterface
     {
         $this->assertStarted(__FUNCTION__);
 
-        $r = new TerminateWorkflowExecutionRequest();
-        $r->setNamespace($this->clientOptions->namespace);
-        $r->setIdentity($this->clientOptions->identity);
-        $r->setWorkflowExecution($this->execution->toProtoWorkflowExecution());
-        $r->setReason($reason);
+        $serviceClient = $this->serviceClient;
+        $clientOptions = $this->clientOptions;
+        $converter = $this->converter;
 
-        if ($details !== []) {
-            $r->setDetails(EncodedValues::fromValues($details, $this->converter)->toPayloads());
-        }
+        $this->interceptors->with(
+            static function (TerminateInput $input) use ($serviceClient, $clientOptions, $details, $converter): void {
+                $request = new TerminateWorkflowExecutionRequest();
+                $request->setNamespace($clientOptions->namespace);
+                $request->setIdentity($clientOptions->identity);
+                $request->setWorkflowExecution($input->workflowExecution->toProtoWorkflowExecution());
+                $request->setReason($input->reason);
 
-        $this->serviceClient->TerminateWorkflowExecution($r);
+                if ($details !== []) {
+                    $request->setDetails(EncodedValues::fromValues($details, $converter)->toPayloads());
+                }
+
+                $serviceClient->TerminateWorkflowExecution($request);
+            },
+            /** @see WorkflowClientCallsInterceptor::terminate() */
+            'terminate',
+        )(new TerminateInput(
+            $this->getExecution(),
+            $reason,
+        ));
     }
 
     /**
