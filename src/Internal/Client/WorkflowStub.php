@@ -48,6 +48,7 @@ use Temporal\Exception\WorkflowExecutionFailedException;
 use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Client\WorkflowNotFoundException;
 use Temporal\Exception\Client\WorkflowServiceException;
+use Temporal\Interceptor\WorkflowClient\QueryInput;
 use Temporal\Interceptor\WorkflowClient\SignalInput;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Internal\Interceptor\Pipeline;
@@ -185,52 +186,66 @@ final class WorkflowStub implements WorkflowStubInterface
     {
         $this->assertStarted(__FUNCTION__);
 
-        $r = new QueryWorkflowRequest();
-        $r->setNamespace($this->clientOptions->namespace);
-        $r->setExecution($this->execution->toProtoWorkflowExecution());
-        $r->setQueryRejectCondition($this->clientOptions->queryRejectionCondition);
+        $serviceClient = $this->serviceClient;
+        $converter = $this->converter;
+        $clientOptions = $this->clientOptions;
 
-        $q = new WorkflowQuery();
-        $q->setQueryType($name);
+        return $this->interceptors->with(
+            static function (QueryInput $input) use ($serviceClient, $converter, $clientOptions): ?EncodedValues {
+                $request = new QueryWorkflowRequest();
+                $request->setNamespace($clientOptions->namespace);
+                $request->setQueryRejectCondition($clientOptions->queryRejectionCondition);
+                $request->setExecution($input->workflowExecution->toProtoWorkflowExecution());
 
-        $input = EncodedValues::fromValues($args, $this->converter);
-        if (!$input->isEmpty()) {
-            $q->setQueryArgs($input->toPayloads());
-        }
+                $q = new WorkflowQuery();
+                $q->setQueryType($input->queryType);
 
-        $r->setQuery($q);
+                if (!$input->arguments->isEmpty()) {
+                    $q->setQueryArgs($input->arguments->toPayloads());
+                }
 
-        try {
-            $result = $this->serviceClient->QueryWorkflow($r);
-        } catch (ServiceClientException $e) {
-            if ($e->getCode() === StatusCode::NOT_FOUND) {
-                throw new WorkflowNotFoundException(null, $this->execution, $this->workflowType, $e);
-            }
+                $request->setQuery($q);
 
-            if ($e->getFailure(QueryFailedFailure::class) !== null) {
-                throw new WorkflowQueryException(null, $this->execution, $this->workflowType, $e);
-            }
+                try {
+                    $result = $serviceClient->QueryWorkflow($request);
+                } catch (ServiceClientException $e) {
+                    if ($e->getCode() === StatusCode::NOT_FOUND) {
+                        throw new WorkflowNotFoundException(null, $input->workflowExecution, $input->workflowType, $e);
+                    }
 
-            throw new WorkflowServiceException(null, $this->execution, $this->workflowType, $e);
-        } catch (\Throwable $e) {
-            throw new WorkflowServiceException(null, $this->execution, $this->workflowType, $e);
-        }
+                    if ($e->getFailure(QueryFailedFailure::class) !== null) {
+                        throw new WorkflowQueryException(null, $input->workflowExecution, $input->workflowType, $e);
+                    }
 
-        if (!$result->hasQueryRejected()) {
-            if (!$result->hasQueryResult()) {
-                return null;
-            }
+                    throw new WorkflowServiceException(null, $input->workflowExecution, $input->workflowType, $e);
+                } catch (\Throwable $e) {
+                    throw new WorkflowServiceException(null, $input->workflowExecution, $input->workflowType, $e);
+                }
 
-            return EncodedValues::fromPayloads($result->getQueryResult(), $this->converter);
-        }
+                if (!$result->hasQueryRejected()) {
+                    if (!$result->hasQueryResult()) {
+                        return null;
+                    }
 
-        throw new WorkflowQueryRejectedException(
-            $this->execution,
+                    return EncodedValues::fromPayloads($result->getQueryResult(), $converter);
+                }
+
+                throw new WorkflowQueryRejectedException(
+                    $input->workflowExecution,
+                    $input->workflowType,
+                    $clientOptions->queryRejectionCondition,
+                    $result->getQueryRejected()->getStatus(),
+                    null
+                );
+            },
+            /** @see WorkflowClientCallsInterceptor::query() */
+            'query',
+        )(new QueryInput(
+            $this->getExecution(),
             $this->workflowType,
-            $this->clientOptions->queryRejectionCondition,
-            $result->getQueryRejected()->getStatus(),
-            null
-        );
+            $name,
+            EncodedValues::fromValues($args, $this->converter),
+        ));
     }
 
     /**

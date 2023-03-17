@@ -27,6 +27,8 @@ class QueryInput
         #[Immutable]
         public WorkflowExecution $workflowExecution,
         #[Immutable]
+        public ?string $workflowType,
+        #[Immutable]
         public string $queryType,
         #[Immutable]
         public ValuesInterface $arguments,
@@ -46,6 +48,7 @@ class QueryInput
     ): self {
         return new self(
             $workflowExecution ?? $this->workflowExecution,
+            $this->workflowType,
             $queryType ?? $this->queryType,
             $arguments ?? $this->arguments,
             // $resultClass ?? $this->resultClass,
