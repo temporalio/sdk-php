@@ -36,6 +36,19 @@ $environment->startRoadRunner('./rr serve -c .rr.silent.yaml -w tests');
 register_shutdown_function(fn() => $environment->stop());
 ```
 
+Also, you can configure java sdk version:
+```php
+$environment = new Environment(
+    new ConsoleOutput(),
+    new Downloader(
+        new Filesystem(),
+        HttpClient::create(),
+        'v1.17.0',  // use a specific release tag or `latest` to get the latest version
+    ),
+    SystemInfo::detect(),
+);
+```
+
 2. Add environment variable and `bootstrap.php` to your `phpunit.xml`:
 
 ```xml

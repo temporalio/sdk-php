@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Unit\Router;
 
 use React\Promise\Deferred;
+use RuntimeException;
 use Spiral\Attributes\AnnotationReader;
 use Spiral\Attributes\AttributeReader;
 use Spiral\Attributes\Composite\SelectiveReader;
@@ -89,8 +90,10 @@ final class InvokeActivityTestCase extends UnitTestCase
     {
         $finalizerWasCalled = false;
         $this->services->activities->addFinalizer(
-            function () use (&$finalizerWasCalled) {
+            function (\Throwable $error) use (&$finalizerWasCalled) {
                 $finalizerWasCalled = true;
+                $this->assertInstanceOf(RuntimeException::class, $error);
+                $this->assertSame('Failed', $error->getMessage());
             }
         );
 

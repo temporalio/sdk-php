@@ -14,7 +14,7 @@ namespace Temporal\Tests\Workflow;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Common\RetryOptions;
 use Temporal\Tests\Activity\SimpleActivity;
-use Temporal\Tests\Unit\DTO\Type\EnumType\ScalarEnum;
+use Temporal\Tests\Unit\DTO\Type\EnumType\Stub\ScalarEnum;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 

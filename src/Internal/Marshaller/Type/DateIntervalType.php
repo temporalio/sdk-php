@@ -13,13 +13,14 @@ namespace Temporal\Internal\Marshaller\Type;
 
 use Carbon\CarbonInterval;
 use Temporal\Internal\Marshaller\MarshallerInterface;
+use Temporal\Internal\Marshaller\MarshallingRule;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\Inheritance;
 
 /**
  * @psalm-import-type DateIntervalFormat from DateInterval
  */
-class DateIntervalType extends Type implements DetectableTypeInterface
+class DateIntervalType extends Type implements DetectableTypeInterface, RuleFactoryInterface
 {
     /**
      * @var string
@@ -43,6 +44,22 @@ class DateIntervalType extends Type implements DetectableTypeInterface
     public static function match(\ReflectionNamedType $type): bool
     {
         return !$type->isBuiltin() && Inheritance::extends($type->getName(), \DateInterval::class);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public static function makeRule(\ReflectionProperty $property): ?MarshallingRule
+    {
+        $type = $property->getType();
+
+        if (!$type instanceof \ReflectionNamedType || !\is_subclass_of($type->getName(), \DateInterval::class)) {
+            return null;
+        }
+
+        return $type->allowsNull()
+            ? new MarshallingRule($property->getName(), NullableType::class, self::class)
+            : new MarshallingRule($property->getName(), self::class);
     }
 
     /**

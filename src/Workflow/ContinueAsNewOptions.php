@@ -27,10 +27,6 @@ final class ContinueAsNewOptions
     /**
      * The timeout for a single run of the child workflow execution. Each retry
      * or continue as new should obey this timeout.
-     * Use {@see $workflowExecutionTimeout} to specify how long the parent is
-     * willing to wait for the child completion.
-     *
-     * Optional: defaults to {@see $workflowExecutionTimeout}
      */
     #[Marshal(name: 'WorkflowRunTimeout', type: DateIntervalType::class)]
     public \DateInterval $workflowRunTimeout;
