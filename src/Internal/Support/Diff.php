@@ -11,6 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Support;
 
+/**
+ * @template TContext of object
+ * @psalm-immutable
+ */
 class Diff
 {
     /**
@@ -29,17 +33,20 @@ class Diff
     private const ERROR_INVALID_PROPERTY = 'The context object "%s" does not contain the property named "%s"';
 
     /**
-     * @var string
+     * @var class-string<TContext>
+     * @readonly
      */
     private string $class;
 
     /**
-     * @var array<string, mixed>
+     * @var array<non-empty-string, mixed>
+     * @readonly
      */
     private array $properties = [];
 
     /**
-     * @param object $context
+     * @param TContext $context
+     * @psalm-suppress ImpureMethodCall
      */
     public function __construct(object $context)
     {
@@ -54,7 +61,7 @@ class Diff
 
     /**
      * @param object $context
-     * @param string|null $property
+     * @param non-empty-string|null $property
      * @return bool
      */
     public function isPresent(object $context, string $property = null): bool
@@ -64,7 +71,7 @@ class Diff
 
     /**
      * @param object $context
-     * @param string|null $property
+     * @param non-empty-string|null $property
      * @return bool
      */
     public function isChanged(object $context, string $property = null): bool
@@ -141,11 +148,15 @@ class Diff
     }
 
     /**
-     * @param object $context
+     * @template T of object
+     *
+     * @param T $context
+     *
+     * @psalm-assert class-string<T> $this->class
      */
     private function matchContext(object $context): void
     {
-        $actual = \get_class($context);
+        $actual = $context::class;
 
         if ($this->class !== $actual) {
             $message = \sprintf(self::ERROR_INVALID_CONTEXT, $this->class, $actual);

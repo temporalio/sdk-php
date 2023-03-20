@@ -110,25 +110,25 @@ final class InterceptRequestTestCase extends InterceptorTestCase
 
     // todo: rewrite tests because there is no header in query call
     // todo: add test about dynamic query
-    public function testQueryMethod(): void
-    {
-        // $client = $this->createClient();
-        // $workflow = $client->newWorkflowStub(
-        //     QueryHeadersWorkflow::class,
-        //     WorkflowOptions::new()
-        //         ->withWorkflowExecutionTimeout(CarbonInterval::seconds(5)),
-        // );
-        //
-        // $client->start($workflow);
-        // $result = $workflow->getHeaders();
-        // $workflow->signal();
-        //
-        // // Workflow header
-        // $this->assertEquals([
-        //     /** @see \Temporal\Tests\Interceptor\FooHeaderIterator::handleQuery() */
-        //     'handleQuery' => '1',
-        // ], $result);
-    }
+    // public function testQueryMethod(): void
+    // {
+    //     $client = $this->createClient();
+    //     $workflow = $client->newWorkflowStub(
+    //         QueryHeadersWorkflow::class,
+    //         WorkflowOptions::new()
+    //             ->withWorkflowExecutionTimeout(CarbonInterval::seconds(5)),
+    //     );
+    //
+    //     $client->start($workflow);
+    //     $result = $workflow->getHeaders();
+    //     $workflow->signal();
+    //
+    //     // Workflow header
+    //     $this->assertEquals([
+    //         /** @see \Temporal\Tests\Interceptor\FooHeaderIterator::handleQuery() */
+    //         'handleQuery' => '1',
+    //     ], $result);
+    // }
 
     /**
      * Workflow context should be set for each Query call

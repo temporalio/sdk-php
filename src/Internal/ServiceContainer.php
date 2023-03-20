@@ -78,10 +78,10 @@ final class ServiceContainer
     public ProcessCollection $running;
 
     /**
-     * @var RepositoryInterface<ActivityPrototype>
+     * @var ActivityCollection
      */
     #[Immutable]
-    public RepositoryInterface $activities;
+    public ActivityCollection $activities;
 
     /**
      * @var QueueInterface
