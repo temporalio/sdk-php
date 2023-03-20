@@ -90,8 +90,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         ?DataConverterInterface $dataConverter = null,
         ?RPCConnectionInterface $rpc = null,
         ?ActivityInvocationCacheInterface $activityCache = null,
-    ): WorkerFactoryInterface
-    {
+    ): static {
         return new static(
             $dataConverter ?? DataConverter::createDefault(),
             $rpc ?? Goridge::create(),
