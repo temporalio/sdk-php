@@ -41,6 +41,7 @@ class WorkflowInfoTestCase extends DTOMarshallingTestCase
             'ParentWorkflowNamespace' => null,
             'ParentWorkflowExecution' => null,
             'SearchAttributes' => null,
+            'Memo' => null,
             'BinaryChecksum' => '',
         ];
 

@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Common;
 
 use JetBrains\PhpStorm\Immutable;
-use Spiral\Attributes\NamedArgumentConstructorAttribute;
+use Spiral\Attributes\NamedArgumentConstructor;
 use Temporal\Internal\Support\DateInterval;
 
 /**
@@ -30,10 +30,11 @@ use Temporal\Internal\Support\DateInterval;
  * @see DateInterval
  *
  * @Annotation
+ * @NamedArgumentConstructor
  * @Target({ "METHOD" })
  */
-#[\Attribute(\Attribute::TARGET_METHOD)]
-final class CronSchedule implements NamedArgumentConstructorAttribute, \Stringable
+#[\Attribute(\Attribute::TARGET_METHOD), NamedArgumentConstructor]
+final class CronSchedule implements \Stringable
 {
     /**
      * The cron spec is as following:

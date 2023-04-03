@@ -17,16 +17,7 @@ use Doctrine\Common\Annotations\Annotation\Target;
  * @Annotation
  * @Target({ "CLASS" })
  *
- * Note: We can not implement "NamedArgumentConstructorAttribute" interface
- *  on attribute classes without "__construct" method.
- *
- *  Otherwise, we may receive a NPE inside DocParser class, like:
- *   > Call to a member function getParameters() on null
- *   > in vendor/doctrine/annotations/lib/Doctrine/Common/Annotations/DocParser.php:518
- *
- *  Problem is relevant for doctrine/annotations 1.11 or lower on PHP 7.4 or lower.
- *
- * Note #2: We can not comment this problematic piece of code, because
+ * Note: We can not comment this problematic piece of code, because
  *  otherwise a second doctrine bug occurs (WTF!111?) due to which the doctrine
  *  cannot correctly read the annotations (like "Annotation") in the class.
  *
