@@ -13,15 +13,16 @@ namespace Temporal\Workflow;
 
 use JetBrains\PhpStorm\ExpectedValues;
 use JetBrains\PhpStorm\Immutable;
-use Spiral\Attributes\NamedArgumentConstructorAttribute;
+use Spiral\Attributes\NamedArgumentConstructor;
 use Temporal\DataConverter\Type;
 
 /**
  * @Annotation
+ * @NamedArgumentConstructor
  * @Target({ "METHOD" })
  */
-#[\Attribute(\Attribute::TARGET_METHOD)]
-final class ReturnType implements NamedArgumentConstructorAttribute
+#[\Attribute(\Attribute::TARGET_METHOD), NamedArgumentConstructor]
+final class ReturnType
 {
     public const TYPE_ANY    = Type::TYPE_ANY;
     public const TYPE_STRING = Type::TYPE_STRING;
