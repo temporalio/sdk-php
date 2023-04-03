@@ -72,7 +72,9 @@ final class EncodedHeader extends EncodedPayloads implements HeaderInterface
     {
         return match (true) {
             $this->values !== null => $this->values[$index] ?? null,
-            $this->payloads !== null => $this->payloads[$index]?->getData(),
+            $this->payloads !== null => $this->payloads->offsetExists($index)
+                ? $this->payloads->offsetGet($index)->getData()
+                : null,
             default => null,
         };
     }

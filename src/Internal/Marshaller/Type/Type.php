@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Marshaller\Type;
 
 use Temporal\Internal\Marshaller\MarshallerInterface;
+use Temporal\Internal\Marshaller\MarshallingRule;
 use Temporal\Internal\Support\Inheritance;
 
 abstract class Type implements TypeInterface
@@ -31,15 +32,26 @@ abstract class Type implements TypeInterface
 
     /**
      * @param MarshallerInterface $marshaller
-     * @param string $name
+     * @param string|MarshallingRule $type
+     *
      * @return TypeInterface|null
      * @throws \ReflectionException
      */
-    protected function ofType(MarshallerInterface $marshaller, string $name): ?TypeInterface
+    protected function ofType(MarshallerInterface $marshaller, MarshallingRule|string $type): ?TypeInterface
     {
-        return Inheritance::implements($name, TypeInterface::class)
-            ? new $name($marshaller)
-            : new ObjectType($marshaller, $name)
-        ;
+        $of = $type instanceof MarshallingRule && $type->of !== null
+            ? $type->of
+            : null;
+        $typeClass = $type instanceof MarshallingRule ? $type->type : $type;
+
+        \assert($typeClass !== null);
+
+        if (Inheritance::implements($typeClass, TypeInterface::class)) {
+            return $of === null
+                ? new $typeClass($marshaller)
+                : new $typeClass($marshaller, $of);
+        }
+
+        return new ObjectType($marshaller, $typeClass);
     }
 }

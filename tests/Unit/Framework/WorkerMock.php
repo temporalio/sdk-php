@@ -8,15 +8,17 @@ use Closure;
 use PHPUnit\Framework\Exception;
 use React\Promise\PromiseInterface;
 use Temporal\Common\Uuid;
+use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
+use Temporal\Internal\Interceptor\PipelineProvider;
 use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Internal\Repository\Identifiable;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Router;
 use Temporal\Internal\Transport\RouterInterface;
-use Temporal\Tests\Unit\Framework\Expectation\WorkflowResult;
 use Temporal\Tests\Unit\Framework\Expectation\ActivityCall;
 use Temporal\Tests\Unit\Framework\Expectation\Timer;
+use Temporal\Tests\Unit\Framework\Expectation\WorkflowResult;
 use Temporal\Tests\Unit\Framework\Requests\InvokeSignal;
 use Temporal\Tests\Unit\Framework\Requests\StartWorkflow;
 use Temporal\Tests\Unit\Framework\Server\CommandHandler\CommandHandlerFactory;
@@ -28,8 +30,6 @@ use Temporal\Worker\WorkerInterface;
 use Temporal\Worker\WorkerOptions;
 use Throwable;
 
-use function get_class;
-
 /**
  * @internal
  */
@@ -40,6 +40,7 @@ final class WorkerMock implements Identifiable, WorkerInterface, DispatcherInter
     private ServiceContainer $services;
     private RouterInterface $router;
     private ServerMock $server;
+    private PipelineProvider $interceptorProvider;
 
     /**
      * Contains currently executing Workflow
@@ -50,11 +51,12 @@ final class WorkerMock implements Identifiable, WorkerInterface, DispatcherInter
     public function __construct(
         string $taskQueue,
         WorkerOptions $options,
-        ServiceContainer $serviceContainer
+        ServiceContainer $serviceContainer,
     ) {
         $this->name = $taskQueue;
         $this->options = $options;
         $this->services = $serviceContainer;
+        $this->interceptorProvider = new SimplePipelineProvider();
         $this->router = $this->createRouter();
         $this->server = new ServerMock(CommandHandlerFactory::create());
     }
@@ -63,9 +65,9 @@ final class WorkerMock implements Identifiable, WorkerInterface, DispatcherInter
     {
         $router = new Router();
         $router->add(new Router\StartWorkflow($this->services));
-        $router->add(new Router\InvokeActivity($this->services, Goridge::create()));
+        $router->add(new Router\InvokeActivity($this->services, Goridge::create(), $this->interceptorProvider));
         $router->add(new Router\DestroyWorkflow($this->services->running));
-        $router->add(new Router\InvokeSignal($this->services->running, $this->services->loop));
+        $router->add(new Router\InvokeSignal($this->services->running));
 
         return $router;
     }

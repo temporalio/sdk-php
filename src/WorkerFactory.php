@@ -22,7 +22,9 @@ use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\ExceptionInterceptor;
 use Temporal\Exception\ExceptionInterceptorInterface;
+use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Internal\Events\EventEmitterTrait;
+use Temporal\Internal\Interceptor\PipelineProvider;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Marshaller\MarshallerInterface;
@@ -155,8 +157,10 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
      * @param DataConverterInterface $dataConverter
      * @param RPCConnectionInterface $rpc
      */
-    public function __construct(DataConverterInterface $dataConverter, RPCConnectionInterface $rpc)
-    {
+    public function __construct(
+        DataConverterInterface $dataConverter,
+        RPCConnectionInterface $rpc,
+    ) {
         $this->converter = $dataConverter;
         $this->rpc = $rpc;
 
@@ -166,15 +170,16 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     /**
      * @param DataConverterInterface|null $converter
      * @param RPCConnectionInterface|null $rpc
+     *
      * @return WorkerFactoryInterface
      */
     public static function create(
         DataConverterInterface $converter = null,
-        RPCConnectionInterface $rpc = null
+        RPCConnectionInterface $rpc = null,
     ): WorkerFactoryInterface {
         return new static(
             $converter ?? DataConverter::createDefault(),
-            $rpc ?? Goridge::create()
+            $rpc ?? Goridge::create(),
         );
     }
 
@@ -184,14 +189,16 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     public function newWorker(
         string $taskQueue = self::DEFAULT_TASK_QUEUE,
         WorkerOptions $options = null,
-        ExceptionInterceptorInterface $exceptionInterceptor = null
+        ExceptionInterceptorInterface $exceptionInterceptor = null,
+        PipelineProvider $interceptorProvider = null,
     ): WorkerInterface {
         $worker = new Worker(
             $taskQueue,
             $options ?? WorkerOptions::new(),
             ServiceContainer::fromWorkerFactory(
                 $this,
-                $exceptionInterceptor ?? ExceptionInterceptor::createDefault()
+                $exceptionInterceptor ?? ExceptionInterceptor::createDefault(),
+                $interceptorProvider ?? new SimplePipelineProvider(),
             ),
             $this->rpc,
         );

@@ -21,7 +21,6 @@ use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\NullableType;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\Options;
-use Temporal\Worker\WorkerFactoryInterface;
 
 /**
  * ActivityOptions stores all activity-specific parameters that will be stored
@@ -40,7 +39,7 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
      * queue.
      */
     #[Marshal(name: 'TaskQueueName')]
-    public string $taskQueue = WorkerFactoryInterface::DEFAULT_TASK_QUEUE;
+    public ?string $taskQueue = null;
 
     /**
      * The end to end timeout for the activity needed. The zero value of this
@@ -146,7 +145,7 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
     {
         $self = clone $this;
 
-        $self->taskQueue = $taskQueue ?? WorkerFactoryInterface::DEFAULT_TASK_QUEUE;
+        $self->taskQueue = $taskQueue;
 
         return $self;
     }

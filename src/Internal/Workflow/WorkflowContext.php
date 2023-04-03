@@ -22,6 +22,7 @@ use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\HeaderInterface;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Support\DateInterval;
@@ -35,6 +36,7 @@ use Temporal\Internal\Transport\Request\GetVersion;
 use Temporal\Internal\Transport\Request\NewTimer;
 use Temporal\Internal\Transport\Request\Panic;
 use Temporal\Internal\Transport\Request\SideEffect;
+use Temporal\Internal\Transport\Request\UpsertSearchAttributes;
 use Temporal\Promise;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow\ActivityStubInterface;
@@ -45,7 +47,6 @@ use Temporal\Workflow\ExternalWorkflowStubInterface;
 use Temporal\Workflow\WorkflowContextInterface;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowInfo;
-use Temporal\Internal\Transport\Request\UpsertSearchAttributes;
 
 use function React\Promise\reject;
 use function React\Promise\resolve;
@@ -138,6 +139,15 @@ class WorkflowContext implements WorkflowContextInterface
     public function getInput(): ValuesInterface
     {
         return $this->input->input;
+    }
+
+    public function withInput(Input $input): static
+    {
+        $clone = clone $this;
+        $clone->awaits = &$this->awaits;
+        $clone->trace = &$this->trace;
+        $clone->input = $input;
+        return $clone;
     }
 
     /**
@@ -432,7 +442,15 @@ class WorkflowContext implements WorkflowContextInterface
     public function request(RequestInterface $request, bool $cancellable = true): PromiseInterface
     {
         $this->recordTrace();
-        return $this->client->request($request);
+
+        // Intercept workflow outbound calls
+        return $this->services->interceptorProvider
+            ->getPipeline(WorkflowOutboundRequestInterceptor::class)
+            ->with(
+                fn(RequestInterface $request): PromiseInterface => $this->client->request($request),
+                /** @see WorkflowOutboundRequestInterceptor::handleOutboundRequest() */
+                'handleOutboundRequest',
+            )($request);
     }
 
     /**

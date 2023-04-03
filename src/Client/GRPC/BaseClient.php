@@ -127,7 +127,6 @@ abstract class BaseClient implements ServiceClientInterface
                 if ($ctx->getDeadline() !== null) {
                     $diff = (new \DateTime())->diff($ctx->getDeadline());
                     $options['timeout'] = CarbonInterval::instance($diff)->totalMicroseconds;
-                    ;
                 }
 
                 /** @var UnaryCall $call */

@@ -16,8 +16,11 @@ use Temporal\Activity;
 use Temporal\Activity\ActivityInfo;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\DoNotCompleteOnResultException;
+use Temporal\Interceptor\ActivityInbound\ActivityInput;
+use Temporal\Interceptor\ActivityInboundInterceptor;
 use Temporal\Internal\Activity\ActivityContext;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
+use Temporal\Internal\Interceptor\PipelineProvider;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\RPCConnectionInterface;
@@ -31,15 +34,21 @@ class InvokeActivity extends Route
 
     private ServiceContainer $services;
     private RPCConnectionInterface $rpc;
+    private PipelineProvider $interceptorProvider;
 
     /**
      * @param ServiceContainer $services
      * @param RPCConnectionInterface $rpc
+     * @param PipelineProvider $interceptorProvider
      */
-    public function __construct(ServiceContainer $services, RPCConnectionInterface $rpc)
-    {
+    public function __construct(
+        ServiceContainer $services,
+        RPCConnectionInterface $rpc,
+        PipelineProvider $interceptorProvider,
+    ) {
         $this->rpc = $rpc;
         $this->services = $services;
+        $this->interceptorProvider = $interceptorProvider;
     }
 
     /**
@@ -70,16 +79,29 @@ class InvokeActivity extends Route
             $header,
             $heartbeatDetails,
         );
+        /** @var ActivityContext $context */
         $context = $this->services->marshaller->unmarshal($options, $context);
 
         $prototype = $this->findDeclarationOrFail($context->getInfo());
 
         try {
-            Activity::setCurrentContext($context);
-
             $handler = $prototype->getInstance()->getHandler();
-            $result = $handler($payloads);
 
+            // Run Activity in an interceptors pipeline
+            $result = $this->interceptorProvider
+                ->getPipeline(ActivityInboundInterceptor::class)
+                ->with(
+                    static function (ActivityInput $input) use ($handler, $context): mixed {
+                        Activity::setCurrentContext(
+                            $context->withInput($input->arguments)->withHeader($input->header),
+                        );
+                        return $handler($input->arguments);
+                    },
+                    /** @see ActivityInboundInterceptor::handleActivityInbound() */
+                    'handleActivityInbound',
+                )(new ActivityInput($context->getInput(), $context->getHeader()));
+
+            $context = Activity::getCurrentContext();
             if ($context->isDoNotCompleteOnReturn()) {
                 $resolver->reject(DoNotCompleteOnResultException::create());
             } else {
@@ -90,7 +112,7 @@ class InvokeActivity extends Route
         } finally {
             $finalizer = $this->services->activities->getFinalizer();
             if ($finalizer !== null) {
-                call_user_func($finalizer);
+                \call_user_func($finalizer, $e ?? null);
             }
             Activity::setCurrentContext(null);
         }

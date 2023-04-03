@@ -15,10 +15,16 @@ use JetBrains\PhpStorm\Pure;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Exception\InvalidArgumentException;
+use Temporal\Interceptor\WorkflowInbound\QueryInput;
+use Temporal\Interceptor\WorkflowInbound\SignalInput;
+use Temporal\Interceptor\WorkflowInboundInterceptor;
+use Temporal\Internal\Declaration\WorkflowInstance;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\ServiceContainer;
+use Temporal\Internal\Workflow\Input;
 use Temporal\Internal\Workflow\WorkflowContext;
 use Temporal\Worker\LoopInterface;
+use Temporal\Workflow;
 use Temporal\Workflow\ProcessInterface;
 
 class Process extends Scope implements ProcessInterface
@@ -32,21 +38,60 @@ class Process extends Scope implements ProcessInterface
     {
         parent::__construct($services, $ctx);
 
-        $this->getWorkflowInstance()->getSignalQueue()->onSignal(
-            function (callable $handler): void {
-                $scope = $this->createScope(true, LoopInterface::ON_SIGNAL);
-                $scope->onClose(
-                    function (?\Throwable $error): void {
-                        if ($error !== null) {
-                            // we want to fail process when signal scope fails
-                            $this->complete($error);
-                        }
-                    }
-                );
+        $inboundPipeline = $services->interceptorProvider->getPipeline(WorkflowInboundInterceptor::class);
+        $wfInstance = $this->getWorkflowInstance();
+        \assert($wfInstance instanceof WorkflowInstance);
 
+        // Configure query signal handler
+        $wfInstance->setQueryExecutor(function (QueryInput $input, callable $handler): mixed {
+            try {
+                $context = $this->scopeContext->withInput(
+                    new Input(
+                        $this->scopeContext->getInfo(),
+                        $input->arguments,
+                    )
+                );
+                Workflow::setCurrentContext($context);
+
+                return $handler($input->arguments);
+            } finally {
+                Workflow::setCurrentContext(null);
+            }
+        });
+
+        // Configure signal handler
+        $wfInstance->getSignalQueue()->onSignal(
+            function (string $name, callable $handler, ValuesInterface $arguments) use ($inboundPipeline): void {
                 try {
-                    $scope->start($handler);
-                } catch (InvalidArgumentException $e) {
+                    $inboundPipeline->with(
+                        function (SignalInput $input) use ($handler) {
+                            $this->createScope(
+                                true,
+                                LoopInterface::ON_SIGNAL,
+                                $this->context->withInput(
+                                    new Input($input->info, $input->arguments, $input->header),
+                                ),
+                            )->onClose(
+                                function (?\Throwable $error): void {
+                                    if ($error !== null) {
+                                        // we want to fail process when signal scope fails
+                                        $this->complete($error);
+                                    }
+                                }
+                            )->start(
+                                $handler,
+                                $input->arguments
+                            );
+                        },
+                        /** @see WorkflowInboundInterceptor::handleSignal() */
+                        'handleSignal',
+                    )(new SignalInput(
+                        $name,
+                        $this->scopeContext->getInfo(),
+                        $arguments,
+                        $this->scopeContext->getHeader(),
+                    ));
+                } catch (InvalidArgumentException) {
                     // invalid signal invocation, destroy the scope with no traces
                 }
             }
@@ -76,6 +121,8 @@ class Process extends Scope implements ProcessInterface
             parent::start($handler, $values);
         } catch (\Throwable $e) {
             $this->complete($e);
+        } finally {
+            Workflow::setCurrentContext(null);
         }
     }
 

@@ -13,6 +13,9 @@ namespace Temporal\Internal\Transport\Request;
 
 use Temporal\Worker\Transport\Command\Request;
 
+/**
+ * @psalm-immutable
+ */
 final class Panic extends Request
 {
     public const NAME = 'Panic';

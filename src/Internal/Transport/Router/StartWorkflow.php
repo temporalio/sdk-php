@@ -13,6 +13,8 @@ namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
+use Temporal\Interceptor\WorkflowInboundInterceptor;
 use Temporal\Internal\Declaration\Instantiator\WorkflowInstantiator;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\ServiceContainer;
@@ -26,16 +28,15 @@ final class StartWorkflow extends Route
 {
     private const ERROR_NOT_FOUND = 'Workflow with the specified name "%s" was not registered';
 
-    private ServiceContainer $services;
     private WorkflowInstantiator $instantiator;
 
     /**
      * @param ServiceContainer $services
      */
-    public function __construct(ServiceContainer $services)
-    {
-        $this->services = $services;
-        $this->instantiator = new WorkflowInstantiator();
+    public function __construct(
+        private ServiceContainer $services,
+    ) {
+        $this->instantiator = new WorkflowInstantiator($services->interceptorProvider);
     }
 
     /**
@@ -71,11 +72,30 @@ final class StartWorkflow extends Route
             $lastCompletionResult
         );
 
-        $process = new Process($this->services, $context);
-        $this->services->running->add($process);
-        $resolver->resolve(EncodedValues::fromValues([null]));
 
-        $process->start($instance->getHandler(), $context->getInput());
+        $starter = function (WorkflowInput $input) use (
+            $resolver,
+            $instance,
+            $context,
+        ) {
+            $context = $context->withInput(new Input($input->info, $input->arguments, $input->header));
+            $process = new Process($this->services, $context);
+            $this->services->running->add($process);
+            $resolver->resolve(EncodedValues::fromValues([null]));
+
+            $process->start($instance->getHandler(), $context->getInput());
+        };
+
+        // Run workflow handler in an interceptor pipeline
+        $this->services->interceptorProvider
+            ->getPipeline(WorkflowInboundInterceptor::class)
+            ->with(
+                $starter,
+                /** @see WorkflowInboundInterceptor::execute() */
+                'execute',
+            )(
+                new WorkflowInput($context->getInfo(), $context->getInput(), $context->getHeader()),
+            );
     }
 
     /**

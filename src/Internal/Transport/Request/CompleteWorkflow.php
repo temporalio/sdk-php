@@ -14,6 +14,9 @@ namespace Temporal\Internal\Transport\Request;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Worker\Transport\Command\Request;
 
+/**
+ * @psalm-immutable
+ */
 final class CompleteWorkflow extends Request
 {
     public const NAME = 'CompleteWorkflow';

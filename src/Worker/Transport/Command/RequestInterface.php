@@ -14,6 +14,10 @@ namespace Temporal\Worker\Transport\Command;
 use Temporal\DataConverter\HeaderInterface;
 use Temporal\DataConverter\ValuesInterface;
 
+/**
+ * @psalm-immutable
+ * @psalm-type RequestOptions = array<non-empty-string, mixed>
+ */
 interface RequestInterface extends CommandInterface
 {
     /**
@@ -22,7 +26,7 @@ interface RequestInterface extends CommandInterface
     public function getName(): string;
 
     /**
-     * @return array
+     * @return RequestOptions
      */
     public function getOptions(): array;
 
@@ -42,4 +46,6 @@ interface RequestInterface extends CommandInterface
      * @return \Throwable|null
      */
     public function getFailure(): ?\Throwable;
+
+    public function withHeader(HeaderInterface $header): self;
 }

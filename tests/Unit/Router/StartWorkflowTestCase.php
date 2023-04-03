@@ -14,7 +14,7 @@ use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\ExceptionInterceptorInterface;
-use Temporal\Internal\Declaration\Reader\ActivityReader;
+use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\Marshaller\MarshallerInterface;
@@ -24,10 +24,10 @@ use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Transport\Router\StartWorkflow;
 use Temporal\Internal\Workflow\Input;
 use Temporal\Internal\Workflow\WorkflowContext;
+use Temporal\Tests\Unit\Framework\Requests\StartWorkflow as Request;
 use Temporal\Tests\Unit\UnitTestCase;
 use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Worker\LoopInterface;
-use Temporal\Tests\Unit\Framework\Requests\StartWorkflow as Request;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowInfo;
 
@@ -50,6 +50,7 @@ final class StartWorkflowTestCase extends UnitTestCase
             $this->marshaller,
             $dataConverter,
             $this->createMock(ExceptionInterceptorInterface::class),
+            new SimplePipelineProvider(),
         );
         $workflowReader = new WorkflowReader(new SelectiveReader([new AnnotationReader(), new AttributeReader()]));
         $this->services->workflows->add($workflowReader->fromClass(DummyWorkflow::class));

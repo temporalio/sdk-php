@@ -35,7 +35,7 @@ final class MethodRetry extends RetryOptions implements NamedArgumentConstructor
     /**
      * @param DateIntervalValue|null $initialInterval
      * @param DateIntervalValue|null $maximumInterval
-     * @param positive-int|0 $maximumAttempts
+     * @param int<0, max> $maximumAttempts
      * @param float $backoffCoefficient
      * @param ExceptionsList $nonRetryableExceptions
      */

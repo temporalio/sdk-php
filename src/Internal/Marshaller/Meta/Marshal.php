@@ -12,42 +12,44 @@ declare(strict_types=1);
 namespace Temporal\Internal\Marshaller\Meta;
 
 use Spiral\Attributes\NamedArgumentConstructorAttribute;
-use Temporal\Internal\Marshaller\Type\TypeInterface;
+use Temporal\Internal\Marshaller\MarshallingRule;
+use Temporal\Internal\Marshaller\Type\NullableType;
 
 /**
  * @Annotation
  * @Target({ "PROPERTY" })
  */
 #[\Attribute(\Attribute::TARGET_PROPERTY)]
-class Marshal implements NamedArgumentConstructorAttribute
+class Marshal extends MarshallingRule implements NamedArgumentConstructorAttribute
 {
     /**
-     * @var string|null
-     */
-    public ?string $name = null;
-
-    /**
-     * @var class-string<TypeInterface>|null
-     */
-    public ?string $type = null;
-
-    /**
-     * @var class-string<TypeInterface>|string|null
-     */
-    public ?string $of = null;
-
-    /**
      * @param string|null $name
-     * @param class-string<TypeInterface>|null $type
-     * @param class-string<TypeInterface>|string|null $of
+     * @param class-string|null $type
+     * @param null|Marshal|string $of
+     * @param bool $nullable
      */
     public function __construct(
-        string $name = null,
-        string $type = null,
-        string $of = null
+        ?string $name = null,
+        ?string $type = null,
+        self|string|null $of = null,
+        public bool $nullable = false,
     ) {
-        $this->name = $name;
-        $this->type = $type;
-        $this->of = $of;
+        parent::__construct($name, $type, $of);
+    }
+
+    /**
+     * @return MarshallingRule
+     */
+    public function toTypeDto(): MarshallingRule
+    {
+        if (!$this->nullable) {
+            return $this;
+        }
+
+        return new MarshallingRule(
+            $this->name,
+            NullableType::class,
+            $this->of === null ? $this->type : $this,
+        );
     }
 }

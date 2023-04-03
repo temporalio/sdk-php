@@ -14,7 +14,9 @@ use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\ExceptionInterceptor;
 use Temporal\Exception\ExceptionInterceptorInterface;
+use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Internal\Events\EventEmitterTrait;
+use Temporal\Internal\Interceptor\PipelineProvider;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Marshaller\MarshallerInterface;
@@ -72,8 +74,11 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     private RPCConnectionInterface $rpc;
     private ActivityInvocationCacheInterface $activityCache;
 
-    public function __construct(DataConverterInterface $dataConverter, RPCConnectionInterface $rpc, ActivityInvocationCacheInterface $activityCache)
-    {
+    public function __construct(
+        DataConverterInterface $dataConverter,
+        RPCConnectionInterface $rpc,
+        ActivityInvocationCacheInterface $activityCache,
+    ) {
         $this->converter = $dataConverter;
         $this->rpc = $rpc;
         $this->activityCache = $activityCache;
@@ -84,13 +89,12 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     public static function create(
         ?DataConverterInterface $dataConverter = null,
         ?RPCConnectionInterface $rpc = null,
-        ?ActivityInvocationCacheInterface $activityCache = null
-    ): WorkerFactoryInterface
-    {
+        ?ActivityInvocationCacheInterface $activityCache = null,
+    ): static {
         return new static(
             $dataConverter ?? DataConverter::createDefault(),
             $rpc ?? Goridge::create(),
-            $activityCache ?? RoadRunnerActivityInvocationCache::create($dataConverter)
+            $activityCache ?? RoadRunnerActivityInvocationCache::create($dataConverter),
         );
     }
 
@@ -100,14 +104,16 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     public function newWorker(
         string $taskQueue = self::DEFAULT_TASK_QUEUE,
         WorkerOptions $options = null,
-        ExceptionInterceptorInterface $exceptionInterceptor = null
+        ExceptionInterceptorInterface $exceptionInterceptor = null,
+        PipelineProvider $interceptorProvider = null,
     ): WorkerInterface {
         $worker = new WorkerMock(new Worker(
             $taskQueue,
             $options ?? WorkerOptions::new(),
             ServiceContainer::fromWorkerFactory(
                 $this,
-                $exceptionInterceptor ?? ExceptionInterceptor::createDefault()
+                $exceptionInterceptor ?? ExceptionInterceptor::createDefault(),
+                $interceptorProvider ?? new SimplePipelineProvider(),
             ),
             $this->rpc,
         ), $this->activityCache);

@@ -27,9 +27,15 @@ final class Environment
 
     public static function create(): self
     {
+        $token = \getenv('GITHUB_TOKEN');
+
         return new self(
             new ConsoleOutput(),
-            new Downloader(new Filesystem(), HttpClient::create()),
+            new Downloader(new Filesystem(), HttpClient::create([
+                'headers' => [
+                    'authorization' => $token ? 'token ' . $token : null
+                ],
+            ])),
             SystemInfo::detect(),
         );
     }
@@ -74,7 +80,12 @@ final class Environment
         $this->roadRunnerProcess->setTimeout($commandTimeout);
 
         $this->output->write('Starting RoadRunner... ');
-        $this->roadRunnerProcess->start();
+        $roadRunnerStarted = false;
+        $this->roadRunnerProcess->start(static function ($type, $output) use (&$roadRunnerStarted) {
+            if ($type === Process::OUT && \str_contains($output, 'RoadRunner server started')) {
+                $roadRunnerStarted = true;
+            }
+        });
 
         if (!$this->roadRunnerProcess->isRunning()) {
             $this->output->writeln('<error>error</error>');
@@ -82,9 +93,13 @@ final class Environment
             exit(1);
         }
 
-        $roadRunnerStarted = $this->roadRunnerProcess->waitUntil(
-            fn($type, $output) => strpos($output, 'RoadRunner server started') !== false
-        );
+        // wait for roadrunner to start
+        $ticks = $commandTimeout * 10;
+        while (!$roadRunnerStarted && $ticks > 0) {
+            $this->roadRunnerProcess->getStatus();
+            \usleep(100000);
+            --$ticks;
+        }
 
         if (!$roadRunnerStarted) {
             $this->output->writeln('<error>error</error>');

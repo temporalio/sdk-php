@@ -81,6 +81,22 @@ final class ActivityContext implements ActivityContextInterface
         return $this->header;
     }
 
+    public function withInput(ValuesInterface $input): self
+    {
+        $context = clone $this;
+        $context->input = $input;
+
+        return $context;
+    }
+
+    public function withHeader(HeaderInterface $header): self
+    {
+        $context = clone $this;
+        $context->header = $header;
+
+        return $context;
+    }
+
     /**
      * @return DataConverterInterface
      */

@@ -12,16 +12,21 @@ declare(strict_types=1);
 namespace Temporal\Internal\Declaration;
 
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Interceptor\WorkflowInbound\QueryInput;
+use Temporal\Interceptor\WorkflowInboundInterceptor;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\WorkflowInstance\SignalQueue;
+use Temporal\Internal\Interceptor;
 
 /**
  * @psalm-import-type DispatchableHandler from InstanceInterface
+ * @psalm-type QueryHandler = \Closure(QueryInput): mixed
+ * @psalm-type QueryExecutor = \Closure(QueryInput, callable(ValuesInterface): mixed): mixed
  */
 final class WorkflowInstance extends Instance implements WorkflowInstanceInterface
 {
     /**
-     * @var array<non-empty-string, DispatchableHandler>
+     * @var array<non-empty-string, QueryHandler>
      */
     private array $queryHandlers = [];
 
@@ -35,12 +40,19 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
      */
     private SignalQueue $signalQueue;
 
+    /** @var QueryExecutor */
+    private \Closure $queryExecutor;
+
     /**
      * @param WorkflowPrototype $prototype
      * @param object $context
+     * @param Interceptor\Pipeline<WorkflowInboundInterceptor, mixed> $pipeline
      */
-    public function __construct(WorkflowPrototype $prototype, object $context)
-    {
+    public function __construct(
+        WorkflowPrototype $prototype,
+        object $context,
+        private Interceptor\Pipeline $pipeline,
+    ) {
         parent::__construct($prototype, $context);
 
         $this->signalQueue = new SignalQueue();
@@ -51,8 +63,26 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
         }
 
         foreach ($prototype->getQueryHandlers() as $method => $reflection) {
-            $this->queryHandlers[$method] = $this->createHandler($reflection);
+            $fn = $this->createHandler($reflection);
+            $this->queryHandlers[$method] = \Closure::fromCallable($this->pipeline->with(
+                function (QueryInput $input) use ($fn) {
+                    return ($this->queryExecutor)($input, $fn);
+                },
+                /** @see WorkflowInboundInterceptor::handleQuery() */
+                'handleQuery',
+            ));
         }
+    }
+
+    /**
+     * @param QueryExecutor $executor
+     *
+     * @return $this
+     */
+    public function setQueryExecutor(\Closure $executor): self
+    {
+        $this->queryExecutor = $executor;
+        return $this;
     }
 
     /**
@@ -77,7 +107,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
      * @param non-empty-string $name
      * @return null|\Closure(ValuesInterface):mixed
      *
-     * @psalm-return DispatchableHandler|null
+     * @psalm-return QueryHandler|null
      */
     public function findQueryHandler(string $name): ?\Closure
     {
@@ -91,7 +121,15 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
      */
     public function addQueryHandler(string $name, callable $handler): void
     {
-        $this->queryHandlers[$name] = $this->createCallableHandler($handler);
+        $fn = $this->createCallableHandler($handler);
+
+        $this->queryHandlers[$name] = \Closure::fromCallable($this->pipeline->with(
+            function (QueryInput $input) use ($fn) {
+                return ($this->queryExecutor)($input, $fn);
+            },
+            /** @see WorkflowInboundInterceptor::handleQuery() */
+            'handleQuery',
+        ));
     }
 
     /**
@@ -120,5 +158,22 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     {
         $this->signalHandlers[$name] = $this->createCallableHandler($handler);
         $this->signalQueue->attach($name, $this->signalHandlers[$name]);
+    }
+
+    /**
+     * Make a Closure from a callable.
+     *
+     * @param callable $handler
+     *
+     * @return \Closure(ValuesInterface): mixed
+     * @throws \ReflectionException
+     *
+     * @psalm-return DispatchableHandler
+     */
+    protected function createCallableHandler(callable $handler): \Closure
+    {
+        return $this->createHandler(
+            new \ReflectionFunction($handler instanceof \Closure ? $handler : \Closure::fromCallable($handler)),
+        );
     }
 }

@@ -62,9 +62,13 @@ class Inheritance
     }
 
     /**
+     * @template A
+     *
      * @param class-string $haystack
-     * @param class-string $interface
+     * @param class-string<A> $interface
+     *
      * @return bool
+     * @psalm-assert-if-true class-string<A> $haystack
      */
     public static function implements(string $haystack, string $interface): bool
     {
