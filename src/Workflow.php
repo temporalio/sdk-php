@@ -139,17 +139,6 @@ final class Workflow extends Facade
     }
 
     /**
-     * Get header values from the current workflow context.
-     *
-     * @return HeaderInterface
-     * @throws OutOfContextException in the absence of the workflow execution context.
-     */
-    public static function getHeader(): HeaderInterface
-    {
-        return self::getCurrentContext()->getHeader();
-    }
-
-    /**
      * The method calls an asynchronous task and returns a promise with
      * additional properties/methods.
      *

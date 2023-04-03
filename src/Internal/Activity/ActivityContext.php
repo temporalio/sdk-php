@@ -73,9 +73,6 @@ final class ActivityContext implements ActivityContextInterface
         return $this->input;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getHeader(): HeaderInterface
     {
         return $this->header;

@@ -27,7 +27,7 @@ class HeadersWorkflow
         // Run activity
         $activityHeader = \is_object($activityHeader)
             ? \array_merge(
-                \iterator_to_array(Workflow::getHeader()->getIterator()),
+                \iterator_to_array(Workflow::getCurrentContext()->getHeader()->getIterator()),
                 (array) $activityHeader,
             )
             : $activityHeader;
@@ -42,7 +42,7 @@ class HeadersWorkflow
         )->header();
 
         return [
-            \iterator_to_array(Workflow::getHeader()),
+            \iterator_to_array(Workflow::getCurrentContext()->getHeader()),
             $activityResult,
         ];
     }

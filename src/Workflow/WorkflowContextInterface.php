@@ -42,13 +42,6 @@ interface WorkflowContextInterface extends EnvironmentInterface
     public function getInput(): ValuesInterface;
 
     /**
-     * @see Workflow::getHeader()
-     *
-     * @return HeaderInterface
-     */
-    public function getHeader(): HeaderInterface;
-
-    /**
      * Get value of last completion result, if any.
      *
      * @see Workflow::getLastCompletionResult()

@@ -50,7 +50,7 @@ class HeaderWorkflow
                 \is_array($subWorkflowHeader) => $subWorkflowHeader,
                 // Merge stdClass values with parent workflow header
                 \is_object($subWorkflowHeader) => \array_merge(
-                    \iterator_to_array(Workflow::getHeader()->getIterator()),
+                    \iterator_to_array(Workflow::getCurrentContext()->getHeader()->getIterator()),
                     (array) $subWorkflowHeader,
                 ),
             };
@@ -66,7 +66,7 @@ class HeaderWorkflow
         // Run activity
         $activityHeader = \is_object($activityHeader)
             ? \array_merge(
-                \iterator_to_array(Workflow::getHeader()->getIterator()),
+                \iterator_to_array(Workflow::getCurrentContext()->getHeader()->getIterator()),
                 (array) $activityHeader,
             )
             : $activityHeader;
@@ -81,7 +81,7 @@ class HeaderWorkflow
         )->header();
 
         return [
-            \iterator_to_array(Workflow::getHeader()),
+            \iterator_to_array(Workflow::getCurrentContext()->getHeader()),
             $activityResult,
             $subWorkflowResult[0] ?? [],
         ];

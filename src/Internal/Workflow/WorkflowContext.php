@@ -124,8 +124,6 @@ class WorkflowContext implements WorkflowContextInterface
     }
 
     /**
-     * @see Workflow::getHeader()
-     *
      * @return HeaderInterface
      */
     public function getHeader(): HeaderInterface

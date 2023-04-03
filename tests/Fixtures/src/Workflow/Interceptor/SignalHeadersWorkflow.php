@@ -31,6 +31,6 @@ class SignalHeadersWorkflow
     public function signal(): void
     {
         $this->signalled = true;
-        $this->headers = \iterator_to_array(Workflow::getHeader()->getIterator());
+        $this->headers = \iterator_to_array(Workflow::getCurrentContext()->getHeader()->getIterator());
     }
 }
