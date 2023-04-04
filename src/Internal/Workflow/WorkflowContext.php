@@ -24,6 +24,7 @@ use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
+use Temporal\Internal\Interceptor\HeaderCarrier;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\StackRenderer;
@@ -51,7 +52,7 @@ use Temporal\Workflow\WorkflowInfo;
 use function React\Promise\reject;
 use function React\Promise\resolve;
 
-class WorkflowContext implements WorkflowContextInterface
+class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
 {
     protected ServiceContainer $services;
     protected ClientInterface $client;

@@ -54,10 +54,11 @@ use Temporal\Interceptor\WorkflowClient\QueryInput;
 use Temporal\Interceptor\WorkflowClient\SignalInput;
 use Temporal\Interceptor\WorkflowClient\TerminateInput;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
+use Temporal\Internal\Interceptor\HeaderCarrier;
 use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Workflow\WorkflowExecution;
 
-final class WorkflowStub implements WorkflowStubInterface
+final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
 {
     private const ERROR_WORKFLOW_NOT_STARTED = 'Method "%s" cannot be called because the workflow has not been started';
 
@@ -79,9 +80,8 @@ final class WorkflowStub implements WorkflowStubInterface
         private Pipeline $interceptors,
         private ?string $workflowType = null,
         private ?WorkflowOptions $options = null,
-        HeaderInterface|array $header = [],
     ) {
-        $this->header = \is_array($header) ? EncodedHeader::fromValues($header) : $header;
+        $this->header = EncodedHeader::empty();
     }
 
     /**
@@ -100,9 +100,6 @@ final class WorkflowStub implements WorkflowStubInterface
         return $this->options;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getHeader(): HeaderInterface
     {
         return $this->header;
