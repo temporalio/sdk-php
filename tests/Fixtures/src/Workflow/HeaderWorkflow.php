@@ -57,7 +57,7 @@ class HeaderWorkflow
             // Run
             $subWorkflowResult = yield Workflow::newChildWorkflowStub(
                 HeaderWorkflow::class,
-                header: $header,
+                // header: $header,
             )->handler();
         } else {
             $subWorkflowResult = [];

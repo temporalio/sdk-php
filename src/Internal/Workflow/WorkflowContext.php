@@ -125,7 +125,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
     }
 
     /**
-     * @return HeaderInterface
+     * @inheritDoc
      */
     public function getHeader(): HeaderInterface
     {
@@ -313,9 +313,8 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
         array $args = [],
         ChildWorkflowOptions $options = null,
         $returnType = null,
-        HeaderInterface|array|null $header = null,
     ): PromiseInterface {
-        return $this->newUntypedChildWorkflowStub($type, $options, $header)
+        return $this->newUntypedChildWorkflowStub($type, $options)
             ->execute($args, $returnType);
     }
 
@@ -325,13 +324,11 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
     public function newUntypedChildWorkflowStub(
         string $type,
         ChildWorkflowOptions $options = null,
-        HeaderInterface|array|null $header = null,
     ): ChildWorkflowStubInterface {
         $options ??= (new ChildWorkflowOptions())
             ->withNamespace($this->getInfo()->namespace);
-        $header ??= $this->getHeader();
 
-        return new ChildWorkflowStub($this->services->marshaller, $type, $options, $header);
+        return new ChildWorkflowStub($this->services->marshaller, $type, $options, $this->getHeader());
     }
 
     /**
@@ -340,19 +337,16 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
     public function newChildWorkflowStub(
         string $class,
         ChildWorkflowOptions $options = null,
-        HeaderInterface|array|null $header = null,
     ): object {
         $workflow = $this->services->workflowsReader->fromClass($class);
         $options = $options ?? (new ChildWorkflowOptions())
             ->withNamespace($this->getInfo()->namespace);
-        $header ??= $this->getHeader();
 
         return new ChildWorkflowProxy(
             $class,
             $workflow,
             $options,
             $this,
-            $header,
         );
     }
 
@@ -384,9 +378,8 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
         array $args = [],
         ActivityOptionsInterface $options = null,
         \ReflectionType $returnType = null,
-        HeaderInterface|array|null $header = null,
     ): PromiseInterface {
-        return $this->newUntypedActivityStub($options, $header)->execute($type, $args, $returnType);
+        return $this->newUntypedActivityStub($options)->execute($type, $args, $returnType);
     }
 
     /**
@@ -394,12 +387,10 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
      */
     public function newUntypedActivityStub(
         ActivityOptionsInterface $options = null,
-        HeaderInterface|array|null $header = null,
     ): ActivityStubInterface {
         $options ??= new ActivityOptions();
-        $header ??= $this->getHeader();
 
-        return new ActivityStub($this->services->marshaller, $options, $header);
+        return new ActivityStub($this->services->marshaller, $options, $this->getHeader());
     }
 
     /**
@@ -408,21 +399,18 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
     public function newActivityStub(
         string $class,
         ActivityOptionsInterface $options = null,
-        HeaderInterface|array|null $header = null,
     ): object {
         $activities = $this->services->activitiesReader->fromClass($class);
 
         if (isset($activities[0]) && $activities[0]->isLocalActivity() && !$options instanceof LocalActivityOptions) {
             throw new RuntimeException("Local activity can be used only with LocalActivityOptions");
         }
-        $header ??= $this->getHeader();
 
         return new ActivityProxy(
             $class,
             $activities,
             $options ?? ActivityOptions::new(),
             $this,
-            $header,
         );
     }
 
