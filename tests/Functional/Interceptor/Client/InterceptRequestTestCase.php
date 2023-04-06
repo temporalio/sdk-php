@@ -14,15 +14,15 @@ namespace Temporal\Tests\Functional\Interceptor\Client;
 use Carbon\CarbonInterval;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Testing\WithoutTimeSkipping;
+use Temporal\Tests\Functional\Interceptor\AbstractClient;
 use Temporal\Tests\Workflow\Interceptor\HeadersWorkflow;
-use Temporal\Tests\Workflow\Interceptor\QueryHeadersWorkflow;
 use Temporal\Tests\Workflow\Interceptor\SignalHeadersWorkflow;
 
 /**
  * @group workflow
  * @group functional
  */
-final class InterceptRequestTestCase extends InterceptorTestCase
+final class InterceptRequestTestCase extends AbstractClient
 {
     use WithoutTimeSkipping;
 
@@ -39,20 +39,20 @@ final class InterceptRequestTestCase extends InterceptorTestCase
 
         // Workflow header
         $this->assertSame([
-            /** @see \Temporal\Tests\Interceptor\FooHeaderIterator::start */
+            /** @see \Temporal\Tests\Interceptor\InterceptorCallsCounter::start */
             'start' => '1',
-            /** @see \Temporal\Tests\Interceptor\FooHeaderIterator::execute() */
+            /** @see \Temporal\Tests\Interceptor\InterceptorCallsCounter::execute() */
             'execute' => '1',
         ], (array)$result[0]);
         // Activity header
         $this->assertEquals([
-            /** @see \Temporal\Tests\Interceptor\FooHeaderIterator::start */
+            /** @see \Temporal\Tests\Interceptor\InterceptorCallsCounter::start */
             'start' => '1',
-            /** @see \Temporal\Tests\Interceptor\FooHeaderIterator::execute() */
+            /** @see \Temporal\Tests\Interceptor\InterceptorCallsCounter::execute() */
             'execute' => '1',
-            /** @see \Temporal\Tests\Interceptor\FooHeaderIterator::handleOutboundRequest() */
+            /** @see \Temporal\Tests\Interceptor\InterceptorCallsCounter::handleOutboundRequest() */
             'handleOutboundRequest' => '1',
-            /** @see \Temporal\Tests\Interceptor\FooHeaderIterator::handleActivityInbound() */
+            /** @see \Temporal\Tests\Interceptor\InterceptorCallsCounter::handleActivityInbound() */
             'handleActivityInbound' => '1',
         ], (array)$result[1]);
     }
@@ -71,14 +71,15 @@ final class InterceptRequestTestCase extends InterceptorTestCase
 
         // Workflow header
         $this->assertSame([
-            /** @see \Temporal\Tests\Interceptor\FooHeaderIterator::start() */
+            /** @see \Temporal\Tests\Interceptor\InterceptorCallsCounter::start() */
             'start' => '1',
             /**
              * Inherited from handler run
-             * @see \Temporal\Tests\Interceptor\FooHeaderIterator::execute()
+             *
+             * @see \Temporal\Tests\Interceptor\InterceptorCallsCounter::execute()
              */
             'execute' => '1',
-            /** @see \Temporal\Tests\Interceptor\FooHeaderIterator::handleSignal() */
+            /** @see \Temporal\Tests\Interceptor\InterceptorCallsCounter::handleSignal() */
             'handleSignal' => '1',
         ], (array)$run->getResult());
     }
@@ -96,14 +97,15 @@ final class InterceptRequestTestCase extends InterceptorTestCase
 
         // Workflow header
         $this->assertSame([
-            /** @see \Temporal\Tests\Interceptor\FooHeaderIterator::signalWithStart() */
+            /** @see \Temporal\Tests\Interceptor\InterceptorCallsCounter::signalWithStart() */
             'signalWithStart' => '1',
             /**
              * Inherited from handler run
-             * @see \Temporal\Tests\Interceptor\FooHeaderIterator::execute()
+             *
+             * @see \Temporal\Tests\Interceptor\InterceptorCallsCounter::execute()
              */
             'execute' => '1',
-            /** @see \Temporal\Tests\Interceptor\FooHeaderIterator::handleSignal() */
+            /** @see \Temporal\Tests\Interceptor\InterceptorCallsCounter::handleSignal() */
             'handleSignal' => '1',
         ], (array)$run->getResult());
     }

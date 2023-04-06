@@ -9,11 +9,12 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Functional\Client;
+namespace Temporal\Tests\Functional\Interceptor;
 
 use Temporal\Client\WorkflowOptions;
+use Temporal\Tests\Functional\Client\ClientTestCase;
+use Temporal\Tests\Workflow\Header\EmptyHeaderWorkflow;
 use Temporal\Tests\Workflow\HeaderWorkflow;
-use Temporal\Workflow\ChildWorkflowOptions;
 
 /**
  * todo: rewrite for interceptors and hidden headers
@@ -22,30 +23,29 @@ use Temporal\Workflow\ChildWorkflowOptions;
  */
 class HeaderTestCase extends ClientTestCase
 {
-    // public function testWorkflowEmptyHeader(): void
-    // {
-    //     $client = $this->createClient();
-    //     $simple = $client->newWorkflowStub(
-    //         HeaderWorkflow::class,
-    //         WorkflowOptions::new(),
-    //         [],
-    //     );
-    //
-    //     $this->assertSame([], (array)$simple->handler()[0]);
-    // }
-    //
-    // public function testWorkflowSimpleCase(): void
-    // {
-    //     $client = $this->createClient();
-    //     $simple = $client->newWorkflowStub(
-    //         HeaderWorkflow::class,
-    //         WorkflowOptions::new(),
-    //         ['fooo' => 'bar'],
-    //     );
-    //
-    //     $this->assertSame(['fooo' => 'bar'], (array)$simple->handler()[0]);
-    // }
-    //
+    public function testWorkflowEmptyHeader(): void
+    {
+        $client = $this->createClient();
+        $simple = $client->newWorkflowStub(
+            EmptyHeaderWorkflow::class,
+            WorkflowOptions::new(),
+        );
+
+        $this->assertSame([], (array) $simple->handler()[0]);
+    }
+
+    public function testWorkflowSimpleCase(): void
+    {
+        $client = $this->createClient();
+        $simple = $client->newWorkflowStub(
+            HeaderWorkflow::class,
+            WorkflowOptions::new(),
+            ['fooo' => 'bar'],
+        );
+
+        $this->assertSame(['fooo' => 'bar'], (array)$simple->handler()[0]);
+    }
+
     // /**
     //  * Pass Header values of different types
     //  */

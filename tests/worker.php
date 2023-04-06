@@ -12,6 +12,8 @@ declare(strict_types=1);
 use Temporal\Internal\Interceptor\Interceptor;
 use Temporal\Testing\WorkerFactory;
 use Temporal\Tests\Fixtures\PipelineProvider;
+use Temporal\Tests\Interceptor\HeaderChanger;
+use Temporal\Tests\Interceptor\InterceptorCallsCounter;
 
 require __DIR__ . '/../vendor/autoload.php';
 
@@ -35,13 +37,10 @@ $getClasses = static function (string $dir, string $namespace): iterable {
 
 $factory = WorkerFactory::create();
 
-// Collect interceptors
-$interceptors = [];
-foreach ($getClasses(__DIR__ . '/Fixtures/src/Interceptor', 'Temporal\\Tests\\Interceptor\\') as $class) {
-    if (\class_exists($class) && !\interface_exists($class) && \is_a($class, Interceptor::class, true)) {
-        $interceptors[] = $class;
-    }
-}
+$interceptors = [
+    InterceptorCallsCounter::class,
+    HeaderChanger::class,
+];
 
 $worker = $factory->newWorker(
     'default',

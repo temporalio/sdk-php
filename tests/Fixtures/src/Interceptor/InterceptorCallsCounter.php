@@ -30,7 +30,13 @@ use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow\WorkflowExecution;
 
-final class FooHeaderIterator implements
+/**
+ * Adds in the Header a key with an interceptor method name that was called
+ * with value of the number of times it was called.
+ *
+ * Note: some methods like {@see self::signal()} have no ability to change the header.
+ */
+final class InterceptorCallsCounter implements
     WorkflowOutboundRequestInterceptor,
     ActivityInboundInterceptor,
     WorkflowInboundInterceptor,

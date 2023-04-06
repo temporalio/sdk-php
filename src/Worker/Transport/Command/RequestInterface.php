@@ -19,7 +19,7 @@ use Temporal\Internal\Interceptor\HeaderCarrier;
  * @psalm-immutable
  * @psalm-type RequestOptions = array<non-empty-string, mixed>
  */
-interface RequestInterface extends CommandInterface // , HeaderCarrier
+interface RequestInterface extends CommandInterface, HeaderCarrier
 {
     /**
      * @return string
@@ -35,11 +35,6 @@ interface RequestInterface extends CommandInterface // , HeaderCarrier
      * @return ValuesInterface
      */
     public function getPayloads(): ValuesInterface;
-
-    /**
-     * @return HeaderInterface
-     */
-    public function getHeader(): HeaderInterface;
 
     /**
      * Optional failure.

@@ -9,18 +9,18 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Functional\Interceptor\Client;
+namespace Temporal\Tests\Functional\Interceptor;
 
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
 use Temporal\Tests\Fixtures\PipelineProvider;
 use Temporal\Tests\Functional\FunctionalTestCase;
-use Temporal\Tests\Interceptor\FooHeaderIterator;
+use Temporal\Tests\Interceptor\InterceptorCallsCounter;
 
 /**
  * @group client
  */
-abstract class InterceptorTestCase extends FunctionalTestCase
+abstract class AbstractClient extends FunctionalTestCase
 {
     /**
      * @param string $connection
@@ -30,7 +30,7 @@ abstract class InterceptorTestCase extends FunctionalTestCase
     {
         return new WorkflowClient(
             ServiceClient::create($connection),
-            interceptorProvider: new PipelineProvider([FooHeaderIterator::class]),
+            interceptorProvider: new PipelineProvider([InterceptorCallsCounter::class]),
         );
     }
 }
