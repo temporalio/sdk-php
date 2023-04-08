@@ -13,11 +13,15 @@ namespace Temporal\Tests\Functional\Interceptor;
 
 use Temporal\Client\WorkflowOptions;
 use Temporal\Tests\Functional\Client\ClientTestCase;
+use Temporal\Tests\Functional\Interceptor\Client\InterceptRequestTestCase;
 use Temporal\Tests\Workflow\Header\EmptyHeaderWorkflow;
-use Temporal\Tests\Workflow\HeaderWorkflow;
+use Temporal\Tests\Workflow\Header\ChildedHeaderWorkflow;
 
 /**
- * todo: rewrite for interceptors and hidden headers
+ * Header is a special case of context propagation. There are no ability to write Header using public API. BUtt
+ * it is possible to pass it using interceptors.
+ * A lot of regular cases are tested in {@see InterceptRequestTestCase}
+ *
  * @group client
  * @group functional
  */
@@ -34,193 +38,54 @@ class HeaderTestCase extends ClientTestCase
         $this->assertSame([], (array) $simple->handler()[0]);
     }
 
-    public function testWorkflowSimpleCase(): void
+    /**
+     * ChildWorkflow should inherit headers from his parent
+     */
+    public function testChildWorkflowHeaderInheritance(): void
     {
         $client = $this->createClient();
         $simple = $client->newWorkflowStub(
-            HeaderWorkflow::class,
+            ChildedHeaderWorkflow::class,
             WorkflowOptions::new(),
-            ['fooo' => 'bar'],
         );
 
-        $this->assertSame(['fooo' => 'bar'], (array)$simple->handler()[0]);
+        $result = $simple->handler(['test-foo-bar' => 'bar-test-foo'], true);
+        $this->assertSame([
+            'test-foo-bar' => 'bar-test-foo',
+        ], (array) $result[0]);
+
+        $this->assertArrayHasKey('test-foo-bar', (array) $result[2]);
+        $this->assertSame(((array) $result[2])['test-foo-bar'], 'bar-test-foo');
     }
 
-    // /**
-    //  * Pass Header values of different types
-    //  */
-    // public function testWorkflowDifferentTypes(): void
-    // {
-    //     $client = $this->createClient();
-    //     $simple = $client->newWorkflowStub(
-    //         HeaderWorkflow::class,
-    //         WorkflowOptions::new(),
-    //         [
-    //             'foo' => 'bar',
-    //             123 => 123,
-    //             '' => null,
-    //             'false' => false,
-    //         ],
-    //     );
-    //
-    //     $this->assertEquals([
-    //         'foo' => 'bar',
-    //         123 => '123',
-    //         '' => '',
-    //         'false' => '',
-    //     ], (array)$simple->handler()[0]);
-    // }
-    //
-    // /**
-    //  * Set headers for ChildWorkflow only
-    //  */
-    // public function testChildWorkflowHeader(): void
-    // {
-    //     $client = $this->createClient();
-    //     $simple = $client->newWorkflowStub(
-    //         HeaderWorkflow::class,
-    //         WorkflowOptions::new(),
-    //     );
-    //
-    //     $result = $simple->handler(['test' => 'best']);
-    //     $this->assertEquals([], (array)$result[0]);
-    //
-    //     $this->assertEquals([
-    //         'test' => 'best',
-    //     ], (array)$result[2]);
-    // }
-    //
-    // /**
-    //  * ChildWorkflow should inherit headers from his parent
-    //  * Case when {@see ChildWorkflowOptions} is not passed
-    //  */
-    // public function testChildWorkflowHeaderInheritance(): void
-    // {
-    //     $client = $this->createClient();
-    //     $simple = $client->newWorkflowStub(
-    //         HeaderWorkflow::class,
-    //         WorkflowOptions::new(),
-    //         [
-    //             'foo' => 'bar',
-    //         ],
-    //     );
-    //
-    //     $result = $simple->handler(true);
-    //     $this->assertEquals([
-    //         'foo' => 'bar',
-    //     ], (array)$result[0]);
-    //
-    //     $this->assertEquals([
-    //         'foo' => 'bar',
-    //     ], (array)$result[2]);
-    // }
-    //
-    // /**
-    //  * ChildWorkflow should inherit headers from his parent
-    //  * Case when {@see ChildWorkflowOptions} without headers is passed
-    //  */
-    // public function testChildWorkflowHeaderOverwriteByEmpty(): void
-    // {
-    //     $client = $this->createClient();
-    //     $simple = $client->newWorkflowStub(
-    //         HeaderWorkflow::class,
-    //         WorkflowOptions::new(),
-    //         [
-    //             'foo' => 'bar',
-    //         ],
-    //     );
-    //
-    //     $result = $simple->handler([]);
-    //     $this->assertEquals([
-    //         'foo' => 'bar',
-    //     ], (array)$result[0]);
-    //
-    //     $this->assertEquals([], (array)$result[2]);
-    // }
-    //
-    // /**
-    //  * ChildWorkflow should inherit headers from his parent and merge with new ones
-    //  */
-    // public function testChildWorkflowHeaderMerge(): void
-    // {
-    //     $client = $this->createClient();
-    //     $simple = $client->newWorkflowStub(
-    //         HeaderWorkflow::class,
-    //         WorkflowOptions::new(),
-    //         [
-    //             'foo' => 'bar',
-    //         ],
-    //     );
-    //
-    //     $result = $simple->handler((object) ['test' => 'best']);
-    //     $this->assertEquals([
-    //         'foo' => 'bar',
-    //     ], (array)$result[0]);
-    //
-    //     $this->assertEquals([
-    //         'foo' => 'bar',
-    //         'test' => 'best',
-    //     ], (array)$result[2]);
-    // }
-    //
-    // public function testActivityHeaderOnly(): void
-    // {
-    //     $client = $this->createClient();
-    //     $simple = $client->newWorkflowStub(
-    //         HeaderWorkflow::class,
-    //         WorkflowOptions::new(),
-    //     );
-    //
-    //     $result = $simple->handler(false, ['test' => 'best']);
-    //     $this->assertEquals([], (array)$result[0]);
-    //
-    //     $this->assertEquals([
-    //         'test' => 'best',
-    //     ], (array)$result[1]);
-    // }
-    //
-    // public function testActivityHeaderInheritance(): void
-    // {
-    //     $client = $this->createClient();
-    //     $simple = $client->newWorkflowStub(
-    //         HeaderWorkflow::class,
-    //         WorkflowOptions::new(),
-    //         ['test' => 'best']
-    //     );
-    //
-    //     $result = $simple->handler(false, null);
-    //
-    //     $this->assertEquals(['test' => 'best'], (array)$result[0]);
-    //     $this->assertEquals(['test' => 'best'], (array)$result[1]);
-    // }
-    //
-    // public function testActivityHeaderOverwriteByEmpty(): void
-    // {
-    //     $client = $this->createClient();
-    //     $simple = $client->newWorkflowStub(
-    //         HeaderWorkflow::class,
-    //         WorkflowOptions::new(),
-    //         ['test' => 'best']
-    //     );
-    //
-    //     $result = $simple->handler(false, []);
-    //
-    //     $this->assertEquals(['test' => 'best'], (array)$result[0]);
-    //     $this->assertEquals([], (array)$result[1]);
-    // }
-    //
-    // public function testActivityHeaderMerge(): void
-    // {
-    //     $client = $this->createClient();
-    //     $simple = $client->newWorkflowStub(
-    //         HeaderWorkflow::class,
-    //         WorkflowOptions::new(),
-    //         ['foo' => 'bar',]
-    //     );
-    //
-    //     $result = $simple->handler(false, ['test' => 'best']);
-    //
-    //     $this->assertEquals(['foo' => 'bar'], (array)$result[0]);
-    //     $this->assertEquals(['foo' => 'bar', 'test' => 'best'], (array)$result[1]);
-    // }
+    public function testActivityHeaderInheritance(): void
+    {
+        $client = $this->createClient();
+        $simple = $client->newWorkflowStub(
+            ChildedHeaderWorkflow::class,
+            WorkflowOptions::new(),
+        );
+
+        $result = $simple->handler(['test-foo-bar' => 'bar-test-foo']);
+        $this->assertSame([
+            'test-foo-bar' => 'bar-test-foo',
+        ], (array) $result[0]);
+
+        $this->assertArrayHasKey('test-foo-bar', (array) $result[1]);
+        $this->assertSame(((array) $result[1])['test-foo-bar'], 'bar-test-foo');
+    }
+
+    public function testActivityHeaderOverwriteByEmpty(): void
+    {
+        $client = $this->createClient();
+        $simple = $client->newWorkflowStub(
+            ChildedHeaderWorkflow::class,
+            WorkflowOptions::new(),
+        );
+
+        $result = $simple->handler(['test-foo-bar' => 'bar-test-foo'], false, []);
+
+        $this->assertEquals(['test-foo-bar' => 'bar-test-foo'], (array) $result[0]);
+        $this->assertArrayNotHasKey('test-foo-bar', (array) $result[1]);
+    }
 }

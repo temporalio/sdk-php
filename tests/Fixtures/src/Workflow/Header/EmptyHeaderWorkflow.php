@@ -15,15 +15,14 @@ use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 
 #[Workflow\WorkflowInterface]
-class EmptyHeaderWorkflow extends HeaderWorkflow
+final class EmptyHeaderWorkflow
 {
-    public const WORKFLOW_NAME = 'HeaderEmptyHeaderWorkflow';
+    use HandleTrait;
+
+    public const WORKFLOW_NAME = 'Header.EmptyHeaderWorkflow';
 
     #[WorkflowMethod(name: self::WORKFLOW_NAME)]
-    public function handler(
-        \stdClass|array|bool $subWorkflowHeader = false,
-        \stdClass|array|null $activityHeader = null,
-    ): iterable {
-        return parent::handler($subWorkflowHeader, $activityHeader);
+    public function handler(): iterable {
+        return $this->runActivity();
     }
 }

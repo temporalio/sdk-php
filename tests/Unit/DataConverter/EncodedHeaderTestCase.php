@@ -33,6 +33,16 @@ class EncodedHeaderTestCase extends UnitTestCase
         $this->assertNotSame($collection->toHeader()->getFields(), $source->toHeader()->getFields());
     }
 
+    /**
+     * @dataProvider fromValuesProvider()
+     */
+    public function testFromValues(array $input, array $output): void
+    {
+        $collection = EncodedHeader::fromValues($input);
+
+        $this->assertSame($output, \iterator_to_array($collection->getIterator()));
+    }
+
     public function testEmptyHeaderToProtoPackable(): void
     {
         $collection = EncodedHeader::empty();
@@ -51,5 +61,28 @@ class EncodedHeaderTestCase extends UnitTestCase
         $header->serializeToString();
         // There is no exception
         $this->assertTrue(true);
+    }
+
+    public function fromValuesProvider(): iterable
+    {
+        yield [
+            ['foo' => 'bar', 'bar' => 'baz', 'baz' => 'foo'],
+            ['foo' => 'bar', 'bar' => 'baz', 'baz' => 'foo'],
+        ];
+
+        yield [
+            [1 => 'bar', 2 => 4, 3 => 0.5],
+            [1 => 'bar', 2 => '4', 3 => '0.5'],
+        ];
+
+        yield [
+            ['foo' => null, 'bar' => new class implements \Stringable {
+                public function __toString(): string
+                {
+                    return 'baz';
+                }
+            }, 'baz' => false],
+            ['foo' => '', 'bar' => 'baz', 'baz' => ''],
+        ];
     }
 }
