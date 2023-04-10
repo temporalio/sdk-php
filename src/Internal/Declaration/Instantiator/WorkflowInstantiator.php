@@ -12,11 +12,10 @@ declare(strict_types=1);
 namespace Temporal\Internal\Declaration\Instantiator;
 
 use Temporal\Exception\InstantiationException;
+use Temporal\Interceptor\WorkflowInboundInterceptor;
 use Temporal\Internal\Declaration\Prototype\PrototypeInterface;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\WorkflowInstance;
-use Temporal\Internal\Interceptor;
-use Temporal\Internal\Interceptor\WorkflowInboundInterceptor;
 
 /**
  * @template-implements InstantiatorInterface<WorkflowPrototype, WorkflowInstance>
@@ -24,7 +23,7 @@ use Temporal\Internal\Interceptor\WorkflowInboundInterceptor;
 final class WorkflowInstantiator extends Instantiator
 {
     public function __construct(
-        private Interceptor\PipelineProvider $interceptorProvider,
+        private \Temporal\Interceptor\PipelineProvider $interceptorProvider,
     ) {
     }
 

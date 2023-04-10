@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\DataConverter;
+namespace Temporal\Interceptor;
 
 use IteratorAggregate;
 use Temporal\Api\Common\V1\Header;

@@ -9,11 +9,19 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Internal\Interceptor;
+namespace Temporal\Interceptor;
 
 use React\Promise\PromiseInterface;
+use Temporal\Internal\Interceptor\Interceptor;
 use Temporal\Worker\Transport\Command\RequestInterface;
 
+/**
+ * Don't implement the interface directly, extend {@see \Temporal\Interceptor\WorkflowOutboundRequestInterceptor}
+ * instead.
+ * The interface might be extended in the future.
+ *
+ * @internal
+ */
 interface WorkflowOutboundRequestInterceptor extends Interceptor
 {
     /**

@@ -11,9 +11,9 @@ use Spiral\Attributes\AttributeReader;
 use Spiral\Attributes\Composite\SelectiveReader;
 use Spiral\Attributes\ReaderInterface;
 use Temporal\DataConverter\DataConverterInterface;
-use Temporal\DataConverter\EncodedHeader;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\ExceptionInterceptorInterface;
+use Temporal\Interceptor\Header;
 use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Internal\Activity\ActivityContext;
 use Temporal\Internal\Declaration\Reader\ActivityReader;
@@ -43,7 +43,7 @@ final class InvokeActivityTestCase extends UnitTestCase
             $rpc,
             $dataConverter,
             EncodedValues::empty(),
-            EncodedHeader::empty(),
+            Header::empty(),
         );
         $marshaller->expects($this->once())
             ->method('unmarshal')

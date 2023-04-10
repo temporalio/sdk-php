@@ -9,12 +9,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Temporal\DataConverter;
+namespace Temporal\Interceptor;
 
 use ArrayAccess;
 use Countable;
-use Temporal\Api\Common\V1\Header;
+use Temporal\Api\Common\V1\Header as ProtoHeader;
 use Temporal\Api\Common\V1\Payload;
+use Temporal\DataConverter\EncodedPayloads;
 use Traversable;
 
 /**
@@ -26,7 +27,7 @@ use Traversable;
  *
  * @psalm-immutable
  */
-final class EncodedHeader extends EncodedPayloads implements HeaderInterface
+final class Header extends EncodedPayloads implements HeaderInterface
 {
     /**
      * @param array<TKey, scalar|\Stringable> $values
@@ -46,7 +47,7 @@ final class EncodedHeader extends EncodedPayloads implements HeaderInterface
     }
 
     /**
-     * @param TPayloadsCollection $payloads
+     * @param ArrayAccess $payloads
      *
      * @return static
      */
@@ -98,8 +99,8 @@ final class EncodedHeader extends EncodedPayloads implements HeaderInterface
         return $clone;
     }
 
-    public function toHeader(): Header
+    public function toHeader(): ProtoHeader
     {
-        return new Header(['fields' => $this->toProtoCollection()]);
+        return new ProtoHeader(['fields' => $this->toProtoCollection()]);
     }
 }

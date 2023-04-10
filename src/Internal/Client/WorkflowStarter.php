@@ -21,15 +21,15 @@ use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverterInterface;
-use Temporal\DataConverter\EncodedHeader;
 use Temporal\DataConverter\EncodedValues;
-use Temporal\DataConverter\HeaderInterface;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Client\WorkflowExecutionAlreadyStartedException;
+use Temporal\Interceptor\Header;
+use Temporal\Interceptor\HeaderInterface;
 use Temporal\Interceptor\WorkflowClient\SignalWithStartInput;
 use Temporal\Interceptor\WorkflowClient\StartInput;
+use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Internal\Interceptor\Pipeline;
-use Temporal\Internal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Workflow\WorkflowExecution;
 
@@ -69,7 +69,7 @@ final class WorkflowStarter
         array $args = [],
         HeaderInterface $header = null,
     ): WorkflowExecution {
-        $header ??= EncodedHeader::empty();
+        $header ??= Header::empty();
         $arguments = EncodedValues::fromValues($args, $this->converter);
 
         return $this->interceptors->with(
@@ -102,7 +102,7 @@ final class WorkflowStarter
         array $startArgs = [],
         HeaderInterface $header = null,
     ): WorkflowExecution {
-        $header ??= EncodedHeader::empty();
+        $header ??= Header::empty();
         $arguments = EncodedValues::fromValues($startArgs, $this->converter);
         $signalArguments = EncodedValues::fromValues($signalArgs, $this->converter);
 

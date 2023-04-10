@@ -13,20 +13,20 @@ namespace Temporal\Tests\Interceptor;
 
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\EncodedValues;
-use Temporal\DataConverter\HeaderInterface;
 use Temporal\Interceptor\ActivityInbound\ActivityInput;
+use Temporal\Interceptor\ActivityInboundInterceptor;
+use Temporal\Interceptor\HeaderInterface;
 use Temporal\Interceptor\WorkflowClient\CancelInput;
 use Temporal\Interceptor\WorkflowClient\GetResultInput;
 use Temporal\Interceptor\WorkflowClient\SignalWithStartInput;
 use Temporal\Interceptor\WorkflowClient\StartInput;
 use Temporal\Interceptor\WorkflowClient\TerminateInput;
+use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
-use Temporal\Internal\Interceptor\ActivityInboundInterceptor;
-use Temporal\Internal\Interceptor\WorkflowClientCallsInterceptor;
-use Temporal\Internal\Interceptor\WorkflowInboundInterceptor;
-use Temporal\Internal\Interceptor\WorkflowOutboundRequestInterceptor;
+use Temporal\Interceptor\WorkflowInboundInterceptor;
+use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow\WorkflowExecution;
 

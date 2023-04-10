@@ -13,7 +13,6 @@ namespace Temporal\Interceptor;
 
 use Temporal\Internal\Interceptor\Interceptor;
 use Temporal\Internal\Interceptor\Pipeline;
-use Temporal\Internal\Interceptor\PipelineProvider;
 
 class SimplePipelineProvider implements PipelineProvider
 {

@@ -11,14 +11,14 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Fixtures;
 
-use Temporal\Internal\Interceptor\ActivityInboundInterceptor;
+use Temporal\Interceptor\ActivityInboundInterceptor;
+use Temporal\Interceptor\WorkflowClientCallsInterceptor;
+use Temporal\Interceptor\WorkflowInboundInterceptor;
+use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
 use Temporal\Internal\Interceptor\Interceptor;
 use Temporal\Internal\Interceptor\Pipeline;
-use Temporal\Internal\Interceptor\WorkflowClientCallsInterceptor;
-use Temporal\Internal\Interceptor\WorkflowInboundInterceptor;
-use Temporal\Internal\Interceptor\WorkflowOutboundRequestInterceptor;
 
-final class PipelineProvider implements \Temporal\Internal\Interceptor\PipelineProvider
+final class PipelineProvider implements \Temporal\Interceptor\PipelineProvider
 {
     /**
      * @template Type of Interceptor

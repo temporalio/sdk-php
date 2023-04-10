@@ -10,8 +10,8 @@
 namespace Temporal\Interceptor\WorkflowInbound;
 
 use JetBrains\PhpStorm\Immutable;
-use Temporal\DataConverter\HeaderInterface;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Interceptor\HeaderInterface;
 use Temporal\Workflow\WorkflowInfo;
 
 /**

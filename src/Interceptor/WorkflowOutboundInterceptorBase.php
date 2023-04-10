@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Interceptor;
 
 use React\Promise\PromiseInterface;
-use Temporal\Internal\Interceptor\WorkflowOutboundRequestInterceptor;
 use Temporal\Internal\Transport\Request\ContinueAsNew;
 use Temporal\Internal\Transport\Request\ExecuteActivity;
 use Temporal\Internal\Transport\Request\ExecuteChildWorkflow;
@@ -27,7 +26,7 @@ use Temporal\Worker\Transport\Command\RequestInterface;
  * Interceptor for outbound workflow requests.
  * Override existing methods to intercept and modify requests.
  */
-abstract class WorkflowOutboundInterceptor implements WorkflowOutboundRequestInterceptor
+abstract class WorkflowOutboundInterceptorBase implements WorkflowOutboundRequestInterceptor
 {
     final public function handleOutboundRequest(RequestInterface $request, callable $next): PromiseInterface
     {

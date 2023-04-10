@@ -11,8 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Transport\Command;
 
-use Temporal\DataConverter\HeaderInterface;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Interceptor\HeaderInterface;
 use Temporal\Internal\Interceptor\HeaderCarrier;
 
 /**

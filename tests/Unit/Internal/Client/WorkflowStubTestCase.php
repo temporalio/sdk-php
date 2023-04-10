@@ -20,8 +20,8 @@ use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Client\WorkflowNotFoundException;
 use Temporal\Exception\Client\WorkflowServiceException;
+use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Internal\Client\WorkflowStub;
-use Temporal\Internal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Tests\Fixtures\PipelineProvider;
 use Temporal\Workflow\WorkflowExecution;
 

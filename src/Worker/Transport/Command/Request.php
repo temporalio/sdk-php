@@ -11,10 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Transport\Command;
 
-use Temporal\DataConverter\EncodedHeader;
 use Temporal\DataConverter\EncodedValues;
-use Temporal\DataConverter\HeaderInterface;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Interceptor\Header;
+use Temporal\Interceptor\HeaderInterface;
 
 /**
  * Carries request to perform host action with payloads and failure as context. Can be cancelled if allows
@@ -46,7 +46,7 @@ class Request extends Command implements RequestInterface
         $this->name = $name;
         $this->options = $options;
         $this->payloads = $payloads ?? EncodedValues::empty();
-        $this->header = $header ?? EncodedHeader::empty();
+        $this->header = $header ?? Header::empty();
 
         parent::__construct($id);
     }
@@ -92,9 +92,9 @@ class Request extends Command implements RequestInterface
     }
 
     /**
-     * @return EncodedHeader
+     * @return Header
      */
-    public function getHeader(): EncodedHeader
+    public function getHeader(): Header
     {
         return $this->header;
     }

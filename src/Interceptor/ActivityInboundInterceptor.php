@@ -9,10 +9,17 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Internal\Interceptor;
+namespace Temporal\Interceptor;
 
 use Temporal\Interceptor\ActivityInbound\ActivityInput;
+use Temporal\Internal\Interceptor\Interceptor;
 
+/**
+ * Don't implement the interface directly, extend {@see \Temporal\Interceptor\ActivityInboundInterceptorBase} instead.
+ * The interface might be extended in the future.
+ *
+ * @internal
+ */
 interface ActivityInboundInterceptor extends Interceptor
 {
     /**

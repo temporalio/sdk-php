@@ -9,12 +9,19 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Internal\Interceptor;
+namespace Temporal\Interceptor;
 
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
+use Temporal\Internal\Interceptor\Interceptor;
 
+/**
+ * Don't implement the interface directly, extend {@see \Temporal\Interceptor\WorkflowInboundInterceptorBase} instead.
+ * The interface might be extended in the future.
+ *
+ * @internal
+ */
 interface WorkflowInboundInterceptor extends Interceptor
 {
     /**

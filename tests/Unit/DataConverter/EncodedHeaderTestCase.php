@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\DataConverter;
 
-use Temporal\DataConverter\EncodedHeader;
+use Temporal\Interceptor\Header;
 use Temporal\Tests\Unit\UnitTestCase;
 
 /**
@@ -22,7 +22,7 @@ class EncodedHeaderTestCase extends UnitTestCase
 {
     public function testEmptyWithValue(): void
     {
-        $source = EncodedHeader::empty();
+        $source = Header::empty();
 
         $collection = $source->withValue('foo', 'bar');
 
@@ -38,14 +38,14 @@ class EncodedHeaderTestCase extends UnitTestCase
      */
     public function testFromValues(array $input, array $output): void
     {
-        $collection = EncodedHeader::fromValues($input);
+        $collection = Header::fromValues($input);
 
         $this->assertSame($output, \iterator_to_array($collection->getIterator()));
     }
 
     public function testEmptyHeaderToProtoPackable(): void
     {
-        $collection = EncodedHeader::empty();
+        $collection = Header::empty();
 
         $header = $collection->toHeader();
         $header->serializeToString();
@@ -55,7 +55,7 @@ class EncodedHeaderTestCase extends UnitTestCase
 
     public function testHeaderFromValuesToProtoPackable(): void
     {
-        $collection = EncodedHeader::fromValues(['foo' => 'bar']);
+        $collection = Header::fromValues(['foo' => 'bar']);
 
         $header = $collection->toHeader();
         $header->serializeToString();

@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Internal\Interceptor;
+namespace Temporal\Interceptor;
 
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Interceptor\WorkflowClient\CancelInput;
@@ -19,8 +19,15 @@ use Temporal\Interceptor\WorkflowClient\SignalInput;
 use Temporal\Interceptor\WorkflowClient\SignalWithStartInput;
 use Temporal\Interceptor\WorkflowClient\StartInput;
 use Temporal\Interceptor\WorkflowClient\TerminateInput;
+use Temporal\Internal\Interceptor\Interceptor;
 use Temporal\Workflow\WorkflowExecution;
 
+/**
+ * Don't implement the interface directly, extend {@see \Temporal\Interceptor\WorkflowClientCallsInterceptorBase} instead.
+ * The interface might be extended in the future.
+ *
+ * @internal
+ */
 interface WorkflowClientCallsInterceptor extends Interceptor
 {
     /**

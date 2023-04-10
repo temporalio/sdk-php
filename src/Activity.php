@@ -13,7 +13,6 @@ namespace Temporal;
 
 use Temporal\Activity\ActivityContextInterface;
 use Temporal\Activity\ActivityInfo;
-use Temporal\DataConverter\HeaderInterface;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\OutOfContextException;
