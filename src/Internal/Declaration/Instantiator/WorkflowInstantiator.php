@@ -12,11 +12,11 @@ declare(strict_types=1);
 namespace Temporal\Internal\Declaration\Instantiator;
 
 use Temporal\Exception\InstantiationException;
-use Temporal\Interceptor\WorkflowInboundInterceptor;
 use Temporal\Internal\Declaration\Prototype\PrototypeInterface;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\WorkflowInstance;
 use Temporal\Internal\Interceptor;
+use Temporal\Internal\Interceptor\WorkflowInboundInterceptor;
 
 /**
  * @template-implements InstantiatorInterface<WorkflowPrototype, WorkflowInstance>

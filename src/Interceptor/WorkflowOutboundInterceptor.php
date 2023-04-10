@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Interceptor;
 
 use React\Promise\PromiseInterface;
+use Temporal\Internal\Interceptor\WorkflowOutboundRequestInterceptor;
 use Temporal\Internal\Transport\Request\ContinueAsNew;
 use Temporal\Internal\Transport\Request\ExecuteActivity;
 use Temporal\Internal\Transport\Request\ExecuteChildWorkflow;
@@ -21,7 +22,6 @@ use Temporal\Internal\Transport\Request\NewTimer;
 use Temporal\Internal\Transport\Request\Panic;
 use Temporal\Internal\Transport\Request\SignalExternalWorkflow;
 use Temporal\Worker\Transport\Command\RequestInterface;
-
 
 /**
  * Interceptor for outbound workflow requests.

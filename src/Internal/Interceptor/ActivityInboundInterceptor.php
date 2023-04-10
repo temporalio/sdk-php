@@ -9,10 +9,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Interceptor;
+namespace Temporal\Internal\Interceptor;
 
 use Temporal\Interceptor\ActivityInbound\ActivityInput;
-use Temporal\Internal\Interceptor\Interceptor;
 
 interface ActivityInboundInterceptor extends Interceptor
 {

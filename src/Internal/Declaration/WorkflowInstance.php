@@ -13,10 +13,10 @@ namespace Temporal\Internal\Declaration;
 
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
-use Temporal\Interceptor\WorkflowInboundInterceptor;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\WorkflowInstance\SignalQueue;
 use Temporal\Internal\Interceptor;
+use Temporal\Internal\Interceptor\WorkflowInboundInterceptor;
 
 /**
  * @psalm-import-type DispatchableHandler from InstanceInterface

@@ -28,8 +28,8 @@ use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Client\WorkflowExecutionAlreadyStartedException;
 use Temporal\Interceptor\WorkflowClient\SignalWithStartInput;
 use Temporal\Interceptor\WorkflowClient\StartInput;
-use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Internal\Interceptor\Pipeline;
+use Temporal\Internal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Workflow\WorkflowExecution;
 
