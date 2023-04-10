@@ -12,8 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Internal\Workflow;
 
 use React\Promise\PromiseInterface;
-use Temporal\DataConverter\EncodedHeader;
-use Temporal\DataConverter\HeaderInterface;
 use Temporal\DataConverter\Type;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Transport\CompletableResultInterface;
@@ -66,27 +64,23 @@ final class ChildWorkflowProxy extends Proxy
      * @var WorkflowPrototype
      */
     private WorkflowPrototype $workflow;
-    private HeaderInterface $header;
 
     /**
      * @param string $class
      * @param WorkflowPrototype $workflow
      * @param ChildWorkflowOptions $options
      * @param WorkflowContextInterface $context
-     * @param HeaderInterface|array $header
      */
     public function __construct(
         string $class,
         WorkflowPrototype $workflow,
         ChildWorkflowOptions $options,
         WorkflowContextInterface $context,
-        HeaderInterface|array $header,
     ) {
         $this->class = $class;
         $this->workflow = $workflow;
         $this->options = $options;
         $this->context = $context;
-        $this->header = \is_array($header) ? EncodedHeader::fromValues($header) : $header;
     }
 
     /**
@@ -119,7 +113,6 @@ final class ChildWorkflowProxy extends Proxy
             $this->stub = $this->context->newUntypedChildWorkflowStub(
                 $this->workflow->getID(),
                 $options,
-                $this->header,
             );
 
             return $this->stub->execute($args, $this->resolveReturnType($this->workflow));

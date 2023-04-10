@@ -21,10 +21,11 @@ use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\Client\ActivityCanceledException;
 use Temporal\Exception\Client\ActivityCompletionException;
 use Temporal\Exception\Client\ServiceClientException;
+use Temporal\Internal\Interceptor\HeaderCarrier;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Worker\Transport\RPCConnectionInterface;
 
-final class ActivityContext implements ActivityContextInterface
+final class ActivityContext implements ActivityContextInterface, HeaderCarrier
 {
     #[Marshal(name: 'info')]
     private ActivityInfo $info;
@@ -73,9 +74,6 @@ final class ActivityContext implements ActivityContextInterface
         return $this->input;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getHeader(): HeaderInterface
     {
         return $this->header;

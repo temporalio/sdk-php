@@ -9,28 +9,29 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Workflow\Interceptor;
+namespace Temporal\Tests\Workflow\Header;
 
+use Generator;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Common\RetryOptions;
 use Temporal\Tests\Activity\SimpleActivity;
 use Temporal\Workflow;
-use Temporal\Workflow\WorkflowMethod;
 
-#[Workflow\WorkflowInterface]
-class HeadersWorkflow
+trait HandleTrait
 {
-    #[WorkflowMethod(name: 'InterceptorHeaderWorkflow')]
-    public function handler(
-        \stdClass|array|null $activityHeader = null,
+    /**
+     * @param array|null $activityHeader Header for activity that will be set by {@see HeaderChanger} interceptor:
+     *        - null: run activity with {@see null} header value
+     *        - array: will be passed into activity as is without merging with workflow header
+     *
+     * @return Generator<mixed, mixed, mixed, array{array, array}> Returns array of headers:
+     *         - [0] - header from current workflow
+     *         - [1] - header from activity
+     */
+    protected function runActivity(
+        array|null $activityHeader = null,
     ): iterable {
         // Run activity
-        $activityHeader = \is_object($activityHeader)
-            ? \array_merge(
-                \iterator_to_array(Workflow::getCurrentContext()->getHeader()->getIterator()),
-                (array) $activityHeader,
-            )
-            : $activityHeader;
         $activityResult = yield Workflow::newActivityStub(
             SimpleActivity::class,
             ActivityOptions::new()
@@ -38,7 +39,6 @@ class HeadersWorkflow
                 ->withRetryOptions(
                     RetryOptions::new()->withMaximumAttempts(2),
                 ),
-            $activityHeader,
         )->header();
 
         return [

@@ -40,13 +40,6 @@ interface WorkflowStubInterface extends WorkflowRunInterface
     public function getOptions(): ?WorkflowOptions;
 
     /**
-     * Get configured Header set.
-     *
-     * @return HeaderInterface
-     */
-    public function getHeader(): HeaderInterface;
-
-    /**
      * Get associated workflow execution (if any).
      *
      * @throws IllegalStateException

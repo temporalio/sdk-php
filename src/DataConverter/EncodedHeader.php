@@ -29,14 +29,18 @@ use Traversable;
 final class EncodedHeader extends EncodedPayloads implements HeaderInterface
 {
     /**
-     * @param array<TKey, TValue> $values
+     * @param array<TKey, scalar|\Stringable> $values
      *
      * @return static
      */
     public static function fromValues(array $values): static
     {
         $ev = new static();
-        $ev->values = $values;
+        $ev->values = [];
+
+        foreach ($values as $key => $value) {
+            $ev->values[$key] = (string) $value;
+        }
 
         return $ev;
     }

@@ -33,13 +33,6 @@ interface ActivityContextInterface
     public function getInput(): ValuesInterface;
 
     /**
-     * @see Activity::getHeader()
-     *
-     * @return HeaderInterface
-     */
-    public function getHeader(): HeaderInterface;
-
-    /**
      * @see Activity::hasHeartbeatDetails()
      *
      * @return bool

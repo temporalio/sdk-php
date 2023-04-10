@@ -19,7 +19,6 @@ use Spiral\Attributes\ReaderInterface;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
-use Temporal\DataConverter\HeaderInterface;
 use Temporal\Exception\InvalidArgumentException;
 use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
@@ -29,6 +28,7 @@ use Temporal\Internal\Client\WorkflowStarter;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
 use Temporal\Internal\Client\WorkflowProxy;
 use Temporal\Internal\Client\WorkflowStub;
+use Temporal\Internal\Interceptor\HeaderCarrier;
 use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Internal\Interceptor\PipelineProvider;
 use Temporal\Workflow\WorkflowExecution;
@@ -146,7 +146,7 @@ class WorkflowClient implements WorkflowClientInterface
             $workflowStub->getWorkflowType(),
             $workflowStub->getOptions() ?? WorkflowOptions::new(),
             $args,
-            $workflowStub->getHeader(),
+            $workflowStub instanceof HeaderCarrier ? $workflowStub->getHeader() : null,
         );
 
         $workflowStub->setExecution($execution);
@@ -194,7 +194,7 @@ class WorkflowClient implements WorkflowClientInterface
             $signal,
             $signalArgs,
             $startArgs,
-            $workflowStub->getHeader(),
+            $workflowStub instanceof HeaderCarrier ? $workflowStub->getHeader() : null,
         );
 
         $workflowStub->setExecution($execution);
@@ -208,13 +208,12 @@ class WorkflowClient implements WorkflowClientInterface
     public function newWorkflowStub(
         string $class,
         WorkflowOptions $options = null,
-        array|HeaderInterface $header = [],
     ): object {
         $workflow = $this->reader->fromClass($class);
 
         return new WorkflowProxy(
             $this,
-            $this->newUntypedWorkflowStub($workflow->getID(), $options, $header),
+            $this->newUntypedWorkflowStub($workflow->getID(), $options),
             $workflow
         );
     }
@@ -225,7 +224,6 @@ class WorkflowClient implements WorkflowClientInterface
     public function newUntypedWorkflowStub(
         string $workflowType,
         WorkflowOptions $options = null,
-        HeaderInterface|array $header = [],
     ): WorkflowStubInterface {
         $options ??= new WorkflowOptions();
 
@@ -236,7 +234,6 @@ class WorkflowClient implements WorkflowClientInterface
             $this->interceptorPipeline,
             $workflowType,
             $options,
-            $header,
         );
     }
 

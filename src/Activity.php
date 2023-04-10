@@ -66,19 +66,6 @@ final class Activity extends Facade
     }
 
     /**
-     * Returns passed header values.
-     *
-     * @return HeaderInterface
-     */
-    public static function getHeader(): HeaderInterface
-    {
-        /** @var ActivityContextInterface $context */
-        $context = self::getCurrentContext();
-
-        return $context->getHeader();
-    }
-
-    /**
      * Returns {@see true} when heartbeat's ({@see Activity::heartbeat()}) first
      * argument has been passed.
      *
