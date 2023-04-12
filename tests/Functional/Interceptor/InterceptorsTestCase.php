@@ -9,20 +9,21 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Functional\Interceptor\Client;
+namespace Temporal\Tests\Functional\Interceptor;
 
 use Carbon\CarbonInterval;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Testing\WithoutTimeSkipping;
-use Temporal\Tests\Functional\Interceptor\AbstractClient;
 use Temporal\Tests\Workflow\Interceptor\HeadersWorkflow;
+use Temporal\Tests\Workflow\Interceptor\QueryHeadersWorkflow;
 use Temporal\Tests\Workflow\Interceptor\SignalHeadersWorkflow;
 
 /**
+ * @group client
  * @group workflow
  * @group functional
  */
-final class InterceptRequestTestCase extends AbstractClient
+final class InterceptorsTestCase extends AbstractClient
 {
     use WithoutTimeSkipping;
 

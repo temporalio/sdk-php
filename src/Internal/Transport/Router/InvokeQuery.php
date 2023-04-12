@@ -19,6 +19,7 @@ use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Workflow;
 
 final class InvokeQuery extends WorkflowProcessAwareRoute
 {
@@ -58,8 +59,11 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
 
         $this->loop->once(
             LoopInterface::ON_QUERY,
-            static function () use ($name, $request, $resolver, $handler): void {
+            static function () use ($name, $request, $resolver, $handler, $instance): void {
                 try {
+                    // Define Context for interceptors Pipeline
+                    Workflow::setCurrentContext($instance->getContext()); // todo is it correct?
+
                     $result = $handler(new QueryInput($name, $request->getPayloads()));
                     $resolver->resolve(EncodedValues::fromValues([$result]));
                 } catch (\Throwable $e) {

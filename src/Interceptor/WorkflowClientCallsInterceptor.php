@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Interceptor;
 
-use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\WorkflowClient\CancelInput;
 use Temporal\Interceptor\WorkflowClient\GetResultInput;
 use Temporal\Interceptor\WorkflowClient\QueryInput;
@@ -56,19 +56,19 @@ interface WorkflowClientCallsInterceptor extends Interceptor
 
     /**
      * @param GetResultInput $input
-     * @param callable(GetResultInput): ?EncodedValues $next
+     * @param callable(GetResultInput): ?ValuesInterface $next
      *
-     * @return EncodedValues|null
+     * @return ValuesInterface|null
      */
-    public function getResult(GetResultInput $input, callable $next): ?EncodedValues;
+    public function getResult(GetResultInput $input, callable $next): ?ValuesInterface;
 
     /**
      * @param QueryInput $input
-     * @param callable(QueryInput): ?EncodedValues $next
+     * @param callable(QueryInput): ?ValuesInterface $next
      *
-     * @return EncodedValues|null
+     * @return ValuesInterface|null
      */
-    public function query(QueryInput $input, callable $next): ?EncodedValues;
+    public function query(QueryInput $input, callable $next): ?ValuesInterface;
 
     /**
      * @param CancelInput $input

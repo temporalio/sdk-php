@@ -13,7 +13,7 @@ namespace Temporal\Tests\Interceptor;
 
 use React\Promise\PromiseInterface;
 use RuntimeException;
-use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\Header;
 use Temporal\Interceptor\WorkflowClient\CancelInput;
 use Temporal\Interceptor\WorkflowClient\GetResultInput;
@@ -85,12 +85,12 @@ final class HeaderChanger implements
         return $next($input);
     }
 
-    public function getResult(GetResultInput $input, callable $next): ?EncodedValues
+    public function getResult(GetResultInput $input, callable $next): ?ValuesInterface
     {
         return $next($input);
     }
 
-    public function query(ClientQueryInput $input, callable $next): ?EncodedValues
+    public function query(ClientQueryInput $input, callable $next): ?ValuesInterface
     {
         return $next($input);
     }

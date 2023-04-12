@@ -87,6 +87,9 @@ class InvokeActivity extends Route
         try {
             $handler = $prototype->getInstance()->getHandler();
 
+            // Define Context for interceptors Pipeline
+            Activity::setCurrentContext(null);
+
             // Run Activity in an interceptors pipeline
             $result = $this->interceptorProvider
                 ->getPipeline(ActivityInboundInterceptor::class)

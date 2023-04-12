@@ -38,5 +38,10 @@ interface HeaderInterface extends \Countable, IteratorAggregate
      */
     public function withValue(int|string $key, string $value): self;
 
+    /**
+     * Make a protobuf Header message.
+     *
+     * @return Header
+     */
     public function toHeader(): Header;
 }
