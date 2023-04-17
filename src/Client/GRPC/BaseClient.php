@@ -139,7 +139,6 @@ abstract class BaseClient implements ServiceClientInterface
                 [$result, $status] = $call->wait();
 
                 if ($status->code !== 0) {
-                    echo $status->code . "\n";
                     throw new ServiceClientException($status);
                 }
 
