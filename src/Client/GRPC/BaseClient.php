@@ -21,7 +21,6 @@ abstract class BaseClient implements ServiceClientInterface
 {
     const RETRYABLE_ERRORS = [
         StatusCode::RESOURCE_EXHAUSTED,
-        StatusCode::INTERNAL,
         StatusCode::UNAVAILABLE,
         StatusCode::UNKNOWN,
     ];
@@ -140,6 +139,7 @@ abstract class BaseClient implements ServiceClientInterface
                 [$result, $status] = $call->wait();
 
                 if ($status->code !== 0) {
+                    echo $status->code . "\n";
                     throw new ServiceClientException($status);
                 }
 
