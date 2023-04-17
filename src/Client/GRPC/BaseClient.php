@@ -19,6 +19,12 @@ use Temporal\Exception\Client\TimeoutException;
 
 abstract class BaseClient implements ServiceClientInterface
 {
+    const RETRYABLE_ERRORS = [
+        StatusCode::RESOURCE_EXHAUSTED,
+        StatusCode::INTERNAL,
+        StatusCode::UNAVAILABLE,
+        StatusCode::UNKNOWN,
+    ];
     private WorkflowServiceClient $workflowService;
 
     /**
@@ -98,7 +104,7 @@ abstract class BaseClient implements ServiceClientInterface
     }
 
     /**
-     * @param string $method
+     * @param non-empty-string $method RPC method name
      * @param object $arg
      * @param ContextInterface|null $ctx
      * @return mixed
@@ -127,7 +133,6 @@ abstract class BaseClient implements ServiceClientInterface
                 if ($ctx->getDeadline() !== null) {
                     $diff = (new \DateTime())->diff($ctx->getDeadline());
                     $options['timeout'] = CarbonInterval::instance($diff)->totalMicroseconds;
-                    ;
                 }
 
                 /** @var UnaryCall $call */
@@ -140,7 +145,7 @@ abstract class BaseClient implements ServiceClientInterface
 
                 return $result;
             } catch (ServiceClientException $e) {
-                if ($e->getCode() !== StatusCode::RESOURCE_EXHAUSTED) {
+                if (!\in_array($e->getCode(), self::RETRYABLE_ERRORS, true)) {
                     if ($e->getCode() === StatusCode::DEADLINE_EXCEEDED) {
                         throw new TimeoutException($e->getMessage(), $e->getCode(), $e);
                     }
