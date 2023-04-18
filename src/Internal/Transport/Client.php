@@ -15,12 +15,12 @@ use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Internal\Queue\QueueInterface;
+use Temporal\Internal\Transport\Request\UndefinedResponse;
 use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\FailureResponseInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\ResponseInterface;
 use Temporal\Worker\Transport\Command\SuccessResponseInterface;
-use Temporal\Worker\LoopInterface;
 
 /**
  * @internal Client is an internal library class, please do not use it in your code.
@@ -54,7 +54,10 @@ final class Client implements ClientInterface
     public function dispatch(ResponseInterface $response): void
     {
         if (!isset($this->requests[$response->getID()])) {
-            throw new \LogicException(sprintf('Got the response to undefined request %s', $response->getID()));
+            $this->request(new UndefinedResponse(
+                \sprintf('Got the response to undefined request %s', $response->getID()),
+            ));
+            return;
         }
 
         $deferred = $this->fetch($response->getID());
