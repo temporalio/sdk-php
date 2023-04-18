@@ -17,8 +17,6 @@ use Temporal\Worker\Transport\Command\Request;
  * Cancel internal request.
  *
  * @psalm-immutable
- * @psalm-internal Temporal\Internal\Workflow
- * @internal
  */
 final class Cancel extends Request
 {

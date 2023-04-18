@@ -13,6 +13,9 @@ namespace Temporal\Internal\Transport\Request;
 
 use Temporal\Worker\Transport\Command\Request;
 
+/**
+ * @psalm-immutable
+ */
 class CancelExternalWorkflow extends Request
 {
     public const NAME = 'CancelExternalWorkflow';
@@ -23,9 +26,9 @@ class CancelExternalWorkflow extends Request
      * @param string|null $runId
      */
     public function __construct(
-        string $namespace,
-        string $workflowId,
-        ?string $runId
+        private string $namespace,
+        private string $workflowId,
+        private ?string $runId
     ) {
         $options = [
             'namespace' => $namespace,
@@ -34,5 +37,29 @@ class CancelExternalWorkflow extends Request
         ];
 
         parent::__construct(self::NAME, $options, null);
+    }
+
+    /**
+     * @return string
+     */
+    public function getNamespace(): string
+    {
+        return $this->namespace;
+    }
+
+    /**
+     * @return string
+     */
+    public function getWorkflowId(): string
+    {
+        return $this->workflowId;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getRunId(): ?string
+    {
+        return $this->runId;
     }
 }

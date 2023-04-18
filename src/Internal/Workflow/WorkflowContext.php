@@ -453,9 +453,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
      */
     public function upsertSearchAttributes(array $searchAttributes): void
     {
-        $this->services->client->request(
-            new UpsertSearchAttributes($searchAttributes)
-        );
+        $this->request(new UpsertSearchAttributes($searchAttributes));
     }
 
     /**
