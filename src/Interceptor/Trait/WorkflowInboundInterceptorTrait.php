@@ -9,13 +9,17 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Interceptor;
+namespace Temporal\Interceptor\Trait;
 
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
+use Temporal\Interceptor\WorkflowInboundInterceptor;
 
-abstract class WorkflowInboundInterceptorBase implements \Temporal\Interceptor\WorkflowInboundInterceptor
+/**
+ * Implements {@see WorkflowInboundInterceptor}
+ */
+trait WorkflowInboundInterceptorTrait
 {
     /**
      * @inheritDoc

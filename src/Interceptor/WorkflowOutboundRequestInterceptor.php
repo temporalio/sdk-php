@@ -12,15 +12,17 @@ declare(strict_types=1);
 namespace Temporal\Interceptor;
 
 use React\Promise\PromiseInterface;
+use Temporal\Interceptor\Trait\WorkflowOutboundRequestInterceptorTrait;
 use Temporal\Internal\Interceptor\Interceptor;
 use Temporal\Worker\Transport\Command\RequestInterface;
 
 /**
- * Don't implement the interface directly, extend {@see \Temporal\Interceptor\WorkflowOutboundRequestInterceptor}
- * instead.
+ * Intercept a request before it's sent to RoadRunner.
+ *
+ * Don't implement the interface directly, use {@see WorkflowOutboundRequestInterceptorTrait} instead.
  * The interface might be extended in the future.
  *
- * @internal
+ * @psalm-immutable
  */
 interface WorkflowOutboundRequestInterceptor extends Interceptor
 {

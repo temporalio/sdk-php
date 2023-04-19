@@ -22,9 +22,11 @@ use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\HeaderInterface;
+use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
 use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\Interceptor\HeaderCarrier;
+use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\StackRenderer;
@@ -54,12 +56,6 @@ use function React\Promise\resolve;
 
 class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
 {
-    protected ServiceContainer $services;
-    protected ClientInterface $client;
-
-    protected Input $input;
-    protected WorkflowInstanceInterface $workflowInstance;
-    protected ?ValuesInterface $lastCompletionResult = null;
 
     /**
      * Contains conditional groups that contains tuple of a condition callable and its promise
@@ -70,6 +66,12 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
     private array $trace = [];
     private bool $continueAsNew = false;
 
+    /** @var Pipeline<WorkflowOutboundRequestInterceptor, PromiseInterface> */
+    private Pipeline $requestInterceptor;
+
+    /** @var Pipeline<WorkflowOutboundCallsInterceptor, PromiseInterface> */
+    private Pipeline $callsInterceptor;
+
     /**
      * WorkflowContext constructor.
      * @param ServiceContainer          $services
@@ -79,17 +81,16 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
      * @param ValuesInterface|null      $lastCompletionResult
      */
     public function __construct(
-        ServiceContainer $services,
-        ClientInterface $client,
-        WorkflowInstanceInterface $workflowInstance,
-        Input $input,
-        ?ValuesInterface $lastCompletionResult
+        protected ServiceContainer $services,
+        protected ClientInterface $client,
+        protected WorkflowInstanceInterface $workflowInstance,
+        protected Input $input,
+        protected ?ValuesInterface $lastCompletionResult = null
     ) {
-        $this->services = $services;
-        $this->client = $client;
-        $this->workflowInstance = $workflowInstance;
-        $this->input = $input;
-        $this->lastCompletionResult = $lastCompletionResult;
+        $this->requestInterceptor =  $services->interceptorProvider
+            ->getPipeline(WorkflowOutboundRequestInterceptor::class);
+        $this->callsInterceptor =  $services->interceptorProvider
+            ->getPipeline(WorkflowOutboundCallsInterceptor::class);
     }
 
     /**
@@ -431,13 +432,11 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
         $this->recordTrace();
 
         // Intercept workflow outbound calls
-        return $this->services->interceptorProvider
-            ->getPipeline(WorkflowOutboundRequestInterceptor::class)
-            ->with(
-                fn(RequestInterface $request): PromiseInterface => $this->client->request($request),
-                /** @see WorkflowOutboundRequestInterceptor::handleOutboundRequest() */
-                'handleOutboundRequest',
-            )($request);
+        return $this->requestInterceptor->with(
+            fn(RequestInterface $request): PromiseInterface => $this->client->request($request),
+            /** @see WorkflowOutboundRequestInterceptor::handleOutboundRequest() */
+            'handleOutboundRequest',
+        )($request);
     }
 
     /**

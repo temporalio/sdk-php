@@ -23,16 +23,11 @@ use Temporal\Workflow\WorkflowExecution;
 final class ExternalWorkflowStub implements ExternalWorkflowStubInterface
 {
     /**
-     * @var WorkflowExecution
-     */
-    private WorkflowExecution $execution;
-
-    /**
      * @param WorkflowExecution $execution
      */
-    public function __construct(WorkflowExecution $execution)
-    {
-        $this->execution = $execution;
+    public function __construct(
+        private WorkflowExecution $execution,
+    ) {
     }
 
     /**
@@ -77,7 +72,7 @@ final class ExternalWorkflowStub implements ExternalWorkflowStubInterface
      * @param RequestInterface $request
      * @return PromiseInterface
      */
-    protected function request(RequestInterface $request): PromiseInterface
+    private function request(RequestInterface $request): PromiseInterface
     {
         /** @var Workflow\WorkflowContextInterface $context */
         $context = Workflow::getCurrentContext();

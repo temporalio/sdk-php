@@ -9,11 +9,15 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Interceptor;
+namespace Temporal\Interceptor\Trait;
 
 use Temporal\Interceptor\ActivityInbound\ActivityInput;
+use Temporal\Interceptor\ActivityInboundInterceptor;
 
-abstract class ActivityInboundInterceptorBase implements \Temporal\Interceptor\ActivityInboundInterceptor
+/**
+ * Implements {@see ActivityInboundInterceptor}
+ */
+trait ActivityInboundInterceptorTrait
 {
     /**
      * @inheritDoc

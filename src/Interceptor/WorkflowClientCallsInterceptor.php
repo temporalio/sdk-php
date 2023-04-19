@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Interceptor;
 
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Interceptor\Trait\WorkflowClientCallsInterceptorTrait;
 use Temporal\Interceptor\WorkflowClient\CancelInput;
 use Temporal\Interceptor\WorkflowClient\GetResultInput;
 use Temporal\Interceptor\WorkflowClient\QueryInput;
@@ -23,10 +24,10 @@ use Temporal\Internal\Interceptor\Interceptor;
 use Temporal\Workflow\WorkflowExecution;
 
 /**
- * Don't implement the interface directly, extend {@see \Temporal\Interceptor\WorkflowClientCallsInterceptorBase} instead.
+ * Don't implement the interface directly, use {@see WorkflowClientCallsInterceptorTrait} instead.
  * The interface might be extended in the future.
  *
- * @internal
+ * @psalm-immutable
  */
 interface WorkflowClientCallsInterceptor extends Interceptor
 {

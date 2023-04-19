@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Interceptor;
+namespace Temporal\Interceptor\Trait;
 
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Interceptor\WorkflowClient\CancelInput;
@@ -19,9 +19,13 @@ use Temporal\Interceptor\WorkflowClient\SignalInput;
 use Temporal\Interceptor\WorkflowClient\SignalWithStartInput;
 use Temporal\Interceptor\WorkflowClient\StartInput;
 use Temporal\Interceptor\WorkflowClient\TerminateInput;
+use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Workflow\WorkflowExecution;
 
-abstract class WorkflowClientCallsInterceptorBase implements \Temporal\Interceptor\WorkflowClientCallsInterceptor
+/**
+ * Implements {@see WorkflowClientCallsInterceptor}
+ */
+trait WorkflowClientCallsInterceptorTrait
 {
     /**
      * @inheritDoc

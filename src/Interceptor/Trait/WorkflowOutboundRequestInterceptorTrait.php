@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Interceptor;
+namespace Temporal\Interceptor\Trait;
 
 use React\Promise\PromiseInterface;
 use Temporal\Internal\Transport\Request\Cancel;
@@ -29,26 +29,27 @@ use Temporal\Worker\Transport\Command\RequestInterface;
 
 /**
  * Interceptor for outbound workflow requests.
- * Override existing methods to intercept and modify requests.
+ *
+ * Implements {@see WorkflowOutboundRequestInterceptor}
  */
-abstract class WorkflowOutboundInterceptorBase implements WorkflowOutboundRequestInterceptor
+trait WorkflowOutboundRequestInterceptorTrait
 {
     final public function handleOutboundRequest(RequestInterface $request, callable $next): PromiseInterface
     {
         return match ($request::class) {
-            ExecuteActivity::class => $this->executeActivity($request, $next),
-            ExecuteLocalActivity::class => $this->executeLocalActivity($request, $next),
-            ExecuteChildWorkflow::class => $this->executeChildWorkflow($request, $next),
-            ContinueAsNew::class => $this->continueAsNew($request, $next),
-            NewTimer::class => $this->newTimer($request, $next),
-            CompleteWorkflow::class => $this->completeWorkflow($request, $next),
-            SignalExternalWorkflow::class => $this->signalExternalWorkflow($request, $next),
-            CancelExternalWorkflow::class => $this->cancelExternalWorkflow($request, $next),
-            GetVersion::class => $this->getVersion($request, $next),
-            Panic::class => $this->panic($request, $next),
-            SideEffect::class => $this->sideEffect($request, $next),
-            UpsertSearchAttributes::class => $this->upsertSearchAttributes($request, $next),
-            Cancel::class => $this->cancel($request, $next),
+            ExecuteActivity::class => $this->executeActivityRequest($request, $next),
+            ExecuteLocalActivity::class => $this->executeLocalActivityRequest($request, $next),
+            ExecuteChildWorkflow::class => $this->executeChildWorkflowRequest($request, $next),
+            ContinueAsNew::class => $this->continueAsNewRequest($request, $next),
+            NewTimer::class => $this->newTimerRequest($request, $next),
+            CompleteWorkflow::class => $this->completeWorkflowRequest($request, $next),
+            SignalExternalWorkflow::class => $this->signalExternalWorkflowRequest($request, $next),
+            CancelExternalWorkflow::class => $this->cancelExternalWorkflowRequest($request, $next),
+            GetVersion::class => $this->getVersionRequest($request, $next),
+            Panic::class => $this->panicRequest($request, $next),
+            SideEffect::class => $this->sideEffectRequest($request, $next),
+            UpsertSearchAttributes::class => $this->upsertSearchAttributesRequest($request, $next),
+            Cancel::class => $this->cancelRequest($request, $next),
             default => $next($request),
         };
     }
@@ -59,7 +60,7 @@ abstract class WorkflowOutboundInterceptorBase implements WorkflowOutboundReques
      *
      * @return PromiseInterface
      */
-    protected function executeActivity(ExecuteActivity $request, callable $next): PromiseInterface
+    private function executeActivityRequest(ExecuteActivity $request, callable $next): PromiseInterface
     {
         return $next($request);
     }
@@ -70,7 +71,7 @@ abstract class WorkflowOutboundInterceptorBase implements WorkflowOutboundReques
      *
      * @return PromiseInterface
      */
-    protected function executeLocalActivity(ExecuteLocalActivity $request, callable $next): PromiseInterface
+    private function executeLocalActivityRequest(ExecuteLocalActivity $request, callable $next): PromiseInterface
     {
         return $next($request);
     }
@@ -81,7 +82,7 @@ abstract class WorkflowOutboundInterceptorBase implements WorkflowOutboundReques
      *
      * @return PromiseInterface
      */
-    protected function executeChildWorkflow(ExecuteChildWorkflow $request, callable $next): PromiseInterface
+    private function executeChildWorkflowRequest(ExecuteChildWorkflow $request, callable $next): PromiseInterface
     {
         return $next($request);
     }
@@ -92,7 +93,7 @@ abstract class WorkflowOutboundInterceptorBase implements WorkflowOutboundReques
      *
      * @return PromiseInterface
      */
-    protected function newTimer(NewTimer $request, callable $next): PromiseInterface
+    private function newTimerRequest(NewTimer $request, callable $next): PromiseInterface
     {
         return $next($request);
     }
@@ -103,7 +104,7 @@ abstract class WorkflowOutboundInterceptorBase implements WorkflowOutboundReques
      *
      * @return PromiseInterface
      */
-    protected function continueAsNew(ContinueAsNew $request, callable $next): PromiseInterface
+    private function continueAsNewRequest(ContinueAsNew $request, callable $next): PromiseInterface
     {
         return $next($request);
     }
@@ -114,7 +115,7 @@ abstract class WorkflowOutboundInterceptorBase implements WorkflowOutboundReques
      *
      * @return PromiseInterface
      */
-    protected function signalExternalWorkflow(SignalExternalWorkflow $request, callable $next): PromiseInterface
+    private function signalExternalWorkflowRequest(SignalExternalWorkflow $request, callable $next): PromiseInterface
     {
         return $next($request);
     }
@@ -125,7 +126,7 @@ abstract class WorkflowOutboundInterceptorBase implements WorkflowOutboundReques
      *
      * @return PromiseInterface
      */
-    protected function completeWorkflow(CompleteWorkflow $request, callable $next): PromiseInterface
+    private function completeWorkflowRequest(CompleteWorkflow $request, callable $next): PromiseInterface
     {
         return $next($request);
     }
@@ -136,7 +137,7 @@ abstract class WorkflowOutboundInterceptorBase implements WorkflowOutboundReques
      *
      * @return PromiseInterface
      */
-    protected function cancelExternalWorkflow(CancelExternalWorkflow $request, callable $next): PromiseInterface
+    private function cancelExternalWorkflowRequest(CancelExternalWorkflow $request, callable $next): PromiseInterface
     {
         return $next($request);
     }
@@ -147,7 +148,7 @@ abstract class WorkflowOutboundInterceptorBase implements WorkflowOutboundReques
      *
      * @return PromiseInterface
      */
-    protected function getVersion(GetVersion $request, callable $next): PromiseInterface
+    private function getVersionRequest(GetVersion $request, callable $next): PromiseInterface
     {
         return $next($request);
     }
@@ -158,7 +159,7 @@ abstract class WorkflowOutboundInterceptorBase implements WorkflowOutboundReques
      *
      * @return PromiseInterface
      */
-    protected function panic(Panic $request, callable $next): PromiseInterface
+    private function panicRequest(Panic $request, callable $next): PromiseInterface
     {
         return $next($request);
     }
@@ -169,7 +170,7 @@ abstract class WorkflowOutboundInterceptorBase implements WorkflowOutboundReques
      *
      * @return PromiseInterface
      */
-    protected function sideEffect(SideEffect $request, callable $next): PromiseInterface
+    private function sideEffectRequest(SideEffect $request, callable $next): PromiseInterface
     {
         return $next($request);
     }
@@ -180,7 +181,7 @@ abstract class WorkflowOutboundInterceptorBase implements WorkflowOutboundReques
      *
      * @return PromiseInterface
      */
-    protected function upsertSearchAttributes(UpsertSearchAttributes $request, callable $next): PromiseInterface
+    private function upsertSearchAttributesRequest(UpsertSearchAttributes $request, callable $next): PromiseInterface
     {
         return $next($request);
     }
@@ -191,7 +192,7 @@ abstract class WorkflowOutboundInterceptorBase implements WorkflowOutboundReques
      *
      * @return PromiseInterface
      */
-    protected function cancel(Cancel $request, callable $next): PromiseInterface
+    private function cancelRequest(Cancel $request, callable $next): PromiseInterface
     {
         return $next($request);
     }
