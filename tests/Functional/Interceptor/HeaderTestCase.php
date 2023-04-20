@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Functional\Interceptor;
 
-use Interceptor\InterceptorsTestCase;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Tests\Functional\Client\ClientTestCase;
 use Temporal\Tests\Workflow\Header\ChildedHeaderWorkflow;

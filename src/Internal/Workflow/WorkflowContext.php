@@ -227,13 +227,14 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
         try {
             $reflection = new \ReflectionFunction($context);
             $returnType = $reflection->getReturnType();
-        } catch (\Throwable $e) {
+        } catch (\Throwable) {
         }
 
-        return EncodedValues::decodePromise(
+        $last = fn() => EncodedValues::decodePromise(
             $this->request(new SideEffect(EncodedValues::fromValues([$value]))),
-            $returnType
+            $returnType,
         );
+        return $last();
     }
 
     /**
@@ -249,11 +250,9 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
      */
     public function complete(array $result = null, \Throwable $failure = null): PromiseInterface
     {
-        if ($result !== null) {
-            $values = EncodedValues::fromValues($result);
-        } else {
-            $values = EncodedValues::empty();
-        }
+        $values = $result !== null
+            ? EncodedValues::fromValues($result)
+            : EncodedValues::empty();
 
         return $this->request(new CompleteWorkflow($values, $failure), false);
     }
@@ -464,7 +463,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
         $conditionGroupId = Uuid::v4();
 
         foreach ($conditions as $condition) {
-            assert(\is_callable($condition) || $condition instanceof PromiseInterface);
+            \assert(\is_callable($condition) || $condition instanceof PromiseInterface);
 
             if ($condition instanceof \Closure) {
                 $callableResult = $condition($conditionGroupId);
