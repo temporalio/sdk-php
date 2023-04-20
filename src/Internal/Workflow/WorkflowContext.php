@@ -22,6 +22,8 @@ use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\HeaderInterface;
+use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteActivityInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteLocalActivityInput;
 use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
 use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
@@ -379,7 +381,23 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
         ActivityOptionsInterface $options = null,
         \ReflectionType $returnType = null,
     ): PromiseInterface {
-        return $this->newUntypedActivityStub($options)->execute($type, $args, $returnType);
+        $isLocal = $options instanceof LocalActivityOptions;
+
+        return $isLocal
+            ? $this->callsInterceptor->with(
+                fn(ExecuteLocalActivityInput $input): PromiseInterface => $this
+                    ->newUntypedActivityStub($input->options)
+                    ->execute($input->type, $input->args, $input->returnType),
+                /** @see WorkflowOutboundCallsInterceptor::executeLocalActivity() */
+                'executeLocalActivity',
+            )(new ExecuteLocalActivityInput($type, $args, $options, $returnType))
+            : $this->callsInterceptor->with(
+                fn(ExecuteActivityInput $input): PromiseInterface => $this
+                    ->newUntypedActivityStub($input->options)
+                    ->execute($input->type, $input->args, $input->returnType),
+                /** @see WorkflowOutboundCallsInterceptor::executeActivity() */
+                'executeActivity',
+            )(new ExecuteActivityInput($type, $args, $options, $returnType));
     }
 
     /**
@@ -411,6 +429,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
             $activities,
             $options ?? ActivityOptions::new(),
             $this,
+            $this->callsInterceptor,
         );
     }
 
