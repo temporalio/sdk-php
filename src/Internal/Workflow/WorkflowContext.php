@@ -23,6 +23,7 @@ use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\HeaderInterface;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteActivityInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteChildWorkflowInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteLocalActivityInput;
 use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
 use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
@@ -316,8 +317,13 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
         ChildWorkflowOptions $options = null,
         $returnType = null,
     ): PromiseInterface {
-        return $this->newUntypedChildWorkflowStub($type, $options)
-            ->execute($args, $returnType);
+        return $this->callsInterceptor->with(
+            fn(ExecuteChildWorkflowInput $input): PromiseInterface => $this
+                ->newUntypedChildWorkflowStub($input->type, $input->options)
+                ->execute($input->args, $input->returnType),
+            /** @see WorkflowOutboundCallsInterceptor::executeChildWorkflow */
+            'executeChildWorkflow',
+        )(new ExecuteChildWorkflowInput($type, $args, $options, $returnType));
     }
 
     /**

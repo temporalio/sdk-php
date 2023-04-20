@@ -15,6 +15,7 @@ use React\Promise\PromiseInterface;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteActivityInput;
 use Temporal\Internal\Interceptor\Interceptor;
 use Temporal\Internal\Transport\Request\ExecuteActivity;
+use Temporal\Internal\Transport\Request\ExecuteChildWorkflow;
 use Temporal\Internal\Transport\Request\ExecuteLocalActivity;
 
 /**
@@ -43,4 +44,12 @@ interface WorkflowOutboundCallsInterceptor extends Interceptor
      * @return PromiseInterface
      */
     public function executeLocalActivity(ExecuteLocalActivity $request, callable $next): PromiseInterface;
+
+    /**
+     * @param ExecuteChildWorkflow $request
+     * @param callable(ExecuteChildWorkflow): PromiseInterface $next
+     *
+     * @return PromiseInterface
+     */
+    public function executeChildWorkflow(ExecuteChildWorkflow $request, callable $next): PromiseInterface;
 }
