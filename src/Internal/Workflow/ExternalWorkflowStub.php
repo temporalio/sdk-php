@@ -13,6 +13,10 @@ namespace Temporal\Internal\Workflow;
 
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\Interceptor\WorkflowOutboundCalls\CancelExternalWorkflowInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\SignalExternalWorkflowInput;
+use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
+use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Internal\Transport\Request\CancelExternalWorkflow;
 use Temporal\Internal\Transport\Request\SignalExternalWorkflow;
 use Temporal\Worker\Transport\Command\RequestInterface;
@@ -24,9 +28,11 @@ final class ExternalWorkflowStub implements ExternalWorkflowStubInterface
 {
     /**
      * @param WorkflowExecution $execution
+     * @param Pipeline<WorkflowOutboundCallsInterceptor, PromiseInterface> $callsInterceptor
      */
     public function __construct(
         private WorkflowExecution $execution,
+        private Pipeline $callsInterceptor,
     ) {
     }
 
@@ -43,15 +49,27 @@ final class ExternalWorkflowStub implements ExternalWorkflowStubInterface
      */
     public function signal(string $name, array $args = []): PromiseInterface
     {
-        $request = new SignalExternalWorkflow(
+        return $this->callsInterceptor->with(
+            fn(SignalExternalWorkflowInput $input): PromiseInterface => $this
+                ->request(
+                    new SignalExternalWorkflow(
+                        $input->namespace,
+                        $input->workflowId,
+                        $input->runId,
+                        $input->signal,
+                        $input->input,
+                        $input->childWorkflowOnly,
+                    ),
+                ),
+            /** @see WorkflowOutboundCallsInterceptor::signalExternalWorkflow() */
+            'signalExternalWorkflow',
+        )(new SignalExternalWorkflowInput(
             '',
             $this->execution->getID(),
             $this->execution->getRunID(),
             $name,
-            EncodedValues::fromValues($args)
-        );
-
-        return $this->request($request);
+            EncodedValues::fromValues($args),
+        ));
     }
 
     /**
@@ -59,13 +77,12 @@ final class ExternalWorkflowStub implements ExternalWorkflowStubInterface
      */
     public function cancel(): PromiseInterface
     {
-        $request = new CancelExternalWorkflow(
-            '',
-            $this->execution->getID(),
-            $this->execution->getRunID()
-        );
-
-        return $this->request($request);
+        return $this->callsInterceptor->with(
+            fn(CancelExternalWorkflowInput $input): PromiseInterface => $this
+                ->request(new CancelExternalWorkflow($input->namespace, $input->workflowId, $input->runId)),
+            /** @see WorkflowOutboundCallsInterceptor::cancelExternalWorkflow() */
+            'cancelExternalWorkflow',
+        )(new CancelExternalWorkflowInput('', $this->execution->getID(), $this->execution->getRunID()));
     }
 
     /**
@@ -74,6 +91,7 @@ final class ExternalWorkflowStub implements ExternalWorkflowStubInterface
      */
     private function request(RequestInterface $request): PromiseInterface
     {
+        // todo intercept
         /** @var Workflow\WorkflowContextInterface $context */
         $context = Workflow::getCurrentContext();
 

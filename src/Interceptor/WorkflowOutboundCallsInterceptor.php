@@ -13,10 +13,12 @@ namespace Temporal\Interceptor;
 
 use React\Promise\PromiseInterface;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteActivityInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteChildWorkflowInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteLocalActivityInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\SignalExternalWorkflowInput;
 use Temporal\Internal\Interceptor\Interceptor;
+use Temporal\Internal\Transport\Request\CancelExternalWorkflow;
 use Temporal\Internal\Transport\Request\ExecuteActivity;
-use Temporal\Internal\Transport\Request\ExecuteChildWorkflow;
-use Temporal\Internal\Transport\Request\ExecuteLocalActivity;
 
 /**
  * Interceptor for outbound workflow requests.
@@ -38,18 +40,34 @@ interface WorkflowOutboundCallsInterceptor extends Interceptor
     ): PromiseInterface;
 
     /**
-     * @param ExecuteLocalActivity $request
-     * @param callable(ExecuteLocalActivity): PromiseInterface $next
+     * @param ExecuteLocalActivityInput $request
+     * @param callable(ExecuteLocalActivityInput): PromiseInterface $next
      *
      * @return PromiseInterface
      */
-    public function executeLocalActivity(ExecuteLocalActivity $request, callable $next): PromiseInterface;
+    public function executeLocalActivity(ExecuteLocalActivityInput $request, callable $next): PromiseInterface;
 
     /**
-     * @param ExecuteChildWorkflow $request
-     * @param callable(ExecuteChildWorkflow): PromiseInterface $next
+     * @param ExecuteChildWorkflowInput $request
+     * @param callable(ExecuteChildWorkflowInput): PromiseInterface $next
      *
      * @return PromiseInterface
      */
-    public function executeChildWorkflow(ExecuteChildWorkflow $request, callable $next): PromiseInterface;
+    public function executeChildWorkflow(ExecuteChildWorkflowInput $request, callable $next): PromiseInterface;
+
+    /**
+     * @param SignalExternalWorkflowInput $request
+     * @param callable(SignalExternalWorkflowInput): PromiseInterface $next
+     *
+     * @return PromiseInterface
+     */
+    public function signalExternalWorkflow(SignalExternalWorkflowInput $request, callable $next): PromiseInterface;
+
+    /**
+     * @param CancelExternalWorkflow $request
+     * @param callable(CancelExternalWorkflow): PromiseInterface $next
+     *
+     * @return PromiseInterface
+     */
+    public function cancelExternalWorkflow(CancelExternalWorkflow $request, callable $next): PromiseInterface;
 }

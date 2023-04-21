@@ -28,7 +28,7 @@ class CancelExternalWorkflow extends Request
     public function __construct(
         private string $namespace,
         private string $workflowId,
-        private ?string $runId
+        private ?string $runId,
     ) {
         $options = [
             'namespace' => $namespace,
