@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Common;
 
-use Spiral\Attributes\NamedArgumentConstructorAttribute;
+use Spiral\Attributes\NamedArgumentConstructor;
 use Temporal\Internal\Support\DateInterval;
 
 /**
@@ -27,10 +27,11 @@ use Temporal\Internal\Support\DateInterval;
  * @psalm-import-type ExceptionsList from RetryOptions
  *
  * @Annotation
+ * @NamedArgumentConstructor
  * @Target({ "METHOD" })
  */
-#[\Attribute(\Attribute::TARGET_METHOD)]
-final class MethodRetry extends RetryOptions implements NamedArgumentConstructorAttribute
+#[\Attribute(\Attribute::TARGET_METHOD), NamedArgumentConstructor]
+final class MethodRetry extends RetryOptions
 {
     /**
      * @param DateIntervalValue|null $initialInterval

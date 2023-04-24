@@ -11,13 +11,15 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Marshaller\Meta;
 
+use Spiral\Attributes\NamedArgumentConstructor;
 use Temporal\Internal\Marshaller\Type\ArrayType;
 
 /**
  * @Annotation
+ * @NamedArgumentConstructor
  * @Target({ "PROPERTY", "METHOD" })
  */
-#[\Attribute(\Attribute::TARGET_PROPERTY)]
+#[\Attribute(\Attribute::TARGET_PROPERTY), NamedArgumentConstructor]
 final class MarshalArray extends Marshal
 {
     /**

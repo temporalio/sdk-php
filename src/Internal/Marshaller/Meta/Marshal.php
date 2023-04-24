@@ -11,16 +11,17 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Marshaller\Meta;
 
-use Spiral\Attributes\NamedArgumentConstructorAttribute;
+use Spiral\Attributes\NamedArgumentConstructor;
 use Temporal\Internal\Marshaller\MarshallingRule;
 use Temporal\Internal\Marshaller\Type\NullableType;
 
 /**
  * @Annotation
+ * @NamedArgumentConstructor
  * @Target({ "PROPERTY" })
  */
-#[\Attribute(\Attribute::TARGET_PROPERTY)]
-class Marshal extends MarshallingRule implements NamedArgumentConstructorAttribute
+#[\Attribute(\Attribute::TARGET_PROPERTY), NamedArgumentConstructor]
+class Marshal extends MarshallingRule
 {
     /**
      * @param string|null $name

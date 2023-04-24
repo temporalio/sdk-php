@@ -13,7 +13,7 @@ namespace Temporal\Activity;
 
 use Doctrine\Common\Annotations\Annotation\Target;
 use JetBrains\PhpStorm\Immutable;
-use Spiral\Attributes\NamedArgumentConstructorAttribute;
+use Spiral\Attributes\NamedArgumentConstructor;
 
 /**
  * Indicates that an interface is an activity interface. Only interfaces
@@ -29,10 +29,11 @@ use Spiral\Attributes\NamedArgumentConstructorAttribute;
  * distinct.
  *
  * @Annotation
+ * @NamedArgumentConstructor
  * @Target({ "CLASS" })
  */
-#[\Attribute(\Attribute::TARGET_CLASS)]
-class ActivityInterface implements NamedArgumentConstructorAttribute
+#[\Attribute(\Attribute::TARGET_CLASS), NamedArgumentConstructor]
+class ActivityInterface
 {
     /**
      * Prefix to prepend to method names to generate activity types. Default is

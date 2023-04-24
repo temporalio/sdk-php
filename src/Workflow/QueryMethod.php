@@ -13,7 +13,7 @@ namespace Temporal\Workflow;
 
 use Doctrine\Common\Annotations\Annotation\Target;
 use JetBrains\PhpStorm\Immutable;
-use Spiral\Attributes\NamedArgumentConstructorAttribute;
+use Spiral\Attributes\NamedArgumentConstructor;
 
 /**
  * Indicates that the method is a query method. Query method can be used to
@@ -24,10 +24,11 @@ use Spiral\Attributes\NamedArgumentConstructorAttribute;
  * activities or block threads in any way.
  *
  * @Annotation
+ * @NamedArgumentConstructor
  * @Target({ "METHOD" })
  */
-#[\Attribute(\Attribute::TARGET_METHOD)]
-final class QueryMethod implements NamedArgumentConstructorAttribute
+#[\Attribute(\Attribute::TARGET_METHOD), NamedArgumentConstructor]
+final class QueryMethod
 {
     /**
      * Name of the query type. Default is method name.
