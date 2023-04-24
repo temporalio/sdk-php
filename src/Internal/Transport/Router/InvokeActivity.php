@@ -18,9 +18,9 @@ use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\DoNotCompleteOnResultException;
 use Temporal\Interceptor\ActivityInbound\ActivityInput;
 use Temporal\Interceptor\ActivityInboundInterceptor;
+use Temporal\Interceptor\PipelineProvider;
 use Temporal\Internal\Activity\ActivityContext;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
-use Temporal\Internal\Interceptor\PipelineProvider;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\RPCConnectionInterface;
@@ -86,6 +86,9 @@ class InvokeActivity extends Route
 
         try {
             $handler = $prototype->getInstance()->getHandler();
+
+            // Define Context for interceptors Pipeline
+            Activity::setCurrentContext(null);
 
             // Run Activity in an interceptors pipeline
             $result = $this->interceptorProvider

@@ -13,10 +13,10 @@ namespace Temporal\Internal\Workflow;
 
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
-use Temporal\DataConverter\EncodedHeader;
 use Temporal\DataConverter\EncodedValues;
-use Temporal\DataConverter\HeaderInterface;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Interceptor\Header;
+use Temporal\Interceptor\HeaderInterface;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Transport\Request\ExecuteChildWorkflow;
 use Temporal\Internal\Transport\Request\GetChildWorkflowExecution;
@@ -53,7 +53,7 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
         $this->workflow = $workflow;
         $this->options = $options;
         $this->execution = new Deferred();
-        $this->header = \is_array($header) ? EncodedHeader::fromValues($header) : $header;
+        $this->header = \is_array($header) ? Header::fromValues($header) : $header;
     }
 
     /**

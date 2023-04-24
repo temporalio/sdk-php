@@ -13,8 +13,8 @@ namespace Temporal\Tests\Interceptor;
 
 use React\Promise\PromiseInterface;
 use RuntimeException;
-use Temporal\DataConverter\EncodedHeader;
-use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\ValuesInterface;
+use Temporal\Interceptor\Header;
 use Temporal\Interceptor\WorkflowClient\CancelInput;
 use Temporal\Interceptor\WorkflowClient\GetResultInput;
 use Temporal\Interceptor\WorkflowClient\QueryInput as ClientQueryInput;
@@ -29,8 +29,8 @@ use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
 use Temporal\Interceptor\WorkflowInboundInterceptor;
 use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
 use Temporal\Internal\Transport\Request\ExecuteActivity;
-use Temporal\Tests\Workflow\Header\EmptyHeaderWorkflow;
 use Temporal\Tests\Workflow\Header\ChildedHeaderWorkflow;
+use Temporal\Tests\Workflow\Header\EmptyHeaderWorkflow;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowExecution;
@@ -47,7 +47,7 @@ final class HeaderChanger implements
     private function processInput(StartInput $input): StartInput
     {
         if ($input->workflowType === EmptyHeaderWorkflow::WORKFLOW_NAME) {
-            return $input->with(header: EncodedHeader::empty());
+            return $input->with(header: Header::empty());
         }
 
         return $input;
@@ -56,7 +56,7 @@ final class HeaderChanger implements
     private function processRequest(RequestInterface $request): object
     {
         if (Workflow::getInfo()->type->name === EmptyHeaderWorkflow::WORKFLOW_NAME) {
-            return $request->withHeader(EncodedHeader::empty());
+            return $request->withHeader(Header::empty());
         }
 
         return $request;
@@ -85,12 +85,12 @@ final class HeaderChanger implements
         return $next($input);
     }
 
-    public function getResult(GetResultInput $input, callable $next): ?EncodedValues
+    public function getResult(GetResultInput $input, callable $next): ?ValuesInterface
     {
         return $next($input);
     }
 
-    public function query(ClientQueryInput $input, callable $next): ?EncodedValues
+    public function query(ClientQueryInput $input, callable $next): ?ValuesInterface
     {
         return $next($input);
     }
@@ -111,7 +111,7 @@ final class HeaderChanger implements
             match (false) {
                 /** @see self::start() must clear the Header after {@see InterceptorCallsCounter::start()} */
                 $input->header->getValue('start') === null => throw new RuntimeException('Client Header must be empty'),
-                default => $next($input->with(header: EncodedHeader::empty())),
+                default => $next($input->with(header: Header::empty())),
             };
             return;
         }
@@ -120,7 +120,7 @@ final class HeaderChanger implements
             $values = $input->arguments->getValue(0, null);
             $header = $input->header;
             if ($values !== null) {
-                $header = EncodedHeader::fromValues((array) $values);
+                $header = Header::fromValues((array) $values);
             }
             $next($input->with(header: $header));
 
@@ -151,7 +151,7 @@ final class HeaderChanger implements
         if (Workflow::getInfo()->type->name === ChildedHeaderWorkflow::WORKFLOW_NAME) {
             $header = Workflow::getInput()->count() >= 3 ? Workflow::getInput()->getValue(2, null) : null;
             if ($header !== null) {
-                $request = $request->withHeader(EncodedHeader::fromValues((array)$header));
+                $request = $request->withHeader(Header::fromValues((array)$header));
             }
         }
 

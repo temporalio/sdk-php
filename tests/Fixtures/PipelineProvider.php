@@ -18,7 +18,7 @@ use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
 use Temporal\Internal\Interceptor\Interceptor;
 use Temporal\Internal\Interceptor\Pipeline;
 
-final class PipelineProvider implements \Temporal\Internal\Interceptor\PipelineProvider
+final class PipelineProvider implements \Temporal\Interceptor\PipelineProvider
 {
     /**
      * @template Type of Interceptor

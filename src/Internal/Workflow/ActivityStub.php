@@ -13,9 +13,9 @@ namespace Temporal\Internal\Workflow;
 
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptionsInterface;
-use Temporal\DataConverter\EncodedHeader;
 use Temporal\DataConverter\EncodedValues;
-use Temporal\DataConverter\HeaderInterface;
+use Temporal\Interceptor\Header;
+use Temporal\Interceptor\HeaderInterface;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Transport\Request\ExecuteActivity;
 use Temporal\Internal\Transport\Request\ExecuteLocalActivity;
@@ -41,7 +41,7 @@ final class ActivityStub implements ActivityStubInterface
     ) {
         $this->marshaller = $marshaller;
         $this->options = $options;
-        $this->header = \is_array($header) ? EncodedHeader::fromValues($header) : $header;
+        $this->header = \is_array($header) ? Header::fromValues($header) : $header;
     }
 
     /**

@@ -9,7 +9,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Internal\Interceptor;
+namespace Temporal\Interceptor;
+
+use Temporal\Internal\Interceptor\Interceptor;
+use Temporal\Internal\Interceptor\Pipeline;
 
 /**
  * Provide {@see Pipeline} of specific type of {@see Interceptor}.

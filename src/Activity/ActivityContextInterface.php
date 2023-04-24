@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Activity;
 
 use Temporal\Activity;
-use Temporal\DataConverter\HeaderInterface;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 

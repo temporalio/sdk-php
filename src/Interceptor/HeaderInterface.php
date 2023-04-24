@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\DataConverter;
+namespace Temporal\Interceptor;
 
 use IteratorAggregate;
 use Temporal\Api\Common\V1\Header;
@@ -38,5 +38,10 @@ interface HeaderInterface extends \Countable, IteratorAggregate
      */
     public function withValue(int|string $key, string $value): self;
 
+    /**
+     * Make a protobuf Header message.
+     *
+     * @return Header
+     */
     public function toHeader(): Header;
 }

@@ -12,9 +12,9 @@ declare(strict_types=1);
 namespace Temporal\Worker\Transport\Codec\ProtoCodec;
 
 use Temporal\DataConverter\DataConverterInterface;
-use Temporal\DataConverter\EncodedHeader;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\Failure\FailureConverter;
+use Temporal\Interceptor\Header;
 use Temporal\Roadrunner\Internal\Message;
 use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\FailureResponse;
@@ -71,7 +71,7 @@ class Decoder
             $payloads = EncodedValues::fromPayloads($msg->getPayloads(), $this->converter);
         }
         $header = $msg->hasHeader()
-            ? EncodedHeader::fromPayloadCollection($msg->getHeader()->getFields())
+            ? Header::fromPayloadCollection($msg->getHeader()->getFields())
             : null;
 
         return new Request(

@@ -13,16 +13,16 @@ namespace Temporal\Tests\Functional\Interceptor;
 
 use Temporal\Client\WorkflowOptions;
 use Temporal\Tests\Functional\Client\ClientTestCase;
-use Temporal\Tests\Functional\Interceptor\Client\InterceptRequestTestCase;
-use Temporal\Tests\Workflow\Header\EmptyHeaderWorkflow;
 use Temporal\Tests\Workflow\Header\ChildedHeaderWorkflow;
+use Temporal\Tests\Workflow\Header\EmptyHeaderWorkflow;
 
 /**
  * Header is a special case of context propagation. There are no ability to write Header using public API. BUtt
  * it is possible to pass it using interceptors.
- * A lot of regular cases are tested in {@see InterceptRequestTestCase}
+ * A lot of regular cases are tested in {@see InterceptorsTestCase}
  *
  * @group client
+ * @group workflow
  * @group functional
  */
 class HeaderTestCase extends ClientTestCase

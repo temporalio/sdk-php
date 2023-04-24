@@ -11,8 +11,8 @@ namespace Temporal\Interceptor\WorkflowClient;
 
 use JetBrains\PhpStorm\Immutable;
 use Temporal\Client\WorkflowOptions;
-use Temporal\DataConverter\HeaderInterface;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Interceptor\HeaderInterface;
 
 /**
  * @psalm-immutable
@@ -26,7 +26,6 @@ class StartInput
      */
     public function __construct(
         #[Immutable]
-        // todo: delete redundant property? because it exists in WorkflowOptions
         public string $workflowId,
         #[Immutable]
         public string $workflowType,

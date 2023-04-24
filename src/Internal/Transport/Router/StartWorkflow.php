@@ -22,6 +22,7 @@ use Temporal\Internal\Workflow\Input;
 use Temporal\Internal\Workflow\Process\Process;
 use Temporal\Internal\Workflow\WorkflowContext;
 use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInfo;
 
 final class StartWorkflow extends Route
@@ -72,7 +73,6 @@ final class StartWorkflow extends Route
             $lastCompletionResult
         );
 
-
         $starter = function (WorkflowInput $input) use (
             $resolver,
             $instance,
@@ -85,6 +85,9 @@ final class StartWorkflow extends Route
 
             $process->start($instance->getHandler(), $context->getInput());
         };
+
+        // Define Context for interceptors Pipeline
+        Workflow::setCurrentContext($context);
 
         // Run workflow handler in an interceptor pipeline
         $this->services->interceptorProvider

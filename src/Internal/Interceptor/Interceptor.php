@@ -13,7 +13,9 @@ namespace Temporal\Internal\Interceptor;
 
 /**
  * Don't implement the interface directly, use extended interfaces instead.
+ *
  * @internal
+ * @psalm-immutable
  */
 interface Interceptor
 {

@@ -12,8 +12,15 @@ declare(strict_types=1);
 namespace Temporal\Interceptor;
 
 use Temporal\Interceptor\ActivityInbound\ActivityInput;
+use Temporal\Interceptor\Trait\ActivityInboundInterceptorTrait;
 use Temporal\Internal\Interceptor\Interceptor;
 
+/**
+ * Don't implement the interface directly, use {@see ActivityInboundInterceptorTrait} instead.
+ * The interface might be extended in the future.
+ *
+ * @psalm-immutable
+ */
 interface ActivityInboundInterceptor extends Interceptor
 {
     /**

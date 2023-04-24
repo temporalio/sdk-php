@@ -16,7 +16,6 @@ use Temporal\Interceptor\WorkflowInboundInterceptor;
 use Temporal\Internal\Declaration\Prototype\PrototypeInterface;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\WorkflowInstance;
-use Temporal\Internal\Interceptor;
 
 /**
  * @template-implements InstantiatorInterface<WorkflowPrototype, WorkflowInstance>
@@ -24,7 +23,7 @@ use Temporal\Internal\Interceptor;
 final class WorkflowInstantiator extends Instantiator
 {
     public function __construct(
-        private Interceptor\PipelineProvider $interceptorProvider,
+        private \Temporal\Interceptor\PipelineProvider $interceptorProvider,
     ) {
     }
 

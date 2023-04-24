@@ -63,6 +63,9 @@ class Process extends Scope implements ProcessInterface
         $wfInstance->getSignalQueue()->onSignal(
             function (string $name, callable $handler, ValuesInterface $arguments) use ($inboundPipeline): void {
                 try {
+                    // Define Context for interceptors Pipeline
+                    Workflow::setCurrentContext($this->scopeContext);
+
                     $inboundPipeline->with(
                         function (SignalInput $input) use ($handler) {
                             $this->createScope(

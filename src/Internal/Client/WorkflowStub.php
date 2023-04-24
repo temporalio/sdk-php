@@ -31,23 +31,23 @@ use Temporal\Client\WorkflowOptions;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverterInterface;
-use Temporal\DataConverter\EncodedHeader;
 use Temporal\DataConverter\EncodedValues;
-use Temporal\DataConverter\HeaderInterface;
+use Temporal\Exception\Client\ServiceClientException;
+use Temporal\Exception\Client\TimeoutException;
 use Temporal\Exception\Client\WorkflowException;
+use Temporal\Exception\Client\WorkflowFailedException;
+use Temporal\Exception\Client\WorkflowNotFoundException;
 use Temporal\Exception\Client\WorkflowQueryException;
 use Temporal\Exception\Client\WorkflowQueryRejectedException;
-use Temporal\Exception\Client\ServiceClientException;
+use Temporal\Exception\Client\WorkflowServiceException;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Exception\Failure\TerminatedFailure;
 use Temporal\Exception\Failure\TimeoutFailure;
 use Temporal\Exception\IllegalStateException;
-use Temporal\Exception\Client\TimeoutException;
 use Temporal\Exception\WorkflowExecutionFailedException;
-use Temporal\Exception\Client\WorkflowFailedException;
-use Temporal\Exception\Client\WorkflowNotFoundException;
-use Temporal\Exception\Client\WorkflowServiceException;
+use Temporal\Interceptor\Header;
+use Temporal\Interceptor\HeaderInterface;
 use Temporal\Interceptor\WorkflowClient\CancelInput;
 use Temporal\Interceptor\WorkflowClient\GetResultInput;
 use Temporal\Interceptor\WorkflowClient\QueryInput;
@@ -81,7 +81,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
         private ?string $workflowType = null,
         private ?WorkflowOptions $options = null,
     ) {
-        $this->header = EncodedHeader::empty();
+        $this->header = Header::empty();
     }
 
     /**

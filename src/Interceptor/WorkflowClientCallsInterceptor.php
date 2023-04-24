@@ -11,7 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Interceptor;
 
-use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\ValuesInterface;
+use Temporal\Interceptor\Trait\WorkflowClientCallsInterceptorTrait;
 use Temporal\Interceptor\WorkflowClient\CancelInput;
 use Temporal\Interceptor\WorkflowClient\GetResultInput;
 use Temporal\Interceptor\WorkflowClient\QueryInput;
@@ -22,6 +23,12 @@ use Temporal\Interceptor\WorkflowClient\TerminateInput;
 use Temporal\Internal\Interceptor\Interceptor;
 use Temporal\Workflow\WorkflowExecution;
 
+/**
+ * Don't implement the interface directly, use {@see WorkflowClientCallsInterceptorTrait} instead.
+ * The interface might be extended in the future.
+ *
+ * @psalm-immutable
+ */
 interface WorkflowClientCallsInterceptor extends Interceptor
 {
     /**
@@ -50,19 +57,19 @@ interface WorkflowClientCallsInterceptor extends Interceptor
 
     /**
      * @param GetResultInput $input
-     * @param callable(GetResultInput): ?EncodedValues $next
+     * @param callable(GetResultInput): ?ValuesInterface $next
      *
-     * @return EncodedValues|null
+     * @return ValuesInterface|null
      */
-    public function getResult(GetResultInput $input, callable $next): ?EncodedValues;
+    public function getResult(GetResultInput $input, callable $next): ?ValuesInterface;
 
     /**
      * @param QueryInput $input
-     * @param callable(QueryInput): ?EncodedValues $next
+     * @param callable(QueryInput): ?ValuesInterface $next
      *
-     * @return EncodedValues|null
+     * @return ValuesInterface|null
      */
-    public function query(QueryInput $input, callable $next): ?EncodedValues;
+    public function query(QueryInput $input, callable $next): ?ValuesInterface;
 
     /**
      * @param CancelInput $input

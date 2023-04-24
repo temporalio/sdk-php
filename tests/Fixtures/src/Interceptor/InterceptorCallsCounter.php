@@ -13,9 +13,9 @@ namespace Temporal\Tests\Interceptor;
 
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\EncodedValues;
-use Temporal\DataConverter\HeaderInterface;
 use Temporal\Interceptor\ActivityInbound\ActivityInput;
 use Temporal\Interceptor\ActivityInboundInterceptor;
+use Temporal\Interceptor\HeaderInterface;
 use Temporal\Interceptor\WorkflowClient\CancelInput;
 use Temporal\Interceptor\WorkflowClient\GetResultInput;
 use Temporal\Interceptor\WorkflowClient\SignalWithStartInput;

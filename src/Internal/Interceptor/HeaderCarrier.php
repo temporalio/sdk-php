@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Interceptor;
 
-use Temporal\DataConverter\HeaderInterface;
+use Temporal\Interceptor\HeaderInterface;
 
 /**
  * @internal

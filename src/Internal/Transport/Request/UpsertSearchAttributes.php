@@ -13,8 +13,17 @@ class UpsertSearchAttributes extends Request
     /**
      * @param array<string, mixed> $searchAttributes
      */
-    public function __construct(array $searchAttributes)
-    {
+    public function __construct(
+        private array $searchAttributes,
+    ) {
         parent::__construct(self::NAME, ['searchAttributes' => $searchAttributes]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getSearchAttributes(): array
+    {
+        return $this->searchAttributes;
     }
 }
