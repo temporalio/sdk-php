@@ -25,6 +25,8 @@ use Temporal\Interceptor\HeaderInterface;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteActivityInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteChildWorkflowInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteLocalActivityInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\SideEffectInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\TimerInput;
 use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
 use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
@@ -220,15 +222,24 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
      */
     public function sideEffect(callable $context): PromiseInterface
     {
+        $value = null;
+        $closure = \Closure::fromCallable($context);
+
         try {
-            $value = $this->isReplaying() ? null : $context();
+            if (!$this->isReplaying()) {
+                $value = $this->callsInterceptor->with(
+                    $closure,
+                    /** @see WorkflowOutboundCallsInterceptor::sideEffect() */
+                    'sideEffect',
+                )(new SideEffectInput($closure));
+            }
         } catch (\Throwable $e) {
             return reject($e);
         }
 
         $returnType = null;
         try {
-            $reflection = new \ReflectionFunction($context);
+            $reflection = new \ReflectionFunction($closure);
             $returnType = $reflection->getReturnType();
         } catch (\Throwable) {
         }
@@ -375,7 +386,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
      */
     public function newUntypedExternalWorkflowStub(WorkflowExecution $execution): ExternalWorkflowStubInterface
     {
-        return new ExternalWorkflowStub($execution);
+        return new ExternalWorkflowStub($execution, $this->callsInterceptor);
     }
 
     /**
@@ -444,8 +455,13 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
      */
     public function timer($interval): PromiseInterface
     {
-        $request = new NewTimer(DateInterval::parse($interval, DateInterval::FORMAT_SECONDS));
-        return $this->request($request);
+        $dateInterval = DateInterval::parse($interval, DateInterval::FORMAT_SECONDS);
+
+        return $this->callsInterceptor->with(
+            fn(TimerInput $input): PromiseInterface => $this->request(new NewTimer($input->interval)),
+            /** @see WorkflowOutboundCallsInterceptor::timer() */
+            'timer',
+        )(new TimerInput($dateInterval));
     }
 
     /**
