@@ -25,6 +25,7 @@ use Temporal\Interceptor\HeaderInterface;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteActivityInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteChildWorkflowInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteLocalActivityInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\PanicInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\SideEffectInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\TimerInput;
 use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
@@ -276,7 +277,11 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
      */
     public function panic(\Throwable $failure = null): PromiseInterface
     {
-        return $this->request(new Panic($failure), false);
+        return $this->callsInterceptor->with(
+            fn(PanicInput $failure): PromiseInterface => $this->request(new Panic($failure->failure), false),
+            /** @see WorkflowOutboundCallsInterceptor::panic() */
+            'panic',
+        )(new PanicInput($failure));
     }
 
     /**

@@ -16,6 +16,7 @@ use Temporal\Interceptor\WorkflowOutboundCalls\CancelExternalWorkflowInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteActivityInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteChildWorkflowInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteLocalActivityInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\PanicInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\SideEffectInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\SignalExternalWorkflowInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\TimerInput;
@@ -73,10 +74,12 @@ interface WorkflowOutboundCallsInterceptor extends Interceptor
     public function cancelExternalWorkflow(CancelExternalWorkflowInput $request, callable $next): PromiseInterface;
 
     /**
+     * Intercept {@see SideEffectInput::$callable} execution.
+     *
      * @param SideEffectInput $input
      * @param callable(SideEffectInput): mixed $next
      *
-     * @return mixed
+     * @return mixed The result of the callable execution.
      */
     public function sideEffect(SideEffectInput $input, callable $next): mixed;
 
@@ -87,4 +90,12 @@ interface WorkflowOutboundCallsInterceptor extends Interceptor
      * @return PromiseInterface
      */
     public function timer(TimerInput $input, callable $next): PromiseInterface;
+
+    /**
+     * @param PanicInput $request
+     * @param callable(PanicInput): PromiseInterface $next
+     *
+     * @return PromiseInterface
+     */
+    public function panic(PanicInput $request, callable $next): PromiseInterface;
 }
