@@ -21,10 +21,12 @@ use Temporal\Interceptor\WorkflowOutboundCalls\SideEffectInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\SignalExternalWorkflowInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\TimerInput;
 use Temporal\Internal\Interceptor\Interceptor;
-use Temporal\Internal\Transport\Request\ExecuteActivity;
 
 /**
  * Interceptor for outbound workflow calls.
+ *
+ * It recommended to use {@see WorkflowOutboundCallsInterceptorTrait} when implementing this interface because
+ * the interface might be extended in the future. The trait will provide forward compatibility.
  *
  * @psalm-immutable
  */
@@ -32,7 +34,7 @@ interface WorkflowOutboundCallsInterceptor extends Interceptor
 {
     /**
      * @param ExecuteActivityInput $input
-     * @param callable(ExecuteActivity): PromiseInterface $next
+     * @param callable(ExecuteActivityInput): PromiseInterface $next
      *
      * @return PromiseInterface
      */

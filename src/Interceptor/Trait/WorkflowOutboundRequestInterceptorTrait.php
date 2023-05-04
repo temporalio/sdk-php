@@ -34,6 +34,9 @@ use Temporal\Worker\Transport\Command\RequestInterface;
  */
 trait WorkflowOutboundRequestInterceptorTrait
 {
+    /**
+     * @see WorkflowOutboundRequestInterceptor::handleOutboundRequest()
+     */
     final public function handleOutboundRequest(RequestInterface $request, callable $next): PromiseInterface
     {
         return match ($request::class) {

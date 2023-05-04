@@ -16,8 +16,8 @@ use Temporal\Interceptor\Trait\ActivityInboundInterceptorTrait;
 use Temporal\Internal\Interceptor\Interceptor;
 
 /**
- * Don't implement the interface directly, use {@see ActivityInboundInterceptorTrait} instead.
- * The interface might be extended in the future.
+ * It recommended to use {@see ActivityInboundInterceptorTrait} when implementing this interface because
+ * the interface might be extended in the future. The trait will provide forward compatibility.
  *
  * @psalm-immutable
  */

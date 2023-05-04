@@ -28,7 +28,7 @@ use Temporal\Workflow\WorkflowExecution;
 trait WorkflowClientCallsInterceptorTrait
 {
     /**
-     * @inheritDoc
+     * @see WorkflowClientCallsInterceptor::start()
      */
     public function start(StartInput $input, callable $next): WorkflowExecution
     {
@@ -36,7 +36,7 @@ trait WorkflowClientCallsInterceptorTrait
     }
 
     /**
-     * @inheritDoc
+     * @see WorkflowClientCallsInterceptor::signal()
      */
     public function signal(SignalInput $input, callable $next): void
     {
@@ -44,7 +44,7 @@ trait WorkflowClientCallsInterceptorTrait
     }
 
     /**
-     * @inheritDoc
+     * @see WorkflowClientCallsInterceptor::signalWithStart()
      */
     public function signalWithStart(SignalWithStartInput $input, callable $next): WorkflowExecution
     {
@@ -52,7 +52,7 @@ trait WorkflowClientCallsInterceptorTrait
     }
 
     /**
-     * @inheritDoc
+     * @see WorkflowClientCallsInterceptor::getResult()
      */
     public function getResult(GetResultInput $input, callable $next): ?EncodedValues
     {
@@ -60,7 +60,7 @@ trait WorkflowClientCallsInterceptorTrait
     }
 
     /**
-     * @inheritDoc
+     * @see WorkflowClientCallsInterceptor::query()
      */
     public function query(QueryInput $input, callable $next): ?EncodedValues
     {
@@ -68,7 +68,7 @@ trait WorkflowClientCallsInterceptorTrait
     }
 
     /**
-     * @inheritDoc
+     * @see WorkflowClientCallsInterceptor::cancel()
      */
     public function cancel(CancelInput $input, callable $next): void
     {
@@ -76,7 +76,7 @@ trait WorkflowClientCallsInterceptorTrait
     }
 
     /**
-     * @inheritDoc
+     * @see WorkflowClientCallsInterceptor::terminate()
      */
     public function terminate(TerminateInput $input, callable $next): void
     {
