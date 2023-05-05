@@ -19,8 +19,8 @@ use Temporal\Worker\Transport\Command\RequestInterface;
 /**
  * Intercept a request before it's sent to RoadRunner.
  *
- * Don't implement the interface directly, use {@see WorkflowOutboundRequestInterceptorTrait} instead.
- * The interface might be extended in the future.
+ * It recommended to use {@see WorkflowOutboundRequestInterceptorTrait} when implementing this interface because
+ * the interface might be extended in the future. The trait will provide forward compatibility.
  *
  * @psalm-immutable
  */

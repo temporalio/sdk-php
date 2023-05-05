@@ -22,7 +22,7 @@ use Temporal\Interceptor\WorkflowInboundInterceptor;
 trait WorkflowInboundInterceptorTrait
 {
     /**
-     * @inheritDoc
+     * @see WorkflowInboundInterceptor::execute()
      */
     public function execute(WorkflowInput $input, callable $next): void
     {
@@ -30,7 +30,7 @@ trait WorkflowInboundInterceptorTrait
     }
 
     /**
-     * @inheritDoc
+     * @see WorkflowInboundInterceptor::handleSignal()
      */
     public function handleSignal(SignalInput $input, callable $next): void
     {
@@ -38,7 +38,7 @@ trait WorkflowInboundInterceptorTrait
     }
 
     /**
-     * @inheritDoc
+     * @see WorkflowInboundInterceptor::handleQuery()
      */
     public function handleQuery(QueryInput $input, callable $next): mixed
     {

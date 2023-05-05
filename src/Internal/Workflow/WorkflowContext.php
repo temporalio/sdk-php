@@ -22,6 +22,12 @@ use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\HeaderInterface;
+use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteActivityInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteChildWorkflowInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteLocalActivityInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\PanicInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\SideEffectInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\TimerInput;
 use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
 use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
@@ -217,15 +223,24 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
      */
     public function sideEffect(callable $context): PromiseInterface
     {
+        $value = null;
+        $closure = \Closure::fromCallable($context);
+
         try {
-            $value = $this->isReplaying() ? null : $context();
+            if (!$this->isReplaying()) {
+                $value = $this->callsInterceptor->with(
+                    $closure,
+                    /** @see WorkflowOutboundCallsInterceptor::sideEffect() */
+                    'sideEffect',
+                )(new SideEffectInput($closure));
+            }
         } catch (\Throwable $e) {
             return reject($e);
         }
 
         $returnType = null;
         try {
-            $reflection = new \ReflectionFunction($context);
+            $reflection = new \ReflectionFunction($closure);
             $returnType = $reflection->getReturnType();
         } catch (\Throwable) {
         }
@@ -262,7 +277,11 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
      */
     public function panic(\Throwable $failure = null): PromiseInterface
     {
-        return $this->request(new Panic($failure), false);
+        return $this->callsInterceptor->with(
+            fn(PanicInput $failure): PromiseInterface => $this->request(new Panic($failure->failure), false),
+            /** @see WorkflowOutboundCallsInterceptor::panic() */
+            'panic',
+        )(new PanicInput($failure));
     }
 
     /**
@@ -314,8 +333,13 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
         ChildWorkflowOptions $options = null,
         $returnType = null,
     ): PromiseInterface {
-        return $this->newUntypedChildWorkflowStub($type, $options)
-            ->execute($args, $returnType);
+        return $this->callsInterceptor->with(
+            fn(ExecuteChildWorkflowInput $input): PromiseInterface => $this
+                ->newUntypedChildWorkflowStub($input->type, $input->options)
+                ->execute($input->args, $input->returnType),
+            /** @see WorkflowOutboundCallsInterceptor::executeChildWorkflow */
+            'executeChildWorkflow',
+        )(new ExecuteChildWorkflowInput($type, $args, $options, $returnType));
     }
 
     /**
@@ -367,7 +391,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
      */
     public function newUntypedExternalWorkflowStub(WorkflowExecution $execution): ExternalWorkflowStubInterface
     {
-        return new ExternalWorkflowStub($execution);
+        return new ExternalWorkflowStub($execution, $this->callsInterceptor);
     }
 
     /**
@@ -379,7 +403,23 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
         ActivityOptionsInterface $options = null,
         \ReflectionType $returnType = null,
     ): PromiseInterface {
-        return $this->newUntypedActivityStub($options)->execute($type, $args, $returnType);
+        $isLocal = $options instanceof LocalActivityOptions;
+
+        return $isLocal
+            ? $this->callsInterceptor->with(
+                fn(ExecuteLocalActivityInput $input): PromiseInterface => $this
+                    ->newUntypedActivityStub($input->options)
+                    ->execute($input->type, $input->args, $input->returnType),
+                /** @see WorkflowOutboundCallsInterceptor::executeLocalActivity() */
+                'executeLocalActivity',
+            )(new ExecuteLocalActivityInput($type, $args, $options, $returnType))
+            : $this->callsInterceptor->with(
+                fn(ExecuteActivityInput $input): PromiseInterface => $this
+                    ->newUntypedActivityStub($input->options)
+                    ->execute($input->type, $input->args, $input->returnType),
+                /** @see WorkflowOutboundCallsInterceptor::executeActivity() */
+                'executeActivity',
+            )(new ExecuteActivityInput($type, $args, $options, $returnType));
     }
 
     /**
@@ -411,6 +451,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
             $activities,
             $options ?? ActivityOptions::new(),
             $this,
+            $this->callsInterceptor,
         );
     }
 
@@ -419,8 +460,13 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
      */
     public function timer($interval): PromiseInterface
     {
-        $request = new NewTimer(DateInterval::parse($interval, DateInterval::FORMAT_SECONDS));
-        return $this->request($request);
+        $dateInterval = DateInterval::parse($interval, DateInterval::FORMAT_SECONDS);
+
+        return $this->callsInterceptor->with(
+            fn(TimerInput $input): PromiseInterface => $this->request(new NewTimer($input->interval)),
+            /** @see WorkflowOutboundCallsInterceptor::timer() */
+            'timer',
+        )(new TimerInput($dateInterval));
     }
 
     /**

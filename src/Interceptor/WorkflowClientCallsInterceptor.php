@@ -24,8 +24,8 @@ use Temporal\Internal\Interceptor\Interceptor;
 use Temporal\Workflow\WorkflowExecution;
 
 /**
- * Don't implement the interface directly, use {@see WorkflowClientCallsInterceptorTrait} instead.
- * The interface might be extended in the future.
+ * It recommended to use {@see WorkflowClientCallsInterceptorTrait} when implementing this interface because
+ * the interface might be extended in the future. The trait will provide forward compatibility.
  *
  * @psalm-immutable
  */

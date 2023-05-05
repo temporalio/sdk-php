@@ -18,8 +18,8 @@ use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
 use Temporal\Internal\Interceptor\Interceptor;
 
 /**
- * Don't implement the interface directly, use {@see WorkflowInboundInterceptorTrait} instead.
- * The interface might be extended in the future.
+ * It recommended to use {@see WorkflowInboundInterceptorTrait} when implementing this interface because
+ * the interface might be extended in the future. The trait will provide forward compatibility.
  *
  * @psalm-immutable
  */

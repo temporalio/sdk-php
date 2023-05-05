@@ -20,7 +20,7 @@ use Temporal\Interceptor\ActivityInboundInterceptor;
 trait ActivityInboundInterceptorTrait
 {
     /**
-     * @inheritDoc
+     * @see ActivityInboundInterceptor::handleActivityInbound()
      */
     public function handleActivityInbound(ActivityInput $input, callable $next): mixed
     {
