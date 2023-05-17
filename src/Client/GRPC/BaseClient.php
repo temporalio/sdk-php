@@ -12,10 +12,14 @@ declare(strict_types=1);
 namespace Temporal\Client\GRPC;
 
 use Carbon\CarbonInterval;
+use Closure;
+use Exception;
 use Grpc\UnaryCall;
 use Temporal\Api\Workflowservice\V1\WorkflowServiceClient;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Client\TimeoutException;
+use Temporal\Interceptor\GrpcClientInterceptor;
+use Temporal\Internal\Interceptor\Pipeline;
 
 abstract class BaseClient implements ServiceClientInterface
 {
@@ -26,20 +30,19 @@ abstract class BaseClient implements ServiceClientInterface
     ];
     private WorkflowServiceClient $workflowService;
 
+    /** @var null|Closure(string $method, object $arg, ContextInterface $ctx): object */
+    private ?Closure $invokePipeline = null;
+
+    /** @var callable */
+    private $workflowServiceCloser;
+
     /**
      * @param WorkflowServiceClient $workflowService
      */
     public function __construct(WorkflowServiceClient $workflowService)
     {
         $this->workflowService = $workflowService;
-    }
-
-    /**
-     * Close connection and destruct client.
-     */
-    public function __destruct()
-    {
-        $this->close();
+        $this->workflowServiceCloser = $this->makeClientCloser($workflowService);
     }
 
     /**
@@ -47,15 +50,15 @@ abstract class BaseClient implements ServiceClientInterface
      */
     public function close(): void
     {
-        $this->workflowService->close();
+        ($this->workflowServiceCloser)();
     }
 
     /**
      * @param string $address
-     * @return ServiceClientInterface
+     * @return static
      * @psalm-suppress UndefinedClass
      */
-    public static function create(string $address): ServiceClientInterface
+    public static function create(string $address): static
     {
         $client = new WorkflowServiceClient(
             $address,
@@ -71,7 +74,7 @@ abstract class BaseClient implements ServiceClientInterface
      * @param string|null $clientKey
      * @param string|null $clientPem
      * @param string|null $overrideServerName
-     * @return ServiceClientInterface
+     * @return static
      *
      * @psalm-suppress UndefinedClass
      * @psalm-suppress UnusedVariable
@@ -82,8 +85,7 @@ abstract class BaseClient implements ServiceClientInterface
         string $clientKey = null,
         string $clientPem = null,
         string $overrideServerName = null
-    ): ServiceClientInterface
-    {
+    ): static {
         $options = [
             'credentials' => \Grpc\ChannelCredentials::createSsl(
                 \is_file($crt) ? \file_get_contents($crt) : null,
@@ -103,9 +105,24 @@ abstract class BaseClient implements ServiceClientInterface
     }
 
     /**
+     * @param null|Pipeline<GrpcClientInterceptor, object> $pipeline
+     *
+     * @return static
+     */
+    final public function withInterceptorsPipeline(?Pipeline $pipeline): static
+    {
+        $clone = clone $this;
+        /** @see GrpcClientInterceptor::interceptCall() */
+        $callable = $pipeline?->with(Closure::fromCallable([$clone, 'call']), 'interceptCall');
+        $clone->invokePipeline = $callable === null ? null : Closure::fromCallable($callable);
+        return $clone;
+    }
+
+    /**
      * @param non-empty-string $method RPC method name
      * @param object $arg
      * @param ContextInterface|null $ctx
+     *
      * @return mixed
      *
      * @throw ClientException
@@ -114,6 +131,25 @@ abstract class BaseClient implements ServiceClientInterface
     {
         $ctx = $ctx ?? Context::default();
 
+        return $this->invokePipeline !== null
+            ? ($this->invokePipeline)($method, $arg, $ctx)
+            : $this->call($method, $arg, $ctx);
+    }
+
+    /**
+     * Call grpc.
+     * Used in {@see withInterceptorsPipeline()}
+     *
+     * @param non-empty-string $method
+     * @param object $arg
+     * @param ContextInterface $ctx
+     *
+     * @return object
+     *
+     * @throws Exception
+     */
+    private function call(string $method, object $arg, ContextInterface $ctx): object
+    {
         $attempt = 0;
         $retryOption = $ctx->getRetryOptions();
 
@@ -173,5 +209,29 @@ abstract class BaseClient implements ServiceClientInterface
                 }
             }
         } while (true);
+    }
+
+    /**
+     * Makes an object that will close workflow service client connection on parent class destruct.
+     *
+     * @param WorkflowServiceClient $workflowServiceClient
+     *
+     * @return callable
+     */
+    private function makeClientCloser(WorkflowServiceClient $workflowServiceClient): callable
+    {
+        return new class ($workflowServiceClient) {
+            public function __construct(public WorkflowServiceClient $client) { }
+
+            public function __invoke(): void
+            {
+                $this->client->close();
+            }
+
+            public function __destruct()
+            {
+                $this->client->close();
+            }
+        };
     }
 }
