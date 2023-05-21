@@ -26,6 +26,7 @@ use Temporal\Interceptor\WorkflowOutboundCalls\ContinueAsNewInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteActivityInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteChildWorkflowInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteLocalActivityInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\GetVersionInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\PanicInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\SideEffectInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\TimerInput;
@@ -213,10 +214,14 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
      */
     public function getVersion(string $changeId, int $minSupported, int $maxSupported): PromiseInterface
     {
-        return EncodedValues::decodePromise(
-            $this->request(new GetVersion($changeId, $minSupported, $maxSupported)),
-            Type::TYPE_ANY
-        );
+        return $this->callsInterceptor->with(
+            fn(GetVersionInput $input): PromiseInterface => EncodedValues::decodePromise(
+                $this->request(new GetVersion($input->changeId, $input->minSupported, $input->maxSupported)),
+                Type::TYPE_ANY,
+            ),
+            /** @see WorkflowOutboundCallsInterceptor::getVersion() */
+            'getVersion',
+        )(new GetVersionInput($changeId, $minSupported, $maxSupported));
     }
 
     /**

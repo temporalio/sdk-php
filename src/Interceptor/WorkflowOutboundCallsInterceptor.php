@@ -17,6 +17,7 @@ use Temporal\Interceptor\WorkflowOutboundCalls\ContinueAsNewInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteActivityInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteChildWorkflowInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteLocalActivityInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\GetVersionInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\PanicInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\SideEffectInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\SignalExternalWorkflowInput;
@@ -109,4 +110,12 @@ interface WorkflowOutboundCallsInterceptor extends Interceptor
      * @return PromiseInterface
      */
     public function continueAsNew(ContinueAsNewInput $request, callable $next): PromiseInterface;
+
+    /**
+     * @param GetVersionInput $request
+     * @param callable(GetVersionInput): PromiseInterface $next
+     *
+     * @return PromiseInterface
+     */
+    public function getVersion(GetVersionInput $request, callable $next): PromiseInterface;
 }
