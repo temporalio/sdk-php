@@ -15,6 +15,7 @@ use React\Promise\PromiseInterface;
 use Temporal\Interceptor\WorkflowOutboundCalls\AwaitInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\AwaitWithTimeoutInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\CancelExternalWorkflowInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\CompleteInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ContinueAsNewInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteActivityInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteChildWorkflowInput;
@@ -105,6 +106,14 @@ interface WorkflowOutboundCallsInterceptor extends Interceptor
      * @return PromiseInterface
      */
     public function panic(PanicInput $request, callable $next): PromiseInterface;
+
+    /**
+     * @param CompleteInput $request
+     * @param callable(CompleteInput): PromiseInterface $next
+     *
+     * @return PromiseInterface
+     */
+    public function complete(CompleteInput $request, callable $next): PromiseInterface;
 
     /**
      * @param ContinueAsNewInput $request

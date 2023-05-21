@@ -24,6 +24,7 @@ use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\HeaderInterface;
 use Temporal\Interceptor\WorkflowOutboundCalls\AwaitInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\AwaitWithTimeoutInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\CompleteInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ContinueAsNewInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteActivityInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteChildWorkflowInput;
@@ -274,11 +275,17 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
      */
     public function complete(array $result = null, \Throwable $failure = null): PromiseInterface
     {
-        $values = $result !== null
-            ? EncodedValues::fromValues($result)
-            : EncodedValues::empty();
+        return $this->callsInterceptor->with(
+            function (CompleteInput $input): PromiseInterface {
+                $values = $input->result !== null
+                    ? EncodedValues::fromValues($input->result)
+                    : EncodedValues::empty();
 
-        return $this->request(new CompleteWorkflow($values, $failure), false);
+                return $this->request(new CompleteWorkflow($values, $input->failure), false);
+            },
+            /** @see WorkflowOutboundCallsInterceptor::complete() */
+            'complete',
+        )(new CompleteInput($result, $failure));
     }
 
     /**
@@ -526,7 +533,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
     public function await(...$conditions): PromiseInterface
     {
         return $this->callsInterceptor->with(
-            fn(AwaitInput $input): PromiseInterface => $this->awaitRequest($input->conditions),
+            fn(AwaitInput $input): PromiseInterface => $this->awaitRequest(...$input->conditions),
             /** @see WorkflowOutboundCallsInterceptor::await() */
             'await',
         )(new AwaitInput($conditions));
