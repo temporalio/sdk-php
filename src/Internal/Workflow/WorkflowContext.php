@@ -22,6 +22,7 @@ use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\HeaderInterface;
+use Temporal\Interceptor\WorkflowOutboundCalls\ContinueAsNewInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteActivityInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteChildWorkflowInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteLocalActivityInput;
@@ -292,16 +293,22 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
         array $args = [],
         ContinueAsNewOptions $options = null
     ): PromiseInterface {
-        $this->continueAsNew = true;
+        return $this->callsInterceptor->with(
+            function (ContinueAsNewInput $input): PromiseInterface {
+                $this->continueAsNew = true;
 
-        $request = new ContinueAsNew(
-            $type,
-            EncodedValues::fromValues($args),
-            $this->services->marshaller->marshal($options ?? new ContinueAsNewOptions())
-        );
+                $request = new ContinueAsNew(
+                    $input->type,
+                    EncodedValues::fromValues($input->args),
+                    $this->services->marshaller->marshal($input->options ?? new ContinueAsNewOptions())
+                );
 
-        // must not be captured
-        return $this->request($request, false);
+                // must not be captured
+                return $this->request($request, false);
+            },
+            /** @see WorkflowOutboundCallsInterceptor::continueAsNew() */
+            'continueAsNew',
+        )(new ContinueAsNewInput($type, $args, $options));
     }
 
     /**
@@ -337,7 +344,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
             fn(ExecuteChildWorkflowInput $input): PromiseInterface => $this
                 ->newUntypedChildWorkflowStub($input->type, $input->options)
                 ->execute($input->args, $input->returnType),
-            /** @see WorkflowOutboundCallsInterceptor::executeChildWorkflow */
+            /** @see WorkflowOutboundCallsInterceptor::executeChildWorkflow() */
             'executeChildWorkflow',
         )(new ExecuteChildWorkflowInput($type, $args, $options, $returnType));
     }

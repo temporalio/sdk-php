@@ -13,6 +13,7 @@ namespace Temporal\Interceptor;
 
 use React\Promise\PromiseInterface;
 use Temporal\Interceptor\WorkflowOutboundCalls\CancelExternalWorkflowInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\ContinueAsNewInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteActivityInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteChildWorkflowInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteLocalActivityInput;
@@ -100,4 +101,12 @@ interface WorkflowOutboundCallsInterceptor extends Interceptor
      * @return PromiseInterface
      */
     public function panic(PanicInput $request, callable $next): PromiseInterface;
+
+    /**
+     * @param ContinueAsNewInput $request
+     * @param callable(ContinueAsNewInput): PromiseInterface $next
+     *
+     * @return PromiseInterface
+     */
+    public function continueAsNew(ContinueAsNewInput $request, callable $next): PromiseInterface;
 }
