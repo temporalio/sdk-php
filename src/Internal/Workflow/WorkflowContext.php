@@ -22,6 +22,7 @@ use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\HeaderInterface;
+use Temporal\Interceptor\WorkflowOutboundCalls\AwaitInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ContinueAsNewInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteActivityInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteChildWorkflowInput;
@@ -523,49 +524,55 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
      */
     public function await(...$conditions): PromiseInterface
     {
-        $result = [];
-        $conditionGroupId = Uuid::v4();
+        return $this->callsInterceptor->with(
+            function (AwaitInput $input): PromiseInterface {
+                $result = [];
+                $conditionGroupId = Uuid::v4();
 
-        foreach ($conditions as $condition) {
-            \assert(\is_callable($condition) || $condition instanceof PromiseInterface);
+                foreach ($input->conditions as $condition) {
+                    \assert(\is_callable($condition) || $condition instanceof PromiseInterface);
 
-            if ($condition instanceof \Closure) {
-                $callableResult = $condition($conditionGroupId);
-                if ($callableResult === true) {
-                    $this->resolveConditionGroup($conditionGroupId);
-                    return resolve(true);
-                }
-                $result[] = $this->addCondition($conditionGroupId, $condition);
-                continue;
-            }
-
-            if ($condition instanceof PromiseInterface) {
-                $result[] = $condition;
-            }
-        }
-
-        if (\count($result) === 1) {
-            return $result[0];
-        }
-
-        return Promise::any($result)->then(
-            function ($result) use ($conditionGroupId) {
-                $this->resolveConditionGroup($conditionGroupId);
-                return $result;
-            },
-            function ($reason) use ($conditionGroupId) {
-                $this->rejectConditionGroup($conditionGroupId);
-                // Throw the first reason
-                // It need to avoid memory leak when the related workflow is destroyed
-                if (\is_iterable($reason)) {
-                    foreach ($reason as $exception) {
-                        if ($exception instanceof \Throwable) {
-                            throw $exception;
+                    if ($condition instanceof \Closure) {
+                        $callableResult = $condition($conditionGroupId);
+                        if ($callableResult === true) {
+                            $this->resolveConditionGroup($conditionGroupId);
+                            return resolve(true);
                         }
+                        $result[] = $this->addCondition($conditionGroupId, $condition);
+                        continue;
+                    }
+
+                    if ($condition instanceof PromiseInterface) {
+                        $result[] = $condition;
                     }
                 }
+
+                if (\count($result) === 1) {
+                    return $result[0];
+                }
+
+                return Promise::any($result)->then(
+                    function ($result) use ($conditionGroupId) {
+                        $this->resolveConditionGroup($conditionGroupId);
+                        return $result;
+                    },
+                    function ($reason) use ($conditionGroupId) {
+                        $this->rejectConditionGroup($conditionGroupId);
+                        // Throw the first reason
+                        // It need to avoid memory leak when the related workflow is destroyed
+                        if (\is_iterable($reason)) {
+                            foreach ($reason as $exception) {
+                                if ($exception instanceof \Throwable) {
+                                    throw $exception;
+                                }
+                            }
+                        }
+                    },
+                );
             },
-        );
+            /** @see WorkflowOutboundCallsInterceptor::await() */
+            'await',
+        )(new AwaitInput($conditions));
     }
 
     /**

@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Interceptor;
 
 use React\Promise\PromiseInterface;
+use Temporal\Interceptor\WorkflowOutboundCalls\AwaitInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\CancelExternalWorkflowInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ContinueAsNewInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteActivityInput;
@@ -127,4 +128,12 @@ interface WorkflowOutboundCallsInterceptor extends Interceptor
      * @return PromiseInterface
      */
     public function upsertSearchAttributes(UpsertSearchAttributesInput $request, callable $next): PromiseInterface;
+
+    /**
+     * @param AwaitInput $request
+     * @param callable(AwaitInput): PromiseInterface $next
+     *
+     * @return PromiseInterface
+     */
+    public function await(AwaitInput $request, callable $next): PromiseInterface;
 }
