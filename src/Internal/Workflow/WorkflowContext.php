@@ -30,6 +30,7 @@ use Temporal\Interceptor\WorkflowOutboundCalls\GetVersionInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\PanicInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\SideEffectInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\TimerInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\UpsertSearchAttributesInput;
 use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
 use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
@@ -509,7 +510,12 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
      */
     public function upsertSearchAttributes(array $searchAttributes): void
     {
-        $this->request(new UpsertSearchAttributes($searchAttributes));
+        $this->callsInterceptor->with(
+            fn(UpsertSearchAttributesInput $input): PromiseInterface
+                => $this->request(new UpsertSearchAttributes($input->searchAttributes)),
+            /** @see WorkflowOutboundCallsInterceptor::upsertSearchAttributes() */
+            'upsertSearchAttributes',
+        )(new UpsertSearchAttributesInput($searchAttributes));
     }
 
     /**
