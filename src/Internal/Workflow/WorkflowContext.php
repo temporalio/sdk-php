@@ -23,6 +23,7 @@ use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\HeaderInterface;
 use Temporal\Interceptor\WorkflowOutboundCalls\AwaitInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\AwaitWithTimeoutInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ContinueAsNewInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteActivityInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteChildWorkflowInput;
@@ -525,51 +526,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
     public function await(...$conditions): PromiseInterface
     {
         return $this->callsInterceptor->with(
-            function (AwaitInput $input): PromiseInterface {
-                $result = [];
-                $conditionGroupId = Uuid::v4();
-
-                foreach ($input->conditions as $condition) {
-                    \assert(\is_callable($condition) || $condition instanceof PromiseInterface);
-
-                    if ($condition instanceof \Closure) {
-                        $callableResult = $condition($conditionGroupId);
-                        if ($callableResult === true) {
-                            $this->resolveConditionGroup($conditionGroupId);
-                            return resolve(true);
-                        }
-                        $result[] = $this->addCondition($conditionGroupId, $condition);
-                        continue;
-                    }
-
-                    if ($condition instanceof PromiseInterface) {
-                        $result[] = $condition;
-                    }
-                }
-
-                if (\count($result) === 1) {
-                    return $result[0];
-                }
-
-                return Promise::any($result)->then(
-                    function ($result) use ($conditionGroupId) {
-                        $this->resolveConditionGroup($conditionGroupId);
-                        return $result;
-                    },
-                    function ($reason) use ($conditionGroupId) {
-                        $this->rejectConditionGroup($conditionGroupId);
-                        // Throw the first reason
-                        // It need to avoid memory leak when the related workflow is destroyed
-                        if (\is_iterable($reason)) {
-                            foreach ($reason as $exception) {
-                                if ($exception instanceof \Throwable) {
-                                    throw $exception;
-                                }
-                            }
-                        }
-                    },
-                );
-            },
+            fn(AwaitInput $input): PromiseInterface => $this->awaitRequest($input->conditions),
             /** @see WorkflowOutboundCallsInterceptor::await() */
             'await',
         )(new AwaitInput($conditions));
@@ -580,21 +537,29 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
      */
     public function awaitWithTimeout($interval, ...$conditions): PromiseInterface
     {
-        /** Bypassing {@see timer()} to acquire a timer request ID */
-        $request = new NewTimer(DateInterval::parse($interval, DateInterval::FORMAT_SECONDS));
-        $requestId = $request->getID();
-        $timer = $this->request($request);
-        \assert($timer instanceof CompletableResultInterface);
+        $intervalObject = DateInterval::parse($interval, DateInterval::FORMAT_SECONDS);
 
-        return $this->await($timer, ...$conditions)
-            ->then(function () use ($timer, $requestId): bool {
-                $isCompleted = $timer->isComplete();
-                if (!$isCompleted) {
-                    // If internal timer was not completed then cancel it
-                    $this->request(new Cancel($requestId));
-                }
-                return !$isCompleted;
-            });
+        return $this->callsInterceptor->with(
+            function (AwaitWithTimeoutInput $input): PromiseInterface {
+                /** Bypassing {@see timer()} to acquire a timer request ID */
+                $request = new NewTimer($input->interval);
+                $requestId = $request->getID();
+                $timer = $this->request($request);
+                \assert($timer instanceof CompletableResultInterface);
+
+                return $this->awaitRequest($timer, ...$input->conditions)
+                    ->then(function () use ($timer, $requestId): bool {
+                        $isCompleted = $timer->isComplete();
+                        if (!$isCompleted) {
+                            // If internal timer was not completed then cancel it
+                            $this->request(new Cancel($requestId));
+                        }
+                        return !$isCompleted;
+                    });
+            },
+            /** @see WorkflowOutboundCallsInterceptor::awaitWithTimeout() */
+            'awaitWithTimeout',
+        )(new AwaitWithTimeoutInput($intervalObject, $conditions));
     }
 
     /**
@@ -611,19 +576,6 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
                 }
             }
         }
-    }
-
-    /**
-     * @param non-empty-string $conditionGroupId
-     * @param callable $condition
-     * @return PromiseInterface
-     */
-    protected function addCondition(string $conditionGroupId, callable $condition): PromiseInterface
-    {
-        $deferred = new Deferred();
-        $this->awaits[$conditionGroupId][] = [$condition, $deferred];
-
-        return $deferred->promise();
     }
 
     /**
@@ -644,5 +596,68 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
     public function rejectConditionGroup(string $conditionGroupId): void
     {
         unset($this->awaits[$conditionGroupId]);
+    }
+
+    /**
+     * @param callable|PromiseInterface ...$conditions
+     */
+    protected function awaitRequest(...$conditions): PromiseInterface
+    {
+        $result = [];
+        $conditionGroupId = Uuid::v4();
+
+        foreach ($conditions as $condition) {
+            \assert(\is_callable($condition) || $condition instanceof PromiseInterface);
+
+            if ($condition instanceof \Closure) {
+                $callableResult = $condition($conditionGroupId);
+                if ($callableResult === true) {
+                    $this->resolveConditionGroup($conditionGroupId);
+                    return resolve(true);
+                }
+                $result[] = $this->addCondition($conditionGroupId, $condition);
+                continue;
+            }
+
+            if ($condition instanceof PromiseInterface) {
+                $result[] = $condition;
+            }
+        }
+
+        if (\count($result) === 1) {
+            return $result[0];
+        }
+
+        return Promise::any($result)->then(
+            function ($result) use ($conditionGroupId) {
+                $this->resolveConditionGroup($conditionGroupId);
+                return $result;
+            },
+            function ($reason) use ($conditionGroupId) {
+                $this->rejectConditionGroup($conditionGroupId);
+                // Throw the first reason
+                // It need to avoid memory leak when the related workflow is destroyed
+                if (\is_iterable($reason)) {
+                    foreach ($reason as $exception) {
+                        if ($exception instanceof \Throwable) {
+                            throw $exception;
+                        }
+                    }
+                }
+            },
+        );
+    }
+
+    /**
+     * @param non-empty-string $conditionGroupId
+     * @param callable $condition
+     * @return PromiseInterface
+     */
+    protected function addCondition(string $conditionGroupId, callable $condition): PromiseInterface
+    {
+        $deferred = new Deferred();
+        $this->awaits[$conditionGroupId][] = [$condition, $deferred];
+
+        return $deferred->promise();
     }
 }

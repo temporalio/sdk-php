@@ -13,6 +13,7 @@ namespace Temporal\Interceptor;
 
 use React\Promise\PromiseInterface;
 use Temporal\Interceptor\WorkflowOutboundCalls\AwaitInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\AwaitWithTimeoutInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\CancelExternalWorkflowInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ContinueAsNewInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteActivityInput;
@@ -136,4 +137,12 @@ interface WorkflowOutboundCallsInterceptor extends Interceptor
      * @return PromiseInterface
      */
     public function await(AwaitInput $request, callable $next): PromiseInterface;
+
+    /**
+     * @param AwaitWithTimeoutInput $request
+     * @param callable(AwaitWithTimeoutInput): PromiseInterface $next
+     *
+     * @return PromiseInterface
+     */
+    public function awaitWithTimeout(AwaitWithTimeoutInput $request, callable $next): PromiseInterface;
 }
