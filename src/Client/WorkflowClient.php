@@ -98,9 +98,10 @@ class WorkflowClient implements WorkflowClientInterface
     public static function create(
         ServiceClientInterface $serviceClient,
         ClientOptions $options = null,
-        DataConverterInterface $converter = null
+        DataConverterInterface $converter = null,
+        PipelineProvider $interceptorProvider = null,
     ): self {
-        return new self($serviceClient, $options, $converter);
+        return new self($serviceClient, $options, $converter, $interceptorProvider);
     }
 
     /**

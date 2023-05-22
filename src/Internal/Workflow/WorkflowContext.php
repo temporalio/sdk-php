@@ -22,12 +22,18 @@ use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\HeaderInterface;
+use Temporal\Interceptor\WorkflowOutboundCalls\AwaitInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\AwaitWithTimeoutInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\CompleteInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\ContinueAsNewInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteActivityInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteChildWorkflowInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteLocalActivityInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\GetVersionInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\PanicInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\SideEffectInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\TimerInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\UpsertSearchAttributesInput;
 use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
 use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
@@ -212,10 +218,14 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
      */
     public function getVersion(string $changeId, int $minSupported, int $maxSupported): PromiseInterface
     {
-        return EncodedValues::decodePromise(
-            $this->request(new GetVersion($changeId, $minSupported, $maxSupported)),
-            Type::TYPE_ANY
-        );
+        return $this->callsInterceptor->with(
+            fn(GetVersionInput $input): PromiseInterface => EncodedValues::decodePromise(
+                $this->request(new GetVersion($input->changeId, $input->minSupported, $input->maxSupported)),
+                Type::TYPE_ANY,
+            ),
+            /** @see WorkflowOutboundCallsInterceptor::getVersion() */
+            'getVersion',
+        )(new GetVersionInput($changeId, $minSupported, $maxSupported));
     }
 
     /**
@@ -265,11 +275,17 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
      */
     public function complete(array $result = null, \Throwable $failure = null): PromiseInterface
     {
-        $values = $result !== null
-            ? EncodedValues::fromValues($result)
-            : EncodedValues::empty();
+        return $this->callsInterceptor->with(
+            function (CompleteInput $input): PromiseInterface {
+                $values = $input->result !== null
+                    ? EncodedValues::fromValues($input->result)
+                    : EncodedValues::empty();
 
-        return $this->request(new CompleteWorkflow($values, $failure), false);
+                return $this->request(new CompleteWorkflow($values, $input->failure), false);
+            },
+            /** @see WorkflowOutboundCallsInterceptor::complete() */
+            'complete',
+        )(new CompleteInput($result, $failure));
     }
 
     /**
@@ -292,16 +308,22 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
         array $args = [],
         ContinueAsNewOptions $options = null
     ): PromiseInterface {
-        $this->continueAsNew = true;
+        return $this->callsInterceptor->with(
+            function (ContinueAsNewInput $input): PromiseInterface {
+                $this->continueAsNew = true;
 
-        $request = new ContinueAsNew(
-            $type,
-            EncodedValues::fromValues($args),
-            $this->services->marshaller->marshal($options ?? new ContinueAsNewOptions())
-        );
+                $request = new ContinueAsNew(
+                    $input->type,
+                    EncodedValues::fromValues($input->args),
+                    $this->services->marshaller->marshal($input->options ?? new ContinueAsNewOptions())
+                );
 
-        // must not be captured
-        return $this->request($request, false);
+                // must not be captured
+                return $this->request($request, false);
+            },
+            /** @see WorkflowOutboundCallsInterceptor::continueAsNew() */
+            'continueAsNew',
+        )(new ContinueAsNewInput($type, $args, $options));
     }
 
     /**
@@ -337,7 +359,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
             fn(ExecuteChildWorkflowInput $input): PromiseInterface => $this
                 ->newUntypedChildWorkflowStub($input->type, $input->options)
                 ->execute($input->args, $input->returnType),
-            /** @see WorkflowOutboundCallsInterceptor::executeChildWorkflow */
+            /** @see WorkflowOutboundCallsInterceptor::executeChildWorkflow() */
             'executeChildWorkflow',
         )(new ExecuteChildWorkflowInput($type, $args, $options, $returnType));
     }
@@ -497,13 +519,96 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
      */
     public function upsertSearchAttributes(array $searchAttributes): void
     {
-        $this->request(new UpsertSearchAttributes($searchAttributes));
+        $this->callsInterceptor->with(
+            fn(UpsertSearchAttributesInput $input): PromiseInterface
+                => $this->request(new UpsertSearchAttributes($input->searchAttributes)),
+            /** @see WorkflowOutboundCallsInterceptor::upsertSearchAttributes() */
+            'upsertSearchAttributes',
+        )(new UpsertSearchAttributesInput($searchAttributes));
     }
 
     /**
      * {@inheritDoc}
      */
     public function await(...$conditions): PromiseInterface
+    {
+        return $this->callsInterceptor->with(
+            fn(AwaitInput $input): PromiseInterface => $this->awaitRequest(...$input->conditions),
+            /** @see WorkflowOutboundCallsInterceptor::await() */
+            'await',
+        )(new AwaitInput($conditions));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function awaitWithTimeout($interval, ...$conditions): PromiseInterface
+    {
+        $intervalObject = DateInterval::parse($interval, DateInterval::FORMAT_SECONDS);
+
+        return $this->callsInterceptor->with(
+            function (AwaitWithTimeoutInput $input): PromiseInterface {
+                /** Bypassing {@see timer()} to acquire a timer request ID */
+                $request = new NewTimer($input->interval);
+                $requestId = $request->getID();
+                $timer = $this->request($request);
+                \assert($timer instanceof CompletableResultInterface);
+
+                return $this->awaitRequest($timer, ...$input->conditions)
+                    ->then(function () use ($timer, $requestId): bool {
+                        $isCompleted = $timer->isComplete();
+                        if (!$isCompleted) {
+                            // If internal timer was not completed then cancel it
+                            $this->request(new Cancel($requestId));
+                        }
+                        return !$isCompleted;
+                    });
+            },
+            /** @see WorkflowOutboundCallsInterceptor::awaitWithTimeout() */
+            'awaitWithTimeout',
+        )(new AwaitWithTimeoutInput($intervalObject, $conditions));
+    }
+
+    /**
+     * Calculate unblocked conditions.
+     */
+    public function resolveConditions(): void
+    {
+        foreach ($this->awaits as $awaitsGroupId => $awaitsGroup) {
+            foreach ($awaitsGroup as $i => [$condition, $deferred]) {
+                if ($condition()) {
+                    $deferred->resolve();
+                    unset($this->awaits[$awaitsGroupId][$i]);
+                    $this->resolveConditionGroup($awaitsGroupId);
+                }
+            }
+        }
+    }
+
+    /**
+     * Record last stack trace of the call.
+     *
+     * @return void
+     */
+    protected function recordTrace(): void
+    {
+        $this->trace = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
+    }
+
+    public function resolveConditionGroup(string $conditionGroupId): void
+    {
+        unset($this->awaits[$conditionGroupId]);
+    }
+
+    public function rejectConditionGroup(string $conditionGroupId): void
+    {
+        unset($this->awaits[$conditionGroupId]);
+    }
+
+    /**
+     * @param callable|PromiseInterface ...$conditions
+     */
+    protected function awaitRequest(...$conditions): PromiseInterface
     {
         $result = [];
         $conditionGroupId = Uuid::v4();
@@ -551,44 +656,6 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
     }
 
     /**
-     * {@inheritDoc}
-     */
-    public function awaitWithTimeout($interval, ...$conditions): PromiseInterface
-    {
-        /** Bypassing {@see timer()} to acquire a timer request ID */
-        $request = new NewTimer(DateInterval::parse($interval, DateInterval::FORMAT_SECONDS));
-        $requestId = $request->getID();
-        $timer = $this->request($request);
-        \assert($timer instanceof CompletableResultInterface);
-
-        return $this->await($timer, ...$conditions)
-            ->then(function () use ($timer, $requestId): bool {
-                $isCompleted = $timer->isComplete();
-                if (!$isCompleted) {
-                    // If internal timer was not completed then cancel it
-                    $this->request(new Cancel($requestId));
-                }
-                return !$isCompleted;
-            });
-    }
-
-    /**
-     * Calculate unblocked conditions.
-     */
-    public function resolveConditions(): void
-    {
-        foreach ($this->awaits as $awaitsGroupId => $awaitsGroup) {
-            foreach ($awaitsGroup as $i => [$condition, $deferred]) {
-                if ($condition()) {
-                    $deferred->resolve();
-                    unset($this->awaits[$awaitsGroupId][$i]);
-                    $this->resolveConditionGroup($awaitsGroupId);
-                }
-            }
-        }
-    }
-
-    /**
      * @param non-empty-string $conditionGroupId
      * @param callable $condition
      * @return PromiseInterface
@@ -599,25 +666,5 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
         $this->awaits[$conditionGroupId][] = [$condition, $deferred];
 
         return $deferred->promise();
-    }
-
-    /**
-     * Record last stack trace of the call.
-     *
-     * @return void
-     */
-    protected function recordTrace(): void
-    {
-        $this->trace = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
-    }
-
-    public function resolveConditionGroup(string $conditionGroupId): void
-    {
-        unset($this->awaits[$conditionGroupId]);
-    }
-
-    public function rejectConditionGroup(string $conditionGroupId): void
-    {
-        unset($this->awaits[$conditionGroupId]);
     }
 }

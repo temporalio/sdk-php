@@ -12,14 +12,20 @@ declare(strict_types=1);
 namespace Temporal\Interceptor;
 
 use React\Promise\PromiseInterface;
+use Temporal\Interceptor\WorkflowOutboundCalls\AwaitInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\AwaitWithTimeoutInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\CancelExternalWorkflowInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\CompleteInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\ContinueAsNewInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteActivityInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteChildWorkflowInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteLocalActivityInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\GetVersionInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\PanicInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\SideEffectInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\SignalExternalWorkflowInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\TimerInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\UpsertSearchAttributesInput;
 use Temporal\Internal\Interceptor\Interceptor;
 
 /**
@@ -100,4 +106,52 @@ interface WorkflowOutboundCallsInterceptor extends Interceptor
      * @return PromiseInterface
      */
     public function panic(PanicInput $request, callable $next): PromiseInterface;
+
+    /**
+     * @param CompleteInput $request
+     * @param callable(CompleteInput): PromiseInterface $next
+     *
+     * @return PromiseInterface
+     */
+    public function complete(CompleteInput $request, callable $next): PromiseInterface;
+
+    /**
+     * @param ContinueAsNewInput $request
+     * @param callable(ContinueAsNewInput): PromiseInterface $next
+     *
+     * @return PromiseInterface
+     */
+    public function continueAsNew(ContinueAsNewInput $request, callable $next): PromiseInterface;
+
+    /**
+     * @param GetVersionInput $request
+     * @param callable(GetVersionInput): PromiseInterface $next
+     *
+     * @return PromiseInterface
+     */
+    public function getVersion(GetVersionInput $request, callable $next): PromiseInterface;
+
+    /**
+     * @param UpsertSearchAttributesInput $request
+     * @param callable(UpsertSearchAttributesInput): PromiseInterface $next
+     *
+     * @return PromiseInterface
+     */
+    public function upsertSearchAttributes(UpsertSearchAttributesInput $request, callable $next): PromiseInterface;
+
+    /**
+     * @param AwaitInput $request
+     * @param callable(AwaitInput): PromiseInterface $next
+     *
+     * @return PromiseInterface
+     */
+    public function await(AwaitInput $request, callable $next): PromiseInterface;
+
+    /**
+     * @param AwaitWithTimeoutInput $request
+     * @param callable(AwaitWithTimeoutInput): PromiseInterface $next
+     *
+     * @return PromiseInterface
+     */
+    public function awaitWithTimeout(AwaitWithTimeoutInput $request, callable $next): PromiseInterface;
 }
