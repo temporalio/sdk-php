@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Transport\Request;
 
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Interceptor\HeaderInterface;
 use Temporal\Worker\Transport\Command\Request;
 use Temporal\Worker\Transport\Command\RequestInterface;
 
@@ -31,7 +32,7 @@ final class ContinueAsNew extends Request
      * @param ValuesInterface $input
      * @param RequestOptions $options
      */
-    public function __construct(string $name, ValuesInterface $input, array $options)
+    public function __construct(string $name, ValuesInterface $input, array $options, HeaderInterface $header)
     {
         $this->workflowType = $name;
         parent::__construct(
@@ -40,7 +41,8 @@ final class ContinueAsNew extends Request
                 'name' => $name,
                 'options' => $options,
             ],
-            $input
+            $input,
+            header: $header,
         );
     }
 

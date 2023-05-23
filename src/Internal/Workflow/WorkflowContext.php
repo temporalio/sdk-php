@@ -315,7 +315,8 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
                 $request = new ContinueAsNew(
                     $input->type,
                     EncodedValues::fromValues($input->args),
-                    $this->services->marshaller->marshal($input->options ?? new ContinueAsNewOptions())
+                    $this->services->marshaller->marshal($input->options ?? new ContinueAsNewOptions()),
+                    $this->getHeader(),
                 );
 
                 // must not be captured

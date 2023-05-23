@@ -13,18 +13,11 @@ namespace Temporal\Tests\Interceptor;
 
 use React\Promise\PromiseInterface;
 use RuntimeException;
-use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\Header;
-use Temporal\Interceptor\WorkflowClient\CancelInput;
-use Temporal\Interceptor\WorkflowClient\GetResultInput;
-use Temporal\Interceptor\WorkflowClient\QueryInput as ClientQueryInput;
-use Temporal\Interceptor\WorkflowClient\SignalInput as ClientSignalInput;
-use Temporal\Interceptor\WorkflowClient\SignalWithStartInput;
+use Temporal\Interceptor\Trait\WorkflowClientCallsInterceptorTrait;
+use Temporal\Interceptor\Trait\WorkflowInboundInterceptorTrait;
 use Temporal\Interceptor\WorkflowClient\StartInput;
-use Temporal\Interceptor\WorkflowClient\TerminateInput;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
-use Temporal\Interceptor\WorkflowInbound\QueryInput;
-use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
 use Temporal\Interceptor\WorkflowInboundInterceptor;
 use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
@@ -33,17 +26,21 @@ use Temporal\Tests\Workflow\Header\ChildedHeaderWorkflow;
 use Temporal\Tests\Workflow\Header\EmptyHeaderWorkflow;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow;
-use Temporal\Workflow\WorkflowExecution;
 
 /**
  * Interceptor thar helps to test headers.
+ *
  * @see \Temporal\Tests\Functional\Interceptor\HeaderTestCase
+ * @psalm-immutable
  */
 final class HeaderChanger implements
     WorkflowOutboundRequestInterceptor,
     WorkflowInboundInterceptor,
     WorkflowClientCallsInterceptor
 {
+    use WorkflowInboundInterceptorTrait;
+    use WorkflowClientCallsInterceptorTrait;
+
     private function processInput(StartInput $input): StartInput
     {
         if ($input->workflowType === EmptyHeaderWorkflow::WORKFLOW_NAME) {
@@ -70,41 +67,6 @@ final class HeaderChanger implements
         };
     }
 
-    public function start(StartInput $input, callable $next): WorkflowExecution
-    {
-        return $next($this->processInput($input));
-    }
-
-    public function signal(ClientSignalInput $input, callable $next): void
-    {
-        $next($input);
-    }
-
-    public function signalWithStart(SignalWithStartInput $input, callable $next): WorkflowExecution
-    {
-        return $next($input);
-    }
-
-    public function getResult(GetResultInput $input, callable $next): ?ValuesInterface
-    {
-        return $next($input);
-    }
-
-    public function query(ClientQueryInput $input, callable $next): ?ValuesInterface
-    {
-        return $next($input);
-    }
-
-    public function cancel(CancelInput $input, callable $next): void
-    {
-        $next($input);
-    }
-
-    public function terminate(TerminateInput $input, callable $next): void
-    {
-        $next($input);
-    }
-
     public function execute(WorkflowInput $input, callable $next): void
     {
         if ($input->info->type->name === EmptyHeaderWorkflow::WORKFLOW_NAME) {
@@ -120,7 +82,7 @@ final class HeaderChanger implements
             $values = $input->arguments->getValue(0, null);
             $header = $input->header;
             if ($values !== null) {
-                $header = Header::fromValues((array) $values);
+                $header = Header::fromValues((array)$values);
             }
             $next($input->with(header: $header));
 
@@ -128,16 +90,6 @@ final class HeaderChanger implements
         }
 
         $next($input);
-    }
-
-    public function handleSignal(SignalInput $input, callable $next): void
-    {
-        $next($input);
-    }
-
-    public function handleQuery(QueryInput $input, callable $next): mixed
-    {
-        return $next($input);
     }
 
     /**

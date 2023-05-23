@@ -28,6 +28,7 @@ use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
 use Temporal\Interceptor\WorkflowInboundInterceptor;
 use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
 use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Workflow;
 use Temporal\Workflow\WorkflowExecution;
 
 /**
@@ -35,6 +36,7 @@ use Temporal\Workflow\WorkflowExecution;
  * with value of the number of times it was called.
  *
  * Note: some methods like {@see self::signal()} have no ability to change the header.
+ * @psalm-immutable
  */
 final class InterceptorCallsCounter implements
     WorkflowOutboundRequestInterceptor,
@@ -52,7 +54,8 @@ final class InterceptorCallsCounter implements
 
     public function handleOutboundRequest(RequestInterface $request, callable $next): PromiseInterface
     {
-        return $next($request->withHeader($this->increment($request->getHeader(), __FUNCTION__)));
+        $header = $this->increment(Workflow::getCurrentContext()->getHeader(), $request->getName());
+        return $next($request->withHeader($header));
     }
 
     public function handleActivityInbound(ActivityInput $input, callable $next): mixed
