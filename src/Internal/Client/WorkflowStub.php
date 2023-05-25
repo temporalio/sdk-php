@@ -82,6 +82,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
         private ?WorkflowOptions $options = null,
     ) {
         $this->header = Header::empty();
+        $this->header->setDataConverter($converter);
     }
 
     /**

@@ -68,6 +68,8 @@ class Process extends Scope implements ProcessInterface
 
                     $inboundPipeline->with(
                         function (SignalInput $input) use ($handler) {
+                            $input->header->setDataConverter($this->services->dataConverter);
+
                             $this->createScope(
                                 true,
                                 LoopInterface::ON_SIGNAL,

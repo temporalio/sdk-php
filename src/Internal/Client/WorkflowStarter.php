@@ -67,9 +67,9 @@ final class WorkflowStarter
         string $workflowType,
         WorkflowOptions $options,
         array $args = [],
-        HeaderInterface $header = null,
     ): WorkflowExecution {
-        $header ??= Header::empty();
+        $header = Header::empty();
+        $header->setDataConverter($this->converter);
         $arguments = EncodedValues::fromValues($args, $this->converter);
 
         return $this->interceptors->with(
@@ -100,9 +100,9 @@ final class WorkflowStarter
         string $signal,
         array $signalArgs = [],
         array $startArgs = [],
-        HeaderInterface $header = null,
     ): WorkflowExecution {
-        $header ??= Header::empty();
+        $header = Header::empty();
+        $header->setDataConverter($this->converter);
         $arguments = EncodedValues::fromValues($startArgs, $this->converter);
         $signalArguments = EncodedValues::fromValues($signalArgs, $this->converter);
 
@@ -182,6 +182,8 @@ final class WorkflowStarter
         StartInput $input,
     ): StartWorkflowExecutionRequest|SignalWithStartWorkflowExecutionRequest {
         $options = $input->options;
+        $input->header->setDataConverter($this->converter);
+
         $req->setRequestId(Uuid::v4())
             ->setIdentity($this->clientOptions->identity)
             ->setNamespace($this->clientOptions->namespace)

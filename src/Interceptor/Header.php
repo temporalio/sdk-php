@@ -121,7 +121,7 @@ final class Header implements HeaderInterface
             return $this->values[$index];
         }
 
-        if (!$this->payloads->offsetExists($index)) {
+        if ($this->payloads === null || !$this->payloads->offsetExists($index)) {
             return null;
         }
 

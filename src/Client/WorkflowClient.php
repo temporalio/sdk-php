@@ -147,7 +147,6 @@ class WorkflowClient implements WorkflowClientInterface
             $workflowStub->getWorkflowType(),
             $workflowStub->getOptions() ?? WorkflowOptions::new(),
             $args,
-            $workflowStub instanceof HeaderCarrier ? $workflowStub->getHeader() : null,
         );
 
         $workflowStub->setExecution($execution);
@@ -195,7 +194,6 @@ class WorkflowClient implements WorkflowClientInterface
             $signal,
             $signalArgs,
             $startArgs,
-            $workflowStub instanceof HeaderCarrier ? $workflowStub->getHeader() : null,
         );
 
         $workflowStub->setExecution($execution);
