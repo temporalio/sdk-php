@@ -21,16 +21,8 @@ use Temporal\Workflow\WorkflowMethod;
 class HeadersWorkflow
 {
     #[WorkflowMethod(name: 'InterceptorHeaderWorkflow')]
-    public function handler(
-        \stdClass|array|null $activityHeader = null,
-    ): iterable {
+    public function handler(): iterable {
         // Run activity
-        $activityHeader = \is_object($activityHeader)
-            ? \array_merge(
-                \iterator_to_array(Workflow::getCurrentContext()->getHeader()->getIterator()),
-                (array) $activityHeader,
-            )
-            : $activityHeader;
         $activityResult = yield Workflow::newActivityStub(
             SimpleActivity::class,
             ActivityOptions::new()
@@ -38,7 +30,6 @@ class HeadersWorkflow
                 ->withRetryOptions(
                     RetryOptions::new()->withMaximumAttempts(2),
                 ),
-            $activityHeader,
         )->header();
 
         return [

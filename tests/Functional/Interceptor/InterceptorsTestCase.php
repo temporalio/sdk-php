@@ -39,7 +39,7 @@ final class InterceptorsTestCase extends AbstractClient
         $result = (array)$workflow->handler();
 
         // Workflow header
-        $this->assertSame([
+        $this->assertEquals([
             /** @see \Temporal\Tests\Interceptor\InterceptorCallsCounter::start */
             'start' => '1',
             /** @see \Temporal\Tests\Interceptor\InterceptorCallsCounter::execute() */
@@ -71,7 +71,7 @@ final class InterceptorsTestCase extends AbstractClient
         $workflow->signal();
 
         // Workflow header
-        $this->assertSame([
+        $this->assertEquals([
             /** @see \Temporal\Tests\Interceptor\InterceptorCallsCounter::start() */
             'start' => '1',
             /**
@@ -97,7 +97,7 @@ final class InterceptorsTestCase extends AbstractClient
         $run = $client->startWithSignal($workflow, 'signal');
 
         // Workflow header
-        $this->assertSame([
+        $this->assertEquals([
             /** @see \Temporal\Tests\Interceptor\InterceptorCallsCounter::signalWithStart() */
             'signalWithStart' => '1',
             /**

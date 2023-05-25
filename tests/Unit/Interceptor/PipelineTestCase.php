@@ -7,6 +7,10 @@ use PHPUnit\Framework\TestCase;
 use stdClass;
 use Temporal\Internal\Interceptor\Pipeline;
 
+/**
+ * @group unit
+ * @group interceptor
+ */
 class PipelineTestCase extends TestCase
 {
     /**

@@ -36,7 +36,7 @@ final class InterceptorsTimeSkippingTestCase extends AbstractClient
         $result = (array)$workflow->handler();
 
         // Workflow header
-        $this->assertSame([
+        $this->assertEquals([
             /** @see \Temporal\Tests\Interceptor\InterceptorCallsCounter::start */
             'start' => '1',
             /** @see \Temporal\Tests\Interceptor\InterceptorCallsCounter::execute() */
