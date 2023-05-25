@@ -11,22 +11,52 @@ declare(strict_types=1);
 
 namespace Temporal\DataConverter;
 
+use ArrayAccess;
+use Countable;
 use React\Promise\PromiseInterface;
 use Temporal\Api\Common\V1\Payload;
 use Temporal\Api\Common\V1\Payloads;
 use Traversable;
 
 /**
- * @psalm-import-type TPayloadsCollection from EncodedPayloads
- *
- * @extends EncodedPayloads<int, mixed>
+ * @psalm-type TPayloadsCollection = Traversable&ArrayAccess&Countable
+ * @psalm-type TKey = array-key
+ * @psalm-type TValue = string
  */
-class EncodedValues extends EncodedPayloads implements ValuesInterface
+class EncodedValues implements ValuesInterface
 {
     /**
      * @var DataConverterInterface|null
      */
     private ?DataConverterInterface $converter = null;
+
+    /**
+     * @var TPayloadsCollection|null
+     */
+    protected ?Traversable $payloads = null;
+
+    /**
+     * @var array<TKey, TValue>|null
+     */
+    protected ?array $values = null;
+
+    /**
+     * Can not be constructed directly.
+     */
+    private function __construct()
+    {
+    }
+
+    /**
+     * @return static
+     */
+    public static function empty(): static
+    {
+        $ev = new static();
+        $ev->values = [];
+
+        return $ev;
+    }
 
     /**
      * @param Payloads $payloads
@@ -119,7 +149,7 @@ class EncodedValues extends EncodedPayloads implements ValuesInterface
      * @param array $values
      * @param DataConverterInterface|null $dataConverter
      *
-     * @return EncodedValues
+     * @return static
      */
     public static function fromValues(array $values, DataConverterInterface $dataConverter = null): static
     {
@@ -134,7 +164,7 @@ class EncodedValues extends EncodedPayloads implements ValuesInterface
      * @param TPayloadsCollection $payloads
      * @param ?DataConverterInterface $dataConverter
      *
-     * @return EncodedValues
+     * @return static
      */
     public static function fromPayloadCollection(
         Traversable $payloads,
@@ -147,7 +177,47 @@ class EncodedValues extends EncodedPayloads implements ValuesInterface
         return $ev;
     }
 
-    protected function valueToPayload(mixed $value): Payload
+    /**
+     * @return int<0, max>
+     */
+    public function count(): int
+    {
+        return match (true) {
+            $this->values !== null => \count($this->values),
+            $this->payloads !== null => \count($this->payloads),
+            default => 0,
+        };
+    }
+
+    public function isEmpty(): bool
+    {
+        return $this->count() === 0;
+    }
+
+    /**
+     * Returns collection of {@see Payloads}.
+     *
+     * @return array<TKey, Payload>
+     */
+    private function toProtoCollection(): array
+    {
+        $data = [];
+
+        if ($this->payloads !== null) {
+            foreach ($this->payloads as $key => $payload) {
+                $data[$key] = $payload;
+            }
+            return $data;
+        }
+
+        foreach ($this->values as $key => $value) {
+            $data[$key] = $this->valueToPayload($value);
+        }
+
+        return $data;
+    }
+
+    private function valueToPayload(mixed $value): Payload
     {
         if ($this->converter === null) {
             throw new \LogicException('DataConverter is not set');
