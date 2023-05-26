@@ -70,16 +70,19 @@ final class Header implements HeaderInterface
     }
 
     /**
-     * @param ArrayAccess $payloads
+     * @param ArrayAccess&Traversable $payloads
      *
      * @return static
      */
-    public static function fromPayloadCollection(Traversable $payloads): self
-    {
+    public static function fromPayloadCollection(
+        Traversable $payloads,
+        ?DataConverterInterface $dataConverter = null,
+    ): self {
         \assert($payloads instanceof ArrayAccess);
 
         $ev = new self();
         $ev->payloads = $payloads;
+        $ev->converter = $dataConverter;
 
         return $ev;
     }

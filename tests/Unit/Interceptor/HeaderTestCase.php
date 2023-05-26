@@ -76,8 +76,7 @@ class HeaderTestCase extends UnitTestCase
         $header->setDataConverter($this->getDataConverter());
         $protoCollection = $header->toHeader()->getFields();
 
-        $header = Header::fromPayloadCollection($protoCollection);
-        $header->setDataConverter($this->getDataConverter());
+        $header = Header::fromPayloadCollection($protoCollection, $this->getDataConverter());
 
         // Check
         $this->assertSame('bar', $header->getValue('foo'));
@@ -96,9 +95,8 @@ class HeaderTestCase extends UnitTestCase
         $header->setDataConverter($this->getDataConverter());
         $protoCollection = $header->toHeader()->getFields();
 
-        $header = Header::fromPayloadCollection($protoCollection)
+        $header = Header::fromPayloadCollection($protoCollection, $this->getDataConverter())
             ->withValue('baz', 'qux');
-        $header->setDataConverter($this->getDataConverter());
 
         // Overwrite `foo` value
         $this->assertCount(2, $header);

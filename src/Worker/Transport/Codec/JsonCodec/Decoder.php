@@ -17,6 +17,7 @@ use Temporal\Api\Failure\V1\Failure;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\Failure\FailureConverter;
+use Temporal\Interceptor\Header;
 use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\FailureResponse;
 use Temporal\Worker\Transport\Command\FailureResponseInterface;
@@ -69,12 +70,17 @@ class Decoder
         if (isset($data['payloads'])) {
             $payloads->mergeFromString(base64_decode($data['payloads']));
         }
+        $headers = new \Temporal\Api\Common\V1\Header();
+        if (isset($data['header'])) {
+            $headers->mergeFromString(base64_decode($data['header']));
+        }
 
         $request = new Request(
             $data['command'],
             $data['options'] ?? [],
             EncodedValues::fromPayloads($payloads, $this->converter),
-            $data['id']
+            $data['id'],
+            Header::fromPayloadCollection($headers->getFields(), $this->converter),
         );
 
         if (isset($data['failure'])) {
