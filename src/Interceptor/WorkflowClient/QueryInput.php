@@ -32,10 +32,6 @@ class QueryInput
         public string $queryType,
         #[Immutable]
         public ValuesInterface $arguments,
-        // #[Immutable]
-        // public Class<R> $resultClass,
-        // #[Immutable]
-        // public Type $resultType,
     ) {
     }
 
@@ -43,16 +39,12 @@ class QueryInput
         WorkflowExecution $workflowExecution = null,
         string $queryType = null,
         ValuesInterface $arguments = null,
-        // Class<R> $resultClass = null,
-        // Type $resultType = null,
     ): self {
         return new self(
             $workflowExecution ?? $this->workflowExecution,
             $this->workflowType,
             $queryType ?? $this->queryType,
             $arguments ?? $this->arguments,
-            // $resultClass ?? $this->resultClass,
-            // $resultType ?? $this->resultType,
         );
     }
 }

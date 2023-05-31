@@ -95,9 +95,6 @@ final class Header implements HeaderInterface
         return new self();
     }
 
-    /**
-     * @param DataConverterInterface $converter
-     */
     public function setDataConverter(DataConverterInterface $converter): void
     {
         $this->converter = $converter;

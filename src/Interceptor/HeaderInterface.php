@@ -55,6 +55,8 @@ interface HeaderInterface extends \Countable, IteratorAggregate
 
     /**
      * @param DataConverterInterface $converter
+     *
+     * @internal Might be removed in the future.
      */
     public function setDataConverter(DataConverterInterface $converter);
 }
