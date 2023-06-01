@@ -174,7 +174,7 @@ class WorkerOptions
      *
      * @psalm-suppress ImpureMethodCall
      *
-     * @param positive-int|0 $size
+     * @param int<0, max> $size
      * @return self
      */
     #[Pure]
@@ -225,7 +225,7 @@ class WorkerOptions
      *
      * @psalm-suppress ImpureMethodCall
      *
-     * @param positive-int|0 $size
+     * @param int<0, max> $size
      * @return self
      */
     #[Pure]
@@ -309,7 +309,7 @@ class WorkerOptions
      *
      * @psalm-suppress ImpureMethodCall
      *
-     * @param positive-int|0 $pollers
+     * @param int<0, max> $pollers
      * @return self
      */
     #[Pure]
@@ -332,7 +332,7 @@ class WorkerOptions
      *
      * @psalm-suppress ImpureMethodCall
      *
-     * @param positive-int|0 $size
+     * @param int<0, max> $size
      * @return self
      */
     #[Pure]
@@ -355,7 +355,7 @@ class WorkerOptions
      *
      * @psalm-suppress ImpureMethodCall
      *
-     * @param positive-int|0 $pollers
+     * @param int<0, max> $pollers
      * @return self
      */
     #[Pure]
@@ -460,7 +460,7 @@ class WorkerOptions
      *
      * @psalm-suppress ImpureMethodCall
      *
-     * @param positive-int|0 $size
+     * @param int<0, max> $size
      * @return self
      */
     #[Pure]

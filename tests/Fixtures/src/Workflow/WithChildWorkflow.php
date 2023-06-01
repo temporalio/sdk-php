@@ -24,7 +24,7 @@ class WithChildWorkflow
         $result = yield Workflow::executeChildWorkflow(
             'SimpleWorkflow',
             ['child ' . $input],
-            Workflow\ChildWorkflowOptions::new()
+            Workflow\ChildWorkflowOptions::new(),
         );
 
         return 'Child: ' . $result;

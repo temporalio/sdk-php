@@ -36,15 +36,14 @@ final class Client implements ClientInterface
         'Unable to receive a request with id %d because ' .
         'a request with that identifier was not sent';
 
-    private QueueInterface $queue;
     private array $requests = [];
 
     /**
      * @param QueueInterface $queue
      */
-    public function __construct(QueueInterface $queue)
-    {
-        $this->queue = $queue;
+    public function __construct(
+        private QueueInterface $queue,
+    ) {
     }
 
     /**
@@ -106,7 +105,7 @@ final class Client implements ClientInterface
     {
         // remove from queue
         $this->queue->pull($command->getID());
-        $this->fetch($command->getID())->reject(new CanceledFailure('internal cancel'));
+        $this->reject($command, new CanceledFailure('internal cancel'));
     }
 
     /**
@@ -117,8 +116,7 @@ final class Client implements ClientInterface
      */
     public function reject(CommandInterface $command, \Throwable $reason): void
     {
-        $request = $this->fetch($command->getID());
-        $request->reject($reason);
+        $this->fetch($command->getID())->reject($reason);
     }
 
     /**

@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Declaration\Instantiator;
 
 use Temporal\Exception\InstantiationException;
+use Temporal\Interceptor\WorkflowInboundInterceptor;
 use Temporal\Internal\Declaration\Prototype\PrototypeInterface;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\WorkflowInstance;
@@ -21,6 +22,11 @@ use Temporal\Internal\Declaration\WorkflowInstance;
  */
 final class WorkflowInstantiator extends Instantiator
 {
+    public function __construct(
+        private \Temporal\Interceptor\PipelineProvider $interceptorProvider,
+    ) {
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -28,7 +34,11 @@ final class WorkflowInstantiator extends Instantiator
     {
         assert($prototype instanceof WorkflowPrototype, 'Precondition failed');
 
-        return new WorkflowInstance($prototype, $this->getInstance($prototype));
+        return new WorkflowInstance(
+            $prototype,
+            $this->getInstance($prototype),
+            $this->interceptorProvider->getPipeline(WorkflowInboundInterceptor::class),
+        );
     }
 
     /**

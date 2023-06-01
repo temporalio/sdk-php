@@ -13,7 +13,11 @@ namespace Temporal\Internal\Workflow;
 
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptionsInterface;
+use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteActivityInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteLocalActivityInput;
+use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
+use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Internal\Transport\CompletableResultInterface;
 use Temporal\Workflow\WorkflowContextInterface;
 
@@ -50,12 +54,14 @@ final class ActivityProxy extends Proxy
      * @param array<ActivityPrototype> $activities
      * @param ActivityOptionsInterface $options
      * @param WorkflowContextInterface $ctx
+     * @param Pipeline<WorkflowOutboundCallsInterceptor, PromiseInterface> $callsInterceptor
      */
     public function __construct(
         string $class,
         array $activities,
         ActivityOptionsInterface $options,
-        WorkflowContextInterface $ctx
+        WorkflowContextInterface $ctx,
+        private Pipeline $callsInterceptor,
     ) {
         $this->activities = $activities;
         $this->class = $class;
@@ -71,11 +77,24 @@ final class ActivityProxy extends Proxy
     public function __call(string $method, array $args = []): PromiseInterface
     {
         $handler = $this->findPrototypeByHandlerNameOrFail($method);
-
         $type = $handler->getHandler()->getReturnType();
+        $options = $this->options->mergeWith($handler->getMethodRetry());
 
-        return $this->ctx->newUntypedActivityStub($this->options->mergeWith($handler->getMethodRetry()))
-            ->execute($handler->getID(), $args, $type, $handler->isLocalActivity());
+        return $handler->isLocalActivity()
+            ? $this->callsInterceptor->with(
+                fn(ExecuteLocalActivityInput $input): PromiseInterface => $this->ctx
+                    ->newUntypedActivityStub($input->options)
+                    ->execute($input->type, $input->args, $input->returnType),
+                /** @see WorkflowOutboundCallsInterceptor::executeLocalActivity() */
+                'executeLocalActivity',
+            )(new ExecuteLocalActivityInput($handler->getID(), $args, $options, $type))
+            : $this->callsInterceptor->with(
+                fn(ExecuteActivityInput $input): PromiseInterface => $this->ctx
+                    ->newUntypedActivityStub($input->options)
+                    ->execute($input->type, $input->args, $input->returnType),
+                /** @see WorkflowOutboundCallsInterceptor::executeActivity() */
+                'executeActivity',
+            )(new ExecuteActivityInput($handler->getID(), $args, $options, $type));
     }
 
     /**

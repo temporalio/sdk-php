@@ -20,12 +20,17 @@ use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\InvalidArgumentException;
+use Temporal\Interceptor\PipelineProvider;
+use Temporal\Interceptor\SimplePipelineProvider;
+use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Internal\Client\ActivityCompletionClient;
+use Temporal\Internal\Client\WorkflowProxy;
 use Temporal\Internal\Client\WorkflowRun;
 use Temporal\Internal\Client\WorkflowStarter;
-use Temporal\Internal\Declaration\Reader\WorkflowReader;
-use Temporal\Internal\Client\WorkflowProxy;
 use Temporal\Internal\Client\WorkflowStub;
+use Temporal\Internal\Declaration\Reader\WorkflowReader;
+use Temporal\Internal\Interceptor\HeaderCarrier;
+use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowRunInterface;
 use Temporal\Workflow\WorkflowStub as WorkflowStubConverter;
@@ -43,21 +48,32 @@ class WorkflowClient implements WorkflowClientInterface
     private DataConverterInterface $converter;
     private WorkflowStarter $starter;
     private WorkflowReader $reader;
+    /** @var Pipeline<WorkflowClientCallsInterceptor, mixed> */
+    private Pipeline $interceptorPipeline;
 
     /**
      * @param ServiceClientInterface $serviceClient
      * @param ClientOptions|null $options
      * @param DataConverterInterface|null $converter
+     * @param PipelineProvider|null $interceptorProvider
      */
     public function __construct(
         ServiceClientInterface $serviceClient,
         ClientOptions $options = null,
-        DataConverterInterface $converter = null
+        DataConverterInterface $converter = null,
+        PipelineProvider $interceptorProvider = null,
     ) {
         $this->client = $serviceClient;
+        $this->interceptorPipeline = ($interceptorProvider ?? new SimplePipelineProvider())
+            ->getPipeline(WorkflowClientCallsInterceptor::class);
         $this->clientOptions = $options ?? new ClientOptions();
         $this->converter = $converter ?? DataConverter::createDefault();
-        $this->starter = new WorkflowStarter($serviceClient, $this->converter, $this->clientOptions);
+        $this->starter = new WorkflowStarter(
+            $serviceClient,
+            $this->converter,
+            $this->clientOptions,
+            $this->interceptorPipeline,
+        );
         $this->reader = new WorkflowReader($this->createReader());
     }
 
@@ -82,9 +98,10 @@ class WorkflowClient implements WorkflowClientInterface
     public static function create(
         ServiceClientInterface $serviceClient,
         ClientOptions $options = null,
-        DataConverterInterface $converter = null
+        DataConverterInterface $converter = null,
+        PipelineProvider $interceptorProvider = null,
     ): self {
-        return new self($serviceClient, $options, $converter);
+        return new self($serviceClient, $options, $converter, $interceptorProvider);
     }
 
     /**
@@ -129,7 +146,7 @@ class WorkflowClient implements WorkflowClientInterface
         $execution = $this->starter->start(
             $workflowStub->getWorkflowType(),
             $workflowStub->getOptions() ?? WorkflowOptions::new(),
-            $args
+            $args,
         );
 
         $workflowStub->setExecution($execution);
@@ -176,7 +193,7 @@ class WorkflowClient implements WorkflowClientInterface
             $workflowStub->getOptions() ?? WorkflowOptions::new(),
             $signal,
             $signalArgs,
-            $startArgs
+            $startArgs,
         );
 
         $workflowStub->setExecution($execution);
@@ -187,8 +204,10 @@ class WorkflowClient implements WorkflowClientInterface
     /**
      * {@inheritDoc}
      */
-    public function newWorkflowStub(string $class, WorkflowOptions $options = null): object
-    {
+    public function newWorkflowStub(
+        string $class,
+        WorkflowOptions $options = null,
+    ): object {
         $workflow = $this->reader->fromClass($class);
 
         return new WorkflowProxy(
@@ -201,16 +220,19 @@ class WorkflowClient implements WorkflowClientInterface
     /**
      * {@inheritDoc}
      */
-    public function newUntypedWorkflowStub(string $workflowType, WorkflowOptions $options = null): WorkflowStubInterface
-    {
+    public function newUntypedWorkflowStub(
+        string $workflowType,
+        WorkflowOptions $options = null,
+    ): WorkflowStubInterface {
         $options ??= new WorkflowOptions();
 
         return new WorkflowStub(
             $this->client,
             $this->clientOptions,
             $this->converter,
+            $this->interceptorPipeline,
             $workflowType,
-            $options
+            $options,
         );
     }
 
@@ -236,7 +258,13 @@ class WorkflowClient implements WorkflowClientInterface
         ?string $runID = null,
         ?string $workflowType = null
     ): WorkflowStubInterface {
-        $untyped = new WorkflowStub($this->client, $this->clientOptions, $this->converter, $workflowType);
+        $untyped = new WorkflowStub(
+            $this->client,
+            $this->clientOptions,
+            $this->converter,
+            $this->interceptorPipeline,
+            $workflowType,
+        );
         $untyped->setExecution(new WorkflowExecution($workflowID, $runID));
 
         return $untyped;

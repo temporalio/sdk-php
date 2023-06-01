@@ -54,6 +54,7 @@ class Encoder
         switch (true) {
             case $cmd instanceof RequestInterface:
                 $cmd->getPayloads()->setDataConverter($this->converter);
+                $cmd->getHeader()->setDataConverter($this->converter);
 
                 $options = $cmd->getOptions();
                 if ($options === []) {
@@ -61,8 +62,9 @@ class Encoder
                 }
 
                 $msg->setCommand($cmd->getName());
-                $msg->setOptions(json_encode($options));
+                $msg->setOptions(\json_encode($options));
                 $msg->setPayloads($cmd->getPayloads()->toPayloads());
+                $msg->setHeader($cmd->getHeader()->toHeader());
 
                 if ($cmd->getFailure() !== null) {
                     $msg->setFailure(FailureConverter::mapExceptionToFailure($cmd->getFailure(), $this->converter));

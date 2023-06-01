@@ -33,6 +33,7 @@ use Temporal\Internal\Support\Options;
  *
  * @psalm-type ExceptionsList = array<class-string<\Throwable>>
  * @psalm-import-type DateIntervalValue from DateInterval
+ * @psalm-immutable
  */
 class RetryOptions extends Options
 {
@@ -52,7 +53,7 @@ class RetryOptions extends Options
     public const DEFAULT_MAXIMUM_INTERVAL = null;
 
     /**
-     * @var positive-int|0
+     * @var int<0, max>
      */
     public const DEFAULT_MAXIMUM_ATTEMPTS = 0;
 
@@ -91,7 +92,7 @@ class RetryOptions extends Options
      * expired yet. If not set or set to 0, it means unlimited, and rely on
      * activity {@see ActivityOptions::$scheduleToCloseTimeout} to stop.
      *
-     * @var positive-int|0
+     * @var int<0, max>
      */
     #[Marshal(name: 'maximum_attempts')]
     public int $maximumAttempts = self::DEFAULT_MAXIMUM_ATTEMPTS;
@@ -110,7 +111,7 @@ class RetryOptions extends Options
 
     /**
      * @param MethodRetry|null $retry
-     * @return $this
+     * @return self
      */
     public function mergeWith(MethodRetry $retry = null): self
     {
@@ -129,7 +130,7 @@ class RetryOptions extends Options
      * @psalm-suppress ImpureMethodCall
      *
      * @param DateIntervalValue|null $interval
-     * @return $this
+     * @return self
      */
     #[Pure]
     public function withInitialInterval($interval): self
@@ -145,7 +146,7 @@ class RetryOptions extends Options
      * @psalm-suppress ImpureMethodCall
      *
      * @param float $coefficient
-     * @return $this
+     * @return self
      */
     #[Pure]
     public function withBackoffCoefficient(float $coefficient): self
@@ -161,7 +162,7 @@ class RetryOptions extends Options
      * @psalm-suppress ImpureMethodCall
      *
      * @param DateIntervalValue|null $interval
-     * @return $this
+     * @return self
      */
     #[Pure]
     public function withMaximumInterval($interval): self
@@ -176,8 +177,8 @@ class RetryOptions extends Options
     /**
      * @psalm-suppress ImpureMethodCall
      *
-     * @param int $attempts
-     * @return $this
+     * @param int<0, max> $attempts
+     * @return self
      */
     #[Pure]
     public function withMaximumAttempts(int $attempts): self
@@ -194,7 +195,7 @@ class RetryOptions extends Options
      * @psalm-suppress ImpureMethodCall
      *
      * @param ExceptionsList $exceptions
-     * @return $this
+     * @return self
      */
     #[Pure]
     public function withNonRetryableExceptions(array $exceptions): self
@@ -210,6 +211,7 @@ class RetryOptions extends Options
      * Converts DTO to protobuf object
      *
      * @return RetryPolicy
+     * @psalm-suppress ImpureMethodCall
      */
     public function toWorkflowRetryPolicy(): RetryPolicy
     {

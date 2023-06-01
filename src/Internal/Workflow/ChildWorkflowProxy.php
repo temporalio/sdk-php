@@ -75,7 +75,7 @@ final class ChildWorkflowProxy extends Proxy
         string $class,
         WorkflowPrototype $workflow,
         ChildWorkflowOptions $options,
-        WorkflowContextInterface $context
+        WorkflowContextInterface $context,
     ) {
         $this->class = $class;
         $this->workflow = $workflow;
@@ -110,7 +110,10 @@ final class ChildWorkflowProxy extends Proxy
                 $this->workflow->getCronSchedule()
             );
 
-            $this->stub = $this->context->newUntypedChildWorkflowStub($this->workflow->getID(), $options);
+            $this->stub = $this->context->newUntypedChildWorkflowStub(
+                $this->workflow->getID(),
+                $options,
+            );
 
             return $this->stub->execute($args, $this->resolveReturnType($this->workflow));
         }

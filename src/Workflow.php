@@ -19,15 +19,14 @@ use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\OutOfContextException;
 use Temporal\Internal\Support\Facade;
+use Temporal\Internal\Workflow\ScopeContext;
 use Temporal\Workflow\ActivityStubInterface;
 use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\ChildWorkflowOptions;
 use Temporal\Workflow\ChildWorkflowStubInterface;
 use Temporal\Workflow\ContinueAsNewOptions;
 use Temporal\Workflow\ExternalWorkflowStubInterface;
-use Temporal\Workflow\ParentClosePolicy;
 use Temporal\Workflow\ScopedContextInterface;
-use Temporal\Internal\Workflow\WorkflowContext;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowInfo;
 use Temporal\Internal\Support\DateInterval;
@@ -37,6 +36,8 @@ use Temporal\Internal\Support\DateInterval;
  * your helper classes.
  *
  * This is main class you can use in your workflow code.
+ *
+ * @method static ScopeContext getCurrentContext() Get current workflow context.
  *
  * @psalm-import-type TypeEnum from Type
  * @psalm-import-type DateIntervalValue from DateInterval
@@ -72,10 +73,7 @@ final class Workflow extends Facade
      */
     public static function now(): \DateTimeInterface
     {
-        /** @var ScopedContextInterface $context */
-        $context = self::getCurrentContext();
-
-        return $context->now();
+        return self::getCurrentContext()->now();
     }
 
     /**
@@ -89,10 +87,7 @@ final class Workflow extends Facade
      */
     public static function isReplaying(): bool
     {
-        /** @var ScopedContextInterface $context */
-        $context = self::getCurrentContext();
-
-        return $context->isReplaying();
+        return self::getCurrentContext()->isReplaying();
     }
 
     /**
@@ -103,10 +98,7 @@ final class Workflow extends Facade
      */
     public static function getInfo(): WorkflowInfo
     {
-        /** @var ScopedContextInterface $context */
-        $context = self::getCurrentContext();
-
-        return $context->getInfo();
+        return self::getCurrentContext()->getInfo();
     }
 
     /**
@@ -142,10 +134,7 @@ final class Workflow extends Facade
      */
     public static function getInput(): ValuesInterface
     {
-        /** @var ScopedContextInterface $context */
-        $context = self::getCurrentContext();
-
-        return $context->getInput();
+        return self::getCurrentContext()->getInput();
     }
 
     /**
@@ -188,10 +177,7 @@ final class Workflow extends Facade
      */
     public static function async(callable $task): CancellationScopeInterface
     {
-        /** @var ScopedContextInterface $context */
-        $context = self::getCurrentContext();
-
-        return $context->async($task);
+        return self::getCurrentContext()->async($task);
     }
 
     /**
@@ -239,10 +225,7 @@ final class Workflow extends Facade
      */
     public static function asyncDetached(callable $task): CancellationScopeInterface
     {
-        /** @var ScopedContextInterface $context */
-        $context = self::getCurrentContext();
-
-        return $context->asyncDetached($task);
+        return self::getCurrentContext()->asyncDetached($task);
     }
 
     /**
@@ -289,10 +272,7 @@ final class Workflow extends Facade
      */
     public static function await(...$conditions): PromiseInterface
     {
-        /** @var WorkflowContext $context */
-        $context = self::getCurrentContext();
-
-        return $context->await(...$conditions);
+        return self::getCurrentContext()->await(...$conditions);
     }
 
     /**
@@ -320,10 +300,7 @@ final class Workflow extends Facade
      */
     public static function awaitWithTimeout($interval, ...$conditions): PromiseInterface
     {
-        /** @var WorkflowContext $context */
-        $context = self::getCurrentContext();
-
-        return $context->awaitWithTimeout($interval, ...$conditions);
+        return self::getCurrentContext()->awaitWithTimeout($interval, ...$conditions);
     }
 
     /**
@@ -335,10 +312,7 @@ final class Workflow extends Facade
      */
     public static function getLastCompletionResult($type = null)
     {
-        /** @var ScopedContextInterface $context */
-        $context = self::getCurrentContext();
-
-        return $context->getLastCompletionResult($type);
+        return self::getCurrentContext()->getLastCompletionResult($type);
     }
 
     /**
@@ -365,10 +339,7 @@ final class Workflow extends Facade
      */
     public static function registerQuery(string $queryType, callable $handler): ScopedContextInterface
     {
-        /** @var ScopedContextInterface $context */
-        $context = self::getCurrentContext();
-
-        return $context->registerQuery($queryType, $handler);
+        return self::getCurrentContext()->registerQuery($queryType, $handler);
     }
 
     /**
@@ -395,10 +366,7 @@ final class Workflow extends Facade
      */
     public static function registerSignal(string $queryType, callable $handler): ScopedContextInterface
     {
-        /** @var ScopedContextInterface $context */
-        $context = self::getCurrentContext();
-
-        return $context->registerSignal($queryType, $handler);
+        return self::getCurrentContext()->registerSignal($queryType, $handler);
     }
 
     /**
@@ -427,10 +395,7 @@ final class Workflow extends Facade
      */
     public static function getVersion(string $changeId, int $minSupported, int $maxSupported): PromiseInterface
     {
-        /** @var ScopedContextInterface $context */
-        $context = self::getCurrentContext();
-
-        return $context->getVersion($changeId, $minSupported, $maxSupported);
+        return self::getCurrentContext()->getVersion($changeId, $minSupported, $maxSupported);
     }
 
     /**
@@ -457,10 +422,7 @@ final class Workflow extends Facade
      */
     public static function sideEffect(callable $value): PromiseInterface
     {
-        /** @var ScopedContextInterface $context */
-        $context = self::getCurrentContext();
-
-        return $context->sideEffect($value);
+        return self::getCurrentContext()->sideEffect($value);
     }
 
     /**
@@ -492,10 +454,7 @@ final class Workflow extends Facade
      */
     public static function timer($interval): PromiseInterface
     {
-        /** @var ScopedContextInterface $context */
-        $context = self::getCurrentContext();
-
-        return $context->timer($interval);
+        return self::getCurrentContext()->timer($interval);
     }
 
     /**
@@ -522,10 +481,7 @@ final class Workflow extends Facade
         array $args = [],
         ContinueAsNewOptions $options = null
     ): PromiseInterface {
-        /** @var ScopedContextInterface $context */
-        $context = self::getCurrentContext();
-
-        return $context->continueAsNew($type, $args, $options);
+        return self::getCurrentContext()->continueAsNew($type, $args, $options);
     }
 
     /**
@@ -565,10 +521,7 @@ final class Workflow extends Facade
      */
     public static function newContinueAsNewStub(string $class, ContinueAsNewOptions $options = null): object
     {
-        /** @var ScopedContextInterface $context */
-        $context = self::getCurrentContext();
-
-        return $context->newContinueAsNewStub($class, $options);
+        return self::getCurrentContext()->newContinueAsNewStub($class, $options);
     }
 
     /**
@@ -616,6 +569,7 @@ final class Workflow extends Facade
      * @param array $args
      * @param ChildWorkflowOptions|null $options
      * @param Type|string|\ReflectionType|\ReflectionClass|null $returnType
+     *
      * @return PromiseInterface
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
@@ -623,12 +577,9 @@ final class Workflow extends Facade
         string $type,
         array $args = [],
         ChildWorkflowOptions $options = null,
-        $returnType = null
+        $returnType = null,
     ): PromiseInterface {
-        /** @var ScopedContextInterface $context */
-        $context = self::getCurrentContext();
-
-        return $context->executeChildWorkflow($type, $args, $options, $returnType);
+        return self::getCurrentContext()->executeChildWorkflow($type, $args, $options, $returnType);
     }
 
     /**
@@ -666,15 +617,15 @@ final class Workflow extends Facade
      *
      * @param class-string<T> $class
      * @param ChildWorkflowOptions|null $options
+     *
      * @return T
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
-    public static function newChildWorkflowStub(string $class, ChildWorkflowOptions $options = null): object
-    {
-        /** @var ScopedContextInterface $context */
-        $context = self::getCurrentContext();
-
-        return $context->newChildWorkflowStub($class, $options);
+    public static function newChildWorkflowStub(
+        string $class,
+        ChildWorkflowOptions $options = null,
+    ): object {
+        return self::getCurrentContext()->newChildWorkflowStub($class, $options);
     }
 
     /**
@@ -717,17 +668,15 @@ final class Workflow extends Facade
      *
      * @param string $name
      * @param ChildWorkflowOptions|null $options
+     *
      * @return ChildWorkflowStubInterface
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function newUntypedChildWorkflowStub(
         string $name,
-        ChildWorkflowOptions $options = null
+        ChildWorkflowOptions $options = null,
     ): ChildWorkflowStubInterface {
-        /** @var ScopedContextInterface $context */
-        $context = self::getCurrentContext();
-
-        return $context->newUntypedChildWorkflowStub($name, $options);
+        return self::getCurrentContext()->newUntypedChildWorkflowStub($name, $options);
     }
 
     /**
@@ -756,10 +705,7 @@ final class Workflow extends Facade
      */
     public static function newExternalWorkflowStub(string $class, WorkflowExecution $execution): object
     {
-        /** @var ScopedContextInterface $context */
-        $context = self::getCurrentContext();
-
-        return $context->newExternalWorkflowStub($class, $execution);
+        return self::getCurrentContext()->newExternalWorkflowStub($class, $execution);
     }
 
     /**
@@ -788,10 +734,7 @@ final class Workflow extends Facade
      */
     public static function newUntypedExternalWorkflowStub(WorkflowExecution $execution): ExternalWorkflowStubInterface
     {
-        /** @var ScopedContextInterface $context */
-        $context = self::getCurrentContext();
-
-        return $context->newUntypedExternalWorkflowStub($execution);
+        return self::getCurrentContext()->newUntypedExternalWorkflowStub($execution);
     }
 
     /**
@@ -828,6 +771,7 @@ final class Workflow extends Facade
      * @param array $args
      * @param ActivityOptions|null $options
      * @param \ReflectionType|null $returnType
+     *
      * @return PromiseInterface
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
@@ -835,12 +779,9 @@ final class Workflow extends Facade
         string $type,
         array $args = [],
         ActivityOptionsInterface $options = null,
-        \ReflectionType $returnType = null
+        \ReflectionType $returnType = null,
     ): PromiseInterface {
-        /** @var ScopedContextInterface $context */
-        $context = self::getCurrentContext();
-
-        return $context->executeActivity($type, $args, $options, $returnType);
+        return self::getCurrentContext()->executeActivity($type, $args, $options, $returnType);
     }
 
     /**
@@ -873,15 +814,15 @@ final class Workflow extends Facade
      *
      * @param class-string<T> $class
      * @param ActivityOptionsInterface|null $options
+     *
      * @return T
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
-    public static function newActivityStub(string $class, ActivityOptionsInterface $options = null): object
-    {
-        /** @var ScopedContextInterface $context */
-        $context = self::getCurrentContext();
-
-        return $context->newActivityStub($class, $options);
+    public static function newActivityStub(
+        string $class,
+        ActivityOptionsInterface $options = null,
+    ): object {
+        return self::getCurrentContext()->newActivityStub($class, $options);
     }
 
     /**
@@ -904,15 +845,14 @@ final class Workflow extends Facade
      * </code>
      *
      * @param ActivityOptionsInterface|null $options
+     *
      * @return ActivityStubInterface
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
-    public static function newUntypedActivityStub(ActivityOptionsInterface $options = null): ActivityStubInterface
-    {
-        /** @var ScopedContextInterface $context */
-        $context = self::getCurrentContext();
-
-        return $context->newUntypedActivityStub($options);
+    public static function newUntypedActivityStub(
+        ActivityOptionsInterface $options = null,
+    ): ActivityStubInterface {
+        return self::getCurrentContext()->newUntypedActivityStub($options);
     }
 
     /**
@@ -923,10 +863,7 @@ final class Workflow extends Facade
      */
     public static function getStackTrace(): string
     {
-        /** @var ScopedContextInterface $context */
-        $context = self::getCurrentContext();
-
-        return $context->getStackTrace();
+        return self::getCurrentContext()->getStackTrace();
     }
 
     /**
@@ -936,8 +873,6 @@ final class Workflow extends Facade
      */
     public static function upsertSearchAttributes(array $searchAttributes): void
     {
-        /** @var ScopedContextInterface $context */
-        $context = self::getCurrentContext();
-        $context->upsertSearchAttributes($searchAttributes);
+        self::getCurrentContext()->upsertSearchAttributes($searchAttributes);
     }
 }

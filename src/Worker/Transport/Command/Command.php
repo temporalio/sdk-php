@@ -13,6 +13,8 @@ namespace Temporal\Worker\Transport\Command;
 
 /**
  * Carries requests and responses between worker and host process.
+ *
+ * @psalm-immutable
  */
 abstract class Command implements CommandInterface
 {
@@ -20,11 +22,11 @@ abstract class Command implements CommandInterface
     protected int $id;
 
     /**
-     * @param int|null $ID
+     * @param int|null $Id
      */
-    public function __construct(int $ID = null)
+    public function __construct(int $Id = null)
     {
-        $this->id = $ID ?? $this->getNextID();
+        $this->id = $Id ?? $this->getNextID();
     }
 
     /**

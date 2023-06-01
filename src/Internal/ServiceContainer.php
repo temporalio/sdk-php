@@ -15,7 +15,7 @@ use JetBrains\PhpStorm\Immutable;
 use Spiral\Attributes\ReaderInterface;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\ExceptionInterceptorInterface;
-use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
+use Temporal\Interceptor\PipelineProvider;
 use Temporal\Internal\Declaration\Prototype\ActivityCollection;
 use Temporal\Internal\Declaration\Prototype\WorkflowCollection;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
@@ -26,10 +26,10 @@ use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Workflow\ProcessCollection;
-use Temporal\Worker\WorkerFactoryInterface;
-use Temporal\WorkerFactory;
 use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Worker\LoopInterface;
+use Temporal\Worker\WorkerFactoryInterface;
+use Temporal\WorkerFactory;
 
 #[Immutable]
 final class ServiceContainer
@@ -77,10 +77,10 @@ final class ServiceContainer
     public ProcessCollection $running;
 
     /**
-     * @var RepositoryInterface<ActivityPrototype>
+     * @var ActivityCollection
      */
     #[Immutable]
-    public RepositoryInterface $activities;
+    public ActivityCollection $activities;
 
     /**
      * @var QueueInterface
@@ -112,6 +112,11 @@ final class ServiceContainer
     public ExceptionInterceptorInterface $exceptionInterceptor;
 
     /**
+     * @var PipelineProvider
+     */
+    public PipelineProvider $interceptorProvider;
+
+    /**
      * @param LoopInterface $loop
      * @param EnvironmentInterface $env
      * @param ClientInterface $client
@@ -120,6 +125,7 @@ final class ServiceContainer
      * @param MarshallerInterface $marshaller
      * @param DataConverterInterface $dataConverter
      * @param ExceptionInterceptorInterface $exceptionInterceptor
+     * @param PipelineProvider $interceptorProvider
      */
     public function __construct(
         LoopInterface $loop,
@@ -129,7 +135,8 @@ final class ServiceContainer
         QueueInterface $queue,
         MarshallerInterface $marshaller,
         DataConverterInterface $dataConverter,
-        ExceptionInterceptorInterface $exceptionInterceptor
+        ExceptionInterceptorInterface $exceptionInterceptor,
+        PipelineProvider $interceptorProvider,
     ) {
         $this->env = $env;
         $this->loop = $loop;
@@ -138,6 +145,7 @@ final class ServiceContainer
         $this->queue = $queue;
         $this->marshaller = $marshaller;
         $this->dataConverter = $dataConverter;
+        $this->interceptorProvider = $interceptorProvider;
 
         $this->workflows = new WorkflowCollection();
         $this->activities = new ActivityCollection();
@@ -155,7 +163,8 @@ final class ServiceContainer
      */
     public static function fromWorkerFactory(
         WorkerFactoryInterface $worker,
-        ExceptionInterceptorInterface $exceptionInterceptor
+        ExceptionInterceptorInterface $exceptionInterceptor,
+        PipelineProvider $interceptorProvider,
     ): self {
         return new self(
             $worker,
@@ -165,7 +174,8 @@ final class ServiceContainer
             $worker->getQueue(),
             $worker->getMarshaller(),
             $worker->getDataConverter(),
-            $exceptionInterceptor
+            $exceptionInterceptor,
+            $interceptorProvider,
         );
     }
 }

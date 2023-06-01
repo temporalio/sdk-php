@@ -32,52 +32,57 @@ use Temporal\Client\WorkflowStubInterface;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\Exception\Client\ServiceClientException;
+use Temporal\Exception\Client\TimeoutException;
 use Temporal\Exception\Client\WorkflowException;
+use Temporal\Exception\Client\WorkflowFailedException;
+use Temporal\Exception\Client\WorkflowNotFoundException;
 use Temporal\Exception\Client\WorkflowQueryException;
 use Temporal\Exception\Client\WorkflowQueryRejectedException;
-use Temporal\Exception\Client\ServiceClientException;
+use Temporal\Exception\Client\WorkflowServiceException;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Exception\Failure\TerminatedFailure;
 use Temporal\Exception\Failure\TimeoutFailure;
 use Temporal\Exception\IllegalStateException;
-use Temporal\Exception\Client\TimeoutException;
 use Temporal\Exception\WorkflowExecutionFailedException;
-use Temporal\Exception\Client\WorkflowFailedException;
-use Temporal\Exception\Client\WorkflowNotFoundException;
-use Temporal\Exception\Client\WorkflowServiceException;
+use Temporal\Interceptor\Header;
+use Temporal\Interceptor\HeaderInterface;
+use Temporal\Interceptor\WorkflowClient\CancelInput;
+use Temporal\Interceptor\WorkflowClient\GetResultInput;
+use Temporal\Interceptor\WorkflowClient\QueryInput;
+use Temporal\Interceptor\WorkflowClient\SignalInput;
+use Temporal\Interceptor\WorkflowClient\TerminateInput;
+use Temporal\Interceptor\WorkflowClientCallsInterceptor;
+use Temporal\Internal\Interceptor\HeaderCarrier;
+use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Workflow\WorkflowExecution;
 
-final class WorkflowStub implements WorkflowStubInterface
+final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
 {
     private const ERROR_WORKFLOW_NOT_STARTED = 'Method "%s" cannot be called because the workflow has not been started';
 
-    private ServiceClientInterface $serviceClient;
-    private ClientOptions $clientOptions;
-    private DataConverterInterface $converter;
-    private ?string $workflowType;
-    private ?WorkflowOptions $options;
     private ?WorkflowExecution $execution = null;
+    private HeaderInterface $header;
 
     /**
      * @param ServiceClientInterface $serviceClient
      * @param ClientOptions $clientOptions
      * @param DataConverterInterface $converter
-     * @param string|null $workflowType
+     * @param Pipeline<WorkflowClientCallsInterceptor, void> $interceptors
+     * @param non-empty-string|null $workflowType
      * @param WorkflowOptions|null $options
      */
     public function __construct(
-        ServiceClientInterface $serviceClient,
-        ClientOptions $clientOptions,
-        DataConverterInterface $converter,
-        ?string $workflowType = null,
-        WorkflowOptions $options = null
+        private ServiceClientInterface $serviceClient,
+        private ClientOptions $clientOptions,
+        private DataConverterInterface $converter,
+        private Pipeline $interceptors,
+        private ?string $workflowType = null,
+        private ?WorkflowOptions $options = null,
     ) {
-        $this->serviceClient = $serviceClient;
-        $this->clientOptions = $clientOptions;
-        $this->converter = $converter;
-        $this->workflowType = $workflowType;
-        $this->options = $options;
+        $this->header = Header::empty();
+        $this->header->setDataConverter($converter);
     }
 
     /**
@@ -94,6 +99,11 @@ final class WorkflowStub implements WorkflowStubInterface
     public function getOptions(): ?WorkflowOptions
     {
         return $this->options;
+    }
+
+    public function getHeader(): HeaderInterface
+    {
+        return $this->header;
     }
 
     /**
@@ -131,28 +141,43 @@ final class WorkflowStub implements WorkflowStubInterface
     {
         $this->assertStarted(__FUNCTION__);
 
-        $r = new SignalWorkflowExecutionRequest();
-        $r->setRequestId(Uuid::v4());
-        $r->setIdentity($this->clientOptions->identity);
-        $r->setNamespace($this->clientOptions->namespace);
+        $request = new SignalWorkflowExecutionRequest();
+        $request->setRequestId(Uuid::v4());
+        $request->setIdentity($this->clientOptions->identity);
+        $request->setNamespace($this->clientOptions->namespace);
+        $serviceClient = $this->serviceClient;
 
-        $r->setWorkflowExecution($this->execution->toProtoWorkflowExecution());
-        $r->setSignalName($name);
+        $this->interceptors->with(
+            static function (SignalInput $input) use ($request, $serviceClient): void {
+                $request->setWorkflowExecution($input->workflowExecution->toProtoWorkflowExecution());
+                $request->setSignalName($input->signalName);
 
-        $input = EncodedValues::fromValues($args, $this->converter);
-        if (!$input->isEmpty()) {
-            $r->setInput($input->toPayloads());
-        }
+                if (!$input->arguments->isEmpty()) {
+                    $request->setInput($input->arguments->toPayloads());
+                }
 
-        try {
-            $this->serviceClient->SignalWorkflowExecution($r);
-        } catch (ServiceClientException $e) {
-            if ($e->getCode() === StatusCode::NOT_FOUND) {
-                throw WorkflowNotFoundException::withoutMessage($this->execution, $this->workflowType, $e);
-            }
+                try {
+                    $serviceClient->SignalWorkflowExecution($request);
+                } catch (ServiceClientException $e) {
+                    if ($e->getCode() === StatusCode::NOT_FOUND) {
+                        throw WorkflowNotFoundException::withoutMessage(
+                            $input->workflowExecution,
+                            $input->workflowType,
+                            $e,
+                        );
+                    }
 
-            throw WorkflowServiceException::withoutMessage($this->execution, $this->workflowType, $e);
-        }
+                    throw WorkflowServiceException::withoutMessage($input->workflowExecution, $input->workflowType, $e);
+                }
+            },
+            /** @see WorkflowClientCallsInterceptor::signal() */
+            'signal',
+        )(new SignalInput(
+            $this->getExecution(),
+            $this->workflowType,
+            $name,
+            EncodedValues::fromValues($args, $this->converter),
+        ));
     }
 
     /**
@@ -162,52 +187,66 @@ final class WorkflowStub implements WorkflowStubInterface
     {
         $this->assertStarted(__FUNCTION__);
 
-        $r = new QueryWorkflowRequest();
-        $r->setNamespace($this->clientOptions->namespace);
-        $r->setExecution($this->execution->toProtoWorkflowExecution());
-        $r->setQueryRejectCondition($this->clientOptions->queryRejectionCondition);
+        $serviceClient = $this->serviceClient;
+        $converter = $this->converter;
+        $clientOptions = $this->clientOptions;
 
-        $q = new WorkflowQuery();
-        $q->setQueryType($name);
+        return $this->interceptors->with(
+            static function (QueryInput $input) use ($serviceClient, $converter, $clientOptions): ?EncodedValues {
+                $request = new QueryWorkflowRequest();
+                $request->setNamespace($clientOptions->namespace);
+                $request->setQueryRejectCondition($clientOptions->queryRejectionCondition);
+                $request->setExecution($input->workflowExecution->toProtoWorkflowExecution());
 
-        $input = EncodedValues::fromValues($args, $this->converter);
-        if (!$input->isEmpty()) {
-            $q->setQueryArgs($input->toPayloads());
-        }
+                $q = new WorkflowQuery();
+                $q->setQueryType($input->queryType);
 
-        $r->setQuery($q);
+                if (!$input->arguments->isEmpty()) {
+                    $q->setQueryArgs($input->arguments->toPayloads());
+                }
 
-        try {
-            $result = $this->serviceClient->QueryWorkflow($r);
-        } catch (ServiceClientException $e) {
-            if ($e->getCode() === StatusCode::NOT_FOUND) {
-                throw new WorkflowNotFoundException(null, $this->execution, $this->workflowType, $e);
-            }
+                $request->setQuery($q);
 
-            if ($e->getFailure(QueryFailedFailure::class) !== null) {
-                throw new WorkflowQueryException(null, $this->execution, $this->workflowType, $e);
-            }
+                try {
+                    $result = $serviceClient->QueryWorkflow($request);
+                } catch (ServiceClientException $e) {
+                    if ($e->getCode() === StatusCode::NOT_FOUND) {
+                        throw new WorkflowNotFoundException(null, $input->workflowExecution, $input->workflowType, $e);
+                    }
 
-            throw new WorkflowServiceException(null, $this->execution, $this->workflowType, $e);
-        } catch (\Throwable $e) {
-            throw new WorkflowServiceException(null, $this->execution, $this->workflowType, $e);
-        }
+                    if ($e->getFailure(QueryFailedFailure::class) !== null) {
+                        throw new WorkflowQueryException(null, $input->workflowExecution, $input->workflowType, $e);
+                    }
 
-        if (!$result->hasQueryRejected()) {
-            if (!$result->hasQueryResult()) {
-                return null;
-            }
+                    throw new WorkflowServiceException(null, $input->workflowExecution, $input->workflowType, $e);
+                } catch (\Throwable $e) {
+                    throw new WorkflowServiceException(null, $input->workflowExecution, $input->workflowType, $e);
+                }
 
-            return EncodedValues::fromPayloads($result->getQueryResult(), $this->converter);
-        }
+                if (!$result->hasQueryRejected()) {
+                    if (!$result->hasQueryResult()) {
+                        return null;
+                    }
 
-        throw new WorkflowQueryRejectedException(
-            $this->execution,
+                    return EncodedValues::fromPayloads($result->getQueryResult(), $converter);
+                }
+
+                throw new WorkflowQueryRejectedException(
+                    $input->workflowExecution,
+                    $input->workflowType,
+                    $clientOptions->queryRejectionCondition,
+                    $result->getQueryRejected()->getStatus(),
+                    null
+                );
+            },
+            /** @see WorkflowClientCallsInterceptor::query() */
+            'query',
+        )(new QueryInput(
+            $this->getExecution(),
             $this->workflowType,
-            $this->clientOptions->queryRejectionCondition,
-            $result->getQueryRejected()->getStatus(),
-            null
-        );
+            $name,
+            EncodedValues::fromValues($args, $this->converter),
+        ));
     }
 
     /**
@@ -217,13 +256,24 @@ final class WorkflowStub implements WorkflowStubInterface
     {
         $this->assertStarted(__FUNCTION__);
 
-        $r = new RequestCancelWorkflowExecutionRequest();
-        $r->setRequestId(Uuid::v4());
-        $r->setIdentity($this->clientOptions->identity);
-        $r->setNamespace($this->clientOptions->namespace);
-        $r->setWorkflowExecution($this->execution->toProtoWorkflowExecution());
+        $serviceClient = $this->serviceClient;
+        $clientOptions = $this->clientOptions;
 
-        $this->serviceClient->RequestCancelWorkflowExecution($r);
+        $this->interceptors->with(
+            static function (CancelInput $input) use ($serviceClient, $clientOptions): void {
+                $request = new RequestCancelWorkflowExecutionRequest();
+                $request->setRequestId(Uuid::v4());
+                $request->setIdentity($clientOptions->identity);
+                $request->setNamespace($clientOptions->namespace);
+                $request->setWorkflowExecution($input->workflowExecution->toProtoWorkflowExecution());
+
+                $serviceClient->RequestCancelWorkflowExecution($request);
+            },
+            /** @see WorkflowClientCallsInterceptor::cancel() */
+            'cancel',
+        )(new CancelInput(
+            $this->getExecution(),
+        ));
     }
 
     /**
@@ -233,17 +283,30 @@ final class WorkflowStub implements WorkflowStubInterface
     {
         $this->assertStarted(__FUNCTION__);
 
-        $r = new TerminateWorkflowExecutionRequest();
-        $r->setNamespace($this->clientOptions->namespace);
-        $r->setIdentity($this->clientOptions->identity);
-        $r->setWorkflowExecution($this->execution->toProtoWorkflowExecution());
-        $r->setReason($reason);
+        $serviceClient = $this->serviceClient;
+        $clientOptions = $this->clientOptions;
+        $converter = $this->converter;
 
-        if ($details !== []) {
-            $r->setDetails(EncodedValues::fromValues($details, $this->converter)->toPayloads());
-        }
+        $this->interceptors->with(
+            static function (TerminateInput $input) use ($serviceClient, $clientOptions, $details, $converter): void {
+                $request = new TerminateWorkflowExecutionRequest();
+                $request->setNamespace($clientOptions->namespace);
+                $request->setIdentity($clientOptions->identity);
+                $request->setWorkflowExecution($input->workflowExecution->toProtoWorkflowExecution());
+                $request->setReason($input->reason);
 
-        $this->serviceClient->TerminateWorkflowExecution($r);
+                if ($details !== []) {
+                    $request->setDetails(EncodedValues::fromValues($details, $converter)->toPayloads());
+                }
+
+                $serviceClient->TerminateWorkflowExecution($request);
+            },
+            /** @see WorkflowClientCallsInterceptor::terminate() */
+            'terminate',
+        )(new TerminateInput(
+            $this->getExecution(),
+            $reason,
+        ));
     }
 
     /**
@@ -251,25 +314,37 @@ final class WorkflowStub implements WorkflowStubInterface
      *
      * @throws \Throwable
      */
-    public function getResult($type = null, int $timeout = null)
+    public function getResult($type = null, int $timeout = null): mixed
     {
-        try {
-            $result = $this->fetchResult($timeout);
+        $result = $this->interceptors->with(
+            function (GetResultInput $input): ?EncodedValues {
+                try {
+                    return $this->fetchResult($input->timeout);
+                } catch (TimeoutException | IllegalStateException $e) {
+                    throw $e;
+                } catch (\Throwable $e) {
+                    throw $this->mapWorkflowFailureToException($e);
+                }
+            },
+            /** @see WorkflowClientCallsInterceptor::getResult() */
+            'getResult',
+        )(new GetResultInput(
+            $this->getExecution(),
+            $this->workflowType,
+            $timeout,
+            $type,
+        ));
 
-            if ($result === null || $result->count() === 0) {
-                return $result;
-            }
-
-            return $result->getValue(0, $type);
-        } catch (TimeoutException | IllegalStateException $e) {
-            throw $e;
-        } catch (\Throwable $e) {
-            throw $this->mapWorkflowFailureToException($e);
+        if ($result === null || $result->count() === 0) {
+            return $result;
         }
+
+        return $result->getValue(0, $type);
     }
 
     /**
      * @param string $method
+     * @psalm-assert !null $this->execution
      */
     private function assertStarted(string $method): void
     {

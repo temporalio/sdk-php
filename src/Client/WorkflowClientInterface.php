@@ -62,7 +62,10 @@ interface WorkflowClientInterface
      * @param WorkflowOptions|null $options
      * @return T
      */
-    public function newWorkflowStub(string $class, WorkflowOptions $options = null): object;
+    public function newWorkflowStub(
+        string $class,
+        WorkflowOptions $options = null,
+    ): object;
 
     /**
      * Creates workflow untyped client stub that can be used to start a single
@@ -80,7 +83,7 @@ interface WorkflowClientInterface
      */
     public function newUntypedWorkflowStub(
         string $workflowType,
-        WorkflowOptions $options = null
+        WorkflowOptions $options = null,
     ): WorkflowStubInterface;
 
     /**

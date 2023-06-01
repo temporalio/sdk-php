@@ -13,6 +13,8 @@ use Spiral\Attributes\ReaderInterface;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\ExceptionInterceptorInterface;
+use Temporal\Interceptor\Header;
+use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Internal\Activity\ActivityContext;
 use Temporal\Internal\Declaration\Reader\ActivityReader;
 use Temporal\Internal\Marshaller\MarshallerInterface;
@@ -20,11 +22,11 @@ use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Transport\Router\InvokeActivity;
+use Temporal\Tests\Unit\Framework\Requests\InvokeActivity as Request;
 use Temporal\Tests\Unit\UnitTestCase;
 use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\RPCConnectionInterface;
-use Temporal\Tests\Unit\Framework\Requests\InvokeActivity as Request;
 
 final class InvokeActivityTestCase extends UnitTestCase
 {
@@ -37,7 +39,12 @@ final class InvokeActivityTestCase extends UnitTestCase
 
         $dataConverter = $this->createMock(DataConverterInterface::class);
         $marshaller = $this->createMock(MarshallerInterface::class);
-        $this->activityContext = new ActivityContext($rpc, $dataConverter, EncodedValues::empty());
+        $this->activityContext = new ActivityContext(
+            $rpc,
+            $dataConverter,
+            EncodedValues::empty(),
+            Header::empty(),
+        );
         $marshaller->expects($this->once())
             ->method('unmarshal')
             ->willReturn($this->activityContext);
@@ -51,13 +58,14 @@ final class InvokeActivityTestCase extends UnitTestCase
             $marshaller,
             $dataConverter,
             $this->createMock(ExceptionInterceptorInterface::class),
+            new SimplePipelineProvider(),
         );
         $activityReader = new ActivityReader(new SelectiveReader([new AnnotationReader(), new AttributeReader()]));
         foreach ($activityReader->fromClass(DummyActivity::class) as $proto) {
             $this->services->activities->add($proto);
         }
 
-        $this->router = new InvokeActivity($this->services, $rpc);
+        $this->router = new InvokeActivity($this->services, $rpc, new SimplePipelineProvider());
 
         parent::setUp();
     }

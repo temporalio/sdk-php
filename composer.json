@@ -61,11 +61,12 @@
         "phpunit/phpunit": "^9.5.21",
         "symfony/translation": "^6.0",
         "symfony/var-dumper": "^6.0",
-        "vimeo/psalm": "^4.1"
+        "vimeo/psalm": "^4.30 || ^5.4"
     },
     "autoload-dev": {
         "psr-4": {
             "Temporal\\Tests\\": "tests",
+            "Temporal\\Tests\\Interceptor\\": "tests/Fixtures/src/Interceptor",
             "Temporal\\Tests\\Workflow\\": "tests/Fixtures/src/Workflow",
             "Temporal\\Tests\\Activity\\": "tests/Fixtures/src/Activity",
             "Temporal\\Tests\\DTO\\": "tests/Fixtures/src/DTO"

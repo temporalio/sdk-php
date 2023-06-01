@@ -15,6 +15,8 @@ use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Interceptor\Header;
+use Temporal\Interceptor\HeaderInterface;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Transport\Request\ExecuteChildWorkflow;
 use Temporal\Internal\Transport\Request\GetChildWorkflowExecution;
@@ -33,18 +35,25 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
     private MarshallerInterface $marshaller;
     private ?ExecuteChildWorkflow $request = null;
     private ?PromiseInterface $result = null;
+    private HeaderInterface $header;
 
     /**
      * @param MarshallerInterface $marshaller
      * @param string $workflow
      * @param ChildWorkflowOptions $options
+     * @param HeaderInterface|array $header
      */
-    public function __construct(MarshallerInterface $marshaller, string $workflow, ChildWorkflowOptions $options)
-    {
+    public function __construct(
+        MarshallerInterface $marshaller,
+        string $workflow,
+        ChildWorkflowOptions $options,
+        HeaderInterface|array $header,
+    ) {
         $this->marshaller = $marshaller;
         $this->workflow = $workflow;
         $this->options = $options;
         $this->execution = new Deferred();
+        $this->header = \is_array($header) ? Header::fromValues($header) : $header;
     }
 
     /**
@@ -72,7 +81,8 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
         $this->request = new ExecuteChildWorkflow(
             $this->workflow,
             EncodedValues::fromValues($args),
-            $this->getOptionsArray()
+            $this->getOptionsArray(),
+            $this->header,
         );
 
         $this->result = $this->request($this->request);
@@ -126,7 +136,7 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
                     $execution->getRunID(),
                     $name,
                     EncodedValues::fromValues($args),
-                    true
+                    true,
                 );
 
                 return $this->request($request);

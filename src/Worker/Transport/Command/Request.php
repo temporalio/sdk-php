@@ -13,20 +13,26 @@ namespace Temporal\Worker\Transport\Command;
 
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Interceptor\Header;
+use Temporal\Interceptor\HeaderInterface;
 
 /**
  * Carries request to perform host action with payloads and failure as context. Can be cancelled if allows
+ *
+ * @psalm-import-type RequestOptions from RequestInterface
+ * @psalm-immutable
  */
 class Request extends Command implements RequestInterface
 {
     protected string $name;
     protected array $options;
     protected ValuesInterface $payloads;
+    protected ?HeaderInterface $header = null;
     protected ?\Throwable $failure = null;
 
     /**
      * @param string $name
-     * @param array $options
+     * @param RequestOptions $options
      * @param ValuesInterface|null $payloads
      * @param int|null $id
      */
@@ -34,11 +40,13 @@ class Request extends Command implements RequestInterface
         string $name,
         array $options = [],
         ValuesInterface $payloads = null,
-        int $id = null
+        int $id = null,
+        ?HeaderInterface $header = null,
     ) {
         $this->name = $name;
         $this->options = $options;
         $this->payloads = $payloads ?? EncodedValues::empty();
+        $this->header = $header ?? Header::empty();
 
         parent::__construct($id);
     }
@@ -52,7 +60,7 @@ class Request extends Command implements RequestInterface
     }
 
     /**
-     * @return array
+     * @return RequestOptions
      */
     public function getOptions(): array
     {
@@ -81,5 +89,20 @@ class Request extends Command implements RequestInterface
     public function getFailure(): ?\Throwable
     {
         return $this->failure;
+    }
+
+    /**
+     * @return Header
+     */
+    public function getHeader(): Header
+    {
+        return $this->header;
+    }
+
+    public function withHeader(HeaderInterface $header): self
+    {
+        $clone = clone $this;
+        $clone->header = $header;
+        return $clone;
     }
 }

@@ -32,7 +32,6 @@ use Temporal\Worker\WorkerFactoryInterface;
 
 /**
  * @psalm-import-type DateIntervalValue from DateInterval
- *
  * @psalm-import-type IdReusePolicyEnum from IdReusePolicy
  * @psalm-import-type ChildWorkflowCancellationEnum from ChildWorkflowCancellationType
  */
