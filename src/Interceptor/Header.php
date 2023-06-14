@@ -132,7 +132,7 @@ final class Header implements HeaderInterface
         return $this->converter->fromPayload($this->payloads[$index], $type);
     }
 
-    public function withValue(int|string $key, string $value): self
+    public function withValue(int|string $key, mixed $value): self
     {
         $clone = clone $this;
         $clone->values[$key] = $value;

@@ -18,7 +18,7 @@ use Temporal\DataConverter\Type;
 
 /**
  * @psalm-type TKey=array-key
- * @psalm-type TValue=string
+ * @psalm-type TValue=mixed
  * @psalm-import-type TypeEnum from Type
  *
  * @extends IteratorAggregate<TKey, string>
@@ -44,7 +44,7 @@ interface HeaderInterface extends \Countable, IteratorAggregate
      *
      * @psalm-mutation-free
      */
-    public function withValue(int|string $key, string $value): self;
+    public function withValue(int|string $key, mixed $value): self;
 
     /**
      * Make a protobuf Header message.
