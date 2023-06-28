@@ -1,11 +1,11 @@
 <?php
+
 /**
  * This file is part of Temporal package.
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
 
 namespace Temporal\Client\GRPC;
 
@@ -17,6 +17,8 @@ use Temporal\Exception\Client\ServiceClientException;
  */
 class ServiceClient extends BaseClient
 {
+    private ?ServerCapabilities $capabilities = null;
+
     /**
      * RegisterNamespace creates a new namespace which can be used as a container for
      * all resources.
@@ -739,5 +741,14 @@ class ServiceClient extends BaseClient
     {
         return $this->invoke("ListTaskQueuePartitions", $arg, $ctx);
     }
-}
 
+    public function getServerCapabilities(): ?ServerCapabilities
+    {
+        return $this->capabilities;
+    }
+
+    public function setServerCapabilities(ServerCapabilities $capabilities): void
+    {
+        $this->capabilities = $capabilities;
+    }
+}
