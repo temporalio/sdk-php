@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport\Request;
 
+use Temporal\Interceptor\HeaderInterface;
 use Temporal\Worker\Transport\Command\Request;
 
 /**
@@ -28,6 +29,7 @@ class CancelExternalWorkflow extends Request
     public function __construct(
         private string $namespace,
         private string $workflowId,
+        HeaderInterface $header,
         private ?string $runId,
     ) {
         $options = [
@@ -36,7 +38,7 @@ class CancelExternalWorkflow extends Request
             'runID' => $runId,
         ];
 
-        parent::__construct(self::NAME, $options, null);
+        parent::__construct(name: self::NAME, options: $options, header: $header);
     }
 
     /**

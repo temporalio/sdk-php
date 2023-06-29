@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Transport\Request;
 
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Interceptor\HeaderInterface;
 use Temporal\Worker\Transport\Command\Request;
 
 /**
@@ -25,9 +26,9 @@ final class CompleteWorkflow extends Request
      * @param ValuesInterface $values
      * @param \Throwable|null $failure
      */
-    public function __construct(ValuesInterface $values, \Throwable $failure = null)
+    public function __construct(ValuesInterface $values, HeaderInterface $header, \Throwable $failure = null)
     {
-        parent::__construct(self::NAME, [], $values);
+        parent::__construct(name: self::NAME, payloads: $values, header: $header);
         $this->setFailure($failure);
     }
 }

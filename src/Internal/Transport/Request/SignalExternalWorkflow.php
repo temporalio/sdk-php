@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Transport\Request;
 
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Interceptor\HeaderInterface;
 use Temporal\Worker\Transport\Command\Request;
 
 /**
@@ -34,6 +35,7 @@ final class SignalExternalWorkflow extends Request
         string $workflowId,
         ?string $runId,
         string $signal,
+        HeaderInterface $header,
         ValuesInterface $input = null,
         bool $childWorkflowOnly = false
     ) {
@@ -45,6 +47,6 @@ final class SignalExternalWorkflow extends Request
             'childWorkflowOnly' => $childWorkflowOnly,
         ];
 
-        parent::__construct(self::NAME, $options, $input);
+        parent::__construct(name: self::NAME, options: $options, payloads: $input, header: $header);
     }
 }

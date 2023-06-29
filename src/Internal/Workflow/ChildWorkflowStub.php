@@ -87,7 +87,7 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
 
         $this->result = $this->request($this->request);
 
-        $started = $this->request(new GetChildWorkflowExecution($this->request))
+        $started = $this->request(new GetChildWorkflowExecution($this->request, $this->header))
             ->then(
                 function (ValuesInterface $values) {
                     $execution = $values->getValue(0, WorkflowExecution::class);
@@ -135,6 +135,7 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
                     $execution->getID(),
                     $execution->getRunID(),
                     $name,
+                    $this->header,
                     EncodedValues::fromValues($args),
                     true,
                 );

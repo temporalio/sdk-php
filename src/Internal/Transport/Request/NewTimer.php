@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Transport\Request;
 
 use Carbon\CarbonInterval;
+use Temporal\Interceptor\HeaderInterface;
 use Temporal\Worker\Transport\Command\Request;
 
 /**
@@ -24,9 +25,13 @@ final class NewTimer extends Request
     /**
      * @param \DateInterval $interval
      */
-    public function __construct(private \DateInterval $interval)
+    public function __construct(private \DateInterval $interval, HeaderInterface $header)
     {
-        parent::__construct(self::NAME, ['ms' => (int)CarbonInterval::make($interval)->totalMilliseconds]);
+        parent::__construct(
+            name: self::NAME,
+            options: ['ms' => (int)CarbonInterval::make($interval)->totalMilliseconds],
+            header: $header
+        );
     }
 
     /**

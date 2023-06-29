@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport\Request;
 
+use Temporal\Interceptor\HeaderInterface;
 use Temporal\Worker\Transport\Command\Request;
 
 final class GetVersion extends Request
@@ -25,15 +26,17 @@ final class GetVersion extends Request
     public function __construct(
         private string $changeId,
         private int $minSupported,
-        private int $maxSupported
+        private int $maxSupported,
+        HeaderInterface $header
     ) {
         parent::__construct(
-            self::NAME,
-            [
+            name: self::NAME,
+            options: [
                 'changeID' => $changeId,
                 'minSupported' => $minSupported,
                 'maxSupported' => $maxSupported,
-            ]
+            ],
+            header: $header
         );
     }
 

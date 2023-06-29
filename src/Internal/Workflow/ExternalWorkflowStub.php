@@ -13,6 +13,7 @@ namespace Temporal\Internal\Workflow;
 
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\Interceptor\HeaderInterface;
 use Temporal\Interceptor\WorkflowOutboundCalls\CancelExternalWorkflowInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\SignalExternalWorkflowInput;
 use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
@@ -33,6 +34,7 @@ final class ExternalWorkflowStub implements ExternalWorkflowStubInterface
     public function __construct(
         private WorkflowExecution $execution,
         private Pipeline $callsInterceptor,
+        private HeaderInterface $header
     ) {
     }
 
@@ -57,6 +59,7 @@ final class ExternalWorkflowStub implements ExternalWorkflowStubInterface
                         $input->workflowId,
                         $input->runId,
                         $input->signal,
+                        $input->header,
                         $input->input,
                         $input->childWorkflowOnly,
                     ),
@@ -69,6 +72,8 @@ final class ExternalWorkflowStub implements ExternalWorkflowStubInterface
             $this->execution->getRunID(),
             $name,
             EncodedValues::fromValues($args),
+            false,
+            $this->header,
         ));
     }
 
@@ -79,10 +84,15 @@ final class ExternalWorkflowStub implements ExternalWorkflowStubInterface
     {
         return $this->callsInterceptor->with(
             fn(CancelExternalWorkflowInput $input): PromiseInterface => $this
-                ->request(new CancelExternalWorkflow($input->namespace, $input->workflowId, $input->runId)),
+                ->request(new CancelExternalWorkflow(
+                    $input->namespace,
+                    $input->workflowId,
+                    $input->header,
+                    $input->runId
+                )),
             /** @see WorkflowOutboundCallsInterceptor::cancelExternalWorkflow() */
             'cancelExternalWorkflow',
-        )(new CancelExternalWorkflowInput('', $this->execution->getID(), $this->execution->getRunID()));
+        )(new CancelExternalWorkflowInput('', $this->execution->getID(), null, $this->header));
     }
 
     /**

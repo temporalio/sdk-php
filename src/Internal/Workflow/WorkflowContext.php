@@ -222,7 +222,12 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
     {
         return $this->callsInterceptor->with(
             fn(GetVersionInput $input): PromiseInterface => EncodedValues::decodePromise(
-                $this->request(new GetVersion($input->changeId, $input->minSupported, $input->maxSupported)),
+                $this->request(new GetVersion(
+                    $input->changeId,
+                    $input->minSupported,
+                    $input->maxSupported,
+                    $this->getHeader()
+                )),
                 Type::TYPE_ANY,
             ),
             /** @see WorkflowOutboundCallsInterceptor::getVersion() */
@@ -258,7 +263,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
         }
 
         $last = fn() => EncodedValues::decodePromise(
-            $this->request(new SideEffect(EncodedValues::fromValues([$value]))),
+            $this->request(new SideEffect(EncodedValues::fromValues([$value]), $this->getHeader())),
             $returnType,
         );
         return $last();
@@ -283,7 +288,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
                     ? EncodedValues::fromValues($input->result)
                     : EncodedValues::empty();
 
-                return $this->request(new CompleteWorkflow($values, $input->failure), false);
+                return $this->request(new CompleteWorkflow($values, $this->getHeader(), $input->failure), false);
             },
             /** @see WorkflowOutboundCallsInterceptor::complete() */
             'complete',
@@ -416,7 +421,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
      */
     public function newUntypedExternalWorkflowStub(WorkflowExecution $execution): ExternalWorkflowStubInterface
     {
-        return new ExternalWorkflowStub($execution, $this->callsInterceptor);
+        return new ExternalWorkflowStub($execution, $this->callsInterceptor, $this->getHeader());
     }
 
     /**
@@ -488,7 +493,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
         $dateInterval = DateInterval::parse($interval, DateInterval::FORMAT_SECONDS);
 
         return $this->callsInterceptor->with(
-            fn(TimerInput $input): PromiseInterface => $this->request(new NewTimer($input->interval)),
+            fn(TimerInput $input): PromiseInterface => $this->request(new NewTimer($input->interval, $this->getHeader())),
             /** @see WorkflowOutboundCallsInterceptor::timer() */
             'timer',
         )(new TimerInput($dateInterval));
@@ -556,7 +561,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
         return $this->callsInterceptor->with(
             function (AwaitWithTimeoutInput $input): PromiseInterface {
                 /** Bypassing {@see timer()} to acquire a timer request ID */
-                $request = new NewTimer($input->interval);
+                $request = new NewTimer($input->interval, $this->getHeader());
                 $requestId = $request->getID();
                 $timer = $this->request($request);
                 \assert($timer instanceof CompletableResultInterface);
@@ -566,7 +571,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
                         $isCompleted = $timer->isComplete();
                         if (!$isCompleted) {
                             // If internal timer was not completed then cancel it
-                            $this->request(new Cancel($requestId));
+                            $this->request(new Cancel($this->getHeader(), $requestId));
                         }
                         return !$isCompleted;
                     });

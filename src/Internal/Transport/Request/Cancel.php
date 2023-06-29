@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport\Request;
 
+use Temporal\Interceptor\HeaderInterface;
 use Temporal\Worker\Transport\Command\Request;
 
 /**
@@ -28,10 +29,10 @@ final class Cancel extends Request
     /**
      * @param int ...$requestId
      */
-    public function __construct(int ...$requestId)
+    public function __construct(HeaderInterface $header, int ...$requestId)
     {
         $this->requestIds = $requestId;
-        parent::__construct(self::NAME, ['ids' => $requestId]);
+        parent::__construct(name: self::NAME, options: ['ids' => $requestId], header: $header);
     }
 
     /**

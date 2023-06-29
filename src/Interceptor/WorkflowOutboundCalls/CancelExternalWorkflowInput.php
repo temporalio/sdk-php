@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Interceptor\WorkflowOutboundCalls;
 
 use JetBrains\PhpStorm\Immutable;
+use Temporal\Interceptor\HeaderInterface;
 
 /**
  * @psalm-immutable
@@ -23,6 +24,8 @@ final class CancelExternalWorkflowInput
         public string $workflowId,
         #[Immutable]
         public ?string $runId,
+        #[Immutable]
+        public HeaderInterface $header,
     ) {
     }
 
@@ -30,11 +33,13 @@ final class CancelExternalWorkflowInput
         ?string $namespace = null,
         ?string $workflowId = null,
         ?string $runId = null,
+        ?HeaderInterface $header = null,
     ): self {
         return new self(
             $namespace ?? $this->namespace,
             $workflowId ?? $this->workflowId,
             $runId ?? $this->runId,
+            $header ?? $this->header,
         );
     }
 }

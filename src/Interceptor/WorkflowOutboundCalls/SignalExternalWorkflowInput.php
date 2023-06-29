@@ -6,6 +6,7 @@ namespace Temporal\Interceptor\WorkflowOutboundCalls;
 
 use JetBrains\PhpStorm\Immutable;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Interceptor\HeaderInterface;
 
 /**
  * @psalm-immutable
@@ -30,6 +31,8 @@ final class SignalExternalWorkflowInput
         public ValuesInterface $input,
         #[Immutable]
         public bool $childWorkflowOnly = false,
+        #[Immutable]
+        public HeaderInterface $header,
     ) {
     }
 
@@ -40,6 +43,7 @@ final class SignalExternalWorkflowInput
         ?string $signal = null,
         ?ValuesInterface $input = null,
         ?bool $childWorkflowOnly = null,
+        ?HeaderInterface $header = null,
     ): self {
         return new self(
             $namespace ?? $this->namespace,
@@ -48,6 +52,7 @@ final class SignalExternalWorkflowInput
             $signal ?? $this->signal,
             $input ?? $this->input,
             $childWorkflowOnly ?? $this->childWorkflowOnly,
+            $header ?? $this->header,
         );
     }
 }

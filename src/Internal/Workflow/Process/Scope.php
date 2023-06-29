@@ -351,7 +351,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
                 return;
             }
 
-            $this->context->getClient()->request(new Cancel($request->getID()));
+            $this->context->getClient()->request(new Cancel($request->getHeader(), $request->getID()));
         };
 
         $cancelID = $this->cancelID;

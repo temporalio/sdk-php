@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Transport\Request;
 
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Interceptor\HeaderInterface;
 use Temporal\Worker\Transport\Command\Request;
 
 final class SideEffect extends Request
@@ -21,8 +22,8 @@ final class SideEffect extends Request
     /**
      * @param ValuesInterface $values
      */
-    public function __construct(ValuesInterface $values)
+    public function __construct(ValuesInterface $values, HeaderInterface $header)
     {
-        parent::__construct(self::NAME, [], $values);
+        parent::__construct(name: self::NAME, payloads: $values, header: $header);
     }
 }

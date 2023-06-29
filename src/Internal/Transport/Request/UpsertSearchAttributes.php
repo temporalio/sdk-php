@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport\Request;
 
+use Temporal\Interceptor\HeaderInterface;
 use Temporal\Worker\Transport\Command\Request;
 
 class UpsertSearchAttributes extends Request
@@ -15,8 +16,9 @@ class UpsertSearchAttributes extends Request
      */
     public function __construct(
         private array $searchAttributes,
+        HeaderInterface $header
     ) {
-        parent::__construct(self::NAME, ['searchAttributes' => $searchAttributes]);
+        parent::__construct(name: self::NAME, options: ['searchAttributes' => $searchAttributes], header: $header);
     }
 
     /**
