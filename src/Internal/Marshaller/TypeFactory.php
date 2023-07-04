@@ -19,6 +19,7 @@ use Temporal\Internal\Marshaller\Type\EnumType;
 use Temporal\Internal\Marshaller\Type\ObjectType;
 use Temporal\Internal\Marshaller\Type\RuleFactoryInterface as TypeRuleFactoryInterface;
 use Temporal\Internal\Marshaller\Type\TypeInterface;
+use Temporal\Internal\Marshaller\Type\UuidType;
 
 /**
  * @psalm-type CallableTypeMatcher = \Closure(\ReflectionNamedType): ?string
@@ -141,6 +142,7 @@ class TypeFactory implements RuleFactoryInterface
 
         yield DateTimeType::class;
         yield DateIntervalType::class;
+        yield UuidType::class;
         yield ArrayType::class;
         yield ObjectType::class;
     }
