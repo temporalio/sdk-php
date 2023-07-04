@@ -12,10 +12,8 @@ declare(strict_types=1);
 namespace Temporal\Workflow;
 
 use React\Promise\PromiseInterface;
-use Temporal\Activity\ActivityOptions;
 use Temporal\Activity\ActivityOptionsInterface;
 use Temporal\DataConverter\Type;
-use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Transport\CompletableResultInterface;
 
 interface ActivityStubInterface
@@ -34,5 +32,10 @@ interface ActivityStubInterface
      * @param bool $isLocalActivity
      * @return CompletableResultInterface Promise to the activity result.
      */
-    public function execute(string $name, array $args = [], $returnType = null, bool $isLocalActivity = false): PromiseInterface;
+    public function execute(
+        string $name,
+        array $args = [],
+        Type|string|\ReflectionClass|\ReflectionType $returnType = null,
+        bool $isLocalActivity = false
+    ): PromiseInterface;
 }
