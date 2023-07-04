@@ -61,7 +61,8 @@
         "phpunit/phpunit": "^9.5.21",
         "symfony/translation": "^6.0",
         "symfony/var-dumper": "^6.0",
-        "vimeo/psalm": "^4.1"
+        "vimeo/psalm": "^4.1",
+        "ramsey/uuid": "4.7"
     },
     "autoload-dev": {
         "psr-4": {
