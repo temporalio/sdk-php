@@ -24,6 +24,8 @@ use Temporal\Interceptor\GrpcClientInterceptor;
  */
 final class SystemInfoInterceptor implements GrpcClientInterceptor
 {
+    private bool $systemInfoRequested = false;
+
     public function __construct(
         private ServiceClient $serviceClient
     ) {
@@ -35,6 +37,10 @@ final class SystemInfoInterceptor implements GrpcClientInterceptor
      */
     public function interceptCall(string $method, object $arg, ContextInterface $ctx, callable $next): object
     {
+        if ($this->systemInfoRequested) {
+            return $next($method, $arg, $ctx);
+        }
+
         try {
             $systemInfo = $this->serviceClient->getSystemInfo(new GetSystemInfoRequest());
 
@@ -50,6 +56,8 @@ final class SystemInfoInterceptor implements GrpcClientInterceptor
                 throw $e;
             }
         }
+
+        $this->systemInfoRequested = true;
 
         return $next($method, $arg, $ctx);
     }
