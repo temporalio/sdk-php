@@ -20,6 +20,10 @@ final class UuidType extends Type implements DetectableTypeInterface, RuleFactor
 {
     public static function match(\ReflectionNamedType $type): bool
     {
+        if (!\interface_exists(UuidInterface::class)) {
+            return false;
+        }
+
         return !$type->isBuiltin() && Inheritance::implements($type->getName(), UuidInterface::class);
     }
 
