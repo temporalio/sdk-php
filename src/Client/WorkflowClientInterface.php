@@ -11,7 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
+use Temporal\Client\DTO\WorkflowExecutionInfo as WorkflowExecutionInfoDto;
 use Temporal\Client\GRPC\ServiceClientInterface;
+use Temporal\Common\Paginator;
 use Temporal\Workflow\WorkflowRunInterface;
 
 interface WorkflowClientInterface
@@ -120,4 +122,26 @@ interface WorkflowClientInterface
      * @return ActivityCompletionClientInterface
      */
     public function newActivityCompletionClient(): ActivityCompletionClientInterface;
+
+    /**
+     * Get paginated list of workflow executions using List Filet Query syntax.
+     * Query example:
+     *
+     * <code>
+     * WorkflowType='MyWorkflow' and StartTime  between '2022-08-22T15:04:05+00:00' and  '2023-08-22T15:04:05+00:00'
+     * </code>
+     *
+     * @link https://docs.temporal.io/visibility
+     *
+     * @param non-empty-string $query
+     * @param non-empty-string $namespace
+     * @param int $pageSize
+     *
+     * @return Paginator<WorkflowExecutionInfoDto>
+     */
+    public function listWorkflowExecutions(
+        string $query,
+        string $namespace = 'default',
+        int $pageSize = 10,
+    ): Paginator;
 }

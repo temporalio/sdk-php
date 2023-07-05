@@ -245,11 +245,7 @@ class WorkflowClient implements WorkflowClientInterface
     }
 
     /**
-     * @param string $query
-     * @param string $namespace
-     * @param int $pageSize
-     *
-     * @return Paginator<WorkflowExecutionInfoDto>
+     * @inheritDoc
      */
     public function listWorkflowExecutions(
         string $query,
