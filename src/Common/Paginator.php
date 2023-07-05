@@ -9,13 +9,13 @@ use IteratorAggregate;
 use Traversable;
 
 /**
+ * Paginator that allows to iterate over all pages.
+ *
  * @template TItem
  * @implements IteratorAggregate<TItem>
  */
 final class Paginator implements IteratorAggregate
 {
-    /** @var int<1, max> */
-    private int $pageNumber = 1;
     /** @var list<TItem> */
     private array $collection;
     /** @var self<TItem>|null */
@@ -23,11 +23,23 @@ final class Paginator implements IteratorAggregate
 
     /**
      * @param Generator<array-key, list<TItem>> $loader
+     * @param int<1, max> $pageNumber
      */
-    public function __construct(
+    private function __construct(
         private Generator $loader,
+        private int $pageNumber,
     ) {
         $this->collection = $loader->current();
+    }
+
+    /**
+     * @param Generator<array-key, list<TItem>> $loader
+     *
+     * @return self<TItem>
+     */
+    public static function createFromGenerator(Generator $loader): self
+    {
+        return new self($loader, 1);
     }
 
     /**
@@ -46,10 +58,7 @@ final class Paginator implements IteratorAggregate
             return null;
         }
 
-        $this->nextPage = new self($this->loader);
-
-        $this->nextPage->pageNumber = $this->pageNumber + 1;
-        return $this->nextPage;
+        return $this->nextPage = new self($this->loader, $this->pageNumber + 1);
     }
 
     /**

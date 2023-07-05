@@ -282,7 +282,7 @@ class WorkflowClient implements WorkflowClientInterface
             } while ($nextPageToken !== '');
         };
 
-        return new Paginator($loader($request));
+        return Paginator::createFromGenerator($loader($request));
     }
 
     /**
