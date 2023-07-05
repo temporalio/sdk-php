@@ -10,6 +10,7 @@
 namespace Temporal\Client\GRPC;
 
 use Temporal\Api\Workflowservice\V1;
+use Temporal\Client\DTO\ServerCapabilities;
 use Temporal\Exception\Client\ServiceClientException;
 
 /**

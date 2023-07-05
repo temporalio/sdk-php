@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\GRPC;
+namespace Temporal\Client\DTO;
 
 final class ServerCapabilities
 {

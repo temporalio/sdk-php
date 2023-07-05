@@ -12,8 +12,8 @@ declare(strict_types=1);
 namespace Temporal\Client\Interceptor;
 
 use Temporal\Api\Workflowservice\V1\GetSystemInfoRequest;
+use Temporal\Client\DTO\ServerCapabilities;
 use Temporal\Client\GRPC\ContextInterface;
-use Temporal\Client\GRPC\ServerCapabilities;
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\GRPC\StatusCode;
 use Temporal\Exception\Client\ServiceClientException;
