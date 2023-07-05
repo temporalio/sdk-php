@@ -15,13 +15,13 @@ final class PaginatorTest extends TestCase
         $paginator = Paginator::createFromGenerator($this->createGenerator());
 
         self::assertCount(3, $paginator->getPageItems());
-        self::assertCount(3, $paginator->nextPage()->getPageItems());
-        self::assertNotNull($paginator->nextPage());
+        self::assertCount(3, $paginator->getNextPage()->getPageItems());
+        self::assertNotNull($paginator->getNextPage());
         // Next page is cached
-        self::assertSame($paginator->nextPage(), $paginator->nextPage());
-        self::assertNotNull($paginator->nextPage()->nextPage());
-        self::assertCount(1, $paginator->nextPage()->nextPage()->getPageItems());
-        self::assertNull($paginator->nextPage()->nextPage()->nextPage());
+        self::assertSame($paginator->getNextPage(), $paginator->getNextPage());
+        self::assertNotNull($paginator->getNextPage()->getNextPage());
+        self::assertCount(1, $paginator->getNextPage()->getNextPage()->getPageItems());
+        self::assertNull($paginator->getNextPage()->getNextPage()->getNextPage());
     }
 
     public function testPageNumber(): void
@@ -29,8 +29,8 @@ final class PaginatorTest extends TestCase
         $paginator = Paginator::createFromGenerator($this->createGenerator());
 
         self::assertSame(1, $paginator->getPageNumber());
-        self::assertSame(2, $paginator->nextPage()->getPageNumber());
-        self::assertSame(3, $paginator->nextPage()->nextPage()->getPageNumber());
+        self::assertSame(2, $paginator->getNextPage()->getPageNumber());
+        self::assertSame(3, $paginator->getNextPage()->getNextPage()->getPageNumber());
     }
 
     public function testIterator(): void

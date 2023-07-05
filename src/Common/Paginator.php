@@ -49,7 +49,7 @@ final class Paginator implements IteratorAggregate
      *
      * @return self<TItem>|null
      */
-    public function nextPage(): ?self
+    public function getNextPage(): ?self
     {
         if ($this->nextPage !== null) {
             return $this->nextPage;
@@ -84,7 +84,7 @@ final class Paginator implements IteratorAggregate
                 yield $item;
             }
 
-            $paginator = $paginator->nextPage();
+            $paginator = $paginator->getNextPage();
         }
     }
 

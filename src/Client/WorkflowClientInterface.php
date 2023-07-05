@@ -124,7 +124,7 @@ interface WorkflowClientInterface
     public function newActivityCompletionClient(): ActivityCompletionClientInterface;
 
     /**
-     * Get paginated list of workflow executions using List Filet Query syntax.
+     * Get paginated list of workflow executions using List Filter Query syntax.
      * Query example:
      *
      * <code>
