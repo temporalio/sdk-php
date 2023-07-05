@@ -7,6 +7,7 @@ namespace Temporal\Client\DTO;
 use DateTimeInterface;
 use JetBrains\PhpStorm\Immutable;
 use Temporal\Client\DTO\ResetPointInfo as ResetPointInfoDto;
+use Temporal\DataConverter\EncodedCollection;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowType;
@@ -30,8 +31,8 @@ final class WorkflowExecutionInfo
         public ?string $parentNamespaceId,
         public ?WorkflowExecution $parentExecution,
         public ?DateTimeInterface $executionTime,
-        public ValuesInterface $memo,
-        public ValuesInterface $searchAttributes,
+        public EncodedCollection $memo,
+        public EncodedCollection $searchAttributes,
         public array $autoResetPoints,
         public string $taskQueue,
         public int $stateTransitionCount,

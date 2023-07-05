@@ -33,9 +33,11 @@ final class Paginator implements IteratorAggregate
     }
 
     /**
-     * @param Generator<array-key, list<TItem>> $loader
+     * @template TInitItem
      *
-     * @return self<TItem>
+     * @param Generator<array-key, list<TInitItem>> $loader
+     *
+     * @return self<TInitItem>
      */
     public static function createFromGenerator(Generator $loader): self
     {

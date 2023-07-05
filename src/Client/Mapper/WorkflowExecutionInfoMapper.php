@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Temporal\Client\Mapper;
 
 use Temporal\Api\Common\V1\Memo;
-use Temporal\Api\Common\V1\Payloads;
 use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\Api\Common\V1\WorkflowExecution;
 use Temporal\Api\Workflow\V1\ResetPointInfo;
@@ -14,7 +13,7 @@ use Temporal\Api\Workflow\V1\WorkflowExecutionInfo;
 use Temporal\Client\DTO\ResetPointInfo as ResetPointInfoDto;
 use Temporal\Client\DTO\WorkflowExecutionInfo as WorkflowExecutionInfoDto;
 use Temporal\DataConverter\DataConverterInterface;
-use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\EncodedCollection;
 use Temporal\Workflow\WorkflowExecution as WorkflowExecutionDto;
 use Temporal\Workflow\WorkflowType;
 
@@ -54,26 +53,26 @@ final class WorkflowExecutionInfoMapper
         );
     }
 
-    private function prepareMemo(?Memo $memo): EncodedValues
+    private function prepareMemo(?Memo $memo): EncodedCollection
     {
         if ($memo === null) {
-            return EncodedValues::fromValues([], $this->converter);
+            return EncodedCollection::fromValues([], $this->converter);
         }
 
-        return EncodedValues::fromPayloads(
-            (new Payloads())->setPayloads(\iterator_to_array($memo->getFields())),
+        return EncodedCollection::fromPayloadCollection(
+            $memo->getFields(),
             $this->converter,
         );
     }
 
-    private function prepareSearchAttributes(?SearchAttributes $searchAttributes): EncodedValues
+    private function prepareSearchAttributes(?SearchAttributes $searchAttributes): EncodedCollection
     {
         if ($searchAttributes === null) {
-            return EncodedValues::fromValues([], $this->converter);
+            return EncodedCollection::fromValues([], $this->converter);
         }
 
-        return EncodedValues::fromPayloads(
-            (new Payloads())->setPayloads(\iterator_to_array($searchAttributes->getIndexedFields())),
+        return EncodedCollection::fromPayloadCollection(
+            $searchAttributes->getIndexedFields(),
             $this->converter,
         );
     }
