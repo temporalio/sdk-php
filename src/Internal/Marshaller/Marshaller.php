@@ -70,8 +70,17 @@ class Marshaller implements MarshallerInterface
      */
     public function unmarshal(array $from, object $to): object
     {
-        $mapper = $this->getMapper(\get_class($to));
+        $class = $to::class;
 
+        if ($class === \stdClass::class) {
+            foreach ($from as $key => $value) {
+                $to->{$key} = $value;
+            }
+
+            return $to;
+        }
+
+        $mapper = $this->getMapper($class);
         $result = $mapper->isCopyOnWrite() ? clone $to : $to;
 
         foreach ($mapper->getSetters() as $field => $setter) {
