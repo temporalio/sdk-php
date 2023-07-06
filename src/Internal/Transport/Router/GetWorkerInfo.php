@@ -85,7 +85,7 @@ final class GetWorkerInfo extends Route
             'Options'    => $this->marshaller->marshal($worker->getOptions()),
             'Workflows'  => $this->map($worker->getWorkflows(), $workflowMap),
             'Activities' => $this->map($worker->getActivities(), $activityMap),
-            'php_sdk_version' => $sdkVersion,
+            'PhpSdkVersion' => $sdkVersion,
         ];
     }
 
