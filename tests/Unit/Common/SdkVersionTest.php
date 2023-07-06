@@ -23,12 +23,14 @@ class SdkVersionTest extends TestCase
     public function versionProvider(): iterable
     {
         return [
-            ['dev-master', ''],
+            ['1.2.3.0', '1.2.3'],
+            ['1.2.3', '1.2.3'],
             ['1.2.3-x-dev', '1.2.3-x-dev'],
             ['1.2.3-beta', '1.2.3-beta'],
             ['1.2.3-beta-1', '1.2.3-beta-1'],
             ['1.2.3-beta.1', '1.2.3-beta.1'],
             ['1.2.3-valhalla', '1.2.3-valhalla'],
+            ['dev-master', ''],
             ['1.foo', ''],
             ['feature/interceptors', ''],
         ];
