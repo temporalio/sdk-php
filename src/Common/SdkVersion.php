@@ -13,12 +13,17 @@ final class SdkVersion
 
     public static function getSdkVersion(): string
     {
+        static $cache = null;
+        if ($cache !== null) {
+            return $cache;
+        }
+
         $version = InstalledVersions::getVersion(SdkVersion::PACKAGE_NAME);
 
         if ($version === null || \preg_match(self::VERSION_REGX, $version, $matches) !== 1) {
-            return '';
+            return $cache = '';
         }
 
-        return $matches[1];
+        return $cache = $matches[1];
     }
 }
