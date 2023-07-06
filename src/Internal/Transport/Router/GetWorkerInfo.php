@@ -13,6 +13,7 @@ namespace Temporal\Internal\Transport\Router;
 
 use Composer\InstalledVersions;
 use React\Promise\Deferred;
+use Temporal\Common\SdkVersion;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
@@ -75,17 +76,12 @@ final class GetWorkerInfo extends Route
             'Name' => $activity->getID(),
         ];
 
-        $sdkVersion = '';
-        if (\preg_match('/^(\d++\.\d++\.\d++)/', InstalledVersions::getVersion('temporal/sdk') ?? '', $matches) === 1) {
-            $sdkVersion = $matches[1];
-        }
-
         return [
             'TaskQueue'  => $worker->getID(),
             'Options'    => $this->marshaller->marshal($worker->getOptions()),
             'Workflows'  => $this->map($worker->getWorkflows(), $workflowMap),
             'Activities' => $this->map($worker->getActivities(), $activityMap),
-            'PhpSdkVersion' => $sdkVersion,
+            'PhpSdkVersion' => SdkVersion::getSdkVersion(),
         ];
     }
 

@@ -14,6 +14,7 @@ namespace Temporal\Client\GRPC;
 use Carbon\CarbonInterval;
 use Composer\InstalledVersions;
 use Temporal\Common\RetryOptions;
+use Temporal\Common\SdkVersion;
 use Temporal\Internal\Support\DateInterval;
 
 final class Context implements ContextInterface
@@ -32,14 +33,9 @@ final class Context implements ContextInterface
             ->withMaximumAttempts(0)
             ->withInitialInterval(CarbonInterval::millisecond(500));
 
-        $sdkVersion = '';
-        if (\preg_match('/^(\d++\.\d++\.\d++)/', InstalledVersions::getVersion('temporal/sdk') ?? '', $matches) === 1) {
-            $sdkVersion = $matches[1];
-        }
-
         $this->metadata = [
             'client-name' => ['temporal-php-2'],
-            'client-version' => [$sdkVersion],
+            'client-version' => [SdkVersion::getSdkVersion()],
         ];
     }
 
