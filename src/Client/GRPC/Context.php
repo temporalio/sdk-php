@@ -19,8 +19,8 @@ use Temporal\Internal\Support\DateInterval;
 final class Context implements ContextInterface
 {
     private ?\DateTimeInterface $deadline = null;
-    private array $options;
-    private array $metadata = [];
+    private array $options = [];
+    private array $metadata;
     private RetryOptions $retryOptions;
 
     /**
@@ -32,9 +32,14 @@ final class Context implements ContextInterface
             ->withMaximumAttempts(0)
             ->withInitialInterval(CarbonInterval::millisecond(500));
 
-        $this->options = [
-            'client-name' => 'temporal-php',
-            'client-version' => InstalledVersions::getVersion('temporal/sdk'),
+        $sdkVersion = '';
+        if (\preg_match('/^(\d++\.\d++\.\d++)/', InstalledVersions::getVersion('temporal/sdk') ?? '', $matches) === 1) {
+            $sdkVersion = $matches[1];
+        }
+
+        $this->metadata = [
+            'client-name' => ['temporal-php-2'],
+            'client-version' => [$sdkVersion],
         ];
     }
 

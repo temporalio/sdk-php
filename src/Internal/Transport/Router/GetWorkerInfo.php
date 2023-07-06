@@ -76,7 +76,7 @@ final class GetWorkerInfo extends Route
         ];
 
         $sdkVersion = '';
-        if (\preg_match('/^(\d++\.\d++\.\d++)/', InstalledVersions::getVersion('temporal/sdk') ?? '', $matches) !== 1) {
+        if (\preg_match('/^(\d++\.\d++\.\d++)/', InstalledVersions::getVersion('temporal/sdk') ?? '', $matches) === 1) {
             $sdkVersion = $matches[1];
         }
 
