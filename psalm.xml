@@ -13,6 +13,7 @@
     ensureArrayStringOffsetsExist="true"
     addParamDefaultToDocblockType="true"
     strictBinaryOperands="true"
+    errorBaseline="psalm-baseline.xml"
 >
     <projectFiles>
         <directory name="src" />
