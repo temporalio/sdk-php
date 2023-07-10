@@ -23,7 +23,7 @@ use Temporal\Workflow\WorkflowType;
 final class WorkflowExecutionInfoMapper
 {
     public function __construct(
-        private DataConverterInterface $converter,
+        private readonly DataConverterInterface $converter,
     ) {
     }
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
+use Closure;
 use Countable;
 use Generator;
 use IteratorAggregate;
@@ -26,11 +27,12 @@ final class Paginator implements IteratorAggregate, Countable
     /**
      * @param Generator<array-key, list<TItem>> $loader
      * @param int<1, max> $pageNumber
+     * @param null|Closure(): int<0, max> $counter
      */
     private function __construct(
-        private Generator $loader,
-        private int $pageNumber,
-        private ?\Closure $counter,
+        private readonly Generator $loader,
+        private readonly int $pageNumber,
+        private ?Closure $counter,
     ) {
         $this->collection = $loader->current();
     }
@@ -39,13 +41,13 @@ final class Paginator implements IteratorAggregate, Countable
      * @template TInitItem
      *
      * @param Generator<array-key, list<TInitItem>> $loader
-     * @param null|callable(): int $counter Returns total number of items.
+     * @param null|callable(): int<0, max> $counter Returns total number of items.
      *
      * @return self<TInitItem>
      */
     public static function createFromGenerator(Generator $loader, ?callable $counter): self
     {
-        return new self($loader, 1, \Closure::fromCallable($counter));
+        return new self($loader, 1, $counter === null ? null : $counter(...));
     }
 
     /**
@@ -64,6 +66,7 @@ final class Paginator implements IteratorAggregate, Countable
             return null;
         }
         $this->nextPage = new self($this->loader, $this->pageNumber + 1, $this->counter);
+        /** @var @psalm-suppress UnsupportedPropertyReferenceUsage */
         $this->nextPage->counter = &$this->nextPage;
 
         return $this->nextPage;
@@ -108,7 +111,7 @@ final class Paginator implements IteratorAggregate, Countable
      * Note: the method may call yet another RPC to get total number of items.
      * It means that the result may be different from the number of items at the moment of the pagination start.
      *
-     * @return int<0, max>
+     * @return int
      * @throws \LogicException If counter is not set.
      */
     public function count(): int

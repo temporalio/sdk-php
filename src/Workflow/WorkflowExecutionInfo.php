@@ -21,22 +21,22 @@ final class WorkflowExecutionInfo
      * @param array<ResetPointInfoDto> $autoResetPoints
      */
     public function __construct(
-        public WorkflowExecution $execution,
-        public WorkflowType $type,
-        public ?DateTimeInterface $startTime,
-        public ?DateTimeInterface $closeTime,
-        public WorkflowExecutionStatus $status,
-        public int $historyLength,
-        public ?string $parentNamespaceId,
-        public ?WorkflowExecution $parentExecution,
-        public ?DateTimeInterface $executionTime,
-        public EncodedCollection $memo,
-        public EncodedCollection $searchAttributes,
-        public array $autoResetPoints,
-        public string $taskQueue,
-        public int $stateTransitionCount,
-        public int $historySizeBytes,
-        public ?WorkerVersionStamp $mostRecentWorkerVersionStamp,
+        public readonly WorkflowExecution $execution,
+        public readonly WorkflowType $type,
+        public readonly ?DateTimeInterface $startTime,
+        public readonly ?DateTimeInterface $closeTime,
+        public readonly WorkflowExecutionStatus $status,
+        public readonly int $historyLength,
+        public readonly ?string $parentNamespaceId,
+        public readonly ?WorkflowExecution $parentExecution,
+        public readonly ?DateTimeInterface $executionTime,
+        public readonly EncodedCollection $memo,
+        public readonly EncodedCollection $searchAttributes,
+        public readonly array $autoResetPoints,
+        public readonly string $taskQueue,
+        public readonly int $stateTransitionCount,
+        public readonly int $historySizeBytes,
+        public readonly ?WorkerVersionStamp $mostRecentWorkerVersionStamp,
     ) {
     }
 }

@@ -4,10 +4,12 @@
     xmlns="https://getpsalm.org/schema/config"
     xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
 
-    errorLevel="7"
+    errorLevel="2"
     hoistConstants="true"
     findUnusedPsalmSuppress="false"
     findUnusedVariablesAndParams="true"
+    findUnusedBaselineEntry="true"
+    findUnusedCode="false"
     ensureArrayStringOffsetsExist="true"
     addParamDefaultToDocblockType="true"
     strictBinaryOperands="true"
