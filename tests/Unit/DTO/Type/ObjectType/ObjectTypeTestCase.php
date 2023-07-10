@@ -48,9 +48,6 @@ final class ObjectTypeTestCase extends DTOMarshallingTestCase
         ), $dto);
     }
 
-    /**
-     * @requires PHP >= 8.1
-     */
     public function testReadonlyMarshal(): void
     {
         $dto = new ReadonlyProperty(
@@ -88,9 +85,6 @@ final class ObjectTypeTestCase extends DTOMarshallingTestCase
         ], $dto);
     }
 
-    /**
-     * @requires PHP >= 8.1
-     */
     public function testReadonlyUnmarshal(): void
     {
         $dto = $this->unmarshal([

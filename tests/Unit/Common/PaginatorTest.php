@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Temporal\Tests\Unit\Common;
 
 use Generator;
-use Temporal\Common\Paginator;
 use PHPUnit\Framework\TestCase;
+use Temporal\Client\Paginator;
 
 final class PaginatorTest extends TestCase
 {

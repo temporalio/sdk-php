@@ -18,9 +18,6 @@ use Temporal\Tests\Unit\DTO\Type\EnumType\Stub\EnumDto;
 use Temporal\Tests\Unit\DTO\Type\EnumType\Stub\ScalarEnum;
 use Temporal\Tests\Unit\DTO\Type\EnumType\Stub\SimpleEnum;
 
-/**
- * @requires PHP >= 8.1
- */
 class EnumTestCase extends DTOMarshallingTestCase
 {
     public function testMarshal(): void
