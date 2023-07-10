@@ -129,6 +129,9 @@ class TypedStubTestCase extends ClientTestCase
         );
     }
 
+    /**
+     * @group skip-on-test-server
+     */
     public function testSignalRunningWorkflowWithInheritedSignal()
     {
         $client = $this->createClient();
@@ -145,6 +148,9 @@ class TypedStubTestCase extends ClientTestCase
         $this->assertEquals(['test1'], $result);
     }
 
+    /**
+     * @group skip-on-test-server
+     */
     public function testSignalRunningWorkflowWithInheritedSignalViaParentInterface()
     {
         $client = $this->createClient();
