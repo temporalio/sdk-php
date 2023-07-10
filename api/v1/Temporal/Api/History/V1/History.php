@@ -24,7 +24,7 @@ class History extends \Google\Protobuf\Internal\Message
      * @param array $data {
      *     Optional. Data for populating the Message object.
      *
-     *     @type \Temporal\Api\History\V1\HistoryEvent[]|\Google\Protobuf\Internal\RepeatedField $events
+     *     @type array<\Temporal\Api\History\V1\HistoryEvent>|\Google\Protobuf\Internal\RepeatedField $events
      * }
      */
     public function __construct($data = NULL) {
@@ -43,7 +43,7 @@ class History extends \Google\Protobuf\Internal\Message
 
     /**
      * Generated from protobuf field <code>repeated .temporal.api.history.v1.HistoryEvent events = 1;</code>
-     * @param \Temporal\Api\History\V1\HistoryEvent[]|\Google\Protobuf\Internal\RepeatedField $var
+     * @param array<\Temporal\Api\History\V1\HistoryEvent>|\Google\Protobuf\Internal\RepeatedField $var
      * @return $this
      */
     public function setEvents($var)

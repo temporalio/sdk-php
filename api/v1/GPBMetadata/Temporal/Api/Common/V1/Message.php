@@ -19,8 +19,7 @@ class Message
         \GPBMetadata\Temporal\Api\Enums\V1\Common::initOnce();
         $pool->internalAddGeneratedFile(
             '
-÷
-
+Ý
 $temporal/api/common/v1/message.prototemporal.api.common.v1!dependencies/gogoproto/gogo.proto"temporal/api/enums/v1/common.proto"T
 DataBlob:
 encoding_type (2#.temporal.api.enums.v1.EncodingType
@@ -60,8 +59,17 @@ $temporal/api/common/v1/message.prototemporal.api.common.v1!dependencies/gogo
 backoff_coefficient (9
 maximum_interval (2.google.protobuf.DurationB˜ß
 maximum_attempts (!
-non_retryable_error_types (	B…
-io.temporal.api.common.v1BMessageProtoPZ#go.temporal.io/api/common/v1;commonªTemporal.Api.Common.V1êTemporal::Api::Common::V1bproto3'
+non_retryable_error_types (	"F
+MeteringMetadata2
+*nonfirst_local_activity_execution_attempts ("Q
+WorkerVersionStamp
+build_id (	
+	bundle_id (	
+use_versioning ("E
+WorkerVersionCapabilities
+build_id (	
+use_versioning (B‰
+io.temporal.api.common.v1BMessageProtoPZ#go.temporal.io/api/common/v1;commonªTemporalio.Api.Common.V1êTemporalio::Api::Common::V1bproto3'
         , true);
 
         static::$is_initialized = true;

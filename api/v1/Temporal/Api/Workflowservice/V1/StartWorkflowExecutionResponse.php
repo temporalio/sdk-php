@@ -17,6 +17,14 @@ class StartWorkflowExecutionResponse extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>string run_id = 1;</code>
      */
     protected $run_id = '';
+    /**
+     * When `request_eager_execution` is set on the `StartWorkflowExecutionRequest`, the server - if supported - will
+     * return the first workflow task to be eagerly executed.
+     * The caller is expected to have a worker available to process the task.
+     *
+     * Generated from protobuf field <code>.temporal.api.workflowservice.v1.PollWorkflowTaskQueueResponse eager_workflow_task = 2;</code>
+     */
+    protected $eager_workflow_task = null;
 
     /**
      * Constructor.
@@ -25,6 +33,10 @@ class StartWorkflowExecutionResponse extends \Google\Protobuf\Internal\Message
      *     Optional. Data for populating the Message object.
      *
      *     @type string $run_id
+     *     @type \Temporal\Api\Workflowservice\V1\PollWorkflowTaskQueueResponse $eager_workflow_task
+     *           When `request_eager_execution` is set on the `StartWorkflowExecutionRequest`, the server - if supported - will
+     *           return the first workflow task to be eagerly executed.
+     *           The caller is expected to have a worker available to process the task.
      * }
      */
     public function __construct($data = NULL) {
@@ -50,6 +62,46 @@ class StartWorkflowExecutionResponse extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkString($var, True);
         $this->run_id = $var;
+
+        return $this;
+    }
+
+    /**
+     * When `request_eager_execution` is set on the `StartWorkflowExecutionRequest`, the server - if supported - will
+     * return the first workflow task to be eagerly executed.
+     * The caller is expected to have a worker available to process the task.
+     *
+     * Generated from protobuf field <code>.temporal.api.workflowservice.v1.PollWorkflowTaskQueueResponse eager_workflow_task = 2;</code>
+     * @return \Temporal\Api\Workflowservice\V1\PollWorkflowTaskQueueResponse|null
+     */
+    public function getEagerWorkflowTask()
+    {
+        return $this->eager_workflow_task;
+    }
+
+    public function hasEagerWorkflowTask()
+    {
+        return isset($this->eager_workflow_task);
+    }
+
+    public function clearEagerWorkflowTask()
+    {
+        unset($this->eager_workflow_task);
+    }
+
+    /**
+     * When `request_eager_execution` is set on the `StartWorkflowExecutionRequest`, the server - if supported - will
+     * return the first workflow task to be eagerly executed.
+     * The caller is expected to have a worker available to process the task.
+     *
+     * Generated from protobuf field <code>.temporal.api.workflowservice.v1.PollWorkflowTaskQueueResponse eager_workflow_task = 2;</code>
+     * @param \Temporal\Api\Workflowservice\V1\PollWorkflowTaskQueueResponse $var
+     * @return $this
+     */
+    public function setEagerWorkflowTask($var)
+    {
+        GPBUtil::checkMessage($var, \Temporal\Api\Workflowservice\V1\PollWorkflowTaskQueueResponse::class);
+        $this->eager_workflow_task = $var;
 
         return $this;
     }

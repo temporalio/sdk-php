@@ -25,6 +25,13 @@ class TaskQueue extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>.temporal.api.enums.v1.TaskQueueKind kind = 2;</code>
      */
     protected $kind = 0;
+    /**
+     * Iff kind == TASK_QUEUE_KIND_STICKY, then this field contains the name of
+     * the normal task queue that the sticky worker is running on.
+     *
+     * Generated from protobuf field <code>string normal_name = 3;</code>
+     */
+    protected $normal_name = '';
 
     /**
      * Constructor.
@@ -35,6 +42,9 @@ class TaskQueue extends \Google\Protobuf\Internal\Message
      *     @type string $name
      *     @type int $kind
      *           Default: TASK_QUEUE_KIND_NORMAL.
+     *     @type string $normal_name
+     *           Iff kind == TASK_QUEUE_KIND_STICKY, then this field contains the name of
+     *           the normal task queue that the sticky worker is running on.
      * }
      */
     public function __construct($data = NULL) {
@@ -86,6 +96,34 @@ class TaskQueue extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkEnum($var, \Temporal\Api\Enums\V1\TaskQueueKind::class);
         $this->kind = $var;
+
+        return $this;
+    }
+
+    /**
+     * Iff kind == TASK_QUEUE_KIND_STICKY, then this field contains the name of
+     * the normal task queue that the sticky worker is running on.
+     *
+     * Generated from protobuf field <code>string normal_name = 3;</code>
+     * @return string
+     */
+    public function getNormalName()
+    {
+        return $this->normal_name;
+    }
+
+    /**
+     * Iff kind == TASK_QUEUE_KIND_STICKY, then this field contains the name of
+     * the normal task queue that the sticky worker is running on.
+     *
+     * Generated from protobuf field <code>string normal_name = 3;</code>
+     * @param string $var
+     * @return $this
+     */
+    public function setNormalName($var)
+    {
+        GPBUtil::checkString($var, True);
+        $this->normal_name = $var;
 
         return $this;
     }

@@ -26,7 +26,7 @@ class ListSearchAttributesResponse extends \Google\Protobuf\Internal\Message
      */
     private $system_attributes;
     /**
-     * Mapping from the attribute name to the visibility storage native type
+     * Mapping from the attribute name to the visibility storage native type.
      *
      * Generated from protobuf field <code>map<string, string> storage_schema = 3;</code>
      */
@@ -43,7 +43,7 @@ class ListSearchAttributesResponse extends \Google\Protobuf\Internal\Message
      *     @type array|\Google\Protobuf\Internal\MapField $system_attributes
      *           Mapping between system (predefined) search attribute name to its IndexedValueType.
      *     @type array|\Google\Protobuf\Internal\MapField $storage_schema
-     *           Mapping from the attribute name to the visibility storage native type
+     *           Mapping from the attribute name to the visibility storage native type.
      * }
      */
     public function __construct($data = NULL) {
@@ -104,7 +104,7 @@ class ListSearchAttributesResponse extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Mapping from the attribute name to the visibility storage native type
+     * Mapping from the attribute name to the visibility storage native type.
      *
      * Generated from protobuf field <code>map<string, string> storage_schema = 3;</code>
      * @return \Google\Protobuf\Internal\MapField
@@ -115,7 +115,7 @@ class ListSearchAttributesResponse extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Mapping from the attribute name to the visibility storage native type
+     * Mapping from the attribute name to the visibility storage native type.
      *
      * Generated from protobuf field <code>map<string, string> storage_schema = 3;</code>
      * @param array|\Google\Protobuf\Internal\MapField $var

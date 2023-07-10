@@ -39,7 +39,7 @@ class ResetWorkflowExecutionRequest extends \Google\Protobuf\Internal\Message
      */
     protected $request_id = '';
     /**
-     * Should be removed. Appears unused.
+     * Reset reapplay(replay) options.
      *
      * Generated from protobuf field <code>.temporal.api.enums.v1.ResetReapplyType reset_reapply_type = 6;</code>
      */
@@ -60,7 +60,7 @@ class ResetWorkflowExecutionRequest extends \Google\Protobuf\Internal\Message
      *     @type string $request_id
      *           Used to de-dupe reset requests
      *     @type int $reset_reapply_type
-     *           Should be removed. Appears unused.
+     *           Reset reapplay(replay) options.
      * }
      */
     public function __construct($data = NULL) {
@@ -199,7 +199,7 @@ class ResetWorkflowExecutionRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Should be removed. Appears unused.
+     * Reset reapplay(replay) options.
      *
      * Generated from protobuf field <code>.temporal.api.enums.v1.ResetReapplyType reset_reapply_type = 6;</code>
      * @return int
@@ -210,7 +210,7 @@ class ResetWorkflowExecutionRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Should be removed. Appears unused.
+     * Reset reapplay(replay) options.
      *
      * Generated from protobuf field <code>.temporal.api.enums.v1.ResetReapplyType reset_reapply_type = 6;</code>
      * @param int $var

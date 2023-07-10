@@ -17,19 +17,21 @@ class RequestResponse
         \GPBMetadata\Temporal\Api\Enums\V1\Common::initOnce();
         $pool->internalAddGeneratedFile(
             '
-Ž
-
-6temporal/api/operatorservice/v1/request_response.prototemporal.api.operatorservice.v1"ì
+ñ
+6temporal/api/operatorservice/v1/request_response.prototemporal.api.operatorservice.v1"ÿ
 AddSearchAttributesRequestl
-search_attributes (2Q.temporal.api.operatorservice.v1.AddSearchAttributesRequest.SearchAttributesEntry`
+search_attributes (2Q.temporal.api.operatorservice.v1.AddSearchAttributesRequest.SearchAttributesEntry
+	namespace (	`
 SearchAttributesEntry
 key (	6
 value (2\'.temporal.api.enums.v1.IndexedValueType:8"
-AddSearchAttributesResponse":
+AddSearchAttributesResponse"M
 RemoveSearchAttributesRequest
-search_attributes (	" 
-RemoveSearchAttributesResponse"
-ListSearchAttributesRequest"â
+search_attributes (	
+	namespace (	" 
+RemoveSearchAttributesResponse"0
+ListSearchAttributesRequest
+	namespace (	"â
 ListSearchAttributesResponsen
 custom_attributes (2S.temporal.api.operatorservice.v1.ListSearchAttributesResponse.CustomAttributesEntryn
 system_attributes (2S.temporal.api.operatorservice.v1.ListSearchAttributesResponse.SystemAttributesEntryh
@@ -42,8 +44,33 @@ class RequestResponse
 value (2\'.temporal.api.enums.v1.IndexedValueType:84
 StorageSchemaEntry
 key (	
-value (	:8Bº
-"io.temporal.api.operatorservice.v1BRequestResponseProtoPZ5go.temporal.io/api/operatorservice/v1;operatorserviceªTemporal.Api.OperatorService.V1ê"Temporal::Api::OperatorService::V1bproto3'
+value (	:8"+
+DeleteNamespaceRequest
+	namespace (	"4
+DeleteNamespaceResponse
+deleted_namespace (	"e
+AddOrUpdateRemoteClusterRequest
+frontend_address (	(
+ enable_remote_cluster_connection (""
+ AddOrUpdateRemoteClusterResponse"2
+RemoveRemoteClusterRequest
+cluster_name (	"
+RemoveRemoteClusterResponse"A
+ListClustersRequest
+	page_size (
+next_page_token ("s
+ListClustersResponseB
+clusters (20.temporal.api.operatorservice.v1.ClusterMetadata
+next_page_token ("ª
+ClusterMetadata
+cluster_name (	
+
+cluster_id (	
+address (	 
+initial_failover_version (
+history_shard_count (
+is_connection_enabled (B¾
+"io.temporal.api.operatorservice.v1BRequestResponseProtoPZ5go.temporal.io/api/operatorservice/v1;operatorserviceª!Temporalio.Api.OperatorService.V1ê$Temporalio::Api::OperatorService::V1bproto3'
         , true);
 
         static::$is_initialized = true;

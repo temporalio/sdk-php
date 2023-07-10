@@ -19,7 +19,7 @@ class Message
         \GPBMetadata\Temporal\Api\Common\V1\Message::initOnce();
         $pool->internalAddGeneratedFile(
             '
-Ž
+’
 #temporal/api/query/v1/message.prototemporal.api.query.v1$temporal/api/enums/v1/workflow.proto$temporal/api/common/v1/message.proto"‰
 WorkflowQuery
 
@@ -32,8 +32,8 @@ query_args (2 .temporal.api.common.v1.Payloads.
 answer (2 .temporal.api.common.v1.Payloads
 error_message (	"O
 QueryRejected>
-status (2..temporal.api.enums.v1.WorkflowExecutionStatusB€
-io.temporal.api.query.v1BMessageProtoPZ!go.temporal.io/api/query/v1;queryªTemporal.Api.Query.V1êTemporal::Api::Query::V1bproto3'
+status (2..temporal.api.enums.v1.WorkflowExecutionStatusB„
+io.temporal.api.query.v1BMessageProtoPZ!go.temporal.io/api/query/v1;queryªTemporalio.Api.Query.V1êTemporalio::Api::Query::V1bproto3'
         , true);
 
         static::$is_initialized = true;

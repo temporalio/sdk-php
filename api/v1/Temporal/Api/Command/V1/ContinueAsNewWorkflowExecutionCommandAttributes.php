@@ -83,6 +83,13 @@ class ContinueAsNewWorkflowExecutionCommandAttributes extends \Google\Protobuf\I
      * Generated from protobuf field <code>.temporal.api.common.v1.SearchAttributes search_attributes = 14;</code>
      */
     protected $search_attributes = null;
+    /**
+     * If this is set, the workflow executing this command wishes to continue as new using a version
+     * compatible with the version that this workflow most recently ran on.
+     *
+     * Generated from protobuf field <code>bool use_compatible_version = 15;</code>
+     */
+    protected $use_compatible_version = false;
 
     /**
      * Constructor.
@@ -111,6 +118,9 @@ class ContinueAsNewWorkflowExecutionCommandAttributes extends \Google\Protobuf\I
      *     @type \Temporal\Api\Common\V1\Header $header
      *     @type \Temporal\Api\Common\V1\Memo $memo
      *     @type \Temporal\Api\Common\V1\SearchAttributes $search_attributes
+     *     @type bool $use_compatible_version
+     *           If this is set, the workflow executing this command wishes to continue as new using a version
+     *           compatible with the version that this workflow most recently ran on.
      * }
      */
     public function __construct($data = NULL) {
@@ -570,6 +580,34 @@ class ContinueAsNewWorkflowExecutionCommandAttributes extends \Google\Protobuf\I
     {
         GPBUtil::checkMessage($var, \Temporal\Api\Common\V1\SearchAttributes::class);
         $this->search_attributes = $var;
+
+        return $this;
+    }
+
+    /**
+     * If this is set, the workflow executing this command wishes to continue as new using a version
+     * compatible with the version that this workflow most recently ran on.
+     *
+     * Generated from protobuf field <code>bool use_compatible_version = 15;</code>
+     * @return bool
+     */
+    public function getUseCompatibleVersion()
+    {
+        return $this->use_compatible_version;
+    }
+
+    /**
+     * If this is set, the workflow executing this command wishes to continue as new using a version
+     * compatible with the version that this workflow most recently ran on.
+     *
+     * Generated from protobuf field <code>bool use_compatible_version = 15;</code>
+     * @param bool $var
+     * @return $this
+     */
+    public function setUseCompatibleVersion($var)
+    {
+        GPBUtil::checkBool($var);
+        $this->use_compatible_version = $var;
 
         return $this;
     }

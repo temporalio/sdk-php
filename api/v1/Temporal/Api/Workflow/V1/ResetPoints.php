@@ -24,7 +24,7 @@ class ResetPoints extends \Google\Protobuf\Internal\Message
      * @param array $data {
      *     Optional. Data for populating the Message object.
      *
-     *     @type \Temporal\Api\Workflow\V1\ResetPointInfo[]|\Google\Protobuf\Internal\RepeatedField $points
+     *     @type array<\Temporal\Api\Workflow\V1\ResetPointInfo>|\Google\Protobuf\Internal\RepeatedField $points
      * }
      */
     public function __construct($data = NULL) {
@@ -43,7 +43,7 @@ class ResetPoints extends \Google\Protobuf\Internal\Message
 
     /**
      * Generated from protobuf field <code>repeated .temporal.api.workflow.v1.ResetPointInfo points = 1;</code>
-     * @param \Temporal\Api\Workflow\V1\ResetPointInfo[]|\Google\Protobuf\Internal\RepeatedField $var
+     * @param array<\Temporal\Api\Workflow\V1\ResetPointInfo>|\Google\Protobuf\Internal\RepeatedField $var
      * @return $this
      */
     public function setPoints($var)

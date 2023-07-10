@@ -14,14 +14,21 @@ use Google\Protobuf\Internal\GPBUtil;
 class ResetPointInfo extends \Google\Protobuf\Internal\Message
 {
     /**
+     * A worker binary version identifier, will be deprecated and superseded by a newer concept of
+     * build_id.
+     *
      * Generated from protobuf field <code>string binary_checksum = 1;</code>
      */
     protected $binary_checksum = '';
     /**
+     * The first run ID in the execution chain that was touched by this worker build.
+     *
      * Generated from protobuf field <code>string run_id = 2;</code>
      */
     protected $run_id = '';
     /**
+     * Event ID of the first WorkflowTaskCompleted event processed by this worker build.
+     *
      * Generated from protobuf field <code>int64 first_workflow_task_completed_id = 3;</code>
      */
     protected $first_workflow_task_completed_id = 0;
@@ -51,8 +58,12 @@ class ResetPointInfo extends \Google\Protobuf\Internal\Message
      *     Optional. Data for populating the Message object.
      *
      *     @type string $binary_checksum
+     *           A worker binary version identifier, will be deprecated and superseded by a newer concept of
+     *           build_id.
      *     @type string $run_id
+     *           The first run ID in the execution chain that was touched by this worker build.
      *     @type int|string $first_workflow_task_completed_id
+     *           Event ID of the first WorkflowTaskCompleted event processed by this worker build.
      *     @type \Google\Protobuf\Timestamp $create_time
      *     @type \Google\Protobuf\Timestamp $expire_time
      *           (-- api-linter: core::0214::resource-expiry=disabled
@@ -68,6 +79,9 @@ class ResetPointInfo extends \Google\Protobuf\Internal\Message
     }
 
     /**
+     * A worker binary version identifier, will be deprecated and superseded by a newer concept of
+     * build_id.
+     *
      * Generated from protobuf field <code>string binary_checksum = 1;</code>
      * @return string
      */
@@ -77,6 +91,9 @@ class ResetPointInfo extends \Google\Protobuf\Internal\Message
     }
 
     /**
+     * A worker binary version identifier, will be deprecated and superseded by a newer concept of
+     * build_id.
+     *
      * Generated from protobuf field <code>string binary_checksum = 1;</code>
      * @param string $var
      * @return $this
@@ -90,6 +107,8 @@ class ResetPointInfo extends \Google\Protobuf\Internal\Message
     }
 
     /**
+     * The first run ID in the execution chain that was touched by this worker build.
+     *
      * Generated from protobuf field <code>string run_id = 2;</code>
      * @return string
      */
@@ -99,6 +118,8 @@ class ResetPointInfo extends \Google\Protobuf\Internal\Message
     }
 
     /**
+     * The first run ID in the execution chain that was touched by this worker build.
+     *
      * Generated from protobuf field <code>string run_id = 2;</code>
      * @param string $var
      * @return $this
@@ -112,6 +133,8 @@ class ResetPointInfo extends \Google\Protobuf\Internal\Message
     }
 
     /**
+     * Event ID of the first WorkflowTaskCompleted event processed by this worker build.
+     *
      * Generated from protobuf field <code>int64 first_workflow_task_completed_id = 3;</code>
      * @return int|string
      */
@@ -121,6 +144,8 @@ class ResetPointInfo extends \Google\Protobuf\Internal\Message
     }
 
     /**
+     * Event ID of the first WorkflowTaskCompleted event processed by this worker build.
+     *
      * Generated from protobuf field <code>int64 first_workflow_task_completed_id = 3;</code>
      * @param int|string $var
      * @return $this
