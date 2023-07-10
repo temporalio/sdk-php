@@ -11,9 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
-use Temporal\Client\DTO\WorkflowExecutionInfo as WorkflowExecutionInfoDto;
 use Temporal\Client\GRPC\ServiceClientInterface;
-use Temporal\Common\Paginator;
+use Temporal\Workflow\WorkflowExecutionInfo as WorkflowExecutionInfoDto;
 use Temporal\Workflow\WorkflowRunInterface;
 
 interface WorkflowClientInterface

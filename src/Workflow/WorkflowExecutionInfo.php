@@ -2,15 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\DTO;
+namespace Temporal\Workflow;
 
 use DateTimeInterface;
 use JetBrains\PhpStorm\Immutable;
-use Temporal\Client\DTO\ResetPointInfo as ResetPointInfoDto;
+use Temporal\Common\WorkerVersionStamp;
 use Temporal\DataConverter\EncodedCollection;
-use Temporal\DataConverter\ValuesInterface;
-use Temporal\Workflow\WorkflowExecution;
-use Temporal\Workflow\WorkflowType;
+use Temporal\Workflow\ResetPointInfo as ResetPointInfoDto;
 
 /**
  * @see \Temporal\Api\Workflow\V1\WorkflowExecutionInfo

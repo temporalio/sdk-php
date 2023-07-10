@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\DTO;
+namespace Temporal\Common;
 
 use JetBrains\PhpStorm\Immutable;
 

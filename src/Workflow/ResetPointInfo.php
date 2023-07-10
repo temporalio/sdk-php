@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\DTO;
+namespace Temporal\Workflow;
 
 use DateTimeInterface;
 use JetBrains\PhpStorm\Immutable;

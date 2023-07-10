@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Mapper;
+namespace Temporal\Internal\Mapper;
 
 use Temporal\Api\Common\V1\Memo;
 use Temporal\Api\Common\V1\SearchAttributes;
@@ -11,12 +11,12 @@ use Temporal\Api\Common\V1\WorkflowExecution;
 use Temporal\Api\Workflow\V1\ResetPointInfo;
 use Temporal\Api\Workflow\V1\ResetPoints;
 use Temporal\Api\Workflow\V1\WorkflowExecutionInfo;
-use Temporal\Client\DTO\ResetPointInfo as ResetPointInfoDto;
-use Temporal\Client\DTO\WorkerVersionStamp as WorkerVersionStampDto;
-use Temporal\Client\DTO\WorkflowExecutionInfo as WorkflowExecutionInfoDto;
+use Temporal\Common\WorkerVersionStamp as WorkerVersionStampDto;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedCollection;
+use Temporal\Workflow\ResetPointInfo as ResetPointInfoDto;
 use Temporal\Workflow\WorkflowExecution as WorkflowExecutionDto;
+use Temporal\Workflow\WorkflowExecutionInfo as WorkflowExecutionInfoDto;
 use Temporal\Workflow\WorkflowType;
 
 final class WorkflowExecutionInfoMapper

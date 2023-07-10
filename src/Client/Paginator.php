@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Common;
+namespace Temporal\Client;
 
+use Countable;
 use Generator;
 use IteratorAggregate;
 use Traversable;
@@ -14,12 +15,13 @@ use Traversable;
  * @template TItem
  * @implements IteratorAggregate<TItem>
  */
-final class Paginator implements IteratorAggregate
+final class Paginator implements IteratorAggregate, Countable
 {
     /** @var list<TItem> */
     private array $collection;
     /** @var self<TItem>|null */
     private ?self $nextPage = null;
+    private ?int $totalItems = null;
 
     /**
      * @param Generator<array-key, list<TItem>> $loader
@@ -28,6 +30,7 @@ final class Paginator implements IteratorAggregate
     private function __construct(
         private Generator $loader,
         private int $pageNumber,
+        private ?\Closure $counter,
     ) {
         $this->collection = $loader->current();
     }
@@ -36,12 +39,13 @@ final class Paginator implements IteratorAggregate
      * @template TInitItem
      *
      * @param Generator<array-key, list<TInitItem>> $loader
+     * @param null|callable(): int $counter Returns total number of items.
      *
      * @return self<TInitItem>
      */
-    public static function createFromGenerator(Generator $loader): self
+    public static function createFromGenerator(Generator $loader, ?callable $counter): self
     {
-        return new self($loader, 1);
+        return new self($loader, 1, \Closure::fromCallable($counter));
     }
 
     /**
@@ -59,8 +63,10 @@ final class Paginator implements IteratorAggregate
         if (!$this->loader->valid()) {
             return null;
         }
+        $this->nextPage = new self($this->loader, $this->pageNumber + 1, $this->counter);
+        $this->nextPage->counter = &$this->nextPage;
 
-        return $this->nextPage = new self($this->loader, $this->pageNumber + 1);
+        return $this->nextPage;
     }
 
     /**
@@ -94,5 +100,27 @@ final class Paginator implements IteratorAggregate
     public function getPageNumber(): int
     {
         return $this->pageNumber;
+    }
+
+    /**
+     * Value is cached in all produced pages after first call in any page.
+     *
+     * Note: the method may call yet another RPC to get total number of items.
+     * It means that the result may be different from the number of items at the moment of the pagination start.
+     *
+     * @return int<0, max>
+     * @throws \LogicException If counter is not set.
+     */
+    public function count(): int
+    {
+        if ($this->totalItems !== null) {
+            return $this->totalItems;
+        }
+
+        if ($this->counter === null) {
+            throw new \LogicException('Paginator does not support counting.');
+        }
+
+        return $this->totalItems = ($this->counter)();
     }
 }

@@ -18,20 +18,19 @@ use Spiral\Attributes\AttributeReader;
 use Spiral\Attributes\Composite\SelectiveReader;
 use Spiral\Attributes\ReaderInterface;
 use Temporal\Api\Workflow\V1\WorkflowExecutionInfo;
+use Temporal\Api\Workflowservice\V1\CountWorkflowExecutionsRequest;
 use Temporal\Api\Workflowservice\V1\ListWorkflowExecutionsRequest;
-use Temporal\Client\DTO\WorkflowExecutionInfo as WorkflowExecutionInfoDto;
 use Temporal\Client\GRPC\ServiceClientInterface;
-use Temporal\Client\Mapper\WorkflowExecutionInfoMapper;
-use Temporal\Common\Paginator;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\InvalidArgumentException;
 use Temporal\Internal\Client\ActivityCompletionClient;
+use Temporal\Internal\Client\WorkflowProxy;
 use Temporal\Internal\Client\WorkflowRun;
 use Temporal\Internal\Client\WorkflowStarter;
-use Temporal\Internal\Declaration\Reader\WorkflowReader;
-use Temporal\Internal\Client\WorkflowProxy;
 use Temporal\Internal\Client\WorkflowStub;
+use Temporal\Internal\Declaration\Reader\WorkflowReader;
+use Temporal\Internal\Mapper\WorkflowExecutionInfoMapper;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowRunInterface;
 use Temporal\Workflow\WorkflowStub as WorkflowStubConverter;
@@ -277,8 +276,15 @@ class WorkflowClient implements WorkflowClientInterface
                 $request->setNextPageToken($nextPageToken);
             } while ($nextPageToken !== '');
         };
+        $counter = function () use ($namespace, $query): int {
+            $response = $this->client->CountWorkflowExecutions((new CountWorkflowExecutionsRequest())
+                ->setNamespace($namespace)
+                ->setQuery($query));
 
-        return Paginator::createFromGenerator($loader($request));
+            return (int)$response->getCount();
+        };
+
+        return Paginator::createFromGenerator($loader($request), $counter);
     }
 
     /**

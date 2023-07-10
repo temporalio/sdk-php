@@ -12,10 +12,10 @@ use Temporal\Api\Common\V1\WorkflowExecution;
 use Temporal\Api\Common\V1\WorkflowType;
 use Temporal\Api\Workflow\V1\ResetPoints;
 use Temporal\Api\Workflow\V1\WorkflowExecutionInfo;
-use Temporal\Client\DTO\ResetPointInfo;
-use Temporal\Client\Mapper\WorkflowExecutionInfoMapper;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\EncodedCollection;
+use Temporal\Internal\Mapper\WorkflowExecutionInfoMapper;
+use Temporal\Workflow\ResetPointInfo;
 
 final class WorkflowExecutionInfoMapperTest extends TestCase
 {
@@ -61,6 +61,11 @@ final class WorkflowExecutionInfoMapperTest extends TestCase
                     ]),
                 'task_queue' => 'taskQueue',
                 'state_transition_count' => 1,
+                'history_size_bytes' => 1,
+                'most_recent_worker_version_stamp' => (new \Temporal\Api\Common\V1\WorkerVersionStamp())
+                    ->setBundleId('bundleId')
+                    ->setBuildId('buildId')
+                    ->setUseVersioning(true),
             ]),
         );
 
@@ -87,6 +92,10 @@ final class WorkflowExecutionInfoMapperTest extends TestCase
         $this->assertSame('2021-01-01T00:00:00.000000Z', $info->autoResetPoints[0]->createTime->format('Y-m-d\TH:i:s.u\Z'));
         $this->assertTrue($info->autoResetPoints[0]->resettable);
         $this->assertSame('binaryChecksum', $info->autoResetPoints[0]->binaryChecksum);
+        $this->assertSame(1, $info->historySizeBytes);
+        $this->assertSame('bundleId', $info->mostRecentWorkerVersionStamp->bundleId);
+        $this->assertSame('buildId', $info->mostRecentWorkerVersionStamp->buildId);
+        $this->assertTrue($info->mostRecentWorkerVersionStamp->useVersioning);
     }
 
     private function createMapper(): WorkflowExecutionInfoMapper
