@@ -46,8 +46,12 @@ final class DataConverter implements DataConverterInterface
         }
 
         $type = Type::create($type);
-        if ($type->getName() === Type::TYPE_VOID) {
-            return null;
+        if (\in_array($type->getName(),  [Type::TYPE_VOID, Type::TYPE_NULL, Type::TYPE_FALSE, Type::TYPE_TRUE], true)) {
+            return match($type->getName()) {
+                Type::TYPE_VOID, Type::TYPE_NULL => null,
+                Type::TYPE_TRUE => true,
+                Type::TYPE_FALSE => false,
+            };
         }
 
         return $this->converters[$encoding]->fromPayload($payload, $type);
