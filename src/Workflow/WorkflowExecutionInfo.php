@@ -25,7 +25,7 @@ final class WorkflowExecutionInfo
         public WorkflowType $type,
         public ?DateTimeInterface $startTime,
         public ?DateTimeInterface $closeTime,
-        public int $status,
+        public WorkflowExecutionStatus $status,
         public int $historyLength,
         public ?string $parentNamespaceId,
         public ?WorkflowExecution $parentExecution,

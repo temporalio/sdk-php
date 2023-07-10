@@ -17,6 +17,7 @@ use Temporal\DataConverter\EncodedCollection;
 use Temporal\Workflow\ResetPointInfo as ResetPointInfoDto;
 use Temporal\Workflow\WorkflowExecution as WorkflowExecutionDto;
 use Temporal\Workflow\WorkflowExecutionInfo as WorkflowExecutionInfoDto;
+use Temporal\Workflow\WorkflowExecutionStatus;
 use Temporal\Workflow\WorkflowType;
 
 final class WorkflowExecutionInfoMapper
@@ -42,7 +43,7 @@ final class WorkflowExecutionInfoMapper
             type: $wfType,
             startTime: $message->getStartTime()?->toDateTime(),
             closeTime: $message->getCloseTime()?->toDateTime(),
-            status: $message->getStatus(),
+            status: WorkflowExecutionStatus::from($message->getStatus()),
             historyLength: (int)$message->getHistoryLength(),
             parentNamespaceId: $message->getParentNamespaceId(),
             parentExecution: $this->prepareWorkflowExecution($message->getParentExecution()),

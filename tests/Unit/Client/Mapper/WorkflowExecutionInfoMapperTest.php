@@ -16,6 +16,7 @@ use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\EncodedCollection;
 use Temporal\Internal\Mapper\WorkflowExecutionInfoMapper;
 use Temporal\Workflow\ResetPointInfo;
+use Temporal\Workflow\WorkflowExecutionStatus;
 
 final class WorkflowExecutionInfoMapperTest extends TestCase
 {
@@ -32,7 +33,7 @@ final class WorkflowExecutionInfoMapperTest extends TestCase
                 'type' => new WorkflowType(['name' => 'HistoryLengthWorkflow']),
                 'start_time' => new Timestamp(['seconds' => \strtotime('2021-01-01T00:00:00.000000Z')]),
                 'close_time' => new Timestamp(['seconds' => \strtotime('2021-02-01T00:00:00.000000Z')]),
-                'status' => 1,
+                'status' => WorkflowExecutionStatus::Completed->value,
                 'history_length' => 15,
                 'parent_namespace_id' => 'parentNamespaceId',
                 'parent_execution' => new WorkflowExecution([
@@ -74,7 +75,7 @@ final class WorkflowExecutionInfoMapperTest extends TestCase
         $this->assertSame('HistoryLengthWorkflow', $info->type->name);
         $this->assertSame('2021-01-01T00:00:00.000000Z', $info->startTime->format('Y-m-d\TH:i:s.u\Z'));
         $this->assertSame('2021-02-01T00:00:00.000000Z', $info->closeTime->format('Y-m-d\TH:i:s.u\Z'));
-        $this->assertSame(1, $info->status);
+        $this->assertSame(WorkflowExecutionStatus::Completed, $info->status);
         $this->assertSame(15, $info->historyLength);
         $this->assertSame('parentNamespaceId', $info->parentNamespaceId);
         $this->assertSame('f81c8119-d53a-4100-9d53-7dabac8849c2', $info->parentExecution->getID());
