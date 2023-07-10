@@ -14,6 +14,10 @@ namespace Temporal\Client\DTO;
 use DateTimeInterface;
 use JetBrains\PhpStorm\Immutable;
 
+/**
+ * @see \Temporal\Api\Workflow\V1\ResetPointInfo
+ * @psalm-immutable
+ */
 #[Immutable]
 final class ResetPointInfo
 {

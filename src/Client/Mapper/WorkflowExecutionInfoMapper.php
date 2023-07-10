@@ -6,11 +6,13 @@ namespace Temporal\Client\Mapper;
 
 use Temporal\Api\Common\V1\Memo;
 use Temporal\Api\Common\V1\SearchAttributes;
+use Temporal\Api\Common\V1\WorkerVersionStamp;
 use Temporal\Api\Common\V1\WorkflowExecution;
 use Temporal\Api\Workflow\V1\ResetPointInfo;
 use Temporal\Api\Workflow\V1\ResetPoints;
 use Temporal\Api\Workflow\V1\WorkflowExecutionInfo;
 use Temporal\Client\DTO\ResetPointInfo as ResetPointInfoDto;
+use Temporal\Client\DTO\WorkerVersionStamp as WorkerVersionStampDto;
 use Temporal\Client\DTO\WorkflowExecutionInfo as WorkflowExecutionInfoDto;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedCollection;
@@ -49,8 +51,21 @@ final class WorkflowExecutionInfoMapper
             searchAttributes: $this->prepareSearchAttributes($message->getSearchAttributes()),
             autoResetPoints: $this->prepareAutoResetPoints($message->getAutoResetPoints()),
             taskQueue: $message->getTaskQueue(),
-            stateTransitionCount: $message->getStateTransitionCount(),
+            stateTransitionCount: (int)$message->getStateTransitionCount(),
+            historySizeBytes: (int)$message->getHistorySizeBytes(),
+            mostRecentWorkerVersionStamp: $this->prepareWorkerVersionStamp($message->getMostRecentWorkerVersionStamp()),
         );
+    }
+
+    public function prepareWorkerVersionStamp(?WorkerVersionStamp $versionStamp): ?WorkerVersionStampDto
+    {
+        return $versionStamp === null
+            ? null
+            : new WorkerVersionStampDto(
+                buildId: $versionStamp->getBuildId(),
+                bundleId: $versionStamp->getBundleId(),
+                useVersioning: $versionStamp->getUseVersioning(),
+            );
     }
 
     private function prepareMemo(?Memo $memo): EncodedCollection

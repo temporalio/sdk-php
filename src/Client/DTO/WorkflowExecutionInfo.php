@@ -13,6 +13,7 @@ use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowType;
 
 /**
+ * @see \Temporal\Api\Workflow\V1\WorkflowExecutionInfo
  * @psalm-immutable
  */
 #[Immutable]
@@ -36,6 +37,8 @@ final class WorkflowExecutionInfo
         public array $autoResetPoints,
         public string $taskQueue,
         public int $stateTransitionCount,
+        public int $historySizeBytes,
+        public ?WorkerVersionStamp $mostRecentWorkerVersionStamp,
     ) {
     }
 }
