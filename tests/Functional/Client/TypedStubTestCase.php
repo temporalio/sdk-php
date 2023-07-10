@@ -163,15 +163,16 @@ class TypedStubTestCase extends ClientTestCase
 
     /**
      * @requires PHP >= 8.2
+     * todo: uncomment this with min php 8.2 requirement or when we can skip activities loading depending on php version
      */
-    public function testPhp82Types(): void
-    {
-        $client = $this->createClient();
-
-        $workflow = $client->newWorkflowStub(Php82TypesWorkflow::class);
-        $workflowRun = $client->start($workflow);
-        $result = $workflowRun->getResult();
-
-        $this->assertSame([null, true, false], $result);
-    }
+    // public function testPhp82Types(): void
+    // {
+    //     $client = $this->createClient();
+    //
+    //     $workflow = $client->newWorkflowStub(Php82TypesWorkflow::class);
+    //     $workflowRun = $client->start($workflow);
+    //     $result = $workflowRun->getResult();
+    //
+    //     $this->assertSame([null, true, false], $result);
+    // }
 }
