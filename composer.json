@@ -38,7 +38,7 @@
         "symfony/http-client": "^4.4.27 || ^5.0 || ^6.0",
         "symfony/process": "^5.4 || ^6.0",
         "roadrunner-php/version-checker": "^1.0",
-        "spiral/roadrunner": "^2023.1"
+        "spiral/roadrunner": "^2023.2"
     },
     "autoload": {
         "psr-4": {
