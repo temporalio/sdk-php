@@ -39,6 +39,7 @@ class RespondWorkflowTaskFailedRequest extends \Google\Protobuf\Internal\Message
      */
     protected $identity = '';
     /**
+     * DEPRECATED since 1.21 - use `worker_version_stamp` instead.
      * Worker process' unique binary id
      *
      * Generated from protobuf field <code>string binary_checksum = 5;</code>
@@ -48,6 +49,20 @@ class RespondWorkflowTaskFailedRequest extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>string namespace = 6;</code>
      */
     protected $namespace = '';
+    /**
+     * Protocol messages piggybacking on a WFT as a transport
+     *
+     * Generated from protobuf field <code>repeated .temporal.api.protocol.v1.Message messages = 7;</code>
+     */
+    private $messages;
+    /**
+     * Version info of the worker who processed this task. This message's `build_id` field should
+     * always be set by SDKs. Workers opting into versioning will also set the `use_versioning`
+     * field to true. See message docstrings for more.
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionStamp worker_version = 8;</code>
+     */
+    protected $worker_version = null;
 
     /**
      * Constructor.
@@ -65,8 +80,15 @@ class RespondWorkflowTaskFailedRequest extends \Google\Protobuf\Internal\Message
      *     @type string $identity
      *           The identity of the worker/client
      *     @type string $binary_checksum
+     *           DEPRECATED since 1.21 - use `worker_version_stamp` instead.
      *           Worker process' unique binary id
      *     @type string $namespace
+     *     @type array<\Temporal\Api\Protocol\V1\Message>|\Google\Protobuf\Internal\RepeatedField $messages
+     *           Protocol messages piggybacking on a WFT as a transport
+     *     @type \Temporal\Api\Common\V1\WorkerVersionStamp $worker_version
+     *           Version info of the worker who processed this task. This message's `build_id` field should
+     *           always be set by SDKs. Workers opting into versioning will also set the `use_versioning`
+     *           field to true. See message docstrings for more.
      * }
      */
     public function __construct($data = NULL) {
@@ -191,6 +213,7 @@ class RespondWorkflowTaskFailedRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
+     * DEPRECATED since 1.21 - use `worker_version_stamp` instead.
      * Worker process' unique binary id
      *
      * Generated from protobuf field <code>string binary_checksum = 5;</code>
@@ -202,6 +225,7 @@ class RespondWorkflowTaskFailedRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
+     * DEPRECATED since 1.21 - use `worker_version_stamp` instead.
      * Worker process' unique binary id
      *
      * Generated from protobuf field <code>string binary_checksum = 5;</code>
@@ -234,6 +258,72 @@ class RespondWorkflowTaskFailedRequest extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkString($var, True);
         $this->namespace = $var;
+
+        return $this;
+    }
+
+    /**
+     * Protocol messages piggybacking on a WFT as a transport
+     *
+     * Generated from protobuf field <code>repeated .temporal.api.protocol.v1.Message messages = 7;</code>
+     * @return \Google\Protobuf\Internal\RepeatedField
+     */
+    public function getMessages()
+    {
+        return $this->messages;
+    }
+
+    /**
+     * Protocol messages piggybacking on a WFT as a transport
+     *
+     * Generated from protobuf field <code>repeated .temporal.api.protocol.v1.Message messages = 7;</code>
+     * @param array<\Temporal\Api\Protocol\V1\Message>|\Google\Protobuf\Internal\RepeatedField $var
+     * @return $this
+     */
+    public function setMessages($var)
+    {
+        $arr = GPBUtil::checkRepeatedField($var, \Google\Protobuf\Internal\GPBType::MESSAGE, \Temporal\Api\Protocol\V1\Message::class);
+        $this->messages = $arr;
+
+        return $this;
+    }
+
+    /**
+     * Version info of the worker who processed this task. This message's `build_id` field should
+     * always be set by SDKs. Workers opting into versioning will also set the `use_versioning`
+     * field to true. See message docstrings for more.
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionStamp worker_version = 8;</code>
+     * @return \Temporal\Api\Common\V1\WorkerVersionStamp|null
+     */
+    public function getWorkerVersion()
+    {
+        return $this->worker_version;
+    }
+
+    public function hasWorkerVersion()
+    {
+        return isset($this->worker_version);
+    }
+
+    public function clearWorkerVersion()
+    {
+        unset($this->worker_version);
+    }
+
+    /**
+     * Version info of the worker who processed this task. This message's `build_id` field should
+     * always be set by SDKs. Workers opting into versioning will also set the `use_versioning`
+     * field to true. See message docstrings for more.
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionStamp worker_version = 8;</code>
+     * @param \Temporal\Api\Common\V1\WorkerVersionStamp $var
+     * @return $this
+     */
+    public function setWorkerVersion($var)
+    {
+        GPBUtil::checkMessage($var, \Temporal\Api\Common\V1\WorkerVersionStamp::class);
+        $this->worker_version = $var;
 
         return $this;
     }

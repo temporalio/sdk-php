@@ -27,7 +27,7 @@ class RespondActivityTaskFailedByIdResponse extends \Google\Protobuf\Internal\Me
      * @param array $data {
      *     Optional. Data for populating the Message object.
      *
-     *     @type \Temporal\Api\Failure\V1\Failure[]|\Google\Protobuf\Internal\RepeatedField $failures
+     *     @type array<\Temporal\Api\Failure\V1\Failure>|\Google\Protobuf\Internal\RepeatedField $failures
      *           Server validation failures could include
      *           last_heartbeat_details payload is too large, request failure is too large
      * }
@@ -54,7 +54,7 @@ class RespondActivityTaskFailedByIdResponse extends \Google\Protobuf\Internal\Me
      * last_heartbeat_details payload is too large, request failure is too large
      *
      * Generated from protobuf field <code>repeated .temporal.api.failure.v1.Failure failures = 1;</code>
-     * @param \Temporal\Api\Failure\V1\Failure[]|\Google\Protobuf\Internal\RepeatedField $var
+     * @param array<\Temporal\Api\Failure\V1\Failure>|\Google\Protobuf\Internal\RepeatedField $var
      * @return $this
      */
     public function setFailures($var)

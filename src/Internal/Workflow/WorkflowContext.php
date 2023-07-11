@@ -426,7 +426,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
         string $type,
         array $args = [],
         ActivityOptionsInterface $options = null,
-        \ReflectionType $returnType = null,
+        Type|string|\ReflectionClass|\ReflectionType $returnType = null,
     ): PromiseInterface {
         $isLocal = $options instanceof LocalActivityOptions;
 

@@ -226,7 +226,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @param string $type
      * @param array $args
      * @param ActivityOptions|null $options
-     * @param \ReflectionType|null $returnType
+     * @param Type|string|null|\ReflectionClass|\ReflectionType $returnType
      *
      * @return PromiseInterface
      */
@@ -234,7 +234,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
         string $type,
         array $args = [],
         ActivityOptionsInterface $options = null,
-        \ReflectionType $returnType = null,
+        Type|string|\ReflectionClass|\ReflectionType $returnType = null,
     ): PromiseInterface;
 
     /**

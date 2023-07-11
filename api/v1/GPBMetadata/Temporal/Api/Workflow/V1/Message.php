@@ -23,8 +23,8 @@ class Message
         \GPBMetadata\Temporal\Api\Taskqueue\V1\Message::initOnce();
         $pool->internalAddGeneratedFile(
             '
-•
-&temporal/api/workflow/v1/message.prototemporal.api.workflow.v1google/protobuf/timestamp.proto!dependencies/gogoproto/gogo.proto$temporal/api/enums/v1/workflow.proto$temporal/api/common/v1/message.proto%temporal/api/failure/v1/message.proto\'temporal/api/taskqueue/v1/message.proto"Ð
+ì
+&temporal/api/workflow/v1/message.prototemporal.api.workflow.v1google/protobuf/timestamp.proto!dependencies/gogoproto/gogo.proto$temporal/api/enums/v1/workflow.proto$temporal/api/common/v1/message.proto%temporal/api/failure/v1/message.proto\'temporal/api/taskqueue/v1/message.proto"Â
 WorkflowExecutionInfo<
 	execution (2).temporal.api.common.v1.WorkflowExecution2
 type (2$.temporal.api.common.v1.WorkflowType4
@@ -43,7 +43,9 @@ close_time (2.google.protobuf.TimestampBß>
 auto_reset_points (2%.temporal.api.workflow.v1.ResetPoints
 
 task_queue (	
-state_transition_count ("Ÿ
+state_transition_count (
+history_size_bytes (T
+ most_recent_worker_version_stamp (2*.temporal.api.common.v1.WorkerVersionStamp"Ÿ
 WorkflowExecutionConfig8
 
 task_queue (2$.temporal.api.taskqueue.v1.TaskQueueC
@@ -85,8 +87,24 @@ task_queue (2$.temporal.api.taskqueue.v1.TaskQueueC
 create_time (2.google.protobuf.TimestampBß5
 expire_time (2.google.protobuf.TimestampBß
 
-resettable (B
-io.temporal.api.workflow.v1BMessageProtoPZ\'go.temporal.io/api/workflow/v1;workflowªTemporal.Api.Workflow.V1êTemporal::Api::Workflow::V1bproto3'
+resettable ("Þ
+NewWorkflowExecutionInfo
+workflow_id (	;
+workflow_type (2$.temporal.api.common.v1.WorkflowType8
+
+task_queue (2$.temporal.api.taskqueue.v1.TaskQueue/
+input (2 .temporal.api.common.v1.PayloadsC
+workflow_execution_timeout (2.google.protobuf.DurationB˜ß=
+workflow_run_timeout (2.google.protobuf.DurationB˜ß>
+workflow_task_timeout (2.google.protobuf.DurationB˜ßN
+workflow_id_reuse_policy (2,.temporal.api.enums.v1.WorkflowIdReusePolicy9
+retry_policy	 (2#.temporal.api.common.v1.RetryPolicy
+cron_schedule
+ (	*
+memo (2.temporal.api.common.v1.MemoC
+search_attributes (2(.temporal.api.common.v1.SearchAttributes.
+header (2.temporal.api.common.v1.HeaderB“
+io.temporal.api.workflow.v1BMessageProtoPZ\'go.temporal.io/api/workflow/v1;workflowªTemporalio.Api.Workflow.V1êTemporalio::Api::Workflow::V1bproto3'
         , true);
 
         static::$is_initialized = true;

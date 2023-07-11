@@ -124,6 +124,55 @@ class WorkflowTaskFailedCause
      * Generated from protobuf enum <code>WORKFLOW_TASK_FAILED_CAUSE_NON_DETERMINISTIC_ERROR = 24;</code>
      */
     const WORKFLOW_TASK_FAILED_CAUSE_NON_DETERMINISTIC_ERROR = 24;
+    /**
+     * Generated from protobuf enum <code>WORKFLOW_TASK_FAILED_CAUSE_BAD_MODIFY_WORKFLOW_PROPERTIES_ATTRIBUTES = 25;</code>
+     */
+    const WORKFLOW_TASK_FAILED_CAUSE_BAD_MODIFY_WORKFLOW_PROPERTIES_ATTRIBUTES = 25;
+    /**
+     * We send the below error codes to users when their requests would violate a size constraint
+     * of their workflow. We do this to ensure that the state of their workflow does not become too
+     * large because that can cause severe performance degradation. You can modify the thresholds for
+     * each of these errors within your dynamic config.
+     * Spawning a new child workflow would cause this workflow to exceed its limit of pending child
+     * workflows.
+     *
+     * Generated from protobuf enum <code>WORKFLOW_TASK_FAILED_CAUSE_PENDING_CHILD_WORKFLOWS_LIMIT_EXCEEDED = 26;</code>
+     */
+    const WORKFLOW_TASK_FAILED_CAUSE_PENDING_CHILD_WORKFLOWS_LIMIT_EXCEEDED = 26;
+    /**
+     * Starting a new activity would cause this workflow to exceed its limit of pending activities
+     * that we track.
+     *
+     * Generated from protobuf enum <code>WORKFLOW_TASK_FAILED_CAUSE_PENDING_ACTIVITIES_LIMIT_EXCEEDED = 27;</code>
+     */
+    const WORKFLOW_TASK_FAILED_CAUSE_PENDING_ACTIVITIES_LIMIT_EXCEEDED = 27;
+    /**
+     * A workflow has a buffer of signals that have not yet reached their destination. We return this
+     * error when sending a new signal would exceed the capacity of this buffer.
+     *
+     * Generated from protobuf enum <code>WORKFLOW_TASK_FAILED_CAUSE_PENDING_SIGNALS_LIMIT_EXCEEDED = 28;</code>
+     */
+    const WORKFLOW_TASK_FAILED_CAUSE_PENDING_SIGNALS_LIMIT_EXCEEDED = 28;
+    /**
+     * Similarly, we have a buffer of pending requests to cancel other workflows. We return this error
+     * when our capacity for pending cancel requests is already reached.
+     *
+     * Generated from protobuf enum <code>WORKFLOW_TASK_FAILED_CAUSE_PENDING_REQUEST_CANCEL_LIMIT_EXCEEDED = 29;</code>
+     */
+    const WORKFLOW_TASK_FAILED_CAUSE_PENDING_REQUEST_CANCEL_LIMIT_EXCEEDED = 29;
+    /**
+     * Workflow execution update message (update.Acceptance, update.Rejection, or update.Response)
+     * has wrong format, or missing required fields.
+     *
+     * Generated from protobuf enum <code>WORKFLOW_TASK_FAILED_CAUSE_BAD_UPDATE_WORKFLOW_EXECUTION_MESSAGE = 30;</code>
+     */
+    const WORKFLOW_TASK_FAILED_CAUSE_BAD_UPDATE_WORKFLOW_EXECUTION_MESSAGE = 30;
+    /**
+     * Similar to WORKFLOW_TASK_FAILED_CAUSE_UNHANDLED_COMMAND, but for updates.
+     *
+     * Generated from protobuf enum <code>WORKFLOW_TASK_FAILED_CAUSE_UNHANDLED_UPDATE = 31;</code>
+     */
+    const WORKFLOW_TASK_FAILED_CAUSE_UNHANDLED_UPDATE = 31;
 
     private static $valueToName = [
         self::WORKFLOW_TASK_FAILED_CAUSE_UNSPECIFIED => 'WORKFLOW_TASK_FAILED_CAUSE_UNSPECIFIED',
@@ -151,6 +200,13 @@ class WorkflowTaskFailedCause
         self::WORKFLOW_TASK_FAILED_CAUSE_SCHEDULE_ACTIVITY_DUPLICATE_ID => 'WORKFLOW_TASK_FAILED_CAUSE_SCHEDULE_ACTIVITY_DUPLICATE_ID',
         self::WORKFLOW_TASK_FAILED_CAUSE_BAD_SEARCH_ATTRIBUTES => 'WORKFLOW_TASK_FAILED_CAUSE_BAD_SEARCH_ATTRIBUTES',
         self::WORKFLOW_TASK_FAILED_CAUSE_NON_DETERMINISTIC_ERROR => 'WORKFLOW_TASK_FAILED_CAUSE_NON_DETERMINISTIC_ERROR',
+        self::WORKFLOW_TASK_FAILED_CAUSE_BAD_MODIFY_WORKFLOW_PROPERTIES_ATTRIBUTES => 'WORKFLOW_TASK_FAILED_CAUSE_BAD_MODIFY_WORKFLOW_PROPERTIES_ATTRIBUTES',
+        self::WORKFLOW_TASK_FAILED_CAUSE_PENDING_CHILD_WORKFLOWS_LIMIT_EXCEEDED => 'WORKFLOW_TASK_FAILED_CAUSE_PENDING_CHILD_WORKFLOWS_LIMIT_EXCEEDED',
+        self::WORKFLOW_TASK_FAILED_CAUSE_PENDING_ACTIVITIES_LIMIT_EXCEEDED => 'WORKFLOW_TASK_FAILED_CAUSE_PENDING_ACTIVITIES_LIMIT_EXCEEDED',
+        self::WORKFLOW_TASK_FAILED_CAUSE_PENDING_SIGNALS_LIMIT_EXCEEDED => 'WORKFLOW_TASK_FAILED_CAUSE_PENDING_SIGNALS_LIMIT_EXCEEDED',
+        self::WORKFLOW_TASK_FAILED_CAUSE_PENDING_REQUEST_CANCEL_LIMIT_EXCEEDED => 'WORKFLOW_TASK_FAILED_CAUSE_PENDING_REQUEST_CANCEL_LIMIT_EXCEEDED',
+        self::WORKFLOW_TASK_FAILED_CAUSE_BAD_UPDATE_WORKFLOW_EXECUTION_MESSAGE => 'WORKFLOW_TASK_FAILED_CAUSE_BAD_UPDATE_WORKFLOW_EXECUTION_MESSAGE',
+        self::WORKFLOW_TASK_FAILED_CAUSE_UNHANDLED_UPDATE => 'WORKFLOW_TASK_FAILED_CAUSE_UNHANDLED_UPDATE',
     ];
 
     public static function name($value)

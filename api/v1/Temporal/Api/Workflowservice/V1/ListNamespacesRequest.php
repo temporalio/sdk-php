@@ -21,6 +21,10 @@ class ListNamespacesRequest extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>bytes next_page_token = 2;</code>
      */
     protected $next_page_token = '';
+    /**
+     * Generated from protobuf field <code>.temporal.api.namespace.v1.NamespaceFilter namespace_filter = 3;</code>
+     */
+    protected $namespace_filter = null;
 
     /**
      * Constructor.
@@ -30,6 +34,7 @@ class ListNamespacesRequest extends \Google\Protobuf\Internal\Message
      *
      *     @type int $page_size
      *     @type string $next_page_token
+     *     @type \Temporal\Api\PBNamespace\V1\NamespaceFilter $namespace_filter
      * }
      */
     public function __construct($data = NULL) {
@@ -77,6 +82,38 @@ class ListNamespacesRequest extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkString($var, False);
         $this->next_page_token = $var;
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>.temporal.api.namespace.v1.NamespaceFilter namespace_filter = 3;</code>
+     * @return \Temporal\Api\PBNamespace\V1\NamespaceFilter|null
+     */
+    public function getNamespaceFilter()
+    {
+        return $this->namespace_filter;
+    }
+
+    public function hasNamespaceFilter()
+    {
+        return isset($this->namespace_filter);
+    }
+
+    public function clearNamespaceFilter()
+    {
+        unset($this->namespace_filter);
+    }
+
+    /**
+     * Generated from protobuf field <code>.temporal.api.namespace.v1.NamespaceFilter namespace_filter = 3;</code>
+     * @param \Temporal\Api\PBNamespace\V1\NamespaceFilter $var
+     * @return $this
+     */
+    public function setNamespaceFilter($var)
+    {
+        GPBUtil::checkMessage($var, \Temporal\Api\PBNamespace\V1\NamespaceFilter::class);
+        $this->namespace_filter = $var;
 
         return $this;
     }

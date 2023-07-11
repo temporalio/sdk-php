@@ -41,6 +41,12 @@ class NamespaceConfig extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>string visibility_archival_uri = 6;</code>
      */
     protected $visibility_archival_uri = '';
+    /**
+     * Map from field name to alias.
+     *
+     * Generated from protobuf field <code>map<string, string> custom_search_attribute_aliases = 7;</code>
+     */
+    private $custom_search_attribute_aliases;
 
     /**
      * Constructor.
@@ -56,6 +62,8 @@ class NamespaceConfig extends \Google\Protobuf\Internal\Message
      *     @type int $visibility_archival_state
      *           If unspecified (ARCHIVAL_STATE_UNSPECIFIED) then default server configuration is used.
      *     @type string $visibility_archival_uri
+     *     @type array|\Google\Protobuf\Internal\MapField $custom_search_attribute_aliases
+     *           Map from field name to alias.
      * }
      */
     public function __construct($data = NULL) {
@@ -219,6 +227,32 @@ class NamespaceConfig extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkString($var, True);
         $this->visibility_archival_uri = $var;
+
+        return $this;
+    }
+
+    /**
+     * Map from field name to alias.
+     *
+     * Generated from protobuf field <code>map<string, string> custom_search_attribute_aliases = 7;</code>
+     * @return \Google\Protobuf\Internal\MapField
+     */
+    public function getCustomSearchAttributeAliases()
+    {
+        return $this->custom_search_attribute_aliases;
+    }
+
+    /**
+     * Map from field name to alias.
+     *
+     * Generated from protobuf field <code>map<string, string> custom_search_attribute_aliases = 7;</code>
+     * @param array|\Google\Protobuf\Internal\MapField $var
+     * @return $this
+     */
+    public function setCustomSearchAttributeAliases($var)
+    {
+        $arr = GPBUtil::checkMapField($var, \Google\Protobuf\Internal\GPBType::STRING, \Google\Protobuf\Internal\GPBType::STRING);
+        $this->custom_search_attribute_aliases = $arr;
 
         return $this;
     }

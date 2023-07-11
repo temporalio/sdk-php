@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Unit\DTO\Type\ObjectType;
 
 use ReflectionClass;
+use stdClass;
 use Temporal\Internal\Marshaller\Type\ObjectType;
 use Temporal\Tests\Unit\DTO\Type\ObjectType\Stub\ChildDto;
 use Temporal\Tests\Unit\DTO\Type\ObjectType\Stub\Nested1;
@@ -21,6 +22,7 @@ use Temporal\Tests\Unit\DTO\Type\ObjectType\Stub\NestedParent;
 use Temporal\Tests\Unit\DTO\Type\ObjectType\Stub\ParentDto;
 use Temporal\Tests\Unit\DTO\DTOMarshallingTestCase;
 use Temporal\Tests\Unit\DTO\Type\ObjectType\Stub\ReadonlyProperty;
+use Temporal\Tests\Unit\DTO\Type\ObjectType\Stub\StdClassObjectProp;
 
 final class ObjectTypeTestCase extends DTOMarshallingTestCase
 {
@@ -46,9 +48,6 @@ final class ObjectTypeTestCase extends DTOMarshallingTestCase
         ), $dto);
     }
 
-    /**
-     * @requires PHP >= 8.1
-     */
     public function testReadonlyMarshal(): void
     {
         $dto = new ReadonlyProperty(
@@ -60,9 +59,32 @@ final class ObjectTypeTestCase extends DTOMarshallingTestCase
         $this->assertEquals(['child' => ['foo' => 'foo']], $result);
     }
 
-    /**
-     * @requires PHP >= 8.1
-     */
+    public function testStdClassParamUnmarshal(): void
+    {
+        $dto = $this->unmarshal([
+            'object' => ['foo' => 'bar'],
+            'class' => ['foo' => 'bar'],
+        ], (new ReflectionClass(StdClassObjectProp::class))->newInstanceWithoutConstructor());
+
+        self::assertEquals(new StdClassObjectProp(
+            (object)['foo' => 'bar'],
+            (object)['foo' => 'bar'],
+        ), $dto);
+    }
+
+    public function testStdClassUnmarshal(): void
+    {
+        $dto = $this->unmarshal([
+            'object' => ['foo' => 'bar'],
+            'class' => ['foo' => 'bar'],
+        ], new stdClass());
+
+        self::assertEquals((object)[
+            'object' => ['foo' => 'bar'],
+            'class' => ['foo' => 'bar'],
+        ], $dto);
+    }
+
     public function testReadonlyUnmarshal(): void
     {
         $dto = $this->unmarshal([

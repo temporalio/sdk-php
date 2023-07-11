@@ -18,6 +18,9 @@ class Failure extends \Google\Protobuf\Internal\Message
      */
     protected $message = '';
     /**
+     * The source this Failure originated in, e.g. TypeScriptSDK / JavaSDK
+     * In some SDKs this is used to rehydrate the stack trace into an exception object.
+     *
      * Generated from protobuf field <code>string source = 2;</code>
      */
     protected $source = '';
@@ -25,6 +28,24 @@ class Failure extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>string stack_trace = 3;</code>
      */
     protected $stack_trace = '';
+    /**
+     * Alternative way to supply `message` and `stack_trace` and possibly other attributes, used for encryption of
+     * errors originating in user code which might contain sensitive information.
+     * The `encoded_attributes` Payload could represent any serializable object, e.g. JSON object or a `Failure` proto
+     * message.
+     * SDK authors: 
+     * - The SDK should provide a default `encodeFailureAttributes` and `decodeFailureAttributes` implementation that:
+     *   - Uses a JSON object to represent `{ message, stack_trace }`.
+     *   - Overwrites the original message with "Encoded failure" to indicate that more information could be extracted.
+     *   - Overwrites the original stack_trace with an empty string.
+     *   - The resulting JSON object is converted to Payload using the default PayloadConverter and should be processed
+     *     by the user-provided PayloadCodec
+     * - If there's demand, we could allow overriding the default SDK implementation to encode other opaque Failure attributes.
+     * (-- api-linter: core::0203::optional=disabled --)
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.Payload encoded_attributes = 20;</code>
+     */
+    protected $encoded_attributes = null;
     /**
      * Generated from protobuf field <code>.temporal.api.failure.v1.Failure cause = 4;</code>
      */
@@ -39,7 +60,23 @@ class Failure extends \Google\Protobuf\Internal\Message
      *
      *     @type string $message
      *     @type string $source
+     *           The source this Failure originated in, e.g. TypeScriptSDK / JavaSDK
+     *           In some SDKs this is used to rehydrate the stack trace into an exception object.
      *     @type string $stack_trace
+     *     @type \Temporal\Api\Common\V1\Payload $encoded_attributes
+     *           Alternative way to supply `message` and `stack_trace` and possibly other attributes, used for encryption of
+     *           errors originating in user code which might contain sensitive information.
+     *           The `encoded_attributes` Payload could represent any serializable object, e.g. JSON object or a `Failure` proto
+     *           message.
+     *           SDK authors: 
+     *           - The SDK should provide a default `encodeFailureAttributes` and `decodeFailureAttributes` implementation that:
+     *             - Uses a JSON object to represent `{ message, stack_trace }`.
+     *             - Overwrites the original message with "Encoded failure" to indicate that more information could be extracted.
+     *             - Overwrites the original stack_trace with an empty string.
+     *             - The resulting JSON object is converted to Payload using the default PayloadConverter and should be processed
+     *               by the user-provided PayloadCodec
+     *           - If there's demand, we could allow overriding the default SDK implementation to encode other opaque Failure attributes.
+     *           (-- api-linter: core::0203::optional=disabled --)
      *     @type \Temporal\Api\Failure\V1\Failure $cause
      *     @type \Temporal\Api\Failure\V1\ApplicationFailureInfo $application_failure_info
      *     @type \Temporal\Api\Failure\V1\TimeoutFailureInfo $timeout_failure_info
@@ -79,6 +116,9 @@ class Failure extends \Google\Protobuf\Internal\Message
     }
 
     /**
+     * The source this Failure originated in, e.g. TypeScriptSDK / JavaSDK
+     * In some SDKs this is used to rehydrate the stack trace into an exception object.
+     *
      * Generated from protobuf field <code>string source = 2;</code>
      * @return string
      */
@@ -88,6 +128,9 @@ class Failure extends \Google\Protobuf\Internal\Message
     }
 
     /**
+     * The source this Failure originated in, e.g. TypeScriptSDK / JavaSDK
+     * In some SDKs this is used to rehydrate the stack trace into an exception object.
+     *
      * Generated from protobuf field <code>string source = 2;</code>
      * @param string $var
      * @return $this
@@ -118,6 +161,66 @@ class Failure extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkString($var, True);
         $this->stack_trace = $var;
+
+        return $this;
+    }
+
+    /**
+     * Alternative way to supply `message` and `stack_trace` and possibly other attributes, used for encryption of
+     * errors originating in user code which might contain sensitive information.
+     * The `encoded_attributes` Payload could represent any serializable object, e.g. JSON object or a `Failure` proto
+     * message.
+     * SDK authors: 
+     * - The SDK should provide a default `encodeFailureAttributes` and `decodeFailureAttributes` implementation that:
+     *   - Uses a JSON object to represent `{ message, stack_trace }`.
+     *   - Overwrites the original message with "Encoded failure" to indicate that more information could be extracted.
+     *   - Overwrites the original stack_trace with an empty string.
+     *   - The resulting JSON object is converted to Payload using the default PayloadConverter and should be processed
+     *     by the user-provided PayloadCodec
+     * - If there's demand, we could allow overriding the default SDK implementation to encode other opaque Failure attributes.
+     * (-- api-linter: core::0203::optional=disabled --)
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.Payload encoded_attributes = 20;</code>
+     * @return \Temporal\Api\Common\V1\Payload|null
+     */
+    public function getEncodedAttributes()
+    {
+        return $this->encoded_attributes;
+    }
+
+    public function hasEncodedAttributes()
+    {
+        return isset($this->encoded_attributes);
+    }
+
+    public function clearEncodedAttributes()
+    {
+        unset($this->encoded_attributes);
+    }
+
+    /**
+     * Alternative way to supply `message` and `stack_trace` and possibly other attributes, used for encryption of
+     * errors originating in user code which might contain sensitive information.
+     * The `encoded_attributes` Payload could represent any serializable object, e.g. JSON object or a `Failure` proto
+     * message.
+     * SDK authors: 
+     * - The SDK should provide a default `encodeFailureAttributes` and `decodeFailureAttributes` implementation that:
+     *   - Uses a JSON object to represent `{ message, stack_trace }`.
+     *   - Overwrites the original message with "Encoded failure" to indicate that more information could be extracted.
+     *   - Overwrites the original stack_trace with an empty string.
+     *   - The resulting JSON object is converted to Payload using the default PayloadConverter and should be processed
+     *     by the user-provided PayloadCodec
+     * - If there's demand, we could allow overriding the default SDK implementation to encode other opaque Failure attributes.
+     * (-- api-linter: core::0203::optional=disabled --)
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.Payload encoded_attributes = 20;</code>
+     * @param \Temporal\Api\Common\V1\Payload $var
+     * @return $this
+     */
+    public function setEncodedAttributes($var)
+    {
+        GPBUtil::checkMessage($var, \Temporal\Api\Common\V1\Payload::class);
+        $this->encoded_attributes = $var;
 
         return $this;
     }

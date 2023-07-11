@@ -113,6 +113,23 @@ class SignalWithStartWorkflowExecutionRequest extends \Google\Protobuf\Internal\
      * Generated from protobuf field <code>.temporal.api.common.v1.Header header = 19;</code>
      */
     protected $header = null;
+    /**
+     * Time to wait before dispatching the first workflow task. Cannot be used with `cron_schedule`.
+     * Note that the signal will be delivered with the first workflow task. If the workflow gets
+     * another SignalWithStartWorkflow before the delay and `skip_generate_workflow_task` is false
+     * or not set, a workflow task will be dispatched immediately and the rest of the delay period
+     * will be ignored, even if that request also had a delay. Signal via SignalWorkflowExecution
+     * will not unblock the workflow.
+     *
+     * Generated from protobuf field <code>.google.protobuf.Duration workflow_start_delay = 20 [(.gogoproto.stdduration) = true];</code>
+     */
+    protected $workflow_start_delay = null;
+    /**
+     * Indicates that a new workflow task should not be generated when this signal is received.
+     *
+     * Generated from protobuf field <code>bool skip_generate_workflow_task = 21;</code>
+     */
+    protected $skip_generate_workflow_task = false;
 
     /**
      * Constructor.
@@ -151,6 +168,15 @@ class SignalWithStartWorkflowExecutionRequest extends \Google\Protobuf\Internal\
      *     @type \Temporal\Api\Common\V1\Memo $memo
      *     @type \Temporal\Api\Common\V1\SearchAttributes $search_attributes
      *     @type \Temporal\Api\Common\V1\Header $header
+     *     @type \Google\Protobuf\Duration $workflow_start_delay
+     *           Time to wait before dispatching the first workflow task. Cannot be used with `cron_schedule`.
+     *           Note that the signal will be delivered with the first workflow task. If the workflow gets
+     *           another SignalWithStartWorkflow before the delay and `skip_generate_workflow_task` is false
+     *           or not set, a workflow task will be dispatched immediately and the rest of the delay period
+     *           will be ignored, even if that request also had a delay. Signal via SignalWorkflowExecution
+     *           will not unblock the workflow.
+     *     @type bool $skip_generate_workflow_task
+     *           Indicates that a new workflow task should not be generated when this signal is received.
      * }
      */
     public function __construct($data = NULL) {
@@ -730,6 +756,78 @@ class SignalWithStartWorkflowExecutionRequest extends \Google\Protobuf\Internal\
     {
         GPBUtil::checkMessage($var, \Temporal\Api\Common\V1\Header::class);
         $this->header = $var;
+
+        return $this;
+    }
+
+    /**
+     * Time to wait before dispatching the first workflow task. Cannot be used with `cron_schedule`.
+     * Note that the signal will be delivered with the first workflow task. If the workflow gets
+     * another SignalWithStartWorkflow before the delay and `skip_generate_workflow_task` is false
+     * or not set, a workflow task will be dispatched immediately and the rest of the delay period
+     * will be ignored, even if that request also had a delay. Signal via SignalWorkflowExecution
+     * will not unblock the workflow.
+     *
+     * Generated from protobuf field <code>.google.protobuf.Duration workflow_start_delay = 20 [(.gogoproto.stdduration) = true];</code>
+     * @return \Google\Protobuf\Duration|null
+     */
+    public function getWorkflowStartDelay()
+    {
+        return $this->workflow_start_delay;
+    }
+
+    public function hasWorkflowStartDelay()
+    {
+        return isset($this->workflow_start_delay);
+    }
+
+    public function clearWorkflowStartDelay()
+    {
+        unset($this->workflow_start_delay);
+    }
+
+    /**
+     * Time to wait before dispatching the first workflow task. Cannot be used with `cron_schedule`.
+     * Note that the signal will be delivered with the first workflow task. If the workflow gets
+     * another SignalWithStartWorkflow before the delay and `skip_generate_workflow_task` is false
+     * or not set, a workflow task will be dispatched immediately and the rest of the delay period
+     * will be ignored, even if that request also had a delay. Signal via SignalWorkflowExecution
+     * will not unblock the workflow.
+     *
+     * Generated from protobuf field <code>.google.protobuf.Duration workflow_start_delay = 20 [(.gogoproto.stdduration) = true];</code>
+     * @param \Google\Protobuf\Duration $var
+     * @return $this
+     */
+    public function setWorkflowStartDelay($var)
+    {
+        GPBUtil::checkMessage($var, \Google\Protobuf\Duration::class);
+        $this->workflow_start_delay = $var;
+
+        return $this;
+    }
+
+    /**
+     * Indicates that a new workflow task should not be generated when this signal is received.
+     *
+     * Generated from protobuf field <code>bool skip_generate_workflow_task = 21;</code>
+     * @return bool
+     */
+    public function getSkipGenerateWorkflowTask()
+    {
+        return $this->skip_generate_workflow_task;
+    }
+
+    /**
+     * Indicates that a new workflow task should not be generated when this signal is received.
+     *
+     * Generated from protobuf field <code>bool skip_generate_workflow_task = 21;</code>
+     * @param bool $var
+     * @return $this
+     */
+    public function setSkipGenerateWorkflowTask($var)
+    {
+        GPBUtil::checkBool($var);
+        $this->skip_generate_workflow_task = $var;
 
         return $this;
     }

@@ -33,7 +33,7 @@ class NamespaceReplicationConfig extends \Google\Protobuf\Internal\Message
      *     Optional. Data for populating the Message object.
      *
      *     @type string $active_cluster_name
-     *     @type \Temporal\Api\Replication\V1\ClusterReplicationConfig[]|\Google\Protobuf\Internal\RepeatedField $clusters
+     *     @type array<\Temporal\Api\Replication\V1\ClusterReplicationConfig>|\Google\Protobuf\Internal\RepeatedField $clusters
      *     @type int $state
      * }
      */
@@ -75,7 +75,7 @@ class NamespaceReplicationConfig extends \Google\Protobuf\Internal\Message
 
     /**
      * Generated from protobuf field <code>repeated .temporal.api.replication.v1.ClusterReplicationConfig clusters = 2;</code>
-     * @param \Temporal\Api\Replication\V1\ClusterReplicationConfig[]|\Google\Protobuf\Internal\RepeatedField $var
+     * @param array<\Temporal\Api\Replication\V1\ClusterReplicationConfig>|\Google\Protobuf\Internal\RepeatedField $var
      * @return $this
      */
     public function setClusters($var)
