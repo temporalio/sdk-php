@@ -52,9 +52,13 @@ final class RoadRunner implements HostConnectionInterface
      * @param EnvironmentInterface|null $env
      * @return HostConnectionInterface
      */
-    public static function create(EnvironmentInterface $env = null): HostConnectionInterface
-    {
+    public static function create(
+        EnvironmentInterface $env = null,
+        RoadRunnerVersionChecker $versionChecker = null
+    ): HostConnectionInterface {
         $env ??= Environment::fromGlobals();
+        $versionChecker ??= new RoadRunnerVersionChecker();
+        $versionChecker->check();
 
         return new self(new Worker(Relay::create($env->getRelayAddress())));
     }
