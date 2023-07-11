@@ -49,6 +49,12 @@ class Message extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>.temporal.api.common.v1.Header header = 6;</code>
      */
     protected $header = null;
+    /**
+     * workflow history length
+     *
+     * Generated from protobuf field <code>int64 history_length = 7;</code>
+     */
+    protected $history_length = 0;
 
     /**
      * Constructor.
@@ -67,6 +73,8 @@ class Message extends \Google\Protobuf\Internal\Message
      *           invocation or result payloads.
      *     @type \Temporal\Api\Common\V1\Header $header
      *           invocation or result payloads.
+     *     @type int|string $history_length
+     *           workflow history length
      * }
      */
     public function __construct($data = NULL) {
@@ -252,6 +260,32 @@ class Message extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkMessage($var, \Temporal\Api\Common\V1\Header::class);
         $this->header = $var;
+
+        return $this;
+    }
+
+    /**
+     * workflow history length
+     *
+     * Generated from protobuf field <code>int64 history_length = 7;</code>
+     * @return int|string
+     */
+    public function getHistoryLength()
+    {
+        return $this->history_length;
+    }
+
+    /**
+     * workflow history length
+     *
+     * Generated from protobuf field <code>int64 history_length = 7;</code>
+     * @param int|string $var
+     * @return $this
+     */
+    public function setHistoryLength($var)
+    {
+        GPBUtil::checkInt64($var);
+        $this->history_length = $var;
 
         return $this;
     }

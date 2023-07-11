@@ -18,10 +18,10 @@ class Protocol
         \GPBMetadata\Temporal\Api\Failure\V1\Message::initOnce();
         $pool->internalAddGeneratedFile(
             '
-‘
+ˆ
 protocol.prototemporal.roadrunner.internal%temporal/api/failure/v1/message.proto"@
 Frame7
-messages (2%.temporal.roadrunner.internal.Message"Î
+messages (2%.temporal.roadrunner.internal.Message"æ
 Message
 
 id (
@@ -29,7 +29,8 @@ class Protocol
 options (1
 failure (2 .temporal.api.failure.v1.Failure2
 payloads (2 .temporal.api.common.v1.Payloads.
-header (2.temporal.api.common.v1.HeaderBÊTemporal\\Roadrunner\\Internalbproto3'
+header (2.temporal.api.common.v1.Header
+history_length (bproto3'
         , true);
 
         static::$is_initialized = true;
