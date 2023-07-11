@@ -506,7 +506,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
         return $this->requestInterceptor->with(
             function (RequestInterface $request): PromiseInterface {
                 $request->getHeader()->setDataConverter($this->services->dataConverter);
-                return $this->client->request($request);
+                return $this->client->request($request, $this->getInfo());
             },
             /** @see WorkflowOutboundRequestInterceptor::handleOutboundRequest() */
             'handleOutboundRequest',

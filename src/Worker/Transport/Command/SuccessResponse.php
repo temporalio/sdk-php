@@ -21,11 +21,12 @@ class SuccessResponse extends Response implements SuccessResponseInterface
     /**
      * @param ValuesInterface|null $values
      * @param int $id
+     * @param int<0, max> $historyLength
      */
-    public function __construct(?ValuesInterface $values, int $id)
+    public function __construct(?ValuesInterface $values, int $id, int $historyLength = 0)
     {
         $this->values = $values ?? EncodedValues::empty();
-        parent::__construct($id);
+        parent::__construct($id, $historyLength);
     }
 
     /**

@@ -39,7 +39,7 @@ final class WorkflowInfo
     public WorkflowType $type;
 
     /**
-     * @var string
+     * @var non-empty-string
      */
     #[Marshal(name: 'TaskQueueName')]
     public string $taskQueue = WorkerFactoryInterface::DEFAULT_TASK_QUEUE;
@@ -76,6 +76,17 @@ final class WorkflowInfo
      */
     #[Marshal(name: 'Attempt')]
     public int $attempt = 1;
+
+    /**
+     * Contains the count of history events.
+     * The counter is automatically incremented in the background.
+     *
+     * @var int<0, max>
+     * @since 2.7.0
+     * @since RoadRunner 2023.3. With lower versions, this field is always 0.
+     */
+    #[Marshal(name: 'HistoryLength')]
+    public int $historyLength = 0;
 
     /**
      * @see CronSchedule::$interval for more info about cron format.

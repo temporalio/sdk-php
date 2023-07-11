@@ -27,6 +27,9 @@ use Temporal\Worker\LoopInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\ProcessInterface;
 
+/**
+ * Root process scope.
+ */
 class Process extends Scope implements ProcessInterface
 {
     /**

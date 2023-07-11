@@ -345,7 +345,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     #[Pure]
     private function createClient(): ClientInterface
     {
-        return new Client($this->responses, $this);
+        return new Client($this->responses);
     }
 
     /**

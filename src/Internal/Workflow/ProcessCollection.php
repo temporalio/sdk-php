@@ -25,18 +25,8 @@ class ProcessCollection extends ArrayRepository
      */
     private const ERROR_PROCESS_NOT_DEFINED = 'Unable to kill workflow because workflow process #%s was not found';
 
-    /**
-     * @var ClientInterface
-     */
-    private ClientInterface $client;
-
-    /**
-     * @param ClientInterface $client
-     */
-    public function __construct(ClientInterface $client)
+    public function __construct()
     {
-        $this->client = $client;
-
         parent::__construct();
     }
 
