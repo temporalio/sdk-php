@@ -69,6 +69,16 @@ class WorkflowExecutionInfo extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>int64 state_transition_count = 14;</code>
      */
     protected $state_transition_count = 0;
+    /**
+     * Generated from protobuf field <code>int64 history_size_bytes = 15;</code>
+     */
+    protected $history_size_bytes = 0;
+    /**
+     * If set, the most recent worker version stamp that appeared in a workflow task completion
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionStamp most_recent_worker_version_stamp = 16;</code>
+     */
+    protected $most_recent_worker_version_stamp = null;
 
     /**
      * Constructor.
@@ -90,6 +100,9 @@ class WorkflowExecutionInfo extends \Google\Protobuf\Internal\Message
      *     @type \Temporal\Api\Workflow\V1\ResetPoints $auto_reset_points
      *     @type string $task_queue
      *     @type int|string $state_transition_count
+     *     @type int|string $history_size_bytes
+     *     @type \Temporal\Api\Common\V1\WorkerVersionStamp $most_recent_worker_version_stamp
+     *           If set, the most recent worker version stamp that appeared in a workflow task completion
      * }
      */
     public function __construct($data = NULL) {
@@ -491,6 +504,64 @@ class WorkflowExecutionInfo extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkInt64($var);
         $this->state_transition_count = $var;
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>int64 history_size_bytes = 15;</code>
+     * @return int|string
+     */
+    public function getHistorySizeBytes()
+    {
+        return $this->history_size_bytes;
+    }
+
+    /**
+     * Generated from protobuf field <code>int64 history_size_bytes = 15;</code>
+     * @param int|string $var
+     * @return $this
+     */
+    public function setHistorySizeBytes($var)
+    {
+        GPBUtil::checkInt64($var);
+        $this->history_size_bytes = $var;
+
+        return $this;
+    }
+
+    /**
+     * If set, the most recent worker version stamp that appeared in a workflow task completion
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionStamp most_recent_worker_version_stamp = 16;</code>
+     * @return \Temporal\Api\Common\V1\WorkerVersionStamp|null
+     */
+    public function getMostRecentWorkerVersionStamp()
+    {
+        return $this->most_recent_worker_version_stamp;
+    }
+
+    public function hasMostRecentWorkerVersionStamp()
+    {
+        return isset($this->most_recent_worker_version_stamp);
+    }
+
+    public function clearMostRecentWorkerVersionStamp()
+    {
+        unset($this->most_recent_worker_version_stamp);
+    }
+
+    /**
+     * If set, the most recent worker version stamp that appeared in a workflow task completion
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionStamp most_recent_worker_version_stamp = 16;</code>
+     * @param \Temporal\Api\Common\V1\WorkerVersionStamp $var
+     * @return $this
+     */
+    public function setMostRecentWorkerVersionStamp($var)
+    {
+        GPBUtil::checkMessage($var, \Temporal\Api\Common\V1\WorkerVersionStamp::class);
+        $this->most_recent_worker_version_stamp = $var;
 
         return $this;
     }

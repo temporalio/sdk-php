@@ -38,6 +38,12 @@ class WorkflowExecutionSignaledEventAttributes extends \Google\Protobuf\Internal
      * Generated from protobuf field <code>.temporal.api.common.v1.Header header = 4;</code>
      */
     protected $header = null;
+    /**
+     * Indicates the signal did not generate a new workflow task when received.
+     *
+     * Generated from protobuf field <code>bool skip_generate_workflow_task = 5;</code>
+     */
+    protected $skip_generate_workflow_task = false;
 
     /**
      * Constructor.
@@ -54,6 +60,8 @@ class WorkflowExecutionSignaledEventAttributes extends \Google\Protobuf\Internal
      *     @type \Temporal\Api\Common\V1\Header $header
      *           Headers that were passed by the sender of the signal and copied by temporal 
      *           server into the workflow task.
+     *     @type bool $skip_generate_workflow_task
+     *           Indicates the signal did not generate a new workflow task when received.
      * }
      */
     public function __construct($data = NULL) {
@@ -183,6 +191,32 @@ class WorkflowExecutionSignaledEventAttributes extends \Google\Protobuf\Internal
     {
         GPBUtil::checkMessage($var, \Temporal\Api\Common\V1\Header::class);
         $this->header = $var;
+
+        return $this;
+    }
+
+    /**
+     * Indicates the signal did not generate a new workflow task when received.
+     *
+     * Generated from protobuf field <code>bool skip_generate_workflow_task = 5;</code>
+     * @return bool
+     */
+    public function getSkipGenerateWorkflowTask()
+    {
+        return $this->skip_generate_workflow_task;
+    }
+
+    /**
+     * Indicates the signal did not generate a new workflow task when received.
+     *
+     * Generated from protobuf field <code>bool skip_generate_workflow_task = 5;</code>
+     * @param bool $var
+     * @return $this
+     */
+    public function setSkipGenerateWorkflowTask($var)
+    {
+        GPBUtil::checkBool($var);
+        $this->skip_generate_workflow_task = $var;
 
         return $this;
     }

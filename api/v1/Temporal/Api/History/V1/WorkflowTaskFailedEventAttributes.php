@@ -60,11 +60,20 @@ class WorkflowTaskFailedEventAttributes extends \Google\Protobuf\Internal\Messag
      */
     protected $fork_event_version = 0;
     /**
-     * If a worker explicitly failed this task, it's binary id
+     * DEPRECATED since 1.21 - use `worker_version` instead.
+     * If a worker explicitly failed this task, its binary id
      *
      * Generated from protobuf field <code>string binary_checksum = 9;</code>
      */
     protected $binary_checksum = '';
+    /**
+     * Version info of the worker who processed this workflow task. If present, the `build_id` field
+     * within is also used as `binary_checksum`, which may be omitted in that case (it may also be
+     * populated to preserve compatibility).
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionStamp worker_version = 10;</code>
+     */
+    protected $worker_version = null;
 
     /**
      * Constructor.
@@ -88,7 +97,12 @@ class WorkflowTaskFailedEventAttributes extends \Google\Protobuf\Internal\Messag
      *     @type int|string $fork_event_version
      *           TODO: ?
      *     @type string $binary_checksum
-     *           If a worker explicitly failed this task, it's binary id
+     *           DEPRECATED since 1.21 - use `worker_version` instead.
+     *           If a worker explicitly failed this task, its binary id
+     *     @type \Temporal\Api\Common\V1\WorkerVersionStamp $worker_version
+     *           Version info of the worker who processed this workflow task. If present, the `build_id` field
+     *           within is also used as `binary_checksum`, which may be omitted in that case (it may also be
+     *           populated to preserve compatibility).
      * }
      */
     public function __construct($data = NULL) {
@@ -311,7 +325,8 @@ class WorkflowTaskFailedEventAttributes extends \Google\Protobuf\Internal\Messag
     }
 
     /**
-     * If a worker explicitly failed this task, it's binary id
+     * DEPRECATED since 1.21 - use `worker_version` instead.
+     * If a worker explicitly failed this task, its binary id
      *
      * Generated from protobuf field <code>string binary_checksum = 9;</code>
      * @return string
@@ -322,7 +337,8 @@ class WorkflowTaskFailedEventAttributes extends \Google\Protobuf\Internal\Messag
     }
 
     /**
-     * If a worker explicitly failed this task, it's binary id
+     * DEPRECATED since 1.21 - use `worker_version` instead.
+     * If a worker explicitly failed this task, its binary id
      *
      * Generated from protobuf field <code>string binary_checksum = 9;</code>
      * @param string $var
@@ -332,6 +348,46 @@ class WorkflowTaskFailedEventAttributes extends \Google\Protobuf\Internal\Messag
     {
         GPBUtil::checkString($var, True);
         $this->binary_checksum = $var;
+
+        return $this;
+    }
+
+    /**
+     * Version info of the worker who processed this workflow task. If present, the `build_id` field
+     * within is also used as `binary_checksum`, which may be omitted in that case (it may also be
+     * populated to preserve compatibility).
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionStamp worker_version = 10;</code>
+     * @return \Temporal\Api\Common\V1\WorkerVersionStamp|null
+     */
+    public function getWorkerVersion()
+    {
+        return $this->worker_version;
+    }
+
+    public function hasWorkerVersion()
+    {
+        return isset($this->worker_version);
+    }
+
+    public function clearWorkerVersion()
+    {
+        unset($this->worker_version);
+    }
+
+    /**
+     * Version info of the worker who processed this workflow task. If present, the `build_id` field
+     * within is also used as `binary_checksum`, which may be omitted in that case (it may also be
+     * populated to preserve compatibility).
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionStamp worker_version = 10;</code>
+     * @param \Temporal\Api\Common\V1\WorkerVersionStamp $var
+     * @return $this
+     */
+    public function setWorkerVersion($var)
+    {
+        GPBUtil::checkMessage($var, \Temporal\Api\Common\V1\WorkerVersionStamp::class);
+        $this->worker_version = $var;
 
         return $this;
     }

@@ -26,7 +26,7 @@ jobs:
     strategy:
       fail-fast: ${{ inputs.fail-fast }}
       matrix:
-        php: [ 8.0, 8.1, 8.2 ]
+        php: [ 8.1, 8.2 ]
         os: [ ubuntu-latest ]
         dependencies: [ lowest , highest ]
     steps:
@@ -82,7 +82,7 @@ jobs:
 
       - name: Run tests with Temporal test server
         if: inputs.run-temporal-test-server == true
-        run: vendor/bin/phpunit --testsuite=${{ inputs.test-suite }} --testdox --verbose
+        run: vendor/bin/phpunit --testsuite=${{ inputs.test-suite }} --testdox --verbose --exclude skip-on-test-server
         env:
           RUN_TEMPORAL_TEST_SERVER: ${{ inputs.run-temporal-test-server }}
 

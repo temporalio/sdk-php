@@ -41,6 +41,14 @@ class RespondActivityTaskFailedRequest extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>.temporal.api.common.v1.Payloads last_heartbeat_details = 5;</code>
      */
     protected $last_heartbeat_details = null;
+    /**
+     * Version info of the worker who processed this task. This message's `build_id` field should
+     * always be set by SDKs. Workers opting into versioning will also set the `use_versioning`
+     * field to true. See message docstrings for more.
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionStamp worker_version = 6;</code>
+     */
+    protected $worker_version = null;
 
     /**
      * Constructor.
@@ -57,6 +65,10 @@ class RespondActivityTaskFailedRequest extends \Google\Protobuf\Internal\Message
      *     @type string $namespace
      *     @type \Temporal\Api\Common\V1\Payloads $last_heartbeat_details
      *           Additional details to be stored as last activity heartbeat
+     *     @type \Temporal\Api\Common\V1\WorkerVersionStamp $worker_version
+     *           Version info of the worker who processed this task. This message's `build_id` field should
+     *           always be set by SDKs. Workers opting into versioning will also set the `use_versioning`
+     *           field to true. See message docstrings for more.
      * }
      */
     public function __construct($data = NULL) {
@@ -206,6 +218,46 @@ class RespondActivityTaskFailedRequest extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkMessage($var, \Temporal\Api\Common\V1\Payloads::class);
         $this->last_heartbeat_details = $var;
+
+        return $this;
+    }
+
+    /**
+     * Version info of the worker who processed this task. This message's `build_id` field should
+     * always be set by SDKs. Workers opting into versioning will also set the `use_versioning`
+     * field to true. See message docstrings for more.
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionStamp worker_version = 6;</code>
+     * @return \Temporal\Api\Common\V1\WorkerVersionStamp|null
+     */
+    public function getWorkerVersion()
+    {
+        return $this->worker_version;
+    }
+
+    public function hasWorkerVersion()
+    {
+        return isset($this->worker_version);
+    }
+
+    public function clearWorkerVersion()
+    {
+        unset($this->worker_version);
+    }
+
+    /**
+     * Version info of the worker who processed this task. This message's `build_id` field should
+     * always be set by SDKs. Workers opting into versioning will also set the `use_versioning`
+     * field to true. See message docstrings for more.
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionStamp worker_version = 6;</code>
+     * @param \Temporal\Api\Common\V1\WorkerVersionStamp $var
+     * @return $this
+     */
+    public function setWorkerVersion($var)
+    {
+        GPBUtil::checkMessage($var, \Temporal\Api\Common\V1\WorkerVersionStamp::class);
+        $this->worker_version = $var;
 
         return $this;
     }

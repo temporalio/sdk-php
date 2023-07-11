@@ -16,10 +16,11 @@ class Message
         }
         \GPBMetadata\Temporal\Api\Common\V1\Message::initOnce();
         \GPBMetadata\Temporal\Api\Enums\V1\FailedCause::initOnce();
+        \GPBMetadata\Temporal\Api\Enums\V1\PBNamespace::initOnce();
         $pool->internalAddGeneratedFile(
             '
-É
-*temporal/api/errordetails/v1/message.prototemporal.api.errordetails.v1(temporal/api/enums/v1/failed_cause.proto"B
+œ
+*temporal/api/errordetails/v1/message.prototemporal.api.errordetails.v1(temporal/api/enums/v1/failed_cause.proto%temporal/api/enums/v1/namespace.proto"B
 NotFoundFailure
 current_cluster (	
 active_cluster (	"R
@@ -29,15 +30,21 @@ class Message
 NamespaceNotActiveFailure
 	namespace (	
 current_cluster (	
-active_cluster (	"k
+active_cluster (	"¦
+NamespaceInvalidStateFailure
+	namespace (	4
+state (2%.temporal.api.enums.v1.NamespaceState=
+allowed_states (2%.temporal.api.enums.v1.NamespaceState"-
+NamespaceNotFoundFailure
+	namespace (	"
+NamespaceAlreadyExistsFailure"k
  ClientVersionNotSupportedFailure
 client_version (	
 client_name (	
 supported_versions (	"d
  ServerVersionNotSupportedFailure
 server_version (	(
- client_supported_server_versions (	"
-NamespaceAlreadyExistsFailure"%
+ client_supported_server_versions (	"%
 #CancellationAlreadyRequestedFailure"
 QueryFailedFailure")
 PermissionDeniedFailure
@@ -46,8 +53,11 @@ class Message
 cause (2-.temporal.api.enums.v1.ResourceExhaustedCause"v
 SystemWorkflowFailureE
 workflow_execution (2).temporal.api.common.v1.WorkflowExecution
-workflow_error (	B£
-io.temporal.api.errordetails.v1BMessageProtoPZ/go.temporal.io/api/errordetails/v1;errordetailsªTemporal.Api.ErrorDetails.V1êTemporal::Api::ErrorDetails::V1bproto3'
+workflow_error (	"
+WorkflowNotReadyFailure"3
+NewerBuildExistsFailure
+default_build_id (	B§
+io.temporal.api.errordetails.v1BMessageProtoPZ/go.temporal.io/api/errordetails/v1;errordetailsªTemporalio.Api.ErrorDetails.V1ê!Temporalio::Api::ErrorDetails::V1bproto3'
         , true);
 
         static::$is_initialized = true;

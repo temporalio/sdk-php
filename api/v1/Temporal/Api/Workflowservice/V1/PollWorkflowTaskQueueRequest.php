@@ -28,11 +28,20 @@ class PollWorkflowTaskQueueRequest extends \Google\Protobuf\Internal\Message
      */
     protected $identity = '';
     /**
+     * DEPRECATED since 1.21 - use `worker_version_capabilities` instead.
      * Each worker process should provide an ID unique to the specific set of code it is running
+     * "checksum" in this field name isn't very accurate, it should be though of as an id.
      *
      * Generated from protobuf field <code>string binary_checksum = 4;</code>
      */
     protected $binary_checksum = '';
+    /**
+     * Information about this worker's build identifier and if it is choosing to use the versioning
+     * feature. See the `WorkerVersionCapabilities` docstring for more.
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionCapabilities worker_version_capabilities = 5;</code>
+     */
+    protected $worker_version_capabilities = null;
 
     /**
      * Constructor.
@@ -45,7 +54,12 @@ class PollWorkflowTaskQueueRequest extends \Google\Protobuf\Internal\Message
      *     @type string $identity
      *           The identity of the worker/client who is polling this task queue
      *     @type string $binary_checksum
+     *           DEPRECATED since 1.21 - use `worker_version_capabilities` instead.
      *           Each worker process should provide an ID unique to the specific set of code it is running
+     *           "checksum" in this field name isn't very accurate, it should be though of as an id.
+     *     @type \Temporal\Api\Common\V1\WorkerVersionCapabilities $worker_version_capabilities
+     *           Information about this worker's build identifier and if it is choosing to use the versioning
+     *           feature. See the `WorkerVersionCapabilities` docstring for more.
      * }
      */
     public function __construct($data = NULL) {
@@ -134,7 +148,9 @@ class PollWorkflowTaskQueueRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
+     * DEPRECATED since 1.21 - use `worker_version_capabilities` instead.
      * Each worker process should provide an ID unique to the specific set of code it is running
+     * "checksum" in this field name isn't very accurate, it should be though of as an id.
      *
      * Generated from protobuf field <code>string binary_checksum = 4;</code>
      * @return string
@@ -145,7 +161,9 @@ class PollWorkflowTaskQueueRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
+     * DEPRECATED since 1.21 - use `worker_version_capabilities` instead.
      * Each worker process should provide an ID unique to the specific set of code it is running
+     * "checksum" in this field name isn't very accurate, it should be though of as an id.
      *
      * Generated from protobuf field <code>string binary_checksum = 4;</code>
      * @param string $var
@@ -155,6 +173,44 @@ class PollWorkflowTaskQueueRequest extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkString($var, True);
         $this->binary_checksum = $var;
+
+        return $this;
+    }
+
+    /**
+     * Information about this worker's build identifier and if it is choosing to use the versioning
+     * feature. See the `WorkerVersionCapabilities` docstring for more.
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionCapabilities worker_version_capabilities = 5;</code>
+     * @return \Temporal\Api\Common\V1\WorkerVersionCapabilities|null
+     */
+    public function getWorkerVersionCapabilities()
+    {
+        return $this->worker_version_capabilities;
+    }
+
+    public function hasWorkerVersionCapabilities()
+    {
+        return isset($this->worker_version_capabilities);
+    }
+
+    public function clearWorkerVersionCapabilities()
+    {
+        unset($this->worker_version_capabilities);
+    }
+
+    /**
+     * Information about this worker's build identifier and if it is choosing to use the versioning
+     * feature. See the `WorkerVersionCapabilities` docstring for more.
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionCapabilities worker_version_capabilities = 5;</code>
+     * @param \Temporal\Api\Common\V1\WorkerVersionCapabilities $var
+     * @return $this
+     */
+    public function setWorkerVersionCapabilities($var)
+    {
+        GPBUtil::checkMessage($var, \Temporal\Api\Common\V1\WorkerVersionCapabilities::class);
+        $this->worker_version_capabilities = $var;
 
         return $this;
     }

@@ -26,6 +26,9 @@ final class Type
     public const TYPE_INT       = 'int';
     public const TYPE_FLOAT     = 'float';
     public const TYPE_VOID      = 'void';
+    public const TYPE_NULL      = 'null';
+    public const TYPE_TRUE      = 'true';
+    public const TYPE_FALSE     = 'false';
 
     /**
      * @var string
@@ -46,7 +49,7 @@ final class Type
         $this->name = $name;
 
         $this->allowsNull = $allowsNull ?? (
-            $name === self::TYPE_ANY || $name === self::TYPE_VOID
+            $name === self::TYPE_ANY || $name === self::TYPE_VOID || $name === self::TYPE_NULL
         );
     }
 

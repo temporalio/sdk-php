@@ -439,9 +439,9 @@ class WorkflowServiceClient extends \Grpc\BaseStub {
      * RequestCancelWorkflowExecution is called by workers when they want to request cancellation of
      * a workflow execution.
      *
-     * This result in a new `WORKFLOW_EXECUTION_CANCEL_REQUESTED` event being written to the
-     * workflow history and a new workflow task created for the workflow. Fails with `NotFound` if
-     * the workflow is already completed or doesn't exist.
+     * This results in a new `WORKFLOW_EXECUTION_CANCEL_REQUESTED` event being written to the
+     * workflow history and a new workflow task created for the workflow. It returns success if the requested
+     * workflow is already closed. It fails with 'NotFound' if the requested workflow doesn't exist.
      * @param \Temporal\Api\Workflowservice\V1\RequestCancelWorkflowExecutionRequest $argument input argument
      * @param array $metadata metadata
      * @param array $options call options
@@ -531,6 +531,28 @@ class WorkflowServiceClient extends \Grpc\BaseStub {
         return $this->_simpleRequest('/temporal.api.workflowservice.v1.WorkflowService/TerminateWorkflowExecution',
         $argument,
         ['\Temporal\Api\Workflowservice\V1\TerminateWorkflowExecutionResponse', 'decode'],
+        $metadata, $options);
+    }
+
+    /**
+     * DeleteWorkflowExecution asynchronously deletes a specific Workflow Execution (when
+     * WorkflowExecution.run_id is provided) or the latest Workflow Execution (when
+     * WorkflowExecution.run_id is not provided). If the Workflow Execution is Running, it will be
+     * terminated before deletion.
+     * (-- api-linter: core::0135::method-signature=disabled
+     *     aip.dev/not-precedent: DeleteNamespace RPC doesn't follow Google API format. --)
+     * (-- api-linter: core::0135::response-message-name=disabled
+     *     aip.dev/not-precedent: DeleteNamespace RPC doesn't follow Google API format. --)
+     * @param \Temporal\Api\Workflowservice\V1\DeleteWorkflowExecutionRequest $argument input argument
+     * @param array $metadata metadata
+     * @param array $options call options
+     * @return \Grpc\UnaryCall
+     */
+    public function DeleteWorkflowExecution(\Temporal\Api\Workflowservice\V1\DeleteWorkflowExecutionRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/temporal.api.workflowservice.v1.WorkflowService/DeleteWorkflowExecution',
+        $argument,
+        ['\Temporal\Api\Workflowservice\V1\DeleteWorkflowExecutionResponse', 'decode'],
         $metadata, $options);
     }
 
@@ -765,6 +787,296 @@ class WorkflowServiceClient extends \Grpc\BaseStub {
         return $this->_simpleRequest('/temporal.api.workflowservice.v1.WorkflowService/ListTaskQueuePartitions',
         $argument,
         ['\Temporal\Api\Workflowservice\V1\ListTaskQueuePartitionsResponse', 'decode'],
+        $metadata, $options);
+    }
+
+    /**
+     * Creates a new schedule.
+     * (-- api-linter: core::0133::method-signature=disabled
+     *     aip.dev/not-precedent: CreateSchedule doesn't follow Google API format --)
+     * (-- api-linter: core::0133::response-message-name=disabled
+     *     aip.dev/not-precedent: CreateSchedule doesn't follow Google API format --)
+     * (-- api-linter: core::0133::http-uri-parent=disabled
+     *     aip.dev/not-precedent: CreateSchedule doesn't follow Google API format --)
+     * @param \Temporal\Api\Workflowservice\V1\CreateScheduleRequest $argument input argument
+     * @param array $metadata metadata
+     * @param array $options call options
+     * @return \Grpc\UnaryCall
+     */
+    public function CreateSchedule(\Temporal\Api\Workflowservice\V1\CreateScheduleRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/temporal.api.workflowservice.v1.WorkflowService/CreateSchedule',
+        $argument,
+        ['\Temporal\Api\Workflowservice\V1\CreateScheduleResponse', 'decode'],
+        $metadata, $options);
+    }
+
+    /**
+     * Returns the schedule description and current state of an existing schedule.
+     * @param \Temporal\Api\Workflowservice\V1\DescribeScheduleRequest $argument input argument
+     * @param array $metadata metadata
+     * @param array $options call options
+     * @return \Grpc\UnaryCall
+     */
+    public function DescribeSchedule(\Temporal\Api\Workflowservice\V1\DescribeScheduleRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/temporal.api.workflowservice.v1.WorkflowService/DescribeSchedule',
+        $argument,
+        ['\Temporal\Api\Workflowservice\V1\DescribeScheduleResponse', 'decode'],
+        $metadata, $options);
+    }
+
+    /**
+     * Changes the configuration or state of an existing schedule.
+     * (-- api-linter: core::0134::response-message-name=disabled
+     *     aip.dev/not-precedent: UpdateSchedule RPC doesn't follow Google API format. --)
+     * (-- api-linter: core::0134::method-signature=disabled
+     *     aip.dev/not-precedent: UpdateSchedule RPC doesn't follow Google API format. --)
+     * @param \Temporal\Api\Workflowservice\V1\UpdateScheduleRequest $argument input argument
+     * @param array $metadata metadata
+     * @param array $options call options
+     * @return \Grpc\UnaryCall
+     */
+    public function UpdateSchedule(\Temporal\Api\Workflowservice\V1\UpdateScheduleRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/temporal.api.workflowservice.v1.WorkflowService/UpdateSchedule',
+        $argument,
+        ['\Temporal\Api\Workflowservice\V1\UpdateScheduleResponse', 'decode'],
+        $metadata, $options);
+    }
+
+    /**
+     * Makes a specific change to a schedule or triggers an immediate action.
+     * (-- api-linter: core::0134::synonyms=disabled
+     *     aip.dev/not-precedent: we have both patch and update. --)
+     * @param \Temporal\Api\Workflowservice\V1\PatchScheduleRequest $argument input argument
+     * @param array $metadata metadata
+     * @param array $options call options
+     * @return \Grpc\UnaryCall
+     */
+    public function PatchSchedule(\Temporal\Api\Workflowservice\V1\PatchScheduleRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/temporal.api.workflowservice.v1.WorkflowService/PatchSchedule',
+        $argument,
+        ['\Temporal\Api\Workflowservice\V1\PatchScheduleResponse', 'decode'],
+        $metadata, $options);
+    }
+
+    /**
+     * Lists matching times within a range.
+     * @param \Temporal\Api\Workflowservice\V1\ListScheduleMatchingTimesRequest $argument input argument
+     * @param array $metadata metadata
+     * @param array $options call options
+     * @return \Grpc\UnaryCall
+     */
+    public function ListScheduleMatchingTimes(\Temporal\Api\Workflowservice\V1\ListScheduleMatchingTimesRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/temporal.api.workflowservice.v1.WorkflowService/ListScheduleMatchingTimes',
+        $argument,
+        ['\Temporal\Api\Workflowservice\V1\ListScheduleMatchingTimesResponse', 'decode'],
+        $metadata, $options);
+    }
+
+    /**
+     * Deletes a schedule, removing it from the system.
+     * (-- api-linter: core::0135::method-signature=disabled
+     *     aip.dev/not-precedent: DeleteSchedule doesn't follow Google API format --)
+     * (-- api-linter: core::0135::response-message-name=disabled
+     *     aip.dev/not-precedent: DeleteSchedule doesn't follow Google API format --)
+     * @param \Temporal\Api\Workflowservice\V1\DeleteScheduleRequest $argument input argument
+     * @param array $metadata metadata
+     * @param array $options call options
+     * @return \Grpc\UnaryCall
+     */
+    public function DeleteSchedule(\Temporal\Api\Workflowservice\V1\DeleteScheduleRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/temporal.api.workflowservice.v1.WorkflowService/DeleteSchedule',
+        $argument,
+        ['\Temporal\Api\Workflowservice\V1\DeleteScheduleResponse', 'decode'],
+        $metadata, $options);
+    }
+
+    /**
+     * List all schedules in a namespace.
+     * @param \Temporal\Api\Workflowservice\V1\ListSchedulesRequest $argument input argument
+     * @param array $metadata metadata
+     * @param array $options call options
+     * @return \Grpc\UnaryCall
+     */
+    public function ListSchedules(\Temporal\Api\Workflowservice\V1\ListSchedulesRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/temporal.api.workflowservice.v1.WorkflowService/ListSchedules',
+        $argument,
+        ['\Temporal\Api\Workflowservice\V1\ListSchedulesResponse', 'decode'],
+        $metadata, $options);
+    }
+
+    /**
+     * Allows users to specify sets of worker build id versions on a per task queue basis. Versions
+     * are ordered, and may be either compatible with some extant version, or a new incompatible
+     * version, forming sets of ids which are incompatible with each other, but whose contained
+     * members are compatible with one another.
+     *
+     * A single build id may be mapped to multiple task queues using this API for cases where a single process hosts
+     * multiple workers. 
+     * 
+     * To query which workers can be retired, use the `GetWorkerTaskReachability` API.
+     *
+     * NOTE: The number of task queues mapped to a single build id is limited by the `limit.taskQueuesPerBuildId`
+     * (default is 20), if this limit is exceeded this API will error with a FailedPrecondition.
+     *
+     * (-- api-linter: core::0134::response-message-name=disabled
+     *     aip.dev/not-precedent: UpdateWorkerBuildIdCompatibility RPC doesn't follow Google API format. --)
+     * (-- api-linter: core::0134::method-signature=disabled
+     *     aip.dev/not-precedent: UpdateWorkerBuildIdCompatibility RPC doesn't follow Google API format. --)
+     * @param \Temporal\Api\Workflowservice\V1\UpdateWorkerBuildIdCompatibilityRequest $argument input argument
+     * @param array $metadata metadata
+     * @param array $options call options
+     * @return \Grpc\UnaryCall
+     */
+    public function UpdateWorkerBuildIdCompatibility(\Temporal\Api\Workflowservice\V1\UpdateWorkerBuildIdCompatibilityRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/temporal.api.workflowservice.v1.WorkflowService/UpdateWorkerBuildIdCompatibility',
+        $argument,
+        ['\Temporal\Api\Workflowservice\V1\UpdateWorkerBuildIdCompatibilityResponse', 'decode'],
+        $metadata, $options);
+    }
+
+    /**
+     * Fetches the worker build id versioning sets for a task queue.
+     * @param \Temporal\Api\Workflowservice\V1\GetWorkerBuildIdCompatibilityRequest $argument input argument
+     * @param array $metadata metadata
+     * @param array $options call options
+     * @return \Grpc\UnaryCall
+     */
+    public function GetWorkerBuildIdCompatibility(\Temporal\Api\Workflowservice\V1\GetWorkerBuildIdCompatibilityRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/temporal.api.workflowservice.v1.WorkflowService/GetWorkerBuildIdCompatibility',
+        $argument,
+        ['\Temporal\Api\Workflowservice\V1\GetWorkerBuildIdCompatibilityResponse', 'decode'],
+        $metadata, $options);
+    }
+
+    /**
+     * Fetches task reachability to determine whether a worker may be retired.
+     * The request may specify task queues to query for or let the server fetch all task queues mapped to the given
+     * build IDs.
+     *
+     * When requesting a large number of task queues or all task queues associated with the given build ids in a
+     * namespace, all task queues will be listed in the response but some of them may not contain reachability
+     * information due to a server enforced limit. When reaching the limit, task queues that reachability information
+     * could not be retrieved for will be marked with a single TASK_REACHABILITY_UNSPECIFIED entry. The caller may issue
+     * another call to get the reachability for those task queues.
+     *
+     * Open source users can adjust this limit by setting the server's dynamic config value for
+     * `limit.reachabilityTaskQueueScan` with the caveat that this call can strain the visibility store.
+     * @param \Temporal\Api\Workflowservice\V1\GetWorkerTaskReachabilityRequest $argument input argument
+     * @param array $metadata metadata
+     * @param array $options call options
+     * @return \Grpc\UnaryCall
+     */
+    public function GetWorkerTaskReachability(\Temporal\Api\Workflowservice\V1\GetWorkerTaskReachabilityRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/temporal.api.workflowservice.v1.WorkflowService/GetWorkerTaskReachability',
+        $argument,
+        ['\Temporal\Api\Workflowservice\V1\GetWorkerTaskReachabilityResponse', 'decode'],
+        $metadata, $options);
+    }
+
+    /**
+     * Invokes the specified update function on user workflow code.
+     * (-- api-linter: core::0134=disabled
+     *     aip.dev/not-precedent: UpdateWorkflowExecution doesn't follow Google API format --)
+     * @param \Temporal\Api\Workflowservice\V1\UpdateWorkflowExecutionRequest $argument input argument
+     * @param array $metadata metadata
+     * @param array $options call options
+     * @return \Grpc\UnaryCall
+     */
+    public function UpdateWorkflowExecution(\Temporal\Api\Workflowservice\V1\UpdateWorkflowExecutionRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/temporal.api.workflowservice.v1.WorkflowService/UpdateWorkflowExecution',
+        $argument,
+        ['\Temporal\Api\Workflowservice\V1\UpdateWorkflowExecutionResponse', 'decode'],
+        $metadata, $options);
+    }
+
+    /**
+     * Polls a workflow execution for the outcome of a workflow execution update
+     * previously issued through the UpdateWorkflowExecution RPC. The effective
+     * timeout on this call will be shorter of the the caller-supplied gRPC
+     * timeout and the server's configured long-poll timeout.
+     * (-- api-linter: core::0134=disabled
+     *     aip.dev/not-precedent: UpdateWorkflowExecution doesn't follow Google API format --)
+     * @param \Temporal\Api\Workflowservice\V1\PollWorkflowExecutionUpdateRequest $argument input argument
+     * @param array $metadata metadata
+     * @param array $options call options
+     * @return \Grpc\UnaryCall
+     */
+    public function PollWorkflowExecutionUpdate(\Temporal\Api\Workflowservice\V1\PollWorkflowExecutionUpdateRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/temporal.api.workflowservice.v1.WorkflowService/PollWorkflowExecutionUpdate',
+        $argument,
+        ['\Temporal\Api\Workflowservice\V1\PollWorkflowExecutionUpdateResponse', 'decode'],
+        $metadata, $options);
+    }
+
+    /**
+     * StartBatchOperation starts a new batch operation
+     * @param \Temporal\Api\Workflowservice\V1\StartBatchOperationRequest $argument input argument
+     * @param array $metadata metadata
+     * @param array $options call options
+     * @return \Grpc\UnaryCall
+     */
+    public function StartBatchOperation(\Temporal\Api\Workflowservice\V1\StartBatchOperationRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/temporal.api.workflowservice.v1.WorkflowService/StartBatchOperation',
+        $argument,
+        ['\Temporal\Api\Workflowservice\V1\StartBatchOperationResponse', 'decode'],
+        $metadata, $options);
+    }
+
+    /**
+     * StopBatchOperation stops a batch operation
+     * @param \Temporal\Api\Workflowservice\V1\StopBatchOperationRequest $argument input argument
+     * @param array $metadata metadata
+     * @param array $options call options
+     * @return \Grpc\UnaryCall
+     */
+    public function StopBatchOperation(\Temporal\Api\Workflowservice\V1\StopBatchOperationRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/temporal.api.workflowservice.v1.WorkflowService/StopBatchOperation',
+        $argument,
+        ['\Temporal\Api\Workflowservice\V1\StopBatchOperationResponse', 'decode'],
+        $metadata, $options);
+    }
+
+    /**
+     * DescribeBatchOperation returns the information about a batch operation
+     * @param \Temporal\Api\Workflowservice\V1\DescribeBatchOperationRequest $argument input argument
+     * @param array $metadata metadata
+     * @param array $options call options
+     * @return \Grpc\UnaryCall
+     */
+    public function DescribeBatchOperation(\Temporal\Api\Workflowservice\V1\DescribeBatchOperationRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/temporal.api.workflowservice.v1.WorkflowService/DescribeBatchOperation',
+        $argument,
+        ['\Temporal\Api\Workflowservice\V1\DescribeBatchOperationResponse', 'decode'],
+        $metadata, $options);
+    }
+
+    /**
+     * ListBatchOperations returns a list of batch operations
+     * @param \Temporal\Api\Workflowservice\V1\ListBatchOperationsRequest $argument input argument
+     * @param array $metadata metadata
+     * @param array $options call options
+     * @return \Grpc\UnaryCall
+     */
+    public function ListBatchOperations(\Temporal\Api\Workflowservice\V1\ListBatchOperationsRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/temporal.api.workflowservice.v1.WorkflowService/ListBatchOperations',
+        $argument,
+        ['\Temporal\Api\Workflowservice\V1\ListBatchOperationsResponse', 'decode'],
         $metadata, $options);
     }
 

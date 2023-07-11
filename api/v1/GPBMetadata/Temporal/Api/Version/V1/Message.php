@@ -19,7 +19,7 @@ class Message
         \GPBMetadata\Temporal\Api\Enums\V1\Common::initOnce();
         $pool->internalAddGeneratedFile(
             '
-‘
+ÿ
 %temporal/api/version/v1/message.prototemporal.api.version.v1!dependencies/gogoproto/gogo.proto"temporal/api/enums/v1/common.proto"e
 ReleaseInfo
 version (	6
@@ -33,8 +33,8 @@ class Message
 recommended (2$.temporal.api.version.v1.ReleaseInfo
 instructions (	.
 alerts (2.temporal.api.version.v1.Alert:
-last_update_time (2.google.protobuf.TimestampBêﬂBä
-io.temporal.api.version.v1BMessageProtoPZ%go.temporal.io/api/version/v1;version™Temporal.Api.Version.V1ÍTemporal::Api::Version::V1bproto3'
+last_update_time (2.google.protobuf.TimestampBêﬂBé
+io.temporal.api.version.v1BMessageProtoPZ%go.temporal.io/api/version/v1;version™Temporalio.Api.Version.V1ÍTemporalio::Api::Version::V1bproto3'
         , true);
 
         static::$is_initialized = true;

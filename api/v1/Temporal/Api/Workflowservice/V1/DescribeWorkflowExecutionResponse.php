@@ -42,8 +42,8 @@ class DescribeWorkflowExecutionResponse extends \Google\Protobuf\Internal\Messag
      *
      *     @type \Temporal\Api\Workflow\V1\WorkflowExecutionConfig $execution_config
      *     @type \Temporal\Api\Workflow\V1\WorkflowExecutionInfo $workflow_execution_info
-     *     @type \Temporal\Api\Workflow\V1\PendingActivityInfo[]|\Google\Protobuf\Internal\RepeatedField $pending_activities
-     *     @type \Temporal\Api\Workflow\V1\PendingChildExecutionInfo[]|\Google\Protobuf\Internal\RepeatedField $pending_children
+     *     @type array<\Temporal\Api\Workflow\V1\PendingActivityInfo>|\Google\Protobuf\Internal\RepeatedField $pending_activities
+     *     @type array<\Temporal\Api\Workflow\V1\PendingChildExecutionInfo>|\Google\Protobuf\Internal\RepeatedField $pending_children
      *     @type \Temporal\Api\Workflow\V1\PendingWorkflowTaskInfo $pending_workflow_task
      * }
      */
@@ -127,7 +127,7 @@ class DescribeWorkflowExecutionResponse extends \Google\Protobuf\Internal\Messag
 
     /**
      * Generated from protobuf field <code>repeated .temporal.api.workflow.v1.PendingActivityInfo pending_activities = 3;</code>
-     * @param \Temporal\Api\Workflow\V1\PendingActivityInfo[]|\Google\Protobuf\Internal\RepeatedField $var
+     * @param array<\Temporal\Api\Workflow\V1\PendingActivityInfo>|\Google\Protobuf\Internal\RepeatedField $var
      * @return $this
      */
     public function setPendingActivities($var)
@@ -149,7 +149,7 @@ class DescribeWorkflowExecutionResponse extends \Google\Protobuf\Internal\Messag
 
     /**
      * Generated from protobuf field <code>repeated .temporal.api.workflow.v1.PendingChildExecutionInfo pending_children = 4;</code>
-     * @param \Temporal\Api\Workflow\V1\PendingChildExecutionInfo[]|\Google\Protobuf\Internal\RepeatedField $var
+     * @param array<\Temporal\Api\Workflow\V1\PendingChildExecutionInfo>|\Google\Protobuf\Internal\RepeatedField $var
      * @return $this
      */
     public function setPendingChildren($var)

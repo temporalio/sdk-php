@@ -23,6 +23,8 @@ class UpdateNamespaceInfo extends \Google\Protobuf\Internal\Message
     protected $owner_email = '';
     /**
      * A key-value map for any customized purpose.
+     * If data already exists on the namespace, 
+     * this will merge with the existing key values. 
      *
      * Generated from protobuf field <code>map<string, string> data = 3;</code>
      */
@@ -48,6 +50,8 @@ class UpdateNamespaceInfo extends \Google\Protobuf\Internal\Message
      *     @type string $owner_email
      *     @type array|\Google\Protobuf\Internal\MapField $data
      *           A key-value map for any customized purpose.
+     *           If data already exists on the namespace, 
+     *           this will merge with the existing key values. 
      *     @type int $state
      *           New namespace state, server will reject if transition is not allowed.
      *           Allowed transitions are:
@@ -107,6 +111,8 @@ class UpdateNamespaceInfo extends \Google\Protobuf\Internal\Message
 
     /**
      * A key-value map for any customized purpose.
+     * If data already exists on the namespace, 
+     * this will merge with the existing key values. 
      *
      * Generated from protobuf field <code>map<string, string> data = 3;</code>
      * @return \Google\Protobuf\Internal\MapField
@@ -118,6 +124,8 @@ class UpdateNamespaceInfo extends \Google\Protobuf\Internal\Message
 
     /**
      * A key-value map for any customized purpose.
+     * If data already exists on the namespace, 
+     * this will merge with the existing key values. 
      *
      * Generated from protobuf field <code>map<string, string> data = 3;</code>
      * @param array|\Google\Protobuf\Internal\MapField $var

@@ -82,7 +82,7 @@ class RegisterNamespaceRequest extends \Google\Protobuf\Internal\Message
      *     @type string $description
      *     @type string $owner_email
      *     @type \Google\Protobuf\Duration $workflow_execution_retention_period
-     *     @type \Temporal\Api\Replication\V1\ClusterReplicationConfig[]|\Google\Protobuf\Internal\RepeatedField $clusters
+     *     @type array<\Temporal\Api\Replication\V1\ClusterReplicationConfig>|\Google\Protobuf\Internal\RepeatedField $clusters
      *     @type string $active_cluster_name
      *     @type array|\Google\Protobuf\Internal\MapField $data
      *           A key-value map for any customized purpose.
@@ -210,7 +210,7 @@ class RegisterNamespaceRequest extends \Google\Protobuf\Internal\Message
 
     /**
      * Generated from protobuf field <code>repeated .temporal.api.replication.v1.ClusterReplicationConfig clusters = 5;</code>
-     * @param \Temporal\Api\Replication\V1\ClusterReplicationConfig[]|\Google\Protobuf\Internal\RepeatedField $var
+     * @param array<\Temporal\Api\Replication\V1\ClusterReplicationConfig>|\Google\Protobuf\Internal\RepeatedField $var
      * @return $this
      */
     public function setClusters($var)

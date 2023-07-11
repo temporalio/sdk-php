@@ -295,6 +295,46 @@ class EventType
      * Generated from protobuf enum <code>EVENT_TYPE_UPSERT_WORKFLOW_SEARCH_ATTRIBUTES = 40;</code>
      */
     const EVENT_TYPE_UPSERT_WORKFLOW_SEARCH_ATTRIBUTES = 40;
+    /**
+     * An update was accepted (i.e. validated)
+     *
+     * Generated from protobuf enum <code>EVENT_TYPE_WORKFLOW_EXECUTION_UPDATE_ACCEPTED = 41;</code>
+     */
+    const EVENT_TYPE_WORKFLOW_EXECUTION_UPDATE_ACCEPTED = 41;
+    /**
+     * An update was rejected (i.e. failed validation)
+     *
+     * Generated from protobuf enum <code>EVENT_TYPE_WORKFLOW_EXECUTION_UPDATE_REJECTED = 42;</code>
+     */
+    const EVENT_TYPE_WORKFLOW_EXECUTION_UPDATE_REJECTED = 42;
+    /**
+     * An update completed
+     *
+     * Generated from protobuf enum <code>EVENT_TYPE_WORKFLOW_EXECUTION_UPDATE_COMPLETED = 43;</code>
+     */
+    const EVENT_TYPE_WORKFLOW_EXECUTION_UPDATE_COMPLETED = 43;
+    /**
+     * Some property or properties of the workflow as a whole have changed by non-workflow code.
+     * The distinction of external vs. command-based modification is important so the SDK can
+     * maintain determinism when using the command-based approach.
+     *
+     * Generated from protobuf enum <code>EVENT_TYPE_WORKFLOW_PROPERTIES_MODIFIED_EXTERNALLY = 44;</code>
+     */
+    const EVENT_TYPE_WORKFLOW_PROPERTIES_MODIFIED_EXTERNALLY = 44;
+    /**
+     * Some property or properties of an already-scheduled activity have changed by non-workflow code.
+     * The distinction of external vs. command-based modification is important so the SDK can
+     * maintain determinism when using the command-based approach.
+     *
+     * Generated from protobuf enum <code>EVENT_TYPE_ACTIVITY_PROPERTIES_MODIFIED_EXTERNALLY = 45;</code>
+     */
+    const EVENT_TYPE_ACTIVITY_PROPERTIES_MODIFIED_EXTERNALLY = 45;
+    /**
+     * Workflow properties modified by user workflow code
+     *
+     * Generated from protobuf enum <code>EVENT_TYPE_WORKFLOW_PROPERTIES_MODIFIED = 46;</code>
+     */
+    const EVENT_TYPE_WORKFLOW_PROPERTIES_MODIFIED = 46;
 
     private static $valueToName = [
         self::EVENT_TYPE_UNSPECIFIED => 'EVENT_TYPE_UNSPECIFIED',
@@ -338,6 +378,12 @@ class EventType
         self::EVENT_TYPE_SIGNAL_EXTERNAL_WORKFLOW_EXECUTION_FAILED => 'EVENT_TYPE_SIGNAL_EXTERNAL_WORKFLOW_EXECUTION_FAILED',
         self::EVENT_TYPE_EXTERNAL_WORKFLOW_EXECUTION_SIGNALED => 'EVENT_TYPE_EXTERNAL_WORKFLOW_EXECUTION_SIGNALED',
         self::EVENT_TYPE_UPSERT_WORKFLOW_SEARCH_ATTRIBUTES => 'EVENT_TYPE_UPSERT_WORKFLOW_SEARCH_ATTRIBUTES',
+        self::EVENT_TYPE_WORKFLOW_EXECUTION_UPDATE_ACCEPTED => 'EVENT_TYPE_WORKFLOW_EXECUTION_UPDATE_ACCEPTED',
+        self::EVENT_TYPE_WORKFLOW_EXECUTION_UPDATE_REJECTED => 'EVENT_TYPE_WORKFLOW_EXECUTION_UPDATE_REJECTED',
+        self::EVENT_TYPE_WORKFLOW_EXECUTION_UPDATE_COMPLETED => 'EVENT_TYPE_WORKFLOW_EXECUTION_UPDATE_COMPLETED',
+        self::EVENT_TYPE_WORKFLOW_PROPERTIES_MODIFIED_EXTERNALLY => 'EVENT_TYPE_WORKFLOW_PROPERTIES_MODIFIED_EXTERNALLY',
+        self::EVENT_TYPE_ACTIVITY_PROPERTIES_MODIFIED_EXTERNALLY => 'EVENT_TYPE_ACTIVITY_PROPERTIES_MODIFIED_EXTERNALLY',
+        self::EVENT_TYPE_WORKFLOW_PROPERTIES_MODIFIED => 'EVENT_TYPE_WORKFLOW_PROPERTIES_MODIFIED',
     ];
 
     public static function name($value)
