@@ -35,6 +35,14 @@ class RespondActivityTaskCanceledRequest extends \Google\Protobuf\Internal\Messa
      * Generated from protobuf field <code>string namespace = 4;</code>
      */
     protected $namespace = '';
+    /**
+     * Version info of the worker who processed this task. This message's `build_id` field should
+     * always be set by SDKs. Workers opting into versioning will also set the `use_versioning`
+     * field to true. See message docstrings for more.
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionStamp worker_version = 5;</code>
+     */
+    protected $worker_version = null;
 
     /**
      * Constructor.
@@ -49,6 +57,10 @@ class RespondActivityTaskCanceledRequest extends \Google\Protobuf\Internal\Messa
      *     @type string $identity
      *           The identity of the worker/client
      *     @type string $namespace
+     *     @type \Temporal\Api\Common\V1\WorkerVersionStamp $worker_version
+     *           Version info of the worker who processed this task. This message's `build_id` field should
+     *           always be set by SDKs. Workers opting into versioning will also set the `use_versioning`
+     *           field to true. See message docstrings for more.
      * }
      */
     public function __construct($data = NULL) {
@@ -162,6 +174,46 @@ class RespondActivityTaskCanceledRequest extends \Google\Protobuf\Internal\Messa
     {
         GPBUtil::checkString($var, True);
         $this->namespace = $var;
+
+        return $this;
+    }
+
+    /**
+     * Version info of the worker who processed this task. This message's `build_id` field should
+     * always be set by SDKs. Workers opting into versioning will also set the `use_versioning`
+     * field to true. See message docstrings for more.
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionStamp worker_version = 5;</code>
+     * @return \Temporal\Api\Common\V1\WorkerVersionStamp|null
+     */
+    public function getWorkerVersion()
+    {
+        return $this->worker_version;
+    }
+
+    public function hasWorkerVersion()
+    {
+        return isset($this->worker_version);
+    }
+
+    public function clearWorkerVersion()
+    {
+        unset($this->worker_version);
+    }
+
+    /**
+     * Version info of the worker who processed this task. This message's `build_id` field should
+     * always be set by SDKs. Workers opting into versioning will also set the `use_versioning`
+     * field to true. See message docstrings for more.
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionStamp worker_version = 5;</code>
+     * @param \Temporal\Api\Common\V1\WorkerVersionStamp $var
+     * @return $this
+     */
+    public function setWorkerVersion($var)
+    {
+        GPBUtil::checkMessage($var, \Temporal\Api\Common\V1\WorkerVersionStamp::class);
+        $this->worker_version = $var;
 
         return $this;
     }

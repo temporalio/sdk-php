@@ -21,8 +21,6 @@ use Temporal\Tests\Workflow\SimpleEnumWorkflow;
 /**
  * @group client
  * @group functional
- *
- * @requires PHP >= 8.1
  */
 class EnumTestCase extends ClientTestCase
 {

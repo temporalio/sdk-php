@@ -22,6 +22,7 @@ use Temporal\Internal\Transport\Request\ExecuteLocalActivity;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\ActivityStubInterface;
+use Temporal\DataConverter\Type;
 
 final class ActivityStub implements ActivityStubInterface
 {
@@ -63,8 +64,12 @@ final class ActivityStub implements ActivityStubInterface
     /**
      * {@inheritDoc}
      */
-    public function execute(string $name, array $args = [], $returnType = null, bool $isLocalActivity = false): PromiseInterface
-    {
+    public function execute(
+        string $name,
+        array $args = [],
+        Type|string|\ReflectionClass|\ReflectionType $returnType = null,
+        bool $isLocalActivity = false
+    ): PromiseInterface {
         $request = $isLocalActivity ?
             new ExecuteLocalActivity($name, EncodedValues::fromValues($args), $this->getOptionsArray(), $this->header) :
             new ExecuteActivity($name, EncodedValues::fromValues($args), $this->getOptionsArray(), $this->header);

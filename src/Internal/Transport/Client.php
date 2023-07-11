@@ -21,6 +21,7 @@ use Temporal\Worker\Transport\Command\FailureResponseInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\ResponseInterface;
 use Temporal\Worker\Transport\Command\SuccessResponseInterface;
+use Temporal\Workflow\WorkflowInfo;
 
 /**
  * @internal Client is an internal library class, please do not use it in your code.
@@ -36,6 +37,9 @@ final class Client implements ClientInterface
         'Unable to receive a request with id %d because ' .
         'a request with that identifier was not sent';
 
+    /**
+     * @var array<int, array{Deferred, WorkflowInfo|null}>
+     */
     private array $requests = [];
 
     /**
@@ -52,14 +56,21 @@ final class Client implements ClientInterface
      */
     public function dispatch(ResponseInterface $response): void
     {
-        if (!isset($this->requests[$response->getID()])) {
+        $id = $response->getID();
+        if (!isset($this->requests[$id])) {
             $this->request(new UndefinedResponse(
-                \sprintf('Got the response to undefined request %s', $response->getID()),
+                \sprintf('Got the response to undefined request %s', $id),
             ));
             return;
         }
 
-        $deferred = $this->fetch($response->getID());
+        [$deferred, $info] = $this->requests[$id];
+        unset($this->requests[$id]);
+
+        if ($info !== null && $response->getHistoryLength() > $info->historyLength) {
+            /** @psalm-suppress InaccessibleProperty */
+            $info->historyLength = $response->getHistoryLength();
+        }
 
         if ($response instanceof FailureResponseInterface) {
             $deferred->reject($response->getFailure());
@@ -70,9 +81,11 @@ final class Client implements ClientInterface
 
     /**
      * @param RequestInterface $request
+     * @param null|WorkflowInfo $workflowInfo
+     *
      * @return PromiseInterface
      */
-    public function request(RequestInterface $request): PromiseInterface
+    public function request(RequestInterface $request, ?WorkflowInfo $workflowInfo = null): PromiseInterface
     {
         $this->queue->push($request);
 
@@ -82,7 +95,8 @@ final class Client implements ClientInterface
             throw new \OutOfBoundsException(\sprintf(self::ERROR_REQUEST_ID_DUPLICATION, $id));
         }
 
-        $this->requests[$id] = $deferred = new Deferred();
+        $deferred = new Deferred();
+        $this->requests[$id] = [$deferred, $workflowInfo];
 
         return $deferred->promise();
     }
@@ -144,6 +158,6 @@ final class Client implements ClientInterface
             throw new \UnderflowException(\sprintf(self::ERROR_REQUEST_NOT_FOUND, $id));
         }
 
-        return $this->requests[$id];
+        return $this->requests[$id][0];
     }
 }

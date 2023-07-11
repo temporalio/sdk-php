@@ -18,11 +18,16 @@ class ChildWorkflowExecutionFailedEventAttributes extends \Google\Protobuf\Inter
      */
     protected $failure = null;
     /**
-     * Namespace of the child workflow
+     * Namespace of the child workflow.
+     * SDKs and UI tools should use `namespace` field but server must use `namespace_id` only.
      *
      * Generated from protobuf field <code>string namespace = 2;</code>
      */
     protected $namespace = '';
+    /**
+     * Generated from protobuf field <code>string namespace_id = 8;</code>
+     */
+    protected $namespace_id = '';
     /**
      * Generated from protobuf field <code>.temporal.api.common.v1.WorkflowExecution workflow_execution = 3;</code>
      */
@@ -56,7 +61,9 @@ class ChildWorkflowExecutionFailedEventAttributes extends \Google\Protobuf\Inter
      *
      *     @type \Temporal\Api\Failure\V1\Failure $failure
      *     @type string $namespace
-     *           Namespace of the child workflow
+     *           Namespace of the child workflow.
+     *           SDKs and UI tools should use `namespace` field but server must use `namespace_id` only.
+     *     @type string $namespace_id
      *     @type \Temporal\Api\Common\V1\WorkflowExecution $workflow_execution
      *     @type \Temporal\Api\Common\V1\WorkflowType $workflow_type
      *     @type int|string $initiated_event_id
@@ -104,7 +111,8 @@ class ChildWorkflowExecutionFailedEventAttributes extends \Google\Protobuf\Inter
     }
 
     /**
-     * Namespace of the child workflow
+     * Namespace of the child workflow.
+     * SDKs and UI tools should use `namespace` field but server must use `namespace_id` only.
      *
      * Generated from protobuf field <code>string namespace = 2;</code>
      * @return string
@@ -115,7 +123,8 @@ class ChildWorkflowExecutionFailedEventAttributes extends \Google\Protobuf\Inter
     }
 
     /**
-     * Namespace of the child workflow
+     * Namespace of the child workflow.
+     * SDKs and UI tools should use `namespace` field but server must use `namespace_id` only.
      *
      * Generated from protobuf field <code>string namespace = 2;</code>
      * @param string $var
@@ -125,6 +134,28 @@ class ChildWorkflowExecutionFailedEventAttributes extends \Google\Protobuf\Inter
     {
         GPBUtil::checkString($var, True);
         $this->namespace = $var;
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>string namespace_id = 8;</code>
+     * @return string
+     */
+    public function getNamespaceId()
+    {
+        return $this->namespace_id;
+    }
+
+    /**
+     * Generated from protobuf field <code>string namespace_id = 8;</code>
+     * @param string $var
+     * @return $this
+     */
+    public function setNamespaceId($var)
+    {
+        GPBUtil::checkString($var, True);
+        $this->namespace_id = $var;
 
         return $this;
     }

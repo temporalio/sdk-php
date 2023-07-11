@@ -12,10 +12,14 @@ declare(strict_types=1);
 namespace Temporal\Client;
 
 use Doctrine\Common\Annotations\Reader;
+use Generator;
 use Spiral\Attributes\AnnotationReader;
 use Spiral\Attributes\AttributeReader;
 use Spiral\Attributes\Composite\SelectiveReader;
 use Spiral\Attributes\ReaderInterface;
+use Temporal\Api\Workflow\V1\WorkflowExecutionInfo;
+use Temporal\Api\Workflowservice\V1\CountWorkflowExecutionsRequest;
+use Temporal\Api\Workflowservice\V1\ListWorkflowExecutionsRequest;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
@@ -31,6 +35,7 @@ use Temporal\Internal\Client\WorkflowStub;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
 use Temporal\Internal\Interceptor\HeaderCarrier;
 use Temporal\Internal\Interceptor\Pipeline;
+use Temporal\Internal\Mapper\WorkflowExecutionInfoMapper;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowRunInterface;
 use Temporal\Workflow\WorkflowStub as WorkflowStubConverter;
@@ -75,18 +80,6 @@ class WorkflowClient implements WorkflowClientInterface
             $this->interceptorPipeline,
         );
         $this->reader = new WorkflowReader($this->createReader());
-    }
-
-    /**
-     * @return ReaderInterface
-     */
-    private function createReader(): ReaderInterface
-    {
-        if (\interface_exists(Reader::class)) {
-            return new SelectiveReader([new AnnotationReader(), new AttributeReader()]);
-        }
-
-        return new AttributeReader();
     }
 
     /**
@@ -276,5 +269,61 @@ class WorkflowClient implements WorkflowClientInterface
     public function newActivityCompletionClient(): ActivityCompletionClientInterface
     {
         return new ActivityCompletionClient($this->client, $this->clientOptions, $this->converter);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function listWorkflowExecutions(
+        string $query,
+        string $namespace = 'default',
+        int $pageSize = 10,
+    ): Paginator {
+        if ($pageSize <= 0) {
+            throw new InvalidArgumentException('Page size must be greater than 0.');
+        }
+
+        $request = (new ListWorkflowExecutionsRequest())
+            ->setNamespace($namespace)
+            ->setPageSize($pageSize)
+            ->setQuery($query);
+
+        $mapper = new WorkflowExecutionInfoMapper($this->converter);
+        $loader = function (ListWorkflowExecutionsRequest $request) use ($mapper): Generator {
+            do {
+                $response = $this->client->ListWorkflowExecutions($request);
+                $nextPageToken = $response->getNextPageToken();
+
+                $page = [];
+                foreach ($response->getExecutions() as $message) {
+                    \assert($message instanceof WorkflowExecutionInfo);
+                    $page[] = $mapper->fromMessage($message);
+                }
+                yield $page;
+
+                $request->setNextPageToken($nextPageToken);
+            } while ($nextPageToken !== '');
+        };
+        $counter = function () use ($namespace, $query): int {
+            $response = $this->client->CountWorkflowExecutions((new CountWorkflowExecutionsRequest())
+                ->setNamespace($namespace)
+                ->setQuery($query));
+
+            return (int)$response->getCount();
+        };
+
+        return Paginator::createFromGenerator($loader($request), $counter);
+    }
+
+    /**
+     * @return ReaderInterface
+     */
+    private function createReader(): ReaderInterface
+    {
+        if (\interface_exists(Reader::class)) {
+            return new SelectiveReader([new AnnotationReader(), new AttributeReader()]);
+        }
+
+        return new AttributeReader();
     }
 }

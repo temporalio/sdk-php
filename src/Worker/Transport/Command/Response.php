@@ -13,4 +13,22 @@ namespace Temporal\Worker\Transport\Command;
 
 abstract class Response extends Command implements ResponseInterface
 {
+    /**
+     * @param int|null $id
+     * @param int<0, max> $historyLength
+     */
+    public function __construct(
+        int $id = null,
+        private int $historyLength,
+    ) {
+        parent::__construct($id);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getHistoryLength(): int
+    {
+        return $this->historyLength;
+    }
 }

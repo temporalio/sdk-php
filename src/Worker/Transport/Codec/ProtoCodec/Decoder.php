@@ -80,6 +80,7 @@ class Decoder
             $payloads,
             (int)$msg->getId(),
             $header,
+            $msg->getHistoryLength(),
         );
     }
 
@@ -91,7 +92,8 @@ class Decoder
     {
         return new FailureResponse(
             FailureConverter::mapFailureToException($msg->getFailure(), $this->converter),
-            $msg->getId()
+            $msg->getId(),
+            $msg->getHistoryLength(),
         );
     }
 
@@ -106,6 +108,6 @@ class Decoder
             $payloads = EncodedValues::fromPayloads($msg->getPayloads(), $this->converter);
         }
 
-        return new SuccessResponse($payloads, $msg->getId());
+        return new SuccessResponse($payloads, $msg->getId(), $msg->getHistoryLength());
     }
 }

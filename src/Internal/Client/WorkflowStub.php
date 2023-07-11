@@ -387,11 +387,9 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
             case EventType::EVENT_TYPE_WORKFLOW_EXECUTION_CANCELED:
                 $attr = $closeEvent->getWorkflowExecutionCanceledEventAttributes();
 
-                if ($attr->hasDetails()) {
-                    $details = EncodedValues::fromPayloads($attr->getDetails(), $this->converter);
-                } else {
-                    $details = EncodedValues::fromValues([]);
-                }
+                $details = $attr->hasDetails()
+                    ? EncodedValues::fromPayloads($attr->getDetails(), $this->converter)
+                    : EncodedValues::fromValues([]);
 
                 throw new WorkflowFailedException(
                     $this->execution,

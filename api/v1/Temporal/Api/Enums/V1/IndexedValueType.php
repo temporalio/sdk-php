@@ -39,6 +39,10 @@ class IndexedValueType
      * Generated from protobuf enum <code>INDEXED_VALUE_TYPE_DATETIME = 6;</code>
      */
     const INDEXED_VALUE_TYPE_DATETIME = 6;
+    /**
+     * Generated from protobuf enum <code>INDEXED_VALUE_TYPE_KEYWORD_LIST = 7;</code>
+     */
+    const INDEXED_VALUE_TYPE_KEYWORD_LIST = 7;
 
     private static $valueToName = [
         self::INDEXED_VALUE_TYPE_UNSPECIFIED => 'INDEXED_VALUE_TYPE_UNSPECIFIED',
@@ -48,6 +52,7 @@ class IndexedValueType
         self::INDEXED_VALUE_TYPE_DOUBLE => 'INDEXED_VALUE_TYPE_DOUBLE',
         self::INDEXED_VALUE_TYPE_BOOL => 'INDEXED_VALUE_TYPE_BOOL',
         self::INDEXED_VALUE_TYPE_DATETIME => 'INDEXED_VALUE_TYPE_DATETIME',
+        self::INDEXED_VALUE_TYPE_KEYWORD_LIST => 'INDEXED_VALUE_TYPE_KEYWORD_LIST',
     ];
 
     public static function name($value)

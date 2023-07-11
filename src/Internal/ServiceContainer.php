@@ -149,7 +149,7 @@ final class ServiceContainer
 
         $this->workflows = new WorkflowCollection();
         $this->activities = new ActivityCollection();
-        $this->running = new ProcessCollection($client);
+        $this->running = new ProcessCollection();
 
         $this->workflowsReader = new WorkflowReader($this->reader);
         $this->activitiesReader = new ActivityReader($this->reader);

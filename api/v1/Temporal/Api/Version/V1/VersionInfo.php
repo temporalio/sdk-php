@@ -45,7 +45,7 @@ class VersionInfo extends \Google\Protobuf\Internal\Message
      *     @type \Temporal\Api\Version\V1\ReleaseInfo $current
      *     @type \Temporal\Api\Version\V1\ReleaseInfo $recommended
      *     @type string $instructions
-     *     @type \Temporal\Api\Version\V1\Alert[]|\Google\Protobuf\Internal\RepeatedField $alerts
+     *     @type array<\Temporal\Api\Version\V1\Alert>|\Google\Protobuf\Internal\RepeatedField $alerts
      *     @type \Google\Protobuf\Timestamp $last_update_time
      * }
      */
@@ -151,7 +151,7 @@ class VersionInfo extends \Google\Protobuf\Internal\Message
 
     /**
      * Generated from protobuf field <code>repeated .temporal.api.version.v1.Alert alerts = 4;</code>
-     * @param \Temporal\Api\Version\V1\Alert[]|\Google\Protobuf\Internal\RepeatedField $var
+     * @param array<\Temporal\Api\Version\V1\Alert>|\Google\Protobuf\Internal\RepeatedField $var
      * @return $this
      */
     public function setAlerts($var)

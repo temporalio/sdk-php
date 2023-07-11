@@ -47,4 +47,6 @@ interface RequestInterface extends CommandInterface, HeaderCarrier
      * @psalm-external-mutation-free
      */
     public function withHeader(HeaderInterface $header): self;
+
+    public function getHistoryLength(): int;
 }

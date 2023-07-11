@@ -7,7 +7,9 @@ namespace Temporal\Api\Enums\V1;
 use UnexpectedValueException;
 
 /**
- * TODO: What is this?
+ * Reset reapplay(replay) options
+ * * RESET_REAPPLY_TYPE_SIGNAL (default) - Signals are reapplied when workflow is reset
+ * * RESET_REAPPLY_TYPE_NONE - nothing is reapplied
  *
  * Protobuf type <code>temporal.api.enums.v1.ResetReapplyType</code>
  */

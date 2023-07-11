@@ -33,6 +33,13 @@ class DescribeNamespaceResponse extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>bool is_global_namespace = 5;</code>
      */
     protected $is_global_namespace = false;
+    /**
+     * Contains the historical state of failover_versions for the cluster, truncated to contain only the last N
+     * states to ensure that the list does not grow unbounded.
+     *
+     * Generated from protobuf field <code>repeated .temporal.api.replication.v1.FailoverStatus failover_history = 6;</code>
+     */
+    private $failover_history;
 
     /**
      * Constructor.
@@ -45,6 +52,9 @@ class DescribeNamespaceResponse extends \Google\Protobuf\Internal\Message
      *     @type \Temporal\Api\Replication\V1\NamespaceReplicationConfig $replication_config
      *     @type int|string $failover_version
      *     @type bool $is_global_namespace
+     *     @type array<\Temporal\Api\Replication\V1\FailoverStatus>|\Google\Protobuf\Internal\RepeatedField $failover_history
+     *           Contains the historical state of failover_versions for the cluster, truncated to contain only the last N
+     *           states to ensure that the list does not grow unbounded.
      * }
      */
     public function __construct($data = NULL) {
@@ -188,6 +198,34 @@ class DescribeNamespaceResponse extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkBool($var);
         $this->is_global_namespace = $var;
+
+        return $this;
+    }
+
+    /**
+     * Contains the historical state of failover_versions for the cluster, truncated to contain only the last N
+     * states to ensure that the list does not grow unbounded.
+     *
+     * Generated from protobuf field <code>repeated .temporal.api.replication.v1.FailoverStatus failover_history = 6;</code>
+     * @return \Google\Protobuf\Internal\RepeatedField
+     */
+    public function getFailoverHistory()
+    {
+        return $this->failover_history;
+    }
+
+    /**
+     * Contains the historical state of failover_versions for the cluster, truncated to contain only the last N
+     * states to ensure that the list does not grow unbounded.
+     *
+     * Generated from protobuf field <code>repeated .temporal.api.replication.v1.FailoverStatus failover_history = 6;</code>
+     * @param array<\Temporal\Api\Replication\V1\FailoverStatus>|\Google\Protobuf\Internal\RepeatedField $var
+     * @return $this
+     */
+    public function setFailoverHistory($var)
+    {
+        $arr = GPBUtil::checkRepeatedField($var, \Google\Protobuf\Internal\GPBType::MESSAGE, \Temporal\Api\Replication\V1\FailoverStatus::class);
+        $this->failover_history = $arr;
 
         return $this;
     }

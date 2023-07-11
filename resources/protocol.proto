@@ -27,4 +27,7 @@ message Message {
 
     // invocation or result payloads.
     temporal.api.common.v1.Header header = 6;
+
+    // workflow history length
+    int64 history_length = 7;
 }

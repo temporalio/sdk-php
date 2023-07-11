@@ -89,6 +89,14 @@ class StartChildWorkflowExecutionCommandAttributes extends \Google\Protobuf\Inte
      * Generated from protobuf field <code>.temporal.api.common.v1.SearchAttributes search_attributes = 16;</code>
      */
     protected $search_attributes = null;
+    /**
+     * If this is set, the workflow executing this command wishes to start the child workflow using
+     * a version compatible with the version that this workflow most recently ran on, if such
+     * behavior is possible.
+     *
+     * Generated from protobuf field <code>bool use_compatible_version = 17;</code>
+     */
+    protected $use_compatible_version = false;
 
     /**
      * Constructor.
@@ -118,6 +126,10 @@ class StartChildWorkflowExecutionCommandAttributes extends \Google\Protobuf\Inte
      *     @type \Temporal\Api\Common\V1\Header $header
      *     @type \Temporal\Api\Common\V1\Memo $memo
      *     @type \Temporal\Api\Common\V1\SearchAttributes $search_attributes
+     *     @type bool $use_compatible_version
+     *           If this is set, the workflow executing this command wishes to start the child workflow using
+     *           a version compatible with the version that this workflow most recently ran on, if such
+     *           behavior is possible.
      * }
      */
     public function __construct($data = NULL) {
@@ -597,6 +609,36 @@ class StartChildWorkflowExecutionCommandAttributes extends \Google\Protobuf\Inte
     {
         GPBUtil::checkMessage($var, \Temporal\Api\Common\V1\SearchAttributes::class);
         $this->search_attributes = $var;
+
+        return $this;
+    }
+
+    /**
+     * If this is set, the workflow executing this command wishes to start the child workflow using
+     * a version compatible with the version that this workflow most recently ran on, if such
+     * behavior is possible.
+     *
+     * Generated from protobuf field <code>bool use_compatible_version = 17;</code>
+     * @return bool
+     */
+    public function getUseCompatibleVersion()
+    {
+        return $this->use_compatible_version;
+    }
+
+    /**
+     * If this is set, the workflow executing this command wishes to start the child workflow using
+     * a version compatible with the version that this workflow most recently ran on, if such
+     * behavior is possible.
+     *
+     * Generated from protobuf field <code>bool use_compatible_version = 17;</code>
+     * @param bool $var
+     * @return $this
+     */
+    public function setUseCompatibleVersion($var)
+    {
+        GPBUtil::checkBool($var);
+        $this->use_compatible_version = $var;
 
         return $this;
     }

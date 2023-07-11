@@ -28,7 +28,7 @@ class ListWorkflowExecutionsResponse extends \Google\Protobuf\Internal\Message
      * @param array $data {
      *     Optional. Data for populating the Message object.
      *
-     *     @type \Temporal\Api\Workflow\V1\WorkflowExecutionInfo[]|\Google\Protobuf\Internal\RepeatedField $executions
+     *     @type array<\Temporal\Api\Workflow\V1\WorkflowExecutionInfo>|\Google\Protobuf\Internal\RepeatedField $executions
      *     @type string $next_page_token
      * }
      */
@@ -48,7 +48,7 @@ class ListWorkflowExecutionsResponse extends \Google\Protobuf\Internal\Message
 
     /**
      * Generated from protobuf field <code>repeated .temporal.api.workflow.v1.WorkflowExecutionInfo executions = 1;</code>
-     * @param \Temporal\Api\Workflow\V1\WorkflowExecutionInfo[]|\Google\Protobuf\Internal\RepeatedField $var
+     * @param array<\Temporal\Api\Workflow\V1\WorkflowExecutionInfo>|\Google\Protobuf\Internal\RepeatedField $var
      * @return $this
      */
     public function setExecutions($var)

@@ -6,6 +6,7 @@ namespace Temporal\Interceptor\WorkflowOutboundCalls;
 
 use JetBrains\PhpStorm\Immutable;
 use Temporal\Activity\LocalActivityOptions;
+use Temporal\DataConverter\Type;
 
 /**
  * @psalm-immutable
@@ -25,7 +26,7 @@ final class ExecuteLocalActivityInput
         #[Immutable]
         public ?LocalActivityOptions $options,
         #[Immutable]
-        public ?\ReflectionType $returnType,
+        public null|Type|string|\ReflectionClass|\ReflectionType $returnType,
     ) {
     }
 
@@ -33,7 +34,7 @@ final class ExecuteLocalActivityInput
         ?string $type = null,
         ?array $args = null,
         ?LocalActivityOptions $options = null,
-        ?\ReflectionType $returnType = null,
+        null|Type|string|\ReflectionClass|\ReflectionType $returnType = null,
     ): self {
         return new self(
             $type ?? $this->type,

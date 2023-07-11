@@ -69,7 +69,7 @@ class RetryPolicy extends \Google\Protobuf\Internal\Message
      *     @type int $maximum_attempts
      *           Maximum number of attempts. When exceeded the retries stop even if not expired yet.
      *           1 disables retries. 0 means unlimited (up to the timeouts)
-     *     @type string[]|\Google\Protobuf\Internal\RepeatedField $non_retryable_error_types
+     *     @type array<string>|\Google\Protobuf\Internal\RepeatedField $non_retryable_error_types
      *           Non-Retryable errors types. Will stop retrying if the error type matches this list. Note that
      *           this is not a substring match, the error *type* (not message) must match exactly.
      * }
@@ -228,7 +228,7 @@ class RetryPolicy extends \Google\Protobuf\Internal\Message
      * this is not a substring match, the error *type* (not message) must match exactly.
      *
      * Generated from protobuf field <code>repeated string non_retryable_error_types = 5;</code>
-     * @param string[]|\Google\Protobuf\Internal\RepeatedField $var
+     * @param array<string>|\Google\Protobuf\Internal\RepeatedField $var
      * @return $this
      */
     public function setNonRetryableErrorTypes($var)

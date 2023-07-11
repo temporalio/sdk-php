@@ -41,6 +41,12 @@ class ActivityTaskFailedEventAttributes extends \Google\Protobuf\Internal\Messag
      * Generated from protobuf field <code>.temporal.api.enums.v1.RetryState retry_state = 5;</code>
      */
     protected $retry_state = 0;
+    /**
+     * Version info of the worker who processed this workflow task.
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionStamp worker_version = 6;</code>
+     */
+    protected $worker_version = null;
 
     /**
      * Constructor.
@@ -57,6 +63,8 @@ class ActivityTaskFailedEventAttributes extends \Google\Protobuf\Internal\Messag
      *     @type string $identity
      *           id of the worker that failed this task
      *     @type int $retry_state
+     *     @type \Temporal\Api\Common\V1\WorkerVersionStamp $worker_version
+     *           Version info of the worker who processed this workflow task.
      * }
      */
     public function __construct($data = NULL) {
@@ -196,6 +204,42 @@ class ActivityTaskFailedEventAttributes extends \Google\Protobuf\Internal\Messag
     {
         GPBUtil::checkEnum($var, \Temporal\Api\Enums\V1\RetryState::class);
         $this->retry_state = $var;
+
+        return $this;
+    }
+
+    /**
+     * Version info of the worker who processed this workflow task.
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionStamp worker_version = 6;</code>
+     * @return \Temporal\Api\Common\V1\WorkerVersionStamp|null
+     */
+    public function getWorkerVersion()
+    {
+        return $this->worker_version;
+    }
+
+    public function hasWorkerVersion()
+    {
+        return isset($this->worker_version);
+    }
+
+    public function clearWorkerVersion()
+    {
+        unset($this->worker_version);
+    }
+
+    /**
+     * Version info of the worker who processed this workflow task.
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionStamp worker_version = 6;</code>
+     * @param \Temporal\Api\Common\V1\WorkerVersionStamp $var
+     * @return $this
+     */
+    public function setWorkerVersion($var)
+    {
+        GPBUtil::checkMessage($var, \Temporal\Api\Common\V1\WorkerVersionStamp::class);
+        $this->worker_version = $var;
 
         return $this;
     }

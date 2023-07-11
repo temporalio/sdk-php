@@ -41,6 +41,12 @@ class RequestCancelWorkflowExecutionRequest extends \Google\Protobuf\Internal\Me
      * Generated from protobuf field <code>string first_execution_run_id = 5;</code>
      */
     protected $first_execution_run_id = '';
+    /**
+     * Reason for requesting the cancellation
+     *
+     * Generated from protobuf field <code>string reason = 6;</code>
+     */
+    protected $reason = '';
 
     /**
      * Constructor.
@@ -58,6 +64,8 @@ class RequestCancelWorkflowExecutionRequest extends \Google\Protobuf\Internal\Me
      *           If set, this call will error if the most recent (if no run id is set on
      *           `workflow_execution`), or specified (if it is) workflow execution is not part of the same
      *           execution chain as this id.
+     *     @type string $reason
+     *           Reason for requesting the cancellation
      * }
      */
     public function __construct($data = NULL) {
@@ -197,6 +205,32 @@ class RequestCancelWorkflowExecutionRequest extends \Google\Protobuf\Internal\Me
     {
         GPBUtil::checkString($var, True);
         $this->first_execution_run_id = $var;
+
+        return $this;
+    }
+
+    /**
+     * Reason for requesting the cancellation
+     *
+     * Generated from protobuf field <code>string reason = 6;</code>
+     * @return string
+     */
+    public function getReason()
+    {
+        return $this->reason;
+    }
+
+    /**
+     * Reason for requesting the cancellation
+     *
+     * Generated from protobuf field <code>string reason = 6;</code>
+     * @param string $var
+     * @return $this
+     */
+    public function setReason($var)
+    {
+        GPBUtil::checkString($var, True);
+        $this->reason = $var;
 
         return $this;
     }

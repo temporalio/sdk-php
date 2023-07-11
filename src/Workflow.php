@@ -770,8 +770,7 @@ final class Workflow extends Facade
      * @param string $type
      * @param array $args
      * @param ActivityOptions|null $options
-     * @param \ReflectionType|null $returnType
-     *
+     * @param Type|string|null|\ReflectionClass|\ReflectionType $returnType
      * @return PromiseInterface
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
@@ -779,7 +778,7 @@ final class Workflow extends Facade
         string $type,
         array $args = [],
         ActivityOptionsInterface $options = null,
-        \ReflectionType $returnType = null,
+        Type|string|\ReflectionClass|\ReflectionType $returnType = null,
     ): PromiseInterface {
         return self::getCurrentContext()->executeActivity($type, $args, $options, $returnType);
     }

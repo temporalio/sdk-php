@@ -426,7 +426,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
         string $type,
         array $args = [],
         ActivityOptionsInterface $options = null,
-        \ReflectionType $returnType = null,
+        Type|string|\ReflectionClass|\ReflectionType $returnType = null,
     ): PromiseInterface {
         $isLocal = $options instanceof LocalActivityOptions;
 
@@ -506,7 +506,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
         return $this->requestInterceptor->with(
             function (RequestInterface $request): PromiseInterface {
                 $request->getHeader()->setDataConverter($this->services->dataConverter);
-                return $this->client->request($request);
+                return $this->client->request($request, $this->getInfo());
             },
             /** @see WorkflowOutboundRequestInterceptor::handleOutboundRequest() */
             'handleOutboundRequest',

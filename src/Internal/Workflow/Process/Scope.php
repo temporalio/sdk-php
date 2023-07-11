@@ -30,7 +30,7 @@ use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\WorkflowContextInterface;
 
 /**
- * Unlike Java implementation, PHP merged coroutine and cancellation scope into single instance.
+ * Unlike Java implementation, PHP has merged coroutine and cancellation scope into a single instance.
  *
  * @internal CoroutineScope is an internal library class, please do not use it in your code.
  */
@@ -42,11 +42,15 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     protected ServiceContainer $services;
 
     /**
+     * Workflow context.
+     *
      * @var WorkflowContext
      */
     protected WorkflowContext $context;
 
     /**
+     * Coroutine scope context.
+     *
      * @var ScopeContext
      */
     protected ScopeContext $scopeContext;
@@ -57,6 +61,8 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     protected Deferred $deferred;
 
     /**
+     * Worker handler generator that yields promises and requests that are processed in the {@see self::next()} method.
+     *
      * @var \Generator
      */
     protected \Generator $coroutine;
@@ -399,7 +405,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
                 break;
 
             case $current instanceof RequestInterface:
-                $this->nextPromise($this->context->getClient()->request($current));
+                $this->nextPromise($this->context->getClient()->request($current, $this->scopeContext->getInfo()));
                 break;
 
             case $current instanceof \Generator:

@@ -13,6 +13,10 @@ use Google\Protobuf\Internal\GPBUtil;
  */
 class ListSearchAttributesRequest extends \Google\Protobuf\Internal\Message
 {
+    /**
+     * Generated from protobuf field <code>string namespace = 1;</code>
+     */
+    protected $namespace = '';
 
     /**
      * Constructor.
@@ -20,11 +24,34 @@ class ListSearchAttributesRequest extends \Google\Protobuf\Internal\Message
      * @param array $data {
      *     Optional. Data for populating the Message object.
      *
+     *     @type string $namespace
      * }
      */
     public function __construct($data = NULL) {
         \GPBMetadata\Temporal\Api\Operatorservice\V1\RequestResponse::initOnce();
         parent::__construct($data);
+    }
+
+    /**
+     * Generated from protobuf field <code>string namespace = 1;</code>
+     * @return string
+     */
+    public function getNamespace()
+    {
+        return $this->namespace;
+    }
+
+    /**
+     * Generated from protobuf field <code>string namespace = 1;</code>
+     * @param string $var
+     * @return $this
+     */
+    public function setNamespace($var)
+    {
+        GPBUtil::checkString($var, True);
+        $this->namespace = $var;
+
+        return $this;
     }
 
 }

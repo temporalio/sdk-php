@@ -19,7 +19,7 @@ class Message
         \GPBMetadata\Temporal\Api\Enums\V1\Workflow::initOnce();
         $pool->internalAddGeneratedFile(
             '
-Ï
+Ó
 $temporal/api/filter/v1/message.prototemporal.api.filter.v1!dependencies/gogoproto/gogo.proto$temporal/api/enums/v1/workflow.proto">
 WorkflowExecutionFilter
 workflow_id (	
@@ -30,8 +30,8 @@ $temporal/api/filter/v1/message.prototemporal.api.filter.v1!dependencies/gogo
 earliest_time (2.google.protobuf.TimestampBß5
 latest_time (2.google.protobuf.TimestampBß"N
 StatusFilter>
-status (2..temporal.api.enums.v1.WorkflowExecutionStatusB…
-io.temporal.api.filter.v1BMessageProtoPZ#go.temporal.io/api/filter/v1;filterªTemporal.Api.Filter.V1êTemporal::Api::Filter::V1bproto3'
+status (2..temporal.api.enums.v1.WorkflowExecutionStatusB‰
+io.temporal.api.filter.v1BMessageProtoPZ#go.temporal.io/api/filter/v1;filterªTemporalio.Api.Filter.V1êTemporalio::Api::Filter::V1bproto3'
         , true);
 
         static::$is_initialized = true;

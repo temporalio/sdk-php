@@ -24,8 +24,6 @@ use Temporal\Interceptor\HeaderInterface;
  */
 class Request extends Command implements RequestInterface
 {
-    protected string $name;
-    protected array $options;
     protected ValuesInterface $payloads;
     protected ?HeaderInterface $header = null;
     protected ?\Throwable $failure = null;
@@ -35,16 +33,17 @@ class Request extends Command implements RequestInterface
      * @param RequestOptions $options
      * @param ValuesInterface|null $payloads
      * @param int|null $id
+     * @param HeaderInterface|null $header
+     * @param int<0, max> $historyLength
      */
     public function __construct(
-        string $name,
-        array $options = [],
+        protected string $name,
+        protected array $options = [],
         ValuesInterface $payloads = null,
         int $id = null,
         ?HeaderInterface $header = null,
+        private int $historyLength = 0,
     ) {
-        $this->name = $name;
-        $this->options = $options;
         $this->payloads = $payloads ?? EncodedValues::empty();
         $this->header = $header ?? Header::empty();
 
@@ -104,5 +103,13 @@ class Request extends Command implements RequestInterface
         $clone = clone $this;
         $clone->header = $header;
         return $clone;
+    }
+
+    /**
+     * @return int<0, max>
+     */
+    public function getHistoryLength(): int
+    {
+        return $this->historyLength;
     }
 }
