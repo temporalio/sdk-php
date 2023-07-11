@@ -39,6 +39,9 @@ class Command extends \Google\Protobuf\Internal\Message
      *     @type \Temporal\Api\Command\V1\StartChildWorkflowExecutionCommandAttributes $start_child_workflow_execution_command_attributes
      *     @type \Temporal\Api\Command\V1\SignalExternalWorkflowExecutionCommandAttributes $signal_external_workflow_execution_command_attributes
      *     @type \Temporal\Api\Command\V1\UpsertWorkflowSearchAttributesCommandAttributes $upsert_workflow_search_attributes_command_attributes
+     *     @type \Temporal\Api\Command\V1\ProtocolMessageCommandAttributes $protocol_message_command_attributes
+     *     @type \Temporal\Api\Command\V1\ModifyWorkflowPropertiesCommandAttributes $modify_workflow_properties_command_attributes
+     *           16 is available for use - it was used as part of a prototype that never made it into a release
      * }
      */
     public function __construct($data = NULL) {
@@ -415,6 +418,64 @@ class Command extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkMessage($var, \Temporal\Api\Command\V1\UpsertWorkflowSearchAttributesCommandAttributes::class);
         $this->writeOneof(14, $var);
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>.temporal.api.command.v1.ProtocolMessageCommandAttributes protocol_message_command_attributes = 15;</code>
+     * @return \Temporal\Api\Command\V1\ProtocolMessageCommandAttributes|null
+     */
+    public function getProtocolMessageCommandAttributes()
+    {
+        return $this->readOneof(15);
+    }
+
+    public function hasProtocolMessageCommandAttributes()
+    {
+        return $this->hasOneof(15);
+    }
+
+    /**
+     * Generated from protobuf field <code>.temporal.api.command.v1.ProtocolMessageCommandAttributes protocol_message_command_attributes = 15;</code>
+     * @param \Temporal\Api\Command\V1\ProtocolMessageCommandAttributes $var
+     * @return $this
+     */
+    public function setProtocolMessageCommandAttributes($var)
+    {
+        GPBUtil::checkMessage($var, \Temporal\Api\Command\V1\ProtocolMessageCommandAttributes::class);
+        $this->writeOneof(15, $var);
+
+        return $this;
+    }
+
+    /**
+     * 16 is available for use - it was used as part of a prototype that never made it into a release
+     *
+     * Generated from protobuf field <code>.temporal.api.command.v1.ModifyWorkflowPropertiesCommandAttributes modify_workflow_properties_command_attributes = 17;</code>
+     * @return \Temporal\Api\Command\V1\ModifyWorkflowPropertiesCommandAttributes|null
+     */
+    public function getModifyWorkflowPropertiesCommandAttributes()
+    {
+        return $this->readOneof(17);
+    }
+
+    public function hasModifyWorkflowPropertiesCommandAttributes()
+    {
+        return $this->hasOneof(17);
+    }
+
+    /**
+     * 16 is available for use - it was used as part of a prototype that never made it into a release
+     *
+     * Generated from protobuf field <code>.temporal.api.command.v1.ModifyWorkflowPropertiesCommandAttributes modify_workflow_properties_command_attributes = 17;</code>
+     * @param \Temporal\Api\Command\V1\ModifyWorkflowPropertiesCommandAttributes $var
+     * @return $this
+     */
+    public function setModifyWorkflowPropertiesCommandAttributes($var)
+    {
+        GPBUtil::checkMessage($var, \Temporal\Api\Command\V1\ModifyWorkflowPropertiesCommandAttributes::class);
+        $this->writeOneof(17, $var);
 
         return $this;
     }

@@ -42,6 +42,15 @@ class HistoryEvent extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>int64 task_id = 5;</code>
      */
     protected $task_id = 0;
+    /**
+     * Set to true when the SDK may ignore the event as it does not impact workflow state or
+     * information in any way that the SDK need be concerned with. If an SDK encounters an event
+     * type which it does not understand, it must error unless this is true. If it is true, it's
+     * acceptable for the event type and/or attributes to be uninterpretable.
+     *
+     * Generated from protobuf field <code>bool worker_may_ignore = 300;</code>
+     */
+    protected $worker_may_ignore = false;
     protected $attributes;
 
     /**
@@ -58,6 +67,11 @@ class HistoryEvent extends \Google\Protobuf\Internal\Message
      *           TODO: What is this? Appears unused by SDKs
      *     @type int|string $task_id
      *           TODO: What is this? Appears unused by SDKs
+     *     @type bool $worker_may_ignore
+     *           Set to true when the SDK may ignore the event as it does not impact workflow state or
+     *           information in any way that the SDK need be concerned with. If an SDK encounters an event
+     *           type which it does not understand, it must error unless this is true. If it is true, it's
+     *           acceptable for the event type and/or attributes to be uninterpretable.
      *     @type \Temporal\Api\History\V1\WorkflowExecutionStartedEventAttributes $workflow_execution_started_event_attributes
      *     @type \Temporal\Api\History\V1\WorkflowExecutionCompletedEventAttributes $workflow_execution_completed_event_attributes
      *     @type \Temporal\Api\History\V1\WorkflowExecutionFailedEventAttributes $workflow_execution_failed_event_attributes
@@ -98,6 +112,12 @@ class HistoryEvent extends \Google\Protobuf\Internal\Message
      *     @type \Temporal\Api\History\V1\SignalExternalWorkflowExecutionFailedEventAttributes $signal_external_workflow_execution_failed_event_attributes
      *     @type \Temporal\Api\History\V1\ExternalWorkflowExecutionSignaledEventAttributes $external_workflow_execution_signaled_event_attributes
      *     @type \Temporal\Api\History\V1\UpsertWorkflowSearchAttributesEventAttributes $upsert_workflow_search_attributes_event_attributes
+     *     @type \Temporal\Api\History\V1\WorkflowExecutionUpdateAcceptedEventAttributes $workflow_execution_update_accepted_event_attributes
+     *     @type \Temporal\Api\History\V1\WorkflowExecutionUpdateRejectedEventAttributes $workflow_execution_update_rejected_event_attributes
+     *     @type \Temporal\Api\History\V1\WorkflowExecutionUpdateCompletedEventAttributes $workflow_execution_update_completed_event_attributes
+     *     @type \Temporal\Api\History\V1\WorkflowPropertiesModifiedExternallyEventAttributes $workflow_properties_modified_externally_event_attributes
+     *     @type \Temporal\Api\History\V1\ActivityPropertiesModifiedExternallyEventAttributes $activity_properties_modified_externally_event_attributes
+     *     @type \Temporal\Api\History\V1\WorkflowPropertiesModifiedEventAttributes $workflow_properties_modified_event_attributes
      * }
      */
     public function __construct($data = NULL) {
@@ -233,6 +253,38 @@ class HistoryEvent extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkInt64($var);
         $this->task_id = $var;
+
+        return $this;
+    }
+
+    /**
+     * Set to true when the SDK may ignore the event as it does not impact workflow state or
+     * information in any way that the SDK need be concerned with. If an SDK encounters an event
+     * type which it does not understand, it must error unless this is true. If it is true, it's
+     * acceptable for the event type and/or attributes to be uninterpretable.
+     *
+     * Generated from protobuf field <code>bool worker_may_ignore = 300;</code>
+     * @return bool
+     */
+    public function getWorkerMayIgnore()
+    {
+        return $this->worker_may_ignore;
+    }
+
+    /**
+     * Set to true when the SDK may ignore the event as it does not impact workflow state or
+     * information in any way that the SDK need be concerned with. If an SDK encounters an event
+     * type which it does not understand, it must error unless this is true. If it is true, it's
+     * acceptable for the event type and/or attributes to be uninterpretable.
+     *
+     * Generated from protobuf field <code>bool worker_may_ignore = 300;</code>
+     * @param bool $var
+     * @return $this
+     */
+    public function setWorkerMayIgnore($var)
+    {
+        GPBUtil::checkBool($var);
+        $this->worker_may_ignore = $var;
 
         return $this;
     }
@@ -1313,6 +1365,168 @@ class HistoryEvent extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkMessage($var, \Temporal\Api\History\V1\UpsertWorkflowSearchAttributesEventAttributes::class);
         $this->writeOneof(45, $var);
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>.temporal.api.history.v1.WorkflowExecutionUpdateAcceptedEventAttributes workflow_execution_update_accepted_event_attributes = 46;</code>
+     * @return \Temporal\Api\History\V1\WorkflowExecutionUpdateAcceptedEventAttributes|null
+     */
+    public function getWorkflowExecutionUpdateAcceptedEventAttributes()
+    {
+        return $this->readOneof(46);
+    }
+
+    public function hasWorkflowExecutionUpdateAcceptedEventAttributes()
+    {
+        return $this->hasOneof(46);
+    }
+
+    /**
+     * Generated from protobuf field <code>.temporal.api.history.v1.WorkflowExecutionUpdateAcceptedEventAttributes workflow_execution_update_accepted_event_attributes = 46;</code>
+     * @param \Temporal\Api\History\V1\WorkflowExecutionUpdateAcceptedEventAttributes $var
+     * @return $this
+     */
+    public function setWorkflowExecutionUpdateAcceptedEventAttributes($var)
+    {
+        GPBUtil::checkMessage($var, \Temporal\Api\History\V1\WorkflowExecutionUpdateAcceptedEventAttributes::class);
+        $this->writeOneof(46, $var);
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>.temporal.api.history.v1.WorkflowExecutionUpdateRejectedEventAttributes workflow_execution_update_rejected_event_attributes = 47;</code>
+     * @return \Temporal\Api\History\V1\WorkflowExecutionUpdateRejectedEventAttributes|null
+     */
+    public function getWorkflowExecutionUpdateRejectedEventAttributes()
+    {
+        return $this->readOneof(47);
+    }
+
+    public function hasWorkflowExecutionUpdateRejectedEventAttributes()
+    {
+        return $this->hasOneof(47);
+    }
+
+    /**
+     * Generated from protobuf field <code>.temporal.api.history.v1.WorkflowExecutionUpdateRejectedEventAttributes workflow_execution_update_rejected_event_attributes = 47;</code>
+     * @param \Temporal\Api\History\V1\WorkflowExecutionUpdateRejectedEventAttributes $var
+     * @return $this
+     */
+    public function setWorkflowExecutionUpdateRejectedEventAttributes($var)
+    {
+        GPBUtil::checkMessage($var, \Temporal\Api\History\V1\WorkflowExecutionUpdateRejectedEventAttributes::class);
+        $this->writeOneof(47, $var);
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>.temporal.api.history.v1.WorkflowExecutionUpdateCompletedEventAttributes workflow_execution_update_completed_event_attributes = 48;</code>
+     * @return \Temporal\Api\History\V1\WorkflowExecutionUpdateCompletedEventAttributes|null
+     */
+    public function getWorkflowExecutionUpdateCompletedEventAttributes()
+    {
+        return $this->readOneof(48);
+    }
+
+    public function hasWorkflowExecutionUpdateCompletedEventAttributes()
+    {
+        return $this->hasOneof(48);
+    }
+
+    /**
+     * Generated from protobuf field <code>.temporal.api.history.v1.WorkflowExecutionUpdateCompletedEventAttributes workflow_execution_update_completed_event_attributes = 48;</code>
+     * @param \Temporal\Api\History\V1\WorkflowExecutionUpdateCompletedEventAttributes $var
+     * @return $this
+     */
+    public function setWorkflowExecutionUpdateCompletedEventAttributes($var)
+    {
+        GPBUtil::checkMessage($var, \Temporal\Api\History\V1\WorkflowExecutionUpdateCompletedEventAttributes::class);
+        $this->writeOneof(48, $var);
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>.temporal.api.history.v1.WorkflowPropertiesModifiedExternallyEventAttributes workflow_properties_modified_externally_event_attributes = 49;</code>
+     * @return \Temporal\Api\History\V1\WorkflowPropertiesModifiedExternallyEventAttributes|null
+     */
+    public function getWorkflowPropertiesModifiedExternallyEventAttributes()
+    {
+        return $this->readOneof(49);
+    }
+
+    public function hasWorkflowPropertiesModifiedExternallyEventAttributes()
+    {
+        return $this->hasOneof(49);
+    }
+
+    /**
+     * Generated from protobuf field <code>.temporal.api.history.v1.WorkflowPropertiesModifiedExternallyEventAttributes workflow_properties_modified_externally_event_attributes = 49;</code>
+     * @param \Temporal\Api\History\V1\WorkflowPropertiesModifiedExternallyEventAttributes $var
+     * @return $this
+     */
+    public function setWorkflowPropertiesModifiedExternallyEventAttributes($var)
+    {
+        GPBUtil::checkMessage($var, \Temporal\Api\History\V1\WorkflowPropertiesModifiedExternallyEventAttributes::class);
+        $this->writeOneof(49, $var);
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>.temporal.api.history.v1.ActivityPropertiesModifiedExternallyEventAttributes activity_properties_modified_externally_event_attributes = 50;</code>
+     * @return \Temporal\Api\History\V1\ActivityPropertiesModifiedExternallyEventAttributes|null
+     */
+    public function getActivityPropertiesModifiedExternallyEventAttributes()
+    {
+        return $this->readOneof(50);
+    }
+
+    public function hasActivityPropertiesModifiedExternallyEventAttributes()
+    {
+        return $this->hasOneof(50);
+    }
+
+    /**
+     * Generated from protobuf field <code>.temporal.api.history.v1.ActivityPropertiesModifiedExternallyEventAttributes activity_properties_modified_externally_event_attributes = 50;</code>
+     * @param \Temporal\Api\History\V1\ActivityPropertiesModifiedExternallyEventAttributes $var
+     * @return $this
+     */
+    public function setActivityPropertiesModifiedExternallyEventAttributes($var)
+    {
+        GPBUtil::checkMessage($var, \Temporal\Api\History\V1\ActivityPropertiesModifiedExternallyEventAttributes::class);
+        $this->writeOneof(50, $var);
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>.temporal.api.history.v1.WorkflowPropertiesModifiedEventAttributes workflow_properties_modified_event_attributes = 51;</code>
+     * @return \Temporal\Api\History\V1\WorkflowPropertiesModifiedEventAttributes|null
+     */
+    public function getWorkflowPropertiesModifiedEventAttributes()
+    {
+        return $this->readOneof(51);
+    }
+
+    public function hasWorkflowPropertiesModifiedEventAttributes()
+    {
+        return $this->hasOneof(51);
+    }
+
+    /**
+     * Generated from protobuf field <code>.temporal.api.history.v1.WorkflowPropertiesModifiedEventAttributes workflow_properties_modified_event_attributes = 51;</code>
+     * @param \Temporal\Api\History\V1\WorkflowPropertiesModifiedEventAttributes $var
+     * @return $this
+     */
+    public function setWorkflowPropertiesModifiedEventAttributes($var)
+    {
+        GPBUtil::checkMessage($var, \Temporal\Api\History\V1\WorkflowPropertiesModifiedEventAttributes::class);
+        $this->writeOneof(51, $var);
 
         return $this;
     }

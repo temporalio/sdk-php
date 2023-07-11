@@ -20,17 +20,25 @@ class WorkflowExecutionStartedEventAttributes extends \Google\Protobuf\Internal\
      */
     protected $workflow_type = null;
     /**
-     * If this workflow is a child, the namespace our parent lives in
+     * If this workflow is a child, the namespace our parent lives in.
+     * SDKs and UI tools should use `parent_workflow_namespace` field but server must use `parent_workflow_namespace_id` only.
      *
      * Generated from protobuf field <code>string parent_workflow_namespace = 2;</code>
      */
     protected $parent_workflow_namespace = '';
     /**
+     * Generated from protobuf field <code>string parent_workflow_namespace_id = 27;</code>
+     */
+    protected $parent_workflow_namespace_id = '';
+    /**
+     * Contains information about parent workflow execution that initiated the child workflow these attributes belong to.
+     * If the workflow these attributes belong to is not a child workflow of any other execution, this field will not be populated.
+     *
      * Generated from protobuf field <code>.temporal.api.common.v1.WorkflowExecution parent_workflow_execution = 3;</code>
      */
     protected $parent_workflow_execution = null;
     /**
-     * TODO: What is this? ID of the event that requested this workflow execution if we are a child?
+     * EventID of the child execution initiated event in parent workflow 
      *
      * Generated from protobuf field <code>int64 parent_initiated_event_id = 4;</code>
      */
@@ -83,7 +91,8 @@ class WorkflowExecutionStartedEventAttributes extends \Google\Protobuf\Internal\
      */
     protected $last_completion_result = null;
     /**
-     * This is the run id when the WorkflowExecutionStarted event was written
+     * This is the run id when the WorkflowExecutionStarted event was written.
+     * A workflow reset changes the execution run_id, but preserves this field.
      *
      * Generated from protobuf field <code>string original_execution_run_id = 14;</code>
      */
@@ -95,7 +104,8 @@ class WorkflowExecutionStartedEventAttributes extends \Google\Protobuf\Internal\
      */
     protected $identity = '';
     /**
-     * This is the very first runId along the chain of ContinueAsNew and Reset.
+     * This is the very first runId along the chain of ContinueAsNew, Retry, Cron and Reset.
+     * Used to identify a chain.
      *
      * Generated from protobuf field <code>string first_execution_run_id = 16;</code>
      */
@@ -146,6 +156,27 @@ class WorkflowExecutionStartedEventAttributes extends \Google\Protobuf\Internal\
      * Generated from protobuf field <code>.temporal.api.common.v1.Header header = 25;</code>
      */
     protected $header = null;
+    /**
+     * Version of the child execution initiated event in parent workflow
+     * It should be used together with parent_initiated_event_id to identify
+     * a child initiated event for global namespace
+     *
+     * Generated from protobuf field <code>int64 parent_initiated_event_version = 26;</code>
+     */
+    protected $parent_initiated_event_version = 0;
+    /**
+     * This field is new in 1.21.
+     *
+     * Generated from protobuf field <code>string workflow_id = 28;</code>
+     */
+    protected $workflow_id = '';
+    /**
+     * If this workflow intends to use anything other than the current overall default version for
+     * the queue, then we include it here.
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionStamp source_version_stamp = 29;</code>
+     */
+    protected $source_version_stamp = null;
 
     /**
      * Constructor.
@@ -155,10 +186,14 @@ class WorkflowExecutionStartedEventAttributes extends \Google\Protobuf\Internal\
      *
      *     @type \Temporal\Api\Common\V1\WorkflowType $workflow_type
      *     @type string $parent_workflow_namespace
-     *           If this workflow is a child, the namespace our parent lives in
+     *           If this workflow is a child, the namespace our parent lives in.
+     *           SDKs and UI tools should use `parent_workflow_namespace` field but server must use `parent_workflow_namespace_id` only.
+     *     @type string $parent_workflow_namespace_id
      *     @type \Temporal\Api\Common\V1\WorkflowExecution $parent_workflow_execution
+     *           Contains information about parent workflow execution that initiated the child workflow these attributes belong to.
+     *           If the workflow these attributes belong to is not a child workflow of any other execution, this field will not be populated.
      *     @type int|string $parent_initiated_event_id
-     *           TODO: What is this? ID of the event that requested this workflow execution if we are a child?
+     *           EventID of the child execution initiated event in parent workflow 
      *     @type \Temporal\Api\Taskqueue\V1\TaskQueue $task_queue
      *     @type \Temporal\Api\Common\V1\Payloads $input
      *           SDK will deserialize this and provide it as arguments to the workflow function
@@ -175,11 +210,13 @@ class WorkflowExecutionStartedEventAttributes extends \Google\Protobuf\Internal\
      *     @type \Temporal\Api\Failure\V1\Failure $continued_failure
      *     @type \Temporal\Api\Common\V1\Payloads $last_completion_result
      *     @type string $original_execution_run_id
-     *           This is the run id when the WorkflowExecutionStarted event was written
+     *           This is the run id when the WorkflowExecutionStarted event was written.
+     *           A workflow reset changes the execution run_id, but preserves this field.
      *     @type string $identity
      *           Identity of the client who requested this execution
      *     @type string $first_execution_run_id
-     *           This is the very first runId along the chain of ContinueAsNew and Reset.
+     *           This is the very first runId along the chain of ContinueAsNew, Retry, Cron and Reset.
+     *           Used to identify a chain.
      *     @type \Temporal\Api\Common\V1\RetryPolicy $retry_policy
      *     @type int $attempt
      *           Starting at 1, the number of times we have tried to execute this workflow
@@ -195,6 +232,15 @@ class WorkflowExecutionStartedEventAttributes extends \Google\Protobuf\Internal\
      *     @type \Temporal\Api\Common\V1\SearchAttributes $search_attributes
      *     @type \Temporal\Api\Workflow\V1\ResetPoints $prev_auto_reset_points
      *     @type \Temporal\Api\Common\V1\Header $header
+     *     @type int|string $parent_initiated_event_version
+     *           Version of the child execution initiated event in parent workflow
+     *           It should be used together with parent_initiated_event_id to identify
+     *           a child initiated event for global namespace
+     *     @type string $workflow_id
+     *           This field is new in 1.21.
+     *     @type \Temporal\Api\Common\V1\WorkerVersionStamp $source_version_stamp
+     *           If this workflow intends to use anything other than the current overall default version for
+     *           the queue, then we include it here.
      * }
      */
     public function __construct($data = NULL) {
@@ -235,7 +281,8 @@ class WorkflowExecutionStartedEventAttributes extends \Google\Protobuf\Internal\
     }
 
     /**
-     * If this workflow is a child, the namespace our parent lives in
+     * If this workflow is a child, the namespace our parent lives in.
+     * SDKs and UI tools should use `parent_workflow_namespace` field but server must use `parent_workflow_namespace_id` only.
      *
      * Generated from protobuf field <code>string parent_workflow_namespace = 2;</code>
      * @return string
@@ -246,7 +293,8 @@ class WorkflowExecutionStartedEventAttributes extends \Google\Protobuf\Internal\
     }
 
     /**
-     * If this workflow is a child, the namespace our parent lives in
+     * If this workflow is a child, the namespace our parent lives in.
+     * SDKs and UI tools should use `parent_workflow_namespace` field but server must use `parent_workflow_namespace_id` only.
      *
      * Generated from protobuf field <code>string parent_workflow_namespace = 2;</code>
      * @param string $var
@@ -261,6 +309,31 @@ class WorkflowExecutionStartedEventAttributes extends \Google\Protobuf\Internal\
     }
 
     /**
+     * Generated from protobuf field <code>string parent_workflow_namespace_id = 27;</code>
+     * @return string
+     */
+    public function getParentWorkflowNamespaceId()
+    {
+        return $this->parent_workflow_namespace_id;
+    }
+
+    /**
+     * Generated from protobuf field <code>string parent_workflow_namespace_id = 27;</code>
+     * @param string $var
+     * @return $this
+     */
+    public function setParentWorkflowNamespaceId($var)
+    {
+        GPBUtil::checkString($var, True);
+        $this->parent_workflow_namespace_id = $var;
+
+        return $this;
+    }
+
+    /**
+     * Contains information about parent workflow execution that initiated the child workflow these attributes belong to.
+     * If the workflow these attributes belong to is not a child workflow of any other execution, this field will not be populated.
+     *
      * Generated from protobuf field <code>.temporal.api.common.v1.WorkflowExecution parent_workflow_execution = 3;</code>
      * @return \Temporal\Api\Common\V1\WorkflowExecution|null
      */
@@ -280,6 +353,9 @@ class WorkflowExecutionStartedEventAttributes extends \Google\Protobuf\Internal\
     }
 
     /**
+     * Contains information about parent workflow execution that initiated the child workflow these attributes belong to.
+     * If the workflow these attributes belong to is not a child workflow of any other execution, this field will not be populated.
+     *
      * Generated from protobuf field <code>.temporal.api.common.v1.WorkflowExecution parent_workflow_execution = 3;</code>
      * @param \Temporal\Api\Common\V1\WorkflowExecution $var
      * @return $this
@@ -293,7 +369,7 @@ class WorkflowExecutionStartedEventAttributes extends \Google\Protobuf\Internal\
     }
 
     /**
-     * TODO: What is this? ID of the event that requested this workflow execution if we are a child?
+     * EventID of the child execution initiated event in parent workflow 
      *
      * Generated from protobuf field <code>int64 parent_initiated_event_id = 4;</code>
      * @return int|string
@@ -304,7 +380,7 @@ class WorkflowExecutionStartedEventAttributes extends \Google\Protobuf\Internal\
     }
 
     /**
-     * TODO: What is this? ID of the event that requested this workflow execution if we are a child?
+     * EventID of the child execution initiated event in parent workflow 
      *
      * Generated from protobuf field <code>int64 parent_initiated_event_id = 4;</code>
      * @param int|string $var
@@ -609,7 +685,8 @@ class WorkflowExecutionStartedEventAttributes extends \Google\Protobuf\Internal\
     }
 
     /**
-     * This is the run id when the WorkflowExecutionStarted event was written
+     * This is the run id when the WorkflowExecutionStarted event was written.
+     * A workflow reset changes the execution run_id, but preserves this field.
      *
      * Generated from protobuf field <code>string original_execution_run_id = 14;</code>
      * @return string
@@ -620,7 +697,8 @@ class WorkflowExecutionStartedEventAttributes extends \Google\Protobuf\Internal\
     }
 
     /**
-     * This is the run id when the WorkflowExecutionStarted event was written
+     * This is the run id when the WorkflowExecutionStarted event was written.
+     * A workflow reset changes the execution run_id, but preserves this field.
      *
      * Generated from protobuf field <code>string original_execution_run_id = 14;</code>
      * @param string $var
@@ -661,7 +739,8 @@ class WorkflowExecutionStartedEventAttributes extends \Google\Protobuf\Internal\
     }
 
     /**
-     * This is the very first runId along the chain of ContinueAsNew and Reset.
+     * This is the very first runId along the chain of ContinueAsNew, Retry, Cron and Reset.
+     * Used to identify a chain.
      *
      * Generated from protobuf field <code>string first_execution_run_id = 16;</code>
      * @return string
@@ -672,7 +751,8 @@ class WorkflowExecutionStartedEventAttributes extends \Google\Protobuf\Internal\
     }
 
     /**
-     * This is the very first runId along the chain of ContinueAsNew and Reset.
+     * This is the very first runId along the chain of ContinueAsNew, Retry, Cron and Reset.
+     * Used to identify a chain.
      *
      * Generated from protobuf field <code>string first_execution_run_id = 16;</code>
      * @param string $var
@@ -970,6 +1050,100 @@ class WorkflowExecutionStartedEventAttributes extends \Google\Protobuf\Internal\
     {
         GPBUtil::checkMessage($var, \Temporal\Api\Common\V1\Header::class);
         $this->header = $var;
+
+        return $this;
+    }
+
+    /**
+     * Version of the child execution initiated event in parent workflow
+     * It should be used together with parent_initiated_event_id to identify
+     * a child initiated event for global namespace
+     *
+     * Generated from protobuf field <code>int64 parent_initiated_event_version = 26;</code>
+     * @return int|string
+     */
+    public function getParentInitiatedEventVersion()
+    {
+        return $this->parent_initiated_event_version;
+    }
+
+    /**
+     * Version of the child execution initiated event in parent workflow
+     * It should be used together with parent_initiated_event_id to identify
+     * a child initiated event for global namespace
+     *
+     * Generated from protobuf field <code>int64 parent_initiated_event_version = 26;</code>
+     * @param int|string $var
+     * @return $this
+     */
+    public function setParentInitiatedEventVersion($var)
+    {
+        GPBUtil::checkInt64($var);
+        $this->parent_initiated_event_version = $var;
+
+        return $this;
+    }
+
+    /**
+     * This field is new in 1.21.
+     *
+     * Generated from protobuf field <code>string workflow_id = 28;</code>
+     * @return string
+     */
+    public function getWorkflowId()
+    {
+        return $this->workflow_id;
+    }
+
+    /**
+     * This field is new in 1.21.
+     *
+     * Generated from protobuf field <code>string workflow_id = 28;</code>
+     * @param string $var
+     * @return $this
+     */
+    public function setWorkflowId($var)
+    {
+        GPBUtil::checkString($var, True);
+        $this->workflow_id = $var;
+
+        return $this;
+    }
+
+    /**
+     * If this workflow intends to use anything other than the current overall default version for
+     * the queue, then we include it here.
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionStamp source_version_stamp = 29;</code>
+     * @return \Temporal\Api\Common\V1\WorkerVersionStamp|null
+     */
+    public function getSourceVersionStamp()
+    {
+        return $this->source_version_stamp;
+    }
+
+    public function hasSourceVersionStamp()
+    {
+        return isset($this->source_version_stamp);
+    }
+
+    public function clearSourceVersionStamp()
+    {
+        unset($this->source_version_stamp);
+    }
+
+    /**
+     * If this workflow intends to use anything other than the current overall default version for
+     * the queue, then we include it here.
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionStamp source_version_stamp = 29;</code>
+     * @param \Temporal\Api\Common\V1\WorkerVersionStamp $var
+     * @return $this
+     */
+    public function setSourceVersionStamp($var)
+    {
+        GPBUtil::checkMessage($var, \Temporal\Api\Common\V1\WorkerVersionStamp::class);
+        $this->source_version_stamp = $var;
 
         return $this;
     }

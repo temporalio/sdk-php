@@ -95,6 +95,36 @@ class StartWorkflowExecutionRequest extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>.temporal.api.common.v1.Header header = 16;</code>
      */
     protected $header = null;
+    /**
+     * Request to get the first workflow task inline in the response bypassing matching service and worker polling.
+     * If set to `true` the caller is expected to have a worker available and capable of processing the task.
+     * The returned task will be marked as started and is expected to be completed by the specified
+     * `workflow_task_timeout`.
+     *
+     * Generated from protobuf field <code>bool request_eager_execution = 17;</code>
+     */
+    protected $request_eager_execution = false;
+    /**
+     * These values will be available as ContinuedFailure and LastCompletionResult in the
+     * WorkflowExecutionStarted event and through SDKs. The are currently only used by the
+     * server itself (for the schedules feature) and are not intended to be exposed in
+     * StartWorkflowExecution.
+     *
+     * Generated from protobuf field <code>.temporal.api.failure.v1.Failure continued_failure = 18;</code>
+     */
+    protected $continued_failure = null;
+    /**
+     * Generated from protobuf field <code>.temporal.api.common.v1.Payloads last_completion_result = 19;</code>
+     */
+    protected $last_completion_result = null;
+    /**
+     * Time to wait before dispatching the first workflow task. Cannot be used with `cron_schedule`.
+     * If the workflow gets a signal before the delay, a workflow task will be dispatched and the rest
+     * of the delay will be ignored.
+     *
+     * Generated from protobuf field <code>.google.protobuf.Duration workflow_start_delay = 20 [(.gogoproto.stdduration) = true];</code>
+     */
+    protected $workflow_start_delay = null;
 
     /**
      * Constructor.
@@ -127,6 +157,21 @@ class StartWorkflowExecutionRequest extends \Google\Protobuf\Internal\Message
      *     @type \Temporal\Api\Common\V1\Memo $memo
      *     @type \Temporal\Api\Common\V1\SearchAttributes $search_attributes
      *     @type \Temporal\Api\Common\V1\Header $header
+     *     @type bool $request_eager_execution
+     *           Request to get the first workflow task inline in the response bypassing matching service and worker polling.
+     *           If set to `true` the caller is expected to have a worker available and capable of processing the task.
+     *           The returned task will be marked as started and is expected to be completed by the specified
+     *           `workflow_task_timeout`.
+     *     @type \Temporal\Api\Failure\V1\Failure $continued_failure
+     *           These values will be available as ContinuedFailure and LastCompletionResult in the
+     *           WorkflowExecutionStarted event and through SDKs. The are currently only used by the
+     *           server itself (for the schedules feature) and are not intended to be exposed in
+     *           StartWorkflowExecution.
+     *     @type \Temporal\Api\Common\V1\Payloads $last_completion_result
+     *     @type \Google\Protobuf\Duration $workflow_start_delay
+     *           Time to wait before dispatching the first workflow task. Cannot be used with `cron_schedule`.
+     *           If the workflow gets a signal before the delay, a workflow task will be dispatched and the rest
+     *           of the delay will be ignored.
      * }
      */
     public function __construct($data = NULL) {
@@ -618,6 +663,152 @@ class StartWorkflowExecutionRequest extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkMessage($var, \Temporal\Api\Common\V1\Header::class);
         $this->header = $var;
+
+        return $this;
+    }
+
+    /**
+     * Request to get the first workflow task inline in the response bypassing matching service and worker polling.
+     * If set to `true` the caller is expected to have a worker available and capable of processing the task.
+     * The returned task will be marked as started and is expected to be completed by the specified
+     * `workflow_task_timeout`.
+     *
+     * Generated from protobuf field <code>bool request_eager_execution = 17;</code>
+     * @return bool
+     */
+    public function getRequestEagerExecution()
+    {
+        return $this->request_eager_execution;
+    }
+
+    /**
+     * Request to get the first workflow task inline in the response bypassing matching service and worker polling.
+     * If set to `true` the caller is expected to have a worker available and capable of processing the task.
+     * The returned task will be marked as started and is expected to be completed by the specified
+     * `workflow_task_timeout`.
+     *
+     * Generated from protobuf field <code>bool request_eager_execution = 17;</code>
+     * @param bool $var
+     * @return $this
+     */
+    public function setRequestEagerExecution($var)
+    {
+        GPBUtil::checkBool($var);
+        $this->request_eager_execution = $var;
+
+        return $this;
+    }
+
+    /**
+     * These values will be available as ContinuedFailure and LastCompletionResult in the
+     * WorkflowExecutionStarted event and through SDKs. The are currently only used by the
+     * server itself (for the schedules feature) and are not intended to be exposed in
+     * StartWorkflowExecution.
+     *
+     * Generated from protobuf field <code>.temporal.api.failure.v1.Failure continued_failure = 18;</code>
+     * @return \Temporal\Api\Failure\V1\Failure|null
+     */
+    public function getContinuedFailure()
+    {
+        return $this->continued_failure;
+    }
+
+    public function hasContinuedFailure()
+    {
+        return isset($this->continued_failure);
+    }
+
+    public function clearContinuedFailure()
+    {
+        unset($this->continued_failure);
+    }
+
+    /**
+     * These values will be available as ContinuedFailure and LastCompletionResult in the
+     * WorkflowExecutionStarted event and through SDKs. The are currently only used by the
+     * server itself (for the schedules feature) and are not intended to be exposed in
+     * StartWorkflowExecution.
+     *
+     * Generated from protobuf field <code>.temporal.api.failure.v1.Failure continued_failure = 18;</code>
+     * @param \Temporal\Api\Failure\V1\Failure $var
+     * @return $this
+     */
+    public function setContinuedFailure($var)
+    {
+        GPBUtil::checkMessage($var, \Temporal\Api\Failure\V1\Failure::class);
+        $this->continued_failure = $var;
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>.temporal.api.common.v1.Payloads last_completion_result = 19;</code>
+     * @return \Temporal\Api\Common\V1\Payloads|null
+     */
+    public function getLastCompletionResult()
+    {
+        return $this->last_completion_result;
+    }
+
+    public function hasLastCompletionResult()
+    {
+        return isset($this->last_completion_result);
+    }
+
+    public function clearLastCompletionResult()
+    {
+        unset($this->last_completion_result);
+    }
+
+    /**
+     * Generated from protobuf field <code>.temporal.api.common.v1.Payloads last_completion_result = 19;</code>
+     * @param \Temporal\Api\Common\V1\Payloads $var
+     * @return $this
+     */
+    public function setLastCompletionResult($var)
+    {
+        GPBUtil::checkMessage($var, \Temporal\Api\Common\V1\Payloads::class);
+        $this->last_completion_result = $var;
+
+        return $this;
+    }
+
+    /**
+     * Time to wait before dispatching the first workflow task. Cannot be used with `cron_schedule`.
+     * If the workflow gets a signal before the delay, a workflow task will be dispatched and the rest
+     * of the delay will be ignored.
+     *
+     * Generated from protobuf field <code>.google.protobuf.Duration workflow_start_delay = 20 [(.gogoproto.stdduration) = true];</code>
+     * @return \Google\Protobuf\Duration|null
+     */
+    public function getWorkflowStartDelay()
+    {
+        return $this->workflow_start_delay;
+    }
+
+    public function hasWorkflowStartDelay()
+    {
+        return isset($this->workflow_start_delay);
+    }
+
+    public function clearWorkflowStartDelay()
+    {
+        unset($this->workflow_start_delay);
+    }
+
+    /**
+     * Time to wait before dispatching the first workflow task. Cannot be used with `cron_schedule`.
+     * If the workflow gets a signal before the delay, a workflow task will be dispatched and the rest
+     * of the delay will be ignored.
+     *
+     * Generated from protobuf field <code>.google.protobuf.Duration workflow_start_delay = 20 [(.gogoproto.stdduration) = true];</code>
+     * @param \Google\Protobuf\Duration $var
+     * @return $this
+     */
+    public function setWorkflowStartDelay($var)
+    {
+        GPBUtil::checkMessage($var, \Google\Protobuf\Duration::class);
+        $this->workflow_start_delay = $var;
 
         return $this;
     }

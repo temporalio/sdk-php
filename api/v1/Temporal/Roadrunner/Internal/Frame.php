@@ -24,7 +24,7 @@ class Frame extends \Google\Protobuf\Internal\Message
      * @param array $data {
      *     Optional. Data for populating the Message object.
      *
-     *     @type \Temporal\Roadrunner\Internal\Message[]|\Google\Protobuf\Internal\RepeatedField $messages
+     *     @type array<\Temporal\Roadrunner\Internal\Message>|\Google\Protobuf\Internal\RepeatedField $messages
      * }
      */
     public function __construct($data = NULL) {
@@ -43,7 +43,7 @@ class Frame extends \Google\Protobuf\Internal\Message
 
     /**
      * Generated from protobuf field <code>repeated .temporal.roadrunner.internal.Message messages = 1;</code>
-     * @param \Temporal\Roadrunner\Internal\Message[]|\Google\Protobuf\Internal\RepeatedField $var
+     * @param array<\Temporal\Roadrunner\Internal\Message>|\Google\Protobuf\Internal\RepeatedField $var
      * @return $this
      */
     public function setMessages($var)

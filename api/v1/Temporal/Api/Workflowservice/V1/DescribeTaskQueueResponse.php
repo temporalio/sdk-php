@@ -28,7 +28,7 @@ class DescribeTaskQueueResponse extends \Google\Protobuf\Internal\Message
      * @param array $data {
      *     Optional. Data for populating the Message object.
      *
-     *     @type \Temporal\Api\Taskqueue\V1\PollerInfo[]|\Google\Protobuf\Internal\RepeatedField $pollers
+     *     @type array<\Temporal\Api\Taskqueue\V1\PollerInfo>|\Google\Protobuf\Internal\RepeatedField $pollers
      *     @type \Temporal\Api\Taskqueue\V1\TaskQueueStatus $task_queue_status
      * }
      */
@@ -48,7 +48,7 @@ class DescribeTaskQueueResponse extends \Google\Protobuf\Internal\Message
 
     /**
      * Generated from protobuf field <code>repeated .temporal.api.taskqueue.v1.PollerInfo pollers = 1;</code>
-     * @param \Temporal\Api\Taskqueue\V1\PollerInfo[]|\Google\Protobuf\Internal\RepeatedField $var
+     * @param array<\Temporal\Api\Taskqueue\V1\PollerInfo>|\Google\Protobuf\Internal\RepeatedField $var
      * @return $this
      */
     public function setPollers($var)

@@ -20,11 +20,16 @@ class SignalExternalWorkflowExecutionInitiatedEventAttributes extends \Google\Pr
      */
     protected $workflow_task_completed_event_id = 0;
     /**
-     * namespace of the to-be-signalled workflow
+     * Namespace of the to-be-signalled workflow.
+     * SDKs and UI tools should use `namespace` field but server must use `namespace_id` only.
      *
      * Generated from protobuf field <code>string namespace = 2;</code>
      */
     protected $namespace = '';
+    /**
+     * Generated from protobuf field <code>string namespace_id = 9;</code>
+     */
+    protected $namespace_id = '';
     /**
      * Generated from protobuf field <code>.temporal.api.common.v1.WorkflowExecution workflow_execution = 3;</code>
      */
@@ -68,7 +73,9 @@ class SignalExternalWorkflowExecutionInitiatedEventAttributes extends \Google\Pr
      *     @type int|string $workflow_task_completed_event_id
      *           The `WORKFLOW_TASK_COMPLETED` event which this command was reported with
      *     @type string $namespace
-     *           namespace of the to-be-signalled workflow
+     *           Namespace of the to-be-signalled workflow.
+     *           SDKs and UI tools should use `namespace` field but server must use `namespace_id` only.
+     *     @type string $namespace_id
      *     @type \Temporal\Api\Common\V1\WorkflowExecution $workflow_execution
      *     @type string $signal_name
      *           name/type of the signal to fire in the external workflow
@@ -114,7 +121,8 @@ class SignalExternalWorkflowExecutionInitiatedEventAttributes extends \Google\Pr
     }
 
     /**
-     * namespace of the to-be-signalled workflow
+     * Namespace of the to-be-signalled workflow.
+     * SDKs and UI tools should use `namespace` field but server must use `namespace_id` only.
      *
      * Generated from protobuf field <code>string namespace = 2;</code>
      * @return string
@@ -125,7 +133,8 @@ class SignalExternalWorkflowExecutionInitiatedEventAttributes extends \Google\Pr
     }
 
     /**
-     * namespace of the to-be-signalled workflow
+     * Namespace of the to-be-signalled workflow.
+     * SDKs and UI tools should use `namespace` field but server must use `namespace_id` only.
      *
      * Generated from protobuf field <code>string namespace = 2;</code>
      * @param string $var
@@ -135,6 +144,28 @@ class SignalExternalWorkflowExecutionInitiatedEventAttributes extends \Google\Pr
     {
         GPBUtil::checkString($var, True);
         $this->namespace = $var;
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>string namespace_id = 9;</code>
+     * @return string
+     */
+    public function getNamespaceId()
+    {
+        return $this->namespace_id;
+    }
+
+    /**
+     * Generated from protobuf field <code>string namespace_id = 9;</code>
+     * @param string $var
+     * @return $this
+     */
+    public function setNamespaceId($var)
+    {
+        GPBUtil::checkString($var, True);
+        $this->namespace_id = $var;
 
         return $this;
     }

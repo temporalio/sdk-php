@@ -55,6 +55,7 @@ class RespondWorkflowTaskCompletedRequest extends \Google\Protobuf\Internal\Mess
      */
     protected $force_create_new_workflow_task = false;
     /**
+     * DEPRECATED since 1.21 - use `worker_version_stamp` instead.
      * Worker process' unique binary id
      *
      * Generated from protobuf field <code>string binary_checksum = 7;</code>
@@ -70,6 +71,33 @@ class RespondWorkflowTaskCompletedRequest extends \Google\Protobuf\Internal\Mess
      * Generated from protobuf field <code>string namespace = 9;</code>
      */
     protected $namespace = '';
+    /**
+     * Version info of the worker who processed this task. This message's `build_id` field should
+     * always be set by SDKs. Workers opting into versioning will also set the `use_versioning`
+     * field to true. See message docstrings for more.
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionStamp worker_version_stamp = 10;</code>
+     */
+    protected $worker_version_stamp = null;
+    /**
+     * Protocol messages piggybacking on a WFT as a transport
+     *
+     * Generated from protobuf field <code>repeated .temporal.api.protocol.v1.Message messages = 11;</code>
+     */
+    private $messages;
+    /**
+     * Data the SDK wishes to record for itself, but server need not interpret, and does not
+     * directly impact workflow state.
+     *
+     * Generated from protobuf field <code>.temporal.api.sdk.v1.WorkflowTaskCompletedMetadata sdk_metadata = 12;</code>
+     */
+    protected $sdk_metadata = null;
+    /**
+     * Local usage data collected for metering
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.MeteringMetadata metering_metadata = 13;</code>
+     */
+    protected $metering_metadata = null;
 
     /**
      * Constructor.
@@ -79,7 +107,7 @@ class RespondWorkflowTaskCompletedRequest extends \Google\Protobuf\Internal\Mess
      *
      *     @type string $task_token
      *           The task token as received in `PollWorkflowTaskQueueResponse`
-     *     @type \Temporal\Api\Command\V1\Command[]|\Google\Protobuf\Internal\RepeatedField $commands
+     *     @type array<\Temporal\Api\Command\V1\Command>|\Google\Protobuf\Internal\RepeatedField $commands
      *           A list of commands generated when driving the workflow code in response to the new task
      *     @type string $identity
      *           The identity of the worker/client
@@ -95,10 +123,22 @@ class RespondWorkflowTaskCompletedRequest extends \Google\Protobuf\Internal\Mess
      *           something useful, but cannot complete it within the workflow task timeout. Local activities
      *           which run for longer than the task timeout being the prime example.
      *     @type string $binary_checksum
+     *           DEPRECATED since 1.21 - use `worker_version_stamp` instead.
      *           Worker process' unique binary id
      *     @type array|\Google\Protobuf\Internal\MapField $query_results
      *           Responses to the `queries` field in the task being responded to
      *     @type string $namespace
+     *     @type \Temporal\Api\Common\V1\WorkerVersionStamp $worker_version_stamp
+     *           Version info of the worker who processed this task. This message's `build_id` field should
+     *           always be set by SDKs. Workers opting into versioning will also set the `use_versioning`
+     *           field to true. See message docstrings for more.
+     *     @type array<\Temporal\Api\Protocol\V1\Message>|\Google\Protobuf\Internal\RepeatedField $messages
+     *           Protocol messages piggybacking on a WFT as a transport
+     *     @type \Temporal\Api\Sdk\V1\WorkflowTaskCompletedMetadata $sdk_metadata
+     *           Data the SDK wishes to record for itself, but server need not interpret, and does not
+     *           directly impact workflow state.
+     *     @type \Temporal\Api\Common\V1\MeteringMetadata $metering_metadata
+     *           Local usage data collected for metering
      * }
      */
     public function __construct($data = NULL) {
@@ -147,7 +187,7 @@ class RespondWorkflowTaskCompletedRequest extends \Google\Protobuf\Internal\Mess
      * A list of commands generated when driving the workflow code in response to the new task
      *
      * Generated from protobuf field <code>repeated .temporal.api.command.v1.Command commands = 2;</code>
-     * @param \Temporal\Api\Command\V1\Command[]|\Google\Protobuf\Internal\RepeatedField $var
+     * @param array<\Temporal\Api\Command\V1\Command>|\Google\Protobuf\Internal\RepeatedField $var
      * @return $this
      */
     public function setCommands($var)
@@ -283,6 +323,7 @@ class RespondWorkflowTaskCompletedRequest extends \Google\Protobuf\Internal\Mess
     }
 
     /**
+     * DEPRECATED since 1.21 - use `worker_version_stamp` instead.
      * Worker process' unique binary id
      *
      * Generated from protobuf field <code>string binary_checksum = 7;</code>
@@ -294,6 +335,7 @@ class RespondWorkflowTaskCompletedRequest extends \Google\Protobuf\Internal\Mess
     }
 
     /**
+     * DEPRECATED since 1.21 - use `worker_version_stamp` instead.
      * Worker process' unique binary id
      *
      * Generated from protobuf field <code>string binary_checksum = 7;</code>
@@ -352,6 +394,146 @@ class RespondWorkflowTaskCompletedRequest extends \Google\Protobuf\Internal\Mess
     {
         GPBUtil::checkString($var, True);
         $this->namespace = $var;
+
+        return $this;
+    }
+
+    /**
+     * Version info of the worker who processed this task. This message's `build_id` field should
+     * always be set by SDKs. Workers opting into versioning will also set the `use_versioning`
+     * field to true. See message docstrings for more.
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionStamp worker_version_stamp = 10;</code>
+     * @return \Temporal\Api\Common\V1\WorkerVersionStamp|null
+     */
+    public function getWorkerVersionStamp()
+    {
+        return $this->worker_version_stamp;
+    }
+
+    public function hasWorkerVersionStamp()
+    {
+        return isset($this->worker_version_stamp);
+    }
+
+    public function clearWorkerVersionStamp()
+    {
+        unset($this->worker_version_stamp);
+    }
+
+    /**
+     * Version info of the worker who processed this task. This message's `build_id` field should
+     * always be set by SDKs. Workers opting into versioning will also set the `use_versioning`
+     * field to true. See message docstrings for more.
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionStamp worker_version_stamp = 10;</code>
+     * @param \Temporal\Api\Common\V1\WorkerVersionStamp $var
+     * @return $this
+     */
+    public function setWorkerVersionStamp($var)
+    {
+        GPBUtil::checkMessage($var, \Temporal\Api\Common\V1\WorkerVersionStamp::class);
+        $this->worker_version_stamp = $var;
+
+        return $this;
+    }
+
+    /**
+     * Protocol messages piggybacking on a WFT as a transport
+     *
+     * Generated from protobuf field <code>repeated .temporal.api.protocol.v1.Message messages = 11;</code>
+     * @return \Google\Protobuf\Internal\RepeatedField
+     */
+    public function getMessages()
+    {
+        return $this->messages;
+    }
+
+    /**
+     * Protocol messages piggybacking on a WFT as a transport
+     *
+     * Generated from protobuf field <code>repeated .temporal.api.protocol.v1.Message messages = 11;</code>
+     * @param array<\Temporal\Api\Protocol\V1\Message>|\Google\Protobuf\Internal\RepeatedField $var
+     * @return $this
+     */
+    public function setMessages($var)
+    {
+        $arr = GPBUtil::checkRepeatedField($var, \Google\Protobuf\Internal\GPBType::MESSAGE, \Temporal\Api\Protocol\V1\Message::class);
+        $this->messages = $arr;
+
+        return $this;
+    }
+
+    /**
+     * Data the SDK wishes to record for itself, but server need not interpret, and does not
+     * directly impact workflow state.
+     *
+     * Generated from protobuf field <code>.temporal.api.sdk.v1.WorkflowTaskCompletedMetadata sdk_metadata = 12;</code>
+     * @return \Temporal\Api\Sdk\V1\WorkflowTaskCompletedMetadata|null
+     */
+    public function getSdkMetadata()
+    {
+        return $this->sdk_metadata;
+    }
+
+    public function hasSdkMetadata()
+    {
+        return isset($this->sdk_metadata);
+    }
+
+    public function clearSdkMetadata()
+    {
+        unset($this->sdk_metadata);
+    }
+
+    /**
+     * Data the SDK wishes to record for itself, but server need not interpret, and does not
+     * directly impact workflow state.
+     *
+     * Generated from protobuf field <code>.temporal.api.sdk.v1.WorkflowTaskCompletedMetadata sdk_metadata = 12;</code>
+     * @param \Temporal\Api\Sdk\V1\WorkflowTaskCompletedMetadata $var
+     * @return $this
+     */
+    public function setSdkMetadata($var)
+    {
+        GPBUtil::checkMessage($var, \Temporal\Api\Sdk\V1\WorkflowTaskCompletedMetadata::class);
+        $this->sdk_metadata = $var;
+
+        return $this;
+    }
+
+    /**
+     * Local usage data collected for metering
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.MeteringMetadata metering_metadata = 13;</code>
+     * @return \Temporal\Api\Common\V1\MeteringMetadata|null
+     */
+    public function getMeteringMetadata()
+    {
+        return $this->metering_metadata;
+    }
+
+    public function hasMeteringMetadata()
+    {
+        return isset($this->metering_metadata);
+    }
+
+    public function clearMeteringMetadata()
+    {
+        unset($this->metering_metadata);
+    }
+
+    /**
+     * Local usage data collected for metering
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.MeteringMetadata metering_metadata = 13;</code>
+     * @param \Temporal\Api\Common\V1\MeteringMetadata $var
+     * @return $this
+     */
+    public function setMeteringMetadata($var)
+    {
+        GPBUtil::checkMessage($var, \Temporal\Api\Common\V1\MeteringMetadata::class);
+        $this->metering_metadata = $var;
 
         return $this;
     }

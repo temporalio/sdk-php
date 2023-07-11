@@ -39,6 +39,12 @@ class RequestCancelExternalWorkflowExecutionCommandAttributes extends \Google\Pr
      * Generated from protobuf field <code>bool child_workflow_only = 5;</code>
      */
     protected $child_workflow_only = false;
+    /**
+     * Reason for requesting the cancellation
+     *
+     * Generated from protobuf field <code>string reason = 6;</code>
+     */
+    protected $reason = '';
 
     /**
      * Constructor.
@@ -55,6 +61,8 @@ class RequestCancelExternalWorkflowExecutionCommandAttributes extends \Google\Pr
      *           Set this to true if the workflow being cancelled is a child of the workflow originating this
      *           command. The request will be rejected if it is set to true and the target workflow is *not*
      *           a child of the requesting workflow.
+     *     @type string $reason
+     *           Reason for requesting the cancellation
      * }
      */
     public function __construct($data = NULL) {
@@ -180,6 +188,32 @@ class RequestCancelExternalWorkflowExecutionCommandAttributes extends \Google\Pr
     {
         GPBUtil::checkBool($var);
         $this->child_workflow_only = $var;
+
+        return $this;
+    }
+
+    /**
+     * Reason for requesting the cancellation
+     *
+     * Generated from protobuf field <code>string reason = 6;</code>
+     * @return string
+     */
+    public function getReason()
+    {
+        return $this->reason;
+    }
+
+    /**
+     * Reason for requesting the cancellation
+     *
+     * Generated from protobuf field <code>string reason = 6;</code>
+     * @param string $var
+     * @return $this
+     */
+    public function setReason($var)
+    {
+        GPBUtil::checkString($var, True);
+        $this->reason = $var;
 
         return $this;
     }
