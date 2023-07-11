@@ -39,7 +39,7 @@ final class Uuid
      *
      * @link http://tools.ietf.org/html/rfc4122
      *
-     * @return string
+     * @return non-empty-string
      * @throws \Exception
      */
     public static function v4(): string

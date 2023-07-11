@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\DTO;
+namespace Temporal\Client;
 
 final class ServerCapabilities
 {

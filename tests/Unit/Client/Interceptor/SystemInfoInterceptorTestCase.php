@@ -7,11 +7,11 @@ namespace Temporal\Tests\Unit\Client\Interceptor;
 use PHPUnit\Framework\TestCase;
 use Temporal\Api\Workflowservice\V1\GetSystemInfoResponse;
 use Temporal\Api\Workflowservice\V1\GetSystemInfoResponse\Capabilities;
-use Temporal\Client\DTO\ServerCapabilities;
 use Temporal\Client\GRPC\ContextInterface;
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\GRPC\StatusCode;
 use Temporal\Client\Interceptor\SystemInfoInterceptor;
+use Temporal\Client\ServerCapabilities;
 use Temporal\Exception\Client\ServiceClientException;
 
 final class SystemInfoInterceptorTestCase extends TestCase
