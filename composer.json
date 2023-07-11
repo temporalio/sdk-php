@@ -28,7 +28,7 @@
         "google/protobuf": "^3.22",
         "grpc/grpc": "^1.42",
         "nesbot/carbon": "^2.66",
-        "psr/log": "^1.0.1 || ^2.0 || ^3.0",
+        "psr/log": "^2.0 || ^3.0",
         "react/promise": "^2.9",
         "spiral/attributes": "^2.8 || ^3.0",
         "spiral/roadrunner-cli": "^2.5",
@@ -36,7 +36,7 @@
         "spiral/roadrunner-worker": "^3.0",
         "symfony/filesystem": "^4.4.20 || ^5.0 || ^6.0",
         "symfony/http-client": "^4.4.27 || ^5.0 || ^6.0",
-        "symfony/process": "^4.4.20 || ^5.0 || ^6.0",
+        "symfony/process": "^5.4 || ^6.0",
         "roadrunner-php/version-checker": "^1.0",
         "spiral/roadrunner": "^2023.1"
     },
