@@ -68,7 +68,6 @@ use function React\Promise\resolve;
 
 class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
 {
-
     /**
      * Contains conditional groups that contains tuple of a condition callable and its promise
      * @var array<non-empty-string, array<int<0, max>, array{callable, Deferred}>>
@@ -103,6 +102,8 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
             ->getPipeline(WorkflowOutboundRequestInterceptor::class);
         $this->callsInterceptor =  $services->interceptorProvider
             ->getPipeline(WorkflowOutboundCallsInterceptor::class);
+
+        $this->input->header->setDataConverter($services->dataConverter);
     }
 
     /**
@@ -159,6 +160,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
         $clone->awaits = &$this->awaits;
         $clone->trace = &$this->trace;
         $clone->input = $input;
+        $input->header->setDataConverter($this->services->dataConverter);
         return $clone;
     }
 
@@ -315,7 +317,8 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
                 $request = new ContinueAsNew(
                     $input->type,
                     EncodedValues::fromValues($input->args),
-                    $this->services->marshaller->marshal($input->options ?? new ContinueAsNewOptions())
+                    $this->services->marshaller->marshal($input->options ?? new ContinueAsNewOptions()),
+                    $this->getHeader(),
                 );
 
                 // must not be captured
@@ -423,7 +426,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
         string $type,
         array $args = [],
         ActivityOptionsInterface $options = null,
-        \ReflectionType $returnType = null,
+        Type|string|\ReflectionClass|\ReflectionType $returnType = null,
     ): PromiseInterface {
         $isLocal = $options instanceof LocalActivityOptions;
 
@@ -497,10 +500,14 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
     public function request(RequestInterface $request, bool $cancellable = true): PromiseInterface
     {
         $this->recordTrace();
+        $request->getHeader()->setDataConverter($this->services->dataConverter);
 
         // Intercept workflow outbound calls
         return $this->requestInterceptor->with(
-            fn(RequestInterface $request): PromiseInterface => $this->client->request($request),
+            function (RequestInterface $request): PromiseInterface {
+                $request->getHeader()->setDataConverter($this->services->dataConverter);
+                return $this->client->request($request, $this->getInfo());
+            },
             /** @see WorkflowOutboundRequestInterceptor::handleOutboundRequest() */
             'handleOutboundRequest',
         )($request);

@@ -42,7 +42,7 @@ class GetWorkflowExecutionHistoryResponse extends \Google\Protobuf\Internal\Mess
      *     Optional. Data for populating the Message object.
      *
      *     @type \Temporal\Api\History\V1\History $history
-     *     @type \Temporal\Api\Common\V1\DataBlob[]|\Google\Protobuf\Internal\RepeatedField $raw_history
+     *     @type array<\Temporal\Api\Common\V1\DataBlob>|\Google\Protobuf\Internal\RepeatedField $raw_history
      *           Raw history is an alternate representation of history that may be returned if configured on
      *           the frontend. This is not supported by all SDKs. Either this or `history` will be set.
      *     @type string $next_page_token
@@ -104,7 +104,7 @@ class GetWorkflowExecutionHistoryResponse extends \Google\Protobuf\Internal\Mess
      * the frontend. This is not supported by all SDKs. Either this or `history` will be set.
      *
      * Generated from protobuf field <code>repeated .temporal.api.common.v1.DataBlob raw_history = 2;</code>
-     * @param \Temporal\Api\Common\V1\DataBlob[]|\Google\Protobuf\Internal\RepeatedField $var
+     * @param array<\Temporal\Api\Common\V1\DataBlob>|\Google\Protobuf\Internal\RepeatedField $var
      * @return $this
      */
     public function setRawHistory($var)

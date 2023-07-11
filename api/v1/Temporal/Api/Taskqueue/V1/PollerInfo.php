@@ -14,8 +14,6 @@ use Google\Protobuf\Internal\GPBUtil;
 class PollerInfo extends \Google\Protobuf\Internal\Message
 {
     /**
-     * Unix Nano
-     *
      * Generated from protobuf field <code>.google.protobuf.Timestamp last_access_time = 1 [(.gogoproto.stdtime) = true];</code>
      */
     protected $last_access_time = null;
@@ -27,6 +25,13 @@ class PollerInfo extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>double rate_per_second = 3;</code>
      */
     protected $rate_per_second = 0.0;
+    /**
+     * If a worker has opted into the worker versioning feature while polling, its capabilities will
+     * appear here.
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionCapabilities worker_version_capabilities = 4;</code>
+     */
+    protected $worker_version_capabilities = null;
 
     /**
      * Constructor.
@@ -35,9 +40,11 @@ class PollerInfo extends \Google\Protobuf\Internal\Message
      *     Optional. Data for populating the Message object.
      *
      *     @type \Google\Protobuf\Timestamp $last_access_time
-     *           Unix Nano
      *     @type string $identity
      *     @type float $rate_per_second
+     *     @type \Temporal\Api\Common\V1\WorkerVersionCapabilities $worker_version_capabilities
+     *           If a worker has opted into the worker versioning feature while polling, its capabilities will
+     *           appear here.
      * }
      */
     public function __construct($data = NULL) {
@@ -46,8 +53,6 @@ class PollerInfo extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Unix Nano
-     *
      * Generated from protobuf field <code>.google.protobuf.Timestamp last_access_time = 1 [(.gogoproto.stdtime) = true];</code>
      * @return \Google\Protobuf\Timestamp|null
      */
@@ -67,8 +72,6 @@ class PollerInfo extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Unix Nano
-     *
      * Generated from protobuf field <code>.google.protobuf.Timestamp last_access_time = 1 [(.gogoproto.stdtime) = true];</code>
      * @param \Google\Protobuf\Timestamp $var
      * @return $this
@@ -121,6 +124,44 @@ class PollerInfo extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkDouble($var);
         $this->rate_per_second = $var;
+
+        return $this;
+    }
+
+    /**
+     * If a worker has opted into the worker versioning feature while polling, its capabilities will
+     * appear here.
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionCapabilities worker_version_capabilities = 4;</code>
+     * @return \Temporal\Api\Common\V1\WorkerVersionCapabilities|null
+     */
+    public function getWorkerVersionCapabilities()
+    {
+        return $this->worker_version_capabilities;
+    }
+
+    public function hasWorkerVersionCapabilities()
+    {
+        return isset($this->worker_version_capabilities);
+    }
+
+    public function clearWorkerVersionCapabilities()
+    {
+        unset($this->worker_version_capabilities);
+    }
+
+    /**
+     * If a worker has opted into the worker versioning feature while polling, its capabilities will
+     * appear here.
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionCapabilities worker_version_capabilities = 4;</code>
+     * @param \Temporal\Api\Common\V1\WorkerVersionCapabilities $var
+     * @return $this
+     */
+    public function setWorkerVersionCapabilities($var)
+    {
+        GPBUtil::checkMessage($var, \Temporal\Api\Common\V1\WorkerVersionCapabilities::class);
+        $this->worker_version_capabilities = $var;
 
         return $this;
     }

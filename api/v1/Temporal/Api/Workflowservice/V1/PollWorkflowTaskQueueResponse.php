@@ -104,6 +104,12 @@ class PollWorkflowTaskQueueResponse extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>map<string, .temporal.api.query.v1.WorkflowQuery> queries = 14;</code>
      */
     private $queries;
+    /**
+     * Protocol messages piggybacking on a WFT as a transport
+     *
+     * Generated from protobuf field <code>repeated .temporal.api.protocol.v1.Message messages = 15;</code>
+     */
+    private $messages;
 
     /**
      * Constructor.
@@ -148,6 +154,8 @@ class PollWorkflowTaskQueueResponse extends \Google\Protobuf\Internal\Message
      *     @type array|\Google\Protobuf\Internal\MapField $queries
      *           Queries that should be executed after applying the history in this task. Responses should be
      *           attached to `RespondWorkflowTaskCompletedRequest::query_results`
+     *     @type array<\Temporal\Api\Protocol\V1\Message>|\Google\Protobuf\Internal\RepeatedField $messages
+     *           Protocol messages piggybacking on a WFT as a transport
      * }
      */
     public function __construct($data = NULL) {
@@ -599,6 +607,32 @@ class PollWorkflowTaskQueueResponse extends \Google\Protobuf\Internal\Message
     {
         $arr = GPBUtil::checkMapField($var, \Google\Protobuf\Internal\GPBType::STRING, \Google\Protobuf\Internal\GPBType::MESSAGE, \Temporal\Api\Query\V1\WorkflowQuery::class);
         $this->queries = $arr;
+
+        return $this;
+    }
+
+    /**
+     * Protocol messages piggybacking on a WFT as a transport
+     *
+     * Generated from protobuf field <code>repeated .temporal.api.protocol.v1.Message messages = 15;</code>
+     * @return \Google\Protobuf\Internal\RepeatedField
+     */
+    public function getMessages()
+    {
+        return $this->messages;
+    }
+
+    /**
+     * Protocol messages piggybacking on a WFT as a transport
+     *
+     * Generated from protobuf field <code>repeated .temporal.api.protocol.v1.Message messages = 15;</code>
+     * @param array<\Temporal\Api\Protocol\V1\Message>|\Google\Protobuf\Internal\RepeatedField $var
+     * @return $this
+     */
+    public function setMessages($var)
+    {
+        $arr = GPBUtil::checkRepeatedField($var, \Google\Protobuf\Internal\GPBType::MESSAGE, \Temporal\Api\Protocol\V1\Message::class);
+        $this->messages = $arr;
 
         return $this;
     }

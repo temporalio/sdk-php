@@ -27,6 +27,9 @@ use Temporal\Worker\LoopInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\ProcessInterface;
 
+/**
+ * Root process scope.
+ */
 class Process extends Scope implements ProcessInterface
 {
     /**
@@ -68,6 +71,8 @@ class Process extends Scope implements ProcessInterface
 
                     $inboundPipeline->with(
                         function (SignalInput $input) use ($handler) {
+                            $input->header->setDataConverter($this->services->dataConverter);
+
                             $this->createScope(
                                 true,
                                 LoopInterface::ON_SIGNAL,

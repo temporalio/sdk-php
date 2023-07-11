@@ -24,6 +24,7 @@ use Temporal\Workflow\WorkflowExecution;
 
 /**
  * Implements {@see WorkflowClientCallsInterceptor}
+ * @psalm-immutable
  */
 trait WorkflowClientCallsInterceptorTrait
 {

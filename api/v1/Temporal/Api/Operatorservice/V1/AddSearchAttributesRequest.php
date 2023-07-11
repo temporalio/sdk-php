@@ -19,6 +19,10 @@ class AddSearchAttributesRequest extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>map<string, .temporal.api.enums.v1.IndexedValueType> search_attributes = 1;</code>
      */
     private $search_attributes;
+    /**
+     * Generated from protobuf field <code>string namespace = 2;</code>
+     */
+    protected $namespace = '';
 
     /**
      * Constructor.
@@ -28,6 +32,7 @@ class AddSearchAttributesRequest extends \Google\Protobuf\Internal\Message
      *
      *     @type array|\Google\Protobuf\Internal\MapField $search_attributes
      *           Mapping between search attribute name and its IndexedValueType.
+     *     @type string $namespace
      * }
      */
     public function __construct($data = NULL) {
@@ -57,6 +62,28 @@ class AddSearchAttributesRequest extends \Google\Protobuf\Internal\Message
     {
         $arr = GPBUtil::checkMapField($var, \Google\Protobuf\Internal\GPBType::STRING, \Google\Protobuf\Internal\GPBType::ENUM, \Temporal\Api\Enums\V1\IndexedValueType::class);
         $this->search_attributes = $arr;
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>string namespace = 2;</code>
+     * @return string
+     */
+    public function getNamespace()
+    {
+        return $this->namespace;
+    }
+
+    /**
+     * Generated from protobuf field <code>string namespace = 2;</code>
+     * @param string $var
+     * @return $this
+     */
+    public function setNamespace($var)
+    {
+        GPBUtil::checkString($var, True);
+        $this->namespace = $var;
 
         return $this;
     }

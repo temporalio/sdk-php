@@ -61,6 +61,7 @@
         "laminas/laminas-code": "^4.0",
         "monolog/monolog": "^2.1 || ^3.0",
         "phpunit/phpunit": "^9.5.21",
+        "ramsey/uuid": "^4.7",
         "symfony/translation": "^6.0",
         "symfony/var-dumper": "^6.0",
         "vimeo/psalm": "^4.30 || ^5.4"

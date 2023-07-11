@@ -13,12 +13,15 @@ namespace Temporal\Interceptor;
 
 use IteratorAggregate;
 use Temporal\Api\Common\V1\Header;
+use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\Type;
 
 /**
  * @psalm-type TKey=array-key
- * @psalm-type TValue=string
+ * @psalm-type TValue=mixed
+ * @psalm-import-type TypeEnum from Type
+ *
  * @extends IteratorAggregate<TKey, string>
- * @psalm-immutable
  */
 interface HeaderInterface extends \Countable, IteratorAggregate
 {
@@ -29,14 +32,19 @@ interface HeaderInterface extends \Countable, IteratorAggregate
 
     /**
      * @param TKey $index
+     * @param Type|TypeEnum|mixed $type
+     *
+     * @return mixed Returns {@see null} if value not found.
      */
-    public function getValue(int|string $index): ?string;
+    public function getValue(int|string $index, mixed $type = null): mixed;
 
     /**
      * @param TKey $key
      * @param TValue $value
+     *
+     * @psalm-mutation-free
      */
-    public function withValue(int|string $key, string $value): self;
+    public function withValue(int|string $key, mixed $value): self;
 
     /**
      * Make a protobuf Header message.
@@ -44,4 +52,11 @@ interface HeaderInterface extends \Countable, IteratorAggregate
      * @return Header
      */
     public function toHeader(): Header;
+
+    /**
+     * @param DataConverterInterface $converter
+     *
+     * @internal Might be removed in the future.
+     */
+    public function setDataConverter(DataConverterInterface $converter);
 }

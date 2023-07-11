@@ -14,11 +14,16 @@ use Google\Protobuf\Internal\GPBUtil;
 class ChildWorkflowExecutionStartedEventAttributes extends \Google\Protobuf\Internal\Message
 {
     /**
-     * Namespace of the child workflow
+     * Namespace of the child workflow.
+     * SDKs and UI tools should use `namespace` field but server must use `namespace_id` only.
      *
      * Generated from protobuf field <code>string namespace = 1;</code>
      */
     protected $namespace = '';
+    /**
+     * Generated from protobuf field <code>string namespace_id = 6;</code>
+     */
+    protected $namespace_id = '';
     /**
      * Id of the `START_CHILD_WORKFLOW_EXECUTION_INITIATED` event which this event corresponds to
      *
@@ -45,7 +50,9 @@ class ChildWorkflowExecutionStartedEventAttributes extends \Google\Protobuf\Inte
      *     Optional. Data for populating the Message object.
      *
      *     @type string $namespace
-     *           Namespace of the child workflow
+     *           Namespace of the child workflow.
+     *           SDKs and UI tools should use `namespace` field but server must use `namespace_id` only.
+     *     @type string $namespace_id
      *     @type int|string $initiated_event_id
      *           Id of the `START_CHILD_WORKFLOW_EXECUTION_INITIATED` event which this event corresponds to
      *     @type \Temporal\Api\Common\V1\WorkflowExecution $workflow_execution
@@ -59,7 +66,8 @@ class ChildWorkflowExecutionStartedEventAttributes extends \Google\Protobuf\Inte
     }
 
     /**
-     * Namespace of the child workflow
+     * Namespace of the child workflow.
+     * SDKs and UI tools should use `namespace` field but server must use `namespace_id` only.
      *
      * Generated from protobuf field <code>string namespace = 1;</code>
      * @return string
@@ -70,7 +78,8 @@ class ChildWorkflowExecutionStartedEventAttributes extends \Google\Protobuf\Inte
     }
 
     /**
-     * Namespace of the child workflow
+     * Namespace of the child workflow.
+     * SDKs and UI tools should use `namespace` field but server must use `namespace_id` only.
      *
      * Generated from protobuf field <code>string namespace = 1;</code>
      * @param string $var
@@ -80,6 +89,28 @@ class ChildWorkflowExecutionStartedEventAttributes extends \Google\Protobuf\Inte
     {
         GPBUtil::checkString($var, True);
         $this->namespace = $var;
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>string namespace_id = 6;</code>
+     * @return string
+     */
+    public function getNamespaceId()
+    {
+        return $this->namespace_id;
+    }
+
+    /**
+     * Generated from protobuf field <code>string namespace_id = 6;</code>
+     * @param string $var
+     * @return $this
+     */
+    public function setNamespaceId($var)
+    {
+        GPBUtil::checkString($var, True);
+        $this->namespace_id = $var;
 
         return $this;
     }

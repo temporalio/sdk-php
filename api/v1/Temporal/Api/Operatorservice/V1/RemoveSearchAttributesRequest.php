@@ -19,6 +19,10 @@ class RemoveSearchAttributesRequest extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>repeated string search_attributes = 1;</code>
      */
     private $search_attributes;
+    /**
+     * Generated from protobuf field <code>string namespace = 2;</code>
+     */
+    protected $namespace = '';
 
     /**
      * Constructor.
@@ -26,8 +30,9 @@ class RemoveSearchAttributesRequest extends \Google\Protobuf\Internal\Message
      * @param array $data {
      *     Optional. Data for populating the Message object.
      *
-     *     @type string[]|\Google\Protobuf\Internal\RepeatedField $search_attributes
+     *     @type array<string>|\Google\Protobuf\Internal\RepeatedField $search_attributes
      *           Search attribute names to delete.
+     *     @type string $namespace
      * }
      */
     public function __construct($data = NULL) {
@@ -50,13 +55,35 @@ class RemoveSearchAttributesRequest extends \Google\Protobuf\Internal\Message
      * Search attribute names to delete.
      *
      * Generated from protobuf field <code>repeated string search_attributes = 1;</code>
-     * @param string[]|\Google\Protobuf\Internal\RepeatedField $var
+     * @param array<string>|\Google\Protobuf\Internal\RepeatedField $var
      * @return $this
      */
     public function setSearchAttributes($var)
     {
         $arr = GPBUtil::checkRepeatedField($var, \Google\Protobuf\Internal\GPBType::STRING);
         $this->search_attributes = $arr;
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>string namespace = 2;</code>
+     * @return string
+     */
+    public function getNamespace()
+    {
+        return $this->namespace;
+    }
+
+    /**
+     * Generated from protobuf field <code>string namespace = 2;</code>
+     * @param string $var
+     * @return $this
+     */
+    public function setNamespace($var)
+    {
+        GPBUtil::checkString($var, True);
+        $this->namespace = $var;
 
         return $this;
     }

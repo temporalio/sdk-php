@@ -137,7 +137,7 @@ abstract class BaseClient implements ServiceClientInterface
     }
 
     /**
-     * Call grpc.
+     * Call a gRPC method.
      * Used in {@see withInterceptorsPipeline()}
      *
      * @param non-empty-string $method

@@ -18,9 +18,10 @@ interface DataConverterInterface
 {
     /**
      * @param Payload $payload
-     * @param string|\ReflectionClass|\ReflectionType|Type $type
+     * @param string|\ReflectionClass|\ReflectionType|Type|null $type
      * @return mixed
      *
+     * @psalm-mutation-free
      * @throws DataConverterException
      */
     public function fromPayload(Payload $payload, $type);

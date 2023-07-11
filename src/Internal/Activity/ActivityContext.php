@@ -56,6 +56,8 @@ final class ActivityContext implements ActivityContextInterface, HeaderCarrier
         $this->heartbeatDetails = $lastHeartbeatDetails;
         $this->input = $input;
         $this->header = $header;
+
+        $header->setDataConverter($converter);
     }
 
     /**

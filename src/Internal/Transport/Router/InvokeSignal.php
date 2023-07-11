@@ -26,6 +26,7 @@ final class InvokeSignal extends WorkflowProcessAwareRoute
 
         $instance = $this->findInstanceOrFail($payload['runId']);
         $handler = $instance->getSignalHandler($payload['name']);
+        $instance->getContext()->historyLength = $request->getHistoryLength();
 
         $handler($request->getPayloads());
 

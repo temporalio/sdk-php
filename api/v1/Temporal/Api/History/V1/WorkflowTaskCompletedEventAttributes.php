@@ -37,6 +37,27 @@ class WorkflowTaskCompletedEventAttributes extends \Google\Protobuf\Internal\Mes
      * Generated from protobuf field <code>string binary_checksum = 4;</code>
      */
     protected $binary_checksum = '';
+    /**
+     * Version info of the worker who processed this workflow task. If present, the `build_id` field
+     * within is also used as `binary_checksum`, which may be omitted in that case (it may also be
+     * populated to preserve compatibility).
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionStamp worker_version = 5;</code>
+     */
+    protected $worker_version = null;
+    /**
+     * Data the SDK wishes to record for itself, but server need not interpret, and does not
+     * directly impact workflow state.
+     *
+     * Generated from protobuf field <code>.temporal.api.sdk.v1.WorkflowTaskCompletedMetadata sdk_metadata = 6;</code>
+     */
+    protected $sdk_metadata = null;
+    /**
+     * Local usage data sent during workflow task completion and recorded here for posterity
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.MeteringMetadata metering_metadata = 13;</code>
+     */
+    protected $metering_metadata = null;
 
     /**
      * Constructor.
@@ -52,6 +73,15 @@ class WorkflowTaskCompletedEventAttributes extends \Google\Protobuf\Internal\Mes
      *           Identity of the worker who completed this task
      *     @type string $binary_checksum
      *           Binary ID of the worker who completed this task
+     *     @type \Temporal\Api\Common\V1\WorkerVersionStamp $worker_version
+     *           Version info of the worker who processed this workflow task. If present, the `build_id` field
+     *           within is also used as `binary_checksum`, which may be omitted in that case (it may also be
+     *           populated to preserve compatibility).
+     *     @type \Temporal\Api\Sdk\V1\WorkflowTaskCompletedMetadata $sdk_metadata
+     *           Data the SDK wishes to record for itself, but server need not interpret, and does not
+     *           directly impact workflow state.
+     *     @type \Temporal\Api\Common\V1\MeteringMetadata $metering_metadata
+     *           Local usage data sent during workflow task completion and recorded here for posterity
      * }
      */
     public function __construct($data = NULL) {
@@ -159,6 +189,120 @@ class WorkflowTaskCompletedEventAttributes extends \Google\Protobuf\Internal\Mes
     {
         GPBUtil::checkString($var, True);
         $this->binary_checksum = $var;
+
+        return $this;
+    }
+
+    /**
+     * Version info of the worker who processed this workflow task. If present, the `build_id` field
+     * within is also used as `binary_checksum`, which may be omitted in that case (it may also be
+     * populated to preserve compatibility).
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionStamp worker_version = 5;</code>
+     * @return \Temporal\Api\Common\V1\WorkerVersionStamp|null
+     */
+    public function getWorkerVersion()
+    {
+        return $this->worker_version;
+    }
+
+    public function hasWorkerVersion()
+    {
+        return isset($this->worker_version);
+    }
+
+    public function clearWorkerVersion()
+    {
+        unset($this->worker_version);
+    }
+
+    /**
+     * Version info of the worker who processed this workflow task. If present, the `build_id` field
+     * within is also used as `binary_checksum`, which may be omitted in that case (it may also be
+     * populated to preserve compatibility).
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionStamp worker_version = 5;</code>
+     * @param \Temporal\Api\Common\V1\WorkerVersionStamp $var
+     * @return $this
+     */
+    public function setWorkerVersion($var)
+    {
+        GPBUtil::checkMessage($var, \Temporal\Api\Common\V1\WorkerVersionStamp::class);
+        $this->worker_version = $var;
+
+        return $this;
+    }
+
+    /**
+     * Data the SDK wishes to record for itself, but server need not interpret, and does not
+     * directly impact workflow state.
+     *
+     * Generated from protobuf field <code>.temporal.api.sdk.v1.WorkflowTaskCompletedMetadata sdk_metadata = 6;</code>
+     * @return \Temporal\Api\Sdk\V1\WorkflowTaskCompletedMetadata|null
+     */
+    public function getSdkMetadata()
+    {
+        return $this->sdk_metadata;
+    }
+
+    public function hasSdkMetadata()
+    {
+        return isset($this->sdk_metadata);
+    }
+
+    public function clearSdkMetadata()
+    {
+        unset($this->sdk_metadata);
+    }
+
+    /**
+     * Data the SDK wishes to record for itself, but server need not interpret, and does not
+     * directly impact workflow state.
+     *
+     * Generated from protobuf field <code>.temporal.api.sdk.v1.WorkflowTaskCompletedMetadata sdk_metadata = 6;</code>
+     * @param \Temporal\Api\Sdk\V1\WorkflowTaskCompletedMetadata $var
+     * @return $this
+     */
+    public function setSdkMetadata($var)
+    {
+        GPBUtil::checkMessage($var, \Temporal\Api\Sdk\V1\WorkflowTaskCompletedMetadata::class);
+        $this->sdk_metadata = $var;
+
+        return $this;
+    }
+
+    /**
+     * Local usage data sent during workflow task completion and recorded here for posterity
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.MeteringMetadata metering_metadata = 13;</code>
+     * @return \Temporal\Api\Common\V1\MeteringMetadata|null
+     */
+    public function getMeteringMetadata()
+    {
+        return $this->metering_metadata;
+    }
+
+    public function hasMeteringMetadata()
+    {
+        return isset($this->metering_metadata);
+    }
+
+    public function clearMeteringMetadata()
+    {
+        unset($this->metering_metadata);
+    }
+
+    /**
+     * Local usage data sent during workflow task completion and recorded here for posterity
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.MeteringMetadata metering_metadata = 13;</code>
+     * @param \Temporal\Api\Common\V1\MeteringMetadata $var
+     * @return $this
+     */
+    public function setMeteringMetadata($var)
+    {
+        GPBUtil::checkMessage($var, \Temporal\Api\Common\V1\MeteringMetadata::class);
+        $this->metering_metadata = $var;
 
         return $this;
     }

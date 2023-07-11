@@ -41,6 +41,7 @@ class Encoder
         switch (true) {
             case $cmd instanceof RequestInterface:
                 $cmd->getPayloads()->setDataConverter($this->converter);
+                $cmd->getHeader()->setDataConverter($this->converter);
 
                 $options = $cmd->getOptions();
                 if ($options === []) {

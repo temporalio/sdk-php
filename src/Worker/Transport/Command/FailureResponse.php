@@ -21,11 +21,12 @@ class FailureResponse extends Response implements FailureResponseInterface
     /**
      * @param \Throwable $failure
      * @param int|null $id
+     * @param int<0, max> $historyLength
      */
-    public function __construct(\Throwable $failure, int $id = null)
+    public function __construct(\Throwable $failure, int $id = null, int $historyLength = 0)
     {
         $this->failure = $failure;
-        parent::__construct($id);
+        parent::__construct($id, $historyLength);
     }
 
     /**

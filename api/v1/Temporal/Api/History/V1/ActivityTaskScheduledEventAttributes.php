@@ -24,10 +24,6 @@ class ActivityTaskScheduledEventAttributes extends \Google\Protobuf\Internal\Mes
      */
     protected $activity_type = null;
     /**
-     * Generated from protobuf field <code>string namespace = 3;</code>
-     */
-    protected $namespace = '';
-    /**
      * Generated from protobuf field <code>.temporal.api.taskqueue.v1.TaskQueue task_queue = 4;</code>
      */
     protected $task_queue = null;
@@ -89,6 +85,14 @@ class ActivityTaskScheduledEventAttributes extends \Google\Protobuf\Internal\Mes
      * Generated from protobuf field <code>.temporal.api.common.v1.RetryPolicy retry_policy = 12;</code>
      */
     protected $retry_policy = null;
+    /**
+     * If this is set, the workflow executing this command wishes to start the activity using
+     * a version compatible with the version that this workflow most recently ran on, if such
+     * behavior is possible.
+     *
+     * Generated from protobuf field <code>bool use_compatible_version = 13;</code>
+     */
+    protected $use_compatible_version = false;
 
     /**
      * Constructor.
@@ -99,7 +103,6 @@ class ActivityTaskScheduledEventAttributes extends \Google\Protobuf\Internal\Mes
      *     @type string $activity_id
      *           The worker/user assigned identifier for the activity
      *     @type \Temporal\Api\Common\V1\ActivityType $activity_type
-     *     @type string $namespace
      *     @type \Temporal\Api\Taskqueue\V1\TaskQueue $task_queue
      *     @type \Temporal\Api\Common\V1\Header $header
      *     @type \Temporal\Api\Common\V1\Payloads $input
@@ -129,6 +132,10 @@ class ActivityTaskScheduledEventAttributes extends \Google\Protobuf\Internal\Mes
      *           Activities are assigned a default retry policy controlled by the service's dynamic
      *           configuration. Retries will happen up to `schedule_to_close_timeout`. To disable retries set
      *           retry_policy.maximum_attempts to 1.
+     *     @type bool $use_compatible_version
+     *           If this is set, the workflow executing this command wishes to start the activity using
+     *           a version compatible with the version that this workflow most recently ran on, if such
+     *           behavior is possible.
      * }
      */
     public function __construct($data = NULL) {
@@ -190,28 +197,6 @@ class ActivityTaskScheduledEventAttributes extends \Google\Protobuf\Internal\Mes
     {
         GPBUtil::checkMessage($var, \Temporal\Api\Common\V1\ActivityType::class);
         $this->activity_type = $var;
-
-        return $this;
-    }
-
-    /**
-     * Generated from protobuf field <code>string namespace = 3;</code>
-     * @return string
-     */
-    public function getNamespace()
-    {
-        return $this->namespace;
-    }
-
-    /**
-     * Generated from protobuf field <code>string namespace = 3;</code>
-     * @param string $var
-     * @return $this
-     */
-    public function setNamespace($var)
-    {
-        GPBUtil::checkString($var, True);
-        $this->namespace = $var;
 
         return $this;
     }
@@ -542,6 +527,36 @@ class ActivityTaskScheduledEventAttributes extends \Google\Protobuf\Internal\Mes
     {
         GPBUtil::checkMessage($var, \Temporal\Api\Common\V1\RetryPolicy::class);
         $this->retry_policy = $var;
+
+        return $this;
+    }
+
+    /**
+     * If this is set, the workflow executing this command wishes to start the activity using
+     * a version compatible with the version that this workflow most recently ran on, if such
+     * behavior is possible.
+     *
+     * Generated from protobuf field <code>bool use_compatible_version = 13;</code>
+     * @return bool
+     */
+    public function getUseCompatibleVersion()
+    {
+        return $this->use_compatible_version;
+    }
+
+    /**
+     * If this is set, the workflow executing this command wishes to start the activity using
+     * a version compatible with the version that this workflow most recently ran on, if such
+     * behavior is possible.
+     *
+     * Generated from protobuf field <code>bool use_compatible_version = 13;</code>
+     * @param bool $var
+     * @return $this
+     */
+    public function setUseCompatibleVersion($var)
+    {
+        GPBUtil::checkBool($var);
+        $this->use_compatible_version = $var;
 
         return $this;
     }

@@ -14,18 +14,23 @@ class Message
         if (static::$is_initialized == true) {
           return;
         }
+        \GPBMetadata\Google\Protobuf\Timestamp::initOnce();
+        \GPBMetadata\Dependencies\Gogoproto\Gogo::initOnce();
         \GPBMetadata\Temporal\Api\Enums\V1\PBNamespace::initOnce();
         $pool->internalAddGeneratedFile(
             '
-‡
-)temporal/api/replication/v1/message.prototemporal.api.replication.v1"0
+ì
+)temporal/api/replication/v1/message.prototemporal.api.replication.v1!dependencies/gogoproto/gogo.proto%temporal/api/enums/v1/namespace.proto"0
 ClusterReplicationConfig
 cluster_name (	"∫
 NamespaceReplicationConfig
 active_cluster_name (	G
 clusters (25.temporal.api.replication.v1.ClusterReplicationConfig6
-state (2\'.temporal.api.enums.v1.ReplicationStateBû
-io.temporal.api.replication.v1BMessageProtoPZ-go.temporal.io/api/replication/v1;replication™Temporal.Api.Replication.V1ÍTemporal::Api::Replication::V1bproto3'
+state (2\'.temporal.api.enums.v1.ReplicationState"c
+FailoverStatus7
+failover_time (2.google.protobuf.TimestampBêﬂ
+failover_version (B¢
+io.temporal.api.replication.v1BMessageProtoPZ-go.temporal.io/api/replication/v1;replication™Temporalio.Api.Replication.V1Í Temporalio::Api::Replication::V1bproto3'
         , true);
 
         static::$is_initialized = true;

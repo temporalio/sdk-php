@@ -44,6 +44,12 @@ class ActivityTaskCanceledEventAttributes extends \Google\Protobuf\Internal\Mess
      * Generated from protobuf field <code>string identity = 5;</code>
      */
     protected $identity = '';
+    /**
+     * Version info of the worker who processed this workflow task.
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionStamp worker_version = 6;</code>
+     */
+    protected $worker_version = null;
 
     /**
      * Constructor.
@@ -62,6 +68,8 @@ class ActivityTaskCanceledEventAttributes extends \Google\Protobuf\Internal\Mess
      *           The id of the `ACTIVITY_TASK_STARTED` event this cancel confirmation corresponds to
      *     @type string $identity
      *           id of the worker who canceled this activity
+     *     @type \Temporal\Api\Common\V1\WorkerVersionStamp $worker_version
+     *           Version info of the worker who processed this workflow task.
      * }
      */
     public function __construct($data = NULL) {
@@ -207,6 +215,42 @@ class ActivityTaskCanceledEventAttributes extends \Google\Protobuf\Internal\Mess
     {
         GPBUtil::checkString($var, True);
         $this->identity = $var;
+
+        return $this;
+    }
+
+    /**
+     * Version info of the worker who processed this workflow task.
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionStamp worker_version = 6;</code>
+     * @return \Temporal\Api\Common\V1\WorkerVersionStamp|null
+     */
+    public function getWorkerVersion()
+    {
+        return $this->worker_version;
+    }
+
+    public function hasWorkerVersion()
+    {
+        return isset($this->worker_version);
+    }
+
+    public function clearWorkerVersion()
+    {
+        unset($this->worker_version);
+    }
+
+    /**
+     * Version info of the worker who processed this workflow task.
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionStamp worker_version = 6;</code>
+     * @param \Temporal\Api\Common\V1\WorkerVersionStamp $var
+     * @return $this
+     */
+    public function setWorkerVersion($var)
+    {
+        GPBUtil::checkMessage($var, \Temporal\Api\Common\V1\WorkerVersionStamp::class);
+        $this->worker_version = $var;
 
         return $this;
     }
