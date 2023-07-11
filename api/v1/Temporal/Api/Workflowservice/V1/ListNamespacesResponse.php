@@ -28,7 +28,7 @@ class ListNamespacesResponse extends \Google\Protobuf\Internal\Message
      * @param array $data {
      *     Optional. Data for populating the Message object.
      *
-     *     @type \Temporal\Api\Workflowservice\V1\DescribeNamespaceResponse[]|\Google\Protobuf\Internal\RepeatedField $namespaces
+     *     @type array<\Temporal\Api\Workflowservice\V1\DescribeNamespaceResponse>|\Google\Protobuf\Internal\RepeatedField $namespaces
      *     @type string $next_page_token
      * }
      */
@@ -48,7 +48,7 @@ class ListNamespacesResponse extends \Google\Protobuf\Internal\Message
 
     /**
      * Generated from protobuf field <code>repeated .temporal.api.workflowservice.v1.DescribeNamespaceResponse namespaces = 1;</code>
-     * @param \Temporal\Api\Workflowservice\V1\DescribeNamespaceResponse[]|\Google\Protobuf\Internal\RepeatedField $var
+     * @param array<\Temporal\Api\Workflowservice\V1\DescribeNamespaceResponse>|\Google\Protobuf\Internal\RepeatedField $var
      * @return $this
      */
     public function setNamespaces($var)

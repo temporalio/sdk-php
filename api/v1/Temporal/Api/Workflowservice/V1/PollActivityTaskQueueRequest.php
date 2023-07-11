@@ -31,6 +31,13 @@ class PollActivityTaskQueueRequest extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>.temporal.api.taskqueue.v1.TaskQueueMetadata task_queue_metadata = 4;</code>
      */
     protected $task_queue_metadata = null;
+    /**
+     * Information about this worker's build identifier and if it is choosing to use the versioning
+     * feature. See the `WorkerVersionCapabilities` docstring for more.
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionCapabilities worker_version_capabilities = 5;</code>
+     */
+    protected $worker_version_capabilities = null;
 
     /**
      * Constructor.
@@ -43,6 +50,9 @@ class PollActivityTaskQueueRequest extends \Google\Protobuf\Internal\Message
      *     @type string $identity
      *           The identity of the worker/client
      *     @type \Temporal\Api\Taskqueue\V1\TaskQueueMetadata $task_queue_metadata
+     *     @type \Temporal\Api\Common\V1\WorkerVersionCapabilities $worker_version_capabilities
+     *           Information about this worker's build identifier and if it is choosing to use the versioning
+     *           feature. See the `WorkerVersionCapabilities` docstring for more.
      * }
      */
     public function __construct($data = NULL) {
@@ -158,6 +168,44 @@ class PollActivityTaskQueueRequest extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkMessage($var, \Temporal\Api\Taskqueue\V1\TaskQueueMetadata::class);
         $this->task_queue_metadata = $var;
+
+        return $this;
+    }
+
+    /**
+     * Information about this worker's build identifier and if it is choosing to use the versioning
+     * feature. See the `WorkerVersionCapabilities` docstring for more.
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionCapabilities worker_version_capabilities = 5;</code>
+     * @return \Temporal\Api\Common\V1\WorkerVersionCapabilities|null
+     */
+    public function getWorkerVersionCapabilities()
+    {
+        return $this->worker_version_capabilities;
+    }
+
+    public function hasWorkerVersionCapabilities()
+    {
+        return isset($this->worker_version_capabilities);
+    }
+
+    public function clearWorkerVersionCapabilities()
+    {
+        unset($this->worker_version_capabilities);
+    }
+
+    /**
+     * Information about this worker's build identifier and if it is choosing to use the versioning
+     * feature. See the `WorkerVersionCapabilities` docstring for more.
+     *
+     * Generated from protobuf field <code>.temporal.api.common.v1.WorkerVersionCapabilities worker_version_capabilities = 5;</code>
+     * @param \Temporal\Api\Common\V1\WorkerVersionCapabilities $var
+     * @return $this
+     */
+    public function setWorkerVersionCapabilities($var)
+    {
+        GPBUtil::checkMessage($var, \Temporal\Api\Common\V1\WorkerVersionCapabilities::class);
+        $this->worker_version_capabilities = $var;
 
         return $this;
     }

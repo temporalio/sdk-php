@@ -17,6 +17,7 @@ use Temporal\Tests\DTO\User;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithoutHandler;
 use Temporal\Tests\Workflow\ActivityReturnTypeWorkflow;
 use Temporal\Tests\Workflow\GeneratorWorkflow;
+use Temporal\Tests\Workflow\Php82TypesWorkflow;
 use Temporal\Tests\Workflow\QueryWorkflow;
 use Temporal\Tests\Workflow\SignalledWorkflowReusable;
 use Temporal\Tests\Workflow\SignalledWorkflowWithInheritance;
@@ -128,6 +129,9 @@ class TypedStubTestCase extends ClientTestCase
         );
     }
 
+    /**
+     * @group skip-on-test-server
+     */
     public function testSignalRunningWorkflowWithInheritedSignal()
     {
         $client = $this->createClient();
@@ -144,6 +148,9 @@ class TypedStubTestCase extends ClientTestCase
         $this->assertEquals(['test1'], $result);
     }
 
+    /**
+     * @group skip-on-test-server
+     */
     public function testSignalRunningWorkflowWithInheritedSignalViaParentInterface()
     {
         $client = $this->createClient();
@@ -159,4 +166,19 @@ class TypedStubTestCase extends ClientTestCase
         $result = $workflowRun->getResult();
         $this->assertEquals(['test1'], $result);
     }
+
+    /**
+     * @requires PHP >= 8.2
+     * todo: uncomment this with min php 8.2 requirement or when we can skip activities loading depending on php version
+     */
+    // public function testPhp82Types(): void
+    // {
+    //     $client = $this->createClient();
+    //
+    //     $workflow = $client->newWorkflowStub(Php82TypesWorkflow::class);
+    //     $workflowRun = $client->start($workflow);
+    //     $result = $workflowRun->getResult();
+    //
+    //     $this->assertSame([null, true, false], $result);
+    // }
 }

@@ -24,11 +24,16 @@ class RequestCancelExternalWorkflowExecutionFailedEventAttributes extends \Googl
      */
     protected $workflow_task_completed_event_id = 0;
     /**
-     * namespace of the workflow which failed to cancel
+     * Namespace of the workflow which failed to cancel.
+     * SDKs and UI tools should use `namespace` field but server must use `namespace_id` only.
      *
      * Generated from protobuf field <code>string namespace = 3;</code>
      */
     protected $namespace = '';
+    /**
+     * Generated from protobuf field <code>string namespace_id = 7;</code>
+     */
+    protected $namespace_id = '';
     /**
      * Generated from protobuf field <code>.temporal.api.common.v1.WorkflowExecution workflow_execution = 4;</code>
      */
@@ -57,7 +62,9 @@ class RequestCancelExternalWorkflowExecutionFailedEventAttributes extends \Googl
      *     @type int|string $workflow_task_completed_event_id
      *           The `WORKFLOW_TASK_COMPLETED` event which this command was reported with
      *     @type string $namespace
-     *           namespace of the workflow which failed to cancel
+     *           Namespace of the workflow which failed to cancel.
+     *           SDKs and UI tools should use `namespace` field but server must use `namespace_id` only.
+     *     @type string $namespace_id
      *     @type \Temporal\Api\Common\V1\WorkflowExecution $workflow_execution
      *     @type int|string $initiated_event_id
      *           id of the `REQUEST_CANCEL_EXTERNAL_WORKFLOW_EXECUTION_INITIATED` event this failure
@@ -120,7 +127,8 @@ class RequestCancelExternalWorkflowExecutionFailedEventAttributes extends \Googl
     }
 
     /**
-     * namespace of the workflow which failed to cancel
+     * Namespace of the workflow which failed to cancel.
+     * SDKs and UI tools should use `namespace` field but server must use `namespace_id` only.
      *
      * Generated from protobuf field <code>string namespace = 3;</code>
      * @return string
@@ -131,7 +139,8 @@ class RequestCancelExternalWorkflowExecutionFailedEventAttributes extends \Googl
     }
 
     /**
-     * namespace of the workflow which failed to cancel
+     * Namespace of the workflow which failed to cancel.
+     * SDKs and UI tools should use `namespace` field but server must use `namespace_id` only.
      *
      * Generated from protobuf field <code>string namespace = 3;</code>
      * @param string $var
@@ -141,6 +150,28 @@ class RequestCancelExternalWorkflowExecutionFailedEventAttributes extends \Googl
     {
         GPBUtil::checkString($var, True);
         $this->namespace = $var;
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>string namespace_id = 7;</code>
+     * @return string
+     */
+    public function getNamespaceId()
+    {
+        return $this->namespace_id;
+    }
+
+    /**
+     * Generated from protobuf field <code>string namespace_id = 7;</code>
+     * @param string $var
+     * @return $this
+     */
+    public function setNamespaceId($var)
+    {
+        GPBUtil::checkString($var, True);
+        $this->namespace_id = $var;
 
         return $this;
     }

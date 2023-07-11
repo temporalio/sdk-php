@@ -20,8 +20,8 @@ class Message
         \GPBMetadata\Temporal\Api\Enums\V1\PBNamespace::initOnce();
         $pool->internalAddGeneratedFile(
             '
-¾
-\'temporal/api/namespace/v1/message.prototemporal.api.namespace.v1google/protobuf/timestamp.proto!dependencies/gogoproto/gogo.proto%temporal/api/enums/v1/namespace.proto"ø
+Æ
+\'temporal/api/namespace/v1/message.prototemporal.api.namespace.v1google/protobuf/timestamp.proto!dependencies/gogoproto/gogo.proto%temporal/api/enums/v1/namespace.proto"”
 NamespaceInfo
 name (	4
 state (2%.temporal.api.enums.v1.NamespaceState
@@ -29,17 +29,22 @@ class Message
 owner_email (	@
 data (22.temporal.api.namespace.v1.NamespaceInfo.DataEntry
 
-id (	+
+id (	
+supports_schedulesd (+
 	DataEntry
 key (	
-value (	:8"è
+value (	:8"¤
 NamespaceConfigI
  workflow_execution_retention_ttl (2.google.protobuf.DurationB˜ß<
 bad_binaries (2&.temporal.api.namespace.v1.BadBinariesD
 history_archival_state (2$.temporal.api.enums.v1.ArchivalState
 history_archival_uri (	G
 visibility_archival_state (2$.temporal.api.enums.v1.ArchivalState
-visibility_archival_uri (	"°
+visibility_archival_uri (	u
+custom_search_attribute_aliases (2L.temporal.api.namespace.v1.NamespaceConfig.CustomSearchAttributeAliasesEntryC
+!CustomSearchAttributeAliasesEntry
+key (	
+value (	:8"°
 BadBinariesF
 binaries (24.temporal.api.namespace.v1.BadBinaries.BinariesEntryY
 BinariesEntry
@@ -56,8 +61,10 @@ class Message
 state (2%.temporal.api.enums.v1.NamespaceState+
 	DataEntry
 key (	
-value (	:8B”
-io.temporal.api.namespace.v1BMessageProtoPZ)go.temporal.io/api/namespace/v1;namespaceªTemporal.Api.Namespace.V1êTemporal::Api::Namespace::V1bproto3'
+value (	:8"*
+NamespaceFilter
+include_deleted (B˜
+io.temporal.api.namespace.v1BMessageProtoPZ)go.temporal.io/api/namespace/v1;namespaceªTemporalio.Api.Namespace.V1êTemporalio::Api::Namespace::V1bproto3'
         , true);
 
         static::$is_initialized = true;

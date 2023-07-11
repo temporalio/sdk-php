@@ -14,11 +14,16 @@ use Google\Protobuf\Internal\GPBUtil;
 class StartChildWorkflowExecutionInitiatedEventAttributes extends \Google\Protobuf\Internal\Message
 {
     /**
-     * Namespace of the child workflow
+     * Namespace of the child workflow.
+     * SDKs and UI tools should use `namespace` field but server must use `namespace_id` only.
      *
      * Generated from protobuf field <code>string namespace = 1;</code>
      */
     protected $namespace = '';
+    /**
+     * Generated from protobuf field <code>string namespace_id = 18;</code>
+     */
+    protected $namespace_id = '';
     /**
      * Generated from protobuf field <code>string workflow_id = 2;</code>
      */
@@ -99,6 +104,14 @@ class StartChildWorkflowExecutionInitiatedEventAttributes extends \Google\Protob
      * Generated from protobuf field <code>.temporal.api.common.v1.SearchAttributes search_attributes = 17;</code>
      */
     protected $search_attributes = null;
+    /**
+     * If this is set, the workflow executing this command wishes to start the child workflow using
+     * a version compatible with the version that this workflow most recently ran on, if such
+     * behavior is possible.
+     *
+     * Generated from protobuf field <code>bool use_compatible_version = 19;</code>
+     */
+    protected $use_compatible_version = false;
 
     /**
      * Constructor.
@@ -107,7 +120,9 @@ class StartChildWorkflowExecutionInitiatedEventAttributes extends \Google\Protob
      *     Optional. Data for populating the Message object.
      *
      *     @type string $namespace
-     *           Namespace of the child workflow
+     *           Namespace of the child workflow.
+     *           SDKs and UI tools should use `namespace` field but server must use `namespace_id` only.
+     *     @type string $namespace_id
      *     @type string $workflow_id
      *     @type \Temporal\Api\Common\V1\WorkflowType $workflow_type
      *     @type \Temporal\Api\Taskqueue\V1\TaskQueue $task_queue
@@ -132,6 +147,10 @@ class StartChildWorkflowExecutionInitiatedEventAttributes extends \Google\Protob
      *     @type \Temporal\Api\Common\V1\Header $header
      *     @type \Temporal\Api\Common\V1\Memo $memo
      *     @type \Temporal\Api\Common\V1\SearchAttributes $search_attributes
+     *     @type bool $use_compatible_version
+     *           If this is set, the workflow executing this command wishes to start the child workflow using
+     *           a version compatible with the version that this workflow most recently ran on, if such
+     *           behavior is possible.
      * }
      */
     public function __construct($data = NULL) {
@@ -140,7 +159,8 @@ class StartChildWorkflowExecutionInitiatedEventAttributes extends \Google\Protob
     }
 
     /**
-     * Namespace of the child workflow
+     * Namespace of the child workflow.
+     * SDKs and UI tools should use `namespace` field but server must use `namespace_id` only.
      *
      * Generated from protobuf field <code>string namespace = 1;</code>
      * @return string
@@ -151,7 +171,8 @@ class StartChildWorkflowExecutionInitiatedEventAttributes extends \Google\Protob
     }
 
     /**
-     * Namespace of the child workflow
+     * Namespace of the child workflow.
+     * SDKs and UI tools should use `namespace` field but server must use `namespace_id` only.
      *
      * Generated from protobuf field <code>string namespace = 1;</code>
      * @param string $var
@@ -161,6 +182,28 @@ class StartChildWorkflowExecutionInitiatedEventAttributes extends \Google\Protob
     {
         GPBUtil::checkString($var, True);
         $this->namespace = $var;
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>string namespace_id = 18;</code>
+     * @return string
+     */
+    public function getNamespaceId()
+    {
+        return $this->namespace_id;
+    }
+
+    /**
+     * Generated from protobuf field <code>string namespace_id = 18;</code>
+     * @param string $var
+     * @return $this
+     */
+    public function setNamespaceId($var)
+    {
+        GPBUtil::checkString($var, True);
+        $this->namespace_id = $var;
 
         return $this;
     }
@@ -645,6 +688,36 @@ class StartChildWorkflowExecutionInitiatedEventAttributes extends \Google\Protob
     {
         GPBUtil::checkMessage($var, \Temporal\Api\Common\V1\SearchAttributes::class);
         $this->search_attributes = $var;
+
+        return $this;
+    }
+
+    /**
+     * If this is set, the workflow executing this command wishes to start the child workflow using
+     * a version compatible with the version that this workflow most recently ran on, if such
+     * behavior is possible.
+     *
+     * Generated from protobuf field <code>bool use_compatible_version = 19;</code>
+     * @return bool
+     */
+    public function getUseCompatibleVersion()
+    {
+        return $this->use_compatible_version;
+    }
+
+    /**
+     * If this is set, the workflow executing this command wishes to start the child workflow using
+     * a version compatible with the version that this workflow most recently ran on, if such
+     * behavior is possible.
+     *
+     * Generated from protobuf field <code>bool use_compatible_version = 19;</code>
+     * @param bool $var
+     * @return $this
+     */
+    public function setUseCompatibleVersion($var)
+    {
+        GPBUtil::checkBool($var);
+        $this->use_compatible_version = $var;
 
         return $this;
     }

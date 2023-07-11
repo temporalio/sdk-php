@@ -28,8 +28,8 @@ class ListTaskQueuePartitionsResponse extends \Google\Protobuf\Internal\Message
      * @param array $data {
      *     Optional. Data for populating the Message object.
      *
-     *     @type \Temporal\Api\Taskqueue\V1\TaskQueuePartitionMetadata[]|\Google\Protobuf\Internal\RepeatedField $activity_task_queue_partitions
-     *     @type \Temporal\Api\Taskqueue\V1\TaskQueuePartitionMetadata[]|\Google\Protobuf\Internal\RepeatedField $workflow_task_queue_partitions
+     *     @type array<\Temporal\Api\Taskqueue\V1\TaskQueuePartitionMetadata>|\Google\Protobuf\Internal\RepeatedField $activity_task_queue_partitions
+     *     @type array<\Temporal\Api\Taskqueue\V1\TaskQueuePartitionMetadata>|\Google\Protobuf\Internal\RepeatedField $workflow_task_queue_partitions
      * }
      */
     public function __construct($data = NULL) {
@@ -48,7 +48,7 @@ class ListTaskQueuePartitionsResponse extends \Google\Protobuf\Internal\Message
 
     /**
      * Generated from protobuf field <code>repeated .temporal.api.taskqueue.v1.TaskQueuePartitionMetadata activity_task_queue_partitions = 1;</code>
-     * @param \Temporal\Api\Taskqueue\V1\TaskQueuePartitionMetadata[]|\Google\Protobuf\Internal\RepeatedField $var
+     * @param array<\Temporal\Api\Taskqueue\V1\TaskQueuePartitionMetadata>|\Google\Protobuf\Internal\RepeatedField $var
      * @return $this
      */
     public function setActivityTaskQueuePartitions($var)
@@ -70,7 +70,7 @@ class ListTaskQueuePartitionsResponse extends \Google\Protobuf\Internal\Message
 
     /**
      * Generated from protobuf field <code>repeated .temporal.api.taskqueue.v1.TaskQueuePartitionMetadata workflow_task_queue_partitions = 2;</code>
-     * @param \Temporal\Api\Taskqueue\V1\TaskQueuePartitionMetadata[]|\Google\Protobuf\Internal\RepeatedField $var
+     * @param array<\Temporal\Api\Taskqueue\V1\TaskQueuePartitionMetadata>|\Google\Protobuf\Internal\RepeatedField $var
      * @return $this
      */
     public function setWorkflowTaskQueuePartitions($var)

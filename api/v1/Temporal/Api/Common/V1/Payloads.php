@@ -26,7 +26,7 @@ class Payloads extends \Google\Protobuf\Internal\Message
      * @param array $data {
      *     Optional. Data for populating the Message object.
      *
-     *     @type \Temporal\Api\Common\V1\Payload[]|\Google\Protobuf\Internal\RepeatedField $payloads
+     *     @type array<\Temporal\Api\Common\V1\Payload>|\Google\Protobuf\Internal\RepeatedField $payloads
      * }
      */
     public function __construct($data = NULL) {
@@ -45,7 +45,7 @@ class Payloads extends \Google\Protobuf\Internal\Message
 
     /**
      * Generated from protobuf field <code>repeated .temporal.api.common.v1.Payload payloads = 1;</code>
-     * @param \Temporal\Api\Common\V1\Payload[]|\Google\Protobuf\Internal\RepeatedField $var
+     * @param array<\Temporal\Api\Common\V1\Payload>|\Google\Protobuf\Internal\RepeatedField $var
      * @return $this
      */
     public function setPayloads($var)

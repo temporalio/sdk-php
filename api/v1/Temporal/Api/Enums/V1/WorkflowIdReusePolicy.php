@@ -38,12 +38,20 @@ class WorkflowIdReusePolicy
      * Generated from protobuf enum <code>WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE = 3;</code>
      */
     const WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE = 3;
+    /**
+     * If a workflow is running using the same workflow ID, terminate it and start a new one.
+     * If no running workflow, then the behavior is the same as ALLOW_DUPLICATE
+     *
+     * Generated from protobuf enum <code>WORKFLOW_ID_REUSE_POLICY_TERMINATE_IF_RUNNING = 4;</code>
+     */
+    const WORKFLOW_ID_REUSE_POLICY_TERMINATE_IF_RUNNING = 4;
 
     private static $valueToName = [
         self::WORKFLOW_ID_REUSE_POLICY_UNSPECIFIED => 'WORKFLOW_ID_REUSE_POLICY_UNSPECIFIED',
         self::WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE => 'WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE',
         self::WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY => 'WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY',
         self::WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE => 'WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE',
+        self::WORKFLOW_ID_REUSE_POLICY_TERMINATE_IF_RUNNING => 'WORKFLOW_ID_REUSE_POLICY_TERMINATE_IF_RUNNING',
     ];
 
     public static function name($value)

@@ -33,12 +33,26 @@ class ResourceExhaustedCause
      * Generated from protobuf enum <code>RESOURCE_EXHAUSTED_CAUSE_SYSTEM_OVERLOADED = 3;</code>
      */
     const RESOURCE_EXHAUSTED_CAUSE_SYSTEM_OVERLOADED = 3;
+    /**
+     * Namespace exceeds persistence rate limit.
+     *
+     * Generated from protobuf enum <code>RESOURCE_EXHAUSTED_CAUSE_PERSISTENCE_LIMIT = 4;</code>
+     */
+    const RESOURCE_EXHAUSTED_CAUSE_PERSISTENCE_LIMIT = 4;
+    /**
+     * Workflow is busy
+     *
+     * Generated from protobuf enum <code>RESOURCE_EXHAUSTED_CAUSE_BUSY_WORKFLOW = 5;</code>
+     */
+    const RESOURCE_EXHAUSTED_CAUSE_BUSY_WORKFLOW = 5;
 
     private static $valueToName = [
         self::RESOURCE_EXHAUSTED_CAUSE_UNSPECIFIED => 'RESOURCE_EXHAUSTED_CAUSE_UNSPECIFIED',
         self::RESOURCE_EXHAUSTED_CAUSE_RPS_LIMIT => 'RESOURCE_EXHAUSTED_CAUSE_RPS_LIMIT',
         self::RESOURCE_EXHAUSTED_CAUSE_CONCURRENT_LIMIT => 'RESOURCE_EXHAUSTED_CAUSE_CONCURRENT_LIMIT',
         self::RESOURCE_EXHAUSTED_CAUSE_SYSTEM_OVERLOADED => 'RESOURCE_EXHAUSTED_CAUSE_SYSTEM_OVERLOADED',
+        self::RESOURCE_EXHAUSTED_CAUSE_PERSISTENCE_LIMIT => 'RESOURCE_EXHAUSTED_CAUSE_PERSISTENCE_LIMIT',
+        self::RESOURCE_EXHAUSTED_CAUSE_BUSY_WORKFLOW => 'RESOURCE_EXHAUSTED_CAUSE_BUSY_WORKFLOW',
     ];
 
     public static function name($value)

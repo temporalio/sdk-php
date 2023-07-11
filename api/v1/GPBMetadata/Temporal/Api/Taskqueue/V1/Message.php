@@ -19,13 +19,15 @@ class Message
         \GPBMetadata\Google\Protobuf\Wrappers::initOnce();
         \GPBMetadata\Dependencies\Gogoproto\Gogo::initOnce();
         \GPBMetadata\Temporal\Api\Enums\V1\TaskQueue::initOnce();
+        \GPBMetadata\Temporal\Api\Common\V1\Message::initOnce();
         $pool->internalAddGeneratedFile(
             '
-À
-\'temporal/api/taskqueue/v1/message.prototemporal.api.taskqueue.v1google/protobuf/timestamp.protogoogle/protobuf/wrappers.proto!dependencies/gogoproto/gogo.proto&temporal/api/enums/v1/task_queue.proto"M
+ˆ
+\'temporal/api/taskqueue/v1/message.prototemporal.api.taskqueue.v1google/protobuf/timestamp.protogoogle/protobuf/wrappers.proto!dependencies/gogoproto/gogo.proto&temporal/api/enums/v1/task_queue.proto$temporal/api/common/v1/message.proto"b
 	TaskQueue
 name (	2
-kind (2$.temporal.api.enums.v1.TaskQueueKind"O
+kind (2$.temporal.api.enums.v1.TaskQueueKind
+normal_name (	"O
 TaskQueueMetadata:
 max_tasks_per_second (2.google.protobuf.DoubleValue"¨
 TaskQueueStatus
@@ -40,16 +42,26 @@ read_level (
 end_id ("B
 TaskQueuePartitionMetadata
 key (	
-owner_host_name (	"s
+owner_host_name (	"À
 
 PollerInfo:
 last_access_time (2.google.protobuf.TimestampBêﬂ
 identity (	
-rate_per_second ("†
+rate_per_second (V
+worker_version_capabilities (21.temporal.api.common.v1.WorkerVersionCapabilities"†
 StickyExecutionAttributes?
 worker_task_queue (2$.temporal.api.taskqueue.v1.TaskQueueB
-schedule_to_start_timeout (2.google.protobuf.DurationBòﬂBî
-io.temporal.api.taskqueue.v1BMessageProtoPZ)go.temporal.io/api/taskqueue/v1;taskqueue™Temporal.Api.TaskQueue.V1ÍTemporal::Api::TaskQueue::V1bproto3'
+schedule_to_start_timeout (2.google.protobuf.DurationBòﬂ")
+CompatibleVersionSet
+	build_ids (	"j
+TaskQueueReachability
+
+task_queue (	=
+reachability (2\'.temporal.api.enums.v1.TaskReachability"z
+BuildIdReachability
+build_id (	Q
+task_queue_reachability (20.temporal.api.taskqueue.v1.TaskQueueReachabilityBò
+io.temporal.api.taskqueue.v1BMessageProtoPZ)go.temporal.io/api/taskqueue/v1;taskqueue™Temporalio.Api.TaskQueue.V1ÍTemporalio::Api::TaskQueue::V1bproto3'
         , true);
 
         static::$is_initialized = true;
