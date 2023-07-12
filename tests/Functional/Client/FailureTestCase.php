@@ -11,10 +11,13 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Functional\Client;
 
+use PHPUnit\Framework\AssertionFailedError;
 use Temporal\Exception\Client\WorkflowFailedException;
+use Temporal\Exception\Client\WorkflowNotFoundException;
 use Temporal\Exception\Failure\ActivityFailure;
 use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Exception\Failure\ChildWorkflowFailure;
+use Temporal\Tests\Workflow\SignalExceptionsWorkflow;
 
 /**
  * @group client
@@ -79,5 +82,67 @@ class FailureTestCase extends ClientTestCase
             $this->assertInstanceOf(ApplicationFailure::class, $e->getPrevious());
             $this->assertStringContainsString('SimpleActivity->fail', $e->getPrevious()->getMessage());
         }
+    }
+
+    public function testSignalThatThrowsCustomError()
+    {
+        $client = $this->createClient();
+        $wf = $client->newWorkflowStub(SignalExceptionsWorkflow::class);
+
+        $run = $client->start($wf);
+
+        $wf->failWithName('test1');
+
+        try {
+            // The next
+            sleep(1);
+            $wf->exit();
+            $this->fail('Signal must fail');
+        } catch (AssertionFailedError $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            $this->assertInstanceOf(WorkflowNotFoundException::class, $e);
+            // \dump($e);
+        }
+
+        $this->expectException(WorkflowFailedException::class);
+        $result = $run->getResult();
+        $this->fail(sprintf("Workflow must fail. Got result %s", \print_r($result, true)));
+    }
+
+    public function testSignalThatThrowsInvalidArgumentException()
+    {
+        $client = $this->createClient();
+        $wf = $client->newWorkflowStub(SignalExceptionsWorkflow::class);
+
+        $run = $client->start($wf);
+
+        $wf->failInvalidArgument('test1');
+
+        $this->expectException(WorkflowFailedException::class);
+        $result = $run->getResult();
+        $this->fail(sprintf("Workflow must fail. Got result %s", \print_r($result, true)));
+    }
+
+    public function testSignalThatThrowsInternalException()
+    {
+        $client = $this->createClient();
+        $wf = $client->newWorkflowStub(SignalExceptionsWorkflow::class);
+
+        $run = $client->startWithSignal($wf, 'failActivity', ['foo']);
+
+        try {
+            sleep(5);
+            $wf->failActivity('foo');
+            $this->fail('Signal must fail');
+        } catch (AssertionFailedError $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            $this->assertInstanceOf(WorkflowNotFoundException::class, $e);
+        }
+
+        $this->expectException(WorkflowFailedException::class);
+        $result = $run->getResult();
+        $this->fail(sprintf("Workflow must fail. Got result %s", \print_r($result, true)));
     }
 }

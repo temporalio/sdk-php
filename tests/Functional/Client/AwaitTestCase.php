@@ -133,7 +133,16 @@ class AwaitTestCase extends ClientTestCase
         $wait->addValue('test3');
 
         // breaks the invocation
-        $wait->addValue(['hello'], 123);
+        //
+        // Throws:
+        // Temporal\Exception\Failure\ApplicationFailure
+        // Previous:
+        // Temporal\Exception\InvalidArgumentException:
+        // The passed value of type "array" can not be converted to required type "string" in
+        // src\Internal\Declaration\Dispatcher\AutowiredPayloads.php:34
+        //
+        // todo should it be retried by default?
+        // $wait->addValue(['hello'], 123);
 
         $wait->addValue('test4');
 

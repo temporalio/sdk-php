@@ -167,6 +167,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     public function start(callable $handler, ValuesInterface $values = null): void
     {
         try {
+            // Create a coroutine generator
             $this->coroutine = $this->call($handler, $values ?? EncodedValues::empty());
             $this->context->resolveConditions();
         } catch (\Throwable $e) {
@@ -322,16 +323,20 @@ class Scope implements CancellationScopeInterface, PromisorInterface
      */
     protected function call(callable $handler, ValuesInterface $values): \Generator
     {
-        $this->makeCurrent();
-        $result = $handler($values);
+        try {
+            $this->makeCurrent();
+            $result = $handler($values);
 
-        if ($result instanceof \Generator) {
-            yield from $result;
+            if ($result instanceof \Generator) {
+                yield from $result;
 
-            return $result->getReturn();
+                return $result->getReturn();
+            }
+
+            return $result;
+        } catch (\Throwable $e) {
+            $this->onException($e);
         }
-
-        return $result;
     }
 
     /**
