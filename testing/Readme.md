@@ -36,6 +36,21 @@ $environment->startRoadRunner('./rr serve -c .rr.silent.yaml -w tests');
 register_shutdown_function(fn() => $environment->stop());
 ```
 
+Alternatively, if you have multiple workers because of task-queue separation, you can use below wrapper:
+```php
+
+$environment1 = Environment::create();
+$environment1->startRoadRunner('./rr serve -c .rr.task1.yaml -w tests');
+
+$environment2 = Environment::create();
+$environment2->startRoadRunner('./rr serve -c .rr.task2.yaml -w tests');
+
+register_shutdown_function(function() use($environment1, $environment2): void {
+    $environment1->stop();
+    $environment2->stop();
+});
+```
+
 Also, you can configure java sdk version:
 ```php
 $environment = new Environment(
@@ -47,7 +62,6 @@ $environment = new Environment(
     ),
     SystemInfo::detect(),
 );
-```
 
 2. Add environment variable and `bootstrap.php` to your `phpunit.xml`:
 
