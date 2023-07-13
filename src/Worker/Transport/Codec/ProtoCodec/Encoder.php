@@ -13,7 +13,7 @@ namespace Temporal\Worker\Transport\Codec\ProtoCodec;
 
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\Failure\FailureConverter;
-use Temporal\Roadrunner\Internal\Message;
+use RoadRunner\Temporal\DTO\V1\Message;
 use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\FailureResponseInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
