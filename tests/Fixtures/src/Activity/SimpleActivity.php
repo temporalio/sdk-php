@@ -115,6 +115,16 @@ class SimpleActivity
         return $enum;
     }
 
+    #[ActivityMethod('arrayOfObjects')]
+    public function arrayOfObjects(
+        $user
+    ): array {
+        return [
+            new Message(sprintf("Hello %s", strtolower($user))),
+            new Message(sprintf("Hello %s", strtoupper($user))),
+        ];
+    }
+
     #[ActivityMethod]
     public function simpleEnumDto(WithEnum $dto): WithEnum
     {
