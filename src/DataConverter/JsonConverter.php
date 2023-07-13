@@ -150,13 +150,15 @@ class JsonConverter extends Converter
             }
 
             if ($type->isArrayOf()) {
-                return array_map(
-                    fn($rawObject) => $this->unmarshal($rawObject, $reflection->newInstanceWithoutConstructor()),
-                    $data
-                );
+                $result = [];
+                foreach ($data as $key => $value) {
+                    $result[$key] = $this->unmarshal($value, $reflection);
+                }
+
+                return $result;
             }
 
-            return $this->unmarshal($data, $reflection->newInstanceWithoutConstructor());
+            return $this->unmarshal($data, $reflection);
         }
 
         throw $this->errorInvalidTypeName($type);
@@ -229,8 +231,19 @@ class JsonConverter extends Converter
         return new AttributeReader();
     }
 
-    private function unmarshal(array|object $data, object $instance): mixed
+    /**
+     * @template T of object
+     *
+     * @param object|array $data
+     * @param \ReflectionClass<T> $reflection
+     *
+     * @return T
+     */
+    private function unmarshal(object|array $data, \ReflectionClass $reflection): object
     {
-        return $this->marshaller->unmarshal($this->toHashMap($data), $instance);
+        return $this->marshaller->unmarshal(
+            $this->toHashMap($data),
+            $reflection->newInstanceWithoutConstructor(),
+        );
     }
 }
