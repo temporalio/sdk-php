@@ -16,6 +16,11 @@ on:
         required: false
         type: boolean
         default: true
+  push:
+    branches:
+      - 'master'
+      - '2.*'
+  pull_request: null
 
 jobs:
   test:
