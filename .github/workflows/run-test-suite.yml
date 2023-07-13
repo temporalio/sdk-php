@@ -1,3 +1,5 @@
+name: Unit
+
 on:
   workflow_call:
     inputs:
