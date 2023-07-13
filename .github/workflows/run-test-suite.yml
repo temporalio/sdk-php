@@ -20,7 +20,21 @@ on:
     branches:
       - 'master'
       - '2.*'
-  pull_request: null
+    paths-ignore:
+      - 'README.md'
+      - '.gitignore'
+      - '.gitattributes'
+      - 'psalm.xml'
+      - 'psalm-baseline.xml'
+      - '.editorconfig'
+  pull_request:
+    paths-ignore:
+      - 'README.md'
+      - '.gitignore'
+      - '.gitattributes'
+      - 'psalm.xml'
+      - 'psalm-baseline.xml'
+      - '.editorconfig'
 
 jobs:
   test:
