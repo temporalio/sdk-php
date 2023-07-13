@@ -40,10 +40,13 @@ final class Environment
         );
     }
 
-    public function start(string $rrCommand = null, int $commandTimeout = 10): void
+    /**
+     * @param array<string, mixed> $envs
+     */
+    public function start(string $rrCommand = null, int $commandTimeout = 10, array $envs = []): void
     {
         $this->startTemporalTestServer($commandTimeout);
-        $this->startRoadRunner($rrCommand, $commandTimeout);
+        $this->startRoadRunner($rrCommand, $commandTimeout, $envs);
     }
 
     public function startTemporalTestServer(int $commandTimeout = 10): void
@@ -72,10 +75,14 @@ final class Environment
         }
     }
 
-    public function startRoadRunner(string $rrCommand = null, int $commandTimeout = 10): void
+    /**
+     * @param array<string, mixed> $envs
+     */
+    public function startRoadRunner(string $rrCommand = null, int $commandTimeout = 10, array $envs = []): void
     {
         $this->roadRunnerProcess = new Process(
-            $rrCommand ? explode(' ', $rrCommand) : [$this->systemInfo->rrExecutable, 'serve']
+            command: $rrCommand ? explode(' ', $rrCommand) : [$this->systemInfo->rrExecutable, 'serve'],
+            env: $envs
         );
         $this->roadRunnerProcess->setTimeout($commandTimeout);
 
