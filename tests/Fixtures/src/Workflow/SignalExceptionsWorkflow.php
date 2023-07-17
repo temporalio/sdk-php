@@ -68,6 +68,12 @@ class SignalExceptionsWorkflow
     }
 
     #[SignalMethod]
+    public function failRetryable()
+    {
+        10 / 0;
+    }
+
+    #[SignalMethod]
     public function exit(): void
     {
         $this->exit = true;

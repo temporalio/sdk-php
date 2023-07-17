@@ -84,6 +84,22 @@ class FailureTestCase extends ClientTestCase
         }
     }
 
+    public function testSignalThatThrowsRetryableException()
+    {
+        $client = $this->createClient();
+        $wf = $client->newWorkflowStub(SignalExceptionsWorkflow::class);
+
+        $run = $client->start($wf);
+
+        $wf->failRetryable();
+
+        sleep(1);
+        $wf->exit();
+
+        // There is no any exception because the workflow has not failed after the `failRetryable` signal.
+        $this->assertTrue(true);
+    }
+
     public function testSignalThatThrowsCustomError()
     {
         $client = $this->createClient();
