@@ -62,9 +62,6 @@
     </UnsupportedPropertyReferenceUsage>
   </file>
   <file src="src/Client/WorkflowClient.php">
-    <ArgumentTypeCoercion>
-      <code>$counter</code>
-    </ArgumentTypeCoercion>
     <InvalidReturnStatement>
       <code><![CDATA[new WorkflowProxy(
             $this,

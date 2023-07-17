@@ -276,15 +276,26 @@ class WorkflowClient implements WorkflowClientInterface
                 $request->setNextPageToken($nextPageToken);
             } while ($nextPageToken !== '');
         };
-        $counter = function () use ($namespace, $query): int {
-            $response = $this->client->CountWorkflowExecutions((new CountWorkflowExecutionsRequest())
-                ->setNamespace($namespace)
-                ->setQuery($query));
-
-            return (int)$response->getCount();
-        };
+        $counter = fn(): int => $this->countWorkflowExecutions($query, $namespace);
 
         return Paginator::createFromGenerator($loader($request), $counter);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function countWorkflowExecutions(
+        string $query,
+        string $namespace = 'default',
+    ): int {
+        $result = (int)$this->client
+            ->CountWorkflowExecutions(
+                (new CountWorkflowExecutionsRequest())->setNamespace($namespace)->setQuery($query)
+            )
+            ->getCount();
+
+        \assert($result >= 0);
+        return $result;
     }
 
     /**
