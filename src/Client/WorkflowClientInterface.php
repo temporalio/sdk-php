@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
+use Temporal\Api\Workflowservice\V1\CountWorkflowExecutionsResponse;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Workflow\WorkflowExecutionInfo as WorkflowExecutionInfoDto;
 use Temporal\Workflow\WorkflowRunInterface;
@@ -158,11 +159,9 @@ interface WorkflowClientInterface
      *
      * @param non-empty-string $query
      * @param non-empty-string $namespace
-     *
-     * @return int<0, max>
      */
     public function countWorkflowExecutions(
         string $query,
         string $namespace = 'default',
-    ): int;
+    ): CountWorkflowExecutionsResponse;
 }

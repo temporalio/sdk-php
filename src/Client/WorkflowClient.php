@@ -19,6 +19,7 @@ use Spiral\Attributes\Composite\SelectiveReader;
 use Spiral\Attributes\ReaderInterface;
 use Temporal\Api\Workflow\V1\WorkflowExecutionInfo;
 use Temporal\Api\Workflowservice\V1\CountWorkflowExecutionsRequest;
+use Temporal\Api\Workflowservice\V1\CountWorkflowExecutionsResponse;
 use Temporal\Api\Workflowservice\V1\ListWorkflowExecutionsRequest;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\DataConverter\DataConverter;
@@ -276,7 +277,7 @@ class WorkflowClient implements WorkflowClientInterface
                 $request->setNextPageToken($nextPageToken);
             } while ($nextPageToken !== '');
         };
-        $counter = fn(): int => $this->countWorkflowExecutions($query, $namespace);
+        $counter = fn(): int => (int)$this->countWorkflowExecutions($query, $namespace)->getCount();
 
         return Paginator::createFromGenerator($loader($request), $counter);
     }
@@ -287,15 +288,11 @@ class WorkflowClient implements WorkflowClientInterface
     public function countWorkflowExecutions(
         string $query,
         string $namespace = 'default',
-    ): int {
-        $result = (int)$this->client
+    ): CountWorkflowExecutionsResponse {
+        return $this->client
             ->CountWorkflowExecutions(
                 (new CountWorkflowExecutionsRequest())->setNamespace($namespace)->setQuery($query)
-            )
-            ->getCount();
-
-        \assert($result >= 0);
-        return $result;
+            );
     }
 
     /**
