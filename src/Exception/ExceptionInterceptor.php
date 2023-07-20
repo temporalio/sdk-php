@@ -50,6 +50,6 @@ class ExceptionInterceptor implements ExceptionInterceptorInterface
      */
     public static function createDefault(): self
     {
-        return new self([\Error::class, InvalidArgumentException::class]);
+        return new self([\Error::class]);
     }
 }

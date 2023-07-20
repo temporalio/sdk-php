@@ -19,6 +19,7 @@ use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\TemporalFailure;
+use Temporal\Exception\InvalidArgumentException;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Request\Cancel;
 use Temporal\Internal\Workflow\ScopeContext;
@@ -325,7 +326,12 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     {
         try {
             $this->makeCurrent();
-            $result = $handler($values);
+            try {
+                $result = $handler($values);
+            } catch (InvalidArgumentException) {
+                // Skip deserialization errors
+                return null;
+            }
 
             if ($result instanceof \Generator) {
                 yield from $result;

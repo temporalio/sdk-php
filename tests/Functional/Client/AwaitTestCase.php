@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Tests\Functional\Client;
 
 use Temporal\DataConverter\Type;
-use Temporal\Exception\Client\TimeoutException;
 use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Failure\ActivityFailure;
 use Temporal\Exception\Failure\ApplicationFailure;
@@ -133,16 +132,28 @@ class AwaitTestCase extends ClientTestCase
         $wait->addValue('test2');
         $wait->addValue('test3');
 
+        /**
+         * Breaks the invocation
+         * Deserialization errors must be ignored. Called Signal method in this case will be skipped.
+         * @link https://github.com/temporalio/sdk-php/pull/331
+         */
         $wait->addValue(['hello'], 123);
 
-        \sleep(1);
-        // There is no any exception because the workflow has not failed after signal with invalid data
         $wait->addValue('test4');
 
-        // The workflow will be in the `running` state. By the reason the TimeoutException will be thrown
-        // on getResult with timeout
-        $this->expectException(TimeoutException::class);
-        $run->getResult(timeout: 2);
+        $result = $run->getResult();
+        \asort($result);
+        $result = \array_values($result);
+
+        $this->assertSame(
+            [
+                'IN SIGNAL 2 IN SIGNAL TEST1',
+                'IN SIGNAL 2 IN SIGNAL TEST2',
+                'IN SIGNAL 2 IN SIGNAL TEST3',
+                'IN SIGNAL 2 IN SIGNAL TEST4'
+            ],
+            $result
+        );
     }
 
     public function testFailSignalErrored()
