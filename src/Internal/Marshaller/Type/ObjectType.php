@@ -55,7 +55,13 @@ class ObjectType extends Type implements DetectableTypeInterface, RuleFactoryInt
             return null;
         }
 
-        return new MarshallingRule($property->getName(), self::class, $type->getName());
+        return $type->allowsNull()
+            ? new MarshallingRule(
+                $property->getName(),
+                NullableType::class,
+                new MarshallingRule(type: self::class, of: $type->getName()),
+            )
+            : new MarshallingRule($property->getName(), self::class, $type->getName());
     }
 
     /**
