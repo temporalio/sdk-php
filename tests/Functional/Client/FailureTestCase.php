@@ -111,7 +111,7 @@ class FailureTestCase extends ClientTestCase
 
         try {
             // The next
-            sleep(1);
+            sleep(2);
             $wf->exit();
             $this->fail('Signal must fail');
         } catch (AssertionFailedError $e) {
@@ -148,7 +148,7 @@ class FailureTestCase extends ClientTestCase
         $run = $client->startWithSignal($wf, 'failActivity', ['foo']);
 
         try {
-            sleep(5);
+            sleep(8);
             $wf->failActivity('foo');
             $this->fail('Signal must fail');
         } catch (AssertionFailedError $e) {

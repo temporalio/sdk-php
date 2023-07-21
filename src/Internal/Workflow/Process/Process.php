@@ -14,7 +14,6 @@ namespace Temporal\Internal\Workflow\Process;
 use JetBrains\PhpStorm\Pure;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DestructMemorizedInstanceException;
-use Temporal\Exception\InvalidArgumentException;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Workflow\WorkflowContext;
@@ -44,11 +43,7 @@ class Process extends Scope implements ProcessInterface
                     }
                 );
 
-                try {
-                    $scope->start($handler);
-                } catch (InvalidArgumentException $e) {
-                    // invalid signal invocation, destroy the scope with no traces
-                }
+                $scope->startSignal($handler);
             }
         );
 

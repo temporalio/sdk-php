@@ -180,6 +180,17 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     }
 
     /**
+     * @param callable $handler
+     */
+    public function startSignal(callable $handler): void
+    {
+        // Create a coroutine generator
+        $this->coroutine = $this->callSignalHandler($handler);
+        $this->context->resolveConditions();
+        $this->next();
+    }
+
+    /**
      * @param \Generator $generator
      * @return self
      */
@@ -326,8 +337,32 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     {
         try {
             $this->makeCurrent();
+            $result = $handler($values);
+
+            if ($result instanceof \Generator) {
+                yield from $result;
+
+                return $result->getReturn();
+            }
+
+            return $result;
+        } catch (\Throwable $e) {
+            $this->onException($e);
+        }
+    }
+
+    /**
+     * Call a Signal method. In this case deserialization errors are skipped.
+     *
+     * @param callable $handler
+     * @return \Generator
+     */
+    protected function callSignalHandler(callable $handler): \Generator
+    {
+        try {
+            $this->makeCurrent();
             try {
-                $result = $handler($values);
+                $result = $handler();
             } catch (InvalidArgumentException) {
                 // Skip deserialization errors
                 return null;
