@@ -63,7 +63,7 @@ final class ActivityCancellationType extends Type
                 return false;
 
             default:
-                $error = "Option #${value} is currently not supported";
+                $error = "Option #{$value} is currently not supported";
                 throw new \InvalidArgumentException($error);
         }
     }
