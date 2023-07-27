@@ -435,6 +435,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
         }
 
         $current = $this->coroutine->current();
+        $this->context->resolveConditions();
 
         switch (true) {
             case $current instanceof PromiseInterface:
