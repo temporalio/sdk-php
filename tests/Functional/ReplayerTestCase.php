@@ -2,60 +2,85 @@
 
 declare(strict_types=1);
 
-namespace Functional;
+namespace Temporal\Tests\Functional;
 
-use RoadRunner\Temporal\DTO\V1\ReplayRequest;
-use Spiral\Goridge\Relay;
-use Spiral\Goridge\RPC\Codec\ProtobufCodec;
-use Spiral\Goridge\RPC\RPC;
-use Spiral\RoadRunner\Environment;
-use Temporal\Api\Common\V1\WorkflowExecution;
-use Temporal\Api\Common\V1\WorkflowType;
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
-use Temporal\Testing\ActivityMocker;
+use Temporal\Testing\Replay\WorkflowReplayer;
 use Temporal\Tests\TestCase;
+use Temporal\Tests\Workflow\NonDetermenisticWorkflow;
 use Temporal\Tests\Workflow\SimpleWorkflow;
 
 final class ReplayerTestCase extends TestCase
 {
     private WorkflowClient $workflowClient;
-    private ActivityMocker $activityMocks;
 
     protected function setUp(): void
     {
         $this->workflowClient = new WorkflowClient(
-            ServiceClient::create('localhost:7233')
+            ServiceClient::create('127.0.0.1:7233')
         );
-        $this->activityMocks = new ActivityMocker();
 
         parent::setUp();
     }
 
     protected function tearDown(): void
     {
-        $this->activityMocks->clear();
         parent::tearDown();
     }
 
-    public function testReplayWorkflow(): void
+    public function testReplayWorkflowFromServer(): void
     {
         $workflow = $this->workflowClient->newWorkflowStub(SimpleWorkflow::class);
 
         $run = $this->workflowClient->start($workflow, 'hello');
         $run->getResult('string');
 
-        $rpc = new RPC(Relay::create(Environment::fromGlobals()->getRPCAddress()), new ProtobufCodec());
-        $rpc->call('temporal.ReplayWorkflow', new ReplayRequest([
-            'workflow_execution' => new WorkflowExecution([
-                'run_id' => $run->getExecution()->getRunID(),
-                'workflow_id' => $run->getExecution()->getID(),
-            ]),
-            'workflow_type' => new WorkflowType([
-                'name' => 'SimpleWorkflow',
-            ]),
-        ]));
+        (new WorkflowReplayer())->replayFromServer(
+            $run->getExecution(),
+            'SimpleWorkflow',
+        );
 
         $this->assertTrue(true);
+    }
+
+    public function testReplayWorkflowFromFile(): void
+    {
+        $workflow = $this->workflowClient->newWorkflowStub(SimpleWorkflow::class);
+
+        $run = $this->workflowClient->start($workflow, 'hello');
+        $run->getResult('string');
+        $file = \dirname(__DIR__, 2) . '/runtime/tests/history.json';
+        try {
+            \is_dir(\dirname($file)) or \mkdir(\dirname($file), recursive: true);
+            if (\is_file($file)) {
+                \unlink($file);
+            }
+
+            (new WorkflowReplayer())->downloadHistory($run->getExecution(), 'SimpleWorkflow', $file);
+            $this->assertFileExists($file);
+
+            (new WorkflowReplayer())->replayFromJSONPB('SimpleWorkflow', $file);
+        } finally {
+            if (\is_file($file)) {
+                \unlink($file);
+            }
+        }
+    }
+
+    public function testReplayNonDetermenisticWorkflow(): void
+    {
+        $workflow = $this->workflowClient->newWorkflowStub(NonDetermenisticWorkflow::class);
+
+        $run = $this->workflowClient->start($workflow);
+        $run->getResult('string');
+
+        $this->expectException(\Spiral\Goridge\RPC\Exception\ServiceException::class);
+        $this->expectExceptionMessage('nondeterministic workflow');
+
+        (new WorkflowReplayer())->replayFromServer(
+            $run->getExecution(),
+            'NonDetermenisticWorkflow',
+        );
     }
 }

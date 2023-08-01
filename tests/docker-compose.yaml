@@ -1,35 +1,46 @@
 version: '3.5'
 
 services:
-  cassandra:
-    image: cassandra:3.11
-    ports:
-      - "9042:9042"
-  temporal:
-    image: temporalio/auto-setup:1.16.2
-    ports:
-      - "7233:7233"
-    volumes:
-      - ${DYNAMIC_CONFIG_DIR:-../config/dynamicconfig}:/etc/temporal/config/dynamicconfig
-    environment:
-      - "CASSANDRA_SEEDS=cassandra"
-      - "DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development.yaml"
-    depends_on:
-      - cassandra
-  temporal-admin-tools:
-    image: temporalio/admin-tools:1.16.2
-    stdin_open: true
-    tty: true
-    environment:
-      - "TEMPORAL_CLI_ADDRESS=temporal:7233"
-    depends_on:
-      - temporal
-  temporal-ui:
-    image: temporalio/ui:2.5.0
-    environment:
-      - TEMPORAL_ADDRESS=temporal:7233
-      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
-    ports:
-      - "8088:8080"
-    depends_on:
-      - temporal
+    postgresql:
+        container_name: test-temporal-postgresql
+        image: postgres:13
+        environment:
+            POSTGRES_PASSWORD: temporal
+            POSTGRES_USER: temporal
+        ports:
+            - 5432:5432
+    temporal:
+        container_name: test-temporal-temporal
+        image: temporalio/auto-setup:1.16.2
+        ports:
+            - "7233:7233"
+        volumes:
+            - ${DYNAMIC_CONFIG_DIR:-../config/dynamicconfig}:/etc/temporal/config/dynamicconfig
+        environment:
+            - DB=postgresql
+            - DB_PORT=5432
+            - POSTGRES_USER=temporal
+            - POSTGRES_PWD=temporal
+            - POSTGRES_SEEDS=postgresql
+            - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development.yaml
+        depends_on:
+            - postgresql
+    temporal-admin-tools:
+        container_name: test-temporal-admin-tools
+        image: temporalio/admin-tools:1.16.2
+        stdin_open: true
+        tty: true
+        environment:
+            - "TEMPORAL_CLI_ADDRESS=temporal:7233"
+        depends_on:
+            - temporal
+    temporal-ui:
+        container_name: test-temporal-ui
+        image: temporalio/ui:2.5.0
+        environment:
+            - TEMPORAL_ADDRESS=temporal:7233
+            - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+        ports:
+            - "8088:8080"
+        depends_on:
+            - temporal

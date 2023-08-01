@@ -4,19 +4,17 @@ declare(strict_types=1);
 
 namespace Temporal\Testing\Replay;
 
+use ArrayAccess;
 use Google\Protobuf\Internal\RepeatedField;
 use InvalidArgumentException;
-use Spiral\Attributes\AttributeReader;
-use Spiral\Attributes\Factory;
-use Temporal\Api\Common\V1\Payload;
-use Temporal\Api\Common\V1\Payloads;
+use IteratorAggregate;
 use Temporal\Api\Enums\V1\EventType;
 use Temporal\Api\History\V1\History;
 use Temporal\Api\History\V1\HistoryEvent;
 
 /**
- * Provides a wrapper with convenience methods over raw protobuf {@link History} object representing
- * workflow history
+ * Provides a wrapper with convenience methods over raw protobuf object representing
+ * workflow history {@see History}
  */
 final class WorkflowExecutionHistory
 {
@@ -35,7 +33,7 @@ final class WorkflowExecutionHistory
 
     public static function fromFile(string $filename): self
     {
-        $json = file_get_contents($filename);
+        $json = \file_get_contents($filename);
         return self::fromJson($json);
     }
 
@@ -51,25 +49,25 @@ final class WorkflowExecutionHistory
     private static function checkHistory(History $history): void
     {
         $events = $history->getEvents();
-        if ($events === null || $events->count() === 0) {
-            throw new InvalidArgumentException('Empty history');
+        if ($events->count() === 0) {
+            throw new InvalidArgumentException('Empty history.');
         }
 
         /** @var HistoryEvent $startedEvent */
         $startedEvent = $events->offsetGet(0);
         if ($startedEvent->getEventType() !== EventType::EVENT_TYPE_WORKFLOW_EXECUTION_STARTED) {
-            throw new InvalidArgumentException('First event is not WorkflowExecutionStarted');
+            throw new InvalidArgumentException('First event is not WorkflowExecutionStarted.');
         }
 
         if (!$startedEvent->hasWorkflowExecutionStartedEventAttributes()) {
-            throw new InvalidArgumentException('First event is corrupted');
+            throw new InvalidArgumentException('First event is corrupted.');
         }
     }
 
     /**
      * Returns a list of HistoryEvent objects.
      *
-     * @return RepeatedField
+     * @return ArrayAccess<int, HistoryEvent>&IteratorAggregate<HistoryEvent>&RepeatedField
      */
     public function getEvents(): RepeatedField
     {
