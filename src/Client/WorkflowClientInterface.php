@@ -163,5 +163,5 @@ interface WorkflowClientInterface
     public function countWorkflowExecutions(
         string $query,
         string $namespace = 'default',
-    ): CountWorkflowExecutionsResponse;
+    ): CountWorkflowExecutions;
 }
