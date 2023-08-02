@@ -34,18 +34,28 @@ final class WorkflowReplayer
 
     /**
      * Replays workflow from a history that will be loaded from Temporal server.
+     *
+     * @throws ReplayerException
      */
     public function replayFromServer(
-        \Temporal\Workflow\WorkflowExecution $execution,
         string $workflowType,
+        \Temporal\Workflow\WorkflowExecution $execution,
     ): void {
         $request = $this->buildRequest($workflowType, $execution);
         $this->sendRequest('temporal.ReplayWorkflow', $request);
     }
 
+    /**
+     * Downloads workflow history from Temporal server and saves it to a file.
+     *
+     * @param non-empty-string $workflowType
+     * @param non-empty-string $savePath
+     *
+     * @throws ReplayerException
+     */
     public function downloadHistory(
-        \Temporal\Workflow\WorkflowExecution $execution,
         string $workflowType,
+        \Temporal\Workflow\WorkflowExecution $execution,
         string $savePath,
     ): void {
         $request = $this->buildRequest($workflowType, $execution, $savePath);
@@ -58,14 +68,20 @@ final class WorkflowReplayer
      *
      * @param non-empty-string $workflowType
      * @param non-empty-string|SplFileInfo $path
+     * @param int<0, max> $lastEventId The last event ID to replay from. If not specified, the whole history
+     *        will be replayed.
+     *
+     * @throws ReplayerException
      */
     public function replayFromJSON(
         string $workflowType,
         string|SplFileInfo $path,
+        int $lastEventId = 0,
     ): void {
         $request = $this->buildRequest(
             workflowType: $workflowType,
             filePath: $path instanceof SplFileInfo ? $path->getPathname() : $path,
+            lastEventId: $lastEventId,
         );
         $this->sendRequest('temporal.ReplayFromJSON', $request);
     }

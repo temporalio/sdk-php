@@ -8,6 +8,8 @@ namespace Temporal\Testing\Replay;
  * Helper methods supporting transformation of History's "Proto Json" compatible format, which is
  * supported by {@link com.google.protobuf.util.JsonFormat} to the format of Temporal history
  * supported by tctl and back.
+ *
+ * @internal
  */
 final class HistoryJsonUtils
 {

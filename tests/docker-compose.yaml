@@ -3,7 +3,7 @@ version: '3.5'
 services:
     postgresql:
         container_name: test-temporal-postgresql
-        image: postgres:13
+        image: postgres:15
         environment:
             POSTGRES_PASSWORD: temporal
             POSTGRES_USER: temporal
@@ -11,7 +11,7 @@ services:
             - 5432:5432
     temporal:
         container_name: test-temporal-temporal
-        image: temporalio/auto-setup:1.16.2
+        image: temporalio/auto-setup:1.21
         ports:
             - "7233:7233"
         volumes:
@@ -23,11 +23,15 @@ services:
             - POSTGRES_PWD=temporal
             - POSTGRES_SEEDS=postgresql
             - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development.yaml
+            - ENABLE_ES=true
+            - ES_SEEDS=elasticsearch
+            - ES_VERSION=v7
         depends_on:
             - postgresql
+            - elasticsearch
     temporal-admin-tools:
         container_name: test-temporal-admin-tools
-        image: temporalio/admin-tools:1.16.2
+        image: temporalio/admin-tools:1.21
         stdin_open: true
         tty: true
         environment:
@@ -36,7 +40,7 @@ services:
             - temporal
     temporal-ui:
         container_name: test-temporal-ui
-        image: temporalio/ui:2.5.0
+        image: temporalio/ui:2.17.1
         environment:
             - TEMPORAL_ADDRESS=temporal:7233
             - TEMPORAL_CORS_ORIGINS=http://localhost:3000
@@ -44,3 +48,19 @@ services:
             - "8088:8080"
         depends_on:
             - temporal
+    elasticsearch:
+        container_name: test-temporal-elasticsearch
+        environment:
+            - cluster.routing.allocation.disk.threshold_enabled=true
+            - cluster.routing.allocation.disk.watermark.low=512mb
+            - cluster.routing.allocation.disk.watermark.high=256mb
+            - cluster.routing.allocation.disk.watermark.flood_stage=128mb
+            - discovery.type=single-node
+            - ES_JAVA_OPTS=-Xms256m -Xmx256m
+            - xpack.security.enabled=false
+        image: elasticsearch:8.5.1
+        ports:
+            - 9200:9200
+        logging:
+            driver: none
+

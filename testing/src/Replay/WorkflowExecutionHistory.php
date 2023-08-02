@@ -15,6 +15,8 @@ use Temporal\Api\History\V1\HistoryEvent;
 /**
  * Provides a wrapper with convenience methods over raw protobuf object representing
  * workflow history {@see History}
+ *
+ * @internal
  */
 final class WorkflowExecutionHistory
 {
