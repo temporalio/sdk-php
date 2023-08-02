@@ -342,11 +342,12 @@ interface ServiceClientInterface
      * cancellation of
      * a workflow execution.
      *
-     * This result in a new `WORKFLOW_EXECUTION_CANCEL_REQUESTED` event being written
+     * This results in a new `WORKFLOW_EXECUTION_CANCEL_REQUESTED` event being written
      * to the
-     * workflow history and a new workflow task created for the workflow. Fails with
-     * `NotFound` if
-     * the workflow is already completed or doesn't exist.
+     * workflow history and a new workflow task created for the workflow. It returns
+     * success if the requested
+     * workflow is already closed. It fails with 'NotFound' if the requested workflow
+     * doesn't exist.
      *
      * @param V1\RequestCancelWorkflowExecutionRequest
      * $arg
@@ -421,6 +422,24 @@ interface ServiceClientInterface
      * @throws ServiceClientException
      */
     public function TerminateWorkflowExecution(V1\TerminateWorkflowExecutionRequest $arg, ContextInterface $ctx = null) : V1\TerminateWorkflowExecutionResponse;
+    /**
+     * DeleteWorkflowExecution asynchronously deletes a specific Workflow Execution
+     * (when
+     * WorkflowExecution.run_id is provided) or the latest Workflow Execution (when
+     * WorkflowExecution.run_id is not provided). If the Workflow Execution is Running,
+     * it will be
+     * terminated before deletion.
+     * (-- api-linter: core::0135::method-signature=disabled
+     * aip.dev/not-precedent: DeleteNamespace RPC doesn't follow Google API format. --)
+     * (-- api-linter: core::0135::response-message-name=disabled
+     * aip.dev/not-precedent: DeleteNamespace RPC doesn't follow Google API format. --)
+     *
+     * @param V1\DeleteWorkflowExecutionRequest $arg
+     * @param ContextInterface|null $ctx
+     * @return V1\DeleteWorkflowExecutionResponse
+     * @throws ServiceClientException
+     */
+    public function DeleteWorkflowExecution(V1\DeleteWorkflowExecutionRequest $arg, ContextInterface $ctx = null) : V1\DeleteWorkflowExecutionResponse;
     /**
      * ListOpenWorkflowExecutions is a visibility API to list the open executions in a
      * specific namespace.
@@ -577,6 +596,220 @@ interface ServiceClientInterface
      * @throws ServiceClientException
      */
     public function ListTaskQueuePartitions(V1\ListTaskQueuePartitionsRequest $arg, ContextInterface $ctx = null) : V1\ListTaskQueuePartitionsResponse;
+    /**
+     * Creates a new schedule.
+     * (-- api-linter: core::0133::method-signature=disabled
+     * aip.dev/not-precedent: CreateSchedule doesn't follow Google API format --)
+     * (-- api-linter: core::0133::response-message-name=disabled
+     * aip.dev/not-precedent: CreateSchedule doesn't follow Google API format --)
+     * (-- api-linter: core::0133::http-uri-parent=disabled
+     * aip.dev/not-precedent: CreateSchedule doesn't follow Google API format --)
+     *
+     * @param V1\CreateScheduleRequest $arg
+     * @param ContextInterface|null $ctx
+     * @return V1\CreateScheduleResponse
+     * @throws ServiceClientException
+     */
+    public function CreateSchedule(V1\CreateScheduleRequest $arg, ContextInterface $ctx = null) : V1\CreateScheduleResponse;
+    /**
+     * Returns the schedule description and current state of an existing schedule.
+     *
+     * @param V1\DescribeScheduleRequest $arg
+     * @param ContextInterface|null $ctx
+     * @return V1\DescribeScheduleResponse
+     * @throws ServiceClientException
+     */
+    public function DescribeSchedule(V1\DescribeScheduleRequest $arg, ContextInterface $ctx = null) : V1\DescribeScheduleResponse;
+    /**
+     * Changes the configuration or state of an existing schedule.
+     * (-- api-linter: core::0134::response-message-name=disabled
+     * aip.dev/not-precedent: UpdateSchedule RPC doesn't follow Google API format. --)
+     * (-- api-linter: core::0134::method-signature=disabled
+     * aip.dev/not-precedent: UpdateSchedule RPC doesn't follow Google API format. --)
+     *
+     * @param V1\UpdateScheduleRequest $arg
+     * @param ContextInterface|null $ctx
+     * @return V1\UpdateScheduleResponse
+     * @throws ServiceClientException
+     */
+    public function UpdateSchedule(V1\UpdateScheduleRequest $arg, ContextInterface $ctx = null) : V1\UpdateScheduleResponse;
+    /**
+     * Makes a specific change to a schedule or triggers an immediate action.
+     * (-- api-linter: core::0134::synonyms=disabled
+     * aip.dev/not-precedent: we have both patch and update. --)
+     *
+     * @param V1\PatchScheduleRequest $arg
+     * @param ContextInterface|null $ctx
+     * @return V1\PatchScheduleResponse
+     * @throws ServiceClientException
+     */
+    public function PatchSchedule(V1\PatchScheduleRequest $arg, ContextInterface $ctx = null) : V1\PatchScheduleResponse;
+    /**
+     * Lists matching times within a range.
+     *
+     * @param V1\ListScheduleMatchingTimesRequest $arg
+     * @param ContextInterface|null $ctx
+     * @return V1\ListScheduleMatchingTimesResponse
+     * @throws ServiceClientException
+     */
+    public function ListScheduleMatchingTimes(V1\ListScheduleMatchingTimesRequest $arg, ContextInterface $ctx = null) : V1\ListScheduleMatchingTimesResponse;
+    /**
+     * Deletes a schedule, removing it from the system.
+     * (-- api-linter: core::0135::method-signature=disabled
+     * aip.dev/not-precedent: DeleteSchedule doesn't follow Google API format --)
+     * (-- api-linter: core::0135::response-message-name=disabled
+     * aip.dev/not-precedent: DeleteSchedule doesn't follow Google API format --)
+     *
+     * @param V1\DeleteScheduleRequest $arg
+     * @param ContextInterface|null $ctx
+     * @return V1\DeleteScheduleResponse
+     * @throws ServiceClientException
+     */
+    public function DeleteSchedule(V1\DeleteScheduleRequest $arg, ContextInterface $ctx = null) : V1\DeleteScheduleResponse;
+    /**
+     * List all schedules in a namespace.
+     *
+     * @param V1\ListSchedulesRequest $arg
+     * @param ContextInterface|null $ctx
+     * @return V1\ListSchedulesResponse
+     * @throws ServiceClientException
+     */
+    public function ListSchedules(V1\ListSchedulesRequest $arg, ContextInterface $ctx = null) : V1\ListSchedulesResponse;
+    /**
+     * Allows users to specify sets of worker build id versions on a per task queue
+     * basis. Versions
+     * are ordered, and may be either compatible with some extant version, or a new
+     * incompatible
+     * version, forming sets of ids which are incompatible with each other, but whose
+     * contained
+     * members are compatible with one another.
+     *
+     * A single build id may be mapped to multiple task queues using this API for cases
+     * where a single process hosts
+     * multiple workers.
+     *
+     * To query which workers can be retired, use the `GetWorkerTaskReachability` API.
+     *
+     * NOTE: The number of task queues mapped to a single build id is limited by the
+     * `limit.taskQueuesPerBuildId`
+     * (default is 20), if this limit is exceeded this API will error with a
+     * FailedPrecondition.
+     *
+     * (-- api-linter: core::0134::response-message-name=disabled
+     * aip.dev/not-precedent: UpdateWorkerBuildIdCompatibility RPC doesn't follow
+     * Google API format. --)
+     * (-- api-linter: core::0134::method-signature=disabled
+     * aip.dev/not-precedent: UpdateWorkerBuildIdCompatibility RPC doesn't follow
+     * Google API format. --)
+     *
+     * @param V1\UpdateWorkerBuildIdCompatibilityRequest
+     * $arg
+     * @param ContextInterface|null $ctx
+     * @return
+     * V1\UpdateWorkerBuildIdCompatibilityResponse
+     * @throws ServiceClientException
+     */
+    public function UpdateWorkerBuildIdCompatibility(V1\UpdateWorkerBuildIdCompatibilityRequest $arg, ContextInterface $ctx = null) : V1\UpdateWorkerBuildIdCompatibilityResponse;
+    /**
+     * Fetches the worker build id versioning sets for a task queue.
+     *
+     * @param V1\GetWorkerBuildIdCompatibilityRequest
+     * $arg
+     * @param ContextInterface|null $ctx
+     * @return V1\GetWorkerBuildIdCompatibilityResponse
+     * @throws ServiceClientException
+     */
+    public function GetWorkerBuildIdCompatibility(V1\GetWorkerBuildIdCompatibilityRequest $arg, ContextInterface $ctx = null) : V1\GetWorkerBuildIdCompatibilityResponse;
+    /**
+     * Fetches task reachability to determine whether a worker may be retired.
+     * The request may specify task queues to query for or let the server fetch all
+     * task queues mapped to the given
+     * build IDs.
+     *
+     * When requesting a large number of task queues or all task queues associated with
+     * the given build ids in a
+     * namespace, all task queues will be listed in the response but some of them may
+     * not contain reachability
+     * information due to a server enforced limit. When reaching the limit, task queues
+     * that reachability information
+     * could not be retrieved for will be marked with a single
+     * TASK_REACHABILITY_UNSPECIFIED entry. The caller may issue
+     * another call to get the reachability for those task queues.
+     *
+     * Open source users can adjust this limit by setting the server's dynamic config
+     * value for
+     * `limit.reachabilityTaskQueueScan` with the caveat that this call can strain the
+     * visibility store.
+     *
+     * @param V1\GetWorkerTaskReachabilityRequest $arg
+     * @param ContextInterface|null $ctx
+     * @return V1\GetWorkerTaskReachabilityResponse
+     * @throws ServiceClientException
+     */
+    public function GetWorkerTaskReachability(V1\GetWorkerTaskReachabilityRequest $arg, ContextInterface $ctx = null) : V1\GetWorkerTaskReachabilityResponse;
+    /**
+     * Invokes the specified update function on user workflow code.
+     * (-- api-linter: core::0134=disabled
+     * aip.dev/not-precedent: UpdateWorkflowExecution doesn't follow Google API format
+     * --)
+     *
+     * @param V1\UpdateWorkflowExecutionRequest $arg
+     * @param ContextInterface|null $ctx
+     * @return V1\UpdateWorkflowExecutionResponse
+     * @throws ServiceClientException
+     */
+    public function UpdateWorkflowExecution(V1\UpdateWorkflowExecutionRequest $arg, ContextInterface $ctx = null) : V1\UpdateWorkflowExecutionResponse;
+    /**
+     * Polls a workflow execution for the outcome of a workflow execution update
+     * previously issued through the UpdateWorkflowExecution RPC. The effective
+     * timeout on this call will be shorter of the the caller-supplied gRPC
+     * timeout and the server's configured long-poll timeout.
+     * (-- api-linter: core::0134=disabled
+     * aip.dev/not-precedent: UpdateWorkflowExecution doesn't follow Google API format
+     * --)
+     *
+     * @param V1\PollWorkflowExecutionUpdateRequest $arg
+     * @param ContextInterface|null $ctx
+     * @return V1\PollWorkflowExecutionUpdateResponse
+     * @throws ServiceClientException
+     */
+    public function PollWorkflowExecutionUpdate(V1\PollWorkflowExecutionUpdateRequest $arg, ContextInterface $ctx = null) : V1\PollWorkflowExecutionUpdateResponse;
+    /**
+     * StartBatchOperation starts a new batch operation
+     *
+     * @param V1\StartBatchOperationRequest $arg
+     * @param ContextInterface|null $ctx
+     * @return V1\StartBatchOperationResponse
+     * @throws ServiceClientException
+     */
+    public function StartBatchOperation(V1\StartBatchOperationRequest $arg, ContextInterface $ctx = null) : V1\StartBatchOperationResponse;
+    /**
+     * StopBatchOperation stops a batch operation
+     *
+     * @param V1\StopBatchOperationRequest $arg
+     * @param ContextInterface|null $ctx
+     * @return V1\StopBatchOperationResponse
+     * @throws ServiceClientException
+     */
+    public function StopBatchOperation(V1\StopBatchOperationRequest $arg, ContextInterface $ctx = null) : V1\StopBatchOperationResponse;
+    /**
+     * DescribeBatchOperation returns the information about a batch operation
+     *
+     * @param V1\DescribeBatchOperationRequest $arg
+     * @param ContextInterface|null $ctx
+     * @return V1\DescribeBatchOperationResponse
+     * @throws ServiceClientException
+     */
+    public function DescribeBatchOperation(V1\DescribeBatchOperationRequest $arg, ContextInterface $ctx = null) : V1\DescribeBatchOperationResponse;
+    /**
+     * ListBatchOperations returns a list of batch operations
+     *
+     * @param V1\ListBatchOperationsRequest $arg
+     * @param ContextInterface|null $ctx
+     * @return V1\ListBatchOperationsResponse
+     * @throws ServiceClientException
+     */
+    public function ListBatchOperations(V1\ListBatchOperationsRequest $arg, ContextInterface $ctx = null) : V1\ListBatchOperationsResponse;
     /**
      * Close the communication channel associated with this stub.
      */

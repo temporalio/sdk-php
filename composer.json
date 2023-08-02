@@ -44,8 +44,7 @@
             "Temporal\\Api\\Testservice\\": "testing/api/testservice/Temporal/Api/Testservice",
             "GPBMetadata\\Temporal\\Api\\Testservice\\": "testing/api/testservice/GPBMetadata/Temporal/Api/Testservice",
             "Temporal\\Testing\\": "testing/src",
-            "Temporal\\": "src",
-            "Temporal\\Api\\": "api/v1/Temporal/Api"
+            "Temporal\\": "src"
         }
     },
     "require-dev": {
