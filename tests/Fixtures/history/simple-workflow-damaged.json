@@ -1,0 +1,114 @@
+{
+    "events": [
+        {
+            "eventId": "1",
+            "eventTime": "2023-08-02T13:47:54.350Z",
+            "eventType": "WorkflowExecutionStarted",
+            "workflowExecutionStartedEventAttributes": {
+                "workflowType": {
+                    "name": "SimpleWorkflow"
+                },
+                "taskQueue": {
+                    "name": "default"
+                },
+                "input": {
+                    "payloads": [
+                        {
+                            "metadata": {
+                                "encoding": "anNvbi9wbGFpbg=="
+                            },
+                            "data": "ImhlbGxvIg=="
+                        }
+                    ]
+                },
+                "workflowExecutionTimeout": "315360000s",
+                "workflowRunTimeout": "315360000s",
+                "workflowTaskTimeout": "10s",
+                "originalExecutionRunId": "30cc5f35-523a-4119-a08d-7f25b90700bd",
+                "identity": "21684@roxblnfk-pepelaz",
+                "firstExecutionRunId": "30cc5f35-523a-4119-a08d-7f25b90700bd",
+                "attempt": 1
+            }
+        },
+        {
+            "eventId": "2",
+            "eventTime": "2023-08-02T13:47:54.350Z",
+            "eventType": "WorkflowTaskScheduled",
+            "workflowTaskScheduledEventAttributes": {
+                "taskQueue": {
+                    "name": "default"
+                },
+                "startToCloseTimeout": "10s",
+                "attempt": 1
+            }
+        },
+        {
+            "eventId": "3",
+            "eventTime": "2023-08-02T13:47:54.350Z",
+            "eventType": "WorkflowTaskStarted",
+            "workflowTaskStartedEventAttributes": {
+                "scheduledEventId": "2",
+                "identity": "default:9497a8b7-b082-4ac2-82e5-d235e854677e"
+            }
+        },
+        {
+            "eventId": "4",
+            "eventTime": "2023-08-02T13:47:54.404Z",
+            "eventType": "WorkflowTaskCompleted",
+            "workflowTaskCompletedEventAttributes": {
+                "scheduledEventId": "2",
+                "identity": "default:9497a8b7-b082-4ac2-82e5-d235e854677e",
+                "binaryChecksum": "c0c1afcf6e18d7d040f4f7b777a4e8a7"
+            }
+        },
+        {
+            "eventId": "5",
+            "eventTime": "2023-08-02T13:47:56.552Z",
+            "eventType": "WorkflowTaskScheduled",
+            "workflowTaskScheduledEventAttributes": {
+                "taskQueue": {
+                    "name": "default"
+                },
+                "startToCloseTimeout": "10s",
+                "attempt": 1
+            }
+        },
+        {
+            "eventId": "6",
+            "eventTime": "2023-08-02T13:47:56.552Z",
+            "eventType": "WorkflowTaskStarted",
+            "workflowTaskStartedEventAttributes": {
+                "scheduledEventId": "8",
+                "identity": "default:9497a8b7-b082-4ac2-82e5-d235e854677e"
+            }
+        },
+        {
+            "eventId": "7",
+            "eventTime": "2023-08-02T13:47:56.569Z",
+            "eventType": "WorkflowTaskCompleted",
+            "workflowTaskCompletedEventAttributes": {
+                "scheduledEventId": "8",
+                "identity": "default:9497a8b7-b082-4ac2-82e5-d235e854677e",
+                "binaryChecksum": "c0c1afcf6e18d7d040f4f7b777a4e8a7"
+            }
+        },
+        {
+            "eventId": "8",
+            "eventTime": "2023-08-02T13:47:56.569Z",
+            "eventType": "WorkflowExecutionCompleted",
+            "workflowExecutionCompletedEventAttributes": {
+                "result": {
+                    "payloads": [
+                        {
+                            "metadata": {
+                                "encoding": "anNvbi9wbGFpbg=="
+                            },
+                            "data": "IkhFTExPIg=="
+                        }
+                    ]
+                },
+                "workflowTaskCompletedEventId": "9"
+            }
+        }
+    ]
+}

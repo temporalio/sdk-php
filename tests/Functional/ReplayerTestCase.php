@@ -6,9 +6,10 @@ namespace Temporal\Tests\Functional;
 
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
+use Temporal\Testing\Replay\Exception\NonDeterministicWorkflowException;
+use Temporal\Testing\Replay\Exception\ReplayerException;
 use Temporal\Testing\Replay\WorkflowReplayer;
 use Temporal\Tests\TestCase;
-use Temporal\Tests\Workflow\NonDetermenisticWorkflow;
 use Temporal\Tests\Workflow\SimpleWorkflow;
 
 final class ReplayerTestCase extends TestCase
@@ -60,7 +61,7 @@ final class ReplayerTestCase extends TestCase
             (new WorkflowReplayer())->downloadHistory($run->getExecution(), 'SimpleWorkflow', $file);
             $this->assertFileExists($file);
 
-            (new WorkflowReplayer())->replayFromJSONPB('SimpleWorkflow', $file);
+            (new WorkflowReplayer())->replayFromJSON('SimpleWorkflow', $file);
         } finally {
             if (\is_file($file)) {
                 \unlink($file);
@@ -70,17 +71,19 @@ final class ReplayerTestCase extends TestCase
 
     public function testReplayNonDetermenisticWorkflow(): void
     {
-        $workflow = $this->workflowClient->newWorkflowStub(NonDetermenisticWorkflow::class);
+        $file = \dirname(__DIR__, 1) . '/Fixtures/history/simple-workflow-damaged.json';
 
-        $run = $this->workflowClient->start($workflow);
-        $run->getResult('string');
+        $this->expectException(NonDeterministicWorkflowException::class);
 
-        $this->expectException(\Spiral\Goridge\RPC\Exception\ServiceException::class);
-        $this->expectExceptionMessage('nondeterministic workflow');
+        (new WorkflowReplayer())->replayFromJSON('SimpleWorkflow', $file);
+    }
 
-        (new WorkflowReplayer())->replayFromServer(
-            $run->getExecution(),
-            'NonDetermenisticWorkflow',
-        );
+    public function testReplayUnexistingFile(): void
+    {
+        $file = \dirname(__DIR__, 1) . '/Fixtures/history/there-is-no-file.json';
+
+        $this->expectException(ReplayerException::class);
+
+        (new WorkflowReplayer())->replayFromJSON('SimpleWorkflow', $file);
     }
 }
