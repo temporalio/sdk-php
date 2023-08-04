@@ -27,7 +27,7 @@ final class Paginator implements IteratorAggregate, Countable
     /**
      * @param Generator<array-key, list<TItem>> $loader
      * @param int<1, max> $pageNumber
-     * @param null|Closure(): int<0, max> $counter
+     * @param null|Closure(): int $counter
      */
     private function __construct(
         private readonly Generator $loader,
@@ -41,7 +41,7 @@ final class Paginator implements IteratorAggregate, Countable
      * @template TInitItem
      *
      * @param Generator<array-key, list<TInitItem>> $loader
-     * @param null|callable(): int<0, max> $counter Returns total number of items.
+     * @param null|callable(): int $counter Returns total number of items.
      *
      * @return self<TInitItem>
      */
