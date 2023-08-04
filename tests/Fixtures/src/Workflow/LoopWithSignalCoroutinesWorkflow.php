@@ -30,7 +30,7 @@ class LoopWithSignalCoroutinesWorkflow
         $this->simple = Workflow::newActivityStub(
             SimpleActivity::class,
             ActivityOptions::new()
-                ->withStartToCloseTimeout(5)
+                ->withStartToCloseTimeout(10)
                 ->withRetryOptions(RetryOptions::new()->withMaximumAttempts(1))
         );
     }

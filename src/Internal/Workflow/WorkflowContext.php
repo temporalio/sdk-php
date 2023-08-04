@@ -228,6 +228,10 @@ class WorkflowContext implements WorkflowContextInterface
      */
     public function complete(array $result = null, \Throwable $failure = null): PromiseInterface
     {
+        if ($failure !== null) {
+            $this->workflowInstance->clearSignalQueue();
+        }
+
         if ($result !== null) {
             $values = EncodedValues::fromValues($result);
         } else {
