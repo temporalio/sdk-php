@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\DataConverter;
 
+use Google\Protobuf\DescriptorPool;
 use Google\Protobuf\Internal\Message;
 use Temporal\Api\Common\V1\Payload;
 use Temporal\Exception\DataConverterException;
@@ -35,7 +36,17 @@ class ProtoJsonConverter extends Converter
             return null;
         }
 
-        return $this->create($value->serializeToJsonString());
+        $payload = $this->create($value->serializeToString());
+
+        /** @var DescriptorPool $pool */
+        $pool = \Google\Protobuf\Internal\DescriptorPool::getGeneratedPool();
+
+        $payload->setMetadata([
+            EncodingKeys::METADATA_ENCODING_KEY => $this->getEncodingType(),
+            EncodingKeys::METADATA_MESSAGE_TYPE => $pool->getDescriptorByClassName($value::class)->getFullName(),
+        ]);
+
+        return $payload;
     }
 
     /**
