@@ -69,7 +69,8 @@
             "Temporal\\Tests\\": "tests",
             "Temporal\\Tests\\Workflow\\": "tests/Fixtures/src/Workflow",
             "Temporal\\Tests\\Activity\\": "tests/Fixtures/src/Activity",
-            "Temporal\\Tests\\DTO\\": "tests/Fixtures/src/DTO"
+            "Temporal\\Tests\\DTO\\": "tests/Fixtures/src/DTO",
+            "Temporal\\Tests\\Proto\\": "tests/Fixtures/src/Proto"
         }
     },
     "suggest": {

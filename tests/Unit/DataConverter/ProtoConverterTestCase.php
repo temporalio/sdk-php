@@ -31,13 +31,14 @@ class ProtoConverterTestCase extends UnitTestCase
     {
         $converter = $this->create();
 
-        $message = new \RoadRunner\Jobs\DTO\V1\HeaderValue();
+        $message = new \Temporal\Tests\Proto\Test();
+        $message->setValue('foo');
 
         $payload = $converter->toPayload($message);
 
         $this->assertNotNull($payload);
         $this->assertSame(
-            'jobs.v1.HeaderValue',
+            'tests.Test',
             $payload->getMetadata()->offsetGet(EncodingKeys::METADATA_MESSAGE_TYPE),
         );
     }

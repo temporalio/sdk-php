@@ -13,7 +13,6 @@ namespace DataConverter;
 
 use Temporal\DataConverter\EncodingKeys;
 use Temporal\DataConverter\PayloadConverterInterface;
-use Temporal\DataConverter\ProtoConverter;
 use Temporal\DataConverter\ProtoJsonConverter;
 use Temporal\Tests\Unit\UnitTestCase;
 
@@ -32,13 +31,14 @@ class ProtoJsonConverterTestCase extends UnitTestCase
     {
         $converter = $this->create();
 
-        $message = new \RoadRunner\Jobs\DTO\V1\HeaderValue();
+        $message = new \Temporal\Tests\Proto\Test();
+        $message->setValue('foo');
 
         $payload = $converter->toPayload($message);
 
         $this->assertNotNull($payload);
         $this->assertSame(
-            'jobs.v1.HeaderValue',
+            'tests.Test',
             $payload->getMetadata()->offsetGet(EncodingKeys::METADATA_MESSAGE_TYPE),
         );
     }
