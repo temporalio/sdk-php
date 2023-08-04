@@ -63,8 +63,7 @@ class JsonConverter extends Converter
         if (\is_object($value)) {
             $value = $value instanceof \stdClass
                 ? $value
-                : $this->marshaller->marshal($value)
-            ;
+                : $this->marshaller->marshal($value);
         }
 
         try {
@@ -146,13 +145,20 @@ class JsonConverter extends Converter
                 if (PHP_VERSION_ID >= 80104 && $reflection->isEnum()) {
                     return $reflection->getConstant($data->name);
                 }
-
-                $instance = $reflection->newInstanceWithoutConstructor();
             } catch (\ReflectionException $e) {
                 throw new DataConverterException($e->getMessage(), $e->getCode(), $e);
             }
 
-            return $this->marshaller->unmarshal($this->toHashMap($data), $instance);
+            if ($type->isArrayOf()) {
+                $result = [];
+                foreach ($data as $key => $value) {
+                    $result[$key] = $this->unmarshal($value, $reflection);
+                }
+
+                return $result;
+            }
+
+            return $this->unmarshal($data, $reflection);
         }
 
         throw $this->errorInvalidTypeName($type);
@@ -223,5 +229,21 @@ class JsonConverter extends Converter
         }
 
         return new AttributeReader();
+    }
+
+    /**
+     * @template T of object
+     *
+     * @param object|array $data
+     * @param \ReflectionClass<T> $reflection
+     *
+     * @return T
+     */
+    private function unmarshal(object|array $data, \ReflectionClass $reflection): object
+    {
+        return $this->marshaller->unmarshal(
+            $this->toHashMap($data),
+            $reflection->newInstanceWithoutConstructor(),
+        );
     }
 }

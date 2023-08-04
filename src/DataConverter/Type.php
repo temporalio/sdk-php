@@ -31,26 +31,28 @@ final class Type
     public const TYPE_FALSE     = 'false';
 
     /**
-     * @var string
-     */
-    private string $name;
-
-    /**
      * @var bool
      */
-    private bool $allowsNull;
+    private readonly bool $allowsNull;
 
     /**
      * @param TypeEnum|string $name
      * @param bool|null $allowsNull
+     * @param bool $isArrayOf
      */
-    public function __construct(string $name = Type::TYPE_ANY, bool $allowsNull = null)
-    {
-        $this->name = $name;
-
+    public function __construct(
+        private readonly string $name = Type::TYPE_ANY,
+        bool $allowsNull = null,
+        private readonly bool $isArrayOf = false,
+    ) {
         $this->allowsNull = $allowsNull ?? (
             $name === self::TYPE_ANY || $name === self::TYPE_VOID || $name === self::TYPE_NULL
         );
+    }
+
+    public static function arrayOf(string $class): self
+    {
+        return new self($class, null, true);
     }
 
     /**
@@ -143,5 +145,10 @@ final class Type
             default:
                 return new self();
         }
+    }
+
+    public function isArrayOf(): bool
+    {
+        return $this->isArrayOf;
     }
 }

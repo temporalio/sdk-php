@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
+use Temporal\Api\Workflowservice\V1\CountWorkflowExecutionsResponse;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Workflow\WorkflowExecutionInfo as WorkflowExecutionInfoDto;
 use Temporal\Workflow\WorkflowRunInterface;
@@ -131,10 +132,11 @@ interface WorkflowClientInterface
      * </code>
      *
      * @link https://docs.temporal.io/visibility
+     * @see self::countWorkflowExecutions()
      *
      * @param non-empty-string $query
      * @param non-empty-string $namespace
-     * @param int $pageSize
+     * @param int $pageSize Maximum number of workflow info per page.
      *
      * @return Paginator<WorkflowExecutionInfoDto>
      */
@@ -143,4 +145,23 @@ interface WorkflowClientInterface
         string $namespace = 'default',
         int $pageSize = 10,
     ): Paginator;
+
+    /**
+     * Get count of workflow executions using List Filter Query syntax.
+     * Query example:
+     *
+     * <code>
+     * WorkflowType='MyWorkflow' and StartTime  between '2022-08-22T15:04:05+00:00' and  '2023-08-22T15:04:05+00:00'
+     * </code>
+     *
+     * @link https://docs.temporal.io/visibility
+     * @see self::listWorkflowExecutions()
+     *
+     * @param non-empty-string $query
+     * @param non-empty-string $namespace
+     */
+    public function countWorkflowExecutions(
+        string $query,
+        string $namespace = 'default',
+    ): CountWorkflowExecutions;
 }
