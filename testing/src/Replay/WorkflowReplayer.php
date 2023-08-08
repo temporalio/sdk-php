@@ -33,7 +33,7 @@ final class WorkflowReplayer
     }
 
     /**
-     * Replays workflow from a history that will be loaded from Temporal server.
+     * Replays a workflow from history that will be fetched from Temporal server.
      *
      * @throws ReplayerException
      */
@@ -86,12 +86,12 @@ final class WorkflowReplayer
         $this->sendRequest('temporal.ReplayFromJSON', $request);
     }
 
-    private function sendRequest(string $commad, ReplayRequest $request): ReplayResponse
+    private function sendRequest(string $command, ReplayRequest $request): ReplayResponse
     {
         $wfType = (string)$request->getWorkflowType()?->getName();
         try {
             /** @var string $result */
-            $result = $this->rpc->call($commad, $request);
+            $result = $this->rpc->call($command, $request);
         } catch (\Throwable $e) {
             throw new RPCException(
                 $wfType, $e->getMessage(), (int)$e->getCode(), $e

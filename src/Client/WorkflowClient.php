@@ -17,9 +17,10 @@ use Spiral\Attributes\AnnotationReader;
 use Spiral\Attributes\AttributeReader;
 use Spiral\Attributes\Composite\SelectiveReader;
 use Spiral\Attributes\ReaderInterface;
+use Temporal\Api\Enums\V1\HistoryEventFilterType;
 use Temporal\Api\Workflow\V1\WorkflowExecutionInfo;
 use Temporal\Api\Workflowservice\V1\CountWorkflowExecutionsRequest;
-use Temporal\Api\Workflowservice\V1\CountWorkflowExecutionsResponse;
+use Temporal\Api\Workflowservice\V1\GetWorkflowExecutionHistoryRequest;
 use Temporal\Api\Workflowservice\V1\ListWorkflowExecutionsRequest;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\DataConverter\DataConverter;
@@ -309,5 +310,59 @@ class WorkflowClient implements WorkflowClientInterface
         }
 
         return new AttributeReader();
+    }
+
+    /**
+     * @param string $namespace
+     * @param WorkflowExecution $execution
+     * @param int<0, max> $pageSize
+     * @param bool $waitNewEvent If set to true, the RPC call will not resolve until there is a new event which matches,
+     *        the $historyEventFilterType, or a timeout is hit.
+     * @param int<0, 2>| $historyEventFilterType Filter returned events such that they match the specified filter type.
+     *        Available values are {@see HistoryEventFilterType} constants.
+     * @param bool $skipArchival
+     *
+     * @return WorkflowExecutionHistory
+     */
+    public function getWorkflowHistory(
+        WorkflowExecution $execution,
+        string $namespace = 'default',
+        int $pageSize = 0,
+        bool $waitNewEvent = false,
+        int $historyEventFilterType = HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_ALL_EVENT,
+        bool $skipArchival = false,
+    ): WorkflowExecutionHistory {
+        // if ($pageSize <= 0) {
+        //     throw new InvalidArgumentException('Page size must be greater than 0.');
+        // }
+
+        // Build request
+        $request = (new GetWorkflowExecutionHistoryRequest())
+            ->setNamespace($namespace)
+            ->setWaitNewEvent($waitNewEvent)
+            ->setHistoryEventFilterType($historyEventFilterType)
+            ->setSkipArchival($skipArchival)
+            ->setMaximumPageSize($pageSize)
+            ->setExecution((new \Temporal\Api\Common\V1\WorkflowExecution())
+                ->setWorkflowId($execution->getID())
+                ->setRunId(
+                    $execution->getRunID() ?? throw new InvalidArgumentException('Execution Run ID is required.')
+                )
+            );
+
+        $loader = function (GetWorkflowExecutionHistoryRequest $request): \Generator {
+            do {
+                $response = $this->client->GetWorkflowExecutionHistory($request);
+                $nextPageToken = $response->getNextPageToken();
+
+                yield [$response];
+
+                $request->setNextPageToken($nextPageToken);
+            } while ($nextPageToken !== '');
+        };
+
+        $paginator = Paginator::createFromGenerator($loader($request), null);
+
+        return new WorkflowExecutionHistory($paginator);
     }
 }

@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Functional;
 
+use Temporal\Api\History\V1\HistoryEvent;
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
 use Temporal\Testing\Replay\Exception\NonDeterministicWorkflowException;
 use Temporal\Testing\Replay\Exception\ReplayerException;
 use Temporal\Testing\Replay\WorkflowReplayer;
 use Temporal\Tests\TestCase;
+use Temporal\Tests\Workflow\SignalWorkflow;
 use Temporal\Tests\Workflow\WorkflowWithSequence;
 
 final class ReplayerTestCase extends TestCase
@@ -94,5 +96,39 @@ final class ReplayerTestCase extends TestCase
         $this->expectException(ReplayerException::class);
 
         (new WorkflowReplayer())->replayFromJSON('WorkflowWithSequence', $file);
+    }
+
+    /**
+     * @group skip-on-test-server
+     */
+    public function testWorkflowHistoryObject(): void
+    {
+        $workflow = $this->workflowClient->newWorkflowStub(SignalWorkflow::class);
+
+        $run = $this->workflowClient->start($workflow);
+
+        $workflow->addName('Albert');
+        $workflow->addName('Bob');
+        $workflow->addName('Cecil');
+        $workflow->addName('David');
+        $workflow->addName('Eugene');
+        $workflow->exit();
+
+        trap($run->getResult('array'));
+
+        $history = $this->workflowClient->getWorkflowHistory(
+            execution: $run->getExecution(),
+            skipArchival: true,
+        );
+
+        /** Check there are {@see HistoryEvent} objects in history */
+        $i = 0;
+        foreach ($history as $event) {
+            $this->assertInstanceOf(HistoryEvent::class, $event);
+            ++$i;
+        }
+
+        // History has minimal count of events
+        $this->assertGreaterThan(10, $i);
     }
 }

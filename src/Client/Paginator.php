@@ -15,6 +15,8 @@ use Traversable;
  *
  * @template TItem
  * @implements IteratorAggregate<TItem>
+ * @internal
+ * @psalm-internal Temporal\Client
  */
 final class Paginator implements IteratorAggregate, Countable
 {
@@ -27,7 +29,7 @@ final class Paginator implements IteratorAggregate, Countable
     /**
      * @param Generator<array-key, list<TItem>> $loader
      * @param int<1, max> $pageNumber
-     * @param null|Closure(): int $counter
+     * @param null|Closure(): int<0, max> $counter
      */
     private function __construct(
         private readonly Generator $loader,
@@ -41,7 +43,7 @@ final class Paginator implements IteratorAggregate, Countable
      * @template TInitItem
      *
      * @param Generator<array-key, list<TInitItem>> $loader
-     * @param null|callable(): int $counter Returns total number of items.
+     * @param null|callable(): int<0, max> $counter Returns total number of items.
      *
      * @return self<TInitItem>
      */
@@ -66,7 +68,7 @@ final class Paginator implements IteratorAggregate, Countable
             return null;
         }
         $this->nextPage = new self($this->loader, $this->pageNumber + 1, $this->counter);
-        /** @var @psalm-suppress UnsupportedPropertyReferenceUsage */
+        /** @psalm-suppress UnsupportedPropertyReferenceUsage */
         $this->nextPage->counter = &$this->nextPage;
 
         return $this->nextPage;
