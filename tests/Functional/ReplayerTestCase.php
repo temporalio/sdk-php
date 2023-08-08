@@ -66,7 +66,7 @@ final class ReplayerTestCase extends TestCase
             (new WorkflowReplayer())->replayFromJSON('WorkflowWithSequence', $file);
         } finally {
             if (\is_file($file)) {
-                // \unlink($file);
+                \unlink($file);
             }
         }
     }
@@ -130,5 +130,47 @@ final class ReplayerTestCase extends TestCase
 
         // History has minimal count of events
         $this->assertGreaterThan(10, $i);
+    }
+
+    /**
+     * @group skip-on-test-server
+     */
+    public function testWorkflowHistoryObjectStoring(): void
+    {
+        $workflow = $this->workflowClient->newWorkflowStub(SignalWorkflow::class);
+
+        $run = $this->workflowClient->start($workflow);
+
+        $workflow->addName('Albert');
+        $workflow->addName('Bob');
+        $workflow->addName('Cecil');
+        $workflow->addName('David');
+        $workflow->addName('Eugene');
+        $workflow->exit();
+
+        trap($run->getResult('array'));
+
+        $history = $this->workflowClient->getWorkflowHistory(
+            execution: $run->getExecution(),
+            skipArchival: true,
+        );
+
+        $file = \dirname(__DIR__, 2) . '/runtime/tests/history-from-object.json'
+
+        try {
+            \is_dir(\dirname($file)) or \mkdir(\dirname($file), recursive: true);
+            if (\is_file($file)) {
+                \unlink($file);
+            }
+
+            $history->toFile($file);
+            $this->assertFileExists($file);
+
+            (new WorkflowReplayer())->replayFromJSON('Signal.greet', $file);
+        } finally {
+            if (\is_file($file)) {
+                \unlink($file);
+            }
+        }
     }
 }

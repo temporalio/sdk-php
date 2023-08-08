@@ -71,4 +71,22 @@ final class WorkflowExecutionHistory implements IteratorAggregate
     {
         return $this->getEvents();
     }
+
+    /**
+     * Stores workflow history to a file.
+     */
+    public function toFile(string $file)
+    {
+        // Check file
+        if (!\is_dir(\dirname($file))) {
+            throw new \RuntimeException(\sprintf('Directory "%s" does not exist.', \dirname($file)));
+        }
+
+        $events = \iterator_to_array($this->getEvents(), false);
+        $history = new History();
+        $history->setEvents($events);
+
+        $data = $history->serializeToJsonString();
+        \file_put_contents($file, $data);
+    }
 }
