@@ -6,10 +6,10 @@ namespace Temporal\Client;
 
 use Generator;
 use IteratorAggregate;
-use Temporal\Api\Common\V1\DataBlob;
 use Temporal\Api\History\V1\History;
 use Temporal\Api\History\V1\HistoryEvent;
 use Temporal\Api\Workflowservice\V1\GetWorkflowExecutionHistoryResponse;
+use Temporal\Testing\Replay\WorkflowReplayer;
 use Traversable;
 
 /**
@@ -30,19 +30,6 @@ final class WorkflowExecutionHistory implements IteratorAggregate
     }
 
     /**
-     * @return Generator<int, DataBlob>
-     */
-    public function getRaws(): Generator
-    {
-        foreach ($this->paginator as $response) {
-            /** @var DataBlob $history */
-            foreach ($response->getRawHistory() as $history) {
-                yield $history;
-            }
-        }
-    }
-
-    /**
      * Returns an iterator of HistoryEvent objects.
      *
      * @return Generator<int, HistoryEvent>
@@ -51,15 +38,12 @@ final class WorkflowExecutionHistory implements IteratorAggregate
     {
         foreach ($this->paginator as $response) {
             $history = $response->getHistory();
-            \trap($history);
             if ($history === null) {
                 return;
             }
-            // /** @var iterable<HistoryEvent> $events */
+            /** @var HistoryEvent $event */
             foreach ($history->getEvents() as $event) {
-                // foreach ($events as $event) {
-                    yield $event;
-                // }
+                yield $event;
             }
         }
     }
@@ -73,20 +57,15 @@ final class WorkflowExecutionHistory implements IteratorAggregate
     }
 
     /**
-     * Stores workflow history to a file.
+     * Returns {@see History} object with all the events inside.
+     * The returned object may be used to replay the workflow via {@see WorkflowReplayer::replayHistory()}.
      */
-    public function toFile(string $file)
+    public function getHistory(): History
     {
-        // Check file
-        if (!\is_dir(\dirname($file))) {
-            throw new \RuntimeException(\sprintf('Directory "%s" does not exist.', \dirname($file)));
-        }
-
         $events = \iterator_to_array($this->getEvents(), false);
         $history = new History();
         $history->setEvents($events);
 
-        $data = $history->serializeToJsonString();
-        \file_put_contents($file, $data);
+        return $history;
     }
 }

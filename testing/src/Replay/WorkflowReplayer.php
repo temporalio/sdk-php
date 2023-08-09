@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Testing\Replay;
 
+use Google\Protobuf\Internal\Message;
 use RoadRunner\Temporal\DTO\V1\ReplayRequest;
 use RoadRunner\Temporal\DTO\V1\ReplayResponse;
 use Spiral\Goridge\Relay;
@@ -13,6 +14,11 @@ use Spiral\RoadRunner\Environment;
 use SplFileInfo;
 use Temporal\Api\Common\V1\WorkflowExecution;
 use Temporal\Api\Common\V1\WorkflowType;
+use Temporal\Api\History\V1\History;
+use Temporal\Api\History\V1\HistoryEvent;
+use Temporal\Client\GRPC\StatusCode;
+use Temporal\Testing\Replay\Exception\InternalServerException;
+use Temporal\Testing\Replay\Exception\InvalidArgumentException;
 use Temporal\Testing\Replay\Exception\NonDeterministicWorkflowException;
 use Temporal\Testing\Replay\Exception\ReplayerException;
 use Temporal\Testing\Replay\Exception\RPCException;
@@ -30,6 +36,35 @@ final class WorkflowReplayer
     public function __construct()
     {
         $this->rpc = new RPC(Relay::create(Environment::fromGlobals()->getRPCAddress()), new ProtobufCodec());
+    }
+
+    /**
+     * Replays a workflow from {@see History}
+     *
+     * @param non-empty-string|null $workflowType Workflow type name. If not specified, the workflow type will be
+     *        extracted from the first event in the history.
+     *
+     * @throws ReplayerException
+     */
+    public function replayHistory(
+        History $history,
+        ?string $workflowType = null,
+    ): void {
+        if ($workflowType === null) {
+            /** @var HistoryEvent|null $firstEvent */
+            $firstEvent = $history->getEvents()[0] ?? null;
+            $workflowType = $firstEvent?->getWorkflowExecutionStartedEventAttributes()?->getWorkflowType()?->getName();
+        }
+
+        if ($workflowType === null) {
+            throw new \InvalidArgumentException('Workflow type is not specified.');
+        }
+
+        $request = (new \RoadRunner\Temporal\DTO\V1\History())
+            ->setWorkflowType((new WorkflowType())->setName($workflowType))
+            ->setHistory($history);
+
+        $this->sendRequest('temporal.ReplayWorkflowHistory', $request);
     }
 
     /**
@@ -86,7 +121,7 @@ final class WorkflowReplayer
         $this->sendRequest('temporal.ReplayFromJSON', $request);
     }
 
-    private function sendRequest(string $command, ReplayRequest $request): ReplayResponse
+    private function sendRequest(string $command, Message $request): ReplayResponse
     {
         $wfType = (string)$request->getWorkflowType()?->getName();
         try {
@@ -109,7 +144,13 @@ final class WorkflowReplayer
         }
 
         throw match ($status->getCode()) {
-            13 => new NonDeterministicWorkflowException($wfType, $status->getMessage(), $status->getCode()),
+            StatusCode::INVALID_ARGUMENT => new InvalidArgumentException(
+                $wfType, $status->getMessage(), $status->getCode(),
+            ),
+            StatusCode::INTERNAL => new InternalServerException($wfType, $status->getMessage(), $status->getCode()),
+            StatusCode::FAILED_PRECONDITION => new NonDeterministicWorkflowException(
+                $wfType, $status->getMessage(), $status->getCode(),
+            ),
             default => new ReplayerException($wfType, $status->getMessage(), $status->getCode()),
         };
     }

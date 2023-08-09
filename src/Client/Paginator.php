@@ -69,7 +69,7 @@ final class Paginator implements IteratorAggregate, Countable
         }
         $this->nextPage = new self($this->loader, $this->pageNumber + 1, $this->counter);
         /** @psalm-suppress UnsupportedPropertyReferenceUsage */
-        $this->nextPage->counter = &$this->nextPage;
+        $this->nextPage->counter = &$this->counter;
 
         return $this->nextPage;
     }

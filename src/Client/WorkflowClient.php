@@ -301,41 +301,16 @@ class WorkflowClient implements WorkflowClientInterface
     }
 
     /**
-     * @return ReaderInterface
-     */
-    private function createReader(): ReaderInterface
-    {
-        if (\interface_exists(Reader::class)) {
-            return new SelectiveReader([new AnnotationReader(), new AttributeReader()]);
-        }
-
-        return new AttributeReader();
-    }
-
-    /**
-     * @param string $namespace
-     * @param WorkflowExecution $execution
-     * @param int<0, max> $pageSize
-     * @param bool $waitNewEvent If set to true, the RPC call will not resolve until there is a new event which matches,
-     *        the $historyEventFilterType, or a timeout is hit.
-     * @param int<0, 2>| $historyEventFilterType Filter returned events such that they match the specified filter type.
-     *        Available values are {@see HistoryEventFilterType} constants.
-     * @param bool $skipArchival
-     *
-     * @return WorkflowExecutionHistory
+     * @inheritDoc
      */
     public function getWorkflowHistory(
         WorkflowExecution $execution,
         string $namespace = 'default',
-        int $pageSize = 0,
         bool $waitNewEvent = false,
         int $historyEventFilterType = HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_ALL_EVENT,
         bool $skipArchival = false,
+        int $pageSize = 0,
     ): WorkflowExecutionHistory {
-        // if ($pageSize <= 0) {
-        //     throw new InvalidArgumentException('Page size must be greater than 0.');
-        // }
-
         // Build request
         $request = (new GetWorkflowExecutionHistoryRequest())
             ->setNamespace($namespace)
@@ -346,8 +321,8 @@ class WorkflowClient implements WorkflowClientInterface
             ->setExecution((new \Temporal\Api\Common\V1\WorkflowExecution())
                 ->setWorkflowId($execution->getID())
                 ->setRunId(
-                    $execution->getRunID() ?? throw new InvalidArgumentException('Execution Run ID is required.')
-                )
+                    $execution->getRunID() ?? throw new InvalidArgumentException('Execution Run ID is required.'),
+                ),
             );
 
         $loader = function (GetWorkflowExecutionHistoryRequest $request): \Generator {
@@ -364,5 +339,17 @@ class WorkflowClient implements WorkflowClientInterface
         $paginator = Paginator::createFromGenerator($loader($request), null);
 
         return new WorkflowExecutionHistory($paginator);
+    }
+
+    /**
+     * @return ReaderInterface
+     */
+    private function createReader(): ReaderInterface
+    {
+        if (\interface_exists(Reader::class)) {
+            return new SelectiveReader([new AnnotationReader(), new AttributeReader()]);
+        }
+
+        return new AttributeReader();
     }
 }

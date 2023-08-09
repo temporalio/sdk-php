@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Functional;
 
+use Temporal\Api\Enums\V1\EventType;
+use Temporal\Api\Enums\V1\HistoryEventFilterType;
+use Temporal\Api\History\V1\History;
 use Temporal\Api\History\V1\HistoryEvent;
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
@@ -135,7 +138,7 @@ final class ReplayerTestCase extends TestCase
     /**
      * @group skip-on-test-server
      */
-    public function testWorkflowHistoryObjectStoring(): void
+    public function testReplayWorkflowHistory(): void
     {
         $workflow = $this->workflowClient->newWorkflowStub(SignalWorkflow::class);
 
@@ -147,30 +150,123 @@ final class ReplayerTestCase extends TestCase
         $workflow->addName('David');
         $workflow->addName('Eugene');
         $workflow->exit();
-
-        trap($run->getResult('array'));
+        $run->getResult('array');
 
         $history = $this->workflowClient->getWorkflowHistory(
             execution: $run->getExecution(),
             skipArchival: true,
-        );
+        )->getHistory();
 
-        $file = \dirname(__DIR__, 2) . '/runtime/tests/history-from-object.json'
+        $this->assertGreaterThan(10, \count(\iterator_to_array($history->getEvents(), false)));
 
-        try {
-            \is_dir(\dirname($file)) or \mkdir(\dirname($file), recursive: true);
-            if (\is_file($file)) {
-                \unlink($file);
+        // Run without Workflow Type specifying
+        (new WorkflowReplayer())->replayHistory($history);
+    }
+
+    /**
+     * Broke the history and replay it again
+     * @group skip-on-test-server
+     */
+    public function testReplayBrokenWorkflowHistory(): void
+    {
+        $workflow = $this->workflowClient->newWorkflowStub(SignalWorkflow::class);
+
+        $run = $this->workflowClient->start($workflow);
+
+        $workflow->addName('Albert');
+        $workflow->addName('Bob');
+        $workflow->addName('Cecil');
+        $workflow->addName('David');
+        $workflow->addName('Eugene');
+        $workflow->exit();
+        $run->getResult('array');
+
+        $history = $this->workflowClient->getWorkflowHistory(
+            execution: $run->getExecution(),
+            skipArchival: true,
+        )->getHistory();
+
+        $this->assertGreaterThan(10, \count(\iterator_to_array($history->getEvents(), false)));
+
+        (new WorkflowReplayer())->replayHistory($history, 'Signal.greet');
+
+        // Broke the history and replay it again.
+        /** @var HistoryEvent $event */
+        foreach ($history->getEvents() as $event) {
+            if ($event->getEventType() !== EventType::EVENT_TYPE_WORKFLOW_EXECUTION_SIGNALED) {
+                continue;
             }
-
-            $history->toFile($file);
-            $this->assertFileExists($file);
-
-            (new WorkflowReplayer())->replayFromJSON('Signal.greet', $file);
-        } finally {
-            if (\is_file($file)) {
-                \unlink($file);
+            // Replace `addName` signals with `undefinedSignal`.
+            if ($event->getWorkflowExecutionSignaledEventAttributes()?->getSignalName() !== 'addName') {
+                $event->getWorkflowExecutionSignaledEventAttributes()->setSignalName('undefinedSignal');
             }
         }
+
+        $this->expectException(NonDeterministicWorkflowException::class);
+        (new WorkflowReplayer())->replayHistory($history, 'Signal.greet');
+    }
+
+    /**
+     * Filter event type
+     * @group skip-on-test-server
+     */
+    public function testFilterHistory(): void
+    {
+        $workflow = $this->workflowClient->newWorkflowStub(SignalWorkflow::class);
+
+        $run = $this->workflowClient->start($workflow);
+
+        $workflow->addName('Albert');
+        $workflow->addName('Bob');
+        $workflow->addName('Cecil');
+        $workflow->addName('David');
+        $workflow->addName('Eugene');
+        $workflow->exit();
+        $run->getResult('array');
+
+        $history = $this->workflowClient->getWorkflowHistory(
+            execution: $run->getExecution(),
+            historyEventFilterType: HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_CLOSE_EVENT,
+            skipArchival: true
+        )->getHistory();
+
+        $this->assertCount(1, \iterator_to_array($history->getEvents(), false));
+    }
+
+    /**
+     * todo: uncomment when timeout will be implemented in Workflow Client calls
+     *
+     * @group skip-on-test-server
+     */
+    // public function testWaitNewEvent(): void
+    // {
+    //     $workflow = $this->workflowClient->newWorkflowStub(SignalWorkflow::class);
+    //
+    //     $run = $this->workflowClient->start($workflow);
+    //
+    //     $workflow->addName('Albert');
+    //     $workflow->addName('Albert');
+    //     $workflow->addName('Albert');
+    //     $workflow->addName('Albert');
+    //     $workflow->addName('Albert');
+    //     $run->getResult('array');
+    //
+    //     $this->expectException(TimeoutException::class);
+    //
+    //     $this->workflowClient->withTimeout(1)->getWorkflowHistory(
+    //         execution: $run->getExecution(),
+    //         waitNewEvent: true,
+    //         skipArchival: true,
+    //     )->getHistory();
+    // }
+
+    /**
+     * Send invalid history object to replay
+     */
+    public function testReplayInvalidHistory(): void
+    {
+        $this->expectException(NonDeterministicWorkflowException::class);
+
+        (new WorkflowReplayer())->replayHistory(new History(), 'Signal.greet');
     }
 }

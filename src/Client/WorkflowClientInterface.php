@@ -11,8 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
-use Temporal\Api\Workflowservice\V1\CountWorkflowExecutionsResponse;
+use Temporal\Api\Enums\V1\HistoryEventFilterType;
 use Temporal\Client\GRPC\ServiceClientInterface;
+use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowExecutionInfo as WorkflowExecutionInfoDto;
 use Temporal\Workflow\WorkflowRunInterface;
 
@@ -164,4 +165,27 @@ interface WorkflowClientInterface
         string $query,
         string $namespace = 'default',
     ): CountWorkflowExecutions;
+
+    /**
+     * @param non-empty-string $namespace
+     * @param WorkflowExecution $execution
+     * @param bool $waitNewEvent If set to true, the RPC call will not resolve until there is a new event which matches,
+     *        the $historyEventFilterType, or a timeout is hit. The RPC call will be resolved immediately if the
+     *        workflow was already finished.
+     * @param int<0, 2>| $historyEventFilterType Filter returned events such that they match the specified filter type.
+     *        Available values are {@see HistoryEventFilterType} constants.
+     * @param bool $skipArchival
+     * @param int<0, max> $pageSize Size of the pages to be requested. It affects internal queries only. Use it if you
+     *        want to load limited number of events from the history.
+     *
+     * @return WorkflowExecutionHistory
+     */
+    public function getWorkflowHistory(
+        WorkflowExecution $execution,
+        string $namespace = 'default',
+        bool $waitNewEvent = false,
+        int $historyEventFilterType = HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_ALL_EVENT,
+        bool $skipArchival = false,
+        int $pageSize = 0,
+    ): WorkflowExecutionHistory;
 }
