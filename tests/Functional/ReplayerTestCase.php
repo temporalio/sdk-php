@@ -117,7 +117,7 @@ final class ReplayerTestCase extends TestCase
         $workflow->addName('Eugene');
         $workflow->exit();
 
-        trap($run->getResult('array'));
+        $run->getResult('array');
 
         $history = $this->workflowClient->getWorkflowHistory(
             execution: $run->getExecution(),
@@ -159,7 +159,6 @@ final class ReplayerTestCase extends TestCase
 
         $this->assertGreaterThan(10, \count(\iterator_to_array($history->getEvents(), false)));
 
-        // Run without Workflow Type specifying
         (new WorkflowReplayer())->replayHistory($history);
     }
 
@@ -188,7 +187,7 @@ final class ReplayerTestCase extends TestCase
 
         $this->assertGreaterThan(10, \count(\iterator_to_array($history->getEvents(), false)));
 
-        (new WorkflowReplayer())->replayHistory($history, 'Signal.greet');
+        (new WorkflowReplayer())->replayHistory($history);
 
         // Broke the history and replay it again.
         /** @var HistoryEvent $event */
@@ -203,7 +202,7 @@ final class ReplayerTestCase extends TestCase
         }
 
         $this->expectException(NonDeterministicWorkflowException::class);
-        (new WorkflowReplayer())->replayHistory($history, 'Signal.greet');
+        (new WorkflowReplayer())->replayHistory($history);
     }
 
     /**
@@ -265,8 +264,39 @@ final class ReplayerTestCase extends TestCase
      */
     public function testReplayInvalidHistory(): void
     {
-        $this->expectException(NonDeterministicWorkflowException::class);
+        $this->expectException(\LogicException::class);
 
-        (new WorkflowReplayer())->replayHistory(new History(), 'Signal.greet');
+        (new WorkflowReplayer())->replayHistory(new History());
+    }
+
+    /**
+     * Rename the Workflow in the history and try to replay
+     * @group skip-on-test-server
+     */
+    public function testReplayNotExistingWorkflowHistory(): void
+    {
+        $workflow = $this->workflowClient->newWorkflowStub(SignalWorkflow::class);
+
+        $run = $this->workflowClient->start($workflow);
+
+        $workflow->addName('Albert');
+        $workflow->exit();
+        $run->getResult('array');
+
+        $history = $this->workflowClient->getWorkflowHistory(
+            execution: $run->getExecution(),
+            skipArchival: true,
+        )->getHistory();
+
+        // Broke the history and replay it again.
+        /** @var HistoryEvent|null $firstEvent */
+        $firstEvent = $history->getEvents()[0] ?? null;
+        $firstEvent
+            ->getWorkflowExecutionStartedEventAttributes()
+            ->getWorkflowType()
+            ->setName('nonExistingWorkflowTypeTestFooBar123');
+
+        $this->expectException(ReplayerException::class);
+        (new WorkflowReplayer())->replayHistory($history);
     }
 }

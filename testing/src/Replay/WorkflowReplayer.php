@@ -41,24 +41,14 @@ final class WorkflowReplayer
     /**
      * Replays a workflow from {@see History}
      *
-     * @param non-empty-string|null $workflowType Workflow type name. If not specified, the workflow type will be
-     *        extracted from the first event in the history.
-     *
      * @throws ReplayerException
      */
-    public function replayHistory(
-        History $history,
-        ?string $workflowType = null,
-    ): void {
-        if ($workflowType === null) {
-            /** @var HistoryEvent|null $firstEvent */
-            $firstEvent = $history->getEvents()[0] ?? null;
-            $workflowType = $firstEvent?->getWorkflowExecutionStartedEventAttributes()?->getWorkflowType()?->getName();
-        }
-
-        if ($workflowType === null) {
-            throw new \InvalidArgumentException('Workflow type is not specified.');
-        }
+    public function replayHistory(History $history): void
+    {
+        /** @var HistoryEvent|null $firstEvent */
+        $firstEvent = $history->getEvents()[0] ?? null;
+        $workflowType = $firstEvent?->getWorkflowExecutionStartedEventAttributes()?->getWorkflowType()?->getName()
+            ?? throw new \LogicException('History is empty or broken.');
 
         $request = (new \RoadRunner\Temporal\DTO\V1\History())
             ->setWorkflowType((new WorkflowType())->setName($workflowType))
