@@ -17,8 +17,10 @@ use Spiral\Attributes\AnnotationReader;
 use Spiral\Attributes\AttributeReader;
 use Spiral\Attributes\Composite\SelectiveReader;
 use Spiral\Attributes\ReaderInterface;
+use Temporal\Api\Enums\V1\HistoryEventFilterType;
 use Temporal\Api\Workflow\V1\WorkflowExecutionInfo;
 use Temporal\Api\Workflowservice\V1\CountWorkflowExecutionsRequest;
+use Temporal\Api\Workflowservice\V1\GetWorkflowExecutionHistoryRequest;
 use Temporal\Api\Workflowservice\V1\ListWorkflowExecutionsRequest;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\DataConverter\DataConverter;
@@ -304,15 +306,67 @@ class WorkflowClient implements WorkflowClientInterface
                 $request->setNextPageToken($nextPageToken);
             } while ($nextPageToken !== '');
         };
-        $counter = function () use ($namespace, $query): int {
-            $response = $this->client->CountWorkflowExecutions((new CountWorkflowExecutionsRequest())
-                ->setNamespace($namespace)
-                ->setQuery($query));
-
-            return (int)$response->getCount();
-        };
+        $counter = fn(): int => $this->countWorkflowExecutions($query, $namespace)->count;
 
         return Paginator::createFromGenerator($loader($request), $counter);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function countWorkflowExecutions(
+        string $query,
+        string $namespace = 'default',
+    ): CountWorkflowExecutions {
+        $response = $this->client
+            ->CountWorkflowExecutions(
+                (new CountWorkflowExecutionsRequest())->setNamespace($namespace)->setQuery($query)
+            );
+
+        return new CountWorkflowExecutions(
+            count: (int)$response->getCount(),
+        );
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getWorkflowHistory(
+        WorkflowExecution $execution,
+        string $namespace = 'default',
+        bool $waitNewEvent = false,
+        int $historyEventFilterType = HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_ALL_EVENT,
+        bool $skipArchival = false,
+        int $pageSize = 0,
+    ): WorkflowExecutionHistory {
+        // Build request
+        $request = (new GetWorkflowExecutionHistoryRequest())
+            ->setNamespace($namespace)
+            ->setWaitNewEvent($waitNewEvent)
+            ->setHistoryEventFilterType($historyEventFilterType)
+            ->setSkipArchival($skipArchival)
+            ->setMaximumPageSize($pageSize)
+            ->setExecution((new \Temporal\Api\Common\V1\WorkflowExecution())
+                ->setWorkflowId($execution->getID())
+                ->setRunId(
+                    $execution->getRunID() ?? throw new InvalidArgumentException('Execution Run ID is required.'),
+                ),
+            );
+
+        $loader = function (GetWorkflowExecutionHistoryRequest $request): \Generator {
+            do {
+                $response = $this->client->GetWorkflowExecutionHistory($request);
+                $nextPageToken = $response->getNextPageToken();
+
+                yield [$response];
+
+                $request->setNextPageToken($nextPageToken);
+            } while ($nextPageToken !== '');
+        };
+
+        $paginator = Paginator::createFromGenerator($loader($request), null);
+
+        return new WorkflowExecutionHistory($paginator);
     }
 
     /**

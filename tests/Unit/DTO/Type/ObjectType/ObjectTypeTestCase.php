@@ -19,6 +19,7 @@ use Temporal\Tests\Unit\DTO\Type\ObjectType\Stub\Nested1;
 use Temporal\Tests\Unit\DTO\Type\ObjectType\Stub\Nested2;
 use Temporal\Tests\Unit\DTO\Type\ObjectType\Stub\Nested3;
 use Temporal\Tests\Unit\DTO\Type\ObjectType\Stub\NestedParent;
+use Temporal\Tests\Unit\DTO\Type\ObjectType\Stub\NullableProperty;
 use Temporal\Tests\Unit\DTO\Type\ObjectType\Stub\ParentDto;
 use Temporal\Tests\Unit\DTO\DTOMarshallingTestCase;
 use Temporal\Tests\Unit\DTO\Type\ObjectType\Stub\ReadonlyProperty;
@@ -57,6 +58,24 @@ final class ObjectTypeTestCase extends DTOMarshallingTestCase
         $result = $this->marshal($dto);
 
         $this->assertEquals(['child' => ['foo' => 'foo']], $result);
+    }
+
+    public function testNullableObjectMarshal(): void
+    {
+        $dto = new NullableProperty(null);
+
+        $result = $this->marshal($dto);
+
+        $this->assertEquals(['child' => null], $result);
+    }
+
+    public function testNullableObjectUnmarshal(): void
+    {
+        $dto = $this->unmarshal([
+            'child' => null,
+        ], (new ReflectionClass(NullableProperty::class))->newInstanceWithoutConstructor());
+
+        self::assertEquals(new NullableProperty(null), $dto);
     }
 
     public function testStdClassParamUnmarshal(): void

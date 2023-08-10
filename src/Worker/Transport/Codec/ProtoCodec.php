@@ -13,8 +13,8 @@ namespace Temporal\Worker\Transport\Codec;
 
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\ProtocolException;
-use Temporal\Roadrunner\Internal\Frame;
-use Temporal\Roadrunner\Internal\Message;
+use RoadRunner\Temporal\DTO\V1\Frame;
+use RoadRunner\Temporal\DTO\V1\Message;
 use Temporal\Worker\Transport\Codec\ProtoCodec\Decoder;
 use Temporal\Worker\Transport\Codec\ProtoCodec\Encoder;
 use Temporal\Worker\Transport\Command\CommandInterface;

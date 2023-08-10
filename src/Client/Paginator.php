@@ -15,6 +15,8 @@ use Traversable;
  *
  * @template TItem
  * @implements IteratorAggregate<TItem>
+ * @internal
+ * @psalm-internal Temporal\Client
  */
 final class Paginator implements IteratorAggregate, Countable
 {
@@ -66,8 +68,8 @@ final class Paginator implements IteratorAggregate, Countable
             return null;
         }
         $this->nextPage = new self($this->loader, $this->pageNumber + 1, $this->counter);
-        /** @var @psalm-suppress UnsupportedPropertyReferenceUsage */
-        $this->nextPage->counter = &$this->nextPage;
+        /** @psalm-suppress UnsupportedPropertyReferenceUsage */
+        $this->nextPage->counter = &$this->counter;
 
         return $this->nextPage;
     }

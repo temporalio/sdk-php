@@ -19,6 +19,7 @@ use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\TemporalFailure;
+use Temporal\Exception\InvalidArgumentException;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Request\Cancel;
 use Temporal\Internal\Workflow\ScopeContext;
@@ -172,6 +173,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     public function start(callable $handler, ValuesInterface $values = null): void
     {
         try {
+            // Create a coroutine generator
             $this->coroutine = $this->call($handler, $values ?? EncodedValues::empty());
             $this->context->resolveConditions();
         } catch (\Throwable $e) {
@@ -179,6 +181,17 @@ class Scope implements CancellationScopeInterface, PromisorInterface
             return;
         }
 
+        $this->next();
+    }
+
+    /**
+     * @param callable $handler
+     */
+    public function startSignal(callable $handler, ValuesInterface $values): void
+    {
+        // Create a coroutine generator
+        $this->coroutine = $this->callSignalHandler($handler, $values);
+        $this->context->resolveConditions();
         $this->next();
     }
 
@@ -327,16 +340,49 @@ class Scope implements CancellationScopeInterface, PromisorInterface
      */
     protected function call(callable $handler, ValuesInterface $values): \Generator
     {
-        $this->makeCurrent();
-        $result = $handler($values);
+        try {
+            $this->makeCurrent();
+            $result = $handler($values);
 
-        if ($result instanceof \Generator) {
-            yield from $result;
+            if ($result instanceof \Generator) {
+                yield from $result;
 
-            return $result->getReturn();
+                return $result->getReturn();
+            }
+
+            return $result;
+        } catch (\Throwable $e) {
+            $this->onException($e);
         }
+    }
 
-        return $result;
+    /**
+     * Call a Signal method. In this case deserialization errors are skipped.
+     *
+     * @param callable $handler
+     * @return \Generator
+     */
+    protected function callSignalHandler(callable $handler, ValuesInterface $values): \Generator
+    {
+        try {
+            $this->makeCurrent();
+            try {
+                $result = $handler($values);
+            } catch (InvalidArgumentException) {
+                // Skip deserialization errors
+                return null;
+            }
+
+            if ($result instanceof \Generator) {
+                yield from $result;
+
+                return $result->getReturn();
+            }
+
+            return $result;
+        } catch (\Throwable $e) {
+            $this->onException($e);
+        }
     }
 
     /**
@@ -394,6 +440,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
         }
 
         $current = $this->coroutine->current();
+        $this->context->resolveConditions();
 
         switch (true) {
             case $current instanceof PromiseInterface:

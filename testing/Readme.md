@@ -1,7 +1,9 @@
 ## Testing framework
 
 ### Quick start
+
 1. Create `bootstrap.php` in `tests` folder with the following contents:
+
 ```php
 declare(strict_types=1);
 
@@ -36,7 +38,23 @@ $environment->startRoadRunner('./rr serve -c .rr.silent.yaml -w tests');
 register_shutdown_function(fn() => $environment->stop());
 ```
 
+Alternatively, if you have multiple workers because of task-queue separation, you can use the following solution:
+
+```php
+$environment1 = Environment::create();
+$environment1->startRoadRunner('./rr serve -c .rr.task1.yaml -w tests');
+
+$environment2 = Environment::create();
+$environment2->startRoadRunner('./rr serve -c .rr.task2.yaml -w tests');
+
+register_shutdown_function(function() use($environment1, $environment2): void {
+    $environment1->stop();
+    $environment2->stop();
+});
+```
+
 Also, you can configure java sdk version:
+
 ```php
 $environment = new Environment(
     new ConsoleOutput(),
@@ -63,11 +81,13 @@ $environment = new Environment(
 ```
 
 3. Add test server executable to `.gitignore`:
+
 ```gitignore
 temporal-test-server
 ```
 
 ### How it works
+
 For testing workflows there is no need to run a full Temporal server (with storage and ui interface).
 Instead, we can use a light-weight test server.
 
@@ -78,6 +98,7 @@ Thus, if you use default connection settings, there is no need to change them.
 Under the hood RoadRunner is started with `rr serve` command. So make sure you have the binary.
 
 You can specify your own command in `bootstrap.php`:
+
 ```php
 $environment->start('./rr serve -c .rr.test.yaml -w tests');
 ```
@@ -95,7 +116,6 @@ kv:
         driver: memory
         config:
             interval: 10
-
 ```
 
 And within the worker you register your workflows and activities:
@@ -113,6 +133,7 @@ $factory->run();
 ```
 
 ### Time management 
+
 By default, the test server starts with `--enable-time-skipping` option. It means that if the 
 workflow has a timer, the server doesn't wait for it and continues immediately. To change
 this behaviour you can use `TestService` class:

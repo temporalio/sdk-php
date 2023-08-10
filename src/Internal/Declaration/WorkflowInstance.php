@@ -160,6 +160,11 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
         $this->signalQueue->attach($name, $this->signalHandlers[$name]);
     }
 
+    public function clearSignalQueue(): void
+    {
+        $this->signalQueue->clear();
+    }
+
     /**
      * Make a Closure from a callable.
      *

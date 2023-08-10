@@ -132,14 +132,18 @@ class AwaitTestCase extends ClientTestCase
         $wait->addValue('test2');
         $wait->addValue('test3');
 
-        // breaks the invocation
+        /**
+         * Breaks the invocation
+         * Deserialization errors must be ignored. Called Signal method in this case will be skipped.
+         * @link https://github.com/temporalio/sdk-php/pull/331
+         */
         $wait->addValue(['hello'], 123);
 
         $wait->addValue('test4');
 
         $result = $run->getResult();
-        asort($result);
-        $result = array_values($result);
+        \asort($result);
+        $result = \array_values($result);
 
         $this->assertSame(
             [

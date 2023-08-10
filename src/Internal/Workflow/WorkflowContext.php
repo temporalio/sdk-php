@@ -277,6 +277,10 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
      */
     public function complete(array $result = null, \Throwable $failure = null): PromiseInterface
     {
+        if ($failure !== null) {
+            $this->workflowInstance->clearSignalQueue();
+        }
+
         return $this->callsInterceptor->with(
             function (CompleteInput $input): PromiseInterface {
                 $values = $input->result !== null

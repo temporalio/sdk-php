@@ -38,6 +38,16 @@ class UntypedWorkflowStubTestCase extends ClientTestCase
         $this->assertSame('HELLO WORLD', $simple->getResult());
     }
 
+    public function testUntypedStartWithWrongData()
+    {
+        $client = $this->createClient();
+        $simple = $client->newUntypedWorkflowStub('SimpleWorkflow');
+        $client->start($simple, ['hello world']);
+
+        $this->expectException(WorkflowFailedException::class);
+        $simple->getResult();
+    }
+
     public function testUntypedStartViaClient()
     {
         $client = $this->createClient();

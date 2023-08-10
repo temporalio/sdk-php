@@ -69,6 +69,11 @@ final class SignalQueue
         $this->flush($signal);
     }
 
+    public function clear(): void
+    {
+        $this->queue = [];
+    }
+
     /**
      * @param string $signal
      * @psalm-suppress UnusedVariable

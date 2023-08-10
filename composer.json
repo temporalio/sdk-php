@@ -30,6 +30,7 @@
         "nesbot/carbon": "^2.66",
         "psr/log": "^2.0 || ^3.0",
         "react/promise": "^2.9",
+        "roadrunner-php/roadrunner-api-dto": "^1.3",
         "spiral/attributes": "^2.8 || ^3.0",
         "spiral/roadrunner-cli": "^2.5",
         "spiral/roadrunner-kv": "^4.0",
@@ -45,13 +46,11 @@
             "Temporal\\Api\\Testservice\\": "testing/api/testservice/Temporal/Api/Testservice",
             "GPBMetadata\\Temporal\\Api\\Testservice\\": "testing/api/testservice/GPBMetadata/Temporal/Api/Testservice",
             "Temporal\\Testing\\": "testing/src",
-            "GPBMetadata\\": "api/v1/GPBMetadata",
-            "Temporal\\": "src",
-            "Temporal\\Api\\": "api/v1/Temporal/Api",
-            "Temporal\\Roadrunner\\": "api/v1/Temporal/Roadrunner"
+            "Temporal\\": "src"
         }
     },
     "require-dev": {
+        "buggregator/trap": "^1.0",
         "composer/composer": "^2.0",
         "dereuromark/composer-prefer-lowest": "^0.1.10",
         "doctrine/annotations": "^1.11",
@@ -72,7 +71,8 @@
             "Temporal\\Tests\\Interceptor\\": "tests/Fixtures/src/Interceptor",
             "Temporal\\Tests\\Workflow\\": "tests/Fixtures/src/Workflow",
             "Temporal\\Tests\\Activity\\": "tests/Fixtures/src/Activity",
-            "Temporal\\Tests\\DTO\\": "tests/Fixtures/src/DTO"
+            "Temporal\\Tests\\DTO\\": "tests/Fixtures/src/DTO",
+            "Temporal\\Tests\\Proto\\": "tests/Fixtures/src/Proto"
         }
     },
     "suggest": {
@@ -93,7 +93,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-master": "1.0.x-dev"
+            "dev-master": "2.6.x-dev"
         }
     },
     "config": {

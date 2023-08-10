@@ -65,43 +65,39 @@ class Process extends Scope implements ProcessInterface
         // Configure signal handler
         $wfInstance->getSignalQueue()->onSignal(
             function (string $name, callable $handler, ValuesInterface $arguments) use ($inboundPipeline): void {
-                try {
-                    // Define Context for interceptors Pipeline
-                    Workflow::setCurrentContext($this->scopeContext);
+                // Define Context for interceptors Pipeline
+                Workflow::setCurrentContext($this->scopeContext);
 
-                    $inboundPipeline->with(
-                        function (SignalInput $input) use ($handler) {
-                            $input->header->setDataConverter($this->services->dataConverter);
+                $inboundPipeline->with(
+                    function (SignalInput $input) use ($handler) {
+                        $input->header->setDataConverter($this->services->dataConverter);
 
-                            $this->createScope(
-                                true,
-                                LoopInterface::ON_SIGNAL,
-                                $this->context->withInput(
-                                    new Input($input->info, $input->arguments, $input->header),
-                                ),
-                            )->onClose(
-                                function (?\Throwable $error): void {
-                                    if ($error !== null) {
-                                        // we want to fail process when signal scope fails
-                                        $this->complete($error);
-                                    }
+                        $this->createScope(
+                            true,
+                            LoopInterface::ON_SIGNAL,
+                            $this->context->withInput(
+                                new Input($input->info, $input->arguments, $input->header),
+                            ),
+                        )->onClose(
+                            function (?\Throwable $error): void {
+                                if ($error !== null) {
+                                    // we want to fail process when signal scope fails
+                                    $this->complete($error);
                                 }
-                            )->start(
-                                $handler,
-                                $input->arguments
-                            );
-                        },
-                        /** @see WorkflowInboundInterceptor::handleSignal() */
-                        'handleSignal',
-                    )(new SignalInput(
-                        $name,
-                        $this->scopeContext->getInfo(),
-                        $arguments,
-                        $this->scopeContext->getHeader(),
-                    ));
-                } catch (InvalidArgumentException) {
-                    // invalid signal invocation, destroy the scope with no traces
-                }
+                            }
+                        )->startSignal(
+                            $handler,
+                            $input->arguments
+                        );
+                    },
+                    /** @see WorkflowInboundInterceptor::handleSignal() */
+                    'handleSignal',
+                )(new SignalInput(
+                    $name,
+                    $this->scopeContext->getInfo(),
+                    $arguments,
+                    $this->scopeContext->getHeader(),
+                ));
             }
         );
 
