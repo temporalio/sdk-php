@@ -36,7 +36,7 @@ class ProtoJsonConverter extends Converter
             return null;
         }
 
-        $payload = $this->create($value->serializeToString());
+        $payload = $this->create($value->serializeToJsonString());
 
         /** @var DescriptorPool|\Google\Protobuf\Internal\DescriptorPool $pool */
         $pool = \Google\Protobuf\Internal\DescriptorPool::getGeneratedPool();
