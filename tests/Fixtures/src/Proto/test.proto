@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package tests;
+
+option php_namespace = "Temporal\\Tests\\Proto";
+option php_metadata_namespace = "Temporal\\Tests\\Proto\\ProtobufMetadata";
+
+message Test {
+    string value = 1;
+}

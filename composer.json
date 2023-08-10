@@ -68,7 +68,8 @@
             "Temporal\\Tests\\": "tests",
             "Temporal\\Tests\\Workflow\\": "tests/Fixtures/src/Workflow",
             "Temporal\\Tests\\Activity\\": "tests/Fixtures/src/Activity",
-            "Temporal\\Tests\\DTO\\": "tests/Fixtures/src/DTO"
+            "Temporal\\Tests\\DTO\\": "tests/Fixtures/src/DTO",
+            "Temporal\\Tests\\Proto\\": "tests/Fixtures/src/Proto"
         }
     },
     "suggest": {
@@ -88,7 +89,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-master": "1.0.x-dev"
+            "dev-master": "2.6.x-dev"
         }
     },
     "config": {
