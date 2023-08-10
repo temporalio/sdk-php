@@ -38,7 +38,7 @@ class ProtoConverter extends Converter
 
         $payload = $this->create($value->serializeToString());
 
-        /** @var DescriptorPool $pool */
+        /** @var DescriptorPool|\Google\Protobuf\Internal\DescriptorPool $pool */
         $pool = \Google\Protobuf\Internal\DescriptorPool::getGeneratedPool();
 
         $payload->setMetadata([

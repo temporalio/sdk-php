@@ -89,7 +89,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-master": "1.0.x-dev"
+            "dev-master": "2.6.x-dev"
         }
     },
     "config": {
