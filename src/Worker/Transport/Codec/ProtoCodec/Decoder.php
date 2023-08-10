@@ -14,7 +14,7 @@ namespace Temporal\Worker\Transport\Codec\ProtoCodec;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\Failure\FailureConverter;
-use Temporal\Roadrunner\Internal\Message;
+use RoadRunner\Temporal\DTO\V1\Message;
 use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\FailureResponse;
 use Temporal\Worker\Transport\Command\FailureResponseInterface;

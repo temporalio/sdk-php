@@ -16,6 +16,7 @@ use Temporal\Tests\DTO\Message;
 use Temporal\Tests\DTO\User;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithoutHandler;
 use Temporal\Tests\Workflow\ActivityReturnTypeWorkflow;
+use Temporal\Tests\Workflow\Case335Workflow;
 use Temporal\Tests\Workflow\GeneratorWorkflow;
 use Temporal\Tests\Workflow\Php82TypesWorkflow;
 use Temporal\Tests\Workflow\QueryWorkflow;
@@ -165,6 +166,17 @@ class TypedStubTestCase extends ClientTestCase
 
         $result = $workflowRun->getResult();
         $this->assertEquals(['test1'], $result);
+    }
+
+    public function testSignalResolvesCondidtionsBeforePromiseRun()
+    {
+        $client = $this->createClient();
+
+        $workflow = $client->newWorkflowStub(Case335Workflow::class);
+        $workflowRun = $client->startWithSignal($workflow, 'signal');
+
+        $result = $workflowRun->getResult('bool', 5);
+        $this->assertFalse($result);
     }
 
     /**

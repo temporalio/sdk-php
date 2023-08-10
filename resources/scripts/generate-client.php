@@ -7,9 +7,9 @@
  * file that was distributed with this source code.
  */
 
-use \Laminas\Code\Generator;
+use Laminas\Code\Generator;
 use Laminas\Code\Generator\MethodGenerator;
-use \Temporal\Api\Workflowservice;
+use Temporal\Api\Workflowservice;
 use Grpc\BaseStub;
 
 require __DIR__ . '/../../vendor/autoload.php';
