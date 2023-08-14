@@ -20,8 +20,9 @@ abstract class Route implements RouteInterface
     {
         return $this->getShortClassName();
     }
+
     /**
-     * @return string
+     * @return non-empty-string
      */
     private function getShortClassName(): string
     {
