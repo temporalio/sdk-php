@@ -12,9 +12,6 @@ use Temporal\Worker\WorkerInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 
-use function PHPUnit\Framework\assertFalse;
-use function PHPUnit\Framework\assertTrue;
-
 final class GetVersionTestCase extends UnitTestCase
 {
     private WorkerFactoryInterface $factory;
@@ -36,16 +33,8 @@ final class GetVersionTestCase extends UnitTestCase
 
         $this->worker->registerWorkflowObject(
             new
-            /**
-             * Support for PHP7.4
-             * @Workflow\WorkflowInterface
-             */
             #[Workflow\WorkflowInterface]
             class {
-                /**
-                 * Support for PHP7.4
-                 * @Workflow\WorkflowMethod(name="VersionWorkflow")
-                 */
                 #[WorkflowMethod(name: 'VersionWorkflow')]
                 public function handler(): iterable
                 {

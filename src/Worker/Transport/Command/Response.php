@@ -11,6 +11,15 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Transport\Command;
 
-abstract class Response extends Command implements ResponseInterface
+abstract class Response implements ResponseInterface
 {
+    public function __construct(
+        private readonly string|int $id,
+    ) {
+    }
+
+    public function getID(): string|int
+    {
+        return $this->id;
+    }
 }

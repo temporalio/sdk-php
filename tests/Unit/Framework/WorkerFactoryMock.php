@@ -32,7 +32,7 @@ use Temporal\Worker\Environment\Environment;
 use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\Codec\CodecInterface;
-use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Worker\WorkerInterface;
 use Temporal\Worker\WorkerOptions;
@@ -205,7 +205,7 @@ class WorkerFactoryMock implements WorkerFactoryInterface, LoopInterface
         $this->env->update($commandBatch->context);
 
         foreach ($commandBatch->commands as $command) {
-            if ($command instanceof RequestInterface) {
+            if ($command instanceof ServerRequestInterface) {
                 $this->server->dispatch($command, $commandBatch->context);
             } else {
                 $this->client->dispatch($command);
@@ -217,7 +217,7 @@ class WorkerFactoryMock implements WorkerFactoryInterface, LoopInterface
         return $this->responses;
     }
 
-    private function onRequest(RequestInterface $request, array $headers): PromiseInterface
+    private function onRequest(ServerRequestInterface $request, array $headers): PromiseInterface
     {
         if (!isset($headers[self::HEADER_TASK_QUEUE])) {
             return $this->router->dispatch($request, $headers);

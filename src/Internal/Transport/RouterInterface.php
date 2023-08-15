@@ -12,8 +12,8 @@ declare(strict_types=1);
 namespace Temporal\Internal\Transport;
 
 use Temporal\Internal\Transport\Router\RouteInterface;
-use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\DispatcherInterface;
+use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 interface RouterInterface extends DispatcherInterface
 {
@@ -24,13 +24,13 @@ interface RouterInterface extends DispatcherInterface
     public function add(RouteInterface $route, bool $overwrite = false): void;
 
     /**
-     * @param RouteInterface $route
+     * @param ServerRequestInterface $route
      */
-    public function remove(RouteInterface $route): void;
+    public function remove(ServerRequestInterface $route): void;
 
     /**
-     * @param RequestInterface $request
+     * @param ServerRequestInterface $request
      * @return RouteInterface|null
      */
-    public function match(RequestInterface $request): ?RouteInterface;
+    public function match(ServerRequestInterface $request): ?RouteInterface;
 }

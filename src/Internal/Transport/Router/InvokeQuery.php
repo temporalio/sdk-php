@@ -17,7 +17,7 @@ use Temporal\DataConverter\EncodedValues;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Worker\LoopInterface;
-use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 final class InvokeQuery extends WorkflowProcessAwareRoute
 {
@@ -48,12 +48,10 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
     /**
      * {@inheritDoc}
      */
-    public function handle(RequestInterface $request, array $headers, Deferred $resolver): void
+    public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
-        ['runId' => $runId, 'name' => $name] = $request->getOptions();
-
-        $instance = $this->findInstanceOrFail($runId);
-        $handler = $this->findQueryHandlerOrFail($instance, $name);
+        $instance = $this->findInstanceOrFail($request->getID());
+        $handler = $this->findQueryHandlerOrFail($instance, $request->getOptions()['name']);
 
         $this->loop->once(
             LoopInterface::ON_QUERY,

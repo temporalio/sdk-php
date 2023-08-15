@@ -6,12 +6,12 @@ namespace Temporal\Tests\Unit\Framework\Requests;
 
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\EncodedValues;
-use Temporal\Worker\Transport\Command\Request;
+use Temporal\Worker\Transport\Command\ServerRequest;
 
 /**
  * @internal
  */
-final class StartWorkflow extends Request
+final class StartWorkflow extends ServerRequest
 {
     public function __construct(string $runId, string $workflowType, ...$args)
     {
@@ -25,9 +25,9 @@ final class StartWorkflow extends Request
             ]
         ];
         parent::__construct(
-            'StartWorkflow',
-            ['info' => $info],
-            EncodedValues::fromValues($args)
+            name: 'StartWorkflow',
+            options: ['info' => $info],
+            payloads: EncodedValues::fromValues($args)
         );
     }
 

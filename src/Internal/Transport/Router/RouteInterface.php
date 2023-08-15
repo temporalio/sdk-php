@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
-use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 interface RouteInterface
 {
@@ -22,10 +22,10 @@ interface RouteInterface
     public function getName(): string;
 
     /**
-     * @param RequestInterface $request
+     * @param ServerRequestInterface $request
      * @param array $headers
      * @param Deferred $resolver
      * @return void
      */
-    public function handle(RequestInterface $request, array $headers, Deferred $resolver): void;
+    public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void;
 }

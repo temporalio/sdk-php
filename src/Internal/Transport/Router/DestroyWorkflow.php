@@ -15,7 +15,7 @@ use React\Promise\Deferred;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Internal\Workflow\Process\Process;
-use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 class DestroyWorkflow extends WorkflowProcessAwareRoute
 {
@@ -27,11 +27,9 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
     /**
      * {@inheritDoc}
      */
-    public function handle(RequestInterface $request, array $headers, Deferred $resolver): void
+    public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
-        ['runId' => $runId] = $request->getOptions();
-
-        $this->kill($runId);
+        $this->kill($request->getID());
 
         $resolver->resolve(EncodedValues::fromValues([null]));
 

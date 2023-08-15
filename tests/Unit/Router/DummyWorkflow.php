@@ -6,10 +6,6 @@ namespace Temporal\Tests\Unit\Router;
 
 use Temporal\Workflow;
 
-/**
- * Support for PHP7.4
- * @Temporal\Workflow\WorkflowInterface()
- */
 #[Workflow\WorkflowInterface()]
 final class DummyWorkflow
 {

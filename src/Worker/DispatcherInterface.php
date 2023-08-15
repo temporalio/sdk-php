@@ -12,14 +12,14 @@ declare(strict_types=1);
 namespace Temporal\Worker;
 
 use React\Promise\PromiseInterface;
-use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 interface DispatcherInterface
 {
     /**
-     * @param RequestInterface $request
+     * @param ServerRequestInterface $request
      * @param array $headers
      * @return PromiseInterface
      */
-    public function dispatch(RequestInterface $request, array $headers): PromiseInterface;
+    public function dispatch(ServerRequestInterface $request, array $headers): PromiseInterface;
 }

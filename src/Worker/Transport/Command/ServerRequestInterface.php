@@ -16,9 +16,9 @@ use Temporal\DataConverter\ValuesInterface;
 /**
  * @psalm-import-type RequestOptions from RequestInterface
  */
-interface RequestInterface extends CommandInterface
+interface ServerRequestInterface extends CommandInterface
 {
-    public function getID(): int;
+    public function getID(): string;
 
     /**
      * @return non-empty-string
@@ -35,10 +35,5 @@ interface RequestInterface extends CommandInterface
      */
     public function getPayloads(): ValuesInterface;
 
-    /**
-     * Optional failure.
-     *
-     * @return \Throwable|null
-     */
-    public function getFailure(): ?\Throwable;
+    public function getHistoryLength(): int;
 }

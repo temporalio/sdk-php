@@ -14,11 +14,11 @@ use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\ExceptionInterceptorInterface;
-use Temporal\Internal\Declaration\Reader\ActivityReader;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Queue\QueueInterface;
+use Temporal\Internal\Repository\Identifiable;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Transport\Router\StartWorkflow;
@@ -67,7 +67,7 @@ final class StartWorkflowTestCase extends UnitTestCase
 
     public function testWorkflowIsStartedAndRunning(): void
     {
-        $request = new Request(Uuid::v4(), DummyWorkflow::class, EncodedValues::fromValues([]));
+        $request = new Request($runId = Uuid::v4(), DummyWorkflow::class, EncodedValues::fromValues([]));
 
         $workflowInfo = new WorkflowInfo();
         $workflowInfo->type->name = 'DummyWorkflow';
@@ -78,7 +78,15 @@ final class StartWorkflowTestCase extends UnitTestCase
             ->willReturn(new Input($workflowInfo));
 
         $this->router->handle($request, [], new Deferred());
+        $this->assertNotNull($this->services->running->find($runId));
         $this->assertNotNull($this->services->running->find($workflowInfo->execution->getRunID()));
+    }
+
+    public function testRequestRunId(): void
+    {
+        $request = new Request($runId = Uuid::v4(), DummyWorkflow::class, EncodedValues::fromValues([]));
+
+        $this->assertSame($runId, $request->getID());
     }
 
     public function testStartingAlreadyRunningWorkflow(): void
@@ -93,7 +101,9 @@ final class StartWorkflowTestCase extends UnitTestCase
             ->method('unmarshal')
             ->willReturn(new Input($workflowInfo));
 
-        $this->services->running->add($request);
+        $identify = $this->createIdentifiable($request->getID());
+
+        $this->services->running->add($identify);
 
         try {
             $this->router->handle($request, [], new Deferred());
@@ -114,12 +124,28 @@ final class StartWorkflowTestCase extends UnitTestCase
             ->method('unmarshal')
             ->willReturn(new Input($workflowInfo));
 
-        $this->services->running->add($request);
+        $identify = $this->createIdentifiable($request->getID());
+        $this->services->running->add($identify);
 
         try {
             $this->router->handle($request, [], new Deferred());
         } catch (LogicException $exception) {
             $this->fail($exception->getMessage());
         }
+    }
+
+    private function createIdentifiable(string $id): Identifiable
+    {
+        return new class($id) implements Identifiable {
+            public function __construct(
+                private string $id,
+            ) {
+            }
+
+            public function getID(): string
+            {
+                return $this->id;
+            }
+        };
     }
 }
