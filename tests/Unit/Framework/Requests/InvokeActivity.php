@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Temporal\Tests\Unit\Framework\Requests;
 
 use Temporal\DataConverter\ValuesInterface;
-use Temporal\Worker\Transport\Command\Request;
+use Temporal\Worker\Transport\Command\ServerRequest;
 
 /**
  * @internal
  */
-final class InvokeActivity extends Request
+final class InvokeActivity extends ServerRequest
 {
     public function __construct(string $activityName, ValuesInterface $values)
     {

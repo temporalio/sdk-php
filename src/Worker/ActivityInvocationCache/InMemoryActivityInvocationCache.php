@@ -13,6 +13,7 @@ use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\InvalidArgumentException;
 use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Throwable;
 
 use function React\Promise\reject;
@@ -43,7 +44,7 @@ final class InMemoryActivityInvocationCache implements ActivityInvocationCacheIn
         $this->cache[$activityMethodName] = ActivityInvocationFailure::fromThrowable($error);
     }
 
-    public function canHandle(RequestInterface $request): bool
+    public function canHandle(ServerRequestInterface $request): bool
     {
         if ($request->getName() !== 'InvokeActivity') {
             return false;
@@ -54,7 +55,7 @@ final class InMemoryActivityInvocationCache implements ActivityInvocationCacheIn
         return isset($this->cache[$activityMethodName]);
     }
 
-    public function execute(RequestInterface $request): PromiseInterface
+    public function execute(ServerRequestInterface $request): PromiseInterface
     {
         $activityMethodName = $request->getOptions()['name'];
         $value = $this->cache[$activityMethodName];

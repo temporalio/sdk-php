@@ -13,17 +13,16 @@ namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
 use Temporal\DataConverter\EncodedValues;
-use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 final class StackTrace extends WorkflowProcessAwareRoute
 {
     /**
      * {@inheritDoc}
      */
-    public function handle(RequestInterface $request, array $headers, Deferred $resolver): void
+    public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
-        $payload = $request->getOptions();
-        $process = $this->findProcessOrFail($payload['runId'] ?? null);
+        $process = $this->findProcessOrFail($request->getID());
 
         $context = $process->getContext();
 

@@ -13,6 +13,8 @@ namespace Temporal\Worker\Transport\Codec;
 
 use Temporal\Exception\ProtocolException;
 use Temporal\Worker\Transport\Command\CommandInterface;
+use Temporal\Worker\Transport\Command\ResponseInterface;
+use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 interface CodecInterface
 {
@@ -25,7 +27,7 @@ interface CodecInterface
 
     /**
      * @param string $batch
-     * @return iterable<CommandInterface>
+     * @return iterable<ServerRequestInterface|ResponseInterface>
      * @throws ProtocolException
      */
     public function decode(string $batch): iterable;

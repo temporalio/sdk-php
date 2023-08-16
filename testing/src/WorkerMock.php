@@ -13,6 +13,7 @@ use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Worker\ActivityInvocationCache\ActivityInvocationCacheInterface;
 use Temporal\Worker\DispatcherInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Temporal\Worker\WorkerInterface;
 use Temporal\Worker\WorkerOptions;
 
@@ -36,7 +37,7 @@ final class WorkerMock implements WorkerInterface, Identifiable, EventListenerIn
         return $this->wrapped->getOptions();
     }
 
-    public function dispatch(RequestInterface $request, array $headers): PromiseInterface
+    public function dispatch(ServerRequestInterface $request, array $headers): PromiseInterface
     {
         if ($this->activityInvocationCache->canHandle($request)) {
             return $this->activityInvocationCache->execute($request);

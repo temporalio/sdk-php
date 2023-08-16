@@ -37,7 +37,8 @@ use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\Codec\CodecInterface;
 use Temporal\Worker\Transport\Codec\JsonCodec;
 use Temporal\Worker\Transport\Codec\ProtoCodec;
-use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\ResponseInterface;
+use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Temporal\Worker\Transport\Goridge;
 use Temporal\Worker\Transport\HostConnectionInterface;
 use Temporal\Worker\Transport\RoadRunner;
@@ -247,11 +248,11 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         $this->env->update($headers);
 
         foreach ($commands as $command) {
-            if ($command instanceof RequestInterface) {
-                $this->server->dispatch($command, $headers);
-            } else {
+            if ($command instanceof ResponseInterface) {
                 $this->client->dispatch($command);
+                continue;
             }
+            $this->server->dispatch($command, $headers);
         }
 
         $this->tick();
@@ -259,7 +260,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         return $this->codec->encode($this->responses);
     }
 
-    private function onRequest(RequestInterface $request, array $headers): PromiseInterface
+    private function onRequest(ServerRequestInterface $request, array $headers): PromiseInterface
     {
         if (!isset($headers[self::HEADER_TASK_QUEUE])) {
             return $this->router->dispatch($request, $headers);

@@ -15,7 +15,7 @@ use React\Promise\PromiseInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Internal\Transport\Request\CancelExternalWorkflow;
 use Temporal\Internal\Transport\Request\SignalExternalWorkflow;
-use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\ExternalWorkflowStubInterface;
 use Temporal\Workflow\WorkflowExecution;
@@ -74,10 +74,10 @@ final class ExternalWorkflowStub implements ExternalWorkflowStubInterface
     }
 
     /**
-     * @param RequestInterface $request
+     * @param CommandInterface $request
      * @return PromiseInterface
      */
-    protected function request(RequestInterface $request): PromiseInterface
+    protected function request(CommandInterface $request): PromiseInterface
     {
         /** @var Workflow\WorkflowContextInterface $context */
         $context = Workflow::getCurrentContext();

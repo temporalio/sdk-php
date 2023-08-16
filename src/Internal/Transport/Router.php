@@ -14,7 +14,7 @@ namespace Temporal\Internal\Transport;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\Internal\Transport\Router\RouteInterface;
-use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 use function React\Promise\reject;
 
@@ -50,16 +50,16 @@ final class Router implements RouterInterface
     /**
      * {@inheritDoc}
      */
-    public function remove(RouteInterface $route): void
+    public function remove(ServerRequestInterface $route): void
     {
         unset($this->routes[$route->getName()]);
     }
 
     /**
-     * @param RequestInterface $request
+     * @param ServerRequestInterface $request
      * @return RouteInterface|null
      */
-    public function match(RequestInterface $request): ?RouteInterface
+    public function match(ServerRequestInterface $request): ?RouteInterface
     {
         return $this->routes[$request->getName()] ?? null;
     }
@@ -67,8 +67,9 @@ final class Router implements RouterInterface
     /**
      * {@inheritDoc}
      */
-    public function dispatch(RequestInterface $request, array $headers = []): PromiseInterface
+    public function dispatch(ServerRequestInterface $request, array $headers = []): PromiseInterface
     {
+        // assert($request instanceof ServerRequestInterface);
         $route = $this->match($request);
 
         if ($route === null) {

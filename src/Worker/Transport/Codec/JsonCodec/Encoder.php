@@ -32,10 +32,6 @@ class Encoder
         $this->converter = $dataConverter;
     }
 
-    /**
-     * @param CommandInterface $cmd
-     * @return array
-     */
     public function encode(CommandInterface $cmd): array
     {
         switch (true) {
@@ -64,18 +60,16 @@ class Encoder
             case $cmd instanceof FailureResponseInterface:
                 $failure = FailureConverter::mapExceptionToFailure($cmd->getFailure(), $this->converter);
 
-                return [
-                    'id' => $cmd->getID(),
-                    'failure' => base64_encode($failure->serializeToString()),
-                ];
+                $result = \is_int($cmd->getID()) ? ['id' => $cmd->getID()] : [];
+                $result['failure'] = \base64_encode($failure->serializeToString());
+                return $result;
 
             case $cmd instanceof SuccessResponseInterface:
                 $cmd->getPayloads()->setDataConverter($this->converter);
 
-                return [
-                    'id' => $cmd->getID(),
-                    'payloads' => base64_encode($cmd->getPayloads()->toPayloads()->serializeToString()),
-                ];
+                $result = \is_int($cmd->getID()) ? ['id' => $cmd->getID()] : [];
+                $result['payloads'] = \base64_encode($cmd->getPayloads()->toPayloads()->serializeToString());
+                return $result;
 
             default:
                 throw new \InvalidArgumentException(\sprintf(self::ERROR_INVALID_COMMAND, \get_class($cmd)));

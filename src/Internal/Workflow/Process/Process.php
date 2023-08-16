@@ -27,8 +27,11 @@ class Process extends Scope implements ProcessInterface
      * @param ServiceContainer $services
      * @param WorkflowContext  $ctx
      */
-    public function __construct(ServiceContainer $services, WorkflowContext $ctx)
-    {
+    public function __construct(
+        ServiceContainer $services,
+        WorkflowContext $ctx,
+        private string $runId,
+    ) {
         parent::__construct($services, $ctx);
 
         $this->getWorkflowInstance()->getSignalQueue()->onSignal(
@@ -74,12 +77,9 @@ class Process extends Scope implements ProcessInterface
         }
     }
 
-    /**
-     * @return mixed|string
-     */
-    public function getID()
+    public function getID(): string
     {
-        return $this->context->getRunId();
+        return $this->runId;
     }
 
     /**

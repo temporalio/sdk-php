@@ -11,7 +11,7 @@ use Spiral\RoadRunner\KeyValue\StorageInterface;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\InvalidArgumentException;
-use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Throwable;
 use function React\Promise\reject;
 use function React\Promise\resolve;
@@ -47,7 +47,7 @@ final class RoadRunnerActivityInvocationCache implements ActivityInvocationCache
         $this->cache->set($activityMethodName, ActivityInvocationFailure::fromThrowable($error));
     }
 
-    public function canHandle(RequestInterface $request): bool
+    public function canHandle(ServerRequestInterface $request): bool
     {
         if ($request->getName() !== 'InvokeActivity') {
             return false;
@@ -58,7 +58,7 @@ final class RoadRunnerActivityInvocationCache implements ActivityInvocationCache
         return $this->cache->has($activityMethodName);
     }
 
-    public function execute(RequestInterface $request): PromiseInterface
+    public function execute(ServerRequestInterface $request): PromiseInterface
     {
         $activityMethodName = $request->getOptions()['name'];
         $value = $this->cache->get($activityMethodName);

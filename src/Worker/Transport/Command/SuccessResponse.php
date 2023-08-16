@@ -18,14 +18,10 @@ class SuccessResponse extends Response implements SuccessResponseInterface
 {
     protected ValuesInterface $values;
 
-    /**
-     * @param ValuesInterface|null $values
-     * @param int $id
-     */
-    public function __construct(?ValuesInterface $values, int $id)
+    public function __construct(?ValuesInterface $values, string|int $id)
     {
         $this->values = $values ?? EncodedValues::empty();
-        parent::__construct($id);
+        parent::__construct(id: $id);
     }
 
     /**

@@ -34,16 +34,8 @@ final class WorkerTestCase extends UnitTestCase
     {
         $this->worker->registerWorkflowObject(
             new
-            /**
-             * Support for PHP7.4
-             * @Workflow\WorkflowInterface
-             */
             #[Workflow\WorkflowInterface]
             class {
-                /**
-                 * Support for PHP7.4
-                 * @Workflow\WorkflowMethod(name="SimpleWorkflow")
-                 */
                 #[WorkflowMethod(name: 'SimpleWorkflow')]
                 public function handler(): iterable
                 {

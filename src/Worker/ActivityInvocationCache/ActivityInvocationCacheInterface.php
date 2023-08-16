@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Worker\ActivityInvocationCache;
 
 use React\Promise\PromiseInterface;
-use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Throwable;
 
 interface ActivityInvocationCacheInterface
@@ -16,7 +16,7 @@ interface ActivityInvocationCacheInterface
 
     public function saveFailure(string $activityMethodName, Throwable $error): void;
 
-    public function canHandle(RequestInterface $request): bool;
+    public function canHandle(ServerRequestInterface $request): bool;
 
-    public function execute(RequestInterface $request): PromiseInterface;
+    public function execute(ServerRequestInterface $request): PromiseInterface;
 }

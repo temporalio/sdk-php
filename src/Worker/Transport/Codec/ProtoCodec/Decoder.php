@@ -15,11 +15,12 @@ use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\Failure\FailureConverter;
 use RoadRunner\Temporal\DTO\V1\Message;
-use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\FailureResponse;
 use Temporal\Worker\Transport\Command\FailureResponseInterface;
-use Temporal\Worker\Transport\Command\Request;
 use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\ResponseInterface;
+use Temporal\Worker\Transport\Command\ServerRequest;
+use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Temporal\Worker\Transport\Command\SuccessResponse;
 use Temporal\Worker\Transport\Command\SuccessResponseInterface;
 
@@ -41,40 +42,34 @@ class Decoder
         $this->converter = $dataConverter;
     }
 
-    /**
-     * @param Message $msg
-     * @return CommandInterface
-     */
-    public function decode(Message $msg): CommandInterface
+    public function decode(Message $msg): ServerRequestInterface|ResponseInterface
     {
-        switch (true) {
-            case $msg->getCommand() !== '':
-                return $this->parseRequest($msg);
-
-            case $msg->hasFailure():
-                return $this->parseFailureResponse($msg);
-
-            default:
-                return $this->parseResponse($msg);
-        }
+        return match (true) {
+            $msg->getCommand() !== '' => $this->parseRequest($msg),
+            $msg->hasFailure() => $this->parseFailureResponse($msg),
+            default => $this->parseResponse($msg),
+        };
     }
 
     /**
      * @param Message $msg
      * @return RequestInterface
      */
-    private function parseRequest(Message $msg): RequestInterface
+    private function parseRequest(Message $msg): ServerRequestInterface
     {
         $payloads = null;
         if ($msg->hasPayloads()) {
             $payloads = EncodedValues::fromPayloads($msg->getPayloads(), $this->converter);
         }
+        $header = null;
 
-        return new Request(
-            $msg->getCommand(),
-            json_decode($msg->getOptions(), true, 256, JSON_THROW_ON_ERROR),
-            $payloads,
-            (int)$msg->getId()
+        return new ServerRequest(
+            name: $msg->getCommand(),
+            options: \json_decode($msg->getOptions(), true, 256, JSON_THROW_ON_ERROR),
+            payloads: $payloads,
+            id: $msg->getRunId() ?: null,
+            header: $header,
+            historyLength: (int)$msg->getHistoryLength(),
         );
     }
 
