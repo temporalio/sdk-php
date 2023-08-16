@@ -15,6 +15,7 @@ use Temporal\Worker\Transport\Command\FailureResponseInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\ResponseInterface;
 use Temporal\Worker\Transport\Command\SuccessResponseInterface;
+use Temporal\Workflow\WorkflowInfo;
 
 /**
  * @internal
@@ -56,7 +57,7 @@ final class ClientMock implements ClientInterface
         }
     }
 
-    public function request(RequestInterface $request): PromiseInterface
+    public function request(RequestInterface $request, ?WorkflowInfo $workflowInfo = null): PromiseInterface
     {
         $this->queue->push($request);
 

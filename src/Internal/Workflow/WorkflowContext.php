@@ -406,7 +406,7 @@ class WorkflowContext implements WorkflowContextInterface
     public function request(RequestInterface $request, bool $cancellable = true): PromiseInterface
     {
         $this->recordTrace();
-        return $this->client->request($request);
+        return $this->client->request($request, $this->getInfo());
     }
 
     /**
