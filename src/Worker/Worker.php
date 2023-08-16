@@ -21,6 +21,7 @@ use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Router;
 use Temporal\Internal\Transport\RouterInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Temporal\Worker\Transport\RPCConnectionInterface;
 
 /**
@@ -85,11 +86,9 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
     }
 
     /**
-     * @param RequestInterface $request
-     * @param array $headers
-     * @return PromiseInterface
+     * {@inheritDoc}
      */
-    public function dispatch(RequestInterface $request, array $headers): PromiseInterface
+    public function dispatch(ServerRequestInterface $request, array $headers): PromiseInterface
     {
         return $this->router->dispatch($request, $headers);
     }

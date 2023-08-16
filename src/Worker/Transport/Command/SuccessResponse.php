@@ -19,19 +19,14 @@ class SuccessResponse extends Response implements SuccessResponseInterface
     protected ValuesInterface $values;
 
     /**
-     * @param ValuesInterface|null $values
-     * @param int $id
      * @param int<0, max> $historyLength
      */
-    public function __construct(?ValuesInterface $values, int $id, int $historyLength = 0)
+    public function __construct(?ValuesInterface $values, string|int $id, int $historyLength = 0)
     {
         $this->values = $values ?? EncodedValues::empty();
-        parent::__construct($id, $historyLength);
+        parent::__construct(id: $id, historyLength: $historyLength);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getPayloads(): ValuesInterface
     {
         return $this->values;

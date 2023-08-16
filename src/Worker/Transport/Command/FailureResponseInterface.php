@@ -13,8 +13,5 @@ namespace Temporal\Worker\Transport\Command;
 
 interface FailureResponseInterface extends ResponseInterface
 {
-    /**
-     * @return \Throwable
-     */
     public function getFailure(): \Throwable;
 }

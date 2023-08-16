@@ -18,8 +18,8 @@ use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Worker\LoopInterface;
-use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow;
+use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 final class InvokeQuery extends WorkflowProcessAwareRoute
 {
@@ -50,11 +50,10 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
     /**
      * {@inheritDoc}
      */
-    public function handle(RequestInterface $request, array $headers, Deferred $resolver): void
+    public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
-        ['runId' => $runId, 'name' => $name] = $request->getOptions();
-
-        $process = $this->findProcessOrFail($runId);
+        $name = $request->getOptions()['name'];
+        $process = $this->findProcessOrFail($request->getID());
         $context = $process->getContext();
         $instance = $process->getWorkflowInstance();
         $handler = $this->findQueryHandlerOrFail($instance, $name);

@@ -12,15 +12,13 @@ declare(strict_types=1);
 namespace Temporal\Worker\Transport\Command;
 
 use Temporal\DataConverter\ValuesInterface;
-use Temporal\Interceptor\HeaderInterface;
-use Temporal\Internal\Interceptor\HeaderCarrier;
 
 /**
- * @psalm-type RequestOptions = array<non-empty-string, mixed>
+ * @psalm-import-type RequestOptions from RequestInterface
  */
-interface RequestInterface extends CommandInterface
+interface ServerRequestInterface extends CommandInterface
 {
-    public function getID(): int;
+    public function getID(): string;
 
     /**
      * @return non-empty-string
@@ -37,15 +35,5 @@ interface RequestInterface extends CommandInterface
      */
     public function getPayloads(): ValuesInterface;
 
-    /**
-     * Optional failure.
-     *
-     * @return \Throwable|null
-     */
-    public function getFailure(): ?\Throwable;
-
-    /**
-     * @psalm-external-mutation-free
-     */
-    public function withHeader(HeaderInterface $header): self;
+    public function getHistoryLength(): int;
 }

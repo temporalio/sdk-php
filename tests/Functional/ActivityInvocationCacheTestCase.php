@@ -9,8 +9,8 @@ use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\Failure\ActivityFailure;
 use Temporal\Worker\ActivityInvocationCache\RoadRunnerActivityInvocationCache;
-use Temporal\Worker\Transport\Command\Request;
-use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\ServerRequest;
+use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 class ActivityInvocationCacheTestCase extends FunctionalTestCase
 {
@@ -57,7 +57,7 @@ class ActivityInvocationCacheTestCase extends FunctionalTestCase
         $this->assertFalse($this->cache->canHandle($this->makeRequest('StartWorkflow', 'MyActivity.myMethod', EncodedValues::empty())));
     }
 
-    private function makeRequest(string $name, string $activityName, ValuesInterface $values): RequestInterface
+    private function makeRequest(string $name, string $activityName, ValuesInterface $values): ServerRequestInterface
     {
         $options = [
             'name' => $activityName,
@@ -66,6 +66,6 @@ class ActivityInvocationCacheTestCase extends FunctionalTestCase
                 'ActivityType' => ['Name' => $activityName],
             ]
         ];
-        return new Request($name, $options, $values);
+        return new ServerRequest(name: $name, options: $options, payloads:  $values);
     }
 }

@@ -14,7 +14,7 @@ namespace Temporal\Internal\Transport\Router;
 use React\Promise\Deferred;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Internal\Workflow\Process\Process;
-use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 class CancelWorkflow extends WorkflowProcessAwareRoute
 {
@@ -26,11 +26,9 @@ class CancelWorkflow extends WorkflowProcessAwareRoute
     /**
      * {@inheritDoc}
      */
-    public function handle(RequestInterface $request, array $headers, Deferred $resolver): void
+    public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
-        ['runId' => $runId] = $request->getOptions();
-
-        $this->cancel($runId);
+        $this->cancel($request->getID());
 
         $resolver->resolve(EncodedValues::fromValues([null]));
     }

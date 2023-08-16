@@ -42,19 +42,15 @@ class Encoder
         $this->converter = $converter;
     }
 
-    /**
-     * @param CommandInterface $cmd
-     * @return Message
-     */
     public function encode(CommandInterface $cmd): Message
     {
         $msg = new Message();
-        $msg->setId($cmd->getID());
 
         switch (true) {
             case $cmd instanceof RequestInterface:
                 $cmd->getPayloads()->setDataConverter($this->converter);
                 $cmd->getHeader()->setDataConverter($this->converter);
+                $msg->setId($cmd->getID());
 
                 $options = $cmd->getOptions();
                 if ($options === []) {
@@ -73,11 +69,13 @@ class Encoder
                 return $msg;
 
             case $cmd instanceof FailureResponseInterface:
+                \is_int($cmd->getID()) and $msg->setId($cmd->getID());
                 $msg->setFailure(FailureConverter::mapExceptionToFailure($cmd->getFailure(), $this->converter));
 
                 return $msg;
 
             case $cmd instanceof SuccessResponseInterface:
+                \is_int($cmd->getID()) and $msg->setId($cmd->getID());
                 $cmd->getPayloads()->setDataConverter($this->converter);
                 $msg->setPayloads($cmd->getPayloads()->toPayloads());
 

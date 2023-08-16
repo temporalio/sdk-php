@@ -11,22 +11,22 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Transport\Command;
 
-abstract class Response extends Command implements ResponseInterface
+abstract class Response implements ResponseInterface
 {
     /**
-     * @param int|null $id
      * @param int<0, max> $historyLength
      */
     public function __construct(
-        int $id = null,
+        private readonly string|int $id,
         private int $historyLength,
     ) {
-        parent::__construct($id);
     }
 
-    /**
-     * @inheritDoc
-     */
+    public function getID(): string|int
+    {
+        return $this->id;
+    }
+
     public function getHistoryLength(): int
     {
         return $this->historyLength;

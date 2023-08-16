@@ -21,7 +21,7 @@ use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Workflow\Input;
 use Temporal\Internal\Workflow\Process\Process;
 use Temporal\Internal\Workflow\WorkflowContext;
-use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInfo;
 
@@ -44,14 +44,14 @@ final class StartWorkflow extends Route
      * {@inheritDoc}
      * @throws \Throwable
      */
-    public function handle(RequestInterface $request, array $headers, Deferred $resolver): void
+    public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
         $options = $request->getOptions();
         $payloads = $request->getPayloads();
         $lastCompletionResult = null;
 
         if (($options['lastCompletion'] ?? 0) !== 0) {
-            $offset = count($payloads) - ($options['lastCompletion'] ?? 0);
+            $offset = \count($payloads) - ($options['lastCompletion'] ?? 0);
 
             $lastCompletionResult = EncodedValues::sliceValues($this->services->dataConverter, $payloads, $offset);
             $payloads = EncodedValues::sliceValues($this->services->dataConverter, $payloads, 0, $offset);
@@ -74,14 +74,16 @@ final class StartWorkflow extends Route
             $input,
             $lastCompletionResult
         );
+        $runId = $request->getID();
 
         $starter = function (WorkflowInput $input) use (
             $resolver,
             $instance,
             $context,
+            $runId,
         ) {
             $context = $context->withInput(new Input($input->info, $input->arguments, $input->header));
-            $process = new Process($this->services, $context);
+            $process = new Process($this->services, $context, $runId);
             $this->services->running->add($process);
             $resolver->resolve(EncodedValues::fromValues([null]));
 

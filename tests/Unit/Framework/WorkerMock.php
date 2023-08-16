@@ -24,7 +24,7 @@ use Temporal\Tests\Unit\Framework\Requests\StartWorkflow;
 use Temporal\Tests\Unit\Framework\Server\CommandHandler\CommandHandlerFactory;
 use Temporal\Tests\Unit\Framework\Server\ServerMock;
 use Temporal\Worker\DispatcherInterface;
-use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Temporal\Worker\Transport\Goridge;
 use Temporal\Worker\WorkerInterface;
 use Temporal\Worker\WorkerOptions;
@@ -179,7 +179,7 @@ final class WorkerMock implements Identifiable, WorkerInterface, DispatcherInter
         return $this->services->activities;
     }
 
-    public function dispatch(RequestInterface $request, array $headers): PromiseInterface
+    public function dispatch(ServerRequestInterface $request, array $headers): PromiseInterface
     {
         return $this->router->dispatch($request, $headers);
     }

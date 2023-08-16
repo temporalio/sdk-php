@@ -11,12 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Transport\Command;
 
-use Temporal\Internal\Repository\Identifiable;
-
-interface CommandInterface extends Identifiable
+/**
+ * Carries requests and responses between worker and host process.
+ */
+interface CommandInterface
 {
-    /**
-     * @return int
-     */
-    public function getID(): int;
+    public function getID(): string|int;
 }

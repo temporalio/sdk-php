@@ -15,6 +15,7 @@ use React\Promise\PromiseInterface;
 use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Worker\Transport\Command\FailureResponse;
 use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Temporal\Worker\Transport\Command\SuccessResponse;
 
 /**
@@ -47,14 +48,14 @@ final class Server implements ServerInterface
      */
     public function onMessage(callable $then): void
     {
-        $this->onMessage = \Closure::fromCallable($then);
+        $this->onMessage = $then(...);
     }
 
     /**
      * @param RequestInterface $request
      * @param array $headers
      */
-    public function dispatch(RequestInterface $request, array $headers): void
+    public function dispatch(ServerRequestInterface $request, array $headers): void
     {
         try {
             $result = ($this->onMessage)($request, $headers);
@@ -76,7 +77,7 @@ final class Server implements ServerInterface
      * @param RequestInterface $request
      * @return \Closure
      */
-    private function onFulfilled(RequestInterface $request): \Closure
+    private function onFulfilled(ServerRequestInterface $request): \Closure
     {
         return function ($result) use ($request) {
             $response = new SuccessResponse($result, $request->getID());
@@ -87,10 +88,10 @@ final class Server implements ServerInterface
     }
 
     /**
-     * @param RequestInterface $request
+     * @param ServerRequestInterface $request
      * @return \Closure
      */
-    private function onRejected(RequestInterface $request): \Closure
+    private function onRejected(ServerRequestInterface $request): \Closure
     {
         return function ($result) use ($request) {
             if (!$result instanceof \Throwable) {

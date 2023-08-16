@@ -11,9 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Fixtures;
 
-use Temporal\Worker\Transport\Command\Command;
+use Temporal\Worker\Transport\Command\Request;
 
-class CommandResetter extends Command
+class CommandResetter extends Request
 {
     public static function reset()
     {

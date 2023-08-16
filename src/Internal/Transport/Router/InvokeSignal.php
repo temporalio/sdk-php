@@ -13,19 +13,17 @@ namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
 use Temporal\DataConverter\EncodedValues;
-use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 final class InvokeSignal extends WorkflowProcessAwareRoute
 {
     /**
      * {@inheritDoc}
      */
-    public function handle(RequestInterface $request, array $headers, Deferred $resolver): void
+    public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
-        $payload = $request->getOptions();
-
-        $instance = $this->findInstanceOrFail($payload['runId']);
-        $handler = $instance->getSignalHandler($payload['name']);
+        $instance = $this->findInstanceOrFail($request->getID());
+        $handler = $instance->getSignalHandler($request->getOptions()['name']);
         $instance->getContext()->historyLength = $request->getHistoryLength();
 
         $handler($request->getPayloads());

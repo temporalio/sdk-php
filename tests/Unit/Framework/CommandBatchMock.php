@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Framework;
 
-use Temporal\Worker\Transport\Command\Command;
+use Temporal\Worker\Transport\Command\CommandInterface;
 
 /**
  * @internal
  */
 final class CommandBatchMock
 {
-    /** @var Command[] */
+    /** @var CommandInterface[] */
     public array $commands;
     public array $context;
 
