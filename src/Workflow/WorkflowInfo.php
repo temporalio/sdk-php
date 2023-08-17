@@ -78,6 +78,17 @@ final class WorkflowInfo
     public int $attempt = 1;
 
     /**
+     * Contains the count of history events.
+     * The counter is automatically incremented in the background.
+     *
+     * @var int<0, max>
+     * @since 2.6.0
+     * @since RoadRunner 2023.2. With lower versions, this field is always 0.
+     */
+    #[Marshal(name: 'HistoryLength')]
+    public int $historyLength = 0;
+
+    /**
      * @see CronSchedule::$interval for more info about cron format.
      *
      * @var string|null

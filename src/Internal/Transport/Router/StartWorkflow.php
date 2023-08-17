@@ -55,9 +55,12 @@ final class StartWorkflow extends Route
             $payloads = EncodedValues::sliceValues($this->services->dataConverter, $payloads, 0, $offset);
         }
 
+        /** @var Input $input */
         $input = $this->services->marshaller->unmarshal($options, new Input());
         /** @psalm-suppress InaccessibleProperty */
         $input->input = $payloads;
+        /** @psalm-suppress InaccessibleProperty */
+        $input->info->historyLength = $request->getHistoryLength();
 
         $instance = $this->instantiator->instantiate($this->findWorkflowOrFail($input->info));
 
@@ -68,7 +71,7 @@ final class StartWorkflow extends Route
             $input,
             $lastCompletionResult
         );
-        $runId = $request->getID() ?? $context->getRunId();
+        $runId = $request->getID();
 
         $process = new Process($this->services, $context, runId: $runId);
         $this->services->running->add($process);

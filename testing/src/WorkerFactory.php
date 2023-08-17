@@ -195,7 +195,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         $this->queues = new ArrayRepository();
         $this->router = $this->createRouter();
         $this->responses = new ArrayQueue();
-        $this->client = new Client($this->responses, $this);
+        $this->client = new Client($this->responses);
         $this->server = $this->createServer();
         $this->env = new Environment();
     }
