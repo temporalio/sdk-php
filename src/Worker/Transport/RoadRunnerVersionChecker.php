@@ -20,15 +20,10 @@ use Spiral\RoadRunner\Logger;
 
 final class RoadRunnerVersionChecker
 {
-    private VersionChecker $checker;
-    private LoggerInterface $logger;
-
     public function __construct(
-        VersionChecker $checker = null,
-        LoggerInterface $logger = null
+        private readonly VersionChecker $checker = new VersionChecker(),
+        private readonly LoggerInterface $logger = new Logger()
     ) {
-        $this->checker = $checker ?? new VersionChecker();
-        $this->logger = $logger ?? new Logger();
     }
 
     public function check(): void
