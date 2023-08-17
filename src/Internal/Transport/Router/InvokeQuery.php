@@ -50,13 +50,19 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
      */
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
-        $instance = $this->findInstanceOrFail($request->getID());
-        $handler = $this->findQueryHandlerOrFail($instance, $request->getOptions()['name']);
+        $name = $request->getOptions()['name'];
+        $process = $this->findProcessOrFail($request->getID());
+        $context = $process->getContext();
+        $instance = $process->getWorkflowInstance();
+        $handler = $this->findQueryHandlerOrFail($instance, $name);
 
         $this->loop->once(
             LoopInterface::ON_QUERY,
-            static function () use ($request, $resolver, $handler): void {
+            static function () use ($request, $resolver, $handler, $context): void {
                 try {
+                    /** @psalm-suppress InaccessibleProperty */
+                    $context->getInfo()->historyLength = $request->getHistoryLength();
+
                     $result = $handler($request->getPayloads());
                     $resolver->resolve(EncodedValues::fromValues([$result]));
                 } catch (\Throwable $e) {

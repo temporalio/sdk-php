@@ -447,7 +447,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
                 break;
 
             case $current instanceof RequestInterface:
-                $this->nextPromise($this->context->getClient()->request($current));
+                $this->nextPromise($this->context->getClient()->request($current, $this->scopeContext->getInfo()));
                 break;
 
             case $current instanceof \Generator:

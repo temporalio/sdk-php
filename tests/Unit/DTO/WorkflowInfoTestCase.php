@@ -36,6 +36,7 @@ class WorkflowInfoTestCase extends DTOMarshallingTestCase
             'WorkflowTaskTimeout' => 290304000000000000,
             'Namespace' => 'default',
             'Attempt' => 1,
+            'HistoryLength' => 0,
             'CronSchedule' => null,
             'ContinuedExecutionRunID' => null,
             'ParentWorkflowNamespace' => null,

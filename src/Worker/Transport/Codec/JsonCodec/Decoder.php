@@ -63,21 +63,13 @@ class Decoder
         }
         $header = null;
 
-        $request = new ServerRequest(
+        return new ServerRequest(
             name: $data['command'],
-            id: $data['runId'] ?? null,
             options: $data['options'] ?? [],
             payloads: EncodedValues::fromPayloads($payloads, $this->converter),
+            id: $data['runId'] ?? null,
             header: $header,
         );
-
-        if (isset($data['failure'])) {
-            $failure = new Failure();
-            $failure->mergeFromString(base64_decode($data['failure']));
-            $request->setFailure(FailureConverter::mapFailureToException($failure, $this->converter));
-        }
-
-        return $request;
     }
 
     /**

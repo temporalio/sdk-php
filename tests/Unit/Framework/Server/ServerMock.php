@@ -16,6 +16,8 @@ final class ServerMock
     private CommandHandlerFactory $commandHandlerFactory;
     private Carbon $currentTime;
     private array $queue = [];
+    /** @var int<0, max> */
+    private int $historyLength = 0;
 
     /** @var ExpectationInterface[] */
     private array $expectations = [];
@@ -47,6 +49,7 @@ final class ServerMock
 
     public function handleCommand(CommandInterface $command): ?CommandInterface
     {
+        ++$this->historyLength;
         $expectation = $this->checkExpectation($command);
         if ($expectation !== null) {
             return $expectation->run($command);
@@ -58,6 +61,14 @@ final class ServerMock
         }
 
         return $handler->handle($command);
+    }
+
+    /**
+     * @return int<0, max>
+     */
+    public function getHistoryLength(): int
+    {
+        return $this->historyLength;
     }
 
     private function checkExpectation(CommandInterface $command): ?ExpectationInterface

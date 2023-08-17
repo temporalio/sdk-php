@@ -80,8 +80,9 @@ class Decoder
     private function parseFailureResponse(Message $msg): FailureResponseInterface
     {
         return new FailureResponse(
-            FailureConverter::mapFailureToException($msg->getFailure(), $this->converter),
-            $msg->getId()
+            failure: FailureConverter::mapFailureToException($msg->getFailure(), $this->converter),
+            id: $msg->getId(),
+            historyLength: (int)$msg->getHistoryLength()
         );
     }
 
@@ -96,6 +97,10 @@ class Decoder
             $payloads = EncodedValues::fromPayloads($msg->getPayloads(), $this->converter);
         }
 
-        return new SuccessResponse($payloads, $msg->getId());
+        return new SuccessResponse(
+            values: $payloads,
+            id: $msg->getId(),
+            historyLength: (int)$msg->getHistoryLength(),
+        );
     }
 }

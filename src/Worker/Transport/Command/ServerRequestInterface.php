@@ -35,5 +35,8 @@ interface ServerRequestInterface extends CommandInterface
      */
     public function getPayloads(): ValuesInterface;
 
+    /**
+     * @return int<0, max>
+     */
     public function getHistoryLength(): int;
 }

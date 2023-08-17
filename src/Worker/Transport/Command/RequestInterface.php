@@ -14,7 +14,7 @@ namespace Temporal\Worker\Transport\Command;
 use Temporal\DataConverter\ValuesInterface;
 
 /**
- * @psalm-import-type RequestOptions from RequestInterface
+ * @psalm-type RequestOptions = array<non-empty-string, mixed>
  */
 interface RequestInterface extends CommandInterface
 {
