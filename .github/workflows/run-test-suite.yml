@@ -104,7 +104,7 @@ jobs:
       - name: Download RoadRunner
         if: inputs.run-temporal-test-server == true
         run: |
-          vendor/bin/rr get --no-interaction
+          vendor/bin/rr get --no-interaction --stability=beta
 
       - name: Run tests with Temporal test server
         if: inputs.run-temporal-test-server == true
