@@ -11,35 +11,35 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\DataConverter;
 
+use Ramsey\Uuid\Uuid;
 use Temporal\DataConverter\EncodingKeys;
+use Temporal\DataConverter\JsonConverter;
 use Temporal\DataConverter\PayloadConverterInterface;
-use Temporal\DataConverter\ProtoJsonConverter;
 use Temporal\Tests\Unit\UnitTestCase;
 
 /**
  * @group unit
  * @group data-converter
  */
-class ProtoJsonConverterTestCase extends UnitTestCase
+class JsonConverterTestCase extends UnitTestCase
 {
     protected function create(): PayloadConverterInterface
     {
-        return new ProtoJsonConverter();
+        return new JsonConverter();
     }
 
-    public function testMessageType(): void
+    public function testUuidToPayload(): void
     {
         $converter = $this->create();
 
-        $message = new \Temporal\Tests\Proto\Test();
-        $message->setValue('foo');
+        $dto = Uuid::uuid4();
 
-        $payload = $converter->toPayload($message);
+        $payload = $converter->toPayload($dto);
 
         $this->assertNotNull($payload);
         $this->assertSame(
-            'tests.Test',
-            $payload->getMetadata()->offsetGet(EncodingKeys::METADATA_MESSAGE_TYPE),
+            \json_encode((string)$dto),
+            $payload->getData(),
         );
     }
 }

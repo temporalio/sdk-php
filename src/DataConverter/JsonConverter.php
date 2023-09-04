@@ -12,6 +12,8 @@ declare(strict_types=1);
 namespace Temporal\DataConverter;
 
 use Doctrine\Common\Annotations\Reader;
+use Ramsey\Uuid\Uuid;
+use Ramsey\Uuid\UuidInterface;
 use Spiral\Attributes\AnnotationReader;
 use Spiral\Attributes\AttributeReader;
 use Spiral\Attributes\Composite\SelectiveReader;
@@ -61,9 +63,11 @@ class JsonConverter extends Converter
     public function toPayload($value): ?Payload
     {
         if (\is_object($value)) {
-            $value = $value instanceof \stdClass
-                ? $value
-                : $this->marshaller->marshal($value);
+            $value = match(true) {
+                $value instanceof \stdClass => $value,
+                $value instanceof UuidInterface => $value->toString(),
+                default => $this->marshaller->marshal($value)
+            };
         }
 
         try {
@@ -131,6 +135,12 @@ class JsonConverter extends Converter
 
                 return $data;
 
+            case UuidInterface::class:
+                if (!\is_string($data) || !Uuid::isValid($data)) {
+                    throw $this->errorInvalidType($type, $data);
+                }
+
+                return Uuid::fromString($data);
             case Type::TYPE_OBJECT:
                 if (!\is_object($data)) {
                     throw $this->errorInvalidType($type, $data);

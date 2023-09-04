@@ -19,16 +19,9 @@ use Temporal\Internal\Support\Inheritance;
 
 final class UuidType extends Type implements DetectableTypeInterface, RuleFactoryInterface
 {
-    private static ?bool $interfaceExists = null;
-
     public static function match(\ReflectionNamedType $type): bool
     {
-        if (self::$interfaceExists === null) {
-            self::$interfaceExists = \interface_exists(UuidInterface::class);
-        }
-
-        return self::$interfaceExists &&
-            !$type->isBuiltin() &&
+        return !$type->isBuiltin() &&
             Inheritance::implements($type->getName(), UuidInterface::class);
     }
 
