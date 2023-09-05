@@ -30,7 +30,7 @@ abstract class DTOMarshallingTestCase extends UnitTestCase
     /**
      * @var MarshallerInterface
      */
-    private MarshallerInterface $marshaller;
+    protected MarshallerInterface $marshaller;
 
     /**
      * @return void

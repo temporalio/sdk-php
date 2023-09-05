@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace DataConverter;
+namespace Temporal\Tests\Unit\DataConverter;
 
 use Temporal\DataConverter\EncodingKeys;
 use Temporal\DataConverter\PayloadConverterInterface;
