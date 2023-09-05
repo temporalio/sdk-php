@@ -11,10 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Workflow;
 
-use React\Promise\CancellablePromiseInterface;
 use React\Promise\PromiseInterface;
 
-interface CancellationScopeInterface extends PromiseInterface, CancellablePromiseInterface
+interface CancellationScopeInterface extends PromiseInterface
 {
     /**
      * Detached scopes can continue working even if parent scope was cancelled.
@@ -37,4 +36,15 @@ interface CancellationScopeInterface extends PromiseInterface, CancellablePromis
      * @return $this
      */
     public function onCancel(callable $then): self;
+
+    /**
+     * The `cancel()` method notifies the creator of the promise that there is no
+     * further interest in the results of the operation.
+     *
+     * Once a promise is settled (either fulfilled or rejected), calling `cancel()` on
+     * a promise has no effect.
+     *
+     * @return void
+     */
+    public function cancel();
 }

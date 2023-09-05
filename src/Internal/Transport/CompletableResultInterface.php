@@ -12,9 +12,12 @@ declare(strict_types=1);
 namespace Temporal\Internal\Transport;
 
 use React\Promise\PromiseInterface;
-use React\Promise\PromisorInterface;
 
-interface CompletableResultInterface extends PromisorInterface, PromiseInterface
+/**
+ * @template T
+ * @extends PromiseInterface<T>
+ */
+interface CompletableResultInterface extends PromiseInterface
 {
     /**
      * @return bool

@@ -13,7 +13,6 @@ namespace Temporal\Internal\Workflow\Process;
 
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
-use React\Promise\PromisorInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DestructMemorizedInstanceException;
@@ -34,9 +33,9 @@ use Temporal\Workflow\WorkflowContextInterface;
  * Unlike Java implementation, PHP merged coroutine and cancellation scope into single instance.
  *
  * @internal CoroutineScope is an internal library class, please do not use it in your code.
- * @psalm-internal Temporal\Client
+ * @psalm-internal Temporal\Internal\Workflow
  */
-class Scope implements CancellationScopeInterface, PromisorInterface
+class Scope implements CancellationScopeInterface
 {
     /**
      * @var ServiceContainer
@@ -272,11 +271,29 @@ class Scope implements CancellationScopeInterface, PromisorInterface
     public function then(
         callable $onFulfilled = null,
         callable $onRejected = null,
-        callable $onProgress = null
+        callable $onProgress = null,
     ): PromiseInterface {
-        $promise = $this->deferred->promise();
+        return $this->deferred->promise()->then($onFulfilled, $onRejected);
+    }
 
-        return $promise->then($onFulfilled, $onRejected, $onProgress);
+    public function catch(callable $onRejected): PromiseInterface
+    {
+        return $this->deferred->promise()->catch($onRejected);
+    }
+
+    public function finally(callable $onFulfilledOrRejected): PromiseInterface
+    {
+        return $this->deferred->promise()->finally($onFulfilledOrRejected);
+    }
+
+    public function otherwise(callable $onRejected): PromiseInterface
+    {
+        return $this->catch($onRejected);
+    }
+
+    public function always(callable $onFulfilledOrRejected): PromiseInterface
+    {
+        return $this->finally($onFulfilledOrRejected);
     }
 
     /**
@@ -442,7 +459,7 @@ class Scope implements CancellationScopeInterface, PromisorInterface
                 $this->nextPromise($current);
                 break;
 
-            case $current instanceof PromisorInterface:
+            case $current instanceof Deferred:
                 $this->nextPromise($current->promise());
                 break;
 

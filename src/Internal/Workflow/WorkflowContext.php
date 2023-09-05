@@ -507,7 +507,7 @@ class WorkflowContext implements WorkflowContextInterface
         foreach ($this->awaits as $awaitsGroupId => $awaitsGroup) {
             foreach ($awaitsGroup as $i => [$condition, $deferred]) {
                 if ($condition()) {
-                    $deferred->resolve();
+                    $deferred->resolve(null);
                     unset($this->awaits[$awaitsGroupId][$i]);
                     $this->resolveConditionGroup($awaitsGroupId);
                 }
