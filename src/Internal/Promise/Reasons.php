@@ -39,7 +39,7 @@ final class Reasons extends RuntimeException implements Iterator, ArrayAccess, C
         \next($this->collection);
     }
 
-    public function key(): mixed
+    public function key(): string|int|null
     {
         return \key($this->collection);
     }
@@ -59,7 +59,7 @@ final class Reasons extends RuntimeException implements Iterator, ArrayAccess, C
         return isset($this->collection[$offset]);
     }
 
-    public function offsetGet(mixed $offset): mixed
+    public function offsetGet(mixed $offset): Traversable
     {
         return $this->collection[$offset];
     }

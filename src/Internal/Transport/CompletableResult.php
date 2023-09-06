@@ -102,10 +102,8 @@ class CompletableResult implements CompletableResultInterface
         callable $onRejected = null,
         callable $onProgress = null,
     ): PromiseInterface {
-        Workflow::setCurrentContext($this->context);
-
         return $this->promise()
-            ->then($onFulfilled, $onRejected);
+            ->then($this->wrapContext($onFulfilled), $this->wrapContext($onRejected));
         //return new Future($promise, $this->worker);
     }
 
@@ -153,29 +151,36 @@ class CompletableResult implements CompletableResultInterface
     public function catch(callable $onRejected): PromiseInterface
     {
         return $this->promise()
-            ->catch($onRejected);
+            ->catch($this->wrapContext($onRejected));
     }
 
     public function finally(callable $onFulfilledOrRejected): PromiseInterface
     {
         return $this->promise()
-            ->finally($onFulfilledOrRejected);
+            ->finally($this->wrapContext($onFulfilledOrRejected));
     }
 
     public function cancel(): void
     {
         Workflow::setCurrentContext($this->context);
-
         $this->promise()->cancel();
     }
 
     public function otherwise(callable $onRejected): PromiseInterface
     {
-        return $this->catch($onRejected);
+        return $this->catch($this->wrapContext($onRejected));
     }
 
     public function always(callable $onFulfilledOrRejected): PromiseInterface
     {
-        return $this->finally($onFulfilledOrRejected);
+        return $this->finally($this->wrapContext($onFulfilledOrRejected));
+    }
+
+    private function wrapContext(callable $callback): callable
+    {
+        return function (mixed $value = null) use ($callback): mixed {
+            Workflow::setCurrentContext($this->context);
+            return $callback($value);
+        };
     }
 }

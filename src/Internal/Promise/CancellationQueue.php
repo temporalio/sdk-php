@@ -23,7 +23,7 @@ class CancellationQueue
         $this->drain();
     }
 
-    public function enqueue($cancellable): void
+    public function enqueue(mixed $cancellable): void
     {
         if (!\is_object($cancellable)
             || !\method_exists($cancellable, 'then')
