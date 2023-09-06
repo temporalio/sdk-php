@@ -11,16 +11,17 @@ declare(strict_types=1);
 
 namespace Temporal;
 
+use React\Promise\Exception\LengthException;
 use React\Promise\PromiseInterface;
+use Temporal\Internal\Promise\CancellationQueue;
+
+use Temporal\Internal\Promise\Reasons;
 
 use function React\Promise\all;
 use function React\Promise\any;
-use function React\Promise\map;
-use function React\Promise\reduce;
-use function React\Promise\some;
-use function React\Promise\resolve;
-use function React\Promise\reject;
 use function React\Promise\race;
+use function React\Promise\reject;
+use function React\Promise\resolve;
 
 /**
  * @psalm-type PromiseMapCallback = callable(mixed $value): mixed
@@ -69,7 +70,7 @@ final class Promise
      *
      * The returned promise will reject if it becomes impossible for `$count`
      * items to resolve (that is, when `(count($promises) - $count) + 1` items
-     * reject). The rejection value will be an array of
+     * reject). The rejection value will be an iterable-exception of
      * `(count($promises) - $howMany) + 1` rejection reasons.
      *
      * The returned promise will also reject with a {@see LengthException} if
@@ -81,7 +82,70 @@ final class Promise
      */
     public static function some(iterable $promises, int $count): PromiseInterface
     {
-        return some([...$promises], $count);
+        $cancellationQueue = new CancellationQueue();
+        $cancellationQueue->enqueue($promises);
+
+        return new \React\Promise\Promise(
+            static function (callable $resolve, callable $reject) use ($promises, $count, $cancellationQueue): void {
+                resolve($promises)->then(
+                    static function (iterable $array) use ($count, $cancellationQueue, $resolve, $reject): void {
+                        if (!\is_array($array) || $count < 1) {
+                            $resolve([]);
+                            return;
+                        }
+
+                        $len = \count($array);
+
+                        if ($len < $count) {
+                            $reject(new LengthException(
+                                \sprintf(
+                                    'Input array must contain at least %d item%s but contains only %s item%s.',
+                                    $count,
+                                    1 === $count ? '' : 's',
+                                    $len,
+                                    1 === $len ? '' : 's'
+                                )
+                            ));
+                            return;
+                        }
+
+                        $toResolve = $count;
+                        $toReject = ($len - $toResolve) + 1;
+                        $values = [];
+                        $reasons = [];
+
+                        foreach ($array as $i => $promiseOrValue) {
+                            $fulfiller = static function (mixed $val) use ($i, &$values, &$toResolve, $toReject, $resolve): void {
+                                if ($toResolve < 1 || $toReject < 1) {
+                                    return;
+                                }
+
+                                $values[$i] = $val;
+
+                                if (0 === --$toResolve) {
+                                    $resolve($values);
+                                }
+                            };
+
+                            $rejecter = static function (\Throwable $reason) use ($i, &$reasons, &$toReject, $toResolve, $reject): void {
+                                if ($toResolve < 1 || $toReject < 1) {
+                                    return;
+                                }
+
+                                $reasons[$i] = $reason;
+
+                                if (0 === --$toReject) {
+                                    $reject(new Reasons($reasons));
+                                }
+                            };
+
+                            $cancellationQueue->enqueue($promiseOrValue);
+
+                            resolve($promiseOrValue)->then($fulfiller, $rejecter);
+                        }
+                    }, $reject);
+            }, $cancellationQueue
+        );
     }
 
     /**
@@ -99,7 +163,41 @@ final class Promise
      */
     public static function map(iterable $promises, callable $map): PromiseInterface
     {
-        return map([...$promises], $map);
+        $cancellationQueue = new CancellationQueue();
+        $cancellationQueue->enqueue($promises);
+
+        return new \React\Promise\Promise(
+            function (callable $resolve, callable $reject) use ($promises, $map, $cancellationQueue): void {
+                resolve($promises)
+                    ->then(static function (iterable $array) use ($map, $cancellationQueue, $resolve, $reject): void {
+                        if (!\is_array($array) || !$array) {
+                            $resolve([]);
+                            return;
+                        }
+
+                        $toResolve = \count($array);
+                        $values = [];
+
+                        foreach ($array as $i => $promiseOrValue) {
+                            $cancellationQueue->enqueue($promiseOrValue);
+                            $values[$i] = null;
+
+                            resolve($promiseOrValue)
+                                ->then($map)
+                                ->then(
+                                    static function (mixed $mapped) use ($i, &$values, &$toResolve, $resolve): void {
+                                        $values[$i] = $mapped;
+
+                                        if (0 === --$toResolve) {
+                                            $resolve($values);
+                                        }
+                                    },
+                                    $reject,
+                                );
+                        }
+                    }, $reject);
+            }, $cancellationQueue
+        );
     }
 
     /**
@@ -116,7 +214,55 @@ final class Promise
      */
     public static function reduce(iterable $promises, callable $reduce, $initial = null): PromiseInterface
     {
-        return reduce([...$promises], $reduce, $initial);
+        $cancellationQueue = new CancellationQueue();
+        $cancellationQueue->enqueue($promises);
+
+        return new \React\Promise\Promise(
+            function (callable $resolve, callable $reject) use ($promises, $reduce, $initial, $cancellationQueue): void {
+                resolve($promises)
+                    ->then(
+                        static function (iterable $array) use (
+                            $reduce,
+                            $initial,
+                            $cancellationQueue,
+                            $resolve,
+                            $reject,
+                        ): void {
+                            if (!\is_array($array)) {
+                                $array = [];
+                            }
+
+                            $total = \count($array);
+                            $i = 0;
+
+                            // Wrap the supplied $reduce with one that handles promises and then
+                            // delegates to the supplied.
+                            $wrappedReduceFunc = static function (PromiseInterface $current, mixed $val) use (
+                                $reduce,
+                                $cancellationQueue,
+                                $total,
+                                &$i
+                            ): PromiseInterface {
+                                $cancellationQueue->enqueue($val);
+
+                                return $current
+                                    ->then(static function (mixed $c) use ($reduce, $total, &$i, $val): PromiseInterface {
+                                        return resolve($val)
+                                            ->then(static function (mixed $value) use ($reduce, $total, &$i, $c): mixed {
+                                                return $reduce($c, $value, $i++, $total);
+                                            });
+                                    });
+                            };
+
+                            $cancellationQueue->enqueue($initial);
+
+                            \array_reduce($array, $wrappedReduceFunc, resolve($initial))
+                                ->then($resolve, $reject);
+                        },
+                        $reject,
+                    );
+            }, $cancellationQueue
+        );
     }
 
     /**

@@ -46,5 +46,5 @@ interface CancellationScopeInterface extends PromiseInterface
      *
      * @return void
      */
-    public function cancel();
+    public function cancel(): void;
 }
