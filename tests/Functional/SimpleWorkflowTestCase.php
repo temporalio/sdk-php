@@ -6,6 +6,7 @@ namespace Temporal\Tests\Functional;
 
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
+use Temporal\Client\WorkflowOptions;
 use Temporal\Testing\ActivityMocker;
 use Temporal\Tests\TestCase;
 use Temporal\Tests\Workflow\SimpleWorkflow;
@@ -37,5 +38,13 @@ final class SimpleWorkflowTestCase extends TestCase
         $workflow = $this->workflowClient->newWorkflowStub(SimpleWorkflow::class);
         $run = $this->workflowClient->start($workflow, 'hello');
         $this->assertSame('world', $run->getResult('string'));
+    }
+
+    public function testEagerStartDoesntFail(): void
+    {
+        $workflow = $this->workflowClient
+            ->newWorkflowStub(SimpleWorkflow::class, WorkflowOptions::new()->withEagerStart());
+        $run = $this->workflowClient->start($workflow, 'hello');
+        $this->assertSame('HELLO', $run->getResult('string'));
     }
 }
