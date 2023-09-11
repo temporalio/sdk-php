@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Workflow;
 
+use DateTimeInterface;
+use Ramsey\Uuid\UuidInterface;
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Activity\ActivityOptionsInterface;
@@ -279,4 +281,35 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @param array<string, mixed> $searchAttributes
      */
     public function upsertSearchAttributes(array $searchAttributes): void;
+
+    /**
+     * @see Workflow::uuid()
+     *
+     * Generate a UUID.
+     *
+     * @return PromiseInterface<UuidInterface>
+     */
+    public function uuid(): PromiseInterface;
+
+    /**
+     * @see Workflow::uuid4()
+     *
+     * Generate a UUID version 4 (random).
+     *
+     * @return PromiseInterface<UuidInterface>
+     */
+    public function uuid4(): PromiseInterface;
+
+    /**
+     * @see Workflow::uuid7()
+     *
+     * Generate a UUID version 7 (Unix Epoch time).
+     *
+     * @param DateTimeInterface|null $dateTime An optional date/time from which
+     *     to create the version 7 UUID. If not provided, the UUID is generated
+     *     using the current date/time.
+     *
+     * @return PromiseInterface<UuidInterface>
+     */
+    public function uuid7(?DateTimeInterface $dateTime = null): PromiseInterface;
 }
