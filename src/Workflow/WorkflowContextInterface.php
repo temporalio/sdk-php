@@ -287,7 +287,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * Generate a UUID.
      *
-     * @return PromiseInterface<UuidInterface>
+     * @return PromiseInterface
      */
     public function uuid(): PromiseInterface;
 
@@ -296,7 +296,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * Generate a UUID version 4 (random).
      *
-     * @return PromiseInterface<UuidInterface>
+     * @return PromiseInterface
      */
     public function uuid4(): PromiseInterface;
 
@@ -309,7 +309,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *     to create the version 7 UUID. If not provided, the UUID is generated
      *     using the current date/time.
      *
-     * @return PromiseInterface<UuidInterface>
+     * @return PromiseInterface
      */
     public function uuid7(?DateTimeInterface $dateTime = null): PromiseInterface;
 }

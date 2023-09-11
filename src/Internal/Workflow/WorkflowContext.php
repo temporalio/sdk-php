@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Workflow;
 
 use DateTimeInterface;
+use Ramsey\Uuid\UuidInterface;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use RuntimeException;

@@ -946,7 +946,7 @@ final class Workflow extends Facade
     /**
      * Generate a UUID.
      *
-     * @return PromiseInterface<UuidInterface>
+     * @return PromiseInterface
      */
     public static function uuid(): PromiseInterface
     {
@@ -959,7 +959,7 @@ final class Workflow extends Facade
     /**
      * Generate a UUID version 4 (random).
      *
-     * @return PromiseInterface<UuidInterface>
+     * @return PromiseInterface
      */
     public static function uuid4(): PromiseInterface
     {
@@ -976,7 +976,7 @@ final class Workflow extends Facade
      *     to create the version 7 UUID. If not provided, the UUID is generated
      *     using the current date/time.
      *
-     * @return PromiseInterface<UuidInterface>
+     * @return PromiseInterface
      */
     public static function uuid7(?DateTimeInterface $dateTime = null): PromiseInterface
     {
