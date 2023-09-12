@@ -29,6 +29,5 @@ final class FailureConverterTestCase extends UnitTestCase
 
         $this->assertSame('abc', $restoredDetails->getValue(0));
         $this->assertSame(123, $restoredDetails->getValue(1));
-
     }
 }

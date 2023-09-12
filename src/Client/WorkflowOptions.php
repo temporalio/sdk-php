@@ -58,7 +58,7 @@ final class WorkflowOptions extends Options
     public string $taskQueue = WorkerFactoryInterface::DEFAULT_TASK_QUEUE;
 
     /**
-     * Eager Workflow Dispatch (EWD) is a mechanism that minimizes the duration from starting a workflow to the
+     * Eager Workflow Dispatch is a mechanism that minimizes the duration from starting a workflow to the
      * processing of the first workflow task, making Temporal more suitable for latency sensitive applications.
      */
     #[Marshal(name: 'EnableEagerStart')]
@@ -207,14 +207,11 @@ final class WorkflowOptions extends Options
     }
 
     /**
-     * Eager Workflow Dispatch (EWD) is a mechanism that minimizes the duration from starting a workflow to the
+     * Eager Workflow Dispatch is a mechanism that minimizes the duration from starting a workflow to the
      * processing of the first workflow task, making Temporal more suitable for latency sensitive applications.
      *
-     * EWD can be enabled if the server supports it and a local worker
+     * Eager Workflow Dispatch can be enabled if the server supports it and a local worker
      * is available the task is fed directly to the worker.
-     *
-     * Note: that this will require some extra work to allocate a workflow slot on a Temporal worker
-     * on the same task queue and delivering a workflow task to the workflow from the StartWorkflowExecutionResponse.
      *
      * @param bool $value
      * @return $this
