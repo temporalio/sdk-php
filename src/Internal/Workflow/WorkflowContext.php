@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Workflow;
 
+use DateTimeInterface;
+use Ramsey\Uuid\UuidInterface;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use RuntimeException;
@@ -546,5 +548,29 @@ class WorkflowContext implements WorkflowContextInterface
     public function rejectConditionGroup(string $conditionGroupId): void
     {
         unset($this->awaits[$conditionGroupId]);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function uuid(): PromiseInterface
+    {
+        return $this->sideEffect(static fn(): UuidInterface => \Ramsey\Uuid\Uuid::uuid4());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function uuid4(): PromiseInterface
+    {
+        return $this->sideEffect(static fn(): UuidInterface => \Ramsey\Uuid\Uuid::uuid4());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function uuid7(?DateTimeInterface $dateTime = null): PromiseInterface
+    {
+        return $this->sideEffect(static fn(): UuidInterface => \Ramsey\Uuid\Uuid::uuid7($dateTime));
     }
 }

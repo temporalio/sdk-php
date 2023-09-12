@@ -14,7 +14,7 @@ namespace Temporal\Internal\Transport\Router;
 abstract class Route implements RouteInterface
 {
     /**
-     * @return string
+     * @return non-empty-string
      */
     public function getName(): string
     {
@@ -26,6 +26,7 @@ abstract class Route implements RouteInterface
      */
     private function getShortClassName(): string
     {
+        /** @var non-empty-list<non-empty-string> $chunks */
         $chunks = \explode('\\', static::class);
 
         return \array_pop($chunks);

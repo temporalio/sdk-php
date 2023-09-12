@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal;
 
+use DateTimeInterface;
+use Ramsey\Uuid\UuidInterface;
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Activity\ActivityOptionsInterface;
@@ -939,5 +941,48 @@ final class Workflow extends Facade
         /** @var ScopedContextInterface $context */
         $context = self::getCurrentContext();
         $context->upsertSearchAttributes($searchAttributes);
+    }
+
+    /**
+     * Generate a UUID.
+     *
+     * @return PromiseInterface
+     */
+    public static function uuid(): PromiseInterface
+    {
+        /** @var ScopedContextInterface $context */
+        $context = self::getCurrentContext();
+
+        return $context->uuid();
+    }
+
+    /**
+     * Generate a UUID version 4 (random).
+     *
+     * @return PromiseInterface
+     */
+    public static function uuid4(): PromiseInterface
+    {
+        /** @var ScopedContextInterface $context */
+        $context = self::getCurrentContext();
+
+        return $context->uuid4();
+    }
+
+    /**
+     * Generate a UUID version 7 (Unix Epoch time).
+     *
+     * @param DateTimeInterface|null $dateTime An optional date/time from which
+     *     to create the version 7 UUID. If not provided, the UUID is generated
+     *     using the current date/time.
+     *
+     * @return PromiseInterface
+     */
+    public static function uuid7(?DateTimeInterface $dateTime = null): PromiseInterface
+    {
+        /** @var ScopedContextInterface $context */
+        $context = self::getCurrentContext();
+
+        return $context->uuid7($dateTime);
     }
 }
