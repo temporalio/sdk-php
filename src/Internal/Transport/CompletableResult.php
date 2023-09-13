@@ -98,9 +98,9 @@ class CompletableResult implements CompletableResultInterface
      * {@inheritDoc}
      */
     public function then(
-        callable $onFulfilled = null,
-        callable $onRejected = null,
-        callable $onProgress = null,
+        ?callable $onFulfilled = null,
+        ?callable $onRejected = null,
+        ?callable $onProgress = null,
     ): PromiseInterface {
         return $this->promise()
             ->then($this->wrapContext($onFulfilled), $this->wrapContext($onRejected));
@@ -115,10 +115,7 @@ class CompletableResult implements CompletableResultInterface
         return $this->deferred->promise();
     }
 
-    /**
-     * @param mixed $result
-     */
-    private function onFulfilled($result): void
+    private function onFulfilled(mixed $result): void
     {
         $this->resolved = true;
         $this->value = $result;
@@ -176,8 +173,12 @@ class CompletableResult implements CompletableResultInterface
         return $this->finally($this->wrapContext($onFulfilledOrRejected));
     }
 
-    private function wrapContext(callable $callback): callable
+    private function wrapContext(?callable $callback): ?callable
     {
+        if ($callback === null) {
+            return null;
+        }
+
         return function (mixed $value = null) use ($callback): mixed {
             Workflow::setCurrentContext($this->context);
             return $callback($value);

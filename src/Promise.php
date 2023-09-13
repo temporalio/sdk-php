@@ -17,8 +17,6 @@ use Temporal\Internal\Promise\CancellationQueue;
 
 use Temporal\Internal\Promise\Reasons;
 
-use function React\Promise\all;
-use function React\Promise\any;
 use function React\Promise\race;
 use function React\Promise\reject;
 use function React\Promise\resolve;
@@ -40,7 +38,7 @@ final class Promise
      */
     public static function all(iterable $promises): PromiseInterface
     {
-        return all([...$promises]);
+        return self::map($promises, static fn($val): mixed => $val);
     }
 
     /**
@@ -59,7 +57,8 @@ final class Promise
      */
     public static function any(iterable $promises): PromiseInterface
     {
-        return any([...$promises]);
+        return self::some([...$promises], 1)
+            ->then(static fn(array $values): mixed => \array_shift($values));
     }
 
     /**
