@@ -32,6 +32,7 @@ class WorkflowOptionsTestCase extends DTOMarshallingTestCase
         $expected = [
             'WorkflowID'               => $dto->workflowId,
             'TaskQueue'                => 'default',
+            'EnableEagerStart'         => false,
             'WorkflowExecutionTimeout' => 0,
             'WorkflowRunTimeout'       => 0,
             'WorkflowTaskTimeout'      => 0,
@@ -57,6 +58,15 @@ class WorkflowOptionsTestCase extends DTOMarshallingTestCase
         $dto = new WorkflowOptions();
 
         $this->assertNotSame($dto, $dto->withTaskQueue(Uuid::v4()));
+    }
+
+    public function testEagerStateNotMutateState(): void
+    {
+        $dto = new WorkflowOptions();
+
+        $this->assertNotSame($dto, $newDto = $dto->withEagerStart());
+        $this->assertFalse($dto->eagerStart);
+        $this->assertTrue($newDto->eagerStart);
     }
 
     public function testWorkflowExecutionTimeoutChangesNotMutateState(): void

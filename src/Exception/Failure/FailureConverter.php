@@ -160,7 +160,7 @@ final class FailureConverter
 
             default:
                 $info = new ApplicationFailureInfo();
-                $info->setType(get_class($e));
+                $info->setType($e::class);
                 $info->setNonRetryable(false);
                 $failure->setApplicationFailureInfo($info);
         }
