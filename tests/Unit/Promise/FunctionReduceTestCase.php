@@ -13,7 +13,7 @@ use Temporal\Promise;
  * @license MIT
  * @link https://github.com/reactphp/promise/blob/f913fb8cceba1e6644b7b90c4bfb678ed8a3ef38/tests/FunctionReduceTest.php
  */
-class FunctionReduceTestCase extends BaseFunction
+final class FunctionReduceTestCase extends BaseFunction
 {
     public function testReduceValuesWithoutInitialValue(): void
     {

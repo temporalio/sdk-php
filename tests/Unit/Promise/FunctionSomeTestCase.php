@@ -16,7 +16,7 @@ use Temporal\Tests\Unit\Promise\BaseFunction;
  * @license MIT
  * @link https://github.com/reactphp/promise/blob/f913fb8cceba1e6644b7b90c4bfb678ed8a3ef38/tests/FunctionSomeTest.php
  */
-class FunctionSomeTestCase extends BaseFunction
+final class FunctionSomeTestCase extends BaseFunction
 {
     public function testRejectWithLengthExceptionWithEmptyInputArray(): void
     {
