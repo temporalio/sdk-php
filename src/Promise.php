@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal;
 
 use React\Promise\Exception\LengthException;
+use React\Promise\Internal\RejectedPromise;
 use React\Promise\PromiseInterface;
 use Temporal\Internal\Promise\CancellationQueue;
 
@@ -207,7 +208,7 @@ final class Promise
      *
      * @psalm-param PromiseReduceCallback $reduce
      * @param iterable<int, PromiseInterface|mixed> $promises
-     * @param callable $reduce
+     * @param callable(mixed $current, mixed $carry, int $current, positive-int $items): mixed $reduce
      * @param mixed $initial
      * @return PromiseInterface
      */
@@ -297,7 +298,7 @@ final class Promise
      * the value of another promise.
      *
      * @param $promiseOrValue
-     * @return PromiseInterface
+     * @return PromiseInterface<never>
      */
     public static function reject($promiseOrValue = null): PromiseInterface
     {
@@ -311,8 +312,9 @@ final class Promise
      * The returned promise will become **infinitely pending** if  `$promisesOrValues`
      * contains 0 items.
      *
-     * @param iterable $promisesOrValues
-     * @return PromiseInterface
+     * @template T
+     * @param iterable<PromiseInterface<T>|T> $promisesOrValues
+     * @return PromiseInterface<T>
      */
     public static function race(iterable $promisesOrValues): PromiseInterface
     {

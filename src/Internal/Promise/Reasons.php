@@ -21,7 +21,7 @@ use Traversable;
 final class Reasons extends RuntimeException implements Iterator, ArrayAccess, Countable
 {
     /**
-     * @param array<array-key, Traversable> $collection
+     * @param array<TKey, TValue> $collection
      */
     public function __construct(
         public array $collection,
@@ -59,11 +59,19 @@ final class Reasons extends RuntimeException implements Iterator, ArrayAccess, C
         return isset($this->collection[$offset]);
     }
 
+    /**
+     * @param TKey $offset
+     * @return TValue
+     */
     public function offsetGet(mixed $offset): Traversable
     {
         return $this->collection[$offset];
     }
 
+    /**
+     * @param TKey $offset
+     * @param TValue $value
+     */
     public function offsetSet(mixed $offset, mixed $value): void
     {
         $this->collection[$offset] = $value;

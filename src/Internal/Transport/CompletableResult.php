@@ -17,6 +17,10 @@ use Temporal\Worker\LoopInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowContextInterface;
 
+/**
+ * @template T of mixed
+ * @implements CompletableResultInterface<T>
+ */
 class CompletableResult implements CompletableResultInterface
 {
     /**
@@ -95,7 +99,11 @@ class CompletableResult implements CompletableResultInterface
     }
 
     /**
-     * {@inheritDoc}
+     * @param (callable(mixed): mixed)|null $onFulfilled
+     * @param (callable(\Throwable): mixed)|null $onRejected
+     * @param callable|null $onProgress
+     *
+     * @return PromiseInterface
      */
     public function then(
         ?callable $onFulfilled = null,
@@ -108,7 +116,7 @@ class CompletableResult implements CompletableResultInterface
     }
 
     /**
-     * @return PromiseInterface
+     * @return PromiseInterface<T>
      */
     public function promise(): PromiseInterface
     {
@@ -173,6 +181,12 @@ class CompletableResult implements CompletableResultInterface
         return $this->finally($this->wrapContext($onFulfilledOrRejected));
     }
 
+    /**
+     * @template TParam of mixed
+     * @template TReturn of mixed
+     * @param (callable(TParam): TReturn)|null $callback
+     * @return ($callback is null ? null : (callable(TParam): TReturn))
+     */
     private function wrapContext(?callable $callback): ?callable
     {
         if ($callback === null) {

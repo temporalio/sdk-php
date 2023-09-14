@@ -94,11 +94,9 @@ interface WorkflowContextInterface extends EnvironmentInterface
     /**
      * @see Workflow::sideEffect()
      *
-     * @psalm-type SideEffectCallback = callable(): mixed
-     * @psalm-param SideEffectCallback $context
-     *
-     * @param callable $context
-     * @return PromiseInterface
+     * @template TReturn
+     * @param callable(): TReturn $context
+     * @return PromiseInterface<TReturn>
      */
     public function sideEffect(callable $context): PromiseInterface;
 
@@ -223,7 +221,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @param array $args
      * @param ActivityOptions|null $options
      * @param Type|string|null|\ReflectionClass|\ReflectionType $returnType
-     * @return PromiseInterface
+     * @return PromiseInterface<mixed>
      */
     public function executeActivity(
         string $type,
@@ -266,7 +264,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @param DateIntervalValue $interval
      * @param callable|PromiseInterface ...$conditions
-     * @return PromiseInterface
+     * @return PromiseInterface<bool>
      */
     public function awaitWithTimeout($interval, ...$conditions): PromiseInterface;
 
@@ -287,7 +285,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * Generate a UUID.
      *
-     * @return PromiseInterface
+     * @return PromiseInterface<UuidInterface>
      */
     public function uuid(): PromiseInterface;
 
@@ -296,7 +294,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * Generate a UUID version 4 (random).
      *
-     * @return PromiseInterface
+     * @return PromiseInterface<UuidInterface>
      */
     public function uuid4(): PromiseInterface;
 
@@ -309,7 +307,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *     to create the version 7 UUID. If not provided, the UUID is generated
      *     using the current date/time.
      *
-     * @return PromiseInterface
+     * @return PromiseInterface<UuidInterface>
      */
     public function uuid7(?DateTimeInterface $dateTime = null): PromiseInterface;
 }

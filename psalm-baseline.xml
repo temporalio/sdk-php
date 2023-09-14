@@ -783,6 +783,15 @@
       <code><![CDATA[$command->getID()]]></code>
     </PossiblyInvalidArgument>
   </file>
+  <file src="src/Internal/Transport/CompletableResult.php">
+    <InvalidArgument>
+      <code><![CDATA[$this->wrapContext($onFulfilledOrRejected)]]></code>
+      <code><![CDATA[$this->wrapContext($onFulfilledOrRejected)]]></code>
+    </InvalidArgument>
+    <PossiblyNullArgument>
+      <code>$value</code>
+    </PossiblyNullArgument>
+  </file>
   <file src="src/Internal/Transport/Request/NewTimer.php">
     <PossiblyNullPropertyFetch>
       <code><![CDATA[CarbonInterval::make($interval)->totalMilliseconds]]></code>
@@ -939,27 +948,18 @@
     </MoreSpecificReturnType>
   </file>
   <file src="src/Internal/Workflow/Process/Process.php">
-    <InternalClass>
-      <code>Scope</code>
-      <code>parent::__construct($services, $ctx)</code>
-      <code>parent::start($handler, $values)</code>
-    </InternalClass>
-    <InternalMethod>
-      <code>createScope</code>
-      <code>getContext</code>
-      <code>makeCurrent</code>
-      <code>onClose</code>
-      <code>parent::__construct($services, $ctx)</code>
-      <code>parent::start($handler, $values)</code>
-      <code>promise</code>
-      <code>startSignal</code>
-    </InternalMethod>
+    <InvalidDocblock>
+      <code>class Process extends Scope implements ProcessInterface</code>
+    </InvalidDocblock>
     <MissingClosureParamType>
       <code>$result</code>
     </MissingClosureParamType>
     <MissingParamType>
       <code>$result</code>
     </MissingParamType>
+    <MissingTemplateParam>
+      <code>ProcessInterface</code>
+    </MissingTemplateParam>
     <PropertyNotSetInConstructor>
       <code>Process</code>
     </PropertyNotSetInConstructor>
@@ -973,69 +973,10 @@
     <ArgumentTypeCoercion>
       <code><![CDATA[$this->context]]></code>
     </ArgumentTypeCoercion>
-    <InternalClass>
-      <code><![CDATA[new Scope($this->services, $this->context)]]></code>
-    </InternalClass>
-    <InternalMethod>
-      <code>attach</code>
-      <code>call</code>
-      <code>callSignalHandler</code>
-      <code>createScope</code>
-      <code>createScope</code>
-      <code>defer</code>
-      <code>defer</code>
-      <code>handleError</code>
-      <code>handleError</code>
-      <code>makeCurrent</code>
-      <code>makeCurrent</code>
-      <code>makeCurrent</code>
-      <code>makeCurrent</code>
-      <code>makeCurrent</code>
-      <code>makeCurrent</code>
-      <code>makeCurrent</code>
-      <code>makeCurrent</code>
-      <code><![CDATA[new Scope($this->services, $this->context)]]></code>
-      <code>next</code>
-      <code>next</code>
-      <code>next</code>
-      <code>next</code>
-      <code>next</code>
-      <code>nextPromise</code>
-      <code>nextPromise</code>
-      <code>nextPromise</code>
-      <code>nextPromise</code>
-      <code>onClose</code>
-      <code>onException</code>
-      <code>onException</code>
-      <code>onException</code>
-      <code>onException</code>
-      <code>onException</code>
-      <code>onResult</code>
-      <code>start</code>
-    </InternalMethod>
-    <InternalProperty>
-      <code><![CDATA[$scope->detached]]></code>
-      <code><![CDATA[$scope->layer]]></code>
-      <code><![CDATA[$this->cancelID]]></code>
-      <code><![CDATA[$this->cancelID]]></code>
-      <code><![CDATA[$this->cancelID]]></code>
-      <code><![CDATA[$this->cancelID]]></code>
-      <code><![CDATA[$this->cancelled]]></code>
-      <code><![CDATA[$this->context]]></code>
-      <code><![CDATA[$this->coroutine]]></code>
-      <code><![CDATA[$this->coroutine]]></code>
-      <code><![CDATA[$this->coroutine]]></code>
-      <code><![CDATA[$this->deferred]]></code>
-      <code><![CDATA[$this->exception]]></code>
-      <code><![CDATA[$this->onCancel]]></code>
-      <code><![CDATA[$this->onCancel]]></code>
-      <code><![CDATA[$this->onCancel]]></code>
-      <code><![CDATA[$this->onCancel]]></code>
-      <code><![CDATA[$this->onClose]]></code>
-      <code><![CDATA[$this->result]]></code>
-      <code><![CDATA[$this->scopeContext]]></code>
-      <code><![CDATA[$this->services]]></code>
-    </InternalProperty>
+    <InvalidArgument>
+      <code>$onFulfilled</code>
+      <code>$onRejected</code>
+    </InvalidArgument>
     <LessSpecificReturnStatement>
       <code><![CDATA[$this->context]]></code>
     </LessSpecificReturnStatement>
@@ -1067,6 +1008,9 @@
       <code>resolveConditions</code>
       <code>resolveConditions</code>
     </UndefinedInterfaceMethod>
+    <UnusedClosureParam>
+      <code>$e</code>
+    </UnusedClosureParam>
   </file>
   <file src="src/Internal/Workflow/ProcessCollection.php">
     <DocblockTypeContradiction>
@@ -1082,14 +1026,6 @@
     </PossiblyNullReference>
   </file>
   <file src="src/Internal/Workflow/ScopeContext.php">
-    <InternalMethod>
-      <code>getLayer</code>
-      <code>getLayer</code>
-      <code>isCancelled</code>
-      <code>onAwait</code>
-      <code>startScope</code>
-      <code>startScope</code>
-    </InternalMethod>
     <PropertyNotSetInConstructor>
       <code>$onRequest</code>
       <code>$parent</code>
@@ -1153,6 +1089,12 @@
       <code>$promiseOrValue</code>
       <code>$promiseOrValue</code>
     </MissingParamType>
+    <PossiblyInvalidArgument>
+      <code>$reasons</code>
+    </PossiblyInvalidArgument>
+    <TooManyArguments>
+      <code>$reduce($c, $value, $i++, $total)</code>
+    </TooManyArguments>
   </file>
   <file src="src/Worker/ActivityInvocationCache/ActivityInvocationCacheInterface.php">
     <MissingParamType>

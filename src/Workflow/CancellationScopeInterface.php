@@ -13,6 +13,10 @@ namespace Temporal\Workflow;
 
 use React\Promise\PromiseInterface;
 
+/**
+ * @template T
+ * @extends PromiseInterface<T>
+ */
 interface CancellationScopeInterface extends PromiseInterface
 {
     /**

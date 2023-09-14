@@ -34,6 +34,7 @@ use Temporal\Workflow\WorkflowContextInterface;
  *
  * @internal CoroutineScope is an internal library class, please do not use it in your code.
  * @psalm-internal Temporal\Internal\Workflow
+ * @implements CancellationScopeInterface<mixed>
  */
 class Scope implements CancellationScopeInterface
 {

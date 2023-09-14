@@ -18,8 +18,12 @@ use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Workflow\WorkflowContext;
 use Temporal\Worker\LoopInterface;
+use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\ProcessInterface;
 
+/**
+ * @implements CancellationScopeInterface<mixed>
+ */
 class Process extends Scope implements ProcessInterface
 {
     /**
