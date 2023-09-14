@@ -93,7 +93,8 @@ final class WorkflowStarter
             ->setWorkflowExecutionTimeout(DateInterval::toDuration($options->workflowExecutionTimeout))
             ->setWorkflowTaskTimeout(DateInterval::toDuration($options->workflowTaskTimeout))
             ->setMemo($options->toMemo($this->converter))
-            ->setSearchAttributes($options->toSearchAttributes($this->converter));
+            ->setSearchAttributes($options->toSearchAttributes($this->converter))
+            ->setRequestEagerExecution($options->eagerStart);
 
         $input = EncodedValues::fromValues($args, $this->converter);
         if (!$input->isEmpty()) {
