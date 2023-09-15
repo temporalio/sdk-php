@@ -27,7 +27,6 @@ use Temporal\Workflow\ChildWorkflowOptions;
 use Temporal\Workflow\ChildWorkflowStubInterface;
 use Temporal\Workflow\ContinueAsNewOptions;
 use Temporal\Workflow\ExternalWorkflowStubInterface;
-use Temporal\Workflow\ParentClosePolicy;
 use Temporal\Workflow\ScopedContextInterface;
 use Temporal\Internal\Workflow\WorkflowContext;
 use Temporal\Workflow\WorkflowExecution;
@@ -318,7 +317,7 @@ final class Workflow extends Facade
      *
      * @param DateIntervalValue $interval
      * @param callable|PromiseInterface ...$conditions
-     * @return PromiseInterface
+     * @return PromiseInterface<bool>
      */
     public static function awaitWithTimeout($interval, ...$conditions): PromiseInterface
     {
@@ -424,7 +423,7 @@ final class Workflow extends Facade
      * @param string $changeId
      * @param int $minSupported
      * @param int $maxSupported
-     * @return PromiseInterface
+     * @return PromiseInterface<int>
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function getVersion(string $changeId, int $minSupported, int $maxSupported): PromiseInterface
@@ -453,8 +452,9 @@ final class Workflow extends Facade
      *  }
      * </code>
      *
-     * @param callable $value
-     * @return PromiseInterface
+     * @template TReturn
+     * @param callable(): TReturn $value
+     * @return PromiseInterface<TReturn>
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function sideEffect(callable $value): PromiseInterface
@@ -489,7 +489,7 @@ final class Workflow extends Facade
      * </code>
      *
      * @param DateIntervalValue $interval
-     * @return PromiseInterface
+     * @return PromiseInterface<null>
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function timer($interval): PromiseInterface
@@ -830,7 +830,7 @@ final class Workflow extends Facade
      * @param array $args
      * @param ActivityOptions|null $options
      * @param Type|string|null|\ReflectionClass|\ReflectionType $returnType
-     * @return PromiseInterface
+     * @return PromiseInterface<mixed>
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function executeActivity(
@@ -946,7 +946,7 @@ final class Workflow extends Facade
     /**
      * Generate a UUID.
      *
-     * @return PromiseInterface
+     * @return PromiseInterface<UuidInterface>
      */
     public static function uuid(): PromiseInterface
     {
@@ -959,7 +959,7 @@ final class Workflow extends Facade
     /**
      * Generate a UUID version 4 (random).
      *
-     * @return PromiseInterface
+     * @return PromiseInterface<UuidInterface>
      */
     public static function uuid4(): PromiseInterface
     {
@@ -976,7 +976,7 @@ final class Workflow extends Facade
      *     to create the version 7 UUID. If not provided, the UUID is generated
      *     using the current date/time.
      *
-     * @return PromiseInterface
+     * @return PromiseInterface<UuidInterface>
      */
     public static function uuid7(?DateTimeInterface $dateTime = null): PromiseInterface
     {
