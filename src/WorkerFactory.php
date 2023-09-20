@@ -384,6 +384,8 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         $commands = $this->codec->decode($messages);
         $this->env->update($headers);
 
+        $this->emit(LoopInterface::BEFORE_DISPATCH);
+
         foreach ($commands as $command) {
             if ($command instanceof ResponseInterface) {
                 $this->client->dispatch($command);

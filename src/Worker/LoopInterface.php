@@ -55,6 +55,11 @@ interface LoopInterface extends EventListenerInterface
     public const ON_CALLBACK = 'callback';
 
     /**
+     * @var string
+     */
+    public const BEFORE_DISPATCH = 'before_dispatch';
+
+    /**
      * @return void
      */
     public function tick(): void;
