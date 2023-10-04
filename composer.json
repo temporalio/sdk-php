@@ -30,7 +30,7 @@
         "nesbot/carbon": "^2.66",
         "psr/log": "^2.0 || ^3.0",
         "ramsey/uuid": "^4.7",
-        "react/promise": "2.9 || ^3.0",
+        "react/promise": "^2.9",
         "roadrunner-php/roadrunner-api-dto": "^1.3",
         "roadrunner-php/version-checker": "^1.0",
         "spiral/attributes": "^2.8 || ^3.0",

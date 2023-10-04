@@ -77,8 +77,8 @@ class CompletableResult implements CompletableResultInterface
         $this->layer = $layer;
 
         $this->promise = $promise->then(
-            \Closure::fromCallable([$this, 'onFulfilled']),
-            \Closure::fromCallable([$this, 'onRejected']),
+            $this->onFulfilled(...),
+            $this->onRejected(...),
         );
     }
 
@@ -171,11 +171,17 @@ class CompletableResult implements CompletableResultInterface
         $this->promise()->cancel();
     }
 
+    /**
+     * @deprecated
+     */
     public function otherwise(callable $onRejected): PromiseInterface
     {
         return $this->catch($this->wrapContext($onRejected));
     }
 
+    /**
+     * @deprecated
+     */
     public function always(callable $onFulfilledOrRejected): PromiseInterface
     {
         return $this->finally($this->wrapContext($onFulfilledOrRejected));
