@@ -784,13 +784,28 @@
     </PossiblyInvalidArgument>
   </file>
   <file src="src/Internal/Transport/CompletableResult.php">
-    <InvalidArgument>
-      <code><![CDATA[$this->wrapContext($onFulfilledOrRejected)]]></code>
-      <code><![CDATA[$this->wrapContext($onFulfilledOrRejected)]]></code>
-    </InvalidArgument>
+    <MoreSpecificImplementedParamType>
+      <code>$onFulfilled</code>
+      <code>$onRejected</code>
+    </MoreSpecificImplementedParamType>
     <PossiblyNullArgument>
+      <code><![CDATA[$this->wrapContext($onFulfilledOrRejected)]]></code>
+      <code><![CDATA[$this->wrapContext($onRejected)]]></code>
       <code>$value</code>
     </PossiblyNullArgument>
+    <TooManyTemplateParams>
+      <code><![CDATA[PromiseInterface<T>]]></code>
+    </TooManyTemplateParams>
+    <UndefinedInterfaceMethod>
+      <code>cancel</code>
+      <code>catch</code>
+      <code>finally</code>
+    </UndefinedInterfaceMethod>
+  </file>
+  <file src="src/Internal/Transport/CompletableResultInterface.php">
+    <TooManyTemplateParams>
+      <code>PromiseInterface</code>
+    </TooManyTemplateParams>
   </file>
   <file src="src/Internal/Transport/Request/NewTimer.php">
     <PossiblyNullPropertyFetch>
@@ -973,10 +988,6 @@
     <ArgumentTypeCoercion>
       <code><![CDATA[$this->context]]></code>
     </ArgumentTypeCoercion>
-    <InvalidArgument>
-      <code>$onFulfilled</code>
-      <code>$onRejected</code>
-    </InvalidArgument>
     <LessSpecificReturnStatement>
       <code><![CDATA[$this->context]]></code>
     </LessSpecificReturnStatement>
@@ -993,6 +1004,8 @@
       <code>$coroutine</code>
     </PropertyNotSetInConstructor>
     <UndefinedInterfaceMethod>
+      <code>catch</code>
+      <code>finally</code>
       <code>getClient</code>
       <code>getClient</code>
       <code>getClient</code>
@@ -1095,6 +1108,11 @@
     <TooManyArguments>
       <code>$reduce($c, $value, $i++, $total)</code>
     </TooManyArguments>
+    <TooManyTemplateParams>
+      <code><![CDATA[PromiseInterface<T>]]></code>
+      <code><![CDATA[PromiseInterface<never>]]></code>
+      <code><![CDATA[iterable<PromiseInterface<T>|T>]]></code>
+    </TooManyTemplateParams>
   </file>
   <file src="src/Worker/ActivityInvocationCache/ActivityInvocationCacheInterface.php">
     <MissingParamType>
@@ -1351,6 +1369,23 @@
         )</code>
     </UnsafeInstantiation>
   </file>
+  <file src="src/Workflow.php">
+    <TooManyTemplateParams>
+      <code><![CDATA[PromiseInterface<TReturn>]]></code>
+      <code><![CDATA[PromiseInterface<UuidInterface>]]></code>
+      <code><![CDATA[PromiseInterface<UuidInterface>]]></code>
+      <code><![CDATA[PromiseInterface<UuidInterface>]]></code>
+      <code><![CDATA[PromiseInterface<bool>]]></code>
+      <code><![CDATA[PromiseInterface<int>]]></code>
+      <code><![CDATA[PromiseInterface<mixed>]]></code>
+      <code><![CDATA[PromiseInterface<null>]]></code>
+    </TooManyTemplateParams>
+  </file>
+  <file src="src/Workflow/CancellationScopeInterface.php">
+    <TooManyTemplateParams>
+      <code>PromiseInterface</code>
+    </TooManyTemplateParams>
+  </file>
   <file src="src/Workflow/ChildWorkflowOptions.php">
     <PossiblyNullReference>
       <code>mergeWith</code>
@@ -1365,5 +1400,15 @@
     <PossiblyInvalidArgument>
       <code><![CDATA[$e->getCode()]]></code>
     </PossiblyInvalidArgument>
+  </file>
+  <file src="src/Workflow/WorkflowContextInterface.php">
+    <TooManyTemplateParams>
+      <code><![CDATA[PromiseInterface<TReturn>]]></code>
+      <code><![CDATA[PromiseInterface<UuidInterface>]]></code>
+      <code><![CDATA[PromiseInterface<UuidInterface>]]></code>
+      <code><![CDATA[PromiseInterface<UuidInterface>]]></code>
+      <code><![CDATA[PromiseInterface<bool>]]></code>
+      <code><![CDATA[PromiseInterface<mixed>]]></code>
+    </TooManyTemplateParams>
   </file>
 </files>
