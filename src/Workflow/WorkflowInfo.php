@@ -82,8 +82,8 @@ final class WorkflowInfo
      * The counter is automatically incremented in the background.
      *
      * @var int<0, max>
-     * @since 2.7.0
-     * @since RoadRunner 2023.3. With lower versions, this field is always 0.
+     * @since 2.6.0
+     * @since RoadRunner 2023.2. With lower versions, this field is always 0.
      */
     #[Marshal(name: 'HistoryLength')]
     public int $historyLength = 0;

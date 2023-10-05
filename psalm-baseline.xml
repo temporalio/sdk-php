@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="5.13.1@086b94371304750d1c673315321a55d15fc59015">
+<files psalm-version="5.15.0@5c774aca4746caf3d239d9c8cadb9f882ca29352">
   <file src="src/Activity.php">
     <ImplicitToStringCast>
       <code>$type</code>
@@ -53,15 +53,10 @@
       <code>$timeout</code>
     </PossiblyInvalidArgument>
   </file>
-  <file src="src/Client/Paginator.php">
-    <InvalidDocblock>
-      <code><![CDATA[$this->nextPage->counter = &$this->nextPage;]]></code>
-    </InvalidDocblock>
-    <UnsupportedPropertyReferenceUsage>
-      <code><![CDATA[$this->nextPage->counter = &$this->nextPage]]></code>
-    </UnsupportedPropertyReferenceUsage>
-  </file>
   <file src="src/Client/WorkflowClient.php">
+    <ArgumentTypeCoercion>
+      <code>$counter</code>
+    </ArgumentTypeCoercion>
     <InvalidReturnStatement>
       <code><![CDATA[new WorkflowProxy(
             $this,
@@ -88,10 +83,10 @@
       <code><![CDATA[$workflowStub->getWorkflowType()]]></code>
       <code><![CDATA[$workflowStub->getWorkflowType()]]></code>
     </PossiblyNullArgument>
-    <TooFewArguments>
+    <RedundantFunctionCall>
       <code>\sprintf</code>
       <code>\sprintf</code>
-    </TooFewArguments>
+    </RedundantFunctionCall>
   </file>
   <file src="src/Client/WorkflowOptions.php">
     <PossiblyNullReference>
@@ -763,6 +758,11 @@
       <code>new static()</code>
     </UnsafeInstantiation>
   </file>
+  <file src="src/Internal/Support/StackRenderer.php">
+    <PossiblyInvalidArgument>
+      <code>$path</code>
+    </PossiblyInvalidArgument>
+  </file>
   <file src="src/Internal/Transport/Client.php">
     <InternalClass>
       <code>self::ERROR_REQUEST_ID_DUPLICATION</code>
@@ -770,15 +770,42 @@
     </InternalClass>
     <InternalMethod>
       <code>fetch</code>
-      <code>fetch</code>
-      <code>fetch</code>
       <code>get</code>
+      <code>reject</code>
       <code>request</code>
     </InternalMethod>
     <InternalProperty>
-      <code><![CDATA[$this->queue]]></code>
       <code><![CDATA[$this->requests]]></code>
     </InternalProperty>
+    <PossiblyInvalidArgument>
+      <code><![CDATA[$command->getID()]]></code>
+      <code><![CDATA[$command->getID()]]></code>
+      <code><![CDATA[$command->getID()]]></code>
+    </PossiblyInvalidArgument>
+  </file>
+  <file src="src/Internal/Transport/CompletableResult.php">
+    <MoreSpecificImplementedParamType>
+      <code>$onFulfilled</code>
+      <code>$onRejected</code>
+    </MoreSpecificImplementedParamType>
+    <PossiblyNullArgument>
+      <code><![CDATA[$this->wrapContext($onFulfilledOrRejected)]]></code>
+      <code><![CDATA[$this->wrapContext($onRejected)]]></code>
+      <code>$value</code>
+    </PossiblyNullArgument>
+    <TooManyTemplateParams>
+      <code><![CDATA[PromiseInterface<T>]]></code>
+    </TooManyTemplateParams>
+    <UndefinedInterfaceMethod>
+      <code>cancel</code>
+      <code>catch</code>
+      <code>finally</code>
+    </UndefinedInterfaceMethod>
+  </file>
+  <file src="src/Internal/Transport/CompletableResultInterface.php">
+    <TooManyTemplateParams>
+      <code>PromiseInterface</code>
+    </TooManyTemplateParams>
   </file>
   <file src="src/Internal/Transport/Request/NewTimer.php">
     <PossiblyNullPropertyFetch>
@@ -819,26 +846,36 @@
     </UndefinedInterfaceMethod>
   </file>
   <file src="src/Internal/Transport/Router/InvokeQuery.php">
+    <InternalMethod>
+      <code>getContext</code>
+    </InternalMethod>
     <PossiblyNullFunctionCall>
       <code><![CDATA[$handler($request->getPayloads())]]></code>
     </PossiblyNullFunctionCall>
+    <PossiblyUndefinedStringArrayOffset>
+      <code><![CDATA[$request->getOptions()['name']]]></code>
+    </PossiblyUndefinedStringArrayOffset>
     <UndefinedInterfaceMethod>
       <code>getQueryHandlerNames</code>
     </UndefinedInterfaceMethod>
   </file>
   <file src="src/Internal/Transport/Router/InvokeSignal.php">
+    <PossiblyNullPropertyAssignment>
+      <code><![CDATA[$instance->getContext()]]></code>
+    </PossiblyNullPropertyAssignment>
     <PossiblyUndefinedStringArrayOffset>
-      <code><![CDATA[$payload['name']]]></code>
-      <code><![CDATA[$payload['runId']]]></code>
+      <code><![CDATA[$request->getOptions()['name']]]></code>
     </PossiblyUndefinedStringArrayOffset>
   </file>
   <file src="src/Internal/Transport/Router/StackTrace.php">
     <InternalMethod>
       <code>getContext</code>
     </InternalMethod>
-    <PossiblyNullArgument>
-      <code><![CDATA[$payload['runId'] ?? null]]></code>
-    </PossiblyNullArgument>
+  </file>
+  <file src="src/Internal/Transport/Router/StartWorkflow.php">
+    <UnnecessaryVarAnnotation>
+      <code>Input</code>
+    </UnnecessaryVarAnnotation>
   </file>
   <file src="src/Internal/Transport/Router/WorkflowProcessAwareRoute.php">
     <LessSpecificReturnStatement>
@@ -849,6 +886,13 @@
     </MoreSpecificReturnType>
   </file>
   <file src="src/Internal/Transport/Server.php">
+    <InvalidArgument>
+      <code>$request</code>
+    </InvalidArgument>
+    <MismatchingDocblockParamType>
+      <code>RequestInterface</code>
+      <code>RequestInterface</code>
+    </MismatchingDocblockParamType>
     <MissingClosureParamType>
       <code>$result</code>
       <code>$result</code>
@@ -908,6 +952,9 @@
     </PossiblyNullArgument>
   </file>
   <file src="src/Internal/Workflow/ExternalWorkflowStub.php">
+    <ArgumentTypeCoercion>
+      <code>$request</code>
+    </ArgumentTypeCoercion>
     <LessSpecificReturnStatement>
       <code><![CDATA[$this->request($request)]]></code>
     </LessSpecificReturnStatement>
@@ -916,35 +963,22 @@
     </MoreSpecificReturnType>
   </file>
   <file src="src/Internal/Workflow/Process/Process.php">
-    <InternalClass>
-      <code>Scope</code>
-      <code>parent::__construct($services, $ctx)</code>
-      <code>parent::start($handler, $values)</code>
-    </InternalClass>
-    <InternalMethod>
-      <code>createScope</code>
-      <code>getContext</code>
-      <code>makeCurrent</code>
-      <code>onClose</code>
-      <code>parent::__construct($services, $ctx)</code>
-      <code>parent::start($handler, $values)</code>
-      <code>promise</code>
-      <code>start</code>
-    </InternalMethod>
-    <LessSpecificImplementedReturnType>
-      <code>mixed|string</code>
-    </LessSpecificImplementedReturnType>
+    <InvalidDocblock>
+      <code>class Process extends Scope implements ProcessInterface</code>
+    </InvalidDocblock>
     <MissingClosureParamType>
       <code>$result</code>
     </MissingClosureParamType>
     <MissingParamType>
       <code>$result</code>
     </MissingParamType>
+    <MissingTemplateParam>
+      <code>ProcessInterface</code>
+    </MissingTemplateParam>
     <PropertyNotSetInConstructor>
       <code>Process</code>
     </PropertyNotSetInConstructor>
     <UndefinedInterfaceMethod>
-      <code>getRunId</code>
       <code>getSignalQueue</code>
       <code>getWorkflowInstance</code>
       <code>isContinuedAsNew</code>
@@ -954,63 +988,6 @@
     <ArgumentTypeCoercion>
       <code><![CDATA[$this->context]]></code>
     </ArgumentTypeCoercion>
-    <InternalClass>
-      <code><![CDATA[new Scope($this->services, $this->context)]]></code>
-    </InternalClass>
-    <InternalMethod>
-      <code>attach</code>
-      <code>call</code>
-      <code>createScope</code>
-      <code>createScope</code>
-      <code>defer</code>
-      <code>defer</code>
-      <code>handleError</code>
-      <code>handleError</code>
-      <code>makeCurrent</code>
-      <code>makeCurrent</code>
-      <code>makeCurrent</code>
-      <code>makeCurrent</code>
-      <code>makeCurrent</code>
-      <code>makeCurrent</code>
-      <code>makeCurrent</code>
-      <code><![CDATA[new Scope($this->services, $this->context)]]></code>
-      <code>next</code>
-      <code>next</code>
-      <code>next</code>
-      <code>next</code>
-      <code>nextPromise</code>
-      <code>nextPromise</code>
-      <code>nextPromise</code>
-      <code>nextPromise</code>
-      <code>onClose</code>
-      <code>onException</code>
-      <code>onException</code>
-      <code>onException</code>
-      <code>onResult</code>
-      <code>start</code>
-    </InternalMethod>
-    <InternalProperty>
-      <code><![CDATA[$scope->detached]]></code>
-      <code><![CDATA[$scope->layer]]></code>
-      <code><![CDATA[$this->cancelID]]></code>
-      <code><![CDATA[$this->cancelID]]></code>
-      <code><![CDATA[$this->cancelID]]></code>
-      <code><![CDATA[$this->cancelID]]></code>
-      <code><![CDATA[$this->cancelled]]></code>
-      <code><![CDATA[$this->context]]></code>
-      <code><![CDATA[$this->coroutine]]></code>
-      <code><![CDATA[$this->coroutine]]></code>
-      <code><![CDATA[$this->deferred]]></code>
-      <code><![CDATA[$this->exception]]></code>
-      <code><![CDATA[$this->onCancel]]></code>
-      <code><![CDATA[$this->onCancel]]></code>
-      <code><![CDATA[$this->onCancel]]></code>
-      <code><![CDATA[$this->onCancel]]></code>
-      <code><![CDATA[$this->onClose]]></code>
-      <code><![CDATA[$this->result]]></code>
-      <code><![CDATA[$this->scopeContext]]></code>
-      <code><![CDATA[$this->services]]></code>
-    </InternalProperty>
     <LessSpecificReturnStatement>
       <code><![CDATA[$this->context]]></code>
     </LessSpecificReturnStatement>
@@ -1027,11 +1004,15 @@
       <code>$coroutine</code>
     </PropertyNotSetInConstructor>
     <UndefinedInterfaceMethod>
+      <code>catch</code>
+      <code>finally</code>
       <code>getClient</code>
       <code>getClient</code>
       <code>getClient</code>
       <code>getClient</code>
       <code>getClient</code>
+      <code>resolveConditions</code>
+      <code>resolveConditions</code>
       <code>resolveConditions</code>
       <code>resolveConditions</code>
       <code>resolveConditions</code>
@@ -1040,6 +1021,9 @@
       <code>resolveConditions</code>
       <code>resolveConditions</code>
     </UndefinedInterfaceMethod>
+    <UnusedClosureParam>
+      <code>$e</code>
+    </UnusedClosureParam>
   </file>
   <file src="src/Internal/Workflow/ProcessCollection.php">
     <DocblockTypeContradiction>
@@ -1055,14 +1039,6 @@
     </PossiblyNullReference>
   </file>
   <file src="src/Internal/Workflow/ScopeContext.php">
-    <InternalMethod>
-      <code>getLayer</code>
-      <code>getLayer</code>
-      <code>isCancelled</code>
-      <code>onAwait</code>
-      <code>startScope</code>
-      <code>startScope</code>
-    </InternalMethod>
     <PropertyNotSetInConstructor>
       <code>$onRequest</code>
       <code>$parent</code>
@@ -1126,6 +1102,17 @@
       <code>$promiseOrValue</code>
       <code>$promiseOrValue</code>
     </MissingParamType>
+    <PossiblyInvalidArgument>
+      <code>$reasons</code>
+    </PossiblyInvalidArgument>
+    <TooManyArguments>
+      <code>$reduce($c, $value, $i++, $total)</code>
+    </TooManyArguments>
+    <TooManyTemplateParams>
+      <code><![CDATA[PromiseInterface<T>]]></code>
+      <code><![CDATA[PromiseInterface<never>]]></code>
+      <code><![CDATA[iterable<PromiseInterface<T>|T>]]></code>
+    </TooManyTemplateParams>
   </file>
   <file src="src/Worker/ActivityInvocationCache/ActivityInvocationCacheInterface.php">
     <MissingParamType>
@@ -1190,10 +1177,21 @@
     </PossiblyInvalidArgument>
   </file>
   <file src="src/Worker/Transport/Codec/JsonCodec/Decoder.php">
+    <InvalidReturnStatement>
+      <code><![CDATA[match (true) {
+            isset($command['command']) => $this->parseRequest($command),
+            isset($command['failure']) => $this->parseFailureResponse($command),
+            default => $this->parseResponse($command),
+        }]]></code>
+    </InvalidReturnStatement>
+    <InvalidReturnType>
+      <code>ServerRequestInterface|ResponseInterface</code>
+    </InvalidReturnType>
+    <MismatchingDocblockReturnType>
+      <code>RequestInterface</code>
+    </MismatchingDocblockReturnType>
     <PossiblyUndefinedStringArrayOffset>
-      <code><![CDATA[$data['command']]]></code>
       <code><![CDATA[$data['failure']]]></code>
-      <code><![CDATA[$data['id']]]></code>
       <code><![CDATA[$data['id']]]></code>
       <code><![CDATA[$data['id']]]></code>
     </PossiblyUndefinedStringArrayOffset>
@@ -1210,13 +1208,25 @@
     </PossiblyInvalidArgument>
   </file>
   <file src="src/Worker/Transport/Codec/ProtoCodec/Decoder.php">
-    <PossiblyInvalidArgument>
-      <code><![CDATA[$msg->getId()]]></code>
-      <code><![CDATA[$msg->getId()]]></code>
-    </PossiblyInvalidArgument>
+    <ArgumentTypeCoercion>
+      <code><![CDATA[(int)$msg->getHistoryLength()]]></code>
+      <code><![CDATA[(int)$msg->getHistoryLength()]]></code>
+    </ArgumentTypeCoercion>
+    <InvalidReturnStatement>
+      <code><![CDATA[match (true) {
+            $msg->getCommand() !== '' => $this->parseRequest($msg),
+            $msg->hasFailure() => $this->parseFailureResponse($msg),
+            default => $this->parseResponse($msg),
+        }]]></code>
+    </InvalidReturnStatement>
+    <InvalidReturnType>
+      <code>ServerRequestInterface|ResponseInterface</code>
+    </InvalidReturnType>
+    <MismatchingDocblockReturnType>
+      <code>RequestInterface</code>
+    </MismatchingDocblockReturnType>
     <PossiblyNullArgument>
       <code><![CDATA[$msg->getFailure()]]></code>
-      <code><![CDATA[$msg->getPayloads()]]></code>
       <code><![CDATA[$msg->getPayloads()]]></code>
     </PossiblyNullArgument>
   </file>
@@ -1224,6 +1234,25 @@
     <PossiblyNullArgument>
       <code><![CDATA[$cmd->getFailure()]]></code>
     </PossiblyNullArgument>
+  </file>
+  <file src="src/Worker/Transport/Command/RequestTrait.php">
+    <InvalidNullableReturnType>
+      <code>object</code>
+    </InvalidNullableReturnType>
+    <LessSpecificImplementedReturnType>
+      <code>array</code>
+      <code>array</code>
+      <code>string</code>
+      <code>string</code>
+    </LessSpecificImplementedReturnType>
+    <UndefinedThisPropertyFetch>
+      <code><![CDATA[$this->header]]></code>
+    </UndefinedThisPropertyFetch>
+  </file>
+  <file src="src/Worker/Transport/Command/ServerRequest.php">
+    <ImpureMethodCall>
+      <code><![CDATA[$options['info']]]></code>
+    </ImpureMethodCall>
   </file>
   <file src="src/Worker/Transport/Goridge.php">
     <ArgumentTypeCoercion>
@@ -1296,12 +1325,13 @@
   </file>
   <file src="src/WorkerFactory.php">
     <InternalClass>
-      <code><![CDATA[new Client($this->responses, $this)]]></code>
+      <code><![CDATA[new Client($this->responses)]]></code>
     </InternalClass>
     <InternalMethod>
-      <code><![CDATA[new Client($this->responses, $this)]]></code>
+      <code><![CDATA[new Client($this->responses)]]></code>
     </InternalMethod>
     <InvalidArgument>
+      <code><![CDATA[$this->onRequest(...)]]></code>
       <code><![CDATA[$this->queues]]></code>
     </InvalidArgument>
     <InvalidReturnStatement>
@@ -1326,9 +1356,6 @@
     <PropertyNotSetInConstructor>
       <code>$codec</code>
     </PropertyNotSetInConstructor>
-    <TooManyArguments>
-      <code><![CDATA[new Client($this->responses, $this)]]></code>
-    </TooManyArguments>
     <UndefinedInterfaceMethod>
       <code>dispatch</code>
       <code>dispatch</code>
@@ -1341,6 +1368,23 @@
             $rpc ?? Goridge::create()
         )</code>
     </UnsafeInstantiation>
+  </file>
+  <file src="src/Workflow.php">
+    <TooManyTemplateParams>
+      <code><![CDATA[PromiseInterface<TReturn>]]></code>
+      <code><![CDATA[PromiseInterface<UuidInterface>]]></code>
+      <code><![CDATA[PromiseInterface<UuidInterface>]]></code>
+      <code><![CDATA[PromiseInterface<UuidInterface>]]></code>
+      <code><![CDATA[PromiseInterface<bool>]]></code>
+      <code><![CDATA[PromiseInterface<int>]]></code>
+      <code><![CDATA[PromiseInterface<mixed>]]></code>
+      <code><![CDATA[PromiseInterface<null>]]></code>
+    </TooManyTemplateParams>
+  </file>
+  <file src="src/Workflow/CancellationScopeInterface.php">
+    <TooManyTemplateParams>
+      <code>PromiseInterface</code>
+    </TooManyTemplateParams>
   </file>
   <file src="src/Workflow/ChildWorkflowOptions.php">
     <PossiblyNullReference>
@@ -1356,5 +1400,15 @@
     <PossiblyInvalidArgument>
       <code><![CDATA[$e->getCode()]]></code>
     </PossiblyInvalidArgument>
+  </file>
+  <file src="src/Workflow/WorkflowContextInterface.php">
+    <TooManyTemplateParams>
+      <code><![CDATA[PromiseInterface<TReturn>]]></code>
+      <code><![CDATA[PromiseInterface<UuidInterface>]]></code>
+      <code><![CDATA[PromiseInterface<UuidInterface>]]></code>
+      <code><![CDATA[PromiseInterface<UuidInterface>]]></code>
+      <code><![CDATA[PromiseInterface<bool>]]></code>
+      <code><![CDATA[PromiseInterface<mixed>]]></code>
+    </TooManyTemplateParams>
   </file>
 </files>

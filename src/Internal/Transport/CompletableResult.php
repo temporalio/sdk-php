@@ -11,13 +11,16 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport;
 
-use React\Promise\CancellablePromiseInterface;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\Worker\LoopInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowContextInterface;
 
+/**
+ * @template T of mixed
+ * @implements CompletableResultInterface<T>
+ */
 class CompletableResult implements CompletableResultInterface
 {
     /**
@@ -73,10 +76,9 @@ class CompletableResult implements CompletableResultInterface
         $this->deferred = new Deferred();
         $this->layer = $layer;
 
-        /** @var CancellablePromiseInterface $current */
         $this->promise = $promise->then(
-            \Closure::fromCallable([$this, 'onFulfilled']),
-            \Closure::fromCallable([$this, 'onRejected']),
+            $this->onFulfilled(...),
+            $this->onRejected(...),
         );
     }
 
@@ -97,35 +99,31 @@ class CompletableResult implements CompletableResultInterface
     }
 
     /**
-     * {@inheritDoc}
+     * @param (callable(mixed): mixed)|null $onFulfilled
+     * @param (callable(\Throwable): mixed)|null $onRejected
+     * @param callable|null $onProgress
+     *
+     * @return PromiseInterface
      */
     public function then(
-        callable $onFulfilled = null,
-        callable $onRejected = null,
-        callable $onProgress = null
+        ?callable $onFulfilled = null,
+        ?callable $onRejected = null,
+        ?callable $onProgress = null,
     ): PromiseInterface {
-        Workflow::setCurrentContext($this->context);
-
-        /** @var CancellablePromiseInterface $promise */
-        $promise = $this->promise()
-            ->then($onFulfilled, $onRejected, $onProgress);
-
-        return $promise;
+        return $this->promise()
+            ->then($this->wrapContext($onFulfilled), $this->wrapContext($onRejected));
         //return new Future($promise, $this->worker);
     }
 
     /**
-     * @return PromiseInterface
+     * @return PromiseInterface<T>
      */
     public function promise(): PromiseInterface
     {
         return $this->deferred->promise();
     }
 
-    /**
-     * @param mixed $result
-     */
-    private function onFulfilled($result): void
+    private function onFulfilled(mixed $result): void
     {
         $this->resolved = true;
         $this->value = $result;
@@ -153,5 +151,57 @@ class CompletableResult implements CompletableResultInterface
                 $this->deferred->reject($e);
             }
         );
+    }
+
+    public function catch(callable $onRejected): PromiseInterface
+    {
+        return $this->promise()
+            ->catch($this->wrapContext($onRejected));
+    }
+
+    public function finally(callable $onFulfilledOrRejected): PromiseInterface
+    {
+        return $this->promise()
+            ->finally($this->wrapContext($onFulfilledOrRejected));
+    }
+
+    public function cancel(): void
+    {
+        Workflow::setCurrentContext($this->context);
+        $this->promise()->cancel();
+    }
+
+    /**
+     * @deprecated
+     */
+    public function otherwise(callable $onRejected): PromiseInterface
+    {
+        return $this->catch($this->wrapContext($onRejected));
+    }
+
+    /**
+     * @deprecated
+     */
+    public function always(callable $onFulfilledOrRejected): PromiseInterface
+    {
+        return $this->finally($this->wrapContext($onFulfilledOrRejected));
+    }
+
+    /**
+     * @template TParam of mixed
+     * @template TReturn of mixed
+     * @param (callable(TParam): TReturn)|null $callback
+     * @return ($callback is null ? null : (callable(TParam): TReturn))
+     */
+    private function wrapContext(?callable $callback): ?callable
+    {
+        if ($callback === null) {
+            return null;
+        }
+
+        return function (mixed $value = null) use ($callback): mixed {
+            Workflow::setCurrentContext($this->context);
+            return $callback($value);
+        };
     }
 }

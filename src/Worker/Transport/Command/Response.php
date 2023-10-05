@@ -18,7 +18,7 @@ abstract class Response implements ResponseInterface
      */
     public function __construct(
         private readonly string|int $id,
-        private int $historyLength,
+        private readonly int $historyLength,
     ) {
     }
 

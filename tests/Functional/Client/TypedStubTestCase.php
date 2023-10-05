@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Functional\Client;
 
+use Temporal\Exception\Client\WorkflowQueryException;
 use Temporal\Exception\InvalidArgumentException;
 use Temporal\Tests\DTO\Message;
 use Temporal\Tests\DTO\User;
@@ -88,6 +89,26 @@ class TypedStubTestCase extends ClientTestCase
 
         $this->assertSame(88, $simple->get());
         $this->assertSame(88, $e->getResult());
+    }
+
+    public function testQueryNotExistingMethod()
+    {
+        $client = $this->createClient();
+        $simple = $client->newUntypedWorkflowStub('QueryWorkflow');
+
+
+        $e = $client->start($simple, 'Hello World');
+        $this->assertNotEmpty($e->getExecution()->getID());
+        $this->assertNotEmpty($e->getExecution()->getRunID());
+
+        try {
+            $simple->query('error', -1);
+        } catch (WorkflowQueryException $e) {
+            $this->assertStringContainsString('KnownQueryTypes=[get]', $e->getPrevious()->getMessage());
+            return;
+        }
+
+        $this->fail('Expected exception to be thrown');
     }
 
     public function testGetDTOResult()

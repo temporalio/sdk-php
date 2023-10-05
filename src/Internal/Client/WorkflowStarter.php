@@ -200,6 +200,10 @@ final class WorkflowStarter
             ->setSearchAttributes($options->toSearchAttributes($this->converter))
             ->setHeader($input->header->toHeader());
 
+        if ($req instanceof StartWorkflowExecutionRequest) {
+            $req->setRequestEagerExecution($options->eagerStart);
+        }
+
         if (!$input->arguments->isEmpty()) {
             $req->setInput($input->arguments->toPayloads());
         }

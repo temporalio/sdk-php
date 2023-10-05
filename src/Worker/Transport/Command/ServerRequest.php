@@ -17,7 +17,7 @@ use Temporal\Interceptor\Header;
 use Temporal\Interceptor\HeaderInterface;
 
 /**
- * Carries request to perform host action with payloads and failure as context. Can be cancelled if allows
+ * A request from RoadRunner to the worker.
  *
  * @psalm-import-type RequestOptions from RequestInterface
  * @psalm-immutable
@@ -32,7 +32,7 @@ class ServerRequest implements ServerRequestInterface
 
     /**
      * @param non-empty-string $name
-     * @param non-empty-string $id
+     * @param non-empty-string|null $id
      * @param RequestOptions $options
      * @param int<0, max> $historyLength
      */
@@ -46,7 +46,7 @@ class ServerRequest implements ServerRequestInterface
     ) {
         $this->payloads = $payloads ?? EncodedValues::empty();
         $this->header = $header ?? Header::empty();
-        $this->id = $id ?? $this->options['info']['WorkflowExecution']['RunID'] ?? $this->options['runId'] ?? '';
+        $this->id = $id ?? $options['info']['WorkflowExecution']['RunID'] ?? $options['runId'] ?? '';
     }
 
     public function getID(): string

@@ -16,6 +16,7 @@ final class ServerMock
     private CommandHandlerFactory $commandHandlerFactory;
     private Carbon $currentTime;
     private array $queue = [];
+    /** @var int<0, max> */
     private int $historyLength = 0;
 
     /** @var ExpectationInterface[] */

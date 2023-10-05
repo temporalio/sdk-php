@@ -13,6 +13,10 @@ namespace Temporal\Workflow;
 
 use Temporal\Internal\Repository\Identifiable;
 
+/**
+ * @template T
+ * @extends CancellationScopeInterface<T>
+ */
 interface ProcessInterface extends CancellationScopeInterface, Identifiable
 {
     /**

@@ -13,7 +13,7 @@ on:
       test-timeout:
         required: false
         type: number
-        default: 10
+        default: 15
       run-temporal-test-server:
         required: false
         type: boolean
@@ -90,11 +90,11 @@ jobs:
       - name: Install lowest dependencies from composer.json
         if: matrix.dependencies == 'lowest'
         run: composer update --no-interaction --no-progress --prefer-lowest
-        env:
-          COMPOSER_POOL_OPTIMIZER: 0
 
       - name: Validate lowest dependencies
         if: matrix.dependencies == 'lowest'
+        env:
+          COMPOSER_POOL_OPTIMIZER: 0
         run: vendor/bin/validate-prefer-lowest
 
       - name: Install highest dependencies from composer.json
@@ -104,7 +104,7 @@ jobs:
       - name: Download RoadRunner
         if: inputs.run-temporal-test-server == true
         run: |
-          vendor/bin/rr get --no-interaction
+          vendor/bin/rr get --no-interaction --stability=beta
 
       - name: Run tests with Temporal test server
         if: inputs.run-temporal-test-server == true

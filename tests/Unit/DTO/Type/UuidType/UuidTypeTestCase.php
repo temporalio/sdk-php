@@ -2,28 +2,20 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Unit\Internal\Marshaller\Type;
+namespace Temporal\Tests\Unit\DTO\Type\UuidType;
 
-use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
-use Spiral\Attributes\AttributeReader;
-use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
-use Temporal\Internal\Marshaller\Marshaller;
+use ReflectionClass;
 use Temporal\Internal\Marshaller\MarshallingRule;
 use Temporal\Internal\Marshaller\Type\NullableType;
 use Temporal\Internal\Marshaller\Type\UuidType;
+use Temporal\Tests\Unit\DTO\DTOMarshallingTestCase;
+use Temporal\Tests\Unit\DTO\Type\UuidType\Stub\UuidObjectProp;
 use Temporal\Tests\Unit\Internal\Marshaller\Fixture\PropertyType;
 
-final class UuidTypeTestCase extends TestCase
+final class UuidTypeTestCase extends DTOMarshallingTestCase
 {
-    private Marshaller $marshaller;
-
-    protected function setUp(): void
-    {
-        $this->marshaller = new Marshaller(new AttributeMapperFactory(new AttributeReader()));
-    }
-
     /**
      * @dataProvider matchDataProvider
      */
@@ -105,6 +97,33 @@ final class UuidTypeTestCase extends TestCase
                 NullableType::class,
                 new MarshallingRule(type: UuidType::class, of: UuidInterface::class),
             )
+        ];
+    }
+
+    public function testMarshalUuidDto(): void
+    {
+        $string = '5e71ffd6-36e7-4e72-b3a5-f62dc46d35eb';
+        $dto = new UuidObjectProp(Uuid::fromString($string));
+
+        $result = $this->marshal($dto);
+        $this->assertSame(['interface' => $string], $result);
+    }
+
+    public function testUnmarshalUuidDto(): void
+    {
+        $string = '5e71ffd6-36e7-4e72-b3a5-f62dc46d35eb';
+        $dto = $this->unmarshal([
+            'interface' => $string,
+        ], (new ReflectionClass(UuidObjectProp::class))->newInstanceWithoutConstructor());
+
+        $this->assertSame($string, $dto->interface->toString());
+    }
+
+
+    protected function getTypeMatchers(): array
+    {
+        return [
+            UuidType::class,
         ];
     }
 }

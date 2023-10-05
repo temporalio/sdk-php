@@ -57,6 +57,7 @@ final class StartWorkflow extends Route
             $payloads = EncodedValues::sliceValues($this->services->dataConverter, $payloads, 0, $offset);
         }
 
+        /** @var Input $input */
         $input = $this->services->marshaller->unmarshal($options, new Input());
         /** @psalm-suppress InaccessibleProperty */
         $input->input = $payloads;

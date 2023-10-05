@@ -62,6 +62,7 @@ class Decoder
         if (isset($data['payloads'])) {
             $payloads->mergeFromString(\base64_decode($data['payloads']));
         }
+
         $headers = new \Temporal\Api\Common\V1\Header();
         if (isset($data['header'])) {
             $headers->mergeFromString(\base64_decode($data['header']));

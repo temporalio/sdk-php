@@ -14,7 +14,6 @@ namespace Temporal\Internal\Workflow\Process;
 use JetBrains\PhpStorm\Pure;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DestructMemorizedInstanceException;
-use Temporal\Exception\InvalidArgumentException;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInboundInterceptor;
@@ -29,6 +28,8 @@ use Temporal\Workflow\ProcessInterface;
 
 /**
  * Root process scope.
+ *
+ * @implements ProcessInterface<mixed>
  */
 class Process extends Scope implements ProcessInterface
 {

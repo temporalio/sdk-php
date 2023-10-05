@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Workflow;
 
+use DateTimeInterface;
+use Ramsey\Uuid\UuidInterface;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use RuntimeException;
@@ -596,16 +598,6 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
         }
     }
 
-    /**
-     * Record last stack trace of the call.
-     *
-     * @return void
-     */
-    protected function recordTrace(): void
-    {
-        $this->trace = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
-    }
-
     public function resolveConditionGroup(string $conditionGroupId): void
     {
         unset($this->awaits[$conditionGroupId]);
@@ -614,6 +606,30 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
     public function rejectConditionGroup(string $conditionGroupId): void
     {
         unset($this->awaits[$conditionGroupId]);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function uuid(): PromiseInterface
+    {
+        return $this->sideEffect(static fn(): UuidInterface => \Ramsey\Uuid\Uuid::uuid4());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function uuid4(): PromiseInterface
+    {
+        return $this->sideEffect(static fn(): UuidInterface => \Ramsey\Uuid\Uuid::uuid4());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function uuid7(?DateTimeInterface $dateTime = null): PromiseInterface
+    {
+        return $this->sideEffect(static fn(): UuidInterface => \Ramsey\Uuid\Uuid::uuid7($dateTime));
     }
 
     /**
@@ -677,5 +693,15 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
         $this->awaits[$conditionGroupId][] = [$condition, $deferred];
 
         return $deferred->promise();
+    }
+
+    /**
+     * Record last stack trace of the call.
+     *
+     * @return void
+     */
+    protected function recordTrace(): void
+    {
+        $this->trace = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
     }
 }
