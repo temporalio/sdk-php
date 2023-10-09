@@ -76,7 +76,7 @@ final class Header implements HeaderInterface
      */
     public static function fromPayloadCollection(
         Traversable $payloads,
-        ?DataConverterInterface $dataConverter = null,
+        DataConverterInterface $dataConverter,
     ): self {
         \assert($payloads instanceof ArrayAccess);
 
@@ -95,6 +95,9 @@ final class Header implements HeaderInterface
         return new self();
     }
 
+    /**
+     * @internal
+     */
     public function setDataConverter(DataConverterInterface $converter): void
     {
         $this->converter = $converter;
@@ -141,6 +144,9 @@ final class Header implements HeaderInterface
         return $clone;
     }
 
+    /**
+     * @internal
+     */
     public function toHeader(): ProtoHeader
     {
         return new ProtoHeader(['fields' => $this->toProtoCollection()]);

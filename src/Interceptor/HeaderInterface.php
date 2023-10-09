@@ -49,14 +49,14 @@ interface HeaderInterface extends \Countable, IteratorAggregate
     /**
      * Make a protobuf Header message.
      *
-     * @return Header
+     * @internal
      */
     public function toHeader(): Header;
 
     /**
      * @param DataConverterInterface $converter
      *
-     * @internal Might be removed in the future.
+     * @internal
      */
     public function setDataConverter(DataConverterInterface $converter);
 }

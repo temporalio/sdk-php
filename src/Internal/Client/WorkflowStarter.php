@@ -69,7 +69,6 @@ final class WorkflowStarter
         array $args = [],
     ): WorkflowExecution {
         $header = Header::empty();
-        $header->setDataConverter($this->converter);
         $arguments = EncodedValues::fromValues($args, $this->converter);
 
         return $this->interceptors->with(
@@ -102,7 +101,6 @@ final class WorkflowStarter
         array $startArgs = [],
     ): WorkflowExecution {
         $header = Header::empty();
-        $header->setDataConverter($this->converter);
         $arguments = EncodedValues::fromValues($startArgs, $this->converter);
         $signalArguments = EncodedValues::fromValues($signalArgs, $this->converter);
 

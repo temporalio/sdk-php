@@ -45,6 +45,11 @@ interface RequestInterface extends CommandInterface
     public function getFailure(): ?\Throwable;
 
     /**
+     * @return HeaderInterface
+     */
+    public function getHeader(): HeaderInterface;
+
+    /**
      * @psalm-external-mutation-free
      */
     public function withHeader(HeaderInterface $header): self;
