@@ -12,8 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Interceptor;
 
 use IteratorAggregate;
-use Temporal\Api\Common\V1\Header;
-use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\Type;
 
 /**
@@ -21,7 +19,7 @@ use Temporal\DataConverter\Type;
  * @psalm-type TValue=mixed
  * @psalm-import-type TypeEnum from Type
  *
- * @extends IteratorAggregate<TKey, string>
+ * @extends IteratorAggregate<TKey, TValue>
  */
 interface HeaderInterface extends \Countable, IteratorAggregate
 {
@@ -45,18 +43,4 @@ interface HeaderInterface extends \Countable, IteratorAggregate
      * @psalm-mutation-free
      */
     public function withValue(int|string $key, mixed $value): self;
-
-    /**
-     * Make a protobuf Header message.
-     *
-     * @internal
-     */
-    public function toHeader(): Header;
-
-    /**
-     * @param DataConverterInterface $converter
-     *
-     * @internal
-     */
-    public function setDataConverter(DataConverterInterface $converter);
 }

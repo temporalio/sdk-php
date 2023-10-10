@@ -56,10 +56,8 @@ final class Header implements HeaderInterface
 
     /**
      * @param array<TKey, scalar|\Stringable> $values
-     *
-     * @return static
      */
-    public static function fromValues(array $values): self
+    public static function fromValues(array $values): HeaderInterface
     {
         $ev = new self();
         foreach ($values as $key => $value) {
@@ -69,17 +67,10 @@ final class Header implements HeaderInterface
         return $ev;
     }
 
-    /**
-     * @param ArrayAccess&Traversable $payloads
-     *
-     * @return static
-     */
     public static function fromPayloadCollection(
-        Traversable $payloads,
+        ArrayAccess&Traversable $payloads,
         DataConverterInterface $dataConverter,
     ): self {
-        \assert($payloads instanceof ArrayAccess);
-
         $ev = new self();
         $ev->payloads = $payloads;
         $ev->converter = $dataConverter;
@@ -87,25 +78,11 @@ final class Header implements HeaderInterface
         return $ev;
     }
 
-    /**
-     * @return static
-     */
-    public static function empty(): self
+    public static function empty(): HeaderInterface
     {
         return new self();
     }
 
-    /**
-     * @internal
-     */
-    public function setDataConverter(DataConverterInterface $converter): void
-    {
-        $this->converter = $converter;
-    }
-
-    /**
-     * @return Traversable<TKey, TValue>
-     */
     public function getIterator(): Traversable
     {
         yield from $this->values;
@@ -145,14 +122,6 @@ final class Header implements HeaderInterface
     }
 
     /**
-     * @internal
-     */
-    public function toHeader(): ProtoHeader
-    {
-        return new ProtoHeader(['fields' => $this->toProtoCollection()]);
-    }
-
-    /**
      * @return int<0, max>
      */
     public function count(): int
@@ -163,6 +132,24 @@ final class Header implements HeaderInterface
     public function isEmpty(): bool
     {
         return $this->count() === 0;
+    }
+
+    /**
+     * @internal
+     */
+    public function setDataConverter(DataConverterInterface $converter): void
+    {
+        $this->converter = $converter;
+    }
+
+    /**
+     * Build a {@see ProtoHeader} message.
+     *
+     * @internal
+     */
+    public function toHeader(): ProtoHeader
+    {
+        return new ProtoHeader(['fields' => $this->toProtoCollection()]);
     }
 
     /**
