@@ -90,7 +90,7 @@ interface WorkflowClientInterface
      * Returns workflow stub associated with running workflow.
      *
      * @psalm-template T of object
-     * @param string $class
+     * @param class-string<T> $class
      * @param string $workflowID
      * @param string|null $runID
      * @return T
