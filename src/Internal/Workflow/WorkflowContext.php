@@ -104,8 +104,6 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
             ->getPipeline(WorkflowOutboundRequestInterceptor::class);
         $this->callsInterceptor =  $services->interceptorProvider
             ->getPipeline(WorkflowOutboundCallsInterceptor::class);
-
-        $this->input->header->setDataConverter($services->dataConverter);
     }
 
     /**
@@ -162,7 +160,6 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
         $clone->awaits = &$this->awaits;
         $clone->trace = &$this->trace;
         $clone->input = $input;
-        $input->header->setDataConverter($this->services->dataConverter);
         return $clone;
     }
 
@@ -506,12 +503,10 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
     public function request(RequestInterface $request, bool $cancellable = true): PromiseInterface
     {
         $this->recordTrace();
-        $request->getHeader()->setDataConverter($this->services->dataConverter);
 
         // Intercept workflow outbound calls
         return $this->requestInterceptor->with(
             function (RequestInterface $request): PromiseInterface {
-                $request->getHeader()->setDataConverter($this->services->dataConverter);
                 return $this->client->request($request, $this->getInfo());
             },
             /** @see WorkflowOutboundRequestInterceptor::handleOutboundRequest() */

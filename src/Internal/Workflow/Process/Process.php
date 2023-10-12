@@ -74,8 +74,6 @@ class Process extends Scope implements ProcessInterface
 
                 $inboundPipeline->with(
                     function (SignalInput $input) use ($handler) {
-                        $input->header->setDataConverter($this->services->dataConverter);
-
                         $this->createScope(
                             true,
                             LoopInterface::ON_SIGNAL,
@@ -139,19 +137,13 @@ class Process extends Scope implements ProcessInterface
         return $this->runId;
     }
 
-    /**
-     * @return WorkflowInstanceInterface
-     */
     #[Pure]
     public function getWorkflowInstance(): WorkflowInstanceInterface
     {
         return $this->getContext()->getWorkflowInstance();
     }
 
-    /**
-     * @param $result
-     */
-    protected function complete($result): void
+    protected function complete(mixed $result): void
     {
         if ($result instanceof \Throwable) {
             if ($result instanceof DestructMemorizedInstanceException) {

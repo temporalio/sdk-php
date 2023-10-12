@@ -69,7 +69,6 @@ final class WorkflowStarter
         array $args = [],
     ): WorkflowExecution {
         $header = Header::empty();
-        $header->setDataConverter($this->converter);
         $arguments = EncodedValues::fromValues($args, $this->converter);
 
         return $this->interceptors->with(
@@ -102,7 +101,6 @@ final class WorkflowStarter
         array $startArgs = [],
     ): WorkflowExecution {
         $header = Header::empty();
-        $header->setDataConverter($this->converter);
         $arguments = EncodedValues::fromValues($startArgs, $this->converter);
         $signalArguments = EncodedValues::fromValues($signalArgs, $this->converter);
 
@@ -182,7 +180,10 @@ final class WorkflowStarter
         StartInput $input,
     ): StartWorkflowExecutionRequest|SignalWithStartWorkflowExecutionRequest {
         $options = $input->options;
-        $input->header->setDataConverter($this->converter);
+        $header = $input->header;
+
+        \assert($header instanceof Header);
+        $header->setDataConverter($this->converter);
 
         $req->setRequestId(Uuid::v4())
             ->setIdentity($this->clientOptions->identity)
@@ -198,7 +199,7 @@ final class WorkflowStarter
             ->setWorkflowTaskTimeout(DateInterval::toDuration($options->workflowTaskTimeout))
             ->setMemo($options->toMemo($this->converter))
             ->setSearchAttributes($options->toSearchAttributes($this->converter))
-            ->setHeader($input->header->toHeader());
+            ->setHeader($header->toHeader());
 
         if ($req instanceof StartWorkflowExecutionRequest) {
             $req->setRequestEagerExecution($options->eagerStart);

@@ -14,6 +14,7 @@ namespace Temporal\Worker\Transport\Codec\ProtoCodec;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\Failure\FailureConverter;
 use RoadRunner\Temporal\DTO\V1\Message;
+use Temporal\Interceptor\Header;
 use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\FailureResponseInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
@@ -49,8 +50,11 @@ class Encoder
         switch (true) {
             case $cmd instanceof RequestInterface:
                 $cmd->getPayloads()->setDataConverter($this->converter);
-                $cmd->getHeader()->setDataConverter($this->converter);
                 $msg->setId($cmd->getID());
+
+                $header = $cmd->getHeader();
+                \assert($header instanceof Header);
+                $header->setDataConverter($this->converter);
 
                 $options = $cmd->getOptions();
                 if ($options === []) {
@@ -60,7 +64,7 @@ class Encoder
                 $msg->setCommand($cmd->getName());
                 $msg->setOptions(\json_encode($options));
                 $msg->setPayloads($cmd->getPayloads()->toPayloads());
-                $msg->setHeader($cmd->getHeader()->toHeader());
+                $msg->setHeader($header->toHeader());
 
                 if ($cmd->getFailure() !== null) {
                     $msg->setFailure(FailureConverter::mapExceptionToFailure($cmd->getFailure(), $this->converter));

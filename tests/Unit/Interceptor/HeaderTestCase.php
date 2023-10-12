@@ -25,6 +25,7 @@ class HeaderTestCase extends UnitTestCase
     public function testToHeaderFromValuesWithoutConverterException(): void
     {
         $header = Header::empty()->withValue('foo', 'bar');
+        \assert($header instanceof Header);
 
         $this->assertCount(1, $header);
         $this->assertSame('bar', $header->getValue('foo'));
@@ -37,6 +38,7 @@ class HeaderTestCase extends UnitTestCase
     {
         $converter = $this->getDataConverter();
         $header = Header::empty()->withValue('foo', 'bar');
+        \assert($header instanceof Header);
         $header->setDataConverter($converter);
 
         $this->assertCount(1, $header);
@@ -73,6 +75,7 @@ class HeaderTestCase extends UnitTestCase
     public function testOverwriteProtoWithValue(): void
     {
         $header = Header::fromValues(['foo' => 'bar']);
+        \assert($header instanceof Header);
         $header->setDataConverter($this->getDataConverter());
         $protoCollection = $header->toHeader()->getFields();
 
@@ -92,6 +95,7 @@ class HeaderTestCase extends UnitTestCase
     public function testProtoWithValue(): void
     {
         $header = Header::fromValues(['foo' => 'bar']);
+        \assert($header instanceof Header);
         $header->setDataConverter($this->getDataConverter());
         $protoCollection = $header->toHeader()->getFields();
 
@@ -107,6 +111,7 @@ class HeaderTestCase extends UnitTestCase
     public function testEmptyHeaderToProtoPackable(): void
     {
         $collection = Header::empty();
+        \assert($collection instanceof Header);
 
         $header = $collection->toHeader();
         $header->serializeToString();
@@ -118,6 +123,7 @@ class HeaderTestCase extends UnitTestCase
     {
         $converter = $this->getDataConverter();
         $header = Header::fromValues(['foo' => 'bar']);
+        \assert($header instanceof Header);
         $header->setDataConverter($converter);
 
         $collection = $header->toHeader()->getFields();

@@ -95,7 +95,6 @@ class InvokeActivity extends Route
                 ->getPipeline(ActivityInboundInterceptor::class)
                 ->with(
                     static function (ActivityInput $input) use ($handler, $context): mixed {
-                        $input->header->setDataConverter($context->getDataConverter());
                         Activity::setCurrentContext(
                             $context->withInput($input->arguments)->withHeader($input->header),
                         );
