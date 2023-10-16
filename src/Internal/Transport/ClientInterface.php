@@ -14,17 +14,17 @@ namespace Temporal\Internal\Transport;
 use React\Promise\PromiseInterface;
 use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
-use Temporal\Workflow\WorkflowInfo;
+use Temporal\Workflow\WorkflowContextInterface;
 
 interface ClientInterface
 {
     /**
      * @param RequestInterface $request
-     * @param null|WorkflowInfo $workflowInfo
+     * @param null|WorkflowContextInterface $context
      *
      * @return PromiseInterface
      */
-    public function request(RequestInterface $request, ?WorkflowInfo $workflowInfo = null): PromiseInterface;
+    public function request(RequestInterface $request, ?WorkflowContextInterface $context = null): PromiseInterface;
 
     /**
      * @param CommandInterface $command
