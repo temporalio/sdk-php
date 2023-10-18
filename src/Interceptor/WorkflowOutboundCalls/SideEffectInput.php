@@ -1,16 +1,19 @@
 <?php
 
+/**
+ * This file is part of Temporal package.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Temporal\Interceptor\WorkflowOutboundCalls;
 
-use Closure;
-use JetBrains\PhpStorm\Immutable;
-
 /**
  * @psalm-immutable
  */
-#[Immutable]
 final class SideEffectInput
 {
     /**
@@ -18,13 +21,12 @@ final class SideEffectInput
      * @internal Don't use the constructor. Use {@see self::with()} instead.
      */
     public function __construct(
-        #[Immutable]
-        public Closure $callable,
+        public readonly \Closure $callable,
     ) {
     }
 
     public function with(
-        ?Closure $callable = null,
+        ?\Closure $callable = null,
     ): self {
         return new self(
             $callable ?? $this->callable,

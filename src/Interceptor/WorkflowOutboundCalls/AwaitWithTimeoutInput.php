@@ -1,17 +1,22 @@
 <?php
 
+/**
+ * This file is part of Temporal package.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Temporal\Interceptor\WorkflowOutboundCalls;
 
 use DateInterval;
-use JetBrains\PhpStorm\Immutable;
 use React\Promise\PromiseInterface;
 
 /**
  * @psalm-immutable
  */
-#[Immutable]
 final class AwaitWithTimeoutInput
 {
     /**
@@ -21,10 +26,8 @@ final class AwaitWithTimeoutInput
      * @param array<callable|PromiseInterface> $conditions
      */
     public function __construct(
-        #[Immutable]
-        public DateInterval $interval,
-        #[Immutable]
-        public array $conditions,
+        public readonly DateInterval $interval,
+        public readonly array $conditions,
     ) {
     }
 

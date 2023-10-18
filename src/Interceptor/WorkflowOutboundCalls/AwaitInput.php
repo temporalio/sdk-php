@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace Temporal\Interceptor\WorkflowOutboundCalls;
 
-use JetBrains\PhpStorm\Immutable;
 use React\Promise\PromiseInterface;
 
 /**
  * @psalm-immutable
  */
-#[Immutable]
 final class AwaitInput
 {
     /**
@@ -20,8 +18,7 @@ final class AwaitInput
      * @param array<callable|PromiseInterface> $conditions
      */
     public function __construct(
-        #[Immutable]
-        public array $conditions,
+        public readonly array $conditions,
     ) {
     }
 

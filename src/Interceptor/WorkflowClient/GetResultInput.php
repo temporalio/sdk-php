@@ -9,13 +9,11 @@
 
 namespace Temporal\Interceptor\WorkflowClient;
 
-use JetBrains\PhpStorm\Immutable;
 use Temporal\Workflow\WorkflowExecution;
 
 /**
  * @psalm-immutable
  */
-#[Immutable]
 class GetResultInput
 {
     /**
@@ -23,14 +21,10 @@ class GetResultInput
      * @internal Don't use the constructor. Use {@see self::with()} instead.
      */
     public function __construct(
-        #[Immutable]
-        public WorkflowExecution $workflowExecution,
-        #[Immutable]
-        public ?string $workflowType,
-        #[Immutable]
-        public ?int $timeout,
-        #[Immutable]
-        public mixed $type,
+        public readonly WorkflowExecution $workflowExecution,
+        public readonly ?string $workflowType,
+        public readonly ?int $timeout,
+        public readonly mixed $type,
     ) {
     }
 

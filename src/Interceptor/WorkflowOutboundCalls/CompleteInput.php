@@ -1,15 +1,19 @@
 <?php
 
+/**
+ * This file is part of Temporal package.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Temporal\Interceptor\WorkflowOutboundCalls;
 
-use JetBrains\PhpStorm\Immutable;
-
 /**
  * @psalm-immutable
  */
-#[Immutable]
 final class CompleteInput
 {
     /**
@@ -17,10 +21,8 @@ final class CompleteInput
      * @internal Don't use the constructor. Use {@see self::with()} instead.
      */
     public function __construct(
-        #[Immutable]
-        public ?array $result,
-        #[Immutable]
-        public ?\Throwable $failure,
+        public readonly ?array $result,
+        public readonly ?\Throwable $failure,
     ) {
     }
 

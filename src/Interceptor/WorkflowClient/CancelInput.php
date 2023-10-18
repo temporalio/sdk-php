@@ -9,13 +9,11 @@
 
 namespace Temporal\Interceptor\WorkflowClient;
 
-use JetBrains\PhpStorm\Immutable;
 use Temporal\Workflow\WorkflowExecution;
 
 /**
  * @psalm-immutable
  */
-#[Immutable]
 class CancelInput
 {
     /**
@@ -23,8 +21,7 @@ class CancelInput
      * @internal Don't use the constructor. Use {@see self::with()} instead.
      */
     public function __construct(
-        #[Immutable]
-        public WorkflowExecution $workflowExecution,
+        public readonly WorkflowExecution $workflowExecution,
     ) {
     }
 

@@ -9,13 +9,11 @@
 
 namespace Temporal\Interceptor\WorkflowClient;
 
-use JetBrains\PhpStorm\Immutable;
 use Temporal\DataConverter\ValuesInterface;
 
 /**
  * @psalm-immutable
  */
-#[Immutable]
 class SignalWithStartInput
 {
     /**
@@ -23,12 +21,9 @@ class SignalWithStartInput
      * @internal Don't use the constructor. Use {@see self::with()} instead.
      */
     public function __construct(
-        #[Immutable]
-        public StartInput $workflowStartInput,
-        #[Immutable]
-        public string $signalName,
-        #[Immutable]
-        public ValuesInterface $signalArguments,
+        public readonly StartInput $workflowStartInput,
+        public readonly string $signalName,
+        public readonly ValuesInterface $signalArguments,
     ) {
     }
 

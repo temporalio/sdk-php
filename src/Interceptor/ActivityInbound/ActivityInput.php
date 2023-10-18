@@ -9,14 +9,12 @@
 
 namespace Temporal\Interceptor\ActivityInbound;
 
-use JetBrains\PhpStorm\Immutable;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\HeaderInterface;
 
 /**
  * @psalm-immutable
  */
-#[Immutable]
 class ActivityInput
 {
     /**
@@ -24,10 +22,8 @@ class ActivityInput
      * @internal Don't use the constructor. Use {@see self::with()} instead.
      */
     public function __construct(
-        #[Immutable]
-        public ValuesInterface $arguments,
-        #[Immutable]
-        public HeaderInterface $header,
+        public readonly ValuesInterface $arguments,
+        public readonly HeaderInterface $header,
     ) {
     }
 

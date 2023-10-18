@@ -9,7 +9,6 @@
 
 namespace Temporal\Interceptor\WorkflowInbound;
 
-use JetBrains\PhpStorm\Immutable;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\HeaderInterface;
 use Temporal\Workflow\WorkflowInfo;
@@ -17,7 +16,6 @@ use Temporal\Workflow\WorkflowInfo;
 /**
  * @psalm-immutable
  */
-#[Immutable]
 class WorkflowInput
 {
     /**
@@ -25,12 +23,9 @@ class WorkflowInput
      * @internal Don't use the constructor. Use {@see self::with()} instead.
      */
     public function __construct(
-        #[Immutable]
-        public WorkflowInfo $info,
-        #[Immutable]
-        public ValuesInterface $arguments,
-        #[Immutable]
-        public HeaderInterface $header,
+        public readonly WorkflowInfo $info,
+        public readonly ValuesInterface $arguments,
+        public readonly HeaderInterface $header,
     ) {
     }
 
