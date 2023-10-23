@@ -361,7 +361,7 @@ final class Workflow extends Facade
      * The same method ({@see WorkflowStubInterface::signal()}) should be used
      * to call such signal handlers as in the case of ordinary signal methods.
      *
-     * @param string $queryType
+     * @param non-empty-string $queryType
      * @param callable $handler
      * @return ScopedContextInterface
      * @throws OutOfContextException in the absence of the workflow execution context.

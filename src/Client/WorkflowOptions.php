@@ -154,7 +154,7 @@ final class WorkflowOptions extends Options
      * @param MethodRetry|null $retry
      * @param CronSchedule|null $cron
      *
-     * @return self return new {@see self} instance with merged options
+     * @return self return a new {@see self} instance with merged options
      */
     public function mergeWith(MethodRetry $retry = null, CronSchedule $cron = null): self
     {

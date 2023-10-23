@@ -119,7 +119,7 @@ interface WorkflowClientInterface
     ): WorkflowStubInterface;
 
     /**
-     * Creates new {@link ActivityCompletionClient} that can be used to complete activities
+     * Creates a new {@link ActivityCompletionClient} that can be used to complete activities
      * asynchronously. Only relevant for activity implementations that called {@link
      * ActivityContext->doNotCompleteOnReturn()}.
      *

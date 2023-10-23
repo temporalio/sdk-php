@@ -32,7 +32,7 @@ use Temporal\Internal\Interceptor\Interceptor;
 /**
  * Interceptor for outbound workflow calls.
  *
- * It recommended to use {@see WorkflowOutboundCallsInterceptorTrait} when implementing this interface because
+ * It's recommended to use {@see WorkflowOutboundCallsInterceptorTrait} when implementing this interface because
  * the interface might be extended in the future. The trait will provide forward compatibility.
  *
  * @psalm-immutable

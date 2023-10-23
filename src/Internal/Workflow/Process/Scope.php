@@ -326,12 +326,7 @@ class Scope implements CancellationScopeInterface
         $deferred->promise()->then($cleanup, $cleanup);
     }
 
-    /**
-     * @param bool        $detached
-     * @param string|null $layer
-     * @return self
-     */
-    protected function createScope(bool $detached, string $layer = null, WorkflowContextInterface $context = null): self
+    protected function createScope(bool $detached, ?string $layer = null, WorkflowContext $context = null): self
     {
         $scope = new Scope($this->services, $context ?? $this->context);
         $scope->detached = $detached;
@@ -421,6 +416,7 @@ class Scope implements CancellationScopeInterface
                 $this->context->getClient()->cancel($request);
                 return;
             }
+            // todo ->context or ->scopeContext?
 
             $this->context->getClient()->request(new Cancel($request->getID()), $this->scopeContext);
         };
@@ -470,6 +466,7 @@ class Scope implements CancellationScopeInterface
                 $this->nextPromise($current->promise());
                 break;
 
+                // todo ->context or ->scopeContext?
             case $current instanceof RequestInterface:
                 $this->nextPromise($this->context->getClient()->request($current, $this->scopeContext));
                 break;
