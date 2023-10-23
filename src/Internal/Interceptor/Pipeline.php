@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Internal\Interceptor;
 
 use Closure;
-use Temporal\Exception\InterceptorCallException;
 
 /**
  * Pipeline is a processor for interceptors chain.
@@ -96,14 +95,10 @@ final class Pipeline
             return ($this->last)(...$arguments);
         }
 
-        try {
-            $next = $this->next();
-            $arguments[] = $next;
+        $next = $this->next();
+        $arguments[] = $next;
 
-            return $interceptor->{$this->method}(...$arguments);
-        } catch (\Throwable $e) {
-            throw new InterceptorCallException(previous: $e);
-        }
+        return $interceptor->{$this->method}(...$arguments);
     }
 
     private function next(): self

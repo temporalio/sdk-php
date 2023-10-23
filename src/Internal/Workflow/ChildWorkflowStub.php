@@ -89,7 +89,7 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
 
         $started = $this->request(new GetChildWorkflowExecution($this->request))
             ->then(
-                function (ValuesInterface $values) {
+                function (ValuesInterface $values): mixed {
                     $execution = $values->getValue(0, WorkflowExecution::class);
                     $this->execution->resolve($execution);
 
