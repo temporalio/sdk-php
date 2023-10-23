@@ -422,7 +422,7 @@ class Scope implements CancellationScopeInterface
                 return;
             }
 
-            $this->context->getClient()->request(new Cancel($request->getID()));
+            $this->context->getClient()->request(new Cancel($request->getID()), $this->scopeContext);
         };
 
         $cancelID = $this->cancelID;
@@ -471,7 +471,7 @@ class Scope implements CancellationScopeInterface
                 break;
 
             case $current instanceof RequestInterface:
-                $this->nextPromise($this->context->getClient()->request($current, $this->scopeContext->getInfo()));
+                $this->nextPromise($this->context->getClient()->request($current, $this->scopeContext));
                 break;
 
             case $current instanceof \Generator:

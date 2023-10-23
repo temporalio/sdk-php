@@ -33,8 +33,15 @@ final class ActivityPrototype extends Prototype
 
     private bool $isLocalActivity;
 
-    public function __construct(ActivityInterface $interface, string $name, \ReflectionMethod $handler, \ReflectionClass $class)
-    {
+    /**
+     * @param non-empty-string $name
+     */
+    public function __construct(
+        ActivityInterface $interface,
+        string $name,
+        \ReflectionMethod $handler,
+        \ReflectionClass $class,
+    ) {
         $this->isLocalActivity = $interface instanceof LocalActivityInterface;
 
         parent::__construct($name, $handler, $class);

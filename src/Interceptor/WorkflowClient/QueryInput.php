@@ -9,14 +9,12 @@
 
 namespace Temporal\Interceptor\WorkflowClient;
 
-use JetBrains\PhpStorm\Immutable;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Workflow\WorkflowExecution;
 
 /**
  * @psalm-immutable
  */
-#[Immutable]
 class QueryInput
 {
     /**
@@ -24,14 +22,10 @@ class QueryInput
      * @internal Don't use the constructor. Use {@see self::with()} instead.
      */
     public function __construct(
-        #[Immutable]
-        public WorkflowExecution $workflowExecution,
-        #[Immutable]
-        public ?string $workflowType,
-        #[Immutable]
-        public string $queryType,
-        #[Immutable]
-        public ValuesInterface $arguments,
+        public readonly WorkflowExecution $workflowExecution,
+        public readonly ?string $workflowType,
+        public readonly string $queryType,
+        public readonly ValuesInterface $arguments,
     ) {
     }
 

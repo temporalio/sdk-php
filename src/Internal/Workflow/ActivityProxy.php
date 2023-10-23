@@ -81,20 +81,39 @@ final class ActivityProxy extends Proxy
         $options = $this->options->mergeWith($handler->getMethodRetry());
 
         return $handler->isLocalActivity()
+            // Run local activity through an interceptor pipeline
             ? $this->callsInterceptor->with(
                 fn(ExecuteLocalActivityInput $input): PromiseInterface => $this->ctx
                     ->newUntypedActivityStub($input->options)
                     ->execute($input->type, $input->args, $input->returnType),
                 /** @see WorkflowOutboundCallsInterceptor::executeLocalActivity() */
                 'executeLocalActivity',
-            )(new ExecuteLocalActivityInput($handler->getID(), $args, $options, $type))
+            )(
+                new ExecuteLocalActivityInput(
+                    $handler->getID(),
+                    $args,
+                    $options,
+                    $type,
+                    $handler->getHandler(),
+                )
+            )
+
+            // Run activity through an interceptor pipeline
             : $this->callsInterceptor->with(
                 fn(ExecuteActivityInput $input): PromiseInterface => $this->ctx
                     ->newUntypedActivityStub($input->options)
                     ->execute($input->type, $input->args, $input->returnType),
                 /** @see WorkflowOutboundCallsInterceptor::executeActivity() */
                 'executeActivity',
-            )(new ExecuteActivityInput($handler->getID(), $args, $options, $type));
+            )(
+                new ExecuteActivityInput(
+                    $handler->getID(),
+                    $args,
+                    $options,
+                    $type,
+                    $handler->getHandler(),
+                )
+            );
     }
 
     /**

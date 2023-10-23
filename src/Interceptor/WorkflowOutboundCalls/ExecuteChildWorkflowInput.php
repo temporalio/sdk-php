@@ -1,16 +1,21 @@
 <?php
 
+/**
+ * This file is part of Temporal package.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 declare(strict_types=1);
 
 namespace Temporal\Interceptor\WorkflowOutboundCalls;
 
-use JetBrains\PhpStorm\Immutable;
 use Temporal\Workflow\ChildWorkflowOptions;
 
 /**
  * @psalm-immutable
  */
-#[Immutable]
 final class ExecuteChildWorkflowInput
 {
     /**
@@ -18,14 +23,10 @@ final class ExecuteChildWorkflowInput
      * @internal Don't use the constructor. Use {@see self::with()} instead.
      */
     public function __construct(
-        #[Immutable]
-        public string $type,
-        #[Immutable]
-        public array $args = [],
-        #[Immutable]
-        public ?ChildWorkflowOptions $options = null,
-        #[Immutable]
-        public mixed $returnType = null,
+        public readonly string $type,
+        public readonly array $args = [],
+        public readonly ?ChildWorkflowOptions $options = null,
+        public readonly mixed $returnType = null,
     ) {
     }
 
