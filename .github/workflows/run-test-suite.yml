@@ -13,7 +13,7 @@ on:
       test-timeout:
         required: false
         type: number
-        default: 15
+        default: 30
       run-temporal-test-server:
         required: false
         type: boolean
@@ -40,21 +40,25 @@ on:
 
 jobs:
   test:
-    name: (PHP ${{ matrix.php }}, OS ${{ matrix.os }}, with ${{ matrix.dependencies }} deps
+    name: (PHP ${{ matrix.php }}, ${{ matrix.os }}, ${{ matrix.dependencies }} deps
     runs-on: ${{ matrix.os }}
-    timeout-minutes: ${{ inputs.test-timeout }}
+    timeout-minutes: ${{ matrix.timeout-minutes }}
     env: {GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'}
     strategy:
       fail-fast: ${{ inputs.fail-fast }}
       matrix:
-        php: [ 8.1, 8.2, 8.3 ]
+        php: [ 8.1, 8.2 ]
         os: [ ubuntu-latest, windows-latest ]
         dependencies: [ lowest , highest ]
+        timeout-minutes: [ '${{ inputs.test-timeout }}' ]
         exclude:
           - os: windows-latest
             php: 8.2
-          - os: windows-latest
+        include:
+          - os: ubuntu-latest
             php: 8.3
+            dependencies: highest
+            timeout-minutes: 40
     steps:
       - name: Set Git To Use LF
         run: |
@@ -69,7 +73,7 @@ jobs:
           extensions: dom, sockets, grpc, curl
 
       - name: Check Out Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
