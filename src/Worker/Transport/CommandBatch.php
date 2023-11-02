@@ -16,7 +16,7 @@ namespace Temporal\Worker\Transport;
  */
 final class CommandBatch
 {
-    public ?string $messages;
+    public string $messages;
     public array $context;
 
     /**

@@ -39,7 +39,7 @@ final class WorkflowInfo
     public WorkflowType $type;
 
     /**
-     * @var string
+     * @var non-empty-string
      */
     #[Marshal(name: 'TaskQueueName')]
     public string $taskQueue = WorkerFactoryInterface::DEFAULT_TASK_QUEUE;

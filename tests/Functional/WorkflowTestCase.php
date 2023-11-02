@@ -239,7 +239,7 @@ class WorkflowTestCase extends FunctionalTestCase
         $uuid2 = Uuid::v4();
         $log = <<<LOG
             2021/01/12 15:21:52	[97mDEBUG[0m	[{"command":"StartWorkflow","options":{"info":{"WorkflowExecution":{"ID":"$uuid1","RunID":"$uuid2"},"WorkflowType":{"Name":"AwaitWithTimeoutWorkflow"},"TaskQueueName":"default","WorkflowExecutionTimeout":315360000000000000,"WorkflowRunTimeout":315360000000000000,"WorkflowTaskTimeout":0,"Namespace":"default","Attempt":1,"CronSchedule":"","ContinuedExecutionRunID":"","ParentWorkflowNamespace":"","ParentWorkflowExecution":null,"Memo":null,"SearchAttributes":null,"BinaryChecksum":"4301710877bf4b107429ee12de0922be"}},"payloads":"CicKFgoIZW5jb2RpbmcSCmpzb24vcGxhaW4SDSJIZWxsbyBXb3JsZCI="}] {"taskQueue":"default","tickTime":"2021-01-12T15:21:52.2672785Z"}
-            2021/01/12 15:21:52	[97mDEBUG[0m	[{"id":$id,"command":"NewTimer","options":{"ms":999000},"payloads":""},{"payloads":"ChkKFwoIZW5jb2RpbmcSC2JpbmFyeS9udWxs"}]	{"receive": true}
+            2021/01/12 15:21:52	[97mDEBUG[0m	[{"id":$id,"command":"NewTimer","options":{"ms":999000},"payloads":"","header":""},{"payloads":"ChkKFwoIZW5jb2RpbmcSC2JpbmFyeS9udWxs"}]	{"receive": true}
             2021/01/12 15:21:53	[97mDEBUG[0m	[{"command":"DestroyWorkflow","options":{"runId":"$uuid2"}}] {"taskQueue":"default","tickTime":"2021-01-12T15:21:53.3838443Z","replay":true}
             2021/01/12 15:21:53	[97mDEBUG[0m	[{"payloads":"ChkKFwoIZW5jb2RpbmcSC2JpbmFyeS9udWxs"}]	{"receive": true}
             LOG;
@@ -264,7 +264,7 @@ class WorkflowTestCase extends FunctionalTestCase
             $log = <<<LOG
                 [0m	[{"command":"StartWorkflow","options":{"info":{"WorkflowExecution":{"ID":"$uuid1","RunID":"$uuid2"},"WorkflowType":{"Name":"AwaitWithTimeoutWorkflow"},"TaskQueueName":"default","WorkflowExecutionTimeout":315360000000000000,"WorkflowRunTimeout":315360000000000000,"WorkflowTaskTimeout":0,"Namespace":"default","Attempt":1,"CronSchedule":"","ContinuedExecutionRunID":"","ParentWorkflowNamespace":"","ParentWorkflowExecution":null,"Memo":null,"SearchAttributes":null,"BinaryChecksum":"4301710877bf4b107429ee12de0922be"}},"payloads":"CicKFgoIZW5jb2RpbmcSCmpzb24vcGxhaW4SDSJIZWxsbyBXb3JsZCI="}] {"taskQueue":"default","tickTime":"2021-01-12T15:21:52.2672785Z"}
                 # Run a timers
-                [0m	[{"id":$id,"command":"NewTimer","options":{"ms":999000},"payloads":""},{"payloads":"ChkKFwoIZW5jb2RpbmcSC2JpbmFyeS9udWxs"}]	{"receive": true}
+                [0m	[{"id":$id,"command":"NewTimer","options":{"ms":999000},"payloads":"","header":""},{"payloads":"ChkKFwoIZW5jb2RpbmcSC2JpbmFyeS9udWxs"}]	{"receive": true}
                 # Destroy workflow
                 [0m	[{"command":"DestroyWorkflow","options":{"runId":"$uuid2"}}] {"taskQueue":"default","tickTime":"2021-01-12T15:21:53.3838443Z","replay":true}
                 [0m	[{"payloads":"ChkKFwoIZW5jb2RpbmcSC2JpbmFyeS9udWxs"}]	{"receive": true}
@@ -298,10 +298,10 @@ class WorkflowTestCase extends FunctionalTestCase
             $id4 = ++$id;
             $log = <<<LOG
                 [0m	[{"command":"StartWorkflow","options":{"info":{"WorkflowExecution":{"ID":"$uuid1","RunID":"$uuid2"},"WorkflowType":{"Name":"AwaitWithTimeoutWorkflow"},"TaskQueueName":"default","WorkflowExecutionTimeout":315360000000000000,"WorkflowRunTimeout":315360000000000000,"WorkflowTaskTimeout":0,"Namespace":"default","Attempt":1,"CronSchedule":"","ContinuedExecutionRunID":"","ParentWorkflowNamespace":"","ParentWorkflowExecution":null,"Memo":null,"SearchAttributes":null,"BinaryChecksum":"4301710877bf4b107429ee12de0922be"}},"payloads":"CicKFgoIZW5jb2RpbmcSCmpzb24vcGxhaW4SDSJIZWxsbyBXb3JsZCI="}] {"taskQueue":"default","tickTime":"2021-01-12T15:21:52.2672785Z"}
-                [0m	[{"id":$id1,"command":"NewTimer","options":{"ms":999000},"payloads":""},{"payloads":"ChkKFwoIZW5jb2RpbmcSC2JpbmFyeS9udWxs"}]	{"receive": true}
+                [0m	[{"id":$id1,"command":"NewTimer","options":{"ms":999000},"payloads":"","header":""},{"payloads":"ChkKFwoIZW5jb2RpbmcSC2JpbmFyeS9udWxs"}]	{"receive": true}
                 [0m	[{"id":$id1}] {"taskQueue":"default","tickTime":"2021-01-12T15:21:53.3204026Z"}
                 # Run three async timers
-                [0m	[{"id":{$id2},"command":"NewTimer","options":{"ms":500000},"payloads":""},{"id":$id3,"command":"NewTimer","options":{"ms":120000},"payloads":""},{"id":$id4,"command":"NewTimer","options":{"ms":20000},"payloads":""}]	{"receive": true}
+                [0m	[{"id":{$id2},"command":"NewTimer","options":{"ms":500000},"payloads":"","header":""},{"id":$id3,"command":"NewTimer","options":{"ms":120000},"payloads":"","header":""},{"id":$id4,"command":"NewTimer","options":{"ms":20000},"payloads":"","header":""}]	{"receive": true}
                 # Destroy workflow
                 [0m	[{"command":"DestroyWorkflow","options":{"runId":"$uuid2"}}] {"taskQueue":"default","tickTime":"2021-01-12T15:21:53.3838443Z","replay":true}
                 [0m	[{"payloads":"ChkKFwoIZW5jb2RpbmcSC2JpbmFyeS9udWxs"}]	{"receive": true}
@@ -332,7 +332,7 @@ class WorkflowTestCase extends FunctionalTestCase
             $log = <<<LOG
                 [0m	[{"command":"StartWorkflow","options":{"info":{"WorkflowExecution":{"ID":"$uuid1","RunID":"$uuid2"},"WorkflowType":{"Name":"AwaitWithSingleTimeoutWorkflow"},"TaskQueueName":"default","WorkflowExecutionTimeout":315360000000000000,"WorkflowRunTimeout":315360000000000000,"WorkflowTaskTimeout":0,"Namespace":"default","Attempt":1,"CronSchedule":"","ContinuedExecutionRunID":"","ParentWorkflowNamespace":"","ParentWorkflowExecution":null,"Memo":null,"SearchAttributes":null,"BinaryChecksum":"4301710877bf4b107429ee12de0922be"}},"payloads":"CicKFgoIZW5jb2RpbmcSCmpzb24vcGxhaW4SDSJIZWxsbyBXb3JsZCI="}] {"taskQueue":"default","tickTime":"2021-01-12T15:21:52.2672785Z"}
                 # Run a timer
-                [0m	[{"id":$id1,"command":"NewTimer","options":{"ms":5000000},"payloads":""},{"payloads":"ChkKFwoIZW5jb2RpbmcSC2JpbmFyeS9udWxs"}]	{"receive": true}
+                [0m	[{"id":$id1,"command":"NewTimer","options":{"ms":5000000},"payloads":"","header":""},{"payloads":"ChkKFwoIZW5jb2RpbmcSC2JpbmFyeS9udWxs"}]	{"receive": true}
                 # Destroy workflow
                 [0m	[{"command":"DestroyWorkflow","options":{"runId":"$uuid2"}}] {"taskQueue":"default","tickTime":"2021-01-12T15:21:53.3838443Z","replay":true}
                 [0m	[{"payloads":"ChkKFwoIZW5jb2RpbmcSC2JpbmFyeS9udWxs"}]	{"receive": true}

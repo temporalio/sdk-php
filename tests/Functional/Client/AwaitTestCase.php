@@ -32,7 +32,7 @@ class AwaitTestCase extends ClientTestCase
 {
     use WithoutTimeSkipping;
 
-    public function testSimpleAwait()
+    public function testSimpleAwait(): void
     {
         $client = $this->createClient();
         $wait = $client->newWorkflowStub(WaitWorkflow::class);
@@ -44,7 +44,7 @@ class AwaitTestCase extends ClientTestCase
         $this->assertSame('unlock the condition', $run->getResult('string'));
     }
 
-    public function testAggregated()
+    public function testAggregated(): void
     {
         $client = $this->createClient();
         $wait = $client->newWorkflowStub(AggregatedWorkflow::class);
@@ -67,7 +67,7 @@ class AwaitTestCase extends ClientTestCase
         );
     }
 
-    public function testLoop()
+    public function testLoop(): void
     {
         $client = $this->createClient();
         $wait = $client->newWorkflowStub(LoopWorkflow::class);
@@ -94,7 +94,7 @@ class AwaitTestCase extends ClientTestCase
         );
     }
 
-    public function testLoopWithCoroutinesInSignals()
+    public function testLoopWithCoroutinesInSignals(): void
     {
         $client = $this->createClient();
         $wait = $client->newWorkflowStub(LoopWithSignalCoroutinesWorkflow::class);
@@ -121,7 +121,7 @@ class AwaitTestCase extends ClientTestCase
         );
     }
 
-    public function testFailSignalSerialization()
+    public function testFailSignalSerialization(): void
     {
         $client = $this->createClient();
         $wait = $client->newWorkflowStub(LoopWithSignalCoroutinesWorkflow::class);
@@ -156,7 +156,7 @@ class AwaitTestCase extends ClientTestCase
         );
     }
 
-    public function testFailSignalErrored()
+    public function testFailSignalErrored(): void
     {
         $client = $this->createClient();
         $wait = $client->newWorkflowStub(LoopWithSignalCoroutinesWorkflow::class);
@@ -179,7 +179,7 @@ class AwaitTestCase extends ClientTestCase
         }
     }
 
-    public function testCancelAwait()
+    public function testCancelAwait(): void
     {
         $client = $this->createClient();
         $wait = $client->newWorkflowStub(LoopWithSignalCoroutinesWorkflow::class);

@@ -21,70 +21,31 @@ use Temporal\Workflow\WorkflowContextInterface;
 
 final class ChildWorkflowProxy extends Proxy
 {
-    /**
-     * @var string
-     */
     private const ERROR_UNDEFINED_WORKFLOW_METHOD =
         'The given stub class "%s" does not contain a workflow method named "%s"';
 
-    /**
-     * @var string
-     */
     private const ERROR_UNDEFINED_METHOD =
         'The given stub class "%s" does not contain a workflow or signal method named "%s"';
 
-    /**
-     * @var string
-     */
     private const ERROR_UNSUPPORTED_METHOD =
         'The method named "%s" (%s) cannot be executed from a child workflow stub. ' .
         'Only workflow and signal methods are allowed';
 
-    /**
-     * @var string
-     */
-    private string $class;
-
-    /**
-     * @var ChildWorkflowOptions
-     */
-    private ChildWorkflowOptions $options;
-
-    /**
-     * @var ChildWorkflowStubInterface|null
-     */
     private ?ChildWorkflowStubInterface $stub = null;
 
     /**
-     * @var WorkflowContextInterface
-     */
-    private WorkflowContextInterface $context;
-
-    /**
-     * @var WorkflowPrototype
-     */
-    private WorkflowPrototype $workflow;
-
-    /**
-     * @param string $class
-     * @param WorkflowPrototype $workflow
-     * @param ChildWorkflowOptions $options
-     * @param WorkflowContextInterface $context
+     * @param class-string $class
      */
     public function __construct(
-        string $class,
-        WorkflowPrototype $workflow,
-        ChildWorkflowOptions $options,
-        WorkflowContextInterface $context
+        private readonly string $class,
+        private readonly WorkflowPrototype $workflow,
+        private readonly ChildWorkflowOptions $options,
+        private readonly WorkflowContextInterface $context,
     ) {
-        $this->class = $class;
-        $this->workflow = $workflow;
-        $this->options = $options;
-        $this->context = $context;
     }
 
     /**
-     * @param string $method
+     * @param non-empty-string $method
      * @param array $args
      * @return CompletableResultInterface
      */
@@ -110,7 +71,10 @@ final class ChildWorkflowProxy extends Proxy
                 $this->workflow->getCronSchedule()
             );
 
-            $this->stub = $this->context->newUntypedChildWorkflowStub($this->workflow->getID(), $options);
+            $this->stub = $this->context->newUntypedChildWorkflowStub(
+                $this->workflow->getID(),
+                $options,
+            );
 
             return $this->stub->execute($args, $this->resolveReturnType($this->workflow));
         }
@@ -152,7 +116,8 @@ final class ChildWorkflowProxy extends Proxy
     }
 
     /**
-     * @return bool
+     * @psalm-assert-if-true ChildWorkflowStubInterface $this->stub
+     * @psalm-assert-if-false null $this->stub
      */
     private function isRunning(): bool
     {

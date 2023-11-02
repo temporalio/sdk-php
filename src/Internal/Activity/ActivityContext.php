@@ -20,10 +20,12 @@ use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\Client\ActivityCanceledException;
 use Temporal\Exception\Client\ActivityCompletionException;
 use Temporal\Exception\Client\ServiceClientException;
+use Temporal\Interceptor\HeaderInterface;
+use Temporal\Internal\Interceptor\HeaderCarrier;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Worker\Transport\RPCConnectionInterface;
 
-final class ActivityContext implements ActivityContextInterface
+final class ActivityContext implements ActivityContextInterface, HeaderCarrier
 {
     #[Marshal(name: 'info')]
     private ActivityInfo $info;
@@ -33,6 +35,7 @@ final class ActivityContext implements ActivityContextInterface
     private DataConverterInterface $converter;
     private ?ValuesInterface $heartbeatDetails;
     private ValuesInterface $input;
+    private HeaderInterface $header;
 
     /**
      * @param RPCConnectionInterface $rpc
@@ -44,6 +47,7 @@ final class ActivityContext implements ActivityContextInterface
         RPCConnectionInterface $rpc,
         DataConverterInterface $converter,
         ValuesInterface $input,
+        HeaderInterface $header,
         ValuesInterface $lastHeartbeatDetails = null
     ) {
         $this->info = new ActivityInfo();
@@ -51,6 +55,7 @@ final class ActivityContext implements ActivityContextInterface
         $this->converter = $converter;
         $this->heartbeatDetails = $lastHeartbeatDetails;
         $this->input = $input;
+        $this->header = $header;
     }
 
     /**
@@ -67,6 +72,27 @@ final class ActivityContext implements ActivityContextInterface
     public function getInput(): ValuesInterface
     {
         return $this->input;
+    }
+
+    public function getHeader(): HeaderInterface
+    {
+        return $this->header;
+    }
+
+    public function withInput(ValuesInterface $input): self
+    {
+        $context = clone $this;
+        $context->input = $input;
+
+        return $context;
+    }
+
+    public function withHeader(HeaderInterface $header): self
+    {
+        $context = clone $this;
+        $context->header = $header;
+
+        return $context;
     }
 
     /**

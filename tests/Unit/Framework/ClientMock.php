@@ -9,13 +9,13 @@ use React\Promise\PromiseInterface;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Internal\Transport\ClientInterface;
-use Temporal\Worker\LoopInterface;
+use Temporal\Internal\Transport\Request\UndefinedResponse;
 use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\FailureResponseInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\ResponseInterface;
 use Temporal\Worker\Transport\Command\SuccessResponseInterface;
-use Temporal\Workflow\WorkflowInfo;
+use Temporal\Workflow\WorkflowContextInterface;
 
 /**
  * @internal
@@ -45,7 +45,10 @@ final class ClientMock implements ClientInterface
     public function dispatch(ResponseInterface $response): void
     {
         if (!isset($this->requests[$response->getID()])) {
-            throw new \LogicException(sprintf('Got the response to undefined request %s', $response->getID()));
+            $this->request(new UndefinedResponse(
+                \sprintf('Got the response to undefined request %s', $response->getID()),
+            ));
+            return;
         }
 
         $deferred = $this->fetch($response->getID());
@@ -57,7 +60,7 @@ final class ClientMock implements ClientInterface
         }
     }
 
-    public function request(RequestInterface $request, ?WorkflowInfo $workflowInfo = null): PromiseInterface
+    public function request(RequestInterface $request, ?WorkflowContextInterface $context = null): PromiseInterface
     {
         $this->queue->push($request);
 

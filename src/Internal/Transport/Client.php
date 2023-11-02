@@ -21,7 +21,8 @@ use Temporal\Worker\Transport\Command\FailureResponseInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\ResponseInterface;
 use Temporal\Worker\Transport\Command\SuccessResponseInterface;
-use Temporal\Workflow\WorkflowInfo;
+use Temporal\Workflow;
+use Temporal\Workflow\WorkflowContextInterface;
 
 /**
  * @internal Client is an internal library class, please do not use it in your code.
@@ -38,7 +39,7 @@ final class Client implements ClientInterface
         'a request with that identifier was not sent';
 
     /**
-     * @var array<int, array{Deferred, WorkflowInfo|null}>
+     * @var array<int, array{Deferred, WorkflowContextInterface|null}>
      */
     private array $requests = [];
 
@@ -64,14 +65,17 @@ final class Client implements ClientInterface
             return;
         }
 
-        [$deferred, $info] = $this->requests[$id];
+        [$deferred, $context] = $this->requests[$id];
         unset($this->requests[$id]);
+        $info = $context->getInfo();
 
         if ($info !== null && $response->getHistoryLength() > $info->historyLength) {
             /** @psalm-suppress InaccessibleProperty */
             $info->historyLength = $response->getHistoryLength();
         }
 
+        // Bind workflow context for promise resolution
+        Workflow::setCurrentContext($context);
         if ($response instanceof FailureResponseInterface) {
             $deferred->reject($response->getFailure());
         } else {
@@ -81,11 +85,11 @@ final class Client implements ClientInterface
 
     /**
      * @param RequestInterface $request
-     * @param null|WorkflowInfo $workflowInfo
+     * @param null|WorkflowContextInterface $context
      *
      * @return PromiseInterface
      */
-    public function request(RequestInterface $request, ?WorkflowInfo $workflowInfo = null): PromiseInterface
+    public function request(RequestInterface $request, ?WorkflowContextInterface $context = null): PromiseInterface
     {
         $this->queue->push($request);
 
@@ -96,7 +100,7 @@ final class Client implements ClientInterface
         }
 
         $deferred = new Deferred();
-        $this->requests[$id] = [$deferred, $workflowInfo];
+        $this->requests[$id] = [$deferred, $context];
 
         return $deferred->promise();
     }

@@ -19,7 +19,6 @@ use Temporal\Internal\Workflow\Process\Scope;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\ScopedContextInterface;
-use Temporal\Workflow\WorkflowContextInterface;
 use Temporal\Internal\Transport\Request\UpsertSearchAttributes;
 
 class ScopeContext extends WorkflowContext implements ScopedContextInterface
@@ -36,13 +35,13 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
      * @param Scope           $scope
      * @param callable        $onRequest
      *
-     * @return WorkflowContextInterface
+     * @return self
      */
     public static function fromWorkflowContext(
         WorkflowContext $context,
         Scope $scope,
         callable $onRequest
-    ): WorkflowContextInterface {
+    ): self {
         $ctx = new self(
             $context->services,
             $context->client,

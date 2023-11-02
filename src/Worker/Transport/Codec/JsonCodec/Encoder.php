@@ -13,6 +13,7 @@ namespace Temporal\Worker\Transport\Codec\JsonCodec;
 
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\Failure\FailureConverter;
+use Temporal\Interceptor\Header;
 use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\FailureResponseInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
@@ -38,6 +39,10 @@ class Encoder
             case $cmd instanceof RequestInterface:
                 $cmd->getPayloads()->setDataConverter($this->converter);
 
+                $header = $cmd->getHeader();
+                \assert($header instanceof Header);
+                $header->setDataConverter($this->converter);
+
                 $options = $cmd->getOptions();
                 if ($options === []) {
                     $options = new \stdClass();
@@ -48,6 +53,7 @@ class Encoder
                     'command' => $cmd->getName(),
                     'options' => $options,
                     'payloads' => base64_encode($cmd->getPayloads()->toPayloads()->serializeToString()),
+                    'header' => base64_encode($header->toHeader()->serializeToString()),
                 ];
 
                 if ($cmd->getFailure() !== null) {

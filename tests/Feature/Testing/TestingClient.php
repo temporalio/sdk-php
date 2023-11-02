@@ -19,6 +19,7 @@ use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\Command\FailureResponse;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\SuccessResponse;
+use Temporal\Workflow\WorkflowContextInterface;
 use Temporal\Workflow\WorkflowInfo;
 
 class TestingClient extends CapturedClient
@@ -36,7 +37,7 @@ class TestingClient extends CapturedClient
     {
         $this->queue = $queue ?? new TestingQueue();
 
-        parent::__construct(new Client($this->queue, $loop));
+        parent::__construct(new Client($this->queue));
     }
 
     /**
@@ -70,12 +71,12 @@ class TestingClient extends CapturedClient
     /**
      * {@inheritDoc}
      */
-    public function request(RequestInterface $request, ?WorkflowInfo $workflowInfo = null): PromiseInterface
+    public function request(RequestInterface $request, ?WorkflowContextInterface $context = null): PromiseInterface
     {
         if (!$request instanceof TestingRequest) {
             $request = new TestingRequest($request);
         }
 
-        return parent::request($request, $workflowInfo);
+        return parent::request($request, $context);
     }
 }

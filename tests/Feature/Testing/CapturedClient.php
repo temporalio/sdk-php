@@ -15,7 +15,7 @@ use React\Promise\PromiseInterface;
 use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
-use Temporal\Workflow\WorkflowInfo;
+use Temporal\Workflow\WorkflowContextInterface;
 
 class CapturedClient implements ClientInterface
 {
@@ -41,7 +41,7 @@ class CapturedClient implements ClientInterface
      * @param RequestInterface $request
      * @return PromiseInterface
      */
-    public function request(RequestInterface $request, ?WorkflowInfo $workflowInfo = null): PromiseInterface
+    public function request(RequestInterface $request, ?WorkflowContextInterface $context = null): PromiseInterface
     {
         return $this->requests[$request->getID()] = $this->parent->request($request)
             ->then($this->onFulfilled($request), $this->onRejected($request));

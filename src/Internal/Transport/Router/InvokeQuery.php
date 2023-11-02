@@ -14,9 +14,11 @@ namespace Temporal\Internal\Transport\Router;
 use JetBrains\PhpStorm\Pure;
 use React\Promise\Deferred;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Worker\LoopInterface;
+use Temporal\Workflow;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 final class InvokeQuery extends WorkflowProcessAwareRoute
@@ -58,17 +60,20 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
 
         $this->loop->once(
             LoopInterface::ON_QUERY,
-            static function () use ($request, $resolver, $handler, $context): void {
+            static function () use ($name, $request, $resolver, $handler, $context): void {
                 try {
+                    // Define Context for interceptors Pipeline
+                    Workflow::setCurrentContext($context);
+
                     /** @psalm-suppress InaccessibleProperty */
                     $context->getInfo()->historyLength = $request->getHistoryLength();
 
-                    $result = $handler($request->getPayloads());
+                    $result = $handler(new QueryInput($name, $request->getPayloads()));
                     $resolver->resolve(EncodedValues::fromValues([$result]));
                 } catch (\Throwable $e) {
                     $resolver->reject($e);
                 }
-            }
+            },
         );
     }
 

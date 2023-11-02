@@ -49,7 +49,7 @@ final class WorkflowRun implements WorkflowRunInterface
     /**
      * {@inheritDoc}
      */
-    public function getResult($type = null, int $timeout = null)
+    public function getResult($type = null, int $timeout = null): mixed
     {
         return $this->stub->getResult($type ?? $this->returnType, $timeout);
     }

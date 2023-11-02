@@ -159,13 +159,14 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @param array $args
      * @param ChildWorkflowOptions|null $options
      * @param Type|string|\ReflectionType|\ReflectionClass|null $returnType
+     *
      * @return PromiseInterface
      */
     public function executeChildWorkflow(
         string $type,
         array $args = [],
         ChildWorkflowOptions $options = null,
-        $returnType = null
+        $returnType = null,
     ): PromiseInterface;
 
     /**
@@ -174,20 +175,25 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @psalm-template T of object
      * @param class-string<T> $class
      * @param ChildWorkflowOptions|null $options
+     *
      * @return T
      */
-    public function newChildWorkflowStub(string $class, ChildWorkflowOptions $options = null): object;
+    public function newChildWorkflowStub(
+        string $class,
+        ChildWorkflowOptions $options = null,
+    ): object;
 
     /**
      * @see Workflow::newUntypedChildWorkflowStub()
      *
      * @param string $type
      * @param ChildWorkflowOptions|null $options
+     *
      * @return ChildWorkflowStubInterface
      */
     public function newUntypedChildWorkflowStub(
         string $type,
-        ChildWorkflowOptions $options = null
+        ChildWorkflowOptions $options = null,
     ): ChildWorkflowStubInterface;
 
     /**
@@ -221,13 +227,14 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @param array $args
      * @param ActivityOptions|null $options
      * @param Type|string|null|\ReflectionClass|\ReflectionType $returnType
+     *
      * @return PromiseInterface<mixed>
      */
     public function executeActivity(
         string $type,
         array $args = [],
         ActivityOptionsInterface $options = null,
-        Type|string|\ReflectionClass|\ReflectionType $returnType = null
+        Type|string|\ReflectionClass|\ReflectionType $returnType = null,
     ): PromiseInterface;
 
     /**
@@ -236,17 +243,23 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @psalm-template T of object
      * @param class-string<T> $class
      * @param ActivityOptionsInterface|null $options
+     *
      * @return T
      */
-    public function newActivityStub(string $class, ActivityOptionsInterface $options = null): object;
+    public function newActivityStub(string $class,
+        ActivityOptionsInterface $options = null,
+    ): object;
 
     /**
      * @see Workflow::newUntypedActivityStub()
      *
      * @param ActivityOptionsInterface|null $options
+     *
      * @return ActivityStubInterface
      */
-    public function newUntypedActivityStub(ActivityOptionsInterface $options = null): ActivityStubInterface;
+    public function newUntypedActivityStub(
+        ActivityOptionsInterface $options = null,
+    ): ActivityStubInterface;
 
     /**
      * @see Workflow::await()

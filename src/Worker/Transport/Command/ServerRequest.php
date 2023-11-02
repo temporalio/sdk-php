@@ -13,6 +13,8 @@ namespace Temporal\Worker\Transport\Command;
 
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Interceptor\Header;
+use Temporal\Interceptor\HeaderInterface;
 
 /**
  * A request from RoadRunner to the worker.
@@ -26,6 +28,7 @@ class ServerRequest implements ServerRequestInterface
 
     private string $id;
     protected ValuesInterface $payloads;
+    protected HeaderInterface $header;
 
     /**
      * @param non-empty-string $name
@@ -38,10 +41,11 @@ class ServerRequest implements ServerRequestInterface
         private array $options = [],
         ?ValuesInterface $payloads = null,
         ?string $id = null,
-        ?object $header = null,
+        ?HeaderInterface $header = null,
         private int $historyLength = 0,
     ) {
         $this->payloads = $payloads ?? EncodedValues::empty();
+        $this->header = $header ?? Header::empty();
         $this->id = $id ?? $options['info']['WorkflowExecution']['RunID'] ?? $options['runId'] ?? '';
     }
 

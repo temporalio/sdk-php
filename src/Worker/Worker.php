@@ -67,7 +67,7 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
         string $taskQueue,
         WorkerOptions $options,
         ServiceContainer $serviceContainer,
-        RPCConnectionInterface $rpc
+        RPCConnectionInterface $rpc,
     ) {
         $this->rpc = $rpc;
         $this->name = $taskQueue;
@@ -169,13 +169,13 @@ class Worker implements WorkerInterface, Identifiable, EventListenerInterface, D
         $router = new Router();
 
         // Activity routes
-        $router->add(new Router\InvokeActivity($this->services, $this->rpc));
-        $router->add(new Router\InvokeLocalActivity($this->services, $this->rpc));
+        $router->add(new Router\InvokeActivity($this->services, $this->rpc, $this->services->interceptorProvider));
+        $router->add(new Router\InvokeLocalActivity($this->services, $this->rpc, $this->services->interceptorProvider));
 
         // Workflow routes
         $router->add(new Router\StartWorkflow($this->services));
         $router->add(new Router\InvokeQuery($this->services->running, $this->services->loop));
-        $router->add(new Router\InvokeSignal($this->services->running, $this->services->loop));
+        $router->add(new Router\InvokeSignal($this->services->running));
         $router->add(new Router\CancelWorkflow($this->services->running));
         $router->add(new Router\DestroyWorkflow($this->services->running));
         $router->add(new Router\StackTrace($this->services->running));

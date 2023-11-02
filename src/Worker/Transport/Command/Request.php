@@ -13,6 +13,8 @@ namespace Temporal\Worker\Transport\Command;
 
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Interceptor\Header;
+use Temporal\Interceptor\HeaderInterface;
 
 /**
  * Carries request to perform host action with payloads and failure as context. Can be cancelled if allows
@@ -26,6 +28,7 @@ class Request implements RequestInterface
     protected static int $lastID = 9000;
     protected int $id;
     protected ValuesInterface $payloads;
+    protected HeaderInterface $header;
     protected ?\Throwable $failure = null;
 
     /**
@@ -36,9 +39,10 @@ class Request implements RequestInterface
         protected string $name,
         protected array $options = [],
         ValuesInterface $payloads = null,
-        protected ?object $header = null,
+        ?HeaderInterface $header = null,
     ) {
         $this->payloads = $payloads ?? EncodedValues::empty();
+        $this->header = $header ?? Header::empty();
         $this->id = $this->getNextID();
     }
 

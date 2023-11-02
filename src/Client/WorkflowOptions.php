@@ -38,6 +38,7 @@ use Temporal\Worker\Worker;
  *
  * @psalm-import-type DateIntervalValue from DateInterval
  * @psalm-import-type IdReusePolicyEnum from IdReusePolicy
+ * @psalm-immutable
  */
 final class WorkflowOptions extends Options
 {
@@ -152,7 +153,8 @@ final class WorkflowOptions extends Options
     /**
      * @param MethodRetry|null $retry
      * @param CronSchedule|null $cron
-     * @return $this
+     *
+     * @return self return a new {@see self} instance with merged options
      */
     public function mergeWith(MethodRetry $retry = null, CronSchedule $cron = null): self
     {

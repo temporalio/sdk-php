@@ -17,6 +17,7 @@ use Temporal\Api\Failure\V1\Failure;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\Failure\FailureConverter;
+use Temporal\Interceptor\Header;
 use Temporal\Worker\Transport\Command\FailureResponse;
 use Temporal\Worker\Transport\Command\FailureResponseInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
@@ -59,16 +60,20 @@ class Decoder
     {
         $payloads = new Payloads();
         if (isset($data['payloads'])) {
-            $payloads->mergeFromString(base64_decode($data['payloads']));
+            $payloads->mergeFromString(\base64_decode($data['payloads']));
         }
-        $header = null;
+
+        $headers = new \Temporal\Api\Common\V1\Header();
+        if (isset($data['header'])) {
+            $headers->mergeFromString(\base64_decode($data['header']));
+        }
 
         return new ServerRequest(
             name: $data['command'],
             options: $data['options'] ?? [],
             payloads: EncodedValues::fromPayloads($payloads, $this->converter),
             id: $data['runId'] ?? null,
-            header: $header,
+            header: Header::fromPayloadCollection($headers->getFields(), $this->converter),
         );
     }
 
@@ -82,7 +87,7 @@ class Decoder
         $this->assertCommandID($data);
 
         $failure = new Failure();
-        $failure->mergeFromString(base64_decode($data['failure']));
+        $failure->mergeFromString(\base64_decode($data['failure']));
 
         return new FailureResponse(
             FailureConverter::mapFailureToException($failure, $this->converter),

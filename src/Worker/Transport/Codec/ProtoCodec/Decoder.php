@@ -14,6 +14,7 @@ namespace Temporal\Worker\Transport\Codec\ProtoCodec;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\Failure\FailureConverter;
+use Temporal\Interceptor\Header;
 use RoadRunner\Temporal\DTO\V1\Message;
 use Temporal\Worker\Transport\Command\FailureResponse;
 use Temporal\Worker\Transport\Command\FailureResponseInterface;
@@ -53,7 +54,7 @@ class Decoder
 
     /**
      * @param Message $msg
-     * @return RequestInterface
+     * @return ServerRequestInterface
      */
     private function parseRequest(Message $msg): ServerRequestInterface
     {
@@ -61,7 +62,9 @@ class Decoder
         if ($msg->hasPayloads()) {
             $payloads = EncodedValues::fromPayloads($msg->getPayloads(), $this->converter);
         }
-        $header = null;
+        $header = $msg->hasHeader()
+            ? Header::fromPayloadCollection($msg->getHeader()->getFields(), $this->converter)
+            : null;
 
         return new ServerRequest(
             name: $msg->getCommand(),

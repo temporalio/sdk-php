@@ -46,7 +46,7 @@ abstract class Options
      * @return static
      */
     #[Pure]
-    public static function new(): self
+    public static function new(): static
     {
         return new static();
     }

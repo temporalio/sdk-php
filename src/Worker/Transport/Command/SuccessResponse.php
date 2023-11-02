@@ -27,9 +27,6 @@ class SuccessResponse extends Response implements SuccessResponseInterface
         parent::__construct(id: $id, historyLength: $historyLength);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getPayloads(): ValuesInterface
     {
         return $this->values;

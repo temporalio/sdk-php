@@ -16,6 +16,9 @@ use Temporal\Activity;
 use Temporal\Activity\ActivityInfo;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\DoNotCompleteOnResultException;
+use Temporal\Interceptor\ActivityInbound\ActivityInput;
+use Temporal\Interceptor\ActivityInboundInterceptor;
+use Temporal\Interceptor\PipelineProvider;
 use Temporal\Internal\Activity\ActivityContext;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\ServiceContainer;
@@ -31,15 +34,21 @@ class InvokeActivity extends Route
 
     private ServiceContainer $services;
     private RPCConnectionInterface $rpc;
+    private PipelineProvider $interceptorProvider;
 
     /**
      * @param ServiceContainer $services
      * @param RPCConnectionInterface $rpc
+     * @param PipelineProvider $interceptorProvider
      */
-    public function __construct(ServiceContainer $services, RPCConnectionInterface $rpc)
-    {
+    public function __construct(
+        ServiceContainer $services,
+        RPCConnectionInterface $rpc,
+        PipelineProvider $interceptorProvider,
+    ) {
         $this->rpc = $rpc;
         $this->services = $services;
+        $this->interceptorProvider = $interceptorProvider;
     }
 
     /**
@@ -49,6 +58,7 @@ class InvokeActivity extends Route
     {
         $options = $request->getOptions();
         $payloads = $request->getPayloads();
+        $header = $request->getHeader();
         $heartbeatDetails = null;
 
         // always in binary format
@@ -62,17 +72,39 @@ class InvokeActivity extends Route
             $payloads = EncodedValues::sliceValues($this->services->dataConverter, $payloads, 0, $offset);
         }
 
-        $context = new ActivityContext($this->rpc, $this->services->dataConverter, $payloads, $heartbeatDetails);
+        $context = new ActivityContext(
+            $this->rpc,
+            $this->services->dataConverter,
+            $payloads,
+            $header,
+            $heartbeatDetails,
+        );
+        /** @var ActivityContext $context */
         $context = $this->services->marshaller->unmarshal($options, $context);
 
         $prototype = $this->findDeclarationOrFail($context->getInfo());
 
         try {
+            $handler = $prototype->getInstance()->getHandler();
+
+            // Define Context for interceptors Pipeline
             Activity::setCurrentContext($context);
 
-            $handler = $prototype->getInstance()->getHandler();
-            $result = $handler($payloads);
+            // Run Activity in an interceptors pipeline
+            $result = $this->interceptorProvider
+                ->getPipeline(ActivityInboundInterceptor::class)
+                ->with(
+                    static function (ActivityInput $input) use ($handler, $context): mixed {
+                        Activity::setCurrentContext(
+                            $context->withInput($input->arguments)->withHeader($input->header),
+                        );
+                        return $handler($input->arguments);
+                    },
+                    /** @see ActivityInboundInterceptor::handleActivityInbound() */
+                    'handleActivityInbound',
+                )(new ActivityInput($context->getInput(), $context->getHeader()));
 
+            $context = Activity::getCurrentContext();
             if ($context->isDoNotCompleteOnReturn()) {
                 $resolver->reject(DoNotCompleteOnResultException::create());
             } else {
@@ -83,7 +115,7 @@ class InvokeActivity extends Route
         } finally {
             $finalizer = $this->services->activities->getFinalizer();
             if ($finalizer !== null) {
-                call_user_func($finalizer, $e ?? null);
+                \call_user_func($finalizer, $e ?? null);
             }
             Activity::setCurrentContext(null);
         }

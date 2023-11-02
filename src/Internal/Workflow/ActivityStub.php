@@ -14,6 +14,8 @@ namespace Temporal\Internal\Workflow;
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptionsInterface;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\Interceptor\Header;
+use Temporal\Interceptor\HeaderInterface;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Transport\Request\ExecuteActivity;
 use Temporal\Internal\Transport\Request\ExecuteLocalActivity;
@@ -26,15 +28,21 @@ final class ActivityStub implements ActivityStubInterface
 {
     private MarshallerInterface $marshaller;
     private ActivityOptionsInterface $options;
+    private HeaderInterface $header;
 
     /**
      * @param MarshallerInterface $marshaller
      * @param ActivityOptionsInterface $options
+     * @param HeaderInterface|array $header
      */
-    public function __construct(MarshallerInterface $marshaller, ActivityOptionsInterface $options)
-    {
+    public function __construct(
+        MarshallerInterface $marshaller,
+        ActivityOptionsInterface $options,
+        HeaderInterface|array $header,
+    ) {
         $this->marshaller = $marshaller;
         $this->options = $options;
+        $this->header = \is_array($header) ? Header::fromValues($header) : $header;
     }
 
     /**
@@ -63,8 +71,8 @@ final class ActivityStub implements ActivityStubInterface
         bool $isLocalActivity = false
     ): PromiseInterface {
         $request = $isLocalActivity ?
-            new ExecuteLocalActivity($name, EncodedValues::fromValues($args), $this->getOptionsArray()) :
-            new ExecuteActivity($name, EncodedValues::fromValues($args), $this->getOptionsArray());
+            new ExecuteLocalActivity($name, EncodedValues::fromValues($args), $this->getOptionsArray(), $this->header) :
+            new ExecuteActivity($name, EncodedValues::fromValues($args), $this->getOptionsArray(), $this->header);
 
         return EncodedValues::decodePromise($this->request($request), $returnType);
     }

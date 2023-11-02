@@ -53,6 +53,7 @@ abstract class Facade
 
     /**
      * @param object<T>|null $ctx
+     * @internal
      */
     public static function setCurrentContext(?object $ctx): void
     {

@@ -189,7 +189,7 @@ class Dispatcher implements DispatcherInterface
             $this->executor = $this->createExecutorFromFunction($fun);
             $this->scope = static::SCOPE_STATIC;
 
-            if ($fun->isClosure() && $fun->getClosureThis()) {
+            if ($fun->isClosure() && $fun->getClosureThis() !== null) {
                 $this->scope |= static::SCOPE_OBJECT;
             }
 

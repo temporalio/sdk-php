@@ -24,7 +24,8 @@ interface ExternalWorkflowStubInterface
     /**
      * @param string $name
      * @param array $args
-     * @return CompletableResultInterface
+     *
+     * @return PromiseInterface
      * @throws \LogicException
      */
     public function signal(string $name, array $args = []): PromiseInterface;

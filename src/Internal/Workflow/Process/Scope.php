@@ -30,7 +30,7 @@ use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\WorkflowContextInterface;
 
 /**
- * Unlike Java implementation, PHP merged coroutine and cancellation scope into single instance.
+ * Unlike Java implementation, PHP has merged coroutine and cancellation scope into a single instance.
  *
  * @internal CoroutineScope is an internal library class, please do not use it in your code.
  * @psalm-internal Temporal\Internal\Workflow
@@ -44,14 +44,18 @@ class Scope implements CancellationScopeInterface
     protected ServiceContainer $services;
 
     /**
-     * @var WorkflowContextInterface
+     * Workflow context.
+     *
+     * @var WorkflowContext
      */
-    protected WorkflowContextInterface $context;
+    protected WorkflowContext $context;
 
     /**
-     * @var WorkflowContextInterface
+     * Coroutine scope context.
+     *
+     * @var ScopeContext
      */
-    protected WorkflowContextInterface $scopeContext;
+    protected ScopeContext $scopeContext;
 
     /**
      * @var Deferred
@@ -59,6 +63,8 @@ class Scope implements CancellationScopeInterface
     protected Deferred $deferred;
 
     /**
+     * Worker handler generator that yields promises and requests that are processed in the {@see self::next()} method.
+     *
      * @var \Generator
      */
     protected \Generator $coroutine;
@@ -182,10 +188,10 @@ class Scope implements CancellationScopeInterface
     /**
      * @param callable $handler
      */
-    public function startSignal(callable $handler): void
+    public function startSignal(callable $handler, ValuesInterface $values): void
     {
         // Create a coroutine generator
-        $this->coroutine = $this->callSignalHandler($handler);
+        $this->coroutine = $this->callSignalHandler($handler, $values);
         $this->context->resolveConditions();
         $this->next();
     }
@@ -320,14 +326,9 @@ class Scope implements CancellationScopeInterface
         $deferred->promise()->then($cleanup, $cleanup);
     }
 
-    /**
-     * @param bool        $detached
-     * @param string|null $layer
-     * @return self
-     */
-    protected function createScope(bool $detached, string $layer = null): self
+    protected function createScope(bool $detached, ?string $layer = null, WorkflowContext $context = null): self
     {
-        $scope = new Scope($this->services, $this->context);
+        $scope = new Scope($this->services, $context ?? $this->context);
         $scope->detached = $detached;
 
         if ($layer !== null) {
@@ -375,12 +376,12 @@ class Scope implements CancellationScopeInterface
      * @param callable $handler
      * @return \Generator
      */
-    protected function callSignalHandler(callable $handler): \Generator
+    protected function callSignalHandler(callable $handler, ValuesInterface $values): \Generator
     {
         try {
             $this->makeCurrent();
             try {
-                $result = $handler();
+                $result = $handler($values);
             } catch (InvalidArgumentException) {
                 // Skip deserialization errors
                 return null;
@@ -415,8 +416,9 @@ class Scope implements CancellationScopeInterface
                 $this->context->getClient()->cancel($request);
                 return;
             }
+            // todo ->context or ->scopeContext?
 
-            $this->context->getClient()->request(new Cancel($request->getID()));
+            $this->context->getClient()->request(new Cancel($request->getID()), $this->scopeContext);
         };
 
         $cancelID = $this->cancelID;
@@ -464,8 +466,9 @@ class Scope implements CancellationScopeInterface
                 $this->nextPromise($current->promise());
                 break;
 
+                // todo ->context or ->scopeContext?
             case $current instanceof RequestInterface:
-                $this->nextPromise($this->context->getClient()->request($current, $this->scopeContext->getInfo()));
+                $this->nextPromise($this->context->getClient()->request($current, $this->scopeContext));
                 break;
 
             case $current instanceof \Generator:

@@ -14,6 +14,8 @@ namespace Temporal\Internal\Workflow;
 use JetBrains\PhpStorm\Immutable;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Interceptor\Header;
+use Temporal\Interceptor\HeaderInterface;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Workflow\WorkflowInfo;
 
@@ -36,12 +38,19 @@ final class Input
     public ValuesInterface $input;
 
     /**
+     * @psalm-readonly
+     */
+    #[Immutable]
+    public Header $header;
+
+    /**
      * @param WorkflowInfo|null $info
      * @param ValuesInterface|null $args
      */
-    public function __construct(WorkflowInfo $info = null, ValuesInterface $args = null)
+    public function __construct(WorkflowInfo $info = null, ValuesInterface $args = null, HeaderInterface $header = null)
     {
         $this->info = $info ?? new WorkflowInfo();
         $this->input = $args ?? EncodedValues::empty();
+        $this->header = $header ?? Header::empty();
     }
 }
