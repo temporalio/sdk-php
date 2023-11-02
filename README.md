@@ -1,6 +1,6 @@
 # Temporal PHP SDK
 
-[![CI Status](https://github.com/temporalio/php-sdk/workflows/Unit/badge.svg)](https://github.com/temporalio/php-sdk/actions)
+[![CI Status](https://github.com/temporalio/sdk-php/actions/workflows/testing.yml/badge.svg)](https://github.com/temporalio/php-sdk/actions)
 [![Stable Release](https://poser.pugx.org/temporal/sdk/version)](https://packagist.org/packages/temporal/sdk)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ftemporalio%2Fsdk-php.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Ftemporalio%2Fsdk-php?ref=badge_shield)
 
