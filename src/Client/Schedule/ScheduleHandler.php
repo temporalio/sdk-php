@@ -15,8 +15,10 @@ use Temporal\Api\Schedule\V1\TriggerImmediatelyRequest;
 use Temporal\Api\Workflowservice\V1\DeleteScheduleRequest;
 use Temporal\Api\Workflowservice\V1\ListScheduleMatchingTimesRequest;
 use Temporal\Api\Workflowservice\V1\PatchScheduleRequest;
+use Temporal\Client\ClientOptions;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Common\Uuid;
+use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\InvalidArgumentException;
 use Traversable;
 
@@ -24,8 +26,11 @@ final class ScheduleHandler
 {
     public function __construct(
         private readonly ServiceClientInterface $client,
+        private readonly ClientOptions $clientOptions,
+        private readonly DataConverterInterface $dataConverter,
         private readonly string $namespace,
         private readonly string $id,
+        private readonly ?string $conflictToken = null,
     ) {
     }
 
@@ -136,15 +141,13 @@ final class ScheduleHandler
 
     /**
      * Delete the Schedule.
-     *
-     * @param string $identity The identity of the client who initiated this request.
      */
     public function delete(string $identity): void
     {
         $request = (new DeleteScheduleRequest())
             ->setNamespace($this->namespace)
             ->setScheduleId($this->id)
-            ->setIdentity($identity);
+            ->setIdentity($this->clientOptions->identity);
 
         $this->client->DeleteSchedule($request);
     }
