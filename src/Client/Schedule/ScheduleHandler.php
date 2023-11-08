@@ -13,6 +13,7 @@ use Temporal\Api\Schedule\V1\BackfillRequest;
 use Temporal\Api\Schedule\V1\SchedulePatch;
 use Temporal\Api\Schedule\V1\TriggerImmediatelyRequest;
 use Temporal\Api\Workflowservice\V1\DeleteScheduleRequest;
+use Temporal\Api\Workflowservice\V1\DescribeScheduleRequest;
 use Temporal\Api\Workflowservice\V1\ListScheduleMatchingTimesRequest;
 use Temporal\Api\Workflowservice\V1\PatchScheduleRequest;
 use Temporal\Client\ClientOptions;
@@ -20,6 +21,7 @@ use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\InvalidArgumentException;
+use Temporal\Internal\Mapper\ScheduleInfoMapper;
 use Traversable;
 
 final class ScheduleHandler
@@ -40,6 +42,21 @@ final class ScheduleHandler
     public function getID(): string
     {
         return $this->id;
+    }
+
+    /**
+     * Describe fetches the Schedule's description from the Server
+     */
+    public function describe(): ScheduleDescription
+    {
+        $request = (new DescribeScheduleRequest())
+            ->setScheduleId($this->id)
+            ->setNamespace($this->namespace);
+
+        $response = $this->client->DescribeSchedule($request);
+
+        return (new ScheduleInfoMapper($this->dataConverter))
+            ->fromMessage($response);
     }
 
     /**

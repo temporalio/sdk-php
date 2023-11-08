@@ -129,7 +129,7 @@ class EncodedCollection
     }
 
     /**
-     * @return EncodedValues
+     * @return EncodedCollection
      */
     public static function empty(): EncodedCollection
     {
@@ -143,7 +143,7 @@ class EncodedCollection
      * @param array $values
      * @param DataConverterInterface|null $dataConverter
      *
-     * @return EncodedValues
+     * @return EncodedCollection
      */
     public static function fromValues(array $values, DataConverterInterface $dataConverter = null): EncodedCollection
     {
@@ -158,7 +158,7 @@ class EncodedCollection
      * @param iterable<array-key, Payload> $payloads
      * @param DataConverterInterface $dataConverter
      *
-     * @return EncodedValues
+     * @return EncodedCollection
      */
     public static function fromPayloadCollection(
         iterable $payloads,
