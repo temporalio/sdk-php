@@ -15,6 +15,7 @@ use Temporal\Internal\Marshaller\Type\ArrayType;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\DateTimeType;
 use Temporal\Internal\Marshaller\Type\DetectableTypeInterface;
+use Temporal\Internal\Marshaller\Type\EncodedCollectionType;
 use Temporal\Internal\Marshaller\Type\EnumType;
 use Temporal\Internal\Marshaller\Type\ObjectType;
 use Temporal\Internal\Marshaller\Type\RuleFactoryInterface as TypeRuleFactoryInterface;
@@ -144,6 +145,7 @@ class TypeFactory implements RuleFactoryInterface
         yield DateIntervalType::class;
         yield UuidType::class;
         yield ArrayType::class;
+        yield EncodedCollectionType::class;
         yield ObjectType::class;
     }
 }
