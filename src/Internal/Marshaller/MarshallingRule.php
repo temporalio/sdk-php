@@ -29,4 +29,9 @@ class MarshallingRule
         public self|string|null $of = null,
     ) {
     }
+
+    public function hasType(): bool
+    {
+        return $this->type !== null && $this->of !== null;
+    }
 }

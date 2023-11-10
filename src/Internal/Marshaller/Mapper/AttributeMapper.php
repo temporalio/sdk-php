@@ -149,8 +149,12 @@ class AttributeMapper implements MapperInterface
      */
     private function detectType(\ReflectionProperty $property, ?MarshallingRule &$rule): ?TypeInterface
     {
-        if ($this->factory instanceof RuleFactoryInterface) {
-            $rule ??= $this->factory->makeRule($property);
+        if (($rule === null || !$rule->hasType()) && $this->factory instanceof RuleFactoryInterface) {
+            $newRule = $this->factory->makeRule($property);
+            if ($newRule !== null) {
+                $rule = $newRule;
+                $newRule->name !== null and $rule->name ??= $newRule->name;
+            }
         }
         $rule ??= new MarshallingRule();
         $rule->name ??= $property->getName();
