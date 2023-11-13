@@ -13,7 +13,7 @@ namespace Temporal\Internal\Declaration;
 
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
-use Temporal\Interceptor\WorkflowInboundInterceptor;
+use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\WorkflowInstance\SignalQueue;
 use Temporal\Internal\Interceptor;
@@ -46,7 +46,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     /**
      * @param WorkflowPrototype $prototype
      * @param object $context
-     * @param Interceptor\Pipeline<WorkflowInboundInterceptor, mixed> $pipeline
+     * @param Interceptor\Pipeline<WorkflowInboundCallsInterceptor, mixed> $pipeline
      */
     public function __construct(
         WorkflowPrototype $prototype,
@@ -68,7 +68,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
                 function (QueryInput $input) use ($fn) {
                     return ($this->queryExecutor)($input, $fn);
                 },
-                /** @see WorkflowInboundInterceptor::handleQuery() */
+                /** @see WorkflowInboundCallsInterceptor::handleQuery() */
                 'handleQuery',
             ));
         }
@@ -127,7 +127,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
             function (QueryInput $input) use ($fn) {
                 return ($this->queryExecutor)($input, $fn);
             },
-            /** @see WorkflowInboundInterceptor::handleQuery() */
+            /** @see WorkflowInboundCallsInterceptor::handleQuery() */
             'handleQuery',
         ));
     }

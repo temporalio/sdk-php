@@ -14,7 +14,7 @@ namespace Temporal\Internal\Transport\Router;
 use React\Promise\Deferred;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
-use Temporal\Interceptor\WorkflowInboundInterceptor;
+use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\Instantiator\WorkflowInstantiator;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\ServiceContainer;
@@ -96,10 +96,10 @@ final class StartWorkflow extends Route
 
         // Run workflow handler in an interceptor pipeline
         $this->services->interceptorProvider
-            ->getPipeline(WorkflowInboundInterceptor::class)
+            ->getPipeline(WorkflowInboundCallsInterceptor::class)
             ->with(
                 $starter,
-                /** @see WorkflowInboundInterceptor::execute() */
+                /** @see WorkflowInboundCallsInterceptor::execute() */
                 'execute',
             )(
                 new WorkflowInput($context->getInfo(), $context->getInput(), $context->getHeader()),

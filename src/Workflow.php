@@ -580,7 +580,7 @@ final class Workflow extends Facade
         string $type,
         array $args = [],
         ChildWorkflowOptions $options = null,
-        $returnType = null,
+        mixed $returnType = null,
     ): PromiseInterface {
         return self::getCurrentContext()->executeChildWorkflow($type, $args, $options, $returnType);
     }
