@@ -25,7 +25,7 @@ use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
-use Temporal\Interceptor\WorkflowInboundInterceptor;
+use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow;
@@ -41,7 +41,7 @@ use Temporal\Workflow\WorkflowExecution;
 final class InterceptorCallsCounter implements
     WorkflowOutboundRequestInterceptor,
     ActivityInboundInterceptor,
-    WorkflowInboundInterceptor,
+    WorkflowInboundCallsInterceptor,
     WorkflowClientCallsInterceptor
 {
     private function increment(HeaderInterface $header, string $key): HeaderInterface

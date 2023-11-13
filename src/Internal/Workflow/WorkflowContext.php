@@ -359,7 +359,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
         string $type,
         array $args = [],
         ChildWorkflowOptions $options = null,
-        $returnType = null,
+        mixed $returnType = null,
     ): PromiseInterface {
         return $this->callsInterceptor->with(
             fn(ExecuteChildWorkflowInput $input): PromiseInterface => $this
@@ -467,7 +467,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
     public function newActivityStub(
         string $class,
         ActivityOptionsInterface $options = null,
-    ): object {
+    ): ActivityProxy {
         $activities = $this->services->activitiesReader->fromClass($class);
 
         if (isset($activities[0]) && $activities[0]->isLocalActivity() && !$options instanceof LocalActivityOptions) {

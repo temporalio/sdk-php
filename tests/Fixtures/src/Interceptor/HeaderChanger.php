@@ -15,11 +15,11 @@ use React\Promise\PromiseInterface;
 use RuntimeException;
 use Temporal\Interceptor\Header;
 use Temporal\Interceptor\Trait\WorkflowClientCallsInterceptorTrait;
-use Temporal\Interceptor\Trait\WorkflowInboundInterceptorTrait;
+use Temporal\Interceptor\Trait\WorkflowInboundCallsInterceptorTrait;
 use Temporal\Interceptor\WorkflowClient\StartInput;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
-use Temporal\Interceptor\WorkflowInboundInterceptor;
+use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
 use Temporal\Internal\Transport\Request\ExecuteActivity;
 use Temporal\Tests\Workflow\Header\ChildedHeaderWorkflow;
@@ -35,10 +35,10 @@ use Temporal\Workflow;
  */
 final class HeaderChanger implements
     WorkflowOutboundRequestInterceptor,
-    WorkflowInboundInterceptor,
+    WorkflowInboundCallsInterceptor,
     WorkflowClientCallsInterceptor
 {
-    use WorkflowInboundInterceptorTrait;
+    use WorkflowInboundCallsInterceptorTrait;
     use WorkflowClientCallsInterceptorTrait;
 
     private function processInput(StartInput $input): StartInput

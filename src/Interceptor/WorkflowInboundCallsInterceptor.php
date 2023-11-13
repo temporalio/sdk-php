@@ -11,19 +11,19 @@ declare(strict_types=1);
 
 namespace Temporal\Interceptor;
 
-use Temporal\Interceptor\Trait\WorkflowInboundInterceptorTrait;
+use Temporal\Interceptor\Trait\WorkflowInboundCallsInterceptorTrait;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
 use Temporal\Internal\Interceptor\Interceptor;
 
 /**
- * It's recommended to use {@see WorkflowInboundInterceptorTrait} when implementing this interface because
+ * It's recommended to use {@see WorkflowInboundCallsInterceptorTrait} when implementing this interface because
  * the interface might be extended in the future. The trait will provide forward compatibility.
  *
  * @psalm-immutable
  */
-interface WorkflowInboundInterceptor extends Interceptor
+interface WorkflowInboundCallsInterceptor extends Interceptor
 {
     /**
      * @param WorkflowInput $input
