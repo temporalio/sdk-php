@@ -53,7 +53,7 @@ class DateIntervalType extends Type implements DetectableTypeInterface, RuleFact
     {
         $type = $property->getType();
 
-        if (!$type instanceof \ReflectionNamedType || !\is_subclass_of($type->getName(), \DateInterval::class)) {
+        if (!$type instanceof \ReflectionNamedType || !\is_a($type->getName(), \DateInterval::class, true)) {
             return null;
         }
 
@@ -67,12 +67,12 @@ class DateIntervalType extends Type implements DetectableTypeInterface, RuleFact
      */
     public function serialize($value): int
     {
-        $method = 'total' . \ucfirst($this->format);
 
         if ($this->format === DateInterval::FORMAT_NANOSECONDS) {
             return (int)(DateInterval::parse($value, $this->format)->totalMicroseconds * 1000);
         }
 
+        $method = 'total' . \ucfirst($this->format);
         return (int)(DateInterval::parse($value, $this->format)->$method);
     }
 

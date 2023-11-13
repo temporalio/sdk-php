@@ -151,9 +151,12 @@ class AttributeMapper implements MapperInterface
     {
         if (($rule === null || !$rule->hasType()) && $this->factory instanceof RuleFactoryInterface) {
             $newRule = $this->factory->makeRule($property);
-            if ($newRule !== null) {
+            if ($rule === null) {
                 $rule = $newRule;
-                $newRule->name !== null and $rule->name ??= $newRule->name;
+            } elseif ($newRule !== null) {
+                $rule->name ??= $newRule->name;
+                $rule->type ??= $newRule->type;
+                $rule->of ??= $newRule->of;
             }
         }
         $rule ??= new MarshallingRule();
