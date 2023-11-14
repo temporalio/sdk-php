@@ -16,11 +16,18 @@ use Temporal\Internal\Marshaller\MarshallingRule;
 use Temporal\Internal\Marshaller\Type\NullableType;
 
 /**
+ * Used to annotate a property of a DTO class to be marshalled.
+ *
+ * You may use this annotation multiple times to specify multiple marshalling rules for a single property. It may be
+ * useful when there are multiple ways to unmarshal a property (e.g. multiple names for a single property: `UserName`,
+ * `user_name` and `username`). In this case, the first rule has the highest priority and will be used in marshalling
+ * (serialization) process.
+ *
  * @Annotation
  * @NamedArgumentConstructor
  * @Target({ "PROPERTY" })
  */
-#[\Attribute(\Attribute::TARGET_PROPERTY), NamedArgumentConstructor]
+#[\Attribute(\Attribute::TARGET_PROPERTY | \Attribute::IS_REPEATABLE), NamedArgumentConstructor]
 class Marshal extends MarshallingRule
 {
     /**

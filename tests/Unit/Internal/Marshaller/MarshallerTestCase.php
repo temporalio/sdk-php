@@ -11,6 +11,7 @@ use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Tests\Unit\Internal\Marshaller\Fixture\A;
 use Temporal\Tests\Unit\Internal\Marshaller\Fixture\B;
+use Temporal\Tests\Unit\Internal\Marshaller\Fixture\MultiMarshal;
 use Temporal\Tests\Unit\Internal\Marshaller\Fixture\Uuid;
 
 /**
@@ -79,6 +80,45 @@ final class MarshallerTestCase extends TestCase
                 ],
                 $ref->newInstanceWithoutConstructor()
             )
+        );
+    }
+
+    public function testUnmarshalMultipleMarshalAttributes(): void
+    {
+        $marshaller = new Marshaller(new AttributeMapperFactory(new AttributeReader()));
+
+        $obj = new MultiMarshal();
+
+        $this->assertSame(
+            'foo',
+            $marshaller->unmarshal(['foo-a' => 'foo'], $obj)->foo,
+        );
+
+        $this->assertSame(
+            'foo',
+            $marshaller->unmarshal(['foo-b' => 'foo'], $obj)->foo,
+        );
+
+        $this->assertSame(
+            'bar',
+            $marshaller->unmarshal(['foo-a' => 'bar', 'foo-b' => 'foo'], $obj)->foo,
+        );
+        $this->assertSame(
+            'bar',
+            $marshaller->unmarshal(['foo-b' => 'foo', 'foo-a' => 'bar'], $obj)->foo,
+        );
+    }
+
+    public function testMarshalMultipleMarshalAttributes(): void
+    {
+        $marshaller = new Marshaller(new AttributeMapperFactory(new AttributeReader()));
+
+        $obj = new MultiMarshal();
+        $obj->foo = 'bar';
+
+        $this->assertSame(
+            ['foo-a' => 'bar'],
+            $marshaller->marshal($obj),
         );
     }
 }
