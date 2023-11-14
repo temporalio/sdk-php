@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Marshaller;
 
 use DateTimeImmutable;
+use Google\Protobuf\Duration;
 use Google\Protobuf\Internal\MapField;
 use Google\Protobuf\Internal\Message;
 use Google\Protobuf\Internal\RepeatedField;
@@ -44,6 +45,11 @@ final class ProtoToArrayConverter
                 'U.u',
                 \sprintf('%d.%d', $input->getSeconds(), $input->getNanos() / 1000),
             ),
+            Duration::class => static fn(Duration $input): \DateInterval => new \DateInterval(\sprintf(
+                'PT%ds%df',
+                $input->getSeconds(),
+                $input->getNanos() / 1000,
+            )),
             SearchAttributes::class => fn(SearchAttributes $input): EncodedCollection => EncodedCollection::fromPayloadCollection(
                 $input->getIndexedFields(),
                 $this->converter,

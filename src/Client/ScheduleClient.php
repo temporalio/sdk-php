@@ -12,8 +12,8 @@ declare(strict_types=1);
 namespace Temporal\Client;
 
 use Google\Protobuf\Timestamp;
-use GPBMetadata\Google\Type\Datetime;
 use Ramsey\Uuid\UuidInterface;
+use Spiral\Attributes\AttributeReader;
 use Temporal\Api\Schedule\V1\BackfillRequest;
 use Temporal\Api\Schedule\V1\CalendarSpec;
 use Temporal\Api\Schedule\V1\Schedule;
@@ -33,6 +33,10 @@ use Temporal\Client\Schedule\ScheduleOverlapPolicy;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
+use Temporal\Internal\Marshaller\Marshaller;
+use Temporal\Internal\Marshaller\MarshallerInterface;
+use Temporal\Internal\Marshaller\ProtoToArrayConverter;
 use Temporal\Internal\Support\DateInterval;
 
 final class ScheduleClient
@@ -40,6 +44,8 @@ final class ScheduleClient
     private ServiceClientInterface $client;
     private ClientOptions $clientOptions;
     private DataConverterInterface $converter;
+    private MarshallerInterface $marshaller;
+    private ProtoToArrayConverter $protoConverter;
 
     /**
      * @param ServiceClientInterface $serviceClient
@@ -54,6 +60,10 @@ final class ScheduleClient
         $this->client = $serviceClient;
         $this->clientOptions = $options ?? new ClientOptions();
         $this->converter = $converter ?? DataConverter::createDefault();
+        $this->marshaller = new Marshaller(
+            new AttributeMapperFactory(new AttributeReader()),
+        );
+        $this->protoConverter = new ProtoToArrayConverter($this->converter);
     }
 
     /**
@@ -237,7 +247,6 @@ final class ScheduleClient
             ->setNamespace($namespace)
             ->setMaximumPageSize($pageSize);
 
-        // todo implement messages mapping
         $loader = function (ListSchedulesRequest $request): \Generator {
             do {
                 $response = $this->client->ListSchedules($request);
@@ -246,7 +255,10 @@ final class ScheduleClient
                 $page = [];
                 foreach ($response->getSchedules() as $message) {
                     \assert($message instanceof ScheduleListEntry);
-                    $page[] = $message; //$mapper->fromMessage($message);
+                    $values = $this->protoConverter->convert($message);
+                    $dto = new \Temporal\Client\Schedule\ScheduleListEntry();
+
+                    $page[] = $this->marshaller->unmarshal($values, $dto);
                 }
                 yield $page;
 
