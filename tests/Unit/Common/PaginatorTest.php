@@ -12,7 +12,7 @@ final class PaginatorTest extends TestCase
 {
     public function testNextPage(): void
     {
-        $paginator = Paginator::createFromGenerator($this->createGenerator());
+        $paginator = Paginator::createFromGenerator($this->createGenerator(), null);
 
         self::assertCount(3, $paginator->getPageItems());
         self::assertCount(3, $paginator->getNextPage()->getPageItems());
@@ -26,7 +26,7 @@ final class PaginatorTest extends TestCase
 
     public function testPageNumber(): void
     {
-        $paginator = Paginator::createFromGenerator($this->createGenerator());
+        $paginator = Paginator::createFromGenerator($this->createGenerator(), null);
 
         self::assertSame(1, $paginator->getPageNumber());
         self::assertSame(2, $paginator->getNextPage()->getPageNumber());
@@ -35,7 +35,7 @@ final class PaginatorTest extends TestCase
 
     public function testIterator(): void
     {
-        $paginator = Paginator::createFromGenerator($this->createGenerator());
+        $paginator = Paginator::createFromGenerator($this->createGenerator(), null);
 
         $array = \iterator_to_array($paginator);
         self::assertCount(7, $array);

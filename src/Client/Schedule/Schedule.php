@@ -8,6 +8,7 @@ use Temporal\Client\Schedule\Spec\SchedulePolicies;
 use Temporal\Client\Schedule\Spec\ScheduleSpec;
 use Temporal\Client\Schedule\Spec\ScheduleState;
 use Temporal\Internal\Marshaller\Meta\Marshal;
+use Temporal\Internal\Marshaller\Meta\MarshalOneOf;
 
 /**
  * @see \Temporal\Api\Schedule\V1\Schedule
@@ -17,8 +18,12 @@ final class Schedule
     #[Marshal]
     public readonly ScheduleSpec $spec;
 
-    #[Marshal]
-    public readonly ScheduleAction $action;
+    #[MarshalOneOf(
+        cases: ['start_workflow' => NewWorkflowExecutionInfo::class],
+        of: ScheduleAction::class,
+        nullable: true,
+    )]
+    private readonly ?ScheduleAction $action;
 
     #[Marshal]
     public readonly SchedulePolicies $policies;

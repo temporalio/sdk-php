@@ -23,7 +23,7 @@ class WorkflowType
      * @psalm-readonly
      * @var string
      */
-    #[Marshal(name: 'name')]
     #[Marshal(name: 'Name')]
+    #[Marshal(name: 'name')]
     public string $name = '';
 }

@@ -11,6 +11,7 @@ use Google\Protobuf\Internal\Message;
 use Google\Protobuf\Internal\OneofField;
 use Google\Protobuf\Internal\RepeatedField;
 use Google\Protobuf\Timestamp;
+use Temporal\Api\Common\V1\Header;
 use Temporal\Api\Common\V1\Memo;
 use Temporal\Api\Common\V1\Payloads;
 use Temporal\Api\Common\V1\SearchAttributes;
@@ -18,6 +19,7 @@ use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedCollection;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Interceptor\HeaderInterface;
 
 /**
  * @internall
@@ -68,6 +70,8 @@ final class ProtoToArrayConverter
             ),
             Payloads::class => fn(Payloads $input): ValuesInterface =>
                 EncodedValues::fromPayloadCollection($input->getPayloads(), $this->converter),
+            Header::class => fn(Header $input): HeaderInterface =>
+                \Temporal\Interceptor\Header::fromPayloadCollection($input->getFields(), $this->converter),
 
             default => null,
         };

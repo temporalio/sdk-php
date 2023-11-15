@@ -16,6 +16,7 @@ use Temporal\Api\Workflowservice\V1\DeleteScheduleRequest;
 use Temporal\Api\Workflowservice\V1\DescribeScheduleRequest;
 use Temporal\Api\Workflowservice\V1\ListScheduleMatchingTimesRequest;
 use Temporal\Api\Workflowservice\V1\PatchScheduleRequest;
+use Temporal\Api\Workflowservice\V1\UpdateScheduleRequest;
 use Temporal\Client\ClientOptions;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Common\Uuid;
@@ -46,6 +47,28 @@ final class ScheduleHandler
     {
         return $this->id;
     }
+
+    /**
+     * Update the Schedule.
+     *
+     * NOTE: If two Update calls are made in parallel to the same Schedule there is the potential
+     * for a race condition.
+     */
+    public function update(
+        Schedule $schedule,
+    ): void {
+        $request = (new UpdateScheduleRequest())
+            ->setScheduleId($this->id)
+            ->setNamespace($this->namespace)
+            ->setSchedule(
+                (new Schedule())
+            )
+            ->setConflictToken($this->conflictToken)
+            ->setIdentity($this->clientOptions->identity);
+
+        $response = $this->client->UpdateSchedule($request);
+    }
+    // public function withConflictToken()
 
     /**
      * Describe fetches the Schedule's description from the Server
