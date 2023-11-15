@@ -8,12 +8,16 @@ use DateTimeImmutable;
 use Google\Protobuf\Duration;
 use Google\Protobuf\Internal\MapField;
 use Google\Protobuf\Internal\Message;
+use Google\Protobuf\Internal\OneofField;
 use Google\Protobuf\Internal\RepeatedField;
 use Google\Protobuf\Timestamp;
 use Temporal\Api\Common\V1\Memo;
+use Temporal\Api\Common\V1\Payloads;
 use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedCollection;
+use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\ValuesInterface;
 
 /**
  * @internall
@@ -53,14 +57,17 @@ final class ProtoToArrayConverter
                     )
                 );
             },
-            SearchAttributes::class => fn(SearchAttributes $input): EncodedCollection => EncodedCollection::fromPayloadCollection(
-                $input->getIndexedFields(),
-                $this->converter,
-            ),
+            SearchAttributes::class => fn(SearchAttributes $input): EncodedCollection =>
+                EncodedCollection::fromPayloadCollection(
+                    $input->getIndexedFields(),
+                    $this->converter,
+                ),
             Memo::class => fn(Memo $input): EncodedCollection => EncodedCollection::fromPayloadCollection(
                 $input->getFields(),
                 $this->converter,
             ),
+            Payloads::class => fn(Payloads $input): ValuesInterface =>
+                EncodedValues::fromPayloadCollection($input->getPayloads(), $this->converter),
 
             default => null,
         };
@@ -88,6 +95,13 @@ final class ProtoToArrayConverter
                     foreach ($value as $key => $item) {
                         $result[$name][$key] = $this->convert($item);
                     }
+                    continue;
+                }
+
+                if ($value instanceof OneofField) {
+                    $converted = $this->convert($value->getValue());
+                    $result[$value->getFieldName()] = $converted;
+                    $result[$name] = $converted;
                     continue;
                 }
 

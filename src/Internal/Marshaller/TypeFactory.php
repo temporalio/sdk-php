@@ -18,6 +18,7 @@ use Temporal\Internal\Marshaller\Type\DetectableTypeInterface;
 use Temporal\Internal\Marshaller\Type\EncodedCollectionType;
 use Temporal\Internal\Marshaller\Type\EnumType;
 use Temporal\Internal\Marshaller\Type\ObjectType;
+use Temporal\Internal\Marshaller\Type\OneOfType;
 use Temporal\Internal\Marshaller\Type\RuleFactoryInterface as TypeRuleFactoryInterface;
 use Temporal\Internal\Marshaller\Type\TypeInterface;
 use Temporal\Internal\Marshaller\Type\UuidType;
@@ -146,6 +147,7 @@ class TypeFactory implements RuleFactoryInterface
         yield UuidType::class;
         yield ArrayType::class;
         yield EncodedCollectionType::class;
+        yield OneOfType::class;
         yield ObjectType::class;
     }
 }

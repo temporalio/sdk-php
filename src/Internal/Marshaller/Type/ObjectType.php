@@ -86,7 +86,7 @@ class ObjectType extends Type implements DetectableTypeInterface, RuleFactoryInt
             return $current;
         }
 
-        return $this->marshaller->unmarshal($value, $current);
+        return $this->marshaller->unmarshal($value ?? [], $current);
     }
 
     /**

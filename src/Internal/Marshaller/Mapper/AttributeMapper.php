@@ -171,7 +171,7 @@ class AttributeMapper implements MapperInterface
             return null;
         }
 
-        return $this->factory->create($rule->type, $rule->of ? [$rule->of] : []);
+        return $this->factory->create($rule->type, $rule->getConstructorArgs());
     }
 
     /**
