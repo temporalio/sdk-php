@@ -40,6 +40,10 @@ final class DateTime
             }
         }
 
+        if ($time instanceof $class) {
+            return $time;
+        }
+
         return match ($class) {
             \DateTimeImmutable::class => new \DateTimeImmutable($time, $tz),
             \DateTime::class => new \DateTime($time, $tz),

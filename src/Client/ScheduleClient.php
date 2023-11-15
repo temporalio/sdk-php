@@ -18,7 +18,6 @@ use Temporal\Api\Schedule\V1\BackfillRequest;
 use Temporal\Api\Schedule\V1\CalendarSpec;
 use Temporal\Api\Schedule\V1\Schedule;
 use Temporal\Api\Schedule\V1\ScheduleAction;
-use Temporal\Api\Schedule\V1\ScheduleListEntry;
 use Temporal\Api\Schedule\V1\SchedulePatch;
 use Temporal\Api\Schedule\V1\SchedulePolicies;
 use Temporal\Api\Schedule\V1\ScheduleSpec;
@@ -29,6 +28,7 @@ use Temporal\Api\Workflowservice\V1\ListSchedulesRequest;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Client\Schedule\BackfillPeriod;
 use Temporal\Client\Schedule\ScheduleHandler;
+use Temporal\Client\Schedule\ScheduleListEntry;
 use Temporal\Client\Schedule\ScheduleOverlapPolicy;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverter;
@@ -155,21 +155,13 @@ final class ScheduleClient
         $scheduleDto = (new Schedule())
             ->setPolicies(
                 (new SchedulePolicies())
-                    ->setCatchupWindow(
-                        DateInterval::toDuration(
-                            DateInterval::parse($catchupWindow ?? '1 minute'),
-                        )
-                    )
+                    ->setCatchupWindow(DateInterval::toDuration(DateInterval::parse($catchupWindow ?? '1 minute'),))
                     ->setOverlapPolicy($overlap->value)
                     ->setPauseOnFailure($pauseOnFailure)
             );
 
 
         $scheduleDto
-            ->setAction(
-                (new ScheduleAction())
-                    ->setStartWorkflow(/*NewWorkflowExecutionInfo*/)
-            )
             ->setSpec(
                 (new ScheduleSpec())
                     ->setCalendar(
@@ -213,6 +205,8 @@ final class ScheduleClient
             $this->client,
             $this->clientOptions,
             $this->converter,
+            $this->marshaller,
+            $this->protoConverter,
             $namespace,
             $scheduleId,
             $response->getConflictToken(),
@@ -225,6 +219,8 @@ final class ScheduleClient
             $this->client,
             $this->clientOptions,
             $this->converter,
+            $this->marshaller,
+            $this->protoConverter,
             $namespace,
             $scheduleID,
         );
@@ -254,9 +250,9 @@ final class ScheduleClient
 
                 $page = [];
                 foreach ($response->getSchedules() as $message) {
-                    \assert($message instanceof ScheduleListEntry);
+                    \assert($message instanceof \Temporal\Api\Schedule\V1\ScheduleListEntry);
                     $values = $this->protoConverter->convert($message);
-                    $dto = new \Temporal\Client\Schedule\ScheduleListEntry();
+                    $dto = new ScheduleListEntry();
 
                     $page[] = $this->marshaller->unmarshal($values, $dto);
                 }

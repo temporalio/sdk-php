@@ -22,6 +22,7 @@ class WorkflowExecution
      * @var string
      */
     #[Marshal(name: 'ID')]
+    #[Marshal(name: 'id')]
     private string $id;
 
     /**
@@ -30,6 +31,7 @@ class WorkflowExecution
      * @var string|null
      */
     #[Marshal(name: 'RunID')]
+    #[Marshal(name: 'run_id')]
     private ?string $runId;
 
     /**

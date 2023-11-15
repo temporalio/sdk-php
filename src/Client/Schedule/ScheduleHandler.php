@@ -21,7 +21,8 @@ use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\InvalidArgumentException;
-use Temporal\Internal\Mapper\ScheduleInfoMapper;
+use Temporal\Internal\Marshaller\MarshallerInterface;
+use Temporal\Internal\Marshaller\ProtoToArrayConverter;
 use Traversable;
 
 final class ScheduleHandler
@@ -30,6 +31,8 @@ final class ScheduleHandler
         private readonly ServiceClientInterface $client,
         private readonly ClientOptions $clientOptions,
         private readonly DataConverterInterface $dataConverter,
+        private readonly MarshallerInterface $marshaller,
+        private readonly ProtoToArrayConverter $protoConverter,
         private readonly string $namespace,
         private readonly string $id,
         private readonly ?string $conflictToken = null,
@@ -54,20 +57,21 @@ final class ScheduleHandler
             ->setNamespace($this->namespace);
 
         $response = $this->client->DescribeSchedule($request);
+        $values = $this->protoConverter->convert($response);
+        $dto = new ScheduleDescription();
 
-        return (new ScheduleInfoMapper($this->dataConverter))
-            ->fromMessage($response);
+        return $this->marshaller->unmarshal($values, $dto);
     }
 
     /**
      * Lists matching times within a range.
      *
-     * @return Traversable<int, DateTimeImmutable>|Countable
+     * @return Countable&Traversable<int, DateTimeImmutable>
      */
     public function listScheduleMatchingTimes(
         DateTimeInterface $startTime,
         DateTimeInterface $endTime,
-    ): array {
+    ): Countable&Traversable {
         $request = (new ListScheduleMatchingTimesRequest())
             ->setScheduleId($this->id)
             ->setNamespace($this->namespace)
