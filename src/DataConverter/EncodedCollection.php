@@ -108,9 +108,11 @@ class EncodedCollection
             return $this->payloads;
         }
 
-        if ($this->converter === null) {
-            throw new \LogicException('DataConverter is not set');
+        if ($this->values === []) {
+            return [];
         }
+
+        $this->converter === null and throw new \LogicException('DataConverter is not set');
 
         $data = [];
         foreach ($this->values as $key => $value) {

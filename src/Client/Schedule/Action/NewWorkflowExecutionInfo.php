@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Temporal\Client\Schedule;
 
 use DateInterval;
+use Temporal\Api\Common\V1\Memo;
+use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\Common\RetryOptions;
 use Temporal\Common\TaskQueue\TaskQueue;
 use Temporal\DataConverter\EncodedCollection;
@@ -13,6 +15,7 @@ use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\Header;
 use Temporal\Interceptor\HeaderInterface;
 use Temporal\Internal\Marshaller\Meta\Marshal;
+use Temporal\Internal\Marshaller\Type\EncodedCollectionType;
 use Temporal\Internal\Marshaller\Type\ObjectType;
 use Temporal\Workflow\WorkflowType;
 
@@ -84,13 +87,13 @@ final class NewWorkflowExecutionInfo extends ScheduleAction
     /**
      * Memo
      */
-    #[Marshal]
+    #[Marshal(name: 'memo', type: EncodedCollectionType::class, of: Memo::class)]
     public EncodedCollection $memo;
 
     /**
      * Search attributes
      */
-    #[Marshal(name: 'search_attributes')]
+    #[Marshal(name: 'search_attributes', type: EncodedCollectionType::class, of: SearchAttributes::class)]
     public EncodedCollection $searchAttributes;
 
     /**

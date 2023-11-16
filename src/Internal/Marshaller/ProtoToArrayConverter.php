@@ -22,7 +22,7 @@ use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\HeaderInterface;
 
 /**
- * @internall
+ * @internal
  */
 final class ProtoToArrayConverter
 {

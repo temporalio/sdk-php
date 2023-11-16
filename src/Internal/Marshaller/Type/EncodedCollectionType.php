@@ -11,8 +11,13 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Marshaller\Type;
 
+use Google\Protobuf\Internal\Message;
 use ReflectionNamedType;
+use Temporal\Api\Common\V1\Memo;
+use Temporal\Api\Common\V1\Payloads;
+use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\DataConverter\EncodedCollection;
+use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Marshaller\MarshallingRule;
 use Temporal\Internal\Support\Inheritance;
 
@@ -21,6 +26,14 @@ use Temporal\Internal\Support\Inheritance;
  */
 final class EncodedCollectionType extends Type implements DetectableTypeInterface, RuleFactoryInterface
 {
+    /**
+     * @param class-string<Message>|null $marshalTo
+     */
+    public function __construct(MarshallerInterface $marshaller, private ?string $marshalTo = null)
+    {
+        parent::__construct($marshaller);
+    }
+
     public static function match(\ReflectionNamedType $type): bool
     {
         return !$type->isBuiltin() &&
@@ -51,8 +64,24 @@ final class EncodedCollectionType extends Type implements DetectableTypeInterfac
         };
     }
 
-    public function serialize(mixed $value): string
+    public function serialize(mixed $value): array|Message
     {
-        throw new \BadMethodCallException('EncodedCollectionType is not serializable');
+        if (!$value instanceof EncodedCollection) {
+            throw new \InvalidArgumentException('Unsupported value type.');
+        }
+
+        if ($this->marshalTo === null) {
+            return $value->getValues();
+        }
+
+        $payloads = $value->toPayloadArray();
+
+        /** @var Message $message */
+        return match ($this->marshalTo) {
+            SearchAttributes::class => (new SearchAttributes())->setIndexedFields($payloads),
+            Memo::class => (new Memo())->setFields($payloads),
+            Payloads::class => (new Payloads())->setPayloads($payloads),
+            default => throw new \InvalidArgumentException('Unsupported target type.'),
+        };
     }
 }
