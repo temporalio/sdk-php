@@ -12,14 +12,8 @@ declare(strict_types=1);
 namespace Temporal\Internal\Marshaller\Meta;
 
 use Spiral\Attributes\NamedArgumentConstructor;
-use Temporal\Internal\Marshaller\Type\ArrayType;
 use Temporal\Internal\Marshaller\Type\OneOfType;
 
-/**
- * @Annotation
- * @NamedArgumentConstructor
- * @Target({ "PROPERTY", "METHOD" })
- */
 #[\Attribute(\Attribute::TARGET_PROPERTY), NamedArgumentConstructor]
 final class MarshalOneOf extends Marshal
 {

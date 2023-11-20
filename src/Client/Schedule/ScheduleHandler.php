@@ -22,6 +22,7 @@ use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\InvalidArgumentException;
+use Temporal\Internal\Mapper\ScheduleMapper;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Marshaller\ProtoToArrayConverter;
 use Traversable;
@@ -36,7 +37,6 @@ final class ScheduleHandler
         private readonly ProtoToArrayConverter $protoConverter,
         private readonly string $namespace,
         private readonly string $id,
-        private readonly ?string $conflictToken = null,
     ) {
     }
 
@@ -56,19 +56,20 @@ final class ScheduleHandler
      */
     public function update(
         Schedule $schedule,
+        ?string $conflictToken = null,
     ): void {
+        $mapper = new ScheduleMapper($this->dataConverter, $this->marshaller);
+        $scheduleMessage = $mapper->toMessage($schedule);
+
         $request = (new UpdateScheduleRequest())
             ->setScheduleId($this->id)
             ->setNamespace($this->namespace)
-            ->setSchedule(
-                (new Schedule())
-            )
-            ->setConflictToken($this->conflictToken)
-            ->setIdentity($this->clientOptions->identity);
+            ->setConflictToken($conflictToken)
+            ->setIdentity($this->clientOptions->identity)
+            ->setSchedule($scheduleMessage);
 
-        $response = $this->client->UpdateSchedule($request);
+        $this->client->UpdateSchedule($request);
     }
-    // public function withConflictToken()
 
     /**
      * Describe fetches the Schedule's description from the Server

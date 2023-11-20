@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Client\Schedule\Spec;
 
 use DateInterval;
+use Google\Protobuf\Duration;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 
 /**
@@ -24,9 +25,9 @@ use Temporal\Internal\Marshaller\Meta\Marshal;
  */
 final class IntervalSpec
 {
-    #[Marshal(name: 'second')]
+    #[Marshal(name: 'interval', of: Duration::class)]
     public readonly DateInterval $interval;
 
-    #[Marshal(name: 'minute')]
+    #[Marshal(name: 'phase', of: Duration::class)]
     public readonly DateInterval $phase;
 }

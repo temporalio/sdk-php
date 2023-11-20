@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Schedule;
 
+use Temporal\Client\Schedule\Action\NewWorkflowExecutionInfo;
 use Temporal\Client\Schedule\Spec\SchedulePolicies;
 use Temporal\Client\Schedule\Spec\ScheduleSpec;
 use Temporal\Client\Schedule\Spec\ScheduleState;
@@ -23,7 +24,7 @@ final class Schedule
         of: ScheduleAction::class,
         nullable: true,
     )]
-    private readonly ?ScheduleAction $action;
+    public readonly ?ScheduleAction $action;
 
     #[Marshal]
     public readonly SchedulePolicies $policies;

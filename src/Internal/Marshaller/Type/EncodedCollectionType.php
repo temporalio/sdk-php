@@ -13,6 +13,7 @@ namespace Temporal\Internal\Marshaller\Type;
 
 use Google\Protobuf\Internal\Message;
 use ReflectionNamedType;
+use Temporal\Api\Common\V1\Header;
 use Temporal\Api\Common\V1\Memo;
 use Temporal\Api\Common\V1\Payloads;
 use Temporal\Api\Common\V1\SearchAttributes;
@@ -81,6 +82,7 @@ final class EncodedCollectionType extends Type implements DetectableTypeInterfac
             SearchAttributes::class => (new SearchAttributes())->setIndexedFields($payloads),
             Memo::class => (new Memo())->setFields($payloads),
             Payloads::class => (new Payloads())->setPayloads($payloads),
+            Header::class => (new Header())->setFields($payloads),
             default => throw new \InvalidArgumentException('Unsupported target type.'),
         };
     }

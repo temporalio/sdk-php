@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Marshaller\Type;
 
 use Carbon\CarbonInterval;
+use Google\Protobuf\Duration;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Marshaller\MarshallingRule;
 use Temporal\Internal\Support\DateInterval;
@@ -65,11 +66,24 @@ class DateIntervalType extends Type implements DetectableTypeInterface, RuleFact
     /**
      * {@inheritDoc}
      */
-    public function serialize($value): int
+    public function serialize($value): int|Duration
     {
-
         if ($this->format === DateInterval::FORMAT_NANOSECONDS) {
             return (int)(DateInterval::parse($value, $this->format)->totalMicroseconds * 1000);
+        }
+
+        if ($this->format === Duration::class) {
+            return match (true) {
+                $value instanceof \DateInterval => (new Duration())
+                    ->setSeconds($value->format('%s'))
+                    ->setNanos((int)$value->format('%f000')),
+                \is_int($value) => (new Duration())->setSeconds($value),
+                \is_string($value) => (new Duration())->setSeconds((int)$value),
+                \is_float($value) => (new Duration())
+                    ->setSeconds((int)$value)
+                    ->setNanos(($value * 1000000000) % 1000000000),
+                default => throw new \InvalidArgumentException('Invalid value type.'),
+            };
         }
 
         $method = 'total' . \ucfirst($this->format);

@@ -67,7 +67,7 @@ final class ScheduleSpec
      *
      * @var list<CalendarSpec>
      */
-    #[MarshalArray(name: 'exclude_structured_calendar', of: CalendarSpec::class)]
+    #[MarshalArray(name: 'exclude_calendar', of: CalendarSpec::class)]
     public array $excludeCalendar;
 
     /**
@@ -82,20 +82,20 @@ final class ScheduleSpec
      * If start_time is set, any timestamps before start_time will be skipped.
      * (Together, startTime and endTime make an inclusive interval.)
      */
-    #[MarshalArray(name: 'start_time', nullable: true)]
+    #[Marshal(name: 'start_time', nullable: true)]
     public ?DateTimeInterface $startTime;
 
     /**
      * If endTime is set, any timestamps after endTime will be skipped.
      */
-    #[MarshalArray(name: 'end_time', nullable: true)]
+    #[Marshal(name: 'end_time', nullable: true)]
     public ?DateTimeInterface $endTime;
 
     /**
      * All timestamps will be incremented by a random value from 0 to this
      * amount of jitter.
      */
-    #[MarshalArray(name: 'jitter', nullable: true)]
+    #[Marshal(name: 'jitter', nullable: true)]
     public ?DateInterval $jitter;
 
     /**

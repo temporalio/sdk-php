@@ -2,18 +2,20 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Schedule;
+namespace Temporal\Client\Schedule\Action;
 
 use DateInterval;
+use Google\Protobuf\Duration;
+use Temporal\Api\Common\V1\Header;
 use Temporal\Api\Common\V1\Memo;
 use Temporal\Api\Common\V1\SearchAttributes;
+use Temporal\Client\Schedule\ScheduleAction;
+use Temporal\Client\Schedule\WorkflowIdReusePolicy;
 use Temporal\Common\RetryOptions;
 use Temporal\Common\TaskQueue\TaskQueue;
 use Temporal\DataConverter\EncodedCollection;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
-use Temporal\Interceptor\Header;
-use Temporal\Interceptor\HeaderInterface;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\EncodedCollectionType;
 use Temporal\Internal\Marshaller\Type\ObjectType;
@@ -51,19 +53,19 @@ final class NewWorkflowExecutionInfo extends ScheduleAction
     /**
      * Total workflow execution timeout including retries and continue as new
      */
-    #[Marshal(name: 'workflow_execution_timeout')]
+    #[Marshal(name: 'workflow_execution_timeout', of: Duration::class)]
     public DateInterval $workflowExecutionTimeout;
 
     /**
      * Timeout of a single workflow run
      */
-    #[Marshal(name: 'workflow_run_timeout')]
+    #[Marshal(name: 'workflow_run_timeout', of: Duration::class)]
     public DateInterval $workflowRunTimeout;
 
     /**
      * Timeout of a single workflow task
      */
-    #[Marshal(name: 'workflow_task_timeout')]
+    #[Marshal(name: 'workflow_task_timeout', of: Duration::class)]
     public DateInterval $workflowTaskTimeout;
 
     /**
@@ -99,6 +101,6 @@ final class NewWorkflowExecutionInfo extends ScheduleAction
     /**
      * Header
      */
-    #[Marshal(type: ObjectType::class, of: Header::class)]
-    public HeaderInterface $header;
+    #[Marshal(type: EncodedCollectionType::class, of: Header::class)]
+    public EncodedCollection $header;
 }

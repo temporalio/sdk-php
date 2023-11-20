@@ -65,7 +65,7 @@ class OneOfType extends Type
         if ($dtoClass === null) {
             $this->nullable or throw new \InvalidArgumentException(\sprintf(
                 'Unable to detect OneOf case for non-nullable type%s.',
-                $this->parentClass ? " {$this->parentClass}" : '',
+                $this->parentClass ? " `{$this->parentClass}`" : '',
             ));
 
             return null;

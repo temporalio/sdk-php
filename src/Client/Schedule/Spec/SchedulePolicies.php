@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Client\Schedule\Spec;
 
 use DateInterval;
+use Google\Protobuf\Duration;
 use Temporal\Client\Schedule\ScheduleOverlapPolicy;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 
@@ -29,7 +30,7 @@ final class SchedulePolicies
      * time is within this window from the current time.
      * This value defaults to 60 seconds, and can't be less than 10 seconds.
      */
-    #[Marshal(name: 'catchup_window')]
+    #[Marshal(name: 'catchup_window', of: Duration::class)]
     public DateInterval $catchupWindow;
 
     /**
