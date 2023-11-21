@@ -124,6 +124,8 @@ class AttributeMapper implements MapperInterface
             $attrs = \array_reverse(\is_array($meta) ? $meta : \iterator_to_array($meta));
             $hasAttrs = false;
             $cnt = \count($attrs);
+
+            /** @var Marshal $marshal */
             foreach ($attrs as $marshal) {
                 yield $property => [$marshal->toTypeDto(), --$cnt > 0];
                 $hasAttrs = true;

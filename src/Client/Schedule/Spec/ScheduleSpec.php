@@ -6,8 +6,10 @@ namespace Temporal\Client\Schedule\Spec;
 
 use DateInterval;
 use DateTimeInterface;
+use Google\Protobuf\Timestamp;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Meta\MarshalArray;
+use Temporal\Internal\Marshaller\Meta\MarshalDateTime;
 
 /**
  *  ScheduleSpec is a complete description of a set of absolute timestamps
@@ -34,7 +36,7 @@ final class ScheduleSpec
      * @var list<StructuredCalendarSpec>
      */
     #[MarshalArray(name: 'structured_calendar', of: StructuredCalendarSpec::class)]
-    public array $structuredCalendar;
+    public readonly array $structuredCalendar;
 
     /**
      * cron_string holds a traditional cron specification as a string. It
@@ -44,7 +46,7 @@ final class ScheduleSpec
      * @var list<non-empty-string>
      */
     #[MarshalArray(name: 'cron_string')]
-    public array $cronString;
+    public readonly array $cronString;
 
     /**
      * Calendar-based specifications of times.
@@ -52,7 +54,7 @@ final class ScheduleSpec
      * @var list<CalendarSpec>
      */
     #[MarshalArray(name: 'calendar')]
-    public array $calendar;
+    public readonly array $calendar;
 
     /**
      * Interval-based specifications of times.
@@ -60,7 +62,7 @@ final class ScheduleSpec
      * @var list<IntervalSpec>
      */
     #[MarshalArray(name: 'interval', of: DateInterval::class)]
-    public array $interval;
+    public readonly array $interval;
 
     /**
      * Any timestamps matching any of exclude* will be skipped.
@@ -68,7 +70,7 @@ final class ScheduleSpec
      * @var list<CalendarSpec>
      */
     #[MarshalArray(name: 'exclude_calendar', of: CalendarSpec::class)]
-    public array $excludeCalendar;
+    public readonly array $excludeCalendar;
 
     /**
      * Any timestamps matching any of exclude* will be skipped.
@@ -76,27 +78,27 @@ final class ScheduleSpec
      * @var list<StructuredCalendarSpec>
      */
     #[MarshalArray(name: 'exclude_structured_calendar', of: StructuredCalendarSpec::class)]
-    public array $excludeStructuredCalendar;
+    public readonly array $excludeStructuredCalendar;
 
     /**
      * If start_time is set, any timestamps before start_time will be skipped.
      * (Together, startTime and endTime make an inclusive interval.)
      */
-    #[Marshal(name: 'start_time', nullable: true)]
-    public ?DateTimeInterface $startTime;
+    #[MarshalDateTime(name: 'start_time', to: Timestamp::class, nullable: true)]
+    public readonly ?DateTimeInterface $startTime;
 
     /**
      * If endTime is set, any timestamps after endTime will be skipped.
      */
-    #[Marshal(name: 'end_time', nullable: true)]
-    public ?DateTimeInterface $endTime;
+    #[MarshalDateTime(name: 'end_time', to: Timestamp::class, nullable: true)]
+    public readonly ?DateTimeInterface $endTime;
 
     /**
      * All timestamps will be incremented by a random value from 0 to this
      * amount of jitter.
      */
     #[Marshal(name: 'jitter', nullable: true)]
-    public ?DateInterval $jitter;
+    public readonly ?DateInterval $jitter;
 
     /**
      * Time zone to interpret all calendar-based specs in.
@@ -118,8 +120,8 @@ final class ScheduleSpec
      * Also note that no actions are taken on leap-seconds (e.g. 23:59:60 UTC).
      */
     #[Marshal(name: 'timezone_name')]
-    public string $timezoneName;
+    public readonly string $timezoneName;
 
     #[Marshal(name: 'timezone_data')]
-    public string $timezoneData;
+    public readonly string $timezoneData;
 }

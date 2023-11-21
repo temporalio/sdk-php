@@ -42,7 +42,9 @@ abstract class Type implements TypeInterface
         $args = $type instanceof MarshallingRule ? $type->getConstructorArgs() : [];
         $typeClass = $type instanceof MarshallingRule ? $type->type : $type;
 
-        \assert($typeClass !== null);
+        if ($typeClass === null) {
+            return null;
+        }
 
         if (Inheritance::implements($typeClass, TypeInterface::class)) {
             return new $typeClass($marshaller, ...$args);

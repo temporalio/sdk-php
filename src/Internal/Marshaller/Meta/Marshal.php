@@ -52,10 +52,6 @@ class Marshal extends MarshallingRule
             return $this;
         }
 
-        return new MarshallingRule(
-            $this->name,
-            NullableType::class,
-            $this->of === null ? $this->type : $this,
-        );
+        return new MarshalNullable($this->name, $this);
     }
 }
