@@ -100,7 +100,8 @@ final class NewWorkflowExecutionInfo extends ScheduleAction
 
     /**
      * Header
+     * todo: make Header compatible with EncodedCollection
      */
-    #[Marshal(type: EncodedCollectionType::class, of: Header::class)]
-    public EncodedCollection $header;
+    // #[Marshal(type: EncodedCollectionType::class, of: Header::class)]
+    // public EncodedCollection $header;
 }
