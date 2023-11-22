@@ -11,9 +11,11 @@ declare(strict_types=1);
 
 namespace Temporal\DataConverter;
 
+use IteratorAggregate;
 use Temporal\Api\Common\V1\Payload;
+use Traversable;
 
-class EncodedCollection
+class EncodedCollection implements IteratorAggregate
 {
     /**
      * @var DataConverterInterface|null
@@ -64,7 +66,7 @@ class EncodedCollection
      *
      * @return mixed
      */
-    public function getValue(int|string $name, $type = null): mixed
+    public function getValue(int|string $name, mixed $type = null): mixed
     {
         if (\is_array($this->values) && \array_key_exists($name, $this->values)) {
             return $this->values[$name];
@@ -83,13 +85,11 @@ class EncodedCollection
             return $this->values;
         }
 
-        if ($this->converter === null) {
-            throw new \LogicException('DataConverter is not set.');
-        }
-
-        if ($this->payloads === null) {
+        if (empty($this->payloads)) {
             return [];
         }
+
+        $this->converter === null and throw new \LogicException('DataConverter is not set.');
 
         $data = [];
         foreach ($this->payloads as $key => $payload) {
@@ -97,6 +97,11 @@ class EncodedCollection
         }
 
         return $data;
+    }
+
+    public function getIterator(): Traversable
+    {
+        // TODO: Implement getIterator() method.
     }
 
     /**
@@ -142,15 +147,15 @@ class EncodedCollection
     }
 
     /**
-     * @param array $values
+     * @param iterable $values
      * @param DataConverterInterface|null $dataConverter
      *
      * @return EncodedCollection
      */
-    public static function fromValues(array $values, DataConverterInterface $dataConverter = null): EncodedCollection
+    public static function fromValues(iterable $values, DataConverterInterface $dataConverter = null): EncodedCollection
     {
         $ev = new self();
-        $ev->values = $values;
+        $ev->values = \is_array($values) ? $values : \iterator_to_array($values);
         $ev->converter = $dataConverter;
 
         return $ev;

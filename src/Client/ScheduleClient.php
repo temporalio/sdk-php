@@ -12,32 +12,28 @@ declare(strict_types=1);
 namespace Temporal\Client;
 
 use Google\Protobuf\Timestamp;
-use Ramsey\Uuid\UuidInterface;
 use Spiral\Attributes\AttributeReader;
+use Temporal\Api\Common\V1\Memo;
+use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\Api\Schedule\V1\BackfillRequest;
-use Temporal\Api\Schedule\V1\CalendarSpec;
-use Temporal\Api\Schedule\V1\Schedule;
-use Temporal\Api\Schedule\V1\ScheduleAction;
 use Temporal\Api\Schedule\V1\SchedulePatch;
-use Temporal\Api\Schedule\V1\SchedulePolicies;
-use Temporal\Api\Schedule\V1\ScheduleSpec;
-use Temporal\Api\Schedule\V1\ScheduleState;
-use Temporal\Api\Schedule\V1\StructuredCalendarSpec;
+use Temporal\Api\Schedule\V1\TriggerImmediatelyRequest;
 use Temporal\Api\Workflowservice\V1\CreateScheduleRequest;
 use Temporal\Api\Workflowservice\V1\ListSchedulesRequest;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Client\Schedule\BackfillPeriod;
+use Temporal\Client\Schedule\Schedule;
 use Temporal\Client\Schedule\ScheduleHandler;
 use Temporal\Client\Schedule\ScheduleListEntry;
-use Temporal\Client\Schedule\ScheduleOverlapPolicy;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\EncodedCollection;
+use Temporal\Internal\Mapper\ScheduleMapper;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Marshaller\ProtoToArrayConverter;
-use Temporal\Internal\Support\DateInterval;
 
 final class ScheduleClient
 {
@@ -81,31 +77,14 @@ final class ScheduleClient
     }
 
     /**
-     * @psalm-import-type DateIntervalValue from DateInterval
+     * Create a schedule and return its handle.
      *
-     * @param ScheduleSpec $spec Describes when Actions should be taken.
-     * @param ScheduleAction $action Which Action to take.
-     * @param ScheduleOverlapPolicy $overlap Controls what happens when an Action would be started by a Schedule
-     *        at the same time that an older Action is still running.
-     *        This can be changed after a Schedule has taken some Actions, and some changes might produce
-     *        unintuitive results. In general, the later policy overrides the earlier policy.
-     * @param DateIntervalValue|null $catchupWindow The Temporal Server might be down or unavailable at the time when
-     *        a Schedule should take an Action. When the Server comes back up, CatchupWindow controls which missed
-     *        Actions should be taken at that point. The default is one minute, which means that the Schedule attempts
-     *        to take any Actions that wouldn't be more than one minute late. It takes those Actions according to the
-     *        Overlap. An outage that lasts longer than the Catchup Window could lead to missed Actions.
-     * @param bool $pauseOnFailure When an Action times out or reaches the end of its Retry Policy the Schedule will
-     *        pause. With {@see ScheduleOverlapPolicy::AllowAll}, this pause might not apply to the next Action,
-     *        because the next Action might have already started previous to the failed one finishing.
-     *        Pausing applies only to Actions that are scheduled to start after the failed one finishes.
-     * @param int<0, max> $remainingActions Limit the number of Actions to take.
-     *        This number is decremented after each Action is taken, and Actions are not
-     *        taken when the number is `0` (unless {@see ScheduleHandler::trigger()} is called).
+     * @param Schedule $schedule Schedule to create.
+     * @param non-empty-string|null $scheduleId Unique ID for the schedule. Will be generated as UUID if not provided.
      * @param bool $triggerImmediately Trigger one Action immediately on creating the Schedule.
-     * @param iterable<BackfillPeriod> $scheduleBackfill Runs though the specified time periods and takes Actions
-     *        as if that time passed by right now, all at once. The overlap policy can be overridden for the scope
-     *        of the ScheduleBackfill.
-     * @param string|UuidInterface|null $scheduleId Will be generated as UUID if not provided.
+     * @param iterable<BackfillPeriod> $backfills Runs though the specified time periods and takes Actions
+     *         as if that time passed by right now, all at once. The overlap policy can be overridden for the scope
+     *         of the ScheduleBackfill.
      * @param iterable $memo Optional non-indexed info that will be shown in list schedules.
      * @param iterable $searchAttributes Optional indexed info that can be used in query of List schedules APIs.
      *        The key and value type must be registered on Temporal server side. Use GetSearchAttributes API
@@ -113,18 +92,15 @@ final class ScheduleClient
      *        versions see {@link https://docs.temporal.io/visibility}.
      */
     public function createSchedule(
-        ScheduleSpec $spec,
-        ScheduleAction $action,
-        ScheduleOverlapPolicy $overlap = ScheduleOverlapPolicy::Skip,
-        null|string|int|float|\DateInterval $catchupWindow = null, // todo duration
-        bool $pauseOnFailure = false,
-        int $remainingActions = 0,
+        Schedule $schedule,
+        ?string $scheduleId = null,
+
+        // todo move into an options DTO?
         bool $triggerImmediately = false,
-        iterable $scheduleBackfill = [],
-        string $namespace = 'default',
-        string|UuidInterface $scheduleId = null,
+        iterable $backfills = [],
         iterable $memo = [],
         iterable $searchAttributes = [],
+        string $namespace = 'default',
     ): ScheduleHandler {
         $requestId = Uuid::v4();
         $scheduleId ??= Uuid::v4();
@@ -133,12 +109,12 @@ final class ScheduleClient
         $request
             ->setRequestId($requestId)
             ->setNamespace($namespace)
-            ->setScheduleId((string)$scheduleId)
+            ->setScheduleId($scheduleId)
             ->setIdentity($this->clientOptions->identity);
 
         // Initial Patch
         $backfillRequests = [];
-        foreach ($scheduleBackfill as $period) {
+        foreach ($backfills as $period) {
             $period instanceof BackfillPeriod or throw new \InvalidArgumentException(
                 'Backfill periods must be of type BackfillPeriod.'
             );
@@ -148,58 +124,29 @@ final class ScheduleClient
                 ->setStartTime((new Timestamp())->setSeconds($period->startTime->getTimestamp()))
                 ->setEndTime((new Timestamp())->setSeconds($period->endTime->getTimestamp()));
         }
+
         $initialPatch = (new SchedulePatch())
             ->setBackfillRequest($backfillRequests);
-            // ->setTriggerImmediately($triggerImmediately);
+        if ($triggerImmediately) {
+            $overlap = $schedule->policies->overlapPolicy->value;
+            $initialPatch
+                ->setTriggerImmediately((new TriggerImmediatelyRequest())->setOverlapPolicy($overlap));
+        }
 
-        $scheduleDto = (new Schedule())
-            ->setPolicies(
-                (new SchedulePolicies())
-                    ->setCatchupWindow(DateInterval::toDuration(DateInterval::parse($catchupWindow ?? '1 minute'),))
-                    ->setOverlapPolicy($overlap->value)
-                    ->setPauseOnFailure($pauseOnFailure)
-            );
+        $memoDto = (new Memo())
+            ->setFields(EncodedCollection::fromValues($memo, $this->converter)->toPayloadArray());
+        $searchAttributesDto = (new SearchAttributes())
+            ->setIndexedFields(EncodedCollection::fromValues($searchAttributes, $this->converter)->toPayloadArray());
 
-
-        $scheduleDto
-            ->setSpec(
-                (new ScheduleSpec())
-                    ->setCalendar(
-                        [
-                            (new CalendarSpec())->setComment()->setYear()->setMonth()->setDayOfMonth()->setHour(
-                            )->setMinute()->setSecond()
-                        ]
-                    )
-                    ->setCronString()
-                    ->setStartTime()
-                    ->setEndTime()
-                    ->setInterval()
-                    ->setStructuredCalendar([
-                        (new StructuredCalendarSpec())->setYear()->setMonth()->setDayOfMonth()->setHour()->setMinute(
-                        )->setSecond()
-                    ])
-                    ->setExcludeStructuredCalendar()
-                    ->setJitter()
-                    ->setTimezoneData()
-                    ->setTimezoneName()
-            )
-            ->setState(
-                (new ScheduleState())
-                    ->setNotes()
-                    ->setLimitedActions()
-                    ->setRemainingActions()
-                    ->setPaused()
-            );
-        // ->setMemo((new Memo())->setFields())
-        // ->setInitialPatch((new SchedulePatch())->setPause()
-        //     ->setBackfillRequest(/*BackfillRequest[]*/)
-        //     ->setTriggerImmediately(/*TriggerImmediatelyRequest*/))
-        // ->setSearchAttributes()
+        $mapper = new ScheduleMapper($this->converter, $this->marshaller);
+        $scheduleMessage = $mapper->toMessage($schedule);
 
         $request
-            ->setSchedule($scheduleDto)
-            ->setInitialPatch($initialPatch);
-        $response = $this->client->CreateSchedule($request);
+            ->setSchedule($scheduleMessage)
+            ->setInitialPatch($initialPatch)
+            ->setMemo($memoDto)
+            ->setSearchAttributes($searchAttributesDto);
+        $this->client->CreateSchedule($request);
 
         return new ScheduleHandler(
             $this->client,
@@ -209,7 +156,6 @@ final class ScheduleClient
             $this->protoConverter,
             $namespace,
             $scheduleId,
-            $response->getConflictToken(),
         );
     }
 

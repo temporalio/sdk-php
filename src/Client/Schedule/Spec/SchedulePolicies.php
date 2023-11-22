@@ -21,7 +21,7 @@ final class SchedulePolicies
      * policy overrides the earlier policy.
      */
     #[Marshal(name: 'overlap_policy')]
-    public ScheduleOverlapPolicy $overlapPolicy;
+    public ScheduleOverlapPolicy $overlapPolicy = ScheduleOverlapPolicy::Unspecified;
 
     /**
      * Policy for catchups:

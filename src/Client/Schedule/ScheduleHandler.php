@@ -32,7 +32,7 @@ final class ScheduleHandler
     public function __construct(
         private readonly ServiceClientInterface $client,
         private readonly ClientOptions $clientOptions,
-        private readonly DataConverterInterface $dataConverter,
+        private readonly DataConverterInterface $converter,
         private readonly MarshallerInterface $marshaller,
         private readonly ProtoToArrayConverter $protoConverter,
         private readonly string $namespace,
@@ -58,7 +58,7 @@ final class ScheduleHandler
         Schedule $schedule,
         ?string $conflictToken = null,
     ): void {
-        $mapper = new ScheduleMapper($this->dataConverter, $this->marshaller);
+        $mapper = new ScheduleMapper($this->converter, $this->marshaller);
         $scheduleMessage = $mapper->toMessage($schedule);
 
         $request = (new UpdateScheduleRequest())
