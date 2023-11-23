@@ -35,6 +35,7 @@ class WorkflowOptionsTestCase extends DTOMarshallingTestCase
             'EnableEagerStart'         => false,
             'WorkflowExecutionTimeout' => 0,
             'WorkflowRunTimeout'       => 0,
+            'WorkflowStartDelay'       => 0,
             'WorkflowTaskTimeout'      => 0,
             'WorkflowIDReusePolicy'    => 2,
             'RetryPolicy'              => null,
@@ -92,6 +93,15 @@ class WorkflowOptionsTestCase extends DTOMarshallingTestCase
         $dto = new WorkflowOptions();
 
         $this->assertNotSame($dto, $dto->withWorkflowTaskTimeout(
+            CarbonInterval::seconds(10)
+        ));
+    }
+
+    public function testWorkflowStartDelayChangesNotMutateState(): void
+    {
+        $dto = new WorkflowOptions();
+
+        $this->assertNotSame($dto, $dto->withWorkflowStartDelay(
             CarbonInterval::seconds(10)
         ));
     }

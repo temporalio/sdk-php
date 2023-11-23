@@ -85,6 +85,12 @@ final class WorkflowOptions extends Options
     public \DateInterval $workflowRunTimeout;
 
     /**
+     * Time to wait before dispatching the first Workflow task.
+     */
+    #[Marshal(name: 'WorkflowStartDelay', type: DateIntervalType::class)]
+    public \DateInterval $workflowStartDelay;
+
+    /**
      * The timeout for processing workflow task from the time the worker pulled
      * this task. If a workflow task is lost, it is retried after this timeout.
      *
@@ -146,6 +152,7 @@ final class WorkflowOptions extends Options
         $this->workflowExecutionTimeout = CarbonInterval::seconds(0);
         $this->workflowRunTimeout = CarbonInterval::seconds(0);
         $this->workflowTaskTimeout = CarbonInterval::seconds(0);
+        $this->workflowStartDelay = CarbonInterval::seconds(0);
 
         parent::__construct();
     }
@@ -290,6 +297,30 @@ final class WorkflowOptions extends Options
 
         $self = clone $this;
         $self->workflowTaskTimeout = $timeout;
+        return $self;
+    }
+
+    /**
+     * Time to wait before dispatching the first Workflow task.
+     * If the Workflow gets a Signal before the delay, a Workflow task will be dispatched and the rest
+     * of the delay will be ignored. A Signal from {@see WorkflowClientInterface::startWithSignal()} won't
+     * trigger a workflow task. Cannot be set the same time as a {@see $cronSchedule}.
+     *
+     * NOTE: Experimental
+     *
+     * @psalm-suppress ImpureMethodCall
+     *
+     * @param DateIntervalValue $delay
+     * @return $this
+     */
+    #[Pure]
+    public function withWorkflowStartDelay($delay): self
+    {
+        assert(DateInterval::assert($delay));
+        $delay = DateInterval::parse($delay, DateInterval::FORMAT_SECONDS);
+
+        $self = clone $this;
+        $self->workflowStartDelay = $delay;
         return $self;
     }
 
