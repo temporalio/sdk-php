@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Schedule\Spec;
 
-use DateInterval;
 use Google\Protobuf\Duration;
 use Temporal\Internal\Marshaller\Meta\Marshal;
+use Temporal\Internal\Support\DateInterval;
+use Temporal\Internal\Traits\CloneWith;
 
 /**
  *  IntervalSpec matches times that can be expressed as:
@@ -25,9 +26,41 @@ use Temporal\Internal\Marshaller\Meta\Marshal;
  */
 final class IntervalSpec
 {
-    #[Marshal(name: 'interval', of: Duration::class)]
-    public readonly DateInterval $interval;
+    use CloneWith;
 
-    #[Marshal(name: 'phase', of: Duration::class)]
-    public readonly DateInterval $phase;
+    private function __construct(
+        #[Marshal(name: 'interval', of: Duration::class)]
+        public readonly \DateInterval $interval,
+
+        #[Marshal(name: 'phase', of: Duration::class)]
+        public readonly \DateInterval $phase,
+    ) {
+    }
+
+    public static function new(mixed $interval, mixed $phase = null): self
+    {
+        assert(DateInterval::assert($interval));
+        $interval = DateInterval::parse($interval, DateInterval::FORMAT_SECONDS);
+
+        assert($phase === null or DateInterval::assert($phase));
+        $phase = DateInterval::parse($phase ?? new DateInterval('PT0S'), DateInterval::FORMAT_SECONDS);
+
+        return new self($interval, $phase);
+    }
+
+    public function withInterval(mixed $interval): self
+    {
+        assert(DateInterval::assert($interval));
+        $interval = DateInterval::parse($interval, DateInterval::FORMAT_SECONDS);
+
+        return $this->with('interval', $interval);
+    }
+
+    public function withPhase(mixed $phase): self
+    {
+        assert(DateInterval::assert($phase));
+        $phase = DateInterval::parse($phase, DateInterval::FORMAT_SECONDS);
+
+        return $this->with('phase', $phase);
+    }
 }

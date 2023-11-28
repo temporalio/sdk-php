@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Client\Schedule\Spec;
 
 use Temporal\Internal\Marshaller\Meta\MarshalArray;
+use Temporal\Internal\Traits\CloneWith;
 
 /**
  * CalendarSpec describes an event specification relative to the calendar,
@@ -30,51 +31,99 @@ use Temporal\Internal\Marshaller\Meta\MarshalArray;
  */
 final class CalendarSpec
 {
-    /**
-     * Expression to match seconds.
-     */
-    #[MarshalArray(name: 'second', of: Range::class)]
-    public readonly string $second;
+    use CloneWith;
 
     /**
-     * Expression to match minutes.
+     * @param string $second Expression to match seconds.
+     * @param string $minute Expression to match minutes.
+     * @param string $hour Expression to match hours.
+     * @param string $dayOfMonth Expression to match days of the month.
+     * @param string $month Expression to match months.
+     * @param string $year Expression to match years.
+     * @param string $dayOfWeek Expression to match days of the week.
+     * @param string $comment Free-form comment describing the intention of this spec.
      */
-    #[MarshalArray(name: 'minute', of: Range::class)]
-    public readonly string $minute;
+    private function __construct(
+        #[MarshalArray(name: 'second', of: Range::class)]
+        public readonly string $second,
+        #[MarshalArray(name: 'minute', of: Range::class)]
+        public readonly string $minute,
+        #[MarshalArray(name: 'hour', of: Range::class)]
+        public readonly string $hour,
+        #[MarshalArray(name: 'day_of_month', of: Range::class)]
+        public readonly string $dayOfMonth,
+        #[MarshalArray(name: 'month', of: Range::class)]
+        public readonly string $month,
+        #[MarshalArray(name: 'year', of: Range::class)]
+        public readonly string $year,
+        #[MarshalArray(name: 'day_of_week', of: Range::class)]
+        public readonly string $dayOfWeek,
+        #[MarshalArray(name: 'comment', of: Range::class)]
+        public readonly string $comment,
+    ) {
+    }
+
 
     /**
-     * Expression to match hours.
+     * @param string $second Expression to match seconds.
+     * @param string $minute Expression to match minutes.
+     * @param string $hour Expression to match hours.
+     * @param string $dayOfMonth Expression to match days of the month.
+     * @param string $month Expression to match months.
+     * @param string $year Expression to match years.
+     * @param string $dayOfWeek Expression to match days of the week.
+     * @param string $comment Free-form comment describing the intention of this spec.
      */
-    #[MarshalArray(name: 'hour', of: Range::class)]
-    public readonly string $hour;
+    public static function new(
+        string $second = '*',
+        string $minute = '*',
+        string $hour = '*',
+        string $dayOfMonth = '*',
+        string $month = '*',
+        string $year = '*',
+        string $dayOfWeek = '*',
+        string $comment = '',
+    ): self {
+        return new self($second, $minute, $hour, $dayOfMonth, $month, $year, $dayOfWeek, $comment);
+    }
 
-    /**
-     * Expression to match days of the month.
-     */
-    #[MarshalArray(name: 'day_of_month', of: Range::class)]
-    public readonly string $dayOfMonth;
+    public function withSecond(string $second): self
+    {
+        return $this->with('second', $second);
+    }
 
-    /**
-     * Expression to match months.
-     */
-    #[MarshalArray(name: 'month', of: Range::class)]
-    public readonly string $month;
+    public function withMinute(string $minute): self
+    {
+        return $this->with('minute', $minute);
+    }
 
-    /**
-     * Expression to match years.
-     */
-    #[MarshalArray(name: 'year', of: Range::class)]
-    public readonly string $year;
+    public function withHour(string $hour): self
+    {
+        return $this->with('hour', $hour);
+    }
 
-    /**
-     * Expression to match days of the week.
-     */
-    #[MarshalArray(name: 'day_of_week', of: Range::class)]
-    public readonly string $dayOfWeek;
+    public function withDayOfMonth(string $dayOfMonth): self
+    {
+        return $this->with('dayOfMonth', $dayOfMonth);
+    }
 
-    /**
-     * Free-form comment describing the intention of this spec.
-     */
-    #[MarshalArray(name: 'comme', of: Range::class)]
-    public readonly string $comme;
+    public function withMonth(string $month): self
+    {
+        return $this->with('month', $month);
+    }
+
+    public function withYear(string $year): self
+    {
+        return $this->with('year', $year);
+    }
+
+    public function withDayOfWeek(string $dayOfWeek): self
+    {
+        return $this->with('dayOfWeek', $dayOfWeek);
+    }
+
+    public function withComment(string $comment): self
+    {
+        return $this->with('comment', $comment);
+    }
 }

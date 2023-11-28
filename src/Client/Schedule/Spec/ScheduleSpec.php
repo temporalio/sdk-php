@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Schedule\Spec;
 
-use DateInterval;
 use DateTimeInterface;
 use Google\Protobuf\Timestamp;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Meta\MarshalArray;
 use Temporal\Internal\Marshaller\Meta\MarshalDateTime;
+use Temporal\Internal\Support\DateInterval;
+use Temporal\Internal\Traits\CloneWith;
 
 /**
  *  ScheduleSpec is a complete description of a set of absolute timestamps
@@ -26,43 +27,47 @@ use Temporal\Internal\Marshaller\Meta\MarshalDateTime;
  *  structured_calendar (and maybe interval and timezone_name), so if you
  *  Describe a schedule, you'll see only structured_calendar, interval, etc.
  *
+ * @psalm-import-type DateIntervalValue from DateInterval
+ *
  * @see \Temporal\Api\Schedule\V1\ScheduleSpec
  */
 final class ScheduleSpec
 {
+    use CloneWith;
+
     /**
      * Calendar-based specifications of times.
      *
      * @var list<StructuredCalendarSpec>
      */
     #[MarshalArray(name: 'structured_calendar', of: StructuredCalendarSpec::class)]
-    public readonly array $structuredCalendar;
+    public readonly array $structuredCalendarList;
 
     /**
-     * cron_string holds a traditional cron specification as a string. It
-     *  accepts 5, 6, or 7 fields, separated by spaces, and interprets them the
-     *  same way as CalendarSpec.
+     * A cronStringList item holds a traditional cron specification as a string.
+     * It accepts 5, 6, or 7 fields, separated by spaces, and interprets them the
+     * same way as CalendarSpec.
      *
      * @var list<non-empty-string>
      */
     #[MarshalArray(name: 'cron_string')]
-    public readonly array $cronString;
+    public readonly array $cronStringList;
 
     /**
      * Calendar-based specifications of times.
      *
      * @var list<CalendarSpec>
      */
-    #[MarshalArray(name: 'calendar')]
-    public readonly array $calendar;
+    #[MarshalArray(name: 'calendar', of: CalendarSpec::class)]
+    public readonly array $calendarList;
 
     /**
      * Interval-based specifications of times.
      *
      * @var list<IntervalSpec>
      */
-    #[MarshalArray(name: 'interval', of: DateInterval::class)]
-    public readonly array $interval;
+    #[MarshalArray(name: 'interval', of: \DateInterval::class)]
+    public readonly array $intervalList;
 
     /**
      * Any timestamps matching any of exclude* will be skipped.
@@ -70,7 +75,7 @@ final class ScheduleSpec
      * @var list<CalendarSpec>
      */
     #[MarshalArray(name: 'exclude_calendar', of: CalendarSpec::class)]
-    public readonly array $excludeCalendar;
+    public readonly array $excludeCalendarList;
 
     /**
      * Any timestamps matching any of exclude* will be skipped.
@@ -78,10 +83,10 @@ final class ScheduleSpec
      * @var list<StructuredCalendarSpec>
      */
     #[MarshalArray(name: 'exclude_structured_calendar', of: StructuredCalendarSpec::class)]
-    public readonly array $excludeStructuredCalendar;
+    public readonly array $excludeStructuredCalendarList;
 
     /**
-     * If start_time is set, any timestamps before start_time will be skipped.
+     * If startTime is set, any timestamps before startTime will be skipped.
      * (Together, startTime and endTime make an inclusive interval.)
      */
     #[MarshalDateTime(name: 'start_time', to: Timestamp::class, nullable: true)]
@@ -98,7 +103,194 @@ final class ScheduleSpec
      * amount of jitter.
      */
     #[Marshal(name: 'jitter', nullable: true)]
-    public readonly ?DateInterval $jitter;
+    public readonly ?\DateInterval $jitter;
+
+    /**
+     * Time zone to interpret all calendar-based specs in.
+     */
+    #[Marshal(name: 'timezone_name')]
+    public readonly string $timezoneName;
+
+    #[Marshal(name: 'timezone_data')]
+    public readonly string $timezoneData;
+
+    private function __construct()
+    {
+        $this->structuredCalendarList = [];
+        $this->cronStringList = [];
+        $this->calendarList = [];
+        $this->intervalList = [];
+        $this->excludeCalendarList = [];
+        $this->excludeStructuredCalendarList = [];
+        $this->startTime = null;
+        $this->endTime = null;
+        $this->jitter = null;
+        $this->timezoneName = '';
+        $this->timezoneData = '';
+    }
+
+    public static function new(): self
+    {
+        return new self();
+    }
+
+    /**
+     * Returns a new instance with the replaced structured calendar list.
+     */
+    public function withStructuredCalendarList(StructuredCalendarSpec ...$structuredCalendar): self
+    {
+        return $this->with('structuredCalendarList', $structuredCalendar);
+    }
+
+    /**
+     * Calendar-based specifications of times.
+     */
+    public function withAddedStructuredCalendar(StructuredCalendarSpec $structuredCalendar): self
+    {
+        $value = $this->structuredCalendarList;
+        $value[] = $structuredCalendar;
+        return $this->with('structuredCalendarList', $value);
+    }
+
+    /**
+     * Returns a new instance with the replaced cron string list.
+     */
+    public function withCronStringList(string ...$cronString): self
+    {
+        return $this->with('cronStringList', $cronString);
+    }
+
+    /**
+     * A traditional cron specification as a string.
+     * It accepts 5, 6, or 7 fields, separated by spaces, and interprets them the
+     * same way as CalendarSpec.
+     *
+     * @param non-empty-string $cronString
+     */
+    public function withAddedCronString(string $cronString): self
+    {
+        $value = $this->cronStringList;
+        $value[] = $cronString;
+        return $this->with('cronStringList', $value);
+    }
+
+    /**
+     * Returns a new instance with the replaced calendar list.
+     */
+    public function withCalendarList(CalendarSpec ...$calendar): self
+    {
+        return $this->with('calendarList', $calendar);
+    }
+
+    /**
+     * Calendar-based specifications of times.
+     */
+    public function withAddedCalendar(CalendarSpec $calendar): self
+    {
+        $value = $this->calendarList;
+        $value[] = $calendar;
+        return $this->with('calendarList', $value);
+    }
+
+    /**
+     * Returns a new instance with the replaced interval list.
+     *
+     * @param DateIntervalValue ...$interval
+     */
+    public function withIntervalList(mixed ...$interval): self
+    {
+        foreach ($interval as $key => $item) {
+            \assert(DateInterval::assert($item));
+            $interval[$key] = DateInterval::parse($item, DateInterval::FORMAT_SECONDS);
+        }
+
+        return $this->with('intervalList', $interval);
+    }
+
+    /**
+     * Interval-based specifications of times.
+     *
+     * @param DateIntervalValue $interval
+     */
+    public function withAddedInterval(mixed $interval): self
+    {
+        \assert(DateInterval::assert($interval));
+        $value = $this->intervalList;
+        $value[] = $interval;
+
+        return $this->with('intervalList', $value);
+    }
+
+    /**
+     * Returns a new instance with the replaced exclude calendar list.
+     */
+    public function withExcludeCalendarList(CalendarSpec ...$excludeCalendar): self
+    {
+        return $this->with('excludeCalendarList', $excludeCalendar);
+    }
+
+    /**
+     * Any timestamps matching any of exclude* will be skipped.
+     */
+    public function withAddedExcludeCalendar(CalendarSpec $excludeCalendar): self
+    {
+        $value = $this->excludeCalendarList;
+        $value[] = $excludeCalendar;
+        return $this->with('excludeCalendarList', $value);
+    }
+
+    /**
+     * Returns a new instance with the replaced exclude structured calendar list.
+     */
+    public function withExcludeStructuredCalendarList(StructuredCalendarSpec ...$excludeStructuredCalendar): self
+    {
+        return $this->with('excludeStructuredCalendarList', $excludeStructuredCalendar);
+    }
+
+    /**
+     * Any timestamps matching any of exclude* will be skipped.
+     */
+    public function withAddedExcludeStructuredCalendar(StructuredCalendarSpec $excludeStructuredCalendar): self
+    {
+        $value = $this->excludeStructuredCalendarList;
+        $value[] = $excludeStructuredCalendar;
+        return $this->with('excludeStructuredCalendarList', $value);
+    }
+
+    /**
+     * If startTime is set, any timestamps before startTime will be skipped.
+     * (Together, startTime and endTime make an inclusive interval.)
+     */
+    public function withStartTime(?DateTimeInterface $startTime): self
+    {
+        return $this->with('startTime', $startTime);
+    }
+
+    /**
+     * If endTime is set, any timestamps after endTime will be skipped.
+     */
+    public function withEndTime(?DateTimeInterface $endTime): self
+    {
+        return $this->with('endTime', $endTime);
+    }
+
+    /**
+     * All timestamps will be incremented by a random value from 0 to this
+     * amount of jitter.
+     *
+     * @param DateIntervalValue|null $jitter
+     */
+    public function withJitter(mixed $jitter): self
+    {
+        if ($jitter === null) {
+            return $this->with('jitter', null);
+        }
+
+        assert(DateInterval::assert($jitter));
+        $jitter = DateInterval::parse($jitter, DateInterval::FORMAT_SECONDS);
+
+        return $this->with('jitter', $jitter);
+    }
 
     /**
      * Time zone to interpret all calendar-based specs in.
@@ -119,9 +311,13 @@ final class ScheduleSpec
      * fires at 1:30am will be triggered twice on the day that has two 1:30s.
      * Also note that no actions are taken on leap-seconds (e.g. 23:59:60 UTC).
      */
-    #[Marshal(name: 'timezone_name')]
-    public readonly string $timezoneName;
+    public function withTimezoneName(string $timezoneName): self
+    {
+        return $this->with('timezoneName', $timezoneName);
+    }
 
-    #[Marshal(name: 'timezone_data')]
-    public readonly string $timezoneData;
+    public function withTimezoneData(string $timezoneData): self
+    {
+        return $this->with('timezoneData', $timezoneData);
+    }
 }
