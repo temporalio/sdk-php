@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Common\TaskQueue;
 
 use Temporal\Internal\Marshaller\Meta\Marshal;
+use Temporal\Internal\Traits\CloneWith;
 
 /**
  * @link https://docs.temporal.io/docs/concepts/task-queues/
@@ -12,6 +13,8 @@ use Temporal\Internal\Marshaller\Meta\Marshal;
  */
 final class TaskQueue
 {
+    use CloneWith;
+
     #[Marshal]
     public readonly string $name;
 
@@ -27,4 +30,28 @@ final class TaskQueue
      */
     #[Marshal(name: 'normal_name')]
     public readonly string $normalName;
+
+    private function __construct(string $name)
+    {
+        $this->name = $name;
+        $this->kind = TaskQueueKind::TaskQueueKindUnspecified;
+        $this->normalName = '';
+    }
+
+    public static function new(string $name): self
+    {
+        return new self($name);
+    }
+
+    public function withName(string $name): self
+    {
+        /** @see self::$name */
+        return $this->with('name', $name);
+    }
+
+    public function withKind(TaskQueueKind $kind): self
+    {
+        /** @see self::$kind */
+        return $this->with('kind', $kind);
+    }
 }
