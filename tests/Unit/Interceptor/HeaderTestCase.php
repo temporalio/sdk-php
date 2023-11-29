@@ -69,7 +69,7 @@ class HeaderTestCase extends UnitTestCase
     {
         $collection = Header::fromValues($input);
 
-        $this->assertSame($output, \iterator_to_array($collection->getIterator()));
+        $this->assertSame($output, $collection->getValues());
     }
 
     public function testOverwriteProtoWithValue(): void
@@ -140,17 +140,17 @@ class HeaderTestCase extends UnitTestCase
 
         yield [
             [1 => 'bar', 2 => 4, 3 => 0.5],
-            [1 => 'bar', 2 => '4', 3 => '0.5'],
+            [1 => 'bar', 2 => 4, 3 => 0.5],
         ];
 
         yield [
-            ['foo' => null, 'bar' => new class implements \Stringable {
+            ['foo' => null, 'bar' => $x = new class implements \Stringable {
                 public function __toString(): string
                 {
                     return 'baz';
                 }
             }, 'baz' => false],
-            ['foo' => '', 'bar' => 'baz', 'baz' => ''],
+            ['foo' => null, 'bar' => $x, 'baz' => false],
         ];
     }
 
