@@ -25,10 +25,10 @@ use Temporal\Client\Schedule\BackfillPeriod;
 use Temporal\Client\Schedule\Info\ScheduleListEntry;
 use Temporal\Client\Schedule\Schedule;
 use Temporal\Client\Schedule\ScheduleHandle;
+use Temporal\Client\Schedule\ScheduleOptions;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
-use Temporal\DataConverter\EncodedCollection;
 use Temporal\Internal\Mapper\ScheduleMapper;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
@@ -80,41 +80,29 @@ final class ScheduleClient
      * Create a schedule and return its handle.
      *
      * @param Schedule $schedule Schedule to create.
+     * @param ScheduleOptions|null $options Options for creating the schedule.
      * @param non-empty-string|null $scheduleId Unique ID for the schedule. Will be generated as UUID if not provided.
-     * @param bool $triggerImmediately Trigger one Action immediately on creating the Schedule.
-     * @param iterable<BackfillPeriod> $backfills Runs though the specified time periods and takes Actions
-     *         as if that time passed by right now, all at once. The overlap policy can be overridden for the scope
-     *         of the ScheduleBackfill.
-     * @param iterable $memo Optional non-indexed info that will be shown in list schedules.
-     * @param iterable $searchAttributes Optional indexed info that can be used in query of List schedules APIs.
-     *        The key and value type must be registered on Temporal server side. Use GetSearchAttributes API
-     *        to get valid key and corresponding value type. For supported operations on different server
-     *        versions see {@link https://docs.temporal.io/visibility}.
      */
     public function createSchedule(
         Schedule $schedule,
+        ?ScheduleOptions $options = null,
         ?string $scheduleId = null,
-
-        // todo move into an options DTO?
-        bool $triggerImmediately = false,
-        iterable $backfills = [],
-        iterable $memo = [],
-        iterable $searchAttributes = [],
-        string $namespace = 'default',
     ): ScheduleHandle {
-        $requestId = Uuid::v4();
         $scheduleId ??= Uuid::v4();
+        $options ??= ScheduleOptions::new();
+        $options->memo->setDataConverter($this->converter);
+        $options->searchAttributes->setDataConverter($this->converter);
 
         $request = new CreateScheduleRequest();
         $request
-            ->setRequestId($requestId)
-            ->setNamespace($namespace)
+            ->setRequestId(Uuid::v4())
+            ->setNamespace($options->namespace)
             ->setScheduleId($scheduleId)
             ->setIdentity($this->clientOptions->identity);
 
         // Initial Patch
         $backfillRequests = [];
-        foreach ($backfills as $period) {
+        foreach ($options->backfills as $period) {
             $period instanceof BackfillPeriod or throw new \InvalidArgumentException(
                 'Backfill periods must be of type BackfillPeriod.'
             );
@@ -125,18 +113,12 @@ final class ScheduleClient
                 ->setEndTime((new Timestamp())->setSeconds($period->endTime->getTimestamp()));
         }
 
-        $initialPatch = (new SchedulePatch())
-            ->setBackfillRequest($backfillRequests);
-        if ($triggerImmediately) {
+        $initialPatch = (new SchedulePatch())->setBackfillRequest($backfillRequests);
+        if ($options->triggerImmediately) {
             $overlap = $schedule->policies->overlapPolicy->value;
             $initialPatch
                 ->setTriggerImmediately((new TriggerImmediatelyRequest())->setOverlapPolicy($overlap));
         }
-
-        $memoDto = (new Memo())
-            ->setFields(EncodedCollection::fromValues($memo, $this->converter)->toPayloadArray());
-        $searchAttributesDto = (new SearchAttributes())
-            ->setIndexedFields(EncodedCollection::fromValues($searchAttributes, $this->converter)->toPayloadArray());
 
         $mapper = new ScheduleMapper($this->converter, $this->marshaller);
         $scheduleMessage = $mapper->toMessage($schedule);
@@ -144,8 +126,10 @@ final class ScheduleClient
         $request
             ->setSchedule($scheduleMessage)
             ->setInitialPatch($initialPatch)
-            ->setMemo($memoDto)
-            ->setSearchAttributes($searchAttributesDto);
+            ->setMemo((new Memo())->setFields($options->memo->toPayloadArray()))
+            ->setSearchAttributes(
+                (new SearchAttributes())->setIndexedFields($options->searchAttributes->toPayloadArray())
+            );
         $this->client->CreateSchedule($request);
 
         return new ScheduleHandle(
@@ -154,7 +138,7 @@ final class ScheduleClient
             $this->converter,
             $this->marshaller,
             $this->protoConverter,
-            $namespace,
+            $options->namespace,
             $scheduleId,
         );
     }

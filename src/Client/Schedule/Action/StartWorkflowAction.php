@@ -160,14 +160,14 @@ final class StartWorkflowAction extends ScheduleAction
     /**
      * Arguments to the workflow
      *
-     * @param list<mixed>|ValuesInterface $input
+     * @param list<mixed>|ValuesInterface $values
      */
-    public function withInput(array|ValuesInterface $input): self
+    public function withInput(array|ValuesInterface $values): self
     {
-        \is_array($input) and $input = EncodedValues::fromValues($input);
+        $values instanceof ValuesInterface or $values = EncodedValues::fromValues($values);
 
         /** @see self::$input */
-        return $this->with('input', $input);
+        return $this->with('input', $values);
     }
 
     /**
@@ -242,40 +242,40 @@ final class StartWorkflowAction extends ScheduleAction
     /**
      * Memo
      *
-     * @param array<non-empty-string, mixed>|EncodedCollection $memo
+     * @param iterable<non-empty-string, mixed>|EncodedCollection $values
      */
-    public function withMemo(array|EncodedCollection $memo): self
+    public function withMemo(iterable|EncodedCollection $values): self
     {
-        \is_array($memo) and $memo = EncodedCollection::fromValues($memo);
+        $values instanceof EncodedCollection or $values = EncodedCollection::fromValues($values);
 
         /** @see self::$memo */
-        return $this->with('memo', $memo);
+        return $this->with('memo', $values);
     }
 
     /**
      * Search attributes
      *
-     * @param array<non-empty-string, mixed>|EncodedCollection $searchAttributes
+     * @param iterable<non-empty-string, mixed>|EncodedCollection $values
      */
-    public function withSearchAttributes(array|EncodedCollection $searchAttributes): self
+    public function withSearchAttributes(iterable|EncodedCollection $values): self
     {
-        \is_array($searchAttributes) and $searchAttributes = EncodedCollection::fromValues($searchAttributes);
+        $values instanceof EncodedCollection or $values = EncodedCollection::fromValues($values);
 
         /** @see self::$searchAttributes */
-        return $this->with('searchAttributes', $searchAttributes);
+        return $this->with('searchAttributes', $values);
     }
 
     /**
      * Header
      *
-     * @param array<non-empty-string, mixed>|EncodedCollection $header
+     * @param iterable<non-empty-string, mixed>|HeaderInterface $values
      */
-    public function withHeader(array|HeaderInterface $header): self
+    public function withHeader(iterable|HeaderInterface $values): self
     {
-        \is_array($header) and $header = \Temporal\Interceptor\Header::fromValues($header);
+        $values instanceof HeaderInterface or $values = \Temporal\Interceptor\Header::fromValues($values);
 
         /** @see self::$header */
-        return $this->with('header', $header);
+        return $this->with('header', $values);
     }
 
     private static function createWorkflowType(string $name): WorkflowType
