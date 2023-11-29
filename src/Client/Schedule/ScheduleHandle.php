@@ -19,6 +19,8 @@ use Temporal\Api\Workflowservice\V1\PatchScheduleRequest;
 use Temporal\Api\Workflowservice\V1\UpdateScheduleRequest;
 use Temporal\Client\ClientOptions;
 use Temporal\Client\GRPC\ServiceClientInterface;
+use Temporal\Client\Schedule\Info\ScheduleDescription;
+use Temporal\Client\Schedule\Policy\ScheduleOverlapPolicy;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\InvalidArgumentException;
@@ -27,7 +29,7 @@ use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Marshaller\ProtoToArrayConverter;
 use Traversable;
 
-final class ScheduleHandler
+final class ScheduleHandle
 {
     public function __construct(
         private readonly ServiceClientInterface $client,

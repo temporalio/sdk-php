@@ -2,13 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Schedule;
+namespace Temporal\Client\Schedule\Info;
 
+use Temporal\Client\Schedule\Schedule;
 use Temporal\DataConverter\EncodedCollection;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 
 /**
- * Describes the current Schedule details from {@see scheduleHandler::describe()}.
+ * Describes the current Schedule details from {@see ScheduleHandle::describe()}.
  *
  * @see \Temporal\Api\Workflowservice\V1\DescribeScheduleResponse
  */
@@ -52,4 +53,11 @@ final class ScheduleDescription
      */
     #[Marshal(name: 'conflict_token')]
     public readonly string $conflictToken;
+
+    /**
+     * @internal The DTO is a result of a query, so it is not possible to create it manually.
+     */
+    public function __construct()
+    {
+    }
 }

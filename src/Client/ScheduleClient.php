@@ -22,9 +22,9 @@ use Temporal\Api\Workflowservice\V1\CreateScheduleRequest;
 use Temporal\Api\Workflowservice\V1\ListSchedulesRequest;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Client\Schedule\BackfillPeriod;
+use Temporal\Client\Schedule\Info\ScheduleListEntry;
 use Temporal\Client\Schedule\Schedule;
-use Temporal\Client\Schedule\ScheduleHandler;
-use Temporal\Client\Schedule\ScheduleListEntry;
+use Temporal\Client\Schedule\ScheduleHandle;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
@@ -101,7 +101,7 @@ final class ScheduleClient
         iterable $memo = [],
         iterable $searchAttributes = [],
         string $namespace = 'default',
-    ): ScheduleHandler {
+    ): ScheduleHandle {
         $requestId = Uuid::v4();
         $scheduleId ??= Uuid::v4();
 
@@ -148,7 +148,7 @@ final class ScheduleClient
             ->setSearchAttributes($searchAttributesDto);
         $this->client->CreateSchedule($request);
 
-        return new ScheduleHandler(
+        return new ScheduleHandle(
             $this->client,
             $this->clientOptions,
             $this->converter,
@@ -159,9 +159,9 @@ final class ScheduleClient
         );
     }
 
-    public function getHandler(string $scheduleID, string $namespace = 'default'): ScheduleHandler
+    public function getHandler(string $scheduleID, string $namespace = 'default'): ScheduleHandle
     {
-        return new ScheduleHandler(
+        return new ScheduleHandle(
             $this->client,
             $this->clientOptions,
             $this->converter,

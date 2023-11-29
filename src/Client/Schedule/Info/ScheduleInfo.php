@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Schedule;
+namespace Temporal\Client\Schedule\Info;
 
 use DateTimeImmutable;
 use Temporal\Internal\Marshaller\Meta\Marshal;
@@ -40,7 +40,7 @@ final class ScheduleInfo
      * Currently-running workflows started by this schedule. (There might be
      * more than one if the overlap policy allows overlaps.)
      *
-     * @var list<WorkflowExecution>
+     * @var WorkflowExecution
      */
     #[MarshalArray(name: 'running_workflows', of: WorkflowExecution::class)]
     public readonly array $runningWorkflows;
@@ -73,4 +73,11 @@ final class ScheduleInfo
      */
     #[Marshal(name: 'update_time')]
     public readonly ?DateTimeImmutable $lastUpdateAt;
+
+    /**
+     * The DTO is a result of a query, so it is not possible to create it manually.
+     */
+    private function __construct()
+    {
+    }
 }

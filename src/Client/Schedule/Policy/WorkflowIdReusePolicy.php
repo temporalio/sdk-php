@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Schedule;
+namespace Temporal\Client\Schedule\Policy;
 
 /**
  * Defines how new runs of a workflow with a particular ID may or may not be allowed. Note that

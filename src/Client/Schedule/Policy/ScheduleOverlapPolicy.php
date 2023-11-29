@@ -2,11 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Schedule;
+namespace Temporal\Client\Schedule\Policy;
 
 /**
- * ScheduleOverlapPolicy controls what happens when a workflow would be started
- * by a schedule, and is already running.
+ * Controls what happens when a workflow would be started by a schedule, and is already running.
  *
  * @see \Temporal\Api\Enums\V1\ScheduleOverlapPolicy
  */

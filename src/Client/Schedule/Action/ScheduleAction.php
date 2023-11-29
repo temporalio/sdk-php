@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Schedule;
+namespace Temporal\Client\Schedule\Action;
 
 /**
  * Base class for an action a schedule can take.

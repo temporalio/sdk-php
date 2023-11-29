@@ -12,11 +12,10 @@ declare(strict_types=1);
 namespace Temporal\Internal\Marshaller\Type;
 
 use stdClass;
-use Temporal\Client\Schedule\ScheduleAction;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 
 /**
- * @template TClass of ScheduleAction
+ * @template TClass of object
  */
 class OneOfType extends Type
 {

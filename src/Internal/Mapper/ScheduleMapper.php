@@ -14,9 +14,9 @@ use Temporal\Api\Schedule\V1\ScheduleSpec;
 use Temporal\Api\Schedule\V1\ScheduleState;
 use Temporal\Api\Schedule\V1\StructuredCalendarSpec;
 use Temporal\Api\Taskqueue\V1\TaskQueue;
-use Temporal\Client\Schedule\Action\NewWorkflowExecutionInfo;
+use Temporal\Client\Schedule\Action\StartWorkflowAction;
+use Temporal\Client\Schedule\Action\ScheduleAction;
 use Temporal\Client\Schedule\Schedule;
-use Temporal\Client\Schedule\ScheduleAction;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 
@@ -49,7 +49,7 @@ final class ScheduleMapper
         $values = \reset($array);
         switch (\array_key_first($array)) {
             case 'start_workflow':
-                \assert($action instanceof NewWorkflowExecutionInfo);
+                \assert($action instanceof StartWorkflowAction);
                 $values['workflow_type'] = (new WorkflowType())
                     /** Because it is mapped with wrong key {@see \Temporal\Workflow\WorkflowType::$name} */
                     ->setName($values['workflow_type']['Name']);

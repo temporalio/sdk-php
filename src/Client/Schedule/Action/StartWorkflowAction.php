@@ -8,8 +8,7 @@ use Google\Protobuf\Duration;
 use Temporal\Api\Common\V1\Header;
 use Temporal\Api\Common\V1\Memo;
 use Temporal\Api\Common\V1\SearchAttributes;
-use Temporal\Client\Schedule\ScheduleAction;
-use Temporal\Client\Schedule\WorkflowIdReusePolicy;
+use Temporal\Client\Schedule\Policy\WorkflowIdReusePolicy;
 use Temporal\Common\RetryOptions;
 use Temporal\Common\TaskQueue\TaskQueue;
 use Temporal\DataConverter\EncodedCollection;
@@ -24,13 +23,13 @@ use Temporal\Internal\Traits\CloneWith;
 use Temporal\Workflow\WorkflowType;
 
 /**
- * Shared message that encapsulates all the required arguments to starting a Workflow in different contexts.
+ * Start a new Workflow execution.
  *
  * @psalm-import-type DateIntervalValue from DateInterval
  *
  * @see \Temporal\Api\Workflow\V1\NewWorkflowExecutionInfo
  */
-final class NewWorkflowExecutionInfo extends ScheduleAction
+final class StartWorkflowAction extends ScheduleAction
 {
     use CloneWith;
 

@@ -8,7 +8,7 @@ use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Traits\CloneWith;
 
 /**
- * ScheduleState describes the current state of a schedule.
+ * ScheduleState describes the current state of a Schedule.
  *
  * @see \Temporal\Api\Schedule\V1\ScheduleState
  */

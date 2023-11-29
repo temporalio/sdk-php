@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Schedule;
+namespace Temporal\Client\Schedule\Info;
 
 use Temporal\Client\ScheduleClient;
 use Temporal\DataConverter\EncodedCollection;
@@ -37,4 +37,11 @@ final class ScheduleListEntry
      */
     #[Marshal(name: 'search_attributes')]
     public readonly EncodedCollection $searchAttributes;
+
+    /**
+     * @internal The DTO is a result of a query, so it is not possible to create it manually.
+     */
+    public function __construct()
+    {
+    }
 }

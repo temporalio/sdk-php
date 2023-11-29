@@ -2,10 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Schedule\Spec;
+namespace Temporal\Client\Schedule\Policy;
 
 use Google\Protobuf\Duration;
-use Temporal\Client\Schedule\ScheduleOverlapPolicy;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Traits\CloneWith;

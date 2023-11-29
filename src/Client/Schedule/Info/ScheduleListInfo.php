@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\Schedule;
+namespace Temporal\Client\Schedule\Info;
 
 use Temporal\Client\Schedule\Spec\ScheduleSpec;
 use Temporal\Internal\Marshaller\Meta\Marshal;
@@ -39,4 +39,11 @@ final class ScheduleListInfo
      */
     #[MarshalArray(name: 'future_action_times', of: \DateTimeImmutable::class)]
     public readonly array $futureActionTimes;
+
+    /**
+     * The DTO is a result of a query, so it is not possible to create it manually.
+     */
+    private function __construct()
+    {
+    }
 }
