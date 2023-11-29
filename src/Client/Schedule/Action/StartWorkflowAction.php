@@ -107,16 +107,15 @@ final class StartWorkflowAction extends ScheduleAction
 
     /**
      * Header
-     * todo: make Header compatible with EncodedCollection
      */
     #[Marshal(type: EncodedCollectionType::class, of: Header::class)]
-    public readonly EncodedCollection|HeaderInterface $header;
+    public readonly HeaderInterface $header;
 
-    private function __construct(WorkflowType $workflowType, TaskQueue $taskQueue)
+    private function __construct(WorkflowType $workflowType)
     {
         $this->workflowId = '';
         $this->workflowType = $workflowType;
-        $this->taskQueue = $taskQueue;
+        $this->taskQueue = TaskQueue::new('default');
         $this->input = EncodedValues::empty();
         $this->workflowExecutionTimeout = new \DateInterval('PT0S');
         $this->workflowRunTimeout = new \DateInterval('PT0S');
@@ -129,12 +128,11 @@ final class StartWorkflowAction extends ScheduleAction
         $this->header = \Temporal\Interceptor\Header::empty();
     }
 
-    public static function new(string|WorkflowType $workflowType, string|TaskQueue $taskQueue): self
+    public static function new(string|WorkflowType $workflowType): self
     {
         \is_string($workflowType) and $workflowType = self::createWorkflowType($workflowType);
-        \is_string($taskQueue) and $taskQueue = TaskQueue::new($taskQueue);
 
-        return new self($workflowType, $taskQueue);
+        return new self($workflowType);
     }
 
     public function withWorkflowId(string $workflowId): self

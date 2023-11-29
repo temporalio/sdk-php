@@ -68,7 +68,7 @@ final class EncodedCollectionType extends Type implements DetectableTypeInterfac
     public function serialize(mixed $value): array|Message
     {
         if (!$value instanceof EncodedCollection) {
-            throw new \InvalidArgumentException('Unsupported value type.');
+            throw new \InvalidArgumentException(\sprintf('Unsupported value type %s', \get_debug_type($value)));
         }
 
         if ($this->marshalTo === null) {

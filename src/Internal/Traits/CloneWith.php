@@ -13,7 +13,7 @@ trait CloneWith
      * Return a new immutable instance with the specified property value.
      */
     private function with(string $key, mixed $value): static {
-        $new = new self();
+        $new = (new \ReflectionClass($this))->newInstanceWithoutConstructor();
         $new->{$key} = $value;
         foreach ($this as $k => $v) {
             if ($k === $key) {

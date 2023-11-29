@@ -11,10 +11,19 @@ declare(strict_types=1);
 
 namespace Temporal\DataConverter;
 
+use ArrayAccess;
+use Countable;
 use IteratorAggregate;
 use Temporal\Api\Common\V1\Payload;
 use Traversable;
 
+/**
+ * @psalm-type TPayloadsCollection = Traversable&ArrayAccess&Countable
+ * @psalm-type TKey = array-key
+ * @psalm-type TValue = mixed
+ *
+ * @implements IteratorAggregate<TKey, TValue>
+ */
 class EncodedCollection implements IteratorAggregate
 {
     /**
@@ -23,36 +32,29 @@ class EncodedCollection implements IteratorAggregate
     private ?DataConverterInterface $converter = null;
 
     /**
-     * @var Payload[]
+     * @var TPayloadsCollection|null
      */
-    private ?array $payloads = null;
+    private ?ArrayAccess $payloads = null;
+
+    private array $values = [];
 
     /**
-     * @var array|null
-     */
-    private ?array $values = null;
-
-    /**
-     * Can not be constructed directly.
+     * Cannot be constructed directly.
      */
     private function __construct()
     {
     }
 
-    /**
-     * @return int
-     */
+    public function __clone()
+    {
+        if ($this->payloads !== null) {
+            $this->payloads = clone $this->payloads;
+        }
+    }
+
     public function count(): int
     {
-        if ($this->values !== null) {
-            return \count($this->values);
-        }
-
-        if ($this->payloads !== null) {
-            return \count($this->payloads);
-        }
-
-        return 0;
+        return \count($this->values) + ($this->payloads?->count() ?? 0);
     }
 
     public function isEmpty(): bool
@@ -68,8 +70,12 @@ class EncodedCollection implements IteratorAggregate
      */
     public function getValue(int|string $name, mixed $type = null): mixed
     {
-        if (\is_array($this->values) && \array_key_exists($name, $this->values)) {
+        if (\array_key_exists($name, $this->values)) {
             return $this->values[$name];
+        }
+
+        if ($this->payloads === null || !$this->payloads->offsetExists($name)) {
+            return null;
         }
 
         if ($this->converter === null) {
@@ -81,27 +87,32 @@ class EncodedCollection implements IteratorAggregate
 
     public function getValues(): array
     {
-        if (\is_array($this->values)) {
-            return $this->values;
-        }
+        $result = $this->values;
 
         if (empty($this->payloads)) {
-            return [];
+            return $result;
         }
 
         $this->converter === null and throw new \LogicException('DataConverter is not set.');
 
-        $data = [];
         foreach ($this->payloads as $key => $payload) {
-            $data[$key] = $this->converter->fromPayload($payload, null);
+            $result[$key] = $this->converter->fromPayload($payload, null);
         }
 
-        return $data;
+        return $result;
     }
 
     public function getIterator(): Traversable
     {
-        // TODO: Implement getIterator() method.
+        yield from $this->values;
+        if ($this->payloads !== null) {
+            $this->converter !== null or $this->payloads->count() === 0
+            or throw new \LogicException('DataConverter is not set.');
+
+            foreach ($this->payloads as $key => $payload) {
+                yield $key => $this->converter->fromPayload($payload, null);
+            }
+        }
     }
 
     /**
@@ -109,22 +120,39 @@ class EncodedCollection implements IteratorAggregate
      */
     public function toPayloadArray(): array
     {
-        if ($this->payloads !== null) {
-            return $this->payloads;
+        $data = $this->payloads !== null
+            ? \iterator_to_array($this->payloads)
+            : [];
+
+        if (empty($this->values)) {
+            return $data;
         }
 
-        if ($this->values === []) {
-            return [];
+        if ($this->converter === null) {
+            throw new \LogicException('DataConverter is not set.');
         }
 
-        $this->converter === null and throw new \LogicException('DataConverter is not set');
-
-        $data = [];
         foreach ($this->values as $key => $value) {
             $data[$key] = $this->converter->toPayload($value);
         }
 
         return $data;
+    }
+
+    public function withValue(int|string $name, mixed $value): static
+    {
+        $clone = clone $this;
+        if ($value instanceof Payload) {
+            $clone->payloads ??= new \ArrayIterator();
+            $clone->payloads->offsetSet($name, $value);
+            unset($clone->values[$name]);
+            return $clone;
+        }
+
+        // The value is not a Payload
+        $clone->values[$name] = $value;
+        $clone->payloads?->offsetUnset($name);
+        return $clone;
     }
 
     /**
@@ -138,9 +166,9 @@ class EncodedCollection implements IteratorAggregate
     /**
      * @return EncodedCollection
      */
-    public static function empty(): EncodedCollection
+    public static function empty(): static
     {
-        $ev = new self();
+        $ev = new static();
         $ev->values = [];
 
         return $ev;
@@ -152,10 +180,12 @@ class EncodedCollection implements IteratorAggregate
      *
      * @return EncodedCollection
      */
-    public static function fromValues(iterable $values, DataConverterInterface $dataConverter = null): EncodedCollection
+    public static function fromValues(iterable $values, ?DataConverterInterface $dataConverter = null): static
     {
-        $ev = new self();
-        $ev->values = \is_array($values) ? $values : \iterator_to_array($values);
+        $ev = new static();
+        foreach ($values as $key => $value) {
+            $ev->values[$key] = $value;
+        }
         $ev->converter = $dataConverter;
 
         return $ev;
@@ -168,11 +198,13 @@ class EncodedCollection implements IteratorAggregate
      * @return EncodedCollection
      */
     public static function fromPayloadCollection(
-        iterable $payloads,
+        array|ArrayAccess $payloads,
         DataConverterInterface $dataConverter,
-    ): EncodedCollection {
-        $ev = new self();
-        $ev->payloads = \is_array($payloads) ? $payloads : \iterator_to_array($payloads);
+    ): static {
+        $ev = new static();
+        $ev->payloads = \is_array($payloads)
+            ? new \ArrayIterator($payloads)
+            : $payloads;
         $ev->converter = $dataConverter;
 
         return $ev;

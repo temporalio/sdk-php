@@ -30,6 +30,14 @@ final class ScheduleMapper
 
     public function toMessage(Schedule $dto): \Temporal\Api\Schedule\V1\Schedule
     {
+        if ($dto->action instanceof StartWorkflowAction) {
+            $action = $dto->action;
+            $action->input?->setDataConverter($this->converter);
+            $action->header?->setDataConverter($this->converter);
+            $action->memo?->setDataConverter($this->converter);
+            $action->searchAttributes?->setDataConverter($this->converter);
+        }
+
         $array = $this->marshaller->marshal($dto);
         $array['policies']['overlap_policy'] = $dto->policies->overlapPolicy->value;
 
@@ -38,8 +46,6 @@ final class ScheduleMapper
         $array['state'] = new ScheduleState($array['state']);
         isset($array['action']) and $array['action'] = $this->prepareAction($dto->action, $array['action']);
 
-
-        \trap($array);
         return new \Temporal\Api\Schedule\V1\Schedule($array);
     }
 
@@ -60,7 +66,6 @@ final class ScheduleMapper
                 $values['workflow_id_reuse_policy'] = $action->workflowIdReusePolicy->value;
                 $values['retry_policy'] = new RetryPolicy($values['retry_policy'] ?? []);
 
-                \trap($values);
                 $result->setStartWorkflow(
                     new \Temporal\Api\Workflow\V1\NewWorkflowExecutionInfo($values),
                 );
