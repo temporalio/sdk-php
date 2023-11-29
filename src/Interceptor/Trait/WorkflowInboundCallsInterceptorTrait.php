@@ -14,15 +14,15 @@ namespace Temporal\Interceptor\Trait;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
-use Temporal\Interceptor\WorkflowInboundInterceptor;
+use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 
 /**
- * Implements {@see WorkflowInboundInterceptor}
+ * Implements {@see WorkflowInboundCallsInterceptor}
  */
-trait WorkflowInboundInterceptorTrait
+trait WorkflowInboundCallsInterceptorTrait
 {
     /**
-     * @see WorkflowInboundInterceptor::execute()
+     * @see WorkflowInboundCallsInterceptor::execute()
      */
     public function execute(WorkflowInput $input, callable $next): void
     {
@@ -30,7 +30,7 @@ trait WorkflowInboundInterceptorTrait
     }
 
     /**
-     * @see WorkflowInboundInterceptor::handleSignal()
+     * @see WorkflowInboundCallsInterceptor::handleSignal()
      */
     public function handleSignal(SignalInput $input, callable $next): void
     {
@@ -38,7 +38,7 @@ trait WorkflowInboundInterceptorTrait
     }
 
     /**
-     * @see WorkflowInboundInterceptor::handleQuery()
+     * @see WorkflowInboundCallsInterceptor::handleQuery()
      */
     public function handleQuery(QueryInput $input, callable $next): mixed
     {

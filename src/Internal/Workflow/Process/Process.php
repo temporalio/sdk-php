@@ -16,7 +16,7 @@ use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\SignalInput;
-use Temporal\Interceptor\WorkflowInboundInterceptor;
+use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\WorkflowInstance;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\ServiceContainer;
@@ -45,7 +45,7 @@ class Process extends Scope implements ProcessInterface
     ) {
         parent::__construct($services, $ctx);
 
-        $inboundPipeline = $services->interceptorProvider->getPipeline(WorkflowInboundInterceptor::class);
+        $inboundPipeline = $services->interceptorProvider->getPipeline(WorkflowInboundCallsInterceptor::class);
         $wfInstance = $this->getWorkflowInstance();
         \assert($wfInstance instanceof WorkflowInstance);
 
@@ -92,7 +92,7 @@ class Process extends Scope implements ProcessInterface
                             $input->arguments
                         );
                     },
-                    /** @see WorkflowInboundInterceptor::handleSignal() */
+                    /** @see WorkflowInboundCallsInterceptor::handleSignal() */
                     'handleSignal',
                 )(new SignalInput(
                     $name,

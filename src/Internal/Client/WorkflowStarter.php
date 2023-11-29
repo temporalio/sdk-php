@@ -191,6 +191,7 @@ final class WorkflowStarter
             ->setTaskQueue(new TaskQueue(['name' => $options->taskQueue]))
             ->setWorkflowType(new WorkflowType(['name' => $input->workflowType]))
             ->setWorkflowId($input->workflowId)
+            ->setWorkflowStartDelay(DateInterval::toDuration($options->workflowStartDelay))
             ->setCronSchedule($options->cronSchedule ?? '')
             ->setRetryPolicy($options->retryOptions ? $options->retryOptions->toWorkflowRetryPolicy() : null)
             ->setWorkflowIdReusePolicy($options->workflowIdReusePolicy)
