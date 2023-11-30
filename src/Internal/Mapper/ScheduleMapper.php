@@ -59,7 +59,6 @@ final class ScheduleMapper
                 $values['workflow_type'] = (new WorkflowType())
                     /** Because it is mapped with wrong key {@see \Temporal\Workflow\WorkflowType::$name} */
                     ->setName($values['workflow_type']['Name']);
-                $values['task_queue']['kind'] = $action->taskQueue->kind->value;
                 $values['task_queue'] = new TaskQueue($values['task_queue']);
                 $action->input?->setDataConverter($this->converter);
                 $values['input'] = $action->input?->toPayloads() ?? new Payloads();
