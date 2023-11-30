@@ -14,7 +14,7 @@ enum ScheduleOverlapPolicy: int
     case Unspecified = 0;
 
     /**
-     * Means don't start anything. When the workflow completes, the next scheduled event after that
+     * Don't start anything. When the workflow completes, the next scheduled event after that
      * time will be considered.
      */
     case Skip = 1;
@@ -27,24 +27,24 @@ enum ScheduleOverlapPolicy: int
     case BufferOne = 2;
 
     /**
-     * Means buffer up any number of starts to all happen sequentially, immediately after the running
+     * Buffer up any number of starts to all happen sequentially, immediately after the running
      * workflow completes.
      */
     case BufferAll = 3;
 
     /**
-     * Means that if there is another workflow running, cancel it, and start the new one after the old one
+     * If there is another workflow running, cancel it, and start the new one after the old one
      * completes cancellation.
      */
     case CancelOther = 4;
 
     /**
-     * Means that if there is another workflow running, terminate it and start the new one immediately.
+     * If there is another workflow running, terminate it and start the new one immediately.
      */
     case TerminateOther = 5;
 
     /**
-     * Means start any number of concurrent workflows. Note that with this policy, last completion result
+     * Start any number of concurrent workflows. Note that with this policy, last completion result
      * and last failure will not be available since workflows are not sequential.
      */
     case AllowAll = 6;

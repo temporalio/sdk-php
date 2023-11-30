@@ -54,7 +54,13 @@ final class ScheduleHandle
      * Update the Schedule.
      *
      * NOTE: If two Update calls are made in parallel to the same Schedule there is the potential
-     * for a race condition.
+     * for a race condition. Use $conflictToken to avoid this.
+     *
+     * @param Schedule $schedule The new Schedule to update to.
+     * @param string|null $conflictToken Can be the value of {@see ScheduleDescription::$conflictToken},
+     *        which will cause this request to fail if the schedule has been modified
+     *        between the {@see self::describe()} and this Update.
+     *        If missing, the schedule will be updated unconditionally.
      */
     public function update(
         Schedule $schedule,

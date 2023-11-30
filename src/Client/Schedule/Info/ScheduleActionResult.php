@@ -15,7 +15,7 @@ use Temporal\Workflow\WorkflowExecution;
 final class ScheduleActionResult
 {
     /**
-     * Time that the action was taken (according to the schedule, including jitter).
+     * Time that the action should have been taken (according to the schedule, including jitter).
      */
     #[Marshal(name: 'schedule_time')]
     public readonly DateTimeImmutable $scheduleTime;

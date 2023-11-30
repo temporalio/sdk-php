@@ -11,31 +11,21 @@ use Temporal\Internal\Traits\CloneWith;
  * @link https://docs.temporal.io/docs/concepts/task-queues/
  * @see \Temporal\Api\Taskqueue\V1\TaskQueue
  */
-final class TaskQueue
+final class TaskQueue implements \Stringable
 {
     use CloneWith;
 
     #[Marshal]
     public readonly string $name;
 
-    /**
-     * Default: {@see TaskQueueKind::TaskQueueKindNormal}
-     */
-    #[Marshal]
-    public readonly TaskQueueKind $kind;
-
-    /**
-     * Iff kind == {@see TaskQueueKind::TaskQueueKindSticky}, then this field contains the name of
-     * the normal task queue that the sticky worker is running on.
-     */
-    #[Marshal(name: 'normal_name')]
-    public readonly string $normalName;
+    public function __toString(): string
+    {
+        return $this->name;
+    }
 
     private function __construct(string $name)
     {
         $this->name = $name;
-        $this->kind = TaskQueueKind::TaskQueueKindUnspecified;
-        $this->normalName = '';
     }
 
     public static function new(string $name): self
@@ -47,11 +37,5 @@ final class TaskQueue
     {
         /** @see self::$name */
         return $this->with('name', $name);
-    }
-
-    public function withKind(TaskQueueKind $kind): self
-    {
-        /** @see self::$kind */
-        return $this->with('kind', $kind);
     }
 }

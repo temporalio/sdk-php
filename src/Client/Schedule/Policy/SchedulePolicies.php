@@ -38,7 +38,7 @@ final class SchedulePolicies
     public readonly \DateInterval $catchupWindow;
 
     /**
-     * If true, and a workflow run fails or times out, turn on "paused".
+     * If true, and a Workflow run fails or times out, pause the Schedule.
      * This applies after retry policies: the full chain of retries must fail to
      * trigger a pause here.
      */

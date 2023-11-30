@@ -118,7 +118,6 @@ class AttributeMapper implements MapperInterface
      */
     private function getPropertyMappings(Scope $scope): iterable
     {
-        // $stack = new SplStack();
         foreach ($this->class->getProperties() as $property) {
             $meta = $this->reader->getPropertyMetadata($property, Marshal::class);
             $attrs = \array_reverse(\is_array($meta) ? $meta : \iterator_to_array($meta));

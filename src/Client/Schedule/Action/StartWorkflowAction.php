@@ -88,12 +88,6 @@ final class StartWorkflowAction extends ScheduleAction
     public readonly RetryOptions $retryPolicy;
 
     /**
-     * @link https://docs.temporal.io/docs/content/what-is-a-temporal-cron-job/
-     */
-    #[Marshal(name: 'cron_schedule')]
-    public readonly string $cronSchedule;
-
-    /**
      * Memo
      */
     #[Marshal(name: 'memo', type: EncodedCollectionType::class, of: Memo::class)]
@@ -122,7 +116,6 @@ final class StartWorkflowAction extends ScheduleAction
         $this->workflowTaskTimeout = new \DateInterval('PT0S');
         $this->workflowIdReusePolicy = WorkflowIdReusePolicy::WorkflowIdReusePolicyUnspecified;
         $this->retryPolicy = RetryOptions::new();
-        $this->cronSchedule = '';
         $this->memo = EncodedCollection::empty();
         $this->searchAttributes = EncodedCollection::empty();
         $this->header = \Temporal\Interceptor\Header::empty();
@@ -228,15 +221,6 @@ final class StartWorkflowAction extends ScheduleAction
     {
         /** @see self::$retryPolicy */
         return $this->with('retryPolicy', $retryPolicy);
-    }
-
-    /**
-     * @link https://docs.temporal.io/docs/content/what-is-a-temporal-cron-job/
-     */
-    public function withCronSchedule(?string $cronSchedule): self
-    {
-        /** @see self::$cronSchedule */
-        return $this->with('cronSchedule', (string)$cronSchedule);
     }
 
     /**
