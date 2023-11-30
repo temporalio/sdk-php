@@ -29,4 +29,17 @@ class MarshallingRule
         public self|string|null $of = null,
     ) {
     }
+
+    public function hasType(): bool
+    {
+        return $this->type !== null && $this->of !== null;
+    }
+
+    /**
+     * Generate constructor arguments for the related {@see \Temporal\Internal\Marshaller\Type\Type} object.
+     */
+    public function getConstructorArgs(): array
+    {
+        return $this->of === null ? [] : [$this->of];
+    }
 }

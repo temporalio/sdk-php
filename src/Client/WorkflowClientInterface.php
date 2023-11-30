@@ -140,7 +140,7 @@ interface WorkflowClientInterface
      *
      * @param non-empty-string $query
      * @param non-empty-string $namespace
-     * @param int $pageSize Maximum number of workflow info per page.
+     * @param int<0, max> $pageSize Maximum number of workflow info per page.
      *
      * @return Paginator<WorkflowExecutionInfoDto>
      */

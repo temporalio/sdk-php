@@ -103,8 +103,6 @@ final class DateInterval
      */
     public static function parse($interval, string $format = self::FORMAT_MILLISECONDS): CarbonInterval
     {
-        self::validateFormat($format);
-
         switch (true) {
             case \is_string($interval):
                 return CarbonInterval::fromString($interval);
@@ -114,6 +112,7 @@ final class DateInterval
 
             case \is_int($interval):
             case \is_float($interval):
+                self::validateFormat($format);
                 if ($format === self::FORMAT_NANOSECONDS) {
                     return CarbonInterval::microseconds($interval / 1000);
                 }

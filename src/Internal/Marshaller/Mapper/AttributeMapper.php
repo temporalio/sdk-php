@@ -67,11 +67,11 @@ class AttributeMapper implements MapperInterface
         $this->factory = $factory;
         $this->scope = $this->getScope();
 
-        foreach ($this->getPropertyMappings($this->scope) as $property => $marshal) {
+        foreach ($this->getPropertyMappings($this->scope) as $property => [$marshal, $readonly]) {
             $type = $this->detectType($property, $marshal);
             $name = $property->getName();
 
-            $this->getters[$marshal->name] = $this->createGetter($name, $type);
+            $readonly or $this->getters[$marshal->name] = $this->createGetter($name, $type);
             $this->setters[$marshal->name] = $this->createSetter($name, $type);
         }
     }
@@ -114,20 +114,25 @@ class AttributeMapper implements MapperInterface
      *
      * @param Scope $scope
      *
-     * @return iterable<\ReflectionProperty, MarshallingRule|null>
+     * @return iterable<\ReflectionProperty, array{MarshallingRule|null, bool}>
      */
     private function getPropertyMappings(Scope $scope): iterable
     {
         foreach ($this->class->getProperties() as $property) {
-            /** @var Marshal $marshal */
-            $marshal = $this->reader->firstPropertyMetadata($property, Marshal::class);
+            $meta = $this->reader->getPropertyMetadata($property, Marshal::class);
+            $attrs = \array_reverse(\is_array($meta) ? $meta : \iterator_to_array($meta));
+            $hasAttrs = false;
+            $cnt = \count($attrs);
 
-            // Has marshal attribute
-            if ($marshal === null && !$this->isValidScope($property, $scope)) {
-                continue;
+            /** @var Marshal $marshal */
+            foreach ($attrs as $marshal) {
+                yield $property => [$marshal->toTypeDto(), --$cnt > 0];
+                $hasAttrs = true;
             }
 
-            yield $property => $marshal?->toTypeDto();
+            if (!$hasAttrs && $this->isValidScope($property, $scope)) {
+                yield $property => [null, false];
+            }
         }
     }
 
@@ -149,8 +154,15 @@ class AttributeMapper implements MapperInterface
      */
     private function detectType(\ReflectionProperty $property, ?MarshallingRule &$rule): ?TypeInterface
     {
-        if ($this->factory instanceof RuleFactoryInterface) {
-            $rule ??= $this->factory->makeRule($property);
+        if (($rule === null || !$rule->hasType()) && $this->factory instanceof RuleFactoryInterface) {
+            $newRule = $this->factory->makeRule($property);
+            if ($rule === null) {
+                $rule = $newRule;
+            } elseif ($newRule !== null) {
+                $rule->name ??= $newRule->name;
+                $rule->type ??= $newRule->type;
+                $rule->of ??= $newRule->of;
+            }
         }
         $rule ??= new MarshallingRule();
         $rule->name ??= $property->getName();
@@ -160,7 +172,7 @@ class AttributeMapper implements MapperInterface
             return null;
         }
 
-        return $this->factory->create($rule->type, $rule->of ? [$rule->of] : []);
+        return $this->factory->create($rule->type, $rule->getConstructorArgs());
     }
 
     /**

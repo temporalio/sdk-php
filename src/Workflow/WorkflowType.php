@@ -24,5 +24,6 @@ class WorkflowType
      * @var string
      */
     #[Marshal(name: 'Name')]
+    #[Marshal(name: 'name')]
     public string $name = '';
 }

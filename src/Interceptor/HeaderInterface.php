@@ -29,18 +29,18 @@ interface HeaderInterface extends \Countable, IteratorAggregate
     public function isEmpty(): bool;
 
     /**
-     * @param TKey $index
+     * @param TKey $name
      * @param Type|TypeEnum|mixed $type
      *
      * @return mixed Returns {@see null} if value not found.
      */
-    public function getValue(int|string $index, mixed $type = null): mixed;
+    public function getValue(int|string $name, mixed $type = null): mixed;
 
     /**
-     * @param TKey $key
+     * @param TKey $name
      * @param TValue $value
      *
      * @psalm-mutation-free
      */
-    public function withValue(int|string $key, mixed $value): self;
+    public function withValue(int|string $name, mixed $value): static;
 }

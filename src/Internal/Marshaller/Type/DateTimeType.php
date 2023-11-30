@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Marshaller\Type;
 
 use DateTimeInterface;
+use Google\Protobuf\Timestamp;
 use JetBrains\PhpStorm\Pure;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Marshaller\MarshallingRule;
@@ -31,15 +32,16 @@ class DateTimeType extends Type implements DetectableTypeInterface, RuleFactoryI
 
     /**
      * @param MarshallerInterface $marshaller
-     * @param class-string<DateTimeInterface> $class
+     * @param class-string<DateTimeInterface>|null $class
      * @param string $format
      */
     #[Pure]
     public function __construct(
         MarshallerInterface $marshaller,
-        string $class = DateTimeInterface::class,
+        ?string $class = null,
         string $format = \DateTimeInterface::RFC3339,
     ) {
+        $class ??= DateTimeInterface::class;
         $this->format = $format;
 
         parent::__construct($marshaller);
@@ -85,9 +87,14 @@ class DateTimeType extends Type implements DetectableTypeInterface, RuleFactoryI
     /**
      * {@inheritDoc}
      */
-    public function serialize($value): string
+    public function serialize($value): mixed
     {
-        return DateTime::parse($value)
-            ->format($this->format);
+        $datetime = DateTime::parse($value);
+        return match ($this->format) {
+            Timestamp::class => (new Timestamp())
+                ->setSeconds($datetime->getTimestamp())
+                ->setNanos((int)$datetime->format('u') * 1000),
+            default => $datetime->format($this->format),
+        };
     }
 }

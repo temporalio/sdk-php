@@ -39,17 +39,15 @@ abstract class Type implements TypeInterface
      */
     protected function ofType(MarshallerInterface $marshaller, MarshallingRule|string $type): ?TypeInterface
     {
-        $of = $type instanceof MarshallingRule && $type->of !== null
-            ? $type->of
-            : null;
+        $args = $type instanceof MarshallingRule ? $type->getConstructorArgs() : [];
         $typeClass = $type instanceof MarshallingRule ? $type->type : $type;
 
-        \assert($typeClass !== null);
+        if ($typeClass === null) {
+            return null;
+        }
 
         if (Inheritance::implements($typeClass, TypeInterface::class)) {
-            return $of === null
-                ? new $typeClass($marshaller)
-                : new $typeClass($marshaller, $of);
+            return new $typeClass($marshaller, ...$args);
         }
 
         return new ObjectType($marshaller, $typeClass);

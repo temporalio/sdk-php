@@ -16,11 +16,16 @@ use Temporal\Internal\Marshaller\MarshallingRule;
 use Temporal\Internal\Marshaller\Type\NullableType;
 
 /**
+ * You may use this annotation multiple times to specify multiple marshalling rules for a single property. It may be
+ * useful when there are multiple ways to unmarshal a property (e.g. multiple names for a single property: `UserName`,
+ * `user_name` and `username`). In this case, the first rule has the highest priority and will be used in marshalling
+ * (serialization) process.
+ *
  * @Annotation
  * @NamedArgumentConstructor
  * @Target({ "PROPERTY" })
  */
-#[\Attribute(\Attribute::TARGET_PROPERTY), NamedArgumentConstructor]
+#[\Attribute(\Attribute::TARGET_PROPERTY | \Attribute::IS_REPEATABLE), NamedArgumentConstructor]
 class Marshal extends MarshallingRule
 {
     /**
@@ -47,10 +52,6 @@ class Marshal extends MarshallingRule
             return $this;
         }
 
-        return new MarshallingRule(
-            $this->name,
-            NullableType::class,
-            $this->of === null ? $this->type : $this,
-        );
+        return new MarshalNullable($this->name, $this);
     }
 }
