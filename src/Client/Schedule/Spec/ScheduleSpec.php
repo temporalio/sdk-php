@@ -18,14 +18,15 @@ use Temporal\Internal\Traits\CloneWith;
  *  ScheduleSpec depends only on its contents and never changes, except that the
  *  definition of a time zone can change over time (most commonly, when daylight
  *  saving time policy changes for an area). To create a totally self-contained
- *  ScheduleSpec, use UTC or include timezone_data.
- *  For input, you can provide zero or more of: structured_calendar, calendar,
- *  cron_string, interval, and exclude_structured_calendar, and all of them will
+ *  ScheduleSpec, use UTC or include {@see self::$timezoneData}.
+ *  For input, you can provide zero or more of: structuredCalendar, calendar,
+ *  cronString, interval, and exclude_structured_calendar, and all of them will
  *  be used (the schedule will take action at the union of all of their times,
- *  minus the ones that match exclude_structured_calendar).
- *  On input, calendar and cron_string fields will be compiled into
- *  structured_calendar (and maybe interval and timezone_name), so if you
- *  Describe a schedule, you'll see only structured_calendar, interval, etc.
+ *  minus the ones that match excludeStructuredCalendar).
+ *  On input, calendar and cronString fields will be compiled into
+ *  {@see self::structuredCalendarList} (and maybe interval and timezoneName), so if you
+ *  Describe a schedule, you'll see only {@see self::$structuredCalendarList},
+ *  {@see self::$intervalList}, etc.
  *
  * @psalm-import-type DateIntervalValue from DateInterval
  *
