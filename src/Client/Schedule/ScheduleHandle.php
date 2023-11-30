@@ -195,7 +195,7 @@ final class ScheduleHandle
     /**
      * Delete the Schedule.
      */
-    public function delete(string $identity): void
+    public function delete(): void
     {
         $request = (new DeleteScheduleRequest())
             ->setNamespace($this->namespace)
