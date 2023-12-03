@@ -126,6 +126,8 @@ class WorkflowClient implements WorkflowClientInterface
         $returnType = null;
         if ($workflow instanceof WorkflowProxy) {
             $returnType = $workflow->__getReturnType();
+
+            $args = $this->prepareArgs($args, $workflow);
         }
 
         if ($workflowStub->getWorkflowType() === null) {
@@ -150,6 +152,41 @@ class WorkflowClient implements WorkflowClientInterface
     }
 
     /**
+     * @param array $args
+     * @param WorkflowProxy $workflow
+     * @return array
+     */
+    private function prepareArgs(array $args, WorkflowProxy $workflow): array
+    {
+        if (array_is_list($args) || count($args) === 0) {
+            return $args;
+        }
+
+        $method = $workflow->getHandlerReflection();
+
+        if ($method === null) {
+            return $args;
+        }
+
+        $parameters = $method->getParameters();
+
+        $finalArgs = [];
+        foreach ($parameters as $parameter) {
+            $name = $parameter->getName();
+
+            if (array_key_exists($name, $args)) {
+                $finalArgs[$name] = $args[$name];
+            } else if ($parameter->isDefaultValueAvailable()) {
+                $finalArgs[$name] = $parameter->getDefaultValue();
+            } else {
+                throw new \InvalidArgumentException("Missing argument: $name");
+            }
+        }
+
+        return $finalArgs;
+    }
+
+    /**
      * @param object|WorkflowStubInterface $workflow
      * @param string $signal
      * @param array $signalArgs
@@ -171,6 +208,8 @@ class WorkflowClient implements WorkflowClientInterface
         $returnType = null;
         if ($workflow instanceof WorkflowProxy) {
             $returnType = $workflow->__getReturnType();
+
+            $startArgs = $this->prepareArgs($startArgs, $workflow);
         }
 
         if ($workflowStub->getWorkflowType() === null) {

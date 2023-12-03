@@ -122,6 +122,15 @@ final class WorkflowProxy extends Proxy
      */
     public function hasHandler(): bool
     {
-        return $this->prototype->getHandler() !== null;
+        return $this->getHandlerReflection() !== null;
+    }
+
+    /**
+     * @return \ReflectionMethod|null
+     * @internal
+     */
+    public function getHandlerReflection(): ?\ReflectionMethod
+    {
+        return $this->prototype?->getHandler();
     }
 }
