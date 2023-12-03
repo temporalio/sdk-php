@@ -18,6 +18,7 @@ use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteLocalActivityInput;
 use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Interceptor\Pipeline;
+use Temporal\Internal\Support\ArgumentPreparator;
 use Temporal\Internal\Transport\CompletableResultInterface;
 use Temporal\Workflow\WorkflowContextInterface;
 
@@ -79,6 +80,8 @@ final class ActivityProxy extends Proxy
         $handler = $this->findPrototypeByHandlerNameOrFail($method);
         $type = $handler->getHandler()->getReturnType();
         $options = $this->options->mergeWith($handler->getMethodRetry());
+
+        $args = ArgumentPreparator::alignArgs($args, $handler->getHandler());
 
         return $handler->isLocalActivity()
             // Run local activity through an interceptor pipeline

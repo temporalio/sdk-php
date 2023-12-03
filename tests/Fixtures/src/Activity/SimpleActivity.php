@@ -136,4 +136,17 @@ class SimpleActivity
     {
         return $dto;
     }
+
+    #[ActivityMethod]
+    public function namedArguments(
+        string $input,
+        bool $optionalBool = false,
+        ?string $optionalNullableString = null,
+    ): array {
+        return [
+            'input' => $input,
+            'optionalBool' => $optionalBool,
+            'optionalNullableString' => $optionalNullableString,
+        ];
+    }
 }

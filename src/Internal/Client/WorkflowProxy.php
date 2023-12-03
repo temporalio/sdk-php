@@ -14,6 +14,7 @@ namespace Temporal\Internal\Client;
 use Temporal\Client\WorkflowClient;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Internal\Support\ArgumentPreparator;
 use Temporal\Internal\Workflow\Proxy;
 
 /**
@@ -62,6 +63,8 @@ final class WorkflowProxy extends Proxy
     public function __call(string $method, array $args)
     {
         if ($method === $this->prototype->getHandler()?->getName()) {
+            $args = ArgumentPreparator::alignArgs($args, $this->prototype->getHandler());
+
             // no timeout (use async mode to get it)
             return $this->client->start($this, ...$args)->getResult($this->__getReturnType());
         }
@@ -69,6 +72,8 @@ final class WorkflowProxy extends Proxy
         // Otherwise, we try to find a suitable workflow "query" method.
         foreach ($this->prototype->getQueryHandlers() as $name => $query) {
             if ($query->getName() === $method) {
+                $args = ArgumentPreparator::alignArgs($args, $query);
+
                 $result = $this->stub->query($name, ...$args);
                 if ($result === null) {
                     return null;
@@ -81,6 +86,8 @@ final class WorkflowProxy extends Proxy
         // Otherwise, we try to find a suitable workflow "signal" method.
         foreach ($this->prototype->getSignalHandlers() as $name => $signal) {
             if ($signal->getName() === $method) {
+                $args = ArgumentPreparator::alignArgs($args, $signal);
+
                 $this->stub->signal($name, ...$args);
 
                 return;
@@ -132,5 +139,24 @@ final class WorkflowProxy extends Proxy
     public function getHandlerReflection(): ?\ReflectionMethod
     {
         return $this->prototype?->getHandler();
+    }
+
+    /**
+     * @param string $name
+     * @return \ReflectionFunctionAbstract|null
+     */
+    public function findSignalReflection(string $name): ?\ReflectionFunctionAbstract
+    {
+        if ($this->prototype === null) {
+            return null;
+        }
+
+        foreach ($this->prototype->getSignalHandlers() as $signalName => $signal) {
+            if ($signalName === $name) {
+                return $signal;
+            }
+        }
+
+        return null;
     }
 }

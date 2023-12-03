@@ -20,7 +20,7 @@ use Temporal\Tests\Activity\SimpleActivity;
 #[Workflow\WorkflowInterface]
 class SimpleNamedArgumentsWorkflow
 {
-    #[WorkflowMethod(name: 'SimpleNamedArgumentsWorkflow')]
+    #[WorkflowMethod]
     public function handler(
         string $input,
         bool $optionalBool = false,

@@ -38,6 +38,7 @@ use Temporal\Internal\Declaration\Reader\WorkflowReader;
 use Temporal\Internal\Interceptor\HeaderCarrier;
 use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Internal\Mapper\WorkflowExecutionInfoMapper;
+use Temporal\Internal\Support\ArgumentPreparator;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowRunInterface;
 use Temporal\Workflow\WorkflowStub as WorkflowStubConverter;
@@ -126,8 +127,9 @@ class WorkflowClient implements WorkflowClientInterface
         $returnType = null;
         if ($workflow instanceof WorkflowProxy) {
             $returnType = $workflow->__getReturnType();
+            $method = $workflow->getHandlerReflection();
 
-            $args = $this->prepareArgs($args, $workflow);
+            $args = ArgumentPreparator::alignArgs($args, $method);
         }
 
         if ($workflowStub->getWorkflowType() === null) {
@@ -152,41 +154,6 @@ class WorkflowClient implements WorkflowClientInterface
     }
 
     /**
-     * @param array $args
-     * @param WorkflowProxy $workflow
-     * @return array
-     */
-    private function prepareArgs(array $args, WorkflowProxy $workflow): array
-    {
-        if (array_is_list($args) || count($args) === 0) {
-            return $args;
-        }
-
-        $method = $workflow->getHandlerReflection();
-
-        if ($method === null) {
-            return $args;
-        }
-
-        $parameters = $method->getParameters();
-
-        $finalArgs = [];
-        foreach ($parameters as $parameter) {
-            $name = $parameter->getName();
-
-            if (array_key_exists($name, $args)) {
-                $finalArgs[$name] = $args[$name];
-            } else if ($parameter->isDefaultValueAvailable()) {
-                $finalArgs[$name] = $parameter->getDefaultValue();
-            } else {
-                throw new \InvalidArgumentException("Missing argument: $name");
-            }
-        }
-
-        return $finalArgs;
-    }
-
-    /**
      * @param object|WorkflowStubInterface $workflow
      * @param string $signal
      * @param array $signalArgs
@@ -208,8 +175,17 @@ class WorkflowClient implements WorkflowClientInterface
         $returnType = null;
         if ($workflow instanceof WorkflowProxy) {
             $returnType = $workflow->__getReturnType();
+            $handler = $workflow->getHandlerReflection();
 
-            $startArgs = $this->prepareArgs($startArgs, $workflow);
+            if ($handler !== null) {
+                $startArgs = ArgumentPreparator::alignArgs($startArgs, $handler);
+            }
+
+            $signalReflection = $workflow->findSignalReflection($signal);
+
+            if ($signalReflection !== null) {
+                $signalArgs = ArgumentPreparator::alignArgs($signalArgs, $signalReflection);
+            }
         }
 
         if ($workflowStub->getWorkflowType() === null) {

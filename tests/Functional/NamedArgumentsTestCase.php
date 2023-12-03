@@ -7,6 +7,8 @@ namespace Temporal\Tests\Functional;
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
 use Temporal\Tests\TestCase;
+use Temporal\Tests\Workflow\ActivityNamedArgumentsWorkflow;
+use Temporal\Tests\Workflow\SignalNamedArgumentsWorkflow;
 use Temporal\Tests\Workflow\SimpleNamedArgumentsWorkflow;
 
 final class NamedArgumentsTestCase extends TestCase
@@ -21,10 +23,10 @@ final class NamedArgumentsTestCase extends TestCase
 
         parent::setUp();
     }
-    private function runWorkflow(...$args)
+    private function runWorkflow(string $workflow, ...$args): array
     {
         $workflow = $this->workflowClient->newWorkflowStub(
-            SimpleNamedArgumentsWorkflow::class
+            $workflow
         );
 
         return $this->workflowClient->start(
@@ -36,6 +38,7 @@ final class NamedArgumentsTestCase extends TestCase
     public function testWorkflowStartWithOneParam(): void
     {
         $result = $this->runWorkflow(
+            SimpleNamedArgumentsWorkflow::class,
             input: 'hello',
         );
 
@@ -49,6 +52,7 @@ final class NamedArgumentsTestCase extends TestCase
     public function testWorkflowStartWithParamsInDifferentOrder(): void
     {
         $result = $this->runWorkflow(
+            SimpleNamedArgumentsWorkflow::class,
             optionalNullableString: 'test',
             input: 'hello',
             optionalBool: true
@@ -64,6 +68,7 @@ final class NamedArgumentsTestCase extends TestCase
     public function testWorkflowStartWithMissingParams(): void
     {
         $result = $this->runWorkflow(
+            SimpleNamedArgumentsWorkflow::class,
             input: 'hello',
             optionalNullableString: 'test',
         );
@@ -78,6 +83,7 @@ final class NamedArgumentsTestCase extends TestCase
     public function testWorkflowStartWithMissingParamAndDifferentOrder(): void
     {
         $result = $this->runWorkflow(
+            SimpleNamedArgumentsWorkflow::class,
             optionalNullableString: 'test',
             input: 'hello',
         );
@@ -89,5 +95,198 @@ final class NamedArgumentsTestCase extends TestCase
         ], $result);
     }
 
+    public function testActivityNamedParams(): void
+    {
+        $result = $this->runWorkflow(
+            ActivityNamedArgumentsWorkflow::class,
+            string: 'hello',
+            bool: true,
+            secondString: 'test',
+        );
 
+        $this->assertSame([
+            'oneParamRes' => [
+                'input' => 'hello',
+                'optionalBool' => false,
+                'optionalNullableString' => null,
+            ],
+            'paramsInDifferentOrderRes' => [
+                'input' => 'hello',
+                'optionalBool' => true,
+                'optionalNullableString' => 'test',
+            ],
+            'missingParamsRes' => [
+                'input' => 'hello',
+                'optionalBool' => false,
+                'optionalNullableString' => 'test',
+            ],
+            'missingParamAndDifferentOrderRes' => [
+                'input' => 'hello',
+                'optionalBool' => false,
+                'optionalNullableString' => 'test',
+            ],
+        ], $result);
+    }
+
+    private function runSignalWorkflowAndSetValues(...$signalArgs): array
+    {
+        $workflow = $this->workflowClient->newWorkflowStub(
+            SignalNamedArgumentsWorkflow::class
+        );
+
+        $run = $this->workflowClient->start($workflow);
+
+        $workflow->setValues(...$signalArgs);
+
+        return $run->getResult('array');
+    }
+
+    public function testSignalWorksWithOneParam(): void
+    {
+        $result = $this->runSignalWorkflowAndSetValues(
+            int: 1,
+        );
+
+        $this->assertSame([
+            'int' => 1,
+            'string' => '',
+            'bool' => false,
+            'nullableString' => null,
+            'array' => [],
+        ], $result);
+    }
+
+    public function testSignalWorksWithParamsInDifferentOrder(): void
+    {
+        $result = $this->runSignalWorkflowAndSetValues(
+            string: 'test',
+            int: 1,
+            bool: true,
+            nullableString: 'test',
+            array: ['test'],
+        );
+
+        $this->assertSame([
+            'int' => 1,
+            'string' => 'test',
+            'bool' => true,
+            'nullableString' => 'test',
+            'array' => ['test'],
+        ], $result);
+    }
+
+    public function testSignalWorksWithMissingParams(): void
+    {
+        $result = $this->runSignalWorkflowAndSetValues(
+            int: 1,
+            nullableString: 'test',
+        );
+
+        $this->assertSame([
+            'int' => 1,
+            'string' => '',
+            'bool' => false,
+            'nullableString' => 'test',
+            'array' => [],
+        ], $result);
+    }
+
+    public function testSignalWorksWithMissingParamAndDifferentOrder(): void
+    {
+        $result = $this->runSignalWorkflowAndSetValues(
+            nullableString: 'test',
+            int: 1,
+            array: ['test'],
+        );
+
+        $this->assertSame([
+            'int' => 1,
+            'string' => '',
+            'bool' => false,
+            'nullableString' => 'test',
+            'array' => ['test'],
+        ], $result);
+    }
+
+    private function startWorkflowWithSignal(array $signalArgs): array
+    {
+        $workflow = $this->workflowClient->newWorkflowStub(
+            SignalNamedArgumentsWorkflow::class
+        );
+
+        $run = $this->workflowClient->startWithSignal(
+            $workflow,
+            'setValues',
+            $signalArgs,
+        );
+
+        return $run->getResult('array');
+    }
+
+    public function testStartWithSignalWorksWithOneParam(): void
+    {
+        $result = $this->startWorkflowWithSignal([
+            'int' => 1,
+        ]);
+
+        $this->assertSame([
+            'int' => 1,
+            'string' => '',
+            'bool' => false,
+            'nullableString' => null,
+            'array' => [],
+        ], $result);
+    }
+
+    public function testStartWithSignalWorksWithParamsInDifferentOrder(): void
+    {
+        $result = $this->startWorkflowWithSignal([
+            'string' => 'test',
+            'int' => 1,
+            'bool' => true,
+            'nullableString' => 'test',
+            'array' => ['test'],
+        ]);
+
+        $this->assertSame([
+            'int' => 1,
+            'string' => 'test',
+            'bool' => true,
+            'nullableString' => 'test',
+            'array' => ['test'],
+        ], $result);
+    }
+
+    public function testStartWithSignalWorksWithMissingParams(): void
+    {
+        $result = $this->startWorkflowWithSignal([
+            'int' => 1,
+            'nullableString' => 'test',
+        ]);
+
+        $this->assertSame([
+            'int' => 1,
+            'string' => '',
+            'bool' => false,
+            'nullableString' => 'test',
+            'array' => [],
+        ], $result);
+    }
+
+    public function testStartWithSignalWorksWithMissingParamAndDifferentOrder(): void
+    {
+        $result = $this->startWorkflowWithSignal([
+            'nullableString' => 'test',
+            'int' => 1,
+            'array' => ['test'],
+        ]);
+
+        $this->assertSame([
+            'int' => 1,
+            'string' => '',
+            'bool' => false,
+            'nullableString' => 'test',
+            'array' => ['test'],
+        ], $result);
+    }
 }
