@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Client\Schedule\Spec;
 
 use DateTimeInterface;
+use Google\Protobuf\Duration;
 use Google\Protobuf\Timestamp;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Meta\MarshalArray;
@@ -103,7 +104,7 @@ final class ScheduleSpec
      * All timestamps will be incremented by a random value from 0 to this
      * amount of jitter.
      */
-    #[Marshal(name: 'jitter', nullable: true)]
+    #[Marshal(name: 'jitter', of: Duration::class, nullable: true)]
     public readonly ?\DateInterval $jitter;
 
     /**
@@ -156,9 +157,9 @@ final class ScheduleSpec
     /**
      * Returns a new instance with the replaced cron string list.
      */
-    public function withCronStringList(string ...$cronString): self
+    public function withCronStringList(\Stringable|string ...$cronString): self
     {
-        return $this->with('cronStringList', $cronString);
+        return $this->with('cronStringList', \array_map(fn($item) => (string)$item, $cronString));
     }
 
     /**
@@ -290,6 +291,7 @@ final class ScheduleSpec
         assert(DateInterval::assert($jitter));
         $jitter = DateInterval::parse($jitter, DateInterval::FORMAT_SECONDS);
 
+        /** @see self::$jitter */
         return $this->with('jitter', $jitter);
     }
 

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Schedule\Spec;
 
-use Temporal\Internal\Marshaller\Meta\MarshalArray;
+use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Traits\CloneWith;
 
 /**
@@ -44,21 +44,21 @@ final class CalendarSpec
      * @param string $comment Free-form comment describing the intention of this spec.
      */
     private function __construct(
-        #[MarshalArray(name: 'second', of: Range::class)]
+        #[Marshal(name: 'second')]
         public readonly string $second,
-        #[MarshalArray(name: 'minute', of: Range::class)]
+        #[Marshal(name: 'minute')]
         public readonly string $minute,
-        #[MarshalArray(name: 'hour', of: Range::class)]
+        #[Marshal(name: 'hour')]
         public readonly string $hour,
-        #[MarshalArray(name: 'day_of_month', of: Range::class)]
+        #[Marshal(name: 'day_of_month')]
         public readonly string $dayOfMonth,
-        #[MarshalArray(name: 'month', of: Range::class)]
+        #[Marshal(name: 'month')]
         public readonly string $month,
-        #[MarshalArray(name: 'year', of: Range::class)]
+        #[Marshal(name: 'year')]
         public readonly string $year,
-        #[MarshalArray(name: 'day_of_week', of: Range::class)]
+        #[Marshal(name: 'day_of_week')]
         public readonly string $dayOfWeek,
-        #[MarshalArray(name: 'comment', of: Range::class)]
+        #[Marshal(name: 'comment')]
         public readonly string $comment,
     ) {
     }
@@ -124,6 +124,7 @@ final class CalendarSpec
 
     public function withComment(string $comment): self
     {
+        /** @see self::$comment */
         return $this->with('comment', $comment);
     }
 }

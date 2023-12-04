@@ -82,7 +82,7 @@ final class SchedulePolicies
         assert(DateInterval::assert($interval));
         $interval = DateInterval::parse($interval, DateInterval::FORMAT_SECONDS);
         // Can't be less than 10 seconds.
-        assert($interval->s >= 10);
+        assert($interval->seconds >= 10);
 
         return $this->with('catchupWindow', $interval);
     }
