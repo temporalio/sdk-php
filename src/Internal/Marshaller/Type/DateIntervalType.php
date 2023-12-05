@@ -74,9 +74,7 @@ class DateIntervalType extends Type implements DetectableTypeInterface, RuleFact
 
         if ($this->format === Duration::class) {
             return match (true) {
-                $value instanceof \DateInterval => (new Duration())
-                    ->setSeconds($value->format('%s'))
-                    ->setNanos((int)$value->format('%f000')),
+                $value instanceof \DateInterval => DateInterval::toDuration($value),
                 \is_int($value) => (new Duration())->setSeconds($value),
                 \is_string($value) => (new Duration())->setSeconds((int)$value),
                 \is_float($value) => (new Duration())

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Client\Schedule\Spec;
 
 use DateTimeInterface;
+use Google\Protobuf\Duration;
 use Google\Protobuf\Timestamp;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Meta\MarshalArray;
@@ -67,7 +68,7 @@ final class ScheduleSpec
      *
      * @var list<IntervalSpec>
      */
-    #[MarshalArray(name: 'interval', of: \DateInterval::class)]
+    #[MarshalArray(name: 'interval', of: IntervalSpec::class)]
     public readonly array $intervalList;
 
     /**
@@ -103,8 +104,8 @@ final class ScheduleSpec
      * All timestamps will be incremented by a random value from 0 to this
      * amount of jitter.
      */
-    #[Marshal(name: 'jitter', nullable: true)]
-    public readonly ?\DateInterval $jitter;
+    #[Marshal(name: 'jitter', of: Duration::class)]
+    public readonly \DateInterval $jitter;
 
     /**
      * Time zone to interpret all calendar-based specs in.
@@ -125,7 +126,7 @@ final class ScheduleSpec
         $this->excludeStructuredCalendarList = [];
         $this->startTime = null;
         $this->endTime = null;
-        $this->jitter = null;
+        $this->jitter = new \DateInterval('PT0S');
         $this->timezoneName = '';
         $this->timezoneData = '';
     }
@@ -140,6 +141,7 @@ final class ScheduleSpec
      */
     public function withStructuredCalendarList(StructuredCalendarSpec ...$structuredCalendar): self
     {
+        /** @see self::$structuredCalendarList */
         return $this->with('structuredCalendarList', $structuredCalendar);
     }
 
@@ -150,15 +152,18 @@ final class ScheduleSpec
     {
         $value = $this->structuredCalendarList;
         $value[] = $structuredCalendar;
+
+        /** @see self::$structuredCalendarList */
         return $this->with('structuredCalendarList', $value);
     }
 
     /**
      * Returns a new instance with the replaced cron string list.
      */
-    public function withCronStringList(string ...$cronString): self
+    public function withCronStringList(\Stringable|string ...$cronString): self
     {
-        return $this->with('cronStringList', $cronString);
+        /** @see self::$cronStringList */
+        return $this->with('cronStringList', \array_map(fn($item) => (string)$item, $cronString));
     }
 
     /**
@@ -172,6 +177,8 @@ final class ScheduleSpec
     {
         $value = $this->cronStringList;
         $value[] = $cronString;
+
+        /** @see self::$cronStringList */
         return $this->with('cronStringList', $value);
     }
 
@@ -180,6 +187,7 @@ final class ScheduleSpec
      */
     public function withCalendarList(CalendarSpec ...$calendar): self
     {
+        /** @see self::$calendarList */
         return $this->with('calendarList', $calendar);
     }
 
@@ -190,35 +198,47 @@ final class ScheduleSpec
     {
         $value = $this->calendarList;
         $value[] = $calendar;
+
+        /** @see self::$calendarList */
         return $this->with('calendarList', $value);
     }
 
     /**
      * Returns a new instance with the replaced interval list.
      *
-     * @param DateIntervalValue ...$interval
+     * @param DateIntervalValue|IntervalSpec ...$interval
      */
     public function withIntervalList(mixed ...$interval): self
     {
         foreach ($interval as $key => $item) {
-            \assert(DateInterval::assert($item));
-            $interval[$key] = DateInterval::parse($item, DateInterval::FORMAT_SECONDS);
+            if ($item instanceof IntervalSpec) {
+                $interval[$key] = $item;
+                continue;
+            }
+
+            $interval[$key] = IntervalSpec::new($item);
         }
 
+        /** @see self::$intervalList */
         return $this->with('intervalList', $interval);
     }
 
     /**
      * Interval-based specifications of times.
      *
-     * @param DateIntervalValue $interval
+     * @param DateIntervalValue|IntervalSpec $interval
      */
     public function withAddedInterval(mixed $interval): self
     {
-        \assert(DateInterval::assert($interval));
         $value = $this->intervalList;
-        $value[] = $interval;
+        if ($interval instanceof IntervalSpec) {
+            $value[] = $interval;
+        } else {
+            \assert(DateInterval::assert($interval));
+            $value[] = IntervalSpec::new($interval);
+        }
 
+        /** @see self::$intervalList */
         return $this->with('intervalList', $value);
     }
 
@@ -227,6 +247,7 @@ final class ScheduleSpec
      */
     public function withExcludeCalendarList(CalendarSpec ...$excludeCalendar): self
     {
+        /** @see self::$excludeCalendarList */
         return $this->with('excludeCalendarList', $excludeCalendar);
     }
 
@@ -237,6 +258,8 @@ final class ScheduleSpec
     {
         $value = $this->excludeCalendarList;
         $value[] = $excludeCalendar;
+
+        /** @see self::$excludeCalendarList */
         return $this->with('excludeCalendarList', $value);
     }
 
@@ -245,6 +268,7 @@ final class ScheduleSpec
      */
     public function withExcludeStructuredCalendarList(StructuredCalendarSpec ...$excludeStructuredCalendar): self
     {
+        /** @see self::$excludeStructuredCalendarList */
         return $this->with('excludeStructuredCalendarList', $excludeStructuredCalendar);
     }
 
@@ -255,6 +279,8 @@ final class ScheduleSpec
     {
         $value = $this->excludeStructuredCalendarList;
         $value[] = $excludeStructuredCalendar;
+
+        /** @see self::$excludeStructuredCalendarList */
         return $this->with('excludeStructuredCalendarList', $value);
     }
 
@@ -262,17 +288,27 @@ final class ScheduleSpec
      * If startTime is set, any timestamps before startTime will be skipped.
      * (Together, startTime and endTime make an inclusive interval.)
      */
-    public function withStartTime(?DateTimeInterface $startTime): self
+    public function withStartTime(DateTimeInterface|string|null $dateTime): self
     {
-        return $this->with('startTime', $startTime);
+        /** @see self::$startTime */
+        return $this->with('startTime', match(true) {
+            empty($dateTime) => null,
+            \is_string($dateTime) => new \DateTimeImmutable($dateTime),
+            default => $dateTime,
+        });
     }
 
     /**
      * If endTime is set, any timestamps after endTime will be skipped.
      */
-    public function withEndTime(?DateTimeInterface $endTime): self
+    public function withEndTime(DateTimeInterface|string|null $dateTime): self
     {
-        return $this->with('endTime', $endTime);
+        /** @see self::$endTime */
+        return $this->with('endTime', match(true) {
+            empty($dateTime) => null,
+            \is_string($dateTime) => new \DateTimeImmutable($dateTime),
+            default => $dateTime,
+        });
     }
 
     /**
@@ -283,13 +319,15 @@ final class ScheduleSpec
      */
     public function withJitter(mixed $jitter): self
     {
-        if ($jitter === null) {
-            return $this->with('jitter', null);
+        if (empty($jitter)) {
+            /** @see self::$jitter */
+            return $this->with('jitter', new \DateInterval('PT0S'));
         }
 
         assert(DateInterval::assert($jitter));
         $jitter = DateInterval::parse($jitter, DateInterval::FORMAT_SECONDS);
 
+        /** @see self::$jitter */
         return $this->with('jitter', $jitter);
     }
 
@@ -314,11 +352,13 @@ final class ScheduleSpec
      */
     public function withTimezoneName(string $timezoneName): self
     {
+        /** @see self::$timezoneName */
         return $this->with('timezoneName', $timezoneName);
     }
 
     public function withTimezoneData(string $timezoneData): self
     {
+        /** @see self::$timezoneData */
         return $this->with('timezoneData', $timezoneData);
     }
 }

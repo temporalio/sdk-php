@@ -13,7 +13,7 @@ use Temporal\Internal\Traits\CloneWith;
  *  IntervalSpec matches times that can be expressed as:
  *  epoch + n * interval + phase
  *  where n is an integer.
- *  phase defaults to zero if missing. interval is required.
+ *  {@see self::$pahse} defaults to zero if missing. {@see self::$interval} is required.
  *  Both interval and phase must be non-negative and are truncated to the nearest
  *  second before any calculations.
  *  For example, an interval of 1 hour with phase of zero would match every hour,
@@ -43,7 +43,7 @@ final class IntervalSpec
         $interval = DateInterval::parse($interval, DateInterval::FORMAT_SECONDS);
 
         assert($phase === null or DateInterval::assert($phase));
-        $phase = DateInterval::parse($phase ?? new DateInterval('PT0S'), DateInterval::FORMAT_SECONDS);
+        $phase = DateInterval::parse($phase ?? new \DateInterval('PT0S'), DateInterval::FORMAT_SECONDS);
 
         return new self($interval, $phase);
     }

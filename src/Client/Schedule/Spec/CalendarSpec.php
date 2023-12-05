@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Schedule\Spec;
 
-use Temporal\Internal\Marshaller\Meta\MarshalArray;
+use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Traits\CloneWith;
 
 /**
@@ -44,25 +44,24 @@ final class CalendarSpec
      * @param string $comment Free-form comment describing the intention of this spec.
      */
     private function __construct(
-        #[MarshalArray(name: 'second', of: Range::class)]
+        #[Marshal(name: 'second')]
         public readonly string $second,
-        #[MarshalArray(name: 'minute', of: Range::class)]
+        #[Marshal(name: 'minute')]
         public readonly string $minute,
-        #[MarshalArray(name: 'hour', of: Range::class)]
+        #[Marshal(name: 'hour')]
         public readonly string $hour,
-        #[MarshalArray(name: 'day_of_month', of: Range::class)]
+        #[Marshal(name: 'day_of_month')]
         public readonly string $dayOfMonth,
-        #[MarshalArray(name: 'month', of: Range::class)]
+        #[Marshal(name: 'month')]
         public readonly string $month,
-        #[MarshalArray(name: 'year', of: Range::class)]
+        #[Marshal(name: 'year')]
         public readonly string $year,
-        #[MarshalArray(name: 'day_of_week', of: Range::class)]
+        #[Marshal(name: 'day_of_week')]
         public readonly string $dayOfWeek,
-        #[MarshalArray(name: 'comment', of: Range::class)]
+        #[Marshal(name: 'comment')]
         public readonly string $comment,
     ) {
     }
-
 
     /**
      * @param string $second Expression to match seconds.
@@ -87,43 +86,44 @@ final class CalendarSpec
         return new self($second, $minute, $hour, $dayOfMonth, $month, $year, $dayOfWeek, $comment);
     }
 
-    public function withSecond(string $second): self
+    public function withSecond(string|int $second): self
     {
-        return $this->with('second', $second);
+        return $this->with('second', (string)$second);
     }
 
-    public function withMinute(string $minute): self
+    public function withMinute(string|int $minute): self
     {
-        return $this->with('minute', $minute);
+        return $this->with('minute', (string)$minute);
     }
 
-    public function withHour(string $hour): self
+    public function withHour(string|int $hour): self
     {
-        return $this->with('hour', $hour);
+        return $this->with('hour', (string)$hour);
     }
 
-    public function withDayOfMonth(string $dayOfMonth): self
+    public function withDayOfMonth(string|int $dayOfMonth): self
     {
-        return $this->with('dayOfMonth', $dayOfMonth);
+        return $this->with('dayOfMonth', (string)$dayOfMonth);
     }
 
-    public function withMonth(string $month): self
+    public function withMonth(string|int $month): self
     {
-        return $this->with('month', $month);
+        return $this->with('month', (string)$month);
     }
 
-    public function withYear(string $year): self
+    public function withYear(string|int $year): self
     {
-        return $this->with('year', $year);
+        return $this->with('year', (string)$year);
     }
 
-    public function withDayOfWeek(string $dayOfWeek): self
+    public function withDayOfWeek(string|int $dayOfWeek): self
     {
-        return $this->with('dayOfWeek', $dayOfWeek);
+        return $this->with('dayOfWeek', (string)$dayOfWeek);
     }
 
     public function withComment(string $comment): self
     {
+        /** @see self::$comment */
         return $this->with('comment', $comment);
     }
 }
