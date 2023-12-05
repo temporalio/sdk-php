@@ -14,6 +14,7 @@ enum ScheduleOverlapPolicy: int
     case Unspecified = 0;
 
     /**
+     * Default.
      * Don't start anything. When the workflow completes, the next scheduled event after that
      * time will be considered.
      */

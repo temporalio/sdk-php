@@ -79,10 +79,10 @@ final class SchedulePolicies
      */
     public function withCatchupWindow(mixed $interval): self
     {
-        assert(DateInterval::assert($interval));
+        \assert(DateInterval::assert($interval));
         $interval = DateInterval::parse($interval, DateInterval::FORMAT_SECONDS);
         // Can't be less than 10 seconds.
-        assert($interval->seconds >= 10);
+        \assert($interval->totalSeconds >= 10);
 
         return $this->with('catchupWindow', $interval);
     }

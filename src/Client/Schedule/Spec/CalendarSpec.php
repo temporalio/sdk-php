@@ -63,7 +63,6 @@ final class CalendarSpec
     ) {
     }
 
-
     /**
      * @param string $second Expression to match seconds.
      * @param string $minute Expression to match minutes.
@@ -87,39 +86,39 @@ final class CalendarSpec
         return new self($second, $minute, $hour, $dayOfMonth, $month, $year, $dayOfWeek, $comment);
     }
 
-    public function withSecond(string $second): self
+    public function withSecond(string|int $second): self
     {
-        return $this->with('second', $second);
+        return $this->with('second', (string)$second);
     }
 
-    public function withMinute(string $minute): self
+    public function withMinute(string|int $minute): self
     {
-        return $this->with('minute', $minute);
+        return $this->with('minute', (string)$minute);
     }
 
-    public function withHour(string $hour): self
+    public function withHour(string|int $hour): self
     {
-        return $this->with('hour', $hour);
+        return $this->with('hour', (string)$hour);
     }
 
-    public function withDayOfMonth(string $dayOfMonth): self
+    public function withDayOfMonth(string|int $dayOfMonth): self
     {
-        return $this->with('dayOfMonth', $dayOfMonth);
+        return $this->with('dayOfMonth', (string)$dayOfMonth);
     }
 
-    public function withMonth(string $month): self
+    public function withMonth(string|int $month): self
     {
-        return $this->with('month', $month);
+        return $this->with('month', (string)$month);
     }
 
-    public function withYear(string $year): self
+    public function withYear(string|int $year): self
     {
-        return $this->with('year', $year);
+        return $this->with('year', (string)$year);
     }
 
-    public function withDayOfWeek(string $dayOfWeek): self
+    public function withDayOfWeek(string|int $dayOfWeek): self
     {
-        return $this->with('dayOfWeek', $dayOfWeek);
+        return $this->with('dayOfWeek', (string)$dayOfWeek);
     }
 
     public function withComment(string $comment): self

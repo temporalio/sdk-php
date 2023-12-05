@@ -68,7 +68,7 @@ final class ScheduleSpec
      *
      * @var list<IntervalSpec>
      */
-    #[MarshalArray(name: 'interval', of: \DateInterval::class)]
+    #[MarshalArray(name: 'interval', of: IntervalSpec::class)]
     public readonly array $intervalList;
 
     /**
@@ -104,8 +104,8 @@ final class ScheduleSpec
      * All timestamps will be incremented by a random value from 0 to this
      * amount of jitter.
      */
-    #[Marshal(name: 'jitter', of: Duration::class, nullable: true)]
-    public readonly ?\DateInterval $jitter;
+    #[Marshal(name: 'jitter', of: Duration::class)]
+    public readonly \DateInterval $jitter;
 
     /**
      * Time zone to interpret all calendar-based specs in.
@@ -126,7 +126,7 @@ final class ScheduleSpec
         $this->excludeStructuredCalendarList = [];
         $this->startTime = null;
         $this->endTime = null;
-        $this->jitter = null;
+        $this->jitter = new \DateInterval('PT0S');
         $this->timezoneName = '';
         $this->timezoneData = '';
     }
@@ -197,28 +197,37 @@ final class ScheduleSpec
     /**
      * Returns a new instance with the replaced interval list.
      *
-     * @param DateIntervalValue ...$interval
+     * @param DateIntervalValue|IntervalSpec ...$interval
      */
     public function withIntervalList(mixed ...$interval): self
     {
         foreach ($interval as $key => $item) {
-            \assert(DateInterval::assert($item));
-            $interval[$key] = DateInterval::parse($item, DateInterval::FORMAT_SECONDS);
+            if ($item instanceof IntervalSpec) {
+                $interval[$key] = $item;
+                continue;
+            }
+
+            $interval[$key] = IntervalSpec::new($item);
         }
 
+        /** @see self::$intervalList */
         return $this->with('intervalList', $interval);
     }
 
     /**
      * Interval-based specifications of times.
      *
-     * @param DateIntervalValue $interval
+     * @param DateIntervalValue|IntervalSpec $interval
      */
     public function withAddedInterval(mixed $interval): self
     {
-        \assert(DateInterval::assert($interval));
         $value = $this->intervalList;
-        $value[] = $interval;
+        if ($interval instanceof IntervalSpec) {
+            $value[] = $interval;
+        } else {
+            \assert(DateInterval::assert($interval));
+            $value[] = IntervalSpec::new($interval);
+        }
 
         return $this->with('intervalList', $value);
     }

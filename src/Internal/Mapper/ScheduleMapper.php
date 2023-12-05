@@ -8,6 +8,7 @@ use Temporal\Api\Common\V1\Payloads;
 use Temporal\Api\Common\V1\RetryPolicy;
 use Temporal\Api\Common\V1\WorkflowType;
 use Temporal\Api\Schedule\V1\CalendarSpec;
+use Temporal\Api\Schedule\V1\IntervalSpec;
 use Temporal\Api\Schedule\V1\Range;
 use Temporal\Api\Schedule\V1\SchedulePolicies;
 use Temporal\Api\Schedule\V1\ScheduleSpec;
@@ -88,6 +89,11 @@ final class ScheduleMapper
         $result['exclude_calendar'] = \array_map(
             static fn(array $item): CalendarSpec => new CalendarSpec($item),
             $result['exclude_calendar'] ?? [],
+        );
+
+        $result['interval'] = \array_map(
+            static fn(array $item): IntervalSpec => new IntervalSpec($item),
+            $result['interval'] ?? [],
         );
 
         $result['exclude_structured_calendar'] = $this->prepareStructuredCalendar(
