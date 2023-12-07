@@ -25,9 +25,13 @@ final class DateTime
         '%s format to the %s format with a loss of precision (round to microseconds).';
 
     /**
+     * @template TReturn of \DateTimeInterface
+     *
      * @param string|\DateTimeInterface|null $time
      * @param \DateTimeZone|string|null $tz
-     * @return CarbonInterface
+     * @param class-string<TReturn> $class
+     *
+     * @return TReturn
      */
     public static function parse($time = null, $tz = null, string $class = \DateTimeInterface::class): \DateTimeInterface
     {
