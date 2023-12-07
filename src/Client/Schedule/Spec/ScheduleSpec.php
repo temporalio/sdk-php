@@ -11,6 +11,7 @@ use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Meta\MarshalArray;
 use Temporal\Internal\Marshaller\Meta\MarshalDateTime;
 use Temporal\Internal\Support\DateInterval;
+use Temporal\Internal\Support\DateTime;
 use Temporal\Internal\Traits\CloneWith;
 
 /**
@@ -160,10 +161,10 @@ final class ScheduleSpec
     /**
      * Returns a new instance with the replaced cron string list.
      */
-    public function withCronStringList(\Stringable|string ...$cronString): self
+    public function withCronStringList(\Stringable|string ...$cron): self
     {
         /** @see self::$cronStringList */
-        return $this->with('cronStringList', \array_map(fn($item) => (string)$item, $cronString));
+        return $this->with('cronStringList', \array_map(static fn($item) => (string)$item, $cron));
     }
 
     /**
@@ -171,12 +172,12 @@ final class ScheduleSpec
      * It accepts 5, 6, or 7 fields, separated by spaces, and interprets them the
      * same way as CalendarSpec.
      *
-     * @param non-empty-string $cronString
+     * @param \Stringable|non-empty-string $cron
      */
-    public function withAddedCronString(string $cronString): self
+    public function withAddedCronString(\Stringable|string $cron): self
     {
         $value = $this->cronStringList;
-        $value[] = $cronString;
+        $value[] = (string)$cron;
 
         /** @see self::$cronStringList */
         return $this->with('cronStringList', $value);
@@ -245,19 +246,19 @@ final class ScheduleSpec
     /**
      * Returns a new instance with the replaced exclude calendar list.
      */
-    public function withExcludeCalendarList(CalendarSpec ...$excludeCalendar): self
+    public function withExcludeCalendarList(CalendarSpec ...$calendar): self
     {
         /** @see self::$excludeCalendarList */
-        return $this->with('excludeCalendarList', $excludeCalendar);
+        return $this->with('excludeCalendarList', $calendar);
     }
 
     /**
      * Any timestamps matching any of exclude* will be skipped.
      */
-    public function withAddedExcludeCalendar(CalendarSpec $excludeCalendar): self
+    public function withAddedExcludeCalendar(CalendarSpec $calendar): self
     {
         $value = $this->excludeCalendarList;
-        $value[] = $excludeCalendar;
+        $value[] = $calendar;
 
         /** @see self::$excludeCalendarList */
         return $this->with('excludeCalendarList', $value);
@@ -266,19 +267,19 @@ final class ScheduleSpec
     /**
      * Returns a new instance with the replaced exclude structured calendar list.
      */
-    public function withExcludeStructuredCalendarList(StructuredCalendarSpec ...$excludeStructuredCalendar): self
+    public function withExcludeStructuredCalendarList(StructuredCalendarSpec ...$structuredCalendar): self
     {
         /** @see self::$excludeStructuredCalendarList */
-        return $this->with('excludeStructuredCalendarList', $excludeStructuredCalendar);
+        return $this->with('excludeStructuredCalendarList', $structuredCalendar);
     }
 
     /**
      * Any timestamps matching any of exclude* will be skipped.
      */
-    public function withAddedExcludeStructuredCalendar(StructuredCalendarSpec $excludeStructuredCalendar): self
+    public function withAddedExcludeStructuredCalendar(StructuredCalendarSpec $structuredCalendar): self
     {
         $value = $this->excludeStructuredCalendarList;
-        $value[] = $excludeStructuredCalendar;
+        $value[] = $structuredCalendar;
 
         /** @see self::$excludeStructuredCalendarList */
         return $this->with('excludeStructuredCalendarList', $value);
@@ -291,11 +292,7 @@ final class ScheduleSpec
     public function withStartTime(DateTimeInterface|string|null $dateTime): self
     {
         /** @see self::$startTime */
-        return $this->with('startTime', match(true) {
-            empty($dateTime) => null,
-            \is_string($dateTime) => new \DateTimeImmutable($dateTime),
-            default => $dateTime,
-        });
+        return $this->with('startTime', DateTime::parse($dateTime));
     }
 
     /**
@@ -304,31 +301,27 @@ final class ScheduleSpec
     public function withEndTime(DateTimeInterface|string|null $dateTime): self
     {
         /** @see self::$endTime */
-        return $this->with('endTime', match(true) {
-            empty($dateTime) => null,
-            \is_string($dateTime) => new \DateTimeImmutable($dateTime),
-            default => $dateTime,
-        });
+        return $this->with('endTime', DateTime::parse($dateTime));
     }
 
     /**
      * All timestamps will be incremented by a random value from 0 to this
      * amount of jitter.
      *
-     * @param DateIntervalValue|null $jitter
+     * @param DateIntervalValue|null $interval
      */
-    public function withJitter(mixed $jitter): self
+    public function withJitter(mixed $interval): self
     {
-        if (empty($jitter)) {
+        if (empty($interval)) {
             /** @see self::$jitter */
             return $this->with('jitter', new \DateInterval('PT0S'));
         }
 
-        assert(DateInterval::assert($jitter));
-        $jitter = DateInterval::parse($jitter, DateInterval::FORMAT_SECONDS);
+        assert(DateInterval::assert($interval));
+        $interval = DateInterval::parse($interval, DateInterval::FORMAT_SECONDS);
 
         /** @see self::$jitter */
-        return $this->with('jitter', $jitter);
+        return $this->with('jitter', $interval);
     }
 
     /**
@@ -342,7 +335,7 @@ final class ScheduleSpec
      * used, it may pass in a complete definition in the form of a TZif file
      * from the time zone database. If present, this will be used instead of
      * loading anything from the environment. You are then responsible for
-     * updating timezone_data when the definition changes.
+     * updating {@see self::$timezoneData} when the definition changes.
      * Calendar spec matching is based on literal matching of the clock time
      * with no special handling of DST: if you write a calendar spec that fires
      * at 2:30am and specify a time zone that follows DST, that action will not

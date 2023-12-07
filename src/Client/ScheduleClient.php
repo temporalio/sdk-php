@@ -143,7 +143,7 @@ final class ScheduleClient
         );
     }
 
-    public function getHandler(string $scheduleID, string $namespace = 'default'): ScheduleHandle
+    public function getHandle(string $scheduleID, string $namespace = 'default'): ScheduleHandle
     {
         return new ScheduleHandle(
             $this->client,

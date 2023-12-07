@@ -65,12 +65,12 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Temporal\\Tests\\": "tests",
             "Temporal\\Tests\\Interceptor\\": "tests/Fixtures/src/Interceptor",
             "Temporal\\Tests\\Workflow\\": "tests/Fixtures/src/Workflow",
             "Temporal\\Tests\\Activity\\": "tests/Fixtures/src/Activity",
             "Temporal\\Tests\\DTO\\": "tests/Fixtures/src/DTO",
-            "Temporal\\Tests\\Proto\\": "tests/Fixtures/src/Proto"
+            "Temporal\\Tests\\Proto\\": "tests/Fixtures/src/Proto",
+            "Temporal\\Tests\\": "tests"
         }
     },
     "suggest": {
