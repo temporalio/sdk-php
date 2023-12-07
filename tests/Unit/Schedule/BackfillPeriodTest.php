@@ -1,9 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Temporal\Tests\Unit\Schedule;
 
-use Temporal\Client\Schedule\BackfillPeriod;
 use PHPUnit\Framework\TestCase;
+use Temporal\Client\Schedule\BackfillPeriod;
 use Temporal\Client\Schedule\Policy\ScheduleOverlapPolicy;
 
 /**

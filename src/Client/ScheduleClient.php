@@ -186,8 +186,8 @@ final class ScheduleClient
 
                     $page[] = $this->marshaller->unmarshal($values, $dto);
                 }
-                yield $page;
 
+                yield $page;
                 $request->setNextPageToken($nextPageToken);
             } while ($nextPageToken !== '');
         };
