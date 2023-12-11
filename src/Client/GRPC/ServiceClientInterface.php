@@ -14,6 +14,8 @@ use Temporal\Exception\Client\ServiceClientException;
 
 interface ServiceClientInterface
 {
+    public function getServerCapabilities() : ?\Temporal\Client\ServerCapabilities;
+    public function setServerCapabilities(\Temporal\Client\ServerCapabilities $capabilities) : void;
     /**
      * RegisterNamespace creates a new namespace which can be used as a container for
      * all resources.

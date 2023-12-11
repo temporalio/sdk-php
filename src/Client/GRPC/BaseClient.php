@@ -16,6 +16,7 @@ use Closure;
 use Exception;
 use Grpc\UnaryCall;
 use Temporal\Api\Workflowservice\V1\WorkflowServiceClient;
+use Temporal\Client\ServerCapabilities;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Client\TimeoutException;
 use Temporal\Interceptor\GrpcClientInterceptor;
@@ -29,6 +30,7 @@ abstract class BaseClient implements ServiceClientInterface
         StatusCode::UNKNOWN,
     ];
     private WorkflowServiceClient $workflowService;
+    private ?ServerCapabilities $capabilities = null;
 
     /** @var null|Closure(string $method, object $arg, ContextInterface $ctx): object */
     private ?Closure $invokePipeline = null;
@@ -116,6 +118,16 @@ abstract class BaseClient implements ServiceClientInterface
         $callable = $pipeline?->with(Closure::fromCallable([$clone, 'call']), 'interceptCall');
         $clone->invokePipeline = $callable === null ? null : Closure::fromCallable($callable);
         return $clone;
+    }
+
+    final public function getServerCapabilities(): ?ServerCapabilities
+    {
+        return $this->capabilities;
+    }
+
+    final public function setServerCapabilities(ServerCapabilities $capabilities): void
+    {
+        $this->capabilities = $capabilities;
     }
 
     /**
