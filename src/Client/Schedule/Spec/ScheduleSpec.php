@@ -189,7 +189,7 @@ final class ScheduleSpec
     public function withCalendarList(CalendarSpec ...$calendar): self
     {
         /** @see self::$calendarList */
-        return $this->with('calendarList', $calendar);
+        return $this->with('calendarList', \array_values($calendar));
     }
 
     /**
@@ -292,7 +292,7 @@ final class ScheduleSpec
     public function withStartTime(DateTimeInterface|string|null $dateTime): self
     {
         /** @see self::$startTime */
-        return $this->with('startTime', DateTime::parse($dateTime));
+        return $this->with('startTime', $dateTime === null ? null : DateTime::parse($dateTime));
     }
 
     /**
@@ -301,14 +301,14 @@ final class ScheduleSpec
     public function withEndTime(DateTimeInterface|string|null $dateTime): self
     {
         /** @see self::$endTime */
-        return $this->with('endTime', DateTime::parse($dateTime));
+        return $this->with('endTime', $dateTime === null ? null : DateTime::parse($dateTime));
     }
 
     /**
      * All timestamps will be incremented by a random value from 0 to this
      * amount of jitter.
      *
-     * @param DateIntervalValue|null $interval
+     * @param DateIntervalValue|null $interval Int value means seconds
      */
     public function withJitter(mixed $interval): self
     {
