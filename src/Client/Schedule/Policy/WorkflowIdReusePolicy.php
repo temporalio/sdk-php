@@ -12,28 +12,28 @@ namespace Temporal\Client\Schedule\Policy;
  */
 enum WorkflowIdReusePolicy: int
 {
-    case WorkflowIdReusePolicyUnspecified = 0;
+    case Unspecified = 0;
 
     /**
      * Allow starting a workflow execution using the same workflow id.
      */
-    case WorkflowIdReusePolicyAllowDuplicate = 1;
+    case AllowDuplicate = 1;
 
     /**
      * Allow starting a workflow execution using the same workflow id, only when the last
      * execution's final state is one of [terminated, cancelled, timed out, failed].
      */
-    case WorkflowIdReusePolicyAllowDuplicateFailedOnly = 2;
+    case AllowDuplicateFailedOnly = 2;
 
     /**
      * Do not permit re-use of the workflow id for this workflow. Future start workflow requests
      * could potentially change the policy, allowing re-use of the workflow id.
      */
-    case WorkflowIdReusePolicyRejectDuplicate = 3;
+    case RejectDuplicate = 3;
 
     /**
      * If a workflow is running using the same workflow ID, terminate it and start a new one.
      * If no running workflow, then the behavior is the same as ALLOW_DUPLICATE
      */
-    case WorkflowIdReusePolicyTerminateIfRunning = 4;
+    case TerminateIfRunning = 4;
 }

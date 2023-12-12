@@ -70,93 +70,58 @@ class ScheduleOptionsTest extends TestCase
         $this->assertSame($values, $new1->backfills);
     }
 
-    public function testWithMemoArray(): void
+    public static function provideEncodedValues(): iterable
+    {
+        yield 'array' => [['foo' => 'bar'], ['foo' => 'bar']];
+        yield 'generator' => [(static fn() => yield from ['foo' => 'bar'])(), ['foo' => 'bar']];
+        yield 'encoded collection' => [EncodedCollection::fromValues(['foo' => 'bar']), ['foo' => 'bar']];
+        yield 'change array' => [['foo' => 'bar'], ['foo' => 'bar'], ['baz' => 'qux'], ['baz' => 'qux']];
+        yield 'change generator' => [
+            (static fn() => yield from ['foo' => 'bar'])(),
+            ['foo' => 'bar'],
+            (static fn() => yield from ['baz' => 'qux'])(),
+            ['baz' => 'qux'],
+        ];
+        yield 'change encoded collection' => [
+            EncodedCollection::fromValues(['foo' => 'bar']),
+            ['foo' => 'bar'],
+            EncodedCollection::fromValues(['baz' => 'qux']),
+            ['baz' => 'qux'],
+        ];
+        yield 'clear' => [[], [], ['foo' => 'bar'], ['foo' => 'bar']];
+    }
+
+    /**
+     * @dataProvider provideEncodedValues
+     */
+    public function testWithMemo(mixed $values, array $expect, mixed $initValues = null, array $initExpect = []): void
     {
         $init = ScheduleOptions::new();
-        $values = [
-            'foo' => 'bar',
-            'baz' => 'qux',
-        ];
+        $initValues === null or $init = $init->withMemo($initValues);
 
         $new = $init->withMemo($values);
 
         $this->assertNotSame($init, $new, 'immutable method clones object');
-        $this->assertSame([], $init->memo->getValues(), 'value was not changed');
-        $this->assertSame($values, $new->memo->getValues());
+        $this->assertCount(\count($initExpect), $init->memo, 'init value was not changed');
+        $this->assertSame($initExpect, $init->memo->getValues(), 'init value was not changed');
+        $this->assertCount(\count($expect), $new->memo);
+        $this->assertSame($expect, $new->memo->getValues());
     }
 
-    public function testWithMemoGenerator(): void
-    {
-        $init = ScheduleOptions::new()->withMemo(['foo' => 'bar']);
-        $values = [
-            'baz' => 'qux',
-            'quux' => 'quuz',
-        ];
-
-        $new = $init->withMemo((static fn() => yield from $values)());
-
-        $this->assertNotSame($init, $new, 'immutable method clones object');
-        $this->assertSame(['foo' => 'bar'], $init->memo->getValues(), 'value was not changed');
-        $this->assertSame($values, $new->memo->getValues());
-    }
-
-    public function testWithMemoEncodedCollection(): void
-    {
-        $init = ScheduleOptions::new()->withMemo(['foo' => 'bar']);
-        $values = [
-            'baz' => 'qux',
-            'quux' => 'quuz',
-        ];
-
-        $new = $init->withMemo(EncodedCollection::fromValues($values));
-
-        $this->assertNotSame($init, $new, 'immutable method clones object');
-        $this->assertSame(['foo' => 'bar'], $init->memo->getValues(), 'value was not changed');
-        $this->assertSame($values, $new->memo->getValues());
-    }
-
-    public function testWithSearchAttributesArray(): void
+    /**
+     * @dataProvider provideEncodedValues
+     */
+    public function testWithSearchAttributes(mixed $values, array $expect, mixed $initValues = null, array $initExpect = []): void
     {
         $init = ScheduleOptions::new();
-        $values = [
-            'foo' => 'bar',
-            'baz' => 'qux',
-        ];
+        $initValues === null or $init = $init->withSearchAttributes($initValues);
 
         $new = $init->withSearchAttributes($values);
 
         $this->assertNotSame($init, $new, 'immutable method clones object');
-        $this->assertSame([], $init->searchAttributes->getValues(), 'value was not changed');
-        $this->assertSame($values, $new->searchAttributes->getValues());
-    }
-
-    public function testWithSearchAttributesGenerator(): void
-    {
-        $init = ScheduleOptions::new()->withSearchAttributes(['foo' => 'bar']);
-        $values = [
-            'baz' => 'qux',
-            'quux' => 'quuz',
-        ];
-
-        $new = $init->withSearchAttributes((static fn() => yield from $values)());
-
-        $this->assertNotSame($init, $new, 'immutable method clones object');
-        $this->assertSame(['foo' => 'bar'], $init->searchAttributes->getValues(), 'value was not changed');
-        $this->assertSame($values, $new->searchAttributes->getValues());
-    }
-
-    public function testWithSearchAttributesEncodedCollection(): void
-    {
-        $init = ScheduleOptions::new()->withSearchAttributes(['foo' => 'bar']);
-        $values = [
-            'baz' => 'qux',
-            'quux' => 'quuz',
-        ];
-
-        $new = $init->withSearchAttributes(EncodedCollection::fromValues($values));
-
-        $this->assertNotSame($init, $new, 'immutable method clones object');
-        $this->assertSame(['foo' => 'bar'], $init->searchAttributes->getValues(), 'value was not changed');
-        $this->assertSame($values, $new->searchAttributes->getValues());
+        $this->assertCount(\count($initExpect), $init->searchAttributes, 'init value was not changed');
+        $this->assertSame($initExpect, $init->searchAttributes->getValues(), 'init value was not changed');
+        $this->assertCount(\count($expect), $new->searchAttributes);
+        $this->assertSame($expect, $new->searchAttributes->getValues());
     }
 }

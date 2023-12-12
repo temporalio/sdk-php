@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Temporal\Tests\Unit\Schedule\Spec;
 
 use PHPUnit\Framework\TestCase;
-use Temporal\Client\Schedule\Spec\CalendarSpec;
 use Temporal\Client\Schedule\Spec\Range;
 use Temporal\Client\Schedule\Spec\StructuredCalendarSpec;
 
@@ -352,7 +351,7 @@ class StructuredCalendarSpecTest extends TestCase
 
     public function testWithComment(): void
     {
-        $init = CalendarSpec::new();
+        $init = StructuredCalendarSpec::new();
         $new = $init->withComment('test comment');
 
         $this->assertNotSame($init, $new, 'immutable method clones object');
@@ -362,7 +361,7 @@ class StructuredCalendarSpecTest extends TestCase
 
     public function testWithoutComment(): void
     {
-        $init = CalendarSpec::new()->withComment('test comment');
+        $init = StructuredCalendarSpec::new()->withComment('test comment');
         $new = $init->withComment('');
 
         $this->assertNotSame($init, $new, 'immutable method clones object');

@@ -76,7 +76,7 @@ final class StartWorkflowAction extends ScheduleAction
     public readonly \DateInterval $workflowTaskTimeout;
 
     /**
-     * Default {@see WorkflowIdReusePolicy::WorkflowIdReusePolicyAllowDuplicate}
+     * Default {@see WorkflowIdReusePolicy::AllowDuplicate}
      */
     #[Marshal(name: 'workflow_id_reuse_policy')]
     public readonly WorkflowIdReusePolicy $workflowIdReusePolicy;
@@ -114,7 +114,7 @@ final class StartWorkflowAction extends ScheduleAction
         $this->workflowExecutionTimeout = new \DateInterval('PT0S');
         $this->workflowRunTimeout = new \DateInterval('PT0S');
         $this->workflowTaskTimeout = new \DateInterval('PT0S');
-        $this->workflowIdReusePolicy = WorkflowIdReusePolicy::WorkflowIdReusePolicyUnspecified;
+        $this->workflowIdReusePolicy = WorkflowIdReusePolicy::Unspecified;
         $this->retryPolicy = RetryOptions::new();
         $this->memo = EncodedCollection::empty();
         $this->searchAttributes = EncodedCollection::empty();

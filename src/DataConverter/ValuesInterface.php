@@ -15,6 +15,8 @@ use Temporal\Api\Common\V1\Payloads;
 
 /**
  * @psalm-import-type TypeEnum from Type
+ *
+ * @method mixed[] getValues() Returns all values as array.
  */
 interface ValuesInterface extends \Countable
 {

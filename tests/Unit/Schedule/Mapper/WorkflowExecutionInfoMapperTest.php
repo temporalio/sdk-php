@@ -49,7 +49,7 @@ final class WorkflowExecutionInfoMapperTest extends TestCase
                     ->withSearchAttributes(['sAttr1' => 's-value1', 'sAttr2' => 's-value2'])
                     ->withWorkflowId('test-workflow-id')
                     ->withWorkflowIdReusePolicy(
-                        Schedule\Policy\WorkflowIdReusePolicy::WorkflowIdReusePolicyAllowDuplicateFailedOnly
+                        Schedule\Policy\WorkflowIdReusePolicy::AllowDuplicateFailedOnly
                     )
             )->withSpec(
                 Schedule\Spec\ScheduleSpec::new()
@@ -118,7 +118,7 @@ final class WorkflowExecutionInfoMapperTest extends TestCase
         );
         $this->assertSame('test-workflow-id', $startWorkflow->getWorkflowId());
         $this->assertSame(
-            Schedule\Policy\WorkflowIdReusePolicy::WorkflowIdReusePolicyAllowDuplicateFailedOnly->value,
+            Schedule\Policy\WorkflowIdReusePolicy::AllowDuplicateFailedOnly->value,
             $startWorkflow->getWorkflowIdReusePolicy(),
         );
 
