@@ -38,8 +38,8 @@
         "spiral/roadrunner-cli": "^2.5",
         "spiral/roadrunner-kv": "^4.0",
         "spiral/roadrunner-worker": "^3.0",
-        "symfony/filesystem": "^4.4.20 || ^5.0 || ^6.0 || ^7.0",
-        "symfony/http-client": "^4.4.27 || ^5.0 || ^6.0 || ^7.0",
+        "symfony/filesystem": "^5.4 || ^6.0 || ^7.0",
+        "symfony/http-client": "^5.4 || ^6.0 || ^7.0",
         "symfony/process": "^5.4 || ^6.0 || ^7.0"
     },
     "autoload": {

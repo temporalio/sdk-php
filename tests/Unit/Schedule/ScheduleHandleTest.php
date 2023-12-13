@@ -312,8 +312,7 @@ class ScheduleHandleTest extends TestCase
         ?ProtoToArrayConverter $protoConverter = null,
         string $namespace = 'default',
         string $id = 'test-id',
-    ): ScheduleHandle
-    {
+    ): ScheduleHandle {
         if ($clientOptions === null) {
             $clientOptions = $this->createMock(ClientOptions::class);
             $clientOptions->identity = 'test-identity';
