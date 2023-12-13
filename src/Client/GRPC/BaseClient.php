@@ -120,12 +120,12 @@ abstract class BaseClient implements ServiceClientInterface
         return $clone;
     }
 
-    final public function getServerCapabilities(): ?ServerCapabilities
+    public function getServerCapabilities(): ?ServerCapabilities
     {
         return $this->capabilities;
     }
 
-    final public function setServerCapabilities(ServerCapabilities $capabilities): void
+    public function setServerCapabilities(ServerCapabilities $capabilities): void
     {
         $this->capabilities = $capabilities;
     }

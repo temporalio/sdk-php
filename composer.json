@@ -54,7 +54,7 @@
         "buggregator/trap": "^1.0.2",
         "composer/composer": "^2.0",
         "dereuromark/composer-prefer-lowest": "^0.1.10",
-        "doctrine/annotations": "^1.11|^2.0.0",
+        "doctrine/annotations": "^1.14|^2.0.0",
         "friendsofphp/php-cs-fixer": "^3.0",
         "illuminate/support": "^9.0",
         "jetbrains/phpstorm-attributes": "dev-master@dev",

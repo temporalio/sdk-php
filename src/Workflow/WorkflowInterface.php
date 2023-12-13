@@ -12,9 +12,11 @@ declare(strict_types=1);
 namespace Temporal\Workflow;
 
 use Doctrine\Common\Annotations\Annotation\Target;
+use Spiral\Attributes\NamedArgumentConstructor;
 
 /**
  * @Annotation
+ * @NamedArgumentConstructor
  * @Target({ "CLASS" })
  *
  * Note: We can not comment this problematic piece of code, because
@@ -23,7 +25,7 @@ use Doctrine\Common\Annotations\Annotation\Target;
  *
  *  Problem is relevant for doctrine/annotations 1.11 or lower on any PHP version.
  */
-#[\Attribute(\Attribute::TARGET_CLASS)]
+#[\Attribute(\Attribute::TARGET_CLASS), NamedArgumentConstructor]
 final class WorkflowInterface
 {
 }
