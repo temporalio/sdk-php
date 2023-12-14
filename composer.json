@@ -33,7 +33,7 @@
         "react/promise": "^2.9",
         "roadrunner-php/roadrunner-api-dto": "^1.4",
         "roadrunner-php/version-checker": "^1.0",
-        "spiral/attributes": "^2.8 || ^3.0",
+        "spiral/attributes": "^3.1.4",
         "spiral/roadrunner": "^v2023.2",
         "spiral/roadrunner-cli": "^2.5",
         "spiral/roadrunner-kv": "^4.0",
@@ -51,7 +51,7 @@
         }
     },
     "require-dev": {
-        "buggregator/trap": "^1.0.2",
+        "buggregator/trap": "^1.2.2",
         "composer/composer": "^2.0",
         "dereuromark/composer-prefer-lowest": "^0.1.10",
         "doctrine/annotations": "^1.14|^2.0.0",
@@ -72,11 +72,6 @@
             "Temporal\\Tests\\Proto\\": "tests/Fixtures/src/Proto",
             "Temporal\\Tests\\": "tests"
         }
-    },
-    "replace": {
-        "symfony/polyfill-php72": "*",
-        "symfony/polyfill-php73": "*",
-        "symfony/polyfill-php80": "*"
     },
     "suggest": {
         "doctrine/annotations": "^1.11 for Doctrine metadata driver support"
