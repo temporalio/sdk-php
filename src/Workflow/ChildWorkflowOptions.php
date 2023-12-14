@@ -342,18 +342,18 @@ final class ChildWorkflowOptions extends Options
      *
      * @psalm-suppress ImpureMethodCall
      *
-     * @param IdReusePolicyEnum $policy
+     * @param IdReusePolicyEnum|IdReusePolicy $policy
      * @return $this
      */
     #[Pure]
     public function withWorkflowIdReusePolicy(
         #[ExpectedValues(valuesFromClass: IdReusePolicy::class)]
-        int $policy
+        IdReusePolicy|int $policy,
     ): self {
-        assert(Assert::enum($policy, IdReusePolicy::class));
+        \is_int($policy) and $policy = IdReusePolicy::from($policy);
 
         $self = clone $this;
-        $self->workflowIdReusePolicy = $policy;
+        $self->workflowIdReusePolicy = $policy->value;
         return $self;
     }
 

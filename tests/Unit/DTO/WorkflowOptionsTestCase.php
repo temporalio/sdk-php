@@ -106,13 +106,23 @@ class WorkflowOptionsTestCase extends DTOMarshallingTestCase
         ));
     }
 
-    public function testWorkflowIdReusePolicyChangesNotMutateState(): void
+    public function testWorkflowIdReusePolicyChangesNotMutateStateUsingConstant(): void
     {
         $dto = new WorkflowOptions();
 
         $this->assertNotSame($dto, $dto->withWorkflowIdReusePolicy(
             IdReusePolicy::POLICY_ALLOW_DUPLICATE
         ));
+    }
+
+    public function testWorkflowIdReusePolicyChangesNotMutateStateUsingEnum(): void
+    {
+        $dto = new WorkflowOptions();
+
+        $this->assertNotSame($dto, $dto->withWorkflowIdReusePolicy(
+            IdReusePolicy::AllowDuplicateFailedOnly
+        ));
+        $this->assertSame(IdReusePolicy::AllowDuplicateFailedOnly->value, $dto->workflowIdReusePolicy);
     }
 
     public function testRetryOptionsChangesNotMutateState(): void

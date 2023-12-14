@@ -10,6 +10,7 @@ use Temporal\Api\Enums\V1\ScheduleOverlapPolicy;
 use Temporal\Api\Workflow\V1\NewWorkflowExecutionInfo;
 use Temporal\Client\Schedule;
 use Temporal\Api\Schedule\V1;
+use Temporal\Common\IdReusePolicy;
 use Temporal\Common\RetryOptions;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
@@ -49,7 +50,7 @@ final class WorkflowExecutionInfoMapperTest extends TestCase
                     ->withSearchAttributes(['sAttr1' => 's-value1', 'sAttr2' => 's-value2'])
                     ->withWorkflowId('test-workflow-id')
                     ->withWorkflowIdReusePolicy(
-                        Schedule\Policy\WorkflowIdReusePolicy::AllowDuplicateFailedOnly
+                        IdReusePolicy::AllowDuplicateFailedOnly
                     )
             )->withSpec(
                 Schedule\Spec\ScheduleSpec::new()
@@ -118,7 +119,7 @@ final class WorkflowExecutionInfoMapperTest extends TestCase
         );
         $this->assertSame('test-workflow-id', $startWorkflow->getWorkflowId());
         $this->assertSame(
-            Schedule\Policy\WorkflowIdReusePolicy::AllowDuplicateFailedOnly->value,
+            IdReusePolicy::AllowDuplicateFailedOnly->value,
             $startWorkflow->getWorkflowIdReusePolicy(),
         );
 

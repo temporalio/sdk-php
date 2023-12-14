@@ -6,7 +6,7 @@ namespace Schedule\Action;
 
 use PHPUnit\Framework\TestCase;
 use Temporal\Client\Schedule\Action\StartWorkflowAction;
-use Temporal\Client\Schedule\Policy\WorkflowIdReusePolicy;
+use Temporal\Common\IdReusePolicy as WorkflowIdReusePolicy;
 use Temporal\Common\RetryOptions;
 use Temporal\DataConverter\EncodedCollection;
 use Temporal\DataConverter\EncodedValues;
