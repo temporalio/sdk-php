@@ -17,6 +17,7 @@ use Temporal\Internal\Marshaller\Mapper\MapperInterface;
 
 /**
  * @psalm-import-type CallableTypeMatcher from TypeFactory
+ * @implements MarshallerInterface<array>
  */
 class Marshaller implements MarshallerInterface
 {

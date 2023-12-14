@@ -17,6 +17,9 @@ use Temporal\Internal\Marshaller\Mapper\MapperFactoryInterface;
 use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 
+/**
+ * @implements MarshallerInterface<array>
+ */
 class TestingMarshaller implements MarshallerInterface
 {
     /**
@@ -34,22 +37,11 @@ class TestingMarshaller implements MarshallerInterface
         $this->marshaller = new Marshaller($mapper);
     }
 
-    /**
-     * @param object $from
-     * @return array
-     * @throws \ReflectionException
-     */
     public function marshal(object $from): array
     {
         return $this->marshaller->marshal($from);
     }
 
-    /**
-     * @param array $from
-     * @param object $to
-     * @return object
-     * @throws \ReflectionException
-     */
     public function unmarshal(array $from, object $to): object
     {
         return $this->marshaller->unmarshal($from, $to);
