@@ -16,6 +16,7 @@ use Temporal\Client\WorkflowStubInterface;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Support\ArgumentPreparator;
 use Temporal\Internal\Workflow\Proxy;
+use Temporal\Workflow\ReturnType;
 
 /**
  * @template-covariant T of object
@@ -26,33 +27,15 @@ final class WorkflowProxy extends Proxy
         'The given workflow class "%s" does not contain a workflow, query or signal method named "%s"';
 
     /**
-     * @var WorkflowClient
-     */
-    public WorkflowClient $client;
-
-    /**
-     * @var WorkflowStubInterface|null
-     */
-    private ?WorkflowStubInterface $stub;
-
-    /**
-     * @var WorkflowPrototype|null
-     */
-    private ?WorkflowPrototype $prototype;
-
-    /**
      * @param WorkflowClient $client
      * @param WorkflowStubInterface $stub
      * @param WorkflowPrototype $prototype
      */
     public function __construct(
-        WorkflowClient $client,
-        WorkflowStubInterface $stub,
-        WorkflowPrototype $prototype
+        public WorkflowClient $client,
+        private readonly WorkflowStubInterface $stub,
+        private readonly WorkflowPrototype $prototype,
     ) {
-        $this->client = $client;
-        $this->stub = $stub;
-        $this->prototype = $prototype;
     }
 
     /**
@@ -115,10 +98,10 @@ final class WorkflowProxy extends Proxy
     /**
      * TODO rename: Method names cannot use underscore (PSR conflict)
      *
-     * @return \ReflectionType|null
+     * @return ReturnType|null
      * @internal
      */
-    public function __getReturnType()
+    public function __getReturnType(): ?ReturnType
     {
         return $this->prototype->getReturnType();
     }
@@ -133,30 +116,22 @@ final class WorkflowProxy extends Proxy
     }
 
     /**
-     * @return \ReflectionMethod|null
+     * @return \ReflectionMethod
      * @internal
      */
-    public function getHandlerReflection(): ?\ReflectionMethod
+    public function getHandlerReflection(): \ReflectionMethod
     {
-        return $this->prototype?->getHandler();
+        return $this->prototype->getHandler() ?? throw new \LogicException(
+            'The workflow does not contain a handler method.'
+        );
     }
 
     /**
-     * @param string $name
+     * @param non-empty-string $name Signal name
      * @return \ReflectionFunctionAbstract|null
      */
     public function findSignalReflection(string $name): ?\ReflectionFunctionAbstract
     {
-        if ($this->prototype === null) {
-            return null;
-        }
-
-        foreach ($this->prototype->getSignalHandlers() as $signalName => $signal) {
-            if ($signalName === $name) {
-                return $signal;
-            }
-        }
-
-        return null;
+        return $this->prototype->getSignalHandlers()[$name] ?? null;
     }
 }
