@@ -38,7 +38,7 @@ use Temporal\Internal\Declaration\Reader\WorkflowReader;
 use Temporal\Internal\Interceptor\HeaderCarrier;
 use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Internal\Mapper\WorkflowExecutionInfoMapper;
-use Temporal\Internal\Support\ArgumentPreparator;
+use Temporal\Internal\Support\Reflection;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowRunInterface;
 use Temporal\Workflow\WorkflowStub as WorkflowStubConverter;
@@ -129,7 +129,7 @@ class WorkflowClient implements WorkflowClientInterface
             $returnType = $workflow->__getReturnType();
             $method = $workflow->getHandlerReflection();
 
-            $args = ArgumentPreparator::alignArgs($args, $method);
+            $args = Reflection::orderArguments($method, $args);
         }
 
         if ($workflowStub->getWorkflowType() === null) {
@@ -178,13 +178,13 @@ class WorkflowClient implements WorkflowClientInterface
             $handler = $workflow->getHandlerReflection();
 
             if ($handler !== null) {
-                $startArgs = ArgumentPreparator::alignArgs($startArgs, $handler);
+                $startArgs = Reflection::orderArguments($handler, $startArgs);
             }
 
             $signalReflection = $workflow->findSignalReflection($signal);
 
             if ($signalReflection !== null) {
-                $signalArgs = ArgumentPreparator::alignArgs($signalArgs, $signalReflection);
+                $signalArgs = Reflection::orderArguments($signalReflection, $signalArgs);
             }
         }
 

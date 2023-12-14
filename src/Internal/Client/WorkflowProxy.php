@@ -14,7 +14,7 @@ namespace Temporal\Internal\Client;
 use Temporal\Client\WorkflowClient;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
-use Temporal\Internal\Support\ArgumentPreparator;
+use Temporal\Internal\Support\Reflection;
 use Temporal\Internal\Workflow\Proxy;
 use Temporal\Workflow\ReturnType;
 
@@ -46,7 +46,7 @@ final class WorkflowProxy extends Proxy
     public function __call(string $method, array $args)
     {
         if ($method === $this->prototype->getHandler()?->getName()) {
-            $args = ArgumentPreparator::alignArgs($args, $this->prototype->getHandler());
+            $args = Reflection::orderArguments($this->prototype->getHandler(), $args);
 
             // no timeout (use async mode to get it)
             return $this->client->start($this, ...$args)->getResult($this->__getReturnType());
@@ -55,7 +55,7 @@ final class WorkflowProxy extends Proxy
         // Otherwise, we try to find a suitable workflow "query" method.
         foreach ($this->prototype->getQueryHandlers() as $name => $query) {
             if ($query->getName() === $method) {
-                $args = ArgumentPreparator::alignArgs($args, $query);
+                $args = Reflection::orderArguments($query, $args);
 
                 $result = $this->stub->query($name, ...$args);
                 if ($result === null) {
@@ -69,7 +69,7 @@ final class WorkflowProxy extends Proxy
         // Otherwise, we try to find a suitable workflow "signal" method.
         foreach ($this->prototype->getSignalHandlers() as $name => $signal) {
             if ($signal->getName() === $method) {
-                $args = ArgumentPreparator::alignArgs($args, $signal);
+                $args = Reflection::orderArguments($signal, $args);
 
                 $this->stub->signal($name, ...$args);
 
