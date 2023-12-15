@@ -725,9 +725,6 @@
     <PossiblyNullArgument>
       <code><![CDATA[$dto->action]]></code>
     </PossiblyNullArgument>
-    <PossiblyUndefinedStringArrayOffset>
-      <code><![CDATA[$array['state']]]></code>
-    </PossiblyUndefinedStringArrayOffset>
     <RedundantCondition>
       <code><![CDATA[$action->header?->setDataConverter($this->converter)]]></code>
       <code><![CDATA[$action->input?->setDataConverter($this->converter)]]></code>
@@ -865,9 +862,6 @@
     </NullableReturnStatement>
   </file>
   <file src="src/Internal/Marshaller/Type/EnumType.php">
-    <MismatchingDocblockReturnType>
-      <code>\UnitEnum|null</code>
-    </MismatchingDocblockReturnType>
     <PropertyTypeCoercion>
       <code>$class</code>
     </PropertyTypeCoercion>
@@ -1174,17 +1168,11 @@
     <DocblockTypeContradiction>
       <code>$process === null</code>
     </DocblockTypeContradiction>
-    <InternalMethod>
-      <code>cancel</code>
-    </InternalMethod>
   </file>
   <file src="src/Internal/Transport/Router/DestroyWorkflow.php">
     <DocblockTypeContradiction>
       <code>$process === null</code>
     </DocblockTypeContradiction>
-    <InternalMethod>
-      <code>cancel</code>
-    </InternalMethod>
     <UndefinedInterfaceMethod>
       <code>pull</code>
     </UndefinedInterfaceMethod>
@@ -1207,9 +1195,6 @@
     </UnnecessaryVarAnnotation>
   </file>
   <file src="src/Internal/Transport/Router/InvokeQuery.php">
-    <InternalMethod>
-      <code>getContext</code>
-    </InternalMethod>
     <PossiblyNullFunctionCall>
       <code><![CDATA[$handler(new QueryInput($name, $request->getPayloads()))]]></code>
     </PossiblyNullFunctionCall>
@@ -1224,11 +1209,6 @@
     <PossiblyUndefinedStringArrayOffset>
       <code><![CDATA[$request->getOptions()['name']]]></code>
     </PossiblyUndefinedStringArrayOffset>
-  </file>
-  <file src="src/Internal/Transport/Router/StackTrace.php">
-    <InternalMethod>
-      <code>getContext</code>
-    </InternalMethod>
   </file>
   <file src="src/Internal/Transport/Router/StartWorkflow.php">
     <MissingClosureReturnType>

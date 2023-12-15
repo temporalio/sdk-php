@@ -19,6 +19,9 @@ use Temporal\Internal\Marshaller\MarshallingRule;
 use Temporal\Internal\Support\DateTime;
 use Temporal\Internal\Support\Inheritance;
 
+/**
+ * @extends Type<Timestamp|non-empty-string>
+ */
 class DateTimeType extends Type implements DetectableTypeInterface, RuleFactoryInterface
 {
     /**
@@ -84,10 +87,7 @@ class DateTimeType extends Type implements DetectableTypeInterface, RuleFactoryI
         return DateTime::parse($value, class: $this->class);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function serialize($value): mixed
+    public function serialize($value): Timestamp|string
     {
         $datetime = DateTime::parse($value);
         return match ($this->format) {

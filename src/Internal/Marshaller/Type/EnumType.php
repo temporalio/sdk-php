@@ -15,6 +15,9 @@ use BackedEnum;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Marshaller\MarshallingRule;
 
+/**
+ * @extends Type<array>
+ */
 class EnumType extends Type implements RuleFactoryInterface
 {
     private const ERROR_INVALID_TYPE = 'Invalid Enum value. Expected: int or string scalar value for BackedEnum; '
@@ -88,8 +91,6 @@ class EnumType extends Type implements RuleFactoryInterface
 
     /**
      * @psalm-suppress UndefinedDocblockClass
-     *
-     * @return \UnitEnum|null
      */
     public function serialize($value): array
     {

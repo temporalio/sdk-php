@@ -13,10 +13,13 @@ namespace Temporal\Internal\Marshaller\Type;
 
 use Temporal\Internal\Marshaller\MarshallerInterface;
 
+/**
+ * @template-covariant TMarshalType of mixed
+ */
 interface TypeInterface
 {
     /**
-     * @param MarshallerInterface $marshaller
+     * @param MarshallerInterface<array> $marshaller
      */
     public function __construct(MarshallerInterface $marshaller);
 
@@ -29,7 +32,7 @@ interface TypeInterface
 
     /**
      * @param mixed $value
-     * @return mixed
+     * @return TMarshalType
      */
     public function serialize($value);
 }

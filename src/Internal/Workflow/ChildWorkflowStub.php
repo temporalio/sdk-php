@@ -29,29 +29,23 @@ use Temporal\Workflow\WorkflowExecution;
 
 final class ChildWorkflowStub implements ChildWorkflowStubInterface
 {
-    private string $workflow;
     private Deferred $execution;
-    private ChildWorkflowOptions $options;
-    private MarshallerInterface $marshaller;
     private ?ExecuteChildWorkflow $request = null;
     private ?PromiseInterface $result = null;
     private HeaderInterface $header;
 
     /**
-     * @param MarshallerInterface $marshaller
+     * @param MarshallerInterface<array> $marshaller
      * @param string $workflow
      * @param ChildWorkflowOptions $options
      * @param HeaderInterface|array $header
      */
     public function __construct(
-        MarshallerInterface $marshaller,
-        string $workflow,
-        ChildWorkflowOptions $options,
+        private readonly MarshallerInterface $marshaller,
+        private readonly string $workflow,
+        private readonly ChildWorkflowOptions $options,
         HeaderInterface|array $header,
     ) {
-        $this->marshaller = $marshaller;
-        $this->workflow = $workflow;
-        $this->options = $options;
         $this->execution = new Deferred();
         $this->header = \is_array($header) ? Header::fromValues($header) : $header;
     }

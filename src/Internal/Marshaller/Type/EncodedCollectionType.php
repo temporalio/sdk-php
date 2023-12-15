@@ -24,6 +24,7 @@ use Temporal\Internal\Support\Inheritance;
 
 /**
  * Read only type.
+ * @extends Type<array|Message>
  */
 final class EncodedCollectionType extends Type implements DetectableTypeInterface, RuleFactoryInterface
 {

@@ -26,12 +26,13 @@ use Temporal\DataConverter\Type;
 
 final class ActivityStub implements ActivityStubInterface
 {
+    /** @var MarshallerInterface<array> */
     private MarshallerInterface $marshaller;
     private ActivityOptionsInterface $options;
     private HeaderInterface $header;
 
     /**
-     * @param MarshallerInterface $marshaller
+     * @param MarshallerInterface<array> $marshaller
      * @param ActivityOptionsInterface $options
      * @param HeaderInterface|array $header
      */

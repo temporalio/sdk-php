@@ -14,7 +14,7 @@ namespace Temporal\Internal\Marshaller;
 use Temporal\Exception\MarshallerException;
 
 /**
- * @template-covariant TTarget of object|array
+ * @template-covariant TTarget of mixed
  */
 interface MarshallerInterface
 {

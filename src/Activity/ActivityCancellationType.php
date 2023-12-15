@@ -19,6 +19,8 @@ use Temporal\Internal\Marshaller\Type\Type;
  * wraps child workflow execution request is canceled. The result of the
  * cancellation independently of the type is a {@see FailedCancellationException}
  * thrown from the child workflow method.
+ *
+ * @extends Type<bool>
  */
 final class ActivityCancellationType extends Type
 {
@@ -53,7 +55,7 @@ final class ActivityCancellationType extends Type
     /**
      * {@inheritDoc}
      */
-    public function serialize($value)
+    public function serialize($value): bool
     {
         switch ($value) {
             case self::WAIT_CANCELLATION_COMPLETED:

@@ -15,19 +15,18 @@ use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Marshaller\MarshallingRule;
 use Temporal\Internal\Support\Inheritance;
 
+/**
+ * @template-covariant TSerializeType of mixed
+ * @implements TypeInterface<TSerializeType>
+ */
 abstract class Type implements TypeInterface
 {
     /**
-     * @var MarshallerInterface
+     * @param MarshallerInterface<array> $marshaller
      */
-    protected MarshallerInterface $marshaller;
-
-    /**
-     * @param MarshallerInterface $marshaller
-     */
-    public function __construct(MarshallerInterface $marshaller)
-    {
-        $this->marshaller = $marshaller;
+    public function __construct(
+        protected MarshallerInterface $marshaller
+    ) {
     }
 
     /**

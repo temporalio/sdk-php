@@ -16,11 +16,11 @@ use Temporal\Internal\Marshaller\MarshallerInterface;
 
 /**
  * @template TClass of object
+ * @extends Type<array>
  */
 class OneOfType extends Type
 {
     /**
-     * @param MarshallerInterface $marshaller
      * @param class-string<TClass>|null $parentClass
      * @param array<non-empty-string, class-string> $cases
      */
