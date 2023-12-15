@@ -20,6 +20,7 @@ use Temporal\Internal\Support\Inheritance;
 
 /**
  * @psalm-import-type DateIntervalFormat from DateInterval
+ * @extends Type<int|Duration>
  */
 class DateIntervalType extends Type implements DetectableTypeInterface, RuleFactoryInterface
 {

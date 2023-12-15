@@ -10,7 +10,7 @@ use Temporal\Internal\Traits\CloneWith;
 /**
  * Options for creating a Schedule.
  *
- * @see \Temporal\Client\ScheduleClient::createSchedule()
+ * @see \Temporal\Client\ScheduleClientInterface::createSchedule()
  */
 final class ScheduleOptions
 {

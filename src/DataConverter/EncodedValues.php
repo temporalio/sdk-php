@@ -137,6 +137,23 @@ class EncodedValues implements ValuesInterface
         return $this->converter->fromPayload($this->payloads[$index], $type);
     }
 
+    public function getValues(): array
+    {
+        $result = $this->values;
+
+        if (empty($this->payloads)) {
+            return $result;
+        }
+
+        $this->converter === null and throw new \LogicException('DataConverter is not set.');
+
+        foreach ($this->payloads as $key => $payload) {
+            $result[$key] = $this->converter->fromPayload($payload, null);
+        }
+
+        return $result;
+    }
+
     /**
      * @param DataConverterInterface $converter
      */

@@ -137,7 +137,7 @@ final class ScheduleHandle
             );
 
             $backfill[] = (new BackfillRequest())
-                ->setOverlapPolicy(ScheduleOverlapPolicy::Unspecified->value)
+                ->setOverlapPolicy($period->overlapPolicy->value)
                 ->setStartTime((new Timestamp())->setSeconds($period->startTime->getTimestamp()))
                 ->setEndTime((new Timestamp())->setSeconds($period->endTime->getTimestamp()));
         }

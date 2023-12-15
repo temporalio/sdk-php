@@ -8,7 +8,7 @@ use Google\Protobuf\Duration;
 use Temporal\Api\Common\V1\Header;
 use Temporal\Api\Common\V1\Memo;
 use Temporal\Api\Common\V1\SearchAttributes;
-use Temporal\Client\Schedule\Policy\WorkflowIdReusePolicy;
+use Temporal\Common\IdReusePolicy;
 use Temporal\Common\RetryOptions;
 use Temporal\Common\TaskQueue\TaskQueue;
 use Temporal\DataConverter\EncodedCollection;
@@ -76,10 +76,10 @@ final class StartWorkflowAction extends ScheduleAction
     public readonly \DateInterval $workflowTaskTimeout;
 
     /**
-     * Default {@see WorkflowIdReusePolicy::WorkflowIdReusePolicyAllowDuplicate}
+     * Default {@see IdReusePolicy::AllowDuplicate}
      */
     #[Marshal(name: 'workflow_id_reuse_policy')]
-    public readonly WorkflowIdReusePolicy $workflowIdReusePolicy;
+    public readonly IdReusePolicy $workflowIdReusePolicy;
 
     /**
      * The retry policy for the workflow. Will never exceed {@see self::$workflowExecutionTimeout}.
@@ -114,7 +114,7 @@ final class StartWorkflowAction extends ScheduleAction
         $this->workflowExecutionTimeout = new \DateInterval('PT0S');
         $this->workflowRunTimeout = new \DateInterval('PT0S');
         $this->workflowTaskTimeout = new \DateInterval('PT0S');
-        $this->workflowIdReusePolicy = WorkflowIdReusePolicy::WorkflowIdReusePolicyUnspecified;
+        $this->workflowIdReusePolicy = IdReusePolicy::Unspecified;
         $this->retryPolicy = RetryOptions::new();
         $this->memo = EncodedCollection::empty();
         $this->searchAttributes = EncodedCollection::empty();
@@ -208,7 +208,7 @@ final class StartWorkflowAction extends ScheduleAction
         return $this->with('workflowTaskTimeout', $timeout);
     }
 
-    public function withWorkflowIdReusePolicy(WorkflowIdReusePolicy $policy): self
+    public function withWorkflowIdReusePolicy(IdReusePolicy $policy): self
     {
         /** @see self::$workflowIdReusePolicy */
         return $this->with('workflowIdReusePolicy', $policy);

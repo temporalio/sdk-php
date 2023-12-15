@@ -11,6 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Marshaller\Type;
 
+/**
+ * @extends Type<string>
+ */
 class CronType extends Type
 {
     /**
@@ -40,7 +43,7 @@ class CronType extends Type
     /**
      * {@inheritDoc}
      */
-    public function serialize($value)
+    public function serialize($value): string
     {
         if (\is_string($value) || $value instanceof \Stringable) {
             return (string)$value;

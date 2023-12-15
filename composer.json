@@ -33,13 +33,13 @@
         "react/promise": "^2.9",
         "roadrunner-php/roadrunner-api-dto": "^1.4",
         "roadrunner-php/version-checker": "^1.0",
-        "spiral/attributes": "^2.8 || ^3.0",
+        "spiral/attributes": "^3.1.4",
         "spiral/roadrunner": "^v2023.2",
         "spiral/roadrunner-cli": "^2.5",
         "spiral/roadrunner-kv": "^4.0",
         "spiral/roadrunner-worker": "^3.0",
-        "symfony/filesystem": "^4.4.20 || ^5.0 || ^6.0 || ^7.0",
-        "symfony/http-client": "^4.4.27 || ^5.0 || ^6.0 || ^7.0",
+        "symfony/filesystem": "^5.4 || ^6.0 || ^7.0",
+        "symfony/http-client": "^5.4 || ^6.0 || ^7.0",
         "symfony/process": "^5.4 || ^6.0 || ^7.0"
     },
     "autoload": {
@@ -51,10 +51,10 @@
         }
     },
     "require-dev": {
-        "buggregator/trap": "^1.0.2",
+        "buggregator/trap": "^1.2.2",
         "composer/composer": "^2.0",
         "dereuromark/composer-prefer-lowest": "^0.1.10",
-        "doctrine/annotations": "^1.11|^2.0.0",
+        "doctrine/annotations": "^1.14|^2.0.0",
         "friendsofphp/php-cs-fixer": "^3.0",
         "illuminate/support": "^9.0",
         "jetbrains/phpstorm-attributes": "dev-master@dev",
@@ -65,12 +65,12 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Temporal\\Tests\\": "tests",
             "Temporal\\Tests\\Interceptor\\": "tests/Fixtures/src/Interceptor",
             "Temporal\\Tests\\Workflow\\": "tests/Fixtures/src/Workflow",
             "Temporal\\Tests\\Activity\\": "tests/Fixtures/src/Activity",
             "Temporal\\Tests\\DTO\\": "tests/Fixtures/src/DTO",
-            "Temporal\\Tests\\Proto\\": "tests/Fixtures/src/Proto"
+            "Temporal\\Tests\\Proto\\": "tests/Fixtures/src/Proto",
+            "Temporal\\Tests\\": "tests"
         }
     },
     "suggest": {

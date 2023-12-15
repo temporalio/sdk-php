@@ -14,6 +14,9 @@ namespace Temporal\Internal\Marshaller\Type;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Marshaller\MarshallingRule;
 
+/**
+ * @extends Type<mixed>
+ */
 class NullableType extends Type
 {
     /**
@@ -54,10 +57,6 @@ class NullableType extends Type
         return $value;
     }
 
-    /**
-     * @param mixed $value
-     * @return mixed
-     */
     public function serialize($value)
     {
         if ($value === null) {

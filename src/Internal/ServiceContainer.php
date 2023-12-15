@@ -59,7 +59,7 @@ final class ServiceContainer
     public EnvironmentInterface $env;
 
     /**
-     * @var MarshallerInterface
+     * @var MarshallerInterface<array>
      */
     #[Immutable]
     public MarshallerInterface $marshaller;
@@ -122,7 +122,7 @@ final class ServiceContainer
      * @param ClientInterface $client
      * @param ReaderInterface $reader
      * @param QueueInterface $queue
-     * @param MarshallerInterface $marshaller
+     * @param MarshallerInterface<array> $marshaller
      * @param DataConverterInterface $dataConverter
      * @param ExceptionInterceptorInterface $exceptionInterceptor
      * @param PipelineProvider $interceptorProvider

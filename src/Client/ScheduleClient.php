@@ -35,7 +35,7 @@ use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Marshaller\ProtoToArrayConverter;
 
-final class ScheduleClient
+final class ScheduleClient implements ScheduleClientInterface
 {
     private ServiceClientInterface $client;
     private ClientOptions $clientOptions;
@@ -62,27 +62,14 @@ final class ScheduleClient
         $this->protoConverter = new ProtoToArrayConverter($this->converter);
     }
 
-    /**
-     * @param ServiceClientInterface $serviceClient
-     * @param ClientOptions|null $options
-     * @param DataConverterInterface|null $converter
-     * @return static
-     */
     public static function create(
         ServiceClientInterface $serviceClient,
         ClientOptions $options = null,
         DataConverterInterface $converter = null
-    ): self {
+    ): ScheduleClientInterface {
         return new self($serviceClient, $options, $converter);
     }
 
-    /**
-     * Create a schedule and return its handle.
-     *
-     * @param Schedule $schedule Schedule to create.
-     * @param ScheduleOptions|null $options Options for creating the schedule.
-     * @param non-empty-string|null $scheduleId Unique ID for the schedule. Will be generated as UUID if not provided.
-     */
     public function createSchedule(
         Schedule $schedule,
         ?ScheduleOptions $options = null,
@@ -143,7 +130,7 @@ final class ScheduleClient
         );
     }
 
-    public function getHandler(string $scheduleID, string $namespace = 'default'): ScheduleHandle
+    public function getHandle(string $scheduleID, string $namespace = 'default'): ScheduleHandle
     {
         return new ScheduleHandle(
             $this->client,
@@ -156,14 +143,6 @@ final class ScheduleClient
         );
     }
 
-    /**
-     * List all schedules in a namespace.
-     *
-     * @param non-empty-string $namespace
-     * @param int<0, max> $pageSize Maximum number of Schedule info per page.
-     *
-     * @return Paginator<ScheduleListEntry>
-     */
     public function listSchedules(
         string $namespace = 'default',
         int $pageSize = 0,
@@ -186,8 +165,8 @@ final class ScheduleClient
 
                     $page[] = $this->marshaller->unmarshal($values, $dto);
                 }
-                yield $page;
 
+                yield $page;
                 $request->setNextPageToken($nextPageToken);
             } while ($nextPageToken !== '');
         };

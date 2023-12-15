@@ -22,7 +22,6 @@ use Temporal\Common\MethodRetry;
 use Temporal\Common\RetryOptions;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverterInterface;
-use Temporal\Internal\Assert;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\ArrayType;
 use Temporal\Internal\Marshaller\Type\CronType;
@@ -37,7 +36,6 @@ use Temporal\Worker\Worker;
  * WorkflowOptions configuration parameters for starting a workflow execution.
  *
  * @psalm-import-type DateIntervalValue from DateInterval
- * @psalm-import-type IdReusePolicyEnum from IdReusePolicy
  * @psalm-immutable
  */
 final class WorkflowOptions extends Options
@@ -102,8 +100,6 @@ final class WorkflowOptions extends Options
     /**
      * Whether server allow reuse of workflow ID, can be useful for dedup logic
      * if set to {@see IdReusePolicy::POLICY_REJECT_DUPLICATE}.
-     *
-     * @psalm-var IdReusePolicyEnum
      */
     #[Marshal(name: 'WorkflowIDReusePolicy')]
     public int $workflowIdReusePolicy = IdReusePolicy::POLICY_ALLOW_DUPLICATE_FAILED_ONLY;
@@ -329,30 +325,27 @@ final class WorkflowOptions extends Options
      * exists. Note that under no conditions Temporal allows two workflows
      * with the same namespace and workflow id run simultaneously.
      *
-     * - {@see IdReusePolicy::POLICY_ALLOW_DUPLICATE_FAILED_ONLY}: Is a default
+     * - {@see IdReusePolicy::AllowDuplicateFailedOnly}: Is a default
      *  value. It means that workflow can start if previous run failed or was
      *  canceled or terminated.
      *
-     * - {@see IdReusePolicy::POLICY_ALLOW_DUPLICATE}: Allows new run
+     * - {@see IdReusePolicy::AllowDuplicate}: Allows new run
      *  independently of the previous run closure status.
      *
-     * - {@see IdReusePolicy::POLICY_REJECT_DUPLICATE}: Doesn't allow new run
+     * - {@see IdReusePolicy::RejectDuplicate}: Doesn't allow new run
      *  independently of the previous run closure status.
      *
      * @psalm-suppress ImpureMethodCall
      *
-     * @param IdReusePolicyEnum $policy
      * @return $this
      */
     #[Pure]
-    public function withWorkflowIdReusePolicy(
-        #[ExpectedValues(valuesFromClass: IdReusePolicy::class)]
-        int $policy
-    ): self {
-        assert(Assert::enum($policy, IdReusePolicy::class));
+    public function withWorkflowIdReusePolicy(IdReusePolicy|int $policy): self
+    {
+        \is_int($policy) and $policy = IdReusePolicy::from($policy);
 
         $self = clone $this;
-        $self->workflowIdReusePolicy = $policy;
+        $self->workflowIdReusePolicy = $policy->value;
         return $self;
     }
 

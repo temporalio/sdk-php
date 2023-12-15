@@ -17,6 +17,9 @@ use ReflectionNamedType;
 use Temporal\Internal\Marshaller\MarshallingRule;
 use Temporal\Internal\Support\Inheritance;
 
+/**
+ * @extends Type<string>
+ */
 final class UuidType extends Type implements DetectableTypeInterface, RuleFactoryInterface
 {
     public static function match(\ReflectionNamedType $type): bool

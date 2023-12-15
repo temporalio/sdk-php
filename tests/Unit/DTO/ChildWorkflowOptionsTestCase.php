@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\DTO;
 
+use Temporal\Common\IdReusePolicy;
 use Temporal\Workflow\ChildWorkflowOptions;
 
 class ChildWorkflowOptionsTestCase extends DTOMarshallingTestCase
@@ -39,5 +40,24 @@ class ChildWorkflowOptionsTestCase extends DTOMarshallingTestCase
         ];
 
         $this->assertSame($expected, $this->marshal($dto));
+    }
+
+    public function testWorkflowIdReusePolicyChangesNotMutateStateUsingConstant(): void
+    {
+        $dto = new ChildWorkflowOptions();
+
+        $this->assertNotSame($dto, $dto->withWorkflowIdReusePolicy(
+            IdReusePolicy::POLICY_ALLOW_DUPLICATE
+        ));
+    }
+
+    public function testWorkflowIdReusePolicyChangesNotMutateStateUsingEnum(): void
+    {
+        $dto = new ChildWorkflowOptions();
+
+        $this->assertNotSame($dto, $dto->withWorkflowIdReusePolicy(
+            IdReusePolicy::AllowDuplicateFailedOnly
+        ));
+        $this->assertSame(IdReusePolicy::AllowDuplicateFailedOnly->value, $dto->workflowIdReusePolicy);
     }
 }

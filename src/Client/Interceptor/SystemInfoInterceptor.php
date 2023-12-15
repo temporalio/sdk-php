@@ -27,7 +27,7 @@ final class SystemInfoInterceptor implements GrpcClientInterceptor
     private bool $systemInfoRequested = false;
 
     public function __construct(
-        private ServiceClient $serviceClient
+        private readonly ServiceClient $serviceClient
     ) {
     }
 

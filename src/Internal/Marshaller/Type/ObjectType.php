@@ -17,6 +17,7 @@ use Temporal\Internal\Marshaller\MarshallingRule;
 
 /**
  * @template TClass of object
+ * @extends Type<array>
  */
 class ObjectType extends Type implements DetectableTypeInterface, RuleFactoryInterface
 {

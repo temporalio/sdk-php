@@ -146,7 +146,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     private RPCConnectionInterface $rpc;
 
     /**
-     * @var MarshallerInterface
+     * @var MarshallerInterface<array>
      */
     private MarshallerInterface $marshaller;
 
@@ -242,7 +242,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     }
 
     /**
-     * @return MarshallerInterface
+     * @return MarshallerInterface<array>
      */
     public function getMarshaller(): MarshallerInterface
     {
@@ -360,7 +360,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
 
     /**
      * @param ReaderInterface $reader
-     * @return MarshallerInterface
+     * @return MarshallerInterface<array>
      */
     private function createMarshaller(ReaderInterface $reader): MarshallerInterface
     {

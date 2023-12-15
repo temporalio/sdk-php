@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Schedule\Info;
 
-use Temporal\Client\ScheduleClient;
 use Temporal\DataConverter\EncodedCollection;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 
 /**
- * ScheduleListEntry is returned by {@see ScheduleClient::listSchedules()}.
+ * ScheduleListEntry is returned by {@see \Temporal\Client\ScheduleClientInterface::listSchedules()}.
  *
  * @see \Temporal\Api\Schedule\V1\ScheduleListEntry
  */

@@ -11,20 +11,27 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Marshaller;
 
+use Temporal\Exception\MarshallerException;
+
+/**
+ * @template-covariant TTarget of mixed
+ */
 interface MarshallerInterface
 {
     /**
-     * @template T of object
-     * @param T $from
-     * @return array
+     * @return TTarget
+     *
+     * @throws MarshallerException
      */
-    public function marshal(object $from): array;
+    public function marshal(object $from): mixed;
 
     /**
      * @template T of object
      * @param array $from
      * @param T $to
      * @return T
+     *
+     * @throws MarshallerException
      */
     public function unmarshal(array $from, object $to): object;
 }

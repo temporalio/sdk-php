@@ -21,6 +21,7 @@ use Temporal\Internal\Marshaller\Type\Type;
  * thrown from the child workflow method.
  *
  * @psalm-type ChildWorkflowCancellationEnum = ChildWorkflowCancellationType::*
+ * @extends Type<bool>
  */
 final class ChildWorkflowCancellationType extends Type
 {

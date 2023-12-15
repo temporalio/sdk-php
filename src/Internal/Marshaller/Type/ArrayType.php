@@ -14,6 +14,9 @@ namespace Temporal\Internal\Marshaller\Type;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Marshaller\MarshallingRule;
 
+/**
+ * @extends Type<array>
+ */
 class ArrayType extends Type implements DetectableTypeInterface, RuleFactoryInterface
 {
     /**
