@@ -1221,9 +1221,6 @@
     </UndefinedInterfaceMethod>
   </file>
   <file src="src/Internal/Transport/Router/InvokeSignal.php">
-    <PossiblyNullPropertyAssignment>
-      <code><![CDATA[$instance->getContext()]]></code>
-    </PossiblyNullPropertyAssignment>
     <PossiblyUndefinedStringArrayOffset>
       <code><![CDATA[$request->getOptions()['name']]]></code>
     </PossiblyUndefinedStringArrayOffset>

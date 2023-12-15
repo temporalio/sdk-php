@@ -91,8 +91,8 @@ abstract class BaseClient implements ServiceClientInterface
         $options = [
             'credentials' => \Grpc\ChannelCredentials::createSsl(
                 \is_file($crt) ? \file_get_contents($crt) : null,
-                \is_file($clientKey) ? \file_get_contents($clientKey) : null,
-                \is_file($clientPem) ? \file_get_contents($clientPem) : null
+                \is_file((string)$clientKey) ? \file_get_contents($clientKey) : null,
+                \is_file((string)$clientPem) ? \file_get_contents($clientPem) : null
             )
         ];
 
@@ -111,7 +111,7 @@ abstract class BaseClient implements ServiceClientInterface
      *
      * @return static
      */
-    final public function withInterceptorsPipeline(?Pipeline $pipeline): static
+    final public function withInterceptorPipeline(?Pipeline $pipeline): static
     {
         $clone = clone $this;
         /** @see GrpcClientInterceptor::interceptCall() */
@@ -150,7 +150,7 @@ abstract class BaseClient implements ServiceClientInterface
 
     /**
      * Call a gRPC method.
-     * Used in {@see withInterceptorsPipeline()}
+     * Used in {@see withInterceptorPipeline()}
      *
      * @param non-empty-string $method
      * @param object $arg

@@ -28,7 +28,7 @@ class GrpcClientInterceptor extends TestCase
         $temporalAddress = getenv('TEMPORAL_ADDRESS') ?: '127.0.0.1:7233';
         $this->workflowClient = new WorkflowClient(
             ServiceClient::create($temporalAddress)
-                ->withInterceptorsPipeline(
+                ->withInterceptorPipeline(
                     Pipeline::prepare([
                         new class ($this->called) implements \Temporal\Interceptor\GrpcClientInterceptor {
                             private array $called;

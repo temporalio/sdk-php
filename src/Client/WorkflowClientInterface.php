@@ -155,7 +155,7 @@ interface WorkflowClientInterface
      * Query example:
      *
      * <code>
-     * WorkflowType='MyWorkflow' and StartTime  between '2022-08-22T15:04:05+00:00' and  '2023-08-22T15:04:05+00:00'
+     * WorkflowType='MyWorkflow' and StartTime between '2022-08-22T15:04:05+00:00' and '2023-08-22T15:04:05+00:00'
      * </code>
      *
      * @link https://docs.temporal.io/visibility
