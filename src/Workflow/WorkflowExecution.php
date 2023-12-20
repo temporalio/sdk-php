@@ -14,6 +14,9 @@ namespace Temporal\Workflow;
 use Temporal\Common\Uuid;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 
+/**
+ * @see \Temporal\Api\Common\V1\WorkflowExecution
+ */
 class WorkflowExecution
 {
     /**
@@ -22,7 +25,7 @@ class WorkflowExecution
      * @var string
      */
     #[Marshal(name: 'ID')]
-    #[Marshal(name: 'id')]
+    #[Marshal(name: 'workflow_id')]
     private string $id;
 
     /**
