@@ -6,10 +6,11 @@ namespace Temporal\Tests\Functional;
 
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
+use Temporal\Tests\Workflow\NamedArguments\ActivityNamedArgumentsWorkflow;
+use Temporal\Tests\TestCase;
+use Temporal\Tests\Workflow\NamedArguments\ChildSignalNamedArgumentsWorkflow;
 use Temporal\Tests\Workflow\NamedArguments\SignalNamedArgumentsWorkflow;
 use Temporal\Tests\Workflow\NamedArguments\SimpleNamedArgumentsWorkflow;
-use Temporal\Tests\TestCase;
-use Temporal\Tests\Workflow\ActivityNamedArgumentsWorkflow;
 use Temporal\Workflow;
 
 final class NamedArgumentsTestCase extends TestCase
@@ -263,8 +264,46 @@ final class NamedArgumentsTestCase extends TestCase
         $this->assertSame($expectedResult, $result);
     }
 
-    public function testFacade()
+    public function testChildWorkflowSignalNamedArguments()
     {
-        Workflow::executeActivity();
+        $result = $this->runWorkflow(
+            ChildSignalNamedArgumentsWorkflow::class,
+            int: 1,
+            string: 'test',
+            bool: true,
+            nullableString: 'test',
+            array: ['test'],
+        );
+
+        $this->assertSame([
+            'oneParamRes' => [
+                'int' => 1,
+                'string' => '',
+                'bool' => false,
+                'nullableString' => null,
+                'array' => [],
+            ],
+            'paramsInDifferentOrderRes' => [
+                'int' => 1,
+                'string' => 'test',
+                'bool' => true,
+                'nullableString' => 'test',
+                'array' => ['test'],
+            ],
+            'missingParamsRes' => [
+                'int' => 1,
+                'string' => '',
+                'bool' => false,
+                'nullableString' => 'test',
+                'array' => [],
+            ],
+            'missingParamAndDifferentOrderRes' => [
+                'int' => 1,
+                'string' => '',
+                'bool' => false,
+                'nullableString' => 'test',
+                'array' => [],
+            ],
+        ], $result);
     }
 }

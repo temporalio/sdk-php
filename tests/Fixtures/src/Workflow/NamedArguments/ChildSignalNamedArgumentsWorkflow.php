@@ -6,7 +6,7 @@ use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 
 #[Workflow\WorkflowInterface]
-class FacadeNamedArgumentsWorkflow
+class ChildSignalNamedArgumentsWorkflow
 {
     #[WorkflowMethod]
     public function handler(
@@ -16,24 +16,61 @@ class FacadeNamedArgumentsWorkflow
         ?string $nullableString = null,
         array $array = [],
     ): \Generator|array {
+        // one param
+        $childStub = Workflow::newChildWorkflowStub(SignalNamedArgumentsWorkflow::class);
 
-        Workflow::executeChildWorkflow(
-            SimpleNamedArgumentsWorkflow::class,
-            [
-                'int' => $int,
-                'string' => $string,
-                'bool' => $bool,
-                'nullableString' => $nullableString,
-                'array' => $array,
-            ],
-            Workflow\ChildWorkflowOptions::new(),
+        $run = $childStub->handler();
+
+        $childStub->setValues(
+            int: $int,
         );
+
+        $oneParamRes = yield $run;
+
+        // params in different order
+        $childStub = Workflow::newChildWorkflowStub(SignalNamedArgumentsWorkflow::class);
+
+        $run = $childStub->handler();
+
+        $childStub->setValues(
+            string: $string,
+            int: $int,
+            bool: $bool,
+            nullableString: $nullableString,
+            array: $array,
+        );
+
+        $paramsInDifferentOrderRes = yield $run;
+
+        // missing params
+        $childStub = Workflow::newChildWorkflowStub(SignalNamedArgumentsWorkflow::class);
+
+        $run = $childStub->handler();
+
+        $childStub->setValues(
+            int: $int,
+            nullableString: $nullableString,
+        );
+
+        $missingParamsRes = yield $run;
+
+        // missing param and different order
+        $childStub = Workflow::newChildWorkflowStub(SignalNamedArgumentsWorkflow::class);
+
+        $run = $childStub->handler();
+
+        $childStub->setValues(
+            nullableString: $nullableString,
+            int: $int,
+        );
+
+        $missingParamAndDifferentOrderRes = yield $run;
+
         return [
-            'int' => $int,
-            'string' => $string,
-            'bool' => $bool,
-            'nullableString' => $nullableString,
-            'array' => $array,
+            'oneParamRes' => $oneParamRes,
+            'paramsInDifferentOrderRes' => $paramsInDifferentOrderRes,
+            'missingParamsRes' => $missingParamsRes,
+            'missingParamAndDifferentOrderRes' => $missingParamAndDifferentOrderRes,
         ];
     }
 }
