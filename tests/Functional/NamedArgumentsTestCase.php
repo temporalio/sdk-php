@@ -141,86 +141,6 @@ final class NamedArgumentsTestCase extends TestCase
         ], $result);
     }
 
-    private function runSignalWorkflowAndSetValues(...$signalArgs): array
-    {
-        $workflow = $this->workflowClient->newWorkflowStub(
-            SignalNamedArgumentsWorkflow::class
-        );
-
-        $run = $this->workflowClient->start($workflow);
-
-        $workflow->setValues(...$signalArgs);
-
-        return $run->getResult('array');
-    }
-
-    public function testSignalWorksWithOneParam(): void
-    {
-        $result = $this->runSignalWorkflowAndSetValues(
-            int: 1,
-        );
-
-        $this->assertSame([
-            'int' => 1,
-            'string' => '',
-            'bool' => false,
-            'nullableString' => null,
-            'array' => [],
-        ], $result);
-    }
-
-    public function testSignalWorksWithParamsInDifferentOrder(): void
-    {
-        $result = $this->runSignalWorkflowAndSetValues(
-            string: 'test',
-            int: 1,
-            bool: true,
-            nullableString: 'test',
-            array: ['test'],
-        );
-
-        $this->assertSame([
-            'int' => 1,
-            'string' => 'test',
-            'bool' => true,
-            'nullableString' => 'test',
-            'array' => ['test'],
-        ], $result);
-    }
-
-    public function testSignalWorksWithMissingParams(): void
-    {
-        $result = $this->runSignalWorkflowAndSetValues(
-            int: 1,
-            nullableString: 'test',
-        );
-
-        $this->assertSame([
-            'int' => 1,
-            'string' => '',
-            'bool' => false,
-            'nullableString' => 'test',
-            'array' => [],
-        ], $result);
-    }
-
-    public function testSignalWorksWithMissingParamAndDifferentOrder(): void
-    {
-        $result = $this->runSignalWorkflowAndSetValues(
-            nullableString: 'test',
-            int: 1,
-            array: ['test'],
-        );
-
-        $this->assertSame([
-            'int' => 1,
-            'string' => '',
-            'bool' => false,
-            'nullableString' => 'test',
-            'array' => ['test'],
-        ], $result);
-    }
-
     public static function signalDataProvider(): iterable
     {
         yield 'one param' => [
@@ -242,6 +162,24 @@ final class NamedArgumentsTestCase extends TestCase
             ['nullableString' => 'test', 'int' => 1, 'array' => ['test']],
             ['int' => 1, 'string' => '', 'bool' => false, 'nullableString' => 'test', 'array' => ['test']],
         ];
+    }
+
+    /**
+     * @dataProvider signalDataProvider
+     */
+    public function testSignalWorkflow(array $signalArgs, array $expectedResult): void
+    {
+        $workflow = $this->workflowClient->newWorkflowStub(
+            SignalNamedArgumentsWorkflow::class
+        );
+
+        $run = $this->workflowClient->start($workflow);
+
+        $workflow->setValues(...$signalArgs);
+
+        $result = $run->getResult('array');
+
+        $this->assertSame($expectedResult, $result);
     }
 
     /**
