@@ -20,9 +20,11 @@ class FacadeNamedArgumentsWorkflow
         Workflow::executeChildWorkflow(
             SimpleNamedArgumentsWorkflow::class,
             [
-                'input' => $string,
-                'optionalBool' => $bool,
-                'optionalNullableString' => $nullableString,
+                'int' => $int,
+                'string' => $string,
+                'bool' => $bool,
+                'nullableString' => $nullableString,
+                'array' => $array,
             ],
             Workflow\ChildWorkflowOptions::new(),
         );
