@@ -11,7 +11,6 @@ use Temporal\Tests\TestCase;
 use Temporal\Tests\Workflow\NamedArguments\ChildSignalNamedArgumentsWorkflow;
 use Temporal\Tests\Workflow\NamedArguments\SignalNamedArgumentsWorkflow;
 use Temporal\Tests\Workflow\NamedArguments\SimpleNamedArgumentsWorkflow;
-use Temporal\Workflow;
 
 final class NamedArgumentsTestCase extends TestCase
 {
@@ -24,17 +23,6 @@ final class NamedArgumentsTestCase extends TestCase
         );
 
         parent::setUp();
-    }
-    private function runWorkflow(string $workflow, ...$args): array
-    {
-        $workflow = $this->workflowClient->newWorkflowStub(
-            $workflow
-        );
-
-        return $this->workflowClient->start(
-            $workflow,
-            ...$args,
-        )->getResult('array');
     }
 
     public function testActivityNamedParams(): void
