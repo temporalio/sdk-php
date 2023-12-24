@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Workflow;
+namespace Temporal\Tests\Workflow\NamedArguments;
 
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;

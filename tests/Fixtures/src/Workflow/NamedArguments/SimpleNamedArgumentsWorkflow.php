@@ -9,27 +9,28 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Workflow;
+namespace Temporal\Tests\Workflow\NamedArguments;
 
-use Temporal\Activity\ActivityOptions;
-use Temporal\Common\RetryOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
-use Temporal\Tests\Activity\SimpleActivity;
 
 #[Workflow\WorkflowInterface]
 class SimpleNamedArgumentsWorkflow
 {
     #[WorkflowMethod]
     public function handler(
-        string $input,
-        bool $optionalBool = false,
-        ?string $optionalNullableString = null,
+        int $int,
+        string $string = '',
+        bool $bool = false,
+        ?string $nullableString = null,
+        array $array = [],
     ) {
         return [
-            'input' => $input,
-            'optionalBool' => $optionalBool,
-            'optionalNullableString' => $optionalNullableString,
+            'int' => $int,
+            'string' => $string,
+            'bool' => $bool,
+            'nullableString' => $nullableString,
+            'array' => $array,
         ];
     }
 }

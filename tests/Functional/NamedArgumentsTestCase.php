@@ -6,10 +6,11 @@ namespace Temporal\Tests\Functional;
 
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
+use Temporal\Tests\Workflow\NamedArguments\SignalNamedArgumentsWorkflow;
+use Temporal\Tests\Workflow\NamedArguments\SimpleNamedArgumentsWorkflow;
 use Temporal\Tests\TestCase;
 use Temporal\Tests\Workflow\ActivityNamedArgumentsWorkflow;
-use Temporal\Tests\Workflow\SignalNamedArgumentsWorkflow;
-use Temporal\Tests\Workflow\SimpleNamedArgumentsWorkflow;
+use Temporal\Workflow;
 
 final class NamedArgumentsTestCase extends TestCase
 {
@@ -39,13 +40,15 @@ final class NamedArgumentsTestCase extends TestCase
     {
         $result = $this->runWorkflow(
             SimpleNamedArgumentsWorkflow::class,
-            input: 'hello',
+            int: 1
         );
 
         $this->assertSame([
-            'input' => 'hello',
-            'optionalBool' => false,
-            'optionalNullableString' => null,
+            'int' => 1,
+            'string' => '',
+            'bool' => false,
+            'nullableString' => null,
+            'array' => [],
         ], $result);
     }
 
@@ -53,15 +56,19 @@ final class NamedArgumentsTestCase extends TestCase
     {
         $result = $this->runWorkflow(
             SimpleNamedArgumentsWorkflow::class,
-            optionalNullableString: 'test',
-            input: 'hello',
-            optionalBool: true
+            array: ['test'],
+            int: 1,
+            bool: true,
+            nullableString: 'test',
+            string: 'hello'
         );
 
         $this->assertSame([
-            'input' => 'hello',
-            'optionalBool' => true,
-            'optionalNullableString' => 'test',
+            'int' => 1,
+            'string' => 'hello',
+            'bool' => true,
+            'nullableString' => 'test',
+            'array' => ['test'],
         ], $result);
     }
 
@@ -69,14 +76,16 @@ final class NamedArgumentsTestCase extends TestCase
     {
         $result = $this->runWorkflow(
             SimpleNamedArgumentsWorkflow::class,
-            input: 'hello',
-            optionalNullableString: 'test',
+            int: 1,
+            nullableString: 'test'
         );
 
         $this->assertSame([
-            'input' => 'hello',
-            'optionalBool' => false,
-            'optionalNullableString' => 'test',
+            'int' => 1,
+            'string' => '',
+            'bool' => false,
+            'nullableString' => 'test',
+            'array' => [],
         ], $result);
     }
 
@@ -84,14 +93,17 @@ final class NamedArgumentsTestCase extends TestCase
     {
         $result = $this->runWorkflow(
             SimpleNamedArgumentsWorkflow::class,
-            optionalNullableString: 'test',
-            input: 'hello',
+            nullableString: 'test',
+            int: 1,
+            array: ['hello']
         );
 
         $this->assertSame([
-            'input' => 'hello',
-            'optionalBool' => false,
-            'optionalNullableString' => 'test',
+            'int' => 1,
+            'string' => '',
+            'bool' => false,
+            'nullableString' => 'test',
+            'array' => ['hello'],
         ], $result);
     }
 
@@ -208,26 +220,6 @@ final class NamedArgumentsTestCase extends TestCase
         ], $result);
     }
 
-    /**
-     * @dataProvider signalDataProvider
-     */
-    public function testStartWithSignal(array $signalArgs, array $expectedResult): void
-    {
-        $workflow = $this->workflowClient->newWorkflowStub(
-            SignalNamedArgumentsWorkflow::class
-        );
-
-        $run = $this->workflowClient->startWithSignal(
-            $workflow,
-            'setValues',
-            $signalArgs,
-        );
-
-        $result = $run->getResult('array');
-
-        $this->assertSame($expectedResult, $result);
-    }
-
     public static function signalDataProvider(): iterable
     {
         yield 'one param' => [
@@ -249,5 +241,30 @@ final class NamedArgumentsTestCase extends TestCase
             ['nullableString' => 'test', 'int' => 1, 'array' => ['test']],
             ['int' => 1, 'string' => '', 'bool' => false, 'nullableString' => 'test', 'array' => ['test']],
         ];
+    }
+
+    /**
+     * @dataProvider signalDataProvider
+     */
+    public function testStartWithSignal(array $signalArgs, array $expectedResult): void
+    {
+        $workflow = $this->workflowClient->newWorkflowStub(
+            SignalNamedArgumentsWorkflow::class
+        );
+
+        $run = $this->workflowClient->startWithSignal(
+            $workflow,
+            'setValues',
+            $signalArgs,
+        );
+
+        $result = $run->getResult('array');
+
+        $this->assertSame($expectedResult, $result);
+    }
+
+    public function testFacade()
+    {
+        Workflow::executeActivity();
     }
 }
