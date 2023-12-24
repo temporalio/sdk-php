@@ -6,6 +6,7 @@ namespace Temporal\Tests\Functional;
 
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
+use Temporal\Tests\Workflow\NamedArguments\ContinueAsNewNamedArgumentsWorkflow;
 use Temporal\Tests\Workflow\NamedArguments\ExecuteChildNamedArgumentsWorkflow;
 use Temporal\Tests\Workflow\NamedArguments\ActivityNamedArgumentsWorkflow;
 use Temporal\Tests\TestCase;
@@ -185,6 +186,30 @@ final class NamedArgumentsTestCase extends TestCase
                 'nullableString' => 'test',
                 'array' => [],
             ],
+        ], $result);
+    }
+
+    public function testContinueAsNewNamedArguments()
+    {
+        $workflow = $this->workflowClient->newWorkflowStub(
+            ContinueAsNewNamedArgumentsWorkflow::class,
+        );
+
+        $result = $this->workflowClient->start(
+            $workflow,
+            int: 1,
+            string: 'test',
+            bool: true,
+            nullableString: 'test',
+            array: ['test'],
+        )->getResult('array');
+
+        $this->assertSame([
+            'int' => 6,
+            'string' => 'test',
+            'bool' => true,
+            'nullableString' => 'test',
+            'array' => ['test'],
         ], $result);
     }
 
