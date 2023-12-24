@@ -6,6 +6,7 @@ namespace Temporal\Tests\Functional;
 
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
+use Temporal\Tests\Workflow\NamedArguments\ExecuteChildNamedArgumentsWorkflow;
 use Temporal\Tests\Workflow\NamedArguments\ActivityNamedArgumentsWorkflow;
 use Temporal\Tests\TestCase;
 use Temporal\Tests\Workflow\NamedArguments\ChildSignalNamedArgumentsWorkflow;
@@ -144,6 +145,57 @@ final class NamedArgumentsTestCase extends TestCase
     {
         $workflow = $this->workflowClient->newWorkflowStub(
             ChildSignalNamedArgumentsWorkflow::class,
+        );
+
+        $result = $this->workflowClient->start(
+            $workflow,
+            int: 1,
+            string: 'test',
+            bool: true,
+            nullableString: 'test',
+            array: ['test'],
+        )->getResult('array');
+
+        $this->assertSame([
+            'oneParamRes' => [
+                'int' => 1,
+                'string' => '',
+                'bool' => false,
+                'nullableString' => null,
+                'array' => [],
+            ],
+            'paramsInDifferentOrderRes' => [
+                'int' => 1,
+                'string' => 'test',
+                'bool' => true,
+                'nullableString' => 'test',
+                'array' => ['test'],
+            ],
+            'missingParamsRes' => [
+                'int' => 1,
+                'string' => '',
+                'bool' => false,
+                'nullableString' => 'test',
+                'array' => [],
+            ],
+            'missingParamAndDifferentOrderRes' => [
+                'int' => 1,
+                'string' => '',
+                'bool' => false,
+                'nullableString' => 'test',
+                'array' => [],
+            ],
+        ], $result);
+    }
+
+    public function testExecuteChildNamedArguments()
+    {
+        $this->markTestSkipped(
+            'Workflow::executeChildWorkflow executes child as untyped, so named arguments are not supported'
+        );
+
+        $workflow = $this->workflowClient->newWorkflowStub(
+            ExecuteChildNamedArgumentsWorkflow::class,
         );
 
         $result = $this->workflowClient->start(
