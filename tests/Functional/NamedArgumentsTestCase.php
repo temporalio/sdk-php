@@ -37,85 +37,18 @@ final class NamedArgumentsTestCase extends TestCase
         )->getResult('array');
     }
 
-    public function testWorkflowStartWithOneParam(): void
-    {
-        $result = $this->runWorkflow(
-            SimpleNamedArgumentsWorkflow::class,
-            int: 1
-        );
-
-        $this->assertSame([
-            'int' => 1,
-            'string' => '',
-            'bool' => false,
-            'nullableString' => null,
-            'array' => [],
-        ], $result);
-    }
-
-    public function testWorkflowStartWithParamsInDifferentOrder(): void
-    {
-        $result = $this->runWorkflow(
-            SimpleNamedArgumentsWorkflow::class,
-            array: ['test'],
-            int: 1,
-            bool: true,
-            nullableString: 'test',
-            string: 'hello'
-        );
-
-        $this->assertSame([
-            'int' => 1,
-            'string' => 'hello',
-            'bool' => true,
-            'nullableString' => 'test',
-            'array' => ['test'],
-        ], $result);
-    }
-
-    public function testWorkflowStartWithMissingParams(): void
-    {
-        $result = $this->runWorkflow(
-            SimpleNamedArgumentsWorkflow::class,
-            int: 1,
-            nullableString: 'test'
-        );
-
-        $this->assertSame([
-            'int' => 1,
-            'string' => '',
-            'bool' => false,
-            'nullableString' => 'test',
-            'array' => [],
-        ], $result);
-    }
-
-    public function testWorkflowStartWithMissingParamAndDifferentOrder(): void
-    {
-        $result = $this->runWorkflow(
-            SimpleNamedArgumentsWorkflow::class,
-            nullableString: 'test',
-            int: 1,
-            array: ['hello']
-        );
-
-        $this->assertSame([
-            'int' => 1,
-            'string' => '',
-            'bool' => false,
-            'nullableString' => 'test',
-            'array' => ['hello'],
-        ], $result);
-    }
-
     public function testActivityNamedParams(): void
     {
-        $result = $this->runWorkflow(
-            ActivityNamedArgumentsWorkflow::class,
+        $workflow = $this->workflowClient->newWorkflowStub(
+            ActivityNamedArgumentsWorkflow::class
+        );
+
+        $result = $this->workflowClient->start(
+            $workflow,
             string: 'hello',
             bool: true,
             secondString: 'test',
-        );
+        )->getResult('array');
 
         $this->assertSame([
             'oneParamRes' => [
@@ -141,7 +74,7 @@ final class NamedArgumentsTestCase extends TestCase
         ], $result);
     }
 
-    public static function signalDataProvider(): iterable
+    public static function argumentsDataProvider(): iterable
     {
         yield 'one param' => [
             ['int' => 1],
@@ -165,7 +98,24 @@ final class NamedArgumentsTestCase extends TestCase
     }
 
     /**
-     * @dataProvider signalDataProvider
+     * @dataProvider argumentsDataProvider
+     */
+    public function testRunWorkflow(array $args, array $expectedResult): void
+    {
+        $workflow = $this->workflowClient->newWorkflowStub(
+            SimpleNamedArgumentsWorkflow::class
+        );
+
+        $result = $this->workflowClient->start(
+            $workflow,
+            ...$args,
+        )->getResult('array');
+
+        $this->assertSame($expectedResult, $result);
+    }
+
+    /**
+     * @dataProvider argumentsDataProvider
      */
     public function testSignalWorkflow(array $signalArgs, array $expectedResult): void
     {
@@ -183,7 +133,7 @@ final class NamedArgumentsTestCase extends TestCase
     }
 
     /**
-     * @dataProvider signalDataProvider
+     * @dataProvider argumentsDataProvider
      */
     public function testStartWithSignal(array $signalArgs, array $expectedResult): void
     {
@@ -204,14 +154,18 @@ final class NamedArgumentsTestCase extends TestCase
 
     public function testChildWorkflowSignalNamedArguments()
     {
-        $result = $this->runWorkflow(
+        $workflow = $this->workflowClient->newWorkflowStub(
             ChildSignalNamedArgumentsWorkflow::class,
+        );
+
+        $result = $this->workflowClient->start(
+            $workflow,
             int: 1,
             string: 'test',
             bool: true,
             nullableString: 'test',
             array: ['test'],
-        );
+        )->getResult('array');
 
         $this->assertSame([
             'oneParamRes' => [
