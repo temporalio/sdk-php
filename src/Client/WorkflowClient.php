@@ -177,9 +177,7 @@ class WorkflowClient implements WorkflowClientInterface
             $returnType = $workflow->__getReturnType();
             $handler = $workflow->getHandlerReflection();
 
-            if ($handler !== null) {
-                $startArgs = Reflection::orderArguments($handler, $startArgs);
-            }
+            $startArgs = Reflection::orderArguments($handler, $startArgs);
 
             $signalReflection = $workflow->findSignalReflection($signal);
 
@@ -188,7 +186,9 @@ class WorkflowClient implements WorkflowClientInterface
             }
         }
 
-        if ($workflowStub->getWorkflowType() === null) {
+        $workflowType = $workflowStub->getWorkflowType();
+
+        if ($workflowType === null) {
             throw new InvalidArgumentException(
                 \sprintf('Unable to start untyped workflow without given workflowType')
             );
@@ -199,7 +199,7 @@ class WorkflowClient implements WorkflowClientInterface
         }
 
         $execution = $this->starter->signalWithStart(
-            $workflowStub->getWorkflowType(),
+            $workflowType,
             $workflowStub->getOptions() ?? WorkflowOptions::new(),
             $signal,
             $signalArgs,
