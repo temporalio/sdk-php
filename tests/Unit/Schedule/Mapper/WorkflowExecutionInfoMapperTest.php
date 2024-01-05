@@ -41,7 +41,11 @@ final class WorkflowExecutionInfoMapperTest extends TestCase
                 Schedule\Action\StartWorkflowAction::new('PingSite')
                     ->withInput(['google.com'])
                     ->withTaskQueue('default')
-                    ->withRetryPolicy(RetryOptions::new()->withMaximumAttempts(3))
+                    ->withRetryPolicy(RetryOptions::new()
+                        ->withMaximumAttempts(3)
+                        ->withInitialInterval(\Carbon\CarbonInterval::seconds(10))
+                        ->withMaximumInterval(\Carbon\CarbonInterval::seconds(20))
+                    )
                     ->withHeader(['foo' => 'bar'])
                     ->withWorkflowExecutionTimeout('40m')
                     ->withWorkflowRunTimeout('30m')
@@ -96,6 +100,11 @@ final class WorkflowExecutionInfoMapperTest extends TestCase
         $this->assertInstanceOf(NewWorkflowExecutionInfo::class, $startWorkflow);
         $this->assertSame('PingSite', $startWorkflow->getWorkflowType()->getName());
         $this->assertSame('default', $startWorkflow->getTaskQueue()->getName());
+        // Retry Policy
+        $this->assertSame(3, $startWorkflow->getRetryPolicy()->getMaximumAttempts());
+        $this->assertSame(10, $startWorkflow->getRetryPolicy()->getInitialInterval()->getSeconds());
+        $this->assertSame(20, $startWorkflow->getRetryPolicy()->getMaximumInterval()->getSeconds());
+        // Header
         $this->assertSame(
             ['foo' => 'bar'],
             EncodedCollection::fromPayloadCollection(

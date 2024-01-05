@@ -728,15 +728,11 @@
     <RedundantCondition>
       <code><![CDATA[$action->header?->setDataConverter($this->converter)]]></code>
       <code><![CDATA[$action->input?->setDataConverter($this->converter)]]></code>
-      <code><![CDATA[$action->input?->setDataConverter($this->converter)]]></code>
-      <code><![CDATA[$action->input?->toPayloads()]]></code>
       <code><![CDATA[$action->memo?->setDataConverter($this->converter)]]></code>
       <code><![CDATA[$action->searchAttributes?->setDataConverter($this->converter)]]></code>
     </RedundantCondition>
     <TypeDoesNotContainNull>
       <code><![CDATA[$action->header]]></code>
-      <code><![CDATA[$action->input]]></code>
-      <code><![CDATA[$action->input]]></code>
       <code><![CDATA[$action->input]]></code>
       <code><![CDATA[$action->memo]]></code>
       <code><![CDATA[$action->searchAttributes]]></code>

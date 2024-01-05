@@ -50,6 +50,9 @@ final class ScheduleMapper
         return new \Temporal\Api\Schedule\V1\Schedule($array);
     }
 
+    /**
+     * @psalm-suppress TypeDoesNotContainNull,RedundantCondition
+     */
     private function prepareAction(ScheduleAction $action, array $array): \Temporal\Api\Schedule\V1\ScheduleAction
     {
         $result = new \Temporal\Api\Schedule\V1\ScheduleAction();
@@ -64,7 +67,7 @@ final class ScheduleMapper
                 $action->input?->setDataConverter($this->converter);
                 $values['input'] = $action->input?->toPayloads() ?? new Payloads();
                 $values['workflow_id_reuse_policy'] = $action->workflowIdReusePolicy->value;
-                $values['retry_policy'] = new RetryPolicy($values['retry_policy'] ?? []);
+                $values['retry_policy'] = $action->retryPolicy?->toWorkflowRetryPolicy();
 
                 $result->setStartWorkflow(
                     new \Temporal\Api\Workflow\V1\NewWorkflowExecutionInfo($values),
