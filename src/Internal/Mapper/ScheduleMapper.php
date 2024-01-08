@@ -70,7 +70,7 @@ final class ScheduleMapper
                 $values['retry_policy'] = $action->retryPolicy?->toWorkflowRetryPolicy();
 
                 $result->setStartWorkflow(
-                    new \Temporal\Api\Workflow\V1\NewWorkflowExecutionInfo($values),
+                    new \Temporal\Api\Workflow\V1\NewWorkflowExecutionInfo(self::cleanArray($values)),
                 );
                 break;
             default:
@@ -117,9 +117,14 @@ final class ScheduleMapper
                 );
             }
 
-            $calendar = new StructuredCalendarSpec($calendar);
+            $calendar = new StructuredCalendarSpec(self::cleanArray($calendar));
         }
 
         return $array;
+    }
+
+    private static function cleanArray(array $array): array
+    {
+        return \array_filter($array, static fn ($item): bool => $item !== null);
     }
 }
