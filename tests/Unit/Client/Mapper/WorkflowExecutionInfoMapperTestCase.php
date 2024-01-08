@@ -18,7 +18,7 @@ use Temporal\Internal\Mapper\WorkflowExecutionInfoMapper;
 use Temporal\Workflow\ResetPointInfo;
 use Temporal\Workflow\WorkflowExecutionStatus;
 
-final class WorkflowExecutionInfoMapperTest extends TestCase
+final class WorkflowExecutionInfoMapperTestCase extends TestCase
 {
     public function testFromPayload(): void
     {

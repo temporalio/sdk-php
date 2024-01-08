@@ -22,7 +22,7 @@ use Temporal\Internal\Marshaller\Marshaller;
 /**
  * @covers \Temporal\Internal\Mapper\ScheduleMapper
  */
-final class WorkflowExecutionInfoMapperTest extends TestCase
+final class WorkflowExecutionInfoMapperTestCase extends TestCase
 {
     private DataConverterInterface $dataConverter;
 

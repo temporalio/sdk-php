@@ -10,7 +10,7 @@ use Temporal\Client\Schedule\Spec\Range;
 /**
  * @covers \Temporal\Client\Schedule\Spec\Range
  */
-class RangeTest extends TestCase
+class RangeTestCase extends TestCase
 {
     public function testWithStart(): void
     {

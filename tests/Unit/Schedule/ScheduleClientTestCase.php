@@ -34,7 +34,7 @@ use Temporal\Internal\Marshaller\ProtoToArrayConverter;
 /**
  * @covers \Temporal\Client\ScheduleClient
  */
-class ScheduleClientTest extends TestCase
+class ScheduleClientTestCase extends TestCase
 {
     public function testCreateSchedule(): void
     {

@@ -10,7 +10,7 @@ use Temporal\Client\Schedule\Spec\IntervalSpec;
 /**
  * @covers \Temporal\Client\Schedule\Spec\IntervalSpec
  */
-class IntervalSpecTest extends TestCase
+class IntervalSpecTestCase extends TestCase
 {
     public function testWithIntervalInt(): void
     {

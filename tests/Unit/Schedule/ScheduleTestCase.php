@@ -14,7 +14,7 @@ use Temporal\Client\Schedule\Spec\ScheduleState;
 /**
  * @covers \Temporal\Client\Schedule\Schedule
  */
-class ScheduleTest extends TestCase
+class ScheduleTestCase extends TestCase
 {
     public function testWithAction(): void
     {

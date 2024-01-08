@@ -11,7 +11,7 @@ use Temporal\Client\Schedule\Spec\StructuredCalendarSpec;
 /**
  * @covers \Temporal\Client\Schedule\Spec\StructuredCalendarSpec
  */
-class StructuredCalendarSpecTest extends TestCase
+class StructuredCalendarSpecTestCase extends TestCase
 {
     public function testWithSeconds(): void
     {
