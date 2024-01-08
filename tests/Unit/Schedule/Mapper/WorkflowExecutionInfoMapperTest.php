@@ -32,7 +32,7 @@ final class WorkflowExecutionInfoMapperTest extends TestCase
         parent::setUp();
     }
 
-    public function testFromPayload(): void
+    public function testToMessage(): void
     {
         $mapper = $this->createMapper();
 
@@ -172,7 +172,70 @@ final class WorkflowExecutionInfoMapperTest extends TestCase
         $this->assertEquals(10, $state->getRemainingActions());
         $this->assertTrue($state->getPaused());
         $this->assertEquals('test notes', $state->getNotes());
+    }
 
+    public function testToMessageEmptyValues(): void
+    {
+        $mapper = $this->createMapper();
+
+        $schedule = $mapper->toMessage(
+            Schedule\Schedule::new()->withAction(
+                Schedule\Action\StartWorkflowAction::new('PingSite')
+            ),
+        );
+
+        $this->assertInstanceOf(V1\Schedule::class, $schedule);
+        $spec = $schedule->getSpec();
+        $state = $schedule->getState();
+        $policies = $schedule->getPolicies();
+        $this->assertInstanceOf(V1\ScheduleSpec::class, $spec);
+        $this->assertInstanceOf(V1\ScheduleState::class, $state);
+        $this->assertInstanceOf(V1\SchedulePolicies::class, $policies);
+
+        // Test Action
+        $this->assertInstanceOf(V1\ScheduleAction::class, $schedule->getAction());
+        $this->assertSame('start_workflow', $schedule->getAction()->getAction());
+        $startWorkflow = $schedule->getAction()->getStartWorkflow();
+        $this->assertInstanceOf(NewWorkflowExecutionInfo::class, $startWorkflow);
+        $this->assertSame('PingSite', $startWorkflow->getWorkflowType()->getName());
+        $this->assertSame('default', $startWorkflow->getTaskQueue()->getName());
+        // Retry Policy
+        $this->assertSame(0, $startWorkflow->getRetryPolicy()->getMaximumAttempts());
+        $this->assertNull($startWorkflow->getRetryPolicy()->getInitialInterval());
+        $this->assertNull($startWorkflow->getRetryPolicy()->getMaximumInterval());
+        // Header
+        $this->assertSame(0, $startWorkflow->getHeader()->getFields()->count());
+        $this->assertSame(0, $startWorkflow->getMemo()->getFields()->count());
+        $this->assertSame(0, $startWorkflow->getSearchAttributes()->getIndexedFields()->count());
+        $this->assertEmpty($startWorkflow->getWorkflowId());
+        $this->assertSame(IdReusePolicy::Unspecified->value, $startWorkflow->getWorkflowIdReusePolicy());
+
+        // Test Spec
+        // Calendar
+        $this->assertEmpty($spec->getCalendar());
+        // Cron
+        $this->assertEmpty($spec->getCronString());
+        // Interval
+        $this->assertEmpty($spec->getInterval());
+        // StartTime and StopTime
+        $this->assertNull($spec->getStartTime());
+        $this->assertNull($spec->getEndTime());
+        // Jitter
+        $this->assertEquals(0, $spec->getJitter()->getSeconds());
+        // Timezone
+        $this->assertEmpty($spec->getTimezoneData());
+        $this->assertEmpty($spec->getTimezoneName());
+
+        // Test Policies
+        $this->assertEquals(60, $policies->getCatchupWindow()->getSeconds());
+        $this->assertFalse($policies->getPauseOnFailure());
+        $this->assertEquals(ScheduleOverlapPolicy::SCHEDULE_OVERLAP_POLICY_UNSPECIFIED, $policies->getOverlapPolicy());
+
+        // Test State
+        $this->assertFalse($state->getLimitedActions());
+        $this->assertSame(0, $state->getRemainingActions());
+        $this->assertFalse($state->getPaused());
+        $this->assertEmpty($state->getNotes());
     }
 
     private function createMapper(): ScheduleMapper
