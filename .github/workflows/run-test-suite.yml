@@ -59,11 +59,6 @@ jobs:
             extensions-suffix: ', protobuf'
           - os: windows-latest
             php: 8.3
-        include:
-          - os: ubuntu-latest
-            php: 8.3
-            dependencies: highest
-            timeout-minutes: 40
     steps:
       - name: Set Git To Use LF
         run: |
