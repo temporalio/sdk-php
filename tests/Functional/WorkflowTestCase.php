@@ -135,6 +135,9 @@ class WorkflowTestCase extends FunctionalTestCase
         $worker->run($this, Splitter::create('Test_Activity.log')->getQueue());
     }
 
+    /**
+     * @group skip-ext-protobuf
+     */
     public function testExecuteProtoWorkflow()
     {
         $worker = WorkerMock::createMock();

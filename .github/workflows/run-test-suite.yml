@@ -115,7 +115,11 @@ jobs:
 
       - name: Run tests with Temporal test server
         if: inputs.run-temporal-test-server == true
-        run: vendor/bin/phpunit --testsuite=${{ inputs.test-suite }} --testdox --verbose --exclude skip-on-test-server
+        run: ${{ format(
+            'vendor/bin/phpunit --testsuite={0} --testdox --verbose --exclude {1}',
+            inputs.test-suite,
+            contains(matrix.extensions-suffix, 'protobuf') && 'skip-on-test-server,skip-ext-protobuf' || 'skip-on-test-server'
+          ) }}
         env:
           RUN_TEMPORAL_TEST_SERVER: ${{ inputs.run-temporal-test-server }}
 
