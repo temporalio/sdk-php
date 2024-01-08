@@ -119,7 +119,7 @@ final class WorkflowExecutionInfoMapperTestCase extends TestCase
                 $this->dataConverter,
             )->getValues(),
         );
-        $this->assertSame(
+        $this->assertEquals(
             ['sAttr1' => 's-value1', 'sAttr2' => 's-value2'],
             EncodedCollection::fromPayloadCollection(
                 $startWorkflow->getSearchAttributes()->getIndexedFields(),

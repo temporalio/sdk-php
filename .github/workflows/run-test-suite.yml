@@ -40,7 +40,7 @@ on:
 
 jobs:
   test:
-    name: (PHP${{ matrix.php }}${{ matrix.extensions-suffix }} ${{ matrix.os }} ${{ matrix.dependencies }} deps
+    name: PHP${{ matrix.php }}${{ matrix.extensions-suffix }}, ${{ matrix.os }}, ${{ matrix.dependencies }} deps
     runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ matrix.timeout-minutes }}
     env: {GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'}

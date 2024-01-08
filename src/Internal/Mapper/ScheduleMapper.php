@@ -47,7 +47,7 @@ final class ScheduleMapper
         $array['state'] = new ScheduleState($array['state'] ?? []);
         isset($array['action']) and $array['action'] = $this->prepareAction($dto->action, $array['action']);
 
-        return new \Temporal\Api\Schedule\V1\Schedule($array);
+        return new \Temporal\Api\Schedule\V1\Schedule(self::cleanArray($array));
     }
 
     /**
@@ -103,7 +103,7 @@ final class ScheduleMapper
             $result['exclude_structured_calendar'] ?? [],
         );
 
-        return new ScheduleSpec($result);
+        return new ScheduleSpec(self::cleanArray($result));
     }
 
     private function prepareStructuredCalendar(array $array): array
