@@ -15,7 +15,7 @@ use Temporal\Workflow\WorkflowType;
 /**
  * @covers \Temporal\Client\Schedule\Action\StartWorkflowAction
  */
-class StartWorkflowActionTest extends TestCase
+class StartWorkflowActionTestCase extends TestCase
 {
     public function testWithWorkflowTypeString(): void
     {

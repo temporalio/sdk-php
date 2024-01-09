@@ -11,7 +11,7 @@ use Temporal\Client\Schedule\Policy\ScheduleOverlapPolicy;
 /**
  * @covers \Temporal\Client\Schedule\BackfillPeriod
  */
-class BackfillPeriodTest extends TestCase
+class BackfillPeriodTestCase extends TestCase
 {
     public function testCreateFromDatetimeImmutable(): void
     {

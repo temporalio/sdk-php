@@ -5,7 +5,7 @@ namespace Temporal\Tests\Unit\Common;
 use PHPUnit\Framework\TestCase;
 use Temporal\Common\SdkVersion;
 
-class SdkVersionTest extends TestCase
+class SdkVersionTestCase extends TestCase
 {
     /**
      * @dataProvider versionProvider

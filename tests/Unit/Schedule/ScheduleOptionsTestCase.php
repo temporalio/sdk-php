@@ -13,7 +13,7 @@ use Temporal\DataConverter\EncodedCollection;
 /**
  * @covers \Temporal\Client\Schedule\ScheduleOptions
  */
-class ScheduleOptionsTest extends TestCase
+class ScheduleOptionsTestCase extends TestCase
 {
     public function testWithNamespace(): void
     {

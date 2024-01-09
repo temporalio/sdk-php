@@ -14,7 +14,7 @@ use Temporal\Client\Schedule\Spec\StructuredCalendarSpec;
 /**
  * @covers \Temporal\Client\Schedule\Spec\ScheduleSpec
  */
-class ScheduleSpecTest extends TestCase
+class ScheduleSpecTestCase extends TestCase
 {
     public function testWithTimezoneName(): void
     {

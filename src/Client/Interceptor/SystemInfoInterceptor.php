@@ -48,7 +48,7 @@ final class SystemInfoInterceptor implements GrpcClientInterceptor
             if ($capabilities !== null && $this->serviceClient->getServerCapabilities() === null) {
                 $this->serviceClient->setServerCapabilities(new ServerCapabilities(
                     signalAndQueryHeader: $capabilities->getSignalAndQueryHeader(),
-                    internalErrorDifferentiation: $capabilities->getInternalErrorDifferentiation()
+                    internalErrorDifferentiation: $capabilities->getInternalErrorDifferentiation(),
                 ));
             }
         } catch (ServiceClientException $e) {

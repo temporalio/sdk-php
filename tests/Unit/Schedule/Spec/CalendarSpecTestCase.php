@@ -10,7 +10,7 @@ use Temporal\Client\Schedule\Spec\CalendarSpec;
 /**
  * @covers \Temporal\Client\Schedule\Spec\CalendarSpec
  */
-class CalendarSpecTest extends TestCase
+class CalendarSpecTestCase extends TestCase
 {
     public function testWithSecondString(): void
     {

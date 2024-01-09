@@ -10,7 +10,7 @@ use Temporal\Client\Schedule\Spec\ScheduleState;
 /**
  * @covers \Temporal\Client\Schedule\Spec\ScheduleState
  */
-class ScheduleStateTest extends TestCase
+class ScheduleStateTestCase extends TestCase
 {
     public function testWithNotes(): void
     {
