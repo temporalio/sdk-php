@@ -585,8 +585,8 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
         foreach ($this->awaits as $awaitsGroupId => $awaitsGroup) {
             foreach ($awaitsGroup as $i => [$condition, $deferred]) {
                 if ($condition()) {
-                    $deferred->resolve();
                     unset($this->awaits[$awaitsGroupId][$i]);
+                    $deferred->resolve();
                     $this->resolveConditionGroup($awaitsGroupId);
                 }
             }
@@ -698,5 +698,11 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
     protected function recordTrace(): void
     {
         $this->trace = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
+    }
+
+    public function destroy(): void
+    {
+        $this->awaits = [];
+        unset($this->workflowInstance);
     }
 }

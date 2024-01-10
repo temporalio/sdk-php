@@ -245,8 +245,8 @@ class Scope implements CancellationScopeInterface
 
         foreach ($this->onCancel as $i => $handler) {
             $this->makeCurrent();
-            $handler($reason);
             unset($this->onCancel[$i]);
+            $handler($reason);
         }
     }
 
@@ -595,5 +595,12 @@ class Scope implements CancellationScopeInterface
         }
 
         return $listener;
+    }
+
+    public function destroy(): void
+    {
+        $this->scopeContext->destroy();
+        $this->context->destroy();
+        unset($this->coroutine);
     }
 }

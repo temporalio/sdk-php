@@ -145,4 +145,10 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
             new UpsertSearchAttributes($searchAttributes)
         );
     }
+
+    public function destroy(): void
+    {
+        parent::destroy();
+        unset($this->scope, $this->parent, $this->onRequest);
+    }
 }

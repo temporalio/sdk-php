@@ -14,7 +14,9 @@ namespace Temporal\Internal\Transport\Router;
 use React\Promise\Deferred;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\DestructMemorizedInstanceException;
+use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Internal\Workflow\Process\Process;
+use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 class DestroyWorkflow extends WorkflowProcessAwareRoute
@@ -24,6 +26,13 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
      */
     private const ERROR_PROCESS_NOT_DEFINED = 'Unable to kill workflow because workflow process #%s was not found';
 
+    public function __construct(
+        RepositoryInterface $running,
+        protected LoopInterface $loop
+    ) {
+        parent::__construct($running);
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -32,8 +41,6 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
         $this->kill($request->getID());
 
         $resolver->resolve(EncodedValues::fromValues([null]));
-
-        \gc_collect_cycles();
     }
 
     /**
@@ -43,13 +50,13 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
     public function kill(string $runId): array
     {
         /** @var Process $process */
-        $process = $this->running->find($runId);
-        if ($process === null) {
-            throw new \InvalidArgumentException(\sprintf(self::ERROR_PROCESS_NOT_DEFINED, $runId));
-        }
+        $process = $this->running->pull($runId);
 
-        $this->running->pull($runId);
         $process->cancel(new DestructMemorizedInstanceException());
+        $this->loop->once(
+            'finally',
+            $process->destroy(...),
+        );
 
         return [];
     }
