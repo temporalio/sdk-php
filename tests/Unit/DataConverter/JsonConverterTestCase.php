@@ -45,16 +45,12 @@ class JsonConverterTestCase extends UnitTestCase
         );
     }
 
-    /**
-     * @throws \JsonException
-     */
     public function testNullFromPayload(): void
     {
         $converter = $this->create();
+        $payload   = $converter->toPayload(null);
 
-        $payload = new Payload();
-        $payload->setMetadata([EncodingKeys::METADATA_ENCODING_KEY => EncodingKeys::METADATA_ENCODING_JSON]);
-        $payload->setData(json_encode(null, JSON_THROW_ON_ERROR));
+        $this->assertNotNull($payload);
 
         $value = $converter->fromPayload($payload, new Type(Type::TYPE_STRING, true));
 
