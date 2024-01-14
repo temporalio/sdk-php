@@ -50,7 +50,7 @@ class JsonConverterTestCase extends UnitTestCase
 
         $this->assertNotNull($payload);
 
-        $value = $converter->fromPayload($payload, new Type(Type::TYPE_STRING, true));
+        $value = $converter->fromPayload($payload, new Type(Type::TYPE_STRING, allowsNull: true));
 
         $this->assertNull($value);
     }
