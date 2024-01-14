@@ -12,8 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Tests\Unit\DataConverter;
 
 use Ramsey\Uuid\Uuid;
-use Temporal\Api\Common\V1\Payload;
-use Temporal\DataConverter\EncodingKeys;
 use Temporal\DataConverter\JsonConverter;
 use Temporal\DataConverter\PayloadConverterInterface;
 use Temporal\DataConverter\Type;
