@@ -191,7 +191,6 @@ final class WorkflowStarter
             ->setTaskQueue(new TaskQueue(['name' => $options->taskQueue]))
             ->setWorkflowType(new WorkflowType(['name' => $input->workflowType]))
             ->setWorkflowId($input->workflowId)
-            ->setWorkflowStartDelay(DateInterval::toDuration($options->workflowStartDelay))
             ->setCronSchedule($options->cronSchedule ?? '')
             ->setRetryPolicy($options->retryOptions ? $options->retryOptions->toWorkflowRetryPolicy() : null)
             ->setWorkflowIdReusePolicy($options->workflowIdReusePolicy)
@@ -201,6 +200,11 @@ final class WorkflowStarter
             ->setMemo($options->toMemo($this->converter))
             ->setSearchAttributes($options->toSearchAttributes($this->converter))
             ->setHeader($header->toHeader());
+
+        $delay = DateInterval::toDuration($options->workflowStartDelay);
+        if ($delay !== null && ($delay->getSeconds() > 0 || $delay->getNanos() > 0)) {
+            $req->setWorkflowStartDelay($delay);
+        }
 
         if ($req instanceof StartWorkflowExecutionRequest) {
             $req->setRequestEagerExecution($options->eagerStart);
