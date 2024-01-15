@@ -96,6 +96,10 @@ class JsonConverter extends Converter
             throw new DataConverterException($e->getMessage(), $e->getCode(), $e);
         }
 
+        if ($data === null && $type->allowsNull()){
+            return null;
+        }
+
         switch ($type->getName()) {
             case Type::TYPE_ANY:
                 return $data;

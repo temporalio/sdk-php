@@ -12,9 +12,9 @@ declare(strict_types=1);
 namespace Temporal\Tests\Unit\DataConverter;
 
 use Ramsey\Uuid\Uuid;
-use Temporal\DataConverter\EncodingKeys;
 use Temporal\DataConverter\JsonConverter;
 use Temporal\DataConverter\PayloadConverterInterface;
+use Temporal\DataConverter\Type;
 use Temporal\Tests\Unit\UnitTestCase;
 
 /**
@@ -41,5 +41,17 @@ class JsonConverterTestCase extends UnitTestCase
             \json_encode((string)$dto),
             $payload->getData(),
         );
+    }
+
+    public function testNullFromPayload(): void
+    {
+        $converter = $this->create();
+        $payload   = $converter->toPayload(null);
+
+        $this->assertNotNull($payload);
+
+        $value = $converter->fromPayload($payload, new Type(Type::TYPE_STRING, allowsNull: true));
+
+        $this->assertNull($value);
     }
 }
