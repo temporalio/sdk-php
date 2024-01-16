@@ -501,7 +501,6 @@
       <code><![CDATA[$options->toSearchAttributes($this->converter)]]></code>
       <code><![CDATA[DateInterval::toDuration($options->workflowExecutionTimeout)]]></code>
       <code><![CDATA[DateInterval::toDuration($options->workflowRunTimeout)]]></code>
-      <code><![CDATA[DateInterval::toDuration($options->workflowStartDelay)]]></code>
       <code><![CDATA[DateInterval::toDuration($options->workflowTaskTimeout)]]></code>
     </PossiblyNullArgument>
     <PossiblyNullReference>
@@ -924,12 +923,9 @@
     </MissingTemplateParam>
   </file>
   <file src="src/Internal/Repository/ArrayRepository.php">
-    <InvalidDocblock>
-      <code>private array $entries = [];</code>
-    </InvalidDocblock>
-    <PossiblyInvalidArgument>
-      <code><![CDATA[\array_filter($this->entries, $filter)]]></code>
-    </PossiblyInvalidArgument>
+    <InvalidReturnStatement>
+      <code><![CDATA[$this->entries[$id] ?? null]]></code>
+    </InvalidReturnStatement>
     <UnsafeInstantiation>
       <code><![CDATA[new static(\array_filter($this->entries, $filter))]]></code>
     </UnsafeInstantiation>
