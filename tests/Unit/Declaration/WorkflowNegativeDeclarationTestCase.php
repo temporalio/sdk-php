@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Declaration;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\TestDox;
 use Temporal\Exception\InstantiationException;
 use Temporal\Internal\Declaration\Instantiator\WorkflowInstantiator;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
@@ -28,12 +30,11 @@ use Temporal\Workflow\WorkflowMethod;
 class WorkflowNegativeDeclarationTestCase extends DeclarationTestCase
 {
     /**
-     * @testdox Validate errors while loading workflow without WorkflowInterface attribute
-     * @dataProvider workflowReaderDataProvider
-     *
      * @param WorkflowReader $reader
      * @throws \ReflectionException
      */
+    #[TestDox("Validate errors while loading workflow without WorkflowInterface attribute")]
+    #[DataProvider('workflowReaderDataProvider')]
     public function testWorkflowWithoutInterfaceAttribute(WorkflowReader $reader): void
     {
         $this->expectException(\LogicException::class);
@@ -49,12 +50,11 @@ class WorkflowNegativeDeclarationTestCase extends DeclarationTestCase
     }
 
     /**
-     * @testdox Workflow handlers duplication
-     * @dataProvider workflowReaderDataProvider
-     *
      * @param WorkflowReader $reader
      * @throws \ReflectionException
      */
+    #[TestDox("Workflow handlers duplication")]
+    #[DataProvider('workflowReaderDataProvider')]
     public function testWorkflowMethodDuplication(WorkflowReader $reader): void
     {
         $this->expectException(\LogicException::class);
@@ -63,12 +63,11 @@ class WorkflowNegativeDeclarationTestCase extends DeclarationTestCase
     }
 
     /**
-     * @testdox Workflow without handler instantiation
-     * @dataProvider workflowReaderDataProvider
-     *
      * @param WorkflowReader $reader
      * @throws \ReflectionException
      */
+    #[TestDox("Workflow without handler instantiation")]
+    #[DataProvider('workflowReaderDataProvider')]
     public function testWorkflowWithoutHandlerInstantiation(WorkflowReader $reader): void
     {
         $this->expectException(InstantiationException::class);

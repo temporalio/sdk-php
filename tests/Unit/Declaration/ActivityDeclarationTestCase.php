@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Declaration;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\TestDox;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Declaration\Reader\ActivityReader;
 use Temporal\Tests\Unit\Declaration\Fixture\ActivitiesWithPublicMethods;
@@ -32,12 +34,11 @@ class ActivityDeclarationTestCase extends DeclarationTestCase
     }
 
     /**
-     * @testdox Reading activities (should return activity prototypes for all non-static public methods)
-     * @dataProvider activityReaderDataProvider
-     *
      * @param ActivityReader $reader
      * @throws \ReflectionException
      */
+    #[TestDox("Reading activities (should return activity prototypes for all non-static public methods)")]
+    #[DataProvider('activityReaderDataProvider')]
     public function testActivitiesFromPublicNonStaticMethods(ActivityReader $reader): void
     {
         $prototypes = $reader->fromClass(ActivitiesWithPublicMethods::class);
@@ -48,12 +49,11 @@ class ActivityDeclarationTestCase extends DeclarationTestCase
     }
 
     /**
-     * @testdox
-     * @dataProvider activityReaderDataProvider
-     *
      * @param ActivityReader $reader
      * @throws \ReflectionException
      */
+    #[TestDox('')]
+    #[DataProvider('activityReaderDataProvider')]
     public function testInheritedActivities(ActivityReader $reader): void
     {
         $prototypes = $reader->fromClass(ChildActivityMethods::class);

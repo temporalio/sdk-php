@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Internal\Client;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Temporal\Api\Workflowservice\V1\StartWorkflowExecutionRequest;
 use Temporal\Api\Workflowservice\V1\StartWorkflowExecutionResponse;
@@ -17,8 +18,8 @@ use Temporal\Internal\Support\DateInterval;
 /**
  * @internal
  *
- * @covers \Temporal\Internal\Client\WorkflowStub
  */
+#[CoversClass(\Temporal\Internal\Client\WorkflowStub::class)]
 final class WorkflowStarterTestCase extends TestCase
 {
     private const NAMESPACE = 'test-namespace';

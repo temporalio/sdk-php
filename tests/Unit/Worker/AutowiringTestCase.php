@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Worker;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\TestDox;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\JsonConverter;
 use Temporal\Internal\Declaration\Dispatcher\AutowiredPayloads;
@@ -31,17 +33,19 @@ class AutowiringTestCase extends WorkerTestCase
         return global_function();
     }
 
-    public function reflectionDataProvider(): array
+    public static function reflectionDataProvider(): array
     {
+        $instance = (new \ReflectionClass(static::class))->newInstanceWithoutConstructor();
+
         return [
             // Closure
-            'closure' => [new \ReflectionFunction(fn() => $this->instanceMethod())],
+            'closure' => [new \ReflectionFunction($instance->instanceMethod(...))],
 
             // Static Closure
             'static closure' => [new \ReflectionFunction(static fn() => global_function())],
 
             // Instance Method
-            static::class . '->instanceMethod' => [new \ReflectionMethod($this, 'instanceMethod')],
+            static::class . '->instanceMethod' => [new \ReflectionMethod($instance, 'instanceMethod')],
 
             // Static Method
             static::class . '::staticMethod' => [new \ReflectionMethod(static::class . '::staticMethod')],
@@ -51,16 +55,13 @@ class AutowiringTestCase extends WorkerTestCase
         ];
     }
 
-    public function instanceMethod(): int
+    public static function instanceMethod(): int
     {
         return global_function();
     }
 
-    /**
-     * @testdox Checks an attempt to create a new autowiring context from different callable types
-     *
-     * @dataProvider reflectionDataProvider
-     */
+    #[DataProvider('reflectionDataProvider')]
+    #[TestDox("Checks an attempt to create a new autowiring context from different callable types")]
     public function testCreation(\ReflectionFunctionAbstract $fn): void
     {
         $this->expectNotToPerformAssertions();
@@ -68,11 +69,8 @@ class AutowiringTestCase extends WorkerTestCase
         new AutowiredPayloads($fn, new DataConverter());
     }
 
-    /**
-     * @testdox Checks invocation with an object context or exception otherwise (if static context required)
-     *
-     * @dataProvider reflectionDataProvider
-     */
+    #[TestDox("Checks invocation with an object context or exception otherwise (if static context required)")]
+    #[DataProvider('reflectionDataProvider')]
     public function testInstanceCallMethodInvocation(\ReflectionFunctionAbstract $fn): void
     {
         $handler = new AutowiredPayloads($fn, new DataConverter(new JsonConverter()));
@@ -86,11 +84,8 @@ class AutowiringTestCase extends WorkerTestCase
         $this->assertSame(0xDEAD_BEEF, $handler->dispatch($this, []));
     }
 
-    /**
-     * @testdox Checks invocation without an object context or exception otherwise (if object context required)
-     *
-     * @dataProvider reflectionDataProvider
-     */
+    #[TestDox("Checks invocation without an object context or exception otherwise (if object context required)")]
+    #[DataProvider('reflectionDataProvider')]
     public function testStaticCallMethodInvocation(\ReflectionFunctionAbstract $fn): void
     {
         $handler = new AutowiredPayloads($fn, new DataConverter(new JsonConverter()));

@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace Internal\Support;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Temporal\Internal\Support\GarbageCollector;
 
 /**
  * @internal
  *
- * @covers \Temporal\Internal\Support\GarbageCollector
  */
+#[CoversClass(\Temporal\Internal\Support\GarbageCollector::class)]
 final class GarbageCollectorTestCase extends TestCase
 {
-    /**
-     * @dataProvider provideCheck
-     */
+    #[DataProvider('provideCheck')]
     public function testCheckTicks(int $counter, int $iterations, bool $result): void
     {
         $gc = new GarbageCollector($counter, 3600);
@@ -56,7 +56,7 @@ final class GarbageCollectorTestCase extends TestCase
         $this->assertTrue($gc->check());
     }
 
-    public function provideCheck(): iterable
+    public static function provideCheck(): iterable
     {
         yield [1, 1, true];
         yield [2, 1, false];

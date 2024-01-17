@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Schedule;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Temporal\Client\Schedule\BackfillPeriod;
 use Temporal\Client\Schedule\Policy\ScheduleOverlapPolicy;
 
-/**
- * @covers \Temporal\Client\Schedule\BackfillPeriod
- */
+#[CoversClass(\Temporal\Client\Schedule\BackfillPeriod::class)]
 class BackfillPeriodTestCase extends TestCase
 {
     public function testCreateFromDatetimeImmutable(): void

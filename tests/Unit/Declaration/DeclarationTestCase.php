@@ -26,7 +26,7 @@ abstract class DeclarationTestCase extends UnitTestCase
     /**
      * @return WorkflowReader[][]
      */
-    public function workflowReaderDataProvider(): array
+    public static function workflowReaderDataProvider(): array
     {
         return [
             AttributeReader::class  => [new WorkflowReader(new AttributeReader())],
@@ -37,7 +37,7 @@ abstract class DeclarationTestCase extends UnitTestCase
     /**
      * @return ActivityReader[][]
      */
-    public function activityReaderDataProvider(): array
+    public static function activityReaderDataProvider(): array
     {
         return [
             AttributeReader::class  => [new ActivityReader(new AttributeReader())],

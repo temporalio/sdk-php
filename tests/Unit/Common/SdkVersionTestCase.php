@@ -2,14 +2,13 @@
 
 namespace Temporal\Tests\Unit\Common;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Temporal\Common\SdkVersion;
 
 class SdkVersionTestCase extends TestCase
 {
-    /**
-     * @dataProvider versionProvider
-     */
+    #[DataProvider('versionProvider')]
     public function testVersionRegx(string $version, string $matched): void
     {
         $result = preg_match(SdkVersion::VERSION_REGX, $version, $matches);
@@ -20,7 +19,7 @@ class SdkVersionTestCase extends TestCase
         }
     }
 
-    public function versionProvider(): iterable
+    public static function versionProvider(): iterable
     {
         return [
             ['1.2.3.0', '1.2.3'],

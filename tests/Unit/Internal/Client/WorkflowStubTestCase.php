@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Internal\Client;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Temporal\Api\Common\V1\Payload;
@@ -27,9 +28,8 @@ use Temporal\Workflow\WorkflowExecution;
 
 /**
  * @internal
- *
- * @covers \Temporal\Internal\Client\WorkflowStub
  */
+#[CoversClass(\Temporal\Internal\Client\WorkflowStub::class)]
 final class WorkflowStubTestCase extends TestCase
 {
     private WorkflowStub $workflowStub;

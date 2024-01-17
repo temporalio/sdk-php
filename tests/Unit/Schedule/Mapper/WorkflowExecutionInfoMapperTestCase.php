@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Schedule\Mapper;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Spiral\Attributes\AttributeReader;
 use Temporal\Api\Enums\V1\ScheduleOverlapPolicy;
@@ -19,9 +20,7 @@ use Temporal\Internal\Mapper\ScheduleMapper;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
 
-/**
- * @covers \Temporal\Internal\Mapper\ScheduleMapper
- */
+#[CoversClass(\Temporal\Internal\Mapper\ScheduleMapper::class)]
 final class WorkflowExecutionInfoMapperTestCase extends TestCase
 {
     private DataConverterInterface $dataConverter;

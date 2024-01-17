@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\DTO\Type\UuidType;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 use ReflectionClass;
@@ -16,9 +17,7 @@ use Temporal\Tests\Unit\Internal\Marshaller\Fixture\PropertyType;
 
 final class UuidTypeTestCase extends DTOMarshallingTestCase
 {
-    /**
-     * @dataProvider matchDataProvider
-     */
+    #[DataProvider('matchDataProvider')]
     public function testMatch(string $property, bool $expected): void
     {
         $this->assertSame(
@@ -27,9 +26,7 @@ final class UuidTypeTestCase extends DTOMarshallingTestCase
         );
     }
 
-    /**
-     * @dataProvider makeRuleDataProvider
-     */
+    #[DataProvider('makeRuleDataProvider')]
     public function testMakeRule(string $property, mixed $expected): void
     {
         $this->assertEquals(

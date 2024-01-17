@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Schedule;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Temporal\Client\Schedule\BackfillPeriod;
 use Temporal\Client\Schedule\Policy\ScheduleOverlapPolicy;
 use Temporal\Client\Schedule\ScheduleOptions;
 use Temporal\DataConverter\EncodedCollection;
 
-/**
- * @covers \Temporal\Client\Schedule\ScheduleOptions
- */
+#[CoversClass(\Temporal\Client\Schedule\ScheduleOptions::class)]
 class ScheduleOptionsTestCase extends TestCase
 {
     public function testWithNamespace(): void
@@ -91,9 +91,7 @@ class ScheduleOptionsTestCase extends TestCase
         yield 'clear' => [[], [], ['foo' => 'bar'], ['foo' => 'bar']];
     }
 
-    /**
-     * @dataProvider provideEncodedValues
-     */
+    #[DataProvider('provideEncodedValues')]
     public function testWithMemo(mixed $values, array $expect, mixed $initValues = null, array $initExpect = []): void
     {
         $init = ScheduleOptions::new();
@@ -108,9 +106,7 @@ class ScheduleOptionsTestCase extends TestCase
         $this->assertSame($expect, $new->memo->getValues());
     }
 
-    /**
-     * @dataProvider provideEncodedValues
-     */
+    #[DataProvider('provideEncodedValues')]
     public function testWithSearchAttributes(mixed $values, array $expect, mixed $initValues = null, array $initExpect = []): void
     {
         $init = ScheduleOptions::new();

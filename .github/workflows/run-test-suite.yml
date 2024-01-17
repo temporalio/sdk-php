@@ -116,7 +116,7 @@ jobs:
       - name: Run tests with Temporal test server
         if: inputs.run-temporal-test-server == true
         run: ${{ format(
-            'vendor/bin/phpunit --testsuite={0} --testdox --verbose --exclude {1}',
+            'vendor/bin/phpunit --testsuite={0} --testdox --colors=always --exclude-group {1}',
             inputs.test-suite,
             contains(matrix.extensions-suffix, 'protobuf') && 'skip-on-test-server,skip-ext-protobuf' || 'skip-on-test-server'
           ) }}
@@ -125,4 +125,4 @@ jobs:
 
       - name: Run tests without Temporal test server
         if: inputs.run-temporal-test-server == false
-        run: vendor/bin/phpunit --testsuite=${{ inputs.test-suite }} --testdox --verbose
+        run: vendor/bin/phpunit --testsuite=${{ inputs.test-suite }} --testdox --colors=always

@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Schedule\Spec;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Temporal\Client\Schedule\Spec\ScheduleState;
 
-/**
- * @covers \Temporal\Client\Schedule\Spec\ScheduleState
- */
+#[CoversClass(\Temporal\Client\Schedule\Spec\ScheduleState::class)]
 class ScheduleStateTestCase extends TestCase
 {
     public function testWithNotes(): void
