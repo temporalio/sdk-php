@@ -285,7 +285,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         $this->emit(LoopInterface::ON_CALLBACK);
         $this->emit(LoopInterface::ON_QUERY);
         $this->emit(LoopInterface::ON_TICK);
-        $this->emit('finally');
+        $this->emit(LoopInterface::ON_FINALLY);
     }
 
     /**
