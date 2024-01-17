@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Tests\Functional;
 
 use Temporal\Common\Uuid;
-use Temporal\Tests\Fixtures\CommandResetter;
 use Temporal\Tests\Fixtures\Splitter;
 use Temporal\Tests\Fixtures\WorkerMock;
 

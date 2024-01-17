@@ -26,6 +26,7 @@ final class GarbageCollector
     /**
      * @param positive-int $threshold Number of ticks before GC will be called.
      * @param int<0, max> $timeout Timeout in seconds.
+     * @param positive-int|null $lastTime Start point for timeout.
      */
     public function __construct(
         private readonly int $threshold,
@@ -44,9 +45,7 @@ final class GarbageCollector
             return true;
         }
 
-        echo "($this->lastTime + $this->timeout) <" . \time();
-        if (($this->lastTime + $this->timeout) < \time()) {
-        // if (\time() - $this->lastTime > $this->timeout) {
+        if (\time() - $this->lastTime > $this->timeout) {
             return true;
         }
 

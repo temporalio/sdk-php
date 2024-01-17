@@ -921,7 +921,7 @@
     <MissingTemplateParam>
       <code>\IteratorAggregate</code>
     </MissingTemplateParam>
-  </file>
+  </file>c
   <file src="src/Internal/Repository/ArrayRepository.php">
     <InvalidReturnStatement>
       <code><![CDATA[$this->entries[$id] ?? null]]></code>
@@ -1159,9 +1159,6 @@
     </DocblockTypeContradiction>
   </file>
   <file src="src/Internal/Transport/Router/DestroyWorkflow.php">
-    <DocblockTypeContradiction>
-      <code>$process === null</code>
-    </DocblockTypeContradiction>
     <UndefinedInterfaceMethod>
       <code>pull</code>
     </UndefinedInterfaceMethod>

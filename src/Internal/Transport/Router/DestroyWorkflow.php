@@ -27,7 +27,9 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
      */
     private const ERROR_PROCESS_NOT_DEFINED = 'Unable to kill workflow because workflow process #%s was not found';
 
+    /** Maximum number of ticks before GC call. */
     private const GC_THRESHOLD = 1000;
+    /** Interval between GC calls in seconds. */
     private const GC_TIMEOUT_SECONDS = 30;
 
     private GarbageCollector $gc;
@@ -64,6 +66,8 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
             'finally',
             function () use ($process) {
                 $process->destroy();
+
+                // Collect garbage if needed
                 if ($this->gc->check()) {
                     $this->gc->collect();
                 }
