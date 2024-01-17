@@ -19,6 +19,7 @@ use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\TemporalFailure;
 use Temporal\Exception\InvalidArgumentException;
+use Temporal\Internal\Declaration\Destroyable;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Request\Cancel;
 use Temporal\Internal\Workflow\ScopeContext;
@@ -36,7 +37,7 @@ use Temporal\Workflow\WorkflowContextInterface;
  * @psalm-internal Temporal\Internal
  * @implements CancellationScopeInterface<mixed>
  */
-class Scope implements CancellationScopeInterface
+class Scope implements CancellationScopeInterface, Destroyable
 {
     /**
      * @var ServiceContainer

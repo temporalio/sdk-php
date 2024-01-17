@@ -38,6 +38,7 @@ use Temporal\Interceptor\WorkflowOutboundCalls\TimerInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\UpsertSearchAttributesInput;
 use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
 use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
+use Temporal\Internal\Declaration\Destroyable;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\Interceptor\HeaderCarrier;
 use Temporal\Internal\Interceptor\Pipeline;
@@ -68,7 +69,7 @@ use Temporal\Workflow\WorkflowInfo;
 use function React\Promise\reject;
 use function React\Promise\resolve;
 
-class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
+class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destroyable
 {
     /**
      * Contains conditional groups that contains tuple of a condition callable and its promise
@@ -85,18 +86,10 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
     /** @var Pipeline<WorkflowOutboundCallsInterceptor, PromiseInterface> */
     private Pipeline $callsInterceptor;
 
-    /**
-     * WorkflowContext constructor.
-     * @param ServiceContainer          $services
-     * @param ClientInterface           $client
-     * @param WorkflowInstanceInterface $workflowInstance
-     * @param Input                     $input
-     * @param ValuesInterface|null      $lastCompletionResult
-     */
     public function __construct(
         protected ServiceContainer $services,
         protected ClientInterface $client,
-        protected WorkflowInstanceInterface $workflowInstance,
+        protected WorkflowInstanceInterface&Destroyable $workflowInstance,
         protected Input $input,
         protected ?ValuesInterface $lastCompletionResult = null
     ) {
@@ -703,6 +696,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier
     public function destroy(): void
     {
         $this->awaits = [];
+        $this->workflowInstance->destroy();
         unset($this->workflowInstance);
     }
 }

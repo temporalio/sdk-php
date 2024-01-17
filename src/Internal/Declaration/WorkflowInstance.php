@@ -23,7 +23,7 @@ use Temporal\Internal\Interceptor;
  * @psalm-type QueryHandler = \Closure(QueryInput): mixed
  * @psalm-type QueryExecutor = \Closure(QueryInput, callable(ValuesInterface): mixed): mixed
  */
-final class WorkflowInstance extends Instance implements WorkflowInstanceInterface
+final class WorkflowInstance extends Instance implements WorkflowInstanceInterface, Destroyable
 {
     /**
      * @var array<non-empty-string, QueryHandler>
@@ -163,6 +163,14 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     public function clearSignalQueue(): void
     {
         $this->signalQueue->clear();
+    }
+
+    public function destroy(): void
+    {
+        $this->signalQueue->clear();
+        $this->signalHandlers = [];
+        $this->queryHandlers = [];
+        unset($this->queryExecutor);
     }
 
     /**
