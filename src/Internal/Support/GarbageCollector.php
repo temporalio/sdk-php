@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Support;
 
 /**
- * Garbage collector that might be called after some number of calls or after certain timeout.
+ * Garbage collector that might be called after some number of ticks or after certain timeout.
  * @internal
  */
 final class GarbageCollector
@@ -20,18 +20,19 @@ final class GarbageCollector
     /** @var positive-int Last time when GC was called. */
     private int $lastTime;
 
-    /** @var int<0, max> Number of calls since last GC. */
+    /** @var int<0, max> Number of ticks since last GC. */
     private int $counter = 0;
 
     /**
-     * @param positive-int $threshold Number of calls before GC will be called.
+     * @param positive-int $threshold Number of ticks before GC will be called.
      * @param int<0, max> $timeout Timeout in seconds.
      */
     public function __construct(
         private readonly int $threshold,
         private readonly int $timeout,
+        ?int $lastTime = null,
     ) {
-        $this->lastTime = \time();
+        $this->lastTime = $lastTime ?? \time();
     }
 
     /**
@@ -39,12 +40,13 @@ final class GarbageCollector
      */
     public function check(): bool
     {
-        $this->counter++;
-        if ($this->counter >= $this->threshold) {
+        if (++$this->counter >= $this->threshold) {
             return true;
         }
 
+        echo "($this->lastTime + $this->timeout) <" . \time();
         if (($this->lastTime + $this->timeout) < \time()) {
+        // if (\time() - $this->lastTime > $this->timeout) {
             return true;
         }
 
@@ -56,9 +58,9 @@ final class GarbageCollector
      */
     public function collect(): void
     {
+        \gc_collect_cycles();
+
         $this->lastTime = \time();
         $this->counter = 0;
-
-        \gc_collect_cycles();
     }
 }
