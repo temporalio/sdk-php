@@ -22,7 +22,7 @@ use Temporal\Tests\Unit\Declaration\Fixture\ChildActivityMethods;
  * @group unit
  * @group declaration
  */
-class ActivityDeclarationTestCase extends DeclarationTestCase
+class ActivityDeclarationTestCase extends AbstractDeclaration
 {
     /**
      * @param array<ActivityPrototype> $prototypes

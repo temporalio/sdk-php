@@ -26,7 +26,7 @@ function global_function(): int
  * @group unit
  * @group worker
  */
-class AutowiringTestCase extends WorkerTestCase
+class AutowiringTestCase extends AbstractWorker
 {
     public static function staticMethod(): int
     {

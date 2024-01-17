@@ -15,13 +15,13 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Interceptor\Header;
-use Temporal\Tests\Unit\UnitTestCase;
+use Temporal\Tests\Unit\AbstractUnit;
 
 /**
  * @group unit
  * @group interceptor
  */
-class HeaderTestCase extends UnitTestCase
+class HeaderTestCase extends AbstractUnit
 {
     public function testToHeaderFromValuesWithoutConverterException(): void
     {

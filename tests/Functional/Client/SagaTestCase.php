@@ -19,7 +19,7 @@ use Temporal\Tests\Workflow\SagaWorkflow;
  * @group client
  * @group functional
  */
-class SagaTestCase extends ClientTestCase
+class SagaTestCase extends AbstractClient
 {
     public function testGetResult()
     {

@@ -19,7 +19,7 @@ use Temporal\DataConverter\EncodedValues;
  * @group unit
  * @group protocol
  */
-class EncodingTestCase extends ProtocolTestCase
+class EncodingTestCase extends AbstractProtocol
 {
     #[Test]
     public function nullValuesAreReturned(): void

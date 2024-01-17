@@ -24,7 +24,7 @@ use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithoutHandler;
  * @group client
  * @group functional
  */
-class UntypedWorkflowStubTestCase extends ClientTestCase
+class UntypedWorkflowStubTestCase extends AbstractClient
 {
     public function testUntypedStartAndWaitResult()
     {

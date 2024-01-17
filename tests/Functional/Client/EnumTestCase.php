@@ -22,7 +22,7 @@ use Temporal\Tests\Workflow\SimpleEnumWorkflow;
  * @group client
  * @group functional
  */
-class EnumTestCase extends ClientTestCase
+class EnumTestCase extends AbstractClient
 {
     public function testSimpleEnum(): void
     {

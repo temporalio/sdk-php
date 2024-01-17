@@ -15,7 +15,7 @@ use Temporal\DataConverter\DataConverter;
 use Temporal\Internal\Marshaller\ProtoToArrayConverter;
 use Temporal\Workflow\WorkflowExecution;
 
-class WorkflowExecutionTestCase extends DTOMarshallingTestCase
+class WorkflowExecutionTestCase extends AbstractDTOMarshalling
 {
     /**
      * @throws \ReflectionException

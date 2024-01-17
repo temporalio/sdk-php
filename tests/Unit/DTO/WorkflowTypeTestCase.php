@@ -13,7 +13,7 @@ namespace Temporal\Tests\Unit\DTO;
 
 use Temporal\Workflow\WorkflowType;
 
-class WorkflowTypeTestCase extends DTOMarshallingTestCase
+class WorkflowTypeTestCase extends AbstractDTOMarshalling
 {
     /**
      * @throws \ReflectionException

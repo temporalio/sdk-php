@@ -14,7 +14,7 @@ namespace Temporal\Tests\Unit\DTO;
 use Temporal\Common\IdReusePolicy;
 use Temporal\Workflow\ChildWorkflowOptions;
 
-class ChildWorkflowOptionsTestCase extends DTOMarshallingTestCase
+class ChildWorkflowOptionsTestCase extends AbstractDTOMarshalling
 {
     /**
      * @throws \ReflectionException

@@ -8,9 +8,9 @@ use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Exception\Failure\FailureConverter;
-use Temporal\Tests\Unit\UnitTestCase;
+use Temporal\Tests\Unit\AbstractUnit;
 
-final class FailureConverterTestCase extends UnitTestCase
+final class FailureConverterTestCase extends AbstractUnit
 {
     public function testApplicationFailureCanTransferData(): void
     {

@@ -11,11 +11,11 @@ use ReflectionClass;
 use Temporal\Internal\Marshaller\MarshallingRule;
 use Temporal\Internal\Marshaller\Type\NullableType;
 use Temporal\Internal\Marshaller\Type\UuidType;
-use Temporal\Tests\Unit\DTO\DTOMarshallingTestCase;
+use Temporal\Tests\Unit\DTO\AbstractDTOMarshalling;
 use Temporal\Tests\Unit\DTO\Type\UuidType\Stub\UuidObjectProp;
 use Temporal\Tests\Unit\Internal\Marshaller\Fixture\PropertyType;
 
-final class UuidTypeTestCase extends DTOMarshallingTestCase
+final class UuidTypeTestCase extends AbstractDTOMarshalling
 {
     #[DataProvider('matchDataProvider')]
     public function testMatch(string $property, bool $expected): void

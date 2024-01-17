@@ -12,9 +12,9 @@ declare(strict_types=1);
 namespace Temporal\Tests\Unit\DTO\Type\ArrayType;
 
 use Temporal\Internal\Marshaller\Type\ArrayType;
-use Temporal\Tests\Unit\DTO\DTOMarshallingTestCase;
+use Temporal\Tests\Unit\DTO\AbstractDTOMarshalling;
 
-class ArrayTestCase extends DTOMarshallingTestCase
+class ArrayTestCase extends AbstractDTOMarshalling
 {
     public function testMarshalling(): void
     {

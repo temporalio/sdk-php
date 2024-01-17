@@ -16,13 +16,13 @@ use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\Type;
 use Temporal\Exception\DataConverterException;
-use Temporal\Tests\Unit\UnitTestCase;
+use Temporal\Tests\Unit\AbstractUnit;
 
 /**
  * @group unit
  * @group data-converter
  */
-class DataConverterTestCase extends UnitTestCase
+class DataConverterTestCase extends AbstractUnit
 {
     /**
      * @return array[]

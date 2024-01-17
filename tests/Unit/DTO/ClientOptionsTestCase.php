@@ -15,7 +15,7 @@ use Temporal\Api\Enums\V1\QueryRejectCondition;
 use Temporal\Client\ClientOptions;
 use Temporal\Common\Uuid;
 
-class ClientOptionsTestCase extends DTOMarshallingTestCase
+class ClientOptionsTestCase extends AbstractDTOMarshalling
 {
     public function testNamespaceChangesNotMutateState(): void
     {

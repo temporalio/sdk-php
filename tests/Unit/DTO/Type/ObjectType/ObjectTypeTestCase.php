@@ -21,11 +21,11 @@ use Temporal\Tests\Unit\DTO\Type\ObjectType\Stub\Nested3;
 use Temporal\Tests\Unit\DTO\Type\ObjectType\Stub\NestedParent;
 use Temporal\Tests\Unit\DTO\Type\ObjectType\Stub\NullableProperty;
 use Temporal\Tests\Unit\DTO\Type\ObjectType\Stub\ParentDto;
-use Temporal\Tests\Unit\DTO\DTOMarshallingTestCase;
+use Temporal\Tests\Unit\DTO\AbstractDTOMarshalling;
 use Temporal\Tests\Unit\DTO\Type\ObjectType\Stub\ReadonlyProperty;
 use Temporal\Tests\Unit\DTO\Type\ObjectType\Stub\StdClassObjectProp;
 
-final class ObjectTypeTestCase extends DTOMarshallingTestCase
+final class ObjectTypeTestCase extends AbstractDTOMarshalling
 {
     public function testReflectionTypeMarshal(): void
     {

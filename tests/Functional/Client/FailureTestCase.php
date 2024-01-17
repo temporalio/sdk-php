@@ -23,7 +23,7 @@ use Temporal\Tests\Workflow\SignalExceptionsWorkflow;
  * @group client
  * @group functional
  */
-class FailureTestCase extends ClientTestCase
+class FailureTestCase extends AbstractClient
 {
     public function testSimpleFailurePropagation()
     {

@@ -27,13 +27,13 @@ use Temporal\Internal\Transport\Router\StartWorkflow;
 use Temporal\Internal\Workflow\Input;
 use Temporal\Internal\Workflow\WorkflowContext;
 use Temporal\Tests\Unit\Framework\Requests\StartWorkflow as Request;
-use Temporal\Tests\Unit\UnitTestCase;
+use Temporal\Tests\Unit\AbstractUnit;
 use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Worker\LoopInterface;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowInfo;
 
-final class StartWorkflowTestCase extends UnitTestCase
+final class StartWorkflowTestCase extends AbstractUnit
 {
     private ServiceContainer $services;
     private StartWorkflow $router;

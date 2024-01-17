@@ -30,7 +30,7 @@ use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithSignals;
  * @group unit
  * @group declaration
  */
-class WorkflowDeclarationTestCase extends DeclarationTestCase
+class WorkflowDeclarationTestCase extends AbstractDeclaration
 {
     /**
      * @param WorkflowReader $reader

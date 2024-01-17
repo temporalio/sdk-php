@@ -10,7 +10,7 @@ use Temporal\Tests\Workflow\DynamicObjectReturnWorkflow;
  * @group client
  * @group functional
  */
-final class DynamicObjectReturnWorkflowTestCase extends ClientTestCase
+final class DynamicObjectReturnWorkflowTestCase extends AbstractClient
 {
     public function testWorkflow(): void
     {

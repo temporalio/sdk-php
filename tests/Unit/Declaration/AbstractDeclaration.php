@@ -15,13 +15,13 @@ use Spiral\Attributes\AnnotationReader;
 use Spiral\Attributes\AttributeReader;
 use Temporal\Internal\Declaration\Reader\ActivityReader;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
-use Temporal\Tests\Unit\UnitTestCase;
+use Temporal\Tests\Unit\AbstractUnit;
 
 /**
  * @group unit
  * @group declaration
  */
-abstract class DeclarationTestCase extends UnitTestCase
+abstract class AbstractDeclaration extends AbstractUnit
 {
     /**
      * @return WorkflowReader[][]

@@ -13,12 +13,12 @@ namespace Temporal\Tests\Unit\DTO\Type\EnumType;
 
 use Error;
 use Temporal\Internal\Marshaller\Type\EnumType;
-use Temporal\Tests\Unit\DTO\DTOMarshallingTestCase;
+use Temporal\Tests\Unit\DTO\AbstractDTOMarshalling;
 use Temporal\Tests\Unit\DTO\Type\EnumType\Stub\EnumDto;
 use Temporal\Tests\Unit\DTO\Type\EnumType\Stub\ScalarEnum;
 use Temporal\Tests\Unit\DTO\Type\EnumType\Stub\SimpleEnum;
 
-class EnumTestCase extends DTOMarshallingTestCase
+class EnumTestCase extends AbstractDTOMarshalling
 {
     public function testMarshal(): void
     {

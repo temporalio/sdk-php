@@ -17,7 +17,7 @@ use PHPUnit\Framework\Attributes\Test;
  * @group unit
  * @group protocol
  */
-class DecodingCommandsTestCase extends ProtocolTestCase
+class DecodingCommandsTestCase extends AbstractProtocol
 {
     #[Test]
     public function todo(): void

@@ -19,7 +19,7 @@ use Temporal\Tests\Fixtures\WorkerMock;
  * @group workflow
  * @group functional
  */
-class WorkflowTestCase extends FunctionalTestCase
+class WorkflowTestCase extends AbstractFunctional
 {
     public function setUp(): void
     {

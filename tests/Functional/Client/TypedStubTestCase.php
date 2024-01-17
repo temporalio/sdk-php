@@ -30,7 +30,7 @@ use Temporal\Tests\Workflow\SimpleWorkflow;
  * @group client
  * @group functional
  */
-class TypedStubTestCase extends ClientTestCase
+class TypedStubTestCase extends AbstractClient
 {
     public function testGetResult()
     {

@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Functional\Interceptor;
 
 use Temporal\Client\WorkflowOptions;
-use Temporal\Tests\Functional\Client\ClientTestCase;
+use Temporal\Tests\Functional\Client\AbstractClient;
 use Temporal\Tests\Workflow\Header\ChildedHeaderWorkflow;
 use Temporal\Tests\Workflow\Header\EmptyHeaderWorkflow;
 
@@ -25,7 +25,7 @@ use Temporal\Tests\Workflow\Header\EmptyHeaderWorkflow;
  * @group workflow
  * @group functional
  */
-class HeaderTestCase extends ClientTestCase
+class HeaderTestCase extends AbstractClient
 {
     public function testWorkflowEmptyHeader(): void
     {

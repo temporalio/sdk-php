@@ -27,7 +27,7 @@ use Temporal\Workflow\WorkflowMethod;
  * @group unit
  * @group declaration
  */
-class WorkflowNegativeDeclarationTestCase extends DeclarationTestCase
+class WorkflowNegativeDeclarationTestCase extends AbstractDeclaration
 {
     /**
      * @param WorkflowReader $reader

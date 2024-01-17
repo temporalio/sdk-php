@@ -20,7 +20,7 @@ use Temporal\Common\RetryOptions;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverter;
 
-class WorkflowOptionsTestCase extends DTOMarshallingTestCase
+class WorkflowOptionsTestCase extends AbstractDTOMarshalling
 {
     /**
      * @throws \ReflectionException

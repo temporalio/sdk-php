@@ -15,13 +15,13 @@ use Ramsey\Uuid\Uuid;
 use Temporal\DataConverter\JsonConverter;
 use Temporal\DataConverter\PayloadConverterInterface;
 use Temporal\DataConverter\Type;
-use Temporal\Tests\Unit\UnitTestCase;
+use Temporal\Tests\Unit\AbstractUnit;
 
 /**
  * @group unit
  * @group data-converter
  */
-class JsonConverterTestCase extends UnitTestCase
+class JsonConverterTestCase extends AbstractUnit
 {
     protected function create(): PayloadConverterInterface
     {

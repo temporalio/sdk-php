@@ -18,7 +18,7 @@ use Temporal\Tests\Workflow\LoopKillerWorkflow;
 use Temporal\Tests\Workflow\LoopSignallingWorkflow;
 use Temporal\Tests\Workflow\LoopWorkflow;
 
-class ExternalWorkflowTestCase extends ClientTestCase
+class ExternalWorkflowTestCase extends AbstractClient
 {
     use WithoutTimeSkipping;
 

@@ -6,7 +6,7 @@ namespace Temporal\Tests\Unit\WorkflowContext;
 
 use Temporal\Tests\Unit\Framework\WorkerFactoryMock;
 use Temporal\Tests\Unit\Framework\WorkerMock;
-use Temporal\Tests\Unit\UnitTestCase;
+use Temporal\Tests\Unit\AbstractUnit;
 use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Worker\WorkerInterface;
 use Temporal\Workflow;
@@ -15,7 +15,7 @@ use Temporal\Workflow\WorkflowMethod;
 use function PHPUnit\Framework\assertFalse;
 use function PHPUnit\Framework\assertTrue;
 
-final class AwaitWithTimeoutTestCase extends UnitTestCase
+final class AwaitWithTimeoutTestCase extends AbstractUnit
 {
     private WorkerFactoryInterface $factory;
     /** @var WorkerMock|WorkerInterface */

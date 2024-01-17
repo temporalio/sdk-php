@@ -13,7 +13,7 @@ namespace Temporal\Tests\Unit\DTO;
 
 use Temporal\Activity\ActivityType;
 
-class ActivityTypeTestCase extends DTOMarshallingTestCase
+class ActivityTypeTestCase extends AbstractDTOMarshalling
 {
     /**
      * @throws \ReflectionException

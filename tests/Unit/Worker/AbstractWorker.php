@@ -9,13 +9,14 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Unit;
+namespace Temporal\Tests\Unit\Worker;
 
-use Temporal\Tests\TestCase;
+use Temporal\Tests\Unit\AbstractUnit;
 
 /**
+ * @group worker
  * @group unit
  */
-abstract class UnitTestCase extends TestCase
+abstract class AbstractWorker extends AbstractUnit
 {
 }

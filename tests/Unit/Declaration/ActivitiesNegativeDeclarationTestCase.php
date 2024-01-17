@@ -23,7 +23,7 @@ use Temporal\Tests\Unit\Declaration\Fixture\ActivityWithPublicStaticMethod;
  * @group unit
  * @group declaration
  */
-class ActivitiesNegativeDeclarationTestCase extends DeclarationTestCase
+class ActivitiesNegativeDeclarationTestCase extends AbstractDeclaration
 {
     /**
      * @param ActivityReader $reader
