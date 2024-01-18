@@ -87,7 +87,8 @@ class TypeFactory implements RuleFactoryInterface
         }
 
         foreach ($this->matchers as $matcher) {
-            if ($result = $matcher($type)) {
+            $result = $matcher($type);
+            if ($result !== null) {
                 return $result;
             }
         }
