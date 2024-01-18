@@ -449,7 +449,7 @@ class WorkerOptions
     {
         $self = clone $this;
 
-        $self->sessionResourceId = $identifier ?: null;
+        $self->sessionResourceId = $identifier === '' ? null : $identifier;
 
         return $self;
     }

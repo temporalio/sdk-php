@@ -312,12 +312,13 @@ final class ScheduleSpec
      */
     public function withJitter(mixed $interval): self
     {
+        /** @psalm-suppress RiskyTruthyFalsyComparison */
         if (empty($interval)) {
             /** @see self::$jitter */
             return $this->with('jitter', new \DateInterval('PT0S'));
         }
 
-        assert(DateInterval::assert($interval));
+        \assert(DateInterval::assert($interval));
         $interval = DateInterval::parse($interval, DateInterval::FORMAT_SECONDS);
 
         /** @see self::$jitter */
