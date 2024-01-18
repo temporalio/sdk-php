@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Schedule\Spec;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Temporal\Client\Schedule\Spec\Range;
 use Temporal\Client\Schedule\Spec\StructuredCalendarSpec;
 
-/**
- * @covers \Temporal\Client\Schedule\Spec\StructuredCalendarSpec
- */
+#[CoversClass(\Temporal\Client\Schedule\Spec\StructuredCalendarSpec::class)]
 class StructuredCalendarSpecTestCase extends TestCase
 {
     public function testWithSeconds(): void

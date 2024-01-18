@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Protocol;
 
+use PHPUnit\Framework\Attributes\Test;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\EncodedValues;
 
@@ -18,9 +19,9 @@ use Temporal\DataConverter\EncodedValues;
  * @group unit
  * @group protocol
  */
-class EncodingTestCase extends ProtocolTestCase
+class EncodingTestCase extends AbstractProtocol
 {
-    /** @test */
+    #[Test]
     public function nullValuesAreReturned(): void
     {
         $encodedValues = EncodedValues::fromValues([null, 'something'], new DataConverter());

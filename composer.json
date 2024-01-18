@@ -59,7 +59,7 @@
         "illuminate/support": "^9.0",
         "jetbrains/phpstorm-attributes": "dev-master@dev",
         "laminas/laminas-code": "^4.0",
-        "phpunit/phpunit": "^9.5.21",
+        "phpunit/phpunit": "^10.5",
         "symfony/var-dumper": "^6.0 || ^7.0",
         "vimeo/psalm": "^4.30 || ^5.4"
     },

@@ -16,14 +16,13 @@ use Temporal\Api\History\V1\HistoryEvent;
 use Temporal\Api\Workflowservice\V1\GetWorkflowExecutionHistoryRequest;
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
-use Temporal\Testing\WithoutTimeSkipping;
-use Temporal\Tests\Functional\FunctionalTestCase;
+use Temporal\Tests\Functional\AbstractFunctional;
 use Temporal\Workflow\WorkflowExecution;
 
 /**
  * @group client
  */
-abstract class ClientTestCase extends FunctionalTestCase
+abstract class AbstractClient extends AbstractFunctional
 {
     /**
      * @param string $connection

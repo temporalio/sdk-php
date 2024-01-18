@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Unit\Schedule;
 
 use DateTimeImmutable;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Spiral\Attributes\AttributeReader;
 use Temporal\Api\Workflowservice\V1\CreateScheduleRequest;
@@ -31,9 +32,7 @@ use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Marshaller\ProtoToArrayConverter;
 
-/**
- * @covers \Temporal\Client\ScheduleClient
- */
+#[CoversClass(\Temporal\Client\ScheduleClient::class)]
 class ScheduleClientTestCase extends TestCase
 {
     public function testCreateSchedule(): void

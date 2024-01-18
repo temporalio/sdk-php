@@ -13,7 +13,7 @@ namespace Temporal\Tests\Unit\DTO;
 
 use Temporal\Workflow\ContinueAsNewOptions;
 
-class ContinueAsNewOptionsTestCase extends DTOMarshallingTestCase
+class ContinueAsNewOptionsTestCase extends AbstractDTOMarshalling
 {
     /**
      * @throws \ReflectionException

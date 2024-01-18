@@ -23,12 +23,12 @@ use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Transport\Router\InvokeActivity;
 use Temporal\Tests\Unit\Framework\Requests\InvokeActivity as Request;
-use Temporal\Tests\Unit\UnitTestCase;
+use Temporal\Tests\Unit\AbstractUnit;
 use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\RPCConnectionInterface;
 
-final class InvokeActivityTestCase extends UnitTestCase
+final class InvokeActivityTestCase extends AbstractUnit
 {
     private ServiceContainer $services;
     private InvokeActivity $router;

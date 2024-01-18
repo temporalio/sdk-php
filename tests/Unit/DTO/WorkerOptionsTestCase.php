@@ -13,7 +13,7 @@ namespace Temporal\Tests\Unit\DTO;
 
 use Temporal\Worker\WorkerOptions;
 
-class WorkerOptionsTestCase extends DTOMarshallingTestCase
+class WorkerOptionsTestCase extends AbstractDTOMarshalling
 {
     /**
      * @throws \ReflectionException

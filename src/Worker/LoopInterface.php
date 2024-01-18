@@ -54,6 +54,12 @@ interface LoopInterface extends EventListenerInterface
      */
     public const ON_CALLBACK = 'callback';
 
+    /** Must be emitted at the end of each loop iteration after all other events.
+     *
+     * @var string
+     */
+    public const ON_FINALLY = 'finally';
+
     /**
      * @return void
      */

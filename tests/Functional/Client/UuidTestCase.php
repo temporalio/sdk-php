@@ -20,7 +20,7 @@ use Temporal\Tests\Workflow\SimpleUuidWorkflow;
  * @group client
  * @group functional
  */
-class UuidTestCase extends ClientTestCase
+class UuidTestCase extends AbstractClient
 {
     public function testUuidPassedAndReturned(): void
     {

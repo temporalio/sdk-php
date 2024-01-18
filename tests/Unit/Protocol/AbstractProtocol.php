@@ -9,13 +9,14 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Feature;
+namespace Temporal\Tests\Unit\Protocol;
 
-use Temporal\Tests\TestCase;
+use Temporal\Tests\Unit\AbstractUnit;
 
 /**
- * @group feature
+ * @group unit
+ * @group protocol
  */
-abstract class FeatureTestCase extends TestCase
+abstract class AbstractProtocol extends AbstractUnit
 {
 }

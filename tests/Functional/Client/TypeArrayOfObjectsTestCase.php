@@ -19,7 +19,7 @@ use Temporal\Tests\Workflow\ArrayOfObjectsWorkflow;
  * @group client
  * @group functional
  */
-class TypeArrayOfObjectsTestCase extends ClientTestCase
+class TypeArrayOfObjectsTestCase extends AbstractClient
 {
     public function testArrayOfMessagesReceived(): void
     {

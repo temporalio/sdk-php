@@ -12,9 +12,9 @@ declare(strict_types=1);
 namespace Temporal\Tests\Unit\DTO\Readonly;
 
 use Temporal\DataConverter\DataConverter;
-use Temporal\Tests\Unit\DTO\DTOMarshallingTestCase;
+use Temporal\Tests\Unit\DTO\AbstractDTOMarshalling;
 
-class ReadonlyPropertiesTestCase extends DTOMarshallingTestCase
+class ReadonlyPropertiesTestCase extends AbstractDTOMarshalling
 {
     public function testMarshalling(): void
     {

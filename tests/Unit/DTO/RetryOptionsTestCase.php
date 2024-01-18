@@ -13,7 +13,7 @@ namespace Temporal\Tests\Unit\DTO;
 
 use Temporal\Common\RetryOptions;
 
-class RetryOptionsTestCase extends DTOMarshallingTestCase
+class RetryOptionsTestCase extends AbstractDTOMarshalling
 {
     /**
      * @throws \ReflectionException

@@ -13,10 +13,10 @@ namespace Temporal\Tests\Unit\DTO\Type\DateIntervalType;
 
 use DateInterval;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
-use Temporal\Tests\Unit\DTO\DTOMarshallingTestCase;
+use Temporal\Tests\Unit\DTO\AbstractDTOMarshalling;
 use Temporal\Tests\Unit\DTO\Type\DateIntervalType\Stub\DateIntervalDto;
 
-class DateIntervalTestCase extends DTOMarshallingTestCase
+class DateIntervalTestCase extends AbstractDTOMarshalling
 {
     public function testMarshalAndUnmarshalWithoutAttribute(): void
     {

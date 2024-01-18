@@ -12,7 +12,7 @@ use Temporal\Worker\ActivityInvocationCache\RoadRunnerActivityInvocationCache;
 use Temporal\Worker\Transport\Command\ServerRequest;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
-class ActivityInvocationCacheTestCase extends FunctionalTestCase
+class ActivityInvocationCacheTestCase extends AbstractFunctional
 {
     private RoadRunnerActivityInvocationCache $cache;
 

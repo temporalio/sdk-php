@@ -17,7 +17,7 @@ use Temporal\Activity\ActivityOptions;
 use Temporal\Common\RetryOptions;
 use Temporal\Common\Uuid;
 
-class ActivityOptionsTestCase extends DTOMarshallingTestCase
+class ActivityOptionsTestCase extends AbstractDTOMarshalling
 {
     /**
      * @throws \ReflectionException

@@ -14,13 +14,13 @@ namespace Temporal\Tests\Functional\Interceptor;
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
 use Temporal\Tests\Fixtures\PipelineProvider;
-use Temporal\Tests\Functional\FunctionalTestCase;
+use Temporal\Tests\Functional\AbstractFunctional;
 use Temporal\Tests\Interceptor\InterceptorCallsCounter;
 
 /**
  * @group client
  */
-abstract class AbstractClient extends FunctionalTestCase
+abstract class AbstractClient extends AbstractFunctional
 {
     /**
      * @param string $connection

@@ -14,13 +14,13 @@ namespace Temporal\Tests\Unit\DataConverter;
 use Temporal\DataConverter\EncodingKeys;
 use Temporal\DataConverter\PayloadConverterInterface;
 use Temporal\DataConverter\ProtoConverter;
-use Temporal\Tests\Unit\UnitTestCase;
+use Temporal\Tests\Unit\AbstractUnit;
 
 /**
  * @group unit
  * @group data-converter
  */
-class ProtoConverterTestCase extends UnitTestCase
+class ProtoConverterTestCase extends AbstractUnit
 {
     protected function create(): PayloadConverterInterface
     {

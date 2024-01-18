@@ -3,36 +3,31 @@
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
          bootstrap="tests/bootstrap.php"
          backupGlobals="false"
-         backupStaticAttributes="false"
          colors="true"
-         verbose="true"
-         convertErrorsToExceptions="true"
-         convertNoticesToExceptions="true"
-         convertWarningsToExceptions="true"
          processIsolation="false"
          stopOnFailure="false"
          stopOnError="false"
          stderr="true"
 >
-    <coverage>
-        <include>
-            <directory>src</directory>
-        </include>
-    </coverage>
-    <testsuites>
-        <testsuite name="Unit">
-            <directory suffix="TestCase.php">tests/Unit</directory>
-        </testsuite>
-        <testsuite name="Feature">
-            <directory suffix="TestCase.php">tests/Feature</directory>
-        </testsuite>
-        <testsuite name="Functional">
-            <directory suffix="TestCase.php">tests/Functional</directory>
-        </testsuite>
-    </testsuites>
-    <php>
-        <ini name="error_reporting" value="-1"/>
-        <ini name="memory_limit" value="-1"/>
-        <env name="TEMPORAL_ADDRESS" value="127.0.0.1:7233" />
-    </php>
+<testsuites>
+    <testsuite name="Unit">
+      <directory suffix="TestCase.php">tests/Unit</directory>
+    </testsuite>
+    <testsuite name="Feature">
+      <directory suffix="TestCase.php">tests/Feature</directory>
+    </testsuite>
+    <testsuite name="Functional">
+      <directory suffix="TestCase.php">tests/Functional</directory>
+    </testsuite>
+  </testsuites>
+  <php>
+    <ini name="error_reporting" value="-1"/>
+    <ini name="memory_limit" value="-1"/>
+    <env name="TEMPORAL_ADDRESS" value="127.0.0.1:7233"/>
+  </php>
+  <source>
+    <include>
+      <directory>src</directory>
+    </include>
+  </source>
 </phpunit>

@@ -17,7 +17,7 @@ use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Marshaller\Type\DetectableTypeInterface;
 use Temporal\Internal\Marshaller\TypeFactory;
-use Temporal\Tests\Unit\UnitTestCase;
+use Temporal\Tests\Unit\AbstractUnit;
 
 /**
  * @group unit
@@ -25,7 +25,7 @@ use Temporal\Tests\Unit\UnitTestCase;
  *
  * @psalm-import-type CallableTypeMatcher from TypeFactory
  */
-abstract class DTOMarshallingTestCase extends UnitTestCase
+abstract class AbstractDTOMarshalling extends AbstractUnit
 {
     /**
      * @var MarshallerInterface

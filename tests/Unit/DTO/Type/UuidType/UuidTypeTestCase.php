@@ -4,21 +4,20 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\DTO\Type\UuidType;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 use ReflectionClass;
 use Temporal\Internal\Marshaller\MarshallingRule;
 use Temporal\Internal\Marshaller\Type\NullableType;
 use Temporal\Internal\Marshaller\Type\UuidType;
-use Temporal\Tests\Unit\DTO\DTOMarshallingTestCase;
+use Temporal\Tests\Unit\DTO\AbstractDTOMarshalling;
 use Temporal\Tests\Unit\DTO\Type\UuidType\Stub\UuidObjectProp;
 use Temporal\Tests\Unit\Internal\Marshaller\Fixture\PropertyType;
 
-final class UuidTypeTestCase extends DTOMarshallingTestCase
+final class UuidTypeTestCase extends AbstractDTOMarshalling
 {
-    /**
-     * @dataProvider matchDataProvider
-     */
+    #[DataProvider('matchDataProvider')]
     public function testMatch(string $property, bool $expected): void
     {
         $this->assertSame(
@@ -27,9 +26,7 @@ final class UuidTypeTestCase extends DTOMarshallingTestCase
         );
     }
 
-    /**
-     * @dataProvider makeRuleDataProvider
-     */
+    #[DataProvider('makeRuleDataProvider')]
     public function testMakeRule(string $property, mixed $expected): void
     {
         $this->assertEquals(

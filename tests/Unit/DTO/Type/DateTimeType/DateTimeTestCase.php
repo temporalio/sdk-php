@@ -16,10 +16,10 @@ use Carbon\CarbonImmutable;
 use DateTime;
 use DateTimeImmutable;
 use Temporal\Internal\Marshaller\Type\DateTimeType;
-use Temporal\Tests\Unit\DTO\DTOMarshallingTestCase;
+use Temporal\Tests\Unit\DTO\AbstractDTOMarshalling;
 use Temporal\Tests\Unit\DTO\Type\DateTimeType\Stub\DateTimeDto;
 
-class DateTimeTestCase extends DTOMarshallingTestCase
+class DateTimeTestCase extends AbstractDTOMarshalling
 {
     public function testMarshal(): void
     {

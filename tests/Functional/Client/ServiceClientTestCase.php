@@ -20,7 +20,7 @@ use Temporal\Exception\Client\TimeoutException;
  * @group client
  * @group functional
  */
-class ServiceClientTestCase extends ClientTestCase
+class ServiceClientTestCase extends AbstractClient
 {
     public function testTimeoutException()
     {

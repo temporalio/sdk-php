@@ -6,13 +6,13 @@ namespace Temporal\Tests\Unit\WorkflowContext;
 
 use Temporal\Tests\Unit\Framework\WorkerFactoryMock;
 use Temporal\Tests\Unit\Framework\WorkerMock;
-use Temporal\Tests\Unit\UnitTestCase;
+use Temporal\Tests\Unit\AbstractUnit;
 use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Worker\WorkerInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 
-final class GetVersionTestCase extends UnitTestCase
+final class GetVersionTestCase extends AbstractUnit
 {
     private WorkerFactoryInterface $factory;
     /** @var WorkerMock|WorkerInterface */
