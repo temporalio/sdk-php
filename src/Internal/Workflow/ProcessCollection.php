@@ -20,10 +20,7 @@ use Temporal\Internal\Workflow\Process\Process;
  */
 class ProcessCollection extends ArrayRepository
 {
-    /**
-     * @var string
-     */
-    private const ERROR_PROCESS_NOT_DEFINED = 'Unable to kill workflow because workflow process #%s was not found';
+    private const ERROR_PROCESS_NOT_FOUND = 'Process #%s not found.';
 
     public function __construct()
     {
@@ -32,16 +29,14 @@ class ProcessCollection extends ArrayRepository
 
     /**
      * @param string $runId
+     * @param non-empty-string|null $error Error message if the process was not found.
      * @return Process
      */
-    public function pull(string $runId): Process
+    public function pull(string $runId, ?string $error = null): Process
     {
-        /** @var Process $process */
-        $process = $this->find($runId);
-
-        if ($process === null) {
-            throw new \InvalidArgumentException(\sprintf(self::ERROR_PROCESS_NOT_DEFINED, $runId));
-        }
+        $process = $this->find($runId) ?? throw new \InvalidArgumentException(
+            $error ?? \sprintf(self::ERROR_PROCESS_NOT_FOUND, $runId),
+        );
 
         $this->remove($runId);
 

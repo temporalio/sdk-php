@@ -14,19 +14,14 @@ namespace Temporal\Internal\Transport\Router;
 use React\Promise\Deferred;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\DestructMemorizedInstanceException;
-use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Internal\Support\GarbageCollector;
 use Temporal\Internal\Workflow\Process\Process;
+use Temporal\Internal\Workflow\ProcessCollection;
 use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 class DestroyWorkflow extends WorkflowProcessAwareRoute
 {
-    /**
-     * @var string
-     */
-    private const ERROR_PROCESS_NOT_DEFINED = 'Unable to kill workflow because workflow process #%s was not found';
-
     /** Maximum number of ticks before GC call. */
     private const GC_THRESHOLD = 1000;
     /** Interval between GC calls in seconds. */
@@ -35,7 +30,7 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
     private GarbageCollector $gc;
 
     public function __construct(
-        RepositoryInterface $running,
+        ProcessCollection $running,
         protected LoopInterface $loop
     ) {
         $this->gc = new GarbageCollector(self::GC_THRESHOLD, self::GC_TIMEOUT_SECONDS);
@@ -59,11 +54,12 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
     public function kill(string $runId): array
     {
         /** @var Process $process */
-        $process = $this->running->pull($runId);
+        $process = $this->running
+            ->pull($runId, "Unable to kill workflow because workflow process #$runId was not found");
 
         $process->cancel(new DestructMemorizedInstanceException());
         $this->loop->once(
-            'finally',
+            LoopInterface::ON_FINALLY,
             function () use ($process) {
                 $process->destroy();
 

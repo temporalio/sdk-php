@@ -1330,11 +1330,6 @@
       <code>$e</code>
     </UnusedClosureParam>
   </file>
-  <file src="src/Internal/Workflow/ProcessCollection.php">
-    <DocblockTypeContradiction>
-      <code>$process === null</code>
-    </DocblockTypeContradiction>
-  </file>
   <file src="src/Internal/Workflow/Proxy.php">
     <MissingReturnType>
       <code>__call</code>
