@@ -68,6 +68,7 @@ final class GetWorkerInfo extends Route
                 'Name'    => $workflow->getID(),
                 'Queries' => $this->keys($workflow->getQueryHandlers()),
                 'Signals' => $this->keys($workflow->getSignalHandlers()),
+                'Updates' => $this->keys($workflow->getUpdateHandlers()),
             ];
         };
 

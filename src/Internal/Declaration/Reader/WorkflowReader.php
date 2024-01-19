@@ -19,6 +19,7 @@ use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Workflow\QueryMethod;
 use Temporal\Workflow\ReturnType;
 use Temporal\Workflow\SignalMethod;
+use Temporal\Workflow\UpdateMethod;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
@@ -123,6 +124,24 @@ class WorkflowReader extends Reader
         foreach ($class->getMethods() as $ctx) {
             $contextClass = $ctx->getDeclaringClass();
 
+            /** @var UpdateMethod|null $signal */
+            $update = $this->getAttributedMethod($graph, $ctx, UpdateMethod::class);
+
+            if ($update !== null) {
+                // Validation
+                if (!$this->isValidMethod($ctx)) {
+                    throw new \LogicException(
+                        \vsprintf(self::ERROR_COMMON_METHOD_VISIBILITY, [
+                            'update',
+                            $contextClass->getName(),
+                            $ctx->getName(),
+                        ])
+                    );
+                }
+
+                $prototype->addUpdateHandler($signal->name ?? $ctx->getName(), $ctx);
+            }
+
             /** @var SignalMethod|null $signal */
             $signal = $this->getAttributedMethod($graph, $ctx, SignalMethod::class);
 
@@ -138,10 +157,7 @@ class WorkflowReader extends Reader
                     );
                 }
 
-                $prototype->addSignalHandler(
-                    $signal->name ?? $ctx->getName(),
-                    $ctx
-                );
+                $prototype->addSignalHandler($signal->name ?? $ctx->getName(), $ctx);
             }
 
             /** @var QueryMethod|null $query */
@@ -159,10 +175,7 @@ class WorkflowReader extends Reader
                     );
                 }
 
-                $prototype->addQueryHandler(
-                    $query->name ?? $ctx->getName(),
-                    $ctx
-                );
+                $prototype->addQueryHandler($query->name ?? $ctx->getName(), $ctx);
             }
         }
 

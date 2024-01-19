@@ -28,6 +28,11 @@ final class WorkflowPrototype extends Prototype
     private array $signalHandlers = [];
 
     /**
+     * @var array<non-empty-string, \ReflectionFunctionAbstract>
+     */
+    private array $updateHandlers = [];
+
+    /**
      * @var CronSchedule|null
      */
     private ?CronSchedule $cronSchedule = null;
@@ -108,7 +113,7 @@ final class WorkflowPrototype extends Prototype
     }
 
     /**
-     * @param string $name
+     * @param non-empty-string $name
      * @param \ReflectionFunctionAbstract $fun
      */
     public function addSignalHandler(string $name, \ReflectionFunctionAbstract $fun): void
@@ -122,5 +127,22 @@ final class WorkflowPrototype extends Prototype
     public function getSignalHandlers(): iterable
     {
         return $this->signalHandlers;
+    }
+
+    /**
+     * @param string $name
+     * @param \ReflectionFunctionAbstract $fun
+     */
+    public function addUpdateHandler(string $name, \ReflectionFunctionAbstract $fun): void
+    {
+        $this->updateHandlers[$name] = $fun;
+    }
+
+    /**
+     * @return iterable<non-empty-string, \ReflectionFunctionAbstract>
+     */
+    public function getUpdateHandlers(): iterable
+    {
+        return $this->updateHandlers;
     }
 }
