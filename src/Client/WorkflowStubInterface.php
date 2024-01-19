@@ -78,6 +78,13 @@ interface WorkflowStubInterface extends WorkflowRunInterface
     public function query(string $name, ...$args): ?EncodedValues;
 
     /**
+     * todo
+     * @param string $name
+     * @param ...mixed $args
+     */
+    public function update(string $name, ...$args): void;
+
+    /**
      * Request cancellation of a workflow execution.
      *
      * Cancellation cancels {@see CancellationScopeInterface} that wraps the

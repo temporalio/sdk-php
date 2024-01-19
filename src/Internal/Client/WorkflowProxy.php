@@ -87,6 +87,19 @@ final class WorkflowProxy extends Proxy
             }
         }
 
+        // Otherwise, we try to find a suitable workflow "update" method.
+        foreach ($this->prototype->getUpdateHandlers() as $name => $update) {
+            if ($update->getName() === $method) {
+                $result = $this->stub->update($name, ...$args);
+
+                if ($result === null) {
+                    return null;
+                }
+
+                return $result->getValue(0, $update->getReturnType());
+            }
+        }
+
         $class = $this->prototype->getClass();
 
         throw new \BadMethodCallException(
