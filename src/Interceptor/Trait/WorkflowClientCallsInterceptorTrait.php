@@ -19,6 +19,7 @@ use Temporal\Interceptor\WorkflowClient\SignalInput;
 use Temporal\Interceptor\WorkflowClient\SignalWithStartInput;
 use Temporal\Interceptor\WorkflowClient\StartInput;
 use Temporal\Interceptor\WorkflowClient\TerminateInput;
+use Temporal\Interceptor\WorkflowClient\UpdateInput;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Workflow\WorkflowExecution;
 
@@ -39,6 +40,14 @@ trait WorkflowClientCallsInterceptorTrait
      * @see WorkflowClientCallsInterceptor::signal()
      */
     public function signal(SignalInput $input, callable $next): void
+    {
+        $next($input);
+    }
+
+    /**
+     * @see WorkflowClientCallsInterceptor::update()
+     */
+    public function update(UpdateInput $input, callable $next): void
     {
         $next($input);
     }
