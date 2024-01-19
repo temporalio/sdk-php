@@ -23,6 +23,7 @@ use Temporal\Api\Workflowservice\V1\QueryWorkflowRequest;
 use Temporal\Api\Workflowservice\V1\RequestCancelWorkflowExecutionRequest;
 use Temporal\Api\Workflowservice\V1\SignalWorkflowExecutionRequest;
 use Temporal\Api\Workflowservice\V1\TerminateWorkflowExecutionRequest;
+use Temporal\Api\Workflowservice\V1\UpdateWorkflowExecutionRequest;
 use Temporal\Client\ClientOptions;
 use Temporal\Client\GRPC\Context;
 use Temporal\Client\GRPC\ServiceClientInterface;
@@ -53,9 +54,11 @@ use Temporal\Interceptor\WorkflowClient\GetResultInput;
 use Temporal\Interceptor\WorkflowClient\QueryInput;
 use Temporal\Interceptor\WorkflowClient\SignalInput;
 use Temporal\Interceptor\WorkflowClient\TerminateInput;
+use Temporal\Interceptor\WorkflowClient\UpdateInput;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Internal\Interceptor\HeaderCarrier;
 use Temporal\Internal\Interceptor\Pipeline;
+use Temporal\Workflow\Update\WaitPolicy;
 use Temporal\Workflow\WorkflowExecution;
 
 final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
@@ -245,6 +248,83 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
             $this->workflowType,
             $name,
             EncodedValues::fromValues($args, $this->converter),
+        ));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function update(string $name, ...$args): ?EncodedValues
+    {
+        $this->assertStarted(__FUNCTION__);
+
+        $serviceClient = $this->serviceClient;
+        $converter = $this->converter;
+        $clientOptions = $this->clientOptions;
+
+        return $this->interceptors->with(
+            static function (UpdateInput $input) use ($serviceClient, $converter, $clientOptions): ?EncodedValues {
+                $request = (new UpdateWorkflowExecutionRequest())
+                    ->setNamespace($clientOptions->namespace)
+                    ->setWorkflowExecution($input->workflowExecution->toProtoWorkflowExecution())
+                    ->setRequest($r = new \Temporal\Api\Update\V1\Request());
+                    /** todo {@see WaitPolicy} */
+                    // ->setWaitPolicy()
+                    // ->setFirstExecutionRunId()
+
+                // Configure Meta
+                $meta = new \Temporal\Api\Update\V1\Meta();
+                $meta->setIdentity($clientOptions->identity);
+                // $meta->setUpdateId(...);
+                $r->setMeta($meta);
+
+                // Configure update Input
+                $i = new \Temporal\Api\Update\V1\Input();
+                $i->setName($input->updateType);
+                $input->arguments->isEmpty() or $i->setArgs($input->arguments->toPayloads());
+                $input->header->isEmpty() or $i->setHeader($input->header->toHeader());
+                $r->setInput($i);
+
+                try {
+                    $result = $serviceClient->UpdateWorkflowExecution($request);
+                } catch (ServiceClientException $e) {
+                    if ($e->getCode() === StatusCode::NOT_FOUND) {
+                        throw new WorkflowNotFoundException(null, $input->workflowExecution, $input->workflowType, $e);
+                    }
+
+                    if ($e->getFailure(QueryFailedFailure::class) !== null) {
+                        throw new WorkflowQueryException(null, $input->workflowExecution, $input->workflowType, $e);
+                    }
+
+                    throw new WorkflowServiceException(null, $input->workflowExecution, $input->workflowType, $e);
+                } catch (\Throwable $e) {
+                    throw new WorkflowServiceException(null, $input->workflowExecution, $input->workflowType, $e);
+                }
+
+                if (!$result->hasQueryRejected()) {
+                    if (!$result->hasQueryResult()) {
+                        return null;
+                    }
+
+                    return EncodedValues::fromPayloads($result->getQueryResult(), $converter);
+                }
+
+                throw new WorkflowQueryRejectedException(
+                    $input->workflowExecution,
+                    $input->workflowType,
+                    $clientOptions->queryRejectionCondition,
+                    $result->getQueryRejected()->getStatus(),
+                    null
+                );
+            },
+            /** @see WorkflowClientCallsInterceptor::update() */
+            'update',
+        )(new UpdateInput(
+            $this->getExecution(),
+            $this->workflowType,
+            $name,
+            EncodedValues::fromValues($args, $this->converter),
+            Header::empty(),
         ));
     }
 

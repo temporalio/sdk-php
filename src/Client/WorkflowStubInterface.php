@@ -82,7 +82,7 @@ interface WorkflowStubInterface extends WorkflowRunInterface
      * @param string $name
      * @param ...mixed $args
      */
-    public function update(string $name, ...$args): void;
+    public function update(string $name, ...$args): ?EncodedValues;
 
     /**
      * Request cancellation of a workflow execution.

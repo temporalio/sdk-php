@@ -10,6 +10,7 @@
 namespace Temporal\Interceptor\WorkflowClient;
 
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Interceptor\HeaderInterface;
 use Temporal\Workflow\WorkflowExecution;
 
 /**
@@ -26,19 +27,22 @@ class UpdateInput
         public readonly ?string $workflowType,
         public readonly string $updateType,
         public readonly ValuesInterface $arguments,
+        public readonly HeaderInterface $header,
     ) {
     }
 
     public function with(
-        WorkflowExecution $workflowExecution = null,
-        string $updateType = null,
-        ValuesInterface $arguments = null,
+        ?WorkflowExecution $workflowExecution = null,
+        ?string $updateType = null,
+        ?ValuesInterface $arguments = null,
+        ?HeaderInterface $header = null,
     ): self {
         return new self(
             $workflowExecution ?? $this->workflowExecution,
             $this->workflowType,
             $updateType ?? $this->updateType,
             $arguments ?? $this->arguments,
+            $header ?? $this->header,
         );
     }
 }
