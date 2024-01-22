@@ -22,6 +22,7 @@ use Temporal\Interceptor\WorkflowClient\StartInput;
 use Temporal\Interceptor\WorkflowClient\TerminateInput;
 use Temporal\Interceptor\WorkflowClient\UpdateInput;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
+use Temporal\Workflow\Update\StartUpdateOutput;
 use Temporal\Workflow\WorkflowExecution;
 
 /**
@@ -48,7 +49,7 @@ trait WorkflowClientCallsInterceptorTrait
     /**
      * @see WorkflowClientCallsInterceptor::update()
      */
-    public function update(UpdateInput $input, callable $next): ?ValuesInterface
+    public function update(UpdateInput $input, callable $next): StartUpdateOutput
     {
         return $next($input);
     }

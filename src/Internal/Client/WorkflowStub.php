@@ -59,6 +59,7 @@ use Temporal\Interceptor\WorkflowClient\UpdateInput;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Internal\Interceptor\HeaderCarrier;
 use Temporal\Internal\Interceptor\Pipeline;
+use Temporal\Workflow\Update\StartUpdateOutput;
 use Temporal\Workflow\Update\WaitPolicy;
 use Temporal\Workflow\WorkflowExecution;
 
@@ -255,7 +256,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
     /**
      * {@inheritDoc}
      */
-    public function update(string $name, ...$args): ?EncodedValues
+    public function update(string $name, ...$args): StartUpdateOutput
     {
         $this->assertStarted(__FUNCTION__);
 
@@ -264,14 +265,15 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
         $clientOptions = $this->clientOptions;
 
         return $this->interceptors->with(
-            static function (UpdateInput $input) use ($serviceClient, $converter, $clientOptions): ?EncodedValues {
+            static function (UpdateInput $input) use ($serviceClient, $converter, $clientOptions): StartUpdateOutput {
                 $request = (new UpdateWorkflowExecutionRequest())
                     ->setNamespace($clientOptions->namespace)
                     ->setWorkflowExecution($input->workflowExecution->toProtoWorkflowExecution())
-                    ->setRequest($r = new \Temporal\Api\Update\V1\Request());
-                    /** todo {@see WaitPolicy} */
-                    // ->setWaitPolicy()
-                    // ->setFirstExecutionRunId()
+                    ->setRequest($r = new \Temporal\Api\Update\V1\Request())
+                    /** todo marshal {@see WaitPolicy} */
+                    // ->setWaitPolicy($input->waitPolicy)
+                    ->setFirstExecutionRunId((string)$input->firstExecutionRunId)
+                ;
 
                 // Configure Meta
                 $meta = new \Temporal\Api\Update\V1\Meta();
@@ -281,7 +283,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
 
                 // Configure update Input
                 $i = new \Temporal\Api\Update\V1\Input();
-                $i->setName($input->updateType);
+                $i->setName($input->updateName);
                 $input->arguments->setDataConverter($converter);
                 $input->arguments->isEmpty() or $i->setArgs($input->arguments->toPayloads());
                 $input->header->isEmpty() or $i->setHeader($input->header->toHeader());
@@ -303,15 +305,18 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
 
                 if ($outcome === null) {
                     // Not completed
-                    // todo
+                    return new StartUpdateOutput($result->getUpdateRef(), false, null);
                 }
 
                 $failure = $outcome->getFailure();
                 $success = $outcome->getSuccess();
 
                 if ($success !== null) {
-                    // todo
-                    return null;
+                    return new StartUpdateOutput(
+                        $result->getUpdateRef(),
+                        true,
+                        EncodedValues::fromPayloads($success, $converter),
+                    );
                 }
 
                 if ($failure !== null) {
@@ -322,7 +327,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                             ? $input->workflowExecution
                             : new WorkflowExecution($execution->getWorkflowId(), $execution->getRunId()),
                         updateId: $result->getUpdateRef()?->getUpdateId(),
-                        updateName: $input->updateType,
+                        updateName: $input->updateName,
                         previous: FailureConverter::mapFailureToException($failure, $converter),
                     );
                 }
@@ -340,6 +345,8 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
             $name,
             EncodedValues::fromValues($args, $this->converter),
             Header::empty(),
+            WaitPolicy::new(),
+            null,
         ));
     }
 

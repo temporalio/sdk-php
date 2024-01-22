@@ -15,6 +15,7 @@ use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\IllegalStateException;
 use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\QueryMethod;
+use Temporal\Workflow\Update\StartUpdateOutput;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowRunInterface;
 
@@ -82,7 +83,7 @@ interface WorkflowStubInterface extends WorkflowRunInterface
      * @param string $name
      * @param ...mixed $args
      */
-    public function update(string $name, ...$args): ?EncodedValues;
+    public function update(string $name, ...$args): StartUpdateOutput;
 
     /**
      * Request cancellation of a workflow execution.
