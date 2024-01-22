@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Interceptor\Trait;
 
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\WorkflowClient\CancelInput;
 use Temporal\Interceptor\WorkflowClient\GetResultInput;
 use Temporal\Interceptor\WorkflowClient\QueryInput;
@@ -47,9 +48,9 @@ trait WorkflowClientCallsInterceptorTrait
     /**
      * @see WorkflowClientCallsInterceptor::update()
      */
-    public function update(UpdateInput $input, callable $next): void
+    public function update(UpdateInput $input, callable $next): ?ValuesInterface
     {
-        $next($input);
+        return $next($input);
     }
 
     /**

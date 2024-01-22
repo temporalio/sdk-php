@@ -41,6 +41,7 @@ use Temporal\Exception\Client\WorkflowNotFoundException;
 use Temporal\Exception\Client\WorkflowQueryException;
 use Temporal\Exception\Client\WorkflowQueryRejectedException;
 use Temporal\Exception\Client\WorkflowServiceException;
+use Temporal\Exception\Client\WorkflowUpdateException;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Exception\Failure\TerminatedFailure;
@@ -281,6 +282,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                 // Configure update Input
                 $i = new \Temporal\Api\Update\V1\Input();
                 $i->setName($input->updateType);
+                $input->arguments->setDataConverter($converter);
                 $input->arguments->isEmpty() or $i->setArgs($input->arguments->toPayloads());
                 $input->header->isEmpty() or $i->setHeader($input->header->toHeader());
                 $r->setInput($i);
@@ -292,30 +294,43 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                         throw new WorkflowNotFoundException(null, $input->workflowExecution, $input->workflowType, $e);
                     }
 
-                    if ($e->getFailure(QueryFailedFailure::class) !== null) {
-                        throw new WorkflowQueryException(null, $input->workflowExecution, $input->workflowType, $e);
-                    }
-
-                    throw new WorkflowServiceException(null, $input->workflowExecution, $input->workflowType, $e);
+                    throw WorkflowServiceException::withoutMessage($input->workflowExecution, $input->workflowType, $e);
                 } catch (\Throwable $e) {
                     throw new WorkflowServiceException(null, $input->workflowExecution, $input->workflowType, $e);
                 }
 
-                if (!$result->hasQueryRejected()) {
-                    if (!$result->hasQueryResult()) {
-                        return null;
-                    }
+                $outcome = $result->getOutcome();
 
-                    return EncodedValues::fromPayloads($result->getQueryResult(), $converter);
+                if ($outcome === null) {
+                    // Not completed
+                    // todo
                 }
 
-                throw new WorkflowQueryRejectedException(
-                    $input->workflowExecution,
-                    $input->workflowType,
-                    $clientOptions->queryRejectionCondition,
-                    $result->getQueryRejected()->getStatus(),
-                    null
-                );
+                $failure = $outcome->getFailure();
+                $success = $outcome->getSuccess();
+
+                if ($success !== null) {
+                    // todo
+                    return null;
+                }
+
+                if ($failure !== null) {
+                    $execution = $result->getUpdateRef()?->getWorkflowExecution();
+                    throw new WorkflowUpdateException(
+                        null,
+                        $execution === null
+                            ? $input->workflowExecution
+                            : new WorkflowExecution($execution->getWorkflowId(), $execution->getRunId()),
+                        updateId: $result->getUpdateRef()?->getUpdateId(),
+                        updateName: $input->updateType,
+                        previous: FailureConverter::mapFailureToException($failure, $converter),
+                    );
+                }
+
+                throw new \RuntimeException(\sprintf(
+                    'Received unexpected outcome from update request: %s',
+                    $outcome->getValue()
+                ));
             },
             /** @see WorkflowClientCallsInterceptor::update() */
             'update',

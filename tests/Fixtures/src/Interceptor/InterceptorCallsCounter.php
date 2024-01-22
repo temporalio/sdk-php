@@ -16,6 +16,7 @@ use Temporal\DataConverter\EncodedValues;
 use Temporal\Interceptor\ActivityInbound\ActivityInput;
 use Temporal\Interceptor\ActivityInboundInterceptor;
 use Temporal\Interceptor\HeaderInterface;
+use Temporal\Interceptor\Trait\WorkflowClientCallsInterceptorTrait;
 use Temporal\Interceptor\WorkflowClient\CancelInput;
 use Temporal\Interceptor\WorkflowClient\GetResultInput;
 use Temporal\Interceptor\WorkflowClient\SignalWithStartInput;
@@ -44,6 +45,8 @@ final class InterceptorCallsCounter implements
     WorkflowInboundCallsInterceptor,
     WorkflowClientCallsInterceptor
 {
+    use WorkflowClientCallsInterceptorTrait;
+
     private function increment(HeaderInterface $header, string $key): HeaderInterface
     {
         $value = $header->getValue($key);
