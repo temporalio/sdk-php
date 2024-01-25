@@ -16,6 +16,7 @@ use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\SignalInput;
+use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\WorkflowInstance;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
@@ -49,13 +50,31 @@ class Process extends Scope implements ProcessInterface
         $wfInstance = $this->getWorkflowInstance();
         \assert($wfInstance instanceof WorkflowInstance);
 
-        // Configure query signal handler
+        // Configure query handler
         $wfInstance->setQueryExecutor(function (QueryInput $input, callable $handler): mixed {
             try {
                 $context = $this->scopeContext->withInput(
                     new Input(
                         $this->scopeContext->getInfo(),
                         $input->arguments,
+                    )
+                );
+                Workflow::setCurrentContext($context);
+
+                return $handler($input->arguments);
+            } finally {
+                Workflow::setCurrentContext(null);
+            }
+        });
+
+        // Configure update handler
+        $wfInstance->setUpdateExecutor(function (UpdateInput $input, callable $handler): mixed {
+            try {
+                $context = $this->scopeContext->withInput(
+                    new Input(
+                        $this->scopeContext->getInfo(),
+                        $input->arguments,
+                        $input->header,
                     )
                 );
                 Workflow::setCurrentContext($context);

@@ -12,18 +12,16 @@ declare(strict_types=1);
 namespace Temporal\Tests\Interceptor;
 
 use React\Promise\PromiseInterface;
-use Temporal\DataConverter\EncodedValues;
 use Temporal\Interceptor\ActivityInbound\ActivityInput;
 use Temporal\Interceptor\ActivityInboundInterceptor;
 use Temporal\Interceptor\HeaderInterface;
+use Temporal\Interceptor\Trait\ActivityInboundInterceptorTrait;
 use Temporal\Interceptor\Trait\WorkflowClientCallsInterceptorTrait;
-use Temporal\Interceptor\WorkflowClient\CancelInput;
-use Temporal\Interceptor\WorkflowClient\GetResultInput;
+use Temporal\Interceptor\Trait\WorkflowInboundCallsInterceptorTrait;
+use Temporal\Interceptor\Trait\WorkflowOutboundRequestInterceptorTrait;
 use Temporal\Interceptor\WorkflowClient\SignalWithStartInput;
 use Temporal\Interceptor\WorkflowClient\StartInput;
-use Temporal\Interceptor\WorkflowClient\TerminateInput;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
-use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
 use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
@@ -45,6 +43,9 @@ final class InterceptorCallsCounter implements
     WorkflowInboundCallsInterceptor,
     WorkflowClientCallsInterceptor
 {
+    use WorkflowOutboundRequestInterceptorTrait;
+    use ActivityInboundInterceptorTrait;
+    use WorkflowInboundCallsInterceptorTrait;
     use WorkflowClientCallsInterceptorTrait;
 
     private function increment(HeaderInterface $header, string $key): HeaderInterface
@@ -76,19 +77,9 @@ final class InterceptorCallsCounter implements
         $next($input->with(header: $this->increment($input->header, __FUNCTION__)));
     }
 
-    public function handleQuery(QueryInput $input, callable $next): mixed
-    {
-        return $next($input);
-    }
-
     public function start(StartInput $input, callable $next): WorkflowExecution
     {
         return $next($input->with(header: $this->increment($input->header, __FUNCTION__)));
-    }
-
-    public function signal(\Temporal\Interceptor\WorkflowClient\SignalInput $input, callable $next): void
-    {
-        $next($input);
     }
 
     public function signalWithStart(SignalWithStartInput $input, callable $next): WorkflowExecution
@@ -100,25 +91,5 @@ final class InterceptorCallsCounter implements
                 ),
             ),
         );
-    }
-
-    public function getResult(GetResultInput $input, callable $next): ?EncodedValues
-    {
-        return $next($input);
-    }
-
-    public function query(\Temporal\Interceptor\WorkflowClient\QueryInput $input, callable $next): ?EncodedValues
-    {
-        return $next($input);
-    }
-
-    public function cancel(CancelInput $input, callable $next): void
-    {
-        $next($input);
-    }
-
-    public function terminate(TerminateInput $input, callable $next): void
-    {
-        $next($input);
     }
 }

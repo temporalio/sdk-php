@@ -19,15 +19,19 @@ use Temporal\Tests\Workflow\UpdateWorkflow;
  */
 class UpdateTestCase extends AbstractClient
 {
-    public function testUuidPassedAndReturned(): void
+    public function testSimpleCase(): void
     {
         $client = $this->createClient();
         $workflow = $client->newWorkflowStub(UpdateWorkflow::class);
 
-        $run = $client->start($workflow);
-        $workflow->addName('John Doe');
-        $workflow->exit();
-        $result = $run->getResult();
+        try {
+            $run = $client->start($workflow);
+            $workflow->addName('John Doe');
+            $workflow->exit();
+            $result = $run->getResult();
+        } finally {
+            $workflow->exit();
+        }
 
         $this->assertSame(['Hello, John Doe!'], $result);
     }

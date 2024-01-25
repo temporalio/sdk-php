@@ -43,7 +43,7 @@ class UpdateWorkflow
         $this->greetings[] = sprintf('Hello, %s!', $name);
     }
 
-    #[Workflow\UpdateMethod]
+    #[Workflow\SignalMethod]
     public function exit(): void
     {
         $this->exit = true;

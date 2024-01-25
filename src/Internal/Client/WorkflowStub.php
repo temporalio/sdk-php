@@ -270,8 +270,10 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                     ->setNamespace($clientOptions->namespace)
                     ->setWorkflowExecution($input->workflowExecution->toProtoWorkflowExecution())
                     ->setRequest($r = new \Temporal\Api\Update\V1\Request())
-                    /** todo marshal {@see WaitPolicy} */
-                    // ->setWaitPolicy($input->waitPolicy)
+                    ->setWaitPolicy(
+                        (new \Temporal\Api\Update\V1\WaitPolicy())
+                            ->setLifecycleStage($input->waitPolicy->lifecycleStage->value)
+                    )
                     ->setFirstExecutionRunId((string)$input->firstExecutionRunId)
                 ;
 

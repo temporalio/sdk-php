@@ -13,37 +13,23 @@ namespace Temporal\Internal\Transport\Router;
 
 use JetBrains\PhpStorm\Pure;
 use React\Promise\Deferred;
-use Temporal\DataConverter\EncodedValues;
-use Temporal\Interceptor\WorkflowInbound\QueryInput;
+use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Worker\LoopInterface;
-use Temporal\Workflow;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
+use Temporal\Workflow;
+use Temporal\Workflow\Update\UpdateResult;
 
-final class InvokeQuery extends WorkflowProcessAwareRoute
+final class InvokeUpdate extends WorkflowProcessAwareRoute
 {
-    /**
-     * @var string
-     */
-    private const ERROR_QUERY_NOT_FOUND = 'unknown queryType %s. KnownQueryTypes=[%s]';
+    private const ERROR_HANDLER_NOT_FOUND = 'unknown updateName %s. KnownUpdateNames=[%s]';
 
-    /**
-     * @var LoopInterface
-     */
-    private LoopInterface $loop;
-
-    /**
-     * @param RepositoryInterface $running
-     * @param LoopInterface $loop
-     */
     #[Pure]
     public function __construct(
         RepositoryInterface $running,
-        LoopInterface $loop,
+        private LoopInterface $loop,
     ) {
-        $this->loop = $loop;
-
         parent::__construct($running);
     }
 
@@ -52,6 +38,16 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
      */
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
+        $type = $request->getOptions()['type'] ?? null;
+        if ($type === 'validate') {
+            $resolver->resolve(new UpdateResult(
+                status: 'InvokeUpdate',
+                options: \array_intersect_key($request->getOptions(), ['updateId' => true])
+            ));
+
+            return;
+        }
+
         $name = $request->getOptions()['name'];
         $process = $this->findProcessOrFail($request->getID());
         $context = $process->getContext();
@@ -59,7 +55,7 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
         $handler = $this->findQueryHandlerOrFail($instance, $name);
 
         $this->loop->once(
-            LoopInterface::ON_QUERY,
+            LoopInterface::ON_SIGNAL,
             static function () use ($name, $request, $resolver, $handler, $context): void {
                 try {
                     // Define Context for interceptors Pipeline
@@ -68,8 +64,18 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
                     /** @psalm-suppress InaccessibleProperty */
                     $context->getInfo()->historyLength = $request->getHistoryLength();
 
-                    $result = $handler(new QueryInput($name, $request->getPayloads()));
-                    $resolver->resolve(EncodedValues::fromValues([$result]));
+                    // todo Header from request?
+                    $result = $handler(new UpdateInput(
+                        signalName: $name,
+                        info: $context->getInfo(),
+                        arguments: $request->getPayloads(),
+                        header: $context->getHeader()),
+                    );
+                    $resolver->resolve(new UpdateResult(
+                        status: 'InvokeUpdate',
+                        result: $result,
+                        options: \array_intersect_key($request->getOptions(), ['updateId' => true])
+                    ));
                 } catch (\Throwable $e) {
                     $resolver->reject($e);
                 }
@@ -84,12 +90,12 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
      */
     private function findQueryHandlerOrFail(WorkflowInstanceInterface $instance, string $name): ?\Closure
     {
-        $handler = $instance->findQueryHandler($name);
+        $handler = $instance->findUpdateHandler($name);
 
         if ($handler === null) {
-            $available = \implode(' ', $instance->getQueryHandlerNames());
+            $available = \implode(' ', $instance->getUpdateHandlerNames());
 
-            throw new \LogicException(\sprintf(self::ERROR_QUERY_NOT_FOUND, $name, $available));
+            throw new \LogicException(\sprintf(self::ERROR_HANDLER_NOT_FOUND, $name, $available));
         }
 
         return $handler;

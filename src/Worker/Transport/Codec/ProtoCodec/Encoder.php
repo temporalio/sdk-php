@@ -19,6 +19,7 @@ use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\FailureResponseInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\SuccessResponseInterface;
+use Temporal\Worker\Transport\Command\UpdateResponse;
 
 /**
  * @codeCoverageIgnore tested via roadrunner-temporal repository.
@@ -82,6 +83,17 @@ class Encoder
                 \is_int($cmd->getID()) and $msg->setId($cmd->getID());
                 $cmd->getPayloads()->setDataConverter($this->converter);
                 $msg->setPayloads($cmd->getPayloads()->toPayloads());
+
+                return $msg;
+
+            case $cmd instanceof UpdateResponse:
+                \is_int($cmd->getID()) and $msg->setId($cmd->getID());
+                $msg->setCommand('InvokeUpdate');
+                $msg->setOptions(\json_encode($cmd->getOptions()));
+
+                if ($cmd->getFailure() !== null) {
+                    $msg->setFailure(FailureConverter::mapExceptionToFailure($cmd->getFailure(), $this->converter));
+                }
 
                 return $msg;
 

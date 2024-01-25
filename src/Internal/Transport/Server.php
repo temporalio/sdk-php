@@ -17,6 +17,8 @@ use Temporal\Worker\Transport\Command\FailureResponse;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Temporal\Worker\Transport\Command\SuccessResponse;
+use Temporal\Worker\Transport\Command\UpdateResponse;
+use Temporal\Workflow\Update\UpdateResult;
 
 /**
  * @psalm-import-type OnMessageHandler from ServerInterface
@@ -80,7 +82,18 @@ final class Server implements ServerInterface
     private function onFulfilled(ServerRequestInterface $request): \Closure
     {
         return function ($result) use ($request) {
-            $response = new SuccessResponse($result, $request->getID());
+            if ($result::class === UpdateResult::class) {
+                $response = new UpdateResponse(
+                    status: $result->status,
+                    values: $result->result,
+                    failure: $result->error,
+                    id: $request->getID(),
+                    options: $result->options,
+                );
+            } else {
+                $response = new SuccessResponse($result, $request->getID());
+            }
+
             $this->queue->push($response);
 
             return $response;
