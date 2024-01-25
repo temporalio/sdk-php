@@ -25,6 +25,7 @@ use Temporal\Internal\Interceptor;
  * @psalm-type QueryHandler = \Closure(QueryInput): mixed
  * @psalm-type QueryExecutor = \Closure(QueryInput, callable(ValuesInterface): mixed): mixed
  * @psalm-type UpdateExecutor = \Closure(UpdateInput, callable(ValuesInterface): mixed): mixed
+ * @psalm-type UpdateValidator = \Closure(UpdateInput, callable(ValuesInterface): mixed): void
  */
 final class WorkflowInstance extends Instance implements WorkflowInstanceInterface, Destroyable
 {
@@ -49,6 +50,8 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
 
     /** @var UpdateExecutor */
     private \Closure $updateExecutor;
+    /** @var UpdateValidator */
+    private \Closure $updateValidator;
 
     /**
      * @param WorkflowPrototype $prototype
@@ -71,13 +74,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
 
         foreach ($prototype->getUpdateHandlers() as $method => $reflection) {
             $fn = $this->createHandler($reflection);
-            $this->updateHandlers[$method] = $this->pipeline->with(
-                function (UpdateInput $input) use ($fn) {
-                    return ($this->updateExecutor)($input, $fn);
-                },
-                /** @see WorkflowInboundCallsInterceptor::handleUpdate() */
-                'handleUpdate',
-            )(...);
+            $this->updateHandlers[$method] = fn(UpdateInput $input) => ($this->updateExecutor)($input, $fn);
         }
 
         foreach ($prototype->getQueryHandlers() as $method => $reflection) {
@@ -109,6 +106,15 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     public function setUpdateExecutor(\Closure $executor): self
     {
         $this->updateExecutor = $executor;
+        return $this;
+    }
+
+    /**
+     * @param UpdateValidator $validator
+     */
+    public function setUpdateValidator(\Closure $validator): self
+    {
+        $this->updateValidator = $validator;
         return $this;
     }
 
@@ -159,13 +165,13 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     {
         $fn = $this->createCallableHandler($handler);
 
-        $this->queryHandlers[$name] = \Closure::fromCallable($this->pipeline->with(
+        $this->queryHandlers[$name] = $this->pipeline->with(
             function (QueryInput $input) use ($fn) {
                 return ($this->queryExecutor)($input, $fn);
             },
             /** @see WorkflowInboundCallsInterceptor::handleQuery() */
             'handleQuery',
-        ));
+        )(...);
     }
 
     /**

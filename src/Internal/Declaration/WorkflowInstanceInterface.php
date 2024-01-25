@@ -44,7 +44,7 @@ interface WorkflowInstanceInterface extends InstanceInterface
 
     /**
      * @param non-empty-string $name
-     * @return \Closure|null
+     * @return \Closure
      */
     public function findUpdateHandler(string $name): ?\Closure;
 

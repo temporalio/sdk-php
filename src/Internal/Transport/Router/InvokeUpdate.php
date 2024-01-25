@@ -18,7 +18,6 @@ use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
-use Temporal\Workflow;
 use Temporal\Workflow\Update\UpdateResult;
 
 final class InvokeUpdate extends WorkflowProcessAwareRoute
@@ -40,11 +39,7 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
     {
         $type = $request->getOptions()['type'] ?? null;
         if ($type === 'validate') {
-            $resolver->resolve(new UpdateResult(
-                status: 'InvokeUpdate',
-                options: \array_intersect_key($request->getOptions(), ['updateId' => true])
-            ));
-
+            $this->validateUpdate($request, $headers, $resolver);
             return;
         }
 
@@ -54,33 +49,30 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
         $instance = $process->getWorkflowInstance();
         $handler = $this->findQueryHandlerOrFail($instance, $name);
 
-        $this->loop->once(
-            LoopInterface::ON_SIGNAL,
-            static function () use ($name, $request, $resolver, $handler, $context): void {
-                try {
-                    // Define Context for interceptors Pipeline
-                    Workflow::setCurrentContext($context);
+        /** @psalm-suppress InaccessibleProperty */
+        $context->getInfo()->historyLength = $request->getHistoryLength();
 
-                    /** @psalm-suppress InaccessibleProperty */
-                    $context->getInfo()->historyLength = $request->getHistoryLength();
+        try {
+            $result = $handler(new UpdateInput(
+                signalName: $name,
+                info: $context->getInfo(),
+                arguments: $request->getPayloads(),
+                // todo Header from request
+                header: $context->getHeader(),
+            ));
 
-                    // todo Header from request?
-                    $result = $handler(new UpdateInput(
-                        signalName: $name,
-                        info: $context->getInfo(),
-                        arguments: $request->getPayloads(),
-                        header: $context->getHeader()),
-                    );
-                    $resolver->resolve(new UpdateResult(
-                        status: 'InvokeUpdate',
-                        result: $result,
-                        options: \array_intersect_key($request->getOptions(), ['updateId' => true])
-                    ));
-                } catch (\Throwable $e) {
-                    $resolver->reject($e);
-                }
-            },
-        );
+            $resolver->resolve(new UpdateResult(
+                status: UpdateResult::COMPLETE,
+                result: $result,
+                options: \array_intersect_key($request->getOptions(), ['updateId' => true])
+            ));
+        } catch (\Throwable $e) {
+            $resolver->reject(new UpdateResult(
+                status: UpdateResult::ERROR_COMPLETE,
+                error: $e,
+                options: \array_intersect_key($request->getOptions(), ['updateId' => true])
+            ));
+        }
     }
 
     /**
@@ -99,5 +91,14 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
         }
 
         return $handler;
+    }
+
+    private function validateUpdate(ServerRequestInterface $request, array $headers, Deferred $resolver): void
+    {
+        // todo validate in a immutable scope
+        $resolver->resolve(new UpdateResult(
+            status: UpdateResult::ACCEPT,
+            options: \array_intersect_key($request->getOptions(), ['updateId' => true]),
+        ));
     }
 }

@@ -50,7 +50,7 @@ class Process extends Scope implements ProcessInterface
         $wfInstance = $this->getWorkflowInstance();
         \assert($wfInstance instanceof WorkflowInstance);
 
-        // Configure query handler
+        // Configure query handler in an immutable scope
         $wfInstance->setQueryExecutor(function (QueryInput $input, callable $handler): mixed {
             try {
                 $context = $this->scopeContext->withInput(
@@ -67,8 +67,8 @@ class Process extends Scope implements ProcessInterface
             }
         });
 
-        // Configure update handler
-        $wfInstance->setUpdateExecutor(function (UpdateInput $input, callable $handler): mixed {
+        // Configure update validator in an immutable scope
+        $wfInstance->setUpdateValidator(function (UpdateInput $input, callable $handler): mixed {
             try {
                 $context = $this->scopeContext->withInput(
                     new Input(
@@ -78,6 +78,42 @@ class Process extends Scope implements ProcessInterface
                     )
                 );
                 Workflow::setCurrentContext($context);
+
+                return $handler($input->arguments);
+            } finally {
+                Workflow::setCurrentContext(null);
+            }
+        });
+
+        // Configure update handler in a mutable scope
+        $wfInstance->setUpdateExecutor(function (UpdateInput $input, callable $handler) use ($inboundPipeline): mixed {
+            try {
+                // Define Context for interceptors Pipeline
+                Workflow::setCurrentContext($this->scopeContext);
+
+                $inboundPipeline->with(
+                    function (UpdateInput $input) use ($handler) {
+                        $this->createScope(
+                            true,
+                            LoopInterface::ON_SIGNAL,
+                            $this->context->withInput(
+                                new Input($input->info, $input->arguments, $input->header),
+                            ),
+                        )->onClose(
+                            function (?\Throwable $error): void {
+                                if ($error !== null) {
+                                    // we want to fail process when update execute scope fails
+                                    $this->complete($error);
+                                }
+                            }
+                        )->startSignal( // todo rename ??
+                            $handler,
+                            $input->arguments,
+                        );
+                    },
+                    /** @see WorkflowInboundCallsInterceptor::handleUpdate() */
+                    'handleUpdate',
+                )($input);
 
                 return $handler($input->arguments);
             } finally {
