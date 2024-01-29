@@ -22,7 +22,7 @@ final class Reflection
      */
     public static function orderArguments(\ReflectionFunctionAbstract $method, array $args): array
     {
-        if (\array_is_list($args) || \count($args) === 0) {
+        if ($args === [] || \array_is_list($args)) {
             return $args;
         }
 
@@ -33,7 +33,7 @@ final class Reflection
 
             if (\array_key_exists($name, $args)) {
                 $finalArgs[] = $args[$name];
-            } else if ($parameter->isDefaultValueAvailable()) {
+            } elseif ($parameter->isDefaultValueAvailable()) {
                 $finalArgs[] = $parameter->getDefaultValue();
             } else {
                 throw new InvalidArgumentException("Missing argument `$name`.");
