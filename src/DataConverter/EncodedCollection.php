@@ -24,7 +24,7 @@ use Traversable;
  *
  * @implements IteratorAggregate<TKey, TValue>
  */
-class EncodedCollection implements IteratorAggregate
+class EncodedCollection implements IteratorAggregate, Countable
 {
     /**
      * @var DataConverterInterface|null

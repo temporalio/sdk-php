@@ -8,7 +8,7 @@ use Generator;
 use PHPUnit\Framework\TestCase;
 use Temporal\Client\Paginator;
 
-final class PaginatorTest extends TestCase
+final class PaginatorTestCase extends TestCase
 {
     public function testNextPage(): void
     {

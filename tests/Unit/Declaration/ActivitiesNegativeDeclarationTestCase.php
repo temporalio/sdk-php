@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Declaration;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\TestDox;
 use Temporal\Internal\Declaration\Reader\ActivityReader;
 use Temporal\Tests\Unit\Declaration\Fixture\ActivityNamesDuplication;
 use Temporal\Tests\Unit\Declaration\Fixture\ActivityWithPrivateMethod;
@@ -21,15 +23,14 @@ use Temporal\Tests\Unit\Declaration\Fixture\ActivityWithPublicStaticMethod;
  * @group unit
  * @group declaration
  */
-class ActivitiesNegativeDeclarationTestCase extends DeclarationTestCase
+class ActivitiesNegativeDeclarationTestCase extends AbstractDeclaration
 {
     /**
-     * @testdox Checks for errors when reading activity class methods with the same name
-     * @dataProvider activityReaderDataProvider
-     *
      * @param ActivityReader $reader
      * @throws \ReflectionException
      */
+    #[TestDox("Checks for errors when reading activity class methods with the same name")]
+    #[DataProvider('activityReaderDataProvider')]
     public function testNameConflict(ActivityReader $reader): void
     {
         $reflection = new \ReflectionMethod(ActivityNamesDuplication::class, 'a');
@@ -49,12 +50,11 @@ class ActivitiesNegativeDeclarationTestCase extends DeclarationTestCase
     }
 
     /**
-     * @testdox Checks for errors when declaring a private method with an activity method attribute declaration
-     * @dataProvider activityReaderDataProvider
-     *
      * @param ActivityReader $reader
      * @throws \ReflectionException
      */
+    #[TestDox("Checks for errors when declaring a private method with an activity method attribute declaration")]
+    #[DataProvider('activityReaderDataProvider')]
     public function testPrivateMethod(ActivityReader $reader): void
     {
         $this->expectException(\LogicException::class);
@@ -70,12 +70,11 @@ class ActivitiesNegativeDeclarationTestCase extends DeclarationTestCase
     }
 
     /**
-     * @testdox Checks for errors when declaring a protected method with an activity method attribute declaration
-     * @dataProvider activityReaderDataProvider
-     *
      * @param ActivityReader $reader
      * @throws \ReflectionException
      */
+    #[TestDox("Checks for errors when declaring a protected method with an activity method attribute declaration")]
+    #[DataProvider('activityReaderDataProvider')]
     public function testProtectedMethod(ActivityReader $reader): void
     {
         $this->expectException(\LogicException::class);
@@ -91,12 +90,11 @@ class ActivitiesNegativeDeclarationTestCase extends DeclarationTestCase
     }
 
     /**
-     * @testdox Checks for errors when declaring a public static method with an activity method attribute declaration
-     * @dataProvider activityReaderDataProvider
-     *
      * @param ActivityReader $reader
      * @throws \ReflectionException
      */
+    #[TestDox("Checks for errors when declaring a public static method with an activity method attribute declaration")]
+    #[DataProvider('activityReaderDataProvider')]
     public function testPublicStaticMethod(ActivityReader $reader): void
     {
         $this->expectException(\LogicException::class);

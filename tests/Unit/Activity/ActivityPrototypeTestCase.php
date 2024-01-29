@@ -8,10 +8,10 @@ use Spiral\Attributes\AnnotationReader;
 use Spiral\Attributes\AttributeReader;
 use Spiral\Attributes\Composite\SelectiveReader;
 use Temporal\Internal\Declaration\Reader\ActivityReader;
-use Temporal\Tests\Unit\UnitTestCase;
+use Temporal\Tests\Unit\AbstractUnit;
 use WeakReference;
 
-final class ActivityPrototypeTestCase extends UnitTestCase
+final class ActivityPrototypeTestCase extends AbstractUnit
 {
     private ActivityReader $activityReader;
 

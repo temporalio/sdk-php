@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Schedule\Spec;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Temporal\Client\Schedule\Spec\Range;
 
-/**
- * @covers \Temporal\Client\Schedule\Spec\Range
- */
-class RangeTest extends TestCase
+#[CoversClass(\Temporal\Client\Schedule\Spec\Range::class)]
+class RangeTestCase extends TestCase
 {
     public function testWithStart(): void
     {

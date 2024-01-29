@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Schedule;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use Spiral\Attributes\AttributeReader;
 use Temporal\Api\Schedule\V1\BackfillRequest;
 use Temporal\Api\Workflowservice\V1\DeleteScheduleRequest;
@@ -31,10 +32,8 @@ use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Marshaller\ProtoToArrayConverter;
 
-/**
- * @covers \Temporal\Client\Schedule\ScheduleHandle
- */
-class ScheduleHandleTest extends TestCase
+#[CoversClass(\Temporal\Client\Schedule\ScheduleHandle::class)]
+class ScheduleHandleTestCase extends TestCase
 {
     public function testGetId(): void
     {

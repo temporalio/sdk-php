@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Schedule;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Temporal\Client\Schedule\Action\StartWorkflowAction;
 use Temporal\Client\Schedule\Policy\SchedulePolicies;
@@ -11,10 +12,8 @@ use Temporal\Client\Schedule\Schedule;
 use Temporal\Client\Schedule\Spec\ScheduleSpec;
 use Temporal\Client\Schedule\Spec\ScheduleState;
 
-/**
- * @covers \Temporal\Client\Schedule\Schedule
- */
-class ScheduleTest extends TestCase
+#[CoversClass(\Temporal\Client\Schedule\Schedule::class)]
+class ScheduleTestCase extends TestCase
 {
     public function testWithAction(): void
     {

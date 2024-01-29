@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Framework;
 
-use Temporal\Tests\Unit\UnitTestCase;
-use Temporal\Tests\Workflow\SimpleWorkflow;
+use Temporal\Tests\Unit\AbstractUnit;
 use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Worker\WorkerInterface;
 use Temporal\Workflow;
@@ -16,7 +15,7 @@ use function PHPUnit\Framework\assertFalse;
 /**
  * @internal
  */
-final class WorkerTestCase extends UnitTestCase
+final class WorkerTestCase extends AbstractUnit
 {
     private WorkerFactoryInterface $factory;
     /** @var WorkerMock|WorkerInterface */

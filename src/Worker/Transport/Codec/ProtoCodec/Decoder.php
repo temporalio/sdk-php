@@ -18,16 +18,12 @@ use Temporal\Interceptor\Header;
 use RoadRunner\Temporal\DTO\V1\Message;
 use Temporal\Worker\Transport\Command\FailureResponse;
 use Temporal\Worker\Transport\Command\FailureResponseInterface;
-use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\ResponseInterface;
 use Temporal\Worker\Transport\Command\ServerRequest;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Temporal\Worker\Transport\Command\SuccessResponse;
 use Temporal\Worker\Transport\Command\SuccessResponseInterface;
 
-/**
- * @codeCoverageIgnore tested via roadrunner-temporal repository.
- */
 class Decoder
 {
     /**

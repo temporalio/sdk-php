@@ -47,9 +47,12 @@ final class ScheduleMapper
         $array['state'] = new ScheduleState($array['state'] ?? []);
         isset($array['action']) and $array['action'] = $this->prepareAction($dto->action, $array['action']);
 
-        return new \Temporal\Api\Schedule\V1\Schedule($array);
+        return new \Temporal\Api\Schedule\V1\Schedule(self::cleanArray($array));
     }
 
+    /**
+     * @psalm-suppress TypeDoesNotContainNull,RedundantCondition
+     */
     private function prepareAction(ScheduleAction $action, array $array): \Temporal\Api\Schedule\V1\ScheduleAction
     {
         $result = new \Temporal\Api\Schedule\V1\ScheduleAction();
@@ -64,10 +67,10 @@ final class ScheduleMapper
                 $action->input?->setDataConverter($this->converter);
                 $values['input'] = $action->input?->toPayloads() ?? new Payloads();
                 $values['workflow_id_reuse_policy'] = $action->workflowIdReusePolicy->value;
-                $values['retry_policy'] = new RetryPolicy($values['retry_policy'] ?? []);
+                $values['retry_policy'] = $action->retryPolicy?->toWorkflowRetryPolicy();
 
                 $result->setStartWorkflow(
-                    new \Temporal\Api\Workflow\V1\NewWorkflowExecutionInfo($values),
+                    new \Temporal\Api\Workflow\V1\NewWorkflowExecutionInfo(self::cleanArray($values)),
                 );
                 break;
             default:
@@ -100,7 +103,7 @@ final class ScheduleMapper
             $result['exclude_structured_calendar'] ?? [],
         );
 
-        return new ScheduleSpec($result);
+        return new ScheduleSpec(self::cleanArray($result));
     }
 
     private function prepareStructuredCalendar(array $array): array
@@ -114,9 +117,14 @@ final class ScheduleMapper
                 );
             }
 
-            $calendar = new StructuredCalendarSpec($calendar);
+            $calendar = new StructuredCalendarSpec(self::cleanArray($calendar));
         }
 
         return $array;
+    }
+
+    private static function cleanArray(array $array): array
+    {
+        return \array_filter($array, static fn ($item): bool => $item !== null);
     }
 }

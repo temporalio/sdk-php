@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Schedule\Spec;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Temporal\Client\Schedule\Spec\CalendarSpec;
 use Temporal\Client\Schedule\Spec\IntervalSpec;
@@ -11,10 +13,8 @@ use Temporal\Client\Schedule\Spec\Range;
 use Temporal\Client\Schedule\Spec\ScheduleSpec;
 use Temporal\Client\Schedule\Spec\StructuredCalendarSpec;
 
-/**
- * @covers \Temporal\Client\Schedule\Spec\ScheduleSpec
- */
-class ScheduleSpecTest extends TestCase
+#[CoversClass(\Temporal\Client\Schedule\Spec\ScheduleSpec::class)]
+class ScheduleSpecTestCase extends TestCase
 {
     public function testWithTimezoneName(): void
     {
@@ -38,9 +38,7 @@ class ScheduleSpecTest extends TestCase
         $this->assertSame('+01:00', $new->timezoneData);
     }
 
-    /**
-     * @dataProvider provideStartEndTime
-     */
+    #[DataProvider('provideStartEndTime')]
     public function testWithStartTime(
         mixed $withValue,
         ?string $expectedValue,
@@ -57,9 +55,7 @@ class ScheduleSpecTest extends TestCase
         $this->assertSame($expectedValue, $new->startTime?->format(\DateTimeInterface::ATOM));
     }
 
-    /**
-     * @dataProvider provideStartEndTime
-     */
+    #[DataProvider('provideStartEndTime')]
     public function testWithEndTime(
         mixed $withValue,
         ?string $expectedValue,
@@ -83,9 +79,7 @@ class ScheduleSpecTest extends TestCase
         yield 'unset' => [null, null, '2024-10-01T00:00:00Z', '2024-10-01T00:00:00+00:00'];
     }
 
-    /**
-     * @dataProvider provideJitter
-     */
+    #[DataProvider('provideJitter')]
     public function testWithJitter(
         mixed $withValue,
         string $expectedValue,

@@ -14,15 +14,28 @@ namespace Temporal\Internal\Transport\Router;
 use React\Promise\Deferred;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\DestructMemorizedInstanceException;
+use Temporal\Internal\Support\GarbageCollector;
 use Temporal\Internal\Workflow\Process\Process;
+use Temporal\Internal\Workflow\ProcessCollection;
+use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 class DestroyWorkflow extends WorkflowProcessAwareRoute
 {
-    /**
-     * @var string
-     */
-    private const ERROR_PROCESS_NOT_DEFINED = 'Unable to kill workflow because workflow process #%s was not found';
+    /** Maximum number of ticks before GC call. */
+    private const GC_THRESHOLD = 1000;
+    /** Interval between GC calls in seconds. */
+    private const GC_TIMEOUT_SECONDS = 30;
+
+    private GarbageCollector $gc;
+
+    public function __construct(
+        ProcessCollection $running,
+        protected LoopInterface $loop
+    ) {
+        $this->gc = new GarbageCollector(self::GC_THRESHOLD, self::GC_TIMEOUT_SECONDS);
+        parent::__construct($running);
+    }
 
     /**
      * {@inheritDoc}
@@ -32,8 +45,6 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
         $this->kill($request->getID());
 
         $resolver->resolve(EncodedValues::fromValues([null]));
-
-        \gc_collect_cycles();
     }
 
     /**
@@ -43,13 +54,21 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
     public function kill(string $runId): array
     {
         /** @var Process $process */
-        $process = $this->running->find($runId);
-        if ($process === null) {
-            throw new \InvalidArgumentException(\sprintf(self::ERROR_PROCESS_NOT_DEFINED, $runId));
-        }
+        $process = $this->running
+            ->pull($runId, "Unable to kill workflow because workflow process #$runId was not found");
 
-        $this->running->pull($runId);
         $process->cancel(new DestructMemorizedInstanceException());
+        $this->loop->once(
+            LoopInterface::ON_FINALLY,
+            function () use ($process) {
+                $process->destroy();
+
+                // Collect garbage if needed
+                if ($this->gc->check()) {
+                    $this->gc->collect();
+                }
+            },
+        );
 
         return [];
     }

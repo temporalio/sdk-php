@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Internal\Marshaller;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Rfc4122\UuidV4;
 use Spiral\Attributes\AttributeReader;
@@ -16,9 +17,8 @@ use Temporal\Tests\Unit\Internal\Marshaller\Fixture\Uuid;
 
 /**
  * @internal
- *
- * @covers \Temporal\Internal\Marshaller\Marshaller
  */
+#[CoversClass(\Temporal\Internal\Marshaller\Marshaller::class)]
 final class MarshallerTestCase extends TestCase
 {
     public function testNestedNullableObjectWasSerialized(): void

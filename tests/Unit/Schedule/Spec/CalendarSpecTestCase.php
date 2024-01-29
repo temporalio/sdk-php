@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Schedule\Spec;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Temporal\Client\Schedule\Spec\CalendarSpec;
 
-/**
- * @covers \Temporal\Client\Schedule\Spec\CalendarSpec
- */
-class CalendarSpecTest extends TestCase
+#[CoversClass(\Temporal\Client\Schedule\Spec\CalendarSpec::class)]
+class CalendarSpecTestCase extends TestCase
 {
     public function testWithSecondString(): void
     {

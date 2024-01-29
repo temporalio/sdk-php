@@ -23,7 +23,7 @@ use Temporal\Exception\Failure\ApplicationFailure;
  * @group client
  * @group functional
  */
-class ActivityCompletionClientTestCase extends ClientTestCase
+class ActivityCompletionClientTestCase extends AbstractClient
 {
     public function testCompleteAsyncActivityById()
     {

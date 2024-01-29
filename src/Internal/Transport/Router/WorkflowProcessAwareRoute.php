@@ -23,16 +23,11 @@ abstract class WorkflowProcessAwareRoute extends Route
     private const ERROR_PROCESS_NOT_FOUND = 'Workflow with the specified run identifier "%s" not found';
 
     /**
-     * @var RepositoryInterface
-     */
-    protected RepositoryInterface $running;
-
-    /**
      * @param RepositoryInterface $running
      */
-    public function __construct(RepositoryInterface $running)
-    {
-        $this->running = $running;
+    public function __construct(
+        protected RepositoryInterface $running
+    ) {
     }
 
     /**

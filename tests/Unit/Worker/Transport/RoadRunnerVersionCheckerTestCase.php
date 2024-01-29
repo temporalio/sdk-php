@@ -9,13 +9,13 @@ use RoadRunner\VersionChecker\Exception\RoadrunnerNotInstalledException;
 use RoadRunner\VersionChecker\Version\InstalledInterface;
 use RoadRunner\VersionChecker\Version\RequiredInterface;
 use RoadRunner\VersionChecker\VersionChecker;
-use Temporal\Tests\Unit\UnitTestCase;
+use Temporal\Tests\Unit\AbstractUnit;
 use Temporal\Worker\Transport\RoadRunnerVersionChecker;
 
 /**
  * @group unit
  */
-final class RoadRunnerVersionCheckerTestCase extends UnitTestCase
+final class RoadRunnerVersionCheckerTestCase extends AbstractUnit
 {
     public function testCheckSuccess(): void
     {

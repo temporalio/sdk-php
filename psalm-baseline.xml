@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="5.18.0@b113f3ed0259fd6e212d87c3df80eec95a6abf19">
+<files psalm-version="5.20.0@3f284e96c9d9be6fe6b15c79416e1d1903dcfef4">
   <file src="src/Activity.php">
     <ImplicitToStringCast>
       <code>$type</code>
@@ -501,7 +501,6 @@
       <code><![CDATA[$options->toSearchAttributes($this->converter)]]></code>
       <code><![CDATA[DateInterval::toDuration($options->workflowExecutionTimeout)]]></code>
       <code><![CDATA[DateInterval::toDuration($options->workflowRunTimeout)]]></code>
-      <code><![CDATA[DateInterval::toDuration($options->workflowStartDelay)]]></code>
       <code><![CDATA[DateInterval::toDuration($options->workflowTaskTimeout)]]></code>
     </PossiblyNullArgument>
     <PossiblyNullReference>
@@ -728,15 +727,11 @@
     <RedundantCondition>
       <code><![CDATA[$action->header?->setDataConverter($this->converter)]]></code>
       <code><![CDATA[$action->input?->setDataConverter($this->converter)]]></code>
-      <code><![CDATA[$action->input?->setDataConverter($this->converter)]]></code>
-      <code><![CDATA[$action->input?->toPayloads()]]></code>
       <code><![CDATA[$action->memo?->setDataConverter($this->converter)]]></code>
       <code><![CDATA[$action->searchAttributes?->setDataConverter($this->converter)]]></code>
     </RedundantCondition>
     <TypeDoesNotContainNull>
       <code><![CDATA[$action->header]]></code>
-      <code><![CDATA[$action->input]]></code>
-      <code><![CDATA[$action->input]]></code>
       <code><![CDATA[$action->input]]></code>
       <code><![CDATA[$action->memo]]></code>
       <code><![CDATA[$action->searchAttributes]]></code>
@@ -928,12 +923,9 @@
     </MissingTemplateParam>
   </file>
   <file src="src/Internal/Repository/ArrayRepository.php">
-    <InvalidDocblock>
-      <code>private array $entries = [];</code>
-    </InvalidDocblock>
-    <PossiblyInvalidArgument>
-      <code><![CDATA[\array_filter($this->entries, $filter)]]></code>
-    </PossiblyInvalidArgument>
+    <InvalidReturnStatement>
+      <code><![CDATA[$this->entries[$id] ?? null]]></code>
+    </InvalidReturnStatement>
     <UnsafeInstantiation>
       <code><![CDATA[new static(\array_filter($this->entries, $filter))]]></code>
     </UnsafeInstantiation>
@@ -942,9 +934,6 @@
     <InvalidDocblock>
       <code>interface RepositoryInterface extends \IteratorAggregate, \Countable</code>
     </InvalidDocblock>
-    <InvalidTemplateParam>
-      <code>callable(TEntry): bool</code>
-    </InvalidTemplateParam>
     <MissingTemplateParam>
       <code>\IteratorAggregate</code>
     </MissingTemplateParam>
@@ -1170,9 +1159,6 @@
     </DocblockTypeContradiction>
   </file>
   <file src="src/Internal/Transport/Router/DestroyWorkflow.php">
-    <DocblockTypeContradiction>
-      <code>$process === null</code>
-    </DocblockTypeContradiction>
     <UndefinedInterfaceMethod>
       <code>pull</code>
     </UndefinedInterfaceMethod>
@@ -1343,11 +1329,6 @@
     <UnusedClosureParam>
       <code>$e</code>
     </UnusedClosureParam>
-  </file>
-  <file src="src/Internal/Workflow/ProcessCollection.php">
-    <DocblockTypeContradiction>
-      <code>$process === null</code>
-    </DocblockTypeContradiction>
   </file>
   <file src="src/Internal/Workflow/Proxy.php">
     <MissingReturnType>

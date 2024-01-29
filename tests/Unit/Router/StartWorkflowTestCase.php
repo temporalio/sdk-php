@@ -15,6 +15,7 @@ use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\ExceptionInterceptorInterface;
 use Temporal\Interceptor\SimplePipelineProvider;
+use Temporal\Internal\Declaration\Destroyable;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\Marshaller\MarshallerInterface;
@@ -26,13 +27,13 @@ use Temporal\Internal\Transport\Router\StartWorkflow;
 use Temporal\Internal\Workflow\Input;
 use Temporal\Internal\Workflow\WorkflowContext;
 use Temporal\Tests\Unit\Framework\Requests\StartWorkflow as Request;
-use Temporal\Tests\Unit\UnitTestCase;
+use Temporal\Tests\Unit\AbstractUnit;
 use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Worker\LoopInterface;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowInfo;
 
-final class StartWorkflowTestCase extends UnitTestCase
+final class StartWorkflowTestCase extends AbstractUnit
 {
     private ServiceContainer $services;
     private StartWorkflow $router;
@@ -59,7 +60,7 @@ final class StartWorkflowTestCase extends UnitTestCase
         $this->workflowContext = new WorkflowContext(
             $this->services,
             $this->services->client,
-            $this->createMock(WorkflowInstanceInterface::class),
+            $this->createMockForIntersectionOfInterfaces([WorkflowInstanceInterface::class, Destroyable::class]),
             new Input(),
             EncodedValues::empty()
         );

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Schedule\Action;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Temporal\Client\Schedule\Action\StartWorkflowAction;
 use Temporal\Common\IdReusePolicy as WorkflowIdReusePolicy;
@@ -12,10 +14,8 @@ use Temporal\DataConverter\EncodedCollection;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Workflow\WorkflowType;
 
-/**
- * @covers \Temporal\Client\Schedule\Action\StartWorkflowAction
- */
-class StartWorkflowActionTest extends TestCase
+#[CoversClass(\Temporal\Client\Schedule\Action\StartWorkflowAction::class)]
+class StartWorkflowActionTestCase extends TestCase
 {
     public function testWithWorkflowTypeString(): void
     {
@@ -71,9 +71,7 @@ class StartWorkflowActionTest extends TestCase
         $this->assertSame('task-queue', $new->taskQueue->name);
     }
 
-    /**
-     * @dataProvider provideInput
-     */
+    #[DataProvider('provideInput')]
     public function testWithInput(mixed $input, array $expect, mixed $initInput = null, array $initExpect = []): void
     {
         $init = StartWorkflowAction::new('TestWorkflow');
@@ -116,9 +114,7 @@ class StartWorkflowActionTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider provideTimeouts
-     */
+    #[DataProvider('provideTimeouts')]
     public function testWithWorkflowExecutionTimeout(
         mixed $timeout,
         string $expect,
@@ -135,9 +131,7 @@ class StartWorkflowActionTest extends TestCase
         $this->assertSame($expect, $new->workflowExecutionTimeout->format('%y/%m/%d/%h/%i/%s'));
     }
 
-    /**
-     * @dataProvider provideTimeouts
-     */
+    #[DataProvider('provideTimeouts')]
     public function testWithWorkflowRunTimeout(
         mixed $timeout,
         string $expect,
@@ -154,9 +148,7 @@ class StartWorkflowActionTest extends TestCase
         $this->assertSame($expect, $new->workflowRunTimeout->format('%y/%m/%d/%h/%i/%s'));
     }
 
-    /**
-     * @dataProvider provideTimeouts
-     */
+    #[DataProvider('provideTimeouts')]
     public function testWithWorkflowTaskTimeout(
         mixed $timeout,
         string $expect,
@@ -215,9 +207,7 @@ class StartWorkflowActionTest extends TestCase
         yield 'clear' => [[], [], ['foo' => 'bar'], ['foo' => 'bar']];
     }
 
-    /**
-     * @dataProvider provideEncodedValues
-     */
+    #[DataProvider('provideEncodedValues')]
     public function testWithMemo(mixed $values, array $expect, mixed $initValues = null, array $initExpect = []): void
     {
         $init = StartWorkflowAction::new('TestWorkflow');
@@ -232,9 +222,7 @@ class StartWorkflowActionTest extends TestCase
         $this->assertSame($expect, $new->memo->getValues());
     }
 
-    /**
-     * @dataProvider provideEncodedValues
-     */
+    #[DataProvider('provideEncodedValues')]
     public function testWithSearchAttributes(mixed $values, array $expect, mixed $initValues = null, array $initExpect = []): void
     {
         $init = StartWorkflowAction::new('TestWorkflow');

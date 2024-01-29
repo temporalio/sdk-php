@@ -32,7 +32,7 @@ final class SystemInfoInterceptorTestCase extends TestCase
         $this->serviceClient
             ->expects($this->once())
             ->method('getSystemInfo')
-            ->willReturn(new GetSystemInfoResponse(['capabilities' => null]));
+            ->willReturn(new GetSystemInfoResponse());
 
         $this->serviceClient
             ->expects($this->never())
@@ -91,7 +91,7 @@ final class SystemInfoInterceptorTestCase extends TestCase
             // it is important for this test
             ->expects($this->once())
             ->method('getSystemInfo')
-            ->willReturn(new GetSystemInfoResponse(['capabilities' => null]));
+            ->willReturn(new GetSystemInfoResponse());
 
         $this->interceptor->interceptCall(
             'foo',

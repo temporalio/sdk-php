@@ -40,25 +40,25 @@ on:
 
 jobs:
   test:
-    name: (PHP ${{ matrix.php }}, ${{ matrix.os }}, ${{ matrix.dependencies }} deps
+    name: PHP${{ matrix.php }}${{ matrix.extensions-suffix }}, ${{ matrix.os }}, ${{ matrix.dependencies }} deps
     runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ matrix.timeout-minutes }}
     env: {GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'}
     strategy:
       fail-fast: ${{ inputs.fail-fast }}
       matrix:
-        php: [ 8.1, 8.2 ]
+        php: [ 8.1, 8.2, 8.3 ]
         os: [ ubuntu-latest, windows-latest ]
+        extensions-suffix: [ '', ', protobuf' ]
         dependencies: [ lowest , highest ]
         timeout-minutes: [ '${{ inputs.test-timeout }}' ]
         exclude:
           - os: windows-latest
             php: 8.2
-        include:
-          - os: ubuntu-latest
+          - os: windows-latest
+            extensions-suffix: ', protobuf'
+          - os: windows-latest
             php: 8.3
-            dependencies: highest
-            timeout-minutes: 40
     steps:
       - name: Set Git To Use LF
         run: |
@@ -70,7 +70,8 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           tools: composer:v2
-          extensions: dom, sockets, grpc, curl
+          extensions: dom, sockets, grpc, curl ${{ matrix.extensions-suffix }}
+#          extensions: dom, sockets, grpc, curl
 
       - name: Check Out Code
         uses: actions/checkout@v4
@@ -114,10 +115,14 @@ jobs:
 
       - name: Run tests with Temporal test server
         if: inputs.run-temporal-test-server == true
-        run: vendor/bin/phpunit --testsuite=${{ inputs.test-suite }} --testdox --verbose --exclude skip-on-test-server
+        run: ${{ format(
+            'vendor/bin/phpunit --testsuite={0} --testdox --colors=always --exclude-group {1}',
+            inputs.test-suite,
+            contains(matrix.extensions-suffix, 'protobuf') && 'skip-on-test-server,skip-ext-protobuf' || 'skip-on-test-server'
+          ) }}
         env:
           RUN_TEMPORAL_TEST_SERVER: ${{ inputs.run-temporal-test-server }}
 
       - name: Run tests without Temporal test server
         if: inputs.run-temporal-test-server == false
-        run: vendor/bin/phpunit --testsuite=${{ inputs.test-suite }} --testdox --verbose
+        run: vendor/bin/phpunit --testsuite=${{ inputs.test-suite }} --testdox --colors=always

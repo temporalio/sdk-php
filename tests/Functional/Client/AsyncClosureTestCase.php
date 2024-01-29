@@ -19,7 +19,7 @@ use Temporal\Tests\Workflow\AsyncClosureWorkflow;
  * @group client
  * @group functional
  */
-class AsyncClosureTestCase extends ClientTestCase
+class AsyncClosureTestCase extends AbstractClient
 {
     use WithoutTimeSkipping;
 

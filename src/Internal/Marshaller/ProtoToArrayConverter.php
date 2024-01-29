@@ -15,6 +15,7 @@ use Temporal\Api\Common\V1\Header;
 use Temporal\Api\Common\V1\Memo;
 use Temporal\Api\Common\V1\Payloads;
 use Temporal\Api\Common\V1\SearchAttributes;
+use Temporal\Api\Schedule\V1\ScheduleAction;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedCollection;
 use Temporal\DataConverter\EncodedValues;
@@ -73,6 +74,14 @@ final class ProtoToArrayConverter
             Header::class => fn(Header $input): HeaderInterface =>
                 \Temporal\Interceptor\Header::fromPayloadCollection($input->getFields(), $this->converter),
 
+            ScheduleAction::class => fn(ScheduleAction $scheduleAction): array => [
+                'action' => $this->convert(
+                    // Use getter for `oneOf` field
+                    $scheduleAction->{'get' . \str_replace('_', '', \ucwords($scheduleAction->getAction(), '_'))}()
+                ),
+                'start_workflow' => $this->convert($scheduleAction->getStartWorkflow()),
+            ],
+
             default => null,
         };
 
@@ -87,7 +96,11 @@ final class ProtoToArrayConverter
             $reflection = new \ReflectionClass($input::class);
             foreach ($reflection->getProperties() as $property) {
                 $name = $property->getName();
-                $value = $input->{$name};
+                $method = 'get' . \str_replace('_', '', \ucwords($name, '_'));
+                if (!\method_exists($input, $method)) {
+                    continue;
+                }
+                $value = $input->$method();
 
                 if ($value instanceof Message) {
                     $result[$name] = $this->convert($value);

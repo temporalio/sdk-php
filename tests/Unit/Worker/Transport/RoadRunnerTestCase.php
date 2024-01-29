@@ -8,14 +8,14 @@ use RoadRunner\VersionChecker\Version\ComparatorInterface;
 use RoadRunner\VersionChecker\Version\InstalledInterface;
 use RoadRunner\VersionChecker\Version\RequiredInterface;
 use RoadRunner\VersionChecker\VersionChecker;
-use Temporal\Tests\Unit\UnitTestCase;
+use Temporal\Tests\Unit\AbstractUnit;
 use Temporal\Worker\Transport\RoadRunner;
 use Temporal\Worker\Transport\RoadRunnerVersionChecker;
 
 /**
  * @group unit
  */
-final class RoadRunnerTestCase extends UnitTestCase
+final class RoadRunnerTestCase extends AbstractUnit
 {
     public function testCreateShouldCallVersionCheck(): void
     {

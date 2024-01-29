@@ -28,7 +28,7 @@ use Temporal\Workflow\WorkflowStub;
  * @group client
  * @group functional
  */
-class AwaitTestCase extends ClientTestCase
+class AwaitTestCase extends AbstractClient
 {
     use WithoutTimeSkipping;
 

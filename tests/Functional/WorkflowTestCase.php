@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Tests\Functional;
 
 use Temporal\Common\Uuid;
-use Temporal\Tests\Fixtures\CommandResetter;
 use Temporal\Tests\Fixtures\Splitter;
 use Temporal\Tests\Fixtures\WorkerMock;
 
@@ -20,7 +19,7 @@ use Temporal\Tests\Fixtures\WorkerMock;
  * @group workflow
  * @group functional
  */
-class WorkflowTestCase extends FunctionalTestCase
+class WorkflowTestCase extends AbstractFunctional
 {
     public function setUp(): void
     {
@@ -135,6 +134,9 @@ class WorkflowTestCase extends FunctionalTestCase
         $worker->run($this, Splitter::create('Test_Activity.log')->getQueue());
     }
 
+    /**
+     * @group skip-ext-protobuf
+     */
     public function testExecuteProtoWorkflow()
     {
         $worker = WorkerMock::createMock();

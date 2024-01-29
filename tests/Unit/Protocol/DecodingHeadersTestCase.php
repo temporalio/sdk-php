@@ -11,13 +11,15 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Protocol;
 
+use PHPUnit\Framework\Attributes\Test;
+
 /**
  * @group unit
  * @group protocol
  */
-class DecodingHeadersTestCase extends ProtocolTestCase
+class DecodingHeadersTestCase extends AbstractProtocol
 {
-    /** @test */
+    #[Test]
     public function todo(): void
     {
         $this->expectNotToPerformAssertions();

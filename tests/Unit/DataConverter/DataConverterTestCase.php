@@ -11,22 +11,23 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\DataConverter;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\Type;
 use Temporal\Exception\DataConverterException;
-use Temporal\Tests\Unit\UnitTestCase;
+use Temporal\Tests\Unit\AbstractUnit;
 
 /**
  * @group unit
  * @group data-converter
  */
-class DataConverterTestCase extends UnitTestCase
+class DataConverterTestCase extends AbstractUnit
 {
     /**
      * @return array[]
      */
-    public function typesDataProvider(): array
+    public static function typesDataProvider(): array
     {
         return [
             // Any
@@ -59,7 +60,7 @@ class DataConverterTestCase extends UnitTestCase
     /**
      * @return array
      */
-    public function negativeTypesDataProvider(): array
+    public static function negativeTypesDataProvider(): array
     {
         return [
             Type::TYPE_OBJECT . ' => ' . Type::TYPE_STRING => [Type::TYPE_STRING, (object)['field' => 'value']],
@@ -115,7 +116,7 @@ class DataConverterTestCase extends UnitTestCase
      * @return array[]
      * @throws \Exception
      */
-    public function nullableTypesDataProvider(): array
+    public static function nullableTypesDataProvider(): array
     {
         return [
             Type::TYPE_ARRAY . ' => ' . Type::TYPE_VOID  => [Type::TYPE_VOID, [1, 2, 3]],
@@ -137,11 +138,10 @@ class DataConverterTestCase extends UnitTestCase
     }
 
     /**
-     * @dataProvider typesDataProvider
-     *
      * @param string $type
      * @param mixed $value
      */
+    #[DataProvider('typesDataProvider')]
     public function testPositiveConvert(string $type, $value): void
     {
         $converter = $this->create();
@@ -152,11 +152,10 @@ class DataConverterTestCase extends UnitTestCase
     }
 
     /**
-     * @dataProvider negativeTypesDataProvider
-     *
      * @param string $type
      * @param mixed $value
      */
+    #[DataProvider('negativeTypesDataProvider')]
     public function testConvertErrors(string $type, $value): void
     {
         $this->expectException(DataConverterException::class);
@@ -166,11 +165,10 @@ class DataConverterTestCase extends UnitTestCase
     }
 
     /**
-     * @dataProvider nullableTypesDataProvider
-     *
      * @param string $type
      * @param mixed $value
      */
+    #[DataProvider('nullableTypesDataProvider')]
     public function testNullableTypeCoercion(string $type, $value): void
     {
         $converter = $this->create();

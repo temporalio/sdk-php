@@ -23,7 +23,7 @@ namespace Temporal\Internal\Repository;
 interface RepositoryInterface extends \IteratorAggregate, \Countable
 {
     /**
-     * @param callable(TEntry): bool $filter
+     * @param callable(Identifiable): bool $filter
      * @return $this
      */
     public function filter(callable $filter): self;

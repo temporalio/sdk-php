@@ -9,13 +9,13 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Functional;
+namespace Temporal\Tests\Unit;
 
 use Temporal\Tests\TestCase;
 
 /**
- * @group functional
+ * @group unit
  */
-abstract class FunctionalTestCase extends TestCase
+abstract class AbstractUnit extends TestCase
 {
 }

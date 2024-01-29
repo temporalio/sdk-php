@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Schedule\Spec;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Temporal\Client\Schedule\Spec\IntervalSpec;
 
-/**
- * @covers \Temporal\Client\Schedule\Spec\IntervalSpec
- */
-class IntervalSpecTest extends TestCase
+#[CoversClass(\Temporal\Client\Schedule\Spec\IntervalSpec::class)]
+class IntervalSpecTestCase extends TestCase
 {
     public function testWithIntervalInt(): void
     {
