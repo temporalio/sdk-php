@@ -45,8 +45,9 @@ final class WorkflowProxy extends Proxy
      */
     public function __call(string $method, array $args)
     {
-        if ($method === $this->prototype->getHandler()?->getName()) {
-            $args = Reflection::orderArguments($this->prototype->getHandler(), $args);
+        $handler = $this->prototype->getHandler();
+        if ($handler !== null && $method === $handler->getName()) {
+            $args = Reflection::orderArguments($handler, $args);
 
             // no timeout (use async mode to get it)
             return $this->client->start($this, ...$args)->getResult($this->__getReturnType());

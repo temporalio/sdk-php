@@ -12,62 +12,94 @@ use Temporal\Internal\Support\Reflection;
 #[CoversClass(\Temporal\Internal\Support\Reflection::class)]
 final class ReflectionTestCase extends TestCase
 {
+
     public static function provideOrderArguments(): iterable
     {
         // Normal named order
-        yield [
+        yield 'Normal order with three items' => [
             ['foo' => 1, 'bar' => 2, 'baz' => 3],
             [1, 2, 3],
         ];
-        yield [
+        yield 'Normal order missing third item' => [
             ['foo' => 1, 'bar' => 2],
             [1, 2, 42],
         ];
-        yield [
+        yield 'Normal order with null second item' => [
             ['foo' => 1, 'bar' => null],
             [1, null, 42],
         ];
-        yield [
-            ['foo' => 1, 'bar' => 2, 'baz' => 3, 'qux' => 4],
-            [1, 2, 3],
-        ];
+
         // Custom named order
-        yield [
+        yield 'Custom order, keys reordered' => [
             ['bar' => 2, 'foo' => 1, 'baz' => 3],
             [1, 2, 3],
         ];
-        yield [
+        yield 'Custom order with two items, default used for third' => [
             ['bar' => 2, 'foo' => 1],
             [1, 2, 42],
         ];
+
         // Numeric order
-        yield [
+        yield 'Numeric order, simple list' => [
             [1, 2, 3],
             [1, 2, 3],
         ];
+
         // Mixed order
-        yield [
+        yield 'Mixed order, numeric and named, all present' => [
             [1, 'bar' => 2, 'baz' => 3],
             [1, 2, 3],
         ];
-        yield [
+        yield 'Mixed order with null second item' => [
             [1, null, 'baz' => 3],
             [1, null, 3],
         ];
-        yield [
+        yield 'Mixed order, null in named key' => [
             [1, 'baz' => 3, 'bar' => null],
             [1, null, 3],
         ];
     }
 
+
+    /**
+     * @param array<int|string,?int> $arguments
+     * @param list<?int> $expectedResult
+     * @return void
+     * @throws \ReflectionException
+     */
     #[DataProvider('provideOrderArguments')]
-    public function testOrderArguments(array $arguments, array $result): void
+    public function testOrderArguments(array $arguments, array $expectedResult): void
     {
-        $reflection = new \ReflectionFunction($fn = static fn (int $foo, ?int $bar, int $baz = 42) => \func_get_args());
+        /**
+         * @param int $foo
+         * @param int|null $bar
+         * @param int $baz
+         *
+         * @return array<?int>
+         */
+        $fn = static fn (int $foo, ?int $bar, int $baz = 42): array => \func_get_args();
+        $reflection = new \ReflectionFunction($fn);
 
-        $args = Reflection::orderArguments($reflection, $arguments);
+        $sortedArguments = Reflection::orderArguments($reflection, $arguments);
 
-        $this->assertIsList($args);
-        $this->assertSame($result, $fn(...$args));
+        $this->assertIsList($sortedArguments);
+        $this->assertSame(
+            $expectedResult,
+            $fn(...$sortedArguments)
+        );
+    }
+
+    public function testTooManyArguments(): void
+    {
+        $this->expectException(\Temporal\Exception\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches(
+            regularExpression: '/Too many arguments passed to .* expected 2, got 3./'
+        );
+
+        $reflection = new \ReflectionFunction(
+            static fn (int $foo, int $bar): array => \func_get_args()
+        );
+
+        Reflection::orderArguments($reflection, [1, 2, 3]);
     }
 }

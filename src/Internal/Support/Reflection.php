@@ -16,23 +16,36 @@ final class Reflection
      * If the method has default values, they will be used for missing arguments.
      * If the method has no default values, an exception will be thrown.
      *
+     * @template T
+     *
      * @param \ReflectionFunctionAbstract $method
-     * @param array $args
-     * @return list<mixed> Unnamed arguments in the correct order.
+     * @param array<int|string, T> $args
+     * @return list<T> Unnamed list of arguments in the correct order.
      */
     public static function orderArguments(\ReflectionFunctionAbstract $method, array $args): array
     {
+        if (count($args) > $method->getNumberOfParameters()) {
+            throw new InvalidArgumentException(sprintf(
+                'Too many arguments passed to %s, expected %d, got %d.',
+                $method->getName(),
+                $method->getNumberOfParameters(),
+                count($args)
+            ));
+        }
+
         if ($args === [] || \array_is_list($args)) {
             return $args;
         }
 
         $finalArgs = [];
 
-        foreach ($method->getParameters() as $parameter) {
+        foreach ($method->getParameters() as $i => $parameter) {
             $name = $parameter->getName();
 
             if (\array_key_exists($name, $args)) {
                 $finalArgs[] = $args[$name];
+            } elseif (\array_key_exists($i, $args)) {
+                $finalArgs[] = $args[$i];
             } elseif ($parameter->isDefaultValueAvailable()) {
                 $finalArgs[] = $parameter->getDefaultValue();
             } else {
