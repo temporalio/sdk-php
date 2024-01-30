@@ -7,6 +7,7 @@ namespace Temporal\Tests\Unit\Internal\Support;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Temporal\Exception\InvalidArgumentException;
 use Temporal\Internal\Support\Reflection;
 
 #[CoversClass(\Temporal\Internal\Support\Reflection::class)]
@@ -48,6 +49,10 @@ final class ReflectionTestCase extends TestCase
             [1, 2, 3],
             [1, 2, 3],
         ];
+        yield 'Numeric order, extra arguments' => [
+            [1, 2, 3, 7, 42, 10],
+            [1, 2, 3, 7, 42, 10],
+        ];
 
         // Mixed order
         yield 'Mixed order, numeric and named, all present' => [
@@ -66,10 +71,8 @@ final class ReflectionTestCase extends TestCase
 
 
     /**
-     * @param array<int|string,?int> $arguments
-     * @param list<?int> $expectedResult
-     * @return void
-     * @throws \ReflectionException
+     * @param array<int|string, int|null> $arguments
+     * @param list<int|null> $expectedResult
      */
     #[DataProvider('provideOrderArguments')]
     public function testOrderArguments(array $arguments, array $expectedResult): void
@@ -93,7 +96,7 @@ final class ReflectionTestCase extends TestCase
         );
     }
 
-    public function testSpreadFunction(): void
+    public function testOrderArgumentsSpreadFunction(): void
     {
         $fn = static fn (int $foo, int ...$rest): array => \func_get_args();
         $reflection = new \ReflectionFunction($fn);
@@ -106,6 +109,32 @@ final class ReflectionTestCase extends TestCase
         $this->assertSame(
             [1, 2, 3, 4],
             $fn(...$sortedArguments)
+        );
+    }
+
+    public function testOrderArgumentsConflictOrder(): void
+    {
+        $fn = static fn (int $foo, int $bar, int $baz = 42): array => \func_get_args();
+        $reflection = new \ReflectionFunction($fn);
+
+        $this->expectException(InvalidArgumentException::class);
+
+        Reflection::orderArguments(
+            $reflection,
+            [1, 2, 'foo' => 42],
+        );
+    }
+
+    public function testOrderArgumentsExtraNamedArguments(): void
+    {
+        $fn = static fn (int $foo): array => \func_get_args();
+        $reflection = new \ReflectionFunction($fn);
+
+        $this->expectException(InvalidArgumentException::class);
+
+        Reflection::orderArguments(
+            $reflection,
+            ['foo' => 42, 'bar' => 13],
         );
     }
 }
