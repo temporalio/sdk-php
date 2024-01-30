@@ -130,20 +130,17 @@ final class ReflectionTestCase extends TestCase
         $reflection = new \ReflectionMethod($this, 'publicTestFunction');
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageMatches(
-            regularExpression: '/Parameter #0 \$foo .* received two conflicting arguments - named and positional/'
-        );
+        $this->expectExceptionMessage(sprintf(
+            'Parameter #%d $%s of %s received two conflicting arguments - named and positional.',
+            0,
+            'foo',
+            __CLASS__ . '::publicTestFunction()',
+        ));
 
-        try {
-            Reflection::orderArguments(
-                $reflection,
-                [1, 'foo' => 42],
-            );
-        } catch (\Throwable $e) {
-            $this->assertStringContainsString(__CLASS__, $e->getMessage());
-            $this->assertStringContainsString('::publicTestFunction()', $e->getMessage());
-            throw $e;
-        }
+        Reflection::orderArguments(
+            $reflection,
+            [1, 'foo' => 42],
+        );
     }
 
     public function testOrderArgumentsExtraNamedArgumentsOnMethod(): void
@@ -151,20 +148,17 @@ final class ReflectionTestCase extends TestCase
         $reflection = new \ReflectionMethod($this, __FUNCTION__);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageMatches(
-            regularExpression: '/Too many arguments passed to .* defined 0, got 2/'
-        );
+        $this->expectExceptionMessage(sprintf(
+            'Too many arguments passed to %s: defined %d, got %d.',
+            __CLASS__ . '::' . __FUNCTION__ . '()',
+            $reflection->getNumberOfParameters(),
+            2,
+        ));
 
-        try {
-            Reflection::orderArguments(
-                $reflection,
-                ['foo' => 42, 'bar' => 13],
-            );
-        } catch (\Throwable $e) {
-            $this->assertStringContainsString(__CLASS__, $e->getMessage());
-            $this->assertStringContainsString(__FUNCTION__ . '()', $e->getMessage());
-            throw $e;
-        }
+        Reflection::orderArguments(
+            $reflection,
+            ['foo' => 42, 'bar' => 13],
+        );
     }
 
     public function publicTestFunction(int $foo, int $bar): void
