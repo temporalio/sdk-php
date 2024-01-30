@@ -39,30 +39,29 @@ final class Reflection
 
         $finalArgs = [];
 
-
         foreach ($method->getParameters() as $i => $parameter) {
             $name = $parameter->getName();
 
-            if (array_key_exists($i, $args)) {
-                if (array_key_exists($name, $args)) {
-                    throw new InvalidArgumentException(sprintf(
-                        'Argument #%d $%s passed to %s as positional and as named at the same time',
-                        $i,
-                        $name,
-                        $method->getName(),
-                    ));
-                }
+            $isPositional = \array_key_exists($i, $args);
+            $isNamed = \array_key_exists($name, $args);
 
-                $finalArgs[$name] = $args[$i];
-            } elseif (array_key_exists($name, $args)) {
-                $finalArgs[$name] = $args[$name];
-            } elseif ($parameter->isDefaultValueAvailable()) {
-                $finalArgs[$name] = $parameter->getDefaultValue();
-            } else {
-                throw new InvalidArgumentException("Missing argument `$name`.");
+            if ($isPositional && $isNamed) {
+                throw new InvalidArgumentException(sprintf(
+                    'Argument #%d $%s passed to %s as positional and as named at the same time',
+                    $i,
+                    $name,
+                    $method->getName(),
+                ));
             }
+
+            $finalArgs[] = match (true) {
+                $isPositional => $args[$i],
+                $isNamed => $args[$name],
+                $parameter->isDefaultValueAvailable() => $parameter->getDefaultValue(),
+                default => throw new InvalidArgumentException("Missing argument `$name`.")
+            };
         }
 
-        return array_values($finalArgs);
+        return $finalArgs;
     }
 }
