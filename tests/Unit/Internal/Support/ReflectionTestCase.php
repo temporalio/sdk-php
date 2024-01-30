@@ -28,6 +28,10 @@ final class ReflectionTestCase extends TestCase
             ['foo' => 1, 'bar' => null],
             [1, null, 42],
         ];
+        yield 'Normal order, more items than needed' => [
+            ['foo' => 1, 'bar' => 2, 'baz' => 3, 'qux' => 4],
+            [1, 2, 3],
+        ];
 
         // Custom named order
         yield 'Custom order, keys reordered' => [
@@ -89,17 +93,19 @@ final class ReflectionTestCase extends TestCase
         );
     }
 
-    public function testTooManyArguments(): void
+    public function testSpreadFunction(): void
     {
-        $this->expectException(\Temporal\Exception\InvalidArgumentException::class);
-        $this->expectExceptionMessageMatches(
-            regularExpression: '/Too many arguments passed to .* expected 2, got 3./'
+        $fn = static fn (int $foo, int ...$rest): array => \func_get_args();
+        $reflection = new \ReflectionFunction($fn);
+
+        $sortedArguments = Reflection::orderArguments(
+            $reflection,
+            [1, 2, 3, 4]
         );
 
-        $reflection = new \ReflectionFunction(
-            static fn (int $foo, int $bar): array => \func_get_args()
+        $this->assertSame(
+            [1, 2, 3, 4],
+            $fn(...$sortedArguments)
         );
-
-        Reflection::orderArguments($reflection, [1, 2, 3]);
     }
 }

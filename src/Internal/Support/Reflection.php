@@ -24,15 +24,6 @@ final class Reflection
      */
     public static function orderArguments(\ReflectionFunctionAbstract $method, array $args): array
     {
-        if (count($args) > $method->getNumberOfParameters()) {
-            throw new InvalidArgumentException(sprintf(
-                'Too many arguments passed to %s, expected %d, got %d.',
-                $method->getName(),
-                $method->getNumberOfParameters(),
-                count($args)
-            ));
-        }
-
         if ($args === [] || \array_is_list($args)) {
             return $args;
         }
