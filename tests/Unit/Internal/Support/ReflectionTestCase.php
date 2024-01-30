@@ -29,10 +29,6 @@ final class ReflectionTestCase extends TestCase
             ['foo' => 1, 'bar' => null],
             [1, null, 42],
         ];
-        yield 'Normal order, more items than needed' => [
-            ['foo' => 1, 'bar' => 2, 'baz' => 3, 'qux' => 4],
-            [1, 2, 3],
-        ];
 
         // Custom named order
         yield 'Custom order, keys reordered' => [
@@ -118,6 +114,10 @@ final class ReflectionTestCase extends TestCase
         $reflection = new \ReflectionFunction($fn);
 
         $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches(
+            regularExpression: '/Argument .* \$foo .* as positional and as named at the same time/'
+        );
+
 
         Reflection::orderArguments(
             $reflection,
@@ -131,6 +131,9 @@ final class ReflectionTestCase extends TestCase
         $reflection = new \ReflectionFunction($fn);
 
         $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches(
+            regularExpression: '/Too many arguments passed to .* expected 1, got 2/'
+        );
 
         Reflection::orderArguments(
             $reflection,

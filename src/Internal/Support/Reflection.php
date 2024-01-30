@@ -28,22 +28,41 @@ final class Reflection
             return $args;
         }
 
+        if (count($args) > $method->getNumberOfParameters()) {
+            throw new InvalidArgumentException(sprintf(
+                'Too many arguments passed to %s, expected %d, got %d.',
+                $method->getName(),
+                $method->getNumberOfParameters(),
+                count($args)
+            ));
+        }
+
         $finalArgs = [];
+
 
         foreach ($method->getParameters() as $i => $parameter) {
             $name = $parameter->getName();
 
-            if (\array_key_exists($name, $args)) {
-                $finalArgs[] = $args[$name];
-            } elseif (\array_key_exists($i, $args)) {
-                $finalArgs[] = $args[$i];
+            if (array_key_exists($i, $args)) {
+                if (array_key_exists($name, $args)) {
+                    throw new InvalidArgumentException(sprintf(
+                        'Argument #%d $%s passed to %s as positional and as named at the same time',
+                        $i,
+                        $name,
+                        $method->getName(),
+                    ));
+                }
+
+                $finalArgs[$name] = $args[$i];
+            } elseif (array_key_exists($name, $args)) {
+                $finalArgs[$name] = $args[$name];
             } elseif ($parameter->isDefaultValueAvailable()) {
-                $finalArgs[] = $parameter->getDefaultValue();
+                $finalArgs[$name] = $parameter->getDefaultValue();
             } else {
                 throw new InvalidArgumentException("Missing argument `$name`.");
             }
         }
 
-        return $finalArgs;
+        return array_values($finalArgs);
     }
 }
