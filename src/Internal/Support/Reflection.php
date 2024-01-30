@@ -28,12 +28,12 @@ final class Reflection
             return $args;
         }
 
-        if (count($args) > $method->getNumberOfParameters()) {
-            throw new InvalidArgumentException(sprintf(
-                'Too many arguments passed to %s, expected %d, got %d.',
-                $method->getName(),
+        if (\count($args) > $method->getNumberOfParameters()) {
+            throw new InvalidArgumentException(\sprintf(
+                'Too many arguments passed to %s: defined %d, got %d.',
+                self::methodName($method),
                 $method->getNumberOfParameters(),
-                count($args)
+                \count($args),
             ));
         }
 
@@ -46,11 +46,11 @@ final class Reflection
             $isNamed = \array_key_exists($name, $args);
 
             if ($isPositional && $isNamed) {
-                throw new InvalidArgumentException(sprintf(
-                    'Argument #%d $%s passed to %s as positional and as named at the same time',
+                throw new InvalidArgumentException(\sprintf(
+                    'Parameter #%d $%s of %s received two conflicting arguments - named and positional.',
                     $i,
                     $name,
-                    $method->getName(),
+                    self::methodName($method),
                 ));
             }
 
@@ -63,5 +63,15 @@ final class Reflection
         }
 
         return $finalArgs;
+    }
+
+    private static function methodName(\ReflectionFunctionAbstract $method): string
+    {
+        if ($method instanceof \ReflectionMethod) {
+            // render class and method name
+            return $method->getDeclaringClass()->getName() . '::' . $method->getName() . '()';
+        }
+
+        return $method->getName() . '()';
     }
 }
