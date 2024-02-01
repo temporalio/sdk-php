@@ -25,6 +25,7 @@ use Temporal\Api\Workflowservice\V1\ListWorkflowExecutionsRequest;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\Type;
 use Temporal\Exception\InvalidArgumentException;
 use Temporal\Interceptor\PipelineProvider;
 use Temporal\Interceptor\SimplePipelineProvider;
@@ -132,7 +133,9 @@ class WorkflowClient implements WorkflowClientInterface
             $args = Reflection::orderArguments($method, $args);
         }
 
-        if ($workflowStub->getWorkflowType() === null) {
+        $workflowType = $workflowStub->getWorkflowType();
+
+        if ($workflowType === null) {
             throw new InvalidArgumentException(
                 \sprintf('Unable to start untyped workflow without given workflowType')
             );
@@ -143,14 +146,17 @@ class WorkflowClient implements WorkflowClientInterface
         }
 
         $execution = $this->starter->start(
-            $workflowStub->getWorkflowType(),
+            $workflowType,
             $workflowStub->getOptions() ?? WorkflowOptions::new(),
             $args,
         );
 
         $workflowStub->setExecution($execution);
 
-        return new WorkflowRun($workflowStub, $returnType);
+        return new WorkflowRun(
+            stub: $workflowStub,
+            returnType: $returnType !== null ? Type::create($returnType) : null,
+        );
     }
 
     /**
@@ -168,6 +174,10 @@ class WorkflowClient implements WorkflowClientInterface
     ): WorkflowRunInterface {
         if ($workflow instanceof WorkflowProxy && !$workflow->hasHandler()) {
             throw new InvalidArgumentException('Unable to start workflow without workflow handler');
+        }
+
+        if ($signal === '') {
+            throw new InvalidArgumentException('Signal name cannot be empty');
         }
 
         $workflowStub = WorkflowStubConverter::fromWorkflow($workflow);
@@ -208,7 +218,10 @@ class WorkflowClient implements WorkflowClientInterface
 
         $workflowStub->setExecution($execution);
 
-        return new WorkflowRun($workflowStub, $returnType);
+        return new WorkflowRun(
+            stub: $workflowStub,
+            returnType: $returnType !== null ? Type::create($returnType) : null,
+        );
     }
 
     /**

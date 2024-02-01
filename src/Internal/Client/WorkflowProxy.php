@@ -13,6 +13,7 @@ namespace Temporal\Internal\Client;
 
 use Temporal\Client\WorkflowClient;
 use Temporal\Client\WorkflowStubInterface;
+use Temporal\DataConverter\Type;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Support\Reflection;
 use Temporal\Internal\Workflow\Proxy;
@@ -49,8 +50,15 @@ final class WorkflowProxy extends Proxy
         if ($handler !== null && $method === $handler->getName()) {
             $args = Reflection::orderArguments($handler, $args);
 
+
+            $returnType = $this->__getReturnType();
+
             // no timeout (use async mode to get it)
-            return $this->client->start($this, ...$args)->getResult($this->__getReturnType());
+            return $this->client
+                ->start($this, ...$args)
+                ->getResult(
+                    type: $returnType !== null ? Type::create($returnType) : null
+                );
         }
 
         // Otherwise, we try to find a suitable workflow "query" method.
@@ -133,6 +141,12 @@ final class WorkflowProxy extends Proxy
      */
     public function findSignalReflection(string $name): ?\ReflectionFunctionAbstract
     {
-        return $this->prototype->getSignalHandlers()[$name] ?? null;
+        foreach ($this->prototype->getSignalHandlers() as $method => $reflection) {
+            if ($method === $name) {
+                return $reflection;
+            }
+        }
+
+        return null;
     }
 }
