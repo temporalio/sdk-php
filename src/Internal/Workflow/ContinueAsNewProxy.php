@@ -13,6 +13,7 @@ namespace Temporal\Internal\Workflow;
 
 use React\Promise\PromiseInterface;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Internal\Support\Reflection;
 use Temporal\Workflow\ContinueAsNewOptions;
 use Temporal\Workflow\WorkflowContextInterface;
 
@@ -95,6 +96,10 @@ class ContinueAsNewProxy extends Proxy
         }
 
         $this->isContinued = true;
+
+        if ($handler !== null) {
+            $args = Reflection::orderArguments($handler, $args);
+        }
 
         return $this->context->continueAsNew($this->workflow->getID(), $args, $this->options);
     }

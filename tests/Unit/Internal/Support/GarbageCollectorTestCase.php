@@ -2,17 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Internal\Support;
+namespace Temporal\Tests\Unit\Internal\Support;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Temporal\Internal\Support\GarbageCollector;
 
-/**
- * @internal
- *
- */
 #[CoversClass(\Temporal\Internal\Support\GarbageCollector::class)]
 final class GarbageCollectorTestCase extends TestCase
 {

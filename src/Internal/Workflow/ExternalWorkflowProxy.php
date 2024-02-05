@@ -13,6 +13,7 @@ namespace Temporal\Internal\Workflow;
 
 use React\Promise\PromiseInterface;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Internal\Support\Reflection;
 use Temporal\Workflow\ExternalWorkflowStubInterface;
 
 class ExternalWorkflowProxy extends Proxy
@@ -61,6 +62,8 @@ class ExternalWorkflowProxy extends Proxy
     {
         foreach ($this->workflow->getSignalHandlers() as $name => $reflection) {
             if ($method === $reflection->getName()) {
+                $args = Reflection::orderArguments($reflection, $args);
+
                 return $this->stub->signal($name, $args);
             }
         }
