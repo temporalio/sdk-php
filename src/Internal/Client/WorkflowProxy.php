@@ -96,7 +96,7 @@ final class WorkflowProxy extends Proxy
                     return null;
                 }
 
-                return $result->getValue(0, $update->getReturnType());
+                return $result->getResult()?->getValue(0, $update->getReturnType());
             }
         }
 

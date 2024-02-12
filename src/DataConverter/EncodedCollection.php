@@ -164,7 +164,7 @@ class EncodedCollection implements IteratorAggregate, Countable
     }
 
     /**
-     * @return EncodedCollection
+     * @return static
      */
     public static function empty(): static
     {

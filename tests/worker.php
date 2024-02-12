@@ -9,7 +9,6 @@
 
 declare(strict_types=1);
 
-use Temporal\Internal\Interceptor\Interceptor;
 use Temporal\Testing\WorkerFactory;
 use Temporal\Tests\Fixtures\PipelineProvider;
 use Temporal\Tests\Interceptor\HeaderChanger;

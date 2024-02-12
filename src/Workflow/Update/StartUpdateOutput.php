@@ -17,9 +17,20 @@ use Temporal\DataConverter\ValuesInterface;
 final class StartUpdateOutput
 {
     public function __construct(
-        public UpdateRef $reference,
-        public readonly bool $hasResult,
-        public readonly ?ValuesInterface $result,
+        // todo DTO
+        private UpdateRef $reference,
+        private readonly bool $hasResult,
+        private readonly ?ValuesInterface $result,
     ) {
+    }
+
+    public function hasResult(): bool
+    {
+        return $this->hasResult;
+    }
+
+    public function getResult(): ?ValuesInterface
+    {
+        return $this->result;
     }
 }

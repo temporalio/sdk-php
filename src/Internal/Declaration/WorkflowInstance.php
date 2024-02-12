@@ -38,6 +38,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
      * @var array<string, DispatchableHandler>
      */
     private array $signalHandlers = [];
+
     /**
      * @var array<string, DispatchableHandler>
      */

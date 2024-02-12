@@ -17,7 +17,6 @@ use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
 use Temporal\Internal\Interceptor\Interceptor;
-use Temporal\Workflow\Update\UpdateResult;
 
 /**
  * It's recommended to use {@see WorkflowInboundCallsInterceptorTrait} when implementing this interface because
@@ -47,13 +46,13 @@ interface WorkflowInboundCallsInterceptor extends Interceptor
 
     /**
      * @param UpdateInput $input
-     * @param callable(UpdateInput): UpdateResult $next
+     * @param callable(UpdateInput): mixed $next
      */
-    public function handleUpdate(UpdateInput $input, callable $next): UpdateResult;
+    public function handleUpdate(UpdateInput $input, callable $next): mixed;
 
     /**
      * @param UpdateInput $input
-     * @param callable(UpdateInput): UpdateResult $next
+     * @param callable(UpdateInput): void $next
      */
-    public function validateUpdate(UpdateInput $input, callable $next): UpdateResult;
+    public function validateUpdate(UpdateInput $input, callable $next): void;
 }

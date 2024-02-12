@@ -26,13 +26,14 @@ class UpdateTestCase extends AbstractClient
 
         try {
             $run = $client->start($workflow);
-            $workflow->addName('John Doe');
+            $updated = $workflow->addName('John Doe');
             $workflow->exit();
             $result = $run->getResult();
-        } finally {
+        } catch (\Throwable) {
             $workflow->exit();
         }
 
         $this->assertSame(['Hello, John Doe!'], $result);
+        $this->assertSame('Hello, John Doe!', $updated);
     }
 }

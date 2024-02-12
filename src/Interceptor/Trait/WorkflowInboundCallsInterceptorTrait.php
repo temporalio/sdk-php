@@ -16,7 +16,6 @@ use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
 use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
-use Temporal\Workflow\Update\UpdateResult;
 
 /**
  * Implements {@see WorkflowInboundCallsInterceptor}
@@ -50,7 +49,7 @@ trait WorkflowInboundCallsInterceptorTrait
     /**
      * @see WorkflowInboundCallsInterceptor::handleUpdate()
      */
-    public function handleUpdate(UpdateInput $input, callable $next): UpdateResult
+    public function handleUpdate(UpdateInput $input, callable $next): mixed
     {
         return $next($input);
     }
@@ -58,8 +57,8 @@ trait WorkflowInboundCallsInterceptorTrait
     /**
      * @see WorkflowInboundCallsInterceptor::handleUpdate()
      */
-    public function validateUpdate(UpdateInput $input, callable $next): UpdateResult
+    public function validateUpdate(UpdateInput $input, callable $next): void
     {
-        return $next($input);
+        $next($input);
     }
 }

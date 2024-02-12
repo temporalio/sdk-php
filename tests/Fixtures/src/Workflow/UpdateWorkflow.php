@@ -24,23 +24,16 @@ class UpdateWorkflow
     #[WorkflowMethod(name: "Update.greet")]
     public function greet()
     {
-        $received = [];
-        while (true) {
-            yield Workflow::await(fn() => $this->greetings !== [] || $this->exit);
-            if ($this->greetings === [] && $this->exit) {
-                return $received;
-            }
-
-            $message = array_shift($this->greetings);
-            $received[] = $message;
-        }
+        yield Workflow::await(fn() => $this->exit);
+        return $this->greetings;
     }
 
     #[Workflow\UpdateMethod]
     public function addName(
         string $name
-    ): void {
-        $this->greetings[] = sprintf('Hello, %s!', $name);
+    ): mixed {
+        $this->greetings[] = \sprintf('Hello, %s!', $name);
+        return $this->greetings;
     }
 
     #[Workflow\SignalMethod]

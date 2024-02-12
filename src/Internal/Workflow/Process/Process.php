@@ -86,7 +86,7 @@ class Process extends Scope implements ProcessInterface
         });
 
         // Configure update handler in a mutable scope
-        $wfInstance->setUpdateExecutor(function (UpdateInput $input, callable $handler) use ($inboundPipeline): mixed {
+        $wfInstance->setUpdateExecutor(function (UpdateInput $input, callable $handler) use ($inboundPipeline): void {
             try {
                 // Define Context for interceptors Pipeline
                 Workflow::setCurrentContext($this->scopeContext);
@@ -94,18 +94,13 @@ class Process extends Scope implements ProcessInterface
                 $inboundPipeline->with(
                     function (UpdateInput $input) use ($handler) {
                         $this->createScope(
-                            true,
-                            LoopInterface::ON_SIGNAL,
-                            $this->context->withInput(
+                            detached: true,
+                            layer: LoopInterface::ON_SIGNAL,
+                            context: $this->context->withInput(
                                 new Input($input->info, $input->arguments, $input->header),
                             ),
                         )->onClose(
-                            function (?\Throwable $error): void {
-                                if ($error !== null) {
-                                    // we want to fail process when update execute scope fails
-                                    $this->complete($error);
-                                }
-                            }
+                            $this->complete(...),
                         )->startSignal( // todo rename ??
                             $handler,
                             $input->arguments,
@@ -114,8 +109,6 @@ class Process extends Scope implements ProcessInterface
                     /** @see WorkflowInboundCallsInterceptor::handleUpdate() */
                     'handleUpdate',
                 )($input);
-
-                return $handler($input->arguments);
             } finally {
                 Workflow::setCurrentContext(null);
             }

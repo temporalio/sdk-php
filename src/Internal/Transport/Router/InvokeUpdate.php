@@ -13,12 +13,12 @@ namespace Temporal\Internal\Transport\Router;
 
 use JetBrains\PhpStorm\Pure;
 use React\Promise\Deferred;
+use Temporal\DataConverter\EncodedValues;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
-use Temporal\Workflow\Update\UpdateResult;
 
 final class InvokeUpdate extends WorkflowProcessAwareRoute
 {
@@ -52,35 +52,19 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
         /** @psalm-suppress InaccessibleProperty */
         $context->getInfo()->historyLength = $request->getHistoryLength();
 
-        try {
-            $result = $handler(new UpdateInput(
-                signalName: $name,
-                info: $context->getInfo(),
-                arguments: $request->getPayloads(),
-                // todo Header from request
-                header: $context->getHeader(),
-            ));
-
-            $resolver->resolve(new UpdateResult(
-                status: UpdateResult::COMPLETE,
-                result: $result,
-                options: \array_intersect_key($request->getOptions(), ['updateId' => true])
-            ));
-        } catch (\Throwable $e) {
-            $resolver->reject(new UpdateResult(
-                status: UpdateResult::ERROR_COMPLETE,
-                error: $e,
-                options: \array_intersect_key($request->getOptions(), ['updateId' => true])
-            ));
-        }
+        $handler(new UpdateInput(
+            signalName: $name,
+            info: $context->getInfo(),
+            arguments: $request->getPayloads(),
+            // todo Header from request
+            header: $context->getHeader(),
+        ));
     }
 
     /**
-     * @param WorkflowInstanceInterface $instance
-     * @param string $name
-     * @return \Closure|null
+     * @param non-empty-string $name
      */
-    private function findQueryHandlerOrFail(WorkflowInstanceInterface $instance, string $name): ?\Closure
+    private function findQueryHandlerOrFail(WorkflowInstanceInterface $instance, string $name): \Closure
     {
         $handler = $instance->findUpdateHandler($name);
 
@@ -96,9 +80,6 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
     private function validateUpdate(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
         // todo validate in a immutable scope
-        $resolver->resolve(new UpdateResult(
-            status: UpdateResult::ACCEPT,
-            options: \array_intersect_key($request->getOptions(), ['updateId' => true]),
-        ));
+        $resolver->resolve(EncodedValues::fromValues([null]));
     }
 }
