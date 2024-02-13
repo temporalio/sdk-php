@@ -88,7 +88,7 @@ final class ActivityProxy extends Proxy
             ? $this->callsInterceptor->with(
                 fn(ExecuteLocalActivityInput $input): PromiseInterface => $this->ctx
                     ->newUntypedActivityStub($input->options)
-                    ->execute($input->type, $input->args, $input->returnType),
+                    ->execute($input->type, $input->args, $input->returnType, true),
                 /** @see WorkflowOutboundCallsInterceptor::executeLocalActivity() */
                 'executeLocalActivity',
             )(
