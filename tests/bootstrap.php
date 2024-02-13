@@ -14,4 +14,3 @@ if (getenv('RUN_TEMPORAL_TEST_SERVER') !== false) {
     $environment->startRoadRunner('./rr serve -c .rr.silent.yaml -w tests');
     register_shutdown_function(fn() => $environment->stop());
 }
-

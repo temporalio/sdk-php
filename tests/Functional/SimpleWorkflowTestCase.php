@@ -60,17 +60,45 @@ final class SimpleWorkflowTestCase extends TestCase
 
         $status = $workflow->getStatus();
         $this->assertSame([
-			"start",
-			"child started",
-			"child signaled",
-			"scope canceled",
-			"process done",
+            "start",
+            "child started",
+            "child signaled",
+            "scope canceled",
+            "process done",
         ], $status);
 
         $this->assertContainsEvent(
             $run->getExecution(),
             EventType::EVENT_TYPE_REQUEST_CANCEL_EXTERNAL_WORKFLOW_EXECUTION_INITIATED,
         );
+    }
+
+    public function testLocalActivity(): void
+    {
+        $workflow = $this->workflowClient
+            ->newWorkflowStub(
+                \Temporal\Tests\Workflow\LocalActivityWorkflow::class,
+                WorkflowOptions::new()->withWorkflowRunTimeout('10 seconds')
+            );
+        $run = $this->workflowClient->start($workflow);
+
+        $run->getResult(null, 5);
+
+        $history = $this->workflowClient->getWorkflowHistory(
+            $run->getExecution(),
+            pageSize: 50,
+        );
+        foreach ($history as $item) {
+            if ($item->getEventType() === EventType::EVENT_TYPE_MARKER_RECORDED &&
+                $item->getMarkerRecordedEventAttributes()->getMarkerName() === 'LocalActivity'
+            ) {
+                // LocalActivity found
+                $this->assertTrue(true);
+                return;
+            }
+        }
+
+        $this->fail('LocalActivity not found in history');
     }
 
     private function assertContainsEvent(WorkflowExecution $execution, int $event): void
