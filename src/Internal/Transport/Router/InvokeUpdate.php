@@ -13,6 +13,7 @@ namespace Temporal\Internal\Transport\Router;
 
 use JetBrains\PhpStorm\Pure;
 use React\Promise\Deferred;
+use React\Promise\PromiseInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
@@ -52,13 +53,22 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
         /** @psalm-suppress InaccessibleProperty */
         $context->getInfo()->historyLength = $request->getHistoryLength();
 
-        $handler(new UpdateInput(
+        /** @var PromiseInterface $promise */
+        $promise = $handler(new UpdateInput(
             signalName: $name,
             info: $context->getInfo(),
             arguments: $request->getPayloads(),
             // todo Header from request
             header: $context->getHeader(),
         ));
+        $promise->then(
+            static function (mixed $value) use ($resolver): void {
+                $resolver->resolve(EncodedValues::fromValues($value));
+            },
+            static function (\Throwable $err) use ($resolver): void {
+                $resolver->reject($err);
+            },
+        );
     }
 
     /**

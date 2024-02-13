@@ -29,11 +29,16 @@ class UpdateWorkflow
     }
 
     #[Workflow\UpdateMethod]
-    public function addName(
-        string $name
-    ): mixed {
+    public function addName(string $name): mixed
+    {
         $this->greetings[] = \sprintf('Hello, %s!', $name);
         return $this->greetings;
+    }
+
+    #[Workflow\UpdateMethod]
+    public function throwException(string $name): mixed
+    {
+        throw new \Exception("Test exception with $name");
     }
 
     #[Workflow\SignalMethod]

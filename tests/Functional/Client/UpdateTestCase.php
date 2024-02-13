@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Functional\Client;
 
+use Temporal\Exception\Client\WorkflowUpdateException;
+use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Tests\Workflow\UpdateWorkflow;
 
 /**
@@ -29,11 +31,30 @@ class UpdateTestCase extends AbstractClient
             $updated = $workflow->addName('John Doe');
             $workflow->exit();
             $result = $run->getResult();
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
             $workflow->exit();
+            throw $e;
         }
 
         $this->assertSame(['Hello, John Doe!'], $result);
         $this->assertSame('Hello, John Doe!', $updated);
+    }
+
+    public function testThrowException(): void
+    {
+        $client = $this->createClient();
+        $workflow = $client->newWorkflowStub(UpdateWorkflow::class);
+
+        try {
+            $client->start($workflow);
+            $workflow->throwException('John Doe');
+            $this->fail('Exception should be thrown');
+        } catch (WorkflowUpdateException $e) {
+            $previous = $e->getPrevious();
+            $this->assertInstanceOf(ApplicationFailure::class, $previous);
+            $this->assertSame('Test exception with John Doe', $previous->getOriginalMessage());
+        } finally {
+            $workflow->exit();
+        }
     }
 }
