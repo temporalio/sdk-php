@@ -11,6 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Client;
 
+use ArrayAccess;
+use Countable;
+use Google\Protobuf\Internal\RepeatedField;
 use Temporal\Api\Enums\V1\EventType;
 use Temporal\Api\Enums\V1\HistoryEventFilterType;
 use Temporal\Api\Enums\V1\RetryState;
@@ -568,16 +571,19 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                 }
             }
 
-            if ($response->getHistory() === null) {
+            $history = $response->getHistory();
+            if ($history === null) {
                 continue;
             }
 
-            if ($response->getHistory()->getEvents()->count() === 0) {
+            $events = $history->getEvents();
+            /** @var ArrayAccess<int,mixed> $events */
+            if (!$events->offsetExists(0)) {
                 continue;
             }
 
             /** @var HistoryEvent $closeEvent */
-            $closeEvent = $response->getHistory()->getEvents()->offsetGet(0);
+            $closeEvent = $events->offsetGet(0);
 
             if ($closeEvent->getEventType() === EventType::EVENT_TYPE_WORKFLOW_EXECUTION_CONTINUED_AS_NEW) {
                 $this->execution = new WorkflowExecution(

@@ -25,6 +25,7 @@ use Temporal\Api\Workflowservice\V1\ListWorkflowExecutionsRequest;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\Type;
 use Temporal\Exception\InvalidArgumentException;
 use Temporal\Interceptor\PipelineProvider;
 use Temporal\Interceptor\SimplePipelineProvider;
@@ -38,6 +39,7 @@ use Temporal\Internal\Declaration\Reader\WorkflowReader;
 use Temporal\Internal\Interceptor\HeaderCarrier;
 use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Internal\Mapper\WorkflowExecutionInfoMapper;
+use Temporal\Internal\Support\Reflection;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowRunInterface;
 use Temporal\Workflow\WorkflowStub as WorkflowStubConverter;
@@ -126,9 +128,14 @@ class WorkflowClient implements WorkflowClientInterface
         $returnType = null;
         if ($workflow instanceof WorkflowProxy) {
             $returnType = $workflow->__getReturnType();
+            $method = $workflow->getHandlerReflection();
+
+            $args = Reflection::orderArguments($method, $args);
         }
 
-        if ($workflowStub->getWorkflowType() === null) {
+        $workflowType = $workflowStub->getWorkflowType();
+
+        if ($workflowType === null) {
             throw new InvalidArgumentException(
                 \sprintf('Unable to start untyped workflow without given workflowType')
             );
@@ -139,14 +146,17 @@ class WorkflowClient implements WorkflowClientInterface
         }
 
         $execution = $this->starter->start(
-            $workflowStub->getWorkflowType(),
+            $workflowType,
             $workflowStub->getOptions() ?? WorkflowOptions::new(),
             $args,
         );
 
         $workflowStub->setExecution($execution);
 
-        return new WorkflowRun($workflowStub, $returnType);
+        return new WorkflowRun(
+            stub: $workflowStub,
+            returnType: $returnType !== null ? Type::create($returnType) : null,
+        );
     }
 
     /**
@@ -166,14 +176,29 @@ class WorkflowClient implements WorkflowClientInterface
             throw new InvalidArgumentException('Unable to start workflow without workflow handler');
         }
 
+        if ($signal === '') {
+            throw new InvalidArgumentException('Signal name cannot be empty');
+        }
+
         $workflowStub = WorkflowStubConverter::fromWorkflow($workflow);
 
         $returnType = null;
         if ($workflow instanceof WorkflowProxy) {
             $returnType = $workflow->__getReturnType();
+            $handler = $workflow->getHandlerReflection();
+
+            $startArgs = Reflection::orderArguments($handler, $startArgs);
+
+            $signalReflection = $workflow->findSignalReflection($signal);
+
+            if ($signalReflection !== null) {
+                $signalArgs = Reflection::orderArguments($signalReflection, $signalArgs);
+            }
         }
 
-        if ($workflowStub->getWorkflowType() === null) {
+        $workflowType = $workflowStub->getWorkflowType();
+
+        if ($workflowType === null) {
             throw new InvalidArgumentException(
                 \sprintf('Unable to start untyped workflow without given workflowType')
             );
@@ -184,7 +209,7 @@ class WorkflowClient implements WorkflowClientInterface
         }
 
         $execution = $this->starter->signalWithStart(
-            $workflowStub->getWorkflowType(),
+            $workflowType,
             $workflowStub->getOptions() ?? WorkflowOptions::new(),
             $signal,
             $signalArgs,
@@ -193,7 +218,10 @@ class WorkflowClient implements WorkflowClientInterface
 
         $workflowStub->setExecution($execution);
 
-        return new WorkflowRun($workflowStub, $returnType);
+        return new WorkflowRun(
+            stub: $workflowStub,
+            returnType: $returnType !== null ? Type::create($returnType) : null,
+        );
     }
 
     /**

@@ -13,7 +13,9 @@ namespace Temporal\Internal\Workflow;
 
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\Type;
+use Temporal\Internal\Client\WorkflowProxy;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Internal\Support\Reflection;
 use Temporal\Internal\Transport\CompletableResultInterface;
 use Temporal\Workflow\ChildWorkflowOptions;
 use Temporal\Workflow\ChildWorkflowStubInterface;
@@ -76,12 +78,18 @@ final class ChildWorkflowProxy extends Proxy
                 $options,
             );
 
+            if ($handler !== null) {
+                $args = Reflection::orderArguments($handler, $args);
+            }
+
             return $this->stub->execute($args, $this->resolveReturnType($this->workflow));
         }
 
         // Otherwise, we try to find a suitable workflow "signal" method.
         foreach ($this->workflow->getSignalHandlers() as $name => $signal) {
             if ($signal->getName() === $method) {
+                $args = Reflection::orderArguments($signal, $args);
+
                 return $this->stub->signal($name, $args);
             }
         }

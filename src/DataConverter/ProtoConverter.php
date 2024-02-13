@@ -38,12 +38,11 @@ class ProtoConverter extends Converter
 
         $payload = $this->create($value->serializeToString());
 
-        /** @var DescriptorPool|\Google\Protobuf\Internal\DescriptorPool $pool */
-        $pool = \Google\Protobuf\Internal\DescriptorPool::getGeneratedPool();
-
         $payload->setMetadata([
             EncodingKeys::METADATA_ENCODING_KEY => $this->getEncodingType(),
-            EncodingKeys::METADATA_MESSAGE_TYPE => $pool->getDescriptorByClassName($value::class)->getFullName(),
+            EncodingKeys::METADATA_MESSAGE_TYPE => \Google\Protobuf\Internal\DescriptorPool::getGeneratedPool()
+                ->getDescriptorByClassName($value::class)
+                ?->getFullName(),
         ]);
 
         return $payload;

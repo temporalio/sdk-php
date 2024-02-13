@@ -430,7 +430,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
             ? $this->callsInterceptor->with(
                 fn(ExecuteLocalActivityInput $input): PromiseInterface => $this
                     ->newUntypedActivityStub($input->options)
-                    ->execute($input->type, $input->args, $input->returnType),
+                    ->execute($input->type, $input->args, $input->returnType, true),
                 /** @see WorkflowOutboundCallsInterceptor::executeLocalActivity() */
                 'executeLocalActivity',
             )(new ExecuteLocalActivityInput($type, $args, $options, $returnType))

@@ -19,23 +19,13 @@ use Temporal\Workflow\WorkflowRunInterface;
 final class WorkflowRun implements WorkflowRunInterface
 {
     /**
-     * @var WorkflowStubInterface
-     */
-    private WorkflowStubInterface $stub;
-
-    /**
-     * @var \ReflectionClass|\ReflectionType|string|Type|null
-     */
-    private $returnType;
-
-    /**
      * @param WorkflowStubInterface $stub
-     * @param string|\ReflectionClass|\ReflectionType|Type|null $returnType
+     * @param \ReflectionClass|\ReflectionType|string|Type|null $returnType
      */
-    public function __construct(WorkflowStubInterface $stub, $returnType = null)
-    {
-        $this->stub = $stub;
-        $this->returnType = $returnType;
+    public function __construct(
+        private WorkflowStubInterface $stub,
+        private $returnType = null,
+    ) {
     }
 
     /**

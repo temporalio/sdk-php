@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="5.20.0@3f284e96c9d9be6fe6b15c79416e1d1903dcfef4">
+<files psalm-version="5.21.1@8c473e2437be8b6a8fd8f630f0f11a16b114c494">
   <file src="src/Activity.php">
     <ImplicitToStringCast>
       <code>$type</code>
@@ -192,10 +192,6 @@
     <MoreSpecificReturnType>
       <code>static</code>
     </MoreSpecificReturnType>
-    <PossiblyNullArgument>
-      <code><![CDATA[$workflowStub->getWorkflowType()]]></code>
-      <code><![CDATA[$workflowStub->getWorkflowType()]]></code>
-    </PossiblyNullArgument>
     <RedundantFunctionCall>
       <code>\sprintf</code>
       <code>\sprintf</code>
@@ -472,23 +468,6 @@
     <ImplicitToStringCast>
       <code><![CDATA[$query->getReturnType()]]></code>
     </ImplicitToStringCast>
-    <InvalidNullableReturnType>
-      <code>WorkflowStubInterface</code>
-    </InvalidNullableReturnType>
-    <InvalidReturnStatement>
-      <code><![CDATA[$this->prototype->getReturnType()]]></code>
-    </InvalidReturnStatement>
-    <NullableReturnStatement>
-      <code><![CDATA[$this->stub]]></code>
-    </NullableReturnStatement>
-    <PossiblyNullReference>
-      <code>getHandler</code>
-      <code>getHandler</code>
-      <code>getQueryHandlers</code>
-      <code>getReturnType</code>
-      <code>query</code>
-      <code>signal</code>
-    </PossiblyNullReference>
   </file>
   <file src="src/Internal/Client/WorkflowStarter.php">
     <InvalidArgument>
@@ -533,8 +512,6 @@
       <code><![CDATA[$this->execution]]></code>
     </PossiblyNullArgument>
     <PossiblyNullReference>
-      <code>getEvents</code>
-      <code>getEvents</code>
       <code>getFailure</code>
       <code>getNewExecutionRunId</code>
       <code>getReason</code>

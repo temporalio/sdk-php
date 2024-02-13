@@ -13,8 +13,11 @@ namespace Temporal\Internal\Client;
 
 use Temporal\Client\WorkflowClient;
 use Temporal\Client\WorkflowStubInterface;
+use Temporal\DataConverter\Type;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Internal\Support\Reflection;
 use Temporal\Internal\Workflow\Proxy;
+use Temporal\Workflow\ReturnType;
 
 /**
  * @template-covariant T of object
@@ -25,33 +28,15 @@ final class WorkflowProxy extends Proxy
         'The given workflow class "%s" does not contain a workflow, query or signal method named "%s"';
 
     /**
-     * @var WorkflowClient
-     */
-    public WorkflowClient $client;
-
-    /**
-     * @var WorkflowStubInterface|null
-     */
-    private ?WorkflowStubInterface $stub;
-
-    /**
-     * @var WorkflowPrototype|null
-     */
-    private ?WorkflowPrototype $prototype;
-
-    /**
      * @param WorkflowClient $client
      * @param WorkflowStubInterface $stub
      * @param WorkflowPrototype $prototype
      */
     public function __construct(
-        WorkflowClient $client,
-        WorkflowStubInterface $stub,
-        WorkflowPrototype $prototype
+        public WorkflowClient $client,
+        private readonly WorkflowStubInterface $stub,
+        private readonly WorkflowPrototype $prototype,
     ) {
-        $this->client = $client;
-        $this->stub = $stub;
-        $this->prototype = $prototype;
     }
 
     /**
@@ -61,14 +46,26 @@ final class WorkflowProxy extends Proxy
      */
     public function __call(string $method, array $args)
     {
-        if ($method === $this->prototype->getHandler()?->getName()) {
+        $handler = $this->prototype->getHandler();
+        if ($handler !== null && $method === $handler->getName()) {
+            $args = Reflection::orderArguments($handler, $args);
+
+
+            $returnType = $this->__getReturnType();
+
             // no timeout (use async mode to get it)
-            return $this->client->start($this, ...$args)->getResult($this->__getReturnType());
+            return $this->client
+                ->start($this, ...$args)
+                ->getResult(
+                    type: $returnType !== null ? Type::create($returnType) : null
+                );
         }
 
         // Otherwise, we try to find a suitable workflow "query" method.
         foreach ($this->prototype->getQueryHandlers() as $name => $query) {
             if ($query->getName() === $method) {
+                $args = Reflection::orderArguments($query, $args);
+
                 $result = $this->stub->query($name, ...$args);
                 if ($result === null) {
                     return null;
@@ -81,6 +78,8 @@ final class WorkflowProxy extends Proxy
         // Otherwise, we try to find a suitable workflow "signal" method.
         foreach ($this->prototype->getSignalHandlers() as $name => $signal) {
             if ($signal->getName() === $method) {
+                $args = Reflection::orderArguments($signal, $args);
+
                 $this->stub->signal($name, ...$args);
 
                 return;
@@ -121,10 +120,10 @@ final class WorkflowProxy extends Proxy
     /**
      * TODO rename: Method names cannot use underscore (PSR conflict)
      *
-     * @return \ReflectionType|null
+     * @return ReturnType|null
      * @internal
      */
-    public function __getReturnType()
+    public function __getReturnType(): ?ReturnType
     {
         return $this->prototype->getReturnType();
     }
@@ -136,5 +135,31 @@ final class WorkflowProxy extends Proxy
     public function hasHandler(): bool
     {
         return $this->prototype->getHandler() !== null;
+    }
+
+    /**
+     * @return \ReflectionMethod
+     * @internal
+     */
+    public function getHandlerReflection(): \ReflectionMethod
+    {
+        return $this->prototype->getHandler() ?? throw new \LogicException(
+            'The workflow does not contain a handler method.'
+        );
+    }
+
+    /**
+     * @param non-empty-string $name Signal name
+     * @return \ReflectionFunctionAbstract|null
+     */
+    public function findSignalReflection(string $name): ?\ReflectionFunctionAbstract
+    {
+        foreach ($this->prototype->getSignalHandlers() as $method => $reflection) {
+            if ($method === $name) {
+                return $reflection;
+            }
+        }
+
+        return null;
     }
 }
