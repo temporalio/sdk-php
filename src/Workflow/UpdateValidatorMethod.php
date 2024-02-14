@@ -16,24 +16,25 @@ use JetBrains\PhpStorm\Immutable;
 use Spiral\Attributes\NamedArgumentConstructor;
 
 /**
- * Indicates that the method is an update handler method.
- * An update method gets executed when a workflow receives an update after the validator is called.
+ * Indicates that the method is an update validator handle. An update validator handle is associated
+ * with an update method and runs before the associated update handle. If the update validator
+ * throws an exception, the update handle is not called and the update is not persisted in history.
  *
  * @Annotation
  * @NamedArgumentConstructor
  * @Target({ "METHOD" })
  */
 #[\Attribute(\Attribute::TARGET_METHOD), NamedArgumentConstructor]
-final class UpdateMethod
+final class UpdateValidatorMethod
 {
     /**
-     * @param non-empty-string|null $name Name of the update handler. Default is method name.
+     * @param non-empty-string $name Name of the update handler the validator should be used for.
      *        Be careful about names that contain special characters. These names can be used as metric tags.
      *        And systems like prometheus ignore metrics which have tags with unsupported characters.
      */
     public function __construct(
         #[Immutable]
-        public ?string $name = null,
+        public string $name,
     ) {
     }
 }
