@@ -21,6 +21,9 @@ use Temporal\Tests\Workflow\UpdateWorkflow;
  */
 class UpdateTestCase extends AbstractClient
 {
+    /**
+     * @group skip-on-test-server
+     */
     public function testSimpleCase(): void
     {
         $client = $this->createClient();
@@ -40,6 +43,9 @@ class UpdateTestCase extends AbstractClient
         $this->assertSame('Hello, John Doe!', $updated);
     }
 
+    /**
+     * @group skip-on-test-server
+     */
     public function testWithoutValidationMethod(): void
     {
         $client = $this->createClient();
@@ -59,6 +65,9 @@ class UpdateTestCase extends AbstractClient
         $this->assertSame('Hello, John Doe 42!', $updated);
     }
 
+    /**
+     * @group skip-on-test-server
+     */
     public function testFailedValidation(): void
     {
         $client = $this->createClient();
@@ -77,6 +86,9 @@ class UpdateTestCase extends AbstractClient
         }
     }
 
+    /**
+     * @group skip-on-test-server
+     */
     public function testExecuteThrowException(): void
     {
         $client = $this->createClient();
