@@ -38,29 +38,41 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
      */
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
-        $type = $request->getOptions()['type'] ?? null;
-        if ($type === 'validate') {
-            $this->validateUpdate($request, $headers, $resolver);
-            return;
-        }
-
         $name = $request->getOptions()['name'];
         $process = $this->findProcessOrFail($request->getID());
         $context = $process->getContext();
         $instance = $process->getWorkflowInstance();
-        $handler = $this->findQueryHandlerOrFail($instance, $name);
+        $handler = $this->getUpdateHandler($instance, $name);
 
         /** @psalm-suppress InaccessibleProperty */
         $context->getInfo()->historyLength = $request->getHistoryLength();
 
-        /** @var PromiseInterface $promise */
-        $promise = $handler(new UpdateInput(
+        $input = new UpdateInput(
             signalName: $name,
             info: $context->getInfo(),
             arguments: $request->getPayloads(),
             // todo Header from request
             header: $context->getHeader(),
-        ));
+        );
+
+        $type = $request->getOptions()['type'] ?? null;
+        if ($type === 'validate') {
+            $handler = $instance->findValidateUpdateHandler($name);
+            if ($handler === null) {
+                $resolver->resolve(EncodedValues::fromValues([null]));
+            }
+
+            try {
+                $handler($input);
+                $resolver->resolve(EncodedValues::fromValues([null]));
+            } catch (\Throwable $e) {
+                $resolver->reject($e);
+            }
+            return;
+        }
+
+        /** @var PromiseInterface $promise */
+        $promise = $handler($input);
         $promise->then(
             static function (mixed $value) use ($resolver): void {
                 $resolver->resolve(EncodedValues::fromValues($value));
@@ -74,7 +86,7 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
     /**
      * @param non-empty-string $name
      */
-    private function findQueryHandlerOrFail(WorkflowInstanceInterface $instance, string $name): \Closure
+    private function getUpdateHandler(WorkflowInstanceInterface $instance, string $name): \Closure
     {
         $handler = $instance->findUpdateHandler($name);
 
@@ -85,11 +97,5 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
         }
 
         return $handler;
-    }
-
-    private function validateUpdate(ServerRequestInterface $request, array $headers, Deferred $resolver): void
-    {
-        // todo validate in a immutable scope
-        $resolver->resolve(EncodedValues::fromValues([null]));
     }
 }

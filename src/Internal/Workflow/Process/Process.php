@@ -69,18 +69,23 @@ class Process extends Scope implements ProcessInterface
         });
 
         // Configure update validator in an immutable scope
-        $wfInstance->setUpdateValidator(function (UpdateInput $input, callable $handler): mixed {
+        $wfInstance->setUpdateValidator(function (UpdateInput $input, callable $handler) use ($inboundPipeline): void {
             try {
-                $context = $this->scopeContext->withInput(
-                    new Input(
-                        $this->scopeContext->getInfo(),
-                        $input->arguments,
-                        $input->header,
-                    )
-                );
-                Workflow::setCurrentContext($context);
-
-                return $handler($input->arguments);
+                Workflow::setCurrentContext($this->scopeContext);
+                $inboundPipeline->with(
+                    function (UpdateInput $input) use ($handler): void {
+                        Workflow::setCurrentContext($this->scopeContext->withInput(
+                            new Input(
+                                $this->scopeContext->getInfo(),
+                                $input->arguments,
+                                $input->header,
+                            )
+                        ));
+                        $handler($input->arguments);
+                    },
+                    /** @see WorkflowInboundCallsInterceptor::validateUpdate() */
+                    'validateUpdate',
+                )($input);
             } finally {
                 Workflow::setCurrentContext(null);
             }

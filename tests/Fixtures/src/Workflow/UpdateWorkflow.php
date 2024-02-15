@@ -29,10 +29,25 @@ class UpdateWorkflow
     }
 
     #[Workflow\UpdateMethod]
+    public function addNameWithoutValidation(string $name): mixed
+    {
+        $this->greetings[] = \sprintf('Hello, %s!', $name);
+        return $this->greetings;
+    }
+
+    #[Workflow\UpdateMethod]
     public function addName(string $name): mixed
     {
         $this->greetings[] = \sprintf('Hello, %s!', $name);
         return $this->greetings;
+    }
+
+    #[Workflow\UpdateValidatorMethod(name: 'addName')]
+    public function validateName(string $name): void
+    {
+        if (\preg_match('/\\d/', $name) === 1) {
+            throw new \InvalidArgumentException('Name must not contain digits');
+        }
     }
 
     #[Workflow\UpdateMethod]

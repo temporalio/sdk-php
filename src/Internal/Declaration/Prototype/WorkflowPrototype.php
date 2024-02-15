@@ -33,6 +33,11 @@ final class WorkflowPrototype extends Prototype
     private array $updateHandlers = [];
 
     /**
+     * @var array<non-empty-string, \ReflectionFunctionAbstract>
+     */
+    private array $updateValidators = [];
+
+    /**
      * @var CronSchedule|null
      */
     private ?CronSchedule $cronSchedule = null;
@@ -130,7 +135,7 @@ final class WorkflowPrototype extends Prototype
     }
 
     /**
-     * @param string $name
+     * @param non-empty-string $name
      * @param \ReflectionFunctionAbstract $fun
      */
     public function addUpdateHandler(string $name, \ReflectionFunctionAbstract $fun): void
@@ -139,10 +144,27 @@ final class WorkflowPrototype extends Prototype
     }
 
     /**
+     * @param non-empty-string $name
+     * @param \ReflectionFunctionAbstract $fun
+     */
+    public function addValidateUpdateHandler(string $name, \ReflectionFunctionAbstract $fun): void
+    {
+        $this->updateValidators[$name] = $fun;
+    }
+
+    /**
      * @return iterable<non-empty-string, \ReflectionFunctionAbstract>
      */
     public function getUpdateHandlers(): iterable
     {
         return $this->updateHandlers;
+    }
+
+    /**
+     * @return array<non-empty-string, \ReflectionFunctionAbstract>
+     */
+    public function getValidateUpdateHandler(): array
+    {
+        return $this->updateValidators;
     }
 }

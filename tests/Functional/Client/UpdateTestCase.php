@@ -40,7 +40,44 @@ class UpdateTestCase extends AbstractClient
         $this->assertSame('Hello, John Doe!', $updated);
     }
 
-    public function testThrowException(): void
+    public function testWithoutValidationMethod(): void
+    {
+        $client = $this->createClient();
+        $workflow = $client->newWorkflowStub(UpdateWorkflow::class);
+
+        try {
+            $run = $client->start($workflow);
+            $updated = $workflow->addNameWithoutValidation('John Doe 42');
+            $workflow->exit();
+            $result = $run->getResult();
+        } catch (\Throwable $e) {
+            $workflow->exit();
+            throw $e;
+        }
+
+        $this->assertSame(['Hello, John Doe 42!'], $result);
+        $this->assertSame('Hello, John Doe 42!', $updated);
+    }
+
+    public function testFailedValidation(): void
+    {
+        $client = $this->createClient();
+        $workflow = $client->newWorkflowStub(UpdateWorkflow::class);
+
+        try {
+            $client->start($workflow);
+            $workflow->addName('123');
+            $this->fail('Exception should be thrown');
+        } catch (WorkflowUpdateException $e) {
+            $previous = $e->getPrevious();
+            $this->assertInstanceOf(ApplicationFailure::class, $previous);
+            $this->assertSame('Name must not contain digits', $previous->getOriginalMessage());
+        } finally {
+            $workflow->exit();
+        }
+    }
+
+    public function testExecuteThrowException(): void
     {
         $client = $this->createClient();
         $workflow = $client->newWorkflowStub(UpdateWorkflow::class);

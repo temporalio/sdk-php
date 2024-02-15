@@ -23,9 +23,12 @@ use Temporal\Internal\Interceptor;
 /**
  * @psalm-import-type DispatchableHandler from InstanceInterface
  * @psalm-type QueryHandler = \Closure(QueryInput): mixed
+ * @psalm-type UpdateHandler = \Closure(UpdateInput): mixed
+ * @psalm-type ValidateUpdateHandler = \Closure(UpdateInput): void
  * @psalm-type QueryExecutor = \Closure(QueryInput, callable(ValuesInterface): mixed): mixed
  * @psalm-type UpdateExecutor = \Closure(UpdateInput, callable(ValuesInterface): mixed): mixed
- * @psalm-type UpdateValidator = \Closure(UpdateInput, callable(ValuesInterface): mixed): void
+ * @psalm-type ValidateUpdateExecutor = \Closure(UpdateInput, callable(ValuesInterface): mixed): mixed
+ * @psalm-type UpdateValidator = \Closure(UpdateInput, UpdateHandler): void
  */
 final class WorkflowInstance extends Instance implements WorkflowInstanceInterface, Destroyable
 {
@@ -35,14 +38,19 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     private array $queryHandlers = [];
 
     /**
-     * @var array<string, DispatchableHandler>
+     * @var array<non-empty-string, DispatchableHandler>
      */
     private array $signalHandlers = [];
 
     /**
-     * @var array<string, DispatchableHandler>
+     * @var array<non-empty-string, UpdateHandler>
      */
     private array $updateHandlers = [];
+
+    /**
+     * @var array<non-empty-string, null|ValidateUpdateHandler>
+     */
+    private array $validateUpdateHandlers = [];
 
     private SignalQueue $signalQueue;
 
@@ -51,7 +59,8 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
 
     /** @var UpdateExecutor */
     private \Closure $updateExecutor;
-    /** @var UpdateValidator */
+
+    /** @var ValidateUpdateExecutor */
     private \Closure $updateValidator;
 
     /**
@@ -62,7 +71,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     public function __construct(
         WorkflowPrototype $prototype,
         object $context,
-        private Interceptor\Pipeline $pipeline,
+        private readonly Interceptor\Pipeline $pipeline,
     ) {
         parent::__construct($prototype, $context);
 
@@ -73,15 +82,23 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
             $this->signalQueue->attach($method, $this->signalHandlers[$method]);
         }
 
+        $updateValidators = $prototype->getValidateUpdateHandler();
         foreach ($prototype->getUpdateHandlers() as $method => $reflection) {
             $fn = $this->createHandler($reflection);
-            $this->updateHandlers[$method] = fn(UpdateInput $input) => ($this->updateExecutor)($input, $fn);
+            $this->updateHandlers[$method] = fn(UpdateInput $input): mixed => ($this->updateExecutor)($input, $fn);
+            // Register validate update handlers
+            $this->validateUpdateHandlers[$method] = \array_key_exists($method, $updateValidators)
+                ? fn(UpdateInput $input): mixed => ($this->updateValidator)(
+                    $input,
+                    $this->createHandler($updateValidators[$method]),
+                )
+                : null;
         }
 
         foreach ($prototype->getQueryHandlers() as $method => $reflection) {
             $fn = $this->createHandler($reflection);
             $this->queryHandlers[$method] = $this->pipeline->with(
-                function (QueryInput $input) use ($fn) {
+                function (QueryInput $input) use ($fn): mixed {
                     return ($this->queryExecutor)($input, $fn);
                 },
                 /** @see WorkflowInboundCallsInterceptor::handleQuery() */
@@ -155,6 +172,14 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     public function findUpdateHandler(string $name): ?\Closure
     {
         return $this->updateHandlers[$name] ?? null;
+    }
+
+    /**
+     * @param non-empty-string $name
+     */
+    public function findValidateUpdateHandler(string $name): ?\Closure
+    {
+        return $this->validateUpdateHandlers[$name] ?? null;
     }
 
     /**

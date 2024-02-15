@@ -20,6 +20,7 @@ use Temporal\Workflow\QueryMethod;
 use Temporal\Workflow\ReturnType;
 use Temporal\Workflow\SignalMethod;
 use Temporal\Workflow\UpdateMethod;
+use Temporal\Workflow\UpdateValidatorMethod;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
@@ -124,7 +125,7 @@ class WorkflowReader extends Reader
         foreach ($class->getMethods() as $ctx) {
             $contextClass = $ctx->getDeclaringClass();
 
-            /** @var UpdateMethod|null $signal */
+            /** @var UpdateMethod|null $update */
             $update = $this->getAttributedMethod($graph, $ctx, UpdateMethod::class);
 
             if ($update !== null) {
@@ -139,7 +140,25 @@ class WorkflowReader extends Reader
                     );
                 }
 
-                $prototype->addUpdateHandler($signal->name ?? $ctx->getName(), $ctx);
+                $prototype->addUpdateHandler($update->name ?? $ctx->getName(), $ctx);
+            }
+
+            /** @var UpdateValidatorMethod|null $validate */
+            $validate = $this->getAttributedMethod($graph, $ctx, UpdateValidatorMethod::class);
+
+            if ($validate !== null) {
+                // Validation
+                if (!$this->isValidMethod($ctx)) {
+                    throw new \LogicException(
+                        \vsprintf(self::ERROR_COMMON_METHOD_VISIBILITY, [
+                            'validate update',
+                            $contextClass->getName(),
+                            $ctx->getName(),
+                        ])
+                    );
+                }
+
+                $prototype->addValidateUpdateHandler($validate->name, $ctx);
             }
 
             /** @var SignalMethod|null $signal */
