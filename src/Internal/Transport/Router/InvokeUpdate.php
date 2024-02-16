@@ -25,14 +25,6 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
 {
     private const ERROR_HANDLER_NOT_FOUND = 'unknown updateName %s. KnownUpdateNames=[%s]';
 
-    #[Pure]
-    public function __construct(
-        RepositoryInterface $running,
-        private LoopInterface $loop,
-    ) {
-        parent::__construct($running);
-    }
-
     /**
      * {@inheritDoc}
      */
@@ -51,8 +43,7 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
             signalName: $name,
             info: $context->getInfo(),
             arguments: $request->getPayloads(),
-            // todo Header from request
-            header: $context->getHeader(),
+            header: $request->getHeader(),
         );
 
         $type = $request->getOptions()['type'] ?? null;

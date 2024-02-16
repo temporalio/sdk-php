@@ -11,17 +11,20 @@ declare(strict_types=1);
 
 namespace Temporal\Workflow\Update;
 
-use Temporal\Api\Update\V1\UpdateRef;
 use Temporal\DataConverter\ValuesInterface;
 
 final class StartUpdateOutput
 {
     public function __construct(
-        // todo DTO
-        private UpdateRef $reference,
+        private readonly UpdateRef $reference,
         private readonly bool $hasResult,
         private readonly ?ValuesInterface $result,
     ) {
+    }
+
+    public function getReference(): UpdateRef
+    {
+        return $this->reference;
     }
 
     public function hasResult(): bool

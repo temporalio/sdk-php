@@ -11,11 +11,11 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
-use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\IllegalStateException;
 use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\QueryMethod;
-use Temporal\Workflow\Update\StartUpdateOutput;
+use Temporal\Workflow\UpdateMethod;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowRunInterface;
 
@@ -64,7 +64,7 @@ interface WorkflowStubInterface extends WorkflowRunInterface
      * Sends named signal to the workflow execution.
      *
      * @param string $name
-     * @param ...mixed $args
+     * @param mixed ...$args
      */
     public function signal(string $name, ...$args): void;
 
@@ -73,17 +73,20 @@ interface WorkflowStubInterface extends WorkflowRunInterface
      * query handler is a method annotated with {@see QueryMethod}.
      *
      * @param string $name
-     * @param ...mixed $args
-     * @return EncodedValues|null
+     * @param mixed ...$args
+     * @return ValuesInterface|null
      */
-    public function query(string $name, ...$args): ?EncodedValues;
+    public function query(string $name, ...$args): ?ValuesInterface;
 
     /**
-     * todo
-     * @param string $name
-     * @param ...mixed $args
+     * Synchronously update a workflow execution by invoking its update handler.
+     * Usually an update handler is a method annotated with the {@see UpdateMethod} attribute.
+     *
+     * @param non-empty-string $name
+     * @param mixed ...$args
+     * @return ValuesInterface|null
      */
-    public function update(string $name, ...$args): StartUpdateOutput;
+    public function update(string $name, ...$args): ?ValuesInterface;
 
     /**
      * Request cancellation of a workflow execution.

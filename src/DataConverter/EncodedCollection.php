@@ -178,7 +178,7 @@ class EncodedCollection implements IteratorAggregate, Countable
      * @param iterable $values
      * @param DataConverterInterface|null $dataConverter
      *
-     * @return EncodedCollection
+     * @return static
      */
     public static function fromValues(iterable $values, ?DataConverterInterface $dataConverter = null): static
     {

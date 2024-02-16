@@ -27,6 +27,8 @@ enum LifecycleStage: int
      * or resource limits that an update is made to wait before the server will
      * indicate that it has been received and will be processed. This value
      * does not wait for any sort of acknowledgement from a worker.
+     *
+     * Note: the option is currently unimplemented.
      */
     case StageAdmitted = 1;
 

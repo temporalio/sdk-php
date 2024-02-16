@@ -20,7 +20,6 @@ use Temporal\Workflow\WorkflowExecution;
 class UpdateInput
 {
     /**
-     * @no-named-arguments
      * @internal Don't use the constructor. Use {@see self::with()} instead.
      */
     public function __construct(
@@ -30,7 +29,8 @@ class UpdateInput
         public readonly ValuesInterface $arguments,
         public readonly HeaderInterface $header,
         public readonly WaitPolicy $waitPolicy,
-        public readonly ?string $firstExecutionRunId,
+        public readonly string $updateId,
+        public readonly string $firstExecutionRunId,
     ) {
     }
 
@@ -43,6 +43,7 @@ class UpdateInput
         ?ValuesInterface $arguments = null,
         ?HeaderInterface $header = null,
         ?WaitPolicy $waitPolicy = null,
+        ?string $updateId = null,
         ?string $firstExecutionRunId = null,
     ): self {
         return new self(
@@ -52,11 +53,8 @@ class UpdateInput
             $arguments ?? $this->arguments,
             $header ?? $this->header,
             $waitPolicy ?? $this->waitPolicy,
-            match ($firstExecutionRunId) {
-                null => $this->firstExecutionRunId,
-                '' => null,
-                default => $firstExecutionRunId,
-            }
+            $updateId ?? $this->updateId,
+            $firstExecutionRunId ?? $this->firstExecutionRunId,
         );
     }
 }

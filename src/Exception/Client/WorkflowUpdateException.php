@@ -18,20 +18,20 @@ final class WorkflowUpdateException extends WorkflowException
     public function __construct(
         ?string $message,
         WorkflowExecution $execution,
-        ?string $workflowType = null,
-        private readonly ?string $updateId = null,
-        private readonly ?string $updateName = null,
+        ?string $workflowType,
+        private readonly string $updateId,
+        private readonly string $updateName,
         ?\Throwable $previous = null
     ) {
         parent::__construct($message, $execution, $workflowType, $previous);
     }
 
-    public function getUpdateId(): ?string
+    public function getUpdateId(): string
     {
         return $this->updateId;
     }
 
-    public function getUpdateName(): ?string
+    public function getUpdateName(): string
     {
         return $this->updateName;
     }

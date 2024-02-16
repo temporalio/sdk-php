@@ -19,7 +19,6 @@ use Temporal\Workflow\WorkflowInfo;
 class UpdateInput
 {
     /**
-     * @no-named-arguments
      * @internal Don't use the constructor. Use {@see self::with()} instead.
      */
     public function __construct(

@@ -36,6 +36,7 @@ use Temporal\Client\WorkflowStubInterface;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Client\TimeoutException;
 use Temporal\Exception\Client\WorkflowException;
@@ -63,6 +64,7 @@ use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Internal\Interceptor\HeaderCarrier;
 use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Workflow\Update\StartUpdateOutput;
+use Temporal\Workflow\Update\UpdateRef;
 use Temporal\Workflow\Update\WaitPolicy;
 use Temporal\Workflow\WorkflowExecution;
 
@@ -190,7 +192,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
     /**
      * {@inheritDoc}
      */
-    public function query(string $name, ...$args): ?EncodedValues
+    public function query(string $name, ...$args): ?ValuesInterface
     {
         $this->assertStarted(__FUNCTION__);
 
@@ -259,7 +261,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
     /**
      * {@inheritDoc}
      */
-    public function update(string $name, ...$args): StartUpdateOutput
+    public function update(string $name, ...$args): ?ValuesInterface
     {
         $this->assertStarted(__FUNCTION__);
 
@@ -267,7 +269,8 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
         $converter = $this->converter;
         $clientOptions = $this->clientOptions;
 
-        return $this->interceptors->with(
+        /** @var StartUpdateOutput $result */
+        $result = $this->interceptors->with(
             static function (UpdateInput $input) use ($serviceClient, $converter, $clientOptions): StartUpdateOutput {
                 $request = (new UpdateWorkflowExecutionRequest())
                     ->setNamespace($clientOptions->namespace)
@@ -283,7 +286,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                 // Configure Meta
                 $meta = new \Temporal\Api\Update\V1\Meta();
                 $meta->setIdentity($clientOptions->identity);
-                // $meta->setUpdateId(...);
+                $meta->setUpdateId($input->updateId);
                 $r->setMeta($meta);
 
                 // Configure update Input
@@ -307,31 +310,42 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                 }
 
                 $outcome = $result->getOutcome();
+                $updateRef = $result->getUpdateRef();
+                \assert($updateRef !== null);
+                $updateRefDto = new UpdateRef(
+                    new WorkflowExecution(
+                        (string)$updateRef->getWorkflowExecution()?->getWorkflowId(),
+                        $updateRef->getWorkflowExecution()?->getRunId(),
+                    ),
+                    $updateRef->getUpdateId(),
+                );
 
                 if ($outcome === null) {
                     // Not completed
-                    return new StartUpdateOutput($result->getUpdateRef(), false, null);
+                    return new StartUpdateOutput($updateRefDto, false, null);
                 }
 
                 $failure = $outcome->getFailure();
                 $success = $outcome->getSuccess();
 
+
                 if ($success !== null) {
                     return new StartUpdateOutput(
-                        $result->getUpdateRef(),
+                        $updateRefDto,
                         true,
                         EncodedValues::fromPayloads($success, $converter),
                     );
                 }
 
                 if ($failure !== null) {
-                    $execution = $result->getUpdateRef()?->getWorkflowExecution();
+                    $execution = $updateRef->getWorkflowExecution();
                     throw new WorkflowUpdateException(
                         null,
                         $execution === null
                             ? $input->workflowExecution
                             : new WorkflowExecution($execution->getWorkflowId(), $execution->getRunId()),
-                        updateId: $result->getUpdateRef()?->getUpdateId(),
+                        workflowType: $input->workflowType,
+                        updateId: $updateRef->getUpdateId(),
                         updateName: $input->updateName,
                         previous: FailureConverter::mapFailureToException($failure, $converter),
                     );
@@ -345,14 +359,17 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
             /** @see WorkflowClientCallsInterceptor::update() */
             'update',
         )(new UpdateInput(
-            $this->getExecution(),
-            $this->workflowType,
-            $name,
-            EncodedValues::fromValues($args, $this->converter),
-            Header::empty(),
-            WaitPolicy::new(),
-            null,
+            workflowExecution: $this->getExecution(),
+            workflowType: $this->workflowType,
+            updateName: $name,
+            arguments: EncodedValues::fromValues($args, $this->converter),
+            header: Header::empty(),
+            waitPolicy: WaitPolicy::new(),
+            updateId: '',
+            firstExecutionRunId: '',
         ));
+
+        return $result->getResult();
     }
 
     /**

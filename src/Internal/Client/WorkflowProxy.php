@@ -66,12 +66,7 @@ final class WorkflowProxy extends Proxy
             if ($query->getName() === $method) {
                 $args = Reflection::orderArguments($query, $args);
 
-                $result = $this->stub->query($name, ...$args);
-                if ($result === null) {
-                    return null;
-                }
-
-                return $result->getValue(0, $query->getReturnType());
+                return $this->stub->query($name, ...$args)?->getValue(0, $query->getReturnType());
             }
         }
 
@@ -89,13 +84,7 @@ final class WorkflowProxy extends Proxy
         // Otherwise, we try to find a suitable workflow "update" method.
         foreach ($this->prototype->getUpdateHandlers() as $name => $update) {
             if ($update->getName() === $method) {
-                $result = $this->stub->update($name, ...$args);
-
-                if ($result === null) {
-                    return null;
-                }
-
-                return $result->getResult()?->getValue(0, $update->getReturnType());
+                return $this->stub->update($name, ...$args)?->getValue(0, $update->getReturnType());
             }
         }
 
