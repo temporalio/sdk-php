@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Workflow\Update;
+namespace Temporal\Client\Update;
 
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Traits\CloneWith;

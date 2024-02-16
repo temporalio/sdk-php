@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Workflow\Update;
+namespace Temporal\Client\Update;
 
 /**
  * Specified by clients invoking workflow execution updates and used to indicate to the

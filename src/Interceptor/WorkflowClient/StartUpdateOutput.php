@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Workflow\Update;
+namespace Temporal\Interceptor\WorkflowClient;
 
 use Temporal\DataConverter\ValuesInterface;
 

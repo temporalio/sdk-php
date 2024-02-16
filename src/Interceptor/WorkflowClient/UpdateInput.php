@@ -9,9 +9,9 @@
 
 namespace Temporal\Interceptor\WorkflowClient;
 
+use Temporal\Client\Update\WaitPolicy;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\HeaderInterface;
-use Temporal\Workflow\Update\WaitPolicy;
 use Temporal\Workflow\WorkflowExecution;
 
 /**

@@ -12,17 +12,16 @@ declare(strict_types=1);
 namespace Temporal\Interceptor\Trait;
 
 use Temporal\DataConverter\EncodedValues;
-use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\WorkflowClient\CancelInput;
 use Temporal\Interceptor\WorkflowClient\GetResultInput;
 use Temporal\Interceptor\WorkflowClient\QueryInput;
 use Temporal\Interceptor\WorkflowClient\SignalInput;
 use Temporal\Interceptor\WorkflowClient\SignalWithStartInput;
 use Temporal\Interceptor\WorkflowClient\StartInput;
+use Temporal\Interceptor\WorkflowClient\StartUpdateOutput;
 use Temporal\Interceptor\WorkflowClient\TerminateInput;
 use Temporal\Interceptor\WorkflowClient\UpdateInput;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
-use Temporal\Workflow\Update\StartUpdateOutput;
 use Temporal\Workflow\WorkflowExecution;
 
 /**

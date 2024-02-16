@@ -12,8 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Internal\Client;
 
 use ArrayAccess;
-use Countable;
-use Google\Protobuf\Internal\RepeatedField;
 use Temporal\Api\Enums\V1\EventType;
 use Temporal\Api\Enums\V1\HistoryEventFilterType;
 use Temporal\Api\Enums\V1\RetryState;
@@ -31,6 +29,7 @@ use Temporal\Client\ClientOptions;
 use Temporal\Client\GRPC\Context;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Client\GRPC\StatusCode;
+use Temporal\Client\Update\WaitPolicy;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Common\Uuid;
@@ -58,14 +57,13 @@ use Temporal\Interceptor\WorkflowClient\CancelInput;
 use Temporal\Interceptor\WorkflowClient\GetResultInput;
 use Temporal\Interceptor\WorkflowClient\QueryInput;
 use Temporal\Interceptor\WorkflowClient\SignalInput;
+use Temporal\Interceptor\WorkflowClient\StartUpdateOutput;
 use Temporal\Interceptor\WorkflowClient\TerminateInput;
 use Temporal\Interceptor\WorkflowClient\UpdateInput;
+use Temporal\Interceptor\WorkflowClient\UpdateRef;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Internal\Interceptor\HeaderCarrier;
 use Temporal\Internal\Interceptor\Pipeline;
-use Temporal\Workflow\Update\StartUpdateOutput;
-use Temporal\Workflow\Update\UpdateRef;
-use Temporal\Workflow\Update\WaitPolicy;
 use Temporal\Workflow\WorkflowExecution;
 
 final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
