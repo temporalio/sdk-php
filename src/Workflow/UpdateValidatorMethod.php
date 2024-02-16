@@ -28,13 +28,13 @@ use Spiral\Attributes\NamedArgumentConstructor;
 final class UpdateValidatorMethod
 {
     /**
-     * @param non-empty-string $name Name of the update handler the validator should be used for.
+     * @param non-empty-string $forUpdate Name of the update handler the validator should be used for.
      *        Be careful about names that contain special characters. These names can be used as metric tags.
      *        And systems like prometheus ignore metrics which have tags with unsupported characters.
      */
     public function __construct(
         #[Immutable]
-        public string $name,
+        public string $forUpdate,
     ) {
     }
 }

@@ -42,7 +42,7 @@ class UpdateWorkflow
         return $this->greetings;
     }
 
-    #[Workflow\UpdateValidatorMethod(name: 'addName')]
+    #[Workflow\UpdateValidatorMethod(forUpdate: 'addName')]
     public function validateName(string $name): void
     {
         if (\preg_match('/\\d/', $name) === 1) {

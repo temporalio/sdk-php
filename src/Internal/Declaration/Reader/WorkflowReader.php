@@ -158,7 +158,7 @@ class WorkflowReader extends Reader
                     );
                 }
 
-                $prototype->addValidateUpdateHandler($validate->name, $ctx);
+                $prototype->addValidateUpdateHandler($validate->forUpdate, $ctx);
             }
 
             /** @var SignalMethod|null $signal */
