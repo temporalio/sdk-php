@@ -11,14 +11,11 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport\Router;
 
-use JetBrains\PhpStorm\Pure;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
-use Temporal\Internal\Repository\RepositoryInterface;
-use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 final class InvokeUpdate extends WorkflowProcessAwareRoute
@@ -66,7 +63,7 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
         $promise = $handler($input);
         $promise->then(
             static function (mixed $value) use ($resolver): void {
-                $resolver->resolve(EncodedValues::fromValues($value));
+                $resolver->resolve(EncodedValues::fromValues([$value]));
             },
             static function (\Throwable $err) use ($resolver): void {
                 $resolver->reject($err);
