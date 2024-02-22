@@ -17,6 +17,7 @@ use Temporal\DataConverter\EncodedValues;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
+use Temporal\Workflow\Update\UpdateResult;
 
 final class InvokeUpdate extends WorkflowProcessAwareRoute
 {
@@ -52,10 +53,16 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
 
             try {
                 $handler($input);
-                $resolver->resolve(EncodedValues::fromValues([null]));
+                $resolver->resolve(new UpdateResult(
+                    command: UpdateResult::COMMAND_VALIDATED,
+                ));
             } catch (\Throwable $e) {
-                $resolver->reject($e);
+                $resolver->reject(new UpdateResult(
+                    command: UpdateResult::COMMAND_VALIDATED,
+                    failure: $e,
+                ));
             }
+
             return;
         }
 
@@ -63,10 +70,18 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
         $promise = $handler($input);
         $promise->then(
             static function (mixed $value) use ($resolver): void {
-                $resolver->resolve(EncodedValues::fromValues([$value]));
+                $resolver->resolve(new UpdateResult(
+                    command: UpdateResult::COMMAND_COMPLETED,
+                    result: EncodedValues::fromValues([$value]),
+                ));
             },
             static function (\Throwable $err) use ($resolver): void {
-                $resolver->reject($err);
+                $resolver->reject(
+                    new UpdateResult(
+                        command: UpdateResult::COMMAND_COMPLETED,
+                        failure: $err,
+                    )
+                );
             },
         );
     }
