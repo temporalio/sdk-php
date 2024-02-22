@@ -68,7 +68,7 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
                     updateId: $updateId,
                 ));
             } catch (\Throwable $e) {
-                $resolver->reject(new UpdateResult(
+                $resolver->resolve(new UpdateResult(
                     command: UpdateResult::COMMAND_VALIDATED,
                     failure: $e,
                 ));
