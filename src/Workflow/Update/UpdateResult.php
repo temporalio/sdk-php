@@ -9,7 +9,7 @@ use Temporal\DataConverter\ValuesInterface;
 final class UpdateResult
 {
     public const COMMAND_VALIDATED = 'UpdateValidated';
-    public const COMMAND_COMPLETED = 'UpdateCompleted ';
+    public const COMMAND_COMPLETED = 'UpdateCompleted';
 
     public function __construct(
         public readonly string $command,

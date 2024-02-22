@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Functional\Client;
 
+use Temporal\Client\WorkflowOptions;
 use Temporal\Exception\Client\WorkflowUpdateException;
 use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Tests\Workflow\UpdateWorkflow;
@@ -27,7 +28,10 @@ class UpdateTestCase extends AbstractClient
     public function testSimpleCase(): void
     {
         $client = $this->createClient();
-        $workflow = $client->newWorkflowStub(UpdateWorkflow::class);
+        $workflow = $client->newWorkflowStub(
+            UpdateWorkflow::class,
+            WorkflowOptions::new()->withWorkflowRunTimeout('1m'),
+        );
 
         try {
             $run = $client->start($workflow);
@@ -95,8 +99,8 @@ class UpdateTestCase extends AbstractClient
 
         try {
             $run = $client->start($workflow);
-            $updated = $workflow->randomizeName();
-            // $updated = $workflow->randomizeName(2);
+            $workflow->randomizeName();
+            $updated = $workflow->randomizeName(2);
             $workflow->exit();
             $result = $run->getResult();
         } catch (\Throwable $e) {

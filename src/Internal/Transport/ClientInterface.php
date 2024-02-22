@@ -26,6 +26,8 @@ interface ClientInterface
      */
     public function request(RequestInterface $request, ?WorkflowContextInterface $context = null): PromiseInterface;
 
+    public function send(CommandInterface $request): void;
+
     /**
      * @param CommandInterface $command
      * @return bool
