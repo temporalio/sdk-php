@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
+use Temporal\Client\Update\UpdateHandle;
+use Temporal\Client\Update\UpdateOptions;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\IllegalStateException;
 use Temporal\Workflow\CancellationScopeInterface;
@@ -82,11 +84,22 @@ interface WorkflowStubInterface extends WorkflowRunInterface
      * Synchronously update a workflow execution by invoking its update handler.
      * Usually an update handler is a method annotated with the {@see UpdateMethod} attribute.
      *
-     * @param non-empty-string $name
-     * @param mixed ...$args
+     * @param non-empty-string $name Name of the update handler.
+     * @param mixed ...$args Arguments to pass to the update handler.
      * @return ValuesInterface|null
      */
     public function update(string $name, ...$args): ?ValuesInterface;
+
+    /**
+     * Asynchronously update a workflow execution by invoking its update handler and returning a
+     * handle to the update request.
+     * Usually an update handler is a method annotated with the {@see UpdateMethod} attribute.
+     *
+     * @param non-empty-string|UpdateOptions $nameOrOptions Name of the update handler or update options.
+     * @param mixed ...$args Arguments to pass to the update handler.
+     * @return UpdateHandle
+     */
+    public function startUpdate(string|UpdateOptions $nameOrOptions, ...$args): UpdateHandle;
 
     /**
      * Request cancellation of a workflow execution.

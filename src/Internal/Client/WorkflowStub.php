@@ -29,6 +29,9 @@ use Temporal\Client\ClientOptions;
 use Temporal\Client\GRPC\Context;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Client\GRPC\StatusCode;
+use Temporal\Client\Update\LifecycleStage;
+use Temporal\Client\Update\UpdateHandle;
+use Temporal\Client\Update\UpdateOptions;
 use Temporal\Client\Update\WaitPolicy;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Client\WorkflowStubInterface;
@@ -261,6 +264,21 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
      */
     public function update(string $name, ...$args): ?ValuesInterface
     {
+        $options = UpdateOptions::new($name)
+            ->withUpdateName($name)
+            ->withWaitPolicy(WaitPolicy::new()->withLifecycleStage(LifecycleStage::StageCompleted));
+        return $this->startUpdate($options, ...$args)->getResult();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function startUpdate(string|UpdateOptions $nameOrOptions, ...$args): UpdateHandle
+    {
+        $nameOrOptions = \is_string($nameOrOptions)
+            ? UpdateOptions::new($nameOrOptions)
+                ->withWaitPolicy(WaitPolicy::new()->withLifecycleStage(LifecycleStage::StageAccepted))
+            : $nameOrOptions;
         $this->assertStarted(__FUNCTION__);
 
         $serviceClient = $this->serviceClient;
@@ -359,15 +377,19 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
         )(new UpdateInput(
             workflowExecution: $this->getExecution(),
             workflowType: $this->workflowType,
-            updateName: $name,
+            updateName: $nameOrOptions->updateName,
             arguments: EncodedValues::fromValues($args, $this->converter),
             header: Header::empty(),
-            waitPolicy: WaitPolicy::new(),
-            updateId: '',
-            firstExecutionRunId: '',
+            waitPolicy: $nameOrOptions->waitPolicy,
+            updateId: $nameOrOptions->updateId ?? '',
+            firstExecutionRunId: $nameOrOptions->firstExecutionRunId ?? '',
         ));
 
-        return $result->getResult();
+        return new UpdateHandle(
+            execution: $result->getReference()->workflowExecution,
+            id: $result->getReference()->updateId,
+            result: $result->getResult(),
+        );
     }
 
     /**
