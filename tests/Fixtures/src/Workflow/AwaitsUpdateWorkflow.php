@@ -60,12 +60,10 @@ class AwaitsUpdateWorkflow
             return $this->awaits[$name];
         }
 
-        \trap(TIMEOUT: "FIRED1 " . \time());
         $notTimeout = yield Workflow::awaitWithTimeout(
             $timeout,
             fn() => $this->awaits[$name] !== null,
         );
-        \trap(TIMEOUT: "FIRED2 " . \time());
 
         if (!$notTimeout) {
             return $this->awaits[$name] = $value;

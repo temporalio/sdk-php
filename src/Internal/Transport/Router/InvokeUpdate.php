@@ -82,15 +82,19 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
         $promise = $handler($input);
         $promise->then(
             static function (mixed $value) use ($updateId, $context, $resolver): void {
-                $resolver->resolve(new UpdateResult(
+                $context->getClient()->send(new UpdateResponse(
                     command: UpdateResult::COMMAND_COMPLETED,
-                    result: EncodedValues::fromValues([$value]),
+                    values: EncodedValues::fromValues([$value]),
+                    failure: null,
+                    updateId: $updateId,
                 ));
             },
             static function (\Throwable $err) use ($updateId, $context, $resolver): void {
-                $resolver->resolve(new UpdateResult(
+                $context->getClient()->send(new UpdateResponse(
                     command: UpdateResult::COMMAND_COMPLETED,
+                    values: null,
                     failure: $err,
+                    updateId: $updateId,
                 ));
             },
         );

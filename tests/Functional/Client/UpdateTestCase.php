@@ -184,6 +184,36 @@ class UpdateTestCase extends AbstractClient
     /**
      * @group skip-on-test-server
      */
+    public function testSingleAwaitsWithoutTimeout(): void
+    {
+        $client = $this->createClient();
+        $stub = $this->createAwaitsUpdateUntypedStub($client);
+
+        $client->start($stub);
+        /** @see AwaitsUpdateWorkflow::add */
+        $handle = $stub->startUpdate('await', 'key');
+        $this->assertNull($handle->getResult());
+
+        /** @see AwaitsUpdateWorkflow::get */
+        $this->assertNull($stub->query('getValue', "key")->getValue(0));
+
+        /** @see AwaitsUpdateWorkflow::resolve */
+        $handle = $stub->update('resolveValue', "key", "resolved");
+        $this->assertSame("resolved", $handle->getValue(0));
+
+        /** @see AwaitsUpdateWorkflow::get */
+        $this->assertSame("resolved", $stub->query('getValue', "key")->getValue(0));
+
+        /** @see AwaitsUpdateWorkflow::exit */
+        $stub->signal('exit');
+        $result = $stub->getResult();
+
+        $this->assertSame(['key' => 'resolved'], (array)$result);
+    }
+
+    /**
+     * @group skip-on-test-server
+     */
     public function testMultipleAwaitsWithoutTimeout(): void
     {
         $client = $this->createClient();
@@ -194,12 +224,18 @@ class UpdateTestCase extends AbstractClient
             /** @see AwaitsUpdateWorkflow::add */
             $handle = $stub->startUpdate('await', "key$i", 5, "fallback$i");
             $this->assertNull($handle->getResult());
+
+            /** @see AwaitsUpdateWorkflow::get */
+            $this->assertNull($stub->query('getValue', "key$i")->getValue(0));
         }
 
         for ($i = 1; $i <= 5; $i++) {
             /** @see AwaitsUpdateWorkflow::resolve */
             $handle = $stub->update('resolveValue', "key$i", "resolved$i");
             $this->assertSame("resolved$i", $handle->getValue(0));
+
+            /** @see AwaitsUpdateWorkflow::get */
+            $this->assertSame("resolved$i", $stub->query('getValue', "key$i")->getValue(0));
         }
 
         /** @see AwaitsUpdateWorkflow::exit */

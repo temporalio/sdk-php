@@ -97,7 +97,7 @@ class Process extends Scope implements ProcessInterface
                 // Define Context for interceptors Pipeline
                 $scope = $this->createScope(
                     detached: true,
-                    layer: LoopInterface::ON_SIGNAL,
+                    layer: LoopInterface::ON_TICK,
                     context: $this->context->withInput(
                         new Input($input->info, $input->arguments, $input->header),
                     ),
