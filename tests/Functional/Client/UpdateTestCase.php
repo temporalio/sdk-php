@@ -11,9 +11,12 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Functional\Client;
 
+use Temporal\Client\WorkflowClient;
 use Temporal\Client\WorkflowOptions;
+use Temporal\Client\WorkflowStubInterface;
 use Temporal\Exception\Client\WorkflowUpdateException;
 use Temporal\Exception\Failure\ApplicationFailure;
+use Temporal\Tests\Workflow\AwaitsUpdateWorkflow;
 use Temporal\Tests\Workflow\UpdateWorkflow;
 
 /**
@@ -53,7 +56,7 @@ class UpdateTestCase extends AbstractClient
     public function testFailedValidation(): void
     {
         $client = $this->createClient();
-        $workflow = $client->newWorkflowStub(UpdateWorkflow::class);
+        $workflow = $this->createUpdateWorkflow($client);
 
         try {
             $client->start($workflow);
@@ -74,7 +77,7 @@ class UpdateTestCase extends AbstractClient
     public function testExecuteThrowException(): void
     {
         $client = $this->createClient();
-        $workflow = $client->newWorkflowStub(UpdateWorkflow::class);
+        $workflow = $this->createUpdateWorkflow($client);
 
         try {
             $client->start($workflow);
@@ -95,12 +98,12 @@ class UpdateTestCase extends AbstractClient
     public function testSimpleCaseWithSideEffect(): void
     {
         $client = $this->createClient();
-        $workflow = $client->newWorkflowStub(UpdateWorkflow::class);
+        $workflow = $this->createUpdateWorkflow($client);
 
         try {
             $run = $client->start($workflow);
-            $workflow->randomizeName();
-            $updated = $workflow->randomizeName(2);
+            $updated1 = $workflow->randomizeName();
+            $updated2 = $workflow->randomizeName(2);
             $workflow->exit();
             $result = $run->getResult();
         } catch (\Throwable $e) {
@@ -109,7 +112,8 @@ class UpdateTestCase extends AbstractClient
         }
 
         $this->assertCount(3, $result);
-        self::assertNotEmpty($updated);
+        self::assertNotEmpty($updated1);
+        self::assertNotEmpty($updated2);
     }
 
     /**
@@ -118,7 +122,7 @@ class UpdateTestCase extends AbstractClient
     public function testSimpleCaseWithActivity(): void
     {
         $client = $this->createClient();
-        $workflow = $client->newWorkflowStub(UpdateWorkflow::class);
+        $workflow = $this->createUpdateWorkflow($client);
 
         try {
             $run = $client->start($workflow);
@@ -140,7 +144,7 @@ class UpdateTestCase extends AbstractClient
     public function testWithoutValidationMethod(): void
     {
         $client = $this->createClient();
-        $workflow = $client->newWorkflowStub(UpdateWorkflow::class);
+        $workflow = $this->createUpdateWorkflow($client);
 
         try {
             $run = $client->start($workflow);
@@ -154,5 +158,121 @@ class UpdateTestCase extends AbstractClient
 
         $this->assertSame(['Hello, John Doe 42!'], $result);
         $this->assertSame('Hello, John Doe 42!', $updated);
+    }
+
+    /**
+     * @group skip-on-test-server
+     */
+    public function testAwaitWorks(): void
+    {
+        $client = $this->createClient();
+        $workflow = $this->createAwaitsUpdateWorkflow($client);
+
+        $run = $client->start($workflow);
+        $startedAt = \microtime(true);
+        $updated = $workflow->addWithTimeout('key', 1, 'fallback');
+        $endedAt = \microtime(true);
+        $workflow->exit();
+        $result = $run->getResult();
+
+        $this->assertGreaterThan(1, $endedAt - $startedAt, 'Await is working');
+        $this->assertLessThan(3, $endedAt - $startedAt);
+        $this->assertSame(['key' => 'fallback'], (array)$result);
+        $this->assertSame('fallback', $updated);
+    }
+
+    /**
+     * @group skip-on-test-server
+     */
+    public function testMultipleAwaitsWithoutTimeout(): void
+    {
+        $client = $this->createClient();
+        $stub = $this->createAwaitsUpdateUntypedStub($client);
+
+        $client->start($stub);
+        for ($i = 1; $i <= 5; $i++) {
+            /** @see AwaitsUpdateWorkflow::add */
+            $handle = $stub->startUpdate('await', "key$i", 5, "fallback$i");
+            $this->assertNull($handle->getResult());
+        }
+
+        for ($i = 1; $i <= 5; $i++) {
+            /** @see AwaitsUpdateWorkflow::resolve */
+            $handle = $stub->update('resolveValue', "key$i", "resolved$i");
+            $this->assertSame("resolved$i", $handle->getValue(0));
+        }
+
+        /** @see AwaitsUpdateWorkflow::exit */
+        $stub->signal('exit');
+        $result = $stub->getResult();
+
+        $this->assertSame([
+            'key1' => 'resolved1',
+            'key2' => 'resolved2',
+            'key3' => 'resolved3',
+            'key4' => 'resolved4',
+            'key5' => 'resolved5',
+        ], (array)$result);
+    }
+
+    /**
+     * @group skip-on-test-server
+     */
+    public function testMultipleAwaitsWithTimeout(): void
+    {
+        $client = $this->createClient();
+        $stub = $this->createAwaitsUpdateUntypedStub($client);
+
+        $client->start($stub);
+        for ($i = 1; $i <= 5; $i++) {
+            /** @see AwaitsUpdateWorkflow::addWithTimeout */
+            $handle = $stub->startUpdate('awaitWithTimeout', "key$i", 5, "fallback$i");
+            $this->assertNull($handle->getResult());
+        }
+
+        for ($i = 1; $i <= 5; $i++) {
+            /** @see AwaitsUpdateWorkflow::resolve */
+            $handle = $stub->update('resolveValue', "key$i", "resolved$i");
+            $this->assertSame("resolved$i", $handle->getValue(0));
+        }
+
+        /** @see AwaitsUpdateWorkflow::exit */
+        $stub->signal('exit');
+        $result = $stub->getResult();
+
+        $this->assertSame([
+            'key1' => 'resolved1',
+            'key2' => 'resolved2',
+            'key3' => 'resolved3',
+            'key4' => 'resolved4',
+            'key5' => 'resolved5',
+        ], (array)$result);
+    }
+
+    /**
+     * @return UpdateWorkflow
+     */
+    private function createUpdateWorkflow(WorkflowClient $client)
+    {
+        return $client->newWorkflowStub(UpdateWorkflow::class, WorkflowOptions::new()
+            ->withWorkflowRunTimeout('10 seconds')
+        );
+    }
+
+    /**
+     * @return AwaitsUpdateWorkflow
+     */
+    private function createAwaitsUpdateWorkflow(WorkflowClient $client)
+    {
+        return $client->newWorkflowStub(AwaitsUpdateWorkflow::class, WorkflowOptions::new()
+            ->withWorkflowRunTimeout('10 seconds')
+        );
+    }
+
+    private function createAwaitsUpdateUntypedStub(WorkflowClient $client): WorkflowStubInterface
+    {
+        return $client->newWorkflowStub(AwaitsUpdateWorkflow::class, WorkflowOptions::new()
+            ->withWorkflowRunTimeout('10 seconds')
+        )->__getUntypedStub();
     }
 }

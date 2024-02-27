@@ -45,6 +45,14 @@ class UpdateWorkflow
         return $result;
     }
 
+    #[Workflow\UpdateValidatorMethod(forUpdate: 'addName')]
+    public function validateName(string $name): void
+    {
+        if (\preg_match('/\\d/', $name) === 1) {
+            throw new \InvalidArgumentException('Name must not contain digits');
+        }
+    }
+
     #[Workflow\UpdateMethod]
     public function randomizeName(int $count = 1): mixed
     {
@@ -71,14 +79,6 @@ class UpdateWorkflow
         )->lower($name);
         $this->greetings[] = $result = \sprintf('Hello, %s!', $name);
         return $result;
-    }
-
-    #[Workflow\UpdateValidatorMethod(forUpdate: 'addName')]
-    public function validateName(string $name): void
-    {
-        if (\preg_match('/\\d/', $name) === 1) {
-            throw new \InvalidArgumentException('Name must not contain digits');
-        }
     }
 
     #[Workflow\UpdateMethod]
