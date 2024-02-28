@@ -31,6 +31,7 @@ class UpdateInput
         public readonly WaitPolicy $waitPolicy,
         public readonly string $updateId,
         public readonly string $firstExecutionRunId,
+        public readonly mixed $resultType,
     ) {
     }
 
@@ -45,6 +46,7 @@ class UpdateInput
         ?WaitPolicy $waitPolicy = null,
         ?string $updateId = null,
         ?string $firstExecutionRunId = null,
+        mixed $resultType = null,
     ): self {
         return new self(
             $workflowExecution ?? $this->workflowExecution,
@@ -55,6 +57,7 @@ class UpdateInput
             $waitPolicy ?? $this->waitPolicy,
             $updateId ?? $this->updateId,
             $firstExecutionRunId ?? $this->firstExecutionRunId,
+            $resultType ?? $this->resultType,
         );
     }
 }

@@ -11,6 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Client;
 
+use Temporal\Client\Update\LifecycleStage;
+use Temporal\Client\Update\UpdateOptions;
+use Temporal\Client\Update\WaitPolicy;
 use Temporal\Client\WorkflowClient;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\DataConverter\Type;
@@ -88,7 +91,11 @@ final class WorkflowProxy extends Proxy
                 $returnType = \array_key_exists(0, $attrs)
                     ? $attrs[0]->newInstance()
                     : $update->getReturnType();
-                return $this->stub->update($name, ...$args)?->getValue(0, $returnType);
+                $options = UpdateOptions::new($name)
+                    ->withUpdateName($name)
+                    ->withResultType($returnType)
+                    ->withWaitPolicy(WaitPolicy::new()->withLifecycleStage(LifecycleStage::StageCompleted));
+                return $this->stub->startUpdate($options, ...$args)->getResult();
             }
         }
 

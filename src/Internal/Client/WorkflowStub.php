@@ -19,6 +19,7 @@ use Temporal\Api\Enums\V1\TimeoutType;
 use Temporal\Api\Errordetails\V1\QueryFailedFailure;
 use Temporal\Api\History\V1\HistoryEvent;
 use Temporal\Api\Query\V1\WorkflowQuery;
+use Temporal\Api\Update\V1\Request as UpdateRequestMessage;
 use Temporal\Api\Workflowservice\V1\GetWorkflowExecutionHistoryRequest;
 use Temporal\Api\Workflowservice\V1\QueryWorkflowRequest;
 use Temporal\Api\Workflowservice\V1\RequestCancelWorkflowExecutionRequest;
@@ -267,7 +268,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
         $options = UpdateOptions::new($name)
             ->withUpdateName($name)
             ->withWaitPolicy(WaitPolicy::new()->withLifecycleStage(LifecycleStage::StageCompleted));
-        return $this->startUpdate($options, ...$args)->getResult();
+        return $this->startUpdate($options, ...$args)->getEncodedValues();
     }
 
     /**
@@ -285,18 +286,24 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
         $converter = $this->converter;
         $clientOptions = $this->clientOptions;
 
-        /** @var StartUpdateOutput $result */
+        /**
+         * @var StartUpdateOutput $result
+         * @var UpdateInput $updateInput
+         */
         $result = $this->interceptors->with(
-            static function (UpdateInput $input) use ($serviceClient, $converter, $clientOptions): StartUpdateOutput {
+            static function (
+                UpdateInput $input,
+            ) use (&$updateInput, $serviceClient, $converter, $clientOptions): StartUpdateOutput {
+                $updateInput = $input;
                 $request = (new UpdateWorkflowExecutionRequest())
                     ->setNamespace($clientOptions->namespace)
                     ->setWorkflowExecution($input->workflowExecution->toProtoWorkflowExecution())
-                    ->setRequest($r = new \Temporal\Api\Update\V1\Request())
+                    ->setRequest($r = new UpdateRequestMessage())
                     ->setWaitPolicy(
                         (new \Temporal\Api\Update\V1\WaitPolicy())
                             ->setLifecycleStage($input->waitPolicy->lifecycleStage->value)
                     )
-                    ->setFirstExecutionRunId((string)$input->firstExecutionRunId)
+                    ->setFirstExecutionRunId($input->firstExecutionRunId)
                 ;
 
                 // Configure Meta
@@ -383,11 +390,14 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
             waitPolicy: $nameOrOptions->waitPolicy,
             updateId: $nameOrOptions->updateId ?? '',
             firstExecutionRunId: $nameOrOptions->firstExecutionRunId ?? '',
+            resultType: $nameOrOptions->resultType,
         ));
 
         return new UpdateHandle(
-            execution: $result->getReference()->workflowExecution,
-            id: $result->getReference()->updateId,
+            client: $this->serviceClient,
+            clientOptions: $clientOptions,
+            updateInput: $updateInput,
+            updateRef: $result->getReference(),
             result: $result->getResult(),
         );
     }

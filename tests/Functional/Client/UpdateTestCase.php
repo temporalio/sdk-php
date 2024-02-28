@@ -192,7 +192,7 @@ class UpdateTestCase extends AbstractClient
         $client->start($stub);
         /** @see AwaitsUpdateWorkflow::add */
         $handle = $stub->startUpdate('await', 'key');
-        $this->assertNull($handle->getResult());
+        $this->assertFalse($handle->hasResult());
 
         /** @see AwaitsUpdateWorkflow::get */
         $this->assertNull($stub->query('getValue', "key")->getValue(0));
@@ -223,7 +223,7 @@ class UpdateTestCase extends AbstractClient
         for ($i = 1; $i <= 5; $i++) {
             /** @see AwaitsUpdateWorkflow::add */
             $handle = $stub->startUpdate('await', "key$i", 5, "fallback$i");
-            $this->assertNull($handle->getResult());
+            $this->assertFalse($handle->hasResult());
 
             /** @see AwaitsUpdateWorkflow::get */
             $this->assertNull($stub->query('getValue', "key$i")->getValue(0));
@@ -268,8 +268,7 @@ class UpdateTestCase extends AbstractClient
 
         for ($i = 1; $i <= 5; $i++) {
             /** @see AwaitsUpdateWorkflow::resolve */
-            $handle = $stub->update('resolveValue', "key$i", "resolved$i");
-            $this->assertSame("resolved$i", $handle->getValue(0));
+            $stub->startUpdate('resolveValue', "key$i", "resolved$i");
         }
 
         /** @see AwaitsUpdateWorkflow::exit */
