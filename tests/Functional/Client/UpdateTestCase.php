@@ -20,7 +20,7 @@ use Temporal\Tests\Workflow\AwaitsUpdateWorkflow;
 use Temporal\Tests\Workflow\UpdateWorkflow;
 
 /**
- * @group client
+ * @group workflow
  * @group functional
  */
 class UpdateTestCase extends AbstractClient
@@ -263,7 +263,7 @@ class UpdateTestCase extends AbstractClient
         for ($i = 1; $i <= 5; $i++) {
             /** @see AwaitsUpdateWorkflow::addWithTimeout */
             $handle = $stub->startUpdate('awaitWithTimeout', "key$i", 5, "fallback$i");
-            $this->assertNull($handle->getResult());
+            $this->assertFalse($handle->hasResult());
         }
 
         for ($i = 1; $i <= 5; $i++) {

@@ -396,6 +396,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
         return new UpdateHandle(
             client: $this->serviceClient,
             clientOptions: $clientOptions,
+            converter: $this->converter,
             updateInput: $updateInput,
             updateRef: $result->getReference(),
             result: $result->getResult(),

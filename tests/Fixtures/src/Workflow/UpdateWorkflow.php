@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Workflow;
 
+use Ramsey\Uuid\Uuid;
+use Ramsey\Uuid\UuidInterface;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Promise;
 use Temporal\Tests\Activity\SimpleActivity;
@@ -85,6 +87,26 @@ class UpdateWorkflow
     public function throwException(string $name): mixed
     {
         throw new \Exception("Test exception with $name");
+    }
+
+    #[Workflow\UpdateMethod]
+    public function returnNilUuid(): UuidInterface
+    {
+        return Uuid::fromString(Uuid::NIL);
+    }
+
+    #[Workflow\UpdateMethod]
+    #[Workflow\ReturnType(UuidInterface::class)]
+    public function returnUuid(UuidInterface $datetime)
+    {
+        return $datetime;
+    }
+
+    #[Workflow\UpdateMethod]
+    #[Workflow\ReturnType('object')]
+    public function returnAsObject(mixed $mixed): object
+    {
+        return (object)(array)$mixed;
     }
 
     #[Workflow\SignalMethod]

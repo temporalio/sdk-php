@@ -6,12 +6,17 @@ namespace Temporal\Client\Update;
 
 use Temporal\Api\Workflowservice\V1\PollWorkflowExecutionUpdateRequest;
 use Temporal\Client\ClientOptions;
+use Temporal\Client\GRPC\Context;
 use Temporal\Client\GRPC\ServiceClientInterface;
+use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\Client\TimeoutException;
 use Temporal\Exception\Client\WorkflowUpdateException;
+use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Interceptor\WorkflowClient\UpdateInput;
 use Temporal\Interceptor\WorkflowClient\UpdateRef;
+use Temporal\Internal\Support\DateInterval;
 use Temporal\Workflow\WorkflowExecution;
 
 /**
@@ -23,6 +28,7 @@ final class UpdateHandle
     public function __construct(
         private readonly ServiceClientInterface $client,
         private readonly ClientOptions $clientOptions,
+        private readonly DataConverterInterface $converter,
         private readonly UpdateInput $updateInput,
         private readonly UpdateRef $updateRef,
         private ValuesInterface|WorkflowUpdateException|null $result,
@@ -59,24 +65,28 @@ final class UpdateHandle
     /**
      * Fetch and decode the result of this update request.
      *
+     * @param int|float|null $timeout Timeout in seconds. Accuracy to milliseconds.
+     *
      * @throws WorkflowUpdateException
      * @throws TimeoutException
      */
-    public function getResult(): mixed
+    public function getResult(int|float|null $timeout = null): mixed
     {
-        return $this->getEncodedValues()->getValue(0, $this->updateInput->resultType);
+        return $this->getEncodedValues($timeout)->getValue(0, $this->updateInput->resultType);
     }
 
     /**
      * Fetch and return the encoded result of this update request.
      *
+     * @param int|float|null $timeout Timeout in seconds. Accuracy to milliseconds.
+     *
      * @throws WorkflowUpdateException
      * @throws TimeoutException
      */
-    public function getEncodedValues(): ValuesInterface
+    public function getEncodedValues(int|float|null $timeout = null): ValuesInterface
     {
         if ($this->result === null) {
-            $this->fetchResult();
+            $this->fetchResult($timeout);
         }
 
         return $this->result instanceof WorkflowUpdateException
@@ -85,10 +95,12 @@ final class UpdateHandle
     }
 
     /**
+     * @param int|float|null $timeout Timeout in seconds. Accuracy to milliseconds.
+     *
      * @psalm-assert !null $this->result
      * @throws TimeoutException
      */
-    private function fetchResult(): void
+    private function fetchResult(int|float|null $timeout = null): void
     {
         $request = (new PollWorkflowExecutionUpdateRequest())
             ->setUpdateRef(
@@ -104,6 +116,8 @@ final class UpdateHandle
 
         $response = $this->client->PollWorkflowExecutionUpdate(
             $request,
+            $timeout === null ? null : Context::default()
+                ->withTimeout((int)($timeout * 1000), DateInterval::FORMAT_MILLISECONDS),
         );
 
         // Workflow Uprate accepted
@@ -112,21 +126,22 @@ final class UpdateHandle
 
         // Accepted with result
         if ($result->getSuccess() !== null) {
-            $this->result = $result->getSuccess();
+            $this->result = EncodedValues::fromPayloads($result->getSuccess(), $this->converter);
             return;
         }
 
         // Accepted with failure
         $failure = $result->getFailure();
-        \assert($failure instanceof \Throwable);
+        \assert($failure !== null);
+        $e = FailureConverter::mapFailureToException($failure, $this->converter);
 
         $this->result = new WorkflowUpdateException(
-            $failure->getMessage(),
+            $e->getMessage(),
             execution: $this->getExecution(),
             workflowType: $this->updateInput->workflowType,
             updateId: $this->getId(),
             updateName: $this->updateInput->updateName,
-            previous: $failure,
+            previous: $e,
         );
     }
 }
