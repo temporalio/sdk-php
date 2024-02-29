@@ -82,7 +82,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
             $this->signalQueue->attach($method, $this->signalHandlers[$method]);
         }
 
-        $updateValidators = $prototype->getValidateUpdateHandler();
+        $updateValidators = $prototype->getValidateUpdateHandlers();
         foreach ($prototype->getUpdateHandlers() as $method => $reflection) {
             $fn = $this->createHandler($reflection);
             $this->updateHandlers[$method] = fn(UpdateInput $input): mixed => ($this->updateExecutor)($input, $fn);

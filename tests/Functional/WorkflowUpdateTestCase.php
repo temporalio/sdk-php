@@ -9,13 +9,14 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Functional\Client;
+namespace Temporal\Tests\Functional;
 
 use Temporal\Client\WorkflowClient;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Exception\Client\WorkflowUpdateException;
 use Temporal\Exception\Failure\ApplicationFailure;
+use Temporal\Tests\Functional\Client\AbstractClient;
 use Temporal\Tests\Workflow\AwaitsUpdateWorkflow;
 use Temporal\Tests\Workflow\UpdateWorkflow;
 
@@ -23,7 +24,7 @@ use Temporal\Tests\Workflow\UpdateWorkflow;
  * @group workflow
  * @group functional
  */
-class UpdateTestCase extends AbstractClient
+class WorkflowUpdateTestCase extends AbstractClient
 {
     /**
      * @group skip-on-test-server

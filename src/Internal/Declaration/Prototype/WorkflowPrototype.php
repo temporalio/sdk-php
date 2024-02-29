@@ -153,9 +153,9 @@ final class WorkflowPrototype extends Prototype
     }
 
     /**
-     * @return iterable<non-empty-string, \ReflectionFunctionAbstract>
+     * @return array<non-empty-string, \ReflectionFunctionAbstract>
      */
-    public function getUpdateHandlers(): iterable
+    public function getUpdateHandlers(): array
     {
         return $this->updateHandlers;
     }
@@ -163,7 +163,7 @@ final class WorkflowPrototype extends Prototype
     /**
      * @return array<non-empty-string, \ReflectionFunctionAbstract>
      */
-    public function getValidateUpdateHandler(): array
+    public function getValidateUpdateHandlers(): array
     {
         return $this->updateValidators;
     }
