@@ -10,10 +10,13 @@ use Temporal\Api\History\V1\History;
 use Temporal\Api\History\V1\HistoryEvent;
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
+use Temporal\Client\WorkflowOptions;
+use Temporal\Client\WorkflowStubInterface;
 use Temporal\Testing\Replay\Exception\NonDeterministicWorkflowException;
 use Temporal\Testing\Replay\Exception\ReplayerException;
 use Temporal\Testing\Replay\WorkflowReplayer;
 use Temporal\Tests\TestCase;
+use Temporal\Tests\Workflow\AwaitsUpdateWorkflow;
 use Temporal\Tests\Workflow\SignalWorkflow;
 use Temporal\Tests\Workflow\WorkflowWithSequence;
 
@@ -45,6 +48,30 @@ final class ReplayerTestCase extends TestCase
         (new WorkflowReplayer())->replayFromServer(
             'WorkflowWithSequence',
             $run->getExecution(),
+        );
+
+        $this->assertTrue(true);
+    }
+
+    /**
+     * @group skip-on-test-server
+     */
+    public function testReplayWorkflowFromServerWithUpdates(): void
+    {
+        $stub = $this->createAwaitsUpdateUntypedStub($this->workflowClient);
+
+        $this->workflowClient->start($stub);
+        /** @see AwaitsUpdateWorkflow::add */
+        $stub->startUpdate('await', 'key');
+        /** @see AwaitsUpdateWorkflow::resolve */
+        $stub->update('resolveValue', "key", "resolved");
+        /** @see AwaitsUpdateWorkflow::exit */
+        $stub->signal('exit');
+        $stub->getResult();
+
+        (new WorkflowReplayer())->replayFromServer(
+            'AwaitsUpdate.greet',
+            $stub->getExecution(),
         );
 
         $this->assertTrue(true);
@@ -298,5 +325,12 @@ final class ReplayerTestCase extends TestCase
 
         $this->expectException(ReplayerException::class);
         (new WorkflowReplayer())->replayHistory($history);
+    }
+
+    private function createAwaitsUpdateUntypedStub(WorkflowClient $client): WorkflowStubInterface
+    {
+        return $client->newWorkflowStub(AwaitsUpdateWorkflow::class, WorkflowOptions::new()
+            ->withWorkflowRunTimeout('10 seconds')
+        )->__getUntypedStub();
     }
 }

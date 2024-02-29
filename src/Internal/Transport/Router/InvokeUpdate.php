@@ -18,7 +18,6 @@ use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Temporal\Worker\Transport\Command\UpdateResponse;
-use Temporal\Workflow\Update\UpdateResult;
 
 final class InvokeUpdate extends WorkflowProcessAwareRoute
 {
@@ -29,29 +28,36 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
      */
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
-        try {
-            $isReplay = (bool)($request->getOptions()['replay'] ?? false);
-            $name = $request->getOptions()['name'];
-            $process = $this->findProcessOrFail($request->getID());
-            $context = $process->getContext();
-            $instance = $process->getWorkflowInstance();
-            $handler = $this->getUpdateHandler($instance, $name);
-            $updateId = $request->getOptions()['updateId'];
+        $process = $this->findProcessOrFail($request->getID());
+        $context = $process->getContext();
+        $updateId = $request->getOptions()['updateId'];
+        // Update requests don't require a response
+        $resolver->promise()->cancel();
 
+        try {
+            $instance = $process->getWorkflowInstance();
+            $name = $request->getOptions()['name'];
+            $handler = $this->getUpdateHandler($instance, $name);
             /** @psalm-suppress InaccessibleProperty */
             $context->getInfo()->historyLength = $request->getHistoryLength();
 
             $input = new UpdateInput(
-                signalName: $name,
+                updateName: $name,
                 info: $context->getInfo(),
                 arguments: $request->getPayloads(),
                 header: $request->getHeader(),
             );
 
             // Validation
+
+            $isReplay = (bool)($request->getOptions()['replay'] ?? false);
             if ($isReplay) {
-                $resolver->resolve(new UpdateResult(
-                    command: UpdateResult::COMMAND_VALIDATED,
+                // On replay, we don't need to execute validation handlers
+                $context->getClient()->send(new UpdateResponse(
+                    command: UpdateResponse::COMMAND_VALIDATED,
+                    values: null,
+                    failure: null,
+                    updateId: $updateId,
                 ));
             } else {
                 $validator = $instance->findValidateUpdateHandler($name);
@@ -62,17 +68,21 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
                 }
 
                 $context->getClient()->send(new UpdateResponse(
-                    command: UpdateResult::COMMAND_VALIDATED,
+                    command: UpdateResponse::COMMAND_VALIDATED,
                     values: null,
                     failure: null,
                     updateId: $updateId,
                 ));
             }
         } catch (\Throwable $e) {
-            $resolver->resolve(new UpdateResult(
-                command: UpdateResult::COMMAND_VALIDATED,
-                failure: $e,
-            ));
+            $context->getClient()->send(
+                new UpdateResponse(
+                    command: UpdateResponse::COMMAND_VALIDATED,
+                    values: null,
+                    failure: $e,
+                    updateId: $updateId,
+                )
+            );
             return;
         }
 
@@ -83,7 +93,7 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
         $promise->then(
             static function (mixed $value) use ($updateId, $context, $resolver): void {
                 $context->getClient()->send(new UpdateResponse(
-                    command: UpdateResult::COMMAND_COMPLETED,
+                    command: UpdateResponse::COMMAND_COMPLETED,
                     values: EncodedValues::fromValues([$value]),
                     failure: null,
                     updateId: $updateId,
@@ -91,7 +101,7 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
             },
             static function (\Throwable $err) use ($updateId, $context, $resolver): void {
                 $context->getClient()->send(new UpdateResponse(
-                    command: UpdateResult::COMMAND_COMPLETED,
+                    command: UpdateResponse::COMMAND_COMPLETED,
                     values: null,
                     failure: $err,
                     updateId: $updateId,

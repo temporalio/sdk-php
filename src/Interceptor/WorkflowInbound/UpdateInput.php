@@ -22,7 +22,7 @@ class UpdateInput
      * @internal Don't use the constructor. Use {@see self::with()} instead.
      */
     public function __construct(
-        public readonly string $signalName,
+        public readonly string $updateName,
         public readonly WorkflowInfo $info,
         public readonly ValuesInterface $arguments,
         public readonly HeaderInterface $header,
@@ -35,7 +35,7 @@ class UpdateInput
         HeaderInterface $header = null,
     ): self {
         return new self(
-            $this->signalName,
+            $this->updateName,
             $info ?? $this->info,
             $arguments ?? $this->arguments,
             $header ?? $this->header

@@ -107,7 +107,6 @@ class Process extends Scope implements ProcessInterface
                         Workflow::setCurrentContext($this->scopeContext);
                         return $inboundPipeline->with(
                             function (UpdateInput $input) use ($handler) {
-                                // todo update headers?
                                 return $handler($input->arguments);
                             },
                             /** @see WorkflowInboundCallsInterceptor::handleUpdate() */

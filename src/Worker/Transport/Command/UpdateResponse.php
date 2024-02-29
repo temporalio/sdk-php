@@ -15,6 +15,9 @@ use Temporal\DataConverter\ValuesInterface;
 
 class UpdateResponse extends Response
 {
+    public const COMMAND_VALIDATED = 'UpdateValidated';
+    public const COMMAND_COMPLETED = 'UpdateCompleted';
+
     public function __construct(
         private readonly string $command,
         private ?ValuesInterface $values,
