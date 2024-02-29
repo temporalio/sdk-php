@@ -68,6 +68,7 @@ final class GetWorkerInfo extends Route
                 'Name'    => $workflow->getID(),
                 'Queries' => $this->keys($workflow->getQueryHandlers()),
                 'Signals' => $this->keys($workflow->getSignalHandlers()),
+                // 'Updates' => $this->keys($workflow->getUpdateHandlers()),
             ];
         };
 
@@ -78,7 +79,9 @@ final class GetWorkerInfo extends Route
         return [
             'TaskQueue'  => $worker->getID(),
             'Options'    => $this->marshaller->marshal($worker->getOptions()),
+            // WorkflowInfo[]
             'Workflows'  => $this->map($worker->getWorkflows(), $workflowMap),
+            // ActivityInfo[]
             'Activities' => $this->map($worker->getActivities(), $activityMap),
             'PhpSdkVersion' => SdkVersion::getSdkVersion(),
         ];

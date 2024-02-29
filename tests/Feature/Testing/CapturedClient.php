@@ -47,6 +47,11 @@ class CapturedClient implements ClientInterface
             ->then($this->onFulfilled($request), $this->onRejected($request));
     }
 
+    public function send(CommandInterface $request): void
+    {
+        $this->parent->send($request);
+    }
+
     /**
      * @param RequestInterface $request
      * @return \Closure

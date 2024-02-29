@@ -13,15 +13,22 @@ namespace Temporal\Internal\Declaration;
 
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
+use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\WorkflowInstance\SignalQueue;
+use Temporal\Internal\Declaration\WorkflowInstance\UpdateQueue;
 use Temporal\Internal\Interceptor;
 
 /**
  * @psalm-import-type DispatchableHandler from InstanceInterface
  * @psalm-type QueryHandler = \Closure(QueryInput): mixed
+ * @psalm-type UpdateHandler = \Closure(UpdateInput): mixed
+ * @psalm-type ValidateUpdateHandler = \Closure(UpdateInput): void
  * @psalm-type QueryExecutor = \Closure(QueryInput, callable(ValuesInterface): mixed): mixed
+ * @psalm-type UpdateExecutor = \Closure(UpdateInput, callable(ValuesInterface): mixed): mixed
+ * @psalm-type ValidateUpdateExecutor = \Closure(UpdateInput, callable(ValuesInterface): mixed): mixed
+ * @psalm-type UpdateValidator = \Closure(UpdateInput, UpdateHandler): void
  */
 final class WorkflowInstance extends Instance implements WorkflowInstanceInterface, Destroyable
 {
@@ -31,17 +38,30 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     private array $queryHandlers = [];
 
     /**
-     * @var array<string, DispatchableHandler>
+     * @var array<non-empty-string, DispatchableHandler>
      */
     private array $signalHandlers = [];
 
     /**
-     * @var SignalQueue
+     * @var array<non-empty-string, UpdateHandler>
      */
+    private array $updateHandlers = [];
+
+    /**
+     * @var array<non-empty-string, null|ValidateUpdateHandler>
+     */
+    private array $validateUpdateHandlers = [];
+
     private SignalQueue $signalQueue;
 
     /** @var QueryExecutor */
     private \Closure $queryExecutor;
+
+    /** @var UpdateExecutor */
+    private \Closure $updateExecutor;
+
+    /** @var ValidateUpdateExecutor */
+    private \Closure $updateValidator;
 
     /**
      * @param WorkflowPrototype $prototype
@@ -51,7 +71,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     public function __construct(
         WorkflowPrototype $prototype,
         object $context,
-        private Interceptor\Pipeline $pipeline,
+        private readonly Interceptor\Pipeline $pipeline,
     ) {
         parent::__construct($prototype, $context);
 
@@ -62,15 +82,28 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
             $this->signalQueue->attach($method, $this->signalHandlers[$method]);
         }
 
+        $updateValidators = $prototype->getValidateUpdateHandlers();
+        foreach ($prototype->getUpdateHandlers() as $method => $reflection) {
+            $fn = $this->createHandler($reflection);
+            $this->updateHandlers[$method] = fn(UpdateInput $input): mixed => ($this->updateExecutor)($input, $fn);
+            // Register validate update handlers
+            $this->validateUpdateHandlers[$method] = \array_key_exists($method, $updateValidators)
+                ? fn(UpdateInput $input): mixed => ($this->updateValidator)(
+                    $input,
+                    $this->createHandler($updateValidators[$method]),
+                )
+                : null;
+        }
+
         foreach ($prototype->getQueryHandlers() as $method => $reflection) {
             $fn = $this->createHandler($reflection);
-            $this->queryHandlers[$method] = \Closure::fromCallable($this->pipeline->with(
-                function (QueryInput $input) use ($fn) {
+            $this->queryHandlers[$method] = $this->pipeline->with(
+                function (QueryInput $input) use ($fn): mixed {
                     return ($this->queryExecutor)($input, $fn);
                 },
                 /** @see WorkflowInboundCallsInterceptor::handleQuery() */
                 'handleQuery',
-            ));
+            )(...);
         }
     }
 
@@ -82,6 +115,24 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     public function setQueryExecutor(\Closure $executor): self
     {
         $this->queryExecutor = $executor;
+        return $this;
+    }
+
+    /**
+     * @param UpdateExecutor $executor
+     */
+    public function setUpdateExecutor(\Closure $executor): self
+    {
+        $this->updateExecutor = $executor;
+        return $this;
+    }
+
+    /**
+     * @param UpdateValidator $validator
+     */
+    public function setUpdateValidator(\Closure $validator): self
+    {
+        $this->updateValidator = $validator;
         return $this;
     }
 
@@ -116,6 +167,23 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
 
     /**
      * @param string $name
+     * @return \Closure
+     */
+    public function findUpdateHandler(string $name): ?\Closure
+    {
+        return $this->updateHandlers[$name] ?? null;
+    }
+
+    /**
+     * @param non-empty-string $name
+     */
+    public function findValidateUpdateHandler(string $name): ?\Closure
+    {
+        return $this->validateUpdateHandlers[$name] ?? null;
+    }
+
+    /**
+     * @param string $name
      * @param callable(ValuesInterface):mixed $handler
      * @throws \ReflectionException
      */
@@ -123,13 +191,31 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     {
         $fn = $this->createCallableHandler($handler);
 
-        $this->queryHandlers[$name] = \Closure::fromCallable($this->pipeline->with(
+        $this->queryHandlers[$name] = $this->pipeline->with(
             function (QueryInput $input) use ($fn) {
                 return ($this->queryExecutor)($input, $fn);
             },
             /** @see WorkflowInboundCallsInterceptor::handleQuery() */
             'handleQuery',
-        ));
+        )(...);
+    }
+
+    /**
+     * @param non-empty-string $name
+     * @param callable(ValuesInterface):mixed $handler
+     * @throws \ReflectionException
+     */
+    public function addUpdateHandler(string $name, callable $handler): void
+    {
+        $fn = $this->createCallableHandler($handler);
+
+        $this->updateHandlers[$name] = $this->pipeline->with(
+            function (UpdateInput $input) use ($fn) {
+                return ($this->updateExecutor)($input, $fn);
+            },
+            /** @see WorkflowInboundCallsInterceptor::handleUpdate() */
+            'handleUpdate',
+        )(...);
     }
 
     /**
@@ -138,6 +224,14 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     public function getQueryHandlerNames(): array
     {
         return \array_keys($this->queryHandlers);
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getUpdateHandlerNames(): array
+    {
+        return \array_keys($this->updateHandlers);
     }
 
     /**

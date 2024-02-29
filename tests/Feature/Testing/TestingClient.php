@@ -20,7 +20,6 @@ use Temporal\Worker\Transport\Command\FailureResponse;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\SuccessResponse;
 use Temporal\Workflow\WorkflowContextInterface;
-use Temporal\Workflow\WorkflowInfo;
 
 class TestingClient extends CapturedClient
 {

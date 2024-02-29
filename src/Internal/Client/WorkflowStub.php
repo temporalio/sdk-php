@@ -12,8 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Internal\Client;
 
 use ArrayAccess;
-use Countable;
-use Google\Protobuf\Internal\RepeatedField;
 use Temporal\Api\Enums\V1\EventType;
 use Temporal\Api\Enums\V1\HistoryEventFilterType;
 use Temporal\Api\Enums\V1\RetryState;
@@ -21,20 +19,27 @@ use Temporal\Api\Enums\V1\TimeoutType;
 use Temporal\Api\Errordetails\V1\QueryFailedFailure;
 use Temporal\Api\History\V1\HistoryEvent;
 use Temporal\Api\Query\V1\WorkflowQuery;
+use Temporal\Api\Update\V1\Request as UpdateRequestMessage;
 use Temporal\Api\Workflowservice\V1\GetWorkflowExecutionHistoryRequest;
 use Temporal\Api\Workflowservice\V1\QueryWorkflowRequest;
 use Temporal\Api\Workflowservice\V1\RequestCancelWorkflowExecutionRequest;
 use Temporal\Api\Workflowservice\V1\SignalWorkflowExecutionRequest;
 use Temporal\Api\Workflowservice\V1\TerminateWorkflowExecutionRequest;
+use Temporal\Api\Workflowservice\V1\UpdateWorkflowExecutionRequest;
 use Temporal\Client\ClientOptions;
 use Temporal\Client\GRPC\Context;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Client\GRPC\StatusCode;
+use Temporal\Client\Update\LifecycleStage;
+use Temporal\Client\Update\UpdateHandle;
+use Temporal\Client\Update\UpdateOptions;
+use Temporal\Client\Update\WaitPolicy;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Client\TimeoutException;
 use Temporal\Exception\Client\WorkflowException;
@@ -43,6 +48,7 @@ use Temporal\Exception\Client\WorkflowNotFoundException;
 use Temporal\Exception\Client\WorkflowQueryException;
 use Temporal\Exception\Client\WorkflowQueryRejectedException;
 use Temporal\Exception\Client\WorkflowServiceException;
+use Temporal\Exception\Client\WorkflowUpdateException;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Exception\Failure\TerminatedFailure;
@@ -55,7 +61,10 @@ use Temporal\Interceptor\WorkflowClient\CancelInput;
 use Temporal\Interceptor\WorkflowClient\GetResultInput;
 use Temporal\Interceptor\WorkflowClient\QueryInput;
 use Temporal\Interceptor\WorkflowClient\SignalInput;
+use Temporal\Interceptor\WorkflowClient\StartUpdateOutput;
 use Temporal\Interceptor\WorkflowClient\TerminateInput;
+use Temporal\Interceptor\WorkflowClient\UpdateInput;
+use Temporal\Interceptor\WorkflowClient\UpdateRef;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Internal\Interceptor\HeaderCarrier;
 use Temporal\Internal\Interceptor\Pipeline;
@@ -185,7 +194,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
     /**
      * {@inheritDoc}
      */
-    public function query(string $name, ...$args): ?EncodedValues
+    public function query(string $name, ...$args): ?ValuesInterface
     {
         $this->assertStarted(__FUNCTION__);
 
@@ -249,6 +258,149 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
             $name,
             EncodedValues::fromValues($args, $this->converter),
         ));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function update(string $name, ...$args): ?ValuesInterface
+    {
+        $options = UpdateOptions::new($name)
+            ->withUpdateName($name)
+            ->withWaitPolicy(WaitPolicy::new()->withLifecycleStage(LifecycleStage::StageCompleted));
+        return $this->startUpdate($options, ...$args)->getEncodedValues();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function startUpdate(string|UpdateOptions $nameOrOptions, ...$args): UpdateHandle
+    {
+        $nameOrOptions = \is_string($nameOrOptions)
+            ? UpdateOptions::new($nameOrOptions)
+                ->withWaitPolicy(WaitPolicy::new()->withLifecycleStage(LifecycleStage::StageAccepted))
+            : $nameOrOptions;
+        $this->assertStarted(__FUNCTION__);
+
+        $serviceClient = $this->serviceClient;
+        $converter = $this->converter;
+        $clientOptions = $this->clientOptions;
+
+        /**
+         * @var StartUpdateOutput $result
+         * @var UpdateInput $updateInput
+         */
+        $result = $this->interceptors->with(
+            static function (
+                UpdateInput $input,
+            ) use (&$updateInput, $serviceClient, $converter, $clientOptions): StartUpdateOutput {
+                $updateInput = $input;
+                $request = (new UpdateWorkflowExecutionRequest())
+                    ->setNamespace($clientOptions->namespace)
+                    ->setWorkflowExecution($input->workflowExecution->toProtoWorkflowExecution())
+                    ->setRequest($r = new UpdateRequestMessage())
+                    ->setWaitPolicy(
+                        (new \Temporal\Api\Update\V1\WaitPolicy())
+                            ->setLifecycleStage($input->waitPolicy->lifecycleStage->value)
+                    )
+                    ->setFirstExecutionRunId($input->firstExecutionRunId)
+                ;
+
+                // Configure Meta
+                $meta = new \Temporal\Api\Update\V1\Meta();
+                $meta->setIdentity($clientOptions->identity);
+                $meta->setUpdateId($input->updateId);
+                $r->setMeta($meta);
+
+                // Configure update Input
+                $i = new \Temporal\Api\Update\V1\Input();
+                $i->setName($input->updateName);
+                $input->arguments->setDataConverter($converter);
+                $input->arguments->isEmpty() or $i->setArgs($input->arguments->toPayloads());
+                $input->header->isEmpty() or $i->setHeader($input->header->toHeader());
+                $r->setInput($i);
+
+                try {
+                    $result = $serviceClient->UpdateWorkflowExecution($request);
+                } catch (ServiceClientException $e) {
+                    if ($e->getCode() === StatusCode::NOT_FOUND) {
+                        throw new WorkflowNotFoundException(null, $input->workflowExecution, $input->workflowType, $e);
+                    }
+
+                    throw WorkflowServiceException::withoutMessage($input->workflowExecution, $input->workflowType, $e);
+                } catch (\Throwable $e) {
+                    throw new WorkflowServiceException(null, $input->workflowExecution, $input->workflowType, $e);
+                }
+
+                $outcome = $result->getOutcome();
+                $updateRef = $result->getUpdateRef();
+                \assert($updateRef !== null);
+                $updateRefDto = new UpdateRef(
+                    new WorkflowExecution(
+                        (string)$updateRef->getWorkflowExecution()?->getWorkflowId(),
+                        $updateRef->getWorkflowExecution()?->getRunId(),
+                    ),
+                    $updateRef->getUpdateId(),
+                );
+
+                if ($outcome === null) {
+                    // Not completed
+                    return new StartUpdateOutput($updateRefDto, false, null);
+                }
+
+                $failure = $outcome->getFailure();
+                $success = $outcome->getSuccess();
+
+
+                if ($success !== null) {
+                    return new StartUpdateOutput(
+                        $updateRefDto,
+                        true,
+                        EncodedValues::fromPayloads($success, $converter),
+                    );
+                }
+
+                if ($failure !== null) {
+                    $execution = $updateRef->getWorkflowExecution();
+                    throw new WorkflowUpdateException(
+                        null,
+                        $execution === null
+                            ? $input->workflowExecution
+                            : new WorkflowExecution($execution->getWorkflowId(), $execution->getRunId()),
+                        workflowType: $input->workflowType,
+                        updateId: $updateRef->getUpdateId(),
+                        updateName: $input->updateName,
+                        previous: FailureConverter::mapFailureToException($failure, $converter),
+                    );
+                }
+
+                throw new \RuntimeException(\sprintf(
+                    'Received unexpected outcome from update request: %s',
+                    $outcome->getValue()
+                ));
+            },
+            /** @see WorkflowClientCallsInterceptor::update() */
+            'update',
+        )(new UpdateInput(
+            workflowExecution: $this->getExecution(),
+            workflowType: $this->workflowType,
+            updateName: $nameOrOptions->updateName,
+            arguments: EncodedValues::fromValues($args, $this->converter),
+            header: Header::empty(),
+            waitPolicy: $nameOrOptions->waitPolicy,
+            updateId: $nameOrOptions->updateId ?? '',
+            firstExecutionRunId: $nameOrOptions->firstExecutionRunId ?? '',
+            resultType: $nameOrOptions->resultType,
+        ));
+
+        return new UpdateHandle(
+            client: $this->serviceClient,
+            clientOptions: $clientOptions,
+            converter: $this->converter,
+            updateInput: $updateInput,
+            updateRef: $result->getReference(),
+            result: $result->getResult(),
+        );
     }
 
     /**

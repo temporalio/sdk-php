@@ -12,10 +12,12 @@ declare(strict_types=1);
 namespace Temporal\Internal\Workflow\Process;
 
 use JetBrains\PhpStorm\Pure;
+use React\Promise\PromiseInterface;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\SignalInput;
+use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\WorkflowInstance;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
@@ -49,7 +51,7 @@ class Process extends Scope implements ProcessInterface
         $wfInstance = $this->getWorkflowInstance();
         \assert($wfInstance instanceof WorkflowInstance);
 
-        // Configure query signal handler
+        // Configure query handler in an immutable scope
         $wfInstance->setQueryExecutor(function (QueryInput $input, callable $handler): mixed {
             try {
                 $context = $this->scopeContext->withInput(
@@ -61,6 +63,60 @@ class Process extends Scope implements ProcessInterface
                 Workflow::setCurrentContext($context);
 
                 return $handler($input->arguments);
+            } finally {
+                Workflow::setCurrentContext(null);
+            }
+        });
+
+        // Configure update validator in an immutable scope
+        $wfInstance->setUpdateValidator(function (UpdateInput $input, callable $handler) use ($inboundPipeline): void {
+            try {
+                Workflow::setCurrentContext($this->scopeContext);
+                $inboundPipeline->with(
+                    function (UpdateInput $input) use ($handler): void {
+                        Workflow::setCurrentContext($this->scopeContext->withInput(
+                            new Input(
+                                $this->scopeContext->getInfo(),
+                                $input->arguments,
+                                $input->header,
+                            )
+                        ));
+                        $handler($input->arguments);
+                    },
+                    /** @see WorkflowInboundCallsInterceptor::validateUpdate() */
+                    'validateUpdate',
+                )($input);
+            } finally {
+                Workflow::setCurrentContext(null);
+            }
+        });
+
+        // Configure update handler in a mutable scope
+        $wfInstance->setUpdateExecutor(function (UpdateInput $input, callable $handler) use ($inboundPipeline): PromiseInterface {
+            try {
+                // Define Context for interceptors Pipeline
+                $scope = $this->createScope(
+                    detached: true,
+                    layer: LoopInterface::ON_TICK,
+                    context: $this->context->withInput(
+                        new Input($input->info, $input->arguments, $input->header),
+                    ),
+                );
+                $scope->startSignal(
+                    function () use ($handler, $inboundPipeline, $input) {
+                        Workflow::setCurrentContext($this->scopeContext);
+                        return $inboundPipeline->with(
+                            function (UpdateInput $input) use ($handler) {
+                                return $handler($input->arguments);
+                            },
+                            /** @see WorkflowInboundCallsInterceptor::handleUpdate() */
+                            'handleUpdate',
+                        )($input);
+                    },
+                    $input->arguments,
+                );
+
+                return $scope->promise();
             } finally {
                 Workflow::setCurrentContext(null);
             }

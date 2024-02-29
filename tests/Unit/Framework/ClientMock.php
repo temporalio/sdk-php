@@ -75,6 +75,11 @@ final class ClientMock implements ClientInterface
         return $deferred->promise();
     }
 
+    public function send(CommandInterface $request): void
+    {
+        $this->queue->push($request);
+    }
+
     /**
      * Check if command still in sending queue.
      */

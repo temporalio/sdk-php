@@ -19,6 +19,8 @@ use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Workflow\QueryMethod;
 use Temporal\Workflow\ReturnType;
 use Temporal\Workflow\SignalMethod;
+use Temporal\Workflow\UpdateMethod;
+use Temporal\Workflow\UpdateValidatorMethod;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
@@ -58,6 +60,11 @@ class WorkflowReader extends Reader
         'but %s::%s() does not meet these criteria'
     ;
 
+    private const ERROR_VALIDATOR_WITHOUT_UPDATE_HANDLER =
+        'The function %s::%s() is specified as a validator for the Update Handler `%s`, ' .
+        'but the Update Handler with that name was not found.'
+    ;
+
     /**
      * @param string $class
      * @return WorkflowPrototype
@@ -74,10 +81,10 @@ class WorkflowReader extends Reader
 
         switch (\count($prototypes)) {
             case 0:
-                return $this->withSignalsAndQueries($graph, $this->getDefaultPrototype($graph));
+                return $this->withMethods($graph, $this->getDefaultPrototype($graph));
 
             case 1:
-                return $this->withSignalsAndQueries($graph, \reset($prototypes));
+                return $this->withMethods($graph, \reset($prototypes));
 
             default:
                 $message = \sprintf(self::ERROR_HANDLER_DUPLICATE, $graph, WorkflowMethod::class, \count($prototypes));
@@ -116,12 +123,30 @@ class WorkflowReader extends Reader
      * @return WorkflowPrototype
      * @throws \ReflectionException
      */
-    private function withSignalsAndQueries(ClassNode $graph, WorkflowPrototype $prototype): WorkflowPrototype
+    private function withMethods(ClassNode $graph, WorkflowPrototype $prototype): WorkflowPrototype
     {
         $class = $graph->getReflection();
 
         foreach ($class->getMethods() as $ctx) {
             $contextClass = $ctx->getDeclaringClass();
+
+            /** @var UpdateMethod|null $update */
+            $update = $this->getAttributedMethod($graph, $ctx, UpdateMethod::class);
+
+            if ($update !== null) {
+                // Validation
+                if (!$this->isValidMethod($ctx)) {
+                    throw new \LogicException(
+                        \vsprintf(self::ERROR_COMMON_METHOD_VISIBILITY, [
+                            'update',
+                            $contextClass->getName(),
+                            $ctx->getName(),
+                        ])
+                    );
+                }
+
+                $prototype->addUpdateHandler($update->name ?? $ctx->getName(), $ctx);
+            }
 
             /** @var SignalMethod|null $signal */
             $signal = $this->getAttributedMethod($graph, $ctx, SignalMethod::class);
@@ -138,10 +163,7 @@ class WorkflowReader extends Reader
                     );
                 }
 
-                $prototype->addSignalHandler(
-                    $signal->name ?? $ctx->getName(),
-                    $ctx
-                );
+                $prototype->addSignalHandler($signal->name ?? $ctx->getName(), $ctx);
             }
 
             /** @var QueryMethod|null $query */
@@ -159,11 +181,43 @@ class WorkflowReader extends Reader
                     );
                 }
 
-                $prototype->addQueryHandler(
-                    $query->name ?? $ctx->getName(),
-                    $ctx
+                $prototype->addQueryHandler($query->name ?? $ctx->getName(), $ctx);
+            }
+        }
+
+        // Find Validate Update methods and check related handlers
+        $updateHandlers = $prototype->getUpdateHandlers();
+        foreach ($class->getMethods() as $ctx) {
+            /** @var UpdateValidatorMethod|null $validate */
+            $validate = $this->getAttributedMethod($graph, $ctx, UpdateValidatorMethod::class);
+
+            if ($validate === null) {
+                continue;
+            }
+
+            if (!\array_key_exists($validate->forUpdate, $updateHandlers)) {
+                throw new \LogicException(
+                    \vsprintf(self::ERROR_VALIDATOR_WITHOUT_UPDATE_HANDLER, [
+                        $ctx->getDeclaringClass()->getName(),
+                        $ctx->getName(),
+                        $validate->forUpdate,
+                    ])
                 );
             }
+
+            // Validation
+            if (!$this->isValidMethod($ctx)) {
+                throw new \LogicException(
+                    \vsprintf(self::ERROR_COMMON_METHOD_VISIBILITY, [
+                        'validate update',
+                        $contextClass->getName(),
+                        $ctx->getName(),
+                    ])
+                );
+            }
+
+
+            $prototype->addValidateUpdateHandler($validate->forUpdate, $ctx);
         }
 
         return $prototype;

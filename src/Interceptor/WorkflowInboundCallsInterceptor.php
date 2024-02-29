@@ -14,6 +14,7 @@ namespace Temporal\Interceptor;
 use Temporal\Interceptor\Trait\WorkflowInboundCallsInterceptorTrait;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\SignalInput;
+use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
 use Temporal\Internal\Interceptor\Interceptor;
 
@@ -39,7 +40,19 @@ interface WorkflowInboundCallsInterceptor extends Interceptor
 
     /**
      * @param QueryInput $input
-     * @param callable(QueryInput): void $next
+     * @param callable(QueryInput): mixed $next
      */
     public function handleQuery(QueryInput $input, callable $next): mixed;
+
+    /**
+     * @param UpdateInput $input
+     * @param callable(UpdateInput): mixed $next
+     */
+    public function handleUpdate(UpdateInput $input, callable $next): mixed;
+
+    /**
+     * @param UpdateInput $input
+     * @param callable(UpdateInput): void $next
+     */
+    public function validateUpdate(UpdateInput $input, callable $next): void;
 }

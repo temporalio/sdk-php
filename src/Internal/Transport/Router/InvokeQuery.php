@@ -40,7 +40,7 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
     #[Pure]
     public function __construct(
         RepositoryInterface $running,
-        LoopInterface $loop
+        LoopInterface $loop,
     ) {
         $this->loop = $loop;
 
@@ -80,9 +80,9 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
     /**
      * @param WorkflowInstanceInterface $instance
      * @param string $name
-     * @return \Closure|null
+     * @return \Closure
      */
-    private function findQueryHandlerOrFail(WorkflowInstanceInterface $instance, string $name): ?\Closure
+    private function findQueryHandlerOrFail(WorkflowInstanceInterface $instance, string $name): \Closure
     {
         $handler = $instance->findQueryHandler($name);
 

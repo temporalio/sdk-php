@@ -11,6 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Client;
 
+use Temporal\Client\Update\LifecycleStage;
+use Temporal\Client\Update\UpdateOptions;
+use Temporal\Client\Update\WaitPolicy;
 use Temporal\Client\WorkflowClient;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\DataConverter\Type;
@@ -66,12 +69,7 @@ final class WorkflowProxy extends Proxy
             if ($query->getName() === $method) {
                 $args = Reflection::orderArguments($query, $args);
 
-                $result = $this->stub->query($name, ...$args);
-                if ($result === null) {
-                    return null;
-                }
-
-                return $result->getValue(0, $query->getReturnType());
+                return $this->stub->query($name, ...$args)?->getValue(0, $query->getReturnType());
             }
         }
 
@@ -83,6 +81,25 @@ final class WorkflowProxy extends Proxy
                 $this->stub->signal($name, ...$args);
 
                 return;
+            }
+        }
+
+        // Otherwise, we try to find a suitable workflow "update" method.
+        foreach ($this->prototype->getUpdateHandlers() as $name => $update) {
+            if ($update->getName() === $method) {
+                $args = Reflection::orderArguments($update, $args);
+                $attrs = $update->getAttributes(ReturnType::class);
+
+                $returnType = \array_key_exists(0, $attrs)
+                    ? $attrs[0]->newInstance()
+                    : $update->getReturnType();
+
+                $options = UpdateOptions::new($name)
+                    ->withUpdateName($name)
+                    ->withResultType($returnType)
+                    ->withWaitPolicy(WaitPolicy::new()->withLifecycleStage(LifecycleStage::StageCompleted));
+
+                return $this->stub->startUpdate($options, ...$args)->getResult();
             }
         }
 

@@ -13,6 +13,7 @@ namespace Temporal\Interceptor\Trait;
 
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\SignalInput;
+use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
 use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 
@@ -43,5 +44,21 @@ trait WorkflowInboundCallsInterceptorTrait
     public function handleQuery(QueryInput $input, callable $next): mixed
     {
         return $next($input);
+    }
+
+    /**
+     * @see WorkflowInboundCallsInterceptor::handleUpdate()
+     */
+    public function handleUpdate(UpdateInput $input, callable $next): mixed
+    {
+        return $next($input);
+    }
+
+    /**
+     * @see WorkflowInboundCallsInterceptor::handleUpdate()
+     */
+    public function validateUpdate(UpdateInput $input, callable $next): void
+    {
+        $next($input);
     }
 }

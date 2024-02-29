@@ -19,7 +19,9 @@ use Temporal\Interceptor\WorkflowClient\QueryInput;
 use Temporal\Interceptor\WorkflowClient\SignalInput;
 use Temporal\Interceptor\WorkflowClient\SignalWithStartInput;
 use Temporal\Interceptor\WorkflowClient\StartInput;
+use Temporal\Interceptor\WorkflowClient\StartUpdateOutput;
 use Temporal\Interceptor\WorkflowClient\TerminateInput;
+use Temporal\Interceptor\WorkflowClient\UpdateInput;
 use Temporal\Internal\Interceptor\Interceptor;
 use Temporal\Workflow\WorkflowExecution;
 
@@ -46,6 +48,14 @@ interface WorkflowClientCallsInterceptor extends Interceptor
      * @return void
      */
     public function signal(SignalInput $input, callable $next): void;
+
+    /**
+     * @param UpdateInput $input
+     * @param callable(UpdateInput): StartUpdateOutput $next
+     *
+     * @return StartUpdateOutput
+     */
+    public function update(UpdateInput $input, callable $next): StartUpdateOutput;
 
     /**
      * @param SignalWithStartInput $input
