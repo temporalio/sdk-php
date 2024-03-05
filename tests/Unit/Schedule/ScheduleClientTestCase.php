@@ -175,9 +175,9 @@ class ScheduleClientTestCase extends TestCase
                 ->withTaskQueue('default')
                 ->withRetryPolicy(RetryOptions::new()->withMaximumAttempts(3))
                 ->withHeader(['foo' => 'bar'])
-                ->withWorkflowExecutionTimeout('40m')
-                ->withWorkflowRunTimeout('30m')
-                ->withWorkflowTaskTimeout('10m')
+                ->withWorkflowExecutionTimeout(new \DateInterval('PT40M'))
+                ->withWorkflowRunTimeout(new \DateInterval('PT30M'))
+                ->withWorkflowTaskTimeout(new \DateInterval('PT10M'))
                 ->withMemo(['foo' => 'memo'])
                 ->withSearchAttributes(['foo' => 'search'])
                 ->withWorkflowId('workflow-id')
@@ -198,10 +198,10 @@ class ScheduleClientTestCase extends TestCase
                 ->withCronStringList('0 12 * * 5', '0 12 * * 1')
                 ->withStartTime(new DateTimeImmutable('2024-10-01T00:00:00Z'))
                 ->withEndTime(new DateTimeImmutable('2024-10-31T00:00:00Z'))
-                ->withJitter('10m')
+                ->withJitter(new \DateInterval('PT10M'))
                 ->withTimezoneName('UTC')
         )->withPolicies(SchedulePolicies::new()
-            ->withCatchupWindow('10m')
+            ->withCatchupWindow(new \DateInterval('PT10M'))
             ->withPauseOnFailure(true)
             ->withOverlapPolicy(ScheduleOverlapPolicy::CancelOther)
         )->withState(
@@ -211,5 +211,6 @@ class ScheduleClientTestCase extends TestCase
                 ->withPaused(true)
                 ->withNotes('test notes')
         );
+
     }
 }
