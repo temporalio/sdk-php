@@ -14,7 +14,7 @@ use Google\Protobuf\Internal\GPBUtil;
 class GetCurrentTimeResponse extends \Google\Protobuf\Internal\Message
 {
     /**
-     * Generated from protobuf field <code>.google.protobuf.Timestamp time = 1 [(.gogoproto.stdtime) = true];</code>
+     * Generated from protobuf field <code>.google.protobuf.Timestamp time = 1;</code>
      */
     protected $time = null;
 
@@ -33,7 +33,7 @@ class GetCurrentTimeResponse extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>.google.protobuf.Timestamp time = 1 [(.gogoproto.stdtime) = true];</code>
+     * Generated from protobuf field <code>.google.protobuf.Timestamp time = 1;</code>
      * @return \Google\Protobuf\Timestamp|null
      */
     public function getTime()
@@ -52,7 +52,7 @@ class GetCurrentTimeResponse extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>.google.protobuf.Timestamp time = 1 [(.gogoproto.stdtime) = true];</code>
+     * Generated from protobuf field <code>.google.protobuf.Timestamp time = 1;</code>
      * @param \Google\Protobuf\Timestamp $var
      * @return $this
      */

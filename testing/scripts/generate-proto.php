@@ -1,10 +1,8 @@
 <?php
 
 /**
- * This file is part of Temporal package.
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
+ * Original proto files:
+ * @link https://github.com/temporalio/sdk-core/tree/master/sdk-core-protos/protos/testsrv_upstream/temporal/api/testservice/v1
  */
 
 use \Temporal\Internal\Support\Process;
@@ -92,22 +90,13 @@ try {
     return;
 }
 
-$gogo = file_get_contents('proto/dependencies/gogoproto/gogo.proto');
-
 try {
     echo "generating dependencies: ";
 
-    // PHP does not support Syntax2
-    file_put_contents(
-        'proto/dependencies/gogoproto/gogo.proto',
-        str_replace('syntax = "proto2";', 'syntax = "proto3";', $gogo)
-    );
-
     $result = exec(
         sprintf(
-            'protoc --php_out=api/testservice --plugin=protoc-gen-grpc=%s --grpc_out=./api/testservice -Iproto %s',
+            'protoc --php_out=api/testservice --plugin=protoc-gen-grpc=%s --grpc_out=./api/testservice',
             $plugin,
-            'proto/dependencies/gogoproto/gogo.proto'
         )
     );
 
@@ -119,7 +108,4 @@ try {
 } catch (Error $e) {
     echo $e->getMessage() . "\n";
     return;
-} finally {
-    // restoring original file
-    file_put_contents('proto/dependencies/gogoproto/gogo.proto', $gogo);
 }

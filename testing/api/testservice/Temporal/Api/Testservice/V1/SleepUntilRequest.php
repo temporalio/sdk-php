@@ -14,7 +14,7 @@ use Google\Protobuf\Internal\GPBUtil;
 class SleepUntilRequest extends \Google\Protobuf\Internal\Message
 {
     /**
-     * Generated from protobuf field <code>.google.protobuf.Timestamp timestamp = 1 [(.gogoproto.stdtime) = true];</code>
+     * Generated from protobuf field <code>.google.protobuf.Timestamp timestamp = 1;</code>
      */
     protected $timestamp = null;
 
@@ -33,7 +33,7 @@ class SleepUntilRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>.google.protobuf.Timestamp timestamp = 1 [(.gogoproto.stdtime) = true];</code>
+     * Generated from protobuf field <code>.google.protobuf.Timestamp timestamp = 1;</code>
      * @return \Google\Protobuf\Timestamp|null
      */
     public function getTimestamp()
@@ -52,7 +52,7 @@ class SleepUntilRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>.google.protobuf.Timestamp timestamp = 1 [(.gogoproto.stdtime) = true];</code>
+     * Generated from protobuf field <code>.google.protobuf.Timestamp timestamp = 1;</code>
      * @param \Google\Protobuf\Timestamp $var
      * @return $this
      */
