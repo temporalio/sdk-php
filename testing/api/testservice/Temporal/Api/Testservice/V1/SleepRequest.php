@@ -14,7 +14,7 @@ use Google\Protobuf\Internal\GPBUtil;
 class SleepRequest extends \Google\Protobuf\Internal\Message
 {
     /**
-     * Generated from protobuf field <code>.google.protobuf.Duration duration = 1 [(.gogoproto.stdduration) = true];</code>
+     * Generated from protobuf field <code>.google.protobuf.Duration duration = 1;</code>
      */
     protected $duration = null;
 
@@ -33,7 +33,7 @@ class SleepRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>.google.protobuf.Duration duration = 1 [(.gogoproto.stdduration) = true];</code>
+     * Generated from protobuf field <code>.google.protobuf.Duration duration = 1;</code>
      * @return \Google\Protobuf\Duration|null
      */
     public function getDuration()
@@ -52,7 +52,7 @@ class SleepRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>.google.protobuf.Duration duration = 1 [(.gogoproto.stdduration) = true];</code>
+     * Generated from protobuf field <code>.google.protobuf.Duration duration = 1;</code>
      * @param \Google\Protobuf\Duration $var
      * @return $this
      */

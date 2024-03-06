@@ -16,23 +16,22 @@ class RequestResponse
         }
         \GPBMetadata\Google\Protobuf\Duration::initOnce();
         \GPBMetadata\Google\Protobuf\Timestamp::initOnce();
-        \GPBMetadata\Dependencies\Gogoproto\Gogo::initOnce();
         $pool->internalAddGeneratedFile(
             '
-†
-2temporal/api/testservice/v1/request_response.prototemporal.api.testservice.v1google/protobuf/timestamp.proto!dependencies/gogoproto/gogo.proto"
+Ô
+2temporal/api/testservice/v1/request_response.prototemporal.api.testservice.v1google/protobuf/timestamp.proto"
 LockTimeSkippingRequest"
 LockTimeSkippingResponse"
 UnlockTimeSkippingRequest"
-UnlockTimeSkippingResponse"H
-SleepUntilRequest3
-	timestamp (2.google.protobuf.TimestampBêﬂ"A
-SleepRequest1
-duration (2.google.protobuf.DurationBòﬂ"
-SleepResponse"H
-GetCurrentTimeResponse.
-time (2.google.protobuf.TimestampBêﬂB¶
-io.temporal.api.testservice.v1BRequestResponseProtoPZ-go.temporal.io/api/testservice/v1;testservice™Temporal.Api.TestService.V1ÍTemporal::Api::TestService::V1bproto3'
+UnlockTimeSkippingResponse"B
+SleepUntilRequest-
+	timestamp (2.google.protobuf.Timestamp";
+SleepRequest+
+duration (2.google.protobuf.Duration"
+SleepResponse"B
+GetCurrentTimeResponse(
+time (2.google.protobuf.TimestampB™
+io.temporal.api.testservice.v1BRequestResponseProtoPZ-go.temporal.io/api/testservice/v1;testservice™Temporalio.Api.TestService.V1Í Temporalio::Api::TestService::V1bproto3'
         , true);
 
         static::$is_initialized = true;
