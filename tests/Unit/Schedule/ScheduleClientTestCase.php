@@ -6,7 +6,6 @@ namespace Temporal\Tests\Unit\Schedule;
 
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\TestCase;
 use Spiral\Attributes\AttributeReader;
 use Temporal\Api\Workflowservice\V1\CreateScheduleRequest;
 use Temporal\Api\Workflowservice\V1\CreateScheduleResponse;
@@ -31,6 +30,7 @@ use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Marshaller\ProtoToArrayConverter;
+use Temporal\Tests\TestCase;
 
 #[CoversClass(\Temporal\Client\ScheduleClient::class)]
 class ScheduleClientTestCase extends TestCase
@@ -112,9 +112,24 @@ class ScheduleClientTestCase extends TestCase
 
         $rehydrated = $marshaller->unmarshal($values, $rehydrated);
 
-        $this->assertEquals($initScheduleDto->spec, $rehydrated->spec);
+        // Compare Specs
+        $this->assertEquals($initScheduleDto->spec->timezoneName, $rehydrated->spec->timezoneName);
+        $this->assertEquals($initScheduleDto->spec->startTime, $rehydrated->spec->startTime);
+        $this->assertEquals($initScheduleDto->spec->endTime, $rehydrated->spec->endTime);
+        $this->assertEqualIntervals($initScheduleDto->spec->jitter, $rehydrated->spec->jitter);
+        $this->assertEquals($initScheduleDto->spec->calendarList, $rehydrated->spec->calendarList);
+        $this->assertEquals($initScheduleDto->spec->cronStringList, $rehydrated->spec->cronStringList);
+        $this->assertEquals($initScheduleDto->spec->structuredCalendarList, $rehydrated->spec->structuredCalendarList);
+        $this->assertEquals($initScheduleDto->spec->excludeCalendarList, $rehydrated->spec->excludeCalendarList);
+        $this->assertEquals($initScheduleDto->spec->intervalList, $rehydrated->spec->intervalList);
+        $this->assertEquals($initScheduleDto->spec->timezoneData, $rehydrated->spec->timezoneData);
+        $this->assertEquals($initScheduleDto->spec->excludeStructuredCalendarList, $rehydrated->spec->excludeStructuredCalendarList);
+
+
         $this->assertEquals($initScheduleDto->state, $rehydrated->state);
-        $this->assertEquals($initScheduleDto->policies, $rehydrated->policies);
+        $this->assertEquals($initScheduleDto->policies->overlapPolicy, $rehydrated->policies->overlapPolicy);
+        $this->assertEqualIntervals($initScheduleDto->policies->catchupWindow, $rehydrated->policies->catchupWindow);
+        $this->assertEquals($initScheduleDto->policies->pauseOnFailure, $rehydrated->policies->pauseOnFailure);
         // Compare each Action property individually
         $action0 = $initScheduleDto->action;
         $action1 = $rehydrated->action;
@@ -122,9 +137,9 @@ class ScheduleClientTestCase extends TestCase
         $this->assertEquals($action0->workflowType, $action1->workflowType);
         $this->assertEquals($action0->taskQueue, $action1->taskQueue);
         $this->assertSame($action0->input->getValues(), $action1->input->getValues());
-        $this->assertEquals($action0->workflowExecutionTimeout, $action1->workflowExecutionTimeout);
-        $this->assertEquals($action0->workflowRunTimeout, $action1->workflowRunTimeout);
-        $this->assertEquals($action0->workflowTaskTimeout, $action1->workflowTaskTimeout);
+        $this->assertEqualIntervals($action0->workflowExecutionTimeout, $action1->workflowExecutionTimeout);
+        $this->assertEqualIntervals($action0->workflowRunTimeout, $action1->workflowRunTimeout);
+        $this->assertEqualIntervals($action0->workflowTaskTimeout, $action1->workflowTaskTimeout);
         $this->assertSame($action0->workflowIdReusePolicy, $action1->workflowIdReusePolicy);
         $this->assertSame($action0->retryPolicy->initialInterval, $action1->retryPolicy->initialInterval);
         $this->assertSame($action0->retryPolicy->backoffCoefficient, $action1->retryPolicy->backoffCoefficient);

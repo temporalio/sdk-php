@@ -11,10 +11,11 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Feature\Testing;
 
-use Illuminate\Support\Arr;
 use PHPUnit\Framework\Assert;
+use Temporal\Api\Common\V1\Payload;
 use Temporal\DataConverter\DataConverter;
-use Temporal\DataConverter\Payload;
+use Temporal\DataConverter\ValuesInterface;
+use Temporal\Interceptor\HeaderInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 
 /**
@@ -56,7 +57,7 @@ class TestingRequest extends TestingCommand implements RequestInterface
      */
     public function getParam(string $key)
     {
-        return Arr::get($this->getOptions(), $key);
+        return $this->getOption($key);
     }
 
     /**
@@ -67,7 +68,7 @@ class TestingRequest extends TestingCommand implements RequestInterface
         return $this->command->getOptions();
     }
 
-    public function getPayloads(): array
+    public function getPayloads(): ValuesInterface
     {
         return $this->command->getPayloads();
     }
@@ -96,19 +97,19 @@ class TestingRequest extends TestingCommand implements RequestInterface
             $this->assertParamsHasKey($key, $message);
         }
 
-        Assert::assertEquals($expected, Arr::get($this->getOptions(), $key), $message);
+        Assert::assertEquals($expected, $this->getOption($key), $message);
 
         return $this;
     }
 
     /**
-     * @param string $expected
+     * @param string $key
      * @param string $message
      * @return $this
      */
     public function assertParamsHasKey(string $key, string $message = ''): self
     {
-        Assert::assertTrue(Arr::has($this->getOptions(), $key), $message);
+        Assert::assertArrayHasKey($key, $this->getOptions(), $message);
 
         return $this;
     }
@@ -125,13 +126,13 @@ class TestingRequest extends TestingCommand implements RequestInterface
             $this->assertParamsHasKey($key, $message);
         }
 
-        if (is_array($expected)) {
-            $expected = array_map([$this, 'convertValue'], $expected);
+        if (\is_array($expected)) {
+            $expected = \array_map([$this, 'convertValue'], $expected);
         } else {
             $expected = $this->convertValue($expected);
         }
 
-        Assert::assertEquals($expected, Arr::get($this->getOptions(), $key), $message);
+        Assert::assertEquals($expected, $this->getOption($key), $message);
 
         return $this;
     }
@@ -140,7 +141,7 @@ class TestingRequest extends TestingCommand implements RequestInterface
     {
         $dc = DataConverter::createDefault();
 
-        return $dc->toPayloads([$value])[0];
+        return $dc->toPayload([$value])[0];
     }
 
     /**
@@ -151,7 +152,7 @@ class TestingRequest extends TestingCommand implements RequestInterface
      */
     public function assertParamsKeyInstanceOf(string $key, string $expected, string $message = ''): self
     {
-        Assert::assertInstanceOf($expected, Arr::get($this->getOptions(), $key), $message);
+        Assert::assertInstanceOf($expected, $this->getOption($key), $message);
 
         return $this;
     }
@@ -166,7 +167,7 @@ class TestingRequest extends TestingCommand implements RequestInterface
     {
         $this->assertParamsHasKey($key, $message);
 
-        Assert::assertNotSame($expected, Arr::get($this->getOptions(), $key), $message);
+        Assert::assertNotSame($expected, $this->getOption($key), $message);
 
         return $this;
     }
@@ -174,5 +175,10 @@ class TestingRequest extends TestingCommand implements RequestInterface
     public function isCancellable(): bool
     {
         return true;
+    }
+
+    private function getOption(string $key): mixed
+    {
+        return $this->getOptions()[$key] ?? null;
     }
 }
