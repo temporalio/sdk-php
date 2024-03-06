@@ -115,9 +115,7 @@ class WorkflowDeclarationTestCase extends AbstractDeclaration
         $this->assertNotNull($prototype->getMethodRetry());
 
         $this->assertEquals(new CronSchedule('@monthly'), $prototype->getCronSchedule());
-        $this->assertEquals(CarbonInterval::microsecond(42)->f,
-            $prototype->getMethodRetry()->initialInterval->f
-        );
+        $this->assertEqualIntervals(CarbonInterval::microsecond(42), $prototype->getMethodRetry()->initialInterval);
     }
 
     /**
