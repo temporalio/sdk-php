@@ -15,12 +15,10 @@ use Closure;
 use React\Promise\PromiseInterface;
 use Temporal\Internal\Events\EventEmitterTrait;
 use Temporal\Internal\Events\EventListenerInterface;
-use Temporal\Internal\Repository\Identifiable;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Router;
 use Temporal\Internal\Transport\RouterInterface;
-use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Temporal\Worker\Transport\RPCConnectionInterface;
 
@@ -28,7 +26,7 @@ use Temporal\Worker\Transport\RPCConnectionInterface;
  * Worker manages the execution of workflows and activities within the single TaskQueue. Activity and Workflow processing
  * will be launched using separate processes.
  */
-class Worker implements WorkerInterface, Identifiable, EventListenerInterface, DispatcherInterface
+class Worker implements WorkerInterface, EventListenerInterface, DispatcherInterface
 {
     use EventEmitterTrait;
 

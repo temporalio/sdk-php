@@ -45,7 +45,6 @@ use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\Codec\CodecInterface;
 use Temporal\Worker\Transport\Codec\JsonCodec;
 use Temporal\Worker\Transport\Codec\ProtoCodec;
-use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\ResponseInterface;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Temporal\Worker\Transport\Goridge;
@@ -103,57 +102,57 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     /**
      * @var DataConverterInterface
      */
-    private DataConverterInterface $converter;
+    protected DataConverterInterface $converter;
 
     /**
      * @var ReaderInterface
      */
-    private ReaderInterface $reader;
+    protected ReaderInterface $reader;
 
     /**
      * @var RouterInterface
      */
-    private RouterInterface $router;
+    protected RouterInterface $router;
 
     /**
      * @var RepositoryInterface<WorkerInterface>
      */
-    private RepositoryInterface $queues;
+    protected RepositoryInterface $queues;
 
     /**
      * @var CodecInterface
      */
-    private CodecInterface $codec;
+    protected CodecInterface $codec;
 
     /**
      * @var ClientInterface
      */
-    private ClientInterface $client;
+    protected ClientInterface $client;
 
     /**
      * @var ServerInterface
      */
-    private ServerInterface $server;
+    protected ServerInterface $server;
 
     /**
      * @var QueueInterface
      */
-    private QueueInterface $responses;
+    protected QueueInterface $responses;
 
     /**
      * @var RPCConnectionInterface
      */
-    private RPCConnectionInterface $rpc;
+    protected RPCConnectionInterface $rpc;
 
     /**
      * @var MarshallerInterface<array>
      */
-    private MarshallerInterface $marshaller;
+    protected MarshallerInterface $marshaller;
 
     /**
      * @var EnvironmentInterface
      */
-    private EnvironmentInterface $env;
+    protected EnvironmentInterface $env;
 
     /**
      * @param DataConverterInterface $dataConverter
@@ -318,7 +317,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     /**
      * @return RepositoryInterface<WorkerInterface>
      */
-    private function createTaskQueue(): RepositoryInterface
+    protected function createTaskQueue(): RepositoryInterface
     {
         return new ArrayRepository();
     }
@@ -326,7 +325,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     /**
      * @return RouterInterface
      */
-    private function createRouter(): RouterInterface
+    protected function createRouter(): RouterInterface
     {
         $router = new Router();
         $router->add(new Router\GetWorkerInfo($this->queues, $this->marshaller));
@@ -337,7 +336,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     /**
      * @return QueueInterface
      */
-    private function createQueue(): QueueInterface
+    protected function createQueue(): QueueInterface
     {
         return new ArrayQueue();
     }
@@ -346,7 +345,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
      * @return ClientInterface
      */
     #[Pure]
-    private function createClient(): ClientInterface
+    protected function createClient(): ClientInterface
     {
         return new Client($this->responses);
     }
@@ -354,7 +353,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     /**
      * @return ServerInterface
      */
-    private function createServer(): ServerInterface
+    protected function createServer(): ServerInterface
     {
         return new Server($this->responses, $this->onRequest(...));
     }
@@ -363,7 +362,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
      * @param ReaderInterface $reader
      * @return MarshallerInterface<array>
      */
-    private function createMarshaller(ReaderInterface $reader): MarshallerInterface
+    protected function createMarshaller(ReaderInterface $reader): MarshallerInterface
     {
         return new Marshaller(new AttributeMapperFactory($reader));
     }
