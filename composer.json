@@ -31,7 +31,7 @@
         "psr/log": "^2.0 || ^3.0",
         "ramsey/uuid": "^4.7",
         "react/promise": "^2.9",
-        "roadrunner-php/roadrunner-api-dto": "dev-new-temporal-api as 1.5.0",
+        "roadrunner-php/roadrunner-api-dto": "^1.5.0",
         "roadrunner-php/version-checker": "^1.0",
         "spiral/attributes": "^3.1.4",
         "spiral/roadrunner": "^v2023.3.11",
