@@ -11,12 +11,14 @@ declare(strict_types=1);
 
 namespace Temporal\Common;
 
+use Google\Protobuf\Duration;
 use JetBrains\PhpStorm\Pure;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Api\Common\V1\RetryPolicy;
 use Temporal\Internal\Assert;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
+use Temporal\Internal\Marshaller\Type\DurationJsonType;
 use Temporal\Internal\Marshaller\Type\NullableType;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\Options;
@@ -67,7 +69,7 @@ class RetryOptions extends Options
      * Backoff interval for the first retry. If {@see RetryOptions::$backoffCoefficient}
      * is 1.0 then it is used for all retries.
      */
-    #[Marshal(name: 'initial_interval', type: NullableType::class, of: DateIntervalType::class)]
+    #[Marshal(name: 'initialInterval', type: DurationJsonType::class, nullable: true)]
     public ?\DateInterval $initialInterval = self::DEFAULT_INITIAL_INTERVAL;
 
     /**
@@ -76,7 +78,7 @@ class RetryOptions extends Options
      *
      * Note: Must be greater than 1.0
      */
-    #[Marshal(name: 'backoff_coefficient')]
+    #[Marshal(name: 'backoffCoefficient')]
     public float $backoffCoefficient = self::DEFAULT_BACKOFF_COEFFICIENT;
 
     /**
@@ -85,7 +87,7 @@ class RetryOptions extends Options
      *
      * Default is 100x of {@see $initialInterval}.
      */
-    #[Marshal(name: 'maximum_interval', type: NullableType::class, of: DateIntervalType::class)]
+    #[Marshal(name: 'maximumInterval', type: DurationJsonType::class, nullable: true)]
     public ?\DateInterval $maximumInterval = self::DEFAULT_MAXIMUM_INTERVAL;
 
     /**
@@ -95,7 +97,7 @@ class RetryOptions extends Options
      *
      * @var int<0, max>
      */
-    #[Marshal(name: 'maximum_attempts')]
+    #[Marshal(name: 'maximumAttempts')]
     public int $maximumAttempts = self::DEFAULT_MAXIMUM_ATTEMPTS;
 
     /**
@@ -104,7 +106,7 @@ class RetryOptions extends Options
      *
      * @var ExceptionsList
      */
-    #[Marshal(name: 'non_retryable_error_types')]
+    #[Marshal(name: 'nonRetryableErrorTypes')]
     public array $nonRetryableExceptions = self::DEFAULT_NON_RETRYABLE_EXCEPTIONS;
 
     /** @var bool */
