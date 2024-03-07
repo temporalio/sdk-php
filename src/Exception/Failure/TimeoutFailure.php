@@ -32,7 +32,7 @@ class TimeoutFailure extends TemporalFailure
         \Throwable $previous = null
     ) {
         parent::__construct(
-            self::buildMessage(compact('message', 'timeoutWorkflowType')),
+            self::buildMessage(\compact('message', 'timeoutWorkflowType') + ['type' => 'TimeoutFailure']),
             $message,
             $previous
         );

@@ -19,13 +19,13 @@ use Temporal\Workflow\WorkflowContextInterface;
 interface ClientInterface
 {
     /**
-     * @param RequestInterface $request
-     * @param null|WorkflowContextInterface $context
-     *
-     * @return PromiseInterface
+     * Send a request and return a promise.
      */
     public function request(RequestInterface $request, ?WorkflowContextInterface $context = null): PromiseInterface;
 
+    /**
+     * Sena a request without tracking the response.
+     */
     public function send(CommandInterface $request): void;
 
     /**
