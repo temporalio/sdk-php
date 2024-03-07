@@ -33,7 +33,7 @@ use Throwable;
 /**
  * @internal
  */
-final class WorkerMock implements Identifiable, WorkerInterface, DispatcherInterface
+final class WorkerMock implements WorkerInterface, DispatcherInterface
 {
     private string $name;
     private WorkerOptions $options;

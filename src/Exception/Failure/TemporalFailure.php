@@ -89,7 +89,7 @@ class TemporalFailure extends TemporalException implements \Stringable
     public function setOriginalStackTrace(string $stackTrace): void
     {
         $this->originalStackTrace = $stackTrace;
-        $this->message .= "\nOriginalStackTrace:\n" . $this->originalStackTrace;
+        $this->message .= "\nStackTrace:\n" . $this->originalStackTrace;
     }
 
     /**

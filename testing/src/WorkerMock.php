@@ -17,7 +17,7 @@ use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Temporal\Worker\WorkerInterface;
 use Temporal\Worker\WorkerOptions;
 
-final class WorkerMock implements WorkerInterface, Identifiable, EventListenerInterface, DispatcherInterface
+final class WorkerMock implements WorkerInterface, EventListenerInterface, DispatcherInterface
 {
     use EventEmitterTrait;
 

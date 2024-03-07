@@ -28,7 +28,6 @@ use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Workflow\ProcessCollection;
 use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Worker\LoopInterface;
-use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\WorkerFactory;
 
 #[Immutable]
@@ -156,13 +155,8 @@ final class ServiceContainer
         $this->exceptionInterceptor = $exceptionInterceptor;
     }
 
-    /**
-     * @param WorkerFactory                 $worker
-     * @param ExceptionInterceptorInterface $exceptionInterceptor
-     * @return static
-     */
     public static function fromWorkerFactory(
-        WorkerFactoryInterface $worker,
+        WorkerFactory|LoopInterface $worker,
         ExceptionInterceptorInterface $exceptionInterceptor,
         PipelineProvider $interceptorProvider,
     ): self {

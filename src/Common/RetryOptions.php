@@ -16,8 +16,7 @@ use Temporal\Activity\ActivityOptions;
 use Temporal\Api\Common\V1\RetryPolicy;
 use Temporal\Internal\Assert;
 use Temporal\Internal\Marshaller\Meta\Marshal;
-use Temporal\Internal\Marshaller\Type\DateIntervalType;
-use Temporal\Internal\Marshaller\Type\NullableType;
+use Temporal\Internal\Marshaller\Type\DurationJsonType;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\Options;
 
@@ -67,7 +66,7 @@ class RetryOptions extends Options
      * Backoff interval for the first retry. If {@see RetryOptions::$backoffCoefficient}
      * is 1.0 then it is used for all retries.
      */
-    #[Marshal(name: 'initial_interval', type: NullableType::class, of: DateIntervalType::class)]
+    #[Marshal(name: 'initial_interval', type: DurationJsonType::class, nullable: true)]
     public ?\DateInterval $initialInterval = self::DEFAULT_INITIAL_INTERVAL;
 
     /**
@@ -85,7 +84,7 @@ class RetryOptions extends Options
      *
      * Default is 100x of {@see $initialInterval}.
      */
-    #[Marshal(name: 'maximum_interval', type: NullableType::class, of: DateIntervalType::class)]
+    #[Marshal(name: 'maximum_interval', type: DurationJsonType::class, nullable: true)]
     public ?\DateInterval $maximumInterval = self::DEFAULT_MAXIMUM_INTERVAL;
 
     /**
@@ -106,9 +105,6 @@ class RetryOptions extends Options
      */
     #[Marshal(name: 'non_retryable_error_types')]
     public array $nonRetryableExceptions = self::DEFAULT_NON_RETRYABLE_EXCEPTIONS;
-
-    /** @var bool */
-    private bool $maximumAttempsSet = false;
 
     /**
      * @param MethodRetry|null $retry

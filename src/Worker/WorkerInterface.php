@@ -14,12 +14,13 @@ namespace Temporal\Worker;
 use Closure;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Internal\Repository\Identifiable;
 
 /**
  * Worker manages the execution of workflows and activities within the single TaskQueue. Activity and Workflow processing
  * will be launched using separate processes.
  */
-interface WorkerInterface
+interface WorkerInterface extends Identifiable
 {
     /**
      * Returns processing options associated with specific worker task queue.

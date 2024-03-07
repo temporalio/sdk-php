@@ -16,12 +16,25 @@ class TemporalException extends \RuntimeException
     /**
      * Build key-value list to explain exception. Skips empty values.
      *
-     * @param array $values
+     * @param array<non-empty-string, mixed> $values
      * @return string
      */
     protected static function buildMessage(array $values): string
     {
+        $body = '';
         $result = [];
+
+        if (isset($values['type'], $values['message'])) {
+            $body = "{$values['type']}: {$values['message']}\n";
+            unset($values['type'], $values['message']);
+
+            if (isset($values['file'], $values['line'])) {
+                $body .= "in {$values['file']}:{$values['line']}\n";
+                unset($values['file'], $values['line']);
+            }
+
+            $body .= "\n";
+        }
 
         foreach ($values as $k => $value) {
             if ($value) {
@@ -29,6 +42,6 @@ class TemporalException extends \RuntimeException
             }
         }
 
-        return implode(', ', $result);
+        return \rtrim($body . \implode(', ', $result));
     }
 }

@@ -74,7 +74,7 @@ final class FailureConverter
 
         $failure->setMessage($e->getMessage());
 
-        $failure->setSource('PHP_SDK')->setStackTrace((string)$e);
+        $failure->setSource('PHP_SDK')->setStackTrace(self::generateStackTraceString($e));
 
         if ($e->getPrevious() !== null) {
             $failure->setCause(self::mapExceptionToFailure($e->getPrevious(), $converter));
@@ -281,5 +281,102 @@ final class FailureConverter
             default:
                 throw new \InvalidArgumentException('Failure info not set');
         }
+    }
+
+    private static function generateStackTraceString(\Throwable $e, bool $skipInternal = true): string
+    {
+        /** @var list<array{
+         *     function: string,
+         *     line: int<0, max>|null,
+         *     file: non-empty-string|null,
+         *     class: class-string,
+         *     object?: object,
+         *     type: string,
+         *     args: array|null
+         * }> $frames
+         */
+        $frames = $e->getTrace();
+
+        $numPad = \strlen((string)(\count($frames) - 1)) + 2;
+        // Skipped frames
+        $internals = [];
+        $isFirst = true;
+        $result = [];
+
+        foreach ($frames as $i => $frame) {
+            if (!\is_array($frame)) {
+                continue;
+            }
+
+            $renderer = static fn() => \sprintf(
+                "%s%s%s\n%s%s%s%s(%s)",
+                \str_pad("#$i", $numPad, ' '),
+                $frame['file'] ?? '[internal function]',
+                empty($frame['line']) ? '' : ":{$frame['line']}",
+                \str_repeat(' ', $numPad),
+                $frame['class'],
+                $frame['type'],
+                $frame['function'],
+                self::renderTraceAttributes($frame['args']),
+            );
+
+
+            if ($skipInternal && \str_starts_with((string)$frame['class'], 'Temporal\\')) {
+                if (!$isFirst) {
+                    $internals[] = $renderer;
+                    $isFirst = false;
+                    continue;
+                }
+
+                $skipInternal = false;
+            }
+
+            $isFirst = false;
+            if (\count($internals) > 2) {
+                $result[] = \sprintf(
+                    '[%d hidden internal calls]',
+                    \count($internals),
+                );
+                $internals = [];
+            } else {
+                $result = [...$result, ...\array_map(static fn(callable $renderer) => $renderer(), $internals)];
+                $internals = [];
+            }
+
+            $result[] = $renderer();
+        }
+
+        if ($internals !== []) {
+            $result[] = \sprintf('[%d hidden internal calls]', \count($internals));
+        }
+
+        return \implode("\n", $result);
+    }
+
+    private static function renderTraceAttributes(?array $args): string
+    {
+        if (empty($args)) {
+            return '';
+        }
+
+        $result = [];
+        foreach ($args as $arg) {
+            $result[] = match(true) {
+                $arg => 'true',
+                $arg === false => 'false',
+                $arg === null => 'null',
+                \is_array($arg) => 'array(' . count($arg) . ')',
+                \is_object($arg) => \get_class($arg),
+                \is_string($arg) => (string)\json_encode(
+                    \strlen($arg) > 50
+                        ? \substr($arg, 0, 50) . '...'
+                        : $arg, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE
+                ),
+                \is_scalar($arg) => (string)$arg,
+                default => \get_debug_type($arg),
+            };
+        }
+
+        return \implode(',', $result);
     }
 }
