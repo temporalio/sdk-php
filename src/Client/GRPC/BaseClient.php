@@ -62,6 +62,10 @@ abstract class BaseClient implements ServiceClientInterface
      */
     public static function create(string $address): static
     {
+        if (!\extension_loaded('grpc')) {
+            throw new \RuntimeException('The gRPC extension is required to use Temporal Client');
+        }
+
         $client = new WorkflowServiceClient(
             $address,
             ['credentials' => \Grpc\ChannelCredentials::createInsecure()]
@@ -91,8 +95,8 @@ abstract class BaseClient implements ServiceClientInterface
         $options = [
             'credentials' => \Grpc\ChannelCredentials::createSsl(
                 \is_file($crt) ? \file_get_contents($crt) : null,
-                \is_file((string)$clientKey) ? \file_get_contents($clientKey) : null,
-                \is_file((string)$clientPem) ? \file_get_contents($clientPem) : null
+                \is_file((string)$clientKey) ? \file_get_contents((string)$clientKey) : null,
+                \is_file((string)$clientPem) ? \file_get_contents((string)$clientPem) : null
             )
         ];
 
@@ -177,8 +181,9 @@ abstract class BaseClient implements ServiceClientInterface
             $attempt++;
             try {
                 $options = $ctx->getOptions();
-                if ($ctx->getDeadline() !== null) {
-                    $diff = (new \DateTime())->diff($ctx->getDeadline());
+                $deadline = $ctx->getDeadline();
+                if ($deadline !== null) {
+                    $diff = (new \DateTime())->diff($deadline);
                     $options['timeout'] = CarbonInterval::instance($diff)->totalMicroseconds;
                 }
 

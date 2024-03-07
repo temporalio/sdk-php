@@ -34,7 +34,7 @@
         "roadrunner-php/roadrunner-api-dto": "^1.5.0",
         "roadrunner-php/version-checker": "^1.0",
         "spiral/attributes": "^3.1.4",
-        "spiral/roadrunner": "^2023.3.12",
+        "spiral/roadrunner": "^2023.3.12 || ^2024.1",
         "spiral/roadrunner-cli": "^2.5",
         "spiral/roadrunner-kv": "^4.0",
         "spiral/roadrunner-worker": "^3.0",
@@ -73,7 +73,8 @@
         }
     },
     "suggest": {
-        "doctrine/annotations": "^1.11 for Doctrine metadata driver support"
+        "doctrine/annotations": "For Doctrine metadata driver support",
+        "ext-grpc": "For Client calls"
     },
     "scripts": {
         "post-update-cmd": "Temporal\\Worker\\Transport\\RoadRunnerVersionChecker::postUpdate",
