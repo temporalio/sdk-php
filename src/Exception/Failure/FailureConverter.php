@@ -287,12 +287,12 @@ final class FailureConverter
     {
         /** @var list<array{
          *     function: string,
-         *     line: int<0, max>,
-         *     file: non-empty-string,
+         *     line: int<0, max>|null,
+         *     file: non-empty-string|null,
          *     class: class-string,
          *     object?: object,
          *     type: string,
-         *     args: array
+         *     args: array|null
          * }> $frames
          */
         $frames = $e->getTrace();
@@ -353,9 +353,9 @@ final class FailureConverter
         return \implode("\n", $result);
     }
 
-    private static function renderTraceAttributes(array $args): string
+    private static function renderTraceAttributes(?array $args): string
     {
-        if ($args === []) {
+        if (empty($args)) {
             return '';
         }
 
