@@ -50,7 +50,7 @@ class DurationJsonType extends Type implements DetectableTypeInterface, RuleFact
     /**
      * {@inheritDoc}
      */
-    public function serialize($value): ?string
+    public function serialize($value): ?array
     {
         $duration = match (true) {
             $value instanceof \DateInterval => DateInterval::toDuration($value),
@@ -62,7 +62,7 @@ class DurationJsonType extends Type implements DetectableTypeInterface, RuleFact
             default => throw new \InvalidArgumentException('Invalid value type.'),
         };
 
-        return \json_decode($duration?->serializeToJsonString(), true);
+        return $duration === null ? null : ['seconds' => $duration->getSeconds(), 'nanos' => $duration->getNanos()];
     }
 
     /**

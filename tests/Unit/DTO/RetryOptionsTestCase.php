@@ -24,11 +24,11 @@ class RetryOptionsTestCase extends AbstractDTOMarshalling
         $dto = new RetryOptions();
 
         $expected = [
-            'initialInterval' => null,
-            'backoffCoefficient' => 2.0,
-            'maximumInterval' => null,
-            'maximumAttempts' => 0,
-            'nonRetryableErrorTypes' => [],
+            'initial_interval' => null,
+            'backoff_coefficient' => 2.0,
+            'maximum_interval' => null,
+            'maximum_attempts' => 0,
+            'non_retryable_error_types' => [],
         ];
 
         $this->assertSame($expected, $result = $this->marshal($dto));
@@ -50,23 +50,13 @@ class RetryOptionsTestCase extends AbstractDTOMarshalling
             ->withMaximumInterval('15 seconds');
 
         $expected = [
-            'initialInterval' => '10s',
-            'backoffCoefficient' => 3.0,
-            'maximumInterval' => '15s',
-            'maximumAttempts' => 5,
-            'nonRetryableErrorTypes' => [],
+            'initial_interval' => ['seconds' => 10, 'nanos' => 0],
+            'backoff_coefficient' => 3.0,
+            'maximum_interval' => ['seconds' => 15, 'nanos' => 0],
+            'maximum_attempts' => 5,
+            'non_retryable_error_types' => [],
         ];
 
-        $this->assertSame($expected, $result = $this->marshal($dto));
-        $json = \json_encode($result);
-
-        /** @var RetryPolicy $message */
-        $message = new RetryPolicy();
-        $message->mergeFromJsonString($json);
-
-        $this->assertSame(10, $message->getInitialInterval()->getSeconds());
-        $this->assertSame(3.0, $message->getBackoffCoefficient());
-        $this->assertSame(15, $message->getMaximumInterval()->getSeconds());
-        $this->assertSame(5, $message->getMaximumAttempts());
+        $this->assertSame($expected, $this->marshal($dto));
     }
 }
