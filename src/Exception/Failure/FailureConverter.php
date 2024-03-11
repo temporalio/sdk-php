@@ -314,10 +314,10 @@ final class FailureConverter
                 $frame['file'] ?? '[internal function]',
                 empty($frame['line']) ? '' : ":{$frame['line']}",
                 \str_repeat(' ', $numPad),
-                $frame['class'],
-                $frame['type'],
-                $frame['function'],
-                self::renderTraceAttributes($frame['args']),
+                $frame['class'] ?? '',
+                $frame['type'] ?? '',
+                $frame['function'] ?? '',
+                self::renderTraceAttributes($frame['args'] ?? []),
             );
 
 
