@@ -52,10 +52,17 @@ final class FailureConverterTestCase extends AbstractUnit
 
     public function testShouldSetStackTraceStringForAdditionalContextEvenWhenClassIsNotPresented(): void
     {
+        \ini_set('zend.exception_ignore_args', 'Off');
+
         $trace = FailureConverter::mapExceptionToFailure(
             call_user_func(fn () => new Exception()),
             DataConverter::createDefault(),
         )->getStackTrace();
+
+        self::assertStringContainsString(
+            '[internal function]',
+            $trace,
+        );
 
         self::assertStringContainsString(
             'Temporal\Tests\Unit\Exception\FailureConverterTestCase->Temporal\Tests\Unit\Exception\{closure}()',

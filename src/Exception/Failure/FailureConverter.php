@@ -286,12 +286,12 @@ final class FailureConverter
     private static function generateStackTraceString(\Throwable $e, bool $skipInternal = true): string
     {
         /** @var list<array{
-         *     function?: non-empty-string,
-         *     line?: int<0, max>,
-         *     file?: non-empty-string,
-         *     class?: class-string,
-         *     object?: object,
-         *     type?: string,
+         *     function?: non-empty-string|null,
+         *     line?: int<0, max>|null,
+         *     file?: non-empty-string|null,
+         *     class?: class-string|null,
+         *     object?: object|null,
+         *     type?: string|null,
          *     args?: array|null
          * }> $frames
          */
@@ -336,12 +336,11 @@ final class FailureConverter
                     '[%d hidden internal calls]',
                     \count($internals),
                 );
-                $internals = [];
             } else {
                 $result = [...$result, ...\array_map(static fn(callable $renderer) => $renderer(), $internals)];
-                $internals = [];
             }
 
+            $internals = [];
             $result[] = $renderer();
         }
 
