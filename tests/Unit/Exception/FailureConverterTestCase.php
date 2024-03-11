@@ -32,7 +32,7 @@ final class FailureConverterTestCase extends AbstractUnit
         $this->assertSame(123, $restoredDetails->getValue(1));
     }
 
-    public function testShouldSetStackTraceStringForAdditionalContext(): void
+    public function testStackTraceStringForAdditionalContext(): void
     {
         $trace = FailureConverter::mapExceptionToFailure(
             new Exception(),
@@ -40,7 +40,7 @@ final class FailureConverterTestCase extends AbstractUnit
         )->getStackTrace();
 
         self::assertStringContainsString(
-            'Temporal\Tests\Unit\Exception\FailureConverterTestCase->testShouldSetStackTraceStringForAdditionalContext()',
+            'Temporal\Tests\Unit\Exception\FailureConverterTestCase->testStackTraceStringForAdditionalContext()',
             $trace,
         );
 
@@ -50,14 +50,19 @@ final class FailureConverterTestCase extends AbstractUnit
         );
     }
 
-    public function testShouldSetStackTraceStringForAdditionalContextEvenWhenClassIsNotPresented(): void
+    public function testStackTraceStringForAdditionalContextEvenWhenClassIsNotPresented(): void
     {
+        $previous = \ini_get('zend.exception_ignore_args');
         \ini_set('zend.exception_ignore_args', 'Off');
 
-        $trace = FailureConverter::mapExceptionToFailure(
-            call_user_func(fn () => new Exception()),
-            DataConverter::createDefault(),
-        )->getStackTrace();
+        try {
+            $trace = FailureConverter::mapExceptionToFailure(
+                call_user_func(fn () => new Exception()),
+                DataConverter::createDefault(),
+            )->getStackTrace();
+        } finally {
+            \ini_set('zend.exception_ignore_args', $previous);
+        }
 
         self::assertStringContainsString(
             '[internal function]',
@@ -76,6 +81,26 @@ final class FailureConverterTestCase extends AbstractUnit
 
         self::assertStringContainsString(
             'PHPUnit\Framework\TestCase->runTest()',
+            $trace,
+        );
+    }
+
+    public function testStackTraceStringWithoutExceptionArgs(): void
+    {
+        $previous = \ini_get('zend.exception_ignore_args');
+        \ini_set('zend.exception_ignore_args', 'On');
+
+        try {
+            $trace = FailureConverter::mapExceptionToFailure(
+                call_user_func(static fn() => new Exception()),
+                DataConverter::createDefault(),
+            )->getStackTrace();
+        } finally {
+            \ini_set('zend.exception_ignore_args', $previous);
+        }
+
+        self::assertStringContainsString(
+            'call_user_func()',
             $trace,
         );
     }

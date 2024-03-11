@@ -351,10 +351,9 @@ final class FailureConverter
         return \implode("\n", $result);
     }
 
-    private static function renderTraceAttributes(?array $args): string
+    private static function renderTraceAttributes(array $args): string
     {
-        /** @psalm-suppress RiskyTruthyFalsyComparison */
-        if (empty($args)) {
+        if ($args === []) {
             return '';
         }
 
