@@ -286,13 +286,13 @@ final class FailureConverter
     private static function generateStackTraceString(\Throwable $e, bool $skipInternal = true): string
     {
         /** @var list<array{
-         *     function: string,
-         *     line: int<0, max>|null,
-         *     file: non-empty-string|null,
-         *     class: class-string,
-         *     object?: object,
-         *     type: string,
-         *     args: array|null
+         *     function?: non-empty-string|null,
+         *     line?: int<0, max>|null,
+         *     file?: non-empty-string|null,
+         *     class?: class-string|null,
+         *     object?: object|null,
+         *     type?: string|null,
+         *     args?: array|null
          * }> $frames
          */
         $frames = $e->getTrace();
@@ -308,20 +308,19 @@ final class FailureConverter
                 continue;
             }
 
-            $renderer = static fn() => \sprintf(
+            $renderer = static fn(): string => \sprintf(
                 "%s%s%s\n%s%s%s%s(%s)",
                 \str_pad("#$i", $numPad, ' '),
                 $frame['file'] ?? '[internal function]',
-                empty($frame['line']) ? '' : ":{$frame['line']}",
+                isset($frame['line']) ? ":{$frame['line']}" : '',
                 \str_repeat(' ', $numPad),
-                $frame['class'],
-                $frame['type'],
-                $frame['function'],
-                self::renderTraceAttributes($frame['args']),
+                $frame['class'] ?? '',
+                $frame['type'] ?? '',
+                $frame['function'] ?? '',
+                self::renderTraceAttributes($frame['args'] ?? []),
             );
 
-
-            if ($skipInternal && \str_starts_with((string)$frame['class'], 'Temporal\\')) {
+            if ($skipInternal && \str_starts_with($frame['class'] ?? '', 'Temporal\\')) {
                 if (!$isFirst) {
                     $internals[] = $renderer;
                     $isFirst = false;
@@ -337,12 +336,11 @@ final class FailureConverter
                     '[%d hidden internal calls]',
                     \count($internals),
                 );
-                $internals = [];
             } else {
                 $result = [...$result, ...\array_map(static fn(callable $renderer) => $renderer(), $internals)];
-                $internals = [];
             }
 
+            $internals = [];
             $result[] = $renderer();
         }
 
@@ -353,9 +351,9 @@ final class FailureConverter
         return \implode("\n", $result);
     }
 
-    private static function renderTraceAttributes(?array $args): string
+    private static function renderTraceAttributes(array $args): string
     {
-        if (empty($args)) {
+        if ($args === []) {
             return '';
         }
 

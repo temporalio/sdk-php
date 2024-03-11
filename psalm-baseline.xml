@@ -395,9 +395,6 @@
     <InvalidOperand>
       <code><![CDATA[count($arg)]]></code>
     </InvalidOperand>
-    <MissingClosureReturnType>
-      <code><![CDATA[static fn() => \sprintf(]]></code>
-    </MissingClosureReturnType>
     <NullableReturnStatement>
       <code><![CDATA[$e->getFailure()]]></code>
     </NullableReturnStatement>
@@ -429,13 +426,6 @@
       <code><![CDATA[hasLastHeartbeatDetails]]></code>
       <code><![CDATA[setStackTrace]]></code>
     </PossiblyNullReference>
-    <RedundantCastGivenDocblockType>
-      <code><![CDATA[(string)$frame['class']]]></code>
-    </RedundantCastGivenDocblockType>
-    <RiskyTruthyFalsyComparison>
-      <code><![CDATA[empty($args)]]></code>
-      <code><![CDATA[empty($frame['line'])]]></code>
-    </RiskyTruthyFalsyComparison>
   </file>
   <file src="src/Exception/Failure/TemporalFailure.php">
     <MissingClosureParamType>
