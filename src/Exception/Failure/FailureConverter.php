@@ -321,7 +321,7 @@ final class FailureConverter
             );
 
 
-            if ($skipInternal && \str_starts_with((string)$frame['class'], 'Temporal\\')) {
+            if ($skipInternal && \str_starts_with((string) ($frame['class'] ?? ''), 'Temporal\\')) {
                 if (!$isFirst) {
                     $internals[] = $renderer;
                     $isFirst = false;
