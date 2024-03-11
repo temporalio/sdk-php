@@ -286,13 +286,13 @@ final class FailureConverter
     private static function generateStackTraceString(\Throwable $e, bool $skipInternal = true): string
     {
         /** @var list<array{
-         *     function: string,
-         *     line: int<0, max>|null,
-         *     file: non-empty-string|null,
-         *     class: class-string,
+         *     function?: non-empty-string,
+         *     line?: int<0, max>,
+         *     file?: non-empty-string,
+         *     class?: class-string,
          *     object?: object,
-         *     type: string,
-         *     args: array|null
+         *     type?: string,
+         *     args?: array|null
          * }> $frames
          */
         $frames = $e->getTrace();
@@ -308,11 +308,11 @@ final class FailureConverter
                 continue;
             }
 
-            $renderer = static fn() => \sprintf(
+            $renderer = static fn(): string => \sprintf(
                 "%s%s%s\n%s%s%s%s(%s)",
                 \str_pad("#$i", $numPad, ' '),
                 $frame['file'] ?? '[internal function]',
-                empty($frame['line']) ? '' : ":{$frame['line']}",
+                isset($frame['line']) ? ":{$frame['line']}" : '',
                 \str_repeat(' ', $numPad),
                 $frame['class'] ?? '',
                 $frame['type'] ?? '',
@@ -321,7 +321,7 @@ final class FailureConverter
             );
 
 
-            if ($skipInternal && \str_starts_with((string) ($frame['class'] ?? ''), 'Temporal\\')) {
+            if ($skipInternal && \str_starts_with($frame['class'] ?? '', 'Temporal\\')) {
                 if (!$isFirst) {
                     $internals[] = $renderer;
                     $isFirst = false;
@@ -355,6 +355,7 @@ final class FailureConverter
 
     private static function renderTraceAttributes(?array $args): string
     {
+        /** @psalm-suppress RiskyTruthyFalsyComparison */
         if (empty($args)) {
             return '';
         }
