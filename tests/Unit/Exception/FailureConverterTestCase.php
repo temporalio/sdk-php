@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Exception;
 
+use Exception;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\Failure\ApplicationFailure;
@@ -29,5 +30,46 @@ final class FailureConverterTestCase extends AbstractUnit
 
         $this->assertSame('abc', $restoredDetails->getValue(0));
         $this->assertSame(123, $restoredDetails->getValue(1));
+    }
+
+    public function testShouldSetStackTraceStringForAdditionalContext(): void
+    {
+        $trace = FailureConverter::mapExceptionToFailure(
+            new Exception(),
+            DataConverter::createDefault(),
+        )->getStackTrace();
+
+        self::assertStringContainsString(
+            'Temporal\Tests\Unit\Exception\FailureConverterTestCase->testShouldSetStackTraceStringForAdditionalContext()',
+            $trace,
+        );
+
+        self::assertStringContainsString(
+            'PHPUnit\Framework\TestCase->runTest()',
+            $trace,
+        );
+    }
+
+    public function testShouldSetStackTraceStringForAdditionalContextEvenWhenClassIsNotPresented(): void
+    {
+        $trace = FailureConverter::mapExceptionToFailure(
+            call_user_func(fn () => new Exception()),
+            DataConverter::createDefault(),
+        )->getStackTrace();
+
+        self::assertStringContainsString(
+            'Temporal\Tests\Unit\Exception\FailureConverterTestCase->Temporal\Tests\Unit\Exception\{closure}()',
+            $trace,
+        );
+
+        self::assertStringContainsString(
+            'call_user_func(Closure)',
+            $trace,
+        );
+
+        self::assertStringContainsString(
+            'PHPUnit\Framework\TestCase->runTest()',
+            $trace,
+        );
     }
 }

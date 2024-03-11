@@ -320,7 +320,6 @@ final class FailureConverter
                 self::renderTraceAttributes($frame['args'] ?? []),
             );
 
-
             if ($skipInternal && \str_starts_with($frame['class'] ?? '', 'Temporal\\')) {
                 if (!$isFirst) {
                     $internals[] = $renderer;
