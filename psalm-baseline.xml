@@ -430,7 +430,7 @@
       <code><![CDATA[setStackTrace]]></code>
     </PossiblyNullReference>
     <RedundantCastGivenDocblockType>
-      <code><![CDATA[(string)$frame['class']]]></code>
+      <code><![CDATA[(string) ($frame['class'] ?? '')]]></code>
     </RedundantCastGivenDocblockType>
     <RiskyTruthyFalsyComparison>
       <code><![CDATA[empty($args)]]></code>
