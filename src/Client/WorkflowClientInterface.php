@@ -131,9 +131,9 @@ interface WorkflowClientInterface
      * Get paginated list of workflow executions using List Filter Query syntax.
      * Query example:
      *
-     * <code>
+     * ```
      * WorkflowType='MyWorkflow' and StartTime  between '2022-08-22T15:04:05+00:00' and  '2023-08-22T15:04:05+00:00'
-     * </code>
+     * ```
      *
      * @link https://docs.temporal.io/visibility
      * @see self::countWorkflowExecutions()
@@ -154,9 +154,9 @@ interface WorkflowClientInterface
      * Get count of workflow executions using List Filter Query syntax.
      * Query example:
      *
-     * <code>
+     * ```
      * WorkflowType='MyWorkflow' and StartTime between '2022-08-22T15:04:05+00:00' and '2023-08-22T15:04:05+00:00'
-     * </code>
+     * ```
      *
      * @link https://docs.temporal.io/visibility
      * @see self::listWorkflowExecutions()

@@ -42,7 +42,7 @@ final class Activity extends Facade
      *
      * The data is equivalent to what is passed to the activity method handler.
      *
-     * <code>
+     * ```php
      *  #[ActivityMethod]
      *  public function activityMethod(int $first, string $second)
      *  {
@@ -51,7 +51,7 @@ final class Activity extends Facade
      *      Assert::assertTrue($first,  $arguments->getValue(0, Type::TYPE_INT));
      *      Assert::assertTrue($second, $arguments->getValue(1, Type::TYPE_STRING));
      *  }
-     * </code>
+     * ```
      *
      * @return ValuesInterface
      * @throws OutOfContextException in the absence of the activity execution context.
@@ -113,7 +113,7 @@ final class Activity extends Facade
     /**
      * Use to notify workflow that activity execution is alive.
      *
-     * <code>
+     * ```php
      *  public function activityMethod()
      *  {
      *      // An example method of deferred request
@@ -127,7 +127,7 @@ final class Activity extends Facade
      *      // Returns response of deferred request
      *      return $query->getResult();
      *  }
-     * </code>
+     * ```
      *
      * @param mixed $details In case of activity timeout details are returned
      * as a field of the exception thrown.

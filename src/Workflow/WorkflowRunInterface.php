@@ -31,13 +31,13 @@ interface WorkflowRunInterface
      * Behind the scene this call performs long poll on Temporal service waiting
      * for workflow completion notification.
      *
-     * <code>
+     * ```php
      * // Map to array
      * $result = $run->getResult(Type::TYPE_ARRAY);
      *
      * // Map to list of custom class
      * $result = $run->getResult(Type::arrayOf(Message::class));
-     * </code>
+     * ```
      *
      * @param string|\ReflectionClass|\ReflectionType|Type|null $type
      * @param int|null $timeout Timeout in seconds. Infinite by the default.

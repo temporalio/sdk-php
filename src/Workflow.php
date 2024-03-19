@@ -109,18 +109,18 @@ final class Workflow extends Facade
      * The data is equivalent to what is passed to the workflow handler.
      *
      * For example:
-     * <code>
+     * ```php
      *  #[WorkflowInterface]
      *  interface ExampleWorkflowInterface
      *  {
      *      #[WorkflowMethod]
      *      public function handle(int $first, string $second);
      *  }
-     * </code>
+     * ```
      *
      * And
      *
-     * <code>
+     * ```php
      *  // ...
      *  $arguments = Workflow::getInput();
      *
@@ -129,7 +129,7 @@ final class Workflow extends Facade
      *
      *  // Contains the value passed as the second argument to the workflow
      *  $second = $arguments->getValue(1, Type::TYPE_STRING);
-     * </code>
+     * ```
      *
      * @return ValuesInterface
      * @throws OutOfContextException in the absence of the workflow execution context.
@@ -147,7 +147,7 @@ final class Workflow extends Facade
      *
      * For example:
      *
-     * <code>
+     * ```php
      *  #[WorkflowMethod]
      *  public function handler()
      *  {
@@ -168,7 +168,7 @@ final class Workflow extends Facade
      *      // Or get information about the execution of the group
      *      $promise->isCancelled();
      *  }
-     * </code>
+     * ```
      *
      * You can see more information about the capabilities of the child
      * asynchronous task in {@see CancellationScopeInterface} interface.
@@ -189,7 +189,7 @@ final class Workflow extends Facade
      *
      * Default behaviour through {@see Workflow::async()}:
      *
-     * <code>
+     * ```php
      *  $parent = Workflow::async(fn() =>
      *      $child = Workflow::async(fn() =>
      *          // ...
@@ -200,13 +200,13 @@ final class Workflow extends Facade
      *
      *  // In this case, the "$child" promise will also be canceled:
      *  $child->isCancelled(); // true
-     * </code>
+     * ```
      *
-     * When creating a detaching task using {@see Workflow::asyncDetached}
+     * When creating a detaching task using {@see Workflow::asyncDetached()}
      * inside the parent, it will not be stopped when the parent context
      * finishes working:
      *
-     * <code>
+     * ```php
      *  $parent = Workflow::async(fn() =>
      *      $child = Workflow::asyncDetached(fn() =>
      *          // ...
@@ -217,7 +217,7 @@ final class Workflow extends Facade
      *
      *  // In this case, the "$child" promise will NOT be canceled:
      *  $child->isCancelled(); // false
-     * </code>
+     * ```
      *
      * Use asyncDetached to handle cleanup and compensation logic.
      *
@@ -236,7 +236,7 @@ final class Workflow extends Facade
      * Please note that a state change should ONLY occur if the internal
      * workflow conditions are met.
      *
-     * <code>
+     * ```php
      *  #[WorkflowMethod]
      *  public function handler()
      *  {
@@ -246,12 +246,12 @@ final class Workflow extends Facade
      *
      *      // ...do something
      *  }
-     * </code>
+     * ```
      *
      * Or in the case of an explicit signal method execution of the specified
      * workflow.
      *
-     * <code>
+     * ```php
      *  private bool $continued = false;
      *
      *  #[WorkflowMethod]
@@ -267,7 +267,7 @@ final class Workflow extends Facade
      *  {
      *      $this->continued = true;
      *  }
-     * </code>
+     * ```
      *
      * @param callable|PromiseInterface ...$conditions
      * @return PromiseInterface
@@ -285,7 +285,7 @@ final class Workflow extends Facade
      * will proceed to the next step either if the internal workflow conditions
      * are met, or after the specified timer interval expires.
      *
-     * <code>
+     * ```php
      *  #[WorkflowMethod]
      *  public function handler()
      *  {
@@ -294,7 +294,7 @@ final class Workflow extends Facade
      *
      *      // ...continue execution
      *  }
-     * </code>
+     * ```
      *
      * @param DateIntervalValue $interval
      * @param callable|PromiseInterface ...$conditions
@@ -321,7 +321,7 @@ final class Workflow extends Facade
      * A method that allows you to dynamically register additional query
      * handler in a workflow during the execution of a workflow.
      *
-     * <code>
+     * ```php
      *  #[WorkflowMethod]
      *  public function handler()
      *  {
@@ -329,7 +329,7 @@ final class Workflow extends Facade
      *          echo sprintf('Executed query "query" with argument "%s"', $argument);
      *      });
      *  }
-     * </code>
+     * ```
      *
      * The same method ({@see WorkflowStubInterface::query()}) should be used
      * to call such query handlers as in the case of ordinary query methods.
@@ -348,7 +348,7 @@ final class Workflow extends Facade
      * The method is similar to the {@see Workflow::registerQuery()}, but it
      * registers an additional signal handler.
      *
-     * <code>
+     * ```php
      *  #[WorkflowMethod]
      *  public function handler()
      *  {
@@ -356,7 +356,7 @@ final class Workflow extends Facade
      *          echo sprintf('Executed signal "signal" with argument "%s"', $argument);
      *      });
      *  }
-     * </code>
+     * ```
      *
      * The same method ({@see WorkflowStubInterface::signal()}) should be used
      * to call such signal handlers as in the case of ordinary signal methods.
@@ -376,7 +376,7 @@ final class Workflow extends Facade
      * which was already implemented earlier in order to get rid of errors of
      * inconsistency of workflow replay and existing new code.
      *
-     * <code>
+     * ```php
      *  #[WorkflowMethod]
      *  public function handler()
      *  {
@@ -387,7 +387,7 @@ final class Workflow extends Facade
      *          2 => Workflow::executeActivity('after'),    // New behaviour
      *      }
      *  }
-     * </code>
+     * ```
      *
      * @param string $changeId
      * @param int $minSupported
@@ -405,7 +405,7 @@ final class Workflow extends Facade
      * replayed (for example, in case of an error), such isolated data will
      * return the result of the previous replay.
      *
-     * <code>
+     * ```php
      *  #[WorkflowMethod]
      *  public function handler()
      *  {
@@ -416,7 +416,7 @@ final class Workflow extends Facade
      *      //          will be performed once.
      *      $time = yield Workflow::sideEffect(fn() => hrtime(true));
      *  }
-     * </code>
+     * ```
      *
      * @template TReturn
      * @param callable(): TReturn $value
@@ -436,7 +436,7 @@ final class Workflow extends Facade
      * or a positive number, which is equivalent to the seconds for which the
      * workflow should be suspended.
      *
-     * <code>
+     * ```php
      *  #[WorkflowMethod]
      *  public function handler()
      *  {
@@ -449,7 +449,7 @@ final class Workflow extends Facade
      *      // Wait 23 months
      *      yield Workflow::timer('23 months');
      *  }
-     * </code>
+     * ```
      *
      * @param DateIntervalValue $interval
      * @return PromiseInterface<null>
@@ -465,13 +465,13 @@ final class Workflow extends Facade
      * new execution of the Workflow with the same Workflow Id. The new
      * execution will not carry over any history from the old execution.
      *
-     * <code>
+     * ```php
      *  #[WorkflowMethod]
      *  public function handler()
      *  {
      *      return yield Workflow::continueAsNew('AnyAnotherWorkflow');
      *  }
-     * </code>
+     * ```
      *
      * @param string $type
      * @param array $args
@@ -492,7 +492,7 @@ final class Workflow extends Facade
      * the workflow class as the first argument, and the further api is built on
      * the basis of calls to the methods of the passed workflow.
      *
-     * <code>
+     * ```php
      *  // Any workflow interface example:
      *
      *  #[WorkflowInterface]
@@ -513,7 +513,7 @@ final class Workflow extends Facade
      *      // Executes ExampleWorkflow::handle(int $value)
      *      return yield $proxy->handle(42);
      *  }
-     * </code>
+     * ```
      *
      * @psalm-template T of object
      *
@@ -532,7 +532,7 @@ final class Workflow extends Facade
      * It is similar to {@see Workflow::continueAsNew}, but does not terminate
      * the current workflow execution.
      *
-     * <code>
+     * ```php
      *  #[WorkflowMethod]
      *  public function handler()
      *  {
@@ -540,13 +540,13 @@ final class Workflow extends Facade
      *
      *      // Do something else
      *  }
-     * </code>
+     * ```
      *
      * Please note that due to the fact that PHP does not allow defining the
      * type on {@see \Generator}, you sometimes need to specify the type of
      * the child workflow result explicitly.
      *
-     * <code>
+     * ```php
      *  // External child workflow handler method with Generator return type-hint
      *  public function handle(): \Generator
      *  {
@@ -566,7 +566,7 @@ final class Workflow extends Facade
      *
      *      // Do something else
      *  }
-     * </code>
+     * ```
      *
      * @param string $type
      * @param array $args
@@ -591,7 +591,7 @@ final class Workflow extends Facade
      * is built on the basis of calls to the methods of the passed workflow.
      * For starting abandon child workflow {@see Workflow::newUntypedChildWorkflowStub()}.
      *
-     * <code>
+     * ```php
      *  // Any workflow interface example:
      *
      *  #[WorkflowInterface]
@@ -614,7 +614,7 @@ final class Workflow extends Facade
      *
      *      // etc ...
      *  }
-     * </code>
+     * ```
      *
      * @psalm-template T of object
      *
@@ -635,7 +635,7 @@ final class Workflow extends Facade
      * This method is equivalent to {@see Workflow::newChildWorkflowStub()}, but
      * it takes the workflow name (instead of class name) as the first argument.
      *
-     * <code>
+     * ```php
      *  #[WorkflowMethod]
      *  public function handler()
      *  {
@@ -650,11 +650,11 @@ final class Workflow extends Facade
      *
      *      // etc ...
      *  }
-     * </code>
+     * ```
      *
      * To start abandoned child workflow use `yield` and method `start()`:
      *
-     * <code>
+     * ```php
      *  #[WorkflowMethod]
      *  public function handler()
      *  {
@@ -667,7 +667,7 @@ final class Workflow extends Facade
      *      // Start child workflow
      *      yield $workflow->start(42);
      *  }
-     * </code>
+     * ```
      *
      * @param string $name
      * @param ChildWorkflowOptions|null $options
@@ -686,7 +686,7 @@ final class Workflow extends Facade
      * This method allows you to create a "proxy" for an existing and
      * running workflow by fqn class name of the existing workflow.
      *
-     * <code>
+     * ```php
      *  #[WorkflowMethod]
      *  public function handler(string $existingWorkflowId)
      *  {
@@ -697,7 +697,7 @@ final class Workflow extends Facade
      *      // The method "signalMethod" from the class "ClassName" will be called:
      *      yield $externalWorkflow->signalMethod();
      *  }
-     * </code>
+     * ```
      *
      * @psalm-template T of object
      *
@@ -715,7 +715,7 @@ final class Workflow extends Facade
      * Allows to create a "proxy" for an existing and running workflow by
      * name (type) of the existing workflow.
      *
-     * <code>
+     * ```php
      *  #[WorkflowMethod]
      *  public function handler(string $existingWorkflowId)
      *  {
@@ -729,7 +729,7 @@ final class Workflow extends Facade
      *      // Stops the external workflow
      *      $externalWorkflow->cancel();
      *  }
-     * </code>
+     * ```
      *
      * @param WorkflowExecution $execution
      * @return ExternalWorkflowStubInterface
@@ -743,19 +743,19 @@ final class Workflow extends Facade
     /**
      * Calls an activity by its name and gets the result of its execution.
      *
-     * <code>
+     * ```php
      *  #[WorkflowMethod]
      *  public function handler(string $existingWorkflowId)
      *  {
      *      $result1 = yield Workflow::executeActivity('activityName');
      *      $result2 = yield Workflow::executeActivity('anotherActivityName');
      *  }
-     * </code>
+     * ```
      *
      * In addition to this method of calling, you can use alternative methods
      * of working with the result using Promise API ({@see PromiseInterface}).
      *
-     * <code>
+     * ```php
      *  #[WorkflowMethod]
      *  public function handler(string $existingWorkflowId)
      *  {
@@ -768,7 +768,7 @@ final class Workflow extends Facade
      *          })
      *      ;
      *  }
-     * </code>
+     * ```
      *
      * @param string $type
      * @param array $args
@@ -791,7 +791,7 @@ final class Workflow extends Facade
      * allows you to conveniently and beautifully call all methods within the
      * passed class.
      *
-     * <code>
+     * ```php
      *  #[ActivityInterface]
      *  class ExampleActivityClass
      *  {
@@ -810,7 +810,7 @@ final class Workflow extends Facade
      *      yield $activities->firstActivity();
      *      yield $activities->secondActivity();
      *  }
-     * </code>
+     * ```
      *
      * @psalm-template T of object
      *
@@ -831,7 +831,7 @@ final class Workflow extends Facade
      * The method creates and returns a proxy class with the specified settings
      * that allows to call an activities with the passed options.
      *
-     * <code>
+     * ```php
      *  #[WorkflowMethod]
      *  public function handler(string $existingWorkflowId)
      *  {
@@ -844,7 +844,7 @@ final class Workflow extends Facade
      *      // Executes an activity named "activity"
      *      $result = yield $activities->execute('activity');
      *  }
-     * </code>
+     * ```
      *
      * @param ActivityOptionsInterface|null $options
      *
