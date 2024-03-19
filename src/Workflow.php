@@ -488,7 +488,7 @@ final class Workflow extends Facade
     }
 
     /**
-     * This method is equivalent to {@see Workflow::continueAsNew}, but it takes
+     * This method is equivalent to {@see Workflow::continueAsNew()}, but it takes
      * the workflow class as the first argument, and the further api is built on
      * the basis of calls to the methods of the passed workflow.
      *
@@ -529,7 +529,7 @@ final class Workflow extends Facade
 
     /**
      * Method for calling an external workflow without stopping the current one.
-     * It is similar to {@see Workflow::continueAsNew}, but does not terminate
+     * It is similar to {@see Workflow::continueAsNew()}, but does not terminate
      * the current workflow execution.
      *
      * ```php
@@ -586,7 +586,7 @@ final class Workflow extends Facade
     }
 
     /**
-     * This method is equivalent to {@see Workflow::executeChildWorkflow}, but
+     * This method is equivalent to {@see Workflow::executeChildWorkflow()}, but
      * it takes the workflow class as the first argument, and the further api
      * is built on the basis of calls to the methods of the passed workflow.
      * For starting abandon child workflow {@see Workflow::newUntypedChildWorkflowStub()}.
