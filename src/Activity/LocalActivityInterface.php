@@ -16,9 +16,9 @@ use JetBrains\PhpStorm\Immutable;
 use Spiral\Attributes\NamedArgumentConstructor;
 
 /**
- * Indicates that an interface is a local activity interface. Only interfaces
- * annotated with this annotation can be used as parameters
- * to {@see Workflow::activity()}
+ * Indicates that an interface is a local activity interface.
+ *
+ * Only interfaces annotated with this annotation can be used as parameters to {@see Workflow::activity()}
  * and {@see WorkflowContextInterface::newActivityStub()} methods.
  *
  * Each method of the interface annotated with {@see LocalActivityInterface}

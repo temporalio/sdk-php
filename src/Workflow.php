@@ -79,10 +79,11 @@ final class Workflow extends Facade
     }
 
     /**
-     * Returns {@see false} if not under workflow code.
+     * Checks if the code is under a workflow.
      *
-     * In the case that the workflow is started for the first time,
-     * the {@see true} value will be returned.
+     * Returns **false** if not under workflow code.
+     *
+     * In the case that the workflow is started for the first time, the **true** value will be returned.
      *
      * @return bool
      * @throws OutOfContextException in the absence of the workflow execution context.
@@ -183,6 +184,8 @@ final class Workflow extends Facade
     }
 
     /**
+     * Creates a child task that is not affected by parent task interruption, cancellation, or completion.
+     *
      * The method is similar to the {@see Workflow::async()}, however, unlike
      * it, it creates a child task, the execution of which is not affected by
      * interruption, cancellation or completion of the parent task.
@@ -231,7 +234,7 @@ final class Workflow extends Facade
     }
 
     /**
-     * Moves to the next step if the expression evaluates to {@see true}.
+     * Moves to the next step if the expression evaluates to `true`.
      *
      * Please note that a state change should ONLY occur if the internal
      * workflow conditions are met.
@@ -278,7 +281,9 @@ final class Workflow extends Facade
     }
 
     /**
-     * Returns {@see true} if any of conditions were fired and {@see false} if
+     * Checks if any conditions were met or the timeout was reached.
+     *
+     * Returns **true** if any of conditions were fired and **false** if
      * timeout was reached.
      *
      * This method is similar to {@see Workflow::await()}, but in any case it
@@ -345,6 +350,8 @@ final class Workflow extends Facade
     }
 
     /**
+     * Registers a query with an additional signal handler.
+     *
      * The method is similar to the {@see Workflow::registerQuery()}, but it
      * registers an additional signal handler.
      *
@@ -372,6 +379,8 @@ final class Workflow extends Facade
     }
 
     /**
+     * Updates the behavior of an existing workflow to resolve inconsistency errors during replay.
+     *
      * The method is used to update the behavior (code) of an existing workflow
      * which was already implemented earlier in order to get rid of errors of
      * inconsistency of workflow replay and existing new code.
@@ -401,6 +410,8 @@ final class Workflow extends Facade
     }
 
     /**
+     * Isolates non-pure data to ensure consistent results during workflow replays.
+     *
      * This method serves to isolate any non-pure data. When the workflow is
      * replayed (for example, in case of an error), such isolated data will
      * return the result of the previous replay.
@@ -461,6 +472,8 @@ final class Workflow extends Facade
     }
 
     /**
+     * Completes the current workflow execution atomically and starts a new execution with the same Workflow Id.
+     *
      * Method atomically completes the current workflow execution and starts a
      * new execution of the Workflow with the same Workflow Id. The new
      * execution will not carry over any history from the old execution.
@@ -488,6 +501,8 @@ final class Workflow extends Facade
     }
 
     /**
+     * Creates a proxy for a workflow class to continue as new.
+     *
      * This method is equivalent to {@see Workflow::continueAsNew()}, but it takes
      * the workflow class as the first argument, and the further api is built on
      * the basis of calls to the methods of the passed workflow.
@@ -528,6 +543,8 @@ final class Workflow extends Facade
     }
 
     /**
+     * Calls an external workflow without stopping the current one.
+     *
      * Method for calling an external workflow without stopping the current one.
      * It is similar to {@see Workflow::continueAsNew()}, but does not terminate
      * the current workflow execution.
@@ -586,6 +603,8 @@ final class Workflow extends Facade
     }
 
     /**
+     * Creates a proxy for a workflow class to execute as a child workflow.
+     *
      * This method is equivalent to {@see Workflow::executeChildWorkflow()}, but
      * it takes the workflow class as the first argument, and the further api
      * is built on the basis of calls to the methods of the passed workflow.
@@ -632,6 +651,8 @@ final class Workflow extends Facade
     }
 
     /**
+     * Creates a proxy for a workflow by name to execute as a child workflow.
+     *
      * This method is equivalent to {@see Workflow::newChildWorkflowStub()}, but
      * it takes the workflow name (instead of class name) as the first argument.
      *

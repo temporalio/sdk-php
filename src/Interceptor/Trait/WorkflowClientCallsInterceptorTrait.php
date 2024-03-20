@@ -25,11 +25,15 @@ use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Workflow\WorkflowExecution;
 
 /**
- * Implements {@see WorkflowClientCallsInterceptor}
+ * Trait that provides a default interceptor implementation.
+ *
+ * @see WorkflowClientCallsInterceptor
  */
 trait WorkflowClientCallsInterceptorTrait
 {
     /**
+     * Default implementation of the `start` method.
+     *
      * @see WorkflowClientCallsInterceptor::start()
      */
     public function start(StartInput $input, callable $next): WorkflowExecution
@@ -38,6 +42,8 @@ trait WorkflowClientCallsInterceptorTrait
     }
 
     /**
+     * Default implementation of the `signal` method.
+     *
      * @see WorkflowClientCallsInterceptor::signal()
      */
     public function signal(SignalInput $input, callable $next): void
@@ -46,6 +52,8 @@ trait WorkflowClientCallsInterceptorTrait
     }
 
     /**
+     * Default implementation of the `update` method.
+     *
      * @see WorkflowClientCallsInterceptor::update()
      */
     public function update(UpdateInput $input, callable $next): StartUpdateOutput
@@ -54,6 +62,8 @@ trait WorkflowClientCallsInterceptorTrait
     }
 
     /**
+     * Default implementation of the `signalWithStart` method.
+     *
      * @see WorkflowClientCallsInterceptor::signalWithStart()
      */
     public function signalWithStart(SignalWithStartInput $input, callable $next): WorkflowExecution
@@ -62,6 +72,8 @@ trait WorkflowClientCallsInterceptorTrait
     }
 
     /**
+     * Default implementation of the `getResult` method.
+     *
      * @see WorkflowClientCallsInterceptor::getResult()
      */
     public function getResult(GetResultInput $input, callable $next): ?EncodedValues
@@ -70,6 +82,8 @@ trait WorkflowClientCallsInterceptorTrait
     }
 
     /**
+     * Default implementation of the `query` method.
+     *
      * @see WorkflowClientCallsInterceptor::query()
      */
     public function query(QueryInput $input, callable $next): ?EncodedValues
@@ -78,6 +92,8 @@ trait WorkflowClientCallsInterceptorTrait
     }
 
     /**
+     * Default implementation of the `cancel` method.
+     *
      * @see WorkflowClientCallsInterceptor::cancel()
      */
     public function cancel(CancelInput $input, callable $next): void
@@ -86,6 +102,8 @@ trait WorkflowClientCallsInterceptorTrait
     }
 
     /**
+     * Default implementation of the `terminate` method.
+     *
      * @see WorkflowClientCallsInterceptor::terminate()
      */
     public function terminate(TerminateInput $input, callable $next): void

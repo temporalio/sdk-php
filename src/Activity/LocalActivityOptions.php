@@ -23,9 +23,10 @@ use Temporal\Internal\Support\Options;
 
 /**
  * LocalActivityOptions stores all local activity-specific parameters that will be stored
- * inside of a context. The current timeout resolution implementation is in
- * seconds and uses `ceil($interval->s)` as the duration. But is subjected to
- * change in the future.
+ * inside of a context.
+ *
+ * The current timeout resolution implementation is in seconds and uses `ceil($interval->s)` as the duration.
+ * But is subjected to change in the future.
  *
  * @psalm-import-type DateIntervalValue from DateInterval
  */
@@ -48,8 +49,9 @@ class LocalActivityOptions extends Options implements ActivityOptionsInterface
     public \DateInterval $startToCloseTimeout;
 
     /**
-     * RetryPolicy specifies how to retry an Activity if an error occurs. More
-     * details are available at {@link https://docs.temporal.io/docs/concepts/activities}. RetryPolicy
+     * RetryPolicy specifies how to retry an Activity if an error occurs.
+     *
+     * More details are available at {@link https://docs.temporal.io/docs/concepts/activities}. RetryPolicy
      * is optional. If one is not specified a default RetryPolicy is provided
      * by the server.
      *

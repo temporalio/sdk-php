@@ -18,6 +18,8 @@ use Temporal\DataConverter\ValuesInterface;
 interface ActivityContextInterface
 {
     /**
+     * Returns information about current activity execution.
+     *
      * @see Activity::getInfo()
      *
      * @return ActivityInfo
@@ -25,6 +27,8 @@ interface ActivityContextInterface
     public function getInfo(): ActivityInfo;
 
     /**
+     * Returns activity execution input arguments.
+     *
      * @see Activity::getInput()
      *
      * @return ValuesInterface
@@ -32,6 +36,8 @@ interface ActivityContextInterface
     public function getInput(): ValuesInterface;
 
     /**
+     * Check if the heartbeat's first argument has been passed.
+     *
      * @see Activity::hasHeartbeatDetails()
      *
      * @return bool
@@ -39,6 +45,8 @@ interface ActivityContextInterface
     public function hasHeartbeatDetails(): bool;
 
     /**
+     * Returns the payload passed into the last heartbeat.
+     *
      * @see Activity::getHeartbeatDetails()
      *
      * @param Type|string $type
@@ -47,6 +55,8 @@ interface ActivityContextInterface
     public function getHeartbeatDetails($type = null);
 
     /**
+     * Marks the activity as incomplete for asynchronous completion.
+     *
      * @see Activity::doNotCompleteOnReturn()
      *
      * @return void
@@ -54,6 +64,8 @@ interface ActivityContextInterface
     public function doNotCompleteOnReturn(): void;
 
     /**
+     * Use to notify workflow that activity execution is alive.
+     *
      * @see Activity::heartbeat()
      *
      * @param mixed $details

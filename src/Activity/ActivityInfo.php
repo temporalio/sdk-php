@@ -34,8 +34,9 @@ use Temporal\Workflow\WorkflowType;
 final class ActivityInfo
 {
     /**
-     * A correlation token that can be used to complete the activity
-     * through {@see ActivityCompletionClientInterface::complete()}.
+     * A correlation token that can be used to complete the activity through `complete` method.
+     *
+     * @see ActivityCompletionClientInterface::complete()
      *
      * @var string
      */
@@ -62,7 +63,9 @@ final class ActivityInfo
 
     /**
      * An ID of the activity. This identifier can be used to complete the
-     * activity through {@see ActivityCompletionClientInterface::complete()}.
+     * activity through `complete` method.
+     *
+     * @see ActivityCompletionClientInterface::complete()
      *
      * @var string
      */

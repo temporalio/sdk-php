@@ -9,8 +9,9 @@ use Temporal\Internal\Traits\CloneWith;
 
 /**
  * CalendarSpec describes an event specification relative to the calendar,
- * similar to a traditional cron specification, but with labeled fields. Each
- * field can be one of:
+ * similar to a traditional cron specification, but with labeled fields.
+ *
+ * Each field can be one of:
  *   - *: matches always
  *   - x: matches when the field equals x
  *   - x/y: matches when the field equals x+n*y where n is an integer

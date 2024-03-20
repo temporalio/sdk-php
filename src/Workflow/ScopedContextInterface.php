@@ -19,6 +19,8 @@ use Temporal\Workflow;
 interface ScopedContextInterface extends WorkflowContextInterface
 {
     /**
+     * The method calls an asynchronous task and returns a promise.
+     *
      * @see Workflow::async()
      *
      * @param callable $handler

@@ -16,8 +16,9 @@ use Temporal\Internal\Traits\CloneWith;
 
 /**
  *  ScheduleSpec is a complete description of a set of absolute timestamps
- *  (possibly infinite) that an action should occur at. The meaning of a
- *  ScheduleSpec depends only on its contents and never changes, except that the
+ *  (possibly infinite) that an action should occur at.
+ *
+ *  The meaning of a ScheduleSpec depends only on its contents and never changes, except that the
  *  definition of a time zone can change over time (most commonly, when daylight
  *  saving time policy changes for an area). To create a totally self-contained
  *  ScheduleSpec, use UTC or include {@see self::$timezoneData}.

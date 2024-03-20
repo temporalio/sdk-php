@@ -15,9 +15,10 @@ use Temporal\Exception\FailedCancellationException;
 use Temporal\Internal\Marshaller\Type\Type;
 
 /**
- * Defines behaviour of the parent workflow when {@see CancellationScope} that
- * wraps child workflow execution request is canceled. The result of the
- * cancellation independently of the type is a {@see FailedCancellationException}
+ * Defines behaviour of the parent workflow when `CancellationScope` that
+ * wraps child workflow execution request is canceled.
+ *
+ * The result of the cancellation independently of the type is a {@see FailedCancellationException}
  * thrown from the child workflow method.
  *
  * @extends Type<bool>
@@ -44,17 +45,11 @@ final class ActivityCancellationType extends Type
      */
     public const ABANDON = 0x02;
 
-    /**
-     * {@inheritDoc}
-     */
     public function parse($value, $current)
     {
         return $value ? self::WAIT_CANCELLATION_COMPLETED : self::TRY_CANCEL;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function serialize($value): bool
     {
         switch ($value) {

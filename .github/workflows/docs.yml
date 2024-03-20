@@ -1,0 +1,35 @@
+name: Generating API documentation
+
+on:
+  push:
+    branches:
+      - 'master'
+      - 'api-reference'
+
+jobs:
+  docs:
+    name: Generating API documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 20
+
+      - name: Cache phpDocumentor build files
+        id: phpdocumentor-cache
+        uses: actions/cache@v3
+        with:
+          path: .phpdoc/cache
+          key: ${{ runner.os }}-phpdocumentor-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-phpdocumentor-
+
+      - name: Build with documentation
+        run: docker run --rm --volume "$(pwd):/data" phpdoc/phpdoc:3.4 -vv --template default
+
+      - name: Upload documentation
+        run: npx vercel deploy docs/api -t ${{ secrets.VERCEL_TOKEN }} --name php --scope temporal --prod --yes

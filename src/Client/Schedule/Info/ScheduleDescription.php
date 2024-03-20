@@ -9,8 +9,9 @@ use Temporal\DataConverter\EncodedCollection;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 
 /**
- * Describes the current Schedule details from {@see ScheduleHandle::describe()}.
+ * Describes the current Schedule details.
  *
+ * @see ScheduleHandle::describe()
  * @see \Temporal\Api\Workflowservice\V1\DescribeScheduleResponse
  */
 final class ScheduleDescription

@@ -12,12 +12,13 @@ declare(strict_types=1);
 namespace Temporal\Worker;
 
 /**
- * The {@see WorkerFactoryInterface} is responsible for providing an
- * interface for registering all dependencies and creating a global
- * event loop ({@see LoopInterface}).
+ * The interface is responsible for providing an interface for registering all dependencies and creating a global
+ * event loop.
  *
  * In addition, implementation of this interface is responsible for delegating
  * events that came from the Temporal server to a specific TaskQueue.
+ *
+ * @see LoopInterface
  */
 interface WorkerFactoryInterface
 {

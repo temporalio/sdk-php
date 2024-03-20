@@ -16,10 +16,10 @@ use JetBrains\PhpStorm\Immutable;
 use Spiral\Attributes\NamedArgumentConstructor;
 
 /**
- * Indicates that an interface is an activity interface. Only interfaces
- * annotated with this annotation can be used as parameters
- * to {@see Workflow::activity()}
- * and {@see WorkflowContextInterface::newActivityStub()} methods.
+ * Indicates that an interface is an activity interface.
+ *
+ * Only interfaces annotated with this annotation can be used as parameters
+ * to {@see Workflow::activity()} and {@see WorkflowContextInterface::newActivityStub()} methods.
  *
  * Each method of the interface annotated with {@see ActivityInterface}
  * including inherited from interfaces is a separate activity. By default the

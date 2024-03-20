@@ -14,8 +14,7 @@ namespace Temporal\Worker;
 use Temporal\Internal\Events\EventListenerInterface;
 
 /**
- * The {@see LoopInterface} is responsible for providing an interface for
- * creating an event loop.
+ * The interface is responsible for providing an interface for creating an event loop.
  *
  * Besides defining a few methods, this interface also implements
  * the {@see EventListenerInterface} which allows you to react to certain events.

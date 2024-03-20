@@ -16,14 +16,17 @@ use Temporal\Interceptor\Trait\ActivityInboundInterceptorTrait;
 use Temporal\Internal\Interceptor\Interceptor;
 
 /**
- * It's recommended to use {@see ActivityInboundInterceptorTrait} when implementing this interface because
+ * It's recommended to use `ActivityInboundInterceptorTrait` when implementing this interface because
  * the interface might be extended in the future. The trait will provide forward compatibility.
  *
+ * @see ActivityInboundInterceptorTrait
  * @psalm-immutable
  */
 interface ActivityInboundInterceptor extends Interceptor
 {
     /**
+     * Intercepts a call to the main activity entry method.
+     *
      * @param ActivityInput $input
      * @param callable(ActivityInput): mixed $next
      *

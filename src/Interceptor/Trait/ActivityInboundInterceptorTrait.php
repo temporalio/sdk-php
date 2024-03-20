@@ -15,11 +15,15 @@ use Temporal\Interceptor\ActivityInbound\ActivityInput;
 use Temporal\Interceptor\ActivityInboundInterceptor;
 
 /**
- * Implements {@see ActivityInboundInterceptor}
+ * Trait that provides a default interceptor implementation.
+ *
+ * @see ActivityInboundInterceptor
  */
 trait ActivityInboundInterceptorTrait
 {
     /**
+     * Default implementation of the `handleActivityInbound` method.
+     *
      * @see ActivityInboundInterceptor::handleActivityInbound()
      */
     public function handleActivityInbound(ActivityInput $input, callable $next): mixed
