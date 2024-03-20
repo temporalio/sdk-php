@@ -28,13 +28,15 @@ use Temporal\Internal\Transport\Request\UpsertSearchAttributes;
 use Temporal\Worker\Transport\Command\RequestInterface;
 
 /**
- * Interceptor for outbound workflow requests.
+ * Trait that provides a default interceptor implementation.
  *
- * Implements {@see WorkflowOutboundRequestInterceptor}
+ * @see WorkflowOutboundRequestInterceptor
  */
 trait WorkflowOutboundRequestInterceptorTrait
 {
     /**
+     * Default implementation of the `handleOutboundRequest` method.
+     *
      * @see WorkflowOutboundRequestInterceptor::handleOutboundRequest()
      */
     final public function handleOutboundRequest(RequestInterface $request, callable $next): PromiseInterface

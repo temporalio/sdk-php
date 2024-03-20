@@ -10,9 +10,8 @@ use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Traits\CloneWith;
 
 /**
- *  IntervalSpec matches times that can be expressed as:
- *  epoch + n * interval + phase
- *  where n is an integer.
+ *  IntervalSpec matches times that can be expressed as: epoch + n * interval + phase where n is an integer.
+ *
  *  {@see self::$pahse} defaults to zero if missing. {@see self::$interval} is required.
  *  Both interval and phase must be non-negative and are truncated to the nearest
  *  second before any calculations.

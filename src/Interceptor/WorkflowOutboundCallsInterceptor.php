@@ -35,6 +35,22 @@ use Temporal\Internal\Interceptor\Interceptor;
  * It's recommended to use {@see WorkflowOutboundCallsInterceptorTrait} when implementing this interface because
  * the interface might be extended in the future. The trait will provide forward compatibility.
  *
+ * ```php
+ * class MyWorkflowOutboundCallsInterceptor implements WorkflowOutboundCallsInterceptor
+ * {
+ *     use WorkflowOutboundCallsInterceptorTrait;
+ *
+ *     public function executeActivity(
+ *         ExecuteActivityInput $input,
+ *         callable $next,
+ *     ): PromiseInterface {
+ *         error_log('Calling activity: ' . $input->type);
+ *
+ *         return $next($input);
+ *     }
+ * }
+ * ```
+ *
  * @psalm-immutable
  */
 interface WorkflowOutboundCallsInterceptor extends Interceptor

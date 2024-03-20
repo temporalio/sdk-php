@@ -10,6 +10,8 @@ use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Traits\CloneWith;
 
 /**
+ * Schedule policies.
+ *
  * @psalm-import-type DateIntervalValue from DateInterval
  *
  * @see \Temporal\Api\Schedule\V1\SchedulePolicies

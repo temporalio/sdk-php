@@ -11,6 +11,8 @@ use Temporal\DataConverter\EncodedCollection;
 use Temporal\Workflow\ResetPointInfo as ResetPointInfoDto;
 
 /**
+ * DTO that contains detailed information about Workflow Execution.
+ *
  * @see \Temporal\Api\Workflow\V1\WorkflowExecutionInfo
  * @psalm-immutable
  */

@@ -24,9 +24,10 @@ use Temporal\Internal\Support\Options;
 
 /**
  * ActivityOptions stores all activity-specific parameters that will be stored
- * inside of a context. The current timeout resolution implementation is in
- * seconds and uses `ceil($interval->s)` as the duration. But is subjected to
- * change in the future.
+ * inside of a context.
+ *
+ * The current timeout resolution implementation is in seconds and uses `ceil($interval->s)` as the duration.
+ * But is subjected to change in the future.
  *
  * @psalm-import-type DateIntervalValue from DateInterval
  */
@@ -64,8 +65,8 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
     public \DateInterval $startToCloseTimeout;
 
     /**
-     * The periodic timeout while the activity is in execution. This is the max
-     * interval the server needs to hear at-least one ping from the activity.
+     * The periodic timeout while the activity is in execution.
+     * This is the max interval the server needs to hear at-least one ping from the activity.
      */
     #[Marshal(name: 'HeartbeatTimeout', type: DateIntervalType::class)]
     public \DateInterval $heartbeatTimeout;
@@ -81,15 +82,17 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
 
     /**
      * Business level activity ID, this is not needed for most of the cases if
-     * you have to specify this then talk to temporal team. This is something
-     * will be done in future.
+     * you have to specify this then talk to temporal team.
+     *
+     * This is something will be done in the future.
      */
     #[Marshal(name: 'ActivityID')]
     public string $activityId = '';
 
     /**
-     * RetryPolicy specifies how to retry an Activity if an error occurs. More
-     * details are available at {@link https://docs.temporal.io/docs/concepts/activities}. RetryPolicy
+     * RetryPolicy specifies how to retry an Activity if an error occurs.
+     *
+     * More details are available at {@link https://docs.temporal.io/docs/concepts/activities}. RetryPolicy
      * is optional. If one is not specified a default RetryPolicy is provided
      * by the server.
      *
@@ -134,8 +137,9 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
     }
 
     /**
-     * Task queue to use when dispatching activity task to a worker. By default
-     * it is the same task list name the workflow was started with.
+     * Task queue to use when dispatching activity task to a worker.
+     *
+     * By default, it is the same task list name the workflow was started with.
      *
      * @param string|null $taskQueue
      * @return $this
@@ -152,6 +156,7 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
 
     /**
      * Overall timeout workflow is willing to wait for activity to complete.
+     *
      * It includes time in a task queue:
      *
      * - Use {@see ActivityOptions::withScheduleToStartTimeout($timeout)} to limit it.
@@ -182,6 +187,7 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
 
     /**
      * Time activity can stay in task queue before it is picked up by a worker.
+     *
      * If schedule to close is not provided then both this and start to close
      * are required.
      *
@@ -203,9 +209,9 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
     }
 
     /**
-     * Maximum activity execution time after it was sent to a worker. If
-     * schedule to close is not provided then both this and schedule to start
-     * are required.
+     * Maximum activity execution time after it was sent to a worker.
+     *
+     * If schedule to close is not provided then both this and schedule to start are required.
      *
      * @psalm-suppress ImpureMethodCall
      *
@@ -225,8 +231,9 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
     }
 
     /**
-     * Heartbeat interval. Activity must heartbeat before this interval passes
-     * after a last heartbeat or activity start.
+     * Heartbeat interval.
+     *
+     * Activity must heartbeat before this interval passes after a last heartbeat or activity start.
      *
      * @psalm-suppress ImpureMethodCall
      *

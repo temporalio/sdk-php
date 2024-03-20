@@ -26,9 +26,24 @@ use Temporal\Internal\Interceptor\Interceptor;
 use Temporal\Workflow\WorkflowExecution;
 
 /**
- * It's recommended to use {@see WorkflowClientCallsInterceptorTrait} when implementing this interface because
+ * It's recommended to use `WorkflowClientCallsInterceptorTrait` when implementing this interface because
  * the interface might be extended in the future. The trait will provide forward compatibility.
  *
+ * ```php
+ * class MyWorkflowClientCallsInterceptor implements WorkflowClientCallsInterceptor
+ * {
+ *     use WorkflowClientCallsInterceptorTrait;
+ *
+ *     public function start(StartInput $input, callable $next): WorkflowExecution
+ *     {
+ *         error_log('Starting workflow: ' . $input->workflowType);
+ *
+ *         return $next($input);
+ *     }
+ * }
+ * ```
+ *
+ * @see WorkflowClientCallsInterceptorTrait
  * @psalm-immutable
  */
 interface WorkflowClientCallsInterceptor extends Interceptor

@@ -12,11 +12,11 @@ declare(strict_types=1);
 namespace Temporal\Worker;
 
 /**
- * Defines behaviour of the parent workflow when {@see CancellationScope}
- * that wraps child workflow execution request is canceled. The result of
- * the cancellation independently of the type is
- * a {@see ChildWorkflowCancellationType} thrown from the child
- * workflow method.
+ * Defines behaviour of the parent workflow when CancellationScope that wraps child workflow execution request
+ * is canceled.
+ *
+ * The result of the cancellation independently of the type is a {@see ChildWorkflowCancellationType} thrown
+ * from the child workflow method.
  */
 final class ChildWorkflowCancellationType
 {

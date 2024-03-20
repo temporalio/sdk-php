@@ -22,8 +22,9 @@ use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowRunInterface;
 
 /**
- * WorkflowStub is a client side stub to a single workflow instance. It can be
- * used to start, signal, query, wait for completion and cancel a workflow
+ * WorkflowStub is a client side stub to a single workflow instance.
+ *
+ * It can be used to start, signal, query, wait for completion and cancel a workflow
  * execution. Created through {@see WorkflowClient::newUntypedWorkflowStub()}.
  */
 interface WorkflowStubInterface extends WorkflowRunInterface
@@ -71,8 +72,9 @@ interface WorkflowStubInterface extends WorkflowRunInterface
     public function signal(string $name, ...$args): void;
 
     /**
-     * Synchronously queries workflow by invoking its query handler. Usually a
-     * query handler is a method annotated with {@see QueryMethod}.
+     * Synchronously queries workflow by invoking its query handler.
+     *
+     * Usually a query handler is a method annotated with {@see QueryMethod}.
      *
      * @param string $name
      * @param mixed ...$args
@@ -82,6 +84,7 @@ interface WorkflowStubInterface extends WorkflowRunInterface
 
     /**
      * Synchronously update a workflow execution by invoking its update handler.
+     *
      * Usually an update handler is a method annotated with the {@see UpdateMethod} attribute.
      *
      * @param non-empty-string $name Name of the update handler.
@@ -93,6 +96,7 @@ interface WorkflowStubInterface extends WorkflowRunInterface
     /**
      * Asynchronously update a workflow execution by invoking its update handler and returning a
      * handle to the update request.
+     *
      * Usually an update handler is a method annotated with the {@see UpdateMethod} attribute.
      *
      * @param non-empty-string|UpdateOptions $nameOrOptions Name of the update handler or update options.

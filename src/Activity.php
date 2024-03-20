@@ -42,7 +42,7 @@ final class Activity extends Facade
      *
      * The data is equivalent to what is passed to the activity method handler.
      *
-     * <code>
+     * ```php
      *  #[ActivityMethod]
      *  public function activityMethod(int $first, string $second)
      *  {
@@ -51,7 +51,7 @@ final class Activity extends Facade
      *      Assert::assertTrue($first,  $arguments->getValue(0, Type::TYPE_INT));
      *      Assert::assertTrue($second, $arguments->getValue(1, Type::TYPE_STRING));
      *  }
-     * </code>
+     * ```
      *
      * @return ValuesInterface
      * @throws OutOfContextException in the absence of the activity execution context.
@@ -65,8 +65,9 @@ final class Activity extends Facade
     }
 
     /**
-     * Returns {@see true} when heartbeat's ({@see Activity::heartbeat()}) first
-     * argument has been passed.
+     * Check if the heartbeat's first argument has been passed.
+     *
+     * This method returns **true** if the first argument has been passed to the {@see Activity::heartbeat()} method.
      *
      * @return bool
      * @throws OutOfContextException in the absence of the activity execution context.
@@ -80,8 +81,9 @@ final class Activity extends Facade
     }
 
     /**
-     * The method returns payload that has been passed into last
-     * heartbeat ({@see Activity::heartbeat()}) method.
+     * Returns the payload passed into the last heartbeat.
+     *
+     * This method retrieves the payload that was passed into the last call of the {@see Activity::heartbeat()} method.
      *
      * @param Type|string|\ReflectionType|\ReflectionClass|null $type
      * @return mixed
@@ -96,6 +98,8 @@ final class Activity extends Facade
     }
 
     /**
+     * Marks the activity as incomplete for asynchronous completion.
+     *
      * If this method is called during an activity execution then activity is
      * not going to complete when its method returns. It is expected to be
      * completed asynchronously using {@see ActivityCompletionClientInterface::complete()}.
@@ -113,7 +117,7 @@ final class Activity extends Facade
     /**
      * Use to notify workflow that activity execution is alive.
      *
-     * <code>
+     * ```php
      *  public function activityMethod()
      *  {
      *      // An example method of deferred request
@@ -127,7 +131,7 @@ final class Activity extends Facade
      *      // Returns response of deferred request
      *      return $query->getResult();
      *  }
-     * </code>
+     * ```
      *
      * @param mixed $details In case of activity timeout details are returned
      * as a field of the exception thrown.

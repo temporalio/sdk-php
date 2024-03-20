@@ -7,6 +7,7 @@ namespace Temporal\Client\Update;
 /**
  * Specified by clients invoking workflow execution updates and used to indicate to the
  * server how long the client wishes to wait for a return value from the RPC.
+ *
  * If any value other than {@see LifecycleStage::StageCompleted} is sent by the
  * client then the RPC will complete before the update is finished and will
  * return a handle to the running update so that it can later be polled for

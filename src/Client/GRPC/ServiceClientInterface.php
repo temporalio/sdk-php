@@ -117,11 +117,9 @@ interface ServiceClientInterface
      * execution is
      * unknown to the service.
      *
-     * @param
-     * V1\GetWorkflowExecutionHistoryReverseRequest $arg
+     * @param V1\GetWorkflowExecutionHistoryReverseRequest $arg
      * @param ContextInterface|null $ctx
-     * @return
-     * V1\GetWorkflowExecutionHistoryReverseResponse
+     * @return V1\GetWorkflowExecutionHistoryReverseResponse
      * @throws ServiceClientException
      */
     public function GetWorkflowExecutionHistoryReverse(V1\GetWorkflowExecutionHistoryReverseRequest $arg, ContextInterface $ctx = null) : V1\GetWorkflowExecutionHistoryReverseResponse;
@@ -234,8 +232,7 @@ interface ServiceClientInterface
      * (-- api-linter: core::0136::prepositions=disabled
      * aip.dev/not-precedent: "By" is used to indicate request type. --)
      *
-     * @param V1\RecordActivityTaskHeartbeatByIdRequest
-     * $arg
+     * @param V1\RecordActivityTaskHeartbeatByIdRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\RecordActivityTaskHeartbeatByIdResponse
      * @throws ServiceClientException
@@ -267,11 +264,9 @@ interface ServiceClientInterface
      * (-- api-linter: core::0136::prepositions=disabled
      * aip.dev/not-precedent: "By" is used to indicate request type. --)
      *
-     * @param V1\RespondActivityTaskCompletedByIdRequest
-     * $arg
+     * @param V1\RespondActivityTaskCompletedByIdRequest $arg
      * @param ContextInterface|null $ctx
-     * @return
-     * V1\RespondActivityTaskCompletedByIdResponse
+     * @return V1\RespondActivityTaskCompletedByIdResponse
      * @throws ServiceClientException
      */
     public function RespondActivityTaskCompletedById(V1\RespondActivityTaskCompletedByIdRequest $arg, ContextInterface $ctx = null) : V1\RespondActivityTaskCompletedByIdResponse;
@@ -300,8 +295,7 @@ interface ServiceClientInterface
      * (-- api-linter: core::0136::prepositions=disabled
      * aip.dev/not-precedent: "By" is used to indicate request type. --)
      *
-     * @param V1\RespondActivityTaskFailedByIdRequest
-     * $arg
+     * @param V1\RespondActivityTaskFailedByIdRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\RespondActivityTaskFailedByIdResponse
      * @throws ServiceClientException
@@ -332,8 +326,7 @@ interface ServiceClientInterface
      * (-- api-linter: core::0136::prepositions=disabled
      * aip.dev/not-precedent: "By" is used to indicate request type. --)
      *
-     * @param V1\RespondActivityTaskCanceledByIdRequest
-     * $arg
+     * @param V1\RespondActivityTaskCanceledByIdRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\RespondActivityTaskCanceledByIdResponse
      * @throws ServiceClientException
@@ -351,8 +344,7 @@ interface ServiceClientInterface
      * workflow is already closed. It fails with 'NotFound' if the requested workflow
      * doesn't exist.
      *
-     * @param V1\RequestCancelWorkflowExecutionRequest
-     * $arg
+     * @param V1\RequestCancelWorkflowExecutionRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\RequestCancelWorkflowExecutionResponse
      * @throws ServiceClientException
@@ -389,11 +381,9 @@ interface ServiceClientInterface
      * (-- api-linter: core::0136::prepositions=disabled
      * aip.dev/not-precedent: "With" is used to indicate combined operation. --)
      *
-     * @param V1\SignalWithStartWorkflowExecutionRequest
-     * $arg
+     * @param V1\SignalWithStartWorkflowExecutionRequest $arg
      * @param ContextInterface|null $ctx
-     * @return
-     * V1\SignalWithStartWorkflowExecutionResponse
+     * @return V1\SignalWithStartWorkflowExecutionResponse
      * @throws ServiceClientException
      */
     public function SignalWithStartWorkflowExecution(V1\SignalWithStartWorkflowExecutionRequest $arg, ContextInterface $ctx = null) : V1\SignalWithStartWorkflowExecutionResponse;
@@ -476,8 +466,7 @@ interface ServiceClientInterface
      * ListArchivedWorkflowExecutions is a visibility API to list archived workflow
      * executions in a specific namespace.
      *
-     * @param V1\ListArchivedWorkflowExecutionsRequest
-     * $arg
+     * @param V1\ListArchivedWorkflowExecutionsRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\ListArchivedWorkflowExecutionsResponse
      * @throws ServiceClientException
@@ -704,19 +693,16 @@ interface ServiceClientInterface
      * aip.dev/not-precedent: UpdateWorkerBuildIdCompatibility RPC doesn't follow
      * Google API format. --)
      *
-     * @param V1\UpdateWorkerBuildIdCompatibilityRequest
-     * $arg
+     * @param V1\UpdateWorkerBuildIdCompatibilityRequest $arg
      * @param ContextInterface|null $ctx
-     * @return
-     * V1\UpdateWorkerBuildIdCompatibilityResponse
+     * @return V1\UpdateWorkerBuildIdCompatibilityResponse
      * @throws ServiceClientException
      */
     public function UpdateWorkerBuildIdCompatibility(V1\UpdateWorkerBuildIdCompatibilityRequest $arg, ContextInterface $ctx = null) : V1\UpdateWorkerBuildIdCompatibilityResponse;
     /**
      * Fetches the worker build id versioning sets for a task queue.
      *
-     * @param V1\GetWorkerBuildIdCompatibilityRequest
-     * $arg
+     * @param V1\GetWorkerBuildIdCompatibilityRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\GetWorkerBuildIdCompatibilityResponse
      * @throws ServiceClientException

@@ -15,7 +15,10 @@ use Temporal\Internal\Interceptor\Interceptor;
 use Temporal\Internal\Interceptor\Pipeline;
 
 /**
- * Provide {@see Pipeline} of specific type of {@see Interceptor}.
+ * Provide `Pipeline` of specific type of `Interceptor`.
+ *
+ * @see Pipeline
+ * @see Interceptor
  */
 interface PipelineProvider
 {

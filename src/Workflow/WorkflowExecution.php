@@ -15,6 +15,8 @@ use Temporal\Common\Uuid;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 
 /**
+ * Workflow Execution DTO.
+ *
  * @see \Temporal\Api\Common\V1\WorkflowExecution
  */
 class WorkflowExecution

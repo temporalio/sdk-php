@@ -29,11 +29,15 @@ use Temporal\Interceptor\WorkflowOutboundCalls\UpsertSearchAttributesInput;
 use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
 
 /**
- * Implements {@see WorkflowOutboundCallsInterceptor}
+ * Trait that provides a default interceptor implementation.
+ *
+ * @see WorkflowOutboundCallsInterceptor
  */
 trait WorkflowOutboundCallsInterceptorTrait
 {
     /**
+     * Default implementation of the `executeActivity` method.
+     *
      * @see WorkflowOutboundCallsInterceptor::executeActivity()
      */
     public function executeActivity(
@@ -44,6 +48,8 @@ trait WorkflowOutboundCallsInterceptorTrait
     }
 
     /**
+     * Default implementation of the `executeLocalActivity` method.
+     *
      * @see WorkflowOutboundCallsInterceptor::executeLocalActivity()
      */
     public function executeLocalActivity(ExecuteLocalActivityInput $input, callable $next): PromiseInterface
@@ -52,6 +58,8 @@ trait WorkflowOutboundCallsInterceptorTrait
     }
 
     /**
+     * Default implementation of the `executeChildWorkflow` method.
+     *
      * @see WorkflowOutboundCallsInterceptor::executeChildWorkflow()
      */
     public function executeChildWorkflow(ExecuteChildWorkflowInput $input, callable $next): PromiseInterface
@@ -60,6 +68,8 @@ trait WorkflowOutboundCallsInterceptorTrait
     }
 
     /**
+     * Default implementation of the `signalExternalWorkflow` method.
+     *
      * @see WorkflowOutboundCallsInterceptor::signalExternalWorkflow()
      */
     public function signalExternalWorkflow(SignalExternalWorkflowInput $input, callable $next): PromiseInterface
@@ -68,6 +78,8 @@ trait WorkflowOutboundCallsInterceptorTrait
     }
 
     /**
+     * Default implementation of the `cancelExternalWorkflow` method.
+     *
      * @see WorkflowOutboundCallsInterceptor::cancelExternalWorkflow()
      */
     public function cancelExternalWorkflow(CancelExternalWorkflowInput $input, callable $next): PromiseInterface
@@ -76,6 +88,8 @@ trait WorkflowOutboundCallsInterceptorTrait
     }
 
     /**
+     * Default implementation of the `sideEffect` method.
+     *
      * @see WorkflowOutboundCallsInterceptor::sideEffect()
      */
     public function sideEffect(SideEffectInput $input, callable $next): mixed
@@ -84,6 +98,8 @@ trait WorkflowOutboundCallsInterceptorTrait
     }
 
     /**
+     * Default implementation of the `timer` method.
+     *
      * @see WorkflowOutboundCallsInterceptor::timer()
      */
     public function timer(TimerInput $input, callable $next): PromiseInterface
@@ -92,6 +108,8 @@ trait WorkflowOutboundCallsInterceptorTrait
     }
 
     /**
+     * Default implementation of the `panic` method.
+     *
      * @see WorkflowOutboundCallsInterceptor::panic()
      */
     public function panic(PanicInput $input, callable $next): PromiseInterface
@@ -100,6 +118,8 @@ trait WorkflowOutboundCallsInterceptorTrait
     }
 
     /**
+     * Default implementation of the `complete` method.
+     *
      * @see WorkflowOutboundCallsInterceptor::complete()
      */
     public function complete(CompleteInput $input, callable $next): PromiseInterface
@@ -108,6 +128,8 @@ trait WorkflowOutboundCallsInterceptorTrait
     }
 
     /**
+     * Default implementation of the `continueAsNew` method.
+     *
      * @see WorkflowOutboundCallsInterceptor::continueAsNew()
      */
     public function continueAsNew(ContinueAsNewInput $input, callable $next): PromiseInterface
@@ -116,6 +138,8 @@ trait WorkflowOutboundCallsInterceptorTrait
     }
 
     /**
+     * Default implementation of the `getVersion` method.
+     *
      * @see WorkflowOutboundCallsInterceptor::getVersion()
      */
     public function getVersion(GetVersionInput $input, callable $next): PromiseInterface
@@ -124,6 +148,8 @@ trait WorkflowOutboundCallsInterceptorTrait
     }
 
     /**
+     * Default implementation of the `upsertSearchAttributes` method.
+     *
      * @see WorkflowOutboundCallsInterceptor::upsertSearchAttributes()
      */
     public function upsertSearchAttributes(UpsertSearchAttributesInput $input, callable $next): PromiseInterface
@@ -132,6 +158,8 @@ trait WorkflowOutboundCallsInterceptorTrait
     }
 
     /**
+     * Default implementation of the `await` method.
+     *
      * @see WorkflowOutboundCallsInterceptor::await()
      */
     public function await(AwaitInput $input, callable $next): PromiseInterface
@@ -140,6 +168,8 @@ trait WorkflowOutboundCallsInterceptorTrait
     }
 
     /**
+     * Default implementation of the `awaitWithTimeout` method.
+     *
      * @see WorkflowOutboundCallsInterceptor::awaitWithTimeout()
      */
     public function awaitWithTimeout(AwaitWithTimeoutInput $input, callable $next): PromiseInterface
