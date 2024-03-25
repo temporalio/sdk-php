@@ -20,7 +20,6 @@ use Temporal\Internal\Interceptor\Interceptor;
  * the interface might be extended in the future. The trait will provide forward compatibility.
  *
  * @see ActivityInboundInterceptorTrait
- * @psalm-immutable
  */
 interface ActivityInboundInterceptor extends Interceptor
 {

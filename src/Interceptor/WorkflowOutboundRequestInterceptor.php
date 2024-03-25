@@ -35,8 +35,6 @@ use Temporal\Worker\Transport\Command\RequestInterface;
  *     }
  * }
  * ```
- *
- * @psalm-immutable
  */
 interface WorkflowOutboundRequestInterceptor extends Interceptor
 {

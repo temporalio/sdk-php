@@ -19,9 +19,6 @@ use Temporal\Client\ServerCapabilities;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Interceptor\GrpcClientInterceptor;
 
-/**
- * @psalm-immutable
- */
 final class SystemInfoInterceptor implements GrpcClientInterceptor
 {
     private bool $systemInfoRequested = false;
