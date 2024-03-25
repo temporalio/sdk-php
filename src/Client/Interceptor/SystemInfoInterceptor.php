@@ -13,7 +13,7 @@ namespace Temporal\Client\Interceptor;
 
 use Temporal\Api\Workflowservice\V1\GetSystemInfoRequest;
 use Temporal\Client\GRPC\ContextInterface;
-use Temporal\Client\GRPC\ServiceClient;
+use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Client\GRPC\StatusCode;
 use Temporal\Client\ServerCapabilities;
 use Temporal\Exception\Client\ServiceClientException;
@@ -27,7 +27,7 @@ final class SystemInfoInterceptor implements GrpcClientInterceptor
     private bool $systemInfoRequested = false;
 
     public function __construct(
-        private readonly ServiceClient $serviceClient
+        private readonly ServiceClientInterface $serviceClient
     ) {
     }
 
