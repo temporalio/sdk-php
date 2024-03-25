@@ -13,9 +13,13 @@ namespace Temporal\Client\GRPC;
 
 use Carbon\CarbonInterval;
 use Closure;
+use DateTimeImmutable;
 use Exception;
+use Fiber;
 use Grpc\UnaryCall;
 use Temporal\Api\Workflowservice\V1\WorkflowServiceClient;
+use Temporal\Client\GRPC\Connection\Connection;
+use Temporal\Client\GRPC\Connection\ConnectionInterface;
 use Temporal\Client\ServerCapabilities;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Client\TimeoutException;
@@ -29,22 +33,18 @@ abstract class BaseClient implements ServiceClientInterface
         StatusCode::UNAVAILABLE,
         StatusCode::UNKNOWN,
     ];
-    private WorkflowServiceClient $workflowService;
-    private ?ServerCapabilities $capabilities = null;
 
     /** @var null|Closure(string $method, object $arg, ContextInterface $ctx): object */
     private ?Closure $invokePipeline = null;
 
-    /** @var callable */
-    private $workflowServiceCloser;
+    private Connection $connection;
 
     /**
      * @param WorkflowServiceClient $workflowService
      */
     public function __construct(WorkflowServiceClient $workflowService)
     {
-        $this->workflowService = $workflowService;
-        $this->workflowServiceCloser = $this->makeClientCloser($workflowService);
+        $this->connection = new Connection($workflowService);
     }
 
     /**
@@ -52,7 +52,7 @@ abstract class BaseClient implements ServiceClientInterface
      */
     public function close(): void
     {
-        ($this->workflowServiceCloser)();
+        $this->connection->close();
     }
 
     /**
@@ -141,12 +141,16 @@ abstract class BaseClient implements ServiceClientInterface
 
     public function getServerCapabilities(): ?ServerCapabilities
     {
-        return $this->capabilities;
+        return $this->connection->capabilities;
     }
 
     public function setServerCapabilities(ServerCapabilities $capabilities): void
     {
-        $this->capabilities = $capabilities;
+        $this->connection->capabilities = $capabilities;
+    }
+
+    public function getConnection(): ConnectionInterface {
+        return $this->connection;
     }
 
     /**
@@ -203,7 +207,7 @@ abstract class BaseClient implements ServiceClientInterface
                 }
 
                 /** @var UnaryCall $call */
-                $call = $this->workflowService->{$method}($arg, $ctx->getMetadata(), $options);
+                $call = $this->connection->workflowService->{$method}($arg, $ctx->getMetadata(), $options);
                 [$result, $status] = $call->wait();
 
                 if ($status->code !== 0) {
@@ -225,15 +229,15 @@ abstract class BaseClient implements ServiceClientInterface
                     throw $e;
                 }
 
-                if ($ctx->getDeadline() !== null && $ctx->getDeadline()->getTimestamp() > time()) {
+                if ($ctx->getDeadline() !== null && $ctx->getDeadline() > new DateTimeImmutable()) {
                     throw new TimeoutException('Call timeout has been reached');
                 }
 
-                // wait till next call
-                \usleep((int)$waitRetry->totalMicroseconds);
+                // wait till the next call
+                $this->usleep((int)$waitRetry->totalMicroseconds);
 
                 $waitRetry = CarbonInterval::millisecond(
-                    $waitRetry->totalMilliseconds + $retryOption->backoffCoefficient
+                    $waitRetry->totalMilliseconds * $retryOption->backoffCoefficient
                 );
 
                 if ($maxInterval !== null && $maxInterval->totalMilliseconds < $waitRetry->totalMilliseconds) {
@@ -244,26 +248,19 @@ abstract class BaseClient implements ServiceClientInterface
     }
 
     /**
-     * Makes an object that will close workflow service client connection on parent class destruct.
-     *
-     * @param WorkflowServiceClient $workflowServiceClient
-     *
-     * @return callable
+     * @param int<0, max> $param Delay in microseconds
      */
-    private function makeClientCloser(WorkflowServiceClient $workflowServiceClient): callable
+    private function usleep(int $param): void
     {
-        return new class ($workflowServiceClient) {
-            public function __construct(public WorkflowServiceClient $client) { }
+        if (Fiber::getCurrent() === null) {
+            \usleep($param);
+            return;
+        }
 
-            public function __invoke(): void
-            {
-                $this->client->close();
-            }
+        $deadline = \microtime(true) + (float)($param / 1_000_000);
 
-            public function __destruct()
-            {
-                $this->client->close();
-            }
-        };
+        while (\microtime(true) < $deadline) {
+            Fiber::suspend();
+        }
     }
 }

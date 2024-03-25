@@ -11,6 +11,7 @@ use Laminas\Code\Generator;
 use Laminas\Code\Generator\MethodGenerator;
 use Temporal\Api\Workflowservice;
 use Grpc\BaseStub;
+use Temporal\Client\GRPC\Connection\ConnectionInterface;
 use Temporal\Client\ServerCapabilities;
 
 require __DIR__ . '/../../vendor/autoload.php';
@@ -88,6 +89,14 @@ echo "generating interface: ";
 $interface = new Generator\InterfaceGenerator('ServiceClientInterface');
 
 
+// public function getConnection(): ConnectionInterface
+$m = new MethodGenerator(
+    'getConnection',
+    [],
+    MethodGenerator::FLAG_PUBLIC,
+);
+$m->setReturnType(ConnectionInterface::class);
+$interface->addMethodFromGenerator($m);
 // Add Capability methods
 $m = new MethodGenerator(
     'getServerCapabilities',
