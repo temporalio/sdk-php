@@ -67,22 +67,6 @@
       <code><![CDATA[$timeout]]></code>
     </PossiblyInvalidArgument>
   </file>
-  <file src="src/Client/Interceptor/SystemInfoInterceptor.php">
-    <ImpureFunctionCall>
-      <code><![CDATA[$next($method, $arg, $ctx)]]></code>
-      <code><![CDATA[$next($method, $arg, $ctx)]]></code>
-    </ImpureFunctionCall>
-    <ImpureMethodCall>
-      <code><![CDATA[getCapabilities]]></code>
-      <code><![CDATA[getInternalErrorDifferentiation]]></code>
-      <code><![CDATA[getSignalAndQueryHeader]]></code>
-      <code><![CDATA[getSystemInfo]]></code>
-      <code><![CDATA[setServerCapabilities]]></code>
-    </ImpureMethodCall>
-    <InaccessibleProperty>
-      <code><![CDATA[$this->systemInfoRequested]]></code>
-    </InaccessibleProperty>
-  </file>
   <file src="src/Client/Schedule/Action/StartWorkflowAction.php">
     <DocblockTypeContradiction>
       <code><![CDATA[$timeout === null]]></code>
