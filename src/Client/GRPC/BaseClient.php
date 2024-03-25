@@ -63,7 +63,7 @@ abstract class BaseClient implements ServiceClientInterface
     public static function create(string $address): static
     {
         if (!\extension_loaded('grpc')) {
-            throw new \RuntimeException('The gRPC extension is required to use Temporal Client');
+            throw new \RuntimeException('The gRPC extension is required to use Temporal Client.');
         }
 
         $client = new WorkflowServiceClient(
@@ -76,10 +76,11 @@ abstract class BaseClient implements ServiceClientInterface
 
     /**
      * @param string $address
-     * @param string $crt Certificate or cert file in x509 format.
-     * @param string|null $clientKey
-     * @param string|null $clientPem
-     * @param string|null $overrideServerName
+     * @param non-empty-string|null $crt Root certificates string or file in PEM format.
+     *        If null provided, default gRPC root certificates are used.
+     * @param non-empty-string|null $clientKey Client private key string or file in PEM format.
+     * @param non-empty-string|null $clientPem Client certificate chain string or file in PEM format.
+     * @param non-empty-string|null $overrideServerName
      * @return static
      *
      * @psalm-suppress UndefinedClass
@@ -87,16 +88,30 @@ abstract class BaseClient implements ServiceClientInterface
      */
     public static function createSSL(
         string $address,
-        string $crt,
+        string $crt = null,
         string $clientKey = null,
         string $clientPem = null,
         string $overrideServerName = null
     ): static {
+        if (!\extension_loaded('grpc')) {
+            throw new \RuntimeException('The gRPC extension is required to use Temporal Client.');
+        }
+
+        $loadCert = static function (?string $cert): ?string {
+            return match (true) {
+                $cert === null, $cert === '' => null,
+                \is_file($cert) => false === ($content = \file_get_contents($cert))
+                    ? throw new \InvalidArgumentException("Failed to load certificate from file `$cert`.")
+                    : $content,
+                default => $cert,
+            };
+        };
+
         $options = [
             'credentials' => \Grpc\ChannelCredentials::createSsl(
-                \is_file($crt) ? \file_get_contents($crt) : null,
-                \is_file((string)$clientKey) ? \file_get_contents((string)$clientKey) : null,
-                \is_file((string)$clientPem) ? \file_get_contents((string)$clientPem) : null
+                $loadCert($crt),
+                $loadCert($clientKey),
+                $loadCert($clientPem),
             )
         ];
 
