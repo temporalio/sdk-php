@@ -52,10 +52,11 @@ interface WorkerInterface extends Identifiable
     public function getWorkflows(): iterable;
 
     /**
-     * @deprecated use registerActivity() instead
-     * @see \Temporal\Worker\WorkerInterface::registerActivity()
      * Register one or multiple activity instances to be served by worker task queue. Activity implementation must
      * be stateless.
+     *
+     * @see WorkerInterface::registerActivity
+     * @deprecated use {@see registerActivity()} instead.
      *
      * @param object ...$activity
      * @return $this

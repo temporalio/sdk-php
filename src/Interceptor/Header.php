@@ -17,8 +17,9 @@ use Temporal\DataConverter\EncodedCollection;
 final class Header extends EncodedCollection implements HeaderInterface
 {
     /**
-     * Build a {@see ProtoHeader} message.
+     * Build a `ProtoHeader` message.
      *
+     * @see ProtoHeader
      * @internal
      */
     public function toHeader(): ProtoHeader

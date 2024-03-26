@@ -368,7 +368,7 @@ class WorkflowReader extends Reader
          * In the case that one of the handlers is declared on an incorrect
          * method, we should inform about it. For example:
          *
-         * <code>
+         * ```php
          *  #[WorkflowInterface]
          *  class Workflow extends BaseWorkflow
          *  {
@@ -382,7 +382,7 @@ class WorkflowReader extends Reader
          *      #[WorkflowMethod]
          *      protected function handler(): void { ... } // << Error: Cannot be protected
          *  }
-         * </code>
+         * ```
          */
         if (!$this->isValidMethod($handler)) {
             $contextClass = $ctx->getDeclaringClass();

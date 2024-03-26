@@ -29,10 +29,10 @@ use function React\Promise\resolve;
 final class Promise
 {
     /**
-     * Returns a promise that will resolve only once all the items
-     * in `$promises` have resolved. The resolution value of the returned
-     * promise will be an array containing the resolution values of each of the
-     * items in `$promises`.
+     * Returns a promise that resolves when all items in `$promises` have resolved.
+     *
+     * The returned promise's resolution value will be an array containing
+     * the resolution values of each item in `$promises`.
      *
      * @param iterable<int, PromiseInterface|mixed> $promises
      * @return PromiseInterface
@@ -43,15 +43,14 @@ final class Promise
     }
 
     /**
-     * Returns a promise that will resolve when any one of the items in
-     * `$promises` resolves. The resolution value of the returned promise will
-     * be the resolution value of the triggering item.
+     * Returns a promise that resolves when any item in `$promises` resolves.
      *
-     * The returned promise will only reject if *all* items in `$promises` are
-     * rejected. The rejection value will be an array of all rejection reasons.
+     * The returned promise's resolution value will be the resolution value of
+     * the triggering item. If **all** items in `$promises` are rejected, the
+     * returned promise will reject with an array of all rejection reasons.
      *
-     * The returned promise will also reject with a {@see LengthException} if
-     * `$promises` contains 0 items.
+     * If `$promises` is empty, the returned promise will reject with a
+     * {@see LengthException}.
      *
      * @param iterable<int, PromiseInterface|mixed> $promises
      * @return PromiseInterface
@@ -63,18 +62,18 @@ final class Promise
     }
 
     /**
-     * Returns a promise that will resolve when `$count` of the supplied items
-     * in `$promises` resolve. The resolution value of the returned promise
-     * will be an array of length `$count` containing the resolution values
-     * of the triggering items.
+     * Returns a promise that resolves when `$count` items in `$promises` resolve.
      *
-     * The returned promise will reject if it becomes impossible for `$count`
-     * items to resolve (that is, when `(count($promises) - $count) + 1` items
-     * reject). The rejection value will be an iterable-exception of
-     * `(count($promises) - $howMany) + 1` rejection reasons.
+     * The returned promise's resolution value will be an array of length `$count`
+     * containing the resolution values of the triggering items.
      *
-     * The returned promise will also reject with a {@see LengthException} if
-     * `$promises` contains less items than `$count`.
+     * If it becomes impossible for `$count` items to resolve (i.e., when
+     * `(count($promises) - $count) + 1` items reject), the returned promise will
+     * reject with an iterable exception of `(count($promises) - $howMany) + 1`
+     * rejection reasons.
+     *
+     * If `$promises` contains fewer items than `$count`, the returned promise will
+     * reject with a {@see LengthException}.
      *
      * @param iterable<int, PromiseInterface|mixed> $promises
      * @param int $count
@@ -149,12 +148,13 @@ final class Promise
     }
 
     /**
-     * Traditional map function, similar to `array_map()`, but allows input to
-     * contain promises and/or values, and `$callback` may return either a
-     * value or a promise.
+     * Applies a callback function to each item in `$promises`.
      *
-     * The map function receives each item as argument, where item is a fully
-     * resolved value of a promise or value in `$promises`.
+     * This function behaves like `array_map()`, but it can handle input containing
+     * promises and/or values, and the `$callback` may return either a value or a promise.
+     *
+     * The `$callback` function receives each item as an argument, where the item is
+     * a fully resolved value of a promise or a value in `$promises`.
      *
      * @psalm-param PromiseMapCallback $map
      * @param iterable<int, PromiseInterface|mixed> $promises
@@ -201,10 +201,11 @@ final class Promise
     }
 
     /**
-     * Traditional reduce function, similar to `array_reduce()`, but input may
-     * contain promises and/or values, and `$reduce` may return either a value
-     * or a promise, *and* `$initial` may be a promise or a value for the
-     * starting value.
+     * Applies a callback function to each item in `$promises`, reducing them to a single value.
+     *
+     * This function behaves like `array_reduce()`, but it can handle input containing
+     * promises and/or values. The `$reduce` callback may return either a value or a promise,
+     * and `$initial` may be a promise or a value for the starting value.
      *
      * @psalm-param PromiseReduceCallback $reduce
      * @param iterable<int, PromiseInterface|mixed> $promises

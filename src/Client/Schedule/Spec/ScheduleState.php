@@ -31,6 +31,8 @@ final class ScheduleState
     public readonly bool $paused;
 
     /**
+     * Indicates if limited actions are enabled.
+     *
      * If {@see self::$limitedActions} is true, decrement {@see self::$remainingActions} after each
      * action, and do not take any more scheduled actions if {@see self::$remainingActions}
      * is zero. Actions may still be taken by explicit request (i.e. trigger
@@ -78,6 +80,8 @@ final class ScheduleState
     }
 
     /**
+     * Set whether limited actions are enabled.
+     *
      * If {@see self::$limitedActions} is true, decrement {@see self::$remainingActions} after each
      * action, and do not take any more scheduled actions if {@see self::$remainingActions}
      * is zero. Actions may still be taken by explicit request (i.e. trigger

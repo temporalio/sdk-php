@@ -98,8 +98,8 @@ final class WorkflowOptions extends Options
     public \DateInterval $workflowTaskTimeout;
 
     /**
-     * Whether server allow reuse of workflow ID, can be useful for dedup logic
-     * if set to {@see IdReusePolicy::POLICY_REJECT_DUPLICATE}.
+     * Whether server allow reuse of workflow ID, can be useful for deduplication logic.
+     * If set to {@see IdReusePolicy::POLICY_REJECT_DUPLICATE}.
      */
     #[Marshal(name: 'WorkflowIDReusePolicy')]
     public int $workflowIdReusePolicy = IdReusePolicy::POLICY_ALLOW_DUPLICATE_FAILED_ONLY;

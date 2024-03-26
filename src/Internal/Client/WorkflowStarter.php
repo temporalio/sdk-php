@@ -75,7 +75,7 @@ final class WorkflowStarter
             fn (StartInput $input): WorkflowExecution => $this->executeRequest(
                 $this->configureExecutionRequest(new StartWorkflowExecutionRequest(), $input)
             ),
-            /** @see WorkflowClientCallsInterceptor::start */
+            /** @see WorkflowClientCallsInterceptor::start() */
             'start',
         )(new StartInput($options->workflowId, $workflowType, $header, $arguments, $options));
     }
@@ -119,7 +119,7 @@ final class WorkflowStarter
 
                 return $this->executeRequest($request);
             },
-            /** @see WorkflowClientCallsInterceptor::signalWithStart */
+            /** @see WorkflowClientCallsInterceptor::signalWithStart() */
             'signalWithStart',
         )(
             new SignalWithStartInput(

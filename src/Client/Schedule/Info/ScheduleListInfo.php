@@ -10,6 +10,8 @@ use Temporal\Internal\Marshaller\Meta\MarshalArray;
 use Temporal\Workflow\WorkflowType;
 
 /**
+ * Describes information about a schedule list.
+ *
  * @see \Temporal\Api\Schedule\V1\ScheduleListInfo
  */
 final class ScheduleListInfo

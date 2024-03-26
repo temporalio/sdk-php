@@ -22,6 +22,20 @@ use Temporal\Worker\Transport\Command\RequestInterface;
  * It's recommended to use {@see WorkflowOutboundRequestInterceptorTrait} when implementing this interface because
  * the interface might be extended in the future. The trait will provide forward compatibility.
  *
+ * ```php
+ * class MyWorkflowOutboundRequestInterceptor implements WorkflowOutboundRequestInterceptor
+ * {
+ *     use WorkflowOutboundRequestInterceptorTrait;
+ *
+ *     private function executeActivityRequest(ExecuteActivity $request, callable $next): PromiseInterface
+ *     {
+ *         error_log('Starting activity: ' . $request->getActivityName());
+ *
+ *         return $next($request);
+ *     }
+ * }
+ * ```
+ *
  * @psalm-immutable
  */
 interface WorkflowOutboundRequestInterceptor extends Interceptor

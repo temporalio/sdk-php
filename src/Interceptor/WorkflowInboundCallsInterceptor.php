@@ -19,9 +19,24 @@ use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
 use Temporal\Internal\Interceptor\Interceptor;
 
 /**
- * It's recommended to use {@see WorkflowInboundCallsInterceptorTrait} when implementing this interface because
+ * It's recommended to use `WorkflowInboundCallsInterceptorTrait` when implementing this interface because
  * the interface might be extended in the future. The trait will provide forward compatibility.
  *
+ * ```php
+ * class MyWorkflowInboundCallsInterceptor implements WorkflowInboundCallsInterceptor
+ * {
+ *     use WorkflowInboundCallsInterceptorTrait;
+ *
+ *     public function handleSignal(SignalInput $input, callable $next): void
+ *     {
+ *         error_log('Workflow received signal: ' . $input->signalName);
+ *
+ *         $next($input);
+ *     }
+ * }
+ * ```
+ *
+ * @see WorkflowInboundCallsInterceptorTrait
  * @psalm-immutable
  */
 interface WorkflowInboundCallsInterceptor extends Interceptor

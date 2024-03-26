@@ -66,9 +66,9 @@ final class ContinueAsNewOptions
     }
 
     /**
-     * Task queue to use for workflow tasks. It should match a task queue
-     * specified when creating a {@see Worker} that hosts the
-     * workflow code.
+     * Task queue to use for workflow tasks.
+     *
+     * It should match a task queue specified when creating a {@see Worker} that hosts the workflow code.
      *
      * @psalm-suppress ImpureMethodCall
      *

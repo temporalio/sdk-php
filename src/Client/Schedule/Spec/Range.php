@@ -9,7 +9,9 @@ use Temporal\Internal\Traits\CloneWith;
 
 /**
  * Range represents a set of integer values, used to match fields of a calendar
- * time in StructuredCalendarSpec. If end < start, then end is interpreted as
+ * time in StructuredCalendarSpec.
+ *
+ * If end < start, then end is interpreted as
  * equal to start. This means you can use a Range with start set to a value, and
  * end and step unset (defaulting to 0) to represent a single value.
  *

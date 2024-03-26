@@ -14,7 +14,9 @@ use Traversable;
 
 /**
  * Provides a wrapper with convenience methods over raw protobuf object representing
- * workflow history {@see History}
+ * workflow history.
+ *
+ * @see History
  *
  * @implements IteratorAggregate<int, HistoryEvent>
  * @internal
@@ -57,8 +59,10 @@ final class WorkflowExecutionHistory implements IteratorAggregate
     }
 
     /**
-     * Returns {@see History} object with all the events inside.
+     * Returns history object with all the events inside.
      * The returned object may be used to replay the workflow via {@see WorkflowReplayer::replayHistory()}.
+     *
+     * @see History
      */
     public function getHistory(): History
     {

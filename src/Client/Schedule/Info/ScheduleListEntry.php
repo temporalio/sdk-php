@@ -8,8 +8,9 @@ use Temporal\DataConverter\EncodedCollection;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 
 /**
- * ScheduleListEntry is returned by {@see \Temporal\Client\ScheduleClientInterface::listSchedules()}.
+ * ScheduleListEntry is returned by `listSchedules` method.
  *
+ * @see \Temporal\Client\ScheduleClientInterface::listSchedules()
  * @see \Temporal\Api\Schedule\V1\ScheduleListEntry
  */
 final class ScheduleListEntry

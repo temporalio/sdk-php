@@ -10,6 +10,8 @@ use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Workflow\WorkflowExecution;
 
 /**
+ * Describes the result of a scheduled action.
+ *
  * @see \Temporal\Api\Schedule\V1\ScheduleActionResult
  */
 final class ScheduleActionResult

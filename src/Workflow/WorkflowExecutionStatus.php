@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Temporal\Workflow;
 
 /**
+ * Workflow execution status.
+ *
  * @see \Temporal\Api\Enums\V1\WorkflowExecutionStatus
  */
 enum WorkflowExecutionStatus: int

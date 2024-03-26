@@ -60,7 +60,7 @@ use Temporal\Worker\WorkerOptions;
  * WorkerFactory is primary entry point for the temporal application. This class is responsible for the communication
  * with parent RoadRunner process and can be used to create taskQueue workflow and activity workers.
  *
- * <code>
+ * ```php
  * $factory = WorkerFactory::create();
  *
  * $worker = $factory->newWorker('default');
@@ -68,7 +68,7 @@ use Temporal\Worker\WorkerOptions;
  * $worker->registerWorkflowTypes(WorkflowType::class);
  * $worker->registerActivityImplementations(new MyActivityImplementation());
  *
- * </code>
+ * ```
  */
 class WorkerFactory implements WorkerFactoryInterface, LoopInterface
 {

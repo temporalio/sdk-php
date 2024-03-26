@@ -14,6 +14,8 @@ use Temporal\Internal\Marshaller\Meta\MarshalOneOf;
 use Temporal\Internal\Traits\CloneWith;
 
 /**
+ * DTO with complete schedule details.
+ *
  * @see \Temporal\Api\Schedule\V1\Schedule
  */
 final class Schedule
@@ -50,6 +52,8 @@ final class Schedule
     }
 
     /**
+     * Returns a new instance with the specified action.
+     *
      * Available types of actions:
      * - {@see StartWorkflowAction} - start a Workflow
      */

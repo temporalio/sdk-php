@@ -39,7 +39,7 @@ final class CronSchedule implements \Stringable
     /**
      * The cron spec is as following:
      *
-     * <code>
+     * ```
      *  ┌───────────── minute (0 - 59)
      *  │ ┌───────────── hour (0 - 23)
      *  │ │ ┌───────────── day of the month (1 - 31)
@@ -48,7 +48,7 @@ final class CronSchedule implements \Stringable
      *  │ │ │ │ │
      *  │ │ │ │ │
      *  * * * * *
-     * </code>
+     * ```
      *
      * @var string
      */

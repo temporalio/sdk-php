@@ -50,9 +50,9 @@ interface WorkflowClientInterface
     ): WorkflowRunInterface;
 
     /**
-     * Creates workflow client stub that can be used to start a single workflow
-     * execution. The first call must be to a method annotated
-     * with {@see WorkflowMethod}. After workflow is started it can be also
+     * Creates workflow client stub that can be used to start a single workflow execution.
+     *
+     * The first call must be to a method annotated with {@see WorkflowMethod}. After workflow is started it can be also
      * used to send signals or queries to it.
      *
      * Use WorkflowClient->start($workflowStub, ...$args) to start workflow asynchronously.
@@ -119,9 +119,12 @@ interface WorkflowClientInterface
     ): WorkflowStubInterface;
 
     /**
-     * Creates a new {@link ActivityCompletionClient} that can be used to complete activities
-     * asynchronously. Only relevant for activity implementations that called {@link
-     * ActivityContext->doNotCompleteOnReturn()}.
+     * Creates a new `ActivityCompletionClient` that can be used to complete activities
+     * asynchronously.
+     *
+     * Only relevant for activity implementations that called {@see ActivityContext::doNotCompleteOnReturn()}.
+     *
+     * @see ActivityCompletionClient
      *
      * @return ActivityCompletionClientInterface
      */
@@ -131,9 +134,9 @@ interface WorkflowClientInterface
      * Get paginated list of workflow executions using List Filter Query syntax.
      * Query example:
      *
-     * <code>
+     * ```
      * WorkflowType='MyWorkflow' and StartTime  between '2022-08-22T15:04:05+00:00' and  '2023-08-22T15:04:05+00:00'
-     * </code>
+     * ```
      *
      * @link https://docs.temporal.io/visibility
      * @see self::countWorkflowExecutions()
@@ -154,9 +157,9 @@ interface WorkflowClientInterface
      * Get count of workflow executions using List Filter Query syntax.
      * Query example:
      *
-     * <code>
+     * ```
      * WorkflowType='MyWorkflow' and StartTime between '2022-08-22T15:04:05+00:00' and '2023-08-22T15:04:05+00:00'
-     * </code>
+     * ```
      *
      * @link https://docs.temporal.io/visibility
      * @see self::listWorkflowExecutions()

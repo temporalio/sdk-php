@@ -92,9 +92,10 @@ final class ChildWorkflowOptions extends Options
     public \DateInterval $workflowTaskTimeout;
 
     /**
-     * In case of a child workflow cancellation it fails with
-     * a {@see FailedCancellationException}. The type defines at which point
-     * the exception is thrown.
+     * In case of a child workflow cancellation it fails with a FailedCancellationException. The type defines at which
+     * point the exception is thrown.
+     *
+     * @see FailedCancellationException
      *
      * @psalm-var ChildWorkflowCancellationEnum
      */
@@ -103,7 +104,9 @@ final class ChildWorkflowOptions extends Options
 
     /**
      * Whether server allow reuse of workflow ID, can be useful for dedup
-     * logic if set to {@see IdReusePolicy::POLICY_REJECT_DUPLICATE}.
+     * logic if set to IdReusePolicy::POLICY_REJECT_DUPLICATE.
+     *
+     * @see IdReusePolicy::POLICY_REJECT_DUPLICATE
      */
     #[Marshal(name: 'WorkflowIDReusePolicy')]
     public int $workflowIdReusePolicy = IdReusePolicy::POLICY_ALLOW_DUPLICATE_FAILED_ONLY;
@@ -303,9 +306,9 @@ final class ChildWorkflowOptions extends Options
     }
 
     /**
-     * In case of a child workflow cancellation it fails with
-     * a {@see FailedCancellationException}. The type defines at which point
-     * the exception is thrown.
+     * The type defines at which point the exception is thrown.
+     *
+     * In case of a child workflow cancellation it fails with a {@see FailedCancellationException}.
      *
      * @psalm-suppress ImpureMethodCall
      *
@@ -368,6 +371,8 @@ final class ChildWorkflowOptions extends Options
     }
 
     /**
+     * Specifies optional cron schedule for workflow.
+     *
      * @see CronSchedule::$interval for more info about cron format.
      *
      * @param string|null $expression
