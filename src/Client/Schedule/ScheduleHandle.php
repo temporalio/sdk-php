@@ -18,6 +18,7 @@ use Temporal\Api\Workflowservice\V1\ListScheduleMatchingTimesRequest;
 use Temporal\Api\Workflowservice\V1\PatchScheduleRequest;
 use Temporal\Api\Workflowservice\V1\UpdateScheduleRequest;
 use Temporal\Client\ClientOptions;
+use Temporal\Client\GRPC\ClientContextTrait;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Client\Schedule\Info\ScheduleDescription;
 use Temporal\Client\Schedule\Policy\ScheduleOverlapPolicy;
@@ -31,8 +32,10 @@ use Traversable;
 
 final class ScheduleHandle
 {
+    use ClientContextTrait;
+
     public function __construct(
-        private readonly ServiceClientInterface $client,
+        ServiceClientInterface $client,
         private readonly ClientOptions $clientOptions,
         private readonly DataConverterInterface $converter,
         private readonly MarshallerInterface $marshaller,
@@ -40,6 +43,7 @@ final class ScheduleHandle
         private readonly string $namespace,
         private readonly string $id,
     ) {
+        $this->client = $client;
     }
 
     /**

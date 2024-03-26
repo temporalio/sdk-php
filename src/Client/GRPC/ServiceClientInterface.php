@@ -14,6 +14,8 @@ use Temporal\Exception\Client\ServiceClientException;
 
 interface ServiceClientInterface
 {
+    public function getContext() : ContextInterface;
+    public function withContext(ContextInterface $context) : static;
     public function getConnection() : \Temporal\Client\GRPC\Connection\ConnectionInterface;
     public function getServerCapabilities() : ?\Temporal\Client\ServerCapabilities;
     public function setServerCapabilities(\Temporal\Client\ServerCapabilities $capabilities) : void;

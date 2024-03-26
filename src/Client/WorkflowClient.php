@@ -22,6 +22,7 @@ use Temporal\Api\Workflow\V1\WorkflowExecutionInfo;
 use Temporal\Api\Workflowservice\V1\CountWorkflowExecutionsRequest;
 use Temporal\Api\Workflowservice\V1\GetWorkflowExecutionHistoryRequest;
 use Temporal\Api\Workflowservice\V1\ListWorkflowExecutionsRequest;
+use Temporal\Client\GRPC\ClientContextTrait;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
@@ -36,7 +37,6 @@ use Temporal\Internal\Client\WorkflowRun;
 use Temporal\Internal\Client\WorkflowStarter;
 use Temporal\Internal\Client\WorkflowStub;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
-use Temporal\Internal\Interceptor\HeaderCarrier;
 use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Internal\Mapper\WorkflowExecutionInfoMapper;
 use Temporal\Internal\Support\Reflection;
@@ -46,16 +46,17 @@ use Temporal\Workflow\WorkflowStub as WorkflowStubConverter;
 
 class WorkflowClient implements WorkflowClientInterface
 {
+    use ClientContextTrait;
+
     private const ERROR_WORKFLOW_START_DUPLICATION =
         'Cannot reuse a stub instance to start more than one workflow execution. ' .
         'The stub points to already started execution. If you are trying to wait ' .
         'for a workflow completion either change WorkflowIdReusePolicy from ' .
         'AllowDuplicate or use WorkflowStub.getResult';
 
-    private ServiceClientInterface $client;
     private ClientOptions $clientOptions;
     private DataConverterInterface $converter;
-    private WorkflowStarter $starter;
+    private ?WorkflowStarter $starter = null;
     private WorkflowReader $reader;
     /** @var Pipeline<WorkflowClientCallsInterceptor, mixed> */
     private Pipeline $interceptorPipeline;
@@ -77,13 +78,12 @@ class WorkflowClient implements WorkflowClientInterface
             ->getPipeline(WorkflowClientCallsInterceptor::class);
         $this->clientOptions = $options ?? new ClientOptions();
         $this->converter = $converter ?? DataConverter::createDefault();
-        $this->starter = new WorkflowStarter(
-            $serviceClient,
-            $this->converter,
-            $this->clientOptions,
-            $this->interceptorPipeline,
-        );
         $this->reader = new WorkflowReader($this->createReader());
+    }
+
+    public function __clone(): void
+    {
+        $this->starter = null;
     }
 
     /**
@@ -145,7 +145,7 @@ class WorkflowClient implements WorkflowClientInterface
             throw new InvalidArgumentException(self::ERROR_WORKFLOW_START_DUPLICATION);
         }
 
-        $execution = $this->starter->start(
+        $execution = $this->getStarter()->start(
             $workflowType,
             $workflowStub->getOptions() ?? WorkflowOptions::new(),
             $args,
@@ -208,7 +208,7 @@ class WorkflowClient implements WorkflowClientInterface
             throw new InvalidArgumentException(self::ERROR_WORKFLOW_START_DUPLICATION);
         }
 
-        $execution = $this->starter->signalWithStart(
+        $execution = $this->getStarter()->signalWithStart(
             $workflowType,
             $workflowStub->getOptions() ?? WorkflowOptions::new(),
             $signal,
@@ -348,7 +348,7 @@ class WorkflowClient implements WorkflowClientInterface
     ): CountWorkflowExecutions {
         $response = $this->client
             ->CountWorkflowExecutions(
-                (new CountWorkflowExecutionsRequest())->setNamespace($namespace)->setQuery($query)
+                (new CountWorkflowExecutionsRequest())->setNamespace($namespace)->setQuery($query),
             );
 
         return new CountWorkflowExecutions(
@@ -407,5 +407,15 @@ class WorkflowClient implements WorkflowClientInterface
         }
 
         return new AttributeReader();
+    }
+
+    private function getStarter(): WorkflowStarter
+    {
+        return $this->starter ??= new WorkflowStarter(
+            $this->client,
+            $this->converter,
+            $this->clientOptions,
+            $this->interceptorPipeline,
+        );
     }
 }

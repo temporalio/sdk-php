@@ -29,9 +29,10 @@ final class Connection implements ConnectionInterface
         return ConnectionState::from($this->workflowService->getConnectivityState($tryToConnect));
     }
 
-    public function waitForReady(int $timeout): bool
+    public function waitForReady(float $timeout): bool
     {
-        return $this->workflowService->waitForReady($timeout);
+        /** @psalm-suppress InvalidOperand */
+        return $this->workflowService->waitForReady((int)($timeout * 1_000_000));
     }
 
     public function close(): void

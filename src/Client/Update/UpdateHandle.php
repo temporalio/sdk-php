@@ -6,7 +6,6 @@ namespace Temporal\Client\Update;
 
 use Temporal\Api\Workflowservice\V1\PollWorkflowExecutionUpdateRequest;
 use Temporal\Client\ClientOptions;
-use Temporal\Client\GRPC\Context;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
@@ -16,7 +15,6 @@ use Temporal\Exception\Client\WorkflowUpdateException;
 use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Interceptor\WorkflowClient\UpdateInput;
 use Temporal\Interceptor\WorkflowClient\UpdateRef;
-use Temporal\Internal\Support\DateInterval;
 use Temporal\Workflow\WorkflowExecution;
 
 /**
@@ -116,8 +114,7 @@ final class UpdateHandle
 
         $response = $this->client->PollWorkflowExecutionUpdate(
             $request,
-            $timeout === null ? null : Context::default()
-                ->withTimeout((int)($timeout * 1000), DateInterval::FORMAT_MILLISECONDS),
+            $timeout === null ? null : $this->client->getContext()->withTimeout($timeout),
         );
 
         // Workflow Uprate accepted

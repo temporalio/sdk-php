@@ -38,6 +38,7 @@ abstract class BaseClient implements ServiceClientInterface
     private ?Closure $invokePipeline = null;
 
     private Connection $connection;
+    private ContextInterface $context;
 
     /**
      * @param WorkflowServiceClient $workflowService
@@ -45,6 +46,19 @@ abstract class BaseClient implements ServiceClientInterface
     public function __construct(WorkflowServiceClient $workflowService)
     {
         $this->connection = new Connection($workflowService);
+        $this->context = Context::default();
+    }
+
+    public function getContext(): ContextInterface
+    {
+        return $this->context;
+    }
+
+    public function withContext(ContextInterface $context): static
+    {
+        $clone = clone $this;
+        $clone->context = $context;
+        return $clone;
     }
 
     /**
@@ -149,6 +163,9 @@ abstract class BaseClient implements ServiceClientInterface
         $this->connection->capabilities = $capabilities;
     }
 
+    /**
+     * Note: Experimental
+     */
     public function getConnection(): ConnectionInterface {
         return $this->connection;
     }
@@ -162,9 +179,9 @@ abstract class BaseClient implements ServiceClientInterface
      *
      * @throw ClientException
      */
-    protected function invoke(string $method, object $arg, ContextInterface $ctx = null)
+    protected function invoke(string $method, object $arg, ?ContextInterface $ctx = null)
     {
-        $ctx = $ctx ?? Context::default();
+        $ctx ??= $this->context;
 
         return $this->invokePipeline !== null
             ? ($this->invokePipeline)($method, $arg, $ctx)

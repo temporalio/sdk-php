@@ -20,6 +20,7 @@ use Temporal\Api\Schedule\V1\SchedulePatch;
 use Temporal\Api\Schedule\V1\TriggerImmediatelyRequest;
 use Temporal\Api\Workflowservice\V1\CreateScheduleRequest;
 use Temporal\Api\Workflowservice\V1\ListSchedulesRequest;
+use Temporal\Client\GRPC\ClientContextTrait;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Client\Schedule\BackfillPeriod;
 use Temporal\Client\Schedule\Info\ScheduleListEntry;
@@ -37,7 +38,8 @@ use Temporal\Internal\Marshaller\ProtoToArrayConverter;
 
 final class ScheduleClient implements ScheduleClientInterface
 {
-    private ServiceClientInterface $client;
+    use ClientContextTrait;
+
     private ClientOptions $clientOptions;
     private DataConverterInterface $converter;
     private MarshallerInterface $marshaller;

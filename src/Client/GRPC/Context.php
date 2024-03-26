@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Client\GRPC;
 
 use Carbon\CarbonInterval;
-use Composer\InstalledVersions;
 use Temporal\Common\RetryOptions;
 use Temporal\Common\SdkVersion;
 use Temporal\Internal\Support\DateInterval;
