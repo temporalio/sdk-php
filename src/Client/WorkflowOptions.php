@@ -302,8 +302,6 @@ final class WorkflowOptions extends Options
      * of the delay will be ignored. A Signal from {@see WorkflowClientInterface::startWithSignal()} won't
      * trigger a workflow task. Cannot be set the same time as a {@see $cronSchedule}.
      *
-     * NOTE: Experimental
-     *
      * @psalm-suppress ImpureMethodCall
      *
      * @param DateIntervalValue $delay
