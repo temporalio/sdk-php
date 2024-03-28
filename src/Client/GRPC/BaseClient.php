@@ -41,10 +41,22 @@ abstract class BaseClient implements ServiceClientInterface
     private ContextInterface $context;
 
     /**
-     * @param WorkflowServiceClient $workflowService
+     * @param WorkflowServiceClient|Closure(): WorkflowServiceClient $workflowService Service Client or its factory
+     *
+     * @private Use static factory methods instead
+     * @see self::create()
+     * @see self::createSSL()
      */
-    public function __construct(WorkflowServiceClient $workflowService)
+    public function __construct(WorkflowServiceClient|Closure $workflowService)
     {
+        if ($workflowService instanceof WorkflowServiceClient) {
+            \trigger_error(
+                'Creating a ServiceClient instance via constructor is deprecated. Use static factory methods instead.',
+                \E_USER_DEPRECATED,
+            );
+            $workflowService = static fn(): WorkflowServiceClient => $workflowService;
+        }
+
         $this->connection = new Connection($workflowService);
         $this->context = Context::default();
     }
@@ -66,7 +78,7 @@ abstract class BaseClient implements ServiceClientInterface
      */
     public function close(): void
     {
-        $this->connection->close();
+        $this->connection->disconnect();
     }
 
     /**
@@ -80,12 +92,10 @@ abstract class BaseClient implements ServiceClientInterface
             throw new \RuntimeException('The gRPC extension is required to use Temporal Client.');
         }
 
-        $client = new WorkflowServiceClient(
+        return new static(static fn(): WorkflowServiceClient => new WorkflowServiceClient(
             $address,
             ['credentials' => \Grpc\ChannelCredentials::createInsecure()]
-        );
-
-        return new static($client);
+        ));
     }
 
     /**
@@ -134,9 +144,7 @@ abstract class BaseClient implements ServiceClientInterface
             $options['grpc.ssl_target_name_override'] = $overrideServerName;
         }
 
-        $client = new WorkflowServiceClient($address, $options);
-
-        return new static($client);
+        return new static(static fn() => new WorkflowServiceClient($address, $options));
     }
 
     /**
@@ -224,7 +232,7 @@ abstract class BaseClient implements ServiceClientInterface
                 }
 
                 /** @var UnaryCall $call */
-                $call = $this->connection->workflowService->{$method}($arg, $ctx->getMetadata(), $options);
+                $call = $this->connection->getWorkflowService()->{$method}($arg, $ctx->getMetadata(), $options);
                 [$result, $status] = $call->wait();
 
                 if ($status->code !== 0) {

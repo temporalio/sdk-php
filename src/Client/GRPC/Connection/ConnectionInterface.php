@@ -6,17 +6,9 @@ namespace Temporal\Client\GRPC\Connection;
 
 interface ConnectionInterface
 {
-    public function getState(bool $tryToConnect = false): ConnectionState;
+    public function isConnected(): bool;
 
-    /**
-     * Wait for the channel to be ready.
-     *
-     * @param float $timeout in seconds
-     *
-     * @return bool true if channel is ready
-     * @throws \Exception if channel is in FATAL_ERROR state
-     */
-    public function waitForReady(float $timeout): bool;
+    public function disconnect(): void;
 
-    public function close(): void;
+    public function connect(float $timeout): void;
 }
