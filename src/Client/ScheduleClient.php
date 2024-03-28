@@ -132,7 +132,7 @@ final class ScheduleClient implements ScheduleClientInterface
         );
     }
 
-    public function getHandle(string $scheduleID, string $namespace = 'default'): ScheduleHandle
+    public function getHandle(string $scheduleID, ?string $namespace = null): ScheduleHandle
     {
         return new ScheduleHandle(
             $this->client,
@@ -140,7 +140,7 @@ final class ScheduleClient implements ScheduleClientInterface
             $this->converter,
             $this->marshaller,
             $this->protoConverter,
-            $namespace,
+            $namespace ?? $this->clientOptions->namespace,
             $scheduleID,
         );
     }
