@@ -306,12 +306,13 @@ class WorkflowClient implements WorkflowClientInterface
      */
     public function listWorkflowExecutions(
         string $query,
-        string $namespace = 'default',
+        ?string $namespace = null,
         int $pageSize = 10,
     ): Paginator {
         if ($pageSize <= 0) {
             throw new InvalidArgumentException('Page size must be greater than 0.');
         }
+        $namespace ??= $this->clientOptions->namespace;
 
         $request = (new ListWorkflowExecutionsRequest())
             ->setNamespace($namespace)
@@ -344,8 +345,9 @@ class WorkflowClient implements WorkflowClientInterface
      */
     public function countWorkflowExecutions(
         string $query,
-        string $namespace = 'default',
+        ?string $namespace = null,
     ): CountWorkflowExecutions {
+        $namespace ??= $this->clientOptions->namespace;
         $response = $this->client
             ->CountWorkflowExecutions(
                 (new CountWorkflowExecutionsRequest())->setNamespace($namespace)->setQuery($query),
@@ -361,12 +363,13 @@ class WorkflowClient implements WorkflowClientInterface
      */
     public function getWorkflowHistory(
         WorkflowExecution $execution,
-        string $namespace = 'default',
+        ?string $namespace = null,
         bool $waitNewEvent = false,
         int $historyEventFilterType = HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_ALL_EVENT,
         bool $skipArchival = false,
         int $pageSize = 0,
     ): WorkflowExecutionHistory {
+        $namespace ??= $this->clientOptions->namespace;
         // Build request
         $request = (new GetWorkflowExecutionHistoryRequest())
             ->setNamespace($namespace)
