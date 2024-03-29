@@ -17,6 +17,7 @@ use DateTimeImmutable;
 use Exception;
 use Fiber;
 use Grpc\UnaryCall;
+use Temporal\Api\Workflowservice\V1\GetSystemInfoRequest;
 use Temporal\Api\Workflowservice\V1\WorkflowServiceClient;
 use Temporal\Client\GRPC\Connection\Connection;
 use Temporal\Client\GRPC\Connection\ConnectionInterface;
@@ -163,12 +164,48 @@ abstract class BaseClient implements ServiceClientInterface
 
     public function getServerCapabilities(): ?ServerCapabilities
     {
-        return $this->connection->capabilities;
+        if ($this->connection->capabilities !== null) {
+            return $this->connection->capabilities;
+        }
+
+        try {
+            $systemInfo = $this->getSystemInfo(new GetSystemInfoRequest());
+            $capabilities = $systemInfo->getCapabilities();
+
+            if ($capabilities === null) {
+                return null;
+            }
+
+            return $this->connection->capabilities = new ServerCapabilities(
+                signalAndQueryHeader: $capabilities->getSignalAndQueryHeader(),
+                internalErrorDifferentiation: $capabilities->getInternalErrorDifferentiation(),
+                activityFailureIncludeHeartbeat: $capabilities->getActivityFailureIncludeHeartbeat(),
+                supportsSchedules: $capabilities->getSupportsSchedules(),
+                encodedFailureAttributes: $capabilities->getEncodedFailureAttributes(),
+                buildIdBasedVersioning: $capabilities->getBuildIdBasedVersioning(),
+                upsertMemo: $capabilities->getUpsertMemo(),
+                eagerWorkflowStart: $capabilities->getEagerWorkflowStart(),
+                sdkMetadata: $capabilities->getSdkMetadata(),
+                countGroupByExecutionStatus: $capabilities->getCountGroupByExecutionStatus(),
+            );
+        } catch (ServiceClientException $e) {
+            if ($e->getCode() === StatusCode::UNIMPLEMENTED) {
+                return null;
+            }
+
+            throw $e;
+        }
     }
 
+    /**
+     * @deprecated
+     */
     public function setServerCapabilities(ServerCapabilities $capabilities): void
     {
-        $this->connection->capabilities = $capabilities;
+        \trigger_error(
+            'Method ' . __METHOD__ . ' is deprecated and will be removed in the next major release.',
+            \E_USER_DEPRECATED,
+        );
     }
 
     /**

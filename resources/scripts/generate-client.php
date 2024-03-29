@@ -122,13 +122,6 @@ $m = new MethodGenerator(
 );
 $m->setReturnType('?' . ServerCapabilities::class);
 $interface->addMethodFromGenerator($m);
-$m = new MethodGenerator(
-    'setServerCapabilities',
-    [Generator\ParameterGenerator::fromArray(['type' => ServerCapabilities::class, 'name' => 'capabilities'])],
-    MethodGenerator::FLAG_PUBLIC,
-);
-$m->setReturnType('void');
-$interface->addMethodFromGenerator($m);
 
 foreach ($methods as $method => $options) {
     $m = new MethodGenerator($method);
