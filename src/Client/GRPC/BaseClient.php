@@ -29,7 +29,7 @@ use Temporal\Internal\Interceptor\Pipeline;
 
 abstract class BaseClient implements ServiceClientInterface
 {
-    const RETRYABLE_ERRORS = [
+    public const RETRYABLE_ERRORS = [
         StatusCode::RESOURCE_EXHAUSTED,
         StatusCode::UNAVAILABLE,
         StatusCode::UNKNOWN,
@@ -48,7 +48,7 @@ abstract class BaseClient implements ServiceClientInterface
      * @see self::create()
      * @see self::createSSL()
      */
-    public function __construct(WorkflowServiceClient|Closure $workflowService)
+    final public function __construct(WorkflowServiceClient|Closure $workflowService)
     {
         if ($workflowService instanceof WorkflowServiceClient) {
             \trigger_error(
@@ -83,7 +83,7 @@ abstract class BaseClient implements ServiceClientInterface
     }
 
     /**
-     * @param string $address
+     * @param non-empty-string $address Temporal service address in format `host:port`
      * @return static
      * @psalm-suppress UndefinedClass
      */
@@ -100,7 +100,7 @@ abstract class BaseClient implements ServiceClientInterface
     }
 
     /**
-     * @param string $address
+     * @param non-empty-string $address Temporal service address in format `host:port`
      * @param non-empty-string|null $crt Root certificates string or file in PEM format.
      *        If null provided, default gRPC root certificates are used.
      * @param non-empty-string|null $clientKey Client private key string or file in PEM format.
@@ -145,7 +145,7 @@ abstract class BaseClient implements ServiceClientInterface
             $options['grpc.ssl_target_name_override'] = $overrideServerName;
         }
 
-        return new static(static fn() => new WorkflowServiceClient($address, $options));
+        return new static(static fn(): WorkflowServiceClient => new WorkflowServiceClient($address, $options));
     }
 
     /**

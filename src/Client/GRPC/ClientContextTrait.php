@@ -49,4 +49,17 @@ trait ClientContextTrait
         $new->client = $new->client->withContext($context->withRetryOptions($options));
         return $new;
     }
+
+    /**
+     * A metadata map to send to the server
+     *
+     * @param array<string, array<string>> $metadata
+     */
+    public function withMetadata(array $metadata): static
+    {
+        $new = clone $this;
+        $context = $new->client->getContext();
+        $new->client = $new->client->withContext($context->withMetadata($metadata));
+        return $new;
+    }
 }
