@@ -70,6 +70,11 @@ class DurationJsonType extends Type implements DetectableTypeInterface, RuleFact
      */
     public function parse($value, $current): CarbonInterval
     {
+        if (is_array($value) && isset($value['seconds']) && isset($value['nanos'])) {
+            // The highest precision is milliseconds either way.
+            $value = ($value['seconds'] * 1000000000 + $value['nanos']) / 1000;
+        }
+
         return DateInterval::parse($value);
     }
 }
