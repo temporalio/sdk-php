@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Temporal\Tests\Unit\Client\GRPC;
 
 use PHPUnit\Framework\TestCase;
@@ -9,7 +11,7 @@ use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Common\RetryOptions;
 use Temporal\Internal\Support\DateInterval;
 
-class ClientContextTraitTest extends TestCase
+class ClientContextTraitTestCase extends TestCase
 {
     public function testWithTimeout(): void
     {

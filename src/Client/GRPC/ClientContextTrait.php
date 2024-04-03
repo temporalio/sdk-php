@@ -27,7 +27,10 @@ trait ClientContextTrait
         $context = $new->client->getContext();
         // Convert to milliseconds
         $timeout *= 1000;
-        $new->client = $new->client->withContext($context->withTimeout($timeout, DateInterval::FORMAT_MILLISECONDS));
+        $new->client = $new->client->withContext(
+            $context->withTimeout((int)$timeout, DateInterval::FORMAT_MILLISECONDS),
+        );
+
         return $new;
     }
 
