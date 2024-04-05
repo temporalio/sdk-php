@@ -72,8 +72,8 @@ class RetryOptionsTestCase extends AbstractDTOMarshalling
 
         $this->unmarshal($expected, $unmarshalled = new RetryOptions());
 
-        self::assertSame(10.0, $unmarshalled->initialInterval->totalSeconds);
-        self::assertSame(15.0, $unmarshalled->maximumInterval->totalSeconds);
+        self::assertSame(10.0, (float)$unmarshalled->initialInterval->totalSeconds);
+        self::assertSame(15.0, (float)$unmarshalled->maximumInterval->totalSeconds);
         self::assertSame(3.0, $unmarshalled->backoffCoefficient);
         self::assertSame(5, $unmarshalled->maximumAttempts);
     }
