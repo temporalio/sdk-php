@@ -31,7 +31,7 @@ class DurationJsonType extends Type implements DetectableTypeInterface, RuleFact
 
     /**
      * @param MarshallerInterface $marshaller
-     * @param string $format Fall back format for parsing when the value is not an array.
+     * @param DateIntervalFormat $format Fall back format for parsing when the value is not an array.
      */
     public function __construct(MarshallerInterface $marshaller, string $format = DateInterval::FORMAT_NANOSECONDS)
     {
