@@ -11,9 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\DTO\Type\DurationJsonType\Stub;
 
-use Carbon\CarbonInterval;
-
 class DurationJsonDto
 {
-    public CarbonInterval $duration;
+    public \DateInterval $duration;
 }

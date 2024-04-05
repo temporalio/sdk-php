@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\DTO\Type\DurationJsonType;
 
-use Carbon\CarbonInterval;
 use Temporal\Internal\Marshaller\Type\DurationJsonType;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Tests\Unit\DTO\AbstractDTOMarshalling;
@@ -27,7 +26,7 @@ class DurationJsonTestCase extends AbstractDTOMarshalling
         $result = $this->marshal($dto);
         $unmarshal = $this->unmarshal($result, new DurationJsonDto());
 
-        self::assertInstanceOf(CarbonInterval::class, $unmarshal->duration);
+        self::assertInstanceOf(\DateInterval::class, $unmarshal->duration);
     }
 
     protected function getTypeMatchers(): array

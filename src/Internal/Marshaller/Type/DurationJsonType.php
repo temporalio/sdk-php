@@ -13,6 +13,7 @@ namespace Temporal\Internal\Marshaller\Type;
 
 use Carbon\CarbonInterval;
 use Google\Protobuf\Duration;
+use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Marshaller\MarshallingRule;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\Inheritance;
@@ -23,6 +24,22 @@ use Temporal\Internal\Support\Inheritance;
  */
 class DurationJsonType extends Type implements DetectableTypeInterface, RuleFactoryInterface
 {
+    /**
+     * @var DateIntervalFormat
+     */
+    private string $fallbackFormat;
+
+    /**
+     * @param MarshallerInterface $marshaller
+     * @param string $format Fall back format for parsing when the value is not an array.
+     */
+    public function __construct(MarshallerInterface $marshaller, string $format = DateInterval::FORMAT_NANOSECONDS)
+    {
+        $this->fallbackFormat = $format;
+
+        parent::__construct($marshaller);
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -72,9 +89,10 @@ class DurationJsonType extends Type implements DetectableTypeInterface, RuleFact
     {
         if (is_array($value) && isset($value['seconds']) && isset($value['nanos'])) {
             // The highest precision is milliseconds either way.
-            $value = ($value['seconds'] * 1000000000 + $value['nanos']) / 1000;
+            $value = $value['seconds'] * 1_000_000_000 + $value['nanos'];
+            return DateInterval::parse($value, DateInterval::FORMAT_NANOSECONDS);
         }
 
-        return DateInterval::parse($value);
+        return DateInterval::parse($value, $this->fallbackFormat);
     }
 }

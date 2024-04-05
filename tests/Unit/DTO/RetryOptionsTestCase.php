@@ -59,4 +59,22 @@ class RetryOptionsTestCase extends AbstractDTOMarshalling
 
         $this->assertSame($expected, $this->marshal($dto));
     }
+
+    public function testUnmarshalLegacyIntervals(): void
+    {
+        $expected = [
+            'initial_interval' => 10_000_000_000,
+            'backoff_coefficient' => 3.0,
+            'maximum_interval' => 15_000_000_000,
+            'maximum_attempts' => 5,
+            'non_retryable_error_types' => [],
+        ];
+
+        $this->unmarshal($expected, $unmarshalled = new RetryOptions());
+
+        self::assertSame(10.0, $unmarshalled->initialInterval->totalSeconds);
+        self::assertSame(15.0, $unmarshalled->maximumInterval->totalSeconds);
+        self::assertSame(3.0, $unmarshalled->backoffCoefficient);
+        self::assertSame(5, $unmarshalled->maximumAttempts);
+    }
 }
