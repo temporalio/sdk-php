@@ -11,13 +11,14 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
+use Temporal\Client\Common\ClientContextInterface;
 use Temporal\Client\Common\Paginator;
 use Temporal\Client\Schedule\Info\ScheduleListEntry;
 use Temporal\Client\Schedule\Schedule;
 use Temporal\Client\Schedule\ScheduleHandle;
 use Temporal\Client\Schedule\ScheduleOptions;
 
-interface ScheduleClientInterface
+interface ScheduleClientInterface extends ClientContextInterface
 {
     /**
      * Create a schedule and return its handle.
