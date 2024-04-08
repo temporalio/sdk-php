@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Unit\Client\GRPC;
+namespace Temporal\Tests\Unit\Client\Common;
 
 use PHPUnit\Framework\TestCase;
-use Temporal\Client\GRPC\ClientContextTrait;
+use Temporal\Client\Common\ClientContextTrait;
 use Temporal\Client\GRPC\ContextInterface;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Common\RetryOptions;

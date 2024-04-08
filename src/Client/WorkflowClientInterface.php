@@ -12,7 +12,9 @@ declare(strict_types=1);
 namespace Temporal\Client;
 
 use Temporal\Api\Enums\V1\HistoryEventFilterType;
+use Temporal\Client\Common\Paginator;
 use Temporal\Client\GRPC\ServiceClientInterface;
+use Temporal\Client\Workflow\CountWorkflowExecutions;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowExecutionInfo as WorkflowExecutionInfoDto;
 use Temporal\Workflow\WorkflowRunInterface;

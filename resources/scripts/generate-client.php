@@ -7,13 +7,13 @@
  * file that was distributed with this source code.
  */
 
+use Grpc\BaseStub;
 use Laminas\Code\Generator;
 use Laminas\Code\Generator\MethodGenerator;
 use Temporal\Api\Workflowservice;
-use Grpc\BaseStub;
+use Temporal\Client\Common\ServerCapabilities;
 use Temporal\Client\GRPC\Connection\ConnectionInterface;
 use Temporal\Client\GRPC\ContextInterface;
-use Temporal\Client\ServerCapabilities;
 
 require __DIR__ . '/../../vendor/autoload.php';
 

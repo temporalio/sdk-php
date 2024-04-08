@@ -7,7 +7,7 @@ namespace Temporal\Client\GRPC\Connection;
 use Closure;
 use Fiber;
 use Temporal\Api\Workflowservice\V1\WorkflowServiceClient;
-use Temporal\Client\ServerCapabilities;
+use Temporal\Client\Common\ServerCapabilities;
 
 /**
  * @internal

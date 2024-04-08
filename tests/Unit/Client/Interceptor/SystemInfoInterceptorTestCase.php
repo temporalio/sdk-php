@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Temporal\Tests\Unit\Client\Interceptor;
 
 use PHPUnit\Framework\TestCase;
+use Temporal\Client\Common\ServerCapabilities;
 use Temporal\Client\GRPC\ContextInterface;
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\GRPC\StatusCode;
 use Temporal\Client\Interceptor\SystemInfoInterceptor;
-use Temporal\Client\ServerCapabilities;
 use Temporal\Exception\Client\ServiceClientException;
 
 final class SystemInfoInterceptorTestCase extends TestCase
@@ -69,6 +69,11 @@ final class SystemInfoInterceptorTestCase extends TestCase
             $this->createMock(ContextInterface::class),
             fn () => new \stdClass()
         );
+    }
+
+    public function testDeprecatedClassExisting(): void
+    {
+        self::assertTrue(\class_exists(\Temporal\Client\ServerCapabilities::class));
     }
 
     private function createException(int $code): ServiceClientException

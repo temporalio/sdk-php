@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client\GRPC;
+namespace Temporal\Client\Common;
 
+use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Common\RetryOptions;
 use Temporal\Internal\Support\DateInterval;
 
@@ -26,6 +27,7 @@ trait ClientContextTrait
         $new = clone $this;
         $context = $new->client->getContext();
         // Convert to milliseconds
+        /** @psalm-suppress InvalidOperand */
         $timeout *= 1000;
         $new->client = $new->client->withContext(
             $context->withTimeout((int)$timeout, DateInterval::FORMAT_MILLISECONDS),

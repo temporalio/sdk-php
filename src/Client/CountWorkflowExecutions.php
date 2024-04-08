@@ -1,20 +1,14 @@
 <?php
 
-/**
- * This file is part of Temporal package.
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 declare(strict_types=1);
 
 namespace Temporal\Client;
 
-final class CountWorkflowExecutions
-{
-    public function __construct(
-        public readonly int $count,
-    ) {
+if (!\class_exists(\Temporal\Client\Workflow\CountWorkflowExecutions::class)) {
+    /**
+     * @deprecated use {@see \Temporal\Client\Workflow\CountWorkflowExecutions} instead. Will be removed in the future.
+     */
+    class CountWorkflowExecutions
+    {
     }
 }

@@ -18,7 +18,7 @@ use Temporal\Api\Workflowservice\V1\ListScheduleMatchingTimesRequest;
 use Temporal\Api\Workflowservice\V1\PatchScheduleRequest;
 use Temporal\Api\Workflowservice\V1\UpdateScheduleRequest;
 use Temporal\Client\ClientOptions;
-use Temporal\Client\GRPC\ClientContextTrait;
+use Temporal\Client\Common\ClientContextTrait;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Client\Schedule\Info\ScheduleDescription;
 use Temporal\Client\Schedule\Policy\ScheduleOverlapPolicy;

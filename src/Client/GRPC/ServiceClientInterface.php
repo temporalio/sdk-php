@@ -17,7 +17,7 @@ interface ServiceClientInterface
     public function getContext() : ContextInterface;
     public function withContext(ContextInterface $context) : static;
     public function getConnection() : \Temporal\Client\GRPC\Connection\ConnectionInterface;
-    public function getServerCapabilities() : ?\Temporal\Client\ServerCapabilities;
+    public function getServerCapabilities() : ?\Temporal\Client\Common\ServerCapabilities;
     /**
      * RegisterNamespace creates a new namespace which can be used as a container for
      * all resources.
