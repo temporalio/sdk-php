@@ -27,7 +27,7 @@ class ClientOptions
     public const DEFAULT_NAMESPACE = 'default';
 
     /**
-     * @var string
+     * @var non-empty-string
      */
     public string $namespace = self::DEFAULT_NAMESPACE;
 
@@ -51,7 +51,7 @@ class ClientOptions
     }
 
     /**
-     * @param string $namespace
+     * @param non-empty-string $namespace
      * @return $this
      */
     #[Pure]

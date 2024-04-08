@@ -23,9 +23,6 @@ final class Context implements ContextInterface
     private array $metadata;
     private RetryOptions $retryOptions;
 
-    /**
-     * Context constructor.
-     */
     private function __construct()
     {
         $this->retryOptions = RetryOptions::new()
@@ -38,11 +35,6 @@ final class Context implements ContextInterface
         ];
     }
 
-    /**
-     * @param DateInterval|int $timeout
-     * @param string $format
-     * @return $this
-     */
     public function withTimeout($timeout, string $format = DateInterval::FORMAT_SECONDS): self
     {
         $internal = DateInterval::parse($timeout, $format);
@@ -53,10 +45,6 @@ final class Context implements ContextInterface
         return $ctx;
     }
 
-    /**
-     * @param \DateTimeInterface $deadline
-     * @return $this
-     */
     public function withDeadline(\DateTimeInterface $deadline): self
     {
         $ctx = clone $this;
@@ -65,10 +53,6 @@ final class Context implements ContextInterface
         return $ctx;
     }
 
-    /**
-     * @param array $options
-     * @return $this
-     */
     public function withOptions(array $options): self
     {
         $ctx = clone $this;
@@ -77,10 +61,6 @@ final class Context implements ContextInterface
         return $ctx;
     }
 
-    /**
-     * @param array $metadata
-     * @return $this
-     */
     public function withMetadata(array $metadata): self
     {
         $ctx = clone $this;
@@ -89,10 +69,6 @@ final class Context implements ContextInterface
         return $ctx;
     }
 
-    /**
-     * @param RetryOptions $options
-     * @return ContextInterface
-     */
     public function withRetryOptions(RetryOptions $options): ContextInterface
     {
         $ctx = clone $this;
@@ -101,42 +77,27 @@ final class Context implements ContextInterface
         return $ctx;
     }
 
-    /**
-     * @return array
-     */
     public function getOptions(): array
     {
         return $this->options;
     }
 
-    /**
-     * @return array
-     */
     public function getMetadata(): array
     {
         return $this->metadata;
     }
 
-    /**
-     * @return \DateTimeInterface|null
-     */
     public function getDeadline(): ?\DateTimeInterface
     {
         return $this->deadline;
     }
 
-    /**
-     * @return RetryOptions
-     */
     public function getRetryOptions(): RetryOptions
     {
         return $this->retryOptions;
     }
 
-    /**
-     * @return Context
-     */
-    public static function default()
+    public static function default(): self
     {
         return new self();
     }

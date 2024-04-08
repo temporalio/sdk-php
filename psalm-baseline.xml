@@ -56,9 +56,6 @@
     <ArgumentTypeCoercion>
       <code><![CDATA[$format]]></code>
     </ArgumentTypeCoercion>
-    <PossiblyInvalidArgument>
-      <code><![CDATA[$timeout]]></code>
-    </PossiblyInvalidArgument>
   </file>
   <file src="src/Client/Schedule/Action/StartWorkflowAction.php">
     <DocblockTypeContradiction>

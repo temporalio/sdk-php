@@ -83,7 +83,7 @@ class WorkflowClient implements WorkflowClientInterface
         $this->reader = new WorkflowReader($this->createReader());
     }
 
-    public function __clone(): void
+    public function __clone()
     {
         $this->starter = null;
     }
