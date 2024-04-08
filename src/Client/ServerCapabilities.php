@@ -11,30 +11,11 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
-final class ServerCapabilities
-{
-    public function __construct(
-        private bool $signalAndQueryHeader = false,
-        private bool $internalErrorDifferentiation = false
-    ) {
-    }
-
+if (!\class_exists(\Temporal\Client\Common\ServerCapabilities::class)) {
     /**
-     * True if signal and query headers are supported.
+     * @deprecated use {@see \Temporal\Client\Common\ServerCapabilities} instead. Will be removed in the future.
      */
-    public function isSignalAndQueryHeaderSupports(): bool
+    class ServerCapabilities
     {
-        return $this->signalAndQueryHeader;
-    }
-
-    /**
-     * True if internal errors are differentiated from other types of errors for purposes of
-     * retrying non-internal errors.
-     * When unset/false, clients retry all failures. When true, clients should only retry
-     * non-internal errors.
-     */
-    public function isInternalErrorDifferentiation(): bool
-    {
-        return $this->internalErrorDifferentiation;
     }
 }

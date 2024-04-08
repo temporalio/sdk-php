@@ -16,8 +16,6 @@ use Temporal\Internal\Interceptor\Interceptor;
 
 /**
  * Interceptor intercepts client gRPC calls.
- *
- * @psalm-immutable
  */
 interface GrpcClientInterceptor extends Interceptor
 {

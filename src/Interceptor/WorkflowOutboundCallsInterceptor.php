@@ -50,8 +50,6 @@ use Temporal\Internal\Interceptor\Interceptor;
  *     }
  * }
  * ```
- *
- * @psalm-immutable
  */
 interface WorkflowOutboundCallsInterceptor extends Interceptor
 {

@@ -13,10 +13,15 @@ namespace Temporal\Client\GRPC;
 
 use Carbon\CarbonInterval;
 use Closure;
+use DateTimeImmutable;
 use Exception;
+use Fiber;
 use Grpc\UnaryCall;
+use Temporal\Api\Workflowservice\V1\GetSystemInfoRequest;
 use Temporal\Api\Workflowservice\V1\WorkflowServiceClient;
-use Temporal\Client\ServerCapabilities;
+use Temporal\Client\Common\ServerCapabilities;
+use Temporal\Client\GRPC\Connection\Connection;
+use Temporal\Client\GRPC\Connection\ConnectionInterface;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Client\TimeoutException;
 use Temporal\Interceptor\GrpcClientInterceptor;
@@ -24,27 +29,49 @@ use Temporal\Internal\Interceptor\Pipeline;
 
 abstract class BaseClient implements ServiceClientInterface
 {
-    const RETRYABLE_ERRORS = [
+    public const RETRYABLE_ERRORS = [
         StatusCode::RESOURCE_EXHAUSTED,
         StatusCode::UNAVAILABLE,
         StatusCode::UNKNOWN,
     ];
-    private WorkflowServiceClient $workflowService;
-    private ?ServerCapabilities $capabilities = null;
 
     /** @var null|Closure(string $method, object $arg, ContextInterface $ctx): object */
     private ?Closure $invokePipeline = null;
 
-    /** @var callable */
-    private $workflowServiceCloser;
+    private Connection $connection;
+    private ContextInterface $context;
 
     /**
-     * @param WorkflowServiceClient $workflowService
+     * @param WorkflowServiceClient|Closure(): WorkflowServiceClient $workflowService Service Client or its factory
+     *
+     * @private Use static factory methods instead
+     * @see self::create()
+     * @see self::createSSL()
      */
-    public function __construct(WorkflowServiceClient $workflowService)
+    final public function __construct(WorkflowServiceClient|Closure $workflowService)
     {
-        $this->workflowService = $workflowService;
-        $this->workflowServiceCloser = $this->makeClientCloser($workflowService);
+        if ($workflowService instanceof WorkflowServiceClient) {
+            \trigger_error(
+                'Creating a ServiceClient instance via constructor is deprecated. Use static factory methods instead.',
+                \E_USER_DEPRECATED,
+            );
+            $workflowService = static fn(): WorkflowServiceClient => $workflowService;
+        }
+
+        $this->connection = new Connection($workflowService);
+        $this->context = Context::default();
+    }
+
+    public function getContext(): ContextInterface
+    {
+        return $this->context;
+    }
+
+    public function withContext(ContextInterface $context): static
+    {
+        $clone = clone $this;
+        $clone->context = $context;
+        return $clone;
     }
 
     /**
@@ -52,34 +79,33 @@ abstract class BaseClient implements ServiceClientInterface
      */
     public function close(): void
     {
-        ($this->workflowServiceCloser)();
+        $this->connection->disconnect();
     }
 
     /**
-     * @param string $address
+     * @param non-empty-string $address Temporal service address in format `host:port`
      * @return static
      * @psalm-suppress UndefinedClass
      */
     public static function create(string $address): static
     {
         if (!\extension_loaded('grpc')) {
-            throw new \RuntimeException('The gRPC extension is required to use Temporal Client');
+            throw new \RuntimeException('The gRPC extension is required to use Temporal Client.');
         }
 
-        $client = new WorkflowServiceClient(
+        return new static(static fn(): WorkflowServiceClient => new WorkflowServiceClient(
             $address,
             ['credentials' => \Grpc\ChannelCredentials::createInsecure()]
-        );
-
-        return new static($client);
+        ));
     }
 
     /**
-     * @param string $address
-     * @param string $crt Certificate or cert file in x509 format.
-     * @param string|null $clientKey
-     * @param string|null $clientPem
-     * @param string|null $overrideServerName
+     * @param non-empty-string $address Temporal service address in format `host:port`
+     * @param non-empty-string|null $crt Root certificates string or file in PEM format.
+     *        If null provided, default gRPC root certificates are used.
+     * @param non-empty-string|null $clientKey Client private key string or file in PEM format.
+     * @param non-empty-string|null $clientPem Client certificate chain string or file in PEM format.
+     * @param non-empty-string|null $overrideServerName
      * @return static
      *
      * @psalm-suppress UndefinedClass
@@ -87,16 +113,30 @@ abstract class BaseClient implements ServiceClientInterface
      */
     public static function createSSL(
         string $address,
-        string $crt,
+        string $crt = null,
         string $clientKey = null,
         string $clientPem = null,
         string $overrideServerName = null
     ): static {
+        if (!\extension_loaded('grpc')) {
+            throw new \RuntimeException('The gRPC extension is required to use Temporal Client.');
+        }
+
+        $loadCert = static function (?string $cert): ?string {
+            return match (true) {
+                $cert === null, $cert === '' => null,
+                \is_file($cert) => false === ($content = \file_get_contents($cert))
+                    ? throw new \InvalidArgumentException("Failed to load certificate from file `$cert`.")
+                    : $content,
+                default => $cert,
+            };
+        };
+
         $options = [
             'credentials' => \Grpc\ChannelCredentials::createSsl(
-                \is_file($crt) ? \file_get_contents($crt) : null,
-                \is_file((string)$clientKey) ? \file_get_contents((string)$clientKey) : null,
-                \is_file((string)$clientPem) ? \file_get_contents((string)$clientPem) : null
+                $loadCert($crt),
+                $loadCert($clientKey),
+                $loadCert($clientPem),
             )
         ];
 
@@ -105,9 +145,7 @@ abstract class BaseClient implements ServiceClientInterface
             $options['grpc.ssl_target_name_override'] = $overrideServerName;
         }
 
-        $client = new WorkflowServiceClient($address, $options);
-
-        return new static($client);
+        return new static(static fn(): WorkflowServiceClient => new WorkflowServiceClient($address, $options));
     }
 
     /**
@@ -126,12 +164,55 @@ abstract class BaseClient implements ServiceClientInterface
 
     public function getServerCapabilities(): ?ServerCapabilities
     {
-        return $this->capabilities;
+        if ($this->connection->capabilities !== null) {
+            return $this->connection->capabilities;
+        }
+
+        try {
+            $systemInfo = $this->getSystemInfo(new GetSystemInfoRequest());
+            $capabilities = $systemInfo->getCapabilities();
+
+            if ($capabilities === null) {
+                return null;
+            }
+
+            return $this->connection->capabilities = new ServerCapabilities(
+                signalAndQueryHeader: $capabilities->getSignalAndQueryHeader(),
+                internalErrorDifferentiation: $capabilities->getInternalErrorDifferentiation(),
+                activityFailureIncludeHeartbeat: $capabilities->getActivityFailureIncludeHeartbeat(),
+                supportsSchedules: $capabilities->getSupportsSchedules(),
+                encodedFailureAttributes: $capabilities->getEncodedFailureAttributes(),
+                buildIdBasedVersioning: $capabilities->getBuildIdBasedVersioning(),
+                upsertMemo: $capabilities->getUpsertMemo(),
+                eagerWorkflowStart: $capabilities->getEagerWorkflowStart(),
+                sdkMetadata: $capabilities->getSdkMetadata(),
+                countGroupByExecutionStatus: $capabilities->getCountGroupByExecutionStatus(),
+            );
+        } catch (ServiceClientException $e) {
+            if ($e->getCode() === StatusCode::UNIMPLEMENTED) {
+                return null;
+            }
+
+            throw $e;
+        }
     }
 
+    /**
+     * @deprecated
+     */
     public function setServerCapabilities(ServerCapabilities $capabilities): void
     {
-        $this->capabilities = $capabilities;
+        \trigger_error(
+            'Method ' . __METHOD__ . ' is deprecated and will be removed in the next major release.',
+            \E_USER_DEPRECATED,
+        );
+    }
+
+    /**
+     * Note: Experimental
+     */
+    public function getConnection(): ConnectionInterface {
+        return $this->connection;
     }
 
     /**
@@ -143,9 +224,9 @@ abstract class BaseClient implements ServiceClientInterface
      *
      * @throw ClientException
      */
-    protected function invoke(string $method, object $arg, ContextInterface $ctx = null)
+    protected function invoke(string $method, object $arg, ?ContextInterface $ctx = null)
     {
-        $ctx = $ctx ?? Context::default();
+        $ctx ??= $this->context;
 
         return $this->invokePipeline !== null
             ? ($this->invokePipeline)($method, $arg, $ctx)
@@ -188,7 +269,7 @@ abstract class BaseClient implements ServiceClientInterface
                 }
 
                 /** @var UnaryCall $call */
-                $call = $this->workflowService->{$method}($arg, $ctx->getMetadata(), $options);
+                $call = $this->connection->getWorkflowService()->{$method}($arg, $ctx->getMetadata(), $options);
                 [$result, $status] = $call->wait();
 
                 if ($status->code !== 0) {
@@ -210,15 +291,15 @@ abstract class BaseClient implements ServiceClientInterface
                     throw $e;
                 }
 
-                if ($ctx->getDeadline() !== null && $ctx->getDeadline()->getTimestamp() > time()) {
+                if ($ctx->getDeadline() !== null && $ctx->getDeadline() > new DateTimeImmutable()) {
                     throw new TimeoutException('Call timeout has been reached');
                 }
 
-                // wait till next call
-                \usleep((int)$waitRetry->totalMicroseconds);
+                // wait till the next call
+                $this->usleep((int)$waitRetry->totalMicroseconds);
 
                 $waitRetry = CarbonInterval::millisecond(
-                    $waitRetry->totalMilliseconds + $retryOption->backoffCoefficient
+                    $waitRetry->totalMilliseconds * $retryOption->backoffCoefficient
                 );
 
                 if ($maxInterval !== null && $maxInterval->totalMilliseconds < $waitRetry->totalMilliseconds) {
@@ -229,26 +310,19 @@ abstract class BaseClient implements ServiceClientInterface
     }
 
     /**
-     * Makes an object that will close workflow service client connection on parent class destruct.
-     *
-     * @param WorkflowServiceClient $workflowServiceClient
-     *
-     * @return callable
+     * @param int<0, max> $param Delay in microseconds
      */
-    private function makeClientCloser(WorkflowServiceClient $workflowServiceClient): callable
+    private function usleep(int $param): void
     {
-        return new class ($workflowServiceClient) {
-            public function __construct(public WorkflowServiceClient $client) { }
+        if (Fiber::getCurrent() === null) {
+            \usleep($param);
+            return;
+        }
 
-            public function __invoke(): void
-            {
-                $this->client->close();
-            }
+        $deadline = \microtime(true) + (float)($param / 1_000_000);
 
-            public function __destruct()
-            {
-                $this->client->close();
-            }
-        };
+        while (\microtime(true) < $deadline) {
+            Fiber::suspend();
+        }
     }
 }

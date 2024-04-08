@@ -14,10 +14,13 @@ namespace Temporal\Client\GRPC;
 use Temporal\Common\RetryOptions;
 use Temporal\Internal\Support\DateInterval;
 
+/**
+ * @psalm-import-type  DateIntervalValue from DateInterval
+ */
 interface ContextInterface
 {
     /**
-     * @param DateInterval|int $timeout
+     * @param DateIntervalValue $timeout
      * @param string $format
      * @return $this
      */

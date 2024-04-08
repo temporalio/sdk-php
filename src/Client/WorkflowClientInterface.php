@@ -12,12 +12,15 @@ declare(strict_types=1);
 namespace Temporal\Client;
 
 use Temporal\Api\Enums\V1\HistoryEventFilterType;
+use Temporal\Client\Common\ClientContextInterface;
+use Temporal\Client\Common\Paginator;
 use Temporal\Client\GRPC\ServiceClientInterface;
+use Temporal\Client\Workflow\CountWorkflowExecutions;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowExecutionInfo as WorkflowExecutionInfoDto;
 use Temporal\Workflow\WorkflowRunInterface;
 
-interface WorkflowClientInterface
+interface WorkflowClientInterface extends ClientContextInterface
 {
     /**
      * @return ServiceClientInterface
@@ -142,14 +145,14 @@ interface WorkflowClientInterface
      * @see self::countWorkflowExecutions()
      *
      * @param non-empty-string $query
-     * @param non-empty-string $namespace
+     * @param non-empty-string|null $namespace If null, the preconfigured namespace will be used.
      * @param int<0, max> $pageSize Maximum number of workflow info per page.
      *
      * @return Paginator<WorkflowExecutionInfoDto>
      */
     public function listWorkflowExecutions(
         string $query,
-        string $namespace = 'default',
+        ?string $namespace = null,
         int $pageSize = 10,
     ): Paginator;
 
@@ -165,16 +168,16 @@ interface WorkflowClientInterface
      * @see self::listWorkflowExecutions()
      *
      * @param non-empty-string $query
-     * @param non-empty-string $namespace
+     * @param non-empty-string|null $namespace If null, the preconfigured namespace will be used.
      */
     public function countWorkflowExecutions(
         string $query,
-        string $namespace = 'default',
+        ?string $namespace = null,
     ): CountWorkflowExecutions;
 
     /**
-     * @param non-empty-string $namespace
      * @param WorkflowExecution $execution
+     * @param non-empty-string|null $namespace If null, the preconfigured namespace will be used.
      * @param bool $waitNewEvent If set to true, the RPC call will not resolve until there is a new event which matches,
      *        the $historyEventFilterType, or a timeout is hit. The RPC call will be resolved immediately if the
      *        workflow was already finished.
@@ -188,7 +191,7 @@ interface WorkflowClientInterface
      */
     public function getWorkflowHistory(
         WorkflowExecution $execution,
-        string $namespace = 'default',
+        ?string $namespace = null,
         bool $waitNewEvent = false,
         int $historyEventFilterType = HistoryEventFilterType::HISTORY_EVENT_FILTER_TYPE_ALL_EVENT,
         bool $skipArchival = false,

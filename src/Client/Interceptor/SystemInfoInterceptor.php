@@ -11,23 +11,17 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Interceptor;
 
-use Temporal\Api\Workflowservice\V1\GetSystemInfoRequest;
 use Temporal\Client\GRPC\ContextInterface;
-use Temporal\Client\GRPC\ServiceClient;
-use Temporal\Client\GRPC\StatusCode;
-use Temporal\Client\ServerCapabilities;
-use Temporal\Exception\Client\ServiceClientException;
+use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Interceptor\GrpcClientInterceptor;
 
 /**
- * @psalm-immutable
+ * Calls `GetSystemInfo` on the first invocation of a client method on the current connection to the Temporal service.
  */
 final class SystemInfoInterceptor implements GrpcClientInterceptor
 {
-    private bool $systemInfoRequested = false;
-
     public function __construct(
-        private readonly ServiceClient $serviceClient
+        private readonly ServiceClientInterface $serviceClient
     ) {
     }
 
@@ -37,27 +31,7 @@ final class SystemInfoInterceptor implements GrpcClientInterceptor
      */
     public function interceptCall(string $method, object $arg, ContextInterface $ctx, callable $next): object
     {
-        if ($this->systemInfoRequested) {
-            return $next($method, $arg, $ctx);
-        }
-
-        try {
-            $systemInfo = $this->serviceClient->getSystemInfo(new GetSystemInfoRequest());
-
-            $capabilities = $systemInfo->getCapabilities();
-            if ($capabilities !== null && $this->serviceClient->getServerCapabilities() === null) {
-                $this->serviceClient->setServerCapabilities(new ServerCapabilities(
-                    signalAndQueryHeader: $capabilities->getSignalAndQueryHeader(),
-                    internalErrorDifferentiation: $capabilities->getInternalErrorDifferentiation(),
-                ));
-            }
-        } catch (ServiceClientException $e) {
-            if ($e->getCode() !== StatusCode::UNIMPLEMENTED) {
-                throw $e;
-            }
-        }
-
-        $this->systemInfoRequested = true;
+        $this->serviceClient->getServerCapabilities();
 
         return $next($method, $arg, $ctx);
     }

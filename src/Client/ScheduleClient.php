@@ -20,6 +20,8 @@ use Temporal\Api\Schedule\V1\SchedulePatch;
 use Temporal\Api\Schedule\V1\TriggerImmediatelyRequest;
 use Temporal\Api\Workflowservice\V1\CreateScheduleRequest;
 use Temporal\Api\Workflowservice\V1\ListSchedulesRequest;
+use Temporal\Client\Common\ClientContextTrait;
+use Temporal\Client\Common\Paginator;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Client\Schedule\BackfillPeriod;
 use Temporal\Client\Schedule\Info\ScheduleListEntry;
@@ -37,7 +39,8 @@ use Temporal\Internal\Marshaller\ProtoToArrayConverter;
 
 final class ScheduleClient implements ScheduleClientInterface
 {
-    private ServiceClientInterface $client;
+    use ClientContextTrait;
+
     private ClientOptions $clientOptions;
     private DataConverterInterface $converter;
     private MarshallerInterface $marshaller;
@@ -130,7 +133,7 @@ final class ScheduleClient implements ScheduleClientInterface
         );
     }
 
-    public function getHandle(string $scheduleID, string $namespace = 'default'): ScheduleHandle
+    public function getHandle(string $scheduleID, ?string $namespace = null): ScheduleHandle
     {
         return new ScheduleHandle(
             $this->client,
@@ -138,7 +141,7 @@ final class ScheduleClient implements ScheduleClientInterface
             $this->converter,
             $this->marshaller,
             $this->protoConverter,
-            $namespace,
+            $namespace ?? $this->clientOptions->namespace,
             $scheduleID,
         );
     }

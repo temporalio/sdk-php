@@ -2,7 +2,7 @@
 
 .github/ export-ignore
 config/ export-ignore
-resources/ export-ignore
+resources/scripts/ export-ignore
 tests/ export-ignore
 
 .php_cs.dist export-ignore

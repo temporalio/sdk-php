@@ -14,8 +14,10 @@ use Temporal\Exception\Client\ServiceClientException;
 
 interface ServiceClientInterface
 {
-    public function getServerCapabilities() : ?\Temporal\Client\ServerCapabilities;
-    public function setServerCapabilities(\Temporal\Client\ServerCapabilities $capabilities) : void;
+    public function getContext() : ContextInterface;
+    public function withContext(ContextInterface $context) : static;
+    public function getConnection() : \Temporal\Client\GRPC\Connection\ConnectionInterface;
+    public function getServerCapabilities() : ?\Temporal\Client\Common\ServerCapabilities;
     /**
      * RegisterNamespace creates a new namespace which can be used as a container for
      * all resources.
@@ -58,11 +60,6 @@ interface ServiceClientInterface
      * registered
      * namespace.
      *
-     * (-- api-linter: core::0134::method-signature=disabled
-     * aip.dev/not-precedent: UpdateNamespace RPC doesn't follow Google API format. --)
-     * (-- api-linter: core::0134::response-message-name=disabled
-     * aip.dev/not-precedent: UpdateNamespace RPC doesn't follow Google API format. --)
-     *
      * @param V1\UpdateNamespaceRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\UpdateNamespaceResponse
@@ -77,6 +74,9 @@ interface ServiceClientInterface
      * executions. Existing
      * workflow executions will continue to run on deprecated namespaces.
      * Deprecated.
+     *
+     * (-- api-linter: core::0127::http-annotation=disabled
+     * aip.dev/not-precedent: Deprecated --)
      *
      * @param V1\DeprecateNamespaceRequest $arg
      * @param ContextInterface|null $ctx
@@ -134,6 +134,9 @@ interface ServiceClientInterface
      * the history for
      * this task before handing it to the worker.
      *
+     * (-- api-linter: core::0127::http-annotation=disabled
+     * aip.dev/not-precedent: We do not expose worker API to HTTP. --)
+     *
      * @param V1\PollWorkflowTaskQueueRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\PollWorkflowTaskQueueResponse
@@ -150,6 +153,9 @@ interface ServiceClientInterface
      * history, along with events corresponding to whatever commands the SDK generated
      * while
      * executing the task (ex timer started, activity task scheduled, etc).
+     *
+     * (-- api-linter: core::0127::http-annotation=disabled
+     * aip.dev/not-precedent: We do not expose worker API to HTTP. --)
      *
      * @param V1\RespondWorkflowTaskCompletedRequest $arg
      * @param ContextInterface|null $ctx
@@ -171,6 +177,9 @@ interface ServiceClientInterface
      * Temporal will only append first WorkflowTaskFailed event to the history of
      * workflow execution
      * for consecutive failures.
+     *
+     * (-- api-linter: core::0127::http-annotation=disabled
+     * aip.dev/not-precedent: We do not expose worker API to HTTP. --)
      *
      * @param V1\RespondWorkflowTaskFailedRequest $arg
      * @param ContextInterface|null $ctx
@@ -198,6 +207,9 @@ interface ServiceClientInterface
      * written permanently to Workflow execution history when Activity is finished.
      * This is done to
      * avoid writing many events in the case of a failure/retry loop.
+     *
+     * (-- api-linter: core::0127::http-annotation=disabled
+     * aip.dev/not-precedent: We do not expose worker API to HTTP. --)
      *
      * @param V1\PollActivityTaskQueueRequest $arg
      * @param ContextInterface|null $ctx
@@ -421,10 +433,10 @@ interface ServiceClientInterface
      * WorkflowExecution.run_id is not provided). If the Workflow Execution is Running,
      * it will be
      * terminated before deletion.
-     * (-- api-linter: core::0135::method-signature=disabled
-     * aip.dev/not-precedent: DeleteNamespace RPC doesn't follow Google API format. --)
-     * (-- api-linter: core::0135::response-message-name=disabled
-     * aip.dev/not-precedent: DeleteNamespace RPC doesn't follow Google API format. --)
+     *
+     * (-- api-linter: core::0127::http-annotation=disabled
+     * aip.dev/not-precedent: Workflow deletion not exposed to HTTP, users should use
+     * cancel or terminate. --)
      *
      * @param V1\DeleteWorkflowExecutionRequest $arg
      * @param ContextInterface|null $ctx
@@ -436,6 +448,9 @@ interface ServiceClientInterface
      * ListOpenWorkflowExecutions is a visibility API to list the open executions in a
      * specific namespace.
      *
+     * (-- api-linter: core::0127::http-annotation=disabled
+     * aip.dev/not-precedent: HTTP users should use ListWorkflowExecutions instead. --)
+     *
      * @param V1\ListOpenWorkflowExecutionsRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\ListOpenWorkflowExecutionsResponse
@@ -445,6 +460,9 @@ interface ServiceClientInterface
     /**
      * ListClosedWorkflowExecutions is a visibility API to list the closed executions
      * in a specific namespace.
+     *
+     * (-- api-linter: core::0127::http-annotation=disabled
+     * aip.dev/not-precedent: HTTP users should use ListWorkflowExecutions instead. --)
      *
      * @param V1\ListClosedWorkflowExecutionsRequest $arg
      * @param ContextInterface|null $ctx
@@ -476,6 +494,9 @@ interface ServiceClientInterface
      * ScanWorkflowExecutions is a visibility API to list large amount of workflow
      * executions in a specific namespace without order.
      *
+     * (-- api-linter: core::0127::http-annotation=disabled
+     * aip.dev/not-precedent: HTTP users should use ListWorkflowExecutions instead. --)
+     *
      * @param V1\ScanWorkflowExecutionsRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\ScanWorkflowExecutionsResponse
@@ -496,6 +517,10 @@ interface ServiceClientInterface
      * GetSearchAttributes is a visibility API to get all legal keys that could be used
      * in list APIs
      *
+     * (-- api-linter: core::0127::http-annotation=disabled
+     * aip.dev/not-precedent: We do not expose this search attribute API to HTTP (but
+     * may expose on OperatorService). --)
+     *
      * @param V1\GetSearchAttributesRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\GetSearchAttributesResponse
@@ -510,6 +535,9 @@ interface ServiceClientInterface
      * Completing the query will unblock the corresponding client call to
      * `QueryWorkflow` and return
      * the query result a response.
+     *
+     * (-- api-linter: core::0127::http-annotation=disabled
+     * aip.dev/not-precedent: We do not expose worker API to HTTP. --)
      *
      * @param V1\RespondQueryTaskCompletedRequest $arg
      * @param ContextInterface|null $ctx
@@ -527,6 +555,9 @@ interface ServiceClientInterface
      * Things cleared are:
      * 1. StickyTaskQueue
      * 2. StickyScheduleToStartTimeout
+     *
+     * (-- api-linter: core::0127::http-annotation=disabled
+     * aip.dev/not-precedent: We do not expose worker API to HTTP. --)
      *
      * @param V1\ResetStickyTaskQueueRequest $arg
      * @param ContextInterface|null $ctx
@@ -581,6 +612,9 @@ interface ServiceClientInterface
      */
     public function GetSystemInfo(V1\GetSystemInfoRequest $arg, ContextInterface $ctx = null) : V1\GetSystemInfoResponse;
     /**
+     * (-- api-linter: core::0127::http-annotation=disabled
+     * aip.dev/not-precedent: We do not expose this low-level API to HTTP. --)
+     *
      * @param V1\ListTaskQueuePartitionsRequest $arg
      * @param ContextInterface|null $ctx
      * @return V1\ListTaskQueuePartitionsResponse
@@ -589,12 +623,6 @@ interface ServiceClientInterface
     public function ListTaskQueuePartitions(V1\ListTaskQueuePartitionsRequest $arg, ContextInterface $ctx = null) : V1\ListTaskQueuePartitionsResponse;
     /**
      * Creates a new schedule.
-     * (-- api-linter: core::0133::method-signature=disabled
-     * aip.dev/not-precedent: CreateSchedule doesn't follow Google API format --)
-     * (-- api-linter: core::0133::response-message-name=disabled
-     * aip.dev/not-precedent: CreateSchedule doesn't follow Google API format --)
-     * (-- api-linter: core::0133::http-uri-parent=disabled
-     * aip.dev/not-precedent: CreateSchedule doesn't follow Google API format --)
      *
      * @param V1\CreateScheduleRequest $arg
      * @param ContextInterface|null $ctx
@@ -613,10 +641,6 @@ interface ServiceClientInterface
     public function DescribeSchedule(V1\DescribeScheduleRequest $arg, ContextInterface $ctx = null) : V1\DescribeScheduleResponse;
     /**
      * Changes the configuration or state of an existing schedule.
-     * (-- api-linter: core::0134::response-message-name=disabled
-     * aip.dev/not-precedent: UpdateSchedule RPC doesn't follow Google API format. --)
-     * (-- api-linter: core::0134::method-signature=disabled
-     * aip.dev/not-precedent: UpdateSchedule RPC doesn't follow Google API format. --)
      *
      * @param V1\UpdateScheduleRequest $arg
      * @param ContextInterface|null $ctx
@@ -626,8 +650,6 @@ interface ServiceClientInterface
     public function UpdateSchedule(V1\UpdateScheduleRequest $arg, ContextInterface $ctx = null) : V1\UpdateScheduleResponse;
     /**
      * Makes a specific change to a schedule or triggers an immediate action.
-     * (-- api-linter: core::0134::synonyms=disabled
-     * aip.dev/not-precedent: we have both patch and update. --)
      *
      * @param V1\PatchScheduleRequest $arg
      * @param ContextInterface|null $ctx
@@ -646,10 +668,6 @@ interface ServiceClientInterface
     public function ListScheduleMatchingTimes(V1\ListScheduleMatchingTimesRequest $arg, ContextInterface $ctx = null) : V1\ListScheduleMatchingTimesResponse;
     /**
      * Deletes a schedule, removing it from the system.
-     * (-- api-linter: core::0135::method-signature=disabled
-     * aip.dev/not-precedent: DeleteSchedule doesn't follow Google API format --)
-     * (-- api-linter: core::0135::response-message-name=disabled
-     * aip.dev/not-precedent: DeleteSchedule doesn't follow Google API format --)
      *
      * @param V1\DeleteScheduleRequest $arg
      * @param ContextInterface|null $ctx
@@ -686,12 +704,8 @@ interface ServiceClientInterface
      * (default is 20), if this limit is exceeded this API will error with a
      * FailedPrecondition.
      *
-     * (-- api-linter: core::0134::response-message-name=disabled
-     * aip.dev/not-precedent: UpdateWorkerBuildIdCompatibility RPC doesn't follow
-     * Google API format. --)
-     * (-- api-linter: core::0134::method-signature=disabled
-     * aip.dev/not-precedent: UpdateWorkerBuildIdCompatibility RPC doesn't follow
-     * Google API format. --)
+     * (-- api-linter: core::0127::http-annotation=disabled
+     * aip.dev/not-precedent: We do yet expose versioning API to HTTP. --)
      *
      * @param V1\UpdateWorkerBuildIdCompatibilityRequest $arg
      * @param ContextInterface|null $ctx
@@ -737,9 +751,6 @@ interface ServiceClientInterface
     public function GetWorkerTaskReachability(V1\GetWorkerTaskReachabilityRequest $arg, ContextInterface $ctx = null) : V1\GetWorkerTaskReachabilityResponse;
     /**
      * Invokes the specified update function on user workflow code.
-     * (-- api-linter: core::0134=disabled
-     * aip.dev/not-precedent: UpdateWorkflowExecution doesn't follow Google API format
-     * --)
      *
      * @param V1\UpdateWorkflowExecutionRequest $arg
      * @param ContextInterface|null $ctx
@@ -752,9 +763,10 @@ interface ServiceClientInterface
      * previously issued through the UpdateWorkflowExecution RPC. The effective
      * timeout on this call will be shorter of the the caller-supplied gRPC
      * timeout and the server's configured long-poll timeout.
-     * (-- api-linter: core::0134=disabled
-     * aip.dev/not-precedent: UpdateWorkflowExecution doesn't follow Google API format
-     * --)
+     *
+     * (-- api-linter: core::0127::http-annotation=disabled
+     * aip.dev/not-precedent: We don't expose update polling API to HTTP in favor of a
+     * potential future non-blocking form. --)
      *
      * @param V1\PollWorkflowExecutionUpdateRequest $arg
      * @param ContextInterface|null $ctx
@@ -798,6 +810,41 @@ interface ServiceClientInterface
      * @throws ServiceClientException
      */
     public function ListBatchOperations(V1\ListBatchOperationsRequest $arg, ContextInterface $ctx = null) : V1\ListBatchOperationsResponse;
+    /**
+     * PollNexusTaskQueue is a long poll call used by workers to receive Nexus tasks.
+     * (-- api-linter: core::0127::http-annotation=disabled
+     * aip.dev/not-precedent: We do not expose worker API to HTTP. --)
+     *
+     * @param V1\PollNexusTaskQueueRequest $arg
+     * @param ContextInterface|null $ctx
+     * @return V1\PollNexusTaskQueueResponse
+     * @throws ServiceClientException
+     */
+    public function PollNexusTaskQueue(V1\PollNexusTaskQueueRequest $arg, ContextInterface $ctx = null) : V1\PollNexusTaskQueueResponse;
+    /**
+     * RespondNexusTaskCompleted is called by workers to respond to Nexus tasks
+     * received via PollNexusTaskQueue.
+     * (-- api-linter: core::0127::http-annotation=disabled
+     * aip.dev/not-precedent: We do not expose worker API to HTTP. --)
+     *
+     * @param V1\RespondNexusTaskCompletedRequest $arg
+     * @param ContextInterface|null $ctx
+     * @return V1\RespondNexusTaskCompletedResponse
+     * @throws ServiceClientException
+     */
+    public function RespondNexusTaskCompleted(V1\RespondNexusTaskCompletedRequest $arg, ContextInterface $ctx = null) : V1\RespondNexusTaskCompletedResponse;
+    /**
+     * RespondNexusTaskFailed is called by workers to fail Nexus tasks received via
+     * PollNexusTaskQueue.
+     * (-- api-linter: core::0127::http-annotation=disabled
+     * aip.dev/not-precedent: We do not expose worker API to HTTP. --)
+     *
+     * @param V1\RespondNexusTaskFailedRequest $arg
+     * @param ContextInterface|null $ctx
+     * @return V1\RespondNexusTaskFailedResponse
+     * @throws ServiceClientException
+     */
+    public function RespondNexusTaskFailed(V1\RespondNexusTaskFailedRequest $arg, ContextInterface $ctx = null) : V1\RespondNexusTaskFailedResponse;
     /**
      * Close the communication channel associated with this stub.
      */

@@ -11,12 +11,14 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
+use Temporal\Client\Common\ClientContextInterface;
+use Temporal\Client\Common\Paginator;
 use Temporal\Client\Schedule\Info\ScheduleListEntry;
 use Temporal\Client\Schedule\Schedule;
 use Temporal\Client\Schedule\ScheduleHandle;
 use Temporal\Client\Schedule\ScheduleOptions;
 
-interface ScheduleClientInterface
+interface ScheduleClientInterface extends ClientContextInterface
 {
     /**
      * Create a schedule and return its handle.
@@ -35,9 +37,9 @@ interface ScheduleClientInterface
      * Get a schedule handle to interact with an existing schedule.
      *
      * @param non-empty-string $scheduleID
-     * @param non-empty-string $namespace
+     * @param non-empty-string|null $namespace If null, the preconfigured namespace will be used.
      */
-    public function getHandle(string $scheduleID, string $namespace = 'default'): ScheduleHandle;
+    public function getHandle(string $scheduleID, ?string $namespace = null): ScheduleHandle;
 
     /**
      * List all schedules in a namespace.

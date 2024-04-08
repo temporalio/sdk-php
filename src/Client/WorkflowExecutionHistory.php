@@ -9,6 +9,7 @@ use IteratorAggregate;
 use Temporal\Api\History\V1\History;
 use Temporal\Api\History\V1\HistoryEvent;
 use Temporal\Api\Workflowservice\V1\GetWorkflowExecutionHistoryResponse;
+use Temporal\Client\Common\Paginator;
 use Temporal\Testing\Replay\WorkflowReplayer;
 use Traversable;
 

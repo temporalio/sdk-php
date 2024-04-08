@@ -7,11 +7,13 @@
  * file that was distributed with this source code.
  */
 
+use Grpc\BaseStub;
 use Laminas\Code\Generator;
 use Laminas\Code\Generator\MethodGenerator;
 use Temporal\Api\Workflowservice;
-use Grpc\BaseStub;
-use Temporal\Client\ServerCapabilities;
+use Temporal\Client\Common\ServerCapabilities;
+use Temporal\Client\GRPC\Connection\ConnectionInterface;
+use Temporal\Client\GRPC\ContextInterface;
 
 require __DIR__ . '/../../vendor/autoload.php';
 
@@ -88,6 +90,30 @@ echo "generating interface: ";
 $interface = new Generator\InterfaceGenerator('ServiceClientInterface');
 
 
+// getContext(): ContextInterface
+$m = new MethodGenerator(
+    'getContext',
+    [],
+    MethodGenerator::FLAG_PUBLIC,
+);
+$m->setReturnType(ContextInterface::class);
+$interface->addMethodFromGenerator($m);
+// withContext(ContextInterface $context): static
+$m = new MethodGenerator(
+    'withContext',
+    [Generator\ParameterGenerator::fromArray(['type' => ContextInterface::class, 'name' => 'context'])],
+    MethodGenerator::FLAG_PUBLIC,
+);
+$m->setReturnType('static');
+$interface->addMethodFromGenerator($m);
+// public function getConnection(): ConnectionInterface
+$m = new MethodGenerator(
+    'getConnection',
+    [],
+    MethodGenerator::FLAG_PUBLIC,
+);
+$m->setReturnType(ConnectionInterface::class);
+$interface->addMethodFromGenerator($m);
 // Add Capability methods
 $m = new MethodGenerator(
     'getServerCapabilities',
@@ -95,13 +121,6 @@ $m = new MethodGenerator(
     MethodGenerator::FLAG_PUBLIC,
 );
 $m->setReturnType('?' . ServerCapabilities::class);
-$interface->addMethodFromGenerator($m);
-$m = new MethodGenerator(
-    'setServerCapabilities',
-    [Generator\ParameterGenerator::fromArray(['type' => ServerCapabilities::class, 'name' => 'capabilities'])],
-    MethodGenerator::FLAG_PUBLIC,
-);
-$m->setReturnType('void');
 $interface->addMethodFromGenerator($m);
 
 foreach ($methods as $method => $options) {

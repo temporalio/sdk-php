@@ -44,7 +44,6 @@ use Temporal\Workflow\WorkflowExecution;
  * ```
  *
  * @see WorkflowClientCallsInterceptorTrait
- * @psalm-immutable
  */
 interface WorkflowClientCallsInterceptor extends Interceptor
 {

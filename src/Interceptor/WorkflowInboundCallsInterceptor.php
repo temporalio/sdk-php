@@ -37,7 +37,6 @@ use Temporal\Internal\Interceptor\Interceptor;
  * ```
  *
  * @see WorkflowInboundCallsInterceptorTrait
- * @psalm-immutable
  */
 interface WorkflowInboundCallsInterceptor extends Interceptor
 {

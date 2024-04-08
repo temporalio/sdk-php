@@ -5,13 +5,11 @@ declare(strict_types=1);
 namespace Temporal\Tests\Unit\Client\Interceptor;
 
 use PHPUnit\Framework\TestCase;
-use Temporal\Api\Workflowservice\V1\GetSystemInfoResponse;
-use Temporal\Api\Workflowservice\V1\GetSystemInfoResponse\Capabilities;
+use Temporal\Client\Common\ServerCapabilities;
 use Temporal\Client\GRPC\ContextInterface;
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\GRPC\StatusCode;
 use Temporal\Client\Interceptor\SystemInfoInterceptor;
-use Temporal\Client\ServerCapabilities;
 use Temporal\Exception\Client\ServiceClientException;
 
 final class SystemInfoInterceptorTestCase extends TestCase
@@ -27,16 +25,10 @@ final class SystemInfoInterceptorTestCase extends TestCase
 
     public function testWithoutCapabilities(): void
     {
-        $this->assertFalse($this->isRequested());
-
         $this->serviceClient
             ->expects($this->once())
-            ->method('getSystemInfo')
-            ->willReturn(new GetSystemInfoResponse());
-
-        $this->serviceClient
-            ->expects($this->never())
-            ->method('setServerCapabilities');
+            ->method('getServerCapabilities')
+            ->willReturn(null);
 
         $this->interceptor->interceptCall(
             'foo',
@@ -44,34 +36,14 @@ final class SystemInfoInterceptorTestCase extends TestCase
             $this->createMock(ContextInterface::class),
             fn () => new \stdClass()
         );
-
-        $this->assertTrue($this->isRequested());
     }
 
     public function testWithCapabilities(): void
     {
-        $this->assertFalse($this->isRequested());
-
         $this->serviceClient
             ->expects($this->once())
-            ->method('getSystemInfo')
-            ->willReturn(new GetSystemInfoResponse(
-                [
-                    'capabilities' => new Capabilities([
-                        'signal_and_query_header' => true,
-                        'internal_error_differentiation' => true
-                    ])
-                ]
-            ));
-
-        $this->serviceClient
-            ->expects($this->once())
-            ->method('setServerCapabilities')
-            ->with($this->callback(
-                fn (ServerCapabilities $capabilities) =>
-                    $capabilities->isSignalAndQueryHeaderSupports() &&
-                    $capabilities->isInternalErrorDifferentiation()
-            ));
+            ->method('getServerCapabilities')
+            ->willReturn(new ServerCapabilities());
 
         $this->interceptor->interceptCall(
             'foo',
@@ -79,62 +51,6 @@ final class SystemInfoInterceptorTestCase extends TestCase
             $this->createMock(ContextInterface::class),
             fn () => new \stdClass()
         );
-
-        $this->assertTrue($this->isRequested());
-    }
-
-    public function testRequestShouldBeExecutedOnce(): void
-    {
-        $this->assertFalse($this->isRequested());
-
-        $this->serviceClient
-            // it is important for this test
-            ->expects($this->once())
-            ->method('getSystemInfo')
-            ->willReturn(new GetSystemInfoResponse());
-
-        $this->interceptor->interceptCall(
-            'foo',
-            new \stdClass(),
-            $this->createMock(ContextInterface::class),
-            fn () => new \stdClass()
-        );
-
-        $this->assertTrue($this->isRequested());
-
-        $this->interceptor->interceptCall(
-            'foo',
-            new \stdClass(),
-            $this->createMock(ContextInterface::class),
-            fn () => new \stdClass()
-        );
-
-        $this->assertTrue($this->isRequested());
-    }
-
-    public function testUnimplementedException(): void
-    {
-        $this->assertFalse($this->isRequested());
-
-        $exception = $this->createException(StatusCode::UNIMPLEMENTED);
-
-        $this->serviceClient
-            ->expects($this->once())
-            ->method('getSystemInfo')
-            ->willThrowException($exception);
-
-        $this->serviceClient
-            ->expects($this->never())
-            ->method('setServerCapabilities');
-
-        $this->interceptor->interceptCall(
-            'foo',
-            new \stdClass(),
-            $this->createMock(ContextInterface::class),
-            fn () => new \stdClass()
-        );
-
-        $this->assertTrue($this->isRequested());
     }
 
     public function testServiceClientException(): void
@@ -143,12 +59,8 @@ final class SystemInfoInterceptorTestCase extends TestCase
 
         $this->serviceClient
             ->expects($this->once())
-            ->method('getSystemInfo')
+            ->method('getServerCapabilities')
             ->willThrowException($exception);
-
-        $this->serviceClient
-            ->expects($this->never())
-            ->method('setServerCapabilities');
 
         $this->expectException(ServiceClientException::class);
         $this->interceptor->interceptCall(
@@ -159,12 +71,9 @@ final class SystemInfoInterceptorTestCase extends TestCase
         );
     }
 
-    private function isRequested(): bool
+    public function testDeprecatedClassExisting(): void
     {
-        $ref = new \ReflectionProperty($this->interceptor, 'systemInfoRequested');
-        $ref->setAccessible(true);
-
-        return $ref->getValue($this->interceptor);
+        self::assertTrue(\class_exists(\Temporal\Client\ServerCapabilities::class));
     }
 
     private function createException(int $code): ServiceClientException

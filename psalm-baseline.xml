@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="5.22.2@d768d914152dbbf3486c36398802f74e80cfde48">
+<files psalm-version="5.23.1@8471a896ccea3526b26d082f4461eeea467f10a4">
   <file src="src/Activity.php">
     <ImplicitToStringCast>
       <code><![CDATA[$type]]></code>
@@ -51,37 +51,11 @@
       <code><![CDATA[$retryOption->maximumInterval]]></code>
       <code><![CDATA[$waitRetry]]></code>
     </InvalidArgument>
-    <PossiblyNullReference>
-      <code><![CDATA[getTimestamp]]></code>
-    </PossiblyNullReference>
-    <UnsafeInstantiation>
-      <code><![CDATA[new static($client)]]></code>
-      <code><![CDATA[new static($client)]]></code>
-    </UnsafeInstantiation>
   </file>
   <file src="src/Client/GRPC/Context.php">
     <ArgumentTypeCoercion>
       <code><![CDATA[$format]]></code>
     </ArgumentTypeCoercion>
-    <PossiblyInvalidArgument>
-      <code><![CDATA[$timeout]]></code>
-    </PossiblyInvalidArgument>
-  </file>
-  <file src="src/Client/Interceptor/SystemInfoInterceptor.php">
-    <ImpureFunctionCall>
-      <code><![CDATA[$next($method, $arg, $ctx)]]></code>
-      <code><![CDATA[$next($method, $arg, $ctx)]]></code>
-    </ImpureFunctionCall>
-    <ImpureMethodCall>
-      <code><![CDATA[getCapabilities]]></code>
-      <code><![CDATA[getInternalErrorDifferentiation]]></code>
-      <code><![CDATA[getSignalAndQueryHeader]]></code>
-      <code><![CDATA[getSystemInfo]]></code>
-      <code><![CDATA[setServerCapabilities]]></code>
-    </ImpureMethodCall>
-    <InaccessibleProperty>
-      <code><![CDATA[$this->systemInfoRequested]]></code>
-    </InaccessibleProperty>
   </file>
   <file src="src/Client/Schedule/Action/StartWorkflowAction.php">
     <DocblockTypeContradiction>
@@ -156,9 +130,6 @@
     </PossiblyNullArgument>
   </file>
   <file src="src/Client/Update/UpdateHandle.php">
-    <InvalidOperand>
-      <code><![CDATA[$timeout * 1000]]></code>
-    </InvalidOperand>
     <PossiblyNullArgument>
       <code><![CDATA[$result->getSuccess()]]></code>
     </PossiblyNullArgument>
