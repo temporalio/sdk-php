@@ -218,24 +218,38 @@ class UntypedWorkflowStubTestCase extends AbstractClient
         $client = $this->createClient();
         $simple = $client->newUntypedWorkflowStub('SimpleSignalledWorkflowWithSleep');
 
-        $e = $client->start($simple, -1);
+        $run = $client->start($simple, -1);
+        $startAt = \microtime(true);
 
-        $stubDescription = $simple->describe();
-        $runDescription = $e->describe();
+        do {
+            $stubDescription = $simple->describe();
+            // 5 seconds limit
+            if (\microtime(true) - $startAt > 5) {
+                throw new InvalidArgumentException('Workflow execution not started');
+            }
+            // wait for workflow was started on a worker
+        } while ($stubDescription->info->historyLength < 5);
+
+        $runDescription = $run->describe();
 
         self::assertEquals($stubDescription, $runDescription);
         self::assertSame(WorkflowExecutionStatus::Running, $runDescription->info->status);
 
         $simple->terminate('user triggered');
-        // Wait a little bit for the workflow to terminate
-        \usleep(1000);
+        try {
+            // Wait for termination
+            $simple->getResult();
+        } catch (WorkflowFailedException $e) {
+            $this->assertInstanceOf(TerminatedFailure::class, $e->getPrevious());
+        }
 
         $stubDescription = $simple->describe();
-        $runDescription = $e->describe();
+        $runDescription = $run->describe();
 
         // After termination
         self::assertEquals($stubDescription, $runDescription);
         self::assertSame(WorkflowExecutionStatus::Terminated, $runDescription->info->status);
+        self::assertSame(WorkflowExecutionStatus::Terminated, $stubDescription->info->status);
     }
 
     public function testSignalRunningWorkflowWithInheritedSignal()
