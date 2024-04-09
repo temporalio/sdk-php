@@ -19,6 +19,7 @@ use Temporal\Exception\Failure\TerminatedFailure;
 use Temporal\Exception\IllegalStateException;
 use Temporal\Exception\InvalidArgumentException;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithoutHandler;
+use Temporal\Workflow\WorkflowExecutionStatus;
 
 /**
  * @group client
@@ -210,6 +211,31 @@ class UntypedWorkflowStubTestCase extends AbstractClient
         } catch (WorkflowFailedException $e) {
             $this->assertInstanceOf(TerminatedFailure::class, $e->getPrevious());
         }
+    }
+
+    public function testDescribe(): void
+    {
+        $client = $this->createClient();
+        $simple = $client->newUntypedWorkflowStub('SimpleSignalledWorkflowWithSleep');
+
+        $e = $client->start($simple, -1);
+
+        $stubDescription = $simple->describe();
+        $runDescription = $e->describe();
+
+        self::assertEquals($stubDescription, $runDescription);
+        self::assertSame(WorkflowExecutionStatus::Running, $runDescription->info->status);
+
+        $simple->terminate('user triggered');
+        // Wait a little bit for the workflow to terminate
+        \usleep(1000);
+
+        $stubDescription = $simple->describe();
+        $runDescription = $e->describe();
+
+        // After termination
+        self::assertEquals($stubDescription, $runDescription);
+        self::assertSame(WorkflowExecutionStatus::Terminated, $runDescription->info->status);
     }
 
     public function testSignalRunningWorkflowWithInheritedSignal()

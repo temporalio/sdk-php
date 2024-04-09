@@ -513,6 +513,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                 $response = $this->serviceClient->DescribeWorkflowExecution($request);
                 $mapper = new WorkflowExecutionInfoMapper($this->converter);
 
+                /** @psalm-suppress PossiblyNullArgument */
                 return new WorkflowExecutionDescription(
                     info: $mapper->fromMessage($response->getWorkflowExecutionInfo()),
                 );
