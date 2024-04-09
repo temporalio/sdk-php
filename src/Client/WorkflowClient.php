@@ -26,6 +26,7 @@ use Temporal\Client\Common\ClientContextTrait;
 use Temporal\Client\Common\Paginator;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Client\Workflow\CountWorkflowExecutions;
+use Temporal\Client\Workflow\WorkflowExecutionHistory;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\Type;

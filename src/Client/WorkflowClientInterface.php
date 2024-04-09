@@ -16,6 +16,7 @@ use Temporal\Client\Common\ClientContextInterface;
 use Temporal\Client\Common\Paginator;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Client\Workflow\CountWorkflowExecutions;
+use Temporal\Client\Workflow\WorkflowExecutionHistory;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowExecutionInfo as WorkflowExecutionInfoDto;
 use Temporal\Workflow\WorkflowRunInterface;

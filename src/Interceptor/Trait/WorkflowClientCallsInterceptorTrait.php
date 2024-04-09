@@ -11,8 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Interceptor\Trait;
 
+use Temporal\Client\Workflow\WorkflowExecutionDescription;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Interceptor\WorkflowClient\CancelInput;
+use Temporal\Interceptor\WorkflowClient\DescribeInput;
 use Temporal\Interceptor\WorkflowClient\GetResultInput;
 use Temporal\Interceptor\WorkflowClient\QueryInput;
 use Temporal\Interceptor\WorkflowClient\SignalInput;
@@ -109,5 +111,15 @@ trait WorkflowClientCallsInterceptorTrait
     public function terminate(TerminateInput $input, callable $next): void
     {
         $next($input);
+    }
+
+    /**
+     * Default implementation of the `describe` method.
+     *
+     * @see WorkflowClientCallsInterceptor::describe()
+     */
+    public function describe(DescribeInput $input, callable $next): WorkflowExecutionDescription
+    {
+        return $next($input);
     }
 }

@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Workflow;
 
+use Temporal\Client\Workflow\WorkflowExecutionDescription;
 use Temporal\DataConverter\Type;
 use Temporal\Exception\Client\WorkflowFailedException;
 
@@ -47,4 +48,6 @@ interface WorkflowRunInterface
      * @see DateInterval
      */
     public function getResult($type = null, int $timeout = null): mixed;
+
+    public function describe(): WorkflowExecutionDescription;
 }
