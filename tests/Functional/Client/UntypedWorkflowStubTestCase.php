@@ -19,6 +19,7 @@ use Temporal\Exception\Failure\TerminatedFailure;
 use Temporal\Exception\IllegalStateException;
 use Temporal\Exception\InvalidArgumentException;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithoutHandler;
+use Temporal\Workflow\WorkflowExecutionStatus;
 
 /**
  * @group client
@@ -210,6 +211,45 @@ class UntypedWorkflowStubTestCase extends AbstractClient
         } catch (WorkflowFailedException $e) {
             $this->assertInstanceOf(TerminatedFailure::class, $e->getPrevious());
         }
+    }
+
+    public function testDescribe(): void
+    {
+        $client = $this->createClient();
+        $simple = $client->newUntypedWorkflowStub('SimpleSignalledWorkflowWithSleep');
+
+        $run = $client->start($simple, -1);
+        $startAt = \microtime(true);
+
+        do {
+            $stubDescription = $simple->describe();
+            // 5 seconds limit
+            if (\microtime(true) - $startAt > 5) {
+                throw new InvalidArgumentException('Workflow execution not started');
+            }
+            // wait for workflow was started on a worker
+        } while ($stubDescription->info->historyLength < 5);
+
+        $runDescription = $run->describe();
+
+        self::assertEquals($stubDescription, $runDescription);
+        self::assertSame(WorkflowExecutionStatus::Running, $runDescription->info->status);
+
+        $simple->terminate('user triggered');
+        try {
+            // Wait for termination
+            $simple->getResult();
+        } catch (WorkflowFailedException $e) {
+            $this->assertInstanceOf(TerminatedFailure::class, $e->getPrevious());
+        }
+
+        $stubDescription = $simple->describe();
+        $runDescription = $run->describe();
+
+        // After termination
+        self::assertEquals($stubDescription, $runDescription);
+        self::assertSame(WorkflowExecutionStatus::Terminated, $runDescription->info->status);
+        self::assertSame(WorkflowExecutionStatus::Terminated, $stubDescription->info->status);
     }
 
     public function testSignalRunningWorkflowWithInheritedSignal()

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Client;
+namespace Temporal\Client\Workflow;
 
 use Generator;
 use IteratorAggregate;

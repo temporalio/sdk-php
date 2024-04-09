@@ -20,6 +20,7 @@ use Temporal\Api\Errordetails\V1\QueryFailedFailure;
 use Temporal\Api\History\V1\HistoryEvent;
 use Temporal\Api\Query\V1\WorkflowQuery;
 use Temporal\Api\Update\V1\Request as UpdateRequestMessage;
+use Temporal\Api\Workflowservice\V1\DescribeWorkflowExecutionRequest;
 use Temporal\Api\Workflowservice\V1\GetWorkflowExecutionHistoryRequest;
 use Temporal\Api\Workflowservice\V1\QueryWorkflowRequest;
 use Temporal\Api\Workflowservice\V1\RequestCancelWorkflowExecutionRequest;
@@ -34,6 +35,7 @@ use Temporal\Client\Update\LifecycleStage;
 use Temporal\Client\Update\UpdateHandle;
 use Temporal\Client\Update\UpdateOptions;
 use Temporal\Client\Update\WaitPolicy;
+use Temporal\Client\Workflow\WorkflowExecutionDescription;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Common\Uuid;
@@ -58,6 +60,7 @@ use Temporal\Exception\WorkflowExecutionFailedException;
 use Temporal\Interceptor\Header;
 use Temporal\Interceptor\HeaderInterface;
 use Temporal\Interceptor\WorkflowClient\CancelInput;
+use Temporal\Interceptor\WorkflowClient\DescribeInput;
 use Temporal\Interceptor\WorkflowClient\GetResultInput;
 use Temporal\Interceptor\WorkflowClient\QueryInput;
 use Temporal\Interceptor\WorkflowClient\SignalInput;
@@ -68,6 +71,7 @@ use Temporal\Interceptor\WorkflowClient\UpdateRef;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Internal\Interceptor\HeaderCarrier;
 use Temporal\Internal\Interceptor\Pipeline;
+use Temporal\Internal\Mapper\WorkflowExecutionInfoMapper;
 use Temporal\Workflow\WorkflowExecution;
 
 final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
@@ -494,6 +498,32 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
         }
 
         return $result->getValue(0, $type);
+    }
+
+    public function describe(): WorkflowExecutionDescription
+    {
+        $this->assertStarted(__FUNCTION__);
+
+        return $this->interceptors->with(
+            function (DescribeInput $input): WorkflowExecutionDescription {
+                $request = new DescribeWorkflowExecutionRequest();
+                $request->setNamespace($input->namespace);
+                $request->setExecution($input->workflowExecution->toProtoWorkflowExecution());
+
+                $response = $this->serviceClient->DescribeWorkflowExecution($request);
+                $mapper = new WorkflowExecutionInfoMapper($this->converter);
+
+                /** @psalm-suppress PossiblyNullArgument */
+                return new WorkflowExecutionDescription(
+                    info: $mapper->fromMessage($response->getWorkflowExecutionInfo()),
+                );
+            },
+            /** @see WorkflowClientCallsInterceptor::describe() */
+            'describe',
+        )(new DescribeInput(
+            $this->execution,
+            $this->clientOptions->namespace,
+        ));
     }
 
     /**

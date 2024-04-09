@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Client;
 
+use Temporal\Client\Workflow\WorkflowExecutionDescription;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\DataConverter\Type;
 use Temporal\Workflow\WorkflowExecution;
@@ -42,5 +43,10 @@ final class WorkflowRun implements WorkflowRunInterface
     public function getResult($type = null, int $timeout = null): mixed
     {
         return $this->stub->getResult($type ?? $this->returnType, $timeout);
+    }
+
+    public function describe(): WorkflowExecutionDescription
+    {
+        return $this->stub->describe();
     }
 }
