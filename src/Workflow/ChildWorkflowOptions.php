@@ -29,6 +29,7 @@ use Temporal\Internal\Marshaller\Type\NullableType;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\Options;
 use Temporal\Worker\WorkerFactoryInterface;
+use Temporal\Workflow;
 
 /**
  * @psalm-import-type DateIntervalValue from DateInterval
@@ -164,6 +165,13 @@ final class ChildWorkflowOptions extends Options
         $this->workflowExecutionTimeout = CarbonInterval::seconds(0);
         $this->workflowRunTimeout = CarbonInterval::seconds(0);
         $this->workflowTaskTimeout = CarbonInterval::seconds(0);
+
+        try {
+            // Inherit namespace from the current Workflow if possible
+            $this->namespace = Workflow::getInfo()->namespace;
+        } catch (\Throwable) {
+            // Do nothing
+        }
 
         parent::__construct();
     }

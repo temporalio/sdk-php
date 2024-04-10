@@ -370,8 +370,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         string $type,
         ChildWorkflowOptions $options = null,
     ): ChildWorkflowStubInterface {
-        $options ??= (new ChildWorkflowOptions())
-            ->withNamespace($this->getInfo()->namespace);
+        $options ??= new ChildWorkflowOptions();
 
         return new ChildWorkflowStub($this->services->marshaller, $type, $options, $this->getHeader());
     }
