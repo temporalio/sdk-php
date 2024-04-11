@@ -39,6 +39,10 @@ class WorkflowOptionsTestCase extends AbstractDTOMarshalling
             'WorkflowStartDelay'       => 0,
             'WorkflowTaskTimeout'      => 0,
             'WorkflowIDReusePolicy'    => 2,
+            'WorkflowIdConflictPolicy' => [
+                'name' => 'Unspecified',
+                'value' => 0,
+            ],
             'RetryPolicy'              => null,
             'CronSchedule'             => null,
             'Memo'                     => null,
