@@ -15,6 +15,9 @@ use Temporal\Workflow\WorkflowExecutionInfo;
  */
 final class WorkflowExecutionDescription
 {
+    /**
+     * @internal
+     */
     public function __construct(
         public readonly WorkflowExecutionInfo $info,
     ) {

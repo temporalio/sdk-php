@@ -18,6 +18,7 @@ use Temporal\Client\WorkflowOptions;
 use Temporal\Common\IdReusePolicy;
 use Temporal\Common\RetryOptions;
 use Temporal\Common\Uuid;
+use Temporal\Common\WorkflowIdConflictPolicy;
 use Temporal\DataConverter\DataConverter;
 
 class WorkflowOptionsTestCase extends AbstractDTOMarshalling
@@ -123,6 +124,17 @@ class WorkflowOptionsTestCase extends AbstractDTOMarshalling
             IdReusePolicy::AllowDuplicateFailedOnly
         ));
         $this->assertSame(IdReusePolicy::AllowDuplicateFailedOnly->value, $dto->workflowIdReusePolicy);
+    }
+
+    public function testWorkflowIdConflictPolicy(): void
+    {
+        $dto = new WorkflowOptions();
+
+        $this->assertNotSame($dto, $newDto = $dto->withWorkflowIdConflictPolicy(
+            WorkflowIdConflictPolicy::Fail
+        ));
+        $this->assertSame(WorkflowIdConflictPolicy::Unspecified, $dto->workflowIdConflictPolicy);
+        $this->assertSame(WorkflowIdConflictPolicy::Fail, $newDto->workflowIdConflictPolicy);
     }
 
     public function testRetryOptionsChangesNotMutateState(): void
