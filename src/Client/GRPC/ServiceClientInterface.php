@@ -16,6 +16,7 @@ interface ServiceClientInterface
 {
     public function getContext() : ContextInterface;
     public function withContext(ContextInterface $context) : static;
+    public function withAuthKey(\Stringable|string $key) : static;
     public function getConnection() : \Temporal\Client\GRPC\Connection\ConnectionInterface;
     public function getServerCapabilities() : ?\Temporal\Client\Common\ServerCapabilities;
     /**
@@ -585,7 +586,11 @@ interface ServiceClientInterface
      */
     public function DescribeWorkflowExecution(V1\DescribeWorkflowExecutionRequest $arg, ContextInterface $ctx = null) : V1\DescribeWorkflowExecutionResponse;
     /**
-     * DescribeTaskQueue returns information about the target task queue.
+     * DescribeTaskQueue returns the following information about the target task queue,
+     * broken down by Build ID:
+     * - List of pollers
+     * - Workflow Reachability status
+     * - Backlog info for Workflow and/or Activity tasks
      *
      * @param V1\DescribeTaskQueueRequest $arg
      * @param ContextInterface|null $ctx
@@ -685,6 +690,8 @@ interface ServiceClientInterface
      */
     public function ListSchedules(V1\ListSchedulesRequest $arg, ContextInterface $ctx = null) : V1\ListSchedulesResponse;
     /**
+     * Deprecated. Use `UpdateWorkerVersioningRules`.
+     *
      * Allows users to specify sets of worker build id versions on a per task queue
      * basis. Versions
      * are ordered, and may be either compatible with some extant version, or a new
@@ -714,6 +721,7 @@ interface ServiceClientInterface
      */
     public function UpdateWorkerBuildIdCompatibility(V1\UpdateWorkerBuildIdCompatibilityRequest $arg, ContextInterface $ctx = null) : V1\UpdateWorkerBuildIdCompatibilityResponse;
     /**
+     * Deprecated. Use `GetWorkerVersioningRules`.
      * Fetches the worker build id versioning sets for a task queue.
      *
      * @param V1\GetWorkerBuildIdCompatibilityRequest $arg
@@ -723,6 +731,33 @@ interface ServiceClientInterface
      */
     public function GetWorkerBuildIdCompatibility(V1\GetWorkerBuildIdCompatibilityRequest $arg, ContextInterface $ctx = null) : V1\GetWorkerBuildIdCompatibilityResponse;
     /**
+     * Allows updating the Build ID assignment and redirect rules for a given Task
+     * Queue.
+     * WARNING: Worker Versioning is not yet stable and the API and behavior may change
+     * incompatibly.
+     * (-- api-linter: core::0127::http-annotation=disabled
+     * aip.dev/not-precedent: We do yet expose versioning API to HTTP. --)
+     *
+     * @param V1\UpdateWorkerVersioningRulesRequest $arg
+     * @param ContextInterface|null $ctx
+     * @return V1\UpdateWorkerVersioningRulesResponse
+     * @throws ServiceClientException
+     */
+    public function UpdateWorkerVersioningRules(V1\UpdateWorkerVersioningRulesRequest $arg, ContextInterface $ctx = null) : V1\UpdateWorkerVersioningRulesResponse;
+    /**
+     * Fetches the Build ID assignment and redirect rules for a Task Queue.
+     * WARNING: Worker Versioning is not yet stable and the API and behavior may change
+     * incompatibly.
+     *
+     * @param V1\GetWorkerVersioningRulesRequest $arg
+     * @param ContextInterface|null $ctx
+     * @return V1\GetWorkerVersioningRulesResponse
+     * @throws ServiceClientException
+     */
+    public function GetWorkerVersioningRules(V1\GetWorkerVersioningRulesRequest $arg, ContextInterface $ctx = null) : V1\GetWorkerVersioningRulesResponse;
+    /**
+     * Deprecated. Use `DescribeTaskQueue`.
+     *
      * Fetches task reachability to determine whether a worker may be retired.
      * The request may specify task queues to query for or let the server fetch all
      * task queues mapped to the given
