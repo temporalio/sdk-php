@@ -11,6 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Common;
 
+/**
+ * @see \Temporal\Api\Workflowservice\V1\GetSystemInfoResponse\Capabilities
+ */
 final class ServerCapabilities
 {
     /**
