@@ -106,6 +106,14 @@ $m = new MethodGenerator(
 );
 $m->setReturnType('static');
 $interface->addMethodFromGenerator($m);
+// withAuthKey(string $key): static
+$m = new MethodGenerator(
+    'withAuthKey',
+    [Generator\ParameterGenerator::fromArray(['type' => '\Stringable|string', 'name' => 'key'])],
+    MethodGenerator::FLAG_PUBLIC,
+);
+$m->setReturnType('static');
+$interface->addMethodFromGenerator($m);
 // public function getConnection(): ConnectionInterface
 $m = new MethodGenerator(
     'getConnection',

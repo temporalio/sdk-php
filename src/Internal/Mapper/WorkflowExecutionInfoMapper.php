@@ -64,7 +64,6 @@ final class WorkflowExecutionInfoMapper
             ? null
             : new WorkerVersionStampDto(
                 buildId: $versionStamp->getBuildId(),
-                bundleId: $versionStamp->getBundleId(),
                 useVersioning: $versionStamp->getUseVersioning(),
             );
     }

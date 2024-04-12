@@ -17,6 +17,7 @@ final class WorkerVersionStamp
 {
     public function __construct(
         public string $buildId = '',
+        /** @deprecated that field was removed {@link https://github.com/temporalio/api/pull/393} */
         public string $bundleId = '',
         public bool $useVersioning = false,
     ) {
