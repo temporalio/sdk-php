@@ -233,7 +233,15 @@ class WorkflowClient implements WorkflowClientInterface
     public function newWorkflowStub(
         string $class,
         WorkflowOptions $options = null,
+        bool $proxy = true,
     ): object {
+        $proxy and \trigger_error(
+            'Use `newRunningWorkflowProxy()` to create a Workflow proxy instance.',
+            \E_USER_DEPRECATED,
+        );
+
+        // todo create stub or proxy
+
         $workflow = $this->reader->fromClass($class);
 
         return new WorkflowProxy(
@@ -265,8 +273,19 @@ class WorkflowClient implements WorkflowClientInterface
     /**
      * {@inheritDoc}
      */
-    public function newRunningWorkflowStub(string $class, string $workflowID, ?string $runID = null): object
-    {
+    public function newRunningWorkflowStub(
+        string $class,
+        string $workflowID,
+        ?string $runID = null,
+        bool $proxy = true,
+    ): object {
+        $proxy and \trigger_error(
+            'Use `newRunningWorkflowProxy()` to create a Workflow proxy instance.',
+            \E_USER_DEPRECATED,
+        );
+
+        // todo create stub or proxy
+
         $workflow = $this->reader->fromClass($class);
 
         return new WorkflowProxy(

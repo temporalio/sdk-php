@@ -67,16 +67,45 @@ interface WorkflowClientInterface extends ClientContextInterface
      * @psalm-template T of object
      * @param class-string<T> $class
      * @param WorkflowOptions|null $options
-     * @return T
+     * @param bool $proxy If set to true, the method will return as the same as {@see self::newWorkflowProxy()}.
+     *        The parameter has {@see true} value by default to keep backward compatibility.
+     *        If you want to get a stub instance, set it to {@see false}, otherwise use {@see self::newWorkflowStub()}.
+     *        This parameter will be removed from the interface in the next major release and the method will
+     *        return exactly {@see WorkflowStubInterface}.
+     * @return ($poxy is false ? WorkflowStubInterface : T)
      */
     public function newWorkflowStub(
+        string $class,
+        WorkflowOptions $options = null,
+        bool $proxy = true,
+    ): object;
+
+    /**
+     * Creates a Workflow client proxy that can be used to start a single workflow execution.
+     * The proxy doesn't implement passed Workflow interface, but it will forward all the interface calls to the
+     * Workflow instance.
+     *
+     * The first call must be to a method annotated with {@see WorkflowMethod}.
+     * After related Workflow is started, the proxy can be also used to send signals, queries or updates to it.
+     *
+     * Use WorkflowClient->start($workflowProxy, ...$args) to start workflow asynchronously.
+     *
+     * IMPORTANT!
+     * There must be only one proxy per a workflow instance.
+     *
+     * @psalm-template T of object
+     * @param class-string<T> $class
+     * @param WorkflowOptions|null $options
+     * @return T
+     */
+    public function newWorkflowProxy(
         string $class,
         WorkflowOptions $options = null,
     ): object;
 
     /**
-     * Creates workflow untyped client stub that can be used to start a single
-     * workflow execution. After workflow is started it can be also used to send
+     * Creates Workflow untyped Client stub that can be used to start a single
+     * Workflow execution. After workflow is started it can be also used to send
      * signals or queries to it.
      *
      * Use WorkflowClient->start($workflowStub, ...$args) to start workflow asynchronously.
@@ -100,12 +129,35 @@ interface WorkflowClientInterface extends ClientContextInterface
      * @param class-string<T> $class
      * @param string $workflowID
      * @param string|null $runID
-     * @return T
+     * @param bool $proxy If set to true, the method will return as the same as {@see self::newWorkflowProxy()}.
+     *         The parameter has {@see true} value by default to keep backward compatibility.
+     *         If you want to get a stub instance, set it to {@see false}, otherwise use {@see self::newWorkflowStub()}.
+     *         This parameter will be removed from the interface in the next major release and set to {@see false} in
+     *         an implementation.
+     * @return ($poxy is false ? WorkflowStubInterface : T)
      */
     public function newRunningWorkflowStub(
         string $class,
         string $workflowID,
-        ?string $runID = null
+        ?string $runID = null,
+        bool $proxy = true,
+    ): object;
+
+    /**
+     * Returns Workflow proxy associated with running Workflow.
+     * The proxy doesn't implement passed Workflow interface, but it will forward all the interface calls to the
+     * Workflow instance.
+     *
+     * @psalm-template T of object
+     * @param class-string<T> $class
+     * @param string $workflowID
+     * @param string|null $runID
+     * @return T
+     */
+    public function newRunningWorkflowProxy(
+        string $class,
+        string $workflowID,
+        ?string $runID = null,
     ): object;
 
     /**
