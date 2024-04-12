@@ -64,7 +64,6 @@ final class WorkflowExecutionInfoMapperTestCase extends TestCase
                 'state_transition_count' => 1,
                 'history_size_bytes' => 1,
                 'most_recent_worker_version_stamp' => (new \Temporal\Api\Common\V1\WorkerVersionStamp())
-                    ->setBundleId('bundleId')
                     ->setBuildId('buildId')
                     ->setUseVersioning(true),
             ]),
@@ -94,7 +93,6 @@ final class WorkflowExecutionInfoMapperTestCase extends TestCase
         $this->assertTrue($info->autoResetPoints[0]->resettable);
         $this->assertSame('binaryChecksum', $info->autoResetPoints[0]->binaryChecksum);
         $this->assertSame(1, $info->historySizeBytes);
-        $this->assertSame('bundleId', $info->mostRecentWorkerVersionStamp->bundleId);
         $this->assertSame('buildId', $info->mostRecentWorkerVersionStamp->buildId);
         $this->assertTrue($info->mostRecentWorkerVersionStamp->useVersioning);
     }
