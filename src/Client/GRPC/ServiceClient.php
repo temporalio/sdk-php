@@ -729,7 +729,11 @@ class ServiceClient extends BaseClient
     }
 
     /**
-     * DescribeTaskQueue returns information about the target task queue.
+     * DescribeTaskQueue returns the following information about the target task queue,
+     * broken down by Build ID:
+     * - List of pollers
+     * - Workflow Reachability status
+     * - Backlog info for Workflow and/or Activity tasks
      *
      * @param V1\DescribeTaskQueueRequest $arg
      * @param ContextInterface|null $ctx
@@ -873,6 +877,8 @@ class ServiceClient extends BaseClient
     }
 
     /**
+     * Deprecated. Use `UpdateWorkerVersioningRules`.
+     *
      * Allows users to specify sets of worker build id versions on a per task queue
      * basis. Versions
      * are ordered, and may be either compatible with some extant version, or a new
@@ -906,6 +912,7 @@ class ServiceClient extends BaseClient
     }
 
     /**
+     * Deprecated. Use `GetWorkerVersioningRules`.
      * Fetches the worker build id versioning sets for a task queue.
      *
      * @param V1\GetWorkerBuildIdCompatibilityRequest $arg
@@ -919,6 +926,41 @@ class ServiceClient extends BaseClient
     }
 
     /**
+     * Allows updating the Build ID assignment and redirect rules for a given Task
+     * Queue.
+     * WARNING: Worker Versioning is not yet stable and the API and behavior may change
+     * incompatibly.
+     * (-- api-linter: core::0127::http-annotation=disabled
+     * aip.dev/not-precedent: We do yet expose versioning API to HTTP. --)
+     *
+     * @param V1\UpdateWorkerVersioningRulesRequest $arg
+     * @param ContextInterface|null $ctx
+     * @return V1\UpdateWorkerVersioningRulesResponse
+     * @throws ServiceClientException
+     */
+    public function UpdateWorkerVersioningRules(V1\UpdateWorkerVersioningRulesRequest $arg, ContextInterface $ctx = null) : V1\UpdateWorkerVersioningRulesResponse
+    {
+        return $this->invoke("UpdateWorkerVersioningRules", $arg, $ctx);
+    }
+
+    /**
+     * Fetches the Build ID assignment and redirect rules for a Task Queue.
+     * WARNING: Worker Versioning is not yet stable and the API and behavior may change
+     * incompatibly.
+     *
+     * @param V1\GetWorkerVersioningRulesRequest $arg
+     * @param ContextInterface|null $ctx
+     * @return V1\GetWorkerVersioningRulesResponse
+     * @throws ServiceClientException
+     */
+    public function GetWorkerVersioningRules(V1\GetWorkerVersioningRulesRequest $arg, ContextInterface $ctx = null) : V1\GetWorkerVersioningRulesResponse
+    {
+        return $this->invoke("GetWorkerVersioningRules", $arg, $ctx);
+    }
+
+    /**
+     * Deprecated. Use `DescribeTaskQueue`.
+     *
      * Fetches task reachability to determine whether a worker may be retired.
      * The request may specify task queues to query for or let the server fetch all
      * task queues mapped to the given

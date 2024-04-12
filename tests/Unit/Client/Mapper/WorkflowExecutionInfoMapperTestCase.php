@@ -64,7 +64,6 @@ final class WorkflowExecutionInfoMapperTestCase extends TestCase
                 'state_transition_count' => 1,
                 'history_size_bytes' => 1,
                 'most_recent_worker_version_stamp' => (new \Temporal\Api\Common\V1\WorkerVersionStamp())
-                    // ->setBundleId('bundleId')
                     ->setBuildId('buildId')
                     ->setUseVersioning(true),
             ]),

@@ -40,6 +40,7 @@ abstract class BaseClient implements ServiceClientInterface
 
     private Connection $connection;
     private ContextInterface $context;
+    private \Stringable|string $apiKey = '';
 
     /**
      * @param WorkflowServiceClient|Closure(): WorkflowServiceClient $workflowService Service Client or its factory
@@ -71,6 +72,21 @@ abstract class BaseClient implements ServiceClientInterface
     {
         $clone = clone $this;
         $clone->context = $context;
+        return $clone;
+    }
+
+    /**
+     * Set the authentication token for the service client.
+     *
+     * This is the equivalent of providing an "Authorization" header with "Bearer " + the given key.
+     * This will overwrite any "Authorization" header that may be on the context before each request to the
+     * Temporal service.
+     * You may pass your own {@see \Stringable} implementation to be able to change the key dynamically.
+     */
+    public function withAuthKey(\Stringable|string $key): static
+    {
+        $clone = clone $this;
+        $clone->apiKey = $key;
         return $clone;
     }
 
@@ -157,8 +173,8 @@ abstract class BaseClient implements ServiceClientInterface
     {
         $clone = clone $this;
         /** @see GrpcClientInterceptor::interceptCall() */
-        $callable = $pipeline?->with(Closure::fromCallable([$clone, 'call']), 'interceptCall');
-        $clone->invokePipeline = $callable === null ? null : Closure::fromCallable($callable);
+        $callable = $pipeline?->with($clone->call(...), 'interceptCall');
+        $clone->invokePipeline = $callable === null ? null : $callable(...);
         return $clone;
     }
 
@@ -224,9 +240,17 @@ abstract class BaseClient implements ServiceClientInterface
      *
      * @throw ClientException
      */
-    protected function invoke(string $method, object $arg, ?ContextInterface $ctx = null)
+    protected function invoke(string $method, object $arg, ?ContextInterface $ctx = null): mixed
     {
         $ctx ??= $this->context;
+
+        // Add the API key to the context
+        $key = (string)$this->apiKey;
+        if ($key !== '') {
+            $ctx = $ctx->withMetadata([
+                'Authorization' => ["Bearer $key"],
+            ]);
+        }
 
         return $this->invokePipeline !== null
             ? ($this->invokePipeline)($method, $arg, $ctx)
