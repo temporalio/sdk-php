@@ -194,6 +194,7 @@ final class WorkflowStarter
             ->setCronSchedule($options->cronSchedule ?? '')
             ->setRetryPolicy($options->retryOptions ? $options->retryOptions->toWorkflowRetryPolicy() : null)
             ->setWorkflowIdReusePolicy($options->workflowIdReusePolicy)
+            ->setWorkflowIdConflictPolicy($options->workflowIdConflictPolicy->value)
             ->setWorkflowRunTimeout(DateInterval::toDuration($options->workflowRunTimeout))
             ->setWorkflowExecutionTimeout(DateInterval::toDuration($options->workflowExecutionTimeout))
             ->setWorkflowTaskTimeout(DateInterval::toDuration($options->workflowTaskTimeout))

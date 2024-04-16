@@ -21,6 +21,7 @@ use Temporal\Common\IdReusePolicy;
 use Temporal\Common\MethodRetry;
 use Temporal\Common\RetryOptions;
 use Temporal\Common\Uuid;
+use Temporal\Common\WorkflowIdConflictPolicy;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\ArrayType;
@@ -98,11 +99,18 @@ final class WorkflowOptions extends Options
     public \DateInterval $workflowTaskTimeout;
 
     /**
-     * Whether server allow reuse of workflow ID, can be useful for deduplication logic.
-     * If set to {@see IdReusePolicy::POLICY_REJECT_DUPLICATE}.
+     * Whether server allow reuse of workflow ID.
+     *
+     * Can be useful for deduplication logic if set to {@see IdReusePolicy::POLICY_REJECT_DUPLICATE}.
      */
     #[Marshal(name: 'WorkflowIDReusePolicy')]
     public int $workflowIdReusePolicy = IdReusePolicy::POLICY_ALLOW_DUPLICATE_FAILED_ONLY;
+
+    /**
+     * Defines how to resolve an ID conflict with a *running* workflow.
+     */
+    #[Marshal(name: 'WorkflowIdConflictPolicy')]
+    public WorkflowIdConflictPolicy $workflowIdConflictPolicy = WorkflowIdConflictPolicy::Unspecified;
 
     /**
      * Optional retry policy for workflow. If a retry policy is specified, in
@@ -319,8 +327,8 @@ final class WorkflowOptions extends Options
     }
 
     /**
-     * Specifies server behavior if a completed workflow with the same id
-     * exists. Note that under no conditions Temporal allows two workflows
+     * Specifies server behavior if a *closed* workflow with the same id exists.
+     * Note that under no conditions Temporal allows two workflows
      * with the same namespace and workflow id run simultaneously.
      *
      * - {@see IdReusePolicy::AllowDuplicateFailedOnly}: Is a default
@@ -344,6 +352,21 @@ final class WorkflowOptions extends Options
 
         $self = clone $this;
         $self->workflowIdReusePolicy = $policy->value;
+        return $self;
+    }
+
+    /**
+     * Defines how to resolve an ID conflict with a *running* workflow.
+     *
+     * @psalm-suppress ImpureMethodCall
+     *
+     * @return $this
+     */
+    #[Pure]
+    public function withWorkflowIdConflictPolicy(WorkflowIdConflictPolicy $policy): self
+    {
+        $self = clone $this;
+        $self->workflowIdConflictPolicy = $policy;
         return $self;
     }
 
