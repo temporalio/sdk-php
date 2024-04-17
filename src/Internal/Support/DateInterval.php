@@ -162,7 +162,7 @@ final class DateInterval
         $d = new Duration();
         $parsed = self::parse($i);
         $d->setSeconds((int)$parsed->totalSeconds);
-        $d->setNanos($parsed->microseconds * 1000);
+        $d->setNanos(($parsed->totalMicroseconds % 1_000_000) * 1000);
 
         return $d;
     }
