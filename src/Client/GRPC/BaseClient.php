@@ -273,17 +273,10 @@ abstract class BaseClient implements ServiceClientInterface
     {
         $attempt = 0;
         $retryOption = $ctx->getRetryOptions();
-
-        $maxInterval = null;
-        if ($retryOption->maximumInterval !== null) {
-            $maxInterval = CarbonInterval::create($retryOption->maximumInterval);
-        }
-
-        $waitRetry = $retryOption->initialInterval ?? CarbonInterval::millisecond(500);
-        $waitRetry = CarbonInterval::create($waitRetry);
+        $initialIntervalMs = $congestionInitialIntervalMs = $maxIntervalMs = null;
 
         do {
-            $attempt++;
+            ++$attempt;
             try {
                 $options = $ctx->getOptions();
                 $deadline = $ctx->getDeadline();
@@ -312,23 +305,53 @@ abstract class BaseClient implements ServiceClientInterface
                 }
 
                 if ($retryOption->maximumAttempts !== 0 && $attempt >= $retryOption->maximumAttempts) {
+                    // Reached maximum attempts
                     throw $e;
                 }
 
                 if ($ctx->getDeadline() !== null && $ctx->getDeadline() > new DateTimeImmutable()) {
+                    // Deadline is reached
                     throw new TimeoutException('Call timeout has been reached');
                 }
 
+                // Init interval values in milliseconds
+                $initialIntervalMs ??= $retryOption->initialInterval === null
+                    ? CarbonInterval::millisecond(50)->totalMilliseconds
+                    : CarbonInterval::create($retryOption->initialInterval)->totalMilliseconds;
+                $congestionInitialIntervalMs ??= $retryOption->congestionInitialInterval === null
+                    ? CarbonInterval::millisecond(1000)->totalMilliseconds
+                    : CarbonInterval::create($retryOption->congestionInitialInterval)->totalMilliseconds;
+                $maxIntervalMs ??= $retryOption->maximumInterval !== null
+                    ? CarbonInterval::create($retryOption->maximumInterval)->totalMilliseconds
+                    : $initialIntervalMs * 200;
+
+                /*
+                 * The formula used to calculate the next sleep interval is:
+                 *
+                 * jitter = rand(-maximumJitterCoefficient, +maximumJitterCoefficient)
+                 * wait = min(pow(backoffCoefficient, failureCount - 1) * baseInterval * (1 + jitter), maximumInterval)
+                 *
+                 * where `baseInterval` is either set to `initialInterval` or
+                 * `congestionInitialInterval` based on the *most recent* failure.
+                 * Note that it means that attempt X can possibly get a shorter throttle
+                 * than attempt X-1, if a non-congestion failure occurs after a congestion failure.
+                 * This is the expected behaviour for all SDK.
+                 */
+
+                $baseInterval = $e->getCode() === StatusCode::RESOURCE_EXHAUSTED
+                        ? $congestionInitialIntervalMs
+                        : $initialIntervalMs;
+
+                // Choose a random number in the range -maxJitterCoefficient ... +maxJitterCoefficient
+                $jitter = \random_int(-1000, 1000) * $retryOption->maximumJitterCoefficient / 1000;
+
+                // Calculate the backoff interval for the current attempt
+                $backoff = $retryOption->backoffCoefficient ** ($attempt - 1);
+
+                $wait = \min($maxIntervalMs, $backoff * $baseInterval * (1 + $jitter));
+
                 // wait till the next call
-                $this->usleep((int)$waitRetry->totalMicroseconds);
-
-                $waitRetry = CarbonInterval::millisecond(
-                    $waitRetry->totalMilliseconds * $retryOption->backoffCoefficient
-                );
-
-                if ($maxInterval !== null && $maxInterval->totalMilliseconds < $waitRetry->totalMilliseconds) {
-                    $waitRetry = $maxInterval;
-                }
+                $this->usleep((int)$wait);
             }
         } while (true);
     }

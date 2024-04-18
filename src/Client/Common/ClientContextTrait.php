@@ -47,7 +47,7 @@ trait ClientContextTrait
         return $new;
     }
 
-    public function withRetryOptions(RetryOptions $options): static
+    public function withRetryOptions(RpcRetryOption $options): static
     {
         $new = clone $this;
         $context = $new->client->getContext();

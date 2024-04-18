@@ -181,7 +181,7 @@ final class ChildWorkflowOptions extends Options
      * @param CronSchedule|null $cron
      * @return $this
      */
-    public function mergeWith(MethodRetry $retry = null, CronSchedule $cron = null): self
+    public function mergeWith(?MethodRetry $retry = null, ?CronSchedule $cron = null): self
     {
         $self = clone $this;
 
