@@ -36,7 +36,7 @@ final class RpcRetryOption extends RetryOptions
      */
     public static function fromRetryOptions(RetryOptions $options): self
     {
-        return (new self())
+        return $options instanceof self ? $options :  (new self())
             ->withInitialInterval($options->initialInterval)
             ->withBackoffCoefficient($options->backoffCoefficient)
             ->withMaximumInterval($options->maximumInterval)

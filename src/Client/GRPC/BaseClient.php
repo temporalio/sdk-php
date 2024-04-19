@@ -19,6 +19,8 @@ use Fiber;
 use Grpc\UnaryCall;
 use Temporal\Api\Workflowservice\V1\GetSystemInfoRequest;
 use Temporal\Api\Workflowservice\V1\WorkflowServiceClient;
+use Temporal\Client\Common\BackoffThrottler;
+use Temporal\Client\Common\RpcRetryOption;
 use Temporal\Client\Common\ServerCapabilities;
 use Temporal\Client\GRPC\Connection\Connection;
 use Temporal\Client\GRPC\Connection\ConnectionInterface;
@@ -272,8 +274,8 @@ abstract class BaseClient implements ServiceClientInterface
     private function call(string $method, object $arg, ContextInterface $ctx): object
     {
         $attempt = 0;
-        $retryOption = $ctx->getRetryOptions();
-        $initialIntervalMs = $congestionInitialIntervalMs = $maxIntervalMs = null;
+        $retryOption = RpcRetryOption::fromRetryOptions($ctx->getRetryOptions());
+        $initialIntervalMs = $congestionInitialIntervalMs = $throttler = null;
 
         do {
             ++$attempt;
@@ -316,42 +318,29 @@ abstract class BaseClient implements ServiceClientInterface
 
                 // Init interval values in milliseconds
                 $initialIntervalMs ??= $retryOption->initialInterval === null
-                    ? CarbonInterval::millisecond(50)->totalMilliseconds
-                    : CarbonInterval::create($retryOption->initialInterval)->totalMilliseconds;
+                    ? (int)CarbonInterval::millisecond(50)->totalMilliseconds
+                    : (int)(new CarbonInterval($retryOption->initialInterval))->totalMilliseconds;
                 $congestionInitialIntervalMs ??= $retryOption->congestionInitialInterval === null
-                    ? CarbonInterval::millisecond(1000)->totalMilliseconds
-                    : CarbonInterval::create($retryOption->congestionInitialInterval)->totalMilliseconds;
-                $maxIntervalMs ??= $retryOption->maximumInterval !== null
-                    ? CarbonInterval::create($retryOption->maximumInterval)->totalMilliseconds
-                    : $initialIntervalMs * 200;
+                    ? (int)CarbonInterval::millisecond(1000)->totalMilliseconds
+                    : (int)(new CarbonInterval($retryOption->congestionInitialInterval))->totalMilliseconds;
 
-                /*
-                 * The formula used to calculate the next sleep interval is:
-                 *
-                 * jitter = rand(-maximumJitterCoefficient, +maximumJitterCoefficient)
-                 * wait = min(pow(backoffCoefficient, failureCount - 1) * baseInterval * (1 + jitter), maximumInterval)
-                 *
-                 * where `baseInterval` is either set to `initialInterval` or
-                 * `congestionInitialInterval` based on the *most recent* failure.
-                 * Note that it means that attempt X can possibly get a shorter throttle
-                 * than attempt X-1, if a non-congestion failure occurs after a congestion failure.
-                 * This is the expected behaviour for all SDK.
-                 */
+                $throttler ??= new BackoffThrottler(
+                    maxInterval: $retryOption->maximumInterval !== null
+                        ? (int)(new CarbonInterval($retryOption->maximumInterval))->totalMilliseconds
+                        : $initialIntervalMs * 200,
+                    maxJitterCoefficient: $retryOption->maximumJitterCoefficient,
+                    backoffCoefficient: $retryOption->backoffCoefficient
+                );
 
+                // Initial interval always depends on the *most recent* failure.
                 $baseInterval = $e->getCode() === StatusCode::RESOURCE_EXHAUSTED
-                        ? $congestionInitialIntervalMs
-                        : $initialIntervalMs;
+                    ? $congestionInitialIntervalMs
+                    : $initialIntervalMs;
 
-                // Choose a random number in the range -maxJitterCoefficient ... +maxJitterCoefficient
-                $jitter = \random_int(-1000, 1000) * $retryOption->maximumJitterCoefficient / 1000;
-
-                // Calculate the backoff interval for the current attempt
-                $backoff = $retryOption->backoffCoefficient ** ($attempt - 1);
-
-                $wait = \min($maxIntervalMs, $backoff * $baseInterval * (1 + $jitter));
+                $wait = $throttler->calculateSleepTime(failureCount: $attempt, initialInterval: $baseInterval);
 
                 // wait till the next call
-                $this->usleep((int)$wait);
+                $this->usleep($wait);
             }
         } while (true);
     }

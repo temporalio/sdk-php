@@ -22,7 +22,7 @@ final class Context implements ContextInterface
     private ?\DateTimeInterface $deadline = null;
     private array $options = [];
     private array $metadata;
-    private RpcRetryOption $retryOptions;
+    private RetryOptions $retryOptions;
 
     private function __construct()
     {
@@ -73,7 +73,7 @@ final class Context implements ContextInterface
     public function withRetryOptions(RetryOptions $options): ContextInterface
     {
         $ctx = clone $this;
-        $ctx->retryOptions = $options instanceof RpcRetryOption ? $options : RpcRetryOption::fromRetryOptions($options);
+        $ctx->retryOptions = $options;
 
         return $ctx;
     }
@@ -93,7 +93,7 @@ final class Context implements ContextInterface
         return $this->deadline;
     }
 
-    public function getRetryOptions(): RpcRetryOption
+    public function getRetryOptions(): RetryOptions
     {
         return $this->retryOptions;
     }

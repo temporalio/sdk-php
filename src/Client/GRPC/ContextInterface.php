@@ -69,5 +69,5 @@ interface ContextInterface
     /**
      * @return RetryOptions
      */
-    public function getRetryOptions(): RpcRetryOption;
+    public function getRetryOptions(): RetryOptions;
 }
