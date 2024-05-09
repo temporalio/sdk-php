@@ -36,7 +36,7 @@
         "spiral/attributes": "^3.1.4",
         "spiral/roadrunner": "^2023.3.12 || ^2024.1",
         "spiral/roadrunner-cli": "^2.5",
-        "spiral/roadrunner-kv": "^4.0",
+        "spiral/roadrunner-kv": "^4.2",
         "spiral/roadrunner-worker": "^3.0",
         "symfony/filesystem": "^5.4 || ^6.0 || ^7.0",
         "symfony/http-client": "^5.4 || ^6.0 || ^7.0",
