@@ -10,6 +10,7 @@ use Temporal\Internal\Support\DateInterval;
 
 /**
  * @psalm-import-type DateIntervalValue from DateInterval
+ * @psalm-immutable
  */
 final class RpcRetryOptions extends RetryOptions
 {
@@ -22,10 +23,9 @@ final class RpcRetryOptions extends RetryOptions
 
     /**
      * Maximum amount of jitter to apply.
+     * Must be lower than 1.
      *
      * 0.1 means that actual retry time can be +/- 10% of the calculated time.
-     *
-     * @var float<0.0, 0.999999>
      */
     public float $maximumJitterCoefficient = 0.1;
 
@@ -58,7 +58,7 @@ final class RpcRetryOptions extends RetryOptions
     #[Pure]
     public function withCongestionInitialInterval($interval): self
     {
-        \assert(DateInterval::assert($interval) || $interval === null);
+        \assert($interval === null || DateInterval::assert($interval));
 
         $self = clone $this;
         $self->congestionInitialInterval = DateInterval::parseOrNull($interval, DateInterval::FORMAT_SECONDS);
@@ -71,7 +71,7 @@ final class RpcRetryOptions extends RetryOptions
      * 0.2 means that actual retry time can be +/- 20% of the calculated time.
      * Set to 0 to disable jitter. Must be lower than 1.
      *
-     * @param null|float<0.0, 0.999999> $coefficient Maximum amount of jitter.
+     * @param null|float $coefficient Maximum amount of jitter.
      *        Default will be used if set to {@see null}.
      *
      * @return self

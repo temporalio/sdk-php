@@ -127,7 +127,7 @@ class RetryOptions extends Options
      * @psalm-suppress ImpureMethodCall
      *
      * @param DateIntervalValue|null $interval
-     * @return self
+     * @return static
      */
     #[Pure]
     public function withInitialInterval($interval): self
@@ -143,7 +143,7 @@ class RetryOptions extends Options
      * @psalm-suppress ImpureMethodCall
      *
      * @param float $coefficient
-     * @return self
+     * @return static
      */
     #[Pure]
     public function withBackoffCoefficient(float $coefficient): self
@@ -159,7 +159,7 @@ class RetryOptions extends Options
      * @psalm-suppress ImpureMethodCall
      *
      * @param DateIntervalValue|null $interval
-     * @return self
+     * @return static
      */
     #[Pure]
     public function withMaximumInterval($interval): self
@@ -175,7 +175,7 @@ class RetryOptions extends Options
      * @psalm-suppress ImpureMethodCall
      *
      * @param int<0, max> $attempts
-     * @return self
+     * @return static
      */
     #[Pure]
     public function withMaximumAttempts(int $attempts): self
@@ -192,7 +192,7 @@ class RetryOptions extends Options
      * @psalm-suppress ImpureMethodCall
      *
      * @param ExceptionsList $exceptions
-     * @return self
+     * @return static
      */
     #[Pure]
     public function withNonRetryableExceptions(array $exceptions): self
