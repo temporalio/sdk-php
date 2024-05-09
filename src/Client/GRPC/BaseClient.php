@@ -20,7 +20,7 @@ use Grpc\UnaryCall;
 use Temporal\Api\Workflowservice\V1\GetSystemInfoRequest;
 use Temporal\Api\Workflowservice\V1\WorkflowServiceClient;
 use Temporal\Client\Common\BackoffThrottler;
-use Temporal\Client\Common\RpcRetryOption;
+use Temporal\Client\Common\RpcRetryOptions;
 use Temporal\Client\Common\ServerCapabilities;
 use Temporal\Client\GRPC\Connection\Connection;
 use Temporal\Client\GRPC\Connection\ConnectionInterface;
@@ -274,7 +274,7 @@ abstract class BaseClient implements ServiceClientInterface
     private function call(string $method, object $arg, ContextInterface $ctx): object
     {
         $attempt = 0;
-        $retryOption = RpcRetryOption::fromRetryOptions($ctx->getRetryOptions());
+        $retryOption = RpcRetryOptions::fromRetryOptions($ctx->getRetryOptions());
         $initialIntervalMs = $congestionInitialIntervalMs = $throttler = null;
 
         do {

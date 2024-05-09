@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Client\GRPC;
 
-use Temporal\Client\Common\RpcRetryOption;
 use Temporal\Common\RetryOptions;
 use Temporal\Internal\Support\DateInterval;
 

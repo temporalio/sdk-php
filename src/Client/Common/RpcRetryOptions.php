@@ -11,7 +11,7 @@ use Temporal\Internal\Support\DateInterval;
 /**
  * @psalm-import-type DateIntervalValue from DateInterval
  */
-final class RpcRetryOption extends RetryOptions
+final class RpcRetryOptions extends RetryOptions
 {
     /**
      * Interval of the first retry, on congestion related failures (i.e. RESOURCE_EXHAUSTED errors).
@@ -30,7 +30,7 @@ final class RpcRetryOption extends RetryOptions
     public float $maximumJitterCoefficient = 0.1;
 
     /**
-     * Converts {@see RetryOptions} to {@see RpcRetryOption}.
+     * Converts {@see RetryOptions} to {@see RpcRetryOptions}.
      *
      * @internal
      */

@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client\GRPC;
 
 use Carbon\CarbonInterval;
-use Temporal\Client\Common\RpcRetryOption;
+use Temporal\Client\Common\RpcRetryOptions;
 use Temporal\Common\RetryOptions;
 use Temporal\Common\SdkVersion;
 use Temporal\Internal\Support\DateInterval;
@@ -26,7 +26,7 @@ final class Context implements ContextInterface
 
     private function __construct()
     {
-        $this->retryOptions = RpcRetryOption::new()
+        $this->retryOptions = RpcRetryOptions::new()
             ->withMaximumAttempts(0)
             ->withInitialInterval(CarbonInterval::millisecond(500));
 
