@@ -58,7 +58,9 @@ final class RpcRetryOptions extends RetryOptions
     #[Pure]
     public function withCongestionInitialInterval($interval): self
     {
-        \assert($interval === null || DateInterval::assert($interval));
+        $interval === null || DateInterval::assert($interval) or throw new \InvalidArgumentException(
+            'Invalid interval value.'
+        );
 
         $self = clone $this;
         $self->congestionInitialInterval = DateInterval::parseOrNull($interval, DateInterval::FORMAT_SECONDS);

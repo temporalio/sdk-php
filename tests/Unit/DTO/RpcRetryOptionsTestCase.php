@@ -29,6 +29,19 @@ class RpcRetryOptionsTestCase extends AbstractDTOMarshalling
         self::assertNull($dto->congestionInitialInterval);
         self::assertInstanceOf(\DateInterval::class, $new->congestionInitialInterval);
         self::assertEquals(10_000, $new->congestionInitialInterval->totalMilliseconds);
+
+        // Set null
+        $new = $new->withCongestionInitialInterval(null);
+        self::assertNull($new->congestionInitialInterval);
+    }
+
+    public function testWithCongestionInitialIntervalIncorrectValue(): void
+    {
+        $dto = new RpcRetryOptions();
+
+        self::expectException(\InvalidArgumentException::class);
+
+        $dto->withCongestionInitialInterval(false);
     }
 
     public function testMaximumJitterCoefficient(): void
