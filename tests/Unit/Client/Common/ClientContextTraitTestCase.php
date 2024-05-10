@@ -9,7 +9,6 @@ use Temporal\Client\Common\ClientContextTrait;
 use Temporal\Client\Common\RpcRetryOptions;
 use Temporal\Client\GRPC\ContextInterface;
 use Temporal\Client\GRPC\ServiceClientInterface;
-use Temporal\Common\RetryOptions;
 use Temporal\Internal\Support\DateInterval;
 
 class ClientContextTraitTestCase extends TestCase

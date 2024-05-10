@@ -62,13 +62,20 @@ final class BackoffThrottler
      * Calculates the next sleep interval in milliseconds.
      *
      * @param int $failureCount number of failures
-     * @param int|null $initialInterval in milliseconds
+     * @param int $initialInterval in milliseconds
+     *
      * @return int<0, max>
+     *
+     * @psalm-assert int<1, max> $failureCount
+     * @psalm-assert int<1, max> $initialInterval
      *
      * @psalm-suppress InvalidOperand
      */
-    public function calculateSleepTime(int $failureCount, ?int $initialInterval = null): int
+    public function calculateSleepTime(int $failureCount, int $initialInterval): int
     {
+        $failureCount > 0 or throw new \InvalidArgumentException('$failureCount must be greater than 0.');
+        $initialInterval > 0 or throw new \InvalidArgumentException('$initialInterval must be greater than 0.');
+
         // Choose a random number in the range -maxJitterCoefficient ... +maxJitterCoefficient
         $jitter = \random_int(-1000, 1000) * $this->maxJitterCoefficient / 1000;
         $sleepTime = \min(
