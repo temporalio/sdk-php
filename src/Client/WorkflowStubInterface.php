@@ -94,8 +94,13 @@ interface WorkflowStubInterface extends WorkflowRunInterface
     public function update(string $name, ...$args): ?ValuesInterface;
 
     /**
-     * Asynchronously update a workflow execution by invoking its update handler and returning a
+     * Update a workflow execution by invoking its update handler and returning a
      * handle to the update request.
+     *
+     * By default, WaitPolicy is set to {@see \Temporal\Client\Update\LifecycleStage::StageAccepted},
+     * which means that the handle will return immediately after successful validation of the Update call.
+     * However, also note that the processing Workflow worker must be available. Otherwise, the request
+     * may block indefinitely or fail due to a timeout.
      *
      * Usually an update handler is a method annotated with the {@see UpdateMethod} attribute.
      *
