@@ -79,7 +79,9 @@ final class RpcRetryOptions extends RetryOptions
     #[Pure]
     public function withMaximumJitterCoefficient(?float $coefficient): self
     {
-        \assert($coefficient === null || ($coefficient >= 0.0 && $coefficient < 1.0));
+        $coefficient === null || ($coefficient >= 0.0 && $coefficient < 1.0) or throw new \InvalidArgumentException(
+            'Maximum jitter coefficient must be in range [0, 1).'
+        );
 
         $self = clone $this;
         $self->maximumJitterCoefficient = $coefficient ?? 0.1;
