@@ -19,6 +19,8 @@ use Fiber;
 use Grpc\UnaryCall;
 use Temporal\Api\Workflowservice\V1\GetSystemInfoRequest;
 use Temporal\Api\Workflowservice\V1\WorkflowServiceClient;
+use Temporal\Client\Common\BackoffThrottler;
+use Temporal\Client\Common\RpcRetryOptions;
 use Temporal\Client\Common\ServerCapabilities;
 use Temporal\Client\GRPC\Connection\Connection;
 use Temporal\Client\GRPC\Connection\ConnectionInterface;
@@ -272,18 +274,11 @@ abstract class BaseClient implements ServiceClientInterface
     private function call(string $method, object $arg, ContextInterface $ctx): object
     {
         $attempt = 0;
-        $retryOption = $ctx->getRetryOptions();
-
-        $maxInterval = null;
-        if ($retryOption->maximumInterval !== null) {
-            $maxInterval = CarbonInterval::create($retryOption->maximumInterval);
-        }
-
-        $waitRetry = $retryOption->initialInterval ?? CarbonInterval::millisecond(500);
-        $waitRetry = CarbonInterval::create($waitRetry);
+        $retryOption = RpcRetryOptions::fromRetryOptions($ctx->getRetryOptions());
+        $initialIntervalMs = $congestionInitialIntervalMs = $throttler = null;
 
         do {
-            $attempt++;
+            ++$attempt;
             try {
                 $options = $ctx->getOptions();
                 $deadline = $ctx->getDeadline();
@@ -312,23 +307,40 @@ abstract class BaseClient implements ServiceClientInterface
                 }
 
                 if ($retryOption->maximumAttempts !== 0 && $attempt >= $retryOption->maximumAttempts) {
+                    // Reached maximum attempts
                     throw $e;
                 }
 
                 if ($ctx->getDeadline() !== null && $ctx->getDeadline() > new DateTimeImmutable()) {
+                    // Deadline is reached
                     throw new TimeoutException('Call timeout has been reached');
                 }
 
-                // wait till the next call
-                $this->usleep((int)$waitRetry->totalMicroseconds);
+                // Init interval values in milliseconds
+                $initialIntervalMs ??= $retryOption->initialInterval === null
+                    ? (int)CarbonInterval::millisecond(50)->totalMilliseconds
+                    : (int)(new CarbonInterval($retryOption->initialInterval))->totalMilliseconds;
+                $congestionInitialIntervalMs ??= $retryOption->congestionInitialInterval === null
+                    ? (int)CarbonInterval::millisecond(1000)->totalMilliseconds
+                    : (int)(new CarbonInterval($retryOption->congestionInitialInterval))->totalMilliseconds;
 
-                $waitRetry = CarbonInterval::millisecond(
-                    $waitRetry->totalMilliseconds * $retryOption->backoffCoefficient
+                $throttler ??= new BackoffThrottler(
+                    maxInterval: $retryOption->maximumInterval !== null
+                        ? (int)(new CarbonInterval($retryOption->maximumInterval))->totalMilliseconds
+                        : $initialIntervalMs * 200,
+                    maxJitterCoefficient: $retryOption->maximumJitterCoefficient,
+                    backoffCoefficient: $retryOption->backoffCoefficient
                 );
 
-                if ($maxInterval !== null && $maxInterval->totalMilliseconds < $waitRetry->totalMilliseconds) {
-                    $waitRetry = $maxInterval;
-                }
+                // Initial interval always depends on the *most recent* failure.
+                $baseInterval = $e->getCode() === StatusCode::RESOURCE_EXHAUSTED
+                    ? $congestionInitialIntervalMs
+                    : $initialIntervalMs;
+
+                $wait = $throttler->calculateSleepTime(failureCount: $attempt, initialInterval: $baseInterval);
+
+                // wait till the next call
+                $this->usleep($wait);
             }
         } while (true);
     }

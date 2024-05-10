@@ -6,9 +6,9 @@ namespace Temporal\Tests\Unit\Client\Common;
 
 use PHPUnit\Framework\TestCase;
 use Temporal\Client\Common\ClientContextTrait;
+use Temporal\Client\Common\RpcRetryOptions;
 use Temporal\Client\GRPC\ContextInterface;
 use Temporal\Client\GRPC\ServiceClientInterface;
-use Temporal\Common\RetryOptions;
 use Temporal\Internal\Support\DateInterval;
 
 class ClientContextTraitTestCase extends TestCase
@@ -56,7 +56,7 @@ class ClientContextTraitTestCase extends TestCase
 
     public function testWithRetryOptions(): void
     {
-        $retry = RetryOptions::new()->withMaximumAttempts(123);
+        $retry = RpcRetryOptions::new()->withMaximumAttempts(123);
         $mock = $this->createMock(ContextInterface::class);
         $mock->expects($this->once())
             ->method('withRetryOptions')

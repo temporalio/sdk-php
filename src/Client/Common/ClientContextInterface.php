@@ -20,7 +20,7 @@ interface ClientContextInterface
      */
     public function withDeadline(\DateTimeInterface $deadline): static;
 
-    public function withRetryOptions(RetryOptions $options): static;
+    public function withRetryOptions(RpcRetryOptions $options): static;
 
     /**
      * A metadata map to send to the server
