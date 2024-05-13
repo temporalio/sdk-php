@@ -44,10 +44,10 @@ interface ScheduleClientInterface extends ClientContextInterface
     /**
      * List all schedules in a namespace.
      *
-     * @param non-empty-string $namespace
+     * @param non-empty-string|null $namespace If null, the preconfigured namespace will be used.
      * @param int<0, max> $pageSize Maximum number of Schedule info per page.
      *
      * @return Paginator<ScheduleListEntry>
      */
-    public function listSchedules(string $namespace = 'default', int $pageSize = 0,): Paginator;
+    public function listSchedules(?string $namespace = null, int $pageSize = 0,): Paginator;
 }
