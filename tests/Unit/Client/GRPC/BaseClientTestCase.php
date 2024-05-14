@@ -4,15 +4,21 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Client\GRPC;
 
+use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
 use Temporal\Api\Workflowservice\V1\GetSystemInfoRequest;
 use Temporal\Api\Workflowservice\V1\GetSystemInfoResponse;
 use Temporal\Api\Workflowservice\V1\GetSystemInfoResponse\Capabilities;
 use Temporal\Api\Workflowservice\V1\WorkflowServiceClient;
+use Temporal\Client\Common\RpcRetryOptions;
 use Temporal\Client\GRPC\BaseClient;
 use Temporal\Client\GRPC\Connection\ConnectionState;
 use Temporal\Client\GRPC\ContextInterface;
 use Temporal\Client\GRPC\ServiceClient;
+use Temporal\Client\GRPC\StatusCode;
+use Temporal\Common\RetryOptions;
+use Temporal\Exception\Client\ServiceClientException;
+use Temporal\Exception\Client\TimeoutException;
 use Temporal\Internal\Interceptor\Pipeline;
 
 class BaseClientTestCase extends TestCase
@@ -125,6 +131,96 @@ class BaseClientTestCase extends TestCase
         self::assertInstanceOf(ContextInterface::class, $ctx2);
         $this->assertArrayHasKey('Authorization', $ctx2->getMetadata());
         $this->assertSame(['Bearer test-key-2'], $ctx2->getMetadata()['Authorization']);
+    }
+
+    public function testServiceClientCallDeadlineReached(): void
+    {
+        $client = $this->createClientMock(fn() => new class() extends WorkflowServiceClient {
+            public function __construct() {}
+            public function testCall()
+            {
+                throw new class((object)['code' => StatusCode::UNKNOWN, 'metadata' => []])
+                    extends ServiceClientException {
+                };
+            }
+            public function close(): void
+            {
+            }
+        })->withInterceptorPipeline(null);
+
+        $client = $client->withContext($client->getContext()
+            ->withDeadline(new DateTimeImmutable('-1 second'))
+            ->withRetryOptions(RpcRetryOptions::new()->withMaximumAttempts(2)) // stop if deadline doesn't work
+        );
+
+        self::expectException(TimeoutException::class);
+
+        $client->testCall();
+    }
+
+    public function testServiceClientCallCustomException(): void
+    {
+        $client = $this->createClientMock(fn() => new class() extends WorkflowServiceClient {
+            public function __construct() {}
+            public function testCall()
+            {
+                throw new \RuntimeException('foo');
+            }
+            public function close(): void
+            {
+            }
+        })->withInterceptorPipeline(null);
+
+        $client = $client->withContext($client->getContext()
+            ->withDeadline(new DateTimeImmutable('-1 second'))
+            ->withRetryOptions(RpcRetryOptions::new()->withMaximumAttempts(2)) // stop if deadline doesn't work
+        );
+
+        self::expectException(\RuntimeException::class);
+        self::expectExceptionMessage('foo');
+
+        $client->testCall();
+    }
+
+    /**
+     * After attempts are exhausted, the last error is thrown.
+     */
+    public function testServiceClientCallMaximumAttemptsReached(): void
+    {
+        $client = $this->createClientMock(fn() => new class() extends WorkflowServiceClient {
+            public function __construct() {}
+            public function testCall()
+            {
+                static $counter = 0;
+                throw new class(++$counter)
+                    extends ServiceClientException {
+                    public function __construct(public int $attempt)
+                    {
+                        parent::__construct((object)['code' => StatusCode::UNKNOWN, 'metadata' => []]);
+                    }
+                    public function isTestError(): bool
+                    {
+                        return true;
+                    }
+                };
+            }
+            public function close(): void
+            {
+            }
+        })->withInterceptorPipeline(null);
+
+        $client = $client->withContext($client->getContext()
+            ->withDeadline(new DateTimeImmutable('+2 seconds')) // stop if attempts don't work
+            ->withRetryOptions(RpcRetryOptions::new()->withMaximumAttempts(3)->withBackoffCoefficient(1))
+        );
+
+        try {
+            $client->testCall();
+            self::fail('Expected exception');
+        } catch (ServiceClientException $e) {
+            self::assertTrue($e->isTestError());
+            self::assertSame(3, $e->attempt);
+        }
     }
 
     private function createClientMock(?callable $serviceClientFactory = null): BaseClient
