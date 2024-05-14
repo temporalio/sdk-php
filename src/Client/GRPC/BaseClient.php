@@ -311,7 +311,7 @@ abstract class BaseClient implements ServiceClientInterface
                     throw $e;
                 }
 
-                if ($ctx->getDeadline() !== null && $ctx->getDeadline() > new DateTimeImmutable()) {
+                if ($ctx->getDeadline() !== null && new DateTimeImmutable() > $ctx->getDeadline()) {
                     // Deadline is reached
                     throw new TimeoutException('Call timeout has been reached');
                 }
