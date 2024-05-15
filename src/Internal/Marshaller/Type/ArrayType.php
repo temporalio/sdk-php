@@ -83,7 +83,7 @@ class ArrayType extends Type implements DetectableTypeInterface, RuleFactoryInte
             $result = [];
 
             foreach ($value as $i => $item) {
-                $result[] = $this->type->parse($item, $current[$i] ?? null);
+                $result[$i] = $this->type->parse($item, $current[$i] ?? null);
             }
 
             return $result;
