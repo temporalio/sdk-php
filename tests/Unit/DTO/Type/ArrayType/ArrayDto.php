@@ -33,4 +33,9 @@ class ArrayDto
     public iterable $iterable;
 
     public ?iterable $iterableNullable;
+
+    public array $assoc;
+
+    #[MarshalArray(of: \stdClass::class)]
+    public array $assocOfType;
 }
