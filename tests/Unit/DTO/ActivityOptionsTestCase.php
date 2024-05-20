@@ -92,6 +92,15 @@ class ActivityOptionsTestCase extends AbstractDTOMarshalling
         ));
     }
 
+    public function testCancellationTypeChangesNotMutateStateUsingEnum(): void
+    {
+        $dto = new ActivityOptions();
+
+        $new = $dto->withCancellationType(ActivityCancellationType::WaitCancellationCompleted);
+        $this->assertNotSame($dto, $new);
+        $this->assertSame(ActivityCancellationType::WAIT_CANCELLATION_COMPLETED, $new->cancellationType);
+    }
+
     public function testActivityIdChangesNotMutateState(): void
     {
         $dto = new ActivityOptions();

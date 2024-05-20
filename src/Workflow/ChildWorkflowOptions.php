@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Workflow;
 
 use Carbon\CarbonInterval;
-use JetBrains\PhpStorm\ExpectedValues;
 use JetBrains\PhpStorm\Pure;
 use Temporal\Client\ClientOptions;
 use Temporal\Common\CronSchedule;
@@ -20,9 +19,9 @@ use Temporal\Common\IdReusePolicy;
 use Temporal\Common\MethodRetry;
 use Temporal\Common\RetryOptions;
 use Temporal\Exception\FailedCancellationException;
-use Temporal\Internal\Assert;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\ArrayType;
+use Temporal\Internal\Marshaller\Type\ChildWorkflowCancellationType as ChildWorkflowCancellationMarshalType;
 use Temporal\Internal\Marshaller\Type\CronType;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\NullableType;
@@ -33,7 +32,6 @@ use Temporal\Workflow;
 
 /**
  * @psalm-import-type DateIntervalValue from DateInterval
- * @psalm-import-type ChildWorkflowCancellationEnum from ChildWorkflowCancellationType
  */
 final class ChildWorkflowOptions extends Options
 {
@@ -98,16 +96,17 @@ final class ChildWorkflowOptions extends Options
      *
      * @see FailedCancellationException
      *
-     * @psalm-var ChildWorkflowCancellationEnum
+     * @psalm-var int<0, 3>
+     * @see ChildWorkflowCancellationType
      */
-    #[Marshal(name: 'WaitForCancellation', type: ChildWorkflowCancellationType::class)]
+    #[Marshal(name: 'WaitForCancellation', type: ChildWorkflowCancellationMarshalType::class)]
     public int $cancellationType = ChildWorkflowCancellationType::TRY_CANCEL;
 
     /**
-     * Whether server allow reuse of workflow ID, can be useful for dedup
+     * Whether server allow reuse of workflow ID, can be useful for deduplication
      * logic if set to IdReusePolicy::POLICY_REJECT_DUPLICATE.
      *
-     * @see IdReusePolicy::POLICY_REJECT_DUPLICATE
+     * @see IdReusePolicy::RejectDuplicate
      */
     #[Marshal(name: 'WorkflowIDReusePolicy')]
     public int $workflowIdReusePolicy = IdReusePolicy::POLICY_ALLOW_DUPLICATE_FAILED_ONLY;
@@ -320,16 +319,15 @@ final class ChildWorkflowOptions extends Options
      *
      * @psalm-suppress ImpureMethodCall
      *
-     * @param ChildWorkflowCancellationEnum $type
      * @return $this
      */
     #[Pure]
-    public function withChildWorkflowCancellationType(int $type): self
+    public function withChildWorkflowCancellationType(ChildWorkflowCancellationType|int $type): self
     {
-        assert(Assert::enum($type, ChildWorkflowCancellationType::class));
+        \is_int($type) and $type = ChildWorkflowCancellationType::from($type);
 
         $self = clone $this;
-        $self->cancellationType = $type;
+        $self->cancellationType = $type->value;
         return $self;
     }
 
@@ -352,7 +350,7 @@ final class ChildWorkflowOptions extends Options
      * @psalm-suppress ImpureMethodCall
      */
     #[Pure]
-    public function withWorkflowIdReusePolicy(IdReusePolicy|int $policy,): self
+    public function withWorkflowIdReusePolicy(IdReusePolicy|int $policy): self
     {
         \is_int($policy) and $policy = IdReusePolicy::from($policy);
 
@@ -430,20 +428,16 @@ final class ChildWorkflowOptions extends Options
      * Specifies how this workflow reacts to the death of the parent workflow.
      *
      * @psalm-suppress ImpureMethodCall
-     * @psalm-type ParentClosePolicyType = ParentClosePolicy::POLICY_*
      *
-     * @param ParentClosePolicyType $policy
      * @return $this
      */
-    public function withParentClosePolicy(
-        #[ExpectedValues(valuesFromClass: ParentClosePolicy::class)]
-        int $policy
-    ): self {
-        assert(Assert::enum($policy, ParentClosePolicy::class));
+    public function withParentClosePolicy(ParentClosePolicy|int $policy): self
+    {
+        \is_int($policy) and $policy = ParentClosePolicy::from($policy);
 
         $self = clone $this;
 
-        $self->parentClosePolicy = $policy;
+        $self->parentClosePolicy = $policy->value;
 
         return $self;
     }

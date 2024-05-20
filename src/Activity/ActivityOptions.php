@@ -15,8 +15,8 @@ use Carbon\CarbonInterval;
 use JetBrains\PhpStorm\Pure;
 use Temporal\Common\MethodRetry;
 use Temporal\Common\RetryOptions;
-use Temporal\Internal\Assert;
 use Temporal\Internal\Marshaller\Meta\Marshal;
+use Temporal\Internal\Marshaller\Type\ActivityCancellationType as ActivityCancellationMarshallerType;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\NullableType;
 use Temporal\Internal\Support\DateInterval;
@@ -75,9 +75,10 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
      * Whether to wait for canceled activity to be completed(activity can be
      * failed, completed, cancel accepted).
      *
-     * @psalm-var ActivityCancellationType::*
+     * @psalm-var int<0, 2>
+     * @see ActivityCancellationType
      */
-    #[Marshal(name: 'WaitForCancellation', type: ActivityCancellationType::class)]
+    #[Marshal(name: 'WaitForCancellation', type: ActivityCancellationMarshallerType::class)]
     public int $cancellationType = ActivityCancellationType::TRY_CANCEL;
 
     /**
@@ -176,9 +177,9 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
     #[Pure]
     public function withScheduleToCloseTimeout($timeout): self
     {
-        assert(DateInterval::assert($timeout));
+        \assert(DateInterval::assert($timeout));
         $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
-        assert($timeout->totalMicroseconds >= 0);
+        \assert($timeout->totalMicroseconds >= 0);
 
         $self = clone $this;
         $self->scheduleToCloseTimeout = $timeout;
@@ -199,9 +200,9 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
     #[Pure]
     public function withScheduleToStartTimeout($timeout): self
     {
-        assert(DateInterval::assert($timeout));
+        \assert(DateInterval::assert($timeout));
         $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
-        assert($timeout->totalMicroseconds >= 0);
+        \assert($timeout->totalMicroseconds >= 0);
 
         $self = clone $this;
         $self->scheduleToStartTimeout = $timeout;
@@ -221,9 +222,9 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
     #[Pure]
     public function withStartToCloseTimeout($timeout): self
     {
-        assert(DateInterval::assert($timeout));
+        \assert(DateInterval::assert($timeout));
         $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
-        assert($timeout->totalMicroseconds >= 0);
+        \assert($timeout->totalMicroseconds >= 0);
 
         $self = clone $this;
         $self->startToCloseTimeout = $timeout;
@@ -243,9 +244,9 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
     #[Pure]
     public function withHeartbeatTimeout($timeout): self
     {
-        assert(DateInterval::assert($timeout));
+        \assert(DateInterval::assert($timeout));
         $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
-        assert($timeout->totalMicroseconds >= 0);
+        \assert($timeout->totalMicroseconds >= 0);
 
         $self = clone $this;
         $self->heartbeatTimeout = $timeout;
@@ -255,16 +256,15 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
     /**
      * @psalm-suppress ImpureMethodCall
      *
-     * @param int $type
      * @return $this
      */
     #[Pure]
-    public function withCancellationType(int $type): self
+    public function withCancellationType(ActivityCancellationType|int $type): self
     {
-        assert(Assert::enum($type, ActivityCancellationType::class));
+        \is_int($type) and $type = ActivityCancellationType::from($type);
 
         $self = clone $this;
-        $self->cancellationType = $type;
+        $self->cancellationType = $type->value;
         return $self;
     }
 

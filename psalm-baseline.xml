@@ -19,9 +19,6 @@
     <PossiblyNullReference>
       <code><![CDATA[mergeWith]]></code>
     </PossiblyNullReference>
-    <PropertyTypeCoercion>
-      <code><![CDATA[$type]]></code>
-    </PropertyTypeCoercion>
   </file>
   <file src="src/Activity/LocalActivityInterface.php">
     <DeprecatedClass>

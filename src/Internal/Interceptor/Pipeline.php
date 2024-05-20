@@ -81,7 +81,7 @@ final class Pipeline
     }
 
     /**
-     * Must be used after {@see with()} method.
+     * Must be used after {@see self::with()} method.
      *
      * @param mixed ...$arguments
      *
