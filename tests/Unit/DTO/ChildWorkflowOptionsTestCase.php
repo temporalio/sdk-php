@@ -13,6 +13,7 @@ namespace Temporal\Tests\Unit\DTO;
 
 use Temporal\Common\IdReusePolicy;
 use Temporal\Workflow\ChildWorkflowOptions;
+use Temporal\Workflow\ParentClosePolicy;
 
 class ChildWorkflowOptionsTestCase extends AbstractDTOMarshalling
 {
@@ -59,5 +60,24 @@ class ChildWorkflowOptionsTestCase extends AbstractDTOMarshalling
             IdReusePolicy::AllowDuplicateFailedOnly
         ));
         $this->assertSame(IdReusePolicy::AllowDuplicateFailedOnly->value, $dto->workflowIdReusePolicy);
+    }
+
+    public function testParentClosePolicyChangesNotMutateStateUsingConstant(): void
+    {
+        $dto = new ChildWorkflowOptions();
+
+        $this->assertNotSame($dto, $dto->withParentClosePolicy(
+            ParentClosePolicy::POLICY_ABANDON
+        ));
+    }
+
+    public function testParentClosePolicyChangesNotMutateStateUsingEnum(): void
+    {
+        $dto = new ChildWorkflowOptions();
+
+        $this->assertNotSame($dto, $dto->withParentClosePolicy(
+            ParentClosePolicy::Terminate
+        ));
+        $this->assertSame(ParentClosePolicy::Terminate->value, $dto->parentClosePolicy);
     }
 }

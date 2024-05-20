@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Worker;
 
+use Temporal\Workflow\ParentClosePolicy;
+
 /**
  * Defines behaviour of the parent workflow when CancellationScope that wraps child workflow execution request
  * is canceled.
@@ -37,7 +39,7 @@ final class ChildWorkflowCancellationType
      * Initiate a cancellation request and immediately report cancellation to the
      * parent. Note that it doesn't guarantee that cancellation is delivered to
      * the child if parent exits before the delivery is done. It can be mitigated
-     * by setting {@see ParentClosePolicy} to {@see ParentClosePolicy#PARENT_CLOSE_POLICY_REQUEST_CANCEL}.
+     * by setting {@see ParentClosePolicy} to {@see ParentClosePolicy::RequestCancel}.
      */
     public const TRY_CANCEL = 0x03;
 

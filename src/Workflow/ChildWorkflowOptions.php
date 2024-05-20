@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Workflow;
 
 use Carbon\CarbonInterval;
-use JetBrains\PhpStorm\ExpectedValues;
 use JetBrains\PhpStorm\Pure;
 use Temporal\Client\ClientOptions;
 use Temporal\Common\CronSchedule;
@@ -352,7 +351,7 @@ final class ChildWorkflowOptions extends Options
      * @psalm-suppress ImpureMethodCall
      */
     #[Pure]
-    public function withWorkflowIdReusePolicy(IdReusePolicy|int $policy,): self
+    public function withWorkflowIdReusePolicy(IdReusePolicy|int $policy): self
     {
         \is_int($policy) and $policy = IdReusePolicy::from($policy);
 
@@ -430,20 +429,16 @@ final class ChildWorkflowOptions extends Options
      * Specifies how this workflow reacts to the death of the parent workflow.
      *
      * @psalm-suppress ImpureMethodCall
-     * @psalm-type ParentClosePolicyType = ParentClosePolicy::POLICY_*
      *
-     * @param ParentClosePolicyType $policy
      * @return $this
      */
-    public function withParentClosePolicy(
-        #[ExpectedValues(valuesFromClass: ParentClosePolicy::class)]
-        int $policy
-    ): self {
-        assert(Assert::enum($policy, ParentClosePolicy::class));
+    public function withParentClosePolicy(ParentClosePolicy|int $policy): self
+    {
+        \is_int($policy) and $policy = ParentClosePolicy::from($policy);
 
         $self = clone $this;
 
-        $self->parentClosePolicy = $policy;
+        $self->parentClosePolicy = $policy->value;
 
         return $self;
     }

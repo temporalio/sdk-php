@@ -43,7 +43,7 @@ final class ChildWorkflowCancellationType extends Type
      * Initiate a cancellation request and immediately report cancellation to
      * the parent. Note that it doesn't guarantee that cancellation is delivered
      * to the child if parent exits before the delivery is done. It can be
-     * mitigated by setting to {@see ParentClosePolicy::POLICY_REQUEST_CANCEL}
+     * mitigated by setting to {@see ParentClosePolicy::RequestCancel}
      */
     public const TRY_CANCEL = 0x02;
 

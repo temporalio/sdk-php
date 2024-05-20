@@ -682,7 +682,7 @@ final class Workflow extends Facade
      *      // ExampleWorkflow proxy
      *      $workflow = Workflow::newUntypedChildWorkflowStub(
      *          'WorkflowName',
-     *           ChildWorkflowOptions::new()->withParentClosePolicy(ParentClosePolicy::POLICY_ABANDON)
+     *           ChildWorkflowOptions::new()->withParentClosePolicy(ParentClosePolicy::Abandon)
      *      );
      *
      *      // Start child workflow
