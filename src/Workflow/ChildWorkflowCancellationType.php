@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Workflow;
 
 use Temporal\Exception\FailedCancellationException;
-use Temporal\Internal\Marshaller\Type\Type;
 
 /**
  * Defines the behavior of the parent workflow when a CancellationScope that
@@ -20,9 +19,6 @@ use Temporal\Internal\Marshaller\Type\Type;
  *
  * The result of the cancellation independently of the type is a {@see FailedCancellationException}
  * thrown from the child workflow method.
- *
- * @psalm-type ChildWorkflowCancellationEnum = ChildWorkflowCancellationType::*
- * @extends Type<bool>
  */
 enum ChildWorkflowCancellationType: int
 {
@@ -32,12 +28,29 @@ enum ChildWorkflowCancellationType: int
     case WaitCancellationCompleted = 0;
 
     /**
+     * Request cancellation of the child and wait for confirmation that the
+     * request was received.
+     *
+     * Doesn't wait for actual cancellation.
+     *
+     * Note: currently not supported.
+     */
+    case WaitCancellationRequested = 1;
+
+    /**
      * Initiate a cancellation request and immediately report cancellation to
      * the parent. Note that it doesn't guarantee that cancellation is delivered
      * to the child if parent exits before the delivery is done. It can be
      * mitigated by setting to {@see ParentClosePolicy::RequestCancel}
      */
     case TryCancel = 2;
+
+    /**
+     * Do not request cancellation of the child workflow.
+     *
+     * Note: currently not supported.
+     */
+    case Abandon = 3;
 
     /**
      * Wait for child cancellation completion.
@@ -49,6 +62,8 @@ enum ChildWorkflowCancellationType: int
      * request was received.
      *
      * Doesn't wait for actual cancellation.
+     *
+     * Note: currently not supported.
      */
     public const WAIT_CANCELLATION_REQUESTED = 0x01;
 
@@ -62,6 +77,8 @@ enum ChildWorkflowCancellationType: int
 
     /**
      * Do not request cancellation of the child workflow.
+     *
+     * Note: currently not supported.
      */
     public const ABANDON  = 0x03;
 }

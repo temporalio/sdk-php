@@ -102,6 +102,8 @@ final class WorkflowOptions extends Options
      * Whether server allow reuse of workflow ID.
      *
      * Can be useful for deduplication logic if set to {@see IdReusePolicy::POLICY_REJECT_DUPLICATE}.
+     *
+     * @psalm-var IdReusePolicy::POLICY_*
      */
     #[Marshal(name: 'WorkflowIDReusePolicy')]
     public int $workflowIdReusePolicy = IdReusePolicy::POLICY_ALLOW_DUPLICATE_FAILED_ONLY;

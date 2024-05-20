@@ -19,7 +19,6 @@ use Temporal\Common\IdReusePolicy;
 use Temporal\Common\MethodRetry;
 use Temporal\Common\RetryOptions;
 use Temporal\Exception\FailedCancellationException;
-use Temporal\Internal\Assert;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\ArrayType;
 use Temporal\Internal\Marshaller\Type\ChildWorkflowCancellationType as ChildWorkflowCancellationMarshalType;
@@ -33,7 +32,6 @@ use Temporal\Workflow;
 
 /**
  * @psalm-import-type DateIntervalValue from DateInterval
- * @psalm-import-type ChildWorkflowCancellationEnum from ChildWorkflowCancellationType
  */
 final class ChildWorkflowOptions extends Options
 {
@@ -98,16 +96,16 @@ final class ChildWorkflowOptions extends Options
      *
      * @see FailedCancellationException
      *
-     * @psalm-var ChildWorkflowCancellationEnum
+     * @psalm-var ChildWorkflowCancellationType::*
      */
     #[Marshal(name: 'WaitForCancellation', type: ChildWorkflowCancellationMarshalType::class)]
     public int $cancellationType = ChildWorkflowCancellationType::TRY_CANCEL;
 
     /**
-     * Whether server allow reuse of workflow ID, can be useful for dedup
+     * Whether server allow reuse of workflow ID, can be useful for deduplication
      * logic if set to IdReusePolicy::POLICY_REJECT_DUPLICATE.
      *
-     * @see IdReusePolicy::POLICY_REJECT_DUPLICATE
+     * @see IdReusePolicy::RejectDuplicate
      */
     #[Marshal(name: 'WorkflowIDReusePolicy')]
     public int $workflowIdReusePolicy = IdReusePolicy::POLICY_ALLOW_DUPLICATE_FAILED_ONLY;

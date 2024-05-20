@@ -20,11 +20,31 @@ use Temporal\Internal\Marshaller\Type\Type;
  *
  * The result of the cancellation independently of the type is a {@see FailedCancellationException}
  * thrown from the child workflow method.
- *
- * @extends Type<bool>
  */
-final class ActivityCancellationType extends Type
+enum ActivityCancellationType: int
 {
+    /**
+     * Wait for activity cancellation completion. Note that activity must
+     * heartbeat to receive a cancellation notification. This can block the
+     * cancellation for a long time if activity doesn't heartbeat or chooses to
+     * ignore the cancellation request.
+     */
+    case WaitCancellationCompleted = 0;
+
+    /**
+     * Initiate a cancellation request and immediately report cancellation to
+     * the workflow.
+     */
+    case TryCancel = 1;
+
+    /**
+     * Do not request cancellation of the activity and immediately report
+     * cancellation to the workflow.
+     *
+     * Note: currently not supported.
+     */
+    case Abandon = 2;
+
     /**
      * Wait for activity cancellation completion. Note that activity must
      * heartbeat to receive a cancellation notification. This can block the
@@ -42,26 +62,8 @@ final class ActivityCancellationType extends Type
     /**
      * Do not request cancellation of the activity and immediately report
      * cancellation to the workflow.
+     *
+     * Note: currently not supported.
      */
     public const ABANDON = 0x02;
-
-    public function parse($value, $current)
-    {
-        return $value ? self::WAIT_CANCELLATION_COMPLETED : self::TRY_CANCEL;
-    }
-
-    public function serialize($value): bool
-    {
-        switch ($value) {
-            case self::WAIT_CANCELLATION_COMPLETED:
-                return true;
-
-            case self::TRY_CANCEL:
-                return false;
-
-            default:
-                $error = "Option #{$value} is currently not supported";
-                throw new \InvalidArgumentException($error);
-        }
-    }
 }

@@ -15,8 +15,6 @@ namespace Temporal\Common;
  * Defines how new runs of a workflow with a particular ID may or may not be allowed. Note that
  * it is *never* valid to have two actively running instances of the same workflow id.
  *
- * @psalm-type IdReusePolicyEnum = IdReusePolicy::POLICY_*
- *
  * @see \Temporal\Api\Enums\V1\WorkflowIdReusePolicy
  */
 enum IdReusePolicy: int
