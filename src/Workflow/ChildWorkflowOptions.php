@@ -96,7 +96,8 @@ final class ChildWorkflowOptions extends Options
      *
      * @see FailedCancellationException
      *
-     * @psalm-var ChildWorkflowCancellationType::*
+     * @psalm-var int<0, 3>
+     * @see ChildWorkflowCancellationType
      */
     #[Marshal(name: 'WaitForCancellation', type: ChildWorkflowCancellationMarshalType::class)]
     public int $cancellationType = ChildWorkflowCancellationType::TRY_CANCEL;

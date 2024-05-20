@@ -75,7 +75,8 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
      * Whether to wait for canceled activity to be completed(activity can be
      * failed, completed, cancel accepted).
      *
-     * @psalm-var ActivityCancellationType::*
+     * @psalm-var int<0, 2>
+     * @see ActivityCancellationType
      */
     #[Marshal(name: 'WaitForCancellation', type: ActivityCancellationMarshallerType::class)]
     public int $cancellationType = ActivityCancellationType::TRY_CANCEL;
