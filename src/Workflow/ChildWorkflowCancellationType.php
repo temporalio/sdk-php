@@ -24,8 +24,21 @@ use Temporal\Internal\Marshaller\Type\Type;
  * @psalm-type ChildWorkflowCancellationEnum = ChildWorkflowCancellationType::*
  * @extends Type<bool>
  */
-final class ChildWorkflowCancellationType extends Type
+enum ChildWorkflowCancellationType: int
 {
+    /**
+     * Wait for child cancellation completion.
+     */
+    case WaitCancellationCompleted = 0;
+
+    /**
+     * Initiate a cancellation request and immediately report cancellation to
+     * the parent. Note that it doesn't guarantee that cancellation is delivered
+     * to the child if parent exits before the delivery is done. It can be
+     * mitigated by setting to {@see ParentClosePolicy::RequestCancel}
+     */
+    case TryCancel = 2;
+
     /**
      * Wait for child cancellation completion.
      */
@@ -51,30 +64,6 @@ final class ChildWorkflowCancellationType extends Type
      * Do not request cancellation of the child workflow.
      */
     public const ABANDON  = 0x03;
-
-    /**
-     * {@inheritDoc}
-     */
-    public function parse($value, $current)
-    {
-        return $value ? self::WAIT_CANCELLATION_COMPLETED : self::TRY_CANCEL;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function serialize($value)
-    {
-        switch ($value) {
-            case self::WAIT_CANCELLATION_COMPLETED:
-                return true;
-
-            case self::TRY_CANCEL:
-                return false;
-
-            default:
-                $error = "Option #{$value} is currently not supported";
-                throw new \InvalidArgumentException($error);
-        }
-    }
 }
+
+\class_alias(ChildWorkflowCancellationType::class, '\Temporal\Worker\ChildWorkflowCancellationType');

@@ -22,6 +22,7 @@ use Temporal\Exception\FailedCancellationException;
 use Temporal\Internal\Assert;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\ArrayType;
+use Temporal\Internal\Marshaller\Type\ChildWorkflowCancellationType as ChildWorkflowCancellationMarshalType;
 use Temporal\Internal\Marshaller\Type\CronType;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\NullableType;
@@ -99,7 +100,7 @@ final class ChildWorkflowOptions extends Options
      *
      * @psalm-var ChildWorkflowCancellationEnum
      */
-    #[Marshal(name: 'WaitForCancellation', type: ChildWorkflowCancellationType::class)]
+    #[Marshal(name: 'WaitForCancellation', type: ChildWorkflowCancellationMarshalType::class)]
     public int $cancellationType = ChildWorkflowCancellationType::TRY_CANCEL;
 
     /**
@@ -319,16 +320,15 @@ final class ChildWorkflowOptions extends Options
      *
      * @psalm-suppress ImpureMethodCall
      *
-     * @param ChildWorkflowCancellationEnum $type
      * @return $this
      */
     #[Pure]
-    public function withChildWorkflowCancellationType(int $type): self
+    public function withChildWorkflowCancellationType(ChildWorkflowCancellationType|int $type): self
     {
-        assert(Assert::enum($type, ChildWorkflowCancellationType::class));
+        \is_int($type) and $type = ChildWorkflowCancellationType::from($type);
 
         $self = clone $this;
-        $self->cancellationType = $type;
+        $self->cancellationType = $type->value;
         return $self;
     }
 

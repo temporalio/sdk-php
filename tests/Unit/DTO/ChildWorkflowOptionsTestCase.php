@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Unit\DTO;
 
 use Temporal\Common\IdReusePolicy;
+use Temporal\Workflow\ChildWorkflowCancellationType;
 use Temporal\Workflow\ChildWorkflowOptions;
 use Temporal\Workflow\ParentClosePolicy;
 
@@ -79,5 +80,24 @@ class ChildWorkflowOptionsTestCase extends AbstractDTOMarshalling
             ParentClosePolicy::Terminate
         ));
         $this->assertSame(ParentClosePolicy::Terminate->value, $dto->parentClosePolicy);
+    }
+
+    public function testChildWorkflowCancellationTypeChangesNotMutateStateUsingConstant(): void
+    {
+        $dto = new ChildWorkflowOptions();
+
+        $this->assertNotSame($dto, $dto->withChildWorkflowCancellationType(
+            ChildWorkflowCancellationType::WAIT_CANCELLATION_COMPLETED
+        ));
+    }
+
+    public function testChildWorkflowCancellationTypeChangesNotMutateStateUsingEnum(): void
+    {
+        $dto = new ChildWorkflowOptions();
+
+        $this->assertNotSame($dto, $dto->withChildWorkflowCancellationType(
+            ChildWorkflowCancellationType::WaitCancellationCompleted
+        ));
+        $this->assertSame(ChildWorkflowCancellationType::TryCancel->value, $dto->cancellationType);
     }
 }
