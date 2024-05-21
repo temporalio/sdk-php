@@ -17,19 +17,27 @@ final class UpdateOptions
 
     private function __construct(
         public readonly string $updateName,
+        LifecycleStage $lifecycleStage,
     ) {
         $this->updateId = null;
         $this->firstExecutionRunId = null;
-        $this->waitPolicy = WaitPolicy::new()->withLifecycleStage(LifecycleStage::StageUnspecified);
+        $this->waitPolicy = WaitPolicy::new()->withLifecycleStage($lifecycleStage);
         $this->resultType = null;
     }
 
     /**
      * @param non-empty-string $updateName Name of the update handler. Usually it is a method name.
+     * @param LifecycleStage $lifecycleStage Specifies at what point in the update request life cycles
+     *        this request should return. By default, it is set to {@see LifecycleStage::StageAccepted} that
+     *        means that the handle will return immediately after successful validation of the Update call.
+     *        However, also note that the processing Workflow worker must be available. Otherwise, the request
+     *        may block indefinitely or fail due to a timeout.
+     *
+     * @link https://docs.temporal.io/workflows#update
      */
-    public static function new(string $updateName): self
+    public static function new(string $updateName, LifecycleStage $lifecycleStage = LifecycleStage::StageAccepted): self
     {
-        return new self($updateName);
+        return new self($updateName, $lifecycleStage);
     }
 
     /**
