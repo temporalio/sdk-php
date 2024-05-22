@@ -11,6 +11,7 @@ use Temporal\Client\WorkflowOptions;
 use Temporal\Testing\ActivityMocker;
 use Temporal\Tests\TestCase;
 use Temporal\Tests\Workflow\SimpleWorkflow;
+use Temporal\Tests\Workflow\YieldScalarsWorkflow;
 use Temporal\Workflow\WorkflowExecution;
 
 final class SimpleWorkflowTestCase extends TestCase
@@ -99,6 +100,13 @@ final class SimpleWorkflowTestCase extends TestCase
         }
 
         $this->fail('LocalActivity not found in history');
+    }
+
+    public function testYieldNonPromises(): void
+    {
+        $workflow = $this->workflowClient->newWorkflowStub(YieldScalarsWorkflow::class);
+        $run = $this->workflowClient->start($workflow, ['hello', 'world', '!']);
+        $this->assertSame([ 'hello', 'world', '!'], $run->getResult('array'));
     }
 
     private function assertContainsEvent(WorkflowExecution $execution, int $event): void

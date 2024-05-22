@@ -446,6 +446,7 @@ class Scope implements CancellationScopeInterface, Destroyable
     protected function next(): void
     {
         $this->makeCurrent();
+        begin:
         $this->context->resolveConditions();
 
         if (!$this->coroutine->valid()) {
@@ -481,6 +482,7 @@ class Scope implements CancellationScopeInterface, Destroyable
 
             default:
                 $this->coroutine->send($current);
+                goto begin;
         }
     }
 
