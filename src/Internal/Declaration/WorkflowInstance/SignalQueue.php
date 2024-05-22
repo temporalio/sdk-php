@@ -60,7 +60,7 @@ final class SignalQueue
 
     /**
      * @param string $signal
-     * @param callable(ValuesInterface): mixed $consumer
+     * @param Consumer $consumer
      * @return void
      */
     public function attach(string $signal, callable $consumer): void

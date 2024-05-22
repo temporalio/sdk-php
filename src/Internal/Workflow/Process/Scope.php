@@ -28,7 +28,6 @@ use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\CancellationScopeInterface;
-use Temporal\Workflow\WorkflowContextInterface;
 
 /**
  * Unlike Java implementation, PHP has merged coroutine and cancellation scope into a single instance.

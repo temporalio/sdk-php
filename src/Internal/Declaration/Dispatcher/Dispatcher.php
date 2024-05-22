@@ -15,7 +15,7 @@ use JetBrains\PhpStorm\Pure;
 use ReflectionType;
 
 /**
- * @psalm-type FunctionExecutor = \Closure(object|null, array): mixed
+ * @psalm-type FunctionExecutor = \Closure(object, array): mixed
  */
 class Dispatcher implements DispatcherInterface
 {
@@ -30,8 +30,8 @@ class Dispatcher implements DispatcherInterface
     public const SCOPE_STATIC = 0x02;
 
     /**
+     * @var \Closure(object, array): mixed
      * @psalm-var FunctionExecutor
-     * @var \Closure
      */
     private \Closure $executor;
 
@@ -114,13 +114,13 @@ class Dispatcher implements DispatcherInterface
      * @psalm-return FunctionExecutor
      *
      * @param \ReflectionMethod $fun
-     * @return \Closure
+     * @return \Closure(object, array): mixed
      */
     private function createExecutorFromMethod(\ReflectionMethod $fun): \Closure
     {
-        return static function (?object $ctx, array $arguments) use ($fun) {
+        return static function (object $object, array $arguments) use ($fun) {
             try {
-                return $fun->invokeArgs($ctx, $arguments);
+                return $fun->invokeArgs($object, $arguments);
             } catch (\ReflectionException $e) {
                 throw new \BadMethodCallException($e->getMessage(), $e->getCode(), $e);
             }

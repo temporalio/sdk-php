@@ -17,7 +17,6 @@ use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\WorkflowInstance\SignalQueue;
-use Temporal\Internal\Declaration\WorkflowInstance\UpdateQueue;
 use Temporal\Internal\Interceptor;
 
 /**
@@ -65,7 +64,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
 
     /**
      * @param WorkflowPrototype $prototype
-     * @param object $context
+     * @param object $context Workflow object
      * @param Interceptor\Pipeline<WorkflowInboundCallsInterceptor, mixed> $pipeline
      */
     public function __construct(
