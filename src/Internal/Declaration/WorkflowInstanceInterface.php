@@ -11,7 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration;
 
+use React\Promise\PromiseInterface;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 
 interface WorkflowInstanceInterface extends InstanceInterface
 {
@@ -46,7 +48,7 @@ interface WorkflowInstanceInterface extends InstanceInterface
 
     /**
      * @param non-empty-string $name
-     * @return \Closure
+     * @return null|\Closure(UpdateInput): PromiseInterface
      */
     public function findUpdateHandler(string $name): ?\Closure;
 

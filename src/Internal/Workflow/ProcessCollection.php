@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Internal\Workflow;
 
 use Temporal\Internal\Repository\ArrayRepository;
-use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Workflow\Process\Process;
 
 /**
@@ -21,11 +20,6 @@ use Temporal\Internal\Workflow\Process\Process;
 class ProcessCollection extends ArrayRepository
 {
     private const ERROR_PROCESS_NOT_FOUND = 'Process #%s not found.';
-
-    public function __construct()
-    {
-        parent::__construct();
-    }
 
     /**
      * @param string $runId

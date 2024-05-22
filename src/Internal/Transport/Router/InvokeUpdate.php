@@ -86,12 +86,11 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
             return;
         }
 
-        // There validation is passed
+        // Validation has passed
 
-        /** @var PromiseInterface $promise */
         $promise = $handler($input);
         $promise->then(
-            static function (mixed $value) use ($updateId, $context, $resolver): void {
+            static function (mixed $value) use ($updateId, $context): void {
                 $context->getClient()->send(new UpdateResponse(
                     command: UpdateResponse::COMMAND_COMPLETED,
                     values: EncodedValues::fromValues([$value]),
@@ -99,7 +98,7 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
                     updateId: $updateId,
                 ));
             },
-            static function (\Throwable $err) use ($updateId, $context, $resolver): void {
+            static function (\Throwable $err) use ($updateId, $context): void {
                 $context->getClient()->send(new UpdateResponse(
                     command: UpdateResponse::COMMAND_COMPLETED,
                     values: null,
@@ -112,6 +111,7 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
 
     /**
      * @param non-empty-string $name
+     * @return \Closure(UpdateInput): PromiseInterface
      */
     private function getUpdateHandler(WorkflowInstanceInterface $instance, string $name): \Closure
     {

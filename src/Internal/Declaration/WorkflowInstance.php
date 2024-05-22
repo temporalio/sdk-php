@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration;
 
+use React\Promise\PromiseInterface;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
@@ -22,10 +23,10 @@ use Temporal\Internal\Interceptor;
 /**
  * @psalm-import-type DispatchableHandler from InstanceInterface
  * @psalm-type QueryHandler = \Closure(QueryInput): mixed
- * @psalm-type UpdateHandler = \Closure(UpdateInput): mixed
+ * @psalm-type UpdateHandler = \Closure(UpdateInput): PromiseInterface
  * @psalm-type ValidateUpdateHandler = \Closure(UpdateInput): void
  * @psalm-type QueryExecutor = \Closure(QueryInput, callable(ValuesInterface): mixed): mixed
- * @psalm-type UpdateExecutor = \Closure(UpdateInput, callable(ValuesInterface): mixed): mixed
+ * @psalm-type UpdateExecutor = \Closure(UpdateInput, callable(ValuesInterface): mixed): PromiseInterface
  * @psalm-type ValidateUpdateExecutor = \Closure(UpdateInput, callable(ValuesInterface): mixed): mixed
  * @psalm-type UpdateValidator = \Closure(UpdateInput, UpdateHandler): void
  */
@@ -166,7 +167,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
 
     /**
      * @param string $name
-     * @return \Closure
+     * @return UpdateHandler|null
      */
     public function findUpdateHandler(string $name): ?\Closure
     {
