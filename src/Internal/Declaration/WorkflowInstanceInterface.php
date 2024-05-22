@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration;
 
+use Temporal\DataConverter\ValuesInterface;
+
 interface WorkflowInstanceInterface extends InstanceInterface
 {
     /**
@@ -37,8 +39,8 @@ interface WorkflowInstanceInterface extends InstanceInterface
     public function addUpdateHandler(string $name, callable $handler): void;
 
     /**
-     * @param string $name
-     * @return \Closure
+     * @param non-empty-string $name
+     * @return \Closure(ValuesInterface): void
      */
     public function getSignalHandler(string $name): \Closure;
 

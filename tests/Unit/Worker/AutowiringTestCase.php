@@ -83,19 +83,4 @@ class AutowiringTestCase extends AbstractWorker
 
         $this->assertSame(0xDEAD_BEEF, $handler->dispatch($this, []));
     }
-
-    #[TestDox("Checks invocation without an object context or exception otherwise (if object context required)")]
-    #[DataProvider('reflectionDataProvider')]
-    public function testStaticCallMethodInvocation(\ReflectionFunctionAbstract $fn): void
-    {
-        $handler = new AutowiredPayloads($fn, new DataConverter(new JsonConverter()));
-
-        // If the object context is required, then the method invocation without
-        // "this" context should return an BadMethodCallException error.
-        if ($handler->isObjectContextRequired()) {
-            $this->expectException(\BadMethodCallException::class);
-        }
-
-        $this->assertSame(0xDEAD_BEEF, $handler->dispatch(null, []));
-    }
 }

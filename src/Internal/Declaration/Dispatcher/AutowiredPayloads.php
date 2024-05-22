@@ -16,15 +16,11 @@ use Temporal\Exception\InvalidArgumentException;
 
 /**
  * @psalm-type FunctionExecutor = \Closure(object|null, array): mixed
+ * @internal
  */
 class AutowiredPayloads extends Dispatcher
 {
-    /**
-     * @param object|null $ctx
-     * @param ValuesInterface $values
-     * @return mixed
-     */
-    public function dispatchValues(?object $ctx, ValuesInterface $values)
+    public function dispatchValues(object $ctx, ValuesInterface $values): mixed
     {
         $arguments = [];
         for ($i = 0; $i < $values->count(); $i++) {

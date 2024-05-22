@@ -95,12 +95,7 @@ class Dispatcher implements DispatcherInterface
         return $this->types;
     }
 
-    /**
-     * @param object|null $ctx
-     * @param array $arguments
-     * @return mixed
-     */
-    public function dispatch(?object $ctx, array $arguments)
+    public function dispatch(object $ctx, array $arguments): mixed
     {
         return ($this->executor)($ctx, $arguments);
     }

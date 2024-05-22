@@ -141,7 +141,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
      */
     public function initConstructor(): void
     {
-        if (method_exists($this->context, '__construct')) {
+        if (\method_exists($this->context, '__construct')) {
             $this->context->__construct();
         }
     }
@@ -234,10 +234,6 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
         return \array_keys($this->updateHandlers);
     }
 
-    /**
-     * @param string $name
-     * @return \Closure
-     */
     public function getSignalHandler(string $name): \Closure
     {
         return fn (ValuesInterface $values) => $this->signalQueue->push($name, $values);

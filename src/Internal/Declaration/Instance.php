@@ -21,18 +21,15 @@ use Temporal\Internal\Declaration\Prototype\Prototype;
  */
 abstract class Instance implements InstanceInterface
 {
-    protected object $context;
     /**
      * @var \Closure(ValuesInterface): mixed
      */
     private \Closure $handler;
 
-    /**
-     * @param Prototype $prototype
-     * @param object $context
-     */
-    public function __construct(Prototype $prototype, object $context)
-    {
+    public function __construct(
+        Prototype $prototype,
+        protected readonly object $context,
+    ) {
         $handler = $prototype->getHandler();
 
         if ($handler === null) {
@@ -42,14 +39,10 @@ abstract class Instance implements InstanceInterface
             ));
         }
 
-        $this->context = $context;
         $this->handler = $this->createHandler($handler);
     }
 
-    /**
-     * @return object|null
-     */
-    public function getContext(): ?object
+    public function getContext(): object
     {
         return $this->context;
     }

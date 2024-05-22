@@ -23,8 +23,5 @@ interface InstanceInterface
      */
     public function getHandler(): callable;
 
-    /**
-     * @return object|null
-     */
-    public function getContext(): ?object;
+    public function getContext(): object;
 }
