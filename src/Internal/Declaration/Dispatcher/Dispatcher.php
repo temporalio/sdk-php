@@ -131,15 +131,11 @@ class Dispatcher implements DispatcherInterface
      * @psalm-return FunctionExecutor
      *
      * @param \ReflectionFunction $fun
-     * @return \Closure
+     * @return \Closure(object, array): mixed
      */
     private function createExecutorFromFunction(\ReflectionFunction $fun): \Closure
     {
-        return static function (?object $ctx, array $arguments) use ($fun) {
-            if ($ctx === null) {
-                return $fun->invoke(...$arguments);
-            }
-
+        return static function (object $ctx, array $arguments) use ($fun) {
             $closure = $fun->getClosure();
 
             try {

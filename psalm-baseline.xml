@@ -509,9 +509,6 @@
     <InvalidDocblock>
       <code><![CDATA[final class ActivityInstantiator extends Instantiator]]></code>
     </InvalidDocblock>
-    <PossiblyNullArgument>
-      <code><![CDATA[$this->getInstance($prototype)]]></code>
-    </PossiblyNullArgument>
   </file>
   <file src="src/Internal/Declaration/Instantiator/Instantiator.php">
     <MissingTemplateParam>
@@ -527,12 +524,6 @@
     <InvalidDocblock>
       <code><![CDATA[final class WorkflowInstantiator extends Instantiator]]></code>
     </InvalidDocblock>
-    <PossiblyNullArgument>
-      <code><![CDATA[$this->getInstance($prototype)]]></code>
-    </PossiblyNullArgument>
-    <RedundantCondition>
-      <code><![CDATA[$class !== null]]></code>
-    </RedundantCondition>
   </file>
   <file src="src/Internal/Declaration/Prototype/Prototype.php">
     <InvalidReturnStatement>
@@ -595,12 +586,10 @@
     </InvalidPropertyAssignmentValue>
     <MissingClosureReturnType>
       <code><![CDATA[function (QueryInput $input) use ($fn) {]]></code>
-      <code><![CDATA[function (UpdateInput $input) use ($fn) {]]></code>
     </MissingClosureReturnType>
     <MoreSpecificImplementedParamType>
       <code><![CDATA[$handler]]></code>
       <code><![CDATA[$handler]]></code>
-      <code><![CDATA[$name]]></code>
     </MoreSpecificImplementedParamType>
     <PropertyNotSetInConstructor>
       <code><![CDATA[$queryExecutor]]></code>
@@ -614,7 +603,6 @@
   </file>
   <file src="src/Internal/Declaration/WorkflowInstance/SignalQueue.php">
     <ArgumentTypeCoercion>
-      <code><![CDATA[$signal]]></code>
       <code><![CDATA[$signal]]></code>
     </ArgumentTypeCoercion>
     <MissingConstructor>
@@ -752,12 +740,8 @@
     </PossiblyFalseArgument>
   </file>
   <file src="src/Internal/Marshaller/Type/ArrayType.php">
-    <DocblockTypeContradiction>
-      <code><![CDATA[\is_array($value)]]></code>
-    </DocblockTypeContradiction>
     <MoreSpecificImplementedParamType>
       <code><![CDATA[$current]]></code>
-      <code><![CDATA[$value]]></code>
       <code><![CDATA[$value]]></code>
     </MoreSpecificImplementedParamType>
   </file>
@@ -1144,10 +1128,6 @@
       <code><![CDATA[findValidateUpdateHandler]]></code>
       <code><![CDATA[getUpdateHandlerNames]]></code>
     </UndefinedInterfaceMethod>
-    <UnusedVariable>
-      <code><![CDATA[$resolver]]></code>
-      <code><![CDATA[$resolver]]></code>
-    </UnusedVariable>
   </file>
   <file src="src/Internal/Transport/Router/StartWorkflow.php">
     <MissingClosureReturnType>

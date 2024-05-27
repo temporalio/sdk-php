@@ -70,6 +70,7 @@ class ArrayType extends Type implements DetectableTypeInterface, RuleFactoryInte
 
     /**
      * @psalm-assert array $value
+     * @param mixed $value
      * @param array $current
      */
     public function parse($value, $current): array
