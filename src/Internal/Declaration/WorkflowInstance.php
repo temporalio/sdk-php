@@ -156,8 +156,8 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
 
     /**
      * @param non-empty-string $name
-     * @return null|\Closure(ValuesInterface):mixed
      *
+     * @return null|\Closure(QueryInput): mixed
      * @psalm-return QueryHandler|null
      */
     public function findQueryHandler(string $name): ?\Closure
@@ -166,8 +166,10 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     }
 
     /**
-     * @param string $name
-     * @return UpdateHandler|null
+     * @param non-empty-string $name
+     *
+     * @return null|\Closure(UpdateInput): PromiseInterface
+     * @psalm-return UpdateHandler|null
      */
     public function findUpdateHandler(string $name): ?\Closure
     {
@@ -176,6 +178,9 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
 
     /**
      * @param non-empty-string $name
+     *
+     * @return null|\Closure(UpdateInput): void
+     * @psalm-return ValidateUpdateHandler|null
      */
     public function findValidateUpdateHandler(string $name): ?\Closure
     {

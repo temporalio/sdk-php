@@ -36,6 +36,7 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
 
         try {
             $instance = $process->getWorkflowInstance();
+            /** @var non-empty-string $name */
             $name = $request->getOptions()['name'];
             $handler = $this->getUpdateHandler($instance, $name);
             /** @psalm-suppress InaccessibleProperty */

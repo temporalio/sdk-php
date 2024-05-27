@@ -13,6 +13,7 @@ namespace Temporal\Internal\Declaration;
 
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 
 interface WorkflowInstanceInterface extends InstanceInterface
@@ -23,8 +24,8 @@ interface WorkflowInstanceInterface extends InstanceInterface
     public function initConstructor(): void;
 
     /**
-     * @param string $name
-     * @return \Closure|null
+     * @param non-empty-string $name
+     * @return null|\Closure(QueryInput): mixed
      */
     public function findQueryHandler(string $name): ?\Closure;
 
