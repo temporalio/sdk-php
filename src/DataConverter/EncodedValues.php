@@ -69,9 +69,6 @@ class EncodedValues implements ValuesInterface
         return static::fromPayloadCollection($payloads->getPayloads(), $dataConverter);
     }
 
-    /**
-     * @return Payloads
-     */
     public function toPayloads(): Payloads
     {
         return new Payloads(['payloads' => $this->toProtoCollection()]);
@@ -102,7 +99,7 @@ class EncodedValues implements ValuesInterface
      * Decode promise response upon returning it to the domain layer.
      *
      * @param PromiseInterface $promise
-     * @param Type|string|null $type
+     * @param string|\ReflectionClass|\ReflectionType|Type|null $type
      *
      * @return PromiseInterface
      */
@@ -119,15 +116,16 @@ class EncodedValues implements ValuesInterface
         );
     }
 
-    /**
-     * @param Type|string|null $type
-     *
-     * @return mixed
-     */
     public function getValue(int|string $index, $type = null): mixed
     {
         if (\is_array($this->values) && \array_key_exists($index, $this->values)) {
             return $this->values[$index];
+        }
+
+        // External SDKs might return an empty array with metadata, alias to null
+        // Most likely this is a void type
+        if ($index === 0 && $this->count() === 0 && $this->isVoidType($type)) {
+            return null;
         }
 
         if ($this->converter === null) {
@@ -209,6 +207,16 @@ class EncodedValues implements ValuesInterface
     public function isEmpty(): bool
     {
         return $this->count() === 0;
+    }
+
+    private function isVoidType(mixed $type = null): bool
+    {
+        return match (true) {
+            $type === null => true,
+            $type instanceof Type => \in_array($type->getName(), [Type::TYPE_VOID, Type::TYPE_NULL], true),
+            $type instanceof \ReflectionNamedType => $type->getName() === Type::TYPE_VOID,
+            default => false,
+        };
     }
 
     /**

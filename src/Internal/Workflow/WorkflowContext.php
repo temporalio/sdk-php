@@ -228,7 +228,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     public function sideEffect(callable $context): PromiseInterface
     {
         $value = null;
-        $closure = \Closure::fromCallable($context);
+        $closure = $context(...);
 
         try {
             if (!$this->isReplaying()) {
@@ -249,7 +249,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         } catch (\Throwable) {
         }
 
-        $last = fn() => EncodedValues::decodePromise(
+        $last = fn(): PromiseInterface => EncodedValues::decodePromise(
             $this->request(new SideEffect(EncodedValues::fromValues([$value]))),
             $returnType,
         );
