@@ -11,6 +11,11 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration;
 
+use React\Promise\PromiseInterface;
+use Temporal\DataConverter\ValuesInterface;
+use Temporal\Interceptor\WorkflowInbound\QueryInput;
+use Temporal\Interceptor\WorkflowInbound\UpdateInput;
+
 interface WorkflowInstanceInterface extends InstanceInterface
 {
     /**
@@ -19,8 +24,8 @@ interface WorkflowInstanceInterface extends InstanceInterface
     public function initConstructor(): void;
 
     /**
-     * @param string $name
-     * @return \Closure|null
+     * @param non-empty-string $name
+     * @return null|\Closure(QueryInput): mixed
      */
     public function findQueryHandler(string $name): ?\Closure;
 
@@ -37,14 +42,14 @@ interface WorkflowInstanceInterface extends InstanceInterface
     public function addUpdateHandler(string $name, callable $handler): void;
 
     /**
-     * @param string $name
-     * @return \Closure
+     * @param non-empty-string $name
+     * @return \Closure(ValuesInterface): void
      */
     public function getSignalHandler(string $name): \Closure;
 
     /**
      * @param non-empty-string $name
-     * @return \Closure
+     * @return null|\Closure(UpdateInput): PromiseInterface
      */
     public function findUpdateHandler(string $name): ?\Closure;
 

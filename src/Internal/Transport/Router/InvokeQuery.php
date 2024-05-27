@@ -52,6 +52,7 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
      */
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
+        /** @var non-empty-string $name */
         $name = $request->getOptions()['name'];
         $process = $this->findProcessOrFail($request->getID());
         $context = $process->getContext();
@@ -79,19 +80,17 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
 
     /**
      * @param WorkflowInstanceInterface $instance
-     * @param string $name
-     * @return \Closure
+     * @param non-empty-string $name
+     * @return \Closure(QueryInput): mixed
      */
     private function findQueryHandlerOrFail(WorkflowInstanceInterface $instance, string $name): \Closure
     {
-        $handler = $instance->findQueryHandler($name);
-
-        if ($handler === null) {
-            $available = \implode(' ', $instance->getQueryHandlerNames());
-
-            throw new \LogicException(\sprintf(self::ERROR_QUERY_NOT_FOUND, $name, $available));
-        }
-
-        return $handler;
+        return $instance->findQueryHandler($name) ?? throw new \LogicException(
+            \sprintf(
+                self::ERROR_QUERY_NOT_FOUND,
+                $name,
+                \implode(' ', $instance->getQueryHandlerNames())
+            ),
+        );
     }
 }

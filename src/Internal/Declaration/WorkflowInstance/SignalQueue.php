@@ -36,7 +36,7 @@ final class SignalQueue
     private $onSignal;
 
     /**
-     * @param string $signal
+     * @param non-empty-string $signal
      * @param ValuesInterface $values
      */
     public function push(string $signal, ValuesInterface $values): void

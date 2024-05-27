@@ -17,24 +17,11 @@ abstract class Instantiator implements InstantiatorInterface
 {
     /**
      * @param PrototypeInterface $prototype
-     * @return \ReflectionClass|null
-     */
-    protected function getClass(PrototypeInterface $prototype): ?\ReflectionClass
-    {
-        return $prototype->getClass();
-    }
-
-    /**
-     * @param PrototypeInterface $prototype
-     * @return object|null
+     * @return object
      * @throws \ReflectionException
      */
-    protected function getInstance(PrototypeInterface $prototype): ?object
+    protected function getInstance(PrototypeInterface $prototype): object
     {
-        if ($class = $this->getClass($prototype)) {
-            return $class->newInstance();
-        }
-
-        return null;
+        return $prototype->getClass()->newInstance();
     }
 }

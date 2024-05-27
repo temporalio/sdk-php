@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Declaration\Instantiator;
 
 use Temporal\Exception\InstantiationException;
+use Temporal\Interceptor\PipelineProvider;
 use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\Prototype\PrototypeInterface;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
@@ -23,7 +24,7 @@ use Temporal\Internal\Declaration\WorkflowInstance;
 final class WorkflowInstantiator extends Instantiator
 {
     public function __construct(
-        private \Temporal\Interceptor\PipelineProvider $interceptorProvider,
+        private PipelineProvider $interceptorProvider,
     ) {
     }
 
@@ -43,26 +44,16 @@ final class WorkflowInstantiator extends Instantiator
 
     /**
      * @param PrototypeInterface $prototype
-     * @return object|null
+     * @return object
      * @throws \ReflectionException
      */
-    protected function getInstance(PrototypeInterface $prototype): ?object
+    protected function getInstance(PrototypeInterface $prototype): object
     {
-        $handler = $prototype->getHandler();
+        $handler = $prototype->getHandler() ?? throw new InstantiationException(\sprintf(
+            'Unable to instantiate workflow "%s" without handler method',
+            $prototype->getID(),
+        ));
 
-        if ($handler === null) {
-            throw new InstantiationException(\sprintf(
-                'Unable to instantiate workflow "%s" without handler method',
-                $prototype->getID(),
-            ));
-        }
-
-        $class = $handler->getDeclaringClass();
-
-        if ($class !== null) {
-            return $class->newInstanceWithoutConstructor();
-        }
-
-        return null;
+        return $handler->getDeclaringClass()->newInstanceWithoutConstructor();
     }
 }

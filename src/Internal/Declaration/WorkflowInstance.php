@@ -11,22 +11,22 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration;
 
+use React\Promise\PromiseInterface;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\WorkflowInstance\SignalQueue;
-use Temporal\Internal\Declaration\WorkflowInstance\UpdateQueue;
 use Temporal\Internal\Interceptor;
 
 /**
  * @psalm-import-type DispatchableHandler from InstanceInterface
  * @psalm-type QueryHandler = \Closure(QueryInput): mixed
- * @psalm-type UpdateHandler = \Closure(UpdateInput): mixed
+ * @psalm-type UpdateHandler = \Closure(UpdateInput): PromiseInterface
  * @psalm-type ValidateUpdateHandler = \Closure(UpdateInput): void
  * @psalm-type QueryExecutor = \Closure(QueryInput, callable(ValuesInterface): mixed): mixed
- * @psalm-type UpdateExecutor = \Closure(UpdateInput, callable(ValuesInterface): mixed): mixed
+ * @psalm-type UpdateExecutor = \Closure(UpdateInput, callable(ValuesInterface): mixed): PromiseInterface
  * @psalm-type ValidateUpdateExecutor = \Closure(UpdateInput, callable(ValuesInterface): mixed): mixed
  * @psalm-type UpdateValidator = \Closure(UpdateInput, UpdateHandler): void
  */
@@ -65,7 +65,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
 
     /**
      * @param WorkflowPrototype $prototype
-     * @param object $context
+     * @param object $context Workflow object
      * @param Interceptor\Pipeline<WorkflowInboundCallsInterceptor, mixed> $pipeline
      */
     public function __construct(
@@ -141,7 +141,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
      */
     public function initConstructor(): void
     {
-        if (method_exists($this->context, '__construct')) {
+        if (\method_exists($this->context, '__construct')) {
             $this->context->__construct();
         }
     }
@@ -156,8 +156,8 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
 
     /**
      * @param non-empty-string $name
-     * @return null|\Closure(ValuesInterface):mixed
      *
+     * @return null|\Closure(QueryInput): mixed
      * @psalm-return QueryHandler|null
      */
     public function findQueryHandler(string $name): ?\Closure
@@ -166,8 +166,10 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     }
 
     /**
-     * @param string $name
-     * @return \Closure
+     * @param non-empty-string $name
+     *
+     * @return null|\Closure(UpdateInput): PromiseInterface
+     * @psalm-return UpdateHandler|null
      */
     public function findUpdateHandler(string $name): ?\Closure
     {
@@ -176,6 +178,9 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
 
     /**
      * @param non-empty-string $name
+     *
+     * @return null|\Closure(UpdateInput): void
+     * @psalm-return ValidateUpdateHandler|null
      */
     public function findValidateUpdateHandler(string $name): ?\Closure
     {
@@ -234,10 +239,6 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
         return \array_keys($this->updateHandlers);
     }
 
-    /**
-     * @param string $name
-     * @return \Closure
-     */
     public function getSignalHandler(string $name): \Closure
     {
         return fn (ValuesInterface $values) => $this->signalQueue->push($name, $values);

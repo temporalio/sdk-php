@@ -139,7 +139,7 @@ class Process extends Scope implements ProcessInterface
                         )->onClose(
                             function (?\Throwable $error): void {
                                 if ($error !== null) {
-                                    // we want to fail process when signal scope fails
+                                    // Fail process when signal scope fails
                                     $this->complete($error);
                                 }
                             }

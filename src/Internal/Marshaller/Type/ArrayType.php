@@ -69,11 +69,11 @@ class ArrayType extends Type implements DetectableTypeInterface, RuleFactoryInte
     }
 
     /**
-     * @param array $value
+     * @psalm-assert array $value
+     * @param mixed $value
      * @param array $current
-     * @return array|mixed
      */
-    public function parse($value, $current)
+    public function parse($value, $current): array
     {
         if (!\is_array($value)) {
             throw new \InvalidArgumentException(\sprintf(self::ERROR_INVALID_TYPE, \get_debug_type($value)));

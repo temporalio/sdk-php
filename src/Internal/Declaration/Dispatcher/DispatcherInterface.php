@@ -11,14 +11,12 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration\Dispatcher;
 
+/**
+ * @internal
+ */
 interface DispatcherInterface
 {
-    /**
-     * @param object|null $ctx
-     * @param array $arguments
-     * @return mixed
-     */
-    public function dispatch(?object $ctx, array $arguments);
+    public function dispatch(object $ctx, array $arguments): mixed;
 
     /**
      * @return array<\ReflectionType>

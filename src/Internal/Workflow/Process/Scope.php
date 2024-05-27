@@ -28,7 +28,6 @@ use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\CancellationScopeInterface;
-use Temporal\Workflow\WorkflowContextInterface;
 
 /**
  * Unlike Java implementation, PHP has merged coroutine and cancellation scope into a single instance.
@@ -447,6 +446,7 @@ class Scope implements CancellationScopeInterface, Destroyable
     protected function next(): void
     {
         $this->makeCurrent();
+        begin:
         $this->context->resolveConditions();
 
         if (!$this->coroutine->valid()) {
@@ -482,6 +482,7 @@ class Scope implements CancellationScopeInterface, Destroyable
 
             default:
                 $this->coroutine->send($current);
+                goto begin;
         }
     }
 
