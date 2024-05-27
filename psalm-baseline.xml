@@ -244,9 +244,6 @@
     <MissingClosureParamType>
       <code><![CDATA[$value]]></code>
     </MissingClosureParamType>
-    <MoreSpecificImplementedParamType>
-      <code><![CDATA[$type]]></code>
-    </MoreSpecificImplementedParamType>
     <NullableReturnStatement>
       <code><![CDATA[$result]]></code>
       <code><![CDATA[$result]]></code>
@@ -1200,9 +1197,6 @@
       <code><![CDATA[$name]]></code>
       <code><![CDATA[$name]]></code>
     </ArgumentTypeCoercion>
-    <ImplicitToStringCast>
-      <code><![CDATA[$returnType]]></code>
-    </ImplicitToStringCast>
     <LessSpecificReturnStatement>
       <code><![CDATA[EncodedValues::decodePromise($this->request($request), $returnType)]]></code>
     </LessSpecificReturnStatement>
@@ -1319,9 +1313,6 @@
       <code><![CDATA[$type]]></code>
       <code><![CDATA[$type]]></code>
     </ArgumentTypeCoercion>
-    <ImplicitToStringCast>
-      <code><![CDATA[$returnType]]></code>
-    </ImplicitToStringCast>
     <InvalidArgument>
       <code><![CDATA[$options]]></code>
     </InvalidArgument>
@@ -1348,7 +1339,6 @@
       <code><![CDATA[$result]]></code>
     </MissingClosureParamType>
     <MissingClosureReturnType>
-      <code><![CDATA[fn() => EncodedValues::decodePromise(]]></code>
       <code><![CDATA[function ($result) use ($conditionGroupId) {]]></code>
     </MissingClosureReturnType>
     <MissingImmutableAnnotation>

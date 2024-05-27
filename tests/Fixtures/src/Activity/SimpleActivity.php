@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Activity;
 
+use React\Promise\PromiseInterface;
 use Temporal\Activity;
 use Temporal\Activity\ActivityInterface;
 use Temporal\Activity\ActivityMethod;
@@ -148,5 +149,13 @@ class SimpleActivity
             'optionalBool' => $optionalBool,
             'optionalNullableString' => $optionalNullableString,
         ];
+    }
+
+    /**
+     * @return PromiseInterface<null>
+     */
+    #[ActivityMethod]
+    public function empty(): void
+    {
     }
 }

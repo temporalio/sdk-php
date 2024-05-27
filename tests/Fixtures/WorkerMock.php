@@ -11,6 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Fixtures;
 
+use Temporal\Api\Failure\V1\Failure;
+use Temporal\DataConverter\DataConverter;
+use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Tests\TestCase;
 use Temporal\Worker\Transport\HostConnectionInterface;
 use Temporal\Worker\WorkerFactoryInterface;
@@ -120,6 +123,24 @@ class WorkerMock implements HostConnectionInterface
 
         if ($this->debug) {
             dump($frame);
+        }
+
+        if ($pair[0] !== $frame) {
+            // Parse error if exists
+            $json = \json_decode($frame, true);
+            if (\is_array($json)) {
+                foreach ($json as $part) {
+                    if (isset($part['failure'])) {
+                        $failure = new Failure();
+                        try {
+                            $failure->mergeFromString(\base64_decode($part['failure']));
+                        } catch (\Throwable) {
+                            continue;
+                        }
+                        throw FailureConverter::mapFailureToException($failure, DataConverter::createDefault());
+                    }
+                }
+            }
         }
 
         $this->testCase->assertEquals($pair[0], $frame);

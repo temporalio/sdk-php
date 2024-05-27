@@ -35,8 +35,11 @@ interface ValuesInterface extends \Countable
     /**
      * Get value by it's index.
      *
+     * Returns {@see null} if there are no values and $type has null value
+     * like {@see null}, {@see Type::TYPE_VOID} or {@see Type::TYPE_NULL}.
+     *
      * @param int $index
-     * @param Type|TypeEnum|mixed $type
+     * @param string|\ReflectionClass|\ReflectionType|Type|null $type
      * @return mixed
      */
     public function getValue(int $index, $type);
