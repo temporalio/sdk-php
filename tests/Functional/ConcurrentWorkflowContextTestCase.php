@@ -14,12 +14,14 @@ namespace Temporal\Tests\Functional;
 use Temporal\Common\Uuid;
 use Temporal\Tests\Fixtures\Splitter;
 use Temporal\Tests\Fixtures\WorkerMock;
+use Temporal\Tests\Functional\Client\AbstractClient;
+use Temporal\Tests\Workflow\TestContextLeakWorkflow;
 
 /**
  * @group workflow
  * @group functional
  */
-class ConcurentWorkflowContextTestCase extends AbstractFunctional
+class ConcurrentWorkflowContextTestCase extends AbstractClient
 {
     public function setUp(): void
     {
@@ -29,7 +31,26 @@ class ConcurentWorkflowContextTestCase extends AbstractFunctional
         $_SERVER['RR_RPC'] = 'tcp://127.0.0.1:6001';
     }
 
-    public function testContextInConcurrentWorkflows(): void
+    public function testConcurrentWorkflowContext(): void
+    {
+        $client = $this->createClient();
+
+        $runs = [];
+        $stubs = [];
+        for ($i = 0; $i <= 100; $i++) {
+            $runs[] = $client->start($stubs[] = $client->newWorkflowStub(TestContextLeakWorkflow::class));
+        }
+
+        foreach ($stubs as $i => $stub) {
+            $i % 2 === 0 and $stub->cancel();
+        }
+
+        foreach ($runs as $run) {
+            self::assertIsBool($run->getResult());
+        }
+    }
+
+    public function testMocks(): void
     {
         $worker = WorkerMock::createMock();
 
@@ -47,18 +68,21 @@ class ConcurentWorkflowContextTestCase extends AbstractFunctional
         for ($i = 0; $i < $workflows; $i++) {
             $addWorkflow();
         }
+        $g = $generators[0];
+        $shouldStop = static fn(): bool => !$g->valid();
 
         $stop = false;
         while ($generators !== []) {
             foreach ($generators as $i => $generator) {
                 if ($generator->valid()) {
                     $log[] = $generator->current();
-                    $generator->next();
                 } else {
-                    $i === 0 and $stop = true;
+                    $stop = $stop || $shouldStop();
                     unset($generators[$i]);
                 }
             }
+            // \shuffle($generators); // todo smart events merge
+            \array_map(static fn(\Generator $g) => $g->next(), $generators);
 
             $stop or $addWorkflow();
         }
@@ -70,11 +94,11 @@ class ConcurentWorkflowContextTestCase extends AbstractFunctional
     {
         $uuid1 = Uuid::v4();
         $uuid2 = Uuid::v4();
-        $id1 = self::getId();
         $emptyPayloadStr= '';
         yield <<<EVENT
             [0m	[{"command":"StartWorkflow","options":{"info":{"WorkflowExecution":{"ID":"$uuid1","RunID":"$uuid2"},"WorkflowType":{"Name":"VoidActivityStubWorkflow"},"TaskQueueName":"default","WorkflowExecutionTimeout":315360000000000000,"WorkflowRunTimeout":315360000000000000,"WorkflowTaskTimeout":0,"Namespace":"default","Attempt":1,"CronSchedule":"","ContinuedExecutionRunID":"","ParentWorkflowNamespace":"","ParentWorkflowExecution":null,"Memo":null,"SearchAttributes":null,"BinaryChecksum":"8646d54f9f6b22f407d6d22254eea9f5"}},"payloads":"$emptyPayloadStr"}] {"taskQueue":"default","tickTime":"2021-01-12T15:25:13.3983204Z"}
             EVENT;
+        $id1 = self::getId();
         yield <<<EVENT
             [0m	[{"id":$id1,"command":"ExecuteActivity","options":{"name":"SimpleActivity.empty","options":{"TaskQueueName":null,"ScheduleToCloseTimeout":0,"ScheduleToStartTimeout":0,"StartToCloseTimeout":5000000000,"HeartbeatTimeout":0,"WaitForCancellation":false,"ActivityID":"","RetryPolicy":null}},"payloads":"$emptyPayloadStr","header":""},{"payloads":"ChkKFwoIZW5jb2RpbmcSC2JpbmFyeS9udWxs"}]	{"receive": true}
             EVENT;
@@ -97,12 +121,12 @@ class ConcurentWorkflowContextTestCase extends AbstractFunctional
     {
         $uuid1 = Uuid::v4();
         $runId = Uuid::v4();
-        $id1 = self::getId();
         // Run workflow
         yield <<<EVENT
             [0m	[{"command":"StartWorkflow","options":{"info":{"WorkflowExecution":{"ID":"$uuid1","RunID":"$runId"},"WorkflowType":{"Name":"TestContextLeakWorkflow"},"TaskQueueName":"default","WorkflowExecutionTimeout":315360000000000000,"WorkflowRunTimeout":315360000000000000,"WorkflowTaskTimeout":0,"Namespace":"default","Attempt":1,"CronSchedule":"","ContinuedExecutionRunID":"","ParentWorkflowNamespace":"","ParentWorkflowExecution":null,"Memo":null,"SearchAttributes":null,"BinaryChecksum":"8646d54f9f6b22f407d6d22254eea9f5"}},"payloads":""}] {"taskQueue":"default","tickTime":"2021-01-12T15:25:13.3983204Z"}
             EVENT;
         // Start timer
+        $id1 = self::getId();
         yield <<<EVENT
             [0m	[{"id":$id1,"command":"NewTimer","options":{"ms":5000},"payloads":"","header":""},{"payloads":"ChkKFwoIZW5jb2RpbmcSC2JpbmFyeS9udWxs"}]	{"receive": true}
             EVENT;
