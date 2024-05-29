@@ -46,7 +46,7 @@ final class DataConverter implements DataConverterInterface
         }
 
         $type = Type::create($type);
-        if (\in_array($type->getName(),  [Type::TYPE_VOID, Type::TYPE_NULL, Type::TYPE_FALSE, Type::TYPE_TRUE], true)) {
+        if (\in_array($type->getName(), [Type::TYPE_VOID, Type::TYPE_NULL, Type::TYPE_FALSE, Type::TYPE_TRUE], true)) {
             return match($type->getName()) {
                 Type::TYPE_VOID, Type::TYPE_NULL => null,
                 Type::TYPE_TRUE => true,
