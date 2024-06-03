@@ -43,7 +43,7 @@ final class Context implements ContextInterface
 
         $ctx = clone $this;
         $ctx->timeout = $internal;
-        $ctx->deadline =null;
+        $ctx->deadline = null;
 
         return $ctx;
     }
