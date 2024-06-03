@@ -16,7 +16,6 @@ use Temporal\Client\GRPC\Connection\ConnectionState;
 use Temporal\Client\GRPC\ContextInterface;
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\GRPC\StatusCode;
-use Temporal\Common\RetryOptions;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Client\TimeoutException;
 use Temporal\Internal\Interceptor\Pipeline;
@@ -85,6 +84,30 @@ class BaseClientTestCase extends TestCase
         $this->assertSame($context, $client->getContext());
         $this->assertSame($context2, $client2->getContext());
         $this->assertNotSame($client, $client2);
+    }
+
+    public function testWithTimeoutDynamicDeadline(): void
+    {
+        $client = $this->createClientMock();
+        $context = $client->getContext()->withTimeout(1.234);
+
+        $this->assertNotSame($context->getDeadline(), $context->getDeadline());
+    }
+
+    public function testContextGetDeadlineWithoutDeadline(): void
+    {
+        $client = $this->createClientMock();
+        $context = $client->getContext();
+
+        $this->assertNull($context->getDeadline());
+    }
+
+    public function testContextGetDeadlineWithStaticDeadline(): void
+    {
+        $client = $this->createClientMock();
+        $context = $client->getContext()->withDeadline(new DateTimeImmutable('+1 second'));
+
+        $this->assertSame($context->getDeadline(), $context->getDeadline());
     }
 
     public function testWithAuthKey(): void
