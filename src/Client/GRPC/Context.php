@@ -20,6 +20,7 @@ use Temporal\Internal\Support\DateInterval;
 final class Context implements ContextInterface
 {
     private ?\DateTimeInterface $deadline = null;
+    private ?\DateInterval $timeout = null;
     private array $options = [];
     private array $metadata;
     private RetryOptions $retryOptions;
@@ -41,7 +42,8 @@ final class Context implements ContextInterface
         $internal = DateInterval::parse($timeout, $format);
 
         $ctx = clone $this;
-        $ctx->deadline = (new \DateTimeImmutable())->add($internal);
+        $ctx->timeout = $internal;
+        $ctx->deadline =null;
 
         return $ctx;
     }
@@ -50,6 +52,7 @@ final class Context implements ContextInterface
     {
         $ctx = clone $this;
         $ctx->deadline = $deadline;
+        $ctx->timeout = null;
 
         return $ctx;
     }
@@ -90,7 +93,11 @@ final class Context implements ContextInterface
 
     public function getDeadline(): ?\DateTimeInterface
     {
-        return $this->deadline;
+        return match (true) {
+            $this->deadline !== null => $this->deadline,
+            $this->timeout !== null => (new \DateTime())->add($this->timeout),
+            default => null,
+        };
     }
 
     public function getRetryOptions(): RetryOptions
