@@ -165,9 +165,11 @@ final class ChildWorkflowOptions extends Options
         $this->workflowRunTimeout = CarbonInterval::seconds(0);
         $this->workflowTaskTimeout = CarbonInterval::seconds(0);
 
+        // Inherit Namespace and TaskQueue from the current Workflow if possible
         try {
-            // Inherit namespace from the current Workflow if possible
-            $this->namespace = Workflow::getInfo()->namespace;
+            $info = Workflow::getInfo();
+            $this->namespace = $info->namespace;
+            $this->taskQueue = $info->taskQueue;
         } catch (\Throwable) {
             // Do nothing
         }

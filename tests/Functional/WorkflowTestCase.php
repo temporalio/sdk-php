@@ -211,6 +211,16 @@ class WorkflowTestCase extends AbstractFunctional
         $worker->run($this, Splitter::create('Test_ExecuteChildWorkflowNamespaced.log')->getQueue());
     }
 
+    /**
+     * Namespace must be inherited by default
+     */
+    public function testExecuteChildWorkflowTaskQueueInheritance(): void
+    {
+        $worker = WorkerMock::createMock();
+
+        $worker->run($this, Splitter::create('Test_ExecuteChildWorkflowTaskQueue.log')->getQueue());
+    }
+
     public function testRuntimeSignal(): void
     {
         $worker = WorkerMock::createMock();
