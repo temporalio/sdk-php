@@ -11,9 +11,12 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Protocol;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\Type;
+use Temporal\Workflow\ReturnType;
 
 /**
  * @group unit
@@ -26,5 +29,78 @@ class EncodingTestCase extends AbstractProtocol
     {
         $encodedValues = EncodedValues::fromValues([null, 'something'], new DataConverter());
         $this->assertNull($encodedValues->getValue(0));
+    }
+
+    public static function getNotNullableTypes(): iterable
+    {
+        yield [Type::create(Type::TYPE_ARRAY)];
+        yield [Type::create(Type::TYPE_OBJECT)];
+        yield [Type::create(Type::TYPE_STRING)];
+        yield [Type::create(Type::TYPE_BOOL)];
+        yield [Type::create(Type::TYPE_INT)];
+        yield [Type::create(Type::TYPE_FLOAT)];
+        yield [Type::create(Type::TYPE_TRUE)];
+        yield [Type::create(Type::TYPE_FALSE)];
+        yield [Type::create(self::class)];
+        yield [Type::TYPE_ARRAY];
+        yield [Type::TYPE_OBJECT];
+        yield [Type::TYPE_STRING];
+        yield [Type::TYPE_BOOL];
+        yield [Type::TYPE_INT];
+        yield [Type::TYPE_FLOAT];
+        yield [Type::TYPE_TRUE];
+        yield [Type::TYPE_FALSE];
+        yield [self::class];
+        yield [new ReturnType(self::class)];
+        yield [self::getRturnType(static fn(): string => '')];
+        yield [self::getRturnType(static fn(): int => 0)];
+        yield [self::getRturnType(static fn(): float => 0.0)];
+        yield [self::getRturnType(static fn(): bool => false)];
+        yield [self::getRturnType(static fn(): array => [])];
+        yield [self::getRturnType(static fn(): object => new \stdClass())];
+        yield 'union' => [[self::getRturnType(static fn(): int|string => 0)]];
+    }
+
+    public static function getNullableTypes(): iterable
+    {
+        yield [null];
+        yield [Type::create(Type::TYPE_ANY)];
+        yield [Type::create(Type::TYPE_VOID)];
+        yield [Type::create(Type::TYPE_NULL)];
+        yield [new Type(self::class, true)];
+        yield [new ReturnType(self::class, true)];
+        yield [Type::TYPE_ANY];
+        yield [Type::TYPE_VOID];
+        yield [Type::TYPE_NULL];
+        yield 'nullable' => [self::getRturnType(static fn(): ?string => null)];
+        yield 'mixed' => [self::getRturnType(static fn(): mixed => null)];
+        yield 'void' => [self::getRturnType(static function (): void {})];
+        yield 'union' => [self::getRturnType(static fn(): int|string|null => null)];
+    }
+
+    #[Test]
+    #[DataProvider('getNullableTypes')]
+    public function payloadWithoutValueDecoding(mixed $type): void
+    {
+        $encodedValues = EncodedValues::fromPayloadCollection(new \ArrayIterator([]));
+
+        self::assertNull($encodedValues->getValue(0, $type));
+    }
+
+    #[Test]
+    #[DataProvider('getNotNullableTypes')]
+    public function payloadWithoutValueDecodingNotNullable(mixed $type): void
+    {
+        $encodedValues = EncodedValues::fromPayloadCollection(new \ArrayIterator([]));
+
+        self::expectException(\LogicException::class);
+        self::expectExceptionMessage('DataConverter is not set');
+
+        $encodedValues->getValue(0, $type);
+    }
+
+    private static function getRturnType(\Closure $closure): \ReflectionType
+    {
+        return (new \ReflectionFunction($closure))->getReturnType();
     }
 }
