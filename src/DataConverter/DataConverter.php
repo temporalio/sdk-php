@@ -87,6 +87,7 @@ final class DataConverter implements DataConverterInterface
             new NullConverter(),
             new BinaryConverter(),
             new ProtoJsonConverter(),
+            new ProtoConverter(),
             new JsonConverter()
         );
     }
