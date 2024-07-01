@@ -16,6 +16,7 @@ use Countable;
 use React\Promise\PromiseInterface;
 use Temporal\Api\Common\V1\Payload;
 use Temporal\Api\Common\V1\Payloads;
+use Temporal\Workflow\ReturnType;
 use Traversable;
 
 /**
@@ -213,8 +214,11 @@ class EncodedValues implements ValuesInterface
     {
         return match (true) {
             $type === null => true,
-            $type instanceof Type => \in_array($type->getName(), [Type::TYPE_VOID, Type::TYPE_NULL], true),
-            $type instanceof \ReflectionNamedType => $type->getName() === Type::TYPE_VOID,
+            \is_string($type) =>  \in_array($type, [Type::TYPE_VOID, Type::TYPE_NULL, Type::TYPE_ANY], true),
+            $type instanceof Type => $type->allowsNull(),
+            $type instanceof ReturnType => $type->nullable,
+            $type instanceof \ReflectionNamedType => $type->getName() === Type::TYPE_VOID || $type->allowsNull(),
+            $type instanceof \ReflectionUnionType => $type->allowsNull(),
             default => false,
         };
     }
