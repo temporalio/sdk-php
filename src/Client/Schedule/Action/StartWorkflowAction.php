@@ -11,6 +11,7 @@ use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\Common\IdReusePolicy;
 use Temporal\Common\RetryOptions;
 use Temporal\Common\TaskQueue\TaskQueue;
+use Temporal\Common\Uuid;
 use Temporal\DataConverter\EncodedCollection;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
@@ -107,7 +108,7 @@ final class StartWorkflowAction extends ScheduleAction
 
     private function __construct(WorkflowType $workflowType)
     {
-        $this->workflowId = '';
+        $this->workflowId = Uuid::v4();
         $this->workflowType = $workflowType;
         $this->taskQueue = TaskQueue::new('default');
         $this->input = EncodedValues::empty();
@@ -130,6 +131,8 @@ final class StartWorkflowAction extends ScheduleAction
 
     public function withWorkflowId(string $workflowId): self
     {
+        $workflowId !== '' or throw new \InvalidArgumentException('Workflow ID cannot be empty.');
+
         /** @see self::$workflowId */
         return $this->with('workflowId', $workflowId);
     }

@@ -57,6 +57,35 @@ class ScheduleClientTestCase extends TestCase
         $this->assertSame('default', $testContext->request->getNamespace());
         $this->assertSame('test-id', $testContext->request->getScheduleId());
         $this->assertSame('test-id', $result->getID());
+        $this->assertSame(
+            'workflow-id',
+            $testContext->request->getSchedule()->getAction()->getStartWorkflow()->getWorkflowId(),
+        );
+    }
+
+    public function testCreateScheduleWithoutWorkflowId(): void
+    {
+        $testContext = new class {
+            public CreateScheduleRequest $request;
+        };
+        // Prepare mocks
+        $clientMock = $this->createMock(ServiceClientInterface::class);
+        $clientMock->expects($this->once())
+            ->method('CreateSchedule')
+            ->with($this->callback(fn(CreateScheduleRequest $request) => $testContext->request = $request or true))
+            ->willReturn((new CreateScheduleResponse())->setConflictToken('test-conflict-token'));
+        $scheduleClient = $this->createScheduleClient(
+            client: $clientMock,
+        );
+        $result = $scheduleClient->createSchedule(
+            Schedule::new()->withAction(
+                StartWorkflowAction::new('PingSite')
+            ),
+            scheduleId: 'test-id',
+        );
+
+        $this->assertTrue(isset($testContext->request));
+        $this->assertNotEmpty($testContext->request->getSchedule()->getAction()->getStartWorkflow()->getWorkflowId());
     }
 
     public function testListSchedules(): void
