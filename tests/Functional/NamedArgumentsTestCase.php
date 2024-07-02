@@ -6,6 +6,9 @@ namespace Temporal\Tests\Functional;
 
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
+use Temporal\Client\WorkflowOptions;
+use Temporal\Tests\Workflow\ContinuableWorkflow;
+use Temporal\Tests\Workflow\ContinuaWithTaskQueueWorkflow;
 use Temporal\Tests\Workflow\NamedArguments\ContinueAsNewNamedArgumentsWorkflow;
 use Temporal\Tests\Workflow\NamedArguments\ExecuteChildNamedArgumentsWorkflow;
 use Temporal\Tests\Workflow\NamedArguments\ActivityNamedArgumentsWorkflow;
@@ -211,6 +214,24 @@ final class NamedArgumentsTestCase extends TestCase
             'nullableString' => 'test',
             'array' => ['test'],
         ], $result);
+    }
+
+    /**
+     * TaskQueue must be inherited from the parent workflow
+     */
+    public function testContinueAsNewTaskQueue(): void
+    {
+        $workflow = $this->workflowClient->newWorkflowStub(
+            ContinuaWithTaskQueueWorkflow::class,
+            WorkflowOptions::new()->withTaskQueue('FooBar'),
+        );
+
+        $result = $this->workflowClient->start(
+            $workflow,
+            generation: 1,
+        )->getResult();
+
+        self::assertSame('FooBar6', $result);
     }
 
     public function testExecuteChildNamedArguments()
