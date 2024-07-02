@@ -52,13 +52,13 @@ class EncodingTestCase extends AbstractProtocol
         yield [Type::TYPE_FALSE];
         yield [self::class];
         yield [new ReturnType(self::class)];
-        yield [self::getRturnType(static fn(): string => '')];
-        yield [self::getRturnType(static fn(): int => 0)];
-        yield [self::getRturnType(static fn(): float => 0.0)];
-        yield [self::getRturnType(static fn(): bool => false)];
-        yield [self::getRturnType(static fn(): array => [])];
-        yield [self::getRturnType(static fn(): object => new \stdClass())];
-        yield 'union' => [[self::getRturnType(static fn(): int|string => 0)]];
+        yield [self::getReturnType(static fn(): string => '')];
+        yield [self::getReturnType(static fn(): int => 0)];
+        yield [self::getReturnType(static fn(): float => 0.0)];
+        yield [self::getReturnType(static fn(): bool => false)];
+        yield [self::getReturnType(static fn(): array => [])];
+        yield [self::getReturnType(static fn(): object => new \stdClass())];
+        yield 'union' => [[self::getReturnType(static fn(): int|string => 0)]];
     }
 
     public static function getNullableTypes(): iterable
@@ -72,10 +72,10 @@ class EncodingTestCase extends AbstractProtocol
         yield [Type::TYPE_ANY];
         yield [Type::TYPE_VOID];
         yield [Type::TYPE_NULL];
-        yield 'nullable' => [self::getRturnType(static fn(): ?string => null)];
-        yield 'mixed' => [self::getRturnType(static fn(): mixed => null)];
-        yield 'void' => [self::getRturnType(static function (): void {})];
-        yield 'union' => [self::getRturnType(static fn(): int|string|null => null)];
+        yield 'nullable' => [self::getReturnType(static fn(): ?string => null)];
+        yield 'mixed' => [self::getReturnType(static fn(): mixed => null)];
+        yield 'void' => [self::getReturnType(static function (): void {})];
+        yield 'union' => [self::getReturnType(static fn(): int|string|null => null)];
     }
 
     #[Test]
@@ -99,7 +99,7 @@ class EncodingTestCase extends AbstractProtocol
         $encodedValues->getValue(0, $type);
     }
 
-    private static function getRturnType(\Closure $closure): \ReflectionType
+    private static function getReturnType(\Closure $closure): \ReflectionType
     {
         return (new \ReflectionFunction($closure))->getReturnType();
     }
