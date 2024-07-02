@@ -14,8 +14,12 @@ namespace Temporal\Tests\Unit\DataConverter;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\EncodingKeys;
+use Temporal\DataConverter\ProtoConverter;
+use Temporal\DataConverter\ProtoJsonConverter;
 use Temporal\DataConverter\Type;
 use Temporal\Exception\DataConverterException;
+use Temporal\Tests\Proto\Test;
 use Temporal\Tests\Unit\AbstractUnit;
 
 /**
@@ -176,5 +180,29 @@ class DataConverterTestCase extends AbstractUnit
         $payload = $converter->toPayload($value);
 
         $this->assertNull($converter->fromPayload($payload, $type));
+    }
+
+    /**
+     * DataConverter may decode protobuf binary messages
+     */
+    public function testProtobufBinaryDecoding(): void
+    {
+        $message = (new Test())->setValue('foo');
+        $payload = (new ProtoConverter())->toPayload($message);
+
+        $decoded = DataConverter::createDefault()->fromPayload($payload, Test::class);
+
+        self::assertEquals($message, $decoded);
+    }
+
+    /**
+     * DataConverter decodes Protobuf messages using ProtoJson converter
+     */
+    public function testProtobufEncodingToJson(): void
+    {
+        $message = (new Test())->setValue('foo');
+        $payload = DataConverter::createDefault()->toPayload($message);
+
+        self::assertSame(EncodingKeys::METADATA_ENCODING_PROTOBUF_JSON, $payload->getMetadata()['encoding']);
     }
 }
