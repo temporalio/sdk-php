@@ -43,10 +43,11 @@ class StartWorkflowActionTestCase extends TestCase
     public function testWithWorkflowId(): void
     {
         $init = StartWorkflowAction::new('TestWorkflow');
+        $initId = $init->workflowId;
         $new = $init->withWorkflowId('workflow-id');
 
         $this->assertNotSame($init, $new, 'immutable method clones object');
-        $this->assertSame('', $init->workflowId, 'init value was not changed');
+        $this->assertSame($initId, $init->workflowId, 'init value was not changed');
         $this->assertSame('workflow-id', $new->workflowId);
     }
 
@@ -54,11 +55,9 @@ class StartWorkflowActionTestCase extends TestCase
     {
         $init = StartWorkflowAction::new('TestWorkflow')->withWorkflowId('test-id');
 
-        $new = $init->withWorkflowId('');
+        $this->expectException(\InvalidArgumentException::class);
 
-        $this->assertNotSame($init, $new, 'immutable method clones object');
-        $this->assertSame('test-id', $init->workflowId, 'init value was not changed');
-        $this->assertSame('', $new->workflowId);
+        $init->withWorkflowId('');
     }
 
     public function testWithTaskQueue(): void
