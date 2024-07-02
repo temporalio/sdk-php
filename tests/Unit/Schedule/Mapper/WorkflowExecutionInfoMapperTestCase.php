@@ -206,7 +206,7 @@ final class WorkflowExecutionInfoMapperTestCase extends TestCase
         $this->assertSame(0, $startWorkflow->getHeader()->getFields()->count());
         $this->assertSame(0, $startWorkflow->getMemo()->getFields()->count());
         $this->assertSame(0, $startWorkflow->getSearchAttributes()->getIndexedFields()->count());
-        $this->assertEmpty($startWorkflow->getWorkflowId());
+        $this->assertNotEmpty($startWorkflow->getWorkflowId());
         $this->assertSame(IdReusePolicy::Unspecified->value, $startWorkflow->getWorkflowIdReusePolicy());
 
         // Test Spec
