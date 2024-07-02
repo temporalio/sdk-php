@@ -52,6 +52,6 @@ final class ReturnType
         bool $nullable = false
     ) {
         $this->name = $name;
-        $this->nullable = $nullable;
+        $this->nullable = $nullable || (new Type($name))->allowsNull();
     }
 }
