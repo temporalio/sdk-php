@@ -18,6 +18,7 @@ use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Worker\Worker;
+use Temporal\Workflow;
 
 /**
  * @psalm-import-type DateIntervalValue from DateInterval
@@ -55,6 +56,12 @@ final class ContinueAsNewOptions
     {
         $this->workflowRunTimeout = CarbonInterval::seconds(0);
         $this->workflowTaskTimeout = CarbonInterval::seconds(0);
+        try {
+            // Inherit TaskQueue from the current Workflow if possible
+            $this->taskQueue = Workflow::getInfo()->taskQueue;
+        } catch (\Throwable) {
+            // Do nothing
+        }
     }
 
     /**
