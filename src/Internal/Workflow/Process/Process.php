@@ -105,12 +105,10 @@ class Process extends Scope implements ProcessInterface
                 );
 
                 $scope->startUpdate(
-                    function () use ($handler, $inboundPipeline, $input) {
+                    function () use ($handler, $inboundPipeline, $input): mixed {
                         Workflow::setCurrentContext($this->scopeContext);
                         return $inboundPipeline->with(
-                            function (UpdateInput $input) use ($handler) {
-                                return $handler($input->arguments);
-                            },
+                            static fn(UpdateInput $input): mixed => $handler($input->arguments),
                             /** @see WorkflowInboundCallsInterceptor::handleUpdate() */
                             'handleUpdate',
                         )($input);
