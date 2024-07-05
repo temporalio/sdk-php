@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Workflow\Process;
 
 use JetBrains\PhpStorm\Pure;
+use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DestructMemorizedInstanceException;
@@ -92,7 +93,7 @@ class Process extends Scope implements ProcessInterface
         });
 
         // Configure update handler in a mutable scope
-        $wfInstance->setUpdateExecutor(function (UpdateInput $input, callable $handler) use ($inboundPipeline): PromiseInterface {
+        $wfInstance->setUpdateExecutor(function (UpdateInput $input, callable $handler, Deferred $resolver) use ($inboundPipeline): PromiseInterface {
             try {
                 // Define Context for interceptors Pipeline
                 $scope = $this->createScope(
@@ -102,7 +103,8 @@ class Process extends Scope implements ProcessInterface
                         new Input($input->info, $input->arguments, $input->header),
                     ),
                 );
-                $scope->startSignal(
+
+                $scope->startUpdate(
                     function () use ($handler, $inboundPipeline, $input) {
                         Workflow::setCurrentContext($this->scopeContext);
                         return $inboundPipeline->with(
@@ -114,6 +116,7 @@ class Process extends Scope implements ProcessInterface
                         )($input);
                     },
                     $input->arguments,
+                    $resolver,
                 );
 
                 return $scope->promise();

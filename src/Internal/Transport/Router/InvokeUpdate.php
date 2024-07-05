@@ -89,8 +89,8 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
 
         // Validation has passed
 
-        $promise = $handler($input);
-        $promise->then(
+        $deferred = new Deferred();
+        $deferred->promise()->then(
             static function (mixed $value) use ($updateId, $context): void {
                 $context->getClient()->send(new UpdateResponse(
                     command: UpdateResponse::COMMAND_COMPLETED,
@@ -108,22 +108,18 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
                 ));
             },
         );
+
+        $handler($input, $deferred);
     }
 
     /**
      * @param non-empty-string $name
-     * @return \Closure(UpdateInput): PromiseInterface
+     * @return \Closure(UpdateInput, Deferred): PromiseInterface
      */
     private function getUpdateHandler(WorkflowInstanceInterface $instance, string $name): \Closure
     {
-        $handler = $instance->findUpdateHandler($name);
-
-        if ($handler === null) {
-            $available = \implode(' ', $instance->getUpdateHandlerNames());
-
-            throw new \LogicException(\sprintf(self::ERROR_HANDLER_NOT_FOUND, $name, $available));
-        }
-
-        return $handler;
+        return $instance->findUpdateHandler($name) ?? throw new \LogicException(
+            \sprintf(self::ERROR_HANDLER_NOT_FOUND, $name, \implode(' ', $instance->getUpdateHandlerNames()))
+        );
     }
 }

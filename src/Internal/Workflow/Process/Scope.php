@@ -186,12 +186,33 @@ class Scope implements CancellationScopeInterface, Destroyable
     }
 
     /**
+     * @param callable(ValuesInterface): mixed $handler Update method handler.
+     * @param Deferred $resolver Update method promise resolver.
+     */
+    public function startUpdate(callable $handler, ValuesInterface $values, Deferred $resolver): void
+    {
+        $this->then(
+            $resolver->resolve(...),
+            function (\Throwable $error) use ($resolver): void {
+                $this->services->exceptionInterceptor->isRetryable($error)
+                    ? $this->scopeContext->panic($error)
+                    : $resolver->reject($error);
+            }
+        );
+
+        // Create a coroutine generator
+        $this->coroutine = $this->callSignalOrUpdateHandler($handler, $values);
+        $this->context->resolveConditions();
+        $this->next();
+    }
+
+    /**
      * @param callable $handler
      */
     public function startSignal(callable $handler, ValuesInterface $values): void
     {
         // Create a coroutine generator
-        $this->coroutine = $this->callSignalHandler($handler, $values);
+        $this->coroutine = $this->callSignalOrUpdateHandler($handler, $values);
         $this->context->resolveConditions();
         $this->next();
     }
@@ -371,12 +392,12 @@ class Scope implements CancellationScopeInterface, Destroyable
     }
 
     /**
-     * Call a Signal method. In this case deserialization errors are skipped.
+     * Call a Signal or Update method. In this case deserialization errors are skipped.
      *
-     * @param callable $handler
+     * @param callable(ValuesInterface): mixed $handler
      * @return \Generator
      */
-    protected function callSignalHandler(callable $handler, ValuesInterface $values): \Generator
+    protected function callSignalOrUpdateHandler(callable $handler, ValuesInterface $values): \Generator
     {
         try {
             $this->makeCurrent();
