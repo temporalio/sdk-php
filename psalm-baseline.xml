@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="5.24.0@462c80e31c34e58cc4f750c656be3927e80e550e">
+<files psalm-version="5.25.0@01a8eb06b9e9cc6cfb6a320bf9fb14331919d505">
   <file src="src/Activity.php">
     <ImplicitToStringCast>
       <code><![CDATA[$type]]></code>
@@ -581,9 +581,6 @@
     </RedundantConditionGivenDocblockType>
   </file>
   <file src="src/Internal/Declaration/WorkflowInstance.php">
-    <InvalidPropertyAssignmentValue>
-      <code><![CDATA[$validator]]></code>
-    </InvalidPropertyAssignmentValue>
     <MissingClosureReturnType>
       <code><![CDATA[function (QueryInput $input) use ($fn) {]]></code>
     </MissingClosureReturnType>
@@ -1157,12 +1154,6 @@
       <code><![CDATA[$result]]></code>
       <code><![CDATA[$result]]></code>
     </MissingClosureParamType>
-    <PossiblyNullArgument>
-      <code><![CDATA[$request->getOptions()['updateId'] ?? null]]></code>
-    </PossiblyNullArgument>
-    <UndefinedClass>
-      <code><![CDATA[UpdateResult]]></code>
-    </UndefinedClass>
   </file>
   <file src="src/Internal/Workflow/ActivityProxy.php">
     <ArgumentTypeCoercion>
@@ -1232,16 +1223,9 @@
     </PropertyTypeCoercion>
   </file>
   <file src="src/Internal/Workflow/Process/Process.php">
-    <InvalidArgument>
-      <code><![CDATA[$input->arguments]]></code>
-    </InvalidArgument>
     <MissingClosureParamType>
       <code><![CDATA[$result]]></code>
     </MissingClosureParamType>
-    <MissingClosureReturnType>
-      <code><![CDATA[function () use ($handler, $inboundPipeline, $input) {]]></code>
-      <code><![CDATA[function (UpdateInput $input) use ($handler) {]]></code>
-    </MissingClosureReturnType>
     <PropertyNotSetInConstructor>
       <code><![CDATA[Process]]></code>
     </PropertyNotSetInConstructor>

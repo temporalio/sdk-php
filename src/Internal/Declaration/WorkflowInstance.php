@@ -130,7 +130,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     }
 
     /**
-     * @param UpdateValidator $validator
+     * @param ValidateUpdateExecutor $validator
      */
     public function setUpdateValidator(\Closure $validator): self
     {
