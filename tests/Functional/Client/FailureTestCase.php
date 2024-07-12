@@ -12,12 +12,16 @@ declare(strict_types=1);
 namespace Temporal\Tests\Functional\Client;
 
 use PHPUnit\Framework\AssertionFailedError;
+use Temporal\Api\Enums\V1\EventType;
+use Temporal\Client\WorkflowOptions;
 use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Client\WorkflowNotFoundException;
+use Temporal\Exception\Client\WorkflowUpdateException;
 use Temporal\Exception\Failure\ActivityFailure;
 use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Exception\Failure\ChildWorkflowFailure;
 use Temporal\Tests\Workflow\SignalExceptionsWorkflow;
+use Temporal\Tests\Workflow\UpdateExceptionsWorkflow;
 
 /**
  * @group client
@@ -148,7 +152,7 @@ class FailureTestCase extends AbstractClient
         $run = $client->startWithSignal($wf, 'failActivity', ['foo']);
 
         try {
-            sleep(8);
+            sleep(3);
             $wf->failActivity('foo');
             $this->fail('Signal must fail');
         } catch (AssertionFailedError $e) {
@@ -160,5 +164,98 @@ class FailureTestCase extends AbstractClient
         $this->expectException(WorkflowFailedException::class);
         $result = $run->getResult();
         $this->fail(sprintf("Workflow must fail. Got result %s", \print_r($result, true)));
+    }
+
+    /**
+     * @group skip-on-test-server
+     */
+    public function testUpdateThatThrowsRetryableException()
+    {
+        $client = $this->createClient();
+        $wf = $client->newUntypedWorkflowStub(
+            'SignalExceptions.greet',
+            WorkflowOptions::new()->withWorkflowRunTimeout('40 seconds')
+        );
+
+        $run = $client->start($wf);
+
+        $wf->startUpdate('error');
+
+        sleep(1);
+        $wf->signal('exit');
+
+        // Check history
+        $e = null;
+        $s = null;
+        foreach ($client->getWorkflowHistory($run->getExecution()) as $event) {
+            if ($event->getEventType() === EventType::EVENT_TYPE_WORKFLOW_TASK_FAILED) {
+                $e = $event;
+                continue;
+            }
+
+            if ($event->getEventType() === EventType::EVENT_TYPE_WORKFLOW_EXECUTION_SIGNALED) {
+                $s = $event;
+                continue;
+            }
+
+            if ($event->getEventType() === EventType::EVENT_TYPE_WORKFLOW_EXECUTION_COMPLETED) {
+                $this->fail('Workflow must not complete');
+            }
+        }
+
+        $this->assertNotNull($e);
+        $this->assertNotNull($s);
+    }
+
+    /**
+     * @group skip-on-test-server
+     */
+    public function testUpdateThatThrowsCustomError()
+    {
+        $client = $this->createClient();
+        $wf = $client->newWorkflowStub(UpdateExceptionsWorkflow::class);
+        $run = $client->start($wf);
+
+        try {
+            $this->expectException(WorkflowUpdateException::class);
+            $wf->failWithName('test1');
+        } finally {
+            $wf->exit();
+            $this->assertSame(['test1'], $run->getResult());
+        }
+    }
+
+    /**
+     * @group skip-on-test-server
+     */
+    public function testUpdateThatThrowsInvalidArgumentException()
+    {
+        try {
+            $client = $this->createClient();
+            $wf = $client->newWorkflowStub(UpdateExceptionsWorkflow::class);
+            $run = $client->start($wf);
+            $this->expectException(WorkflowUpdateException::class);
+            $wf->failInvalidArgument('test1');
+        } finally {
+            $wf->exit();
+            $this->assertSame(['invalidArgument test1'], $run->getResult());
+        }
+    }
+
+    /**
+     * @group skip-on-test-server
+     */
+    public function testUpdateThatThrowsInternalException()
+    {
+        $client = $this->createClient();
+        $wf = $client->newWorkflowStub(UpdateExceptionsWorkflow::class);
+        $client->startWithSignal($wf, 'failActivity', ['foo']);
+
+        try {
+            $this->expectException(WorkflowUpdateException::class);
+            $wf->failActivity('foo');
+        } finally {
+            $wf->exit();
+        }
     }
 }

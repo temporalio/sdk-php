@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration;
 
+use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
@@ -23,10 +24,10 @@ use Temporal\Internal\Interceptor;
 /**
  * @psalm-import-type DispatchableHandler from InstanceInterface
  * @psalm-type QueryHandler = \Closure(QueryInput): mixed
- * @psalm-type UpdateHandler = \Closure(UpdateInput): PromiseInterface
+ * @psalm-type UpdateHandler = \Closure(UpdateInput, Deferred): PromiseInterface
  * @psalm-type ValidateUpdateHandler = \Closure(UpdateInput): void
  * @psalm-type QueryExecutor = \Closure(QueryInput, callable(ValuesInterface): mixed): mixed
- * @psalm-type UpdateExecutor = \Closure(UpdateInput, callable(ValuesInterface): mixed): PromiseInterface
+ * @psalm-type UpdateExecutor = \Closure(UpdateInput, callable(ValuesInterface): mixed, Deferred): PromiseInterface
  * @psalm-type ValidateUpdateExecutor = \Closure(UpdateInput, callable(ValuesInterface): mixed): mixed
  * @psalm-type UpdateValidator = \Closure(UpdateInput, UpdateHandler): void
  */
@@ -85,7 +86,8 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
         $updateValidators = $prototype->getValidateUpdateHandlers();
         foreach ($prototype->getUpdateHandlers() as $method => $reflection) {
             $fn = $this->createHandler($reflection);
-            $this->updateHandlers[$method] = fn(UpdateInput $input): mixed => ($this->updateExecutor)($input, $fn);
+            $this->updateHandlers[$method] = fn(UpdateInput $input, Deferred $deferred): mixed =>
+                ($this->updateExecutor)($input, $fn, $deferred);
             // Register validate update handlers
             $this->validateUpdateHandlers[$method] = \array_key_exists($method, $updateValidators)
                 ? fn(UpdateInput $input): mixed => ($this->updateValidator)(
@@ -128,7 +130,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     }
 
     /**
-     * @param UpdateValidator $validator
+     * @param ValidateUpdateExecutor $validator
      */
     public function setUpdateValidator(\Closure $validator): self
     {
@@ -168,7 +170,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     /**
      * @param non-empty-string $name
      *
-     * @return null|\Closure(UpdateInput): PromiseInterface
+     * @return null|\Closure(UpdateInput, Deferred): PromiseInterface
      * @psalm-return UpdateHandler|null
      */
     public function findUpdateHandler(string $name): ?\Closure
@@ -215,8 +217,8 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
         $fn = $this->createCallableHandler($handler);
 
         $this->updateHandlers[$name] = $this->pipeline->with(
-            function (UpdateInput $input) use ($fn) {
-                return ($this->updateExecutor)($input, $fn);
+            function (UpdateInput $input, Deferred $deferred) use ($fn) {
+                return ($this->updateExecutor)($input, $fn, $deferred);
             },
             /** @see WorkflowInboundCallsInterceptor::handleUpdate() */
             'handleUpdate',
