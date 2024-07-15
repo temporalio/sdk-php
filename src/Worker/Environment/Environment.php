@@ -18,15 +18,12 @@ use Temporal\Internal\Support\DateTime;
 
 class Environment implements EnvironmentInterface
 {
-    /**
-     * @var string
-     */
     private const HEADER_REPLAY = 'replay';
-
-    /**
-     * @var string
-     */
     private const HEADER_TICK_TIME = 'tickTime';
+    private const HEADER_RR_ID = 'rr_id';
+    private const HEADER_CONTINUE_AS_NEW_SUGGESTED = 'continue_as_new_suggested';
+    private const HEADER_HISTORY_LENGTH = 'history_length';
+    private const HEADER_HISTORY_SIZE = 'history_size';
 
     /**
      * @var CarbonInterface
@@ -37,6 +34,14 @@ class Environment implements EnvironmentInterface
      * @var bool
      */
     protected bool $isReplaying = false;
+
+    protected bool $isContinueAsNewSuggested = false;
+
+    /** @var int<0, max> */
+    protected int $historyLength = 0;
+
+    /** @var int<0, max> */
+    protected int $historySize = 0;
 
     /**
      * Environment constructor.
@@ -54,12 +59,15 @@ class Environment implements EnvironmentInterface
         return $this->tickTime;
     }
 
-    /**
-     * @return bool
-     */
     public function isReplaying(): bool
     {
         return $this->isReplaying;
+    }
+
+
+    public function isContinueAsNewSuggested(): bool
+    {
+        return $this->isContinueAsNewSuggested;
     }
 
     /**
@@ -73,5 +81,9 @@ class Environment implements EnvironmentInterface
         if (isset($headers[self::HEADER_TICK_TIME])) {
             $this->tickTime = DateTime::parse($headers[self::HEADER_TICK_TIME], new CarbonTimeZone('UTC'));
         }
+
+        $this->isContinueAsNewSuggested = $headers[self::HEADER_CONTINUE_AS_NEW_SUGGESTED] ?? false;
+        $this->historyLength = $headers[self::HEADER_HISTORY_LENGTH] ?? 0;
+        $this->historySize = $headers[self::HEADER_HISTORY_SIZE] ?? 0;
     }
 }
