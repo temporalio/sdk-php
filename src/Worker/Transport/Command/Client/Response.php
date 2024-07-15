@@ -24,6 +24,6 @@ final class Response
 
     public static function createFailure(\Throwable $failure, int|string $id): FailureResponseInterface
     {
-        return new FiledClientResponse($id, $failure);
+        return new FailedClientResponse($id, $failure);
     }
 }

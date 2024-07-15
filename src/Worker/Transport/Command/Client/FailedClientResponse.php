@@ -13,7 +13,7 @@ namespace Temporal\Worker\Transport\Command\Client;
 
 use Temporal\Worker\Transport\Command\FailureResponseInterface;
 
-final class FiledClientResponse implements FailureResponseInterface
+final class FailedClientResponse implements FailureResponseInterface
 {
     public function __construct(
         private readonly int|string $id,
