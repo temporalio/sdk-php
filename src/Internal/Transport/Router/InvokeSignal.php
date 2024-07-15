@@ -28,7 +28,7 @@ final class InvokeSignal extends WorkflowProcessAwareRoute
         // Get Workflow context
         $context = $this->findProcessOrFail($request->getID())->getContext();
         /** @psalm-suppress InaccessibleProperty */
-        $context->getInfo()->historyLength = $request->getHistoryLength();
+        $context->getInfo()->historyLength = $request->getTickInfo()->historyLength;
 
         $handler($request->getPayloads());
 

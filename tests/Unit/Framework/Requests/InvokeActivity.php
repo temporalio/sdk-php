@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Framework\Requests;
 
+use DateTimeImmutable;
 use Temporal\DataConverter\ValuesInterface;
-use Temporal\Worker\Transport\Command\ServerRequest;
+use Temporal\Worker\Transport\Command\Server\ServerRequest;
+use Temporal\Worker\Transport\Command\Server\TickInfo;
 
 /**
  * @internal
@@ -21,6 +23,7 @@ final class InvokeActivity extends ServerRequest
                 'ActivityType' => ['Name' => $activityName],
             ]
         ];
-        parent::__construct('InvokeActivity', $options, $values);
+        $info = new TickInfo(new DateTimeImmutable());
+        parent::__construct('InvokeActivity', $info, $options, $values);
     }
 }

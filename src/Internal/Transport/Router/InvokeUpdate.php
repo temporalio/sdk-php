@@ -16,8 +16,8 @@ use React\Promise\PromiseInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
+use Temporal\Worker\Transport\Command\Client\UpdateResponse;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
-use Temporal\Worker\Transport\Command\UpdateResponse;
 
 final class InvokeUpdate extends WorkflowProcessAwareRoute
 {
@@ -40,7 +40,7 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
             $name = $request->getOptions()['name'];
             $handler = $this->getUpdateHandler($instance, $name);
             /** @psalm-suppress InaccessibleProperty */
-            $context->getInfo()->historyLength = $request->getHistoryLength();
+            $context->getInfo()->historyLength = $request->getTickInfo()->historyLength;
 
             $input = new UpdateInput(
                 updateName: $name,

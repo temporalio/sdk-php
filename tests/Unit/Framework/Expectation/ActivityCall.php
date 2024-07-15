@@ -8,8 +8,8 @@ use PHPUnit\Framework\ExpectationFailedException;
 use ReflectionClass;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Internal\Transport\Request\ExecuteActivity;
+use Temporal\Worker\Transport\Command\Client\Response;
 use Temporal\Worker\Transport\Command\CommandInterface;
-use Temporal\Worker\Transport\Command\SuccessResponse;
 
 /**
  * @internal
@@ -32,7 +32,7 @@ final class ActivityCall implements ExpectationInterface
 
     public function run(CommandInterface $command): CommandInterface
     {
-        return new SuccessResponse(EncodedValues::fromValues($this->values), $command->getID());
+        return Response::createSuccess(EncodedValues::fromValues($this->values), $command->getID());
     }
 
     public function fail(): void

@@ -9,22 +9,20 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Worker\Transport\Command;
+namespace Temporal\Worker\Transport\Command\Server;
 
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Worker\Transport\Command\SuccessResponseInterface;
 
-class SuccessResponse extends Response implements SuccessResponseInterface
+class SuccessResponse extends ServerResponse implements SuccessResponseInterface
 {
     protected ValuesInterface $values;
 
-    /**
-     * @param int<0, max> $historyLength
-     */
-    public function __construct(?ValuesInterface $values, string|int $id, int $historyLength = 0)
+    public function __construct(?ValuesInterface $values, string|int $id, TickInfo $info)
     {
         $this->values = $values ?? EncodedValues::empty();
-        parent::__construct(id: $id, historyLength: $historyLength);
+        parent::__construct(id: $id, info: $info);
     }
 
     public function getPayloads(): ValuesInterface

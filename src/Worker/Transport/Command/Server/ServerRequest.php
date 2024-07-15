@@ -9,12 +9,15 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Worker\Transport\Command;
+namespace Temporal\Worker\Transport\Command\Server;
 
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\Header;
 use Temporal\Interceptor\HeaderInterface;
+use Temporal\Worker\Transport\Command\Common\RequestTrait;
+use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 /**
  * A request from RoadRunner to the worker.
@@ -34,15 +37,14 @@ class ServerRequest implements ServerRequestInterface
      * @param non-empty-string $name
      * @param non-empty-string|null $id
      * @param RequestOptions $options
-     * @param int<0, max> $historyLength
      */
     public function __construct(
         private string $name,
+        private TickInfo $info,
         private array $options = [],
         ?ValuesInterface $payloads = null,
         ?string $id = null,
         ?HeaderInterface $header = null,
-        private int $historyLength = 0,
     ) {
         $this->payloads = $payloads ?? EncodedValues::empty();
         $this->header = $header ?? Header::empty();
@@ -54,11 +56,8 @@ class ServerRequest implements ServerRequestInterface
         return $this->id;
     }
 
-    /**
-     * @return int<0, max>
-     */
-    public function getHistoryLength(): int
+    public function getTickInfo(): TickInfo
     {
-        return $this->historyLength;
+        return $this->info;
     }
 }

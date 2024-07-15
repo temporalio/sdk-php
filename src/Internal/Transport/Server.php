@@ -13,10 +13,11 @@ namespace Temporal\Internal\Transport;
 
 use React\Promise\PromiseInterface;
 use Temporal\Internal\Queue\QueueInterface;
-use Temporal\Worker\Transport\Command\FailureResponse;
+use Temporal\Worker\Transport\Command\Client\Response;
+use Temporal\Worker\Transport\Command\FailureResponseInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
-use Temporal\Worker\Transport\Command\SuccessResponse;
+use Temporal\Worker\Transport\Command\SuccessResponseInterface;
 
 /**
  * @psalm-import-type OnMessageHandler from ServerInterface
@@ -60,27 +61,26 @@ final class Server implements ServerInterface
         try {
             $result = ($this->onMessage)($request, $headers);
         } catch (\Throwable $e) {
-            $this->queue->push(new FailureResponse($e, $request->getID()));
+            $this->queue->push(Response::createFailure($e, $request->getID()));
 
             return;
         }
 
-        if (!$result instanceof PromiseInterface) {
-            $error = \sprintf(self::ERROR_INVALID_RETURN_TYPE, PromiseInterface::class, \get_debug_type($result));
-            throw new \BadMethodCallException($error);
-        }
+        $result instanceof PromiseInterface or throw new \BadMethodCallException(\sprintf(
+            self::ERROR_INVALID_RETURN_TYPE,
+            PromiseInterface::class, \get_debug_type($result),
+        ));
 
         $result->then($this->onFulfilled($request), $this->onRejected($request));
     }
 
     /**
-     * @param RequestInterface $request
-     * @return \Closure
+     * @return \Closure(mixed): SuccessResponseInterface
      */
     private function onFulfilled(ServerRequestInterface $request): \Closure
     {
         return function ($result) use ($request) {
-            $response = new SuccessResponse($result, $request->getID());
+            $response = Response::createSuccess($result, $request->getID());
             $this->queue->push($response);
 
             return $response;
@@ -88,19 +88,12 @@ final class Server implements ServerInterface
     }
 
     /**
-     * @param ServerRequestInterface $request
-     * @return \Closure
+     * @return \Closure(\Throwable): FailureResponseInterface
      */
     private function onRejected(ServerRequestInterface $request): \Closure
     {
-        return function ($result) use ($request) {
-            if (!$result instanceof \Throwable) {
-                $result = new \InvalidArgumentException(
-                    \sprintf(self::ERROR_INVALID_REJECTION_TYPE, \get_debug_type($result))
-                );
-            }
-
-            $response = new FailureResponse($result, $request->getID());
+        return function (\Throwable $result) use ($request) {
+            $response = Response::createFailure($result, $request->getID());
             $this->queue->push($response);
 
             return $response;

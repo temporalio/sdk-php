@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Unit\Framework\Server\CommandHandler;
 
 use Temporal\Worker\Transport\Command\CommandInterface;
-use Temporal\Worker\Transport\Command\FailureResponse;
+use Temporal\Worker\Transport\Command\Server\FailureResponse;
 
 final class FailureResponseHandler implements CommandHandlerInterface
 {

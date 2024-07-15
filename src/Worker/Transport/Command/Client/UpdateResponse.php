@@ -9,11 +9,12 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Worker\Transport\Command;
+namespace Temporal\Worker\Transport\Command\Client;
 
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Worker\Transport\Command\ResponseInterface;
 
-class UpdateResponse extends Response
+final class UpdateResponse implements ResponseInterface
 {
     public const COMMAND_VALIDATED = 'UpdateValidated';
     public const COMMAND_COMPLETED = 'UpdateCompleted';
@@ -24,7 +25,11 @@ class UpdateResponse extends Response
         private readonly ?\Throwable $failure,
         private string|int $updateId,
     ) {
-        parent::__construct(id: 0, historyLength: 0);
+    }
+
+    public function getID(): int
+    {
+        return 0;
     }
 
     public function getCommand(): string

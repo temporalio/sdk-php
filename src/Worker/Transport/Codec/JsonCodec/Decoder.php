@@ -18,45 +18,34 @@ use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Interceptor\Header;
-use Temporal\Worker\Transport\Command\FailureResponse;
 use Temporal\Worker\Transport\Command\FailureResponseInterface;
-use Temporal\Worker\Transport\Command\RequestInterface;
-use Temporal\Worker\Transport\Command\ResponseInterface;
-use Temporal\Worker\Transport\Command\ServerRequest;
+use Temporal\Worker\Transport\Command\Server\FailureResponse;
+use Temporal\Worker\Transport\Command\Server\ServerRequest;
+use Temporal\Worker\Transport\Command\Server\SuccessResponse;
+use Temporal\Worker\Transport\Command\Server\TickInfo;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
-use Temporal\Worker\Transport\Command\SuccessResponse;
+use Temporal\Worker\Transport\Command\ServerResponseInterface as ServerResponse;
 use Temporal\Worker\Transport\Command\SuccessResponseInterface;
 
 class Decoder
 {
-    private DataConverterInterface $converter;
-
-    /**
-     * @param DataConverterInterface $dataConverter
-     */
-    public function __construct(DataConverterInterface $dataConverter)
-    {
-        $this->converter = $dataConverter;
-    }
+    public function __construct(
+        private readonly DataConverterInterface $dataConverter,
+    ) {}
 
     /**
      * @throws \Exception
      */
-    public function decode(array $command): ServerRequestInterface|ResponseInterface
+    public function decode(array $command, TickInfo $info): ServerRequestInterface|ServerResponse
     {
         return match (true) {
-            isset($command['command']) => $this->parseRequest($command),
-            isset($command['failure']) => $this->parseFailureResponse($command),
-            default => $this->parseResponse($command),
+            isset($command['command']) => $this->parseRequest($command, $info),
+            isset($command['failure']) => $this->parseFailureResponse($command, $info),
+            default => $this->parseResponse($command, $info),
         };
     }
 
-    /**
-     * @param array $data
-     * @return RequestInterface
-     * @throws \Exception
-     */
-    private function parseRequest(array $data): ServerRequestInterface
+    private function parseRequest(array $data, TickInfo $info): ServerRequestInterface
     {
         $payloads = new Payloads();
         if (isset($data['payloads'])) {
@@ -70,19 +59,15 @@ class Decoder
 
         return new ServerRequest(
             name: $data['command'],
+            info: $info,
             options: $data['options'] ?? [],
-            payloads: EncodedValues::fromPayloads($payloads, $this->converter),
+            payloads: EncodedValues::fromPayloads($payloads, $this->dataConverter),
             id: $data['runId'] ?? null,
-            header: Header::fromPayloadCollection($headers->getFields(), $this->converter),
+            header: Header::fromPayloadCollection($headers->getFields(), $this->dataConverter),
         );
     }
 
-    /**
-     * @param array $data
-     * @return FailureResponseInterface
-     * @throws \Exception
-     */
-    private function parseFailureResponse(array $data): FailureResponseInterface
+    private function parseFailureResponse(array $data, TickInfo $info): FailureResponseInterface
     {
         $this->assertCommandID($data);
 
@@ -90,17 +75,13 @@ class Decoder
         $failure->mergeFromString(\base64_decode($data['failure']));
 
         return new FailureResponse(
-            FailureConverter::mapFailureToException($failure, $this->converter),
-            $data['id']
+            FailureConverter::mapFailureToException($failure, $this->dataConverter),
+            $data['id'],
+            $info,
         );
     }
 
-    /**
-     * @param array $data
-     * @return SuccessResponseInterface
-     * @throws \Exception
-     */
-    private function parseResponse(array $data): SuccessResponseInterface
+    private function parseResponse(array $data, TickInfo $info): SuccessResponseInterface
     {
         $this->assertCommandID($data);
 
@@ -109,12 +90,9 @@ class Decoder
             $payloads->mergeFromString(base64_decode($data['payloads']));
         }
 
-        return new SuccessResponse(EncodedValues::fromPayloads($payloads, $this->converter), $data['id']);
+        return new SuccessResponse(EncodedValues::fromPayloads($payloads, $this->dataConverter), $data['id'], $info);
     }
 
-    /**
-     * @param array $data
-     */
     private function assertCommandID(array $data): void
     {
         if (!isset($data['id'])) {
@@ -126,13 +104,9 @@ class Decoder
         }
     }
 
-    /**
-     * @param mixed $value
-     * @return bool
-     */
     #[Pure]
     private function isUInt32(
-        $value
+        mixed $value
     ): bool {
         return \is_int($value) && $value >= 0 && $value <= 2_147_483_647;
     }

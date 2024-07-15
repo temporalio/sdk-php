@@ -13,7 +13,7 @@ use Temporal\Internal\Transport\Request\UndefinedResponse;
 use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\FailureResponseInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
-use Temporal\Worker\Transport\Command\ResponseInterface;
+use Temporal\Worker\Transport\Command\ServerResponseInterface;
 use Temporal\Worker\Transport\Command\SuccessResponseInterface;
 use Temporal\Workflow\WorkflowContextInterface;
 
@@ -40,9 +40,9 @@ final class ClientMock implements ClientInterface
 
     /**
      * @psalm-param SuccessResponseInterface|FailureResponseInterface $response
-     * @param ResponseInterface $response
+     * @param ServerResponseInterface $response
      */
-    public function dispatch(ResponseInterface $response): void
+    public function dispatch(ServerResponseInterface $response): void
     {
         if (!isset($this->requests[$response->getID()])) {
             $this->request(new UndefinedResponse(

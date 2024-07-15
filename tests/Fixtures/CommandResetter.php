@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Fixtures;
 
-use Temporal\Worker\Transport\Command\Request;
+use Temporal\Worker\Transport\Command\Client\Request;
 
 class CommandResetter extends Request
 {

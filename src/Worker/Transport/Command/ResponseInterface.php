@@ -13,8 +13,4 @@ namespace Temporal\Worker\Transport\Command;
 
 interface ResponseInterface extends CommandInterface
 {
-    /**
-     * @return int<0, max>
-     */
-    public function getHistoryLength(): int;
 }

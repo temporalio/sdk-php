@@ -61,13 +61,13 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
 
         $this->loop->once(
             LoopInterface::ON_QUERY,
-            static function () use ($name, $request, $resolver, $handler, $context): void {
+            static function () use ($name, $request, $resolver, $handler, $context, $headers): void {
                 try {
                     // Define Context for interceptors Pipeline
                     Workflow::setCurrentContext($context);
 
                     /** @psalm-suppress InaccessibleProperty */
-                    $context->getInfo()->historyLength = $request->getHistoryLength();
+                    $context->getInfo()->historyLength = $request->getTickInfo()->historyLength;
 
                     $result = $handler(new QueryInput($name, $request->getPayloads()));
                     $resolver->resolve(EncodedValues::fromValues([$result]));

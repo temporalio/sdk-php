@@ -13,7 +13,7 @@ namespace Temporal\Worker\Transport\Command;
 
 use Temporal\DataConverter\ValuesInterface;
 
-interface SuccessResponseInterface extends ResponseInterface
+interface SuccessResponseInterface extends CommandInterface
 {
     /**
      * @return ValuesInterface

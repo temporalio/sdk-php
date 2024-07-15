@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Transport\Codec;
 
+use DateTimeImmutable;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\ProtocolException;
 use RoadRunner\Temporal\DTO\V1\Frame;
@@ -18,6 +19,7 @@ use RoadRunner\Temporal\DTO\V1\Message;
 use Temporal\Worker\Transport\Codec\ProtoCodec\Decoder;
 use Temporal\Worker\Transport\Codec\ProtoCodec\Encoder;
 use Temporal\Worker\Transport\Command\CommandInterface;
+use Temporal\Worker\Transport\Command\Server\TickInfo;
 
 /**
  * @codeCoverageIgnore tested via roadrunner-temporal repository.
@@ -68,7 +70,7 @@ final class ProtoCodec implements CodecInterface
     /**
      * {@inheritDoc}
      */
-    public function decode(string $batch): iterable
+    public function decode(string $batch, array $headers = []): iterable
     {
         try {
             $frame = new Frame();
@@ -76,7 +78,15 @@ final class ProtoCodec implements CodecInterface
 
             /** @var Message $msg */
             foreach ($frame->getMessages() as $msg) {
-                yield $this->parser->decode($msg);
+                $info = new TickInfo(
+                    time: new DateTimeImmutable($msg->getTickTime()),
+                    historyLength: (int)$msg->getHistoryLength(),
+                    historySize: (int)$msg->getHistorySize(),
+                    continueAsNewSuggested: $msg->getContinueAsNewSuggested(),
+                    isReplaying: $msg->getReplay(),
+                );
+
+                yield $this->parser->decode($msg, $info);
             }
         } catch (\Throwable $e) {
             throw new ProtocolException($e->getMessage(), $e->getCode(), $e);

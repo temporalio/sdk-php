@@ -11,7 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Transport\Command;
 
-interface FailureResponseInterface extends CommandInterface
+use Temporal\Worker\Transport\Command\Server\TickInfo;
+
+interface ServerResponseInterface extends CommandInterface
 {
-    public function getFailure(): \Throwable;
+    public function getTickInfo(): TickInfo;
 }

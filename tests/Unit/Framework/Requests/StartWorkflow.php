@@ -6,7 +6,8 @@ namespace Temporal\Tests\Unit\Framework\Requests;
 
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\EncodedValues;
-use Temporal\Worker\Transport\Command\ServerRequest;
+use Temporal\Worker\Transport\Command\Server\ServerRequest;
+use Temporal\Worker\Transport\Command\Server\TickInfo;
 
 /**
  * @internal
@@ -26,6 +27,7 @@ final class StartWorkflow extends ServerRequest
         ];
         parent::__construct(
             name: 'StartWorkflow',
+            info: new TickInfo(new \DateTimeImmutable()),
             options: ['info' => $info],
             payloads: EncodedValues::fromValues($args)
         );
