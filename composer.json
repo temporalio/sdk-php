@@ -77,6 +77,8 @@
         "ext-grpc": "For Client calls"
     },
     "scripts": {
+        "psalm": "psalm",
+        "psalm:baseline": "psalm --set-baseline=psalm-baseline.xml",
         "post-update-cmd": "Temporal\\Worker\\Transport\\RoadRunnerVersionChecker::postUpdate",
         "tests": [
             "phpunit --testsuite=Unit --testdox",
@@ -86,8 +88,7 @@
         "phpcs": [
             "@putenv PHP_CS_FIXER_IGNORE_ENV=1",
             "php-cs-fixer fix src"
-        ],
-        "check": "psalm"
+        ]
     },
     "extra": {
         "branch-alias": {

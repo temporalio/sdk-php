@@ -94,8 +94,9 @@ final class WorkflowInfo
      *
      * @var int<0, max>
      * @since 2.11.0
-     * @since RoadRunner 2024.1.5. With lower versions, this field is always false.
+     * @since RoadRunner 2024.2. With lower versions, this field is always 0.
      */
+    #[Marshal(name: 'HistorySize')]
     public int $historySize = 0;
 
     /**
@@ -103,8 +104,9 @@ final class WorkflowInfo
      * This value changes during the lifetime of a Workflow Execution.
      *
      * @since 2.11.0
-     * @since RoadRunner 2024.1.5. With lower versions, this field is always false.
+     * @since RoadRunner 2024.2. With lower versions, this field is always false.
      */
+    #[Marshal(name: 'ShouldContinueAsNew')]
     public bool $shouldContinueAsNew = false;
 
     /**
