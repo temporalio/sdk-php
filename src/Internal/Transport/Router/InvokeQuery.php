@@ -66,8 +66,14 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
                     // Define Context for interceptors Pipeline
                     Workflow::setCurrentContext($context);
 
+                    $info = $context->getInfo();
+                    $tickInfo = $request->getTickInfo();
                     /** @psalm-suppress InaccessibleProperty */
-                    $context->getInfo()->historyLength = $request->getTickInfo()->historyLength;
+                    $info->historyLength = $tickInfo->historyLength;
+                    /** @psalm-suppress InaccessibleProperty */
+                    $info->historySize = $tickInfo->historySize;
+                    /** @psalm-suppress InaccessibleProperty */
+                    $info->shouldContinueAsNew = $tickInfo->continueAsNewSuggested;
 
                     $result = $handler(new QueryInput($name, $request->getPayloads()));
                     $resolver->resolve(EncodedValues::fromValues([$result]));

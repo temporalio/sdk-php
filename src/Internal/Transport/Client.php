@@ -61,8 +61,13 @@ final class Client implements ClientInterface
 
         $info = $context->getInfo();
         if ($info !== null && $response->getTickInfo()->historyLength > $info->historyLength) {
+            $tickInfo = $response->getTickInfo();
             /** @psalm-suppress InaccessibleProperty */
-            $info->historyLength = $response->getTickInfo()->historyLength;
+            $info->historyLength = $tickInfo->historyLength;
+            /** @psalm-suppress InaccessibleProperty */
+            $info->historySize = $tickInfo->historySize;
+            /** @psalm-suppress InaccessibleProperty */
+            $info->shouldContinueAsNew = $tickInfo->continueAsNewSuggested;
         }
 
         // Bind workflow context for promise resolution

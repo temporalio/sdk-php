@@ -13,7 +13,8 @@ namespace Temporal\Internal\Transport;
 
 use React\Promise\PromiseInterface;
 use Temporal\Internal\Queue\QueueInterface;
-use Temporal\Worker\Transport\Command\Client\Response;
+use Temporal\Worker\Transport\Command\Client\FailedClientResponse;
+use Temporal\Worker\Transport\Command\Client\SuccessClientResponse;
 use Temporal\Worker\Transport\Command\FailureResponseInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
@@ -61,7 +62,7 @@ final class Server implements ServerInterface
         try {
             $result = ($this->onMessage)($request, $headers);
         } catch (\Throwable $e) {
-            $this->queue->push(Response::createFailure($e, $request->getID()));
+            $this->queue->push(new FailedClientResponse($request->getID(), $e));
 
             return;
         }
@@ -80,7 +81,7 @@ final class Server implements ServerInterface
     private function onFulfilled(ServerRequestInterface $request): \Closure
     {
         return function ($result) use ($request) {
-            $response = Response::createSuccess($result, $request->getID());
+            $response = new SuccessClientResponse($request->getID(), $result);
             $this->queue->push($response);
 
             return $response;
@@ -93,7 +94,7 @@ final class Server implements ServerInterface
     private function onRejected(ServerRequestInterface $request): \Closure
     {
         return function (\Throwable $result) use ($request) {
-            $response = Response::createFailure($result, $request->getID());
+            $response = new FailedClientResponse($request->getID(), $result);
             $this->queue->push($response);
 
             return $response;

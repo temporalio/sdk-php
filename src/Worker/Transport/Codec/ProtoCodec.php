@@ -72,6 +72,8 @@ final class ProtoCodec implements CodecInterface
      */
     public function decode(string $batch, array $headers = []): iterable
     {
+        static $tz = new \DateTimeZone('UTC');
+
         try {
             $frame = new Frame();
             $frame->mergeFromString($batch);
@@ -79,14 +81,14 @@ final class ProtoCodec implements CodecInterface
             /** @var Message $msg */
             foreach ($frame->getMessages() as $msg) {
                 $info = new TickInfo(
-                    time: new DateTimeImmutable($msg->getTickTime()),
-                    historyLength: (int)$msg->getHistoryLength(),
-                    historySize: (int)$msg->getHistorySize(),
-                    continueAsNewSuggested: $msg->getContinueAsNewSuggested(),
-                    isReplaying: $msg->getReplay(),
+                    time: new DateTimeImmutable($headers['tickTime'] ?? $msg->getTickTime(), $tz),
+                    historyLength: (int)($headers['history_length'] ?? $msg->getHistoryLength()),
+                    historySize: (int)($headers['history_size'] ?? $msg->getHistorySize()),
+                    continueAsNewSuggested: (bool)($headers['continue_as_new_suggested'] ?? $msg->getContinueAsNewSuggested()),
+                    isReplaying: (bool)($headers['replay'] ?? $msg->getReplay()),
                 );
 
-                yield $this->parser->decode($msg, $info);
+                yield $this->parser->decode($msg, $info, $headers);
             }
         } catch (\Throwable $e) {
             throw new ProtocolException($e->getMessage(), $e->getCode(), $e);

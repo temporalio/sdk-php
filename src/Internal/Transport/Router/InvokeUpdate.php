@@ -39,8 +39,15 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
             /** @var non-empty-string $name */
             $name = $request->getOptions()['name'];
             $handler = $this->getUpdateHandler($instance, $name);
+
+            $info = $context->getInfo();
+            $tickInfo = $request->getTickInfo();
             /** @psalm-suppress InaccessibleProperty */
-            $context->getInfo()->historyLength = $request->getTickInfo()->historyLength;
+            $info->historyLength = $tickInfo->historyLength;
+            /** @psalm-suppress InaccessibleProperty */
+            $info->historySize = $tickInfo->historySize;
+            /** @psalm-suppress InaccessibleProperty */
+            $info->shouldContinueAsNew = $tickInfo->continueAsNewSuggested;
 
             $input = new UpdateInput(
                 updateName: $name,

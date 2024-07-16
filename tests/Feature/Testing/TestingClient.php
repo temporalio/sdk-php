@@ -16,7 +16,7 @@ use React\Promise\PromiseInterface;
 use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Internal\Transport\Client;
 use Temporal\Worker\LoopInterface;
-use Temporal\Worker\Transport\Command\Client\Response;
+use Temporal\Worker\Transport\Command\Client\SuccessClientResponse;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\Server\FailureResponse;
 use Temporal\Workflow\WorkflowContextInterface;
@@ -46,7 +46,7 @@ class TestingClient extends CapturedClient
      */
     public function success(RequestInterface $request, $payload = null): TestingSuccessResponse
     {
-        $response = Response::createSuccess($payload, $request->getID());
+        $response = new SuccessClientResponse($request->getID(), $payload);
 
         $this->parent->dispatch($response);
 

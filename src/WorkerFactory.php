@@ -390,13 +390,15 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     {
         $commands = $this->codec->decode($messages, $headers);
 
-        $this->env->update($headers);
 
         foreach ($commands as $command) {
+            $this->env->update($command->getTickInfo());
+
             if ($command instanceof ServerResponseInterface) {
                 $this->client->dispatch($command);
                 continue;
             }
+
             $this->server->dispatch($command, $headers);
         }
 

@@ -61,13 +61,20 @@ final class JsonCodec implements CodecInterface
      */
     public function decode(string $batch, array $headers = []): iterable
     {
-        $info = new TickInfo(
-            time: new DateTimeImmutable(),
-        );
+        static $tz = new \DateTimeZone('UTC');
+
         try {
             $commands = \json_decode($batch, true, $this->maxDepth, \JSON_THROW_ON_ERROR);
 
             foreach ($commands as $command) {
+                $info = new TickInfo(
+                    time: new DateTimeImmutable($headers['tickTime'] ?? 'now', $tz),
+                    historyLength: (int)($headers['history_length'] ?? 0),
+                    historySize: (int)($headers['history_size'] ?? 0),
+                    continueAsNewSuggested: (bool)($headers['continue_as_new_suggested'] ?? false),
+                    isReplaying: (bool)($headers['replay'] ?? false),
+                );
+
                 assert(\is_array($command));
                 yield $this->parser->decode($command, $info);
             }

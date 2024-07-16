@@ -6,7 +6,7 @@ namespace Temporal\Tests\Unit\Framework\Expectation;
 
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Internal\Transport\Request\CompleteWorkflow;
-use Temporal\Worker\Transport\Command\Client\Response;
+use Temporal\Worker\Transport\Command\Client\SuccessClientResponse;
 use Temporal\Worker\Transport\Command\CommandInterface;
 
 use function PHPUnit\Framework\assertSame;
@@ -36,7 +36,7 @@ final class WorkflowResult implements ExpectationInterface
 
     public function run(CommandInterface $command): CommandInterface
     {
-        return Response::createSuccess(EncodedValues::empty(), $command->getID());
+        return new SuccessClientResponse($command->getID(), EncodedValues::empty());
     }
 
     public function fail(): void

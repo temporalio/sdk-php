@@ -79,7 +79,7 @@ final class WorkflowInfo
 
     /**
      * Contains the count of history events.
-     * The counter is automatically incremented in the background.
+     * This value changes during the lifetime of a Workflow Execution.
      *
      * @var int<0, max>
      * @since 2.6.0
@@ -87,6 +87,25 @@ final class WorkflowInfo
      */
     #[Marshal(name: 'HistoryLength')]
     public int $historyLength = 0;
+
+    /**
+     * Size of Workflow history in bytes up until the current moment of execution.
+     * This value changes during the lifetime of a Workflow Execution.
+     *
+     * @var int<0, max>
+     * @since 2.11.0
+     * @since RoadRunner 2024.1.5. With lower versions, this field is always false.
+     */
+    public int $historySize = 0;
+
+    /**
+     * Contains true if the server is configured to suggest continue as new and it is suggested.
+     * This value changes during the lifetime of a Workflow Execution.
+     *
+     * @since 2.11.0
+     * @since RoadRunner 2024.1.5. With lower versions, this field is always false.
+     */
+    public bool $shouldContinueAsNew = false;
 
     /**
      * @see CronSchedule::$interval for more info about cron format.
