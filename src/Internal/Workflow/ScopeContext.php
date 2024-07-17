@@ -14,20 +14,21 @@ namespace Temporal\Internal\Workflow;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\Exception\Failure\CanceledFailure;
-use Temporal\Internal\Declaration\Destroyable;
 use Temporal\Internal\Transport\CompletableResult;
 use Temporal\Internal\Workflow\Process\Scope;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\ScopedContextInterface;
 use Temporal\Internal\Transport\Request\UpsertSearchAttributes;
+use Temporal\Workflow\UpdateContext;
 
-class ScopeContext extends WorkflowContext implements ScopedContextInterface, Destroyable
+class ScopeContext extends WorkflowContext implements ScopedContextInterface
 {
     private WorkflowContext $parent;
     private Scope $scope;
     /** @var callable */
     private $onRequest;
+    private ?UpdateContext $updateContext = null;
 
     /**
      * Creates scope specific context.
@@ -41,19 +42,21 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface, De
     public static function fromWorkflowContext(
         WorkflowContext $context,
         Scope $scope,
-        callable $onRequest
+        callable $onRequest,
+        ?UpdateContext $updateContext,
     ): self {
         $ctx = new self(
             $context->services,
             $context->client,
             $context->workflowInstance,
             $context->input,
-            $context->getLastCompletionResultValues()
+            $context->getLastCompletionResultValues(),
         );
 
         $ctx->parent = $context;
         $ctx->scope = $scope;
         $ctx->onRequest = $onRequest;
+        $ctx->updateContext = $updateContext;
 
         return $ctx;
     }
@@ -98,6 +101,11 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface, De
             $promise,
             $this->scope->getLayer()
         );
+    }
+
+    public function getUpdateContext(): ?UpdateContext
+    {
+        return $this->updateContext;
     }
 
     /**
@@ -147,6 +155,7 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface, De
         );
     }
 
+    #[\Override]
     public function destroy(): void
     {
         parent::destroy();
