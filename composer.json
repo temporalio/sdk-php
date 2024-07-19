@@ -56,6 +56,7 @@
         "dereuromark/composer-prefer-lowest": "^0.1.10",
         "doctrine/annotations": "^1.14|^2.0.0",
         "friendsofphp/php-cs-fixer": "^3.0",
+        "internal/dload": "*",
         "jetbrains/phpstorm-attributes": "dev-master@dev",
         "laminas/laminas-code": "^4.0",
         "phpunit/phpunit": "^10.5",

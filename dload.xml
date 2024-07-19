@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<dload>
+    <actions>
+        <download software="rr" />
+        <download software="temporal"/>
+        <download software="temporal-tests-server"/>
+    </actions>
+    <registry>
+        <software name="Temporal Tests Server" alias="temporal-tests-server">
+            <repository type="github" uri="temporalio/sdk-java" asset-pattern="/^temporal-test-server.*/"/>
+            <file pattern="/^(temporal-test-server)(?:\.exe)?$/" />
+        </software>
+    </registry>
+</dload>
