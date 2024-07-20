@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <dload>
     <actions>
-        <download software="rr" />
+        <download software="rr" version="^2024.1"/>
         <download software="temporal"/>
         <download software="temporal-tests-server"/>
     </actions>

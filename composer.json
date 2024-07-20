@@ -56,7 +56,7 @@
         "dereuromark/composer-prefer-lowest": "^0.1.10",
         "doctrine/annotations": "^1.14|^2.0.0",
         "friendsofphp/php-cs-fixer": "^3.0",
-        "internal/dload": "*",
+        "internal/dload": ">=0.2.2, <2",
         "jetbrains/phpstorm-attributes": "dev-master@dev",
         "laminas/laminas-code": "^4.0",
         "phpunit/phpunit": "^10.5",
@@ -65,6 +65,7 @@
     },
     "autoload-dev": {
         "psr-4": {
+            "Temporal\\Tests\\Acceptance\\App\\": "tests/Acceptance/App",
             "Temporal\\Tests\\Interceptor\\": "tests/Fixtures/src/Interceptor",
             "Temporal\\Tests\\Workflow\\": "tests/Fixtures/src/Workflow",
             "Temporal\\Tests\\Activity\\": "tests/Fixtures/src/Activity",
@@ -79,11 +80,10 @@
     },
     "scripts": {
         "post-update-cmd": "Temporal\\Worker\\Transport\\RoadRunnerVersionChecker::postUpdate",
-        "tests": [
-            "phpunit --testsuite=Unit --testdox",
-            "phpunit --testsuite=Feature --testdox",
-            "phpunit --testsuite=Functional --testdox"
-        ],
+        "psalm": "psalm",
+        "psalm:baseline": "psalm --set-baseline=psalm-baseline.xml",
+        "test:unit": "phpunit --configuration=tests/phpunit-unit.xml --color=always --testdox",
+        "test:func": "phpunit --configuration=tests/phpunit-functional.xml --color=always --testdox",
         "phpcs": [
             "@putenv PHP_CS_FIXER_IGNORE_ENV=1",
             "php-cs-fixer fix src"
