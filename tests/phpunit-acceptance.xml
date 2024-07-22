@@ -10,9 +10,8 @@
          stderr="true"
 >
     <testsuites>
-        <testsuite name="Acceptance">
-            <directory suffix=".php">Acceptance/*/</directory>
-            <exclude>Acceptance/App</exclude>
+        <testsuite name="Harness">
+            <directory suffix=".php">Acceptance/Harness</directory>
         </testsuite>
     </testsuites>
     <php>
