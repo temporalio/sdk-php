@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="../vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="Acceptance/bootstrap.php"
+         backupGlobals="false"
+         colors="true"
+         processIsolation="false"
+         stopOnFailure="false"
+         stopOnError="false"
+         stderr="true"
+>
+    <testsuites>
+        <testsuite name="Acceptance">
+            <directory suffix=".php">Acceptance/*/</directory>
+            <exclude>Acceptance/App</exclude>
+        </testsuite>
+    </testsuites>
+    <php>
+        <ini name="error_reporting" value="-1"/>
+        <ini name="memory_limit" value="-1"/>
+    </php>
+    <source>
+        <include>
+            <directory>../src</directory>
+        </include>
+    </source>
+</phpunit>

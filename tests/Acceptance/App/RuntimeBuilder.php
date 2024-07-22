@@ -1,0 +1,83 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Temporal\Tests\Acceptance\App;
+
+use PHPUnit\Framework\Attributes\Test;
+use Temporal\Tests\Acceptance\App\Input\Command;
+use Temporal\Tests\Acceptance\App\Input\Feature;
+use Temporal\Tests\Acceptance\App\Runtime\State;
+use Temporal\Activity\ActivityInterface;
+use Temporal\DataConverter\PayloadConverterInterface;
+use Temporal\Workflow\WorkflowInterface;
+
+final class RuntimeBuilder
+{
+    public static function createState(Command $command, string $workDir, string $featuresDir): State
+    {
+        $runtime = new State($command, \dirname(__DIR__), $workDir);
+
+        foreach (self::iterateClasses($featuresDir, $command) as $feature => $classes) {
+            foreach ($classes as $classString) {
+                $class = new \ReflectionClass($classString);
+
+                # Register Workflow
+                $class->getAttributes(WorkflowInterface::class) === [] or $runtime
+                    ->addWorkflow($feature, $classString);
+
+                # Register Activity
+                $class->getAttributes(ActivityInterface::class) === [] or $runtime
+                    ->addActivity($feature, $classString);
+
+                # Register Converters
+                $class->implementsInterface(PayloadConverterInterface::class) and $runtime
+                    ->addConverter($feature, $classString);
+
+                # Register Check
+                foreach ($class->getMethods() as $method) {
+                    $method->getAttributes(Test::class) === [] or $runtime
+                        ->addCheck($feature, $classString, $method->getName());
+                }
+            }
+        }
+
+        return $runtime;
+    }
+
+    public static function init(): void
+    {
+        \ini_set('display_errors', 'stderr');
+        include 'vendor/autoload.php';
+
+        \spl_autoload_register(static function (string $class): void {
+            if (\str_starts_with($class, 'Harness\\')) {
+                $file = \str_replace('\\', '/', \substr($class, 8)) . '.php';
+                $path = __DIR__ . '/' . $file;
+                \is_file($path) and require $path;
+            }
+        });
+    }
+
+    /**
+     * @param non-empty-string $featuresDir
+     * @return iterable<Feature, array<int, class-string>>
+     */
+    private static function iterateClasses(string $featuresDir, Command $run): iterable
+    {
+        // Scan all the test cases
+        foreach (ClassLocator::loadTestCases($featuresDir, 'Temporal\Tests\Acceptance\Harness') as $class) {
+            $namespace = \substr($class, 0, \strrpos($class, '\\'));
+            $feature = new Feature(
+                testClass: $class,
+                testNamespace: $namespace,
+                taskQueue: $namespace,
+            );
+
+            yield $feature => \array_filter(
+                \get_declared_classes(),
+                static fn(string $class): bool => \str_starts_with($class, $namespace),
+            );
+        }
+    }
+}

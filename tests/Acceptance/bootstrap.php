@@ -1,0 +1,99 @@
+<?php
+
+declare(strict_types=1);
+
+use Psr\Container\ContainerInterface;
+use Spiral\Core\Attribute\Proxy;
+use Spiral\Goridge\RPC\RPC;
+use Spiral\Goridge\RPC\RPCInterface;
+use Spiral\RoadRunner\KeyValue\Factory;
+use Spiral\RoadRunner\KeyValue\StorageInterface;
+use Temporal\Client\ClientOptions;
+use Temporal\Client\GRPC\ServiceClient;
+use Temporal\Client\GRPC\ServiceClientInterface;
+use Temporal\Client\ScheduleClient;
+use Temporal\Client\ScheduleClientInterface;
+use Temporal\Client\WorkflowClient;
+use Temporal\Client\WorkflowClientInterface;
+use Temporal\Client\WorkflowStubInterface;
+use Temporal\DataConverter\DataConverter;
+use Temporal\DataConverter\DataConverterInterface;
+use Temporal\Tests\Acceptance\App\Feature\WorkflowStubInjector;
+use Temporal\Tests\Acceptance\App\Input\Command;
+use Temporal\Tests\Acceptance\App\Runtime\ContainerFacade;
+use Temporal\Tests\Acceptance\App\Runtime\Runner;
+use Temporal\Tests\Acceptance\App\Runtime\State;
+use Temporal\Tests\Acceptance\App\RuntimeBuilder;
+use Temporal\Tests\Acceptance\App\Support;
+
+chdir(__DIR__ . '/../..');
+require './vendor/autoload.php';
+
+RuntimeBuilder::init();
+
+$command = Command::fromEnv();
+$runtime = RuntimeBuilder::createState($command, \getcwd(), __DIR__ . '/Harness');
+
+$runner = new Runner($runtime);
+
+// todo RUN TEMPORAL SERVER
+
+# Run RoadRunner server if workflows or activities are defined
+if (\iterator_to_array($runtime->workflows(), false) !== [] || \iterator_to_array(
+        $runtime->activities(),
+        false
+    ) !== []) {
+    $runner->start();
+}
+
+# Prepare and run checks
+
+# Prepare services to be injected
+
+$serviceClient = $runtime->command->tlsKey === null && $runtime->command->tlsCert === null
+    ? ServiceClient::create($runtime->address)
+    : ServiceClient::createSSL(
+        $runtime->address,
+        clientKey: $runtime->command->tlsKey,
+        clientPem: $runtime->command->tlsCert,
+    );
+echo "Connecting to Temporal service at {$runtime->address}... ";
+try {
+    $serviceClient->getConnection()->connect(5);
+    echo "\e[1;32mOK\e[0m\n";
+} catch (\Throwable $e) {
+    echo "\e[1;31mFAILED\e[0m\n";
+    Support::echoException($e);
+    return;
+}
+
+// TODO if authKey is set
+// $serviceClient->withAuthKey($authKey)
+
+$converter = DataConverter::createDefault();
+
+$workflowClient = WorkflowClient::create(
+    serviceClient: $serviceClient,
+    options: (new ClientOptions())->withNamespace($runtime->namespace),
+    converter: $converter,
+)->withTimeout(5);
+
+$scheduleClient = ScheduleClient::create(
+    serviceClient: $serviceClient,
+    options: (new ClientOptions())->withNamespace($runtime->namespace),
+    converter: $converter,
+)->withTimeout(5);
+
+ContainerFacade::$container = $container = new Spiral\Core\Container();
+$container->bindSingleton(State::class, $runtime);
+$container->bindSingleton(Runner::class, $runner);
+$container->bindSingleton(ServiceClientInterface::class, $serviceClient);
+$container->bindSingleton(WorkflowClientInterface::class, $workflowClient);
+$container->bindSingleton(ScheduleClientInterface::class, $scheduleClient);
+$container->bindInjector(WorkflowStubInterface::class, WorkflowStubInjector::class);
+$container->bindSingleton(DataConverterInterface::class, $converter);
+$container->bind(RPCInterface::class, static fn() => RPC::create(getenv('RR_RPC_ADDRESS') ?: 'tcp://127.0.0.1:6001'));
+$container->bind(
+    StorageInterface::class,
+    fn(#[Proxy] ContainerInterface $c): StorageInterface => $c->get(Factory::class)->select('harness'),
+);
