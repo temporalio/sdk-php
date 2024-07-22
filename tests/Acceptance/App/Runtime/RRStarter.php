@@ -6,7 +6,7 @@ namespace Temporal\Tests\Acceptance\App\Runtime;
 
 use Temporal\Testing\Environment;
 
-final class Runner
+final class RRStarter
 {
     private Environment $environment;
     private bool $started = false;

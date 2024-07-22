@@ -21,8 +21,9 @@ use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Tests\Acceptance\App\Feature\WorkflowStubInjector;
 use Temporal\Tests\Acceptance\App\Input\Command;
 use Temporal\Tests\Acceptance\App\Runtime\ContainerFacade;
-use Temporal\Tests\Acceptance\App\Runtime\Runner;
+use Temporal\Tests\Acceptance\App\Runtime\RRStarter;
 use Temporal\Tests\Acceptance\App\Runtime\State;
+use Temporal\Tests\Acceptance\App\Runtime\TemporalStarter;
 use Temporal\Tests\Acceptance\App\RuntimeBuilder;
 use Temporal\Tests\Acceptance\App\Support;
 
@@ -34,15 +35,11 @@ RuntimeBuilder::init();
 $command = Command::fromEnv();
 $runtime = RuntimeBuilder::createState($command, \getcwd(), __DIR__ . '/Harness');
 
-$runner = new Runner($runtime);
+$runner = new RRStarter($runtime);
 
-// todo RUN TEMPORAL SERVER
-
-# Run RoadRunner server if workflows or activities are defined
-if (\iterator_to_array($runtime->workflows(), false) !== [] || \iterator_to_array(
-        $runtime->activities(),
-        false
-    ) !== []) {
+# Run RoadRunner and Temporal if workflows or activities are defined
+if (\iterator_to_array($runtime->workflows(), false) !== [] || \iterator_to_array($runtime->activities(), false) !== []) {
+    (new TemporalStarter())->start();
     $runner->start();
 }
 
@@ -86,7 +83,7 @@ $scheduleClient = ScheduleClient::create(
 
 ContainerFacade::$container = $container = new Spiral\Core\Container();
 $container->bindSingleton(State::class, $runtime);
-$container->bindSingleton(Runner::class, $runner);
+$container->bindSingleton(RRStarter::class, $runner);
 $container->bindSingleton(ServiceClientInterface::class, $serviceClient);
 $container->bindSingleton(WorkflowClientInterface::class, $workflowClient);
 $container->bindSingleton(ScheduleClientInterface::class, $scheduleClient);
