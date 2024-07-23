@@ -21,11 +21,13 @@ final class State
     /**
      * @param non-empty-string $rrConfigDir Dir with rr.yaml
      * @param non-empty-string $workDir Dir where tests are run
+     * @param non-empty-string $testCasesDir Dir with test cases
      */
     public function __construct(
         public readonly Command $command,
         public readonly string $rrConfigDir,
         public readonly string $workDir,
+        public readonly string $testCasesDir,
     ) {
         $this->namespace = $command->namespace ?? 'default';
         $this->address = $command->address ?? 'localhost:7233';
@@ -131,5 +133,13 @@ final class State
     public function getFeatureByTestCase(string $class): ?Feature
     {
         return $this->features[$class] ?? null;
+    }
+
+    /**
+     * @return int<0, max>
+     */
+    public function countFeatures(): int
+    {
+        return count($this->features);
     }
 }

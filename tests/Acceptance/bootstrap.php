@@ -33,15 +33,13 @@ require './vendor/autoload.php';
 RuntimeBuilder::init();
 
 $command = Command::fromEnv();
-$runtime = RuntimeBuilder::createState($command, \getcwd(), __DIR__ . '/Harness');
+$runtime = RuntimeBuilder::createEmpty($command, \getcwd(), __DIR__ . '/Harness');
 
 $runner = new RRStarter($runtime);
 
-# Run RoadRunner and Temporal if workflows or activities are defined
-if (\iterator_to_array($runtime->workflows(), false) !== [] || \iterator_to_array($runtime->activities(), false) !== []) {
-    (new TemporalStarter())->start();
-    $runner->start();
-}
+# Run RoadRunner and Temporal
+(new TemporalStarter())->start();
+$runner->start();
 
 # Prepare and run checks
 

@@ -12,9 +12,6 @@ final class Command
     /** @var non-empty-string|null Temporal Address */
     public ?string $address = null;
 
-    // /** @var list<Feature> */
-    // public array $features = [];
-
     /** @var non-empty-string|null */
     public ?string $tlsKey = null;
 
@@ -29,14 +26,6 @@ final class Command
         $self->address = \getenv('TEMPORAL_ADDRESS') ?: 'localhost:7233';
         // $self->tlsCert =
         // $self->tlsKey =
-
-
-        // [$dir, $taskQueue] = \explode(':', $chunk, 2);
-        // $self->features[] = new Feature(
-        //     dir: $dir,
-        //     namespace: 'Harness\\Feature\\' . self::namespaceFromPath($dir),
-        //     taskQueue: $taskQueue,
-        // );
 
         return $self;
     }
@@ -69,16 +58,6 @@ final class Command
                 $self->tlsKey = \substr($chunk, 8);
                 continue;
             }
-
-            // if (!\str_contains($chunk, ':')) {
-            //     continue;
-            // }
-            // [$dir, $taskQueue] = \explode(':', $chunk, 2);
-            // $self->features[] = new Feature(
-            //     dir: $dir,
-            //     namespace: 'Harness\\Feature\\' . self::namespaceFromPath($dir),
-            //     taskQueue: $taskQueue,
-            // );
         }
 
         return $self;
@@ -94,17 +73,7 @@ final class Command
         $this->address === null or $result[] = "address=$this->address";
         $this->tlsCert === null or $result[] = "tls.cert=$this->tlsCert";
         $this->tlsKey === null or $result[] = "tls.key=$this->tlsKey";
-        // foreach ($this->features as $feature) {
-        //     $result[] = "{$feature->dir}:{$feature->taskQueue}";
-        // }
 
         return $result;
     }
-
-    // private static function namespaceFromPath(string $dir): string
-    // {
-    //     $normalized = \str_replace('/', '\\', \trim($dir, '/\\')) . '\\';
-    //     // snake_case to PascalCase:
-    //     return \str_replace('_', '', \ucwords($normalized, '_\\'));
-    // }
 }

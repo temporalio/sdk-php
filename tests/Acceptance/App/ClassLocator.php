@@ -27,12 +27,27 @@ final class ClassLocator
                 continue;
             }
 
-            include_once $path;
+            require_once $path;
         }
 
+        yield from self::findTestClasses($namespace);
+    }
+
+    /**
+     * @template T
+     * @param non-empty-string $namespace
+     * @param class-string<T> $baseClass
+     * @return \Traversable<int, class-string<T>>
+     */
+    public static function findTestClasses(string $namespace, string $baseClass = TestCase::class): \Traversable
+    {
         yield from \array_filter(
             \get_declared_classes(),
-            static fn(string $class): bool => \str_starts_with($class, $namespace) && \is_a($class, TestCase::class, true),
+            static fn(string $class): bool => \str_starts_with($class, $namespace) && \is_a(
+                    $class,
+                    $baseClass,
+                    true
+                ),
         );
     }
 }

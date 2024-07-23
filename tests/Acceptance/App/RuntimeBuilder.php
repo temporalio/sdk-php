@@ -14,11 +14,9 @@ use Temporal\Workflow\WorkflowInterface;
 
 final class RuntimeBuilder
 {
-    public static function createState(Command $command, string $workDir, string $featuresDir): State
+    public static function hydrateClasses(State $runtime): void
     {
-        $runtime = new State($command, \dirname(__DIR__), $workDir);
-
-        foreach (self::iterateClasses($featuresDir, $command) as $feature => $classes) {
+        foreach (self::iterateClasses($runtime->testCasesDir) as $feature => $classes) {
             foreach ($classes as $classString) {
                 $class = new \ReflectionClass($classString);
 
@@ -41,6 +39,25 @@ final class RuntimeBuilder
                 }
             }
         }
+    }
+
+    /**
+     * @param non-empty-string $workDir
+     */
+    public static function createEmpty(Command $command, string $workDir, string $testCasesDir): State
+    {
+        return new State($command, \dirname(__DIR__), $workDir, $testCasesDir);
+    }
+
+    /**
+     * @param non-empty-string $workDir
+     * @param non-empty-string $testCasesDir
+     */
+    public static function createState(Command $command, string $workDir, string $testCasesDir): State
+    {
+        $runtime = new State($command, \dirname(__DIR__), $workDir, $testCasesDir);
+
+        self::hydrateClasses($runtime, $testCasesDir);
 
         return $runtime;
     }
@@ -63,7 +80,7 @@ final class RuntimeBuilder
      * @param non-empty-string $featuresDir
      * @return iterable<Feature, array<int, class-string>>
      */
-    private static function iterateClasses(string $featuresDir, Command $run): iterable
+    private static function iterateClasses(string $featuresDir): iterable
     {
         // Scan all the test cases
         foreach (ClassLocator::loadTestCases($featuresDir, 'Temporal\Tests\Acceptance\Harness') as $class) {

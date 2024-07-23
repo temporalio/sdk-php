@@ -12,6 +12,15 @@ use Temporal\Tests\Acceptance\App\Runtime\State;
 
 abstract class TestCase extends \PHPUnit\Framework\TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        /** @var State $state */
+        $state = ContainerFacade::$container->get(State::class);
+        $state->countFeatures() === 0 and RuntimeBuilder::hydrateClasses($state);
+    }
+
     protected function runTest(): mixed
     {
         $c = ContainerFacade::$container;
