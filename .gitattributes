@@ -1,12 +1,18 @@
 * text=auto
 
-.github/ export-ignore
-config/ export-ignore
+.github/           export-ignore
+config/            export-ignore
 resources/scripts/ export-ignore
-tests/ export-ignore
+runtime/           export-ignore
+tests/             export-ignore
 
-.php_cs.dist export-ignore
-Makefile export-ignore
-phpunit.xml export-ignore
-psalm.xml export-ignore
+.editorconfig      export-ignore
+.gitattributes     export-ignore
+.gitignore         export-ignore
+.php_cs.dist       export-ignore
+dload.xml          export-ignore
+Makefile           export-ignore
+phpunit.xml.dist   export-ignore
+psalm.xml          export-ignore
 psalm-baseline.xml export-ignore
+phpdoc.dist.xml    export-ignore

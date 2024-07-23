@@ -12,9 +12,7 @@ composer.phar
 Thumbs.db
 
 # Cache
-.phpunit.result.cache
 .php_cs.cache
-/runtime
 
 # Other
 /.rr.yaml

@@ -83,9 +83,9 @@
         "post-update-cmd": "Temporal\\Worker\\Transport\\RoadRunnerVersionChecker::postUpdate",
         "psalm": "psalm",
         "psalm:baseline": "psalm --set-baseline=psalm-baseline.xml",
-        "test:unit": "phpunit --configuration=tests/phpunit-unit.xml --color=always --testdox",
-        "test:func": "phpunit --configuration=tests/phpunit-functional.xml --color=always --testdox",
-        "test:accept": "phpunit --configuration=tests/phpunit-acceptance.xml --color=always --testdox",
+        "test:unit": "phpunit --testsuite=Unit --color=always --testdox",
+        "test:func": "phpunit --testsuite=Functional --color=always --testdox",
+        "test:accept": "phpunit --testsuite=Acceptance --color=always --testdox",
         "phpcs": [
             "@putenv PHP_CS_FIXER_IGNORE_ENV=1",
             "php-cs-fixer fix src"
