@@ -30,6 +30,7 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
         return $c->runScope(
             new Scope(name: 'feature',bindings: [
                 Feature::class => $runtime->getFeatureByTestCase(static::class),
+                static::class => $this,
             ]),
             function (Container $container) {
                 $reflection = new \ReflectionMethod($this, $this->name());

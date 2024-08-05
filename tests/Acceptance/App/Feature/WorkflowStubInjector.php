@@ -20,8 +20,7 @@ final class WorkflowStubInjector implements InjectorInterface
     public function __construct(
         #[Proxy] private readonly ContainerInterface $container,
         private readonly ClientFactory $clientFactory,
-    ) {
-    }
+    ) {}
 
     public function createInjection(
         \ReflectionClass $class,
