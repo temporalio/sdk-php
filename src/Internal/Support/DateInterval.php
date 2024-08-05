@@ -20,69 +20,30 @@ use Google\Protobuf\Duration;
  */
 final class DateInterval
 {
-    /**
-     * @var string
-     */
     public const FORMAT_YEARS = 'years';
 
-    /**
-     * @var string
-     */
     public const FORMAT_MONTHS = 'months';
 
-    /**
-     * @var string
-     */
     public const FORMAT_WEEKS = 'weeks';
 
-    /**
-     * @var string
-     */
     public const FORMAT_DAYS = 'days';
 
-    /**
-     * @var string
-     */
     public const FORMAT_HOURS = 'hours';
 
-    /**
-     * @var string
-     */
     public const FORMAT_MINUTES = 'minutes';
 
-    /**
-     * @var string
-     */
     public const FORMAT_SECONDS = 'seconds';
 
-    /**
-     * @var string
-     */
     public const FORMAT_MILLISECONDS = 'milliseconds';
 
-    /**
-     * @var string
-     */
     public const FORMAT_MICROSECONDS = 'microseconds';
 
-    /**
-     * @var string
-     */
     public const FORMAT_NANOSECONDS = 'nanoseconds';
 
-    /**
-     * @var string
-     */
     private const ERROR_INVALID_DATETIME = 'Unrecognized date time interval format';
 
-    /**
-     * @var string
-     */
     private const ERROR_INVALID_FORMAT = 'Invalid date interval format "%s", available formats: %s';
 
-    /**
-     * @var array<positive-int, DateIntervalFormat>
-     */
     private const AVAILABLE_FORMATS = [
         self::FORMAT_YEARS,
         self::FORMAT_MONTHS,
@@ -143,6 +104,7 @@ final class DateInterval
                 $days = (int) \floor($hours / 24);
 
                 return CarbonInterval::create(
+                    years: 0,
                     weeks: (int) \floor($days / 7),
                     days: $days % 7,
                     hours: $hours % 24,
