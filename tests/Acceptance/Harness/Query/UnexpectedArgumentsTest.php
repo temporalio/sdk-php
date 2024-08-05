@@ -19,7 +19,7 @@ class UnexpectedArgumentsTest extends TestCase
 {
     #[Test]
     public static function check(
-        #[Stub('HarnessWorkflow_Query_UnexpectedArguments')]WorkflowStubInterface $stub,
+        #[Stub('Harness_Query_UnexpectedArguments')]WorkflowStubInterface $stub,
     ): void {
         self::assertSame($stub->query('the_query', 42)?->getValue(0), 'got 42');
 
@@ -54,7 +54,7 @@ class FeatureWorkflow
 {
     private bool $beDone = false;
 
-    #[WorkflowMethod('HarnessWorkflow_Query_UnexpectedArguments')]
+    #[WorkflowMethod('Harness_Query_UnexpectedArguments')]
     public function run()
     {
         yield Workflow::await(fn(): bool => $this->beDone);

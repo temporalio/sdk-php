@@ -33,7 +33,7 @@ timeouts to be set to zero rather than null.
 class BasicTest extends TestCase
 {
     #[Test]
-    public static function check(#[Stub('HarnessWorkflow_Activity_Basic')]WorkflowStubInterface $stub): void
+    public static function check(#[Stub('Harness_Activity_Basic')]WorkflowStubInterface $stub): void
     {
         self::assertSame('echo', $stub->getResult());
     }
@@ -42,7 +42,7 @@ class BasicTest extends TestCase
 #[WorkflowInterface]
 class FeatureWorkflow
 {
-    #[WorkflowMethod('HarnessWorkflow_Activity_Basic')]
+    #[WorkflowMethod('Harness_Activity_Basic')]
     public function run()
     {
         yield Workflow::newActivityStub(

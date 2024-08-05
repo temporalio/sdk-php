@@ -36,7 +36,7 @@ class SignalWithStartTest extends TestCase
 
     #[Test]
     public static function checkSignalToExistingWorkflow(
-        #[Stub('HarnessWorkflow_Signal_SignalWithStart', args: [-2])] WorkflowStubInterface $stub,
+        #[Stub('Harness_Signal_SignalWithStart', args: [-2])] WorkflowStubInterface $stub,
         WorkflowClientInterface $client,
         Feature $feature,
     ): void {
@@ -58,7 +58,7 @@ class FeatureWorkflow
 {
     private int $value = 0;
 
-    #[WorkflowMethod('HarnessWorkflow_Signal_SignalWithStart')]
+    #[WorkflowMethod('Harness_Signal_SignalWithStart')]
     public function run(int $arg = 0)
     {
         $this->value += $arg;

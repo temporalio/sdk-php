@@ -22,7 +22,7 @@ class ContinueAsSameTest extends TestCase
     #[Test]
     public static function check(
         #[Stub(
-            type: 'Workflow_ContinueAsNew_ContinueAsSame',
+            type: 'Harness_ContinueAsNew_ContinueAsSame',
             workflowId: WORKFLOW_ID,
             args: [INPUT_DATA],
             memo: [MEMO_KEY => MEMO_VALUE],
@@ -41,7 +41,7 @@ class ContinueAsSameTest extends TestCase
 #[WorkflowInterface]
 class FeatureWorkflow
 {
-    #[WorkflowMethod('HarnessWorkflow_ContinueAsNew_ContinueAsSame')]
+    #[WorkflowMethod('Harness_ContinueAsNew_ContinueAsSame')]
     public function run(string $input)
     {
         if (!empty(Workflow::getInfo()->continuedExecutionRunId)) {
@@ -49,11 +49,8 @@ class FeatureWorkflow
         }
 
         return yield Workflow::continueAsNew(
-            'Workflow',
+            'Harness_ContinueAsNew_ContinueAsSame',
             args: [$input],
-            options: Workflow\ContinueAsNewOptions::new()
-                // todo might be removed with https://github.com/temporalio/sdk-php/issues/453
-                ->withTaskQueue(Workflow::getInfo()->taskQueue)
         );
     }
 }

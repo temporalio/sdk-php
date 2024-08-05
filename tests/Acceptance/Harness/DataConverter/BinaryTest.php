@@ -64,7 +64,7 @@ class BinaryTest extends TestCase
 
     #[Test]
     public function check(
-        #[Stub('HarnessWorkflow_DataConverter_Binary', args: [INPUT])]
+        #[Stub('Harness_DataConverter_Binary', args: [INPUT])]
         #[Client(pipelineProvider: [self::class, 'pipelineProvider'])]
         WorkflowStubInterface $stub,
     ): void {
@@ -93,7 +93,7 @@ class BinaryTest extends TestCase
 #[WorkflowInterface]
 class FeatureWorkflow
 {
-    #[WorkflowMethod('HarnessWorkflow_DataConverter_Binary')]
+    #[WorkflowMethod('Harness_DataConverter_Binary')]
     public function run(Bytes $data)
     {
         return $data;

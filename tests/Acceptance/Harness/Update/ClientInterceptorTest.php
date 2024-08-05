@@ -29,7 +29,7 @@ class ClientInterceptorTest extends TestCase
 
     #[Test]
     public static function check(
-        #[Stub('HarnessWorkflow_Update_ClientInterceptor')]
+        #[Stub('Harness_Update_ClientInterceptor')]
         #[Client(pipelineProvider: [self::class, 'pipelineProvider'])]
         WorkflowStubInterface $stub,
     ): void {
@@ -44,7 +44,7 @@ class FeatureWorkflow
 {
     private bool $done = false;
 
-    #[WorkflowMethod('HarnessWorkflow_Update_ClientInterceptor')]
+    #[WorkflowMethod('Harness_Update_ClientInterceptor')]
     public function run()
     {
         yield Workflow::await(fn(): bool => $this->done);

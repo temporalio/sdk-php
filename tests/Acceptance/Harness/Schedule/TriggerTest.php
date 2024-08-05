@@ -31,7 +31,7 @@ class TriggerTest extends TestCase
     ): void {
         $handle = $client->createSchedule(
             schedule: Schedule::new()
-                ->withAction(StartWorkflowAction::new('HarnessWorkflow_Schedule_Trigger')
+                ->withAction(StartWorkflowAction::new('Harness_Schedule_Trigger')
                     ->withTaskQueue($feature->taskQueue)
                     ->withInput(['arg1']))
                 ->withSpec(ScheduleSpec::new()->withIntervalList(CarbonInterval::minute(1)))
@@ -62,7 +62,7 @@ class TriggerTest extends TestCase
 #[WorkflowInterface]
 class FeatureWorkflow
 {
-    #[WorkflowMethod('HarnessWorkflow_Schedule_Trigger')]
+    #[WorkflowMethod('Harness_Schedule_Trigger')]
     public function run(string $arg)
     {
         return $arg;

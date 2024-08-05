@@ -36,7 +36,7 @@ class BackfillTest extends TestCase
         $handle = $client->createSchedule(
             schedule: Schedule::new()
                 ->withAction(
-                    StartWorkflowAction::new('HarnessWorkflow_Schedule_Backfill')
+                    StartWorkflowAction::new('Harness_Schedule_Backfill')
                         ->withWorkflowId($workflowId)
                         ->withTaskQueue($feature->taskQueue)
                         ->withInput(['arg1'])
@@ -82,7 +82,7 @@ class BackfillTest extends TestCase
 #[WorkflowInterface]
 class FeatureWorkflow
 {
-    #[WorkflowMethod('HarnessWorkflow_Schedule_Backfill')]
+    #[WorkflowMethod('Harness_Schedule_Backfill')]
     public function run(string $arg)
     {
         return $arg;

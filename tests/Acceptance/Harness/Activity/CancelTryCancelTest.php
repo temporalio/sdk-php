@@ -54,7 +54,7 @@ immediately should proceed with the activity result being cancelled.
 class CancelTryCancelTest extends TestCase
 {
     #[Test]
-    public static function check(#[Stub('HarnessWorkflow_Activity_CancelTryCancel')]WorkflowStubInterface $stub): void
+    public static function check(#[Stub('Harness_Activity_CancelTryCancel')]WorkflowStubInterface $stub): void
     {
         self::assertSame('cancelled', $stub->getResult(timeout: 10));
     }
@@ -65,7 +65,7 @@ class FeatureWorkflow
 {
     private string $result = '';
 
-    #[WorkflowMethod('HarnessWorkflow_Activity_CancelTryCancel')]
+    #[WorkflowMethod('Harness_Activity_CancelTryCancel')]
     public function run()
     {
         # Start workflow

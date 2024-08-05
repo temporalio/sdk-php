@@ -17,7 +17,7 @@ use Temporal\Workflow\WorkflowMethod;
 class SuccessfulQueryTest extends TestCase
 {
     #[Test]
-    public static function check(#[Stub('HarnessWorkflow_Query_SuccessfulQuery')]WorkflowStubInterface $stub): void
+    public static function check(#[Stub('Harness_Query_SuccessfulQuery')]WorkflowStubInterface $stub): void
     {
         self::assertSame(0, $stub->query('get_counter')?->getValue(0));
 
@@ -40,7 +40,7 @@ class FeatureWorkflow
     private int $counter = 0;
     private bool $beDone = false;
 
-    #[WorkflowMethod('HarnessWorkflow_Query_SuccessfulQuery')]
+    #[WorkflowMethod('Harness_Query_SuccessfulQuery')]
     public function run()
     {
         yield Workflow::await(fn(): bool => $this->beDone);

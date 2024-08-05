@@ -23,7 +23,7 @@ class TimeoutDueToNoActiveWorkersTest extends TestCase
     #[Test]
     public static function check(
         #[Client(timeout: 30)]
-        #[Stub('HarnessWorkflow_Query_TimeoutDueToNoActiveWorkers')]
+        #[Stub('Harness_Query_TimeoutDueToNoActiveWorkers')]
         WorkflowStubInterface $stub,
         RRStarter $runner,
     ): void {
@@ -56,7 +56,7 @@ class FeatureWorkflow
 {
     private bool $beDone = false;
 
-    #[WorkflowMethod('HarnessWorkflow_Query_TimeoutDueToNoActiveWorkers')]
+    #[WorkflowMethod('Harness_Query_TimeoutDueToNoActiveWorkers')]
     public function run()
     {
         yield Workflow::await(fn(): bool => $this->beDone);

@@ -37,7 +37,7 @@ class JsonTest extends TestCase
 
     #[Test]
     public function check(
-        #[Stub('HarnessWorkflow_DataConverter_Json', args: [EXPECTED_RESULT])]
+        #[Stub('Harness_DataConverter_Json', args: [EXPECTED_RESULT])]
         #[Client(pipelineProvider: [self::class, 'pipelineProvider'])]
         WorkflowStubInterface $stub,
     ): void {
@@ -60,7 +60,7 @@ class JsonTest extends TestCase
 #[WorkflowInterface]
 class FeatureWorkflow
 {
-    #[WorkflowMethod('HarnessWorkflow_DataConverter_Json')]
+    #[WorkflowMethod('Harness_DataConverter_Json')]
     public function run(object $data)
     {
         return $data;

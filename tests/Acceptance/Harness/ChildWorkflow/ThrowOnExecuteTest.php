@@ -19,18 +19,18 @@ use Temporal\Workflow\WorkflowMethod;
 class ThrowOnExecuteTest extends TestCase
 {
     #[Test]
-    public static function check(#[Stub('HarnessWorkflow_ChildWorkflow_ThrowsOnExecute')]WorkflowStubInterface $stub): void
+    public static function check(#[Stub('Harness_ChildWorkflow_ThrowsOnExecute')]WorkflowStubInterface $stub): void
     {
         try {
             $stub->getResult();
             throw new \Exception('Expected exception');
         } catch (WorkflowFailedException $e) {
-            self::assertSame('MainWorkflow', $e->getWorkflowType());
+            self::assertSame('Harness_ChildWorkflow_ThrowsOnExecute', $e->getWorkflowType());
 
             /** @var ChildWorkflowFailure $previous */
             $previous = $e->getPrevious();
             self::assertInstanceOf(ChildWorkflowFailure::class, $previous);
-            self::assertSame('ChildWorkflow', $previous->getWorkflowType());
+            self::assertSame('Harness_ChildWorkflow_ThrowsOnExecute_Child', $previous->getWorkflowType());
 
             /** @var ApplicationFailure $failure */
             $failure = $previous->getPrevious();
@@ -46,7 +46,7 @@ class ThrowOnExecuteTest extends TestCase
 #[WorkflowInterface]
 class MainWorkflow
 {
-    #[WorkflowMethod('HarnessWorkflow_ChildWorkflow_ThrowsOnExecute')]
+    #[WorkflowMethod('Harness_ChildWorkflow_ThrowsOnExecute')]
     public function run()
     {
         return yield Workflow::newChildWorkflowStub(
@@ -60,7 +60,7 @@ class MainWorkflow
 #[WorkflowInterface]
 class ChildWorkflow
 {
-    #[WorkflowMethod('HarnessWorkflow_ChildWorkflow_ThrowsOnExecute_Child')]
+    #[WorkflowMethod('Harness_ChildWorkflow_ThrowsOnExecute_Child')]
     public function run()
     {
         throw new ApplicationFailure('Test message', 'TestError', true, EncodedValues::fromValues([['foo' => 'bar']]));

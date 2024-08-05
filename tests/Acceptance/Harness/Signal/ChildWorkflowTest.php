@@ -17,7 +17,7 @@ class ChildWorkflowTest extends TestCase
 {
     #[Test]
     public static function check(
-        #[Stub('HarnessWorkflow_Signal_ChildWorkflow')]WorkflowStubInterface $stub,
+        #[Stub('Harness_Signal_ChildWorkflow')]WorkflowStubInterface $stub,
     ): void {
         self::assertSame('child-wf-arg', $stub->getResult());
     }
@@ -26,7 +26,7 @@ class ChildWorkflowTest extends TestCase
 #[WorkflowInterface]
 class FeatureWorkflow
 {
-    #[WorkflowMethod('HarnessWorkflow_Signal_ChildWorkflow')]
+    #[WorkflowMethod('Harness_Signal_ChildWorkflow')]
     public function run()
     {
         $wf = Workflow::newChildWorkflowStub(
@@ -47,7 +47,7 @@ class ChildWorkflow
 {
     private string $value = '';
 
-    #[WorkflowMethod('HarnessWorkflow_Signal_ChildWorkflow_Child')]
+    #[WorkflowMethod('Harness_Signal_ChildWorkflow_Child')]
     public function run()
     {
         yield Workflow::await(fn(): bool => $this->value !== '');

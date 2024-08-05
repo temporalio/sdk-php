@@ -18,5 +18,4 @@ kv:
         config: { }
 
 logs:
-    mode: development
-    level: debug
+    mode: none

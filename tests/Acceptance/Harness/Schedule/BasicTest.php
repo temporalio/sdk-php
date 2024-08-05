@@ -38,7 +38,7 @@ class BasicTest extends TestCase
         $handle = $client->createSchedule(
             schedule: Schedule::new()
                 ->withAction(
-                    StartWorkflowAction::new('HarnessWorkflow_Schedule_Basic')
+                    StartWorkflowAction::new('Harness_Schedule_Basic')
                         ->withWorkflowId($workflowId)
                         ->withTaskQueue($feature->taskQueue)
                         ->withInput(['arg1'])
@@ -125,7 +125,7 @@ class BasicTest extends TestCase
 #[WorkflowInterface]
 class FeatureWorkflow
 {
-    #[WorkflowMethod('HarnessWorkflow_Schedule_Basic')]
+    #[WorkflowMethod('Harness_Schedule_Basic')]
     public function run(string $arg)
     {
         return $arg;

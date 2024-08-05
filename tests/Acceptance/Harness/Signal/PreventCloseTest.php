@@ -18,7 +18,7 @@ class PreventCloseTest extends TestCase
 {
     #[Test]
     public static function checkSignalOutOfExecution(
-        #[Stub('HarnessWorkflow_Signal_PreventClose')]WorkflowStubInterface $stub,
+        #[Stub('Harness_Signal_PreventClose')]WorkflowStubInterface $stub,
     ): void {
         $stub->signal('add', 1);
         \usleep(1_500_000); // Wait 1.5s to workflow complete
@@ -34,7 +34,7 @@ class PreventCloseTest extends TestCase
 
     #[Test]
     public static function checkPreventClose(
-        #[Stub('HarnessWorkflow_Signal_PreventClose')]WorkflowStubInterface $stub,
+        #[Stub('Harness_Signal_PreventClose')]WorkflowStubInterface $stub,
     ): void {
         self::markTestSkipped('research a better way');
 
@@ -56,7 +56,7 @@ class FeatureWorkflow
 {
     private array $values = [];
 
-    #[WorkflowMethod('HarnessWorkflow_Signal_PreventClose')]
+    #[WorkflowMethod('Harness_Signal_PreventClose')]
     public function run()
     {
         // Non-deterministic hack

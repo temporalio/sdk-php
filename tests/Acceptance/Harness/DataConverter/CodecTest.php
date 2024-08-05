@@ -43,7 +43,7 @@ class CodecTest extends TestCase
 
     #[Test]
     public function check(
-        #[Stub('HarnessWorkflow_DataConverter_Codec', args: [EXPECTED_RESULT])]
+        #[Stub('Harness_DataConverter_Codec', args: [EXPECTED_RESULT])]
         #[Client(
             pipelineProvider: [self::class, 'pipelineProvider'],
             payloadConverters: [Base64PayloadCodec::class]),
@@ -76,7 +76,7 @@ class CodecTest extends TestCase
 #[WorkflowInterface]
 class FeatureWorkflow
 {
-    #[WorkflowMethod('HarnessWorkflow_DataConverter_Codec')]
+    #[WorkflowMethod('Harness_DataConverter_Codec')]
     public function run(mixed $data)
     {
         return $data;

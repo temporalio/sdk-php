@@ -15,7 +15,7 @@ class ValidationReplayTest extends TestCase
 {
     #[Test]
     public static function check(
-        #[Stub('HarnessWorkflow_Update_ValidationReplay')]WorkflowStubInterface $stub,
+        #[Stub('Harness_Update_ValidationReplay')]WorkflowStubInterface $stub,
     ): void {
         $stub->update('do_update');
         self::assertSame(1, $stub->getResult());
@@ -30,7 +30,7 @@ class FeatureWorkflow
     # Don't use static variables like this.
     private static int $validations = 0;
 
-    #[WorkflowMethod('HarnessWorkflow_Update_ValidationReplay')]
+    #[WorkflowMethod('Harness_Update_ValidationReplay')]
     public function run()
     {
         yield Workflow::await(fn(): bool => $this->done);

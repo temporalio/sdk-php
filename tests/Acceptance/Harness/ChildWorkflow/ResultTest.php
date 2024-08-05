@@ -15,7 +15,7 @@ use Temporal\Workflow\WorkflowMethod;
 class ResultTest extends TestCase
 {
     #[Test]
-    public static function check(#[Stub('HarnessWorkflow_ChildWorkflow_Result')]WorkflowStubInterface $stub): void
+    public static function check(#[Stub('Harness_ChildWorkflow_Result')]WorkflowStubInterface $stub): void
     {
         self::assertSame('Test', $stub->getResult());
     }
@@ -24,7 +24,7 @@ class ResultTest extends TestCase
 #[WorkflowInterface]
 class MainWorkflow
 {
-    #[WorkflowMethod('HarnessWorkflow_ChildWorkflow_Result')]
+    #[WorkflowMethod('Harness_ChildWorkflow_Result')]
     public function run()
     {
         return yield Workflow::newChildWorkflowStub(
@@ -38,7 +38,7 @@ class MainWorkflow
 #[WorkflowInterface]
 class ChildWorkflow
 {
-    #[WorkflowMethod('HarnessWorkflow_ChildWorkflow_Result_Child')]
+    #[WorkflowMethod('Harness_ChildWorkflow_Result_Child')]
     public function run(string $input)
     {
         return $input;
