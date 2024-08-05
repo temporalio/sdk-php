@@ -40,7 +40,7 @@ class BinaryProtobufTest extends TestCase
 
     #[Test]
     public function check(
-        #[Stub('Workflow', args: [INPUT])]
+        #[Stub('HarnessWorkflow_DataConverter_BinaryProtobuf', args: [INPUT])]
         #[Client(
             pipelineProvider: [self::class, 'pipelineProvider'],
             payloadConverters: [ProtoConverter::class],
@@ -70,7 +70,7 @@ class BinaryProtobufTest extends TestCase
 #[WorkflowInterface]
 class FeatureWorkflow
 {
-    #[WorkflowMethod('Workflow')]
+    #[WorkflowMethod('HarnessWorkflow_DataConverter_BinaryProtobuf')]
     public function run(DataBlob $data)
     {
         return $data;

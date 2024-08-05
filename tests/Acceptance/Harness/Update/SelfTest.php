@@ -20,7 +20,7 @@ class SelfTest extends TestCase
 {
     #[Test]
     public static function check(
-        #[Stub('Workflow')] WorkflowStubInterface $stub,
+        #[Stub('HarnessWorkflow_Update_Self')]WorkflowStubInterface $stub,
     ): void {
         self::assertSame('Hello, world!', $stub->getResult());
     }
@@ -31,7 +31,7 @@ class FeatureWorkflow
 {
     private bool $done = false;
 
-    #[WorkflowMethod('Workflow')]
+    #[WorkflowMethod('HarnessWorkflow_Update_Self')]
     public function run()
     {
         yield Workflow::executeActivity(

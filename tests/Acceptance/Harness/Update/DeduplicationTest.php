@@ -19,7 +19,7 @@ class DeduplicationTest extends TestCase
 {
     #[Test]
     public function check(
-        #[Stub('Workflow')] WorkflowStubInterface $stub,
+        #[Stub('HarnessWorkflow_Update_Deduplication')]WorkflowStubInterface $stub,
         WorkflowClientInterface $client,
     ): void {
         $updateId = 'incrementer';
@@ -61,7 +61,7 @@ class FeatureWorkflow
     private int $counter = 0;
     private bool $blocked = true;
 
-    #[WorkflowMethod('Workflow')]
+    #[WorkflowMethod('HarnessWorkflow_Update_Deduplication')]
     public function run()
     {
         yield Workflow::await(fn(): bool => $this->counter >= 2);

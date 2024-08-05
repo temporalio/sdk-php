@@ -6,8 +6,10 @@ namespace Temporal\Tests\Acceptance\App;
 
 use Spiral\Core\Container;
 use Spiral\Core\Scope;
+use Temporal\Client\WorkflowStubInterface;
 use Temporal\Tests\Acceptance\App\Runtime\ContainerFacade;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
+use Temporal\Tests\Acceptance\App\Runtime\RRStarter;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 
 abstract class TestCase extends \PHPUnit\Framework\TestCase
@@ -38,9 +40,29 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
                 $args = $container->resolveArguments($reflection);
                 $this->setDependencyInput($args);
 
-                return parent::runTest();
+                try {
+                    return parent::runTest();
+                } catch (\Throwable $e) {
+                    // Restart RR if a Error occurs
+                    /** @var RRStarter $runner */
+                    $runner = $container->get(RRStarter::class);
+                    $runner->stop();
+                    $runner->start();
+
+                    throw $e;
+                } finally {
+                    // Cleanup: terminate injected workflow if any
+                    foreach ($args as $arg) {
+                        if ($arg instanceof WorkflowStubInterface) {
+                            try {
+                                $arg->terminate('test-end');
+                            } catch (\Throwable $e) {
+                                // ignore
+                            }
+                        }
+                    }
+                }
             },
         );
-
     }
 }

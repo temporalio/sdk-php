@@ -28,7 +28,7 @@ class WorkerRestartTest extends TestCase
     #[Test]
     #[DoesNotPerformAssertions]
     public static function check(
-        #[Stub('Workflow')] WorkflowStubInterface $stub,
+        #[Stub('HarnessWorkflow_Update_WorkerRestart')]WorkflowStubInterface $stub,
         ContainerInterface $c,
         RRStarter $runner,
     ): void {
@@ -63,7 +63,7 @@ class FeatureWorkflow
 {
     private bool $done = false;
 
-    #[WorkflowMethod('Workflow')]
+    #[WorkflowMethod('HarnessWorkflow_Update_WorkerRestart')]
     public function run()
     {
         yield Workflow::await(fn(): bool => $this->done);

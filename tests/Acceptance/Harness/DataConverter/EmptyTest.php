@@ -25,7 +25,7 @@ class EmptyTest extends TestCase
 {
     #[Test]
     public function check(
-        #[Stub('Workflow')]
+        #[Stub('HarnessWorkflow_DataConverter_Empty')]
         WorkflowStubInterface $stub,
         WorkflowClientInterface $client,
     ): void {
@@ -57,7 +57,7 @@ class EmptyTest extends TestCase
 #[WorkflowInterface]
 class FeatureWorkflow
 {
-    #[WorkflowMethod('Workflow')]
+    #[WorkflowMethod('HarnessWorkflow_DataConverter_Empty')]
     public function run()
     {
         yield Workflow::newActivityStub(

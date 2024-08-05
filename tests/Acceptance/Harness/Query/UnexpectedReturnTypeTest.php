@@ -19,7 +19,7 @@ class UnexpectedReturnTypeTest extends TestCase
 {
     #[Test]
     public static function check(
-        #[Stub('Workflow')] WorkflowStubInterface $stub,
+        #[Stub('HarnessWorkflow_Query_UnexpectedReturnType')]WorkflowStubInterface $stub,
     ): void {
         try {
             $stub->query('the_query')?->getValue(0, 'int');
@@ -41,7 +41,7 @@ class FeatureWorkflow
 {
     private bool $beDone = false;
 
-    #[WorkflowMethod('Workflow')]
+    #[WorkflowMethod('HarnessWorkflow_Query_UnexpectedReturnType')]
     public function run()
     {
         yield Workflow::await(fn(): bool => $this->beDone);

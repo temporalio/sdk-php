@@ -17,7 +17,7 @@ class NonDurableRejectTest extends TestCase
 {
     #[Test]
     public static function check(
-        #[Stub('Workflow')] WorkflowStubInterface $stub,
+        #[Stub('HarnessWorkflow_Update_NonDurableReject')]WorkflowStubInterface $stub,
         WorkflowClientInterface $client,
     ): void {
         for ($i = 0; $i < 5; $i++) {
@@ -45,7 +45,7 @@ class FeatureWorkflow
 {
     private int $counter = 0;
 
-    #[WorkflowMethod('Workflow')]
+    #[WorkflowMethod('HarnessWorkflow_Update_NonDurableReject')]
     public function run()
     {
         yield Workflow::await(fn(): bool => $this->counter === 5);

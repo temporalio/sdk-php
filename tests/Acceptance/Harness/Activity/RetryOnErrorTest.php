@@ -39,7 +39,7 @@ how a failed activity may retry.
 class RetryOnErrorTest extends TestCase
 {
     #[Test]
-    public static function check(#[Stub('Workflow')] WorkflowStubInterface $stub): void
+    public static function check(#[Stub('HarnessWorkflow_Activity_CancelTryCancel')]WorkflowStubInterface $stub): void
     {
         try {
             $stub->getResult();
@@ -57,7 +57,7 @@ class RetryOnErrorTest extends TestCase
 #[WorkflowInterface]
 class FeatureWorkflow
 {
-    #[WorkflowMethod('Workflow')]
+    #[WorkflowMethod('HarnessWorkflow_Activity_CancelTryCancel')]
     public function run()
     {
         # Allow 4 retries with basically no backoff

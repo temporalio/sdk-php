@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Acceptance\Harness\WorkflowUpdate\ThrowsOnExecute;
+namespace Temporal\Tests\Acceptance\Harness\ChildWorkflow\ThrowsOnExecute;
 
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Client\WorkflowStubInterface;
@@ -19,7 +19,7 @@ use Temporal\Workflow\WorkflowMethod;
 class ThrowOnExecuteTest extends TestCase
 {
     #[Test]
-    public static function check(#[Stub('MainWorkflow')] WorkflowStubInterface $stub): void
+    public static function check(#[Stub('HarnessWorkflow_ChildWorkflow_ThrowsOnExecute')]WorkflowStubInterface $stub): void
     {
         try {
             $stub->getResult();
@@ -46,7 +46,7 @@ class ThrowOnExecuteTest extends TestCase
 #[WorkflowInterface]
 class MainWorkflow
 {
-    #[WorkflowMethod('MainWorkflow')]
+    #[WorkflowMethod('HarnessWorkflow_ChildWorkflow_ThrowsOnExecute')]
     public function run()
     {
         return yield Workflow::newChildWorkflowStub(
@@ -60,7 +60,7 @@ class MainWorkflow
 #[WorkflowInterface]
 class ChildWorkflow
 {
-    #[WorkflowMethod('ChildWorkflow')]
+    #[WorkflowMethod('HarnessWorkflow_ChildWorkflow_ThrowsOnExecute_Child')]
     public function run()
     {
         throw new ApplicationFailure('Test message', 'TestError', true, EncodedValues::fromValues([['foo' => 'bar']]));

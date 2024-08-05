@@ -19,7 +19,7 @@ class ExternalTest extends TestCase
 {
     #[Test]
     public static function check(
-        #[Stub('Workflow')] WorkflowStubInterface $stub,
+        #[Stub('HarnessWorkflow_Signal_External')]WorkflowStubInterface $stub,
     ): void {
         $stub->signal('my_signal', SIGNAL_DATA);
         self::assertSame(SIGNAL_DATA, $stub->getResult());
@@ -31,7 +31,7 @@ class FeatureWorkflow
 {
     private ?string $result = null;
 
-    #[WorkflowMethod('Workflow')]
+    #[WorkflowMethod('HarnessWorkflow_Signal_External')]
     public function run()
     {
         yield Workflow::await(fn(): bool => $this->result !== null);

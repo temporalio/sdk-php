@@ -17,7 +17,7 @@ class BasicTest extends TestCase
 {
     #[Test]
     public static function check(
-        #[Stub('Workflow')] WorkflowStubInterface $stub,
+        #[Stub('HarnessWorkflow_Signal_Basic')]WorkflowStubInterface $stub,
     ): void {
         $stub->signal('my_signal', 'arg');
         self::assertSame('arg', $stub->getResult());
@@ -29,7 +29,7 @@ class FeatureWorkflow
 {
     private string $value = '';
 
-    #[WorkflowMethod('Workflow')]
+    #[WorkflowMethod('HarnessWorkflow_Signal_Basic')]
     public function run()
     {
         yield Workflow::await(fn(): bool => $this->value !== '');

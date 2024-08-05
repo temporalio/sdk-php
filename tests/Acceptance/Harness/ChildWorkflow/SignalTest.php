@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Acceptance\Harness\WorkflowUpdate\Signal;
+namespace Temporal\Tests\Acceptance\Harness\ChildWorkflow\Signal;
 
 use PHPUnit\Framework\Attributes\Test;
 use React\Promise\PromiseInterface;
@@ -17,7 +17,7 @@ use Temporal\Workflow\WorkflowMethod;
 class SignalTest extends TestCase
 {
     #[Test]
-    public static function check(#[Stub('MainWorkflow')] WorkflowStubInterface $stub): void
+    public static function check(#[Stub('HarnessWorkflow_ChildWorkflow_Signal')]WorkflowStubInterface $stub): void
     {
         self::assertSame('unblock', $stub->getResult());
     }
@@ -29,7 +29,7 @@ class SignalTest extends TestCase
 #[WorkflowInterface]
 class MainWorkflow
 {
-    #[WorkflowMethod('MainWorkflow')]
+    #[WorkflowMethod('HarnessWorkflow_ChildWorkflow_Signal')]
     public function run()
     {
         $workflow = Workflow::newChildWorkflowStub(
@@ -51,7 +51,7 @@ class ChildWorkflow
 {
     private ?string $message = null;
 
-    #[WorkflowMethod('ChildWorkflow')]
+    #[WorkflowMethod('HarnessWorkflow_ChildWorkflow_Signal_Child')]
     public function run()
     {
         yield Workflow::await(fn(): bool => $this->message !== null);

@@ -18,7 +18,7 @@ class UnexpectedQueryTypeNameTest extends TestCase
 {
     #[Test]
     public static function check(
-        #[Stub('Workflow')] WorkflowStubInterface $stub,
+        #[Stub('HarnessWorkflow_Query_UnexpectedQueryTypeName')]WorkflowStubInterface $stub,
     ): void {
         try {
             $stub->query('nonexistent');
@@ -40,7 +40,7 @@ class FeatureWorkflow
 {
     private bool $beDone = false;
 
-    #[WorkflowMethod('Workflow')]
+    #[WorkflowMethod('HarnessWorkflow_Query_UnexpectedQueryTypeName')]
     public function run()
     {
         yield Workflow::await(fn(): bool => $this->beDone);

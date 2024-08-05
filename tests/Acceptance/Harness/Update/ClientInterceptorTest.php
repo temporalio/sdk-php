@@ -15,11 +15,12 @@ use Temporal\Interceptor\WorkflowClient\UpdateInput;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Tests\Acceptance\App\Attribute\Client;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
+use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
-class ClientInterceptorTest extends \Temporal\Tests\Acceptance\App\TestCase
+class ClientInterceptorTest extends TestCase
 {
     public function pipelineProvider(): PipelineProvider
     {
@@ -28,7 +29,7 @@ class ClientInterceptorTest extends \Temporal\Tests\Acceptance\App\TestCase
 
     #[Test]
     public static function check(
-        #[Stub('Workflow')]
+        #[Stub('HarnessWorkflow_Update_ClientInterceptor')]
         #[Client(pipelineProvider: [self::class, 'pipelineProvider'])]
         WorkflowStubInterface $stub,
     ): void {
@@ -43,7 +44,7 @@ class FeatureWorkflow
 {
     private bool $done = false;
 
-    #[WorkflowMethod('Workflow')]
+    #[WorkflowMethod('HarnessWorkflow_Update_ClientInterceptor')]
     public function run()
     {
         yield Workflow::await(fn(): bool => $this->done);

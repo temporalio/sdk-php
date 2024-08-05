@@ -36,7 +36,7 @@ class SuccessfulStartTest extends TestCase
 
     #[Test]
     public function start(
-        #[Stub('Workflow', eagerStart: true,)]
+        #[Stub('HarnessWorkflow_EagerWorkflow_SuccessfulStart', eagerStart: true,)]
         #[Client(timeout: 30, pipelineProvider: [self::class, 'pipelineProvider'])]
         WorkflowStubInterface $stub,
     ): void {
@@ -50,7 +50,7 @@ class SuccessfulStartTest extends TestCase
 #[WorkflowInterface]
 class FeatureWorkflow
 {
-    #[WorkflowMethod('Workflow')]
+    #[WorkflowMethod('HarnessWorkflow_EagerWorkflow_SuccessfulStart')]
     public function run()
     {
         return EXPECTED_RESULT;

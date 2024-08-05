@@ -29,7 +29,7 @@ class PauseTest extends TestCase
         $handle = $client->createSchedule(
             schedule: Schedule::new()
                 ->withAction(
-                    StartWorkflowAction::new('Workflow')
+                    StartWorkflowAction::new('HarnessWorkflow_Schedule_Pause')
                         ->withTaskQueue($feature->taskQueue)
                         ->withInput(['arg1'])
                 )->withSpec(
@@ -73,7 +73,7 @@ class PauseTest extends TestCase
 #[WorkflowInterface]
 class FeatureWorkflow
 {
-    #[WorkflowMethod('Workflow')]
+    #[WorkflowMethod('HarnessWorkflow_Schedule_Pause')]
     public function run(string $arg)
     {
         return $arg;

@@ -17,7 +17,7 @@ class BasicAsyncTest extends TestCase
 {
     #[Test]
     public static function check(
-        #[Stub('Workflow')] WorkflowStubInterface $stub,
+        #[Stub('HarnessWorkflow_Update_BasicAsync')]WorkflowStubInterface $stub,
     ): void {
         try {
             $stub->update('my_update', 'bad-update-arg');
@@ -37,7 +37,7 @@ class FeatureWorkflow
 {
     private string $state = '';
 
-    #[WorkflowMethod('Workflow')]
+    #[WorkflowMethod('HarnessWorkflow_Update_BasicAsync')]
     public function run()
     {
         yield Workflow::await(fn(): bool => $this->state !== '');

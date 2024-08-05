@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Acceptance\Harness\WorkflowUpdate\ContinueAsSame;
+namespace Temporal\Tests\Acceptance\Harness\ContinueAsNew\ContinueAsSame;
 
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Client\WorkflowStubInterface;
@@ -22,7 +22,7 @@ class ContinueAsSameTest extends TestCase
     #[Test]
     public static function check(
         #[Stub(
-            type: 'Workflow',
+            type: 'Workflow_ContinueAsNew_ContinueAsSame',
             workflowId: WORKFLOW_ID,
             args: [INPUT_DATA],
             memo: [MEMO_KEY => MEMO_VALUE],
@@ -41,7 +41,7 @@ class ContinueAsSameTest extends TestCase
 #[WorkflowInterface]
 class FeatureWorkflow
 {
-    #[WorkflowMethod('Workflow')]
+    #[WorkflowMethod('HarnessWorkflow_ContinueAsNew_ContinueAsSame')]
     public function run(string $input)
     {
         if (!empty(Workflow::getInfo()->continuedExecutionRunId)) {

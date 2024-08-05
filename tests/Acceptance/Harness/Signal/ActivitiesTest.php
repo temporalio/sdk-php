@@ -24,7 +24,7 @@ class ActivitiesTest extends TestCase
 {
     #[Test]
     public static function check(
-        #[Stub('Workflow')] WorkflowStubInterface $stub,
+        #[Stub('HarnessWorkflow_Signal_Activities')]WorkflowStubInterface $stub,
     ): void {
         $stub->signal('mySignal');
         self::assertSame(ACTIVITY_COUNT * ACTIVITY_RESULT, $stub->getResult());
@@ -36,7 +36,7 @@ class FeatureWorkflow
 {
     private int $total = 0;
 
-    #[WorkflowMethod('Workflow')]
+    #[WorkflowMethod('HarnessWorkflow_Signal_Activities')]
     public function run()
     {
         yield Workflow::await(fn(): bool => $this->total > 0);

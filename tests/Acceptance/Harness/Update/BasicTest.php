@@ -16,7 +16,7 @@ class BasicTest extends TestCase
 {
     #[Test]
     public static function check(
-        #[Stub('Workflow')] WorkflowStubInterface $stub,
+        #[Stub('HarnessWorkflow_Update_Basic')]WorkflowStubInterface $stub,
     ): void {
         $updated = $stub->update('my_update')->getValue(0);
         self::assertSame('Updated', $updated);
@@ -29,7 +29,7 @@ class FeatureWorkflow
 {
     private bool $done = false;
 
-    #[WorkflowMethod('Workflow')]
+    #[WorkflowMethod('HarnessWorkflow_Update_Basic')]
     public function run()
     {
         yield Workflow::await(fn(): bool => $this->done);

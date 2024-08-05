@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Acceptance\Harness\WorkflowUpdate\Result;
+namespace Temporal\Tests\Acceptance\Harness\ChildWorkflow\Result;
 
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Client\WorkflowStubInterface;
@@ -15,7 +15,7 @@ use Temporal\Workflow\WorkflowMethod;
 class ResultTest extends TestCase
 {
     #[Test]
-    public static function check(#[Stub('MainWorkflow')] WorkflowStubInterface $stub): void
+    public static function check(#[Stub('HarnessWorkflow_ChildWorkflow_Result')]WorkflowStubInterface $stub): void
     {
         self::assertSame('Test', $stub->getResult());
     }
@@ -24,7 +24,7 @@ class ResultTest extends TestCase
 #[WorkflowInterface]
 class MainWorkflow
 {
-    #[WorkflowMethod('MainWorkflow')]
+    #[WorkflowMethod('HarnessWorkflow_ChildWorkflow_Result')]
     public function run()
     {
         return yield Workflow::newChildWorkflowStub(
@@ -38,7 +38,7 @@ class MainWorkflow
 #[WorkflowInterface]
 class ChildWorkflow
 {
-    #[WorkflowMethod('ChildWorkflow')]
+    #[WorkflowMethod('HarnessWorkflow_ChildWorkflow_Result_Child')]
     public function run(string $input)
     {
         return $input;

@@ -23,7 +23,7 @@ class AsyncAcceptTest extends TestCase
 {
     #[Test]
     public function check(
-        #[Stub('Workflow')] WorkflowStubInterface $stub,
+        #[Stub('HarnessWorkflow_Update_AsyncAccepted')]WorkflowStubInterface $stub,
     ): void {
         $updateId = Uuid::uuid4()->toString();
         # Issue async update
@@ -76,7 +76,7 @@ class FeatureWorkflow
     private bool $done = false;
     private bool $blocked = true;
 
-    #[WorkflowMethod('Workflow')]
+    #[WorkflowMethod('HarnessWorkflow_Update_AsyncAccepted')]
     public function run()
     {
         yield Workflow::await(fn(): bool => $this->done);
