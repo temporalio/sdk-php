@@ -38,7 +38,10 @@ $workers = [];
 try {
     // Load runtime options
     $command = Command::fromCommandLine($argv);
-    $runtime = RuntimeBuilder::createState($command, \getcwd(), __DIR__ . '/Harness');
+    $runtime = RuntimeBuilder::createState($command, \getcwd(), [
+        'Temporal\Tests\Acceptance\Harness' => __DIR__ . '/Harness',
+        'Temporal\Tests\Acceptance\Extra' => __DIR__ . '/Extra',
+    ]);
     $run = $runtime->command;
     // Init container
     $container = new Spiral\Core\Container();

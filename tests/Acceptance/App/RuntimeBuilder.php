@@ -16,26 +16,28 @@ final class RuntimeBuilder
 {
     public static function hydrateClasses(State $runtime): void
     {
-        foreach (self::iterateClasses($runtime->testCasesDir) as $feature => $classes) {
-            foreach ($classes as $classString) {
-                $class = new \ReflectionClass($classString);
+        foreach ($runtime->testCasesDir as $namespace => $dir) {
+            foreach (self::iterateClasses($dir, $namespace) as $feature => $classes) {
+                foreach ($classes as $classString) {
+                    $class = new \ReflectionClass($classString);
 
-                # Register Workflow
-                $class->getAttributes(WorkflowInterface::class) === [] or $runtime
-                    ->addWorkflow($feature, $classString);
+                    # Register Workflow
+                    $class->getAttributes(WorkflowInterface::class) === [] or $runtime
+                        ->addWorkflow($feature, $classString);
 
-                # Register Activity
-                $class->getAttributes(ActivityInterface::class) === [] or $runtime
-                    ->addActivity($feature, $classString);
+                    # Register Activity
+                    $class->getAttributes(ActivityInterface::class) === [] or $runtime
+                        ->addActivity($feature, $classString);
 
-                # Register Converters
-                $class->implementsInterface(PayloadConverterInterface::class) and $runtime
-                    ->addConverter($feature, $classString);
+                    # Register Converters
+                    $class->implementsInterface(PayloadConverterInterface::class) and $runtime
+                        ->addConverter($feature, $classString);
 
-                # Register Check
-                foreach ($class->getMethods() as $method) {
-                    $method->getAttributes(Test::class) === [] or $runtime
-                        ->addCheck($feature, $classString, $method->getName());
+                    # Register Check
+                    foreach ($class->getMethods() as $method) {
+                        $method->getAttributes(Test::class) === [] or $runtime
+                            ->addCheck($feature, $classString, $method->getName());
+                    }
                 }
             }
         }
@@ -43,21 +45,22 @@ final class RuntimeBuilder
 
     /**
      * @param non-empty-string $workDir
+     * @param iterable<non-empty-string, non-empty-string> $testCasesDir
      */
-    public static function createEmpty(Command $command, string $workDir, string $testCasesDir): State
+    public static function createEmpty(Command $command, string $workDir, iterable $testCasesDir): State
     {
         return new State($command, \dirname(__DIR__), $workDir, $testCasesDir);
     }
 
     /**
      * @param non-empty-string $workDir
-     * @param non-empty-string $testCasesDir
+     * @param iterable<non-empty-string, non-empty-string> $testCasesDir
      */
-    public static function createState(Command $command, string $workDir, string $testCasesDir): State
+    public static function createState(Command $command, string $workDir, iterable $testCasesDir): State
     {
         $runtime = new State($command, \dirname(__DIR__), $workDir, $testCasesDir);
 
-        self::hydrateClasses($runtime, $testCasesDir);
+        self::hydrateClasses($runtime);
 
         return $runtime;
     }
@@ -65,25 +68,17 @@ final class RuntimeBuilder
     public static function init(): void
     {
         \ini_set('display_errors', 'stderr');
-        include 'vendor/autoload.php';
-
-        \spl_autoload_register(static function (string $class): void {
-            if (\str_starts_with($class, 'Harness\\')) {
-                $file = \str_replace('\\', '/', \substr($class, 8)) . '.php';
-                $path = __DIR__ . '/' . $file;
-                \is_file($path) and require $path;
-            }
-        });
     }
 
     /**
      * @param non-empty-string $featuresDir
+     * @param non-empty-string $ns
      * @return iterable<Feature, array<int, class-string>>
      */
-    private static function iterateClasses(string $featuresDir): iterable
+    private static function iterateClasses(string $featuresDir, string $ns): iterable
     {
         // Scan all the test cases
-        foreach (ClassLocator::loadTestCases($featuresDir, 'Temporal\Tests\Acceptance\Harness') as $class) {
+        foreach (ClassLocator::loadTestCases($featuresDir, $ns) as $class) {
             $namespace = \substr($class, 0, \strrpos($class, '\\'));
             $feature = new Feature(
                 testClass: $class,

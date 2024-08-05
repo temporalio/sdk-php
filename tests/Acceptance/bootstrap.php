@@ -33,7 +33,10 @@ require './vendor/autoload.php';
 RuntimeBuilder::init();
 
 $command = Command::fromEnv();
-$runtime = RuntimeBuilder::createEmpty($command, \getcwd(), __DIR__ . '/Harness');
+$runtime = RuntimeBuilder::createEmpty($command, \getcwd(), [
+    'Temporal\Tests\Acceptance\Harness' => __DIR__ . '/Harness',
+    'Temporal\Tests\Acceptance\Extra' => __DIR__ . '/Extra',
+]);
 
 $runner = new RRStarter($runtime);
 
