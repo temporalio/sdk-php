@@ -39,7 +39,7 @@ class PreventCloseTest extends TestCase
         $stub->signal('add', 1);
 
         // Wait that the first signal is processed
-        usleep(100_000);
+        usleep(200_000);
 
         // Add signal while WF is completing
         $stub->signal('add', 2);
@@ -62,8 +62,8 @@ class FeatureWorkflow
 
         yield Workflow::await(fn(): bool => $this->values !== []);
 
-        // Add some blocking lag 300ms
-        \usleep(300_000);
+        // Add some blocking lag 500ms
+        \usleep(500_000);
 
         return [$this->values, $replay];
     }

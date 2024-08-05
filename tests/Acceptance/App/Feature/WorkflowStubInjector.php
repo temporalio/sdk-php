@@ -39,6 +39,7 @@ final class WorkflowStubInjector implements InjectorInterface
         /** @var Feature $feature */
         $feature = $this->container->get(Feature::class);
         $options = WorkflowOptions::new()
+            ->withWorkflowExecutionTimeout($attribute->executionTimeout ?? '1 minute')
             ->withTaskQueue($feature->taskQueue)
             ->withEagerStart($attribute->eagerStart);
 
