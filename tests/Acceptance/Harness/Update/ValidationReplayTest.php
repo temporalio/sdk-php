@@ -11,7 +11,7 @@ use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
-class FeatureChecker extends TestCase
+class ValidationReplayTest extends TestCase
 {
     #[Test]
     public static function check(

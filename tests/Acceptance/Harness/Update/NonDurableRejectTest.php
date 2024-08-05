@@ -13,7 +13,7 @@ use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
-class FeatureChecker extends TestCase
+class NonDurableRejectTest extends TestCase
 {
     #[Test]
     public static function check(

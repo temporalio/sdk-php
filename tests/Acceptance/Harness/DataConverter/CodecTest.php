@@ -26,7 +26,7 @@ use Temporal\Workflow\WorkflowMethod;
 const CODEC_ENCODING = 'my-encoding';
 const EXPECTED_RESULT = new DTO(spec: true);
 
-class FeatureChecker extends TestCase
+class CodecTest extends TestCase
 {
     private ResultInterceptor $interceptor;
 
@@ -45,7 +45,7 @@ class FeatureChecker extends TestCase
     public function check(
         #[Stub('Workflow', args: [EXPECTED_RESULT])]
         #[Client(
-            pipelineProvider: [FeatureChecker::class, 'pipelineProvider'],
+            pipelineProvider: [self::class, 'pipelineProvider'],
             payloadConverters: [Base64PayloadCodec::class]),
         ]
         WorkflowStubInterface $stub,

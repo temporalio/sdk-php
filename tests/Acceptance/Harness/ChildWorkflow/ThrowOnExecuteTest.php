@@ -35,7 +35,7 @@ class ThrowOnExecuteTest extends TestCase
             /** @var ApplicationFailure $failure */
             $failure = $previous->getPrevious();
             self::assertInstanceOf(ApplicationFailure::class, $failure);
-            self::assertStringNotContainsString('Test message', $failure->getOriginalMessage());
+            self::assertStringContainsString('Test message', $failure->getOriginalMessage());
             self::assertSame('TestError', $failure->getType());
             self::assertTrue($failure->isNonRetryable());
             self::assertSame(['foo' => 'bar'], $failure->getDetails()->getValue(0, 'array'));

@@ -15,7 +15,7 @@ use Temporal\Workflow\WorkflowMethod;
 
 const SIGNAL_DATA = 'Signaled!';
 
-class FeatureChecker extends TestCase
+class ExternalTest extends TestCase
 {
     #[Test]
     public static function check(

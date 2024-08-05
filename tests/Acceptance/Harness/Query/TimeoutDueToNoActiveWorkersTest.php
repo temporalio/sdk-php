@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Temporal\Client\GRPC\StatusCode;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Exception\Client\WorkflowServiceException;
+use Temporal\Tests\Acceptance\App\Attribute\Client;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\Runtime\RRStarter;
 use Temporal\Tests\Acceptance\App\TestCase;
@@ -21,7 +22,9 @@ class TimeoutDueToNoActiveWorkersTest extends TestCase
 {
     #[Test]
     public static function check(
-        #[Stub('Workflow')] WorkflowStubInterface $stub,
+        #[Client(timeout: 30)]
+        #[Stub('Workflow')]
+        WorkflowStubInterface $stub,
         RRStarter $runner,
     ): void {
         # Stop worker

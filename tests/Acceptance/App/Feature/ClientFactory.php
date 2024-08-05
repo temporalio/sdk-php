@@ -73,7 +73,7 @@ final class ClientFactory
 
         // Build custom WorkflowClient with gRPC interceptor
         $serviceClient = $client->getServiceClient()
-            ->withInterceptorPipeline($pipelineProvider->getPipeline(GrpcClientInterceptor::class));
+            ->withInterceptorPipeline($pipelineProvider?->getPipeline(GrpcClientInterceptor::class));
 
         /** @var State $runtime */
         $runtime = $this->container->get(State::class);
