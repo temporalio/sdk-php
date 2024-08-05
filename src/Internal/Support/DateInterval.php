@@ -113,12 +113,20 @@ final class DateInterval
             case \is_int($interval):
             case \is_float($interval):
                 self::validateFormat($format);
-                if ($format === self::FORMAT_NANOSECONDS) {
-                    return CarbonInterval::microseconds($interval / 1000);
-                }
-
-                return CarbonInterval::$format($interval);
-
+                /** @psalm-suppress InvalidOperand */
+                return CarbonInterval::microseconds(
+                    match ($format) {
+                        self::FORMAT_NANOSECONDS => $interval / 1000,
+                        self::FORMAT_MICROSECONDS => $interval,
+                        self::FORMAT_MILLISECONDS => $interval * 1000,
+                        self::FORMAT_SECONDS => $interval * 1000000,
+                        self::FORMAT_MINUTES => $interval * 60000000,
+                        self::FORMAT_HOURS => $interval * 3600000000,
+                        self::FORMAT_DAYS => $interval * 86400000000,
+                        self::FORMAT_WEEKS => $interval * 604800000000,
+                        default => CarbonInterval::$format($interval),
+                    }
+                );
             default:
                 throw new \InvalidArgumentException(self::ERROR_INVALID_DATETIME);
         }
