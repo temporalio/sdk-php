@@ -37,7 +37,7 @@
         "spiral/roadrunner": "^2024.1",
         "spiral/roadrunner-cli": "^2.5",
         "spiral/roadrunner-kv": "^4.2",
-        "spiral/roadrunner-worker": "^3.0",
+        "spiral/roadrunner-worker": "^3.5",
         "symfony/filesystem": "^5.4 || ^6.0 || ^7.0",
         "symfony/http-client": "^5.4 || ^6.0 || ^7.0",
         "symfony/process": "^5.4 || ^6.0 || ^7.0"
