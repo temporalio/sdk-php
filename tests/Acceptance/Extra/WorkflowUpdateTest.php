@@ -68,7 +68,7 @@ class WorkflowUpdateTest extends TestCase
     }
 
     #[Test]
-    public function testHandleUnknownUpdate(
+    public function handleUnknownUpdate(
         #[Stub('Extra_WorkflowUpdate')]WorkflowStubInterface $stub,
     ): void {
         try {
@@ -80,6 +80,94 @@ class WorkflowUpdateTest extends TestCase
                 $e->getPrevious()->getMessage(),
             );
         }
+    }
+
+    #[Test]
+    public function singleAwaitsWithoutTimeout(
+        #[Stub('Extra_WorkflowUpdate')]WorkflowStubInterface $stub,
+    ): void {
+        /** @see TestWorkflow::add */
+        $handle = $stub->startUpdate('await', 'key');
+        $this->assertFalse($handle->hasResult());
+
+        /** @see TestWorkflow::get */
+        $this->assertNull($stub->query('getValue', "key")->getValue(0));
+
+        /** @see TestWorkflow::resolve */
+        $handle = $stub->update('resolveValue', "key", "resolved");
+        $this->assertSame("resolved", $handle->getValue(0));
+
+        /** @see TestWorkflow::get */
+        $this->assertSame("resolved", $stub->query('getValue', "key")->getValue(0));
+
+        /** @see TestWorkflow::exit */
+        $stub->signal('exit');
+        $result = $stub->getResult();
+
+        $this->assertSame(['key' => 'resolved'], (array)$result);
+    }
+
+    #[Test]
+    public function sultipleAwaitsWithoutTimeout(
+        #[Stub('Extra_WorkflowUpdate')]WorkflowStubInterface $stub,
+    ): void {
+        for ($i = 1; $i <= 5; $i++) {
+            /** @see TestWorkflow::add */
+            $handle = $stub->startUpdate('await', "key$i", 5, "fallback$i");
+            $this->assertFalse($handle->hasResult());
+
+            /** @see TestWorkflow::get */
+            $this->assertNull($stub->query('getValue', "key$i")->getValue(0));
+        }
+
+        for ($i = 1; $i <= 5; $i++) {
+            /** @see TestWorkflow::resolve */
+            $handle = $stub->update('resolveValue', "key$i", "resolved$i");
+            $this->assertSame("resolved$i", $handle->getValue(0));
+
+            /** @see TestWorkflow::get */
+            $this->assertSame("resolved$i", $stub->query('getValue', "key$i")->getValue(0));
+        }
+
+        /** @see TestWorkflow::exit */
+        $stub->signal('exit');
+        $result = $stub->getResult();
+
+        $this->assertSame([
+            'key1' => 'resolved1',
+            'key2' => 'resolved2',
+            'key3' => 'resolved3',
+            'key4' => 'resolved4',
+            'key5' => 'resolved5',
+        ], (array)$result);
+    }
+
+    #[Test]
+    public function sultipleAwaitsWithTimeout(
+        #[Stub('Extra_WorkflowUpdate')]WorkflowStubInterface $stub,
+    ): void {
+        for ($i = 1; $i <= 5; $i++) {
+            /** @see TestWorkflow::addWithTimeout */
+            $handle = $stub->startUpdate('awaitWithTimeout', "key$i", 5, "fallback$i");
+            $this->assertFalse($handle->hasResult());
+        }
+
+        for ($i = 1; $i <= 5; $i++) {
+            /** @see TestWorkflow::resolve */
+            $stub->startUpdate('resolveValue', "key$i", "resolved$i");
+        }
+
+        /** @see TestWorkflow::exit */
+        $stub->signal('exit');
+        $result = $stub->getResult();
+
+        $this->assertSame([
+            'key1' => 'resolved1',
+            'key2' => 'resolved2',
+            'key3' => 'resolved3',
+            'key4' => 'resolved4',
+            'key5' => 'resolved5',
+        ], (array)$result);
     }
 }
 

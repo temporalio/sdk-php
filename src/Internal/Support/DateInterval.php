@@ -100,6 +100,7 @@ final class DateInterval
      * @param DateIntervalValue $interval
      * @param DateIntervalFormat $format
      * @return CarbonInterval
+     * @psalm-suppress InvalidOperand
      */
     public static function parse($interval, string $format = self::FORMAT_MILLISECONDS): CarbonInterval
     {
@@ -113,19 +114,41 @@ final class DateInterval
             case \is_int($interval):
             case \is_float($interval):
                 self::validateFormat($format);
-                /** @psalm-suppress InvalidOperand */
-                return CarbonInterval::microseconds(
-                    match ($format) {
-                        self::FORMAT_NANOSECONDS => $interval / 1000,
-                        self::FORMAT_MICROSECONDS => $interval,
-                        self::FORMAT_MILLISECONDS => $interval * 1000,
-                        self::FORMAT_SECONDS => $interval * 1000000,
-                        self::FORMAT_MINUTES => $interval * 60000000,
-                        self::FORMAT_HOURS => $interval * 3600000000,
-                        self::FORMAT_DAYS => $interval * 86400000000,
-                        self::FORMAT_WEEKS => $interval * 604800000000,
-                        default => CarbonInterval::$format($interval),
-                    }
+
+                $int = (int) \floor($interval);
+                $fraction = $interval - $int;
+
+                $micros = match ($format) {
+                    self::FORMAT_NANOSECONDS => $interval / 1_000,
+                    self::FORMAT_MICROSECONDS => $int,
+                    self::FORMAT_MILLISECONDS => $interval * 1_000,
+                    default => $fraction > 0 ? match ($format) {
+                        self::FORMAT_SECONDS => $fraction * 1_000_000,
+                        self::FORMAT_MINUTES => $fraction * 60_000_000,
+                        default => 0,
+                    } : 0,
+                };
+
+                $seconds = \floor($micros / 1_000_000) + \floor(match ($format) {
+                    self::FORMAT_SECONDS => $int,
+                    self::FORMAT_MINUTES => $int * 60,
+                    self::FORMAT_HOURS => $int * 3600,
+                    self::FORMAT_DAYS => $int * 86400,
+                    self::FORMAT_WEEKS => $int * 604800,
+                    default => 0,
+                });
+
+                $minutes = (int) \floor($seconds / 60);
+                $hours = (int) \floor($minutes / 60);
+                $days = (int) \floor($hours / 24);
+
+                return CarbonInterval::create(
+                    weeks: (int) \floor($days / 7),
+                    days: $days % 7,
+                    hours: $hours % 24,
+                    minutes: $minutes % 60,
+                    seconds: $seconds % 60,
+                    microseconds: $micros % 1000_000,
                 );
             default:
                 throw new \InvalidArgumentException(self::ERROR_INVALID_DATETIME);
