@@ -21,6 +21,7 @@ final class Stub
         public string $type,
         public bool $eagerStart = false,
         public ?string $workflowId = null,
+        public ?string $executionTimeout = null,
         public array $args = [],
         public array $memo = [],
     ) {
