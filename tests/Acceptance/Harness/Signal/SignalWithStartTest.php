@@ -23,8 +23,6 @@ class SignalWithStartTest extends TestCase
         WorkflowClientInterface $client,
         Feature $feature,
     ): void {
-        self::markTestSkipped('See https://github.com/temporalio/sdk-php/issues/457');
-
         $stub = $client->newWorkflowStub(
             FeatureWorkflow::class,
             WorkflowOptions::new()->withTaskQueue($feature->taskQueue),

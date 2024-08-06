@@ -39,7 +39,6 @@ final class StartWorkflow extends Route
 
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
-        tr();
         $options = $request->getOptions();
         $payloads = $request->getPayloads();
         $lastCompletionResult = null;
