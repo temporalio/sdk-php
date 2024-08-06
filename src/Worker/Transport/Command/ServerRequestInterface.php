@@ -13,6 +13,7 @@ namespace Temporal\Worker\Transport\Command;
 
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\Header;
+use Temporal\Worker\Transport\Command\Server\TickInfo;
 
 /**
  * @psalm-import-type RequestOptions from RequestInterface
@@ -31,18 +32,9 @@ interface ServerRequestInterface extends CommandInterface
      */
     public function getOptions(): array;
 
-    /**
-     * @return ValuesInterface
-     */
     public function getPayloads(): ValuesInterface;
 
-    /**
-     * @return int<0, max>
-     */
-    public function getHistoryLength(): int;
-
-    /**
-     * @return Header
-     */
     public function getHeader(): Header;
+
+    public function getTickInfo(): TickInfo;
 }

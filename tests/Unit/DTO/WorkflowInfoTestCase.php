@@ -37,6 +37,8 @@ class WorkflowInfoTestCase extends AbstractDTOMarshalling
             'Namespace' => 'default',
             'Attempt' => 1,
             'HistoryLength' => 0,
+            'HistorySize' => 0,
+            'ShouldContinueAsNew' => false,
             'CronSchedule' => null,
             'ContinuedExecutionRunID' => null,
             'ParentWorkflowNamespace' => null,

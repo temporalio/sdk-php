@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Worker\Transport\Command;
+namespace Temporal\Worker\Transport\Command\Common;
 
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\Header;

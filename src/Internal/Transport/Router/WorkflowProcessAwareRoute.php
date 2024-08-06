@@ -17,42 +17,27 @@ use Temporal\Internal\Workflow\Process\Process;
 
 abstract class WorkflowProcessAwareRoute extends Route
 {
-    /**
-     * @var string
-     */
     private const ERROR_PROCESS_NOT_FOUND = 'Workflow with the specified run identifier "%s" not found';
 
-    /**
-     * @param RepositoryInterface $running
-     */
     public function __construct(
         protected RepositoryInterface $running
-    ) {
-    }
+    ) {}
 
     /**
-     * @param string $runId
-     * @return WorkflowInstanceInterface
+     * @param non-empty-string $runId
      */
     protected function findInstanceOrFail(string $runId): WorkflowInstanceInterface
     {
-        $process = $this->findProcessOrFail($runId);
-
-        return $process->getWorkflowInstance();
+        return $this->findProcessOrFail($runId)->getWorkflowInstance();
     }
 
     /**
-     * @param string $runId
-     * @return Process
+     * @param non-empty-string $runId
      */
     protected function findProcessOrFail(string $runId): Process
     {
-        $process = $this->running->find($runId);
-
-        if ($process === null) {
-            throw new \LogicException(\sprintf(self::ERROR_PROCESS_NOT_FOUND, $runId));
-        }
-
-        return $process;
+        return $this->running->find($runId) ?? throw new \LogicException(
+            \sprintf(self::ERROR_PROCESS_NOT_FOUND, $runId),
+        );
     }
 }

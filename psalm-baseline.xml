@@ -957,6 +957,9 @@
     <RedundantCondition>
       <code><![CDATA[$info !== null]]></code>
     </RedundantCondition>
+    <UndefinedInterfaceMethod>
+      <code><![CDATA[getPayloads]]></code>
+    </UndefinedInterfaceMethod>
   </file>
   <file src="src/Internal/Transport/CompletableResult.php">
     <MoreSpecificImplementedParamType>
@@ -1081,19 +1084,32 @@
     </UnnecessaryVarAnnotation>
   </file>
   <file src="src/Internal/Transport/Router/InvokeQuery.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$request->getID()]]></code>
+    </ArgumentTypeCoercion>
     <PossiblyUndefinedStringArrayOffset>
       <code><![CDATA[$request->getOptions()['name']]]></code>
     </PossiblyUndefinedStringArrayOffset>
     <UndefinedInterfaceMethod>
       <code><![CDATA[getQueryHandlerNames]]></code>
     </UndefinedInterfaceMethod>
+    <UnusedVariable>
+      <code><![CDATA[$headers]]></code>
+    </UnusedVariable>
   </file>
   <file src="src/Internal/Transport/Router/InvokeSignal.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$request->getID()]]></code>
+      <code><![CDATA[$request->getID()]]></code>
+    </ArgumentTypeCoercion>
     <PossiblyUndefinedStringArrayOffset>
       <code><![CDATA[$request->getOptions()['name']]]></code>
     </PossiblyUndefinedStringArrayOffset>
   </file>
   <file src="src/Internal/Transport/Router/InvokeUpdate.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$request->getID()]]></code>
+    </ArgumentTypeCoercion>
     <PossiblyUndefinedStringArrayOffset>
       <code><![CDATA[$request->getOptions()['name']]]></code>
       <code><![CDATA[$request->getOptions()['updateId']]]></code>
@@ -1103,6 +1119,11 @@
       <code><![CDATA[findValidateUpdateHandler]]></code>
       <code><![CDATA[getUpdateHandlerNames]]></code>
     </UndefinedInterfaceMethod>
+  </file>
+  <file src="src/Internal/Transport/Router/StackTrace.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$request->getID()]]></code>
+    </ArgumentTypeCoercion>
   </file>
   <file src="src/Internal/Transport/Router/StartWorkflow.php">
     <MissingClosureReturnType>
@@ -1114,7 +1135,9 @@
   </file>
   <file src="src/Internal/Transport/Router/WorkflowProcessAwareRoute.php">
     <LessSpecificReturnStatement>
-      <code><![CDATA[$process]]></code>
+      <code><![CDATA[$this->running->find($runId) ?? throw new \LogicException(
+            \sprintf(self::ERROR_PROCESS_NOT_FOUND, $runId),
+        )]]></code>
     </LessSpecificReturnStatement>
     <MoreSpecificReturnType>
       <code><![CDATA[Process]]></code>
@@ -1123,15 +1146,11 @@
   <file src="src/Internal/Transport/Server.php">
     <InvalidArgument>
       <code><![CDATA[$request]]></code>
+      <code><![CDATA[$request]]></code>
     </InvalidArgument>
     <MismatchingDocblockParamType>
       <code><![CDATA[RequestInterface]]></code>
-      <code><![CDATA[RequestInterface]]></code>
     </MismatchingDocblockParamType>
-    <MissingClosureParamType>
-      <code><![CDATA[$result]]></code>
-      <code><![CDATA[$result]]></code>
-    </MissingClosureParamType>
   </file>
   <file src="src/Internal/Workflow/ActivityProxy.php">
     <ArgumentTypeCoercion>
@@ -1361,11 +1380,6 @@
       <code><![CDATA[$request->getOptions()['name']]]></code>
     </PossiblyUndefinedStringArrayOffset>
   </file>
-  <file src="src/Worker/Environment/Environment.php">
-    <PropertyTypeCoercion>
-      <code><![CDATA[DateTime::parse($headers[self::HEADER_TICK_TIME], new CarbonTimeZone('UTC'))]]></code>
-    </PropertyTypeCoercion>
-  </file>
   <file src="src/Worker/LoopInterface.php">
     <MissingTemplateParam>
       <code><![CDATA[EventListenerInterface]]></code>
@@ -1375,6 +1389,8 @@
     <ArgumentTypeCoercion>
       <code><![CDATA[$this->maxDepth]]></code>
       <code><![CDATA[$this->maxDepth]]></code>
+      <code><![CDATA[(int)($headers['history_length'] ?? 0)]]></code>
+      <code><![CDATA[(int)($headers['history_size'] ?? 0)]]></code>
     </ArgumentTypeCoercion>
     <PossiblyInvalidArgument>
       <code><![CDATA[$e->getCode()]]></code>
@@ -1382,20 +1398,21 @@
     </PossiblyInvalidArgument>
   </file>
   <file src="src/Worker/Transport/Codec/JsonCodec/Decoder.php">
+    <InvalidArgument>
+      <code><![CDATA[Header::fromPayloadCollection($headers->getFields(), $this->dataConverter)]]></code>
+    </InvalidArgument>
     <InvalidReturnStatement>
       <code><![CDATA[match (true) {
-            isset($command['command']) => $this->parseRequest($command),
-            isset($command['failure']) => $this->parseFailureResponse($command),
-            default => $this->parseResponse($command),
+            isset($command['command']) => $this->parseRequest($command, $info),
+            isset($command['failure']) => $this->parseFailureResponse($command, $info),
+            default => $this->parseResponse($command, $info),
         }]]></code>
     </InvalidReturnStatement>
     <InvalidReturnType>
-      <code><![CDATA[ServerRequestInterface|ResponseInterface]]></code>
+      <code><![CDATA[ServerRequestInterface|ServerResponse]]></code>
     </InvalidReturnType>
-    <MismatchingDocblockReturnType>
-      <code><![CDATA[RequestInterface]]></code>
-    </MismatchingDocblockReturnType>
     <PossiblyUndefinedStringArrayOffset>
+      <code><![CDATA[$data['command']]]></code>
       <code><![CDATA[$data['failure']]]></code>
       <code><![CDATA[$data['id']]]></code>
       <code><![CDATA[$data['id']]]></code>
@@ -1407,17 +1424,21 @@
     </PossiblyNullArgument>
   </file>
   <file src="src/Worker/Transport/Codec/ProtoCodec.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[(int)($headers['history_length'] ?? $msg->getHistoryLength())]]></code>
+      <code><![CDATA[(int)($headers['history_size'] ?? $msg->getHistorySize())]]></code>
+    </ArgumentTypeCoercion>
     <PossiblyInvalidArgument>
       <code><![CDATA[$e->getCode()]]></code>
       <code><![CDATA[$e->getCode()]]></code>
     </PossiblyInvalidArgument>
+    <TooManyArguments>
+      <code><![CDATA[decode]]></code>
+    </TooManyArguments>
   </file>
   <file src="src/Worker/Transport/Codec/ProtoCodec/Decoder.php">
     <ArgumentTypeCoercion>
       <code><![CDATA[$msg->getCommand()]]></code>
-      <code><![CDATA[(int)$msg->getHistoryLength()]]></code>
-      <code><![CDATA[(int)$msg->getHistoryLength()]]></code>
-      <code><![CDATA[(int)$msg->getHistoryLength()]]></code>
     </ArgumentTypeCoercion>
     <InvalidArgument>
       <code><![CDATA[$header]]></code>
@@ -1434,19 +1455,30 @@
   <file src="src/Worker/Transport/Codec/ProtoCodec/Encoder.php">
     <PossiblyNullArgument>
       <code><![CDATA[$cmd->getFailure()]]></code>
-      <code><![CDATA[$cmd->getFailure()]]></code>
     </PossiblyNullArgument>
-    <PossiblyNullReference>
-      <code><![CDATA[setDataConverter]]></code>
-      <code><![CDATA[toPayloads]]></code>
-    </PossiblyNullReference>
   </file>
-  <file src="src/Worker/Transport/Command/Request.php">
+  <file src="src/Worker/Transport/Command/Client/FailedClientResponse.php">
+    <InvalidNullableReturnType>
+      <code><![CDATA[\Throwable]]></code>
+    </InvalidNullableReturnType>
+    <NullableReturnStatement>
+      <code><![CDATA[$this->failure]]></code>
+    </NullableReturnStatement>
+  </file>
+  <file src="src/Worker/Transport/Command/Client/Request.php">
     <MissingImmutableAnnotation>
       <code><![CDATA[Request]]></code>
     </MissingImmutableAnnotation>
   </file>
-  <file src="src/Worker/Transport/Command/RequestTrait.php">
+  <file src="src/Worker/Transport/Command/Client/SuccessClientResponse.php">
+    <InvalidNullableReturnType>
+      <code><![CDATA[ValuesInterface]]></code>
+    </InvalidNullableReturnType>
+    <NullableReturnStatement>
+      <code><![CDATA[$this->values]]></code>
+    </NullableReturnStatement>
+  </file>
+  <file src="src/Worker/Transport/Command/Common/RequestTrait.php">
     <LessSpecificImplementedReturnType>
       <code><![CDATA[array]]></code>
       <code><![CDATA[array]]></code>
@@ -1457,7 +1489,7 @@
       <code><![CDATA[Header]]></code>
     </MoreSpecificReturnType>
   </file>
-  <file src="src/Worker/Transport/Command/ServerRequest.php">
+  <file src="src/Worker/Transport/Command/Server/ServerRequest.php">
     <ImpureMethodCall>
       <code><![CDATA[$options['info']]]></code>
     </ImpureMethodCall>

@@ -11,38 +11,26 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Transport\Codec\ProtoCodec;
 
+use RoadRunner\Temporal\DTO\V1\Message;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\Failure\FailureConverter;
-use RoadRunner\Temporal\DTO\V1\Message;
 use Temporal\Interceptor\Header;
+use Temporal\Worker\Transport\Command\Client\UpdateResponse;
 use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\FailureResponseInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\SuccessResponseInterface;
-use Temporal\Worker\Transport\Command\UpdateResponse;
 
 /**
  * @codeCoverageIgnore tested via roadrunner-temporal repository.
  */
 class Encoder
 {
-    /**
-     * @var string
-     */
     private const ERROR_INVALID_COMMAND = 'Unserializable command type %s';
 
-    /**
-     * @var DataConverterInterface
-     */
-    private DataConverterInterface $converter;
-
-    /**
-     * @param DataConverterInterface $converter
-     */
-    public function __construct(DataConverterInterface $converter)
-    {
-        $this->converter = $converter;
-    }
+    public function __construct(
+        private readonly DataConverterInterface $converter
+    ) {}
 
     public function encode(CommandInterface $cmd): Message
     {
@@ -85,8 +73,6 @@ class Encoder
                 $msg->setPayloads($cmd->getPayloads()->toPayloads());
 
                 return $msg;
-
-
 
             case $cmd instanceof UpdateResponse:
                 $msg->setCommand($cmd->getCommand());

@@ -31,7 +31,7 @@
         "psr/log": "^2.0 || ^3.0",
         "ramsey/uuid": "^4.7",
         "react/promise": "^2.9",
-        "roadrunner-php/roadrunner-api-dto": "^1.8.0",
+        "roadrunner-php/roadrunner-api-dto": "^1.9.0",
         "roadrunner-php/version-checker": "^1.0",
         "spiral/attributes": "^3.1.4",
         "spiral/roadrunner": "^2024.1",
@@ -89,8 +89,7 @@
         "phpcs": [
             "@putenv PHP_CS_FIXER_IGNORE_ENV=1",
             "php-cs-fixer fix src"
-        ],
-        "check": "psalm"
+        ]
     },
     "extra": {
         "branch-alias": {

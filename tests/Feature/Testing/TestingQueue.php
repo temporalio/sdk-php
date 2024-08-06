@@ -13,9 +13,9 @@ namespace Temporal\Tests\Feature\Testing;
 
 use PHPUnit\Framework\Assert;
 use Temporal\Internal\Queue\ArrayQueue;
+use Temporal\Worker\Transport\Command\Client\Request;
 use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\FailureResponseInterface;
-use Temporal\Worker\Transport\Command\Request;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\ResponseInterface;
 use Temporal\Worker\Transport\Command\SuccessResponseInterface;

@@ -45,8 +45,8 @@ use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\Codec\CodecInterface;
 use Temporal\Worker\Transport\Codec\JsonCodec;
 use Temporal\Worker\Transport\Codec\ProtoCodec;
-use Temporal\Worker\Transport\Command\ResponseInterface;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
+use Temporal\Worker\Transport\Command\ServerResponseInterface;
 use Temporal\Worker\Transport\Goridge;
 use Temporal\Worker\Transport\HostConnectionInterface;
 use Temporal\Worker\Transport\RoadRunner;
@@ -388,14 +388,17 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
      */
     private function dispatch(string $messages, array $headers): string
     {
-        $commands = $this->codec->decode($messages);
-        $this->env->update($headers);
+        $commands = $this->codec->decode($messages, $headers);
+
 
         foreach ($commands as $command) {
-            if ($command instanceof ResponseInterface) {
+            $this->env->update($command->getTickInfo());
+
+            if ($command instanceof ServerResponseInterface) {
                 $this->client->dispatch($command);
                 continue;
             }
+
             $this->server->dispatch($command, $headers);
         }
 

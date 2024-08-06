@@ -9,12 +9,14 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Worker\Transport\Command;
+namespace Temporal\Worker\Transport\Command\Client;
 
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\Header;
 use Temporal\Interceptor\HeaderInterface;
+use Temporal\Worker\Transport\Command\Common\RequestTrait;
+use Temporal\Worker\Transport\Command\RequestInterface;
 
 /**
  * Carries request to perform host action with payloads and failure as context. Can be cancelled if allows

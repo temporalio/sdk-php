@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Framework\Server\CommandHandler;
 
+use Temporal\Worker\Transport\Command\Client\FailedClientResponse;
 use Temporal\Worker\Transport\Command\CommandInterface;
-use Temporal\Worker\Transport\Command\FailureResponse;
 
 final class FailureResponseHandler implements CommandHandlerInterface
 {
@@ -20,6 +20,6 @@ final class FailureResponseHandler implements CommandHandlerInterface
 
     public function supports(CommandInterface $command): bool
     {
-        return $command instanceof FailureResponse;
+        return $command instanceof FailedClientResponse;
     }
 }

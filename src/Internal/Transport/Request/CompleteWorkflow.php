@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Transport\Request;
 
 use Temporal\DataConverter\ValuesInterface;
-use Temporal\Worker\Transport\Command\Request;
+use Temporal\Worker\Transport\Command\Client\Request;
 
 /**
  * @psalm-immutable

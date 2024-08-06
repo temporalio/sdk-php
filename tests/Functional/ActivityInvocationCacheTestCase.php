@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Functional;
 
+use DateTimeImmutable;
 use Exception;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\Failure\ActivityFailure;
 use Temporal\Worker\ActivityInvocationCache\RoadRunnerActivityInvocationCache;
-use Temporal\Worker\Transport\Command\ServerRequest;
+use Temporal\Worker\Transport\Command\Server\ServerRequest;
+use Temporal\Worker\Transport\Command\Server\TickInfo;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 class ActivityInvocationCacheTestCase extends AbstractFunctional
@@ -66,6 +68,7 @@ class ActivityInvocationCacheTestCase extends AbstractFunctional
                 'ActivityType' => ['Name' => $activityName],
             ]
         ];
-        return new ServerRequest(name: $name, options: $options, payloads:  $values);
+        $info = new TickInfo(new DateTimeImmutable());
+        return new ServerRequest(name: $name, info: $info, options: $options, payloads:  $values);
     }
 }

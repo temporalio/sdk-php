@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Framework\Expectation;
 
+use DateTimeImmutable;
 use PHPUnit\Framework\ExpectationFailedException;
 use ReflectionClass;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Internal\Transport\Request\ExecuteActivity;
 use Temporal\Worker\Transport\Command\CommandInterface;
-use Temporal\Worker\Transport\Command\SuccessResponse;
+use Temporal\Worker\Transport\Command\Server\SuccessResponse;
+use Temporal\Worker\Transport\Command\Server\TickInfo;
 
 /**
  * @internal
@@ -32,7 +34,7 @@ final class ActivityCall implements ExpectationInterface
 
     public function run(CommandInterface $command): CommandInterface
     {
-        return new SuccessResponse(EncodedValues::fromValues($this->values), $command->getID());
+        return new SuccessResponse(EncodedValues::fromValues($this->values), $command->getID(), new TickInfo(new DateTimeImmutable()));
     }
 
     public function fail(): void

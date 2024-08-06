@@ -19,8 +19,7 @@ use Temporal\Internal\Transport\Request\UndefinedResponse;
 use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\FailureResponseInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
-use Temporal\Worker\Transport\Command\ResponseInterface;
-use Temporal\Worker\Transport\Command\SuccessResponseInterface;
+use Temporal\Worker\Transport\Command\ServerResponseInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowContextInterface;
 
@@ -43,19 +42,11 @@ final class Client implements ClientInterface
      */
     private array $requests = [];
 
-    /**
-     * @param QueueInterface $queue
-     */
     public function __construct(
-        private QueueInterface $queue,
-    ) {
-    }
+        private readonly QueueInterface $queue,
+    ) {}
 
-    /**
-     * @psalm-param SuccessResponseInterface|FailureResponseInterface $response
-     * @param ResponseInterface $response
-     */
-    public function dispatch(ResponseInterface $response): void
+    public function dispatch(ServerResponseInterface $response): void
     {
         $id = $response->getID();
         if (!isset($this->requests[$id])) {
@@ -67,11 +58,16 @@ final class Client implements ClientInterface
 
         [$deferred, $context] = $this->requests[$id];
         unset($this->requests[$id]);
-        $info = $context->getInfo();
 
-        if ($info !== null && $response->getHistoryLength() > $info->historyLength) {
+        $info = $context->getInfo();
+        if ($info !== null && $response->getTickInfo()->historyLength > $info->historyLength) {
+            $tickInfo = $response->getTickInfo();
             /** @psalm-suppress InaccessibleProperty */
-            $info->historyLength = $response->getHistoryLength();
+            $info->historyLength = $tickInfo->historyLength;
+            /** @psalm-suppress InaccessibleProperty */
+            $info->historySize = $tickInfo->historySize;
+            /** @psalm-suppress InaccessibleProperty */
+            $info->shouldContinueAsNew = $tickInfo->continueAsNewSuggested;
         }
 
         // Bind workflow context for promise resolution
@@ -83,12 +79,6 @@ final class Client implements ClientInterface
         }
     }
 
-    /**
-     * @param RequestInterface $request
-     * @param null|WorkflowContextInterface $context
-     *
-     * @return PromiseInterface
-     */
     public function request(RequestInterface $request, ?WorkflowContextInterface $context = null): PromiseInterface
     {
         $this->queue->push($request);
@@ -110,20 +100,11 @@ final class Client implements ClientInterface
         $this->queue->push($request);
     }
 
-    /**
-     * Check if command still in sending queue.
-     *
-     * @param CommandInterface $command
-     * @return bool
-     */
     public function isQueued(CommandInterface $command): bool
     {
         return $this->queue->has($command->getID());
     }
 
-    /**
-     * @param CommandInterface $command
-     */
     public function cancel(CommandInterface $command): void
     {
         // remove from queue
@@ -131,21 +112,11 @@ final class Client implements ClientInterface
         $this->reject($command, new CanceledFailure('internal cancel'));
     }
 
-    /**
-     * Reject pending promise.
-     *
-     * @param CommandInterface $command
-     * @param \Throwable $reason
-     */
     public function reject(CommandInterface $command, \Throwable $reason): void
     {
         $this->fetch($command->getID())->reject($reason);
     }
 
-    /**
-     * @param int $id
-     * @return Deferred
-     */
     private function fetch(int $id): Deferred
     {
         $request = $this->get($id);
@@ -157,10 +128,6 @@ final class Client implements ClientInterface
         }
     }
 
-    /**
-     * @param int $id
-     * @return Deferred
-     */
     private function get(int $id): Deferred
     {
         if (!isset($this->requests[$id])) {

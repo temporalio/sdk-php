@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Framework\Expectation;
 
+use DateTimeImmutable;
+use Temporal\DataConverter\EncodedValues;
 use Temporal\Internal\Transport\Request\CompleteWorkflow;
 use Temporal\Worker\Transport\Command\CommandInterface;
-use Temporal\Worker\Transport\Command\SuccessResponse;
+use Temporal\Worker\Transport\Command\Server\SuccessResponse;
+use Temporal\Worker\Transport\Command\Server\TickInfo;
 
 use function PHPUnit\Framework\assertSame;
 
@@ -35,7 +38,7 @@ final class WorkflowResult implements ExpectationInterface
 
     public function run(CommandInterface $command): CommandInterface
     {
-        return new SuccessResponse(null, $command->getID());
+        return new SuccessResponse(EncodedValues::empty(), $command->getID(), new TickInfo(new DateTimeImmutable()));
     }
 
     public function fail(): void

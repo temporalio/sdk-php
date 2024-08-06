@@ -13,7 +13,7 @@ namespace Temporal\Internal\Transport\Request;
 
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\HeaderInterface;
-use Temporal\Worker\Transport\Command\Request;
+use Temporal\Worker\Transport\Command\Client\Request;
 use Temporal\Worker\Transport\Command\RequestInterface;
 
 /**

@@ -11,11 +11,13 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Transport\Codec;
 
+use DateTimeImmutable;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\ProtocolException;
 use Temporal\Worker\Transport\Codec\JsonCodec\Decoder;
 use Temporal\Worker\Transport\Codec\JsonCodec\Encoder;
 use Temporal\Worker\Transport\Command\CommandInterface;
+use Temporal\Worker\Transport\Command\Server\TickInfo;
 
 final class JsonCodec implements CodecInterface
 {
@@ -57,14 +59,24 @@ final class JsonCodec implements CodecInterface
     /**
      * {@inheritDoc}
      */
-    public function decode(string $batch): iterable
+    public function decode(string $batch, array $headers = []): iterable
     {
+        static $tz = new \DateTimeZone('UTC');
+
         try {
             $commands = \json_decode($batch, true, $this->maxDepth, \JSON_THROW_ON_ERROR);
 
             foreach ($commands as $command) {
+                $info = new TickInfo(
+                    time: new DateTimeImmutable($headers['tickTime'] ?? 'now', $tz),
+                    historyLength: (int)($headers['history_length'] ?? 0),
+                    historySize: (int)($headers['history_size'] ?? 0),
+                    continueAsNewSuggested: (bool)($headers['continue_as_new_suggested'] ?? false),
+                    isReplaying: (bool)($headers['replay'] ?? false),
+                );
+
                 assert(\is_array($command));
-                yield $this->parser->decode($command);
+                yield $this->parser->decode($command, $info);
             }
         } catch (\Throwable $e) {
             throw new ProtocolException($e->getMessage(), $e->getCode(), $e);

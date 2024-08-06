@@ -9,16 +9,15 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Worker\Transport\Command;
+namespace Temporal\Worker\Transport\Command\Server;
 
-abstract class Response implements ResponseInterface
+use Temporal\Worker\Transport\Command\ServerResponseInterface;
+
+abstract class ServerResponse implements ServerResponseInterface
 {
-    /**
-     * @param int<0, max> $historyLength
-     */
     public function __construct(
         private readonly string|int $id,
-        private readonly int $historyLength,
+        private readonly TickInfo $info,
     ) {
     }
 
@@ -27,8 +26,8 @@ abstract class Response implements ResponseInterface
         return $this->id;
     }
 
-    public function getHistoryLength(): int
+    public function getTickInfo(): TickInfo
     {
-        return $this->historyLength;
+        return $this->info;
     }
 }

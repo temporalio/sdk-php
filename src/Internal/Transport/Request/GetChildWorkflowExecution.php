@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport\Request;
 
-use Temporal\Worker\Transport\Command\Request;
+use Temporal\Worker\Transport\Command\Client\Request;
 use Temporal\Workflow\ParentClosePolicy;
 
 final class GetChildWorkflowExecution extends Request

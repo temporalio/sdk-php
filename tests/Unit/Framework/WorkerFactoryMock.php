@@ -35,6 +35,7 @@ use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\Codec\CodecInterface;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
+use Temporal\Worker\Transport\Command\ServerResponseInterface;
 use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Worker\WorkerInterface;
 use Temporal\Worker\WorkerOptions;
@@ -206,9 +207,9 @@ class WorkerFactoryMock implements WorkerFactoryInterface, LoopInterface
 
     private function dispatch(CommandBatchMock $commandBatch): QueueInterface
     {
-        $this->env->update($commandBatch->context);
-
         foreach ($commandBatch->commands as $command) {
+            \assert($command instanceof ServerRequestInterface || $command instanceof ServerResponseInterface);
+            $this->env->update($command->getTickInfo());
             if ($command instanceof ServerRequestInterface) {
                 $this->server->dispatch($command, $commandBatch->context);
             } else {

@@ -29,6 +29,8 @@ interface ClientInterface
     public function send(CommandInterface $request): void;
 
     /**
+     * Check if command still in sending queue.
+     *
      * @param CommandInterface $command
      * @return bool
      */
