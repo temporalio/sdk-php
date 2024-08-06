@@ -31,19 +31,12 @@ final class StartWorkflow extends Route
 
     private WorkflowInstantiator $instantiator;
 
-    /**
-     * @param ServiceContainer $services
-     */
     public function __construct(
         private ServiceContainer $services,
     ) {
         $this->instantiator = new WorkflowInstantiator($services->interceptorProvider);
     }
 
-    /**
-     * {@inheritDoc}
-     * @throws \Throwable
-     */
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
         $options = $request->getOptions();
@@ -89,7 +82,7 @@ final class StartWorkflow extends Route
             $instance,
             $context,
             $runId,
-        ) {
+        ): void {
             $context = $context->withInput(new Input($input->info, $input->arguments, $input->header));
             $process = new Process($this->services, $context, $runId);
             $this->services->running->add($process);
@@ -113,10 +106,6 @@ final class StartWorkflow extends Route
             );
     }
 
-    /**
-     * @param WorkflowInfo $info
-     * @return WorkflowPrototype
-     */
     private function findWorkflowOrFail(WorkflowInfo $info): WorkflowPrototype
     {
         return $this->services->workflows->find($info->type->name) ?? throw new \OutOfRangeException(

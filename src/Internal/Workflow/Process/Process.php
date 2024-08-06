@@ -172,10 +172,6 @@ class Process extends Scope implements ProcessInterface
         );
     }
 
-    /**
-     * @param callable             $handler
-     * @param ValuesInterface|null $values
-     */
     public function start(callable $handler, ValuesInterface $values = null): void
     {
         try {

@@ -87,14 +87,12 @@ class Scope implements CancellationScopeInterface, Destroyable
     /**
      * Every coroutine runs on it's own loop layer.
      *
-     * @var string
+     * @var non-empty-string
      */
     private string $layer = LoopInterface::ON_TICK;
 
     /**
      * Each onCancel receives unique ID.
-     *
-     * @var int
      */
     private int $cancelID = 0;
 
@@ -108,14 +106,8 @@ class Scope implements CancellationScopeInterface, Destroyable
      */
     private array $onClose = [];
 
-    /**
-     * @var bool
-     */
     private bool $detached = false;
 
-    /**
-     * @var bool
-     */
     private bool $cancelled = false;
 
     public function __construct(
@@ -127,7 +119,7 @@ class Scope implements CancellationScopeInterface, Destroyable
         $this->scopeContext = ScopeContext::fromWorkflowContext(
             $this->context,
             $this,
-            \Closure::fromCallable([$this, 'onRequest']),
+            $this->onRequest(...),
             $updateContext,
         );
 
@@ -136,41 +128,28 @@ class Scope implements CancellationScopeInterface, Destroyable
     }
 
     /**
-     * @return string
+     * @return non-empty-string
      */
     public function getLayer(): string
     {
         return $this->layer;
     }
 
-    /**
-     * @return bool
-     */
     public function isDetached(): bool
     {
         return $this->detached;
     }
 
-    /**
-     * @return bool
-     */
     public function isCancelled(): bool
     {
         return $this->cancelled;
     }
 
-    /**
-     * @return WorkflowContext
-     */
     public function getContext(): WorkflowContext
     {
         return $this->context;
     }
 
-    /**
-     * @param callable             $handler
-     * @param ValuesInterface|null $values
-     */
     public function start(callable $handler, ValuesInterface $values = null): void
     {
         try {
@@ -218,8 +197,7 @@ class Scope implements CancellationScopeInterface, Destroyable
     }
 
     /**
-     * @param \Generator $generator
-     * @return self
+     * @return $this
      */
     public function attach(\Generator $generator): self
     {
@@ -230,9 +208,6 @@ class Scope implements CancellationScopeInterface, Destroyable
         return $this;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function onCancel(callable $then): self
     {
         $this->onCancel[++$this->cancelID] = $then;
@@ -272,10 +247,7 @@ class Scope implements CancellationScopeInterface, Destroyable
     }
 
     /**
-     * @param callable    $handler
-     * @param bool        $detached
-     * @param string|null $layer
-     * @return CancellationScopeInterface
+     * @param non-empty-string|null $layer
      */
     public function startScope(callable $handler, bool $detached, string $layer = null): CancellationScopeInterface
     {
@@ -285,17 +257,11 @@ class Scope implements CancellationScopeInterface, Destroyable
         return $scope;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function promise(): PromiseInterface
     {
         return $this->deferred->promise();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function then(
         callable $onFulfilled = null,
         callable $onRejected = null,
@@ -347,6 +313,9 @@ class Scope implements CancellationScopeInterface, Destroyable
         $deferred->promise()->then($cleanup, $cleanup);
     }
 
+    /**
+     * @param non-empty-string|null $layer
+     */
     protected function createScope(
         bool $detached,
         ?string $layer = null,
@@ -361,7 +330,7 @@ class Scope implements CancellationScopeInterface, Destroyable
         }
 
         $cancelID = ++$this->cancelID;
-        $this->onCancel[$cancelID] = \Closure::fromCallable([$scope, 'cancel']);
+        $this->onCancel[$cancelID] = $scope->cancel(...);
 
         $scope->onClose(
             function () use ($cancelID): void {

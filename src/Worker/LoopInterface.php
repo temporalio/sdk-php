@@ -33,36 +33,20 @@ interface LoopInterface extends EventListenerInterface
      *
      * This event MAY be emitted any number of times, which may be zero times
      * if this event loop does not send any data at all.
-     *
-     * @var string
      */
     public const ON_TICK = 'tick';
 
-    /**
-     * @var string
-     */
     public const ON_SIGNAL = 'signal';
 
-    /**
-     * @var string
-     */
     public const ON_QUERY = 'query';
 
-    /**
-     * @var string
-     */
     public const ON_CALLBACK = 'callback';
 
     /**
      * Must be emitted at the end of each loop iteration after all other events.
-     *
-     * @var string
      */
     public const ON_FINALLY = 'finally';
 
-    /**
-     * @return void
-     */
     public function tick(): void;
 
     /**
@@ -89,8 +73,6 @@ interface LoopInterface extends EventListenerInterface
      * for any of the attached listeners.
      *
      * This method MUST NOT be called while the loop is already running.
-     *
-     * @return int
      */
     public function run(): int;
 }

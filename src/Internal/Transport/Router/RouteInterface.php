@@ -17,15 +17,12 @@ use Temporal\Worker\Transport\Command\ServerRequestInterface;
 interface RouteInterface
 {
     /**
-     * @return string
+     * @return non-empty-string
      */
     public function getName(): string;
 
     /**
-     * @param ServerRequestInterface $request
-     * @param array $headers
-     * @param Deferred $resolver
-     * @return void
+     * @throws \Throwable
      */
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void;
 }
