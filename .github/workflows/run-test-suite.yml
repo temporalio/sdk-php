@@ -3,7 +3,7 @@ name: Unit
 on:
   workflow_call:
     inputs:
-      test-suite:
+      test-command:
         required: true
         type: string
       fail-fast:
@@ -14,10 +14,10 @@ on:
         required: false
         type: number
         default: 15
-      run-temporal-test-server:
+      download-binaries:
         required: false
         type: boolean
-        default: true
+        default: false
   push:
     branches:
       - 'master'
@@ -109,20 +109,9 @@ jobs:
         run: composer update --no-interaction --no-progress
 
       - name: Download RoadRunner
-        if: inputs.run-temporal-test-server == true
+        if: inputs.download-binaries == true
         run: |
-          vendor/bin/rr get --no-interaction --stability=beta
+          vendor/bin/dload get --no-interaction -vv
 
-      - name: Run tests with Temporal test server
-        if: inputs.run-temporal-test-server == true
-        run: ${{ format(
-            'vendor/bin/phpunit --testsuite={0} --testdox --colors=always --exclude-group {1}',
-            inputs.test-suite,
-            contains(matrix.extensions-suffix, 'protobuf') && 'skip-on-test-server,skip-ext-protobuf' || 'skip-on-test-server'
-          ) }}
-        env:
-          RUN_TEMPORAL_TEST_SERVER: ${{ inputs.run-temporal-test-server }}
-
-      - name: Run tests without Temporal test server
-        if: inputs.run-temporal-test-server == false
-        run: vendor/bin/phpunit --testsuite=${{ inputs.test-suite }} --testdox --colors=always
+      - name: Run tests
+        run: ${{ inputs.test-command }}

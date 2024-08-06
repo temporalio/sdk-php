@@ -85,9 +85,9 @@ class SimpleActivity
     public function external()
     {
         Activity::doNotCompleteOnReturn();
-        file_put_contents('taskToken', Activity::getInfo()->taskToken);
+        file_put_contents('runtime/taskToken', Activity::getInfo()->taskToken);
         file_put_contents(
-            'activityId',
+            'runtime/activityId',
             json_encode(
                 [
                     'id' => Activity::getInfo()->workflowExecution->getID(),

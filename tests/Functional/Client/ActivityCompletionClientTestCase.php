@@ -35,10 +35,10 @@ class ActivityCompletionClientTestCase extends AbstractClient
         $this->assertNotEmpty($e->getExecution()->getRunID());
 
         sleep(2);
-        $this->assertFileExists(__DIR__ . '/../../activityId');
-        $data = json_decode(file_get_contents(__DIR__ . '/../../activityId'));
-        unlink(__DIR__ . '/../../taskToken');
-        unlink(__DIR__ . '/../../activityId');
+        $this->assertFileExists('runtime/activityId');
+        $data = json_decode(file_get_contents('runtime/activityId'));
+        unlink('runtime/taskToken');
+        unlink('runtime/activityId');
 
         $act = $client->newActivityCompletionClient();
 
@@ -57,10 +57,10 @@ class ActivityCompletionClientTestCase extends AbstractClient
         $this->assertNotEmpty($e->getExecution()->getRunID());
 
         sleep(1);
-        $this->assertFileExists(__DIR__ . '/../../activityId');
-        $data = json_decode(file_get_contents(__DIR__ . '/../../activityId'));
-        unlink(__DIR__ . '/../../taskToken');
-        unlink(__DIR__ . '/../../activityId');
+        $this->assertFileExists('runtime/activityId');
+        $data = json_decode(file_get_contents('runtime/activityId'));
+        unlink('runtime/taskToken');
+        unlink('runtime/activityId');
 
         $act = $client->newActivityCompletionClient();
 
@@ -79,10 +79,10 @@ class ActivityCompletionClientTestCase extends AbstractClient
         $this->assertNotEmpty($e->getExecution()->getRunID());
 
         sleep(1);
-        $this->assertFileExists(__DIR__ . '/../../activityId');
-        $data = json_decode(file_get_contents(__DIR__ . '/../../activityId'));
-        unlink(__DIR__ . '/../../taskToken');
-        unlink(__DIR__ . '/../../activityId');
+        $this->assertFileExists('runtime/activityId');
+        $data = json_decode(file_get_contents('runtime/activityId'));
+        unlink('runtime/taskToken');
+        unlink('runtime/activityId');
 
         $act = $client->newActivityCompletionClient();
 
@@ -105,10 +105,10 @@ class ActivityCompletionClientTestCase extends AbstractClient
         $this->assertNotEmpty($e->getExecution()->getRunID());
 
         sleep(1);
-        $this->assertFileExists(__DIR__ . '/../../taskToken');
-        $taskToken = file_get_contents(__DIR__ . '/../../taskToken');
-        unlink(__DIR__ . '/../../taskToken');
-        unlink(__DIR__ . '/../../activityId');
+        $this->assertFileExists('runtime/taskToken');
+        $taskToken = file_get_contents('runtime/taskToken');
+        unlink('runtime/taskToken');
+        unlink('runtime/activityId');
 
         $act = $client->newActivityCompletionClient();
 
@@ -127,11 +127,11 @@ class ActivityCompletionClientTestCase extends AbstractClient
         $this->assertNotEmpty($e->getExecution()->getRunID());
 
         sleep(1);
-        $this->assertFileExists(__DIR__ . '/../../taskToken');
-        $taskToken = file_get_contents(__DIR__ . '/../../taskToken');
+        $this->assertFileExists('runtime/taskToken');
+        $taskToken = file_get_contents('runtime/taskToken');
 
-        unlink(__DIR__ . '/../../taskToken');
-        unlink(__DIR__ . '/../../activityId');
+        unlink('runtime/taskToken');
+        unlink('runtime/activityId');
 
         $act = $client->newActivityCompletionClient();
 
@@ -154,10 +154,10 @@ class ActivityCompletionClientTestCase extends AbstractClient
         $this->assertNotEmpty($e->getExecution()->getRunID());
 
         sleep(1);
-        $this->assertFileExists(__DIR__ . '/../../taskToken');
-        $taskToken = file_get_contents(__DIR__ . '/../../taskToken');
-        unlink(__DIR__ . '/../../taskToken');
-        unlink(__DIR__ . '/../../activityId');
+        $this->assertFileExists('runtime/taskToken');
+        $taskToken = file_get_contents('runtime/taskToken');
+        unlink('runtime/taskToken');
+        unlink('runtime/activityId');
 
         $act = $client->newActivityCompletionClient();
 
@@ -185,10 +185,10 @@ class ActivityCompletionClientTestCase extends AbstractClient
         $this->assertNotEmpty($e->getExecution()->getRunID());
 
         sleep(2);
-        $this->assertFileExists(__DIR__ . '/../../taskToken');
-        $data = json_decode(file_get_contents(__DIR__ . '/../../activityId'));
-        unlink(__DIR__ . '/../../taskToken');
-        unlink(__DIR__ . '/../../activityId');
+        $this->assertFileExists('runtime/taskToken');
+        $data = json_decode(file_get_contents('runtime/activityId'));
+        unlink('runtime/taskToken');
+        unlink('runtime/activityId');
 
         $act = $client->newActivityCompletionClient();
 
@@ -222,10 +222,10 @@ class ActivityCompletionClientTestCase extends AbstractClient
         $this->assertNotEmpty($e->getExecution()->getRunID());
 
         sleep(1);
-        $this->assertFileExists(__DIR__ . '/../../taskToken');
-        $data = json_decode(file_get_contents(__DIR__ . '/../../activityId'));
-        unlink(__DIR__ . '/../../taskToken');
-        unlink(__DIR__ . '/../../activityId');
+        $this->assertFileExists('runtime/taskToken');
+        $data = json_decode(file_get_contents('runtime/activityId'));
+        unlink('runtime/taskToken');
+        unlink('runtime/activityId');
 
         $act = $client->newActivityCompletionClient();
 
@@ -269,10 +269,10 @@ class ActivityCompletionClientTestCase extends AbstractClient
         $this->assertNotEmpty($e->getExecution()->getRunID());
 
         sleep(1);
-        $this->assertFileExists(__DIR__ . '/../../taskToken');
-        $taskToken = file_get_contents(__DIR__ . '/../../taskToken');
-        unlink(__DIR__ . '/../../taskToken');
-        unlink(__DIR__ . '/../../activityId');
+        $this->assertFileExists('runtime/taskToken');
+        $taskToken = file_get_contents('runtime/taskToken');
+        unlink('runtime/taskToken');
+        unlink('runtime/activityId');
 
         $act = $client->newActivityCompletionClient();
 
