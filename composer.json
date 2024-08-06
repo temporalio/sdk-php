@@ -31,7 +31,7 @@
         "psr/log": "^2.0 || ^3.0",
         "ramsey/uuid": "^4.7",
         "react/promise": "^2.9",
-        "roadrunner-php/roadrunner-api-dto": "dev-update-dtos as 1.9.0",
+        "roadrunner-php/roadrunner-api-dto": "^1.9.0",
         "roadrunner-php/version-checker": "^1.0",
         "spiral/attributes": "^3.1.4",
         "spiral/roadrunner": "^2024.1",
@@ -80,8 +80,6 @@
         "ext-grpc": "For Client calls"
     },
     "scripts": {
-        "psalm": "psalm",
-        "psalm:baseline": "psalm --set-baseline=psalm-baseline.xml",
         "post-update-cmd": "Temporal\\Worker\\Transport\\RoadRunnerVersionChecker::postUpdate",
         "psalm": "psalm",
         "psalm:baseline": "psalm --set-baseline=psalm-baseline.xml",
