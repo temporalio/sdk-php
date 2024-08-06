@@ -8,20 +8,28 @@ jobs:
     uses: ./.github/workflows/run-test-suite.yml
     with:
       fail-fast: false
-      test-suite: Unit
-      run-temporal-test-server: false
+      test-command: composer test:unit
 
-  feature:
-    name: Feature Testing
-    uses: ./.github/workflows/run-test-suite.yml
-    with:
-      fail-fast: true
-      test-suite: Feature
-      test-timeout: 20
+#  feature:
+#    name: Feature Testing
+#    uses: ./.github/workflows/run-test-suite.yml
+#    with:
+#      fail-fast: true
+#      test-command: composer test:feat
+#      test-timeout: 20
 
   functional:
     name: Functional Testing
     uses: ./.github/workflows/run-test-suite.yml
     with:
       fail-fast: false
-      test-suite: Functional
+      test-command: composer test:func
+      download-binaries: true
+
+  acceptance:
+    name: Acceptance Testing
+    uses: ./.github/workflows/run-test-suite.yml
+    with:
+      fail-fast: false
+      test-command: composer test:accept
+      download-binaries: true

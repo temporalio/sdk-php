@@ -76,7 +76,7 @@ final class ScheduleHandle
         $request = (new UpdateScheduleRequest())
             ->setScheduleId($this->id)
             ->setNamespace($this->namespace)
-            ->setConflictToken($conflictToken)
+            ->setConflictToken((string) $conflictToken)
             ->setIdentity($this->clientOptions->identity)
             ->setSchedule($scheduleMessage);
 

@@ -29,6 +29,7 @@ use Temporal\Workflow\ChildWorkflowStubInterface;
 use Temporal\Workflow\ContinueAsNewOptions;
 use Temporal\Workflow\ExternalWorkflowStubInterface;
 use Temporal\Workflow\ScopedContextInterface;
+use Temporal\Workflow\UpdateContext;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowInfo;
 use Temporal\Internal\Support\DateInterval;
@@ -102,6 +103,14 @@ final class Workflow extends Facade
     public static function getInfo(): WorkflowInfo
     {
         return self::getCurrentContext()->getInfo();
+    }
+
+    /**
+     * @throws OutOfContextException in the absence of the workflow execution context.
+     */
+    public static function getUpdateContext(): ?UpdateContext
+    {
+        return self::getCurrentContext()->getUpdateContext();
     }
 
     /**

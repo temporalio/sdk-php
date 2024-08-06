@@ -27,6 +27,12 @@ final class SystemInfo
         'windows' => 'temporal-test-server.exe',
     ];
 
+    private const TEMPORAL_CLI_EXECUTABLE_MAP = [
+        'darwin' => './temporal',
+        'linux' => './temporal',
+        'windows' => 'temporal.exe',
+    ];
+
     private const RR_EXECUTABLE_MAP = [
         'darwin' => './rr',
         'linux' => './rr',
@@ -37,6 +43,7 @@ final class SystemInfo
     public string $platform;
     public string $os;
     public string $temporalServerExecutable;
+    public string $temporalCliExecutable;
     public string $rrExecutable;
 
     private function __construct(
@@ -44,12 +51,14 @@ final class SystemInfo
         string $platform,
         string $os,
         string $temporalServerExecutable,
-        string $rrExecutable
+        string $rrExecutable,
+        string $temporalCliExecutable = 'temporal',
     ) {
         $this->arch = $arch;
         $this->platform = $platform;
         $this->os = $os;
         $this->temporalServerExecutable = $temporalServerExecutable;
+        $this->temporalCliExecutable = $temporalCliExecutable;
         $this->rrExecutable = $rrExecutable;
     }
 
@@ -63,6 +72,7 @@ final class SystemInfo
             self::ARCHITECTURE_MAPPINGS[Architecture::createFromGlobals()],
             self::TEMPORAL_EXECUTABLE_MAP[$os],
             self::RR_EXECUTABLE_MAP[$os],
+            self::TEMPORAL_CLI_EXECUTABLE_MAP[$os],
         );
     }
 }

@@ -113,9 +113,6 @@
     <PossiblyInvalidOperand>
       <code><![CDATA[$timestamp->getSeconds()]]></code>
     </PossiblyInvalidOperand>
-    <PossiblyNullArgument>
-      <code><![CDATA[$conflictToken]]></code>
-    </PossiblyNullArgument>
   </file>
   <file src="src/Client/Update/UpdateHandle.php">
     <PossiblyNullArgument>
@@ -864,25 +861,6 @@
       <code><![CDATA[getQueue]]></code>
       <code><![CDATA[getReader]]></code>
     </UndefinedInterfaceMethod>
-  </file>
-  <file src="src/Internal/Support/DateInterval.php">
-    <InvalidConstantAssignmentValue>
-      <code><![CDATA[AVAILABLE_FORMATS = [
-        self::FORMAT_YEARS,
-        self::FORMAT_MONTHS,
-        self::FORMAT_WEEKS,
-        self::FORMAT_DAYS,
-        self::FORMAT_HOURS,
-        self::FORMAT_MINUTES,
-        self::FORMAT_SECONDS,
-        self::FORMAT_MILLISECONDS,
-        self::FORMAT_MICROSECONDS,
-        self::FORMAT_NANOSECONDS,
-    ]]]></code>
-    </InvalidConstantAssignmentValue>
-    <InvalidOperand>
-      <code><![CDATA[$interval / 1000]]></code>
-    </InvalidOperand>
   </file>
   <file src="src/Internal/Support/DateTime.php">
     <InvalidReturnStatement>

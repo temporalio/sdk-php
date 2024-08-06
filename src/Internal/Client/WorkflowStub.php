@@ -474,6 +474,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
      */
     public function getResult($type = null, int $timeout = null): mixed
     {
+        /** @var ValuesInterface|null $result */
         $result = $this->interceptors->with(
             function (GetResultInput $input): ?EncodedValues {
                 try {
@@ -494,7 +495,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
         ));
 
         if ($result === null || $result->count() === 0) {
-            return $result;
+            return null;
         }
 
         return $result->getValue(0, $type);

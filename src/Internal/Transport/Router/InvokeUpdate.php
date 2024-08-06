@@ -51,6 +51,7 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
 
             $input = new UpdateInput(
                 updateName: $name,
+                updateId: $updateId,
                 info: $context->getInfo(),
                 arguments: $request->getPayloads(),
                 header: $request->getHeader(),

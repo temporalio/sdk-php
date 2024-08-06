@@ -692,6 +692,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         $this->trace = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
     }
 
+    #[\Override]
     public function destroy(): void
     {
         $this->awaits = [];

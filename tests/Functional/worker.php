@@ -1,12 +1,5 @@
 <?php
 
-/**
- * This file is part of Temporal package.
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 declare(strict_types=1);
 
 use Temporal\Testing\WorkerFactory;
@@ -15,10 +8,11 @@ use Temporal\Tests\Interceptor\HeaderChanger;
 use Temporal\Tests\Interceptor\InterceptorCallsCounter;
 use Temporal\Worker\WorkerInterface;
 
-require __DIR__ . '/../vendor/autoload.php';
+require __DIR__ . '/../../vendor/autoload.php';
+chdir(__DIR__ . '/../../');
 
 /**
- * @param string $dir
+ * @param non-empty-string $dir
  * @return array<class-string>
  */
 $getClasses = static function (string $dir, string $namespace): iterable {
@@ -57,7 +51,7 @@ $workers = [
 ];
 
 // register all workflows
-foreach ($getClasses(__DIR__ . '/Fixtures/src/Workflow', 'Temporal\\Tests\\Workflow\\') as $class) {
+foreach ($getClasses(__DIR__ . '/../Fixtures/src/Workflow', 'Temporal\\Tests\\Workflow\\') as $class) {
     if (class_exists($class) && !\interface_exists($class)) {
         \array_walk(
             $workers,
@@ -67,7 +61,7 @@ foreach ($getClasses(__DIR__ . '/Fixtures/src/Workflow', 'Temporal\\Tests\\Workf
 }
 
 // register all activity
-foreach ($getClasses(__DIR__ . '/Fixtures/src/Activity', 'Temporal\\Tests\\Activity\\') as $class) {
+foreach ($getClasses(__DIR__ . '/../Fixtures/src/Activity', 'Temporal\\Tests\\Activity\\') as $class) {
     if (class_exists($class) && !\interface_exists($class)) {
         \array_walk(
             $workers,
