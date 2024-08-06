@@ -118,17 +118,17 @@ class Scope implements CancellationScopeInterface, Destroyable
      */
     private bool $cancelled = false;
 
-    /**
-     * @param WorkflowContext  $ctx
-     * @param ServiceContainer $services
-     */
-    public function __construct(ServiceContainer $services, WorkflowContext $ctx)
-    {
+    public function __construct(
+        ServiceContainer $services,
+        WorkflowContext $ctx,
+        ?Workflow\UpdateContext $updateContext = null,
+    ) {
         $this->context = $ctx;
         $this->scopeContext = ScopeContext::fromWorkflowContext(
             $this->context,
             $this,
-            \Closure::fromCallable([$this, 'onRequest'])
+            \Closure::fromCallable([$this, 'onRequest']),
+            $updateContext,
         );
 
         $this->services = $services;
@@ -347,9 +347,13 @@ class Scope implements CancellationScopeInterface, Destroyable
         $deferred->promise()->then($cleanup, $cleanup);
     }
 
-    protected function createScope(bool $detached, ?string $layer = null, WorkflowContext $context = null): self
-    {
-        $scope = new Scope($this->services, $context ?? $this->context);
+    protected function createScope(
+        bool $detached,
+        ?string $layer = null,
+        WorkflowContext $context = null,
+        ?Workflow\UpdateContext $updateContext = null,
+    ): self {
+        $scope = new Scope($this->services, $context ?? $this->context, $updateContext);
         $scope->detached = $detached;
 
         if ($layer !== null) {
