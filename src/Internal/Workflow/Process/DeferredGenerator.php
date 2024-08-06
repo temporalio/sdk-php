@@ -7,7 +7,10 @@ namespace Temporal\Internal\Workflow\Process;
 use Temporal\DataConverter\ValuesInterface;
 
 /**
+ * @implements \Iterator<mixed, mixed>
+ *
  * @internal
+ * @psalm-suppress PropertyNotSetInConstructor
  */
 final class DeferredGenerator implements \Iterator
 {

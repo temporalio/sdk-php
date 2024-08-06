@@ -29,7 +29,7 @@ final class StartWorkflow extends Route
 {
     private const ERROR_NOT_FOUND = 'Workflow with the specified name "%s" was not registered';
 
-    private WorkflowInstantiator $instantiator;
+    private readonly WorkflowInstantiator $instantiator;
 
     public function __construct(
         private ServiceContainer $services,
@@ -39,6 +39,7 @@ final class StartWorkflow extends Route
 
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
+        tr();
         $options = $request->getOptions();
         $payloads = $request->getPayloads();
         $lastCompletionResult = null;
@@ -88,7 +89,7 @@ final class StartWorkflow extends Route
             $this->services->running->add($process);
             $resolver->resolve(EncodedValues::fromValues([null]));
 
-            $process->start($instance->getHandler(), $context->getInput());
+            $process->start($instance->getHandler(), $context->getInput(), deferred: true);
         };
 
         // Define Context for interceptors Pipeline
