@@ -64,10 +64,8 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     /**
      * Worker handler generator that yields promises and requests that are processed in the {@see self::next()} method.
-     *
-     * @var \Generator
      */
-    protected \Generator $coroutine;
+    protected DeferredGenerator $coroutine;
 
     /**
      * Due nature of PHP generators the result of coroutine can be available before all child coroutines complete.
@@ -75,7 +73,7 @@ class Scope implements CancellationScopeInterface, Destroyable
      *
      * @var mixed
      */
-    private $result;
+    private mixed $result;
 
     /**
      * When scope completes with exception.
@@ -150,16 +148,13 @@ class Scope implements CancellationScopeInterface, Destroyable
         return $this->context;
     }
 
-    public function start(callable $handler, ValuesInterface $values = null): void
+    /**
+     * @param \Closure(ValuesInterface): mixed $handler
+     */
+    public function start(\Closure $handler, ValuesInterface $values = null): void
     {
-        try {
-            // Create a coroutine generator
-            $this->coroutine = $this->call($handler, $values ?? EncodedValues::empty());
-            $this->context->resolveConditions();
-        } catch (\Throwable $e) {
-            $this->onException($e);
-            return;
-        }
+        // Create a coroutine generator
+        $this->coroutine = $this->call($handler, $values ?? EncodedValues::empty());
 
         $this->next();
     }
@@ -181,7 +176,6 @@ class Scope implements CancellationScopeInterface, Destroyable
 
         // Create a coroutine generator
         $this->coroutine = $this->callSignalOrUpdateHandler($handler, $values);
-        $this->context->resolveConditions();
         $this->next();
     }
 
@@ -192,7 +186,6 @@ class Scope implements CancellationScopeInterface, Destroyable
     {
         // Create a coroutine generator
         $this->coroutine = $this->callSignalOrUpdateHandler($handler, $values);
-        $this->context->resolveConditions();
         $this->next();
     }
 
@@ -201,8 +194,7 @@ class Scope implements CancellationScopeInterface, Destroyable
      */
     public function attach(\Generator $generator): self
     {
-        $this->coroutine = $generator;
-        $this->context->resolveConditions();
+        $this->coroutine = DeferredGenerator::fromGenerator($generator);
 
         $this->next();
         return $this;
@@ -342,55 +334,28 @@ class Scope implements CancellationScopeInterface, Destroyable
     }
 
     /**
-     * @param callable $handler
-     * @param ValuesInterface $values
-     * @return \Generator
+     * @param \Closure(ValuesInterface): mixed $handler
      */
-    protected function call(callable $handler, ValuesInterface $values): \Generator
+    protected function call(\Closure $handler, ValuesInterface $values): DeferredGenerator
     {
-        try {
-            $this->makeCurrent();
-            $result = $handler($values);
-
-            if ($result instanceof \Generator) {
-                yield from $result;
-
-                return $result->getReturn();
-            }
-
-            return $result;
-        } catch (\Throwable $e) {
-            $this->onException($e);
-        }
+        return DeferredGenerator::fromHandler($handler, $values)->catch($this->onException(...));
     }
 
     /**
      * Call a Signal or Update method. In this case deserialization errors are skipped.
      *
      * @param callable(ValuesInterface): mixed $handler
-     * @return \Generator
      */
-    protected function callSignalOrUpdateHandler(callable $handler, ValuesInterface $values): \Generator
+    protected function callSignalOrUpdateHandler(callable $handler, ValuesInterface $values): DeferredGenerator
     {
-        try {
-            $this->makeCurrent();
+        return DeferredGenerator::fromHandler(static function (ValuesInterface $values) use ($handler): mixed {
             try {
-                $result = $handler($values);
+                return $handler($values);
             } catch (InvalidArgumentException) {
                 // Skip deserialization errors
                 return null;
             }
-
-            if ($result instanceof \Generator) {
-                yield from $result;
-
-                return $result->getReturn();
-            }
-
-            return $result;
-        } catch (\Throwable $e) {
-            $this->onException($e);
-        }
+        }, $values)->catch($this->onException(...));
     }
 
     /**
@@ -419,6 +384,7 @@ class Scope implements CancellationScopeInterface, Destroyable
 
         // do not cancel already complete promises
         $cleanup = function () use ($cancelID): void {
+            $this->makeCurrent();
             $this->context->resolveConditions();
             unset($this->onCancel[$cancelID]);
         };
@@ -480,9 +446,6 @@ class Scope implements CancellationScopeInterface, Destroyable
         }
     }
 
-    /**
-     * @param PromiseInterface $promise
-     */
     private function nextPromise(PromiseInterface $promise): void
     {
         if ($promise instanceof CancellationScopeInterface && $promise->isCancelled()) {
@@ -490,7 +453,7 @@ class Scope implements CancellationScopeInterface, Destroyable
             return;
         }
 
-        $onFulfilled = function ($result) {
+        $onFulfilled = function (mixed $result): mixed {
             $this->defer(
                 function () use ($result): void {
                     $this->makeCurrent();
@@ -565,7 +528,7 @@ class Scope implements CancellationScopeInterface, Destroyable
     /**
      * @param mixed $result
      */
-    private function onResult($result): void
+    private function onResult(mixed $result): void
     {
         $this->result = $result;
         $this->deferred->resolve($result);

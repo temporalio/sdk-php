@@ -172,7 +172,10 @@ class Process extends Scope implements ProcessInterface
         );
     }
 
-    public function start(callable $handler, ValuesInterface $values = null): void
+    /**
+     * @param \Closure(ValuesInterface): mixed $handler
+     */
+    public function start(\Closure $handler, ValuesInterface $values = null): void
     {
         try {
             $this->makeCurrent();
