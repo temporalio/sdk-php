@@ -112,11 +112,8 @@ final class StartWorkflow extends Route
      */
     private function findWorkflowOrFail(WorkflowInfo $info): WorkflowPrototype
     {
-        $workflow = $this->services->workflows->find($info->type->name);
-        if ($workflow === null) {
-            throw new \OutOfRangeException(\sprintf(self::ERROR_NOT_FOUND, $info->type->name));
-        }
-
-        return $workflow;
+        return $this->services->workflows->find($info->type->name) ?? throw new \OutOfRangeException(
+            \sprintf(self::ERROR_NOT_FOUND, $info->type->name),
+        );
     }
 }

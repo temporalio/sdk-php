@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Functional;
 
+use PHPUnit\Framework\Attributes\Group;
 use Temporal\Api\Common\V1\Payloads;
 use Temporal\Common\Uuid;
 use Temporal\Tests\Fixtures\Splitter;
@@ -135,11 +136,12 @@ class WorkflowTestCase extends AbstractFunctional
         $worker->run($this, Splitter::create('Test_Activity.log')->getQueue());
     }
 
-    /**
-     * @group skip-ext-protobuf
-     */
     public function testExecuteProtoWorkflow(): void
     {
+        if (\extension_loaded('protobuf')) {
+            $this->markTestSkipped('The test conflicts with "protobuf" extension.');
+        }
+
         $worker = WorkerMock::createMock();
 
         $worker->run($this, Splitter::create('Test_ExecuteProtoWorkflow.log')->getQueue());

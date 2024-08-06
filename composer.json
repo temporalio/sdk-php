@@ -27,17 +27,17 @@
         "google/common-protos": "^1.3 || ^2.0 || ^3.0 || ^4.0",
         "google/protobuf": "^3.22 || ^4.0",
         "grpc/grpc": "^1.42",
-        "nesbot/carbon": "^2.66 || ^3.0.2",
+        "nesbot/carbon": "^2.72 || ^3.0.2",
         "psr/log": "^2.0 || ^3.0",
         "ramsey/uuid": "^4.7",
         "react/promise": "^2.9",
         "roadrunner-php/roadrunner-api-dto": "^1.8.0",
         "roadrunner-php/version-checker": "^1.0",
         "spiral/attributes": "^3.1.4",
-        "spiral/roadrunner": "^2023.3.12 || ^2024.1",
+        "spiral/roadrunner": "^2024.1",
         "spiral/roadrunner-cli": "^2.5",
         "spiral/roadrunner-kv": "^4.2",
-        "spiral/roadrunner-worker": "^3.0",
+        "spiral/roadrunner-worker": "^3.5",
         "symfony/filesystem": "^5.4 || ^6.0 || ^7.0",
         "symfony/http-client": "^5.4 || ^6.0 || ^7.0",
         "symfony/process": "^5.4 || ^6.0 || ^7.0"
@@ -56,14 +56,17 @@
         "dereuromark/composer-prefer-lowest": "^0.1.10",
         "doctrine/annotations": "^1.14|^2.0.0",
         "friendsofphp/php-cs-fixer": "^3.0",
+        "internal/dload": "^1.0",
         "jetbrains/phpstorm-attributes": "dev-master@dev",
         "laminas/laminas-code": "^4.0",
         "phpunit/phpunit": "^10.5",
+        "spiral/core": "^3.13",
         "symfony/var-dumper": "^6.0 || ^7.0",
         "vimeo/psalm": "^4.30 || ^5.4"
     },
     "autoload-dev": {
         "psr-4": {
+            "Temporal\\Tests\\Acceptance\\App\\": "tests/Acceptance/App",
             "Temporal\\Tests\\Interceptor\\": "tests/Fixtures/src/Interceptor",
             "Temporal\\Tests\\Workflow\\": "tests/Fixtures/src/Workflow",
             "Temporal\\Tests\\Activity\\": "tests/Fixtures/src/Activity",
@@ -78,11 +81,11 @@
     },
     "scripts": {
         "post-update-cmd": "Temporal\\Worker\\Transport\\RoadRunnerVersionChecker::postUpdate",
-        "tests": [
-            "phpunit --testsuite=Unit --testdox",
-            "phpunit --testsuite=Feature --testdox",
-            "phpunit --testsuite=Functional --testdox"
-        ],
+        "psalm": "psalm",
+        "psalm:baseline": "psalm --set-baseline=psalm-baseline.xml",
+        "test:unit": "phpunit --testsuite=Unit --color=always --testdox",
+        "test:func": "phpunit --testsuite=Functional --color=always --testdox",
+        "test:accept": "phpunit --testsuite=Acceptance --color=always --testdox",
         "phpcs": [
             "@putenv PHP_CS_FIXER_IGNORE_ENV=1",
             "php-cs-fixer fix src"

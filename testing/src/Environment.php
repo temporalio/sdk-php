@@ -15,6 +15,7 @@ final class Environment
     private Downloader $downloader;
     private Output $output;
     private SystemInfo $systemInfo;
+    private ?Process $temporalTestServerProcess = null;
     private ?Process $temporalServerProcess = null;
     private ?Process $roadRunnerProcess = null;
 
@@ -49,6 +50,35 @@ final class Environment
         $this->startRoadRunner($rrCommand, $commandTimeout, $envs);
     }
 
+    public function startTemporalServer(int $commandTimeout = 10): void
+    {
+        $temporalPort = \parse_url(\getenv('TEMPORAL_ADDRESS') ?: '127.0.0.1:7233', PHP_URL_PORT);
+
+        $this->output->write('Starting Temporal test server... ');
+        $this->temporalServerProcess = new Process(
+            [
+                $this->systemInfo->temporalCliExecutable,
+                "server", "start-dev",
+                "--port", $temporalPort,
+                '--dynamic-config-value', 'frontend.enableUpdateWorkflowExecution=true',
+                '--dynamic-config-value', 'frontend.enableUpdateWorkflowExecutionAsyncAccepted=true',
+                '--dynamic-config-value', 'system.enableEagerWorkflowStart=true',
+                '--log-level', 'error',
+                '--headless'
+            ]
+        );
+        $this->temporalServerProcess->setTimeout($commandTimeout);
+        $this->temporalServerProcess->start();
+        $this->output->writeln('<info>done.</info>');
+        sleep(1);
+
+        if (!$this->temporalServerProcess->isRunning()) {
+            $this->output->writeln('<error>error</error>');
+            $this->output->writeln('Error starting Temporal server: ' . $this->temporalServerProcess->getErrorOutput());
+            exit(1);
+        }
+    }
+
     public function startTemporalTestServer(int $commandTimeout = 10): void
     {
         if (!$this->downloader->check($this->systemInfo->temporalServerExecutable)) {
@@ -60,17 +90,17 @@ final class Environment
         $temporalPort = parse_url(getenv('TEMPORAL_ADDRESS') ?: '127.0.0.1:7233', PHP_URL_PORT);
 
         $this->output->write('Starting Temporal test server... ');
-        $this->temporalServerProcess = new Process(
+        $this->temporalTestServerProcess = new Process(
             [$this->systemInfo->temporalServerExecutable, $temporalPort, '--enable-time-skipping']
         );
-        $this->temporalServerProcess->setTimeout($commandTimeout);
-        $this->temporalServerProcess->start();
+        $this->temporalTestServerProcess->setTimeout($commandTimeout);
+        $this->temporalTestServerProcess->start();
         $this->output->writeln('<info>done.</info>');
         sleep(1);
 
-        if (!$this->temporalServerProcess->isRunning()) {
+        if (!$this->temporalTestServerProcess->isRunning()) {
             $this->output->writeln('<error>error</error>');
-            $this->output->writeln('Error starting Temporal server: ' . $this->temporalServerProcess->getErrorOutput());
+            $this->output->writeln('Error starting Temporal Test server: ' . $this->temporalTestServerProcess->getErrorOutput());
             exit(1);
         }
     }
@@ -122,6 +152,12 @@ final class Environment
         if ($this->temporalServerProcess !== null && $this->temporalServerProcess->isRunning()) {
             $this->output->write('Stopping Temporal server... ');
             $this->temporalServerProcess->stop();
+            $this->output->writeln('<info>done.</info>');
+        }
+
+        if ($this->temporalTestServerProcess !== null && $this->temporalTestServerProcess->isRunning()) {
+            $this->output->write('Stopping Temporal Test server... ');
+            $this->temporalTestServerProcess->stop();
             $this->output->writeln('<info>done.</info>');
         }
 
