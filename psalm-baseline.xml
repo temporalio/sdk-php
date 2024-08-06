@@ -109,11 +109,6 @@
       <code><![CDATA[$workflowType]]></code>
     </PropertyNotSetInConstructor>
   </file>
-  <file src="src/Client/Schedule/ScheduleHandle.php">
-    <PossiblyInvalidOperand>
-      <code><![CDATA[$timestamp->getSeconds()]]></code>
-    </PossiblyInvalidOperand>
-  </file>
   <file src="src/Client/Update/UpdateHandle.php">
     <PossiblyNullArgument>
       <code><![CDATA[$result->getSuccess()]]></code>
@@ -1123,9 +1118,6 @@
     </ArgumentTypeCoercion>
   </file>
   <file src="src/Internal/Transport/Router/StartWorkflow.php">
-    <MissingClosureReturnType>
-      <code><![CDATA[function (WorkflowInput $input) use (]]></code>
-    </MissingClosureReturnType>
     <UnnecessaryVarAnnotation>
       <code><![CDATA[Input]]></code>
     </UnnecessaryVarAnnotation>
