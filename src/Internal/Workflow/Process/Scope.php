@@ -151,11 +151,12 @@ class Scope implements CancellationScopeInterface, Destroyable
     /**
      * @param \Closure(ValuesInterface): mixed $handler
      */
-    public function start(\Closure $handler, ValuesInterface $values = null, bool $deferred = true): void
+    public function start(\Closure $handler, ValuesInterface $values = null, bool $deferred): void
     {
         // Create a coroutine generator
         $this->coroutine = $this->call($handler, $values ?? EncodedValues::empty());
 
+        tr($deferred);
         $deferred
             ? $this->services->loop->once($this->layer, $this->next(...))
             : $this->next();
@@ -246,7 +247,7 @@ class Scope implements CancellationScopeInterface, Destroyable
     public function startScope(callable $handler, bool $detached, string $layer = null): CancellationScopeInterface
     {
         $scope = $this->createScope($detached, $layer);
-        $scope->start($handler);
+        $scope->start($handler, null, false);
 
         return $scope;
     }

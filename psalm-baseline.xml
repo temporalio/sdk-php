@@ -109,6 +109,11 @@
       <code><![CDATA[$workflowType]]></code>
     </PropertyNotSetInConstructor>
   </file>
+  <file src="src/Client/Schedule/ScheduleHandle.php">
+    <PossiblyInvalidOperand>
+      <code><![CDATA[$timestamp->getSeconds()]]></code>
+    </PossiblyInvalidOperand>
+  </file>
   <file src="src/Client/Update/UpdateHandle.php">
     <PossiblyNullArgument>
       <code><![CDATA[$result->getSuccess()]]></code>
@@ -739,6 +744,9 @@
       <code><![CDATA[$this->format]]></code>
       <code><![CDATA[$this->format]]></code>
     </ArgumentTypeCoercion>
+    <InvalidNullableReturnType>
+      <code><![CDATA[int|Duration]]></code>
+    </InvalidNullableReturnType>
     <InvalidOperand>
       <code><![CDATA[$value * 1000000000]]></code>
       <code><![CDATA[($value * 1000000000) % 1000000000]]></code>
