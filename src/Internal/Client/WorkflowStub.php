@@ -90,10 +90,10 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
      * @param WorkflowOptions|null $options
      */
     public function __construct(
-        private ServiceClientInterface $serviceClient,
-        private ClientOptions $clientOptions,
-        private DataConverterInterface $converter,
-        private Pipeline $interceptors,
+        private readonly ServiceClientInterface $serviceClient,
+        private readonly ClientOptions $clientOptions,
+        private readonly DataConverterInterface $converter,
+        private readonly Pipeline $interceptors,
         private ?string $workflowType = null,
         private ?WorkflowOptions $options = null,
     ) {
@@ -401,9 +401,30 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
             client: $this->serviceClient,
             clientOptions: $clientOptions,
             converter: $this->converter,
-            updateInput: $updateInput,
-            updateRef: $result->getReference(),
+            execution: $result->getReference()->workflowExecution,
+            workflowType: $updateInput->workflowType,
+            updateName: $updateInput->updateName,
+            resultType: $updateInput->resultType,
+            updateId: $result->getReference()->updateId,
             result: $result->getResult(),
+        );
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getUpdateHandle(string $updateId, mixed $resultType = null): UpdateHandle
+    {
+        return new UpdateHandle(
+            client: $this->serviceClient,
+            clientOptions: $this->clientOptions,
+            converter: $this->converter,
+            execution: $this->getExecution(),
+            workflowType: $this->workflowType,
+            updateName: '',
+            resultType: $resultType,
+            updateId: $updateId,
+            result: null,
         );
     }
 

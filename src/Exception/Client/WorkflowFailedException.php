@@ -19,7 +19,7 @@ class WorkflowFailedException extends WorkflowException
 
     /**
      * @param WorkflowExecution $execution
-     * @param string|null $type
+     * @param non-empty-string|null $type
      * @param int $lastWorkflowTaskCompletedEventId
      * @param int $retryState
      * @param \Throwable|null $previous
@@ -31,12 +31,7 @@ class WorkflowFailedException extends WorkflowException
         int $retryState,
         \Throwable $previous = null
     ) {
-        parent::__construct(
-            null,
-            $execution,
-            $type,
-            $previous
-        );
+        parent::__construct(null, $execution, $type, $previous);
 
         $this->message = self::buildMessage(
             [
