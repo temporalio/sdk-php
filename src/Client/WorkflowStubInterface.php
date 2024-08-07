@@ -13,6 +13,7 @@ namespace Temporal\Client;
 
 use Temporal\Client\Update\UpdateHandle;
 use Temporal\Client\Update\UpdateOptions;
+use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\IllegalStateException;
 use Temporal\Workflow\CancellationScopeInterface;
@@ -109,6 +110,14 @@ interface WorkflowStubInterface extends WorkflowRunInterface
      * @return UpdateHandle
      */
     public function startUpdate(string|UpdateOptions $nameOrOptions, ...$args): UpdateHandle;
+
+    /**
+     * Get a handle to an existing update request.
+     *
+     * @param non-empty-string $updateId
+     * @param string|\ReflectionClass|\ReflectionType|Type|null $resultType
+     */
+    public function getUpdateHandle(string $updateId, mixed $resultType = null): UpdateHandle;
 
     /**
      * Request cancellation of a workflow execution.

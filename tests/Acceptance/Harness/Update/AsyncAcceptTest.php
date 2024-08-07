@@ -34,9 +34,10 @@ class AsyncAcceptTest extends TestCase
         );
 
         $this->assertHandleIsBlocked($handle);
-        // todo: Create a separate handle to the same update
-        // $otherHandle = $stub->getUpdateHandle($updateId)
-        // $this->assertHandleIsBlocked($otherHandle);
+        // Create a separate handle to the same update
+        $otherHandle = $stub->getUpdateHandle($updateId);
+        $this->assertHandleIsBlocked($otherHandle);
+
         # Unblock last update
         $stub->signal('unblock');
         self::assertSame(123, $handle->getResult());

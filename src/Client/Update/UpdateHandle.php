@@ -13,8 +13,6 @@ use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\Client\TimeoutException;
 use Temporal\Exception\Client\WorkflowUpdateException;
 use Temporal\Exception\Failure\FailureConverter;
-use Temporal\Interceptor\WorkflowClient\UpdateInput;
-use Temporal\Interceptor\WorkflowClient\UpdateRef;
 use Temporal\Workflow\WorkflowExecution;
 
 /**
@@ -23,12 +21,18 @@ use Temporal\Workflow\WorkflowExecution;
  */
 final class UpdateHandle
 {
+    /**
+     * @internal
+     */
     public function __construct(
         private readonly ServiceClientInterface $client,
         private readonly ClientOptions $clientOptions,
         private readonly DataConverterInterface $converter,
-        private readonly UpdateInput $updateInput,
-        private readonly UpdateRef $updateRef,
+        private readonly WorkflowExecution $execution,
+        private readonly ?string $workflowType,
+        private readonly string $updateName,
+        private readonly mixed $resultType,
+        private readonly string $updateId,
         private ValuesInterface|WorkflowUpdateException|null $result,
     ) {
     }
@@ -39,7 +43,7 @@ final class UpdateHandle
      */
     public function getExecution(): WorkflowExecution
     {
-        return $this->updateRef->workflowExecution;
+        return $this->execution;
     }
 
     /**
@@ -47,7 +51,7 @@ final class UpdateHandle
      */
     public function getId(): string
     {
-        return $this->updateRef->updateId;
+        return $this->updateId;
     }
 
     /**
@@ -70,7 +74,7 @@ final class UpdateHandle
      */
     public function getResult(int|float|null $timeout = null): mixed
     {
-        return $this->getEncodedValues($timeout)->getValue(0, $this->updateInput->resultType);
+        return $this->getEncodedValues($timeout)->getValue(0, $this->resultType);
     }
 
     /**
@@ -135,9 +139,9 @@ final class UpdateHandle
         $this->result = new WorkflowUpdateException(
             $e->getMessage(),
             execution: $this->getExecution(),
-            workflowType: $this->updateInput->workflowType,
+            workflowType: $this->workflowType,
             updateId: $this->getId(),
-            updateName: $this->updateInput->updateName,
+            updateName: $this->updateName,
             previous: $e,
         );
     }
