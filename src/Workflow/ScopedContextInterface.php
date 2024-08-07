@@ -22,9 +22,6 @@ interface ScopedContextInterface extends WorkflowContextInterface
      * The method calls an asynchronous task and returns a promise.
      *
      * @see Workflow::async()
-     *
-     * @param callable $handler
-     * @return CancellationScopeInterface
      */
     public function async(callable $handler): CancellationScopeInterface;
 
@@ -33,9 +30,6 @@ interface ScopedContextInterface extends WorkflowContextInterface
      * in background.
      *
      * @see Workflow::asyncDetached()
-     *
-     * @param callable $handler
-     * @return CancellationScopeInterface
      */
     public function asyncDetached(callable $handler): CancellationScopeInterface;
 }

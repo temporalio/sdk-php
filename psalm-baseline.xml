@@ -1126,9 +1126,6 @@
     </ArgumentTypeCoercion>
   </file>
   <file src="src/Internal/Transport/Router/StartWorkflow.php">
-    <MissingClosureReturnType>
-      <code><![CDATA[function (WorkflowInput $input) use (]]></code>
-    </MissingClosureReturnType>
     <UnnecessaryVarAnnotation>
       <code><![CDATA[Input]]></code>
     </UnnecessaryVarAnnotation>
@@ -1228,12 +1225,6 @@
     </PropertyNotSetInConstructor>
   </file>
   <file src="src/Internal/Workflow/Process/Scope.php">
-    <MissingClosureParamType>
-      <code><![CDATA[$result]]></code>
-    </MissingClosureParamType>
-    <MissingClosureReturnType>
-      <code><![CDATA[function ($result) {]]></code>
-    </MissingClosureReturnType>
     <PropertyNotSetInConstructor>
       <code><![CDATA[$coroutine]]></code>
     </PropertyNotSetInConstructor>
@@ -1262,9 +1253,6 @@
       <code><![CDATA[$parent]]></code>
       <code><![CDATA[$scope]]></code>
     </PropertyNotSetInConstructor>
-    <PropertyTypeCoercion>
-      <code><![CDATA[$this->parent->awaits]]></code>
-    </PropertyTypeCoercion>
   </file>
   <file src="src/Internal/Workflow/WorkflowContext.php">
     <ArgumentTypeCoercion>

@@ -173,15 +173,14 @@ class Process extends Scope implements ProcessInterface
     }
 
     /**
-     * @param callable             $handler
-     * @param ValuesInterface|null $values
+     * @param \Closure(ValuesInterface): mixed $handler
      */
-    public function start(callable $handler, ValuesInterface $values = null): void
+    public function start(\Closure $handler, ValuesInterface $values = null, bool $deferred): void
     {
         try {
             $this->makeCurrent();
             $this->context->getWorkflowInstance()->initConstructor();
-            parent::start($handler, $values);
+            parent::start($handler, $values, $deferred);
         } catch (\Throwable $e) {
             $this->complete($e);
         } finally {

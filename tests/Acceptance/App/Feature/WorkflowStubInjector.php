@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Acceptance\App\Feature;
 
+use Temporal\Common\IdReusePolicy;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Psr\Container\ContainerInterface;
@@ -43,7 +44,9 @@ final class WorkflowStubInjector implements InjectorInterface
             ->withTaskQueue($feature->taskQueue)
             ->withEagerStart($attribute->eagerStart);
 
-        $attribute->workflowId === null or $options = $options->withWorkflowId($attribute->workflowId);
+        $attribute->workflowId === null or $options = $options
+            ->withWorkflowId($attribute->workflowId)
+            ->withWorkflowIdReusePolicy(IdReusePolicy::AllowDuplicate);
         $attribute->memo === [] or $options = $options->withMemo($attribute->memo);
 
         $stub = $client->newUntypedWorkflowStub($attribute->type, $options);

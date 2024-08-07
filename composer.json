@@ -51,7 +51,7 @@
         }
     },
     "require-dev": {
-        "buggregator/trap": "^1.2.2",
+        "buggregator/trap": "^1.10.1",
         "composer/composer": "^2.0",
         "dereuromark/composer-prefer-lowest": "^0.1.10",
         "doctrine/annotations": "^1.14|^2.0.0",

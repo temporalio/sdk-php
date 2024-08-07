@@ -26,23 +26,16 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
 {
     private WorkflowContext $parent;
     private Scope $scope;
-    /** @var callable */
-    private $onRequest;
+    private \Closure $onRequest;
     private ?UpdateContext $updateContext = null;
 
     /**
      * Creates scope specific context.
-     *
-     * @param WorkflowContext $context
-     * @param Scope           $scope
-     * @param callable        $onRequest
-     *
-     * @return self
      */
     public static function fromWorkflowContext(
         WorkflowContext $context,
         Scope $scope,
-        callable $onRequest,
+        \Closure $onRequest,
         ?UpdateContext $updateContext,
     ): self {
         $ctx = new self(
@@ -61,31 +54,16 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
         return $ctx;
     }
 
-    /**
-     * @param callable $handler
-     * @return CancellationScopeInterface
-     */
     public function async(callable $handler): CancellationScopeInterface
     {
         return $this->scope->startScope($handler, false);
     }
 
-    /**
-     * Cancellation scope which does not react to parent cancel and completes in background.
-     *
-     * @param callable $handler
-     * @return CancellationScopeInterface
-     */
     public function asyncDetached(callable $handler): CancellationScopeInterface
     {
         return $this->scope->startScope($handler, true);
     }
 
-    /**
-     * @param RequestInterface $request
-     * @param bool $cancellable
-     * @return PromiseInterface
-     */
     public function request(RequestInterface $request, bool $cancellable = true): PromiseInterface
     {
         if ($cancellable && $this->scope->isCancelled()) {
@@ -108,11 +86,6 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
         return $this->updateContext;
     }
 
-    /**
-     * @param string $conditionGroupId
-     * @param callable $condition
-     * @return PromiseInterface
-     */
     protected function addCondition(string $conditionGroupId, callable $condition): PromiseInterface
     {
         $deferred = new Deferred();
@@ -127,9 +100,6 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
         );
     }
 
-    /**
-     * Calculate unblocked conditions.
-     */
     public function resolveConditions(): void
     {
         $this->parent->resolveConditions();
@@ -145,9 +115,6 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
         $this->parent->rejectConditionGroup($conditionGroupId);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function upsertSearchAttributes(array $searchAttributes): void
     {
         $this->request(

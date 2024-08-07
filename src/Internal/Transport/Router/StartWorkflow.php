@@ -13,6 +13,7 @@ namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\FeatureFlags;
 use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
 use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\Instantiator\WorkflowInstantiator;
@@ -29,21 +30,16 @@ final class StartWorkflow extends Route
 {
     private const ERROR_NOT_FOUND = 'Workflow with the specified name "%s" was not registered';
 
-    private WorkflowInstantiator $instantiator;
+    private readonly WorkflowInstantiator $instantiator;
+    private readonly bool $wfStartDeferred;
 
-    /**
-     * @param ServiceContainer $services
-     */
     public function __construct(
-        private ServiceContainer $services,
+        private readonly ServiceContainer $services,
     ) {
+        $this->wfStartDeferred = FeatureFlags::$workflowDeferredHandlerStart;
         $this->instantiator = new WorkflowInstantiator($services->interceptorProvider);
     }
 
-    /**
-     * {@inheritDoc}
-     * @throws \Throwable
-     */
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
         $options = $request->getOptions();
@@ -89,13 +85,13 @@ final class StartWorkflow extends Route
             $instance,
             $context,
             $runId,
-        ) {
+        ): void {
             $context = $context->withInput(new Input($input->info, $input->arguments, $input->header));
             $process = new Process($this->services, $context, $runId);
             $this->services->running->add($process);
             $resolver->resolve(EncodedValues::fromValues([null]));
 
-            $process->start($instance->getHandler(), $context->getInput());
+            $process->start($instance->getHandler(), $context->getInput(), $this->wfStartDeferred);
         };
 
         // Define Context for interceptors Pipeline
@@ -113,10 +109,6 @@ final class StartWorkflow extends Route
             );
     }
 
-    /**
-     * @param WorkflowInfo $info
-     * @return WorkflowPrototype
-     */
     private function findWorkflowOrFail(WorkflowInfo $info): WorkflowPrototype
     {
         return $this->services->workflows->find($info->type->name) ?? throw new \OutOfRangeException(
