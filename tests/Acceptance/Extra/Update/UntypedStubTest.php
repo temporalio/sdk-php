@@ -2,10 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Acceptance\Extra\WorkflowUpdate;
+namespace Temporal\Tests\Acceptance\Extra\Update\UntypedStub;
 
 use PHPUnit\Framework\Attributes\Test;
 use React\Promise\PromiseInterface;
+use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Exception\Client\TimeoutException;
 use Temporal\Exception\Client\WorkflowUpdateException;
@@ -16,11 +17,11 @@ use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
-class WorkflowUpdateTest extends TestCase
+class UntypedStubTest extends TestCase
 {
     #[Test]
     public function fetchResolvedResultAfterWorkflowCompleted(
-        #[Stub('Extra_WorkflowUpdate')]WorkflowStubInterface $stub,
+        #[Stub('Extra_WorkflowUpdate')] WorkflowStubInterface $stub,
     ): void
     {
         /** @see TestWorkflow::add */
@@ -44,7 +45,7 @@ class WorkflowUpdateTest extends TestCase
 
     #[Test]
     public function fetchResultWithTimeout(
-        #[Stub('Extra_WorkflowUpdate')]WorkflowStubInterface $stub,
+        #[Stub('Extra_WorkflowUpdate')] WorkflowStubInterface $stub,
     ): void {
         /** @see TestWorkflow::add */
         $handle = $stub->startUpdate('await', 'key');
@@ -69,7 +70,7 @@ class WorkflowUpdateTest extends TestCase
 
     #[Test]
     public function handleUnknownUpdate(
-        #[Stub('Extra_WorkflowUpdate')]WorkflowStubInterface $stub,
+        #[Stub('Extra_WorkflowUpdate')] WorkflowStubInterface $stub,
     ): void {
         try {
             $stub->startUpdate('unknownUpdateMethod', '42');
@@ -84,7 +85,7 @@ class WorkflowUpdateTest extends TestCase
 
     #[Test]
     public function singleAwaitsWithoutTimeout(
-        #[Stub('Extra_WorkflowUpdate')]WorkflowStubInterface $stub,
+        #[Stub('Extra_WorkflowUpdate')] WorkflowStubInterface $stub,
     ): void {
         /** @see TestWorkflow::add */
         $handle = $stub->startUpdate('await', 'key');
@@ -108,8 +109,8 @@ class WorkflowUpdateTest extends TestCase
     }
 
     #[Test]
-    public function sultipleAwaitsWithoutTimeout(
-        #[Stub('Extra_WorkflowUpdate')]WorkflowStubInterface $stub,
+    public function multipleAwaitsWithoutTimeout(
+        #[Stub('Extra_WorkflowUpdate')] WorkflowStubInterface $stub,
     ): void {
         for ($i = 1; $i <= 5; $i++) {
             /** @see TestWorkflow::add */
@@ -143,8 +144,8 @@ class WorkflowUpdateTest extends TestCase
     }
 
     #[Test]
-    public function sultipleAwaitsWithTimeout(
-        #[Stub('Extra_WorkflowUpdate')]WorkflowStubInterface $stub,
+    public function multipleAwaitsWithTimeout(
+        #[Stub('Extra_WorkflowUpdate')] WorkflowStubInterface $stub,
     ): void {
         for ($i = 1; $i <= 5; $i++) {
             /** @see TestWorkflow::addWithTimeout */
@@ -168,6 +169,70 @@ class WorkflowUpdateTest extends TestCase
             'key4' => 'resolved4',
             'key5' => 'resolved5',
         ], (array)$result);
+    }
+
+    #[Test]
+    public function getUpdateHandler(
+        #[Stub('Extra_WorkflowUpdate')] WorkflowStubInterface $stub,
+    ): void {
+        /** @see TestWorkflow::add */
+        $handle = $stub->startUpdate('await', 'key');
+
+        // Create a separate handle to the same update
+        $newHandle = $stub->getUpdateHandle($handle->getId());
+        self::assertFalse($newHandle->hasResult());
+        try {
+            $newHandle->getResult(1.2);
+            $this->fail('Should throw timeout exception');
+        } catch (TimeoutException) {
+            // Expected
+        }
+
+        /** @see TestWorkflow::resolve */
+        $stub->update('resolveValue', "key", "resolved");
+
+        self::assertSame('resolved', $newHandle->getResult(1.2));
+        self::assertTrue($newHandle->hasResult());
+
+        // Complete workflow
+        /** @see TestWorkflow::exit */
+        $stub->signal('exit');
+    }
+
+    #[Test]
+    public function getUpdateHandlerFromNewRunningWorkflowStub(
+        #[Stub('Extra_WorkflowUpdate')] WorkflowStubInterface $stub,
+        WorkflowClientInterface $client,
+    ): void {
+        /** @see TestWorkflow::add */
+        $handle = $stub->startUpdate('await', 'key');
+
+        $newStub = $client->newUntypedRunningWorkflowStub(
+            $stub->getExecution()->getID(),
+            $stub->getExecution()->getRunID(),
+        );
+
+        // Create a separate handle to the same update from the new stub
+        $newHandle = $newStub->getUpdateHandle($handle->getId(), 'object');
+        $newHandleArr = $newStub->getUpdateHandle($handle->getId(), 'array');
+        self::assertFalse($newHandle->hasResult());
+        try {
+            $newHandle->getResult(1.2);
+            $this->fail('Should throw timeout exception');
+        } catch (TimeoutException) {
+            // Expected
+        }
+
+        /** @see TestWorkflow::resolve */
+        $stub->update('resolveValue', "key", ['foo' => 'bar']);
+
+        self::assertEquals((object)['foo' => 'bar'], $newHandle->getResult(1.2));
+        self::assertSame(['foo' => 'bar'], $newHandleArr->getResult(1.2));
+        self::assertTrue($newHandle->hasResult());
+
+        // Complete workflow
+        /** @see TestWorkflow::exit */
+        $stub->signal('exit');
     }
 }
 
