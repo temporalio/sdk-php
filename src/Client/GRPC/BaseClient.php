@@ -167,6 +167,30 @@ abstract class BaseClient implements ServiceClientInterface
     }
 
     /**
+     * Create a new connection with settings from environment variables.
+     * It automatically detects if SSL connection is required.
+     *
+     * @psalm-suppress RiskyTruthyFalsyComparison
+     */
+    public static function createDefaultConnection(): static
+    {
+        $address = \getenv('TEMPORAL_ADDRESS') ?: '127.0.0.1:7233';
+        $authKey = \getenv('TEMPORAL_AUTH_KEY') ?: '';
+        $sslPrivateKey = \getenv('TEMPORAL_SSL_PRIVATE_KEY') ?: null;
+        $sslCertChain = \getenv('TEMPORAL_SSL_CERTIFICATE_CHAIN') ?: null;
+
+        // Check SSL connection is required
+        $useSsl = $authKey !== '' || $sslPrivateKey !== null || $sslCertChain !== null;
+
+        if (!$useSsl) {
+            return static::create($address);
+        }
+
+        return static::createSSL($address, clientKey: $sslPrivateKey, clientPem: $sslCertChain)
+            ->withAuthKey($authKey);
+    }
+
+    /**
      * @param null|Pipeline<GrpcClientInterceptor, object> $pipeline
      *
      * @return static
