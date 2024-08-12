@@ -37,6 +37,40 @@ class AllHandlersFinishedTest extends TestCase
     }
 
     #[Test]
+    public function updateHandlersWithManyCalls(
+        #[Stub('Extra_Workflow_AllHandlersFinished')] WorkflowStubInterface $stub,
+    ): void {
+        for ($i = 1; $i <= 9; ++$i) {
+            /** @see TestWorkflow::addFromUpdate() */
+            $stub->startUpdate('await', "key-$i");
+        }
+
+        for ($i = 1; $i <= 9; ++$i) {
+            /** @see TestWorkflow::resolveFromUpdate */
+            $stub->startUpdate('resolve', "key-$i", "resolved-$i");
+        }
+
+        // Should be completed after the previous operation
+        $result = $stub->getResult(timeout: 1);
+
+        $this->assertSame(
+            [
+                'key-1' => 'resolved-1',
+                'key-2' => 'resolved-2',
+                'key-3' => 'resolved-3',
+                'key-4' => 'resolved-4',
+                'key-5' => 'resolved-5',
+                'key-6' => 'resolved-6',
+                'key-7' => 'resolved-7',
+                'key-8' => 'resolved-8',
+                'key-9' => 'resolved-9',
+            ],
+            (array) $result,
+            'Workflow result contains resolved values',
+        );
+    }
+
+    #[Test]
     public function signalHandlersWithOneCall(
         #[Stub('Extra_Workflow_AllHandlersFinished')] WorkflowStubInterface $stub,
     ): void {
@@ -46,10 +80,53 @@ class AllHandlersFinishedTest extends TestCase
         /** @see TestWorkflow::resolveFromSignal() */
         $stub->signal('resolve', "key", "resolved");
 
-        // Should be completed after the previous operation
         $result = $stub->getResult(timeout: 1);
 
         $this->assertSame(['key' => 'resolved'], (array) $result, 'Workflow result contains resolved value');
+    }
+
+    #[Test]
+    public function signalHandlersWithManyCalls(
+        #[Stub('Extra_Workflow_AllHandlersFinished')] WorkflowStubInterface $stub,
+    ): void {
+        for ($i = 0; $i < 20; $i++) {
+            /** @see TestWorkflow::addFromSignal() */
+            $stub->signal('await', "key-$i");
+        }
+
+        for ($i = 0; $i < 20; $i++) {
+            /** @see TestWorkflow::resolveFromSignal() */
+            $stub->signal('resolve', "key-$i", "resolved-$i");
+        }
+
+        $result = $stub->getResult(timeout: 1);
+
+        $this->assertSame(
+            [
+                'key-0' => 'resolved-0',
+                'key-1' => 'resolved-1',
+                'key-2' => 'resolved-2',
+                'key-3' => 'resolved-3',
+                'key-4' => 'resolved-4',
+                'key-5' => 'resolved-5',
+                'key-6' => 'resolved-6',
+                'key-7' => 'resolved-7',
+                'key-8' => 'resolved-8',
+                'key-9' => 'resolved-9',
+                'key-10' => 'resolved-10',
+                'key-11' => 'resolved-11',
+                'key-12' => 'resolved-12',
+                'key-13' => 'resolved-13',
+                'key-14' => 'resolved-14',
+                'key-15' => 'resolved-15',
+                'key-16' => 'resolved-16',
+                'key-17' => 'resolved-17',
+                'key-18' => 'resolved-18',
+                'key-19' => 'resolved-19',
+            ],
+            (array) $result,
+            'Workflow result contains resolved values',
+        );
     }
 }
 
