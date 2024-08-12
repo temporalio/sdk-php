@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Workflow;
 
 use Doctrine\Common\Annotations\Annotation\Target;
-use JetBrains\PhpStorm\Immutable;
 use Spiral\Attributes\NamedArgumentConstructor;
 
 /**
@@ -30,10 +29,12 @@ final class UpdateMethod
      * @param non-empty-string|null $name Name of the update handler. Default is method name.
      *        Be careful about names that contain special characters. These names can be used as metric tags.
      *        And systems like prometheus ignore metrics which have tags with unsupported characters.
+     * @param HandlerUnfinishedPolicy $unfinishedPolicy Actions taken if a workflow exits with
+     *        a running instance of this handler.
      */
     public function __construct(
-        #[Immutable]
         public ?string $name = null,
+        public readonly HandlerUnfinishedPolicy $unfinishedPolicy = HandlerUnfinishedPolicy::WarnAndAbandon,
     ) {
     }
 }
