@@ -300,6 +300,7 @@ class Scope implements CancellationScopeInterface, Destroyable
 
         // do not cancel already complete promises
         $cleanup = function () use ($cancelID): void {
+            $this->makeCurrent();
             $this->context->resolveConditions();
             unset($this->onCancel[$cancelID]);
         };
@@ -547,15 +548,10 @@ class Scope implements CancellationScopeInterface, Destroyable
      * @param \Closure $tick
      * @return mixed
      */
-    private function defer(\Closure $tick)
+    private function defer(\Closure $tick): void
     {
-        $listener = $this->services->loop->once($this->layer, $tick);
-
-        if ($this->services->queue->count() === 0) {
-            $this->services->loop->tick();
-        }
-
-        return $listener;
+        $this->services->loop->once($this->layer, $tick);
+        $this->services->queue->count() === 0 and $this->services->loop->tick();
     }
 
     public function destroy(): void

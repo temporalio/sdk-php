@@ -7,6 +7,8 @@ namespace Temporal\Internal\Workflow\Process;
 use Temporal\DataConverter\ValuesInterface;
 
 /**
+ * A wrapper around a generator that doesn't start the wrapped generator ASAP.
+ *
  * @implements \Iterator<mixed, mixed>
  *
  * @internal

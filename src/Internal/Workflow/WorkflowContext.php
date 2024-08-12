@@ -620,6 +620,17 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     }
 
     /**
+     * @internal
+     */
+    #[\Override]
+    public function destroy(): void
+    {
+        $this->awaits = [];
+        $this->workflowInstance->destroy();
+        unset($this->workflowInstance);
+    }
+
+    /**
      * @param callable|PromiseInterface ...$conditions
      */
     protected function awaitRequest(...$conditions): PromiseInterface
@@ -690,13 +701,5 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     protected function recordTrace(): void
     {
         $this->trace = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
-    }
-
-    #[\Override]
-    public function destroy(): void
-    {
-        $this->awaits = [];
-        $this->workflowInstance->destroy();
-        unset($this->workflowInstance);
     }
 }
