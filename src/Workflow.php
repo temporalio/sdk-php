@@ -899,6 +899,26 @@ final class Workflow extends Facade
     }
 
     /**
+     * Whether update and signal handlers have finished executing.
+     *
+     * Consider waiting on this condition before workflow return or continue-as-new, to prevent
+     * interruption of in-progress handlers by workflow exit:
+     *
+     * ```php
+     * yield Workflow.await(static fn() => Workflow::allHandlersFinished());
+     * ```
+     *
+     * @return bool True if all handlers have finished executing.
+     */
+    public static function allHandlersFinished(): bool
+    {
+        /** @var ScopedContextInterface $context */
+        $context = self::getCurrentContext();
+
+        return $context->allHandlersFinished();
+    }
+
+    /**
      * Upsert search attributes
      *
      * @param array<string, mixed> $searchAttributes

@@ -44,6 +44,7 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
             $context->workflowInstance,
             $context->input,
             $context->getLastCompletionResultValues(),
+            $context->handlers,
         );
 
         $ctx->parent = $context;
