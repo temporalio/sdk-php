@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Internal;
 
-use JetBrains\PhpStorm\Immutable;
 use Spiral\Attributes\ReaderInterface;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\ExceptionInterceptorInterface;
@@ -30,129 +29,34 @@ use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Worker\LoopInterface;
 use Temporal\WorkerFactory;
 
-#[Immutable]
 final class ServiceContainer
 {
-    /**
-     * @var LoopInterface
-     */
-    #[Immutable]
-    public LoopInterface $loop;
+    /** @var RepositoryInterface<WorkflowPrototype> */
+    public readonly RepositoryInterface $workflows;
+    public readonly ProcessCollection $running;
+    public readonly ActivityCollection $activities;
+    public readonly WorkflowReader $workflowsReader;
+    public readonly ActivityReader $activitiesReader;
 
     /**
-     * @var ClientInterface
-     */
-    #[Immutable]
-    public ClientInterface $client;
-
-    /**
-     * @var ReaderInterface
-     */
-    #[Immutable]
-    public ReaderInterface $reader;
-
-    /**
-     * @var EnvironmentInterface
-     */
-    #[Immutable]
-    public EnvironmentInterface $env;
-
-    /**
-     * @var MarshallerInterface<array>
-     */
-    #[Immutable]
-    public MarshallerInterface $marshaller;
-
-    /**
-     * @var RepositoryInterface<WorkflowPrototype>
-     */
-    #[Immutable]
-    public RepositoryInterface $workflows;
-
-    /**
-     * @var ProcessCollection
-     */
-    #[Immutable]
-    public ProcessCollection $running;
-
-    /**
-     * @var ActivityCollection
-     */
-    #[Immutable]
-    public ActivityCollection $activities;
-
-    /**
-     * @var QueueInterface
-     */
-    #[Immutable]
-    public QueueInterface $queue;
-
-    /**
-     * @var DataConverterInterface
-     */
-    #[Immutable]
-    public DataConverterInterface $dataConverter;
-
-    /**
-     * @var WorkflowReader
-     */
-    #[Immutable]
-    public WorkflowReader $workflowsReader;
-
-    /**
-     * @var ActivityReader
-     */
-    #[Immutable]
-    public ActivityReader $activitiesReader;
-
-    /**
-     * @var ExceptionInterceptorInterface
-     */
-    public ExceptionInterceptorInterface $exceptionInterceptor;
-
-    /**
-     * @var PipelineProvider
-     */
-    public PipelineProvider $interceptorProvider;
-
-    /**
-     * @param LoopInterface $loop
-     * @param EnvironmentInterface $env
-     * @param ClientInterface $client
-     * @param ReaderInterface $reader
-     * @param QueueInterface $queue
      * @param MarshallerInterface<array> $marshaller
-     * @param DataConverterInterface $dataConverter
-     * @param ExceptionInterceptorInterface $exceptionInterceptor
-     * @param PipelineProvider $interceptorProvider
      */
     public function __construct(
-        LoopInterface $loop,
-        EnvironmentInterface $env,
-        ClientInterface $client,
-        ReaderInterface $reader,
-        QueueInterface $queue,
-        MarshallerInterface $marshaller,
-        DataConverterInterface $dataConverter,
-        ExceptionInterceptorInterface $exceptionInterceptor,
-        PipelineProvider $interceptorProvider,
+        public readonly LoopInterface $loop,
+        public readonly EnvironmentInterface $env,
+        public readonly ClientInterface $client,
+        public readonly ReaderInterface $reader,
+        public readonly QueueInterface $queue,
+        public readonly MarshallerInterface $marshaller,
+        public readonly DataConverterInterface $dataConverter,
+        public readonly ExceptionInterceptorInterface $exceptionInterceptor,
+        public readonly PipelineProvider $interceptorProvider,
     ) {
-        $this->env = $env;
-        $this->loop = $loop;
-        $this->client = $client;
-        $this->reader = $reader;
-        $this->queue = $queue;
-        $this->marshaller = $marshaller;
-        $this->dataConverter = $dataConverter;
-        $this->interceptorProvider = $interceptorProvider;
-
         $this->workflows = new WorkflowCollection();
         $this->activities = new ActivityCollection();
         $this->running = new ProcessCollection();
-
         $this->workflowsReader = new WorkflowReader($this->reader);
         $this->activitiesReader = new ActivityReader($this->reader);
-        $this->exceptionInterceptor = $exceptionInterceptor;
     }
 
     public static function fromWorkerFactory(

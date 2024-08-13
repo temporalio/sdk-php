@@ -55,6 +55,7 @@ use Temporal\Internal\Transport\Request\NewTimer;
 use Temporal\Internal\Transport\Request\Panic;
 use Temporal\Internal\Transport\Request\SideEffect;
 use Temporal\Internal\Transport\Request\UpsertSearchAttributes;
+use Temporal\Internal\Workflow\Process\HandlerState;
 use Temporal\Promise;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow\ActivityStubInterface;
@@ -86,12 +87,16 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     /** @var Pipeline<WorkflowOutboundCallsInterceptor, PromiseInterface> */
     private Pipeline $callsInterceptor;
 
+    /**
+     * @param HandlerState $handlers Counter of active Update and Signal handlers
+     */
     public function __construct(
         protected ServiceContainer $services,
         protected ClientInterface $client,
         protected WorkflowInstanceInterface&Destroyable $workflowInstance,
         protected Input $input,
-        protected ?ValuesInterface $lastCompletionResult = null
+        protected ?ValuesInterface $lastCompletionResult = null,
+        protected HandlerState $handlers = new HandlerState(),
     ) {
         $this->requestInterceptor =  $services->interceptorProvider
             ->getPipeline(WorkflowOutboundRequestInterceptor::class);
@@ -517,6 +522,14 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     /**
      * {@inheritDoc}
      */
+    public function allHandlersFinished(): bool
+    {
+        return $this->handlers->signals === 0 && $this->handlers->updates === 0;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function upsertSearchAttributes(array $searchAttributes): void
     {
         $this->callsInterceptor->with(
@@ -620,6 +633,25 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     }
 
     /**
+     * @internal
+     */
+    public function getHandlerState(): HandlerState
+    {
+        return $this->handlers;
+    }
+
+    /**
+     * @internal
+     */
+    #[\Override]
+    public function destroy(): void
+    {
+        $this->awaits = [];
+        $this->workflowInstance->destroy();
+        unset($this->workflowInstance);
+    }
+
+    /**
      * @param callable|PromiseInterface ...$conditions
      */
     protected function awaitRequest(...$conditions): PromiseInterface
@@ -690,13 +722,5 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     protected function recordTrace(): void
     {
         $this->trace = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
-    }
-
-    #[\Override]
-    public function destroy(): void
-    {
-        $this->awaits = [];
-        $this->workflowInstance->destroy();
-        unset($this->workflowInstance);
     }
 }

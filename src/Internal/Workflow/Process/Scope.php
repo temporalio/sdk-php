@@ -167,6 +167,13 @@ class Scope implements CancellationScopeInterface, Destroyable
      */
     public function startUpdate(callable $handler, ValuesInterface $values, Deferred $resolver): void
     {
+        // Update handler counter
+        ++$this->context->getHandlerState()->updates;
+        $this->then(
+            fn() => --$this->context->getHandlerState()->updates,
+            fn() => --$this->context->getHandlerState()->updates,
+        );
+
         $this->then(
             $resolver->resolve(...),
             function (\Throwable $error) use ($resolver): void {
@@ -186,6 +193,13 @@ class Scope implements CancellationScopeInterface, Destroyable
      */
     public function startSignal(callable $handler, ValuesInterface $values): void
     {
+        // Update handler counter
+        ++$this->context->getHandlerState()->signals;
+        $this->then(
+            fn() => --$this->context->getHandlerState()->signals,
+            fn() => --$this->context->getHandlerState()->signals,
+        );
+
         // Create a coroutine generator
         $this->coroutine = $this->callSignalOrUpdateHandler($handler, $values);
         $this->next();
@@ -300,6 +314,7 @@ class Scope implements CancellationScopeInterface, Destroyable
 
         // do not cancel already complete promises
         $cleanup = function () use ($cancelID): void {
+            $this->makeCurrent();
             $this->context->resolveConditions();
             unset($this->onCancel[$cancelID]);
         };
@@ -543,19 +558,10 @@ class Scope implements CancellationScopeInterface, Destroyable
         }
     }
 
-    /**
-     * @param \Closure $tick
-     * @return mixed
-     */
-    private function defer(\Closure $tick)
+    private function defer(\Closure $tick): void
     {
-        $listener = $this->services->loop->once($this->layer, $tick);
-
-        if ($this->services->queue->count() === 0) {
-            $this->services->loop->tick();
-        }
-
-        return $listener;
+        $this->services->loop->once($this->layer, $tick);
+        $this->services->queue->count() === 0 and $this->services->loop->tick();
     }
 
     public function destroy(): void

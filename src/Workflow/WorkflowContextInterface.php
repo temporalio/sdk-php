@@ -327,6 +327,20 @@ interface WorkflowContextInterface extends EnvironmentInterface
     public function getStackTrace(): string;
 
     /**
+     * Whether update and signal handlers have finished executing.
+     *
+     * Consider waiting on this condition before workflow return or continue-as-new, to prevent
+     * interruption of in-progress handlers by workflow exit:
+     *
+     * ```php
+     * yield Workflow.await(static fn() => Workflow::allHandlersFinished());
+     * ```
+     *
+     * @return bool True if all handlers have finished executing.
+     */
+    public function allHandlersFinished(): bool;
+
+    /**
      * @param array<string, mixed> $searchAttributes
      */
     public function upsertSearchAttributes(array $searchAttributes): void;
