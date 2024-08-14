@@ -44,7 +44,7 @@ class Process extends Scope implements ProcessInterface
     public function __construct(
         ServiceContainer $services,
         WorkflowContext $ctx,
-        private string $runId,
+        private readonly string $runId,
     ) {
         parent::__construct($services, $ctx);
 
@@ -115,6 +115,7 @@ class Process extends Scope implements ProcessInterface
                     },
                     $input->arguments,
                     $resolver,
+                    $input->updateName,
                 );
 
                 return $scope->promise();
@@ -146,7 +147,8 @@ class Process extends Scope implements ProcessInterface
                             }
                         )->startSignal(
                             $handler,
-                            $input->arguments
+                            $input->arguments,
+                            $input->signalName,
                         );
                     },
                     /** @see WorkflowInboundCallsInterceptor::handleSignal() */
