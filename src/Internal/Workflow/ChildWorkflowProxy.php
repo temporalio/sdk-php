@@ -86,9 +86,9 @@ final class ChildWorkflowProxy extends Proxy
         }
 
         // Otherwise, we try to find a suitable workflow "signal" method.
-        foreach ($this->workflow->getSignalHandlers() as $name => $signal) {
-            if ($signal->getName() === $method) {
-                $args = Reflection::orderArguments($signal, $args);
+        foreach ($this->workflow->getSignalHandlers() as $name => $definition) {
+            if ($definition->method->getName() === $method) {
+                $args = Reflection::orderArguments($definition->method, $args);
 
                 return $this->stub->signal($name, $args);
             }

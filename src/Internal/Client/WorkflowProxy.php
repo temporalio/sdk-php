@@ -24,27 +24,21 @@ use Temporal\Workflow\ReturnType;
 
 /**
  * @template-covariant T of object
+ * @internal
  */
 final class WorkflowProxy extends Proxy
 {
     private const ERROR_UNDEFINED_METHOD =
         'The given workflow class "%s" does not contain a workflow, query or signal method named "%s"';
 
-    /**
-     * @param WorkflowClient $client
-     * @param WorkflowStubInterface $stub
-     * @param WorkflowPrototype $prototype
-     */
     public function __construct(
         public WorkflowClient $client,
         private readonly WorkflowStubInterface $stub,
         private readonly WorkflowPrototype $prototype,
-    ) {
-    }
+    ) {}
 
     /**
-     * @param string $method
-     * @param array $args
+     * @param non-empty-string $method
      * @return mixed|void
      */
     public function __call(string $method, array $args)
@@ -60,7 +54,7 @@ final class WorkflowProxy extends Proxy
             return $this->client
                 ->start($this, ...$args)
                 ->getResult(
-                    type: $returnType !== null ? Type::create($returnType) : null
+                    type: $returnType !== null ? Type::create($returnType) : null,
                 );
         }
 
@@ -74,10 +68,9 @@ final class WorkflowProxy extends Proxy
         }
 
         // Otherwise, we try to find a suitable workflow "signal" method.
-        foreach ($this->prototype->getSignalHandlers() as $name => $signal) {
-            if ($signal->getName() === $method) {
-                $args = Reflection::orderArguments($signal, $args);
-
+        foreach ($this->prototype->getSignalHandlers() as $name => $definition) {
+            if ($definition->method->getName() === $method) {
+                $args = Reflection::orderArguments($definition->method, $args);
                 $this->stub->signal($name, ...$args);
 
                 return;
@@ -101,15 +94,12 @@ final class WorkflowProxy extends Proxy
         $class = $this->prototype->getClass();
 
         throw new \BadMethodCallException(
-            \sprintf(self::ERROR_UNDEFINED_METHOD, $class->getName(), $method)
+            \sprintf(self::ERROR_UNDEFINED_METHOD, $class->getName(), $method),
         );
     }
 
     /**
      * TODO rename: Method names cannot use underscore (PSR conflict)
-     *
-     * @return WorkflowStubInterface
-     * @internal
      */
     public function __getUntypedStub(): WorkflowStubInterface
     {
@@ -118,19 +108,12 @@ final class WorkflowProxy extends Proxy
 
     /**
      * TODO rename: Method names cannot use underscore (PSR conflict)
-     *
-     * @return ReturnType|null
-     * @internal
      */
     public function __getReturnType(): ?ReturnType
     {
         return $this->prototype->getReturnType();
     }
 
-    /**
-     * @return bool
-     * @internal
-     */
     public function hasHandler(): bool
     {
         return $this->prototype->getHandler() !== null;
@@ -138,27 +121,19 @@ final class WorkflowProxy extends Proxy
 
     /**
      * @return \ReflectionMethod
-     * @internal
      */
     public function getHandlerReflection(): \ReflectionMethod
     {
         return $this->prototype->getHandler() ?? throw new \LogicException(
-            'The workflow does not contain a handler method.'
+            'The workflow does not contain a handler method.',
         );
     }
 
     /**
      * @param non-empty-string $name Signal name
-     * @return \ReflectionFunctionAbstract|null
      */
-    public function findSignalReflection(string $name): ?\ReflectionFunctionAbstract
+    public function findSignalReflection(string $name): ?\ReflectionMethod
     {
-        foreach ($this->prototype->getSignalHandlers() as $method => $reflection) {
-            if ($method === $name) {
-                return $reflection;
-            }
-        }
-
-        return null;
+        return ($this->prototype->getSignalHandlers()[$name] ?? null)?->method;
     }
 }

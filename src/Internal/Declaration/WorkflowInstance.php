@@ -78,28 +78,28 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
 
         $this->signalQueue = new SignalQueue();
 
-        foreach ($prototype->getSignalHandlers() as $method => $reflection) {
-            $this->signalHandlers[$method] = $this->createHandler($reflection);
-            $this->signalQueue->attach($method, $this->signalHandlers[$method]);
+        foreach ($prototype->getSignalHandlers() as $name => $definition) {
+            $this->signalHandlers[$name] = $this->createHandler($definition->method);
+            $this->signalQueue->attach($name, $this->signalHandlers[$name]);
         }
 
         $updateValidators = $prototype->getValidateUpdateHandlers();
-        foreach ($prototype->getUpdateHandlers() as $method => $definition) {
+        foreach ($prototype->getUpdateHandlers() as $name => $definition) {
             $fn = $this->createHandler($definition->method);
-            $this->updateHandlers[$method] = fn(UpdateInput $input, Deferred $deferred): mixed =>
+            $this->updateHandlers[$name] = fn(UpdateInput $input, Deferred $deferred): mixed =>
                 ($this->updateExecutor)($input, $fn, $deferred);
             // Register validate update handlers
-            $this->validateUpdateHandlers[$method] = \array_key_exists($method, $updateValidators)
+            $this->validateUpdateHandlers[$name] = \array_key_exists($name, $updateValidators)
                 ? fn(UpdateInput $input): mixed => ($this->updateValidator)(
                     $input,
-                    $this->createHandler($updateValidators[$method]),
+                    $this->createHandler($updateValidators[$name]),
                 )
                 : null;
         }
 
-        foreach ($prototype->getQueryHandlers() as $method => $reflection) {
+        foreach ($prototype->getQueryHandlers() as $name => $reflection) {
             $fn = $this->createHandler($reflection);
-            $this->queryHandlers[$method] = $this->pipeline->with(
+            $this->queryHandlers[$name] = $this->pipeline->with(
                 function (QueryInput $input) use ($fn): mixed {
                     return ($this->queryExecutor)($input, $fn);
                 },

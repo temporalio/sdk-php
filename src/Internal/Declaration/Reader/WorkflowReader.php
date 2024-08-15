@@ -15,6 +15,7 @@ use Temporal\Common\CronSchedule;
 use Temporal\Common\MethodRetry;
 use Temporal\Internal\Declaration\Graph\ClassNode;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
+use Temporal\Internal\Declaration\Prototype\SignalDefinition;
 use Temporal\Internal\Declaration\Prototype\UpdateDefinition;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Workflow\QueryMethod;
@@ -175,7 +176,13 @@ class WorkflowReader extends Reader
                     );
                 }
 
-                $prototype->addSignalHandler($signal->name ?? $method->getName(), $method);
+                $prototype->addSignalHandler(
+                    new SignalDefinition(
+                        name: $signal->name ?? $method->getName(),
+                        policy: $signal->unfinishedPolicy,
+                        method: $method,
+                    ),
+                );
             }
 
             /** @var QueryMethod|null $query */

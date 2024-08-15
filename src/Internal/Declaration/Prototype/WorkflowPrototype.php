@@ -23,7 +23,7 @@ final class WorkflowPrototype extends Prototype
     private array $queryHandlers = [];
 
     /**
-     * @var array<non-empty-string, \ReflectionFunctionAbstract>
+     * @var array<non-empty-string, SignalDefinition>
      */
     private array $signalHandlers = [];
 
@@ -117,27 +117,19 @@ final class WorkflowPrototype extends Prototype
         return $this->queryHandlers;
     }
 
-    /**
-     * @param non-empty-string $name
-     * @param \ReflectionFunctionAbstract $fun
-     */
-    public function addSignalHandler(string $name, \ReflectionFunctionAbstract $fun): void
+    public function addSignalHandler(SignalDefinition $definition): void
     {
-        $this->signalHandlers[$name] = $fun;
+        $this->signalHandlers[$definition->name] = $definition;
     }
 
     /**
-     * @return iterable<non-empty-string, \ReflectionFunctionAbstract>
+     * @return array<non-empty-string, SignalDefinition>
      */
     public function getSignalHandlers(): iterable
     {
         return $this->signalHandlers;
     }
 
-    /**
-     * @param non-empty-string $name
-     * @param \ReflectionFunctionAbstract $reflection
-     */
     public function addUpdateHandler(UpdateDefinition $definition): void
     {
         $this->updateHandlers[$definition->name] = $definition;
