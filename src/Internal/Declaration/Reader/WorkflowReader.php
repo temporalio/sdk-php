@@ -15,6 +15,7 @@ use Temporal\Common\CronSchedule;
 use Temporal\Common\MethodRetry;
 use Temporal\Internal\Declaration\Graph\ClassNode;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
+use Temporal\Internal\Declaration\Prototype\QueryDefinition;
 use Temporal\Internal\Declaration\Prototype\SignalDefinition;
 use Temporal\Internal\Declaration\Prototype\UpdateDefinition;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
@@ -200,7 +201,13 @@ class WorkflowReader extends Reader
                     );
                 }
 
-                $prototype->addQueryHandler($query->name ?? $method->getName(), $method);
+                $prototype->addQueryHandler(
+                    new QueryDefinition(
+                        name: $query->name ?? $method->getName(),
+                        returnType: $method->getReturnType(),
+                        method: $method,
+                    ),
+                );
             }
         }
 

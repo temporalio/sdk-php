@@ -95,12 +95,10 @@ final class ChildWorkflowProxy extends Proxy
         }
 
         // Otherwise, we try to find a suitable workflow "query" method.
-        foreach ($this->workflow->getQueryHandlers() as $name => $query) {
-            if ($query->getName() === $method) {
-                throw new \BadMethodCallException(
-                    \sprintf(self::ERROR_UNSUPPORTED_METHOD, $method, $name)
-                );
-            }
+        foreach ($this->workflow->getQueryHandlers() as $name => $definition) {
+            $definition->method->getName() === $method and throw new \BadMethodCallException(
+                \sprintf(self::ERROR_UNSUPPORTED_METHOD, $method, $name)
+            );
         }
 
         throw new \BadMethodCallException(

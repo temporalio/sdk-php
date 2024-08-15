@@ -97,8 +97,8 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
                 : null;
         }
 
-        foreach ($prototype->getQueryHandlers() as $name => $reflection) {
-            $fn = $this->createHandler($reflection);
+        foreach ($prototype->getQueryHandlers() as $name => $definition) {
+            $fn = $this->createHandler($definition->method);
             $this->queryHandlers[$name] = $this->pipeline->with(
                 function (QueryInput $input) use ($fn): mixed {
                     return ($this->queryExecutor)($input, $fn);
