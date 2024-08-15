@@ -28,7 +28,7 @@ abstract class Instance implements InstanceInterface
 
     public function __construct(
         Prototype $prototype,
-        protected readonly object $context,
+        protected object $context,
     ) {
         $handler = $prototype->getHandler();
 

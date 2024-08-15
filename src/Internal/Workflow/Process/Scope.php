@@ -19,6 +19,7 @@ use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\TemporalFailure;
 use Temporal\Exception\InvalidArgumentException;
+use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Internal\Declaration\Destroyable;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Request\Cancel;
@@ -150,10 +151,10 @@ class Scope implements CancellationScopeInterface, Destroyable
      * @param callable(ValuesInterface): mixed $handler Update method handler.
      * @param Deferred $resolver Update method promise resolver.
      */
-    public function startUpdate(callable $handler, ValuesInterface $values, Deferred $resolver, string $name): void
+    public function startUpdate(callable $handler, UpdateInput $input, Deferred $resolver): void
     {
         // Update handler counter
-        $id = $this->context->getHandlerState()->addUpdate($name);
+        $id = $this->context->getHandlerState()->addUpdate($input->updateId, $input->updateName);
         $this->then(
             fn() => $this->context->getHandlerState()->removeUpdate($id),
             fn() => $this->context->getHandlerState()->removeUpdate($id),
@@ -169,7 +170,7 @@ class Scope implements CancellationScopeInterface, Destroyable
         );
 
         // Create a coroutine generator
-        $this->coroutine = $this->callSignalOrUpdateHandler($handler, $values);
+        $this->coroutine = $this->callSignalOrUpdateHandler($handler, $input->arguments);
         $this->next();
     }
 

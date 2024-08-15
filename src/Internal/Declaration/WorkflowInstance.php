@@ -65,14 +65,13 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     private \Closure $updateValidator;
 
     /**
-     * @param WorkflowPrototype $prototype
      * @param object $context Workflow object
      * @param Interceptor\Pipeline<WorkflowInboundCallsInterceptor, mixed> $pipeline
      */
     public function __construct(
-        WorkflowPrototype $prototype,
+        private WorkflowPrototype $prototype,
         object $context,
-        private readonly Interceptor\Pipeline $pipeline,
+        private Interceptor\Pipeline $pipeline,
     ) {
         parent::__construct($prototype, $context);
 
@@ -267,7 +266,12 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
         $this->signalQueue->clear();
         $this->signalHandlers = [];
         $this->queryHandlers = [];
-        unset($this->queryExecutor);
+        unset($this->queryExecutor, $this->prototype, $this->pipeline, $this->context);
+    }
+
+    public function getPrototype(): WorkflowPrototype
+    {
+        return $this->prototype;
     }
 
     /**
