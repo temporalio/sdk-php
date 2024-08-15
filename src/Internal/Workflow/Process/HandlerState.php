@@ -9,33 +9,49 @@ namespace Temporal\Internal\Workflow\Process;
  */
 final class HandlerState
 {
-    private int $updates = 0;
-    private int $signals = 0;
+    private array $updates = [];
+    private array $signals = [];
 
     public function hasRunningHandlers(): bool
     {
-        return $this->updates > 0 || $this->signals > 0;
+        return \count($this->updates) > 0 || \count($this->signals) > 0;
     }
 
     public function addUpdate($name): int
     {
-        ++$this->updates;
-        return 0;
+        $this->updates[] = $name;
+        return \array_key_last($this->updates);
     }
 
     public function removeUpdate(int $updateId): void
     {
-        --$this->updates;
+        unset($this->updates[$updateId]);
     }
 
     public function addSignal($name): int
     {
-        ++$this->signals;
-        return 0;
+        $this->signals[] = $name;
+        return \array_key_last($this->signals);
     }
 
     public function removeSignal(int $signalId): void
     {
-        --$this->signals;
+        unset($this->signals[$signalId]);
+    }
+
+    /**
+     * @return list<non-empty-string> List of signal names
+     */
+    public function getRunningSignals(): array
+    {
+        return \array_unique($this->signals);
+    }
+
+    /**
+     * @return list<non-empty-string> List of update names
+     */
+    public function getRunningUpdates(): array
+    {
+        return \array_unique($this->updates);
     }
 }

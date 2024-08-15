@@ -85,18 +85,13 @@ final class WorkflowProxy extends Proxy
         }
 
         // Otherwise, we try to find a suitable workflow "update" method.
-        foreach ($this->prototype->getUpdateHandlers() as $name => $update) {
-            if ($update->getName() === $method) {
-                $args = Reflection::orderArguments($update, $args);
-                $attrs = $update->getAttributes(ReturnType::class);
-
-                $returnType = \array_key_exists(0, $attrs)
-                    ? $attrs[0]->newInstance()
-                    : $update->getReturnType();
+        foreach ($this->prototype->getUpdateHandlers() as $name => $definition) {
+            if ($definition->method->getName() === $method) {
+                $args = Reflection::orderArguments($definition->method, $args);
 
                 $options = UpdateOptions::new($name)
                     ->withUpdateName($name)
-                    ->withResultType($returnType)
+                    ->withResultType($definition->returnType)
                     ->withWaitPolicy(WaitPolicy::new()->withLifecycleStage(LifecycleStage::StageCompleted));
 
                 return $this->stub->startUpdate($options, ...$args)->getResult();

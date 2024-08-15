@@ -84,8 +84,8 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
         }
 
         $updateValidators = $prototype->getValidateUpdateHandlers();
-        foreach ($prototype->getUpdateHandlers() as $method => $reflection) {
-            $fn = $this->createHandler($reflection);
+        foreach ($prototype->getUpdateHandlers() as $method => $definition) {
+            $fn = $this->createHandler($definition->method);
             $this->updateHandlers[$method] = fn(UpdateInput $input, Deferred $deferred): mixed =>
                 ($this->updateExecutor)($input, $fn, $deferred);
             // Register validate update handlers
