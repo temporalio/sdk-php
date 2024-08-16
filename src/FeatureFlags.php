@@ -21,4 +21,10 @@ final class FeatureFlags
      * @link https://github.com/temporalio/sdk-php/issues/457
      */
     public static bool $workflowDeferredHandlerStart = false;
+
+    /**
+     * Warn about running Signal and Update handlers on Workflow finish.
+     * It uses `error_log()` function to output a warning message.
+     */
+    public static bool $warnOnWorkflowUnfinishedHandlers = true;
 }

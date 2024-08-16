@@ -17,6 +17,7 @@ use React\Promise\PromiseInterface;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Exception\Failure\CanceledFailure;
+use Temporal\FeatureFlags;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
@@ -235,6 +236,12 @@ class Process extends Scope implements ProcessInterface
      */
     private function logRunningHandlers(string $happened = 'finished'): void
     {
+        // Skip logging if the feature flag is disabled
+        if (!FeatureFlags::$warnOnWorkflowUnfinishedHandlers) {
+            return;
+        }
+
+        // Skip logging if the workflow is replaying or no handlers are running
         if ($this->getContext()->isReplaying() || !$this->getContext()->getHandlerState()->hasRunningHandlers()) {
             return;
         }
@@ -277,7 +284,7 @@ class Process extends Scope implements ProcessInterface
                 'This may have interrupted work that the update handler was doing, and the client ' .
                 'that sent the update will receive a \'workflow execution already completed\' RPCError ' .
                 'instead of the update result. You can wait for all update and signal handlers ' .
-                'to complete by using `await workflow.wait_condition(lambda: workflow.all_handlers_finished())`. ' .
+                'to complete by using `yield Workflow::await(Workflow::allHandlersFinished(...));`. ' .
                 'Alternatively, if both you and the clients sending the update are okay with interrupting ' .
                 'running handlers when the workflow finishes, and causing clients to receive errors, ' .
                 'then you can disable this warning via the update handler attribute: ' .

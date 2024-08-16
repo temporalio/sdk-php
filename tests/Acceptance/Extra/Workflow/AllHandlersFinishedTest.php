@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Acceptance\Extra\Workflow\AllHandlersFinished;
 
+use PHPUnit\Framework\Attributes\CoversFunction;
 use PHPUnit\Framework\Attributes\Test;
 use React\Promise\PromiseInterface;
 use Temporal\Client\WorkflowStubInterface;
@@ -14,6 +15,7 @@ use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
+#[CoversFunction('Temporal\Internal\Workflow\Process\Process::logRunningHandlers')]
 class AllHandlersFinishedTest extends TestCase
 {
     #[Test]
@@ -136,12 +138,14 @@ class AllHandlersFinishedTest extends TestCase
     ): void {
         $this->markTestSkipped("Can't check the log yet");
 
+        /** @see TestWorkflow::resolveFromSignal() */
+        $stub->signal('resolve', 'foo', 42);
+        $stub->signal('resolve', 'bar', 42);
+
         for ($i = 0; $i < 8; $i++) {
             /** @see TestWorkflow::addFromSignal() */
             $stub->signal('await', "key-$i");
         }
-        /** @see TestWorkflow::resolveFromSignal() */
-        $stub->signal('resolve', 'foo');
 
         // Finish the workflow
         $stub->signal('exit');
@@ -161,7 +165,7 @@ class AllHandlersFinishedTest extends TestCase
             $stub->startUpdate('await', "key-$i");
         }
         /** @see TestWorkflow::resolveFromUpdate() */
-        $stub->startUpdate('resolve', 'foo');
+        $stub->startUpdate('resolve', 'foo', 42);
 
         // Finish the workflow
         $stub->signal('exit');

@@ -296,7 +296,7 @@ class WorkflowTestCase extends AbstractFunctional
                 LOG;
 
             $worker->run($this, Splitter::createFromString($log)->getQueue());
-            $before ??= \memory_get_usage();
+            $i === 3 and $before = \memory_get_usage();
         }
         $after = \memory_get_usage();
 

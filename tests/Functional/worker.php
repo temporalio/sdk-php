@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Temporal\FeatureFlags;
 use Temporal\Testing\WorkerFactory;
 use Temporal\Tests\Fixtures\PipelineProvider;
 use Temporal\Tests\Interceptor\HeaderChanger;
@@ -10,6 +11,9 @@ use Temporal\Worker\WorkerInterface;
 
 require __DIR__ . '/../../vendor/autoload.php';
 chdir(__DIR__ . '/../../');
+
+// Default feature flags
+FeatureFlags::$warnOnWorkflowUnfinishedHandlers = false;
 
 /**
  * @param non-empty-string $dir
