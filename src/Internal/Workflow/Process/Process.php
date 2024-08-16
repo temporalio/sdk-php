@@ -29,7 +29,7 @@ use Temporal\Internal\Workflow\Input;
 use Temporal\Internal\Workflow\WorkflowContext;
 use Temporal\Worker\LoopInterface;
 use Temporal\Workflow;
-use Temporal\Workflow\HandlerUnfinishedPolicy;
+use Temporal\Workflow\HandlerUnfinishedPolicy as HandlerPolicy;
 use Temporal\Workflow\ProcessInterface;
 
 /**
@@ -39,11 +39,6 @@ use Temporal\Workflow\ProcessInterface;
  */
 class Process extends Scope implements ProcessInterface
 {
-    /**
-     * Process constructor.
-     * @param ServiceContainer $services
-     * @param WorkflowContext  $ctx
-     */
     public function __construct(
         ServiceContainer $services,
         WorkflowContext $ctx,
@@ -62,7 +57,7 @@ class Process extends Scope implements ProcessInterface
                     new Input(
                         $this->scopeContext->getInfo(),
                         $input->arguments,
-                    )
+                    ),
                 );
                 Workflow::setCurrentContext($context);
 
@@ -146,7 +141,7 @@ class Process extends Scope implements ProcessInterface
                                     // Fail process when signal scope fails
                                     $this->complete($error);
                                 }
-                            }
+                            },
                         )->startSignal(
                             $handler,
                             $input->arguments,
@@ -172,7 +167,7 @@ class Process extends Scope implements ProcessInterface
             },
             function (\Throwable $e): void {
                 $this->complete($e);
-            }
+            },
         );
     }
 
@@ -254,7 +249,7 @@ class Process extends Scope implements ProcessInterface
         $signals = $this->getContext()->getHandlerState()->getRunningSignals();
         foreach ($signals as $name => $count) {
             // Check statically defined signals
-            if (\array_key_exists($name, $definitions) && $definitions[$name]->policy === HandlerUnfinishedPolicy::Abandon) {
+            if (\array_key_exists($name, $definitions) && $definitions[$name]->policy === HandlerPolicy::Abandon) {
                 continue;
             }
 
@@ -268,7 +263,7 @@ class Process extends Scope implements ProcessInterface
         foreach ($updates as $tuple) {
             $name = $tuple['name'];
             // Check statically defined updates
-            if (\array_key_exists($name, $definitions) && $definitions[$name]->policy === HandlerUnfinishedPolicy::Abandon) {
+            if (\array_key_exists($name, $definitions) && $definitions[$name]->policy === HandlerPolicy::Abandon) {
                 continue;
             }
 
@@ -290,7 +285,7 @@ class Process extends Scope implements ProcessInterface
                 'then you can disable this warning via the update handler attribute: ' .
                 '`#[UpdateMethod(unfinishedPolicy: HandlerUnfinishedPolicy::Abandon)]`. ' .
                 'The following updates were unfinished (and warnings were not disabled for their handler): ' .
-                \implode(', ', \array_map(static fn (array $v) => "`$v[name]` id:$v[id]", $warnUpdates));
+                \implode(', ', \array_map(static fn(array $v): string => "`$v[name]` id:$v[id]", $warnUpdates));
 
             \error_log($message);
         }
@@ -303,9 +298,9 @@ class Process extends Scope implements ProcessInterface
                 'Alternatively, if both you and the clients sending the signal are okay ' .
                 'with interrupting running handlers when the workflow finishes, ' .
                 'and causing clients to receive errors, then you can disable this warning via the signal ' .
-                'handler attribute: `#SignalMethod(unfinishedPolicy: HandlerUnfinishedPolicy::Abandon)]`. ' .
+                'handler attribute: `#[SignalMethod(unfinishedPolicy: HandlerUnfinishedPolicy::Abandon)]`. ' .
                 'The following signals were unfinished (and warnings were not disabled for their handler): ' .
-                \implode(', ', \array_map(static fn (array $v) => "`$v[name]` x$v[count]", $warnSignals));
+                \implode(', ', \array_map(static fn(array $v): string => "`$v[name]` x$v[count]", $warnSignals));
 
             \error_log($message);
         }
