@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Workflow;
 
 use Doctrine\Common\Annotations\Annotation\Target;
-use JetBrains\PhpStorm\Immutable;
 use Spiral\Attributes\NamedArgumentConstructor;
 
 /**
@@ -33,8 +32,6 @@ final class UpdateValidatorMethod
      *        And systems like prometheus ignore metrics which have tags with unsupported characters.
      */
     public function __construct(
-        #[Immutable]
-        public string $forUpdate,
-    ) {
-    }
+        public readonly string $forUpdate,
+    ) {}
 }

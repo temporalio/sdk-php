@@ -33,8 +33,7 @@ final class UpdateMethod
      *        a running instance of this handler.
      */
     public function __construct(
-        public ?string $name = null,
+        public readonly ?string $name = null,
         public readonly HandlerUnfinishedPolicy $unfinishedPolicy = HandlerUnfinishedPolicy::WarnAndAbandon,
-    ) {
-    }
+    ) {}
 }

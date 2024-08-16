@@ -31,7 +31,7 @@ use Temporal\Internal\Interceptor;
  * @psalm-type ValidateUpdateExecutor = \Closure(UpdateInput, callable(ValuesInterface): mixed): mixed
  * @psalm-type UpdateValidator = \Closure(UpdateInput, UpdateHandler): void
  */
-final class WorkflowInstance extends Instance implements WorkflowInstanceInterface, Destroyable
+final class WorkflowInstance extends Instance implements WorkflowInstanceInterface
 {
     /**
      * @var array<non-empty-string, QueryHandler>
@@ -266,7 +266,16 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
         $this->signalQueue->clear();
         $this->signalHandlers = [];
         $this->queryHandlers = [];
-        unset($this->queryExecutor, $this->prototype, $this->pipeline, $this->context);
+        $this->updateHandlers = [];
+        $this->validateUpdateHandlers = [];
+        unset(
+            $this->queryExecutor,
+            $this->updateExecutor,
+            $this->updateValidator,
+            $this->prototype,
+            $this->pipeline,
+        );
+        parent::destroy();
     }
 
     public function getPrototype(): WorkflowPrototype

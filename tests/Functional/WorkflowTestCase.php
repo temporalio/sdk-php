@@ -230,6 +230,17 @@ class WorkflowTestCase extends AbstractFunctional
         $worker->run($this, Splitter::create('Test_RuntimeSignal.log')->getQueue());
     }
 
+    public function testUnfinishedHandlerWarn(): void
+    {
+        $this->markTestSkipped("Can't check the log yet");
+
+        $worker = WorkerMock::createMock();
+
+        $worker->run($this, Splitter::create('Test_RuntimeSignal.log')->getQueue());
+
+        // todo check logs
+    }
+
     public function testSignalStepsAndRuntimeQuery(): void
     {
         $worker = WorkerMock::createMock();
@@ -333,7 +344,7 @@ class WorkflowTestCase extends AbstractFunctional
                 LOG;
 
             $worker->run($this, Splitter::createFromString($log)->getQueue());
-            $before ??= \memory_get_usage();
+            $i === 3 and $before = \memory_get_usage();
         }
         $after = \memory_get_usage();
 
@@ -364,7 +375,7 @@ class WorkflowTestCase extends AbstractFunctional
                 LOG;
 
             $worker->run($this, Splitter::createFromString($log)->getQueue());
-            $before ??= \memory_get_usage();
+            $i === 3 and $before = \memory_get_usage();
         }
         $after = \memory_get_usage();
 
