@@ -7,6 +7,7 @@ namespace Temporal\Tests\Acceptance\Extra\Workflow\AllHandlersFinished;
 use PHPUnit\Framework\Attributes\Test;
 use React\Promise\PromiseInterface;
 use Temporal\Client\WorkflowStubInterface;
+use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
@@ -156,10 +157,10 @@ class AllHandlersFinishedTest extends TestCase
         $this->markTestSkipped("Can't check the log yet");
 
         for ($i = 0; $i < 8; $i++) {
-            /** @see TestWorkflow::addFromSignal() */
+            /** @see TestWorkflow::addFromUpdate() */
             $stub->startUpdate('await', "key-$i");
         }
-        /** @see TestWorkflow::resolveFromSignal() */
+        /** @see TestWorkflow::resolveFromUpdate() */
         $stub->startUpdate('resolve', 'foo');
 
         // Finish the workflow
@@ -167,6 +168,31 @@ class AllHandlersFinishedTest extends TestCase
         $stub->getResult(timeout: 1);
 
         // todo Check that `await` updates was mentioned in the logs
+    }
+
+    #[Test]
+    public function warnUnfinishedOnCancel(
+        #[Stub('Extra_Workflow_AllHandlersFinished')] WorkflowStubInterface $stub,
+    ): void {
+        $this->markTestSkipped("Can't check the log yet");
+
+        /** @see TestWorkflow::addFromSignal() */
+        $stub->signal('await', "key-sig");
+
+        /** @see TestWorkflow::addFromUpdate() */
+        $stub->startUpdate('await', "key-upd");
+
+        // Finish the workflow
+        $stub->cancel();
+
+        try {
+            $stub->getResult(timeout: 1);
+            $this->fail('Cancellation exception must be thrown');
+        } catch (WorkflowFailedException) {
+            // Expected
+        }
+
+        // todo Check logs
     }
 }
 

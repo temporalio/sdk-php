@@ -40,6 +40,8 @@ final class WorkflowProxy extends Proxy
     /**
      * @param non-empty-string $method
      * @return mixed|void
+     *
+     * @psalm-suppress MoreSpecificImplementedParamType
      */
     public function __call(string $method, array $args)
     {

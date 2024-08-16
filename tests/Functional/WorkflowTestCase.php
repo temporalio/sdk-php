@@ -230,17 +230,6 @@ class WorkflowTestCase extends AbstractFunctional
         $worker->run($this, Splitter::create('Test_RuntimeSignal.log')->getQueue());
     }
 
-    public function testUnfinishedHandlerWarn(): void
-    {
-        $this->markTestSkipped("Can't check the log yet");
-
-        $worker = WorkerMock::createMock();
-
-        $worker->run($this, Splitter::create('Test_RuntimeSignal.log')->getQueue());
-
-        // todo check logs
-    }
-
     public function testSignalStepsAndRuntimeQuery(): void
     {
         $worker = WorkerMock::createMock();

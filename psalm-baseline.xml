@@ -533,11 +533,6 @@
       <code><![CDATA[$reflection]]></code>
     </RedundantCondition>
   </file>
-  <file src="src/Internal/Declaration/Prototype/WorkflowPrototype.php">
-    <PropertyTypeCoercion>
-      <code><![CDATA[$this->queryHandlers]]></code>
-    </PropertyTypeCoercion>
-  </file>
   <file src="src/Internal/Declaration/Reader/ActivityReader.php">
     <ArgumentTypeCoercion>
       <code><![CDATA[$contextualRetry]]></code>
@@ -558,7 +553,6 @@
       <code><![CDATA[$method]]></code>
       <code><![CDATA[$name]]></code>
       <code><![CDATA[$retry]]></code>
-      <code><![CDATA[$signal->name ?? $ctx->getName()]]></code>
     </ArgumentTypeCoercion>
     <InvalidArgument>
       <code><![CDATA[\reset($prototypes)]]></code>

@@ -16,6 +16,7 @@ use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DestructMemorizedInstanceException;
+use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
@@ -209,28 +210,30 @@ class Process extends Scope implements ProcessInterface
                 return;
             }
 
+            $this->logRunningHandlers($result instanceof CanceledFailure ? 'cancelled' : 'failed');
+
             if ($this->services->exceptionInterceptor->isRetryable($result)) {
                 $this->scopeContext->panic($result);
                 return;
             }
 
-            $this->logRunningHandlers();
             $this->scopeContext->complete([], $result);
             return;
         }
 
         if ($this->scopeContext->isContinuedAsNew()) {
+            $this->logRunningHandlers('continued as new');
             return;
         }
 
-        $this->scopeContext->complete($result);
         $this->logRunningHandlers();
+        $this->scopeContext->complete($result);
     }
 
     /**
      * Log about running handlers on Workflow cancellation, failure, and success.
      */
-    private function logRunningHandlers(): void
+    private function logRunningHandlers(string $happened = 'finished'): void
     {
         if ($this->getContext()->isReplaying() || !$this->getContext()->getHandlerState()->hasRunningHandlers()) {
             return;
@@ -266,9 +269,11 @@ class Process extends Scope implements ProcessInterface
             $warnUpdates[] = $tuple;
         }
 
+        $workflowName = $this->getContext()->getInfo()->type->name;
+
         // Warn messages
         if ($warnUpdates !== []) {
-            $message = 'Workflow finished while update handlers are still running. ' .
+            $message = "Workflow `$workflowName` $happened while update handlers are still running. " .
                 'This may have interrupted work that the update handler was doing, and the client ' .
                 'that sent the update will receive a \'workflow execution already completed\' RPCError ' .
                 'instead of the update result. You can wait for all update and signal handlers ' .
@@ -284,7 +289,7 @@ class Process extends Scope implements ProcessInterface
         }
 
         if ($warnSignals !== []) {
-            $message = 'Workflow finished while signal handlers are still running. ' .
+            $message = "Workflow `$workflowName` $happened while signal handlers are still running. " .
                 'This may have interrupted work that the signal handler was doing. ' .
                 'You can wait for all update and signal handlers to complete by using ' .
                 '`yield Workflow::await(Workflow::allHandlersFinished(...));`. ' .

@@ -176,6 +176,7 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     /**
      * @param callable $handler
+     * @param non-empty-string $name
      */
     public function startSignal(callable $handler, ValuesInterface $values, string $name): void
     {

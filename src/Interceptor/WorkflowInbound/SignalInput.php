@@ -19,6 +19,8 @@ use Temporal\Workflow\WorkflowInfo;
 class SignalInput
 {
     /**
+     * @param non-empty-string $signalName
+     *
      * @no-named-arguments
      * @internal Don't use the constructor. Use {@see self::with()} instead.
      */
