@@ -13,6 +13,7 @@ namespace Temporal\Exception\Client;
 
 use Temporal\Exception\TemporalException;
 
-class TimeoutException extends TemporalException
-{
-}
+/**
+ * RPC timeout or cancellation.
+ */
+class TimeoutException extends TemporalException {}

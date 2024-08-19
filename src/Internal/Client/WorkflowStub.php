@@ -51,6 +51,7 @@ use Temporal\Exception\Client\WorkflowQueryException;
 use Temporal\Exception\Client\WorkflowQueryRejectedException;
 use Temporal\Exception\Client\WorkflowServiceException;
 use Temporal\Exception\Client\WorkflowUpdateException;
+use Temporal\Exception\Client\WorkflowUpdateRPCTimeoutOrCanceledException;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Exception\Failure\TerminatedFailure;
@@ -332,6 +333,8 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                     }
 
                     throw WorkflowServiceException::withoutMessage($input->workflowExecution, $input->workflowType, $e);
+                } catch (TimeoutException $e) {
+                    throw WorkflowUpdateRPCTimeoutOrCanceledException::fromTimeoutException($e);
                 } catch (\Throwable $e) {
                     throw new WorkflowServiceException(null, $input->workflowExecution, $input->workflowType, $e);
                 }
