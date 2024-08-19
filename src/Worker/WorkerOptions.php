@@ -163,6 +163,14 @@ class WorkerOptions
     public ?\DateInterval $stickyScheduleToStartTimeout = null;
 
     /**
+     * Optional: Sets how workflow worker deals with non-deterministic history events
+     * (presumably arising from non-deterministic workflow definitions or non-backward compatible workflow
+     * definition changes) and other panics raised from workflow code.
+     */
+    #[Marshal(name: 'WorkflowPanicPolicy', type: WorkflowPanicPolicy::class)]
+    public WorkflowPanicPolicy $workflowPanicPolicy = WorkflowPanicPolicy::BlockWorkflow;
+
+    /**
      * Optional: worker graceful stop timeout.
      */
     #[Marshal(name: 'WorkerStopTimeout', type: NullableType::class, of: DateIntervalType::class)]
@@ -318,7 +326,7 @@ class WorkerOptions
     #[Pure]
     public function withMaxConcurrentActivityExecutionSize(int $size): self
     {
-        assert($size >= 0);
+        \assert($size >= 0);
 
         $self = clone $this;
         $self->maxConcurrentActivityExecutionSize = $size;
@@ -341,7 +349,7 @@ class WorkerOptions
     #[Pure]
     public function withWorkerActivitiesPerSecond(float $interval): self
     {
-        assert($interval >= 0);
+        \assert($interval >= 0);
 
         $self = clone $this;
         $self->workerActivitiesPerSecond = $interval;
@@ -361,7 +369,7 @@ class WorkerOptions
     #[Pure]
     public function withMaxConcurrentLocalActivityExecutionSize(int $size): self
     {
-        assert($size >= 0);
+        \assert($size >= 0);
 
         $self = clone $this;
         $self->maxConcurrentLocalActivityExecutionSize = $size;
@@ -385,7 +393,7 @@ class WorkerOptions
     #[Pure]
     public function withWorkerLocalActivitiesPerSecond(float $interval): self
     {
-        assert($interval >= 0);
+        \assert($interval >= 0);
 
         $self = clone $this;
         $self->workerLocalActivitiesPerSecond = $interval;
@@ -414,7 +422,7 @@ class WorkerOptions
     #[Pure]
     public function withTaskQueueActivitiesPerSecond(float $interval): self
     {
-        assert($interval >= 0);
+        \assert($interval >= 0);
 
         $self = clone $this;
         $self->taskQueueActivitiesPerSecond = $interval;
@@ -434,7 +442,7 @@ class WorkerOptions
     #[Pure]
     public function withMaxConcurrentActivityTaskPollers(int $pollers): self
     {
-        assert($pollers >= 0);
+        \assert($pollers >= 0);
 
         $self = clone $this;
         $self->maxConcurrentActivityTaskPollers = $pollers;
@@ -456,7 +464,7 @@ class WorkerOptions
     #[Pure]
     public function withMaxConcurrentWorkflowTaskExecutionSize(int $size): self
     {
-        assert($size >= 0);
+        \assert($size >= 0);
 
         $self = clone $this;
         $self->maxConcurrentWorkflowTaskExecutionSize = $size;
@@ -478,7 +486,7 @@ class WorkerOptions
     #[Pure]
     public function withMaxConcurrentWorkflowTaskPollers(int $pollers): self
     {
-        assert($pollers >= 0);
+        \assert($pollers >= 0);
 
         $self = clone $this;
         $self->maxConcurrentWorkflowTaskPollers = $pollers;
@@ -494,7 +502,7 @@ class WorkerOptions
     #[Pure]
     public function withMaxConcurrentNexusTaskExecutionSize(int $size): self
     {
-        assert($size >= 0);
+        \assert($size >= 0);
 
         $self = clone $this;
         $self->maxConcurrentNexusTaskExecutionSize = $size;
@@ -511,7 +519,7 @@ class WorkerOptions
     #[Pure]
     public function withMaxConcurrentNexusTaskPollers(int $pollers): self
     {
-        assert($pollers >= 0);
+        \assert($pollers >= 0);
 
         $self = clone $this;
         $self->maxConcurrentNexusTaskPollers = $pollers;
@@ -550,12 +558,25 @@ class WorkerOptions
     #[Pure]
     public function withStickyScheduleToStartTimeout($timeout): self
     {
-        assert(DateInterval::assert($timeout));
+        \assert(DateInterval::assert($timeout));
         $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
-        assert($timeout->totalMicroseconds >= 0);
+        \assert($timeout->totalMicroseconds >= 0);
 
         $self = clone $this;
         $self->stickyScheduleToStartTimeout = $timeout;
+        return $self;
+    }
+
+    /**
+     * Optional: Sets how workflow worker deals with non-deterministic history events
+     * (presumably arising from non-deterministic workflow definitions or non-backward compatible workflow
+     * definition changes) and other panics raised from workflow code.
+     */
+    #[Pure]
+    public function withWorkflowPanicPolicy(WorkflowPanicPolicy $policy): self
+    {
+        $self = clone $this;
+        $self->workflowPanicPolicy = $policy;
         return $self;
     }
 
@@ -569,9 +590,9 @@ class WorkerOptions
     #[Pure]
     public function withWorkerStopTimeout($timeout): self
     {
-        assert(DateInterval::assert($timeout));
+        \assert(DateInterval::assert($timeout));
         $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
-        assert($timeout->totalMicroseconds >= 0);
+        \assert($timeout->totalMicroseconds >= 0);
 
         $self = clone $this;
         $self->workerStopTimeout = $timeout;
@@ -622,7 +643,7 @@ class WorkerOptions
     #[Pure]
     public function withMaxConcurrentSessionExecutionSize(int $size): self
     {
-        assert($size >= 0);
+        \assert($size >= 0);
 
         $self = clone $this;
         $self->maxConcurrentSessionExecutionSize = $size;
@@ -679,9 +700,9 @@ class WorkerOptions
     #[Pure]
     public function withDeadlockDetectionTimeout($timeout): self
     {
-        assert(DateInterval::assert($timeout));
+        \assert(DateInterval::assert($timeout));
         $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
-        assert($timeout->totalMicroseconds >= 0);
+        \assert($timeout->totalMicroseconds >= 0);
 
         $self = clone $this;
         $self->deadlockDetectionTimeout = $timeout;
@@ -702,9 +723,9 @@ class WorkerOptions
     #[Pure]
     public function withMaxHeartbeatThrottleInterval($interval): self
     {
-        assert(DateInterval::assert($interval));
+        \assert(DateInterval::assert($interval));
         $interval = DateInterval::parse($interval, DateInterval::FORMAT_SECONDS);
-        assert($interval->totalMicroseconds >= 0);
+        \assert($interval->totalMicroseconds >= 0);
 
         $self = clone $this;
         $self->maxHeartbeatThrottleInterval = $interval;
@@ -747,7 +768,7 @@ class WorkerOptions
     #[Pure]
     public function withMaxConcurrentEagerActivityExecutionSize(int $size): self
     {
-        assert($size >= 0);
+        \assert($size >= 0);
 
         $self = clone $this;
         $self->maxConcurrentEagerActivityExecutionSize = $size;
