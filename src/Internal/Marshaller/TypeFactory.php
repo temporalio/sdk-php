@@ -17,6 +17,7 @@ use Temporal\Internal\Marshaller\Type\DateTimeType;
 use Temporal\Internal\Marshaller\Type\DetectableTypeInterface;
 use Temporal\Internal\Marshaller\Type\EncodedCollectionType;
 use Temporal\Internal\Marshaller\Type\EnumType;
+use Temporal\Internal\Marshaller\Type\EnumValueType;
 use Temporal\Internal\Marshaller\Type\ObjectType;
 use Temporal\Internal\Marshaller\Type\OneOfType;
 use Temporal\Internal\Marshaller\Type\RuleFactoryInterface as TypeRuleFactoryInterface;
@@ -139,10 +140,8 @@ class TypeFactory implements RuleFactoryInterface
      */
     private function getDefaultMatchers(): iterable
     {
-        if (PHP_VERSION_ID >= 80104) {
-            yield EnumType::class;
-        }
-
+        yield EnumType::class;
+        yield EnumValueType::class;
         yield DateTimeType::class;
         yield DateIntervalType::class;
         yield UuidType::class;

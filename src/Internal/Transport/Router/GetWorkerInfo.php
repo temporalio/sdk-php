@@ -84,6 +84,7 @@ final class GetWorkerInfo extends Route
             // ActivityInfo[]
             'Activities' => $this->map($worker->getActivities(), $activityMap),
             'PhpSdkVersion' => SdkVersion::getSdkVersion(),
+            'Flags' => (object)[],
         ];
     }
 
