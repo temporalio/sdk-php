@@ -22,13 +22,18 @@ class EnumValueType extends Type implements RuleFactoryInterface
 {
     private const ERROR_MESSAGE = 'Invalid Enum value. Expected: int or string scalar value for BackedEnum. %s given.';
 
-    /** @var class-string<\UnitEnum> */
+    /** @var class-string<\BackedEnum> */
     private string $classFQCN;
 
-    public function __construct(MarshallerInterface $marshaller, string $class = null)
+    /**
+     * @param class-string<\BackedEnum>|null $class
+     */
+    public function __construct(MarshallerInterface $marshaller, ?string $class = null)
     {
         $this->classFQCN = $class ?? throw new \RuntimeException('Enum is required.');
-        \is_a($class, BackedEnum::class, true) ?: throw new \RuntimeException('Enum must be an instance of BackedEnum.');
+        \is_a($class, BackedEnum::class, true) ?: throw new \RuntimeException(
+            'Class for EnumValueType must be an instance of BackedEnum.',
+        );
         parent::__construct($marshaller);
     }
 
@@ -61,7 +66,7 @@ class EnumValueType extends Type implements RuleFactoryInterface
             return $value;
         }
 
-        if (\is_scalar($value)) {
+        if (\is_int($value) || \is_string($value)) {
             return $this->classFQCN::from($value);
         }
 
