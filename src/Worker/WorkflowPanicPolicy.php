@@ -7,7 +7,7 @@ namespace Temporal\Worker;
 enum WorkflowPanicPolicy: int
 {
     /**
-     *  BlockWorkflow is the default policy for handling workflow panics and detected non-determinism.
+     * BlockWorkflow is the default policy for handling workflow panics and detected non-determinism.
      * This option causes workflow to get stuck in the workflow task retry loop.
      * It is expected that after the problem is discovered and fixed the workflows are going to continue
      * without any additional manual intervention.
