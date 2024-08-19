@@ -28,10 +28,6 @@ class EnumType extends Type implements RuleFactoryInterface
 
     public function __construct(MarshallerInterface $marshaller, string $class = null)
     {
-        if (PHP_VERSION_ID < 80104) {
-            throw new \RuntimeException('Enums are not available in this version of PHP');
-        }
-
         if ($class === null) {
             throw new \RuntimeException('Enum is required');
         }
