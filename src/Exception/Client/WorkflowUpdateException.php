@@ -13,7 +13,7 @@ namespace Temporal\Exception\Client;
 
 use Temporal\Workflow\WorkflowExecution;
 
-final class WorkflowUpdateException extends WorkflowException
+class WorkflowUpdateException extends WorkflowException
 {
     public function __construct(
         ?string $message,

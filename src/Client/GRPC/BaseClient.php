@@ -24,6 +24,7 @@ use Temporal\Client\Common\RpcRetryOptions;
 use Temporal\Client\Common\ServerCapabilities;
 use Temporal\Client\GRPC\Connection\Connection;
 use Temporal\Client\GRPC\Connection\ConnectionInterface;
+use Temporal\Exception\Client\CanceledException;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Client\TimeoutException;
 use Temporal\Interceptor\GrpcClientInterceptor;
@@ -300,6 +301,10 @@ abstract class BaseClient implements ServiceClientInterface
                 if (!\in_array($e->getCode(), self::RETRYABLE_ERRORS, true)) {
                     if ($e->getCode() === StatusCode::DEADLINE_EXCEEDED) {
                         throw new TimeoutException($e->getMessage(), $e->getCode(), $e);
+                    }
+
+                    if ($e->getCode() === StatusCode::CANCELLED) {
+                        throw new CanceledException($e->getMessage(), $e->getCode(), $e);
                     }
 
                     // non retryable
