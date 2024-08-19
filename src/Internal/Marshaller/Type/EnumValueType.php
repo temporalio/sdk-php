@@ -16,23 +16,19 @@ use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Marshaller\MarshallingRule;
 
 /**
- * @extends Type<array>
+ * @extends Type<int|string>
  */
-class EnumType extends Type implements RuleFactoryInterface
+class EnumValueType extends Type implements RuleFactoryInterface
 {
-    private const ERROR_INVALID_TYPE = 'Invalid Enum value. Expected: int or string scalar value for BackedEnum; '
-        . 'array with `name` or `value` keys; a case of the Enum. %s given.';
+    private const ERROR_MESSAGE = 'Invalid Enum value. Expected: int or string scalar value for BackedEnum. %s given.';
 
     /** @var class-string<\UnitEnum> */
     private string $classFQCN;
 
     public function __construct(MarshallerInterface $marshaller, string $class = null)
     {
-        if ($class === null) {
-            throw new \RuntimeException('Enum is required');
-        }
-
-        $this->classFQCN = $class;
+        $this->classFQCN = $class ?? throw new \RuntimeException('Enum is required.');
+        \is_a($class, BackedEnum::class, true) ?: throw new \RuntimeException('Enum must be an instance of BackedEnum.');
         parent::__construct($marshaller);
     }
 
@@ -69,34 +65,11 @@ class EnumType extends Type implements RuleFactoryInterface
             return $this->classFQCN::from($value);
         }
 
-        if (\is_array($value)) {
-           // Process the `value` key
-            if (\array_key_exists('value', $value)) {
-                return $this->classFQCN::from($value['value']);
-            }
-
-            // Process the `name` key
-            if (\array_key_exists('name', $value)) {
-                return (new \ReflectionClass($this->classFQCN))
-                    ->getConstant($value['name']);
-            }
-        }
-
-        throw new \InvalidArgumentException(\sprintf(self::ERROR_INVALID_TYPE, \ucfirst(\get_debug_type($value))));
+        throw new \InvalidArgumentException(\sprintf(self::ERROR_MESSAGE, \ucfirst(\get_debug_type($value))));
     }
 
-    /**
-     * @psalm-suppress UndefinedDocblockClass
-     */
-    public function serialize($value): array
+    public function serialize($value): int|string
     {
-        return $value instanceof BackedEnum
-            ? [
-                'name' => $value->name,
-                'value' => $value->value,
-            ]
-            : [
-                'name' => $value->name,
-            ];
+        return $value->value;
     }
 }

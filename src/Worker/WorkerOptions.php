@@ -15,6 +15,8 @@ use JetBrains\PhpStorm\Pure;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
+use Temporal\Internal\Marshaller\Type\EnumType;
+use Temporal\Internal\Marshaller\Type\EnumValueType;
 use Temporal\Internal\Marshaller\Type\NullableType;
 use Temporal\Internal\Support\DateInterval;
 
@@ -167,7 +169,7 @@ class WorkerOptions
      * (presumably arising from non-deterministic workflow definitions or non-backward compatible workflow
      * definition changes) and other panics raised from workflow code.
      */
-    #[Marshal(name: 'WorkflowPanicPolicy', type: WorkflowPanicPolicy::class)]
+    #[Marshal(name: 'WorkflowPanicPolicy', type: EnumValueType::class, of: WorkflowPanicPolicy::class)]
     public WorkflowPanicPolicy $workflowPanicPolicy = WorkflowPanicPolicy::BlockWorkflow;
 
     /**
@@ -305,7 +307,7 @@ class WorkerOptions
      * @internal Experimental
      * @note Cannot be enabled at the same time as {@see self::$enableSessionWorker}
      */
-    #[Marshal(name: 'UseBuildIDForVersioning bool')]
+    #[Marshal(name: 'UseBuildIDForVersioning')]
     public bool $useBuildIDForVersioning = false;
 
     #[Pure]
