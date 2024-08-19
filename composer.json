@@ -33,7 +33,7 @@
         "react/promise": "^2.9",
         "roadrunner-php/roadrunner-api-dto": "^1.9.0",
         "roadrunner-php/version-checker": "^1.0",
-        "spiral/attributes": "^3.1.4",
+        "spiral/attributes": "^3.1.6",
         "spiral/roadrunner": "^2024.1",
         "spiral/roadrunner-cli": "^2.5",
         "spiral/roadrunner-kv": "^4.2",
