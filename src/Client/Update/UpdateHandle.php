@@ -10,6 +10,7 @@ use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Exception\Client\CanceledException;
 use Temporal\Exception\Client\TimeoutException;
 use Temporal\Exception\Client\WorkflowUpdateException;
 use Temporal\Exception\Client\WorkflowUpdateRPCTimeoutOrCanceledException;
@@ -122,8 +123,8 @@ final class UpdateHandle
                 $request,
                 $timeout === null ? null : $this->client->getContext()->withTimeout($timeout),
             );
-        } catch (TimeoutException $e) {
-            throw WorkflowUpdateRPCTimeoutOrCanceledException::fromTimeoutException($e);
+        } catch (TimeoutException|CanceledException $e) {
+            throw WorkflowUpdateRPCTimeoutOrCanceledException::fromTimeoutOrCanceledException($e);
         }
 
         // Workflow Uprate accepted

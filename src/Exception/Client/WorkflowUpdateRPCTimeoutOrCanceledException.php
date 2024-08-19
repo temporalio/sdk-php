@@ -18,12 +18,15 @@ namespace Temporal\Exception\Client;
  *       this is only related to the client call itself.
  */
 class WorkflowUpdateRPCTimeoutOrCanceledException extends TimeoutException {
-    public static function fromTimeoutException(TimeoutException $exception): self
+    private function __construct(string $message = '', int $code = 0, ?\Throwable $previous = null)
+    {
+        parent::__construct($message, $code, $previous);
+    }
+
+    public static function fromTimeoutOrCanceledException(TimeoutException|CanceledException $exception): self
     {
         return new self(
-            $exception->getMessage(),
-            $exception->getCode(),
-            $exception->getPrevious(),
+            previous: $exception->getPrevious(),
         );
     }
 }

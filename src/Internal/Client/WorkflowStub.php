@@ -334,7 +334,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
 
                     throw WorkflowServiceException::withoutMessage($input->workflowExecution, $input->workflowType, $e);
                 } catch (TimeoutException $e) {
-                    throw WorkflowUpdateRPCTimeoutOrCanceledException::fromTimeoutException($e);
+                    throw WorkflowUpdateRPCTimeoutOrCanceledException::fromTimeoutOrCanceledException($e);
                 } catch (\Throwable $e) {
                     throw new WorkflowServiceException(null, $input->workflowExecution, $input->workflowType, $e);
                 }
