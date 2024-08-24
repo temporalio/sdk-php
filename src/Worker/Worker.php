@@ -66,13 +66,14 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
         WorkerOptions $options,
         ServiceContainer $serviceContainer,
         RPCConnectionInterface $rpc,
+        bool $wfStartDeferred = false
     ) {
         $this->rpc = $rpc;
         $this->name = $taskQueue;
         $this->options = $options;
 
         $this->services = $serviceContainer;
-        $this->router = $this->createRouter();
+        $this->router = $this->createRouter($wfStartDeferred);
     }
 
     /**
@@ -162,7 +163,7 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
     /**
      * @return RouterInterface
      */
-    protected function createRouter(): RouterInterface
+    protected function createRouter(bool $wfStartDeferred): RouterInterface
     {
         $router = new Router();
 
@@ -171,7 +172,7 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
         $router->add(new Router\InvokeLocalActivity($this->services, $this->rpc, $this->services->interceptorProvider));
 
         // Workflow routes
-        $router->add(new Router\StartWorkflow($this->services));
+        $router->add(new Router\StartWorkflow($this->services, $wfStartDeferred));
         $router->add(new Router\InvokeQuery($this->services->running, $this->services->loop));
         $router->add(new Router\InvokeSignal($this->services->running));
         $router->add(new Router\InvokeUpdate($this->services->running));

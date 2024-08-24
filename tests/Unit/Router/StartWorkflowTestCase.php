@@ -56,7 +56,7 @@ final class StartWorkflowTestCase extends AbstractUnit
         );
         $workflowReader = new WorkflowReader(new SelectiveReader([new AnnotationReader(), new AttributeReader()]));
         $this->services->workflows->add($workflowReader->fromClass(DummyWorkflow::class));
-        $this->router = new StartWorkflow($this->services);
+        $this->router = new StartWorkflow($this->services, true);
         $this->workflowContext = new WorkflowContext(
             $this->services,
             $this->services->client,

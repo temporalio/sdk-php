@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Temporal\Tests\Acceptance\App;
 
 use PHPUnit\Framework\Attributes\Test;
-use Temporal\FeatureFlags;
 use Temporal\Tests\Acceptance\App\Input\Command;
 use Temporal\Tests\Acceptance\App\Input\Feature;
 use Temporal\Tests\Acceptance\App\Runtime\State;
@@ -69,7 +68,6 @@ final class RuntimeBuilder
     public static function init(): void
     {
         \ini_set('display_errors', 'stderr');
-        FeatureFlags::$workflowDeferredHandlerStart = true;
     }
 
     /**

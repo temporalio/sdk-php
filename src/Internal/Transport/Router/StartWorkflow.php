@@ -13,7 +13,6 @@ namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
 use Temporal\DataConverter\EncodedValues;
-use Temporal\FeatureFlags;
 use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
 use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\Instantiator\WorkflowInstantiator;
@@ -31,12 +30,11 @@ final class StartWorkflow extends Route
     private const ERROR_NOT_FOUND = 'Workflow with the specified name "%s" was not registered';
 
     private readonly WorkflowInstantiator $instantiator;
-    private readonly bool $wfStartDeferred;
 
     public function __construct(
         private readonly ServiceContainer $services,
+        private readonly bool $wfStartDeferred = false,
     ) {
-        $this->wfStartDeferred = FeatureFlags::$workflowDeferredHandlerStart;
         $this->instantiator = new WorkflowInstantiator($services->interceptorProvider);
     }
 
