@@ -112,4 +112,9 @@ final class ActivityPrototype extends Prototype
     {
         return $this->isLocalActivity;
     }
+
+    public function getFactory(): ?Closure
+    {
+        return $this->factory;
+    }
 }

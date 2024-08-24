@@ -111,4 +111,13 @@ final class ActivityPrototypeTestCase extends AbstractUnit
         $this->assertEquals($protoWithFactory->getInstance()->getContext(), $protoWithFactory->getInstance()->getContext());
         $this->assertNotSame($protoWithFactory->getInstance()->getContext(), $protoWithFactory->getInstance()->getContext());
     }
+
+    public function testGetFactory(): void
+    {
+        $proto = $this->activityReader->fromClass(DummyActivity::class)[0];
+        $protoWithFactory = $proto->withFactory(fn (\ReflectionClass $reflectionClass) => $reflectionClass->newInstance());
+
+        $this->assertNull($proto->getFactory());
+        $this->assertNotNull($protoWithFactory->getFactory());
+    }
 }
