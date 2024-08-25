@@ -44,7 +44,7 @@ jobs:
 
   php-cs-fixer:
     name: PHP-CS-Fixer
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
@@ -56,6 +56,9 @@ jobs:
           php-version: 8.1
           coverage: none
           tools: cs2pr
+
+      - name: Download dependencies
+        uses: ramsey/composer-install@v3
 
       - name: Display PHP-CS-Fixer version
         run: php-cs-fixer --version
