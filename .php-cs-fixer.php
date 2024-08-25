@@ -11,8 +11,8 @@ file that was distributed with this source code.
 EOF;
 
 $finder = Finder::create()
-    ->exclude('tests')
     ->in(__DIR__ . '/src')
+    ->exclude('tests')
 ;
 
 return (new Config())
@@ -31,7 +31,8 @@ return (new Config())
         'unary_operator_spaces'             => true,
         'no_useless_else'                   => true,
         'no_useless_return'                 => true,
-        'trailing_comma_in_multiline_array' => true,
+        'trailing_comma_in_multiline'       => true,
     ])
     ->setFinder($finder)
 ;
+
