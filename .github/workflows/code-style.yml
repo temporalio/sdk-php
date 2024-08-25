@@ -21,26 +21,12 @@ jobs:
 
       - name: Check Out Code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
 
-      - name: Get Composer Cache Directory
-        id: composer-cache
-        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
-
-      - name: Cache Dependencies
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: php-${{ matrix.php }}-${{ runner.os }}-composer-
-
-      - name: Install Composer Dependencies
-        run: composer install --prefer-dist --no-interaction
+      - name: Download dependencies
+        uses: ramsey/composer-install@v3
 
       - name: Run Tests
         run: vendor/bin/psalm --output-format=github
-
 
   php-cs-fixer:
     name: PHP-CS-Fixer
