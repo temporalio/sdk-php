@@ -20,7 +20,7 @@ final class WaitPolicy
     /**
      * Indicates the update lifecycle stage that the gRPC call should wait for before returning.
      */
-    #[Marshal(name: "lifecycle_stage")]
+    #[Marshal(name: 'lifecycle_stage')]
     public readonly LifecycleStage $lifecycleStage;
 
     private function __construct()

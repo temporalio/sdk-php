@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal;
 
 use React\Promise\Exception\LengthException;
-use React\Promise\Internal\RejectedPromise;
 use React\Promise\PromiseInterface;
 use Temporal\Internal\Promise\CancellationQueue;
 
@@ -39,7 +38,7 @@ final class Promise
      */
     public static function all(iterable $promises): PromiseInterface
     {
-        return self::map($promises, static fn($val): mixed => $val);
+        return self::map($promises, static fn ($val): mixed => $val);
     }
 
     /**
@@ -58,7 +57,7 @@ final class Promise
     public static function any(iterable $promises): PromiseInterface
     {
         return self::some([...$promises], 1)
-            ->then(static fn(array $values): mixed => \array_shift($values));
+            ->then(static fn (array $values): mixed => \array_shift($values));
     }
 
     /**
@@ -142,8 +141,11 @@ final class Promise
 
                             resolve($promiseOrValue)->then($fulfiller, $rejecter);
                         }
-                    }, $reject);
-            }, $cancellationQueue
+                    },
+                    $reject
+                );
+            },
+            $cancellationQueue
         );
     }
 
@@ -196,7 +198,8 @@ final class Promise
                                 );
                         }
                     }, $reject);
-            }, $cancellationQueue
+            },
+            $cancellationQueue
         );
     }
 
@@ -262,7 +265,8 @@ final class Promise
                         },
                         $reject,
                     );
-            }, $cancellationQueue
+            },
+            $cancellationQueue
         );
     }
 

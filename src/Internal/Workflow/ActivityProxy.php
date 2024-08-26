@@ -86,7 +86,7 @@ final class ActivityProxy extends Proxy
         return $handler->isLocalActivity()
             // Run local activity through an interceptor pipeline
             ? $this->callsInterceptor->with(
-                fn(ExecuteLocalActivityInput $input): PromiseInterface => $this->ctx
+                fn (ExecuteLocalActivityInput $input): PromiseInterface => $this->ctx
                     ->newUntypedActivityStub($input->options)
                     ->execute($input->type, $input->args, $input->returnType, true),
                 /** @see WorkflowOutboundCallsInterceptor::executeLocalActivity() */
@@ -103,7 +103,7 @@ final class ActivityProxy extends Proxy
 
             // Run activity through an interceptor pipeline
             : $this->callsInterceptor->with(
-                fn(ExecuteActivityInput $input): PromiseInterface => $this->ctx
+                fn (ExecuteActivityInput $input): PromiseInterface => $this->ctx
                     ->newUntypedActivityStub($input->options)
                     ->execute($input->type, $input->args, $input->returnType),
                 /** @see WorkflowOutboundCallsInterceptor::executeActivity() */

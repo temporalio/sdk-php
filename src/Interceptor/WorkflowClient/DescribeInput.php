@@ -32,7 +32,7 @@ class DescribeInput
     ): self {
         return new self(
             $workflowExecution ?? $this->workflowExecution,
-                $namespace ?? $this->namespace,
+            $namespace ?? $this->namespace,
         );
     }
 }

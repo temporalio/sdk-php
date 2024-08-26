@@ -5,14 +5,9 @@ declare(strict_types=1);
 namespace Temporal\Worker\ActivityInvocationCache;
 
 use React\Promise\PromiseInterface;
-use Spiral\Goridge\RPC\RPC;
-use Spiral\RoadRunner\KeyValue\Factory;
-use Spiral\RoadRunner\KeyValue\StorageInterface;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
-use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\InvalidArgumentException;
-use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Throwable;
 

@@ -90,7 +90,7 @@ class Encoder
                 return $msg;
 
             default:
-                throw new \InvalidArgumentException(\sprintf(self::ERROR_INVALID_COMMAND, \get_class($cmd)));
+                throw new \InvalidArgumentException(\sprintf(self::ERROR_INVALID_COMMAND, $cmd::class));
         }
     }
 }

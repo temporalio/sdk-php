@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Workflow;
 
 use React\Promise\PromiseInterface;
-use Temporal\Internal\Transport\CompletableResultInterface;
 
 interface ExternalWorkflowStubInterface
 {

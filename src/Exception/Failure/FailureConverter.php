@@ -126,7 +126,7 @@ final class FailureConverter
                 $info
                     ->setActivityId($e->getActivityId())
                     ->setActivityType(new ActivityType([
-                        'name' => $e->getActivityType()
+                        'name' => $e->getActivityType(),
                     ]))
                     ->setIdentity($e->getIdentity())
                     ->setRetryState($e->getRetryState())
@@ -144,7 +144,7 @@ final class FailureConverter
                     ->setNamespace($e->getNamespace())
                     ->setRetryState($e->getRetryState())
                     ->setWorkflowType(new WorkflowType([
-                        'name' => $e->getWorkflowType()
+                        'name' => $e->getWorkflowType(),
                     ]))
                     ->setWorkflowExecution(new WorkflowExecution([
                         'workflow_id' => $e->getExecution()->getID(),
@@ -308,7 +308,7 @@ final class FailureConverter
                 continue;
             }
 
-            $renderer = static fn(): string => \sprintf(
+            $renderer = static fn (): string => \sprintf(
                 "%s%s%s\n%s%s%s%s(%s)",
                 \str_pad("#$i", $numPad, ' '),
                 $frame['file'] ?? '[internal function]',
@@ -337,7 +337,7 @@ final class FailureConverter
                     \count($internals),
                 );
             } else {
-                $result = [...$result, ...\array_map(static fn(callable $renderer) => $renderer(), $internals)];
+                $result = [...$result, ...\array_map(static fn (callable $renderer) => $renderer(), $internals)];
             }
 
             $internals = [];
@@ -364,11 +364,12 @@ final class FailureConverter
                 $arg === false => 'false',
                 $arg === null => 'null',
                 \is_array($arg) => 'array(' . count($arg) . ')',
-                \is_object($arg) => \get_class($arg),
+                \is_object($arg) => $arg::class,
                 \is_string($arg) => (string)\json_encode(
                     \strlen($arg) > 50
                         ? \substr($arg, 0, 50) . '...'
-                        : $arg, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE
+                        : $arg,
+                    JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE
                 ),
                 \is_scalar($arg) => (string)$arg,
                 default => \get_debug_type($arg),

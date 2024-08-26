@@ -48,7 +48,7 @@ final class ProtoToArrayConverter
     private function getMapper(Message $message): ?\Closure
     {
         $mapper = match ($message::class) {
-            Timestamp::class => static fn(Timestamp $input): DateTimeImmutable => DateTimeImmutable::createFromFormat(
+            Timestamp::class => static fn (Timestamp $input): DateTimeImmutable => DateTimeImmutable::createFromFormat(
                 'U.u',
                 \sprintf('%d.%d', $input->getSeconds(), $input->getNanos() / 1000),
             ),
@@ -60,21 +60,21 @@ final class ProtoToArrayConverter
                     )
                 );
             },
-            SearchAttributes::class => fn(SearchAttributes $input): EncodedCollection =>
+            SearchAttributes::class => fn (SearchAttributes $input): EncodedCollection =>
                 EncodedCollection::fromPayloadCollection(
                     $input->getIndexedFields(),
                     $this->converter,
                 ),
-            Memo::class => fn(Memo $input): EncodedCollection => EncodedCollection::fromPayloadCollection(
+            Memo::class => fn (Memo $input): EncodedCollection => EncodedCollection::fromPayloadCollection(
                 $input->getFields(),
                 $this->converter,
             ),
-            Payloads::class => fn(Payloads $input): ValuesInterface =>
+            Payloads::class => fn (Payloads $input): ValuesInterface =>
                 EncodedValues::fromPayloadCollection($input->getPayloads(), $this->converter),
-            Header::class => fn(Header $input): HeaderInterface =>
+            Header::class => fn (Header $input): HeaderInterface =>
                 \Temporal\Interceptor\Header::fromPayloadCollection($input->getFields(), $this->converter),
 
-            ScheduleAction::class => fn(ScheduleAction $scheduleAction): array => [
+            ScheduleAction::class => fn (ScheduleAction $scheduleAction): array => [
                 'action' => $this->convert(
                     // Use getter for `oneOf` field
                     $scheduleAction->{'get' . \str_replace('_', '', \ucwords($scheduleAction->getAction(), '_'))}()

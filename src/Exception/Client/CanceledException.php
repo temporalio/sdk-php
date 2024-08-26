@@ -16,4 +16,5 @@ use Temporal\Exception\TemporalException;
 /**
  * RPC call was canceled.
  */
-class CanceledException extends TemporalException {}
+class CanceledException extends TemporalException
+{}

@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Common;
 
-use Temporal\Common\RetryOptions;
-
 interface ClientContextInterface
 {
     /**

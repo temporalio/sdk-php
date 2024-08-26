@@ -19,7 +19,7 @@ final class ActivityInvocationFailure
 
     public static function fromThrowable(Throwable $error): self
     {
-        return new self(get_class($error), $error->getMessage());
+        return new self($error::class, $error->getMessage());
     }
 
     public function toThrowable(): Throwable

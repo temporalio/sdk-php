@@ -59,7 +59,7 @@ abstract class BaseClient implements ServiceClientInterface
                 'Creating a ServiceClient instance via constructor is deprecated. Use static factory methods instead.',
                 \E_USER_DEPRECATED,
             );
-            $workflowService = static fn(): WorkflowServiceClient => $workflowService;
+            $workflowService = static fn (): WorkflowServiceClient => $workflowService;
         }
 
         $this->connection = new Connection($workflowService);
@@ -112,7 +112,7 @@ abstract class BaseClient implements ServiceClientInterface
             throw new \RuntimeException('The gRPC extension is required to use Temporal Client.');
         }
 
-        return new static(static fn(): WorkflowServiceClient => new WorkflowServiceClient(
+        return new static(static fn (): WorkflowServiceClient => new WorkflowServiceClient(
             $address,
             ['credentials' => \Grpc\ChannelCredentials::createInsecure()]
         ));
@@ -156,7 +156,7 @@ abstract class BaseClient implements ServiceClientInterface
                 $loadCert($crt),
                 $loadCert($clientKey),
                 $loadCert($clientPem),
-            )
+            ),
         ];
 
         if ($overrideServerName !== null) {
@@ -164,7 +164,7 @@ abstract class BaseClient implements ServiceClientInterface
             $options['grpc.ssl_target_name_override'] = $overrideServerName;
         }
 
-        return new static(static fn(): WorkflowServiceClient => new WorkflowServiceClient($address, $options));
+        return new static(static fn (): WorkflowServiceClient => new WorkflowServiceClient($address, $options));
     }
 
     /**

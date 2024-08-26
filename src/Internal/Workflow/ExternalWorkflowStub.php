@@ -50,7 +50,7 @@ final class ExternalWorkflowStub implements ExternalWorkflowStubInterface
     public function signal(string $name, array $args = []): PromiseInterface
     {
         return $this->callsInterceptor->with(
-            fn(SignalExternalWorkflowInput $input): PromiseInterface => $this
+            fn (SignalExternalWorkflowInput $input): PromiseInterface => $this
                 ->request(
                     new SignalExternalWorkflow(
                         $input->namespace,
@@ -78,7 +78,7 @@ final class ExternalWorkflowStub implements ExternalWorkflowStubInterface
     public function cancel(): PromiseInterface
     {
         return $this->callsInterceptor->with(
-            fn(CancelExternalWorkflowInput $input): PromiseInterface => $this
+            fn (CancelExternalWorkflowInput $input): PromiseInterface => $this
                 ->request(new CancelExternalWorkflow($input->namespace, $input->workflowId, $input->runId)),
             /** @see WorkflowOutboundCallsInterceptor::cancelExternalWorkflow() */
             'cancelExternalWorkflow',

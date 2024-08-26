@@ -218,7 +218,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     public function getVersion(string $changeId, int $minSupported, int $maxSupported): PromiseInterface
     {
         return $this->callsInterceptor->with(
-            fn(GetVersionInput $input): PromiseInterface => EncodedValues::decodePromise(
+            fn (GetVersionInput $input): PromiseInterface => EncodedValues::decodePromise(
                 $this->request(new GetVersion($input->changeId, $input->minSupported, $input->maxSupported)),
                 Type::TYPE_ANY,
             ),
@@ -254,7 +254,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         } catch (\Throwable) {
         }
 
-        $last = fn(): PromiseInterface => EncodedValues::decodePromise(
+        $last = fn (): PromiseInterface => EncodedValues::decodePromise(
             $this->request(new SideEffect(EncodedValues::fromValues([$value]))),
             $returnType,
         );
@@ -297,7 +297,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     public function panic(\Throwable $failure = null): PromiseInterface
     {
         return $this->callsInterceptor->with(
-            fn(PanicInput $failure): PromiseInterface => $this->request(new Panic($failure->failure), false),
+            fn (PanicInput $failure): PromiseInterface => $this->request(new Panic($failure->failure), false),
             /** @see WorkflowOutboundCallsInterceptor::panic() */
             'panic',
         )(new PanicInput($failure));
@@ -360,7 +360,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         mixed $returnType = null,
     ): PromiseInterface {
         return $this->callsInterceptor->with(
-            fn(ExecuteChildWorkflowInput $input): PromiseInterface => $this
+            fn (ExecuteChildWorkflowInput $input): PromiseInterface => $this
                 ->newUntypedChildWorkflowStub($input->type, $input->options)
                 ->execute($input->args, $input->returnType),
             /** @see WorkflowOutboundCallsInterceptor::executeChildWorkflow() */
@@ -432,14 +432,14 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
 
         return $isLocal
             ? $this->callsInterceptor->with(
-                fn(ExecuteLocalActivityInput $input): PromiseInterface => $this
+                fn (ExecuteLocalActivityInput $input): PromiseInterface => $this
                     ->newUntypedActivityStub($input->options)
                     ->execute($input->type, $input->args, $input->returnType, true),
                 /** @see WorkflowOutboundCallsInterceptor::executeLocalActivity() */
                 'executeLocalActivity',
             )(new ExecuteLocalActivityInput($type, $args, $options, $returnType))
             : $this->callsInterceptor->with(
-                fn(ExecuteActivityInput $input): PromiseInterface => $this
+                fn (ExecuteActivityInput $input): PromiseInterface => $this
                     ->newUntypedActivityStub($input->options)
                     ->execute($input->type, $input->args, $input->returnType),
                 /** @see WorkflowOutboundCallsInterceptor::executeActivity() */
@@ -468,7 +468,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         $activities = $this->services->activitiesReader->fromClass($class);
 
         if (isset($activities[0]) && $activities[0]->isLocalActivity() && !$options instanceof LocalActivityOptions) {
-            throw new RuntimeException("Local activity can be used only with LocalActivityOptions");
+            throw new RuntimeException('Local activity can be used only with LocalActivityOptions');
         }
 
         return new ActivityProxy(
@@ -488,7 +488,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         $dateInterval = DateInterval::parse($interval, DateInterval::FORMAT_SECONDS);
 
         return $this->callsInterceptor->with(
-            fn(TimerInput $input): PromiseInterface => $this->request(new NewTimer($input->interval)),
+            fn (TimerInput $input): PromiseInterface => $this->request(new NewTimer($input->interval)),
             /** @see WorkflowOutboundCallsInterceptor::timer() */
             'timer',
         )(new TimerInput($dateInterval));
@@ -503,9 +503,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
 
         // Intercept workflow outbound calls
         return $this->requestInterceptor->with(
-            function (RequestInterface $request): PromiseInterface {
-                return $this->client->request($request, $this);
-            },
+            fn (RequestInterface $request): PromiseInterface => $this->client->request($request, $this),
             /** @see WorkflowOutboundRequestInterceptor::handleOutboundRequest() */
             'handleOutboundRequest',
         )($request);
@@ -533,7 +531,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     public function upsertSearchAttributes(array $searchAttributes): void
     {
         $this->callsInterceptor->with(
-            fn(UpsertSearchAttributesInput $input): PromiseInterface
+            fn (UpsertSearchAttributesInput $input): PromiseInterface
                 => $this->request(new UpsertSearchAttributes($input->searchAttributes)),
             /** @see WorkflowOutboundCallsInterceptor::upsertSearchAttributes() */
             'upsertSearchAttributes',
@@ -546,7 +544,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     public function await(...$conditions): PromiseInterface
     {
         return $this->callsInterceptor->with(
-            fn(AwaitInput $input): PromiseInterface => $this->awaitRequest(...$input->conditions),
+            fn (AwaitInput $input): PromiseInterface => $this->awaitRequest(...$input->conditions),
             /** @see WorkflowOutboundCallsInterceptor::await() */
             'await',
         )(new AwaitInput($conditions));
@@ -613,7 +611,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
      */
     public function uuid(): PromiseInterface
     {
-        return $this->sideEffect(static fn(): UuidInterface => \Ramsey\Uuid\Uuid::uuid4());
+        return $this->sideEffect(static fn (): UuidInterface => \Ramsey\Uuid\Uuid::uuid4());
     }
 
     /**
@@ -621,7 +619,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
      */
     public function uuid4(): PromiseInterface
     {
-        return $this->sideEffect(static fn(): UuidInterface => \Ramsey\Uuid\Uuid::uuid4());
+        return $this->sideEffect(static fn (): UuidInterface => \Ramsey\Uuid\Uuid::uuid4());
     }
 
     /**
@@ -629,7 +627,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
      */
     public function uuid7(?DateTimeInterface $dateTime = null): PromiseInterface
     {
-        return $this->sideEffect(static fn(): UuidInterface => \Ramsey\Uuid\Uuid::uuid7($dateTime));
+        return $this->sideEffect(static fn (): UuidInterface => \Ramsey\Uuid\Uuid::uuid7($dateTime));
     }
 
     /**
@@ -686,7 +684,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
                 $this->resolveConditionGroup($conditionGroupId);
                 return $result;
             },
-            function ($reason) use ($conditionGroupId) {
+            function ($reason) use ($conditionGroupId): void {
                 $this->rejectConditionGroup($conditionGroupId);
                 // Throw the first reason
                 // It need to avoid memory leak when the related workflow is destroyed

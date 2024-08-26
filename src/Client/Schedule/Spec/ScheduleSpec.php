@@ -165,7 +165,7 @@ final class ScheduleSpec
     public function withCronStringList(\Stringable|string ...$cron): self
     {
         /** @see self::$cronStringList */
-        return $this->with('cronStringList', \array_map(static fn($item) => (string)$item, $cron));
+        return $this->with('cronStringList', \array_map(static fn ($item) => (string)$item, $cron));
     }
 
     /**

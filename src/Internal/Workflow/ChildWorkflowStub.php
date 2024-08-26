@@ -66,7 +66,7 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
         return $this->execution->promise();
     }
 
-    public function start(... $args): PromiseInterface
+    public function start(...$args): PromiseInterface
     {
         if ($this->request !== null) {
             throw new \LogicException('Child workflow already has been executed');
@@ -104,7 +104,7 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
      */
     public function execute(array $args = [], $returnType = null): PromiseInterface
     {
-        return $this->start(...$args)->then(fn() => $this->getResult($returnType));
+        return $this->start(...$args)->then(fn () => $this->getResult($returnType));
     }
 
     /**

@@ -13,7 +13,7 @@ class CancellationQueue
     private bool $started = false;
     private array $queue = [];
 
-    public function __invoke()
+    public function __invoke(): void
     {
         if ($this->started) {
             return;

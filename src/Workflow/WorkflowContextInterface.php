@@ -275,7 +275,8 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @return T
      */
-    public function newActivityStub(string $class,
+    public function newActivityStub(
+        string $class,
         ActivityOptionsInterface $options = null,
     ): object;
 

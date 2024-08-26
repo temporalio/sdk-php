@@ -6,7 +6,6 @@
  * file that was distributed with this source code.
  */
 
-
 namespace Temporal\Client\GRPC;
 
 use Temporal\Api\Workflowservice\V1;
@@ -31,9 +30,9 @@ class ServiceClient extends BaseClient
      * @return V1\RegisterNamespaceResponse
      * @throws ServiceClientException
      */
-    public function RegisterNamespace(V1\RegisterNamespaceRequest $arg, ContextInterface $ctx = null) : V1\RegisterNamespaceResponse
+    public function RegisterNamespace(V1\RegisterNamespaceRequest $arg, ContextInterface $ctx = null): V1\RegisterNamespaceResponse
     {
-        return $this->invoke("RegisterNamespace", $arg, $ctx);
+        return $this->invoke('RegisterNamespace', $arg, $ctx);
     }
 
     /**
@@ -45,9 +44,9 @@ class ServiceClient extends BaseClient
      * @return V1\DescribeNamespaceResponse
      * @throws ServiceClientException
      */
-    public function DescribeNamespace(V1\DescribeNamespaceRequest $arg, ContextInterface $ctx = null) : V1\DescribeNamespaceResponse
+    public function DescribeNamespace(V1\DescribeNamespaceRequest $arg, ContextInterface $ctx = null): V1\DescribeNamespaceResponse
     {
-        return $this->invoke("DescribeNamespace", $arg, $ctx);
+        return $this->invoke('DescribeNamespace', $arg, $ctx);
     }
 
     /**
@@ -58,9 +57,9 @@ class ServiceClient extends BaseClient
      * @return V1\ListNamespacesResponse
      * @throws ServiceClientException
      */
-    public function ListNamespaces(V1\ListNamespacesRequest $arg, ContextInterface $ctx = null) : V1\ListNamespacesResponse
+    public function ListNamespaces(V1\ListNamespacesRequest $arg, ContextInterface $ctx = null): V1\ListNamespacesResponse
     {
-        return $this->invoke("ListNamespaces", $arg, $ctx);
+        return $this->invoke('ListNamespaces', $arg, $ctx);
     }
 
     /**
@@ -73,9 +72,9 @@ class ServiceClient extends BaseClient
      * @return V1\UpdateNamespaceResponse
      * @throws ServiceClientException
      */
-    public function UpdateNamespace(V1\UpdateNamespaceRequest $arg, ContextInterface $ctx = null) : V1\UpdateNamespaceResponse
+    public function UpdateNamespace(V1\UpdateNamespaceRequest $arg, ContextInterface $ctx = null): V1\UpdateNamespaceResponse
     {
-        return $this->invoke("UpdateNamespace", $arg, $ctx);
+        return $this->invoke('UpdateNamespace', $arg, $ctx);
     }
 
     /**
@@ -95,9 +94,9 @@ class ServiceClient extends BaseClient
      * @return V1\DeprecateNamespaceResponse
      * @throws ServiceClientException
      */
-    public function DeprecateNamespace(V1\DeprecateNamespaceRequest $arg, ContextInterface $ctx = null) : V1\DeprecateNamespaceResponse
+    public function DeprecateNamespace(V1\DeprecateNamespaceRequest $arg, ContextInterface $ctx = null): V1\DeprecateNamespaceResponse
     {
-        return $this->invoke("DeprecateNamespace", $arg, $ctx);
+        return $this->invoke('DeprecateNamespace', $arg, $ctx);
     }
 
     /**
@@ -114,9 +113,9 @@ class ServiceClient extends BaseClient
      * @return V1\StartWorkflowExecutionResponse
      * @throws ServiceClientException
      */
-    public function StartWorkflowExecution(V1\StartWorkflowExecutionRequest $arg, ContextInterface $ctx = null) : V1\StartWorkflowExecutionResponse
+    public function StartWorkflowExecution(V1\StartWorkflowExecutionRequest $arg, ContextInterface $ctx = null): V1\StartWorkflowExecutionResponse
     {
-        return $this->invoke("StartWorkflowExecution", $arg, $ctx);
+        return $this->invoke('StartWorkflowExecution', $arg, $ctx);
     }
 
     /**
@@ -129,9 +128,9 @@ class ServiceClient extends BaseClient
      * @return V1\GetWorkflowExecutionHistoryResponse
      * @throws ServiceClientException
      */
-    public function GetWorkflowExecutionHistory(V1\GetWorkflowExecutionHistoryRequest $arg, ContextInterface $ctx = null) : V1\GetWorkflowExecutionHistoryResponse
+    public function GetWorkflowExecutionHistory(V1\GetWorkflowExecutionHistoryRequest $arg, ContextInterface $ctx = null): V1\GetWorkflowExecutionHistoryResponse
     {
-        return $this->invoke("GetWorkflowExecutionHistory", $arg, $ctx);
+        return $this->invoke('GetWorkflowExecutionHistory', $arg, $ctx);
     }
 
     /**
@@ -146,9 +145,9 @@ class ServiceClient extends BaseClient
      * @return V1\GetWorkflowExecutionHistoryReverseResponse
      * @throws ServiceClientException
      */
-    public function GetWorkflowExecutionHistoryReverse(V1\GetWorkflowExecutionHistoryReverseRequest $arg, ContextInterface $ctx = null) : V1\GetWorkflowExecutionHistoryReverseResponse
+    public function GetWorkflowExecutionHistoryReverse(V1\GetWorkflowExecutionHistoryReverseRequest $arg, ContextInterface $ctx = null): V1\GetWorkflowExecutionHistoryReverseResponse
     {
-        return $this->invoke("GetWorkflowExecutionHistoryReverse", $arg, $ctx);
+        return $this->invoke('GetWorkflowExecutionHistoryReverse', $arg, $ctx);
     }
 
     /**
@@ -170,9 +169,9 @@ class ServiceClient extends BaseClient
      * @return V1\PollWorkflowTaskQueueResponse
      * @throws ServiceClientException
      */
-    public function PollWorkflowTaskQueue(V1\PollWorkflowTaskQueueRequest $arg, ContextInterface $ctx = null) : V1\PollWorkflowTaskQueueResponse
+    public function PollWorkflowTaskQueue(V1\PollWorkflowTaskQueueRequest $arg, ContextInterface $ctx = null): V1\PollWorkflowTaskQueueResponse
     {
-        return $this->invoke("PollWorkflowTaskQueue", $arg, $ctx);
+        return $this->invoke('PollWorkflowTaskQueue', $arg, $ctx);
     }
 
     /**
@@ -194,9 +193,9 @@ class ServiceClient extends BaseClient
      * @return V1\RespondWorkflowTaskCompletedResponse
      * @throws ServiceClientException
      */
-    public function RespondWorkflowTaskCompleted(V1\RespondWorkflowTaskCompletedRequest $arg, ContextInterface $ctx = null) : V1\RespondWorkflowTaskCompletedResponse
+    public function RespondWorkflowTaskCompleted(V1\RespondWorkflowTaskCompletedRequest $arg, ContextInterface $ctx = null): V1\RespondWorkflowTaskCompletedResponse
     {
-        return $this->invoke("RespondWorkflowTaskCompleted", $arg, $ctx);
+        return $this->invoke('RespondWorkflowTaskCompleted', $arg, $ctx);
     }
 
     /**
@@ -222,9 +221,9 @@ class ServiceClient extends BaseClient
      * @return V1\RespondWorkflowTaskFailedResponse
      * @throws ServiceClientException
      */
-    public function RespondWorkflowTaskFailed(V1\RespondWorkflowTaskFailedRequest $arg, ContextInterface $ctx = null) : V1\RespondWorkflowTaskFailedResponse
+    public function RespondWorkflowTaskFailed(V1\RespondWorkflowTaskFailedRequest $arg, ContextInterface $ctx = null): V1\RespondWorkflowTaskFailedResponse
     {
-        return $this->invoke("RespondWorkflowTaskFailed", $arg, $ctx);
+        return $this->invoke('RespondWorkflowTaskFailed', $arg, $ctx);
     }
 
     /**
@@ -256,9 +255,9 @@ class ServiceClient extends BaseClient
      * @return V1\PollActivityTaskQueueResponse
      * @throws ServiceClientException
      */
-    public function PollActivityTaskQueue(V1\PollActivityTaskQueueRequest $arg, ContextInterface $ctx = null) : V1\PollActivityTaskQueueResponse
+    public function PollActivityTaskQueue(V1\PollActivityTaskQueueRequest $arg, ContextInterface $ctx = null): V1\PollActivityTaskQueueResponse
     {
-        return $this->invoke("PollActivityTaskQueue", $arg, $ctx);
+        return $this->invoke('PollActivityTaskQueue', $arg, $ctx);
     }
 
     /**
@@ -279,9 +278,9 @@ class ServiceClient extends BaseClient
      * @return V1\RecordActivityTaskHeartbeatResponse
      * @throws ServiceClientException
      */
-    public function RecordActivityTaskHeartbeat(V1\RecordActivityTaskHeartbeatRequest $arg, ContextInterface $ctx = null) : V1\RecordActivityTaskHeartbeatResponse
+    public function RecordActivityTaskHeartbeat(V1\RecordActivityTaskHeartbeatRequest $arg, ContextInterface $ctx = null): V1\RecordActivityTaskHeartbeatResponse
     {
-        return $this->invoke("RecordActivityTaskHeartbeat", $arg, $ctx);
+        return $this->invoke('RecordActivityTaskHeartbeat', $arg, $ctx);
     }
 
     /**
@@ -297,9 +296,9 @@ class ServiceClient extends BaseClient
      * @return V1\RecordActivityTaskHeartbeatByIdResponse
      * @throws ServiceClientException
      */
-    public function RecordActivityTaskHeartbeatById(V1\RecordActivityTaskHeartbeatByIdRequest $arg, ContextInterface $ctx = null) : V1\RecordActivityTaskHeartbeatByIdResponse
+    public function RecordActivityTaskHeartbeatById(V1\RecordActivityTaskHeartbeatByIdRequest $arg, ContextInterface $ctx = null): V1\RecordActivityTaskHeartbeatByIdResponse
     {
-        return $this->invoke("RecordActivityTaskHeartbeatById", $arg, $ctx);
+        return $this->invoke('RecordActivityTaskHeartbeatById', $arg, $ctx);
     }
 
     /**
@@ -319,9 +318,9 @@ class ServiceClient extends BaseClient
      * @return V1\RespondActivityTaskCompletedResponse
      * @throws ServiceClientException
      */
-    public function RespondActivityTaskCompleted(V1\RespondActivityTaskCompletedRequest $arg, ContextInterface $ctx = null) : V1\RespondActivityTaskCompletedResponse
+    public function RespondActivityTaskCompleted(V1\RespondActivityTaskCompletedRequest $arg, ContextInterface $ctx = null): V1\RespondActivityTaskCompletedResponse
     {
-        return $this->invoke("RespondActivityTaskCompleted", $arg, $ctx);
+        return $this->invoke('RespondActivityTaskCompleted', $arg, $ctx);
     }
 
     /**
@@ -337,9 +336,9 @@ class ServiceClient extends BaseClient
      * @return V1\RespondActivityTaskCompletedByIdResponse
      * @throws ServiceClientException
      */
-    public function RespondActivityTaskCompletedById(V1\RespondActivityTaskCompletedByIdRequest $arg, ContextInterface $ctx = null) : V1\RespondActivityTaskCompletedByIdResponse
+    public function RespondActivityTaskCompletedById(V1\RespondActivityTaskCompletedByIdRequest $arg, ContextInterface $ctx = null): V1\RespondActivityTaskCompletedByIdResponse
     {
-        return $this->invoke("RespondActivityTaskCompletedById", $arg, $ctx);
+        return $this->invoke('RespondActivityTaskCompletedById', $arg, $ctx);
     }
 
     /**
@@ -358,9 +357,9 @@ class ServiceClient extends BaseClient
      * @return V1\RespondActivityTaskFailedResponse
      * @throws ServiceClientException
      */
-    public function RespondActivityTaskFailed(V1\RespondActivityTaskFailedRequest $arg, ContextInterface $ctx = null) : V1\RespondActivityTaskFailedResponse
+    public function RespondActivityTaskFailed(V1\RespondActivityTaskFailedRequest $arg, ContextInterface $ctx = null): V1\RespondActivityTaskFailedResponse
     {
-        return $this->invoke("RespondActivityTaskFailed", $arg, $ctx);
+        return $this->invoke('RespondActivityTaskFailed', $arg, $ctx);
     }
 
     /**
@@ -376,9 +375,9 @@ class ServiceClient extends BaseClient
      * @return V1\RespondActivityTaskFailedByIdResponse
      * @throws ServiceClientException
      */
-    public function RespondActivityTaskFailedById(V1\RespondActivityTaskFailedByIdRequest $arg, ContextInterface $ctx = null) : V1\RespondActivityTaskFailedByIdResponse
+    public function RespondActivityTaskFailedById(V1\RespondActivityTaskFailedByIdRequest $arg, ContextInterface $ctx = null): V1\RespondActivityTaskFailedByIdResponse
     {
-        return $this->invoke("RespondActivityTaskFailedById", $arg, $ctx);
+        return $this->invoke('RespondActivityTaskFailedById', $arg, $ctx);
     }
 
     /**
@@ -397,9 +396,9 @@ class ServiceClient extends BaseClient
      * @return V1\RespondActivityTaskCanceledResponse
      * @throws ServiceClientException
      */
-    public function RespondActivityTaskCanceled(V1\RespondActivityTaskCanceledRequest $arg, ContextInterface $ctx = null) : V1\RespondActivityTaskCanceledResponse
+    public function RespondActivityTaskCanceled(V1\RespondActivityTaskCanceledRequest $arg, ContextInterface $ctx = null): V1\RespondActivityTaskCanceledResponse
     {
-        return $this->invoke("RespondActivityTaskCanceled", $arg, $ctx);
+        return $this->invoke('RespondActivityTaskCanceled', $arg, $ctx);
     }
 
     /**
@@ -415,9 +414,9 @@ class ServiceClient extends BaseClient
      * @return V1\RespondActivityTaskCanceledByIdResponse
      * @throws ServiceClientException
      */
-    public function RespondActivityTaskCanceledById(V1\RespondActivityTaskCanceledByIdRequest $arg, ContextInterface $ctx = null) : V1\RespondActivityTaskCanceledByIdResponse
+    public function RespondActivityTaskCanceledById(V1\RespondActivityTaskCanceledByIdRequest $arg, ContextInterface $ctx = null): V1\RespondActivityTaskCanceledByIdResponse
     {
-        return $this->invoke("RespondActivityTaskCanceledById", $arg, $ctx);
+        return $this->invoke('RespondActivityTaskCanceledById', $arg, $ctx);
     }
 
     /**
@@ -437,9 +436,9 @@ class ServiceClient extends BaseClient
      * @return V1\RequestCancelWorkflowExecutionResponse
      * @throws ServiceClientException
      */
-    public function RequestCancelWorkflowExecution(V1\RequestCancelWorkflowExecutionRequest $arg, ContextInterface $ctx = null) : V1\RequestCancelWorkflowExecutionResponse
+    public function RequestCancelWorkflowExecution(V1\RequestCancelWorkflowExecutionRequest $arg, ContextInterface $ctx = null): V1\RequestCancelWorkflowExecutionResponse
     {
-        return $this->invoke("RequestCancelWorkflowExecution", $arg, $ctx);
+        return $this->invoke('RequestCancelWorkflowExecution', $arg, $ctx);
     }
 
     /**
@@ -455,9 +454,9 @@ class ServiceClient extends BaseClient
      * @return V1\SignalWorkflowExecutionResponse
      * @throws ServiceClientException
      */
-    public function SignalWorkflowExecution(V1\SignalWorkflowExecutionRequest $arg, ContextInterface $ctx = null) : V1\SignalWorkflowExecutionResponse
+    public function SignalWorkflowExecution(V1\SignalWorkflowExecutionRequest $arg, ContextInterface $ctx = null): V1\SignalWorkflowExecutionResponse
     {
-        return $this->invoke("SignalWorkflowExecution", $arg, $ctx);
+        return $this->invoke('SignalWorkflowExecution', $arg, $ctx);
     }
 
     /**
@@ -482,9 +481,9 @@ class ServiceClient extends BaseClient
      * @return V1\SignalWithStartWorkflowExecutionResponse
      * @throws ServiceClientException
      */
-    public function SignalWithStartWorkflowExecution(V1\SignalWithStartWorkflowExecutionRequest $arg, ContextInterface $ctx = null) : V1\SignalWithStartWorkflowExecutionResponse
+    public function SignalWithStartWorkflowExecution(V1\SignalWithStartWorkflowExecutionRequest $arg, ContextInterface $ctx = null): V1\SignalWithStartWorkflowExecutionResponse
     {
-        return $this->invoke("SignalWithStartWorkflowExecution", $arg, $ctx);
+        return $this->invoke('SignalWithStartWorkflowExecution', $arg, $ctx);
     }
 
     /**
@@ -500,9 +499,9 @@ class ServiceClient extends BaseClient
      * @return V1\ResetWorkflowExecutionResponse
      * @throws ServiceClientException
      */
-    public function ResetWorkflowExecution(V1\ResetWorkflowExecutionRequest $arg, ContextInterface $ctx = null) : V1\ResetWorkflowExecutionResponse
+    public function ResetWorkflowExecution(V1\ResetWorkflowExecutionRequest $arg, ContextInterface $ctx = null): V1\ResetWorkflowExecutionResponse
     {
-        return $this->invoke("ResetWorkflowExecution", $arg, $ctx);
+        return $this->invoke('ResetWorkflowExecution', $arg, $ctx);
     }
 
     /**
@@ -517,9 +516,9 @@ class ServiceClient extends BaseClient
      * @return V1\TerminateWorkflowExecutionResponse
      * @throws ServiceClientException
      */
-    public function TerminateWorkflowExecution(V1\TerminateWorkflowExecutionRequest $arg, ContextInterface $ctx = null) : V1\TerminateWorkflowExecutionResponse
+    public function TerminateWorkflowExecution(V1\TerminateWorkflowExecutionRequest $arg, ContextInterface $ctx = null): V1\TerminateWorkflowExecutionResponse
     {
-        return $this->invoke("TerminateWorkflowExecution", $arg, $ctx);
+        return $this->invoke('TerminateWorkflowExecution', $arg, $ctx);
     }
 
     /**
@@ -539,9 +538,9 @@ class ServiceClient extends BaseClient
      * @return V1\DeleteWorkflowExecutionResponse
      * @throws ServiceClientException
      */
-    public function DeleteWorkflowExecution(V1\DeleteWorkflowExecutionRequest $arg, ContextInterface $ctx = null) : V1\DeleteWorkflowExecutionResponse
+    public function DeleteWorkflowExecution(V1\DeleteWorkflowExecutionRequest $arg, ContextInterface $ctx = null): V1\DeleteWorkflowExecutionResponse
     {
-        return $this->invoke("DeleteWorkflowExecution", $arg, $ctx);
+        return $this->invoke('DeleteWorkflowExecution', $arg, $ctx);
     }
 
     /**
@@ -556,9 +555,9 @@ class ServiceClient extends BaseClient
      * @return V1\ListOpenWorkflowExecutionsResponse
      * @throws ServiceClientException
      */
-    public function ListOpenWorkflowExecutions(V1\ListOpenWorkflowExecutionsRequest $arg, ContextInterface $ctx = null) : V1\ListOpenWorkflowExecutionsResponse
+    public function ListOpenWorkflowExecutions(V1\ListOpenWorkflowExecutionsRequest $arg, ContextInterface $ctx = null): V1\ListOpenWorkflowExecutionsResponse
     {
-        return $this->invoke("ListOpenWorkflowExecutions", $arg, $ctx);
+        return $this->invoke('ListOpenWorkflowExecutions', $arg, $ctx);
     }
 
     /**
@@ -573,9 +572,9 @@ class ServiceClient extends BaseClient
      * @return V1\ListClosedWorkflowExecutionsResponse
      * @throws ServiceClientException
      */
-    public function ListClosedWorkflowExecutions(V1\ListClosedWorkflowExecutionsRequest $arg, ContextInterface $ctx = null) : V1\ListClosedWorkflowExecutionsResponse
+    public function ListClosedWorkflowExecutions(V1\ListClosedWorkflowExecutionsRequest $arg, ContextInterface $ctx = null): V1\ListClosedWorkflowExecutionsResponse
     {
-        return $this->invoke("ListClosedWorkflowExecutions", $arg, $ctx);
+        return $this->invoke('ListClosedWorkflowExecutions', $arg, $ctx);
     }
 
     /**
@@ -587,9 +586,9 @@ class ServiceClient extends BaseClient
      * @return V1\ListWorkflowExecutionsResponse
      * @throws ServiceClientException
      */
-    public function ListWorkflowExecutions(V1\ListWorkflowExecutionsRequest $arg, ContextInterface $ctx = null) : V1\ListWorkflowExecutionsResponse
+    public function ListWorkflowExecutions(V1\ListWorkflowExecutionsRequest $arg, ContextInterface $ctx = null): V1\ListWorkflowExecutionsResponse
     {
-        return $this->invoke("ListWorkflowExecutions", $arg, $ctx);
+        return $this->invoke('ListWorkflowExecutions', $arg, $ctx);
     }
 
     /**
@@ -601,9 +600,9 @@ class ServiceClient extends BaseClient
      * @return V1\ListArchivedWorkflowExecutionsResponse
      * @throws ServiceClientException
      */
-    public function ListArchivedWorkflowExecutions(V1\ListArchivedWorkflowExecutionsRequest $arg, ContextInterface $ctx = null) : V1\ListArchivedWorkflowExecutionsResponse
+    public function ListArchivedWorkflowExecutions(V1\ListArchivedWorkflowExecutionsRequest $arg, ContextInterface $ctx = null): V1\ListArchivedWorkflowExecutionsResponse
     {
-        return $this->invoke("ListArchivedWorkflowExecutions", $arg, $ctx);
+        return $this->invoke('ListArchivedWorkflowExecutions', $arg, $ctx);
     }
 
     /**
@@ -618,9 +617,9 @@ class ServiceClient extends BaseClient
      * @return V1\ScanWorkflowExecutionsResponse
      * @throws ServiceClientException
      */
-    public function ScanWorkflowExecutions(V1\ScanWorkflowExecutionsRequest $arg, ContextInterface $ctx = null) : V1\ScanWorkflowExecutionsResponse
+    public function ScanWorkflowExecutions(V1\ScanWorkflowExecutionsRequest $arg, ContextInterface $ctx = null): V1\ScanWorkflowExecutionsResponse
     {
-        return $this->invoke("ScanWorkflowExecutions", $arg, $ctx);
+        return $this->invoke('ScanWorkflowExecutions', $arg, $ctx);
     }
 
     /**
@@ -632,9 +631,9 @@ class ServiceClient extends BaseClient
      * @return V1\CountWorkflowExecutionsResponse
      * @throws ServiceClientException
      */
-    public function CountWorkflowExecutions(V1\CountWorkflowExecutionsRequest $arg, ContextInterface $ctx = null) : V1\CountWorkflowExecutionsResponse
+    public function CountWorkflowExecutions(V1\CountWorkflowExecutionsRequest $arg, ContextInterface $ctx = null): V1\CountWorkflowExecutionsResponse
     {
-        return $this->invoke("CountWorkflowExecutions", $arg, $ctx);
+        return $this->invoke('CountWorkflowExecutions', $arg, $ctx);
     }
 
     /**
@@ -650,9 +649,9 @@ class ServiceClient extends BaseClient
      * @return V1\GetSearchAttributesResponse
      * @throws ServiceClientException
      */
-    public function GetSearchAttributes(V1\GetSearchAttributesRequest $arg, ContextInterface $ctx = null) : V1\GetSearchAttributesResponse
+    public function GetSearchAttributes(V1\GetSearchAttributesRequest $arg, ContextInterface $ctx = null): V1\GetSearchAttributesResponse
     {
-        return $this->invoke("GetSearchAttributes", $arg, $ctx);
+        return $this->invoke('GetSearchAttributes', $arg, $ctx);
     }
 
     /**
@@ -672,9 +671,9 @@ class ServiceClient extends BaseClient
      * @return V1\RespondQueryTaskCompletedResponse
      * @throws ServiceClientException
      */
-    public function RespondQueryTaskCompleted(V1\RespondQueryTaskCompletedRequest $arg, ContextInterface $ctx = null) : V1\RespondQueryTaskCompletedResponse
+    public function RespondQueryTaskCompleted(V1\RespondQueryTaskCompletedRequest $arg, ContextInterface $ctx = null): V1\RespondQueryTaskCompletedResponse
     {
-        return $this->invoke("RespondQueryTaskCompleted", $arg, $ctx);
+        return $this->invoke('RespondQueryTaskCompleted', $arg, $ctx);
     }
 
     /**
@@ -696,9 +695,9 @@ class ServiceClient extends BaseClient
      * @return V1\ResetStickyTaskQueueResponse
      * @throws ServiceClientException
      */
-    public function ResetStickyTaskQueue(V1\ResetStickyTaskQueueRequest $arg, ContextInterface $ctx = null) : V1\ResetStickyTaskQueueResponse
+    public function ResetStickyTaskQueue(V1\ResetStickyTaskQueueRequest $arg, ContextInterface $ctx = null): V1\ResetStickyTaskQueueResponse
     {
-        return $this->invoke("ResetStickyTaskQueue", $arg, $ctx);
+        return $this->invoke('ResetStickyTaskQueue', $arg, $ctx);
     }
 
     /**
@@ -709,9 +708,9 @@ class ServiceClient extends BaseClient
      * @return V1\QueryWorkflowResponse
      * @throws ServiceClientException
      */
-    public function QueryWorkflow(V1\QueryWorkflowRequest $arg, ContextInterface $ctx = null) : V1\QueryWorkflowResponse
+    public function QueryWorkflow(V1\QueryWorkflowRequest $arg, ContextInterface $ctx = null): V1\QueryWorkflowResponse
     {
-        return $this->invoke("QueryWorkflow", $arg, $ctx);
+        return $this->invoke('QueryWorkflow', $arg, $ctx);
     }
 
     /**
@@ -723,9 +722,9 @@ class ServiceClient extends BaseClient
      * @return V1\DescribeWorkflowExecutionResponse
      * @throws ServiceClientException
      */
-    public function DescribeWorkflowExecution(V1\DescribeWorkflowExecutionRequest $arg, ContextInterface $ctx = null) : V1\DescribeWorkflowExecutionResponse
+    public function DescribeWorkflowExecution(V1\DescribeWorkflowExecutionRequest $arg, ContextInterface $ctx = null): V1\DescribeWorkflowExecutionResponse
     {
-        return $this->invoke("DescribeWorkflowExecution", $arg, $ctx);
+        return $this->invoke('DescribeWorkflowExecution', $arg, $ctx);
     }
 
     /**
@@ -740,9 +739,9 @@ class ServiceClient extends BaseClient
      * @return V1\DescribeTaskQueueResponse
      * @throws ServiceClientException
      */
-    public function DescribeTaskQueue(V1\DescribeTaskQueueRequest $arg, ContextInterface $ctx = null) : V1\DescribeTaskQueueResponse
+    public function DescribeTaskQueue(V1\DescribeTaskQueueRequest $arg, ContextInterface $ctx = null): V1\DescribeTaskQueueResponse
     {
-        return $this->invoke("DescribeTaskQueue", $arg, $ctx);
+        return $this->invoke('DescribeTaskQueue', $arg, $ctx);
     }
 
     /**
@@ -753,9 +752,9 @@ class ServiceClient extends BaseClient
      * @return V1\GetClusterInfoResponse
      * @throws ServiceClientException
      */
-    public function GetClusterInfo(V1\GetClusterInfoRequest $arg, ContextInterface $ctx = null) : V1\GetClusterInfoResponse
+    public function GetClusterInfo(V1\GetClusterInfoRequest $arg, ContextInterface $ctx = null): V1\GetClusterInfoResponse
     {
-        return $this->invoke("GetClusterInfo", $arg, $ctx);
+        return $this->invoke('GetClusterInfo', $arg, $ctx);
     }
 
     /**
@@ -766,9 +765,9 @@ class ServiceClient extends BaseClient
      * @return V1\GetSystemInfoResponse
      * @throws ServiceClientException
      */
-    public function GetSystemInfo(V1\GetSystemInfoRequest $arg, ContextInterface $ctx = null) : V1\GetSystemInfoResponse
+    public function GetSystemInfo(V1\GetSystemInfoRequest $arg, ContextInterface $ctx = null): V1\GetSystemInfoResponse
     {
-        return $this->invoke("GetSystemInfo", $arg, $ctx);
+        return $this->invoke('GetSystemInfo', $arg, $ctx);
     }
 
     /**
@@ -780,9 +779,9 @@ class ServiceClient extends BaseClient
      * @return V1\ListTaskQueuePartitionsResponse
      * @throws ServiceClientException
      */
-    public function ListTaskQueuePartitions(V1\ListTaskQueuePartitionsRequest $arg, ContextInterface $ctx = null) : V1\ListTaskQueuePartitionsResponse
+    public function ListTaskQueuePartitions(V1\ListTaskQueuePartitionsRequest $arg, ContextInterface $ctx = null): V1\ListTaskQueuePartitionsResponse
     {
-        return $this->invoke("ListTaskQueuePartitions", $arg, $ctx);
+        return $this->invoke('ListTaskQueuePartitions', $arg, $ctx);
     }
 
     /**
@@ -793,9 +792,9 @@ class ServiceClient extends BaseClient
      * @return V1\CreateScheduleResponse
      * @throws ServiceClientException
      */
-    public function CreateSchedule(V1\CreateScheduleRequest $arg, ContextInterface $ctx = null) : V1\CreateScheduleResponse
+    public function CreateSchedule(V1\CreateScheduleRequest $arg, ContextInterface $ctx = null): V1\CreateScheduleResponse
     {
-        return $this->invoke("CreateSchedule", $arg, $ctx);
+        return $this->invoke('CreateSchedule', $arg, $ctx);
     }
 
     /**
@@ -806,9 +805,9 @@ class ServiceClient extends BaseClient
      * @return V1\DescribeScheduleResponse
      * @throws ServiceClientException
      */
-    public function DescribeSchedule(V1\DescribeScheduleRequest $arg, ContextInterface $ctx = null) : V1\DescribeScheduleResponse
+    public function DescribeSchedule(V1\DescribeScheduleRequest $arg, ContextInterface $ctx = null): V1\DescribeScheduleResponse
     {
-        return $this->invoke("DescribeSchedule", $arg, $ctx);
+        return $this->invoke('DescribeSchedule', $arg, $ctx);
     }
 
     /**
@@ -819,9 +818,9 @@ class ServiceClient extends BaseClient
      * @return V1\UpdateScheduleResponse
      * @throws ServiceClientException
      */
-    public function UpdateSchedule(V1\UpdateScheduleRequest $arg, ContextInterface $ctx = null) : V1\UpdateScheduleResponse
+    public function UpdateSchedule(V1\UpdateScheduleRequest $arg, ContextInterface $ctx = null): V1\UpdateScheduleResponse
     {
-        return $this->invoke("UpdateSchedule", $arg, $ctx);
+        return $this->invoke('UpdateSchedule', $arg, $ctx);
     }
 
     /**
@@ -832,9 +831,9 @@ class ServiceClient extends BaseClient
      * @return V1\PatchScheduleResponse
      * @throws ServiceClientException
      */
-    public function PatchSchedule(V1\PatchScheduleRequest $arg, ContextInterface $ctx = null) : V1\PatchScheduleResponse
+    public function PatchSchedule(V1\PatchScheduleRequest $arg, ContextInterface $ctx = null): V1\PatchScheduleResponse
     {
-        return $this->invoke("PatchSchedule", $arg, $ctx);
+        return $this->invoke('PatchSchedule', $arg, $ctx);
     }
 
     /**
@@ -845,9 +844,9 @@ class ServiceClient extends BaseClient
      * @return V1\ListScheduleMatchingTimesResponse
      * @throws ServiceClientException
      */
-    public function ListScheduleMatchingTimes(V1\ListScheduleMatchingTimesRequest $arg, ContextInterface $ctx = null) : V1\ListScheduleMatchingTimesResponse
+    public function ListScheduleMatchingTimes(V1\ListScheduleMatchingTimesRequest $arg, ContextInterface $ctx = null): V1\ListScheduleMatchingTimesResponse
     {
-        return $this->invoke("ListScheduleMatchingTimes", $arg, $ctx);
+        return $this->invoke('ListScheduleMatchingTimes', $arg, $ctx);
     }
 
     /**
@@ -858,9 +857,9 @@ class ServiceClient extends BaseClient
      * @return V1\DeleteScheduleResponse
      * @throws ServiceClientException
      */
-    public function DeleteSchedule(V1\DeleteScheduleRequest $arg, ContextInterface $ctx = null) : V1\DeleteScheduleResponse
+    public function DeleteSchedule(V1\DeleteScheduleRequest $arg, ContextInterface $ctx = null): V1\DeleteScheduleResponse
     {
-        return $this->invoke("DeleteSchedule", $arg, $ctx);
+        return $this->invoke('DeleteSchedule', $arg, $ctx);
     }
 
     /**
@@ -871,9 +870,9 @@ class ServiceClient extends BaseClient
      * @return V1\ListSchedulesResponse
      * @throws ServiceClientException
      */
-    public function ListSchedules(V1\ListSchedulesRequest $arg, ContextInterface $ctx = null) : V1\ListSchedulesResponse
+    public function ListSchedules(V1\ListSchedulesRequest $arg, ContextInterface $ctx = null): V1\ListSchedulesResponse
     {
-        return $this->invoke("ListSchedules", $arg, $ctx);
+        return $this->invoke('ListSchedules', $arg, $ctx);
     }
 
     /**
@@ -906,9 +905,9 @@ class ServiceClient extends BaseClient
      * @return V1\UpdateWorkerBuildIdCompatibilityResponse
      * @throws ServiceClientException
      */
-    public function UpdateWorkerBuildIdCompatibility(V1\UpdateWorkerBuildIdCompatibilityRequest $arg, ContextInterface $ctx = null) : V1\UpdateWorkerBuildIdCompatibilityResponse
+    public function UpdateWorkerBuildIdCompatibility(V1\UpdateWorkerBuildIdCompatibilityRequest $arg, ContextInterface $ctx = null): V1\UpdateWorkerBuildIdCompatibilityResponse
     {
-        return $this->invoke("UpdateWorkerBuildIdCompatibility", $arg, $ctx);
+        return $this->invoke('UpdateWorkerBuildIdCompatibility', $arg, $ctx);
     }
 
     /**
@@ -920,9 +919,9 @@ class ServiceClient extends BaseClient
      * @return V1\GetWorkerBuildIdCompatibilityResponse
      * @throws ServiceClientException
      */
-    public function GetWorkerBuildIdCompatibility(V1\GetWorkerBuildIdCompatibilityRequest $arg, ContextInterface $ctx = null) : V1\GetWorkerBuildIdCompatibilityResponse
+    public function GetWorkerBuildIdCompatibility(V1\GetWorkerBuildIdCompatibilityRequest $arg, ContextInterface $ctx = null): V1\GetWorkerBuildIdCompatibilityResponse
     {
-        return $this->invoke("GetWorkerBuildIdCompatibility", $arg, $ctx);
+        return $this->invoke('GetWorkerBuildIdCompatibility', $arg, $ctx);
     }
 
     /**
@@ -938,9 +937,9 @@ class ServiceClient extends BaseClient
      * @return V1\UpdateWorkerVersioningRulesResponse
      * @throws ServiceClientException
      */
-    public function UpdateWorkerVersioningRules(V1\UpdateWorkerVersioningRulesRequest $arg, ContextInterface $ctx = null) : V1\UpdateWorkerVersioningRulesResponse
+    public function UpdateWorkerVersioningRules(V1\UpdateWorkerVersioningRulesRequest $arg, ContextInterface $ctx = null): V1\UpdateWorkerVersioningRulesResponse
     {
-        return $this->invoke("UpdateWorkerVersioningRules", $arg, $ctx);
+        return $this->invoke('UpdateWorkerVersioningRules', $arg, $ctx);
     }
 
     /**
@@ -953,9 +952,9 @@ class ServiceClient extends BaseClient
      * @return V1\GetWorkerVersioningRulesResponse
      * @throws ServiceClientException
      */
-    public function GetWorkerVersioningRules(V1\GetWorkerVersioningRulesRequest $arg, ContextInterface $ctx = null) : V1\GetWorkerVersioningRulesResponse
+    public function GetWorkerVersioningRules(V1\GetWorkerVersioningRulesRequest $arg, ContextInterface $ctx = null): V1\GetWorkerVersioningRulesResponse
     {
-        return $this->invoke("GetWorkerVersioningRules", $arg, $ctx);
+        return $this->invoke('GetWorkerVersioningRules', $arg, $ctx);
     }
 
     /**
@@ -986,9 +985,9 @@ class ServiceClient extends BaseClient
      * @return V1\GetWorkerTaskReachabilityResponse
      * @throws ServiceClientException
      */
-    public function GetWorkerTaskReachability(V1\GetWorkerTaskReachabilityRequest $arg, ContextInterface $ctx = null) : V1\GetWorkerTaskReachabilityResponse
+    public function GetWorkerTaskReachability(V1\GetWorkerTaskReachabilityRequest $arg, ContextInterface $ctx = null): V1\GetWorkerTaskReachabilityResponse
     {
-        return $this->invoke("GetWorkerTaskReachability", $arg, $ctx);
+        return $this->invoke('GetWorkerTaskReachability', $arg, $ctx);
     }
 
     /**
@@ -999,9 +998,9 @@ class ServiceClient extends BaseClient
      * @return V1\UpdateWorkflowExecutionResponse
      * @throws ServiceClientException
      */
-    public function UpdateWorkflowExecution(V1\UpdateWorkflowExecutionRequest $arg, ContextInterface $ctx = null) : V1\UpdateWorkflowExecutionResponse
+    public function UpdateWorkflowExecution(V1\UpdateWorkflowExecutionRequest $arg, ContextInterface $ctx = null): V1\UpdateWorkflowExecutionResponse
     {
-        return $this->invoke("UpdateWorkflowExecution", $arg, $ctx);
+        return $this->invoke('UpdateWorkflowExecution', $arg, $ctx);
     }
 
     /**
@@ -1019,9 +1018,9 @@ class ServiceClient extends BaseClient
      * @return V1\PollWorkflowExecutionUpdateResponse
      * @throws ServiceClientException
      */
-    public function PollWorkflowExecutionUpdate(V1\PollWorkflowExecutionUpdateRequest $arg, ContextInterface $ctx = null) : V1\PollWorkflowExecutionUpdateResponse
+    public function PollWorkflowExecutionUpdate(V1\PollWorkflowExecutionUpdateRequest $arg, ContextInterface $ctx = null): V1\PollWorkflowExecutionUpdateResponse
     {
-        return $this->invoke("PollWorkflowExecutionUpdate", $arg, $ctx);
+        return $this->invoke('PollWorkflowExecutionUpdate', $arg, $ctx);
     }
 
     /**
@@ -1032,9 +1031,9 @@ class ServiceClient extends BaseClient
      * @return V1\StartBatchOperationResponse
      * @throws ServiceClientException
      */
-    public function StartBatchOperation(V1\StartBatchOperationRequest $arg, ContextInterface $ctx = null) : V1\StartBatchOperationResponse
+    public function StartBatchOperation(V1\StartBatchOperationRequest $arg, ContextInterface $ctx = null): V1\StartBatchOperationResponse
     {
-        return $this->invoke("StartBatchOperation", $arg, $ctx);
+        return $this->invoke('StartBatchOperation', $arg, $ctx);
     }
 
     /**
@@ -1045,9 +1044,9 @@ class ServiceClient extends BaseClient
      * @return V1\StopBatchOperationResponse
      * @throws ServiceClientException
      */
-    public function StopBatchOperation(V1\StopBatchOperationRequest $arg, ContextInterface $ctx = null) : V1\StopBatchOperationResponse
+    public function StopBatchOperation(V1\StopBatchOperationRequest $arg, ContextInterface $ctx = null): V1\StopBatchOperationResponse
     {
-        return $this->invoke("StopBatchOperation", $arg, $ctx);
+        return $this->invoke('StopBatchOperation', $arg, $ctx);
     }
 
     /**
@@ -1058,9 +1057,9 @@ class ServiceClient extends BaseClient
      * @return V1\DescribeBatchOperationResponse
      * @throws ServiceClientException
      */
-    public function DescribeBatchOperation(V1\DescribeBatchOperationRequest $arg, ContextInterface $ctx = null) : V1\DescribeBatchOperationResponse
+    public function DescribeBatchOperation(V1\DescribeBatchOperationRequest $arg, ContextInterface $ctx = null): V1\DescribeBatchOperationResponse
     {
-        return $this->invoke("DescribeBatchOperation", $arg, $ctx);
+        return $this->invoke('DescribeBatchOperation', $arg, $ctx);
     }
 
     /**
@@ -1071,9 +1070,9 @@ class ServiceClient extends BaseClient
      * @return V1\ListBatchOperationsResponse
      * @throws ServiceClientException
      */
-    public function ListBatchOperations(V1\ListBatchOperationsRequest $arg, ContextInterface $ctx = null) : V1\ListBatchOperationsResponse
+    public function ListBatchOperations(V1\ListBatchOperationsRequest $arg, ContextInterface $ctx = null): V1\ListBatchOperationsResponse
     {
-        return $this->invoke("ListBatchOperations", $arg, $ctx);
+        return $this->invoke('ListBatchOperations', $arg, $ctx);
     }
 
     /**
@@ -1086,9 +1085,9 @@ class ServiceClient extends BaseClient
      * @return V1\PollNexusTaskQueueResponse
      * @throws ServiceClientException
      */
-    public function PollNexusTaskQueue(V1\PollNexusTaskQueueRequest $arg, ContextInterface $ctx = null) : V1\PollNexusTaskQueueResponse
+    public function PollNexusTaskQueue(V1\PollNexusTaskQueueRequest $arg, ContextInterface $ctx = null): V1\PollNexusTaskQueueResponse
     {
-        return $this->invoke("PollNexusTaskQueue", $arg, $ctx);
+        return $this->invoke('PollNexusTaskQueue', $arg, $ctx);
     }
 
     /**
@@ -1102,9 +1101,9 @@ class ServiceClient extends BaseClient
      * @return V1\RespondNexusTaskCompletedResponse
      * @throws ServiceClientException
      */
-    public function RespondNexusTaskCompleted(V1\RespondNexusTaskCompletedRequest $arg, ContextInterface $ctx = null) : V1\RespondNexusTaskCompletedResponse
+    public function RespondNexusTaskCompleted(V1\RespondNexusTaskCompletedRequest $arg, ContextInterface $ctx = null): V1\RespondNexusTaskCompletedResponse
     {
-        return $this->invoke("RespondNexusTaskCompleted", $arg, $ctx);
+        return $this->invoke('RespondNexusTaskCompleted', $arg, $ctx);
     }
 
     /**
@@ -1118,9 +1117,8 @@ class ServiceClient extends BaseClient
      * @return V1\RespondNexusTaskFailedResponse
      * @throws ServiceClientException
      */
-    public function RespondNexusTaskFailed(V1\RespondNexusTaskFailedRequest $arg, ContextInterface $ctx = null) : V1\RespondNexusTaskFailedResponse
+    public function RespondNexusTaskFailed(V1\RespondNexusTaskFailedRequest $arg, ContextInterface $ctx = null): V1\RespondNexusTaskFailedResponse
     {
-        return $this->invoke("RespondNexusTaskFailed", $arg, $ctx);
+        return $this->invoke('RespondNexusTaskFailed', $arg, $ctx);
     }
 }
-

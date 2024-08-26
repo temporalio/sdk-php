@@ -338,7 +338,7 @@ class WorkflowClient implements WorkflowClientInterface
                 $request->setNextPageToken($nextPageToken);
             } while ($nextPageToken !== '');
         };
-        $counter = fn(): int => $this->countWorkflowExecutions($query, $namespace)->count;
+        $counter = fn (): int => $this->countWorkflowExecutions($query, $namespace)->count;
 
         return Paginator::createFromGenerator($loader($request), $counter);
     }
@@ -380,7 +380,8 @@ class WorkflowClient implements WorkflowClientInterface
             ->setHistoryEventFilterType($historyEventFilterType)
             ->setSkipArchival($skipArchival)
             ->setMaximumPageSize($pageSize)
-            ->setExecution((new \Temporal\Api\Common\V1\WorkflowExecution())
+            ->setExecution(
+                (new \Temporal\Api\Common\V1\WorkflowExecution())
                 ->setWorkflowId($execution->getID())
                 ->setRunId(
                     $execution->getRunID() ?? throw new InvalidArgumentException('Execution Run ID is required.'),

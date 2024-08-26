@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Temporal\Internal\Mapper;
 
 use Temporal\Api\Common\V1\Payloads;
-use Temporal\Api\Common\V1\RetryPolicy;
 use Temporal\Api\Common\V1\WorkflowType;
 use Temporal\Api\Schedule\V1\CalendarSpec;
 use Temporal\Api\Schedule\V1\IntervalSpec;
@@ -85,17 +84,17 @@ final class ScheduleMapper
         $result['structured_calendar'] = $this->prepareStructuredCalendar($result['structured_calendar'] ?? []);
 
         $result['calendar'] = \array_map(
-            static fn(array $item): CalendarSpec => new CalendarSpec($item),
+            static fn (array $item): CalendarSpec => new CalendarSpec($item),
             $result['calendar'] ?? [],
         );
 
         $result['exclude_calendar'] = \array_map(
-            static fn(array $item): CalendarSpec => new CalendarSpec($item),
+            static fn (array $item): CalendarSpec => new CalendarSpec($item),
             $result['exclude_calendar'] ?? [],
         );
 
         $result['interval'] = \array_map(
-            static fn(array $item): IntervalSpec => new IntervalSpec($item),
+            static fn (array $item): IntervalSpec => new IntervalSpec($item),
             $result['interval'] ?? [],
         );
 
@@ -112,7 +111,7 @@ final class ScheduleMapper
             // Convert Range fields
             foreach (['second', 'minute', 'hour', 'day_of_month', 'month', 'year', 'day_of_week'] as $key) {
                 $calendar[$key] = \array_map(
-                    static fn(array $item): Range => new Range($item),
+                    static fn (array $item): Range => new Range($item),
                     $calendar[$key] ?? [],
                 );
             }

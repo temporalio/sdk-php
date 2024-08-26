@@ -70,7 +70,7 @@ class EnumType extends Type implements RuleFactoryInterface
         }
 
         if (\is_array($value)) {
-           // Process the `value` key
+            // Process the `value` key
             if (\array_key_exists('value', $value)) {
                 return $this->classFQCN::from($value['value']);
             }

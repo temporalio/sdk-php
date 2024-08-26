@@ -43,8 +43,8 @@ class Scope
      * @var int
      */
     public const VISIBILITY_ALL = self::VISIBILITY_PRIVATE
-                                | self::VISIBILITY_PROTECTED
-                                | self::VISIBILITY_PUBLIC;
+        | self::VISIBILITY_PROTECTED
+        | self::VISIBILITY_PUBLIC;
 
     /**
      * @var ExportScope

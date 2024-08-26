@@ -53,7 +53,7 @@ class Marshaller implements MarshallerInterface
      */
     public function marshal(object $from): array
     {
-        $mapper = $this->getMapper(\get_class($from));
+        $mapper = $this->getMapper($from::class);
 
         $result = [];
 

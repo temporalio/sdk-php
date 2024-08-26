@@ -13,6 +13,7 @@ use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\InvalidArgumentException;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Throwable;
+
 use function React\Promise\reject;
 use function React\Promise\resolve;
 

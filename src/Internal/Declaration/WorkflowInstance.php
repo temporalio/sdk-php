@@ -86,11 +86,11 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
         $updateValidators = $prototype->getValidateUpdateHandlers();
         foreach ($prototype->getUpdateHandlers() as $method => $reflection) {
             $fn = $this->createHandler($reflection);
-            $this->updateHandlers[$method] = fn(UpdateInput $input, Deferred $deferred): mixed =>
+            $this->updateHandlers[$method] = fn (UpdateInput $input, Deferred $deferred): mixed =>
                 ($this->updateExecutor)($input, $fn, $deferred);
             // Register validate update handlers
             $this->validateUpdateHandlers[$method] = \array_key_exists($method, $updateValidators)
-                ? fn(UpdateInput $input): mixed => ($this->updateValidator)(
+                ? fn (UpdateInput $input): mixed => ($this->updateValidator)(
                     $input,
                     $this->createHandler($updateValidators[$method]),
                 )
@@ -100,9 +100,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
         foreach ($prototype->getQueryHandlers() as $method => $reflection) {
             $fn = $this->createHandler($reflection);
             $this->queryHandlers[$method] = $this->pipeline->with(
-                function (QueryInput $input) use ($fn): mixed {
-                    return ($this->queryExecutor)($input, $fn);
-                },
+                fn (QueryInput $input): mixed => ($this->queryExecutor)($input, $fn),
                 /** @see WorkflowInboundCallsInterceptor::handleQuery() */
                 'handleQuery',
             )(...);
@@ -199,9 +197,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
         $fn = $this->createCallableHandler($handler);
 
         $this->queryHandlers[$name] = $this->pipeline->with(
-            function (QueryInput $input) use ($fn) {
-                return ($this->queryExecutor)($input, $fn);
-            },
+            fn (QueryInput $input) => ($this->queryExecutor)($input, $fn),
             /** @see WorkflowInboundCallsInterceptor::handleQuery() */
             'handleQuery',
         )(...);
@@ -217,9 +213,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
         $fn = $this->createCallableHandler($handler);
 
         $this->updateHandlers[$name] = $this->pipeline->with(
-            function (UpdateInput $input, Deferred $deferred) use ($fn) {
-                return ($this->updateExecutor)($input, $fn, $deferred);
-            },
+            fn (UpdateInput $input, Deferred $deferred) => ($this->updateExecutor)($input, $fn, $deferred),
             /** @see WorkflowInboundCallsInterceptor::handleUpdate() */
             'handleUpdate',
         )(...);

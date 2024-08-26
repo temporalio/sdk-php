@@ -79,7 +79,7 @@ final class BackoffThrottler
         // Choose a random number in the range -maxJitterCoefficient ... +maxJitterCoefficient
         $jitter = \random_int(-1000, 1000) * $this->maxJitterCoefficient / 1000;
         $sleepTime = \min(
-            \pow($this->backoffCoefficient, $failureCount - 1) * $initialInterval * (1.0 + $jitter),
+            $this->backoffCoefficient ** ($failureCount - 1) * $initialInterval * (1.0 + $jitter),
             $this->maxInterval,
         );
 

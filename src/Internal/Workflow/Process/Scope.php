@@ -170,8 +170,8 @@ class Scope implements CancellationScopeInterface, Destroyable
         // Update handler counter
         ++$this->context->getHandlerState()->updates;
         $this->then(
-            fn() => --$this->context->getHandlerState()->updates,
-            fn() => --$this->context->getHandlerState()->updates,
+            fn () => --$this->context->getHandlerState()->updates,
+            fn () => --$this->context->getHandlerState()->updates,
         );
 
         $this->then(
@@ -196,8 +196,8 @@ class Scope implements CancellationScopeInterface, Destroyable
         // Update handler counter
         ++$this->context->getHandlerState()->signals;
         $this->then(
-            fn() => --$this->context->getHandlerState()->signals,
-            fn() => --$this->context->getHandlerState()->signals,
+            fn () => --$this->context->getHandlerState()->signals,
+            fn () => --$this->context->getHandlerState()->signals,
         );
 
         // Create a coroutine generator

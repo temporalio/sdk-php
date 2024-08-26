@@ -13,7 +13,6 @@ namespace Temporal\Internal\Workflow;
 
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\Type;
-use Temporal\Internal\Client\WorkflowProxy;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Support\Reflection;
 use Temporal\Internal\Transport\CompletableResultInterface;

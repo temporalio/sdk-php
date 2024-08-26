@@ -16,4 +16,5 @@ use Temporal\Exception\TemporalException;
 /**
  * RPC timeout or cancellation.
  */
-class TimeoutException extends TemporalException {}
+class TimeoutException extends TemporalException
+{}

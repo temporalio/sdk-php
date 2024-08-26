@@ -137,7 +137,8 @@ final class WorkflowStarter
      * @throws ServiceClientException
      * @throws WorkflowExecutionAlreadyStartedException
      */
-    private function executeRequest(StartWorkflowExecutionRequest|SignalWithStartWorkflowExecutionRequest $request,
+    private function executeRequest(
+        StartWorkflowExecutionRequest|SignalWithStartWorkflowExecutionRequest $request,
     ): WorkflowExecution {
         try {
             $response = $request instanceof StartWorkflowExecutionRequest

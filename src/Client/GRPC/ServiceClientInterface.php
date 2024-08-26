@@ -6,7 +6,6 @@
  * file that was distributed with this source code.
  */
 
-
 namespace Temporal\Client\GRPC;
 
 use Temporal\Api\Workflowservice\V1;
@@ -14,11 +13,11 @@ use Temporal\Exception\Client\ServiceClientException;
 
 interface ServiceClientInterface
 {
-    public function getContext() : ContextInterface;
-    public function withContext(ContextInterface $context) : static;
-    public function withAuthKey(\Stringable|string $key) : static;
-    public function getConnection() : \Temporal\Client\GRPC\Connection\ConnectionInterface;
-    public function getServerCapabilities() : ?\Temporal\Client\Common\ServerCapabilities;
+    public function getContext(): ContextInterface;
+    public function withContext(ContextInterface $context): static;
+    public function withAuthKey(\Stringable|string $key): static;
+    public function getConnection(): \Temporal\Client\GRPC\Connection\ConnectionInterface;
+    public function getServerCapabilities(): ?\Temporal\Client\Common\ServerCapabilities;
     /**
      * RegisterNamespace creates a new namespace which can be used as a container for
      * all resources.
@@ -36,7 +35,7 @@ interface ServiceClientInterface
      * @return V1\RegisterNamespaceResponse
      * @throws ServiceClientException
      */
-    public function RegisterNamespace(V1\RegisterNamespaceRequest $arg, ContextInterface $ctx = null) : V1\RegisterNamespaceResponse;
+    public function RegisterNamespace(V1\RegisterNamespaceRequest $arg, ContextInterface $ctx = null): V1\RegisterNamespaceResponse;
     /**
      * DescribeNamespace returns the information and configuration for a registered
      * namespace.
@@ -46,7 +45,7 @@ interface ServiceClientInterface
      * @return V1\DescribeNamespaceResponse
      * @throws ServiceClientException
      */
-    public function DescribeNamespace(V1\DescribeNamespaceRequest $arg, ContextInterface $ctx = null) : V1\DescribeNamespaceResponse;
+    public function DescribeNamespace(V1\DescribeNamespaceRequest $arg, ContextInterface $ctx = null): V1\DescribeNamespaceResponse;
     /**
      * ListNamespaces returns the information and configuration for all namespaces.
      *
@@ -55,7 +54,7 @@ interface ServiceClientInterface
      * @return V1\ListNamespacesResponse
      * @throws ServiceClientException
      */
-    public function ListNamespaces(V1\ListNamespacesRequest $arg, ContextInterface $ctx = null) : V1\ListNamespacesResponse;
+    public function ListNamespaces(V1\ListNamespacesRequest $arg, ContextInterface $ctx = null): V1\ListNamespacesResponse;
     /**
      * UpdateNamespace is used to update the information and configuration of a
      * registered
@@ -66,7 +65,7 @@ interface ServiceClientInterface
      * @return V1\UpdateNamespaceResponse
      * @throws ServiceClientException
      */
-    public function UpdateNamespace(V1\UpdateNamespaceRequest $arg, ContextInterface $ctx = null) : V1\UpdateNamespaceResponse;
+    public function UpdateNamespace(V1\UpdateNamespaceRequest $arg, ContextInterface $ctx = null): V1\UpdateNamespaceResponse;
     /**
      * DeprecateNamespace is used to update the state of a registered namespace to
      * DEPRECATED.
@@ -84,7 +83,7 @@ interface ServiceClientInterface
      * @return V1\DeprecateNamespaceResponse
      * @throws ServiceClientException
      */
-    public function DeprecateNamespace(V1\DeprecateNamespaceRequest $arg, ContextInterface $ctx = null) : V1\DeprecateNamespaceResponse;
+    public function DeprecateNamespace(V1\DeprecateNamespaceRequest $arg, ContextInterface $ctx = null): V1\DeprecateNamespaceResponse;
     /**
      * StartWorkflowExecution starts a new workflow execution.
      *
@@ -99,7 +98,7 @@ interface ServiceClientInterface
      * @return V1\StartWorkflowExecutionResponse
      * @throws ServiceClientException
      */
-    public function StartWorkflowExecution(V1\StartWorkflowExecutionRequest $arg, ContextInterface $ctx = null) : V1\StartWorkflowExecutionResponse;
+    public function StartWorkflowExecution(V1\StartWorkflowExecutionRequest $arg, ContextInterface $ctx = null): V1\StartWorkflowExecutionResponse;
     /**
      * GetWorkflowExecutionHistory returns the history of specified workflow execution.
      * Fails with
@@ -110,7 +109,7 @@ interface ServiceClientInterface
      * @return V1\GetWorkflowExecutionHistoryResponse
      * @throws ServiceClientException
      */
-    public function GetWorkflowExecutionHistory(V1\GetWorkflowExecutionHistoryRequest $arg, ContextInterface $ctx = null) : V1\GetWorkflowExecutionHistoryResponse;
+    public function GetWorkflowExecutionHistory(V1\GetWorkflowExecutionHistoryRequest $arg, ContextInterface $ctx = null): V1\GetWorkflowExecutionHistoryResponse;
     /**
      * GetWorkflowExecutionHistoryReverse returns the history of specified workflow
      * execution in reverse
@@ -123,7 +122,7 @@ interface ServiceClientInterface
      * @return V1\GetWorkflowExecutionHistoryReverseResponse
      * @throws ServiceClientException
      */
-    public function GetWorkflowExecutionHistoryReverse(V1\GetWorkflowExecutionHistoryReverseRequest $arg, ContextInterface $ctx = null) : V1\GetWorkflowExecutionHistoryReverseResponse;
+    public function GetWorkflowExecutionHistoryReverse(V1\GetWorkflowExecutionHistoryReverseRequest $arg, ContextInterface $ctx = null): V1\GetWorkflowExecutionHistoryReverseResponse;
     /**
      * PollWorkflowTaskQueue is called by workers to make progress on workflows.
      *
@@ -143,7 +142,7 @@ interface ServiceClientInterface
      * @return V1\PollWorkflowTaskQueueResponse
      * @throws ServiceClientException
      */
-    public function PollWorkflowTaskQueue(V1\PollWorkflowTaskQueueRequest $arg, ContextInterface $ctx = null) : V1\PollWorkflowTaskQueueResponse;
+    public function PollWorkflowTaskQueue(V1\PollWorkflowTaskQueueRequest $arg, ContextInterface $ctx = null): V1\PollWorkflowTaskQueueResponse;
     /**
      * RespondWorkflowTaskCompleted is called by workers to successfully complete
      * workflow tasks
@@ -163,7 +162,7 @@ interface ServiceClientInterface
      * @return V1\RespondWorkflowTaskCompletedResponse
      * @throws ServiceClientException
      */
-    public function RespondWorkflowTaskCompleted(V1\RespondWorkflowTaskCompletedRequest $arg, ContextInterface $ctx = null) : V1\RespondWorkflowTaskCompletedResponse;
+    public function RespondWorkflowTaskCompleted(V1\RespondWorkflowTaskCompletedRequest $arg, ContextInterface $ctx = null): V1\RespondWorkflowTaskCompletedResponse;
     /**
      * RespondWorkflowTaskFailed is called by workers to indicate the processing of a
      * workflow task
@@ -187,7 +186,7 @@ interface ServiceClientInterface
      * @return V1\RespondWorkflowTaskFailedResponse
      * @throws ServiceClientException
      */
-    public function RespondWorkflowTaskFailed(V1\RespondWorkflowTaskFailedRequest $arg, ContextInterface $ctx = null) : V1\RespondWorkflowTaskFailedResponse;
+    public function RespondWorkflowTaskFailed(V1\RespondWorkflowTaskFailedRequest $arg, ContextInterface $ctx = null): V1\RespondWorkflowTaskFailedResponse;
     /**
      * PollActivityTaskQueue is called by workers to process activity tasks from a
      * specific task
@@ -217,7 +216,7 @@ interface ServiceClientInterface
      * @return V1\PollActivityTaskQueueResponse
      * @throws ServiceClientException
      */
-    public function PollActivityTaskQueue(V1\PollActivityTaskQueueRequest $arg, ContextInterface $ctx = null) : V1\PollActivityTaskQueueResponse;
+    public function PollActivityTaskQueue(V1\PollActivityTaskQueueRequest $arg, ContextInterface $ctx = null): V1\PollActivityTaskQueueResponse;
     /**
      * RecordActivityTaskHeartbeat is optionally called by workers while they execute
      * activities.
@@ -236,7 +235,7 @@ interface ServiceClientInterface
      * @return V1\RecordActivityTaskHeartbeatResponse
      * @throws ServiceClientException
      */
-    public function RecordActivityTaskHeartbeat(V1\RecordActivityTaskHeartbeatRequest $arg, ContextInterface $ctx = null) : V1\RecordActivityTaskHeartbeatResponse;
+    public function RecordActivityTaskHeartbeat(V1\RecordActivityTaskHeartbeatRequest $arg, ContextInterface $ctx = null): V1\RecordActivityTaskHeartbeatResponse;
     /**
      * See `RecordActivityTaskHeartbeat`. This version allows clients to record
      * heartbeats by
@@ -250,7 +249,7 @@ interface ServiceClientInterface
      * @return V1\RecordActivityTaskHeartbeatByIdResponse
      * @throws ServiceClientException
      */
-    public function RecordActivityTaskHeartbeatById(V1\RecordActivityTaskHeartbeatByIdRequest $arg, ContextInterface $ctx = null) : V1\RecordActivityTaskHeartbeatByIdResponse;
+    public function RecordActivityTaskHeartbeatById(V1\RecordActivityTaskHeartbeatByIdRequest $arg, ContextInterface $ctx = null): V1\RecordActivityTaskHeartbeatByIdResponse;
     /**
      * RespondActivityTaskCompleted is called by workers when they successfully
      * complete an activity
@@ -268,7 +267,7 @@ interface ServiceClientInterface
      * @return V1\RespondActivityTaskCompletedResponse
      * @throws ServiceClientException
      */
-    public function RespondActivityTaskCompleted(V1\RespondActivityTaskCompletedRequest $arg, ContextInterface $ctx = null) : V1\RespondActivityTaskCompletedResponse;
+    public function RespondActivityTaskCompleted(V1\RespondActivityTaskCompletedRequest $arg, ContextInterface $ctx = null): V1\RespondActivityTaskCompletedResponse;
     /**
      * See `RecordActivityTaskCompleted`. This version allows clients to record
      * completions by
@@ -282,7 +281,7 @@ interface ServiceClientInterface
      * @return V1\RespondActivityTaskCompletedByIdResponse
      * @throws ServiceClientException
      */
-    public function RespondActivityTaskCompletedById(V1\RespondActivityTaskCompletedByIdRequest $arg, ContextInterface $ctx = null) : V1\RespondActivityTaskCompletedByIdResponse;
+    public function RespondActivityTaskCompletedById(V1\RespondActivityTaskCompletedByIdRequest $arg, ContextInterface $ctx = null): V1\RespondActivityTaskCompletedByIdResponse;
     /**
      * RespondActivityTaskFailed is called by workers when processing an activity task
      * fails.
@@ -299,7 +298,7 @@ interface ServiceClientInterface
      * @return V1\RespondActivityTaskFailedResponse
      * @throws ServiceClientException
      */
-    public function RespondActivityTaskFailed(V1\RespondActivityTaskFailedRequest $arg, ContextInterface $ctx = null) : V1\RespondActivityTaskFailedResponse;
+    public function RespondActivityTaskFailed(V1\RespondActivityTaskFailedRequest $arg, ContextInterface $ctx = null): V1\RespondActivityTaskFailedResponse;
     /**
      * See `RecordActivityTaskFailed`. This version allows clients to record failures
      * by
@@ -313,7 +312,7 @@ interface ServiceClientInterface
      * @return V1\RespondActivityTaskFailedByIdResponse
      * @throws ServiceClientException
      */
-    public function RespondActivityTaskFailedById(V1\RespondActivityTaskFailedByIdRequest $arg, ContextInterface $ctx = null) : V1\RespondActivityTaskFailedByIdResponse;
+    public function RespondActivityTaskFailedById(V1\RespondActivityTaskFailedByIdRequest $arg, ContextInterface $ctx = null): V1\RespondActivityTaskFailedByIdResponse;
     /**
      * RespondActivityTaskFailed is called by workers when processing an activity task
      * fails.
@@ -330,7 +329,7 @@ interface ServiceClientInterface
      * @return V1\RespondActivityTaskCanceledResponse
      * @throws ServiceClientException
      */
-    public function RespondActivityTaskCanceled(V1\RespondActivityTaskCanceledRequest $arg, ContextInterface $ctx = null) : V1\RespondActivityTaskCanceledResponse;
+    public function RespondActivityTaskCanceled(V1\RespondActivityTaskCanceledRequest $arg, ContextInterface $ctx = null): V1\RespondActivityTaskCanceledResponse;
     /**
      * See `RecordActivityTaskCanceled`. This version allows clients to record failures
      * by
@@ -344,7 +343,7 @@ interface ServiceClientInterface
      * @return V1\RespondActivityTaskCanceledByIdResponse
      * @throws ServiceClientException
      */
-    public function RespondActivityTaskCanceledById(V1\RespondActivityTaskCanceledByIdRequest $arg, ContextInterface $ctx = null) : V1\RespondActivityTaskCanceledByIdResponse;
+    public function RespondActivityTaskCanceledById(V1\RespondActivityTaskCanceledByIdRequest $arg, ContextInterface $ctx = null): V1\RespondActivityTaskCanceledByIdResponse;
     /**
      * RequestCancelWorkflowExecution is called by workers when they want to request
      * cancellation of
@@ -362,7 +361,7 @@ interface ServiceClientInterface
      * @return V1\RequestCancelWorkflowExecutionResponse
      * @throws ServiceClientException
      */
-    public function RequestCancelWorkflowExecution(V1\RequestCancelWorkflowExecutionRequest $arg, ContextInterface $ctx = null) : V1\RequestCancelWorkflowExecutionResponse;
+    public function RequestCancelWorkflowExecution(V1\RequestCancelWorkflowExecutionRequest $arg, ContextInterface $ctx = null): V1\RequestCancelWorkflowExecutionResponse;
     /**
      * SignalWorkflowExecution is used to send a signal to a running workflow
      * execution.
@@ -376,7 +375,7 @@ interface ServiceClientInterface
      * @return V1\SignalWorkflowExecutionResponse
      * @throws ServiceClientException
      */
-    public function SignalWorkflowExecution(V1\SignalWorkflowExecutionRequest $arg, ContextInterface $ctx = null) : V1\SignalWorkflowExecutionResponse;
+    public function SignalWorkflowExecution(V1\SignalWorkflowExecutionRequest $arg, ContextInterface $ctx = null): V1\SignalWorkflowExecutionResponse;
     /**
      * SignalWithStartWorkflowExecution is used to ensure a signal is sent to a
      * workflow, even if
@@ -399,7 +398,7 @@ interface ServiceClientInterface
      * @return V1\SignalWithStartWorkflowExecutionResponse
      * @throws ServiceClientException
      */
-    public function SignalWithStartWorkflowExecution(V1\SignalWithStartWorkflowExecutionRequest $arg, ContextInterface $ctx = null) : V1\SignalWithStartWorkflowExecutionResponse;
+    public function SignalWithStartWorkflowExecution(V1\SignalWithStartWorkflowExecutionRequest $arg, ContextInterface $ctx = null): V1\SignalWithStartWorkflowExecutionResponse;
     /**
      * ResetWorkflowExecution will reset an existing workflow execution to a specified
      * `WORKFLOW_TASK_COMPLETED` event (exclusive). It will immediately terminate the
@@ -413,7 +412,7 @@ interface ServiceClientInterface
      * @return V1\ResetWorkflowExecutionResponse
      * @throws ServiceClientException
      */
-    public function ResetWorkflowExecution(V1\ResetWorkflowExecutionRequest $arg, ContextInterface $ctx = null) : V1\ResetWorkflowExecutionResponse;
+    public function ResetWorkflowExecution(V1\ResetWorkflowExecutionRequest $arg, ContextInterface $ctx = null): V1\ResetWorkflowExecutionResponse;
     /**
      * TerminateWorkflowExecution terminates an existing workflow execution by
      * recording a
@@ -426,7 +425,7 @@ interface ServiceClientInterface
      * @return V1\TerminateWorkflowExecutionResponse
      * @throws ServiceClientException
      */
-    public function TerminateWorkflowExecution(V1\TerminateWorkflowExecutionRequest $arg, ContextInterface $ctx = null) : V1\TerminateWorkflowExecutionResponse;
+    public function TerminateWorkflowExecution(V1\TerminateWorkflowExecutionRequest $arg, ContextInterface $ctx = null): V1\TerminateWorkflowExecutionResponse;
     /**
      * DeleteWorkflowExecution asynchronously deletes a specific Workflow Execution
      * (when
@@ -444,7 +443,7 @@ interface ServiceClientInterface
      * @return V1\DeleteWorkflowExecutionResponse
      * @throws ServiceClientException
      */
-    public function DeleteWorkflowExecution(V1\DeleteWorkflowExecutionRequest $arg, ContextInterface $ctx = null) : V1\DeleteWorkflowExecutionResponse;
+    public function DeleteWorkflowExecution(V1\DeleteWorkflowExecutionRequest $arg, ContextInterface $ctx = null): V1\DeleteWorkflowExecutionResponse;
     /**
      * ListOpenWorkflowExecutions is a visibility API to list the open executions in a
      * specific namespace.
@@ -457,7 +456,7 @@ interface ServiceClientInterface
      * @return V1\ListOpenWorkflowExecutionsResponse
      * @throws ServiceClientException
      */
-    public function ListOpenWorkflowExecutions(V1\ListOpenWorkflowExecutionsRequest $arg, ContextInterface $ctx = null) : V1\ListOpenWorkflowExecutionsResponse;
+    public function ListOpenWorkflowExecutions(V1\ListOpenWorkflowExecutionsRequest $arg, ContextInterface $ctx = null): V1\ListOpenWorkflowExecutionsResponse;
     /**
      * ListClosedWorkflowExecutions is a visibility API to list the closed executions
      * in a specific namespace.
@@ -470,7 +469,7 @@ interface ServiceClientInterface
      * @return V1\ListClosedWorkflowExecutionsResponse
      * @throws ServiceClientException
      */
-    public function ListClosedWorkflowExecutions(V1\ListClosedWorkflowExecutionsRequest $arg, ContextInterface $ctx = null) : V1\ListClosedWorkflowExecutionsResponse;
+    public function ListClosedWorkflowExecutions(V1\ListClosedWorkflowExecutionsRequest $arg, ContextInterface $ctx = null): V1\ListClosedWorkflowExecutionsResponse;
     /**
      * ListWorkflowExecutions is a visibility API to list workflow executions in a
      * specific namespace.
@@ -480,7 +479,7 @@ interface ServiceClientInterface
      * @return V1\ListWorkflowExecutionsResponse
      * @throws ServiceClientException
      */
-    public function ListWorkflowExecutions(V1\ListWorkflowExecutionsRequest $arg, ContextInterface $ctx = null) : V1\ListWorkflowExecutionsResponse;
+    public function ListWorkflowExecutions(V1\ListWorkflowExecutionsRequest $arg, ContextInterface $ctx = null): V1\ListWorkflowExecutionsResponse;
     /**
      * ListArchivedWorkflowExecutions is a visibility API to list archived workflow
      * executions in a specific namespace.
@@ -490,7 +489,7 @@ interface ServiceClientInterface
      * @return V1\ListArchivedWorkflowExecutionsResponse
      * @throws ServiceClientException
      */
-    public function ListArchivedWorkflowExecutions(V1\ListArchivedWorkflowExecutionsRequest $arg, ContextInterface $ctx = null) : V1\ListArchivedWorkflowExecutionsResponse;
+    public function ListArchivedWorkflowExecutions(V1\ListArchivedWorkflowExecutionsRequest $arg, ContextInterface $ctx = null): V1\ListArchivedWorkflowExecutionsResponse;
     /**
      * ScanWorkflowExecutions is a visibility API to list large amount of workflow
      * executions in a specific namespace without order.
@@ -503,7 +502,7 @@ interface ServiceClientInterface
      * @return V1\ScanWorkflowExecutionsResponse
      * @throws ServiceClientException
      */
-    public function ScanWorkflowExecutions(V1\ScanWorkflowExecutionsRequest $arg, ContextInterface $ctx = null) : V1\ScanWorkflowExecutionsResponse;
+    public function ScanWorkflowExecutions(V1\ScanWorkflowExecutionsRequest $arg, ContextInterface $ctx = null): V1\ScanWorkflowExecutionsResponse;
     /**
      * CountWorkflowExecutions is a visibility API to count of workflow executions in a
      * specific namespace.
@@ -513,7 +512,7 @@ interface ServiceClientInterface
      * @return V1\CountWorkflowExecutionsResponse
      * @throws ServiceClientException
      */
-    public function CountWorkflowExecutions(V1\CountWorkflowExecutionsRequest $arg, ContextInterface $ctx = null) : V1\CountWorkflowExecutionsResponse;
+    public function CountWorkflowExecutions(V1\CountWorkflowExecutionsRequest $arg, ContextInterface $ctx = null): V1\CountWorkflowExecutionsResponse;
     /**
      * GetSearchAttributes is a visibility API to get all legal keys that could be used
      * in list APIs
@@ -527,7 +526,7 @@ interface ServiceClientInterface
      * @return V1\GetSearchAttributesResponse
      * @throws ServiceClientException
      */
-    public function GetSearchAttributes(V1\GetSearchAttributesRequest $arg, ContextInterface $ctx = null) : V1\GetSearchAttributesResponse;
+    public function GetSearchAttributes(V1\GetSearchAttributesRequest $arg, ContextInterface $ctx = null): V1\GetSearchAttributesResponse;
     /**
      * RespondQueryTaskCompleted is called by workers to complete queries which were
      * delivered on
@@ -545,7 +544,7 @@ interface ServiceClientInterface
      * @return V1\RespondQueryTaskCompletedResponse
      * @throws ServiceClientException
      */
-    public function RespondQueryTaskCompleted(V1\RespondQueryTaskCompletedRequest $arg, ContextInterface $ctx = null) : V1\RespondQueryTaskCompletedResponse;
+    public function RespondQueryTaskCompleted(V1\RespondQueryTaskCompletedRequest $arg, ContextInterface $ctx = null): V1\RespondQueryTaskCompletedResponse;
     /**
      * ResetStickyTaskQueue resets the sticky task queue related information in the
      * mutable state of
@@ -565,7 +564,7 @@ interface ServiceClientInterface
      * @return V1\ResetStickyTaskQueueResponse
      * @throws ServiceClientException
      */
-    public function ResetStickyTaskQueue(V1\ResetStickyTaskQueueRequest $arg, ContextInterface $ctx = null) : V1\ResetStickyTaskQueueResponse;
+    public function ResetStickyTaskQueue(V1\ResetStickyTaskQueueRequest $arg, ContextInterface $ctx = null): V1\ResetStickyTaskQueueResponse;
     /**
      * QueryWorkflow requests a query be executed for a specified workflow execution.
      *
@@ -574,7 +573,7 @@ interface ServiceClientInterface
      * @return V1\QueryWorkflowResponse
      * @throws ServiceClientException
      */
-    public function QueryWorkflow(V1\QueryWorkflowRequest $arg, ContextInterface $ctx = null) : V1\QueryWorkflowResponse;
+    public function QueryWorkflow(V1\QueryWorkflowRequest $arg, ContextInterface $ctx = null): V1\QueryWorkflowResponse;
     /**
      * DescribeWorkflowExecution returns information about the specified workflow
      * execution.
@@ -584,7 +583,7 @@ interface ServiceClientInterface
      * @return V1\DescribeWorkflowExecutionResponse
      * @throws ServiceClientException
      */
-    public function DescribeWorkflowExecution(V1\DescribeWorkflowExecutionRequest $arg, ContextInterface $ctx = null) : V1\DescribeWorkflowExecutionResponse;
+    public function DescribeWorkflowExecution(V1\DescribeWorkflowExecutionRequest $arg, ContextInterface $ctx = null): V1\DescribeWorkflowExecutionResponse;
     /**
      * DescribeTaskQueue returns the following information about the target task queue,
      * broken down by Build ID:
@@ -597,7 +596,7 @@ interface ServiceClientInterface
      * @return V1\DescribeTaskQueueResponse
      * @throws ServiceClientException
      */
-    public function DescribeTaskQueue(V1\DescribeTaskQueueRequest $arg, ContextInterface $ctx = null) : V1\DescribeTaskQueueResponse;
+    public function DescribeTaskQueue(V1\DescribeTaskQueueRequest $arg, ContextInterface $ctx = null): V1\DescribeTaskQueueResponse;
     /**
      * GetClusterInfo returns information about temporal cluster
      *
@@ -606,7 +605,7 @@ interface ServiceClientInterface
      * @return V1\GetClusterInfoResponse
      * @throws ServiceClientException
      */
-    public function GetClusterInfo(V1\GetClusterInfoRequest $arg, ContextInterface $ctx = null) : V1\GetClusterInfoResponse;
+    public function GetClusterInfo(V1\GetClusterInfoRequest $arg, ContextInterface $ctx = null): V1\GetClusterInfoResponse;
     /**
      * GetSystemInfo returns information about the system.
      *
@@ -615,7 +614,7 @@ interface ServiceClientInterface
      * @return V1\GetSystemInfoResponse
      * @throws ServiceClientException
      */
-    public function GetSystemInfo(V1\GetSystemInfoRequest $arg, ContextInterface $ctx = null) : V1\GetSystemInfoResponse;
+    public function GetSystemInfo(V1\GetSystemInfoRequest $arg, ContextInterface $ctx = null): V1\GetSystemInfoResponse;
     /**
      * (-- api-linter: core::0127::http-annotation=disabled
      * aip.dev/not-precedent: We do not expose this low-level API to HTTP. --)
@@ -625,7 +624,7 @@ interface ServiceClientInterface
      * @return V1\ListTaskQueuePartitionsResponse
      * @throws ServiceClientException
      */
-    public function ListTaskQueuePartitions(V1\ListTaskQueuePartitionsRequest $arg, ContextInterface $ctx = null) : V1\ListTaskQueuePartitionsResponse;
+    public function ListTaskQueuePartitions(V1\ListTaskQueuePartitionsRequest $arg, ContextInterface $ctx = null): V1\ListTaskQueuePartitionsResponse;
     /**
      * Creates a new schedule.
      *
@@ -634,7 +633,7 @@ interface ServiceClientInterface
      * @return V1\CreateScheduleResponse
      * @throws ServiceClientException
      */
-    public function CreateSchedule(V1\CreateScheduleRequest $arg, ContextInterface $ctx = null) : V1\CreateScheduleResponse;
+    public function CreateSchedule(V1\CreateScheduleRequest $arg, ContextInterface $ctx = null): V1\CreateScheduleResponse;
     /**
      * Returns the schedule description and current state of an existing schedule.
      *
@@ -643,7 +642,7 @@ interface ServiceClientInterface
      * @return V1\DescribeScheduleResponse
      * @throws ServiceClientException
      */
-    public function DescribeSchedule(V1\DescribeScheduleRequest $arg, ContextInterface $ctx = null) : V1\DescribeScheduleResponse;
+    public function DescribeSchedule(V1\DescribeScheduleRequest $arg, ContextInterface $ctx = null): V1\DescribeScheduleResponse;
     /**
      * Changes the configuration or state of an existing schedule.
      *
@@ -652,7 +651,7 @@ interface ServiceClientInterface
      * @return V1\UpdateScheduleResponse
      * @throws ServiceClientException
      */
-    public function UpdateSchedule(V1\UpdateScheduleRequest $arg, ContextInterface $ctx = null) : V1\UpdateScheduleResponse;
+    public function UpdateSchedule(V1\UpdateScheduleRequest $arg, ContextInterface $ctx = null): V1\UpdateScheduleResponse;
     /**
      * Makes a specific change to a schedule or triggers an immediate action.
      *
@@ -661,7 +660,7 @@ interface ServiceClientInterface
      * @return V1\PatchScheduleResponse
      * @throws ServiceClientException
      */
-    public function PatchSchedule(V1\PatchScheduleRequest $arg, ContextInterface $ctx = null) : V1\PatchScheduleResponse;
+    public function PatchSchedule(V1\PatchScheduleRequest $arg, ContextInterface $ctx = null): V1\PatchScheduleResponse;
     /**
      * Lists matching times within a range.
      *
@@ -670,7 +669,7 @@ interface ServiceClientInterface
      * @return V1\ListScheduleMatchingTimesResponse
      * @throws ServiceClientException
      */
-    public function ListScheduleMatchingTimes(V1\ListScheduleMatchingTimesRequest $arg, ContextInterface $ctx = null) : V1\ListScheduleMatchingTimesResponse;
+    public function ListScheduleMatchingTimes(V1\ListScheduleMatchingTimesRequest $arg, ContextInterface $ctx = null): V1\ListScheduleMatchingTimesResponse;
     /**
      * Deletes a schedule, removing it from the system.
      *
@@ -679,7 +678,7 @@ interface ServiceClientInterface
      * @return V1\DeleteScheduleResponse
      * @throws ServiceClientException
      */
-    public function DeleteSchedule(V1\DeleteScheduleRequest $arg, ContextInterface $ctx = null) : V1\DeleteScheduleResponse;
+    public function DeleteSchedule(V1\DeleteScheduleRequest $arg, ContextInterface $ctx = null): V1\DeleteScheduleResponse;
     /**
      * List all schedules in a namespace.
      *
@@ -688,7 +687,7 @@ interface ServiceClientInterface
      * @return V1\ListSchedulesResponse
      * @throws ServiceClientException
      */
-    public function ListSchedules(V1\ListSchedulesRequest $arg, ContextInterface $ctx = null) : V1\ListSchedulesResponse;
+    public function ListSchedules(V1\ListSchedulesRequest $arg, ContextInterface $ctx = null): V1\ListSchedulesResponse;
     /**
      * Deprecated. Use `UpdateWorkerVersioningRules`.
      *
@@ -719,7 +718,7 @@ interface ServiceClientInterface
      * @return V1\UpdateWorkerBuildIdCompatibilityResponse
      * @throws ServiceClientException
      */
-    public function UpdateWorkerBuildIdCompatibility(V1\UpdateWorkerBuildIdCompatibilityRequest $arg, ContextInterface $ctx = null) : V1\UpdateWorkerBuildIdCompatibilityResponse;
+    public function UpdateWorkerBuildIdCompatibility(V1\UpdateWorkerBuildIdCompatibilityRequest $arg, ContextInterface $ctx = null): V1\UpdateWorkerBuildIdCompatibilityResponse;
     /**
      * Deprecated. Use `GetWorkerVersioningRules`.
      * Fetches the worker build id versioning sets for a task queue.
@@ -729,7 +728,7 @@ interface ServiceClientInterface
      * @return V1\GetWorkerBuildIdCompatibilityResponse
      * @throws ServiceClientException
      */
-    public function GetWorkerBuildIdCompatibility(V1\GetWorkerBuildIdCompatibilityRequest $arg, ContextInterface $ctx = null) : V1\GetWorkerBuildIdCompatibilityResponse;
+    public function GetWorkerBuildIdCompatibility(V1\GetWorkerBuildIdCompatibilityRequest $arg, ContextInterface $ctx = null): V1\GetWorkerBuildIdCompatibilityResponse;
     /**
      * Allows updating the Build ID assignment and redirect rules for a given Task
      * Queue.
@@ -743,7 +742,7 @@ interface ServiceClientInterface
      * @return V1\UpdateWorkerVersioningRulesResponse
      * @throws ServiceClientException
      */
-    public function UpdateWorkerVersioningRules(V1\UpdateWorkerVersioningRulesRequest $arg, ContextInterface $ctx = null) : V1\UpdateWorkerVersioningRulesResponse;
+    public function UpdateWorkerVersioningRules(V1\UpdateWorkerVersioningRulesRequest $arg, ContextInterface $ctx = null): V1\UpdateWorkerVersioningRulesResponse;
     /**
      * Fetches the Build ID assignment and redirect rules for a Task Queue.
      * WARNING: Worker Versioning is not yet stable and the API and behavior may change
@@ -754,7 +753,7 @@ interface ServiceClientInterface
      * @return V1\GetWorkerVersioningRulesResponse
      * @throws ServiceClientException
      */
-    public function GetWorkerVersioningRules(V1\GetWorkerVersioningRulesRequest $arg, ContextInterface $ctx = null) : V1\GetWorkerVersioningRulesResponse;
+    public function GetWorkerVersioningRules(V1\GetWorkerVersioningRulesRequest $arg, ContextInterface $ctx = null): V1\GetWorkerVersioningRulesResponse;
     /**
      * Deprecated. Use `DescribeTaskQueue`.
      *
@@ -783,7 +782,7 @@ interface ServiceClientInterface
      * @return V1\GetWorkerTaskReachabilityResponse
      * @throws ServiceClientException
      */
-    public function GetWorkerTaskReachability(V1\GetWorkerTaskReachabilityRequest $arg, ContextInterface $ctx = null) : V1\GetWorkerTaskReachabilityResponse;
+    public function GetWorkerTaskReachability(V1\GetWorkerTaskReachabilityRequest $arg, ContextInterface $ctx = null): V1\GetWorkerTaskReachabilityResponse;
     /**
      * Invokes the specified update function on user workflow code.
      *
@@ -792,7 +791,7 @@ interface ServiceClientInterface
      * @return V1\UpdateWorkflowExecutionResponse
      * @throws ServiceClientException
      */
-    public function UpdateWorkflowExecution(V1\UpdateWorkflowExecutionRequest $arg, ContextInterface $ctx = null) : V1\UpdateWorkflowExecutionResponse;
+    public function UpdateWorkflowExecution(V1\UpdateWorkflowExecutionRequest $arg, ContextInterface $ctx = null): V1\UpdateWorkflowExecutionResponse;
     /**
      * Polls a workflow execution for the outcome of a workflow execution update
      * previously issued through the UpdateWorkflowExecution RPC. The effective
@@ -808,7 +807,7 @@ interface ServiceClientInterface
      * @return V1\PollWorkflowExecutionUpdateResponse
      * @throws ServiceClientException
      */
-    public function PollWorkflowExecutionUpdate(V1\PollWorkflowExecutionUpdateRequest $arg, ContextInterface $ctx = null) : V1\PollWorkflowExecutionUpdateResponse;
+    public function PollWorkflowExecutionUpdate(V1\PollWorkflowExecutionUpdateRequest $arg, ContextInterface $ctx = null): V1\PollWorkflowExecutionUpdateResponse;
     /**
      * StartBatchOperation starts a new batch operation
      *
@@ -817,7 +816,7 @@ interface ServiceClientInterface
      * @return V1\StartBatchOperationResponse
      * @throws ServiceClientException
      */
-    public function StartBatchOperation(V1\StartBatchOperationRequest $arg, ContextInterface $ctx = null) : V1\StartBatchOperationResponse;
+    public function StartBatchOperation(V1\StartBatchOperationRequest $arg, ContextInterface $ctx = null): V1\StartBatchOperationResponse;
     /**
      * StopBatchOperation stops a batch operation
      *
@@ -826,7 +825,7 @@ interface ServiceClientInterface
      * @return V1\StopBatchOperationResponse
      * @throws ServiceClientException
      */
-    public function StopBatchOperation(V1\StopBatchOperationRequest $arg, ContextInterface $ctx = null) : V1\StopBatchOperationResponse;
+    public function StopBatchOperation(V1\StopBatchOperationRequest $arg, ContextInterface $ctx = null): V1\StopBatchOperationResponse;
     /**
      * DescribeBatchOperation returns the information about a batch operation
      *
@@ -835,7 +834,7 @@ interface ServiceClientInterface
      * @return V1\DescribeBatchOperationResponse
      * @throws ServiceClientException
      */
-    public function DescribeBatchOperation(V1\DescribeBatchOperationRequest $arg, ContextInterface $ctx = null) : V1\DescribeBatchOperationResponse;
+    public function DescribeBatchOperation(V1\DescribeBatchOperationRequest $arg, ContextInterface $ctx = null): V1\DescribeBatchOperationResponse;
     /**
      * ListBatchOperations returns a list of batch operations
      *
@@ -844,7 +843,7 @@ interface ServiceClientInterface
      * @return V1\ListBatchOperationsResponse
      * @throws ServiceClientException
      */
-    public function ListBatchOperations(V1\ListBatchOperationsRequest $arg, ContextInterface $ctx = null) : V1\ListBatchOperationsResponse;
+    public function ListBatchOperations(V1\ListBatchOperationsRequest $arg, ContextInterface $ctx = null): V1\ListBatchOperationsResponse;
     /**
      * PollNexusTaskQueue is a long poll call used by workers to receive Nexus tasks.
      * (-- api-linter: core::0127::http-annotation=disabled
@@ -855,7 +854,7 @@ interface ServiceClientInterface
      * @return V1\PollNexusTaskQueueResponse
      * @throws ServiceClientException
      */
-    public function PollNexusTaskQueue(V1\PollNexusTaskQueueRequest $arg, ContextInterface $ctx = null) : V1\PollNexusTaskQueueResponse;
+    public function PollNexusTaskQueue(V1\PollNexusTaskQueueRequest $arg, ContextInterface $ctx = null): V1\PollNexusTaskQueueResponse;
     /**
      * RespondNexusTaskCompleted is called by workers to respond to Nexus tasks
      * received via PollNexusTaskQueue.
@@ -867,7 +866,7 @@ interface ServiceClientInterface
      * @return V1\RespondNexusTaskCompletedResponse
      * @throws ServiceClientException
      */
-    public function RespondNexusTaskCompleted(V1\RespondNexusTaskCompletedRequest $arg, ContextInterface $ctx = null) : V1\RespondNexusTaskCompletedResponse;
+    public function RespondNexusTaskCompleted(V1\RespondNexusTaskCompletedRequest $arg, ContextInterface $ctx = null): V1\RespondNexusTaskCompletedResponse;
     /**
      * RespondNexusTaskFailed is called by workers to fail Nexus tasks received via
      * PollNexusTaskQueue.
@@ -879,10 +878,9 @@ interface ServiceClientInterface
      * @return V1\RespondNexusTaskFailedResponse
      * @throws ServiceClientException
      */
-    public function RespondNexusTaskFailed(V1\RespondNexusTaskFailedRequest $arg, ContextInterface $ctx = null) : V1\RespondNexusTaskFailedResponse;
+    public function RespondNexusTaskFailed(V1\RespondNexusTaskFailedRequest $arg, ContextInterface $ctx = null): V1\RespondNexusTaskFailedResponse;
     /**
      * Close the communication channel associated with this stub.
      */
-    public function close() : void;
+    public function close(): void;
 }
-

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Temporal\Client\Common;
 
 use Temporal\Client\GRPC\ServiceClientInterface;
-use Temporal\Common\RetryOptions;
 use Temporal\Internal\Support\DateInterval;
 
 /**
