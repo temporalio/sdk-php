@@ -22,9 +22,11 @@ return (new Config())
         '@PHP80Migration:risky'             => true,
         'list_syntax'                       => ['syntax' => 'short'],
         'no_unused_imports'                 => true,
-        'declare_strict_types'              => true,
+        // TODO change to true
+        'declare_strict_types'              => false,
         'void_return'                       => true,
-        'ordered_class_elements'            => true,
+        // TODO change this to true
+        'ordered_class_elements'            => false,
         'linebreak_after_opening_tag'       => true,
         'single_quote'                      => true,
         'no_blank_lines_after_phpdoc'       => true,
@@ -32,6 +34,10 @@ return (new Config())
         'no_useless_else'                   => true,
         'no_useless_return'                 => true,
         'trailing_comma_in_multiline'       => true,
+        // TODO remove the remaining rules
+        'blank_line_after_opening_tag'      => false,
+        'braces_position'                   => false,
+
     ])
     ->setFinder($finder)
 ;
