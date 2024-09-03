@@ -15,6 +15,8 @@ use Temporal\Client\Update\UpdateHandle;
 use Temporal\Client\Update\UpdateOptions;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Exception\Client\WorkflowUpdateException;
+use Temporal\Exception\Client\WorkflowUpdateRPCTimeoutOrCanceledException;
 use Temporal\Exception\IllegalStateException;
 use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\QueryMethod;
@@ -91,6 +93,8 @@ interface WorkflowStubInterface extends WorkflowRunInterface
      * @param non-empty-string $name Name of the update handler.
      * @param mixed ...$args Arguments to pass to the update handler.
      * @return ValuesInterface|null
+     * @throws WorkflowUpdateException
+     * @throws WorkflowUpdateRPCTimeoutOrCanceledException
      */
     public function update(string $name, ...$args): ?ValuesInterface;
 
@@ -107,7 +111,7 @@ interface WorkflowStubInterface extends WorkflowRunInterface
      *
      * @param non-empty-string|UpdateOptions $nameOrOptions Name of the update handler or update options.
      * @param mixed ...$args Arguments to pass to the update handler.
-     * @return UpdateHandle
+     * @throws WorkflowUpdateRPCTimeoutOrCanceledException
      */
     public function startUpdate(string|UpdateOptions $nameOrOptions, ...$args): UpdateHandle;
 

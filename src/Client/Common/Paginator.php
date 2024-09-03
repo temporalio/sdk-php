@@ -15,8 +15,6 @@ use Traversable;
  *
  * @template TItem
  * @implements IteratorAggregate<TItem>
- * @internal
- * @psalm-internal Temporal\Client
  */
 final class Paginator implements IteratorAggregate, Countable
 {
@@ -46,6 +44,8 @@ final class Paginator implements IteratorAggregate, Countable
      * @param null|callable(): int<0, max> $counter Returns total number of items.
      *
      * @return self<TInitItem>
+     *
+     * @internal
      */
     public static function createFromGenerator(Generator $loader, ?callable $counter): self
     {

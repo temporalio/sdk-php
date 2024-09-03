@@ -1534,14 +1534,6 @@
       <code><![CDATA[run]]></code>
     </MissingReturnType>
   </file>
-  <file src="src/Worker/WorkerOptions.php">
-    <LessSpecificReturnStatement>
-      <code><![CDATA[new self()]]></code>
-    </LessSpecificReturnStatement>
-    <MoreSpecificReturnType>
-      <code><![CDATA[static]]></code>
-    </MoreSpecificReturnType>
-  </file>
   <file src="src/WorkerFactory.php">
     <DeprecatedClass>
       <code><![CDATA[new AnnotationReader()]]></code>

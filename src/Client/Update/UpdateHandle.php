@@ -10,8 +10,10 @@ use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Exception\Client\CanceledException;
 use Temporal\Exception\Client\TimeoutException;
 use Temporal\Exception\Client\WorkflowUpdateException;
+use Temporal\Exception\Client\WorkflowUpdateRPCTimeoutOrCanceledException;
 use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Workflow\WorkflowExecution;
 
@@ -70,7 +72,7 @@ final class UpdateHandle
      * @param int|float|null $timeout Timeout in seconds. Accuracy to milliseconds.
      *
      * @throws WorkflowUpdateException
-     * @throws TimeoutException
+     * @throws WorkflowUpdateRPCTimeoutOrCanceledException
      */
     public function getResult(int|float|null $timeout = null): mixed
     {
@@ -83,7 +85,7 @@ final class UpdateHandle
      * @param int|float|null $timeout Timeout in seconds. Accuracy to milliseconds.
      *
      * @throws WorkflowUpdateException
-     * @throws TimeoutException
+     * @throws WorkflowUpdateRPCTimeoutOrCanceledException
      */
     public function getEncodedValues(int|float|null $timeout = null): ValuesInterface
     {
@@ -100,7 +102,7 @@ final class UpdateHandle
      * @param int|float|null $timeout Timeout in seconds. Accuracy to milliseconds.
      *
      * @psalm-assert !null $this->result
-     * @throws TimeoutException
+     * @throws WorkflowUpdateRPCTimeoutOrCanceledException
      */
     private function fetchResult(int|float|null $timeout = null): void
     {
@@ -116,10 +118,14 @@ final class UpdateHandle
                 (new \Temporal\Api\Update\V1\WaitPolicy())->setLifecycleStage(LifecycleStage::StageCompleted->value)
             );
 
-        $response = $this->client->PollWorkflowExecutionUpdate(
-            $request,
-            $timeout === null ? null : $this->client->getContext()->withTimeout($timeout),
-        );
+        try {
+            $response = $this->client->PollWorkflowExecutionUpdate(
+                $request,
+                $timeout === null ? null : $this->client->getContext()->withTimeout($timeout),
+            );
+        } catch (TimeoutException|CanceledException $e) {
+            throw WorkflowUpdateRPCTimeoutOrCanceledException::fromTimeoutOrCanceledException($e);
+        }
 
         // Workflow Uprate accepted
         $result = $response->getOutcome();
@@ -135,6 +141,7 @@ final class UpdateHandle
         $failure = $result->getFailure();
         \assert($failure !== null);
         $e = FailureConverter::mapFailureToException($failure, $this->converter);
+        tr($e);
 
         $this->result = new WorkflowUpdateException(
             $e->getMessage(),
