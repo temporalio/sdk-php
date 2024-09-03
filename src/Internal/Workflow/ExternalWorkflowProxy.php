@@ -60,9 +60,9 @@ class ExternalWorkflowProxy extends Proxy
      */
     public function __call(string $method, array $args): PromiseInterface
     {
-        foreach ($this->workflow->getSignalHandlers() as $name => $reflection) {
-            if ($method === $reflection->getName()) {
-                $args = Reflection::orderArguments($reflection, $args);
+        foreach ($this->workflow->getSignalHandlers() as $name => $definition) {
+            if ($method === $definition->method->getName()) {
+                $args = Reflection::orderArguments($definition->method, $args);
 
                 return $this->stub->signal($name, $args);
             }

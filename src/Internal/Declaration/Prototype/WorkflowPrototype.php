@@ -18,17 +18,17 @@ use Temporal\Workflow\ReturnType;
 final class WorkflowPrototype extends Prototype
 {
     /**
-     * @var array<non-empty-string, \ReflectionFunctionAbstract>
+     * @var array<non-empty-string, QueryDefinition>
      */
     private array $queryHandlers = [];
 
     /**
-     * @var array<non-empty-string, \ReflectionFunctionAbstract>
+     * @var array<non-empty-string, SignalDefinition>
      */
     private array $signalHandlers = [];
 
     /**
-     * @var array<non-empty-string, \ReflectionFunctionAbstract>
+     * @var array<non-empty-string, UpdateDefinition>
      */
     private array $updateHandlers = [];
 
@@ -100,47 +100,35 @@ final class WorkflowPrototype extends Prototype
         $this->returnType = $attribute;
     }
 
-    /**
-     * @param string $name
-     * @param \ReflectionFunctionAbstract $fun
-     */
-    public function addQueryHandler(string $name, \ReflectionFunctionAbstract $fun): void
+    public function addQueryHandler(QueryDefinition $definition): void
     {
-        $this->queryHandlers[$name] = $fun;
+        $this->queryHandlers[$definition->name] = $definition;
     }
 
     /**
-     * @return iterable<non-empty-string, \ReflectionFunctionAbstract>
+     * @return array<non-empty-string, QueryDefinition>
      */
-    public function getQueryHandlers(): iterable
+    public function getQueryHandlers(): array
     {
         return $this->queryHandlers;
     }
 
-    /**
-     * @param non-empty-string $name
-     * @param \ReflectionFunctionAbstract $fun
-     */
-    public function addSignalHandler(string $name, \ReflectionFunctionAbstract $fun): void
+    public function addSignalHandler(SignalDefinition $definition): void
     {
-        $this->signalHandlers[$name] = $fun;
+        $this->signalHandlers[$definition->name] = $definition;
     }
 
     /**
-     * @return iterable<non-empty-string, \ReflectionFunctionAbstract>
+     * @return array<non-empty-string, SignalDefinition>
      */
-    public function getSignalHandlers(): iterable
+    public function getSignalHandlers(): array
     {
         return $this->signalHandlers;
     }
 
-    /**
-     * @param non-empty-string $name
-     * @param \ReflectionFunctionAbstract $fun
-     */
-    public function addUpdateHandler(string $name, \ReflectionFunctionAbstract $fun): void
+    public function addUpdateHandler(UpdateDefinition $definition): void
     {
-        $this->updateHandlers[$name] = $fun;
+        $this->updateHandlers[$definition->name] = $definition;
     }
 
     /**
@@ -153,7 +141,7 @@ final class WorkflowPrototype extends Prototype
     }
 
     /**
-     * @return array<non-empty-string, \ReflectionFunctionAbstract>
+     * @return array<non-empty-string, UpdateDefinition>
      */
     public function getUpdateHandlers(): array
     {

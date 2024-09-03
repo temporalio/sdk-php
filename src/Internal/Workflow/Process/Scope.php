@@ -19,6 +19,7 @@ use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\TemporalFailure;
 use Temporal\Exception\InvalidArgumentException;
+use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Internal\Declaration\Destroyable;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Request\Cancel;
@@ -68,22 +69,7 @@ class Scope implements CancellationScopeInterface, Destroyable
     protected DeferredGenerator $coroutine;
 
     /**
-     * Due nature of PHP generators the result of coroutine can be available before all child coroutines complete.
-     * This property will hold this result until all the inner coroutines resolve.
-     *
-     * @var mixed
-     */
-    private mixed $result;
-
-    /**
-     * When scope completes with exception.
-     *
-     * @var \Throwable|null
-     */
-    private ?\Throwable $exception = null;
-
-    /**
-     * Every coroutine runs on it's own loop layer.
+     * Every coroutine runs on its own loop layer.
      *
      * @var non-empty-string
      */
@@ -100,7 +86,7 @@ class Scope implements CancellationScopeInterface, Destroyable
     private array $onCancel = [];
 
     /**
-     * @var array<callable>
+     * @var array<callable(mixed): mixed>
      */
     private array $onClose = [];
 
@@ -165,13 +151,13 @@ class Scope implements CancellationScopeInterface, Destroyable
      * @param callable(ValuesInterface): mixed $handler Update method handler.
      * @param Deferred $resolver Update method promise resolver.
      */
-    public function startUpdate(callable $handler, ValuesInterface $values, Deferred $resolver): void
+    public function startUpdate(callable $handler, UpdateInput $input, Deferred $resolver): void
     {
         // Update handler counter
-        ++$this->context->getHandlerState()->updates;
+        $id = $this->context->getHandlerState()->addUpdate($input->updateId, $input->updateName);
         $this->then(
-            fn() => --$this->context->getHandlerState()->updates,
-            fn() => --$this->context->getHandlerState()->updates,
+            fn() => $this->context->getHandlerState()->removeUpdate($id),
+            fn() => $this->context->getHandlerState()->removeUpdate($id),
         );
 
         $this->then(
@@ -184,20 +170,21 @@ class Scope implements CancellationScopeInterface, Destroyable
         );
 
         // Create a coroutine generator
-        $this->coroutine = $this->callSignalOrUpdateHandler($handler, $values);
+        $this->coroutine = $this->callSignalOrUpdateHandler($handler, $input->arguments);
         $this->next();
     }
 
     /**
      * @param callable $handler
+     * @param non-empty-string $name
      */
-    public function startSignal(callable $handler, ValuesInterface $values): void
+    public function startSignal(callable $handler, ValuesInterface $values, string $name): void
     {
         // Update handler counter
-        ++$this->context->getHandlerState()->signals;
+        $id = $this->context->getHandlerState()->addSignal($name);
         $this->then(
-            fn() => --$this->context->getHandlerState()->signals,
-            fn() => --$this->context->getHandlerState()->signals,
+            fn() => $this->context->getHandlerState()->removeSignal($id),
+            fn() => $this->context->getHandlerState()->removeSignal($id),
         );
 
         // Create a coroutine generator
@@ -223,7 +210,7 @@ class Scope implements CancellationScopeInterface, Destroyable
     }
 
     /**
-     * @param callable $then An exception instance is passed in case of error.
+     * @param callable(mixed): mixed $then An exception instance is passed in case of error.
      * @return $this
      */
     public function onClose(callable $then): self
@@ -531,14 +518,13 @@ class Scope implements CancellationScopeInterface, Destroyable
      */
     private function onException(\Throwable $e): void
     {
-        $this->exception = $e;
         $this->deferred->reject($e);
 
         $this->makeCurrent();
         $this->context->resolveConditions();
 
         foreach ($this->onClose as $close) {
-            $close($this->exception);
+            $close($e);
         }
     }
 
@@ -547,14 +533,13 @@ class Scope implements CancellationScopeInterface, Destroyable
      */
     private function onResult(mixed $result): void
     {
-        $this->result = $result;
         $this->deferred->resolve($result);
 
         $this->makeCurrent();
         $this->context->resolveConditions();
 
         foreach ($this->onClose as $close) {
-            $close($this->result);
+            $close($result);
         }
     }
 

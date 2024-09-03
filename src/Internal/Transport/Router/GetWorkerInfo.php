@@ -66,8 +66,8 @@ final class GetWorkerInfo extends Route
         $workflowMap = function (WorkflowPrototype $workflow) {
             return [
                 'Name'    => $workflow->getID(),
-                'Queries' => $this->keys($workflow->getQueryHandlers()),
-                'Signals' => $this->keys($workflow->getSignalHandlers()),
+                'Queries' => \array_keys($workflow->getQueryHandlers()),
+                'Signals' => \array_keys($workflow->getSignalHandlers()),
                 // 'Updates' => $this->keys($workflow->getUpdateHandlers()),
             ];
         };
@@ -99,21 +99,6 @@ final class GetWorkerInfo extends Route
 
         foreach ($items as $key => $value) {
             $result[] = $map($value, $key);
-        }
-
-        return $result;
-    }
-
-    /**
-     * @param iterable $items
-     * @return array
-     */
-    private function keys(iterable $items): array
-    {
-        $result = [];
-
-        foreach ($items as $key => $_) {
-            $result[] = $key;
         }
 
         return $result;

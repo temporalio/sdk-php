@@ -15,7 +15,7 @@ enum HandlerUnfinishedPolicy
     /**
      * Issue a warning in addition to abandoning.
      */
-    case WARN_AND_ABANDON;
+    case WarnAndAbandon;
 
     /**
      * Abandon the handler.
@@ -23,5 +23,5 @@ enum HandlerUnfinishedPolicy
      * In the case of an update handler, this means that the client will receive an error rather than
      * the update result.
      */
-    case ABANDON;
+    case Abandon;
 }

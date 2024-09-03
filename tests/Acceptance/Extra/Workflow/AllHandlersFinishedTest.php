@@ -4,15 +4,18 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Acceptance\Extra\Workflow\AllHandlersFinished;
 
+use PHPUnit\Framework\Attributes\CoversFunction;
 use PHPUnit\Framework\Attributes\Test;
 use React\Promise\PromiseInterface;
 use Temporal\Client\WorkflowStubInterface;
+use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
+#[CoversFunction('Temporal\Internal\Workflow\Process\Process::logRunningHandlers')]
 class AllHandlersFinishedTest extends TestCase
 {
     #[Test]
@@ -128,17 +131,88 @@ class AllHandlersFinishedTest extends TestCase
             'Workflow result contains resolved values',
         );
     }
+
+    #[Test]
+    public function warnUnfinishedSignals(
+        #[Stub('Extra_Workflow_AllHandlersFinished')] WorkflowStubInterface $stub,
+    ): void {
+        $this->markTestSkipped("Can't check the log yet");
+
+        /** @see TestWorkflow::resolveFromSignal() */
+        $stub->signal('resolve', 'foo', 42);
+        $stub->signal('resolve', 'bar', 42);
+
+        for ($i = 0; $i < 8; $i++) {
+            /** @see TestWorkflow::addFromSignal() */
+            $stub->signal('await', "key-$i");
+        }
+
+        // Finish the workflow
+        $stub->signal('exit');
+        $stub->getResult(timeout: 1);
+
+        // todo Check that `await` signal with count was mentioned in the logs
+    }
+
+    #[Test]
+    public function warnUnfinishedUpdates(
+        #[Stub('Extra_Workflow_AllHandlersFinished')] WorkflowStubInterface $stub,
+    ): void {
+        $this->markTestSkipped("Can't check the log yet");
+
+        for ($i = 0; $i < 8; $i++) {
+            /** @see TestWorkflow::addFromUpdate() */
+            $stub->startUpdate('await', "key-$i");
+        }
+        /** @see TestWorkflow::resolveFromUpdate() */
+        $stub->startUpdate('resolve', 'foo', 42);
+
+        // Finish the workflow
+        $stub->signal('exit');
+        $stub->getResult(timeout: 1);
+
+        // todo Check that `await` updates was mentioned in the logs
+    }
+
+    #[Test]
+    public function warnUnfinishedOnCancel(
+        #[Stub('Extra_Workflow_AllHandlersFinished')] WorkflowStubInterface $stub,
+    ): void {
+        $this->markTestSkipped("Can't check the log yet");
+
+        /** @see TestWorkflow::addFromSignal() */
+        $stub->signal('await', "key-sig");
+
+        /** @see TestWorkflow::addFromUpdate() */
+        $stub->startUpdate('await', "key-upd");
+
+        // Finish the workflow
+        $stub->cancel();
+
+        try {
+            $stub->getResult(timeout: 1);
+            $this->fail('Cancellation exception must be thrown');
+        } catch (WorkflowFailedException) {
+            // Expected
+        }
+
+        // todo Check logs
+    }
 }
 
 #[WorkflowInterface]
 class TestWorkflow
 {
     private array $awaits = [];
+    private bool $exit = false;
 
     #[WorkflowMethod(name: "Extra_Workflow_AllHandlersFinished")]
     public function handle()
     {
-        yield Workflow::await(fn() => \count($this->awaits) > 0 && Workflow::allHandlersFinished());
+        yield Workflow::await(
+            fn(): bool => \count($this->awaits) > 0 && Workflow::allHandlersFinished(),
+            fn(): bool => $this->exit,
+        );
         return $this->awaits;
     }
 
@@ -157,7 +231,7 @@ class TestWorkflow
      * @param non-empty-string $name
      * @return PromiseInterface<mixed>
      */
-    #[Workflow\UpdateMethod(name: 'resolve')]
+    #[Workflow\UpdateMethod(name: 'resolve', unfinishedPolicy: Workflow\HandlerUnfinishedPolicy::Abandon)]
     public function resolveFromUpdate(string $name, mixed $value): mixed
     {
         return $this->awaits[$name] = $value;
@@ -176,9 +250,16 @@ class TestWorkflow
     /**
      * @param non-empty-string $name
      */
-    #[Workflow\SignalMethod(name: 'resolve')]
-    public function resolveFromSignal(string $name, mixed $value): void
+    #[Workflow\SignalMethod(name: 'resolve', unfinishedPolicy: Workflow\HandlerUnfinishedPolicy::Abandon)]
+    public function resolveFromSignal(string $name, mixed $value)
     {
+        yield Workflow::await(fn(): bool => \array_key_exists($name, $this->awaits));
         $this->awaits[$name] = $value;
+    }
+
+    #[Workflow\SignalMethod()]
+    public function exit(): void
+    {
+        $this->exit = true;
     }
 }

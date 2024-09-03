@@ -16,6 +16,8 @@ use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DestructMemorizedInstanceException;
+use Temporal\Exception\Failure\CanceledFailure;
+use Temporal\FeatureFlags;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
@@ -27,6 +29,7 @@ use Temporal\Internal\Workflow\Input;
 use Temporal\Internal\Workflow\WorkflowContext;
 use Temporal\Worker\LoopInterface;
 use Temporal\Workflow;
+use Temporal\Workflow\HandlerUnfinishedPolicy as HandlerPolicy;
 use Temporal\Workflow\ProcessInterface;
 
 /**
@@ -36,15 +39,10 @@ use Temporal\Workflow\ProcessInterface;
  */
 class Process extends Scope implements ProcessInterface
 {
-    /**
-     * Process constructor.
-     * @param ServiceContainer $services
-     * @param WorkflowContext  $ctx
-     */
     public function __construct(
         ServiceContainer $services,
         WorkflowContext $ctx,
-        private string $runId,
+        private readonly string $runId,
     ) {
         parent::__construct($services, $ctx);
 
@@ -59,7 +57,7 @@ class Process extends Scope implements ProcessInterface
                     new Input(
                         $this->scopeContext->getInfo(),
                         $input->arguments,
-                    )
+                    ),
                 );
                 Workflow::setCurrentContext($context);
 
@@ -113,7 +111,7 @@ class Process extends Scope implements ProcessInterface
                             'handleUpdate',
                         )($input);
                     },
-                    $input->arguments,
+                    $input,
                     $resolver,
                 );
 
@@ -143,10 +141,11 @@ class Process extends Scope implements ProcessInterface
                                     // Fail process when signal scope fails
                                     $this->complete($error);
                                 }
-                            }
+                            },
                         )->startSignal(
                             $handler,
-                            $input->arguments
+                            $input->arguments,
+                            $input->signalName,
                         );
                     },
                     /** @see WorkflowInboundCallsInterceptor::handleSignal() */
@@ -168,7 +167,7 @@ class Process extends Scope implements ProcessInterface
             },
             function (\Throwable $e): void {
                 $this->complete($e);
-            }
+            },
         );
     }
 
@@ -207,6 +206,8 @@ class Process extends Scope implements ProcessInterface
                 return;
             }
 
+            $this->logRunningHandlers($result instanceof CanceledFailure ? 'cancelled' : 'failed');
+
             if ($this->services->exceptionInterceptor->isRetryable($result)) {
                 $this->scopeContext->panic($result);
                 return;
@@ -217,9 +218,91 @@ class Process extends Scope implements ProcessInterface
         }
 
         if ($this->scopeContext->isContinuedAsNew()) {
+            $this->logRunningHandlers('continued as new');
             return;
         }
 
+        $this->logRunningHandlers();
         $this->scopeContext->complete($result);
+    }
+
+    /**
+     * Log about running handlers on Workflow cancellation, failure, and success.
+     */
+    private function logRunningHandlers(string $happened = 'finished'): void
+    {
+        // Skip logging if the feature flag is disabled
+        if (!FeatureFlags::$warnOnWorkflowUnfinishedHandlers) {
+            return;
+        }
+
+        // Skip logging if the workflow is replaying or no handlers are running
+        if ($this->getContext()->isReplaying() || !$this->getContext()->getHandlerState()->hasRunningHandlers()) {
+            return;
+        }
+
+        $prototype = $this->getContext()->getWorkflowInstance()->getPrototype();
+        $warnSignals = $warnUpdates = [];
+
+        // Signals
+        $definitions = $prototype->getSignalHandlers();
+        $signals = $this->getContext()->getHandlerState()->getRunningSignals();
+        foreach ($signals as $name => $count) {
+            // Check statically defined signals
+            if (\array_key_exists($name, $definitions) && $definitions[$name]->policy === HandlerPolicy::Abandon) {
+                continue;
+            }
+
+            // Dynamically defined signals should be warned
+            $warnSignals[] = ['name' => $name, 'count' => $count];
+        }
+
+        // Updates
+        $definitions = $prototype->getUpdateHandlers();
+        $updates = $this->getContext()->getHandlerState()->getRunningUpdates();
+        foreach ($updates as $tuple) {
+            $name = $tuple['name'];
+            // Check statically defined updates
+            if (\array_key_exists($name, $definitions) && $definitions[$name]->policy === HandlerPolicy::Abandon) {
+                continue;
+            }
+
+            // Dynamically defined updates should be warned
+            $warnUpdates[] = $tuple;
+        }
+
+        $workflowName = $this->getContext()->getInfo()->type->name;
+
+        // Warn messages
+        if ($warnUpdates !== []) {
+            $message = "Workflow `$workflowName` $happened while update handlers are still running. " .
+                'This may have interrupted work that the update handler was doing, and the client ' .
+                'that sent the update will receive a \'workflow execution already completed\' RPCError ' .
+                'instead of the update result. You can wait for all update and signal handlers ' .
+                'to complete by using `yield Workflow::await(Workflow::allHandlersFinished(...));`. ' .
+                'Alternatively, if both you and the clients sending the update are okay with interrupting ' .
+                'running handlers when the workflow finishes, and causing clients to receive errors, ' .
+                'then you can disable this warning via the update handler attribute: ' .
+                '`#[UpdateMethod(unfinishedPolicy: HandlerUnfinishedPolicy::Abandon)]`. ' .
+                'The following updates were unfinished (and warnings were not disabled for their handler): ' .
+                \implode(', ', \array_map(static fn(array $v): string => "`$v[name]` id:$v[id]", $warnUpdates));
+
+            \error_log($message);
+        }
+
+        if ($warnSignals !== []) {
+            $message = "Workflow `$workflowName` $happened while signal handlers are still running. " .
+                'This may have interrupted work that the signal handler was doing. ' .
+                'You can wait for all update and signal handlers to complete by using ' .
+                '`yield Workflow::await(Workflow::allHandlersFinished(...));`. ' .
+                'Alternatively, if both you and the clients sending the signal are okay ' .
+                'with interrupting running handlers when the workflow finishes, ' .
+                'and causing clients to receive errors, then you can disable this warning via the signal ' .
+                'handler attribute: `#[SignalMethod(unfinishedPolicy: HandlerUnfinishedPolicy::Abandon)]`. ' .
+                'The following signals were unfinished (and warnings were not disabled for their handler): ' .
+                \implode(', ', \array_map(static fn(array $v): string => "`$v[name]` x$v[count]", $warnSignals));
+
+            \error_log($message);
+        }
     }
 }

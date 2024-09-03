@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Workflow;
 
 use Doctrine\Common\Annotations\Annotation\Target;
-use JetBrains\PhpStorm\Immutable;
 use Spiral\Attributes\NamedArgumentConstructor;
 
 /**
@@ -31,22 +30,9 @@ use Spiral\Attributes\NamedArgumentConstructor;
 final class QueryMethod
 {
     /**
-     * Name of the query type. Default is method name.
-     *
-     * Be careful about names that contain special characters. These names can
-     * be used as metric tags. And systems like prometheus ignore metrics which
-     * have tags with unsupported characters.
-     *
-     * @var string|null
+     * @param non-empty-string|null $name
      */
-    #[Immutable]
-    public ?string $name = null;
-
-    /**
-     * @param string|null $name
-     */
-    public function __construct(string $name = null)
-    {
-        $this->name = $name;
-    }
+    public function __construct(
+        public readonly ?string $name = null,
+    ) {}
 }

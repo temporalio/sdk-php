@@ -524,7 +524,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
      */
     public function allHandlersFinished(): bool
     {
-        return $this->handlers->signals === 0 && $this->handlers->updates === 0;
+        return !$this->handlers->hasRunningHandlers();
     }
 
     /**

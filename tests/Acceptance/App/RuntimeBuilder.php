@@ -69,6 +69,7 @@ final class RuntimeBuilder
     public static function init(): void
     {
         \ini_set('display_errors', 'stderr');
+        // Feature flags
         FeatureFlags::$workflowDeferredHandlerStart = true;
     }
 
