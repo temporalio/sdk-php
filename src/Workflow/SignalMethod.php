@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Workflow;
 
 use Doctrine\Common\Annotations\Annotation\Target;
-use JetBrains\PhpStorm\Immutable;
 use Spiral\Attributes\NamedArgumentConstructor;
 
 /**
@@ -27,23 +26,14 @@ use Spiral\Attributes\NamedArgumentConstructor;
 #[\Attribute(\Attribute::TARGET_METHOD), NamedArgumentConstructor]
 final class SignalMethod
 {
-    /**
-     * Name of the signal type. Default is method name.
-     *
-     * Be careful about names that contain special characters. These names can
-     * be used as metric tags. And systems like prometheus ignore metrics which
-     * have tags with unsupported characters.
-     *
-     * @var string|null
-     */
-    #[Immutable]
-    public ?string $name = null;
 
     /**
-     * @param string|null $name
+     * @param non-empty-string|null $name Signal name.
+     * @param HandlerUnfinishedPolicy $unfinishedPolicy Actions taken if a workflow exits with
+     *         a running instance of this handler.
      */
-    public function __construct(string $name = null)
-    {
-        $this->name = $name;
-    }
+    public function __construct(
+        public readonly ?string $name = null,
+        public readonly HandlerUnfinishedPolicy $unfinishedPolicy = HandlerUnfinishedPolicy::WarnAndAbandon,
+    ) {}
 }

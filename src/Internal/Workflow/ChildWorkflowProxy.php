@@ -86,21 +86,19 @@ final class ChildWorkflowProxy extends Proxy
         }
 
         // Otherwise, we try to find a suitable workflow "signal" method.
-        foreach ($this->workflow->getSignalHandlers() as $name => $signal) {
-            if ($signal->getName() === $method) {
-                $args = Reflection::orderArguments($signal, $args);
+        foreach ($this->workflow->getSignalHandlers() as $name => $definition) {
+            if ($definition->method->getName() === $method) {
+                $args = Reflection::orderArguments($definition->method, $args);
 
                 return $this->stub->signal($name, $args);
             }
         }
 
         // Otherwise, we try to find a suitable workflow "query" method.
-        foreach ($this->workflow->getQueryHandlers() as $name => $query) {
-            if ($query->getName() === $method) {
-                throw new \BadMethodCallException(
-                    \sprintf(self::ERROR_UNSUPPORTED_METHOD, $method, $name)
-                );
-            }
+        foreach ($this->workflow->getQueryHandlers() as $name => $definition) {
+            $definition->method->getName() === $method and throw new \BadMethodCallException(
+                \sprintf(self::ERROR_UNSUPPORTED_METHOD, $method, $name)
+            );
         }
 
         throw new \BadMethodCallException(

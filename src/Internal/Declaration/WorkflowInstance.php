@@ -31,7 +31,7 @@ use Temporal\Internal\Interceptor;
  * @psalm-type ValidateUpdateExecutor = \Closure(UpdateInput, callable(ValuesInterface): mixed): mixed
  * @psalm-type UpdateValidator = \Closure(UpdateInput, UpdateHandler): void
  */
-final class WorkflowInstance extends Instance implements WorkflowInstanceInterface, Destroyable
+final class WorkflowInstance extends Instance implements WorkflowInstanceInterface
 {
     /**
      * @var array<non-empty-string, QueryHandler>
@@ -65,41 +65,40 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     private \Closure $updateValidator;
 
     /**
-     * @param WorkflowPrototype $prototype
      * @param object $context Workflow object
      * @param Interceptor\Pipeline<WorkflowInboundCallsInterceptor, mixed> $pipeline
      */
     public function __construct(
-        WorkflowPrototype $prototype,
+        private WorkflowPrototype $prototype,
         object $context,
-        private readonly Interceptor\Pipeline $pipeline,
+        private Interceptor\Pipeline $pipeline,
     ) {
         parent::__construct($prototype, $context);
 
         $this->signalQueue = new SignalQueue();
 
-        foreach ($prototype->getSignalHandlers() as $method => $reflection) {
-            $this->signalHandlers[$method] = $this->createHandler($reflection);
-            $this->signalQueue->attach($method, $this->signalHandlers[$method]);
+        foreach ($prototype->getSignalHandlers() as $name => $definition) {
+            $this->signalHandlers[$name] = $this->createHandler($definition->method);
+            $this->signalQueue->attach($name, $this->signalHandlers[$name]);
         }
 
         $updateValidators = $prototype->getValidateUpdateHandlers();
-        foreach ($prototype->getUpdateHandlers() as $method => $reflection) {
-            $fn = $this->createHandler($reflection);
-            $this->updateHandlers[$method] = fn(UpdateInput $input, Deferred $deferred): mixed =>
+        foreach ($prototype->getUpdateHandlers() as $name => $definition) {
+            $fn = $this->createHandler($definition->method);
+            $this->updateHandlers[$name] = fn(UpdateInput $input, Deferred $deferred): mixed =>
                 ($this->updateExecutor)($input, $fn, $deferred);
             // Register validate update handlers
-            $this->validateUpdateHandlers[$method] = \array_key_exists($method, $updateValidators)
+            $this->validateUpdateHandlers[$name] = \array_key_exists($name, $updateValidators)
                 ? fn(UpdateInput $input): mixed => ($this->updateValidator)(
                     $input,
-                    $this->createHandler($updateValidators[$method]),
+                    $this->createHandler($updateValidators[$name]),
                 )
                 : null;
         }
 
-        foreach ($prototype->getQueryHandlers() as $method => $reflection) {
-            $fn = $this->createHandler($reflection);
-            $this->queryHandlers[$method] = $this->pipeline->with(
+        foreach ($prototype->getQueryHandlers() as $name => $definition) {
+            $fn = $this->createHandler($definition->method);
+            $this->queryHandlers[$name] = $this->pipeline->with(
                 function (QueryInput $input) use ($fn): mixed {
                     return ($this->queryExecutor)($input, $fn);
                 },
@@ -267,7 +266,21 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
         $this->signalQueue->clear();
         $this->signalHandlers = [];
         $this->queryHandlers = [];
-        unset($this->queryExecutor);
+        $this->updateHandlers = [];
+        $this->validateUpdateHandlers = [];
+        unset(
+            $this->queryExecutor,
+            $this->updateExecutor,
+            $this->updateValidator,
+            $this->prototype,
+            $this->pipeline,
+        );
+        parent::destroy();
+    }
+
+    public function getPrototype(): WorkflowPrototype
+    {
+        return $this->prototype;
     }
 
     /**

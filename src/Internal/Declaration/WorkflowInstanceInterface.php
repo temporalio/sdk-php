@@ -16,6 +16,7 @@ use React\Promise\PromiseInterface;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
+use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 
 interface WorkflowInstanceInterface extends InstanceInterface
 {
@@ -61,4 +62,6 @@ interface WorkflowInstanceInterface extends InstanceInterface
     public function addSignalHandler(string $name, callable $handler): void;
 
     public function clearSignalQueue(): void;
+
+    public function getPrototype(): WorkflowPrototype;
 }

@@ -19,7 +19,7 @@ use Temporal\Internal\Declaration\Prototype\Prototype;
 /**
  * @psalm-import-type DispatchableHandler from InstanceInterface
  */
-abstract class Instance implements InstanceInterface
+abstract class Instance implements InstanceInterface, Destroyable
 {
     /**
      * @var \Closure(ValuesInterface): mixed
@@ -28,7 +28,7 @@ abstract class Instance implements InstanceInterface
 
     public function __construct(
         Prototype $prototype,
-        protected readonly object $context,
+        protected object $context,
     ) {
         $handler = $prototype->getHandler();
 
@@ -67,5 +67,10 @@ abstract class Instance implements InstanceInterface
 
         $context = $this->context;
         return static fn (ValuesInterface $values): mixed => $valueMapper->dispatchValues($context, $values);
+    }
+
+    public function destroy(): void
+    {
+        unset($this->handler, $this->context);
     }
 }
