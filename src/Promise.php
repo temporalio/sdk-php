@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal;
 
 use React\Promise\Exception\LengthException;
-use React\Promise\Internal\RejectedPromise;
 use React\Promise\PromiseInterface;
 use Temporal\Internal\Promise\CancellationQueue;
 
