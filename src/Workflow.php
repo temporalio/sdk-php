@@ -388,7 +388,36 @@ final class Workflow extends Facade
     }
 
     /**
-     * Registers an Update handler.
+     * Registers an Update method in the Workflow.
+     *
+     * ```php
+     *  #[WorkflowMethod]
+     *  public function handler()
+     *  {
+     *      Workflow::registerUpdate(
+     *          'my-update',
+     *          fn(Task $task) => $this->queue->push($task),
+     *      );
+     *  }
+     * ```
+     *
+     * Register an Update method with a validator:
+     *
+     * ```php
+     * #[WorkflowMethod]
+     * public function handler()
+     * {
+     *    Workflow::registerUpdate(
+     *       'my-update',
+     *       fn(Task $task) => $this->queue->push($task),
+     *       fn(Task $task) => $this->isValidTask($task) or throw new \InvalidArgumentException('Invalid task'),
+     *    );
+     * }
+     * ```
+     *
+     * Note that the validator must have the same signature as the Update method:
+     *
+     * @param non-empty-string $name
      */
     public static function registerUpdate(
         string $name,
