@@ -215,6 +215,17 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     /**
      * {@inheritDoc}
      */
+    public function registerUpdate(string $name, callable $handler, ?callable $validator): WorkflowContextInterface
+    {
+        $this->getWorkflowInstance()->addUpdateHandler($name, $handler);
+        $this->getWorkflowInstance()->addValidateUpdateHandler($name, $validator ?? fn() => null);
+
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function getVersion(string $changeId, int $minSupported, int $maxSupported): PromiseInterface
     {
         return $this->callsInterceptor->with(

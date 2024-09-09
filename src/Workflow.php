@@ -388,6 +388,17 @@ final class Workflow extends Facade
     }
 
     /**
+     * Registers an Update handler.
+     */
+    public static function registerUpdate(
+        string $name,
+        callable $handler,
+        ?callable $validator = null,
+    ): ScopedContextInterface {
+        return self::getCurrentContext()->registerUpdate($name, $handler, $validator);
+    }
+
+    /**
      * Updates the behavior of an existing workflow to resolve inconsistency errors during replay.
      *
      * The method is used to update the behavior (code) of an existing workflow
