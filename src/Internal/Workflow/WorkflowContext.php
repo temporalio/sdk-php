@@ -63,6 +63,7 @@ use Temporal\Workflow\ChildWorkflowOptions;
 use Temporal\Workflow\ChildWorkflowStubInterface;
 use Temporal\Workflow\ContinueAsNewOptions;
 use Temporal\Workflow\ExternalWorkflowStubInterface;
+use Temporal\Workflow\MutexInterface;
 use Temporal\Workflow\WorkflowContextInterface;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowInfo;
@@ -309,7 +310,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     public function continueAsNew(
         string $type,
         array $args = [],
-        ContinueAsNewOptions $options = null
+        ContinueAsNewOptions $options = null,
     ): PromiseInterface {
         return $this->callsInterceptor->with(
             function (ContinueAsNewInput $input): PromiseInterface {
@@ -630,6 +631,21 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     public function uuid7(?DateTimeInterface $dateTime = null): PromiseInterface
     {
         return $this->sideEffect(static fn(): UuidInterface => \Ramsey\Uuid\Uuid::uuid7($dateTime));
+    }
+
+    public function mutex(string $name): MutexInterface
+    {
+        // todo
+    }
+
+    public function conditionalMutex(string $name, PromiseInterface|callable ...$lockConditions): MutexInterface
+    {
+        // todo
+    }
+
+    public function runLocked(string|MutexInterface $name, callable $callable): PromiseInterface
+    {
+        // todo
     }
 
     /**
