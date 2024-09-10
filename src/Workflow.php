@@ -395,10 +395,13 @@ final class Workflow extends Facade
      * );
      * ```
      *
-     * Note that the validator must have the same signature as the Update method:
-     *
      * @param non-empty-string $name
+     * @param callable $handler Handler function to execute the update.
+     * @param callable|null $validator Validator function to check the input. It should throw an exception
+     *        if the input is invalid.
+     *        Note that the validator must have the same parameters as the handler.
      * @throws OutOfContextException in the absence of the workflow execution context.
+     * @since 2.11.0
      */
     public static function registerUpdate(
         string $name,
