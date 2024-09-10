@@ -80,6 +80,15 @@ interface WorkflowContextInterface extends EnvironmentInterface
     public function registerSignal(string $queryType, callable $handler): self;
 
     /**
+     * Registers an update method with an optional validator.
+     *
+     * @see Workflow::registerUpdate()
+     *
+     * @param non-empty-string $name
+     */
+    public function registerUpdate(string $name, callable $handler, ?callable $validator): static;
+
+    /**
      * Exchanges data between worker and host process.
      *
      * @internal This is an internal method

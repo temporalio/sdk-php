@@ -332,17 +332,12 @@ final class Workflow extends Facade
     }
 
     /**
-     * A method that allows you to dynamically register additional query
-     * handler in a workflow during the execution of a workflow.
+     * Register a Query handler in the Workflow.
      *
      * ```php
-     *  #[WorkflowMethod]
-     *  public function handler()
-     *  {
-     *      Workflow::registerQuery('query', function(string $argument) {
-     *          echo sprintf('Executed query "query" with argument "%s"', $argument);
-     *      });
-     *  }
+     * Workflow::registerQuery('query', function(string $argument) {
+     *     echo sprintf('Executed query "query" with argument "%s"', $argument);
+     * });
      * ```
      *
      * The same method ({@see WorkflowStubInterface::query()}) should be used
@@ -359,19 +354,12 @@ final class Workflow extends Facade
     }
 
     /**
-     * Registers a query with an additional signal handler.
-     *
-     * The method is similar to the {@see Workflow::registerQuery()}, but it
-     * registers an additional signal handler.
+     * Registers a Signal handler in the Workflow.
      *
      * ```php
-     *  #[WorkflowMethod]
-     *  public function handler()
-     *  {
-     *      Workflow::registerSignal('signal', function(string $argument) {
-     *          echo sprintf('Executed signal "signal" with argument "%s"', $argument);
-     *      });
-     *  }
+     * Workflow::registerSignal('signal', function(string $argument) {
+     *     echo sprintf('Executed signal "signal" with argument "%s"', $argument);
+     * });
      * ```
      *
      * The same method ({@see WorkflowStubInterface::signal()}) should be used
@@ -385,6 +373,42 @@ final class Workflow extends Facade
     public static function registerSignal(string $queryType, callable $handler): ScopedContextInterface
     {
         return self::getCurrentContext()->registerSignal($queryType, $handler);
+    }
+
+    /**
+     * Registers an Update method in the Workflow.
+     *
+     * ```php
+     * Workflow::registerUpdate(
+     *     'pushTask',
+     *     fn(Task $task) => $this->queue->push($task),
+     * );
+     * ```
+     *
+     * Register an Update method with a validator:
+     *
+     * ```php
+     * Workflow::registerUpdate(
+     *     'pushTask',
+     *     fn(Task $task) => $this->queue->push($task),
+     *     fn(Task $task) => $this->isValidTask($task) or throw new \InvalidArgumentException('Invalid task'),
+     * );
+     * ```
+     *
+     * @param non-empty-string $name
+     * @param callable $handler Handler function to execute the update.
+     * @param callable|null $validator Validator function to check the input. It should throw an exception
+     *        if the input is invalid.
+     *        Note that the validator must have the same parameters as the handler.
+     * @throws OutOfContextException in the absence of the workflow execution context.
+     * @since 2.11.0
+     */
+    public static function registerUpdate(
+        string $name,
+        callable $handler,
+        ?callable $validator = null,
+    ): ScopedContextInterface {
+        return self::getCurrentContext()->registerUpdate($name, $handler, $validator);
     }
 
     /**

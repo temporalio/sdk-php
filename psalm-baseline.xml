@@ -575,10 +575,6 @@
     <MissingClosureReturnType>
       <code><![CDATA[function (QueryInput $input) use ($fn) {]]></code>
     </MissingClosureReturnType>
-    <MoreSpecificImplementedParamType>
-      <code><![CDATA[$handler]]></code>
-      <code><![CDATA[$handler]]></code>
-    </MoreSpecificImplementedParamType>
     <PropertyNotSetInConstructor>
       <code><![CDATA[$queryExecutor]]></code>
       <code><![CDATA[$updateExecutor]]></code>
