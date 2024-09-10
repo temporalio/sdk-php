@@ -8,12 +8,14 @@ use React\Promise\PromiseInterface;
 
 interface MutexInterface
 {
-    /**
-     * @return non-empty-string The name of the mutex.
-     */
-    public function getName(): string;
-
     public function lock(): PromiseInterface;
+
+    /**
+     * Try to lock the mutex.
+     *
+     * @return bool true if the mutex was successfully locked, false otherwise.
+     */
+    public function tryLock(): bool;
 
     public function unlock(): void;
 

@@ -633,17 +633,12 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         return $this->sideEffect(static fn(): UuidInterface => \Ramsey\Uuid\Uuid::uuid7($dateTime));
     }
 
-    public function mutex(string $name): MutexInterface
+    public function mutex(): MutexInterface
     {
         // todo
     }
 
-    public function conditionalMutex(string $name, PromiseInterface|callable ...$lockConditions): MutexInterface
-    {
-        // todo
-    }
-
-    public function runLocked(string|MutexInterface $name, callable $callable): PromiseInterface
+    public function runLocked(MutexInterface $mutex, callable $callable): PromiseInterface
     {
         // todo
     }

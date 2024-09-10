@@ -377,25 +377,13 @@ interface WorkflowContextInterface extends EnvironmentInterface
     public function uuid7(?DateTimeInterface $dateTime = null): PromiseInterface;
 
     /**
-     * Get a mutex by name or create a new one.
-     *
-     * @param non-empty-string $name The name of the mutex.
+     * Create a mutex.
      */
-    public function mutex(string $name): MutexInterface;
-
-    /**
-     * Create a conditional mutex.
-     *
-     * @param non-empty-string $name
-     */
-    public function conditionalMutex(string $name, PromiseInterface|callable ...$lockConditions): MutexInterface;
+    public function mutex(): MutexInterface;
 
     /**
      * Run a function when the mutex is released.
-     * The mutex is locked for the duration of the function if it's not a conditional mutex.
-     * Conditional mutexes are locked only when all conditions are met.
-     *
-     * @param non-empty-string|MutexInterface $name Mutex name or instance.
+     * The mutex will be locked for the duration of the function.
      */
-    public function runLocked(string|MutexInterface $name, callable $callable): PromiseInterface;
+    public function runLocked(MutexInterface $mutex, callable $callable): PromiseInterface;
 }

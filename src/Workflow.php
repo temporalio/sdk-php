@@ -974,85 +974,44 @@ final class Workflow extends Facade
     }
 
     /**
-     * Get a mutex by name or create a new one.
+     * Create a new mutex.
      *
      * If a mutex is yielded without calling `lock()`, the Workflow will continue
      * only when the lock is released.
      *
      * ```php
-     * yield Workflow::mutex('my-mutex');
-     * ```
+     * $this->>mutex = Workflow::mutex();
      *
-     * Now to continue only when the lock is acquired:
+     * // Continue only when the lock is released
+     * yield $this->mutex;
      *
-     * ```php
+     * // Continue only when the lock is acquired
      * yield Workflow::mutex('my-mutex')->lock();
      * ```
      *
-     * Note: in this case, if the lock is already acquired, the Workflow will be blocked until it's released
-     *
-     * @param non-empty-string $name The name of the mutex.
+     * Note: in the last case, if the lock is already acquired, the Workflow will be blocked until it's released.
      */
-    public static function mutex(string $name): MutexInterface
+    public static function mutex(): MutexInterface
     {
         /** @var WorkflowContextInterface $context */
         $context = self::getCurrentContext();
 
-        return $context->mutex($name);
-    }
-
-    /**
-     * Create a conditional mutex that is locked when any of the conditions are met.
-     *
-     * @param non-empty-string $name
-     *
-     * Example:
-     *
-     * Monitor when the number of threads exceeds 10:
-     *
-     * ```php
-     * #[WorkflowMethod]
-     * function start() {
-     *     // Register a conditional mutex that will be locked when the number of threads exceeds 10
-     *     Workflow::conditionalMutex(
-     *         'limit',
-     *         fn() => count($this->threads) > 10,
-     *     );
-     *     // ...
-     * }
-     *
-     * #[SignalMethod]
-     * function addTask(Task $task) {
-     *     yield Workflow::runLocked('limit', function() {
-     *         $key = array_key_last($this->threads) + 1;
-     *         yield $this->threads[$key] = Workflow::executeChildWorkflow(...);
-     *         unset($this->threads[$key]);
-     *     });
-     * }
-     * ```
-     */
-    public function conditionalMutex(string $name, PromiseInterface|callable ...$lockConditions): MutexInterface
-    {
-        /** @var WorkflowContextInterface $context */
-        $context = self::getCurrentContext();
-
-        return $context->conditionalMutex($name, ...$lockConditions);
+        return $context->mutex();
     }
 
     /**
      * Run a function when the mutex is released.
-     * The mutex is locked for the duration of the function if it's not a conditional mutex.
-     * Conditional mutexes are locked only when all conditions are met.
+     * The mutex is locked for the duration of the function.
      *
-     * @see Workflow::conditionalMutex()
+     * @param non-empty-string|MutexInterface $mutex Mutex name or instance.
+     *@see Workflow::conditionalMutex()
      *
-     * @param non-empty-string|MutexInterface $name Mutex name or instance.
      */
-    public function runLocked(string|MutexInterface $name, callable $callable): PromiseInterface
+    public function runLocked(string|MutexInterface $mutex, callable $callable): PromiseInterface
     {
         /** @var WorkflowContextInterface $context */
         $context = self::getCurrentContext();
 
-        return $context->runLocked($name, $callable);
+        return $context->runLocked($mutex, $callable);
     }
 }
