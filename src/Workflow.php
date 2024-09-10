@@ -332,17 +332,12 @@ final class Workflow extends Facade
     }
 
     /**
-     * A method that allows you to dynamically register additional query
-     * handler in a workflow during the execution of a workflow.
+     * Register a Query handler in the Workflow.
      *
      * ```php
-     *  #[WorkflowMethod]
-     *  public function handler()
-     *  {
-     *      Workflow::registerQuery('query', function(string $argument) {
-     *          echo sprintf('Executed query "query" with argument "%s"', $argument);
-     *      });
-     *  }
+     * Workflow::registerQuery('query', function(string $argument) {
+     *     echo sprintf('Executed query "query" with argument "%s"', $argument);
+     * });
      * ```
      *
      * The same method ({@see WorkflowStubInterface::query()}) should be used
@@ -359,19 +354,12 @@ final class Workflow extends Facade
     }
 
     /**
-     * Registers a query with an additional signal handler.
-     *
-     * The method is similar to the {@see Workflow::registerQuery()}, but it
-     * registers an additional signal handler.
+     * Registers a Signal handler in the Workflow.
      *
      * ```php
-     *  #[WorkflowMethod]
-     *  public function handler()
-     *  {
-     *      Workflow::registerSignal('signal', function(string $argument) {
-     *          echo sprintf('Executed signal "signal" with argument "%s"', $argument);
-     *      });
-     *  }
+     * Workflow::registerSignal('signal', function(string $argument) {
+     *     echo sprintf('Executed signal "signal" with argument "%s"', $argument);
+     * });
      * ```
      *
      * The same method ({@see WorkflowStubInterface::signal()}) should be used
@@ -391,33 +379,26 @@ final class Workflow extends Facade
      * Registers an Update method in the Workflow.
      *
      * ```php
-     *  #[WorkflowMethod]
-     *  public function handler()
-     *  {
-     *      Workflow::registerUpdate(
-     *          'my-update',
-     *          fn(Task $task) => $this->queue->push($task),
-     *      );
-     *  }
+     * Workflow::registerUpdate(
+     *     'pushTask',
+     *     fn(Task $task) => $this->queue->push($task),
+     * );
      * ```
      *
      * Register an Update method with a validator:
      *
      * ```php
-     * #[WorkflowMethod]
-     * public function handler()
-     * {
-     *    Workflow::registerUpdate(
-     *       'my-update',
-     *       fn(Task $task) => $this->queue->push($task),
-     *       fn(Task $task) => $this->isValidTask($task) or throw new \InvalidArgumentException('Invalid task'),
-     *    );
-     * }
+     * Workflow::registerUpdate(
+     *     'pushTask',
+     *     fn(Task $task) => $this->queue->push($task),
+     *     fn(Task $task) => $this->isValidTask($task) or throw new \InvalidArgumentException('Invalid task'),
+     * );
      * ```
      *
      * Note that the validator must have the same signature as the Update method:
      *
      * @param non-empty-string $name
+     * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function registerUpdate(
         string $name,
