@@ -904,24 +904,6 @@
       <code><![CDATA[$path]]></code>
     </PossiblyInvalidArgument>
   </file>
-  <file src="src/Internal/Traits/CloneWith.php">
-    <RawObjectIteration>
-      <code><![CDATA[$this]]></code>
-      <code><![CDATA[$this]]></code>
-      <code><![CDATA[$this]]></code>
-      <code><![CDATA[$this]]></code>
-      <code><![CDATA[$this]]></code>
-      <code><![CDATA[$this]]></code>
-      <code><![CDATA[$this]]></code>
-      <code><![CDATA[$this]]></code>
-      <code><![CDATA[$this]]></code>
-      <code><![CDATA[$this]]></code>
-      <code><![CDATA[$this]]></code>
-      <code><![CDATA[$this]]></code>
-      <code><![CDATA[$this]]></code>
-      <code><![CDATA[$this]]></code>
-    </RawObjectIteration>
-  </file>
   <file src="src/Internal/Transport/Client.php">
     <InternalClass>
       <code><![CDATA[self::ERROR_REQUEST_ID_DUPLICATION]]></code>
