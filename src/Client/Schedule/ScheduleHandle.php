@@ -60,6 +60,30 @@ final class ScheduleHandle
     /**
      * Update the Schedule.
      *
+     * Examples:
+     *
+     * Add a search attribute to the schedule:
+     * ```
+     *  $handle->update(function (ScheduleUpdateInput $input): ScheduleUpdate {
+     *      return ScheduleUpdate::new($input->description->schedule)
+     *          ->withSearchAttributes($input->description->searchAttributes
+     *              ->withValue('foo', 'bar'),
+     *              ->withValue('bar', 42),
+     *          );
+     * });
+     * ```
+     *
+     * Pause a described schedule:
+     * ```
+     *  $description = $handle->describe();
+     *  $schedule = $description->schedule;
+     *  $handle->update(
+     *      $schedule
+     *          ->withState($schedule->state->withPaused(true)),
+     *      $description->conflictToken,
+     *  );
+     * ```
+     *
      * NOTE: If two Update calls are made in parallel to the same Schedule there is the potential
      * for a race condition. Use $conflictToken to avoid this.
      *
