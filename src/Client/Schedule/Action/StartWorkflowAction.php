@@ -95,7 +95,9 @@ final class StartWorkflowAction extends ScheduleAction
     public readonly EncodedCollection $memo;
 
     /**
-     * Search attributes
+     * Search Attributes.
+     *
+     * For supported operations on different server versions see {@link https://docs.temporal.io/visibility}
      */
     #[Marshal(name: 'search_attributes', type: EncodedCollectionType::class, of: SearchAttributes::class)]
     public readonly EncodedCollection $searchAttributes;

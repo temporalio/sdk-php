@@ -39,8 +39,8 @@ final class ScheduleDescription
     public readonly EncodedCollection $memo;
 
     /**
-     * Indexed info that can be used in query of List schedules APIs.
-     * The key and value type must be registered on Temporal server side.
+     * Additional indexed information used for search and visibility.
+     * The key and its value type are registered on Temporal server side
      * Use GetSearchAttributes API to get valid key and corresponding value type.
      * For supported operations on different server versions see {@link https://docs.temporal.io/visibility}.
      */

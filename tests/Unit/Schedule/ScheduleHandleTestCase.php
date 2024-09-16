@@ -24,8 +24,11 @@ use PHPUnit\Framework\TestCase;
 use Temporal\Client\Schedule\Policy\ScheduleOverlapPolicy;
 use Temporal\Client\Schedule\Schedule;
 use Temporal\Client\Schedule\ScheduleHandle;
+use Temporal\Client\Schedule\Update\ScheduleUpdate;
+use Temporal\Client\Schedule\Update\ScheduleUpdateInput;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\EncodedCollection;
 use Temporal\Exception\InvalidArgumentException;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
@@ -222,7 +225,46 @@ class ScheduleHandleTestCase extends TestCase
         $this->assertSame('test-id', $testContext->request->getScheduleId());
         $this->assertSame('test-identity', $testContext->request->getIdentity());
         $this->assertSame('test-conflict-token', $testContext->request->getConflictToken());
+        $this->assertNotNull($testContext->request->getRequestId());
         $this->assertNotNull($testContext->request->getSchedule());
+    }
+
+    public function testUpdateUsingClosureDefaults(): void
+    {
+        $testContext = new class {
+            public UpdateScheduleRequest $request;
+        };
+        // Prepare mocks
+        $clientMock = $this->createMock(ServiceClientInterface::class);
+        $clientMock->expects($this->once())
+            ->method('DescribeSchedule')
+            ->willReturn((new DescribeScheduleResponse()));
+        $clientMock->expects($this->once())
+            ->method('UpdateSchedule')
+            ->with($this->callback(fn (UpdateScheduleRequest $request) => $testContext->request = $request or true))
+            ->willReturn(new UpdateScheduleResponse());
+        $scheduleHandle = $this->createScheduleHandle(client: $clientMock);
+
+        $scheduleHandle->update(function (ScheduleUpdateInput $input): ScheduleUpdate {
+            $schedule = Schedule::new();
+            $sa = EncodedCollection::fromValues(['foo' => 'bar']);
+            return ScheduleUpdate::new($schedule)
+                ->withSearchAttributes($sa);
+        }, 'test-conflict-token');
+
+        $this->assertTrue(isset($testContext->request));
+        $this->assertSame('default', $testContext->request->getNamespace());
+        $this->assertSame('test-id', $testContext->request->getScheduleId());
+        $this->assertSame('test-identity', $testContext->request->getIdentity());
+        $this->assertSame('test-conflict-token', $testContext->request->getConflictToken());
+        $this->assertNotNull($testContext->request->getRequestId());
+        $this->assertNotNull($testContext->request->getSchedule());
+        // Search attributes
+        $sa = EncodedCollection::fromPayloadCollection(
+            $testContext->request->getSearchAttributes()->getIndexedFields(),
+            DataConverter::createDefault(),
+        )->getValues();
+        $this->assertSame(['foo' => 'bar'], $sa);
     }
 
     public function testDescribe(): void
