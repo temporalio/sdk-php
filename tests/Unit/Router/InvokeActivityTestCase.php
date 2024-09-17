@@ -25,6 +25,7 @@ use Temporal\Internal\Transport\Router\InvokeActivity;
 use Temporal\Tests\Unit\Framework\Requests\InvokeActivity as Request;
 use Temporal\Tests\Unit\AbstractUnit;
 use Temporal\Worker\Environment\EnvironmentInterface;
+use Temporal\Worker\FeatureFlags;
 use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\RPCConnectionInterface;
 
@@ -59,6 +60,7 @@ final class InvokeActivityTestCase extends AbstractUnit
             $dataConverter,
             $this->createMock(ExceptionInterceptorInterface::class),
             new SimplePipelineProvider(),
+            FeatureFlags::createDefaults(),
         );
         $activityReader = new ActivityReader(new SelectiveReader([new AnnotationReader(), new AttributeReader()]));
         foreach ($activityReader->fromClass(DummyActivity::class) as $proto) {
@@ -69,7 +71,6 @@ final class InvokeActivityTestCase extends AbstractUnit
 
         parent::setUp();
     }
-
 
     public function testFinalizerIsCalledOnSuccessActivityInvocation(): void
     {

@@ -13,6 +13,7 @@ use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Worker\ActivityInvocationCache\ActivityInvocationCacheInterface;
 use Temporal\Worker\ActivityInvocationCache\RoadRunnerActivityInvocationCache;
+use Temporal\Worker\FeatureFlags;
 use Temporal\Worker\Transport\Goridge;
 use Temporal\Worker\Transport\RPCConnectionInterface;
 use Temporal\Worker\Worker;
@@ -27,21 +28,27 @@ class WorkerFactory extends \Temporal\WorkerFactory
         DataConverterInterface $dataConverter,
         RPCConnectionInterface $rpc,
         ActivityInvocationCacheInterface $activityCache,
+        ?FeatureFlags $flags = null,
     ) {
         $this->activityCache = $activityCache;
 
-        parent::__construct($dataConverter, $rpc);
+        parent::__construct($dataConverter, $rpc, flags: $flags);
     }
 
+    /**
+     * @note Use named arguments when calling this method
+     */
     public static function create(
         ?DataConverterInterface $converter = null,
         ?RPCConnectionInterface $rpc = null,
+        ?FeatureFlags $flags = null,
         ?ActivityInvocationCacheInterface $activityCache = null,
     ): static {
         return new static(
             $converter ?? DataConverter::createDefault(),
             $rpc ?? Goridge::create(),
             $activityCache ?? RoadRunnerActivityInvocationCache::create($converter),
+            $flags,
         );
     }
 
@@ -64,7 +71,8 @@ class WorkerFactory extends \Temporal\WorkerFactory
                     $interceptorProvider ?? new SimplePipelineProvider(),
                 ),
                 $this->rpc,
-            ), $this->activityCache
+            ),
+            $this->activityCache,
         );
         $this->queues->add($worker);
 

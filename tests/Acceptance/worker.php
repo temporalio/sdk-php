@@ -24,6 +24,7 @@ use Temporal\DataConverter\JsonConverter;
 use Temporal\DataConverter\NullConverter;
 use Temporal\DataConverter\ProtoConverter;
 use Temporal\DataConverter\ProtoJsonConverter;
+use Temporal\Worker\FeatureFlags;
 use Temporal\Worker\WorkerInterface;
 use Temporal\Worker\WorkerOptions;
 use Temporal\WorkerFactory;
@@ -60,7 +61,10 @@ try {
     $converter = new DataConverter(...$converters);
     $container->bindSingleton(DataConverter::class, $converter);
 
-    $factory = WorkerFactory::create(converter: $converter);
+    $factory = WorkerFactory::create(
+        converter: $converter,
+        flags: FeatureFlags::createDefaults(),
+    );
     $getWorker = static function (string $taskQueue) use (&$workers, $factory): WorkerInterface {
         return $workers[$taskQueue] ??= $factory->newWorker(
             $taskQueue,

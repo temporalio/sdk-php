@@ -29,6 +29,7 @@ use Temporal\Internal\Workflow\WorkflowContext;
 use Temporal\Tests\Unit\Framework\Requests\StartWorkflow as Request;
 use Temporal\Tests\Unit\AbstractUnit;
 use Temporal\Worker\Environment\EnvironmentInterface;
+use Temporal\Worker\FeatureFlags;
 use Temporal\Worker\LoopInterface;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowInfo;
@@ -53,6 +54,7 @@ final class StartWorkflowTestCase extends AbstractUnit
             $dataConverter,
             $this->createMock(ExceptionInterceptorInterface::class),
             new SimplePipelineProvider(),
+            FeatureFlags::createDefaults(),
         );
         $workflowReader = new WorkflowReader(new SelectiveReader([new AnnotationReader(), new AttributeReader()]));
         $this->services->workflows->add($workflowReader->fromClass(DummyWorkflow::class));

@@ -32,6 +32,7 @@ use Temporal\Internal\Transport\Server;
 use Temporal\Internal\Transport\ServerInterface;
 use Temporal\Worker\Environment\Environment;
 use Temporal\Worker\Environment\EnvironmentInterface;
+use Temporal\Worker\FeatureFlags;
 use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\Codec\CodecInterface;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
@@ -65,6 +66,7 @@ class WorkerFactoryMock implements WorkerFactoryInterface, LoopInterface
     private QueueInterface $responses;
     private MarshallerInterface $marshaller;
     private EnvironmentInterface $env;
+    private FeatureFlags $flags;
 
     public function __construct(DataConverterInterface $dataConverter)
     {
@@ -86,7 +88,7 @@ class WorkerFactoryMock implements WorkerFactoryInterface, LoopInterface
         WorkerOptions $options = null,
         ExceptionInterceptorInterface $exceptionInterceptor = null,
         PipelineProvider $interceptorProvider = null,
-    ): WorkerInterface {
+    ): WorkerMock {
         $worker = new WorkerMock(
             $taskQueue,
             $options ?? WorkerOptions::new(),
@@ -132,10 +134,14 @@ class WorkerFactoryMock implements WorkerFactoryInterface, LoopInterface
         return $this->env;
     }
 
+    public function getFlags(): FeatureFlags
+    {
+        return $this->flags;
+    }
+
     public function run(WorkerMock $worker = null): int
     {
-        /** @var WorkerMock */
-        $worker ??= self::newWorker();
+        $worker ??= $this->newWorker();
         while ($batch = $worker->waitBatch()) {
             try {
                 $worker->send($this->dispatch($batch));
@@ -158,6 +164,7 @@ class WorkerFactoryMock implements WorkerFactoryInterface, LoopInterface
 
     private function boot(): void
     {
+        $this->flags = FeatureFlags::createDefaults();
         $this->reader = $this->createReader();
         $this->marshaller = $this->createMarshaller($this->reader);
         $this->queues = new ArrayRepository();

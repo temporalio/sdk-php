@@ -26,6 +26,7 @@ use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Workflow\ProcessCollection;
 use Temporal\Worker\Environment\EnvironmentInterface;
+use Temporal\Worker\FeatureFlags;
 use Temporal\Worker\LoopInterface;
 use Temporal\WorkerFactory;
 
@@ -51,6 +52,7 @@ final class ServiceContainer
         public readonly DataConverterInterface $dataConverter,
         public readonly ExceptionInterceptorInterface $exceptionInterceptor,
         public readonly PipelineProvider $interceptorProvider,
+        public readonly FeatureFlags $flags,
     ) {
         $this->workflows = new WorkflowCollection();
         $this->activities = new ActivityCollection();
@@ -74,6 +76,7 @@ final class ServiceContainer
             $worker->getDataConverter(),
             $exceptionInterceptor,
             $interceptorProvider,
+            $worker->getFlags(),
         );
     }
 }

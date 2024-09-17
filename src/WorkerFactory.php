@@ -41,6 +41,7 @@ use Temporal\Internal\Transport\Server;
 use Temporal\Internal\Transport\ServerInterface;
 use Temporal\Worker\Environment\Environment;
 use Temporal\Worker\Environment\EnvironmentInterface;
+use Temporal\Worker\FeatureFlags;
 use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\Codec\CodecInterface;
 use Temporal\Worker\Transport\Codec\JsonCodec;
@@ -154,33 +155,29 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
      */
     protected EnvironmentInterface $env;
 
-    /**
-     * @param DataConverterInterface $dataConverter
-     * @param RPCConnectionInterface $rpc
-     */
+    protected readonly FeatureFlags $flags;
+
     public function __construct(
         DataConverterInterface $dataConverter,
         RPCConnectionInterface $rpc,
+        ?FeatureFlags $flags = null,
     ) {
+        $this->flags = $flags ?? FeatureFlags::createLegacy();
         $this->converter = $dataConverter;
         $this->rpc = $rpc;
 
         $this->boot();
     }
 
-    /**
-     * @param DataConverterInterface|null $converter
-     * @param RPCConnectionInterface|null $rpc
-     *
-     * @return WorkerFactoryInterface
-     */
     public static function create(
         DataConverterInterface $converter = null,
         RPCConnectionInterface $rpc = null,
+        ?FeatureFlags $flags = null,
     ): WorkerFactoryInterface {
         return new static(
             $converter ?? DataConverter::createDefault(),
             $rpc ?? Goridge::create(),
+            $flags,
         );
     }
 
@@ -254,6 +251,11 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     public function getEnvironment(): EnvironmentInterface
     {
         return $this->env;
+    }
+
+    public function getFlags(): FeatureFlags
+    {
+        return $this->flags;
     }
 
     /**

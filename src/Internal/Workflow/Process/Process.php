@@ -17,7 +17,6 @@ use React\Promise\PromiseInterface;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Exception\Failure\CanceledFailure;
-use Temporal\FeatureFlags;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
@@ -232,7 +231,7 @@ class Process extends Scope implements ProcessInterface
     private function logRunningHandlers(string $happened = 'finished'): void
     {
         // Skip logging if the feature flag is disabled
-        if (!FeatureFlags::$warnOnWorkflowUnfinishedHandlers) {
+        if (!$this->services->flags->warnOnWorkflowUnfinishedHandlers) {
             return;
         }
 

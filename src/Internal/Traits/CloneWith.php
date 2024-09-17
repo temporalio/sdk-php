@@ -23,6 +23,7 @@ trait CloneWith
 
             $new->{$k} = $v;
         }
+
         return $new;
     }
 }

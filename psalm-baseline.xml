@@ -850,6 +850,7 @@
       <code><![CDATA[getMarshaller]]></code>
       <code><![CDATA[getQueue]]></code>
       <code><![CDATA[getReader]]></code>
+      <code><![CDATA[getFlags]]></code>
     </UndefinedInterfaceMethod>
   </file>
   <file src="src/Internal/Support/DateTime.php">
@@ -1550,6 +1551,7 @@
       <code><![CDATA[new static(
             $converter ?? DataConverter::createDefault(),
             $rpc ?? Goridge::create(),
+            $flags,
         )]]></code>
     </UnsafeInstantiation>
   </file>

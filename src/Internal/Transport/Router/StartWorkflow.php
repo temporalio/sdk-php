@@ -13,7 +13,6 @@ namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
 use Temporal\DataConverter\EncodedValues;
-use Temporal\FeatureFlags;
 use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
 use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\Instantiator\WorkflowInstantiator;
@@ -36,7 +35,7 @@ final class StartWorkflow extends Route
     public function __construct(
         private readonly ServiceContainer $services,
     ) {
-        $this->wfStartDeferred = FeatureFlags::$workflowDeferredHandlerStart;
+        $this->wfStartDeferred = $this->services->flags->workflowDeferredHandlerStart;
         $this->instantiator = new WorkflowInstantiator($services->interceptorProvider);
     }
 

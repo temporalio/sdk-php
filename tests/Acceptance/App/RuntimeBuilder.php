@@ -5,12 +5,11 @@ declare(strict_types=1);
 namespace Temporal\Tests\Acceptance\App;
 
 use PHPUnit\Framework\Attributes\Test;
-use Temporal\FeatureFlags;
+use Temporal\Activity\ActivityInterface;
+use Temporal\DataConverter\PayloadConverterInterface;
 use Temporal\Tests\Acceptance\App\Input\Command;
 use Temporal\Tests\Acceptance\App\Input\Feature;
 use Temporal\Tests\Acceptance\App\Runtime\State;
-use Temporal\Activity\ActivityInterface;
-use Temporal\DataConverter\PayloadConverterInterface;
 use Temporal\Workflow\WorkflowInterface;
 
 final class RuntimeBuilder
@@ -69,8 +68,6 @@ final class RuntimeBuilder
     public static function init(): void
     {
         \ini_set('display_errors', 'stderr');
-        // Feature flags
-        FeatureFlags::$workflowDeferredHandlerStart = true;
     }
 
     /**
