@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="5.25.0@01a8eb06b9e9cc6cfb6a320bf9fb14331919d505">
+<files psalm-version="5.26.1@d747f6500b38ac4f7dfc5edbcae6e4b637d7add0">
   <file src="src/Activity.php">
     <ImplicitToStringCast>
       <code><![CDATA[$type]]></code>
@@ -39,6 +39,13 @@
       <code><![CDATA[recordHeartbeat]]></code>
       <code><![CDATA[recordHeartbeatByToken]]></code>
     </MissingReturnType>
+  </file>
+  <file src="src/Client/GRPC/BaseClient.php">
+    <PossiblyNullArgument>
+      <code><![CDATA[$loadCert($clientKey)]]></code>
+      <code><![CDATA[$loadCert($clientPem)]]></code>
+      <code><![CDATA[$loadCert($crt)]]></code>
+    </PossiblyNullArgument>
   </file>
   <file src="src/Client/GRPC/Context.php">
     <ArgumentTypeCoercion>
@@ -109,11 +116,6 @@
       <code><![CDATA[$workflowType]]></code>
     </PropertyNotSetInConstructor>
   </file>
-  <file src="src/Client/Schedule/ScheduleHandle.php">
-    <PossiblyInvalidOperand>
-      <code><![CDATA[$timestamp->getSeconds()]]></code>
-    </PossiblyInvalidOperand>
-  </file>
   <file src="src/Client/Update/UpdateHandle.php">
     <PossiblyNullArgument>
       <code><![CDATA[$result->getSuccess()]]></code>
@@ -132,12 +134,12 @@
       <code><![CDATA[new WorkflowProxy(
             $this,
             $this->newUntypedRunningWorkflowStub($workflowID, $runID, $workflow->getID()),
-            $workflow
+            $workflow,
         )]]></code>
       <code><![CDATA[new WorkflowProxy(
             $this,
             $this->newUntypedWorkflowStub($workflow->getID(), $options),
-            $workflow
+            $workflow,
         )]]></code>
     </InvalidReturnStatement>
     <InvalidReturnType>
@@ -171,7 +173,7 @@
       <code><![CDATA[NamedArgumentConstructor]]></code>
     </DeprecatedClass>
     <RedundantCast>
-      <code><![CDATA[(string)$this->interval]]></code>
+      <code><![CDATA[(string) $this->interval]]></code>
     </RedundantCast>
   </file>
   <file src="src/Common/MethodRetry.php">
@@ -303,7 +305,7 @@
       <code><![CDATA[new static(
             $e->getMessage(),
             $e->getCode(),
-            $e
+            $e,
         )]]></code>
       <code><![CDATA[new static(
             self::buildMessage(
@@ -312,10 +314,10 @@
                     'runId' => $info->workflowExecution->getRunID(),
                     'activityId' => $info->id,
                     'activityType' => $info->type->name,
-                ]
+                ],
             ),
             $e === null ? 0 : $e->getCode(),
-            $e
+            $e,
         )]]></code>
       <code><![CDATA[new static('', $e->getCode(), $e)]]></code>
     </UnsafeInstantiation>
@@ -346,7 +348,7 @@
       <code><![CDATA[Failure]]></code>
     </InvalidNullableReturnType>
     <InvalidOperand>
-      <code><![CDATA[count($arg)]]></code>
+      <code><![CDATA[\count($arg)]]></code>
     </InvalidOperand>
     <NullableReturnStatement>
       <code><![CDATA[$e->getFailure()]]></code>
@@ -387,9 +389,9 @@
       <code><![CDATA[$value]]></code>
     </MissingClosureParamType>
     <MissingClosureReturnType>
-      <code><![CDATA[fn ($value) => RetryState::name($value)]]></code>
-      <code><![CDATA[fn ($value) => TimeoutType::name($value)]]></code>
-      <code><![CDATA[fn ($value) => TimeoutType::name($value)]]></code>
+      <code><![CDATA[static fn($value) => RetryState::name($value)]]></code>
+      <code><![CDATA[static fn($value) => TimeoutType::name($value)]]></code>
+      <code><![CDATA[static fn($value) => TimeoutType::name($value)]]></code>
     </MissingClosureReturnType>
   </file>
   <file src="src/Interceptor/Header.php">
@@ -422,13 +424,13 @@
       <code><![CDATA[$options->retryOptions ? $options->retryOptions->toWorkflowRetryPolicy() : null]]></code>
       <code><![CDATA[$options->toMemo($this->converter)]]></code>
       <code><![CDATA[$options->toSearchAttributes($this->converter)]]></code>
-      <code><![CDATA[DateInterval::toDuration($options->workflowExecutionTimeout)]]></code>
-      <code><![CDATA[DateInterval::toDuration($options->workflowRunTimeout)]]></code>
-      <code><![CDATA[DateInterval::toDuration($options->workflowTaskTimeout)]]></code>
     </PossiblyNullArgument>
     <PossiblyNullReference>
       <code><![CDATA[getName]]></code>
     </PossiblyNullReference>
+    <RedundantConditionGivenDocblockType>
+      <code><![CDATA[$delay !== null]]></code>
+    </RedundantConditionGivenDocblockType>
   </file>
   <file src="src/Internal/Client/WorkflowStub.php">
     <PossiblyInvalidArgument>
@@ -496,7 +498,7 @@
   </file>
   <file src="src/Internal/Declaration/Graph/NodeInterface.php">
     <InvalidDocblock>
-      <code><![CDATA[interface NodeInterface extends \Stringable, \IteratorAggregate, \Countable]]></code>
+      <code><![CDATA[interface NodeInterface extends \Stringable, \IteratorAggregate, \Countable {}]]></code>
     </InvalidDocblock>
     <MissingTemplateParam>
       <code><![CDATA[\IteratorAggregate]]></code>
@@ -697,13 +699,13 @@
   </file>
   <file src="src/Internal/Marshaller/ProtoToArrayConverter.php">
     <FalsableReturnStatement>
-      <code><![CDATA[DateTimeImmutable::createFromFormat(
+      <code><![CDATA[\DateTimeImmutable::createFromFormat(
                 'U.u',
                 \sprintf('%d.%d', $input->getSeconds(), $input->getNanos() / 1000),
             )]]></code>
     </FalsableReturnStatement>
     <InvalidFalsableReturnType>
-      <code><![CDATA[DateTimeImmutable]]></code>
+      <code><![CDATA[\DateTimeImmutable]]></code>
     </InvalidFalsableReturnType>
     <InvalidReturnStatement>
       <code><![CDATA[\Temporal\Interceptor\Header::fromPayloadCollection($input->getFields(), $this->converter)]]></code>
@@ -719,7 +721,7 @@
     </MoreSpecificReturnType>
     <PossiblyFalseArgument>
       <code><![CDATA[$now->modify(
-                        \sprintf('+%d seconds +%d microseconds', $input->getSeconds(), $input->getNanos() / 1000)
+                        \sprintf('+%d seconds +%d microseconds', $input->getSeconds(), $input->getNanos() / 1000),
                     )]]></code>
     </PossiblyFalseArgument>
   </file>
@@ -734,25 +736,11 @@
       <code><![CDATA[$this->format]]></code>
       <code><![CDATA[$this->format]]></code>
     </ArgumentTypeCoercion>
-    <InvalidNullableReturnType>
-      <code><![CDATA[int|Duration]]></code>
-    </InvalidNullableReturnType>
     <InvalidOperand>
       <code><![CDATA[$value * 1000000000]]></code>
       <code><![CDATA[($value * 1000000000) % 1000000000]]></code>
       <code><![CDATA[DateInterval::parse($value, $this->format)->totalMicroseconds * 1000]]></code>
     </InvalidOperand>
-    <NullableReturnStatement>
-      <code><![CDATA[match (true) {
-                $value instanceof \DateInterval => DateInterval::toDuration($value),
-                \is_int($value) => (new Duration())->setSeconds($value),
-                \is_string($value) => (new Duration())->setSeconds((int)$value),
-                \is_float($value) => (new Duration())
-                    ->setSeconds((int)$value)
-                    ->setNanos(($value * 1000000000) % 1000000000),
-                default => throw new \InvalidArgumentException('Invalid value type.'),
-            }]]></code>
-    </NullableReturnStatement>
   </file>
   <file src="src/Internal/Marshaller/Type/DurationJsonType.php">
     <InvalidOperand>
@@ -771,11 +759,11 @@
   </file>
   <file src="src/Internal/Marshaller/Type/ObjectType.php">
     <InvalidPropertyAssignmentValue>
-      <code><![CDATA[new \ReflectionClass($class ?? stdClass::class)]]></code>
+      <code><![CDATA[new \ReflectionClass($class ?? \stdClass::class)]]></code>
     </InvalidPropertyAssignmentValue>
     <InvalidReturnStatement>
-      <code><![CDATA[$this->reflection->getName() === stdClass::class
-            ? (object)$data
+      <code><![CDATA[$this->reflection->getName() === \stdClass::class
+            ? (object) $data
             : $this->marshaller->unmarshal($data, $this->reflection->newInstanceWithoutConstructor())]]></code>
     </InvalidReturnStatement>
     <InvalidReturnType>
@@ -1044,12 +1032,6 @@
       <code><![CDATA[pull]]></code>
     </UndefinedInterfaceMethod>
   </file>
-  <file src="src/Internal/Transport/Router/GetWorkerInfo.php">
-    <MissingClosureReturnType>
-      <code><![CDATA[function (WorkflowPrototype $workflow) {]]></code>
-      <code><![CDATA[static fn (ActivityPrototype $activity) => []]></code>
-    </MissingClosureReturnType>
-  </file>
   <file src="src/Internal/Transport/Router/InvokeActivity.php">
     <UnnecessaryVarAnnotation>
       <code><![CDATA[ActivityContext]]></code>
@@ -1154,7 +1136,7 @@
       <code><![CDATA[$this->workflow]]></code>
     </ArgumentTypeCoercion>
     <LessSpecificReturnStatement>
-      <code><![CDATA[$execution->then(
+      <code><![CDATA[$this->execution->promise()->then(
             function (WorkflowExecution $execution) use ($name, $args) {
                 $request = new SignalExternalWorkflow(
                     $this->getOptions()->namespace,
@@ -1166,7 +1148,7 @@
                 );
 
                 return $this->request($request);
-            }
+            },
         )]]></code>
       <code><![CDATA[$this->start(...$args)->then(fn() => $this->getResult($returnType))]]></code>
       <code><![CDATA[EncodedValues::decodePromise($started)]]></code>
@@ -1293,22 +1275,6 @@
       <code><![CDATA[iterable<PromiseInterface<T>|T>]]></code>
     </TooManyTemplateParams>
   </file>
-  <file src="src/Worker/ActivityInvocationCache/ActivityInvocationCacheInterface.php">
-    <MissingParamType>
-      <code><![CDATA[$value]]></code>
-    </MissingParamType>
-  </file>
-  <file src="src/Worker/ActivityInvocationCache/ActivityInvocationFailure.php">
-    <InvalidStringClass>
-      <code><![CDATA[new $errorClass($this->errorMessage)]]></code>
-    </InvalidStringClass>
-    <LessSpecificReturnStatement>
-      <code><![CDATA[new $errorClass($this->errorMessage)]]></code>
-    </LessSpecificReturnStatement>
-    <MoreSpecificReturnType>
-      <code><![CDATA[Throwable]]></code>
-    </MoreSpecificReturnType>
-  </file>
   <file src="src/Worker/ActivityInvocationCache/ActivityInvocationResult.php">
     <MissingReturnType>
       <code><![CDATA[toValue]]></code>
@@ -1321,9 +1287,6 @@
     </PossiblyUndefinedStringArrayOffset>
   </file>
   <file src="src/Worker/ActivityInvocationCache/InMemoryActivityInvocationCache.php">
-    <MissingParamType>
-      <code><![CDATA[$value]]></code>
-    </MissingParamType>
     <PossiblyUndefinedStringArrayOffset>
       <code><![CDATA[$request->getOptions()['name']]]></code>
     </PossiblyUndefinedStringArrayOffset>
@@ -1349,8 +1312,6 @@
     <ArgumentTypeCoercion>
       <code><![CDATA[$this->maxDepth]]></code>
       <code><![CDATA[$this->maxDepth]]></code>
-      <code><![CDATA[(int)($headers['history_length'] ?? 0)]]></code>
-      <code><![CDATA[(int)($headers['history_size'] ?? 0)]]></code>
     </ArgumentTypeCoercion>
     <PossiblyInvalidArgument>
       <code><![CDATA[$e->getCode()]]></code>
@@ -1384,10 +1345,6 @@
     </PossiblyNullArgument>
   </file>
   <file src="src/Worker/Transport/Codec/ProtoCodec.php">
-    <ArgumentTypeCoercion>
-      <code><![CDATA[(int)($headers['history_length'] ?? $msg->getHistoryLength())]]></code>
-      <code><![CDATA[(int)($headers['history_size'] ?? $msg->getHistorySize())]]></code>
-    </ArgumentTypeCoercion>
     <PossiblyInvalidArgument>
       <code><![CDATA[$e->getCode()]]></code>
       <code><![CDATA[$e->getCode()]]></code>

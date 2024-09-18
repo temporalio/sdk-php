@@ -6,11 +6,17 @@ namespace Temporal\Worker\ActivityInvocationCache;
 
 final class ActivityInvocationFailure
 {
+    /** @var class-string<\Throwable> */
     public string $errorClass;
     public string $errorMessage;
 
-    public function __construct(string $exceptionClass, string $exceptionMessage)
-    {
+    /**
+     * @param class-string<\Throwable> $exceptionClass
+     */
+    public function __construct(
+        string $exceptionClass,
+        string $exceptionMessage,
+    ) {
         $this->errorClass = $exceptionClass;
         $this->errorMessage = $exceptionMessage;
     }
@@ -22,8 +28,6 @@ final class ActivityInvocationFailure
 
     public function toThrowable(): \Throwable
     {
-        $errorClass = $this->errorClass;
-
-        return new $errorClass($this->errorMessage);
+        return new ($this->errorClass)($this->errorMessage);
     }
 }

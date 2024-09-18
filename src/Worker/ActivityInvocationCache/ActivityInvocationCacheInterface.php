@@ -11,8 +11,14 @@ interface ActivityInvocationCacheInterface
 {
     public function clear(): void;
 
-    public function saveCompletion(string $activityMethodName, $value): void;
+    /**
+     * @param non-empty-string $activityMethodName
+     */
+    public function saveCompletion(string $activityMethodName, mixed $value): void;
 
+    /**
+     * @param non-empty-string $activityMethodName
+     */
     public function saveFailure(string $activityMethodName, \Throwable $error): void;
 
     public function canHandle(ServerRequestInterface $request): bool;

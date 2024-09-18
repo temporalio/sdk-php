@@ -15,6 +15,9 @@ use function React\Promise\resolve;
 
 final class InMemoryActivityInvocationCache implements ActivityInvocationCacheInterface
 {
+    /**
+     * @var array<non-empty-string, ActivityInvocationFailure|ActivityInvocationResult>
+     */
     private array $cache = [];
     private DataConverterInterface $dataConverter;
 
@@ -28,7 +31,7 @@ final class InMemoryActivityInvocationCache implements ActivityInvocationCacheIn
         $this->cache = [];
     }
 
-    public function saveCompletion(string $activityMethodName, $value): void
+    public function saveCompletion(string $activityMethodName, mixed $value): void
     {
         $this->cache[$activityMethodName] = ActivityInvocationResult::fromValue($value, $this->dataConverter);
     }
@@ -54,14 +57,8 @@ final class InMemoryActivityInvocationCache implements ActivityInvocationCacheIn
         $activityMethodName = $request->getOptions()['name'];
         $value = $this->cache[$activityMethodName];
 
-        if ($value instanceof ActivityInvocationFailure) {
-            return reject($value->toThrowable());
-        }
-
-        if ($value instanceof ActivityInvocationResult) {
-            return resolve($value->toEncodedValues($this->dataConverter));
-        }
-
-        return reject(new InvalidArgumentException('Invalid cache value'));
+        return $value instanceof ActivityInvocationFailure
+            ? reject($value->toThrowable())
+            : resolve($value->toEncodedValues($this->dataConverter));
     }
 }

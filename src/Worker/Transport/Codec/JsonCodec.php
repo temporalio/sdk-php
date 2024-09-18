@@ -66,6 +66,7 @@ final class JsonCodec implements CodecInterface
             $commands = \json_decode($batch, true, $this->maxDepth, \JSON_THROW_ON_ERROR);
 
             foreach ($commands as $command) {
+                /** @psalm-suppress ArgumentTypeCoercion */
                 $info = new TickInfo(
                     time: new \DateTimeImmutable($headers['tickTime'] ?? 'now', $tz),
                     historyLength: (int) ($headers['history_length'] ?? 0),

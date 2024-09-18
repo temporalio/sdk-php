@@ -132,7 +132,7 @@ final class DateInterval
 
     /**
      * @param \DateInterval|null $i
-     * @return Duration|null
+     * @return ($i is null ? null : Duration)
      */
     public static function toDuration(\DateInterval $i = null): ?Duration
     {

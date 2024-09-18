@@ -79,6 +79,7 @@ final class ProtoCodec implements CodecInterface
 
             /** @var Message $msg */
             foreach ($frame->getMessages() as $msg) {
+                /** @psalm-suppress ArgumentTypeCoercion */
                 $info = new TickInfo(
                     time: new \DateTimeImmutable($headers['tickTime'] ?? $msg->getTickTime(), $tz),
                     historyLength: (int) ($headers['history_length'] ?? $msg->getHistoryLength()),
