@@ -40,13 +40,6 @@
       <code><![CDATA[recordHeartbeatByToken]]></code>
     </MissingReturnType>
   </file>
-  <file src="src/Client/GRPC/BaseClient.php">
-    <PossiblyNullArgument>
-      <code><![CDATA[$loadCert($clientKey)]]></code>
-      <code><![CDATA[$loadCert($clientPem)]]></code>
-      <code><![CDATA[$loadCert($crt)]]></code>
-    </PossiblyNullArgument>
-  </file>
   <file src="src/Client/GRPC/Context.php">
     <ArgumentTypeCoercion>
       <code><![CDATA[$format]]></code>

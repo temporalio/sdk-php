@@ -79,7 +79,7 @@ class DurationJsonType extends Type implements DetectableTypeInterface, RuleFact
             default => throw new \InvalidArgumentException('Invalid value type.'),
         };
 
-        return $duration === null ? null : ['seconds' => $duration->getSeconds(), 'nanos' => $duration->getNanos()];
+        return ['seconds' => $duration->getSeconds(), 'nanos' => $duration->getNanos()];
     }
 
     /**

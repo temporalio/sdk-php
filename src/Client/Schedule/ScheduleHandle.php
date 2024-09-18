@@ -163,7 +163,7 @@ final class ScheduleHandle
         foreach ($response->getStartTime() as $timestamp) {
             \assert($timestamp instanceof Timestamp);
 
-            $list[] = new \DateTimeImmutable('@' . $timestamp->getSeconds());
+            $list[] = new \DateTimeImmutable("@{$timestamp->getSeconds()}");
         }
 
         return new \ArrayIterator($list);
