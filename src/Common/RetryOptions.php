@@ -132,7 +132,7 @@ class RetryOptions extends Options
     #[Pure]
     public function withInitialInterval($interval): self
     {
-        assert(DateInterval::assert($interval) || $interval === null);
+        \assert(DateInterval::assert($interval) || $interval === null);
 
         $self = clone $this;
         $self->initialInterval = DateInterval::parseOrNull($interval, DateInterval::FORMAT_SECONDS);
@@ -148,7 +148,7 @@ class RetryOptions extends Options
     #[Pure]
     public function withBackoffCoefficient(float $coefficient): self
     {
-        assert($coefficient >= 1.0);
+        \assert($coefficient >= 1.0);
 
         $self = clone $this;
         $self->backoffCoefficient = $coefficient;
@@ -164,7 +164,7 @@ class RetryOptions extends Options
     #[Pure]
     public function withMaximumInterval($interval): self
     {
-        assert(DateInterval::assert($interval) || $interval === null);
+        \assert(DateInterval::assert($interval) || $interval === null);
 
         $self = clone $this;
         $self->maximumInterval = DateInterval::parseOrNull($interval, DateInterval::FORMAT_SECONDS);
@@ -180,7 +180,7 @@ class RetryOptions extends Options
     #[Pure]
     public function withMaximumAttempts(int $attempts): self
     {
-        assert($attempts >= 0);
+        \assert($attempts >= 0);
 
         $self = clone $this;
         $self->maximumAttempts = $attempts;
@@ -197,7 +197,7 @@ class RetryOptions extends Options
     #[Pure]
     public function withNonRetryableExceptions(array $exceptions): self
     {
-        assert(Assert::valuesSubclassOfOrSameClass($exceptions, \Throwable::class));
+        \assert(Assert::valuesSubclassOfOrSameClass($exceptions, \Throwable::class));
 
         $self = clone $this;
         $self->nonRetryableExceptions = $exceptions;

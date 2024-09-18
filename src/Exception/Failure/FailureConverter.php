@@ -363,7 +363,7 @@ final class FailureConverter
                 $arg => 'true',
                 $arg === false => 'false',
                 $arg === null => 'null',
-                \is_array($arg) => 'array(' . count($arg) . ')',
+                \is_array($arg) => 'array(' . \count($arg) . ')',
                 \is_object($arg) => \get_class($arg),
                 \is_string($arg) => (string) \json_encode(
                     \strlen($arg) > 50

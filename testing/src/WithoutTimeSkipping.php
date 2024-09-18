@@ -11,7 +11,7 @@ trait WithoutTimeSkipping
     protected function setUp(): void
     {
         $this->testService = TestService::create(
-            getenv('TEMPORAL_ADDRESS') ?: '127.0.0.1:7233',
+            \getenv('TEMPORAL_ADDRESS') ?: '127.0.0.1:7233',
         );
         $this->testService->lockTimeSkipping();
         parent::setUp();

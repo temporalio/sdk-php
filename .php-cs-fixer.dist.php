@@ -9,5 +9,5 @@ return \Spiral\CodeStyle\Builder::create()
     ->include(__DIR__ . '/testing/src')
     ->include(__FILE__)
     ->exclude(__DIR__ . '/src/Client/GRPC/ServiceClientInterface.php')
-    ->allowRisky(false)
+    ->allowRisky(true)
     ->build();

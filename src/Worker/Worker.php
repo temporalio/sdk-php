@@ -125,7 +125,7 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
     public function registerActivityImplementations(object ...$activity): WorkerInterface
     {
         foreach ($activity as $act) {
-            $this->registerActivity(\get_class($act), fn() => $act);
+            $this->registerActivity(\get_class($act), static fn() => $act);
         }
 
         return $this;

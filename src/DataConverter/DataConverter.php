@@ -56,7 +56,7 @@ final class DataConverter implements DataConverterInterface
         $encoding = $meta[EncodingKeys::METADATA_ENCODING_KEY];
 
         if (!isset($this->converters[$encoding])) {
-            throw new DataConverterException(sprintf('Undefined payload encoding %s', $encoding));
+            throw new DataConverterException(\sprintf('Undefined payload encoding %s', $encoding));
         }
 
         $type = Type::create($type);

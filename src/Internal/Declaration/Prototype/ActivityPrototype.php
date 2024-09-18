@@ -51,7 +51,7 @@ final class ActivityPrototype extends Prototype
     public function getHandler(): \ReflectionMethod
     {
         $handler = parent::getHandler();
-        assert($handler !== null);
+        \assert($handler !== null);
 
         return $handler;
     }
@@ -79,7 +79,7 @@ final class ActivityPrototype extends Prototype
         }
 
         if ($this->factory !== null) {
-            $instance = call_user_func($this->factory, $this->getClass());
+            $instance = \call_user_func($this->factory, $this->getClass());
             return new ActivityInstance($this, $instance);
         }
 

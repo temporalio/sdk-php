@@ -61,7 +61,7 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
         $process->cancel(new DestructMemorizedInstanceException());
         $this->loop->once(
             LoopInterface::ON_FINALLY,
-            function () use ($process) {
+            function () use ($process): void {
                 $process->destroy();
 
                 // Collect garbage if needed

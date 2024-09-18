@@ -216,7 +216,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     public function registerUpdate(string $name, callable $handler, ?callable $validator): static
     {
         $this->getWorkflowInstance()->addUpdateHandler($name, $handler);
-        $this->getWorkflowInstance()->addValidateUpdateHandler($name, $validator ?? fn() => null);
+        $this->getWorkflowInstance()->addValidateUpdateHandler($name, $validator ?? static fn() => null);
 
         return $this;
     }
@@ -695,7 +695,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
                 $this->resolveConditionGroup($conditionGroupId);
                 return $result;
             },
-            function ($reason) use ($conditionGroupId) {
+            function ($reason) use ($conditionGroupId): void {
                 $this->rejectConditionGroup($conditionGroupId);
                 // Throw the first reason
                 // It need to avoid memory leak when the related workflow is destroyed

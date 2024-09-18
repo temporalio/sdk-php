@@ -25,7 +25,7 @@ final class ActivityInstantiator extends Instantiator
      */
     public function instantiate(PrototypeInterface $prototype): ActivityInstance
     {
-        assert($prototype instanceof ActivityPrototype, 'Precondition failed');
+        \assert($prototype instanceof ActivityPrototype, 'Precondition failed');
 
         return new ActivityInstance($prototype, $this->getInstance($prototype));
     }

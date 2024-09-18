@@ -658,15 +658,15 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
             ->setExecution($this->execution->toProtoWorkflowExecution());
 
         do {
-            $start = time();
+            $start = \time();
             $response = $this->serviceClient->GetWorkflowExecutionHistory(
                 $historyRequest,
                 $timeout === null ? null : Context::default()->withTimeout($timeout),
             );
-            $elapsed = time() - $start;
+            $elapsed = \time() - $start;
 
             if ($timeout !== null) {
-                $timeout = max(0, $timeout - $elapsed);
+                $timeout = \max(0, $timeout - $elapsed);
 
                 if ($timeout === 0) {
                     throw new TimeoutException('Unable to wait for workflow completion, deadline reached');

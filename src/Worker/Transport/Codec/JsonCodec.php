@@ -45,7 +45,7 @@ final class JsonCodec implements CodecInterface
             $result = [];
 
             foreach ($commands as $command) {
-                assert($command instanceof CommandInterface);
+                \assert($command instanceof CommandInterface);
                 $result[] = $this->serializer->encode($command);
             }
 
@@ -74,7 +74,7 @@ final class JsonCodec implements CodecInterface
                     isReplaying: (bool) ($headers['replay'] ?? false),
                 );
 
-                assert(\is_array($command));
+                \assert(\is_array($command));
                 yield $this->parser->decode($command, $info);
             }
         } catch (\Throwable $e) {

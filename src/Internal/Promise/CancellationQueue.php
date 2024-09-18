@@ -29,7 +29,7 @@ class CancellationQueue
         }
     }
 
-    public function __invoke()
+    public function __invoke(): void
     {
         if ($this->started) {
             return;

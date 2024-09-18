@@ -125,9 +125,9 @@ class TemporalFailure extends TemporalException implements \Stringable
     protected static function buildMessage(array $values): string
     {
         $mapped = [
-            'timeoutType' => fn($value) => TimeoutType::name($value),
-            'timeoutWorkflowType' => fn($value) => TimeoutType::name($value),
-            'retryState' => fn($value) => RetryState::name($value),
+            'timeoutType' => static fn($value) => TimeoutType::name($value),
+            'timeoutWorkflowType' => static fn($value) => TimeoutType::name($value),
+            'retryState' => static fn($value) => RetryState::name($value),
         ];
 
         $result = [];

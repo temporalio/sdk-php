@@ -63,7 +63,7 @@ final class GetWorkerInfo extends Route
      */
     private function workerToArray(WorkerInterface $worker): array
     {
-        $workflowMap = function (WorkflowPrototype $workflow) {
+        $workflowMap = static function (WorkflowPrototype $workflow) {
             return [
                 'Name'    => $workflow->getID(),
                 'Queries' => \array_keys($workflow->getQueryHandlers()),

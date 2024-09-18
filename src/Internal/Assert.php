@@ -42,7 +42,7 @@ final class Assert
      */
     public static function valuesInstanceOf(array $values, string $of): bool
     {
-        return self::all($values, fn($v) => $v instanceof $of);
+        return self::all($values, static fn($v) => $v instanceof $of);
     }
 
     /**
@@ -52,7 +52,7 @@ final class Assert
      */
     public static function valuesSubclassOfOrSameClass(array $values, string $of): bool
     {
-        return self::all($values, fn($v) => is_a($v, $of, true));
+        return self::all($values, static fn($v) => \is_a($v, $of, true));
     }
 
     /**

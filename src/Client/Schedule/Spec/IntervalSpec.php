@@ -36,10 +36,10 @@ final class IntervalSpec
 
     public static function new(mixed $interval, mixed $phase = null): self
     {
-        assert(DateInterval::assert($interval));
+        \assert(DateInterval::assert($interval));
         $interval = DateInterval::parse($interval, DateInterval::FORMAT_SECONDS);
 
-        assert($phase === null or DateInterval::assert($phase));
+        \assert($phase === null or DateInterval::assert($phase));
         $phase = DateInterval::parse($phase ?? new \DateInterval('PT0S'), DateInterval::FORMAT_SECONDS);
 
         return new self($interval, $phase);
@@ -47,7 +47,7 @@ final class IntervalSpec
 
     public function withInterval(mixed $interval): self
     {
-        assert(DateInterval::assert($interval));
+        \assert(DateInterval::assert($interval));
         $interval = DateInterval::parse($interval, DateInterval::FORMAT_SECONDS);
 
         return $this->with('interval', $interval);
@@ -55,7 +55,7 @@ final class IntervalSpec
 
     public function withPhase(mixed $phase): self
     {
-        assert(DateInterval::assert($phase));
+        \assert(DateInterval::assert($phase));
         $phase = DateInterval::parse($phase, DateInterval::FORMAT_SECONDS);
 
         return $this->with('phase', $phase);

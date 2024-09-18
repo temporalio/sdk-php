@@ -84,7 +84,7 @@ class EncodedValues implements ValuesInterface
     ): ValuesInterface {
         $payloads = $values->toPayloads();
         $newPayloads = new Payloads();
-        $newPayloads->setPayloads(array_slice(iterator_to_array($payloads->getPayloads()), $offset, $length));
+        $newPayloads->setPayloads(\array_slice(\iterator_to_array($payloads->getPayloads()), $offset, $length));
 
         return self::fromPayloads($newPayloads, $converter);
     }
@@ -100,7 +100,7 @@ class EncodedValues implements ValuesInterface
     public static function decodePromise(PromiseInterface $promise, $type = null): PromiseInterface
     {
         return $promise->then(
-            function ($value) use ($type) {
+            static function ($value) use ($type) {
                 if (!$value instanceof ValuesInterface || $value instanceof \Throwable) {
                     return $value;
                 }

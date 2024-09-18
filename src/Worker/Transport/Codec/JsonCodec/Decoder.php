@@ -87,7 +87,7 @@ class Decoder
 
         $payloads = new Payloads();
         if (isset($data['payloads'])) {
-            $payloads->mergeFromString(base64_decode($data['payloads']));
+            $payloads->mergeFromString(\base64_decode($data['payloads']));
         }
 
         return new SuccessResponse(EncodedValues::fromPayloads($payloads, $this->dataConverter), $data['id'], $info);

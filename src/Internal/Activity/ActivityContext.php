@@ -159,8 +159,8 @@ final class ActivityContext implements ActivityContextInterface, HeaderCarrier
             $response = $this->rpc->call(
                 'temporal.RecordActivityHeartbeat',
                 [
-                    'taskToken' => base64_encode($this->info->taskToken),
-                    'details' => base64_encode($details),
+                    'taskToken' => \base64_encode($this->info->taskToken),
+                    'details' => \base64_encode($details),
                 ],
             );
 

@@ -54,7 +54,7 @@ final class ProtoCodec implements CodecInterface
 
             $messages = [];
             foreach ($commands as $command) {
-                assert($command instanceof CommandInterface);
+                \assert($command instanceof CommandInterface);
                 $messages[] = $this->encoder->encode($command);
             }
 

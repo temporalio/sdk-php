@@ -497,7 +497,7 @@ class Scope implements CancellationScopeInterface, Destroyable
         $promise
             ->then($onFulfilled, $onRejected)
             // Handle last error
-            ->then(null, fn(\Throwable $e) => null);
+            ->then(null, static fn(\Throwable $e) => null);
     }
 
     /**

@@ -89,7 +89,7 @@ class ClientOptions
         #[ExpectedValues(valuesFromClass: QueryRejectCondition::class)]
         int $condition,
     ): self {
-        assert(Assert::enum($condition, QueryRejectCondition::class));
+        \assert(Assert::enum($condition, QueryRejectCondition::class));
 
         $self = clone $this;
 

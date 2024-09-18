@@ -168,7 +168,7 @@ final class Promise
         $cancellationQueue->enqueue($promises);
 
         return new \React\Promise\Promise(
-            function (callable $resolve, callable $reject) use ($promises, $map, $cancellationQueue): void {
+            static function (callable $resolve, callable $reject) use ($promises, $map, $cancellationQueue): void {
                 resolve($promises)
                     ->then(static function (iterable $array) use ($map, $cancellationQueue, $resolve, $reject): void {
                         if (!\is_array($array) || !$array) {
@@ -221,7 +221,7 @@ final class Promise
         $cancellationQueue->enqueue($promises);
 
         return new \React\Promise\Promise(
-            function (callable $resolve, callable $reject) use ($promises, $reduce, $initial, $cancellationQueue): void {
+            static function (callable $resolve, callable $reject) use ($promises, $reduce, $initial, $cancellationQueue): void {
                 resolve($promises)
                     ->then(
                         static function (iterable $array) use (

@@ -32,7 +32,7 @@ final class WorkflowInstantiator extends Instantiator
      */
     public function instantiate(PrototypeInterface $prototype): WorkflowInstance
     {
-        assert($prototype instanceof WorkflowPrototype, 'Precondition failed');
+        \assert($prototype instanceof WorkflowPrototype, 'Precondition failed');
 
         return new WorkflowInstance(
             $prototype,

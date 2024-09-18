@@ -31,7 +31,7 @@ final class Bytes implements \Stringable
      */
     public function getSize(): int
     {
-        return strlen($this->data);
+        return \strlen($this->data);
     }
 
     /**

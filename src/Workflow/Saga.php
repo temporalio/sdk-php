@@ -78,7 +78,7 @@ final class Saga
 
                 $sagaException = null;
 
-                for ($i = count($this->compensate) - 1; $i >= 0; $i--) {
+                for ($i = \count($this->compensate) - 1; $i >= 0; $i--) {
                     $handler = $this->compensate[$i];
                     try {
                         yield Workflow::asyncDetached($handler);
