@@ -24,8 +24,7 @@ class SignalWithStartInput
         public readonly StartInput $workflowStartInput,
         public readonly string $signalName,
         public readonly ValuesInterface $signalArguments,
-    ) {
-    }
+    ) {}
 
     public function with(
         StartInput $workflowStartInput = null,

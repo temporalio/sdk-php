@@ -7,6 +7,4 @@ namespace Temporal\Testing\Replay\Exception;
 /**
  * Internal errors (proto parsing, marshaling).
  */
-final class InternalServerException extends ReplayerException
-{
-}
+final class InternalServerException extends ReplayerException {}

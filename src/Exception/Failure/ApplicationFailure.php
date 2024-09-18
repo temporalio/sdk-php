@@ -58,12 +58,12 @@ class ApplicationFailure extends TemporalFailure
         string $type,
         bool $nonRetryable,
         ValuesInterface $details = null,
-        \Throwable $previous = null
+        \Throwable $previous = null,
     ) {
         parent::__construct(
             self::buildMessage(compact('message', 'type', 'nonRetryable')),
             $message,
-            $previous
+            $previous,
         );
 
         $this->type = $type;

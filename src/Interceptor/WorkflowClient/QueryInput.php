@@ -26,8 +26,7 @@ class QueryInput
         public readonly ?string $workflowType,
         public readonly string $queryType,
         public readonly ValuesInterface $arguments,
-    ) {
-    }
+    ) {}
 
     public function with(
         WorkflowExecution $workflowExecution = null,

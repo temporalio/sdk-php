@@ -25,8 +25,7 @@ final class WorkflowInstantiator extends Instantiator
 {
     public function __construct(
         private PipelineProvider $interceptorProvider,
-    ) {
-    }
+    ) {}
 
     /**
      * {@inheritDoc}

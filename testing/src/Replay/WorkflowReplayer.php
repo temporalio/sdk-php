@@ -11,7 +11,6 @@ use Spiral\Goridge\Relay;
 use Spiral\Goridge\RPC\Codec\ProtobufCodec;
 use Spiral\Goridge\RPC\RPC;
 use Spiral\RoadRunner\Environment;
-use SplFileInfo;
 use Temporal\Api\Common\V1\WorkflowExecution;
 use Temporal\Api\Common\V1\WorkflowType;
 use Temporal\Api\History\V1\History;
@@ -92,7 +91,7 @@ final class WorkflowReplayer
      * You can load a json serialized history file using {@see downloadHistory()} or via Temporal UI.
      *
      * @param non-empty-string $workflowType
-     * @param non-empty-string|SplFileInfo $path
+     * @param non-empty-string|\SplFileInfo $path
      * @param int<0, max> $lastEventId The last event ID to replay from. If not specified, the whole history
      *        will be replayed.
      *
@@ -100,12 +99,12 @@ final class WorkflowReplayer
      */
     public function replayFromJSON(
         string $workflowType,
-        string|SplFileInfo $path,
+        string|\SplFileInfo $path,
         int $lastEventId = 0,
     ): void {
         $request = $this->buildRequest(
             workflowType: $workflowType,
-            filePath: $path instanceof SplFileInfo ? $path->getPathname() : $path,
+            filePath: $path instanceof \SplFileInfo ? $path->getPathname() : $path,
             lastEventId: $lastEventId,
         );
         $this->sendRequest('temporal.ReplayFromJSON', $request);
@@ -113,13 +112,16 @@ final class WorkflowReplayer
 
     private function sendRequest(string $command, Message $request): ReplayResponse
     {
-        $wfType = (string)$request->getWorkflowType()?->getName();
+        $wfType = (string) $request->getWorkflowType()?->getName();
         try {
             /** @var string $result */
             $result = $this->rpc->call($command, $request);
         } catch (\Throwable $e) {
             throw new RPCException(
-                $wfType, $e->getMessage(), (int)$e->getCode(), $e
+                $wfType,
+                $e->getMessage(),
+                (int) $e->getCode(),
+                $e,
             );
         }
 
@@ -135,11 +137,15 @@ final class WorkflowReplayer
 
         throw match ($status->getCode()) {
             StatusCode::INVALID_ARGUMENT => new InvalidArgumentException(
-                $wfType, $status->getMessage(), $status->getCode(),
+                $wfType,
+                $status->getMessage(),
+                $status->getCode(),
             ),
             StatusCode::INTERNAL => new InternalServerException($wfType, $status->getMessage(), $status->getCode()),
             StatusCode::FAILED_PRECONDITION => new NonDeterministicWorkflowException(
-                $wfType, $status->getMessage(), $status->getCode(),
+                $wfType,
+                $status->getMessage(),
+                $status->getCode(),
             ),
             default => new ReplayerException($wfType, $status->getMessage(), $status->getCode()),
         };
@@ -156,9 +162,10 @@ final class WorkflowReplayer
             ->setLastEventId($lastEventId);
 
         if ($execution !== null) {
-            $request->setWorkflowExecution((new WorkflowExecution())
-                ->setWorkflowId($execution->getID())
-                ->setRunId($execution->getRunID() ?? throw new \LogicException('Run ID is required.'))
+            $request->setWorkflowExecution(
+                (new WorkflowExecution())
+                    ->setWorkflowId($execution->getID())
+                    ->setRunId($execution->getRunID() ?? throw new \LogicException('Run ID is required.')),
             );
         }
 

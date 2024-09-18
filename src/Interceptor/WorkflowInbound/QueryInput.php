@@ -23,8 +23,7 @@ class QueryInput
     public function __construct(
         public readonly string $queryName,
         public readonly ValuesInterface $arguments,
-    ) {
-    }
+    ) {}
 
     public function with(
         ValuesInterface $arguments = null,

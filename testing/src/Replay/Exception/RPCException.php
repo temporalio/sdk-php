@@ -7,6 +7,4 @@ namespace Temporal\Testing\Replay\Exception;
 /**
  * PRC connection or request failed.
  */
-final class RPCException extends ReplayerException
-{
-}
+final class RPCException extends ReplayerException {}

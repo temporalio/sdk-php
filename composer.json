@@ -59,7 +59,7 @@
         "jetbrains/phpstorm-attributes": "dev-master@dev",
         "laminas/laminas-code": "^4.0",
         "phpunit/phpunit": "^10.5",
-        "spiral/code-style": "^2.1",
+        "spiral/code-style": "^2.1.2",
         "spiral/core": "^3.13",
         "symfony/var-dumper": "^6.0 || ^7.0",
         "vimeo/psalm": "^4.30 || ^5.4"
@@ -81,7 +81,7 @@
     },
     "scripts": {
         "post-update-cmd": "Temporal\\Worker\\Transport\\RoadRunnerVersionChecker::postUpdate",
-        "cs:diff": "php-cs-fixer fix --dry-run -v --diff",
+        "cs:diff": "php-cs-fixer fix --dry-run -v --diff --show-progress dots",
         "cs:fix": "php-cs-fixer fix -v",
         "psalm": "psalm",
         "psalm:baseline": "psalm --set-baseline=psalm-baseline.xml",

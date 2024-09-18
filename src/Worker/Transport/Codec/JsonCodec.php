@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Transport\Codec;
 
-use DateTimeImmutable;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\ProtocolException;
 use Temporal\Worker\Transport\Codec\JsonCodec\Decoder;
@@ -68,11 +67,11 @@ final class JsonCodec implements CodecInterface
 
             foreach ($commands as $command) {
                 $info = new TickInfo(
-                    time: new DateTimeImmutable($headers['tickTime'] ?? 'now', $tz),
-                    historyLength: (int)($headers['history_length'] ?? 0),
-                    historySize: (int)($headers['history_size'] ?? 0),
-                    continueAsNewSuggested: (bool)($headers['continue_as_new_suggested'] ?? false),
-                    isReplaying: (bool)($headers['replay'] ?? false),
+                    time: new \DateTimeImmutable($headers['tickTime'] ?? 'now', $tz),
+                    historyLength: (int) ($headers['history_length'] ?? 0),
+                    historySize: (int) ($headers['history_size'] ?? 0),
+                    continueAsNewSuggested: (bool) ($headers['continue_as_new_suggested'] ?? false),
+                    isReplaying: (bool) ($headers['replay'] ?? false),
                 );
 
                 assert(\is_array($command));

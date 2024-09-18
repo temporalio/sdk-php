@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Worker;
 
-use Closure;
 use React\Promise\PromiseInterface;
 use Temporal\Internal\Events\EventEmitterTrait;
 use Temporal\Internal\Events\EventListenerInterface;
@@ -136,7 +135,7 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
     {
         foreach ($this->services->activitiesReader->fromClass($type) as $proto) {
             if ($factory !== null) {
-                $proto = $proto->withFactory($factory instanceof Closure ? $factory : Closure::fromCallable($factory));
+                $proto = $proto->withFactory($factory instanceof \Closure ? $factory : \Closure::fromCallable($factory));
             }
             $this->services->activities->add($proto, false);
         }
@@ -144,7 +143,7 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
         return $this;
     }
 
-    public function registerActivityFinalizer(Closure $finalizer): WorkerInterface
+    public function registerActivityFinalizer(\Closure $finalizer): WorkerInterface
     {
         $this->services->activities->addFinalizer($finalizer);
 

@@ -32,8 +32,7 @@ class UpdateInput
         public readonly string $updateId,
         public readonly string $firstExecutionRunId,
         public readonly mixed $resultType,
-    ) {
-    }
+    ) {}
 
     /**
      * @param string|null $firstExecutionRunId Set empty string to reset.

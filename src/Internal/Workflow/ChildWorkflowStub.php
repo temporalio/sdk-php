@@ -88,7 +88,7 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
                     $this->execution->resolve($execution);
 
                     return $execution;
-                }
+                },
             );
 
         return EncodedValues::decodePromise($started);
@@ -134,7 +134,7 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
                 );
 
                 return $this->request($request);
-            }
+            },
         );
     }
 

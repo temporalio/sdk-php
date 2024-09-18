@@ -32,9 +32,8 @@ final class Range
         #[Marshal]
         public readonly int $end,
         #[Marshal]
-        public readonly int $step
-    ) {
-    }
+        public readonly int $step,
+    ) {}
 
     /**
      * @param int $start Start of range (inclusive).

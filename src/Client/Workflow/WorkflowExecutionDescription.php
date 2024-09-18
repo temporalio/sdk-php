@@ -20,6 +20,5 @@ final class WorkflowExecutionDescription
      */
     public function __construct(
         public readonly WorkflowExecutionInfo $info,
-    ) {
-    }
+    ) {}
 }

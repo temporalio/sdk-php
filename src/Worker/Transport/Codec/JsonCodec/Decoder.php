@@ -106,7 +106,7 @@ class Decoder
 
     #[Pure]
     private function isUInt32(
-        mixed $value
+        mixed $value,
     ): bool {
         return \is_int($value) && $value >= 0 && $value <= 2_147_483_647;
     }

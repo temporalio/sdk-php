@@ -11,6 +11,4 @@ declare(strict_types=1);
 
 namespace Temporal\Exception;
 
-class FailedCancellationException extends TemporalException
-{
-}
+class FailedCancellationException extends TemporalException {}

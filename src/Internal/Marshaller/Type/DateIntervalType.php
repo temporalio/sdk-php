@@ -70,23 +70,23 @@ class DateIntervalType extends Type implements DetectableTypeInterface, RuleFact
     public function serialize($value): int|Duration
     {
         if ($this->format === DateInterval::FORMAT_NANOSECONDS) {
-            return (int)(DateInterval::parse($value, $this->format)->totalMicroseconds * 1000);
+            return (int) (DateInterval::parse($value, $this->format)->totalMicroseconds * 1000);
         }
 
         if ($this->format === Duration::class) {
             return match (true) {
                 $value instanceof \DateInterval => DateInterval::toDuration($value),
                 \is_int($value) => (new Duration())->setSeconds($value),
-                \is_string($value) => (new Duration())->setSeconds((int)$value),
+                \is_string($value) => (new Duration())->setSeconds((int) $value),
                 \is_float($value) => (new Duration())
-                    ->setSeconds((int)$value)
+                    ->setSeconds((int) $value)
                     ->setNanos(($value * 1000000000) % 1000000000),
                 default => throw new \InvalidArgumentException('Invalid value type.'),
             };
         }
 
         $method = 'total' . \ucfirst($this->format);
-        return (int)(DateInterval::parse($value, $this->format)->$method);
+        return (int) (DateInterval::parse($value, $this->format)->$method);
     }
 
     /**

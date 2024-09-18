@@ -30,8 +30,7 @@ class UpdateInput
         public readonly WorkflowInfo $info,
         public readonly ValuesInterface $arguments,
         public readonly HeaderInterface $header,
-    ) {
-    }
+    ) {}
 
     public function with(
         WorkflowInfo $info = null,
@@ -43,7 +42,7 @@ class UpdateInput
             $this->updateId,
             $info ?? $this->info,
             $arguments ?? $this->arguments,
-            $header ?? $this->header
+            $header ?? $this->header,
         );
     }
 }

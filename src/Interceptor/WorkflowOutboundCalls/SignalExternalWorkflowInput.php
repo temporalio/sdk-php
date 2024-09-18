@@ -29,8 +29,7 @@ final class SignalExternalWorkflowInput
         public readonly string $signal,
         public readonly ValuesInterface $input,
         public readonly bool $childWorkflowOnly = false,
-    ) {
-    }
+    ) {}
 
     public function with(
         ?string $namespace = null,

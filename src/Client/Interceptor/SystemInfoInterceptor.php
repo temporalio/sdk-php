@@ -21,9 +21,8 @@ use Temporal\Interceptor\GrpcClientInterceptor;
 final class SystemInfoInterceptor implements GrpcClientInterceptor
 {
     public function __construct(
-        private readonly ServiceClientInterface $serviceClient
-    ) {
-    }
+        private readonly ServiceClientInterface $serviceClient,
+    ) {}
 
     /**
      * @param non-empty-string $method

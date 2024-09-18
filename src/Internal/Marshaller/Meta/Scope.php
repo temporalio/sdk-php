@@ -42,9 +42,7 @@ class Scope
     /**
      * @var int
      */
-    public const VISIBILITY_ALL = self::VISIBILITY_PRIVATE
-                                | self::VISIBILITY_PROTECTED
-                                | self::VISIBILITY_PUBLIC;
+    public const VISIBILITY_ALL = self::VISIBILITY_PRIVATE | self::VISIBILITY_PROTECTED | self::VISIBILITY_PUBLIC;
 
     /**
      * @var ExportScope
@@ -63,7 +61,7 @@ class Scope
      */
     public function __construct(
         int $properties = self::VISIBILITY_PUBLIC,
-        bool $copyOnWrite = false
+        bool $copyOnWrite = false,
     ) {
         $this->properties = $properties;
         $this->copyOnWrite = $copyOnWrite;

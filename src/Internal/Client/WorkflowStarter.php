@@ -49,8 +49,7 @@ final class WorkflowStarter
         private DataConverterInterface $converter,
         private ClientOptions $clientOptions,
         private Pipeline $interceptors,
-    ) {
-    }
+    ) {}
 
     /**
      * @param string $workflowType
@@ -72,8 +71,8 @@ final class WorkflowStarter
         $arguments = EncodedValues::fromValues($args, $this->converter);
 
         return $this->interceptors->with(
-            fn (StartInput $input): WorkflowExecution => $this->executeRequest(
-                $this->configureExecutionRequest(new StartWorkflowExecutionRequest(), $input)
+            fn(StartInput $input): WorkflowExecution => $this->executeRequest(
+                $this->configureExecutionRequest(new StartWorkflowExecutionRequest(), $input),
             ),
             /** @see WorkflowClientCallsInterceptor::start() */
             'start',
@@ -137,7 +136,8 @@ final class WorkflowStarter
      * @throws ServiceClientException
      * @throws WorkflowExecutionAlreadyStartedException
      */
-    private function executeRequest(StartWorkflowExecutionRequest|SignalWithStartWorkflowExecutionRequest $request,
+    private function executeRequest(
+        StartWorkflowExecutionRequest|SignalWithStartWorkflowExecutionRequest $request,
     ): WorkflowExecution {
         try {
             $response = $request instanceof StartWorkflowExecutionRequest
@@ -152,7 +152,7 @@ final class WorkflowStarter
                 throw new WorkflowExecutionAlreadyStartedException(
                     $execution,
                     $request->getWorkflowType()->getName(),
-                    $e
+                    $e,
                 );
             }
 

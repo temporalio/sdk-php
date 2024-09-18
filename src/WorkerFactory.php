@@ -288,21 +288,6 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     }
 
     /**
-     * @return void
-     */
-    private function boot(): void
-    {
-        $this->reader = $this->createReader();
-        $this->marshaller = $this->createMarshaller($this->reader);
-        $this->queues = $this->createTaskQueue();
-        $this->router = $this->createRouter();
-        $this->responses = $this->createQueue();
-        $this->client = $this->createClient();
-        $this->server = $this->createServer();
-        $this->env = new Environment();
-    }
-
-    /**
      * @return ReaderInterface
      */
     protected function createReader(): ReaderInterface
@@ -368,6 +353,21 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     }
 
     /**
+     * @return void
+     */
+    private function boot(): void
+    {
+        $this->reader = $this->createReader();
+        $this->marshaller = $this->createMarshaller($this->reader);
+        $this->queues = $this->createTaskQueue();
+        $this->router = $this->createRouter();
+        $this->responses = $this->createQueue();
+        $this->client = $this->createClient();
+        $this->server = $this->createServer();
+        $this->env = new Environment();
+    }
+
+    /**
      * @return CodecInterface
      */
     private function createCodec(): CodecInterface
@@ -419,7 +419,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         }
 
         $queue = $this->findTaskQueueOrFail(
-            $this->findTaskQueueNameOrFail($headers)
+            $this->findTaskQueueNameOrFail($headers),
         );
 
         return $queue->dispatch($request, $headers);
@@ -454,7 +454,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
                 [
                     self::HEADER_TASK_QUEUE,
                     \get_debug_type($taskQueue),
-                ]
+                ],
             );
 
             throw new \InvalidArgumentException($error);

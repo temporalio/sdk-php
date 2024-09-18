@@ -63,7 +63,7 @@ final class DeferredGenerator implements \Iterator
     {
         $this->started or throw new \LogicException('Cannot throw exception into a generator that was not started.');
         $this->finished and throw new \LogicException(
-            'Cannot throw exception into a generator that was already finished.'
+            'Cannot throw exception into a generator that was already finished.',
         );
         try {
             $this->generator->throw($exception);

@@ -5,16 +5,10 @@ declare(strict_types=1);
 namespace Temporal\Worker\ActivityInvocationCache;
 
 use React\Promise\PromiseInterface;
-use Spiral\Goridge\RPC\RPC;
-use Spiral\RoadRunner\KeyValue\Factory;
-use Spiral\RoadRunner\KeyValue\StorageInterface;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
-use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\InvalidArgumentException;
-use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
-use Throwable;
 
 use function React\Promise\reject;
 use function React\Promise\resolve;
@@ -39,7 +33,7 @@ final class InMemoryActivityInvocationCache implements ActivityInvocationCacheIn
         $this->cache[$activityMethodName] = ActivityInvocationResult::fromValue($value, $this->dataConverter);
     }
 
-    public function saveFailure(string $activityMethodName, Throwable $error): void
+    public function saveFailure(string $activityMethodName, \Throwable $error): void
     {
         $this->cache[$activityMethodName] = ActivityInvocationFailure::fromThrowable($error);
     }

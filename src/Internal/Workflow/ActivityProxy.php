@@ -129,7 +129,7 @@ final class ActivityProxy extends Proxy
 
         if ($prototype === null) {
             throw new \BadMethodCallException(
-                \sprintf(self::ERROR_UNDEFINED_ACTIVITY_METHOD, $this->class, $name)
+                \sprintf(self::ERROR_UNDEFINED_ACTIVITY_METHOD, $this->class, $name),
             );
         }
 

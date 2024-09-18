@@ -4,11 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Common;
 
-use Closure;
-use Countable;
-use Generator;
 use IteratorAggregate;
-use Traversable;
 
 /**
  * Paginator that allows to iterate over all pages.
@@ -16,23 +12,25 @@ use Traversable;
  * @template TItem
  * @implements IteratorAggregate<TItem>
  */
-final class Paginator implements IteratorAggregate, Countable
+final class Paginator implements \IteratorAggregate, \Countable
 {
     /** @var list<TItem> */
     private array $collection;
+
     /** @var self<TItem>|null */
     private ?self $nextPage = null;
+
     private ?int $totalItems = null;
 
     /**
-     * @param Generator<array-key, list<TItem>> $loader
+     * @param \Generator<array-key, list<TItem>> $loader
      * @param int<1, max> $pageNumber
-     * @param null|Closure(): int<0, max> $counter
+     * @param null|\Closure(): int<0, max> $counter
      */
     private function __construct(
-        private readonly Generator $loader,
+        private readonly \Generator $loader,
         private readonly int $pageNumber,
-        private ?Closure $counter,
+        private ?\Closure $counter,
     ) {
         $this->collection = $loader->current();
     }
@@ -40,14 +38,14 @@ final class Paginator implements IteratorAggregate, Countable
     /**
      * @template TInitItem
      *
-     * @param Generator<array-key, list<TInitItem>> $loader
+     * @param \Generator<array-key, list<TInitItem>> $loader
      * @param null|callable(): int<0, max> $counter Returns total number of items.
      *
      * @return self<TInitItem>
      *
      * @internal
      */
-    public static function createFromGenerator(Generator $loader, ?callable $counter): self
+    public static function createFromGenerator(\Generator $loader, ?callable $counter): self
     {
         return new self($loader, 1, $counter === null ? null : $counter(...));
     }
@@ -85,9 +83,9 @@ final class Paginator implements IteratorAggregate, Countable
     /**
      * Iterate all items from current page and all next pages.
      *
-     * @return Traversable<TItem>
+     * @return \Traversable<TItem>
      */
-    public function getIterator(): Traversable
+    public function getIterator(): \Traversable
     {
         $paginator = $this;
         while ($paginator !== null) {

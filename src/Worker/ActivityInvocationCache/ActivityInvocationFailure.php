@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\ActivityInvocationCache;
 
-use Throwable;
-
 final class ActivityInvocationFailure
 {
     public string $errorClass;
@@ -17,12 +15,12 @@ final class ActivityInvocationFailure
         $this->errorMessage = $exceptionMessage;
     }
 
-    public static function fromThrowable(Throwable $error): self
+    public static function fromThrowable(\Throwable $error): self
     {
         return new self(get_class($error), $error->getMessage());
     }
 
-    public function toThrowable(): Throwable
+    public function toThrowable(): \Throwable
     {
         $errorClass = $this->errorClass;
 

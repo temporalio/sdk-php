@@ -24,6 +24,7 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
 {
     /** Maximum number of ticks before GC call. */
     private const GC_THRESHOLD = 1000;
+
     /** Interval between GC calls in seconds. */
     private const GC_TIMEOUT_SECONDS = 30;
 
@@ -31,7 +32,7 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
 
     public function __construct(
         ProcessCollection $running,
-        protected LoopInterface $loop
+        protected LoopInterface $loop,
     ) {
         $this->gc = new GarbageCollector(self::GC_THRESHOLD, self::GC_TIMEOUT_SECONDS);
         parent::__construct($running);

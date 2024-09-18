@@ -27,14 +27,9 @@ use Traversable;
 class EncodedValues implements ValuesInterface
 {
     /**
-     * @var DataConverterInterface|null
-     */
-    private ?DataConverterInterface $converter = null;
-
-    /**
      * @var TPayloadsCollection|null
      */
-    protected ?Traversable $payloads = null;
+    protected ?\Traversable $payloads = null;
 
     /**
      * @var array<TKey, TValue>|null
@@ -42,11 +37,14 @@ class EncodedValues implements ValuesInterface
     protected ?array $values = null;
 
     /**
+     * @var DataConverterInterface|null
+     */
+    private ?DataConverterInterface $converter = null;
+
+    /**
      * Can not be constructed directly.
      */
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 
     /**
      * @return static
@@ -68,11 +66,6 @@ class EncodedValues implements ValuesInterface
     public static function fromPayloads(Payloads $payloads, DataConverterInterface $dataConverter): EncodedValues
     {
         return static::fromPayloadCollection($payloads->getPayloads(), $dataConverter);
-    }
-
-    public function toPayloads(): Payloads
-    {
-        return new Payloads(['payloads' => $this->toProtoCollection()]);
     }
 
     /**
@@ -117,6 +110,43 @@ class EncodedValues implements ValuesInterface
         );
     }
 
+    /**
+     * @param array $values
+     * @param DataConverterInterface|null $dataConverter
+     *
+     * @return static
+     */
+    public static function fromValues(array $values, DataConverterInterface $dataConverter = null): static
+    {
+        $ev = new static();
+        $ev->values = \array_values($values);
+        $ev->converter = $dataConverter;
+
+        return $ev;
+    }
+
+    /**
+     * @param TPayloadsCollection $payloads
+     * @param ?DataConverterInterface $dataConverter
+     *
+     * @return static
+     */
+    public static function fromPayloadCollection(
+        \Traversable $payloads,
+        ?DataConverterInterface $dataConverter = null,
+    ): static {
+        $ev = new static();
+        $ev->payloads = $payloads;
+        $ev->converter = $dataConverter;
+
+        return $ev;
+    }
+
+    public function toPayloads(): Payloads
+    {
+        return new Payloads(['payloads' => $this->toProtoCollection()]);
+    }
+
     public function getValue(int|string $index, $type = null): mixed
     {
         if (\is_array($this->values) && \array_key_exists($index, $this->values)) {
@@ -159,38 +189,6 @@ class EncodedValues implements ValuesInterface
     public function setDataConverter(DataConverterInterface $converter): void
     {
         $this->converter = $converter;
-    }
-
-    /**
-     * @param array $values
-     * @param DataConverterInterface|null $dataConverter
-     *
-     * @return static
-     */
-    public static function fromValues(array $values, DataConverterInterface $dataConverter = null): static
-    {
-        $ev = new static();
-        $ev->values = \array_values($values);
-        $ev->converter = $dataConverter;
-
-        return $ev;
-    }
-
-    /**
-     * @param TPayloadsCollection $payloads
-     * @param ?DataConverterInterface $dataConverter
-     *
-     * @return static
-     */
-    public static function fromPayloadCollection(
-        Traversable $payloads,
-        ?DataConverterInterface $dataConverter = null,
-    ): static {
-        $ev = new static();
-        $ev->payloads = $payloads;
-        $ev->converter = $dataConverter;
-
-        return $ev;
     }
 
     /**

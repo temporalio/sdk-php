@@ -48,7 +48,7 @@ final class ActivityContext implements ActivityContextInterface, HeaderCarrier
         DataConverterInterface $converter,
         ValuesInterface $input,
         HeaderInterface $header,
-        ValuesInterface $lastHeartbeatDetails = null
+        ValuesInterface $lastHeartbeatDetails = null,
     ) {
         $this->info = new ActivityInfo();
         $this->rpc = $rpc;
@@ -161,7 +161,7 @@ final class ActivityContext implements ActivityContextInterface, HeaderCarrier
                 [
                     'taskToken' => base64_encode($this->info->taskToken),
                     'details' => base64_encode($details),
-                ]
+                ],
             );
 
             if (!empty($response['canceled'])) {

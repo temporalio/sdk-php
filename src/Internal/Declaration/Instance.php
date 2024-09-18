@@ -55,6 +55,11 @@ abstract class Instance implements InstanceInterface, Destroyable
         return $this->handler;
     }
 
+    public function destroy(): void
+    {
+        unset($this->handler, $this->context);
+    }
+
     /**
      * @param \ReflectionFunctionAbstract $func
      * @return \Closure(ValuesInterface): mixed
@@ -66,11 +71,6 @@ abstract class Instance implements InstanceInterface, Destroyable
         $valueMapper = new AutowiredPayloads($func);
 
         $context = $this->context;
-        return static fn (ValuesInterface $values): mixed => $valueMapper->dispatchValues($context, $values);
-    }
-
-    public function destroy(): void
-    {
-        unset($this->handler, $this->context);
+        return static fn(ValuesInterface $values): mixed => $valueMapper->dispatchValues($context, $values);
     }
 }

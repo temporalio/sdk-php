@@ -98,7 +98,7 @@ final class Saga
                 if ($sagaException !== null) {
                     throw $sagaException;
                 }
-            }
+            },
         );
     }
 }

@@ -72,9 +72,9 @@ class DurationJsonType extends Type implements DetectableTypeInterface, RuleFact
         $duration = match (true) {
             $value instanceof \DateInterval => DateInterval::toDuration($value),
             \is_int($value) => (new Duration())->setSeconds($value),
-            \is_string($value) => (new Duration())->setSeconds((int)$value),
+            \is_string($value) => (new Duration())->setSeconds((int) $value),
             \is_float($value) => (new Duration())
-                ->setSeconds((int)$value)
+                ->setSeconds((int) $value)
                 ->setNanos(($value * 1000000000) % 1000000000),
             default => throw new \InvalidArgumentException('Invalid value type.'),
         };

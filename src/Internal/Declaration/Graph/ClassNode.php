@@ -32,14 +32,6 @@ final class ClassNode implements NodeInterface
     }
 
     /**
-     * @return string
-     */
-    public function __toString(): string
-    {
-        return $this->class->getName();
-    }
-
-    /**
      * @return \ReflectionClass
      */
     public function getReflection(): \ReflectionClass
@@ -53,7 +45,7 @@ final class ClassNode implements NodeInterface
     public function count(): int
     {
         return \count(
-            $this->inheritance ??= $this->getClassInheritance()
+            $this->inheritance ??= $this->getClassInheritance(),
         );
     }
 
@@ -85,8 +77,16 @@ final class ClassNode implements NodeInterface
     public function getIterator(): \Traversable
     {
         return new \ArrayIterator(
-            $this->inheritance ??= $this->getClassInheritance()
+            $this->inheritance ??= $this->getClassInheritance(),
         );
+    }
+
+    /**
+     * @return string
+     */
+    public function __toString(): string
+    {
+        return $this->class->getName();
     }
 
     /**

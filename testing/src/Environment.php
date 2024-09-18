@@ -34,7 +34,7 @@ final class Environment
             new ConsoleOutput(),
             new Downloader(new Filesystem(), HttpClient::create([
                 'headers' => [
-                    'authorization' => $token ? 'token ' . $token : null
+                    'authorization' => $token ? 'token ' . $token : null,
                 ],
             ])),
             SystemInfo::detect(),
@@ -66,8 +66,8 @@ final class Environment
                 '--search-attribute', 'foo=text',
                 '--search-attribute', 'bar=int',
                 '--log-level', 'error',
-                '--headless'
-            ]
+                '--headless',
+            ],
         );
         $this->temporalServerProcess->setTimeout($commandTimeout);
         $this->temporalServerProcess->start();
@@ -93,7 +93,7 @@ final class Environment
 
         $this->output->write('Starting Temporal test server... ');
         $this->temporalTestServerProcess = new Process(
-            [$this->systemInfo->temporalServerExecutable, $temporalPort, '--enable-time-skipping']
+            [$this->systemInfo->temporalServerExecutable, $temporalPort, '--enable-time-skipping'],
         );
         $this->temporalTestServerProcess->setTimeout($commandTimeout);
         $this->temporalTestServerProcess->start();
@@ -114,7 +114,7 @@ final class Environment
     {
         $this->roadRunnerProcess = new Process(
             command: $rrCommand ? explode(' ', $rrCommand) : [$this->systemInfo->rrExecutable, 'serve'],
-            env: $envs
+            env: $envs,
         );
         $this->roadRunnerProcess->setTimeout($commandTimeout);
 

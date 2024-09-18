@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Schedule\Info;
 
-use DateTimeImmutable;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Meta\MarshalArray;
 use Temporal\Workflow\WorkflowExecution;
@@ -57,27 +56,25 @@ final class ScheduleInfo
     /**
      * Next 10 scheduled Action times.
      *
-     * @var DateTimeImmutable[]
+     * @var \DateTimeImmutable[]
      */
-    #[MarshalArray(name: 'future_action_times', of: DateTimeImmutable::class)]
+    #[MarshalArray(name: 'future_action_times', of: \DateTimeImmutable::class)]
     public readonly array $nextActionTimes;
 
     /**
      * When the schedule was created.
      */
     #[Marshal(name: 'create_time')]
-    public readonly DateTimeImmutable $createdAt;
+    public readonly \DateTimeImmutable $createdAt;
 
     /**
      * When a schedule was last updated.
      */
     #[Marshal(name: 'update_time')]
-    public readonly ?DateTimeImmutable $lastUpdateAt;
+    public readonly ?\DateTimeImmutable $lastUpdateAt;
 
     /**
      * The DTO is a result of a query, so it is not possible to create it manually.
      */
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 }

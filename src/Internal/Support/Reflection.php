@@ -58,7 +58,7 @@ final class Reflection
                 $isPositional => $args[$i],
                 $isNamed => $args[$name],
                 $parameter->isDefaultValueAvailable() => $parameter->getDefaultValue(),
-                default => throw new InvalidArgumentException("Missing argument `$name`.")
+                default => throw new InvalidArgumentException("Missing argument `$name`."),
             };
         }
 

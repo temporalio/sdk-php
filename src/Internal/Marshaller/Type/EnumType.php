@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Marshaller\Type;
 
-use BackedEnum;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Marshaller\MarshallingRule;
 
@@ -70,7 +69,7 @@ class EnumType extends Type implements RuleFactoryInterface
         }
 
         if (\is_array($value)) {
-           // Process the `value` key
+            // Process the `value` key
             if (\array_key_exists('value', $value)) {
                 return $this->classFQCN::from($value['value']);
             }
@@ -87,10 +86,11 @@ class EnumType extends Type implements RuleFactoryInterface
 
     /**
      * @psalm-suppress UndefinedDocblockClass
+     * @param mixed $value
      */
     public function serialize($value): array
     {
-        return $value instanceof BackedEnum
+        return $value instanceof \BackedEnum
             ? [
                 'name' => $value->name,
                 'value' => $value->value,

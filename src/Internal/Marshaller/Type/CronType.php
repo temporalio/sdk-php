@@ -46,7 +46,7 @@ class CronType extends Type
     public function serialize($value): string
     {
         if (\is_string($value) || $value instanceof \Stringable) {
-            return (string)$value;
+            return (string) $value;
         }
 
         throw new \InvalidArgumentException(\sprintf(self::ERROR_INVALID_TYPE, \get_debug_type($value)));

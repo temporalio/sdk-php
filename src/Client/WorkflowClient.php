@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Client;
 
 use Doctrine\Common\Annotations\Reader;
-use Generator;
 use Spiral\Attributes\AnnotationReader;
 use Spiral\Attributes\AttributeReader;
 use Spiral\Attributes\Composite\SelectiveReader;
@@ -61,6 +60,7 @@ class WorkflowClient implements WorkflowClientInterface
     private DataConverterInterface $converter;
     private ?WorkflowStarter $starter = null;
     private WorkflowReader $reader;
+
     /** @var Pipeline<WorkflowClientCallsInterceptor, mixed> */
     private Pipeline $interceptorPipeline;
 
@@ -82,11 +82,6 @@ class WorkflowClient implements WorkflowClientInterface
         $this->clientOptions = $options ?? new ClientOptions();
         $this->converter = $converter ?? DataConverter::createDefault();
         $this->reader = new WorkflowReader($this->createReader());
-    }
-
-    public function __clone()
-    {
-        $this->starter = null;
     }
 
     /**
@@ -140,7 +135,7 @@ class WorkflowClient implements WorkflowClientInterface
 
         if ($workflowType === null) {
             throw new InvalidArgumentException(
-                \sprintf('Unable to start untyped workflow without given workflowType')
+                \sprintf('Unable to start untyped workflow without given workflowType'),
             );
         }
 
@@ -173,7 +168,7 @@ class WorkflowClient implements WorkflowClientInterface
         $workflow,
         string $signal,
         array $signalArgs = [],
-        array $startArgs = []
+        array $startArgs = [],
     ): WorkflowRunInterface {
         if ($workflow instanceof WorkflowProxy && !$workflow->hasHandler()) {
             throw new InvalidArgumentException('Unable to start workflow without workflow handler');
@@ -203,7 +198,7 @@ class WorkflowClient implements WorkflowClientInterface
 
         if ($workflowType === null) {
             throw new InvalidArgumentException(
-                \sprintf('Unable to start untyped workflow without given workflowType')
+                \sprintf('Unable to start untyped workflow without given workflowType'),
             );
         }
 
@@ -239,7 +234,7 @@ class WorkflowClient implements WorkflowClientInterface
         return new WorkflowProxy(
             $this,
             $this->newUntypedWorkflowStub($workflow->getID(), $options),
-            $workflow
+            $workflow,
         );
     }
 
@@ -272,7 +267,7 @@ class WorkflowClient implements WorkflowClientInterface
         return new WorkflowProxy(
             $this,
             $this->newUntypedRunningWorkflowStub($workflowID, $runID, $workflow->getID()),
-            $workflow
+            $workflow,
         );
     }
 
@@ -282,7 +277,7 @@ class WorkflowClient implements WorkflowClientInterface
     public function newUntypedRunningWorkflowStub(
         string $workflowID,
         ?string $runID = null,
-        ?string $workflowType = null
+        ?string $workflowType = null,
     ): WorkflowStubInterface {
         $untyped = new WorkflowStub(
             $this->client,
@@ -323,7 +318,7 @@ class WorkflowClient implements WorkflowClientInterface
             ->setQuery($query);
 
         $mapper = new WorkflowExecutionInfoMapper($this->converter);
-        $loader = function (ListWorkflowExecutionsRequest $request) use ($mapper): Generator {
+        $loader = function (ListWorkflowExecutionsRequest $request) use ($mapper): \Generator {
             do {
                 $response = $this->client->ListWorkflowExecutions($request);
                 $nextPageToken = $response->getNextPageToken();
@@ -357,7 +352,7 @@ class WorkflowClient implements WorkflowClientInterface
             );
 
         return new CountWorkflowExecutions(
-            count: (int)$response->getCount(),
+            count: (int) $response->getCount(),
         );
     }
 
@@ -380,11 +375,12 @@ class WorkflowClient implements WorkflowClientInterface
             ->setHistoryEventFilterType($historyEventFilterType)
             ->setSkipArchival($skipArchival)
             ->setMaximumPageSize($pageSize)
-            ->setExecution((new \Temporal\Api\Common\V1\WorkflowExecution())
-                ->setWorkflowId($execution->getID())
-                ->setRunId(
-                    $execution->getRunID() ?? throw new InvalidArgumentException('Execution Run ID is required.'),
-                ),
+            ->setExecution(
+                (new \Temporal\Api\Common\V1\WorkflowExecution())
+                    ->setWorkflowId($execution->getID())
+                    ->setRunId(
+                        $execution->getRunID() ?? throw new InvalidArgumentException('Execution Run ID is required.'),
+                    ),
             );
 
         $loader = function (GetWorkflowExecutionHistoryRequest $request): \Generator {
@@ -401,6 +397,11 @@ class WorkflowClient implements WorkflowClientInterface
         $paginator = Paginator::createFromGenerator($loader($request), null);
 
         return new WorkflowExecutionHistory($paginator);
+    }
+
+    public function __clone()
+    {
+        $this->starter = null;
     }
 
     /**

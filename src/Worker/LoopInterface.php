@@ -37,9 +37,7 @@ interface LoopInterface extends EventListenerInterface
     public const ON_TICK = 'tick';
 
     public const ON_SIGNAL = 'signal';
-
     public const ON_QUERY = 'query';
-
     public const ON_CALLBACK = 'callback';
 
     /**

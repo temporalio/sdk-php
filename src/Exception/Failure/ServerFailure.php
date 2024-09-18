@@ -25,7 +25,7 @@ class ServerFailure extends TemporalFailure
         parent::__construct(
             $message,
             $message,
-            $previous
+            $previous,
         );
         $this->nonRetryable = $nonRetryable;
     }

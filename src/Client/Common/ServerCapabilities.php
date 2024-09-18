@@ -56,8 +56,7 @@ final class ServerCapabilities
         public readonly bool $eagerWorkflowStart = false,
         public readonly bool $sdkMetadata = false,
         public readonly bool $countGroupByExecutionStatus = false,
-    ) {
-    }
+    ) {}
 
     /**
      * True if signal and query headers are supported.

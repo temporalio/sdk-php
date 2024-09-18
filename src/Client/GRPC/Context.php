@@ -37,6 +37,11 @@ final class Context implements ContextInterface
         ];
     }
 
+    public static function default(): self
+    {
+        return new self();
+    }
+
     public function withTimeout($timeout, string $format = DateInterval::FORMAT_SECONDS): self
     {
         $internal = DateInterval::parse($timeout, $format);
@@ -103,10 +108,5 @@ final class Context implements ContextInterface
     public function getRetryOptions(): RetryOptions
     {
         return $this->retryOptions;
-    }
-
-    public static function default(): self
-    {
-        return new self();
     }
 }

@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Client;
 
-use ArrayAccess;
 use Temporal\Api\Enums\V1\EventType;
 use Temporal\Api\Enums\V1\HistoryEventFilterType;
 use Temporal\Api\Enums\V1\RetryState;
@@ -252,7 +251,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                     $input->workflowType,
                     $clientOptions->queryRejectionCondition,
                     $result->getQueryRejected()->getStatus(),
-                    null
+                    null,
                 );
             },
             /** @see WorkflowClientCallsInterceptor::query() */
@@ -306,7 +305,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                     ->setRequest($r = new UpdateRequestMessage())
                     ->setWaitPolicy(
                         (new \Temporal\Api\Update\V1\WaitPolicy())
-                            ->setLifecycleStage($input->waitPolicy->lifecycleStage->value)
+                            ->setLifecycleStage($input->waitPolicy->lifecycleStage->value),
                     )
                     ->setFirstExecutionRunId($input->firstExecutionRunId)
                 ;
@@ -344,7 +343,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                 \assert($updateRef !== null);
                 $updateRefDto = new UpdateRef(
                     new WorkflowExecution(
-                        (string)$updateRef->getWorkflowExecution()?->getWorkflowId(),
+                        (string) $updateRef->getWorkflowExecution()?->getWorkflowId(),
                         $updateRef->getWorkflowExecution()?->getRunId(),
                     ),
                     $updateRef->getUpdateId(),
@@ -383,7 +382,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
 
                 throw new \RuntimeException(\sprintf(
                     'Received unexpected outcome from update request: %s',
-                    $outcome->getValue()
+                    $outcome->getValue(),
                 ));
             },
             /** @see WorkflowClientCallsInterceptor::update() */
@@ -590,7 +589,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                 throw new WorkflowExecutionFailedException(
                     $attr->getFailure(),
                     $closeEvent->getTaskId(),
-                    $attr->getRetryState()
+                    $attr->getRetryState(),
                 );
 
             case EventType::EVENT_TYPE_WORKFLOW_EXECUTION_CANCELED:
@@ -608,8 +607,8 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                     new CanceledFailure(
                         'Workflow canceled',
                         $details,
-                        null
-                    )
+                        null,
+                    ),
                 );
             case EventType::EVENT_TYPE_WORKFLOW_EXECUTION_TERMINATED:
                 $attr = $closeEvent->getWorkflowExecutionTerminatedEventAttributes();
@@ -619,7 +618,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                     $this->workflowType,
                     0,
                     RetryState::RETRY_STATE_NON_RETRYABLE_FAILURE,
-                    new TerminatedFailure($attr->getReason())
+                    new TerminatedFailure($attr->getReason()),
                 );
 
             case EventType::EVENT_TYPE_WORKFLOW_EXECUTION_TIMED_OUT:
@@ -633,13 +632,13 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                     new TimeoutFailure(
                         '',
                         EncodedValues::empty(),
-                        TimeoutType::TIMEOUT_TYPE_START_TO_CLOSE
-                    )
+                        TimeoutType::TIMEOUT_TYPE_START_TO_CLOSE,
+                    ),
                 );
 
             default:
                 throw new \RuntimeException(
-                    'Workflow end state is not completed: ' . $closeEvent->serializeToJsonString()
+                    'Workflow end state is not completed: ' . $closeEvent->serializeToJsonString(),
                 );
         }
     }
@@ -662,7 +661,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
             $start = time();
             $response = $this->serviceClient->GetWorkflowExecutionHistory(
                 $historyRequest,
-                $timeout === null ? null : Context::default()->withTimeout($timeout)
+                $timeout === null ? null : Context::default()->withTimeout($timeout),
             );
             $elapsed = time() - $start;
 
@@ -680,7 +679,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
             }
 
             $events = $history->getEvents();
-            /** @var ArrayAccess<int,mixed> $events */
+            /** @var \ArrayAccess<int,mixed> $events */
             if (!$events->offsetExists(0)) {
                 continue;
             }
@@ -693,7 +692,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                     $this->execution->getID(),
                     $closeEvent
                         ->getWorkflowExecutionContinuedAsNewEventAttributes()
-                        ->getNewExecutionRunId()
+                        ->getNewExecutionRunId(),
                 );
 
                 $historyRequest->setExecution($this->execution->toProtoWorkflowExecution());
@@ -717,7 +716,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                     $this->workflowType,
                     $failure->getWorkflowTaskCompletedEventId(),
                     $failure->getRetryState(),
-                    FailureConverter::mapFailureToException($failure->getFailure(), $this->converter)
+                    FailureConverter::mapFailureToException($failure->getFailure(), $this->converter),
                 );
 
             case $failure instanceof ServiceClientException:
@@ -726,7 +725,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                         null,
                         $this->execution,
                         $this->workflowType,
-                        $failure
+                        $failure,
                     );
                 }
 
@@ -734,7 +733,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                     null,
                     $this->execution,
                     $this->workflowType,
-                    $failure
+                    $failure,
                 );
 
             case $failure instanceof CanceledFailure || $failure instanceof WorkflowException:

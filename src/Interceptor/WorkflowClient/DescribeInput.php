@@ -23,8 +23,7 @@ class DescribeInput
     public function __construct(
         public readonly WorkflowExecution $workflowExecution,
         public readonly string $namespace,
-    ) {
-    }
+    ) {}
 
     public function with(
         WorkflowExecution $workflowExecution = null,
@@ -32,7 +31,7 @@ class DescribeInput
     ): self {
         return new self(
             $workflowExecution ?? $this->workflowExecution,
-                $namespace ?? $this->namespace,
+            $namespace ?? $this->namespace,
         );
     }
 }

@@ -56,7 +56,7 @@ class StackRenderer
             $result[] = sprintf(
                 '%s:%s',
                 $line['file'] ?? '-',
-                $line['line'] ?? '-'
+                $line['line'] ?? '-',
             );
         }
 

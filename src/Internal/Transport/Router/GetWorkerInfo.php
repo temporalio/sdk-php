@@ -72,7 +72,7 @@ final class GetWorkerInfo extends Route
             ];
         };
 
-        $activityMap = static fn (ActivityPrototype $activity) => [
+        $activityMap = static fn(ActivityPrototype $activity) => [
             'Name' => $activity->getID(),
         ];
 
@@ -84,7 +84,7 @@ final class GetWorkerInfo extends Route
             // ActivityInfo[]
             'Activities' => $this->map($worker->getActivities(), $activityMap),
             'PhpSdkVersion' => SdkVersion::getSdkVersion(),
-            'Flags' => (object)[],
+            'Flags' => (object) [],
         ];
     }
 

@@ -126,7 +126,7 @@ final class FailureConverter
                 $info
                     ->setActivityId($e->getActivityId())
                     ->setActivityType(new ActivityType([
-                        'name' => $e->getActivityType()
+                        'name' => $e->getActivityType(),
                     ]))
                     ->setIdentity($e->getIdentity())
                     ->setRetryState($e->getRetryState())
@@ -144,7 +144,7 @@ final class FailureConverter
                     ->setNamespace($e->getNamespace())
                     ->setRetryState($e->getRetryState())
                     ->setWorkflowType(new WorkflowType([
-                        'name' => $e->getWorkflowType()
+                        'name' => $e->getWorkflowType(),
                     ]))
                     ->setWorkflowExecution(new WorkflowExecution([
                         'workflow_id' => $e->getExecution()->getID(),
@@ -203,7 +203,7 @@ final class FailureConverter
                     $info->getType(),
                     $info->getNonRetryable(),
                     $details,
-                    $previous
+                    $previous,
                 );
 
             case $failure->hasTimeoutFailureInfo():
@@ -245,7 +245,7 @@ final class FailureConverter
                     'ResetWorkflow',
                     false,
                     $details,
-                    $previous
+                    $previous,
                 );
 
             case $failure->hasActivityFailureInfo():
@@ -258,7 +258,7 @@ final class FailureConverter
                     $info->getActivityId(),
                     $info->getRetryState(),
                     $info->getIdentity(),
-                    $previous
+                    $previous,
                 );
 
             case $failure->hasChildWorkflowExecutionFailureInfo():
@@ -275,7 +275,7 @@ final class FailureConverter
                     ),
                     $info->getNamespace(),
                     $info->getRetryState(),
-                    $previous
+                    $previous,
                 );
 
             default:
@@ -297,7 +297,7 @@ final class FailureConverter
          */
         $frames = $e->getTrace();
 
-        $numPad = \strlen((string)(\count($frames) - 1)) + 2;
+        $numPad = \strlen((string) (\count($frames) - 1)) + 2;
         // Skipped frames
         $internals = [];
         $isFirst = true;
@@ -359,18 +359,19 @@ final class FailureConverter
 
         $result = [];
         foreach ($args as $arg) {
-            $result[] = match(true) {
+            $result[] = match (true) {
                 $arg => 'true',
                 $arg === false => 'false',
                 $arg === null => 'null',
                 \is_array($arg) => 'array(' . count($arg) . ')',
                 \is_object($arg) => \get_class($arg),
-                \is_string($arg) => (string)\json_encode(
+                \is_string($arg) => (string) \json_encode(
                     \strlen($arg) > 50
                         ? \substr($arg, 0, 50) . '...'
-                        : $arg, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE
+                        : $arg,
+                    JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE,
                 ),
-                \is_scalar($arg) => (string)$arg,
+                \is_scalar($arg) => (string) $arg,
                 default => \get_debug_type($arg),
             };
         }

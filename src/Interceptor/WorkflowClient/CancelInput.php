@@ -22,8 +22,7 @@ class CancelInput
      */
     public function __construct(
         public readonly WorkflowExecution $workflowExecution,
-    ) {
-    }
+    ) {}
 
     public function with(
         WorkflowExecution $workflowExecution = null,

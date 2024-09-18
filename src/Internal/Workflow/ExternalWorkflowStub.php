@@ -33,8 +33,7 @@ final class ExternalWorkflowStub implements ExternalWorkflowStubInterface
     public function __construct(
         private WorkflowExecution $execution,
         private Pipeline $callsInterceptor,
-    ) {
-    }
+    ) {}
 
     /**
      * {@inheritDoc}

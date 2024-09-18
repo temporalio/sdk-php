@@ -69,7 +69,7 @@ class ExternalWorkflowProxy extends Proxy
         }
 
         throw new \BadMethodCallException(
-            \sprintf(self::ERROR_INVALID_SIGNAL_METHOD, $method, $this->class)
+            \sprintf(self::ERROR_INVALID_SIGNAL_METHOD, $method, $this->class),
         );
     }
 }

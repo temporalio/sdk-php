@@ -15,11 +15,9 @@ final class EncodingKeys
 {
     public const METADATA_ENCODING_KEY = 'encoding';
     public const METADATA_MESSAGE_TYPE = 'messageType';
-
     public const METADATA_ENCODING_NULL = 'binary/null';
     public const METADATA_ENCODING_RAW = 'binary/plain';
     public const METADATA_ENCODING_JSON = 'json/plain';
-
     public const METADATA_ENCODING_PROTOBUF_JSON = 'json/protobuf';
     public const METADATA_ENCODING_PROTOBUF = 'binary/protobuf';
 }

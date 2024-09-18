@@ -21,29 +21,17 @@ use Google\Protobuf\Duration;
 final class DateInterval
 {
     public const FORMAT_YEARS = 'years';
-
     public const FORMAT_MONTHS = 'months';
-
     public const FORMAT_WEEKS = 'weeks';
-
     public const FORMAT_DAYS = 'days';
-
     public const FORMAT_HOURS = 'hours';
-
     public const FORMAT_MINUTES = 'minutes';
-
     public const FORMAT_SECONDS = 'seconds';
-
     public const FORMAT_MILLISECONDS = 'milliseconds';
-
     public const FORMAT_MICROSECONDS = 'microseconds';
-
     public const FORMAT_NANOSECONDS = 'nanoseconds';
-
     private const ERROR_INVALID_DATETIME = 'Unrecognized date time interval format';
-
     private const ERROR_INVALID_FORMAT = 'Invalid date interval format "%s", available formats: %s';
-
     private const AVAILABLE_FORMATS = [
         self::FORMAT_YEARS,
         self::FORMAT_MONTHS,
@@ -154,7 +142,7 @@ final class DateInterval
 
         $d = new Duration();
         $parsed = self::parse($i);
-        $d->setSeconds((int)$parsed->totalSeconds);
+        $d->setSeconds((int) $parsed->totalSeconds);
         $d->setNanos($parsed->microseconds * 1000);
 
         return $d;

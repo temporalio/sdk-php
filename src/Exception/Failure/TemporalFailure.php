@@ -48,18 +48,6 @@ class TemporalFailure extends TemporalException implements \Stringable
     }
 
     /**
-     * @return string
-     */
-    public function __toString(): string
-    {
-        if ($this->hasOriginalStackTrace()) {
-            return (string)$this->getOriginalStackTrace();
-        }
-
-        return parent::__toString();
-    }
-
-    /**
      * @return Failure|null
      */
     public function getFailure(): ?Failure
@@ -117,6 +105,18 @@ class TemporalFailure extends TemporalException implements \Stringable
     }
 
     /**
+     * @return string
+     */
+    public function __toString(): string
+    {
+        if ($this->hasOriginalStackTrace()) {
+            return (string) $this->getOriginalStackTrace();
+        }
+
+        return parent::__toString();
+    }
+
+    /**
      * Explain known types of key=>value pairs.
      *
      * @param array $values
@@ -125,9 +125,9 @@ class TemporalFailure extends TemporalException implements \Stringable
     protected static function buildMessage(array $values): string
     {
         $mapped = [
-            'timeoutType' => fn ($value) => TimeoutType::name($value),
-            'timeoutWorkflowType' => fn ($value) => TimeoutType::name($value),
-            'retryState' => fn ($value) => RetryState::name($value),
+            'timeoutType' => fn($value) => TimeoutType::name($value),
+            'timeoutWorkflowType' => fn($value) => TimeoutType::name($value),
+            'retryState' => fn($value) => RetryState::name($value),
         ];
 
         $result = [];

@@ -13,7 +13,6 @@ namespace Temporal\Internal\Marshaller\Meta;
 
 use Spiral\Attributes\NamedArgumentConstructor;
 use Temporal\Internal\Marshaller\MarshallingRule;
-use Temporal\Internal\Marshaller\Type\NullableType;
 
 /**
  * You may use this annotation multiple times to specify multiple marshalling rules for a single property. It may be

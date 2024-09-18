@@ -32,8 +32,7 @@ final class ExecuteActivityInput
         public readonly ?ActivityOptions $options,
         public readonly null|Type|string|\ReflectionClass|\ReflectionType $returnType,
         public readonly ?\ReflectionMethod $method = null,
-    ) {
-    }
+    ) {}
 
     /**
      * @param non-empty-string|null $type

@@ -30,11 +30,9 @@ final class IntervalSpec
     private function __construct(
         #[Marshal(name: 'interval', of: Duration::class)]
         public readonly \DateInterval $interval,
-
         #[Marshal(name: 'phase', of: Duration::class)]
         public readonly \DateInterval $phase,
-    ) {
-    }
+    ) {}
 
     public static function new(mixed $interval, mixed $phase = null): self
     {

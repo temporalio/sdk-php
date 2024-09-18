@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Transport\Codec;
 
-use DateTimeImmutable;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\ProtocolException;
 use RoadRunner\Temporal\DTO\V1\Frame;
@@ -81,11 +80,11 @@ final class ProtoCodec implements CodecInterface
             /** @var Message $msg */
             foreach ($frame->getMessages() as $msg) {
                 $info = new TickInfo(
-                    time: new DateTimeImmutable($headers['tickTime'] ?? $msg->getTickTime(), $tz),
-                    historyLength: (int)($headers['history_length'] ?? $msg->getHistoryLength()),
-                    historySize: (int)($headers['history_size'] ?? $msg->getHistorySize()),
-                    continueAsNewSuggested: (bool)($headers['continue_as_new_suggested'] ?? $msg->getContinueAsNewSuggested()),
-                    isReplaying: (bool)($headers['replay'] ?? $msg->getReplay()),
+                    time: new \DateTimeImmutable($headers['tickTime'] ?? $msg->getTickTime(), $tz),
+                    historyLength: (int) ($headers['history_length'] ?? $msg->getHistoryLength()),
+                    historySize: (int) ($headers['history_size'] ?? $msg->getHistorySize()),
+                    continueAsNewSuggested: (bool) ($headers['continue_as_new_suggested'] ?? $msg->getContinueAsNewSuggested()),
+                    isReplaying: (bool) ($headers['replay'] ?? $msg->getReplay()),
                 );
 
                 yield $this->parser->decode($msg, $info, $headers);

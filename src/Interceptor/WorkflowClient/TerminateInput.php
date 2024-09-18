@@ -23,8 +23,7 @@ class TerminateInput
     public function __construct(
         public readonly WorkflowExecution $workflowExecution,
         public readonly string $reason,
-    ) {
-    }
+    ) {}
 
     public function with(
         WorkflowExecution $workflowExecution = null,

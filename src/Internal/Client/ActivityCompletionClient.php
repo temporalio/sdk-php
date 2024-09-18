@@ -38,7 +38,7 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
     public function __construct(
         ServiceClientInterface $client,
         ClientOptions $clientOptions,
-        DataConverterInterface $converter
+        DataConverterInterface $converter,
     ) {
         $this->client = $client;
         $this->clientOptions = $clientOptions;
@@ -109,7 +109,7 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
         string $workflowId,
         ?string $runId,
         string $activityId,
-        \Throwable $error
+        \Throwable $error,
     ): void {
         $r = new Proto\RespondActivityTaskFailedByIdRequest();
         $r

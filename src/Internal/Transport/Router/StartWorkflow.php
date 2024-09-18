@@ -76,7 +76,7 @@ final class StartWorkflow extends Route
             $this->services->client,
             $instance,
             $input,
-            $lastCompletionResult
+            $lastCompletionResult,
         );
         $runId = $request->getID();
 

@@ -11,6 +11,4 @@ declare(strict_types=1);
 
 namespace Temporal\Exception\Client;
 
-class WorkflowQueryException extends WorkflowException
-{
-}
+class WorkflowQueryException extends WorkflowException {}

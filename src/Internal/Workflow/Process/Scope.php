@@ -91,7 +91,6 @@ class Scope implements CancellationScopeInterface, Destroyable
     private array $onClose = [];
 
     private bool $detached = false;
-
     private bool $cancelled = false;
 
     public function __construct(
@@ -166,7 +165,7 @@ class Scope implements CancellationScopeInterface, Destroyable
                 $this->services->exceptionInterceptor->isRetryable($error)
                     ? $this->scopeContext->panic($error)
                     : $resolver->reject($error);
-            }
+            },
         );
 
         // Create a coroutine generator
@@ -309,6 +308,13 @@ class Scope implements CancellationScopeInterface, Destroyable
         $deferred->promise()->then($cleanup, $cleanup);
     }
 
+    public function destroy(): void
+    {
+        $this->scopeContext->destroy();
+        $this->context->destroy();
+        unset($this->coroutine);
+    }
+
     /**
      * @param non-empty-string|null $layer
      */
@@ -331,7 +337,7 @@ class Scope implements CancellationScopeInterface, Destroyable
         $scope->onClose(
             function () use ($cancelID): void {
                 unset($this->onCancel[$cancelID]);
-            }
+            },
         );
 
         return $scope;
@@ -468,7 +474,7 @@ class Scope implements CancellationScopeInterface, Destroyable
                         $this->onException($e);
                         return;
                     }
-                }
+                },
             );
 
             return $result;
@@ -482,7 +488,7 @@ class Scope implements CancellationScopeInterface, Destroyable
                     }
 
                     $this->handleError($e);
-                }
+                },
             );
 
             throw $e;
@@ -491,7 +497,7 @@ class Scope implements CancellationScopeInterface, Destroyable
         $promise
             ->then($onFulfilled, $onRejected)
             // Handle last error
-            ->then(null, fn (\Throwable $e) => null);
+            ->then(null, fn(\Throwable $e) => null);
     }
 
     /**
@@ -547,12 +553,5 @@ class Scope implements CancellationScopeInterface, Destroyable
     {
         $this->services->loop->once($this->layer, $tick);
         $this->services->queue->count() === 0 and $this->services->loop->tick();
-    }
-
-    public function destroy(): void
-    {
-        $this->scopeContext->destroy();
-        $this->context->destroy();
-        unset($this->coroutine);
     }
 }

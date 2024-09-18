@@ -22,8 +22,7 @@ final class SideEffectInput
      */
     public function __construct(
         public readonly \Closure $callable,
-    ) {
-    }
+    ) {}
 
     public function with(
         ?\Closure $callable = null,

@@ -14,7 +14,6 @@ namespace Temporal;
 use React\Promise\Exception\LengthException;
 use React\Promise\PromiseInterface;
 use Temporal\Internal\Promise\CancellationQueue;
-
 use Temporal\Internal\Promise\Reasons;
 
 use function React\Promise\race;
@@ -99,10 +98,10 @@ final class Promise
                                 \sprintf(
                                     'Input array must contain at least %d item%s but contains only %s item%s.',
                                     $count,
-                                    1 === $count ? '' : 's',
+                                    $count === 1 ? '' : 's',
                                     $len,
-                                    1 === $len ? '' : 's'
-                                )
+                                    $len === 1 ? '' : 's',
+                                ),
                             ));
                             return;
                         }
@@ -120,7 +119,7 @@ final class Promise
 
                                 $values[$i] = $val;
 
-                                if (0 === --$toResolve) {
+                                if (--$toResolve === 0) {
                                     $resolve($values);
                                 }
                             };
@@ -132,7 +131,7 @@ final class Promise
 
                                 $reasons[$i] = $reason;
 
-                                if (0 === --$toReject) {
+                                if (--$toReject === 0) {
                                     $reject(new Reasons($reasons));
                                 }
                             };
@@ -141,8 +140,11 @@ final class Promise
 
                             resolve($promiseOrValue)->then($fulfiller, $rejecter);
                         }
-                    }, $reject);
-            }, $cancellationQueue
+                    },
+                    $reject,
+                );
+            },
+            $cancellationQueue,
         );
     }
 
@@ -187,7 +189,7 @@ final class Promise
                                     static function (mixed $mapped) use ($i, &$values, &$toResolve, $resolve): void {
                                         $values[$i] = $mapped;
 
-                                        if (0 === --$toResolve) {
+                                        if (--$toResolve === 0) {
                                             $resolve($values);
                                         }
                                     },
@@ -195,7 +197,8 @@ final class Promise
                                 );
                         }
                     }, $reject);
-            }, $cancellationQueue
+            },
+            $cancellationQueue,
         );
     }
 
@@ -261,7 +264,8 @@ final class Promise
                         },
                         $reject,
                     );
-            }, $cancellationQueue
+            },
+            $cancellationQueue,
         );
     }
 

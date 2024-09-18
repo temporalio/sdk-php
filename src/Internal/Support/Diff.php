@@ -114,7 +114,7 @@ class Diff
     public function getPresentProperties(object $context): array
     {
         $changed = $this->getChangedPropertyNames($context);
-        $filter = static fn ($_, string $name): bool => !\in_array($name, $changed, true);
+        $filter = static fn($_, string $name): bool => !\in_array($name, $changed, true);
 
         return \array_filter($this->properties, $filter, \ARRAY_FILTER_USE_BOTH);
     }
@@ -139,7 +139,7 @@ class Diff
         $result = [];
 
         foreach ($this->properties as $name => $value) {
-            if ($context->$name !== $value) {
+            if ($value !== $context->$name) {
                 $result[$name] = $value;
             }
         }
@@ -171,7 +171,7 @@ class Diff
     private function isChangedAnyProperty(object $context): bool
     {
         foreach ($this->properties as $name => $value) {
-            if ($context->$name !== $value) {
+            if ($value !== $context->$name) {
                 return true;
             }
         }

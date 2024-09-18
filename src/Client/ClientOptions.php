@@ -87,7 +87,7 @@ class ClientOptions
     #[Pure]
     public function withQueryRejectionCondition(
         #[ExpectedValues(valuesFromClass: QueryRejectCondition::class)]
-        int $condition
+        int $condition,
     ): self {
         assert(Assert::enum($condition, QueryRejectCondition::class));
 

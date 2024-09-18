@@ -28,8 +28,7 @@ class StartInput
         public readonly HeaderInterface $header,
         public readonly ValuesInterface $arguments,
         public readonly WorkflowOptions $options,
-    ) {
-    }
+    ) {}
 
     public function with(
         HeaderInterface $header = null,

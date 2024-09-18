@@ -63,7 +63,7 @@ class Marshaller implements MarshallerInterface
             } catch (\Throwable $e) {
                 throw new MarshallerException(
                     \sprintf('Unable to marshal field `%s` of class %s.', $field, $from::class),
-                    previous: $e
+                    previous: $e,
                 );
             }
         }
@@ -101,7 +101,7 @@ class Marshaller implements MarshallerInterface
             } catch (\Throwable $e) {
                 throw new MarshallerException(
                     \sprintf('Unable to unmarshal field `%s` of class %s', $field, $to::class),
-                    previous: $e
+                    previous: $e,
                 );
             }
         }

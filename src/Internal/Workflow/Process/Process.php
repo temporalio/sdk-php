@@ -78,7 +78,7 @@ class Process extends Scope implements ProcessInterface
                                 $this->scopeContext->getInfo(),
                                 $input->arguments,
                                 $input->header,
-                            )
+                            ),
                         ));
                         $handler($input->arguments);
                     },
@@ -156,7 +156,7 @@ class Process extends Scope implements ProcessInterface
                     $arguments,
                     $this->scopeContext->getHeader(),
                 ));
-            }
+            },
         );
 
         // unlike other scopes Process will notify the server when complete instead of pushing the result
