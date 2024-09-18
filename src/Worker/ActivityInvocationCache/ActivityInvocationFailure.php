@@ -8,6 +8,7 @@ final class ActivityInvocationFailure
 {
     /** @var class-string<\Throwable> */
     public string $errorClass;
+
     public string $errorMessage;
 
     /**

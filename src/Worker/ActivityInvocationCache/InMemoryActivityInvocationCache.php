@@ -7,7 +7,6 @@ namespace Temporal\Worker\ActivityInvocationCache;
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
-use Temporal\Exception\InvalidArgumentException;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 use function React\Promise\reject;
@@ -19,6 +18,7 @@ final class InMemoryActivityInvocationCache implements ActivityInvocationCacheIn
      * @var array<non-empty-string, ActivityInvocationFailure|ActivityInvocationResult>
      */
     private array $cache = [];
+
     private DataConverterInterface $dataConverter;
 
     public function __construct(DataConverterInterface $dataConverter = null)
