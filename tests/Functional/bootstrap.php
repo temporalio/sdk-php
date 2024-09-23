@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use Temporal\FeatureFlags;
 use Temporal\Testing\Environment;
 use Temporal\Tests\SearchAttributeTestInvoker;
+use Temporal\Worker\FeatureFlags;
 
 chdir(__DIR__ . '/../..');
 require_once __DIR__ . '/../../vendor/autoload.php';

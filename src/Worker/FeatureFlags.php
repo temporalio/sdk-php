@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal;
+namespace Temporal\Worker;
 
 /**
  * Feature flags help to smoothly introduce behavior changes that may affect existing workflows.
@@ -25,6 +25,8 @@ final class FeatureFlags
     /**
      * Warn about running Signal and Update handlers on Workflow finish.
      * It uses `error_log()` function to output a warning message.
+     *
+     * @since SDK 2.11.0
      */
     public static bool $warnOnWorkflowUnfinishedHandlers = true;
 }
