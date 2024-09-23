@@ -11,11 +11,10 @@ use Temporal\DataConverter\Type;
 
 final class ActivityInvocationResult
 {
-    public function __construct(protected Payloads $payloads)
-    {
-    }
+    public function __construct(protected Payloads $payloads) {}
 
-    public static function fromValue(mixed $value, ?DataConverterInterface $dataConverter = null): ActivityInvocationResult {
+    public static function fromValue(mixed $value, ?DataConverterInterface $dataConverter = null): ActivityInvocationResult
+    {
         $value = $value instanceof EncodedValues ? $value : EncodedValues::fromValues([$value], $dataConverter);
 
         return new self($value->toPayloads());

@@ -128,7 +128,7 @@ class TypeFactory implements RuleFactoryInterface
             }
 
             if (\is_subclass_of($matcher, DetectableTypeInterface::class, true)) {
-                $this->matchers[] = static fn (\ReflectionNamedType $type): ?string => $matcher::match($type)
+                $this->matchers[] = static fn(\ReflectionNamedType $type): ?string => $matcher::match($type)
                     ? $matcher
                     : null;
             }

@@ -43,7 +43,7 @@ interface ActivityCompletionClientInterface
         string $workflowId,
         ?string $runId,
         string $activityId,
-        \Throwable $error
+        \Throwable $error,
     ): void;
 
     /**
@@ -62,7 +62,7 @@ interface ActivityCompletionClientInterface
         string $workflowId,
         ?string $runId,
         string $activityId,
-        $details = null
+        $details = null,
     ): void;
 
     /**
@@ -83,7 +83,7 @@ interface ActivityCompletionClientInterface
         string $workflowId,
         ?string $runId,
         string $activityId,
-        $details = null
+        $details = null,
     );
 
     /**

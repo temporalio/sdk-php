@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal;
 
-use DateTimeInterface;
 use Ramsey\Uuid\UuidInterface;
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
@@ -528,7 +527,7 @@ final class Workflow extends Facade
     public static function continueAsNew(
         string $type,
         array $args = [],
-        ContinueAsNewOptions $options = null
+        ContinueAsNewOptions $options = null,
     ): PromiseInterface {
         return self::getCurrentContext()->continueAsNew($type, $args, $options);
     }
@@ -981,13 +980,13 @@ final class Workflow extends Facade
     /**
      * Generate a UUID version 7 (Unix Epoch time).
      *
-     * @param DateTimeInterface|null $dateTime An optional date/time from which
+     * @param \DateTimeInterface|null $dateTime An optional date/time from which
      *     to create the version 7 UUID. If not provided, the UUID is generated
      *     using the current date/time.
      *
      * @return PromiseInterface<UuidInterface>
      */
-    public static function uuid7(?DateTimeInterface $dateTime = null): PromiseInterface
+    public static function uuid7(?\DateTimeInterface $dateTime = null): PromiseInterface
     {
         /** @var ScopedContextInterface $context */
         $context = self::getCurrentContext();

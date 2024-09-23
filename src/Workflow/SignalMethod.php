@@ -26,7 +26,6 @@ use Spiral\Attributes\NamedArgumentConstructor;
 #[\Attribute(\Attribute::TARGET_METHOD), NamedArgumentConstructor]
 final class SignalMethod
 {
-
     /**
      * @param non-empty-string|null $name Signal name.
      * @param HandlerUnfinishedPolicy $unfinishedPolicy Actions taken if a workflow exits with

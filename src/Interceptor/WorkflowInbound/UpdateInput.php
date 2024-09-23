@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * This file is part of Temporal package.
  *
@@ -30,8 +32,7 @@ class UpdateInput
         public readonly WorkflowInfo $info,
         public readonly ValuesInterface $arguments,
         public readonly HeaderInterface $header,
-    ) {
-    }
+    ) {}
 
     public function with(
         WorkflowInfo $info = null,
@@ -43,7 +44,7 @@ class UpdateInput
             $this->updateId,
             $info ?? $this->info,
             $arguments ?? $this->arguments,
-            $header ?? $this->header
+            $header ?? $this->header,
         );
     }
 }

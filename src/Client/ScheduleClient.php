@@ -54,7 +54,7 @@ final class ScheduleClient implements ScheduleClientInterface
     public function __construct(
         ServiceClientInterface $serviceClient,
         ClientOptions $options = null,
-        DataConverterInterface $converter = null
+        DataConverterInterface $converter = null,
     ) {
         $this->client = $serviceClient;
         $this->clientOptions = $options ?? new ClientOptions();
@@ -68,7 +68,7 @@ final class ScheduleClient implements ScheduleClientInterface
     public static function create(
         ServiceClientInterface $serviceClient,
         ClientOptions $options = null,
-        DataConverterInterface $converter = null
+        DataConverterInterface $converter = null,
     ): ScheduleClientInterface {
         return new self($serviceClient, $options, $converter);
     }
@@ -94,7 +94,7 @@ final class ScheduleClient implements ScheduleClientInterface
         $backfillRequests = [];
         foreach ($options->backfills as $period) {
             $period instanceof BackfillPeriod or throw new \InvalidArgumentException(
-                'Backfill periods must be of type BackfillPeriod.'
+                'Backfill periods must be of type BackfillPeriod.',
             );
 
             $backfillRequests[] = (new BackfillRequest())
@@ -118,7 +118,7 @@ final class ScheduleClient implements ScheduleClientInterface
             ->setInitialPatch($initialPatch)
             ->setMemo((new Memo())->setFields($options->memo->toPayloadArray()))
             ->setSearchAttributes(
-                (new SearchAttributes())->setIndexedFields($options->searchAttributes->toPayloadArray())
+                (new SearchAttributes())->setIndexedFields($options->searchAttributes->toPayloadArray()),
             );
         $this->client->CreateSchedule($request);
 

@@ -29,7 +29,7 @@ class Encoder
     private const ERROR_INVALID_COMMAND = 'Unserializable command type %s';
 
     public function __construct(
-        private readonly DataConverterInterface $converter
+        private readonly DataConverterInterface $converter,
     ) {}
 
     public function encode(CommandInterface $cmd): Message

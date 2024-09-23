@@ -13,7 +13,6 @@ namespace Temporal\Internal\Marshaller\Type;
 
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
-use ReflectionNamedType;
 use Temporal\Internal\Marshaller\MarshallingRule;
 use Temporal\Internal\Support\Inheritance;
 
@@ -32,7 +31,7 @@ final class UuidType extends Type implements DetectableTypeInterface, RuleFactor
     {
         $type = $property->getType();
 
-        if (!$type instanceof ReflectionNamedType || !self::match($type)) {
+        if (!$type instanceof \ReflectionNamedType || !self::match($type)) {
             return null;
         }
 

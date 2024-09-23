@@ -14,6 +14,4 @@ namespace Temporal\Internal\Declaration\Graph;
 /**
  * @template-implements \IteratorAggregate<mixed, NodeInterface>
  */
-interface NodeInterface extends \Stringable, \IteratorAggregate, \Countable
-{
-}
+interface NodeInterface extends \Stringable, \IteratorAggregate, \Countable {}

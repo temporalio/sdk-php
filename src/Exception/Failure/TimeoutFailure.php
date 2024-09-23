@@ -29,12 +29,12 @@ class TimeoutFailure extends TemporalFailure
         string $message,
         ValuesInterface $lastHeartbeatDetails,
         int $timeoutWorkflowType,
-        \Throwable $previous = null
+        \Throwable $previous = null,
     ) {
         parent::__construct(
             self::buildMessage(\compact('message', 'timeoutWorkflowType') + ['type' => 'TimeoutFailure']),
             $message,
-            $previous
+            $previous,
         );
 
         $this->lastHeartbeatDetails = $lastHeartbeatDetails;

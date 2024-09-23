@@ -24,7 +24,7 @@ class Inheritance
             return true;
         }
 
-        foreach ((array)\class_uses($haystack) as $used) {
+        foreach ((array) \class_uses($haystack) as $used) {
             if ($used === $trait) {
                 return true;
             }
@@ -76,7 +76,7 @@ class Inheritance
             return true;
         }
 
-        foreach ((array)\class_implements($haystack) as $implements) {
+        foreach ((array) \class_implements($haystack) as $implements) {
             if ($implements === $interface) {
                 return true;
             }

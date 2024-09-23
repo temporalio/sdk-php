@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Transport\Codec;
 
-use DateTimeImmutable;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\ProtocolException;
 use Temporal\Worker\Transport\Codec\JsonCodec\Decoder;
@@ -46,7 +45,7 @@ final class JsonCodec implements CodecInterface
             $result = [];
 
             foreach ($commands as $command) {
-                assert($command instanceof CommandInterface);
+                \assert($command instanceof CommandInterface);
                 $result[] = $this->serializer->encode($command);
             }
 
@@ -67,15 +66,16 @@ final class JsonCodec implements CodecInterface
             $commands = \json_decode($batch, true, $this->maxDepth, \JSON_THROW_ON_ERROR);
 
             foreach ($commands as $command) {
+                /** @psalm-suppress ArgumentTypeCoercion */
                 $info = new TickInfo(
-                    time: new DateTimeImmutable($headers['tickTime'] ?? 'now', $tz),
-                    historyLength: (int)($headers['history_length'] ?? 0),
-                    historySize: (int)($headers['history_size'] ?? 0),
-                    continueAsNewSuggested: (bool)($headers['continue_as_new_suggested'] ?? false),
-                    isReplaying: (bool)($headers['replay'] ?? false),
+                    time: new \DateTimeImmutable($headers['tickTime'] ?? 'now', $tz),
+                    historyLength: (int) ($headers['history_length'] ?? 0),
+                    historySize: (int) ($headers['history_size'] ?? 0),
+                    continueAsNewSuggested: (bool) ($headers['continue_as_new_suggested'] ?? false),
+                    isReplaying: (bool) ($headers['replay'] ?? false),
                 );
 
-                assert(\is_array($command));
+                \assert(\is_array($command));
                 yield $this->parser->decode($command, $info);
             }
         } catch (\Throwable $e) {

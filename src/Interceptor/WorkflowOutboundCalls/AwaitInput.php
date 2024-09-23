@@ -19,8 +19,7 @@ final class AwaitInput
      */
     public function __construct(
         public readonly array $conditions,
-    ) {
-    }
+    ) {}
 
     /**
      * @param array<callable|PromiseInterface> $conditions

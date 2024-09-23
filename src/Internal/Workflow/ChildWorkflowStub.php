@@ -88,7 +88,7 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
                     $this->execution->resolve($execution);
 
                     return $execution;
-                }
+                },
             );
 
         return EncodedValues::decodePromise($started);
@@ -120,9 +120,7 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
      */
     public function signal(string $name, array $args = []): PromiseInterface
     {
-        $execution = $this->execution->promise();
-
-        return $execution->then(
+        return $this->execution->promise()->then(
             function (WorkflowExecution $execution) use ($name, $args) {
                 $request = new SignalExternalWorkflow(
                     $this->getOptions()->namespace,
@@ -134,7 +132,7 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
                 );
 
                 return $this->request($request);
-            }
+            },
         );
     }
 

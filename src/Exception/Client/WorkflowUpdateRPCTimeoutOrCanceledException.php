@@ -17,7 +17,8 @@ namespace Temporal\Exception\Client;
  * @note this is not related to any general concept of timing out or cancelling a running update,
  *       this is only related to the client call itself.
  */
-class WorkflowUpdateRPCTimeoutOrCanceledException extends TimeoutException {
+class WorkflowUpdateRPCTimeoutOrCanceledException extends TimeoutException
+{
     private function __construct(string $message = '', int $code = 0, ?\Throwable $previous = null)
     {
         parent::__construct($message, $code, $previous);

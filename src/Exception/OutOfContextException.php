@@ -11,6 +11,4 @@ declare(strict_types=1);
 
 namespace Temporal\Exception;
 
-class OutOfContextException extends TemporalException
-{
-}
+class OutOfContextException extends TemporalException {}

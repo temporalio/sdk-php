@@ -34,7 +34,7 @@ final class Environment
             new ConsoleOutput(),
             new Downloader(new Filesystem(), HttpClient::create([
                 'headers' => [
-                    'authorization' => $token ? 'token ' . $token : null
+                    'authorization' => $token ? 'token ' . $token : null,
                 ],
             ])),
             SystemInfo::detect(),
@@ -66,13 +66,13 @@ final class Environment
                 '--search-attribute', 'foo=text',
                 '--search-attribute', 'bar=int',
                 '--log-level', 'error',
-                '--headless'
-            ]
+                '--headless',
+            ],
         );
         $this->temporalServerProcess->setTimeout($commandTimeout);
         $this->temporalServerProcess->start();
         $this->output->writeln('<info>done.</info>');
-        sleep(1);
+        \sleep(1);
 
         if (!$this->temporalServerProcess->isRunning()) {
             $this->output->writeln('<error>error</error>');
@@ -89,16 +89,16 @@ final class Environment
             $this->output->writeln('<info>done.</info>');
         }
 
-        $temporalPort = parse_url(getenv('TEMPORAL_ADDRESS') ?: '127.0.0.1:7233', PHP_URL_PORT);
+        $temporalPort = \parse_url(\getenv('TEMPORAL_ADDRESS') ?: '127.0.0.1:7233', PHP_URL_PORT);
 
         $this->output->write('Starting Temporal test server... ');
         $this->temporalTestServerProcess = new Process(
-            [$this->systemInfo->temporalServerExecutable, $temporalPort, '--enable-time-skipping']
+            [$this->systemInfo->temporalServerExecutable, $temporalPort, '--enable-time-skipping'],
         );
         $this->temporalTestServerProcess->setTimeout($commandTimeout);
         $this->temporalTestServerProcess->start();
         $this->output->writeln('<info>done.</info>');
-        sleep(1);
+        \sleep(1);
 
         if (!$this->temporalTestServerProcess->isRunning()) {
             $this->output->writeln('<error>error</error>');
@@ -113,14 +113,14 @@ final class Environment
     public function startRoadRunner(string $rrCommand = null, int $commandTimeout = 10, array $envs = []): void
     {
         $this->roadRunnerProcess = new Process(
-            command: $rrCommand ? explode(' ', $rrCommand) : [$this->systemInfo->rrExecutable, 'serve'],
-            env: $envs
+            command: $rrCommand ? \explode(' ', $rrCommand) : [$this->systemInfo->rrExecutable, 'serve'],
+            env: $envs,
         );
         $this->roadRunnerProcess->setTimeout($commandTimeout);
 
         $this->output->write('Starting RoadRunner... ');
         $roadRunnerStarted = false;
-        $this->roadRunnerProcess->start(static function ($type, $output) use (&$roadRunnerStarted) {
+        $this->roadRunnerProcess->start(static function ($type, $output) use (&$roadRunnerStarted): void {
             if ($type === Process::OUT && \str_contains($output, 'RoadRunner server started')) {
                 $roadRunnerStarted = true;
             }

@@ -83,6 +83,6 @@ final class BackoffThrottler
             $this->maxInterval,
         );
 
-        return \abs((int)$sleepTime);
+        return \abs((int) $sleepTime);
     }
 }

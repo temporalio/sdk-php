@@ -87,7 +87,7 @@ class Decoder
 
         $payloads = new Payloads();
         if (isset($data['payloads'])) {
-            $payloads->mergeFromString(base64_decode($data['payloads']));
+            $payloads->mergeFromString(\base64_decode($data['payloads']));
         }
 
         return new SuccessResponse(EncodedValues::fromPayloads($payloads, $this->dataConverter), $data['id'], $info);
@@ -106,7 +106,7 @@ class Decoder
 
     #[Pure]
     private function isUInt32(
-        mixed $value
+        mixed $value,
     ): bool {
         return \is_int($value) && $value >= 0 && $value <= 2_147_483_647;
     }

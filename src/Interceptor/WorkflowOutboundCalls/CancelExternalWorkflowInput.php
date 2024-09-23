@@ -24,8 +24,7 @@ final class CancelExternalWorkflowInput
         public readonly string $namespace,
         public readonly string $workflowId,
         public readonly ?string $runId,
-    ) {
-    }
+    ) {}
 
     public function with(
         ?string $namespace = null,

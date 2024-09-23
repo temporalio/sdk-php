@@ -36,9 +36,7 @@ final class UpdateHandle
         private readonly mixed $resultType,
         private readonly string $updateId,
         private ValuesInterface|WorkflowUpdateException|null $result,
-    ) {
-    }
-
+    ) {}
 
     /**
      * Gets the workflow execution this update request was sent to.
@@ -110,12 +108,12 @@ final class UpdateHandle
             ->setUpdateRef(
                 (new \Temporal\Api\Update\V1\UpdateRef())
                     ->setUpdateId($this->getId())
-                    ->setWorkflowExecution($this->getExecution()->toProtoWorkflowExecution())
+                    ->setWorkflowExecution($this->getExecution()->toProtoWorkflowExecution()),
             )
             ->setNamespace($this->clientOptions->namespace)
             ->setIdentity($this->clientOptions->identity)
             ->setWaitPolicy(
-                (new \Temporal\Api\Update\V1\WaitPolicy())->setLifecycleStage(LifecycleStage::StageCompleted->value)
+                (new \Temporal\Api\Update\V1\WaitPolicy())->setLifecycleStage(LifecycleStage::StageCompleted->value),
             );
 
         try {

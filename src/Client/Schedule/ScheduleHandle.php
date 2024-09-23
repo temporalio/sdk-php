@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Schedule;
 
-use ArrayIterator;
-use Countable;
-use DateTimeImmutable;
-use DateTimeInterface;
 use Google\Protobuf\Timestamp;
 use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\Api\Schedule\V1\BackfillRequest;
@@ -31,7 +27,6 @@ use Temporal\Exception\InvalidArgumentException;
 use Temporal\Internal\Mapper\ScheduleMapper;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Marshaller\ProtoToArrayConverter;
-use Traversable;
 
 final class ScheduleHandle
 {
@@ -109,7 +104,7 @@ final class ScheduleHandle
             $description = $this->describe();
             $update = $schedule(new ScheduleUpdateInput($description));
             $update instanceof ScheduleUpdate or throw new InvalidArgumentException(
-                'Closure for the schedule update method must return a ScheduleUpdate.'
+                'Closure for the schedule update method must return a ScheduleUpdate.',
             );
 
             $schedule = $update->schedule;
@@ -150,12 +145,12 @@ final class ScheduleHandle
     /**
      * Lists matching times within a range.
      *
-     * @return Countable&Traversable<int, DateTimeImmutable>
+     * @return \Countable&\Traversable<int, \DateTimeImmutable>
      */
     public function listScheduleMatchingTimes(
-        DateTimeInterface $startTime,
-        DateTimeInterface $endTime,
-    ): Countable&Traversable {
+        \DateTimeInterface $startTime,
+        \DateTimeInterface $endTime,
+    ): \Countable&\Traversable {
         $request = (new ListScheduleMatchingTimesRequest())
             ->setScheduleId($this->id)
             ->setNamespace($this->namespace)
@@ -163,15 +158,15 @@ final class ScheduleHandle
             ->setEndTime((new Timestamp())->setSeconds($endTime->getTimestamp()));
 
         $response = $this->client->ListScheduleMatchingTimes($request);
-        /** @var list<DateTimeInterface> $list */
+        /** @var list<\DateTimeInterface> $list */
         $list = [];
         foreach ($response->getStartTime() as $timestamp) {
             \assert($timestamp instanceof Timestamp);
 
-            $list[] = new \DateTimeImmutable('@' . $timestamp->getSeconds());
+            $list[] = new \DateTimeImmutable("@{$timestamp->getSeconds()}");
         }
 
-        return new ArrayIterator($list);
+        return new \ArrayIterator($list);
     }
 
     /**
@@ -185,7 +180,7 @@ final class ScheduleHandle
         $backfill = [];
         foreach ($periods as $period) {
             $period instanceof BackfillPeriod or throw new InvalidArgumentException(
-                'Backfill periods must be of type BackfillPeriod.'
+                'Backfill periods must be of type BackfillPeriod.',
             );
 
             $backfill[] = (new BackfillRequest())

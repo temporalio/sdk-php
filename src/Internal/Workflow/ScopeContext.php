@@ -78,27 +78,13 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
             $this,
             $this->services->loop,
             $promise,
-            $this->scope->getLayer()
+            $this->scope->getLayer(),
         );
     }
 
     public function getUpdateContext(): ?UpdateContext
     {
         return $this->updateContext;
-    }
-
-    protected function addCondition(string $conditionGroupId, callable $condition): PromiseInterface
-    {
-        $deferred = new Deferred();
-        $this->parent->awaits[$conditionGroupId][] = [$condition, $deferred];
-        $this->scope->onAwait($deferred);
-
-        return new CompletableResult(
-            $this,
-            $this->services->loop,
-            $deferred->promise(),
-            $this->scope->getLayer()
-        );
     }
 
     public function resolveConditions(): void
@@ -119,7 +105,7 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
     public function upsertSearchAttributes(array $searchAttributes): void
     {
         $this->request(
-            new UpsertSearchAttributes($searchAttributes)
+            new UpsertSearchAttributes($searchAttributes),
         );
     }
 
@@ -128,5 +114,19 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
     {
         parent::destroy();
         unset($this->scope, $this->parent, $this->onRequest);
+    }
+
+    protected function addCondition(string $conditionGroupId, callable $condition): PromiseInterface
+    {
+        $deferred = new Deferred();
+        $this->parent->awaits[$conditionGroupId][] = [$condition, $deferred];
+        $this->scope->onAwait($deferred);
+
+        return new CompletableResult(
+            $this,
+            $this->services->loop,
+            $deferred->promise(),
+            $this->scope->getLayer(),
+        );
     }
 }

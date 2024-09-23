@@ -95,7 +95,7 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
             \sprintf(
                 self::ERROR_QUERY_NOT_FOUND,
                 $name,
-                \implode(' ', $instance->getQueryHandlerNames())
+                \implode(' ', $instance->getQueryHandlerNames()),
             ),
         );
     }

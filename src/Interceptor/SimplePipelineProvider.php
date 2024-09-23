@@ -23,17 +23,18 @@ class SimplePipelineProvider implements PipelineProvider
      */
     public function __construct(
         private iterable $interceptors = [],
-    ) {
-    }
+    ) {}
 
     /**
      * @inheritDoc
      */
     public function getPipeline(string $interceptorClass): Pipeline
     {
-        return $this->cache[$interceptorClass] ??= Pipeline::prepare(\array_filter(
-            $this->interceptors,
-            static fn(Interceptor $i): bool => $i instanceof $interceptorClass)
+        return $this->cache[$interceptorClass] ??= Pipeline::prepare(
+            \array_filter(
+                $this->interceptors,
+                static fn(Interceptor $i): bool => $i instanceof $interceptorClass,
+            ),
         );
     }
 }

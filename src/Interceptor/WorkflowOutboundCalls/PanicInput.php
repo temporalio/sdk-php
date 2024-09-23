@@ -22,8 +22,7 @@ final class PanicInput
      */
     public function __construct(
         public readonly ?\Throwable $failure,
-    ) {
-    }
+    ) {}
 
     public function withoutFailure(): self
     {

@@ -72,14 +72,14 @@ class DurationJsonType extends Type implements DetectableTypeInterface, RuleFact
         $duration = match (true) {
             $value instanceof \DateInterval => DateInterval::toDuration($value),
             \is_int($value) => (new Duration())->setSeconds($value),
-            \is_string($value) => (new Duration())->setSeconds((int)$value),
+            \is_string($value) => (new Duration())->setSeconds((int) $value),
             \is_float($value) => (new Duration())
-                ->setSeconds((int)$value)
+                ->setSeconds((int) $value)
                 ->setNanos(($value * 1000000000) % 1000000000),
             default => throw new \InvalidArgumentException('Invalid value type.'),
         };
 
-        return $duration === null ? null : ['seconds' => $duration->getSeconds(), 'nanos' => $duration->getNanos()];
+        return ['seconds' => $duration->getSeconds(), 'nanos' => $duration->getNanos()];
     }
 
     /**
@@ -87,7 +87,7 @@ class DurationJsonType extends Type implements DetectableTypeInterface, RuleFact
      */
     public function parse($value, $current): CarbonInterval
     {
-        if (is_array($value) && isset($value['seconds']) && isset($value['nanos'])) {
+        if (\is_array($value) && isset($value['seconds']) && isset($value['nanos'])) {
             // The highest precision is milliseconds either way.
             $value = $value['seconds'] * 1_000_000_000 + $value['nanos'];
             return DateInterval::parse($value, DateInterval::FORMAT_NANOSECONDS);

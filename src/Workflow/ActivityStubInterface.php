@@ -36,6 +36,6 @@ interface ActivityStubInterface
         string $name,
         array $args = [],
         Type|string|\ReflectionClass|\ReflectionType $returnType = null,
-        bool $isLocalActivity = false
+        bool $isLocalActivity = false,
     ): PromiseInterface;
 }

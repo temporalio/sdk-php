@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * This file is part of Temporal package.
  *
@@ -22,8 +24,7 @@ class CancelInput
      */
     public function __construct(
         public readonly WorkflowExecution $workflowExecution,
-    ) {
-    }
+    ) {}
 
     public function with(
         WorkflowExecution $workflowExecution = null,

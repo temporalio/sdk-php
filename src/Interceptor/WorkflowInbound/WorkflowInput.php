@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * This file is part of Temporal package.
  *
@@ -26,8 +28,7 @@ class WorkflowInput
         public readonly WorkflowInfo $info,
         public readonly ValuesInterface $arguments,
         public readonly HeaderInterface $header,
-    ) {
-    }
+    ) {}
 
     public function with(
         WorkflowInfo $info = null,
@@ -37,7 +38,7 @@ class WorkflowInput
         return new self(
             $info ?? $this->info,
             $arguments ?? $this->arguments,
-            $header ?? $this->header
+            $header ?? $this->header,
         );
     }
 }

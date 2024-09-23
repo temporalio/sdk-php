@@ -78,7 +78,7 @@ class Process extends Scope implements ProcessInterface
                                 $this->scopeContext->getInfo(),
                                 $input->arguments,
                                 $input->header,
-                            )
+                            ),
                         ));
                         $handler($input->arguments);
                     },
@@ -104,7 +104,7 @@ class Process extends Scope implements ProcessInterface
                 );
 
                 $scope->startUpdate(
-                    function () use ($handler, $inboundPipeline, $input): mixed {
+                    static function () use ($handler, $inboundPipeline, $input): mixed {
                         return $inboundPipeline->with(
                             static fn(UpdateInput $input): mixed => $handler($input->arguments),
                             /** @see WorkflowInboundCallsInterceptor::handleUpdate() */
@@ -128,7 +128,7 @@ class Process extends Scope implements ProcessInterface
                 Workflow::setCurrentContext($this->scopeContext);
 
                 $inboundPipeline->with(
-                    function (SignalInput $input) use ($handler) {
+                    function (SignalInput $input) use ($handler): void {
                         $this->createScope(
                             true,
                             LoopInterface::ON_SIGNAL,
@@ -156,7 +156,7 @@ class Process extends Scope implements ProcessInterface
                     $arguments,
                     $this->scopeContext->getHeader(),
                 ));
-            }
+            },
         );
 
         // unlike other scopes Process will notify the server when complete instead of pushing the result

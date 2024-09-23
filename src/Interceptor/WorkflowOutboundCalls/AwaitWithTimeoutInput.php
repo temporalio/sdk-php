@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Interceptor\WorkflowOutboundCalls;
 
-use DateInterval;
 use React\Promise\PromiseInterface;
 
 /**
@@ -26,16 +25,15 @@ final class AwaitWithTimeoutInput
      * @param array<callable|PromiseInterface> $conditions
      */
     public function __construct(
-        public readonly DateInterval $interval,
+        public readonly \DateInterval $interval,
         public readonly array $conditions,
-    ) {
-    }
+    ) {}
 
     /**
      * @param array<callable|PromiseInterface> $conditions
      */
     public function with(
-        ?DateInterval $interval = null,
+        ?\DateInterval $interval = null,
         ?array $conditions = null,
     ): self {
         return new self(

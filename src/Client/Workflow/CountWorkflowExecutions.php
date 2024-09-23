@@ -15,8 +15,7 @@ final class CountWorkflowExecutions
 {
     public function __construct(
         public readonly int $count,
-    ) {
-    }
+    ) {}
 }
 
 \class_alias(CountWorkflowExecutions::class, 'Temporal\Client\CountWorkflowExecutions');

@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Workflow;
 
-use DateTimeInterface;
 use JetBrains\PhpStorm\Immutable;
 
 /**
@@ -25,9 +24,8 @@ final class ResetPointInfo
         public string $binaryChecksum,
         public string $runId,
         public int $firstWorkflowTaskCompletedId,
-        public ?DateTimeInterface $createTime,
-        public ?DateTimeInterface $expireTime,
+        public ?\DateTimeInterface $createTime,
+        public ?\DateTimeInterface $expireTime,
         public bool $resettable,
-    ) {
-    }
+    ) {}
 }

@@ -22,8 +22,7 @@ final class UpsertSearchAttributesInput
      */
     public function __construct(
         public readonly array $searchAttributes,
-    ) {
-    }
+    ) {}
 
     public function with(
         ?array $searchAttributes = null,

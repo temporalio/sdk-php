@@ -22,38 +22,6 @@ class ActivityCompletionException extends TemporalException
     private ?string $activityId = null;
 
     /**
-     * @return string|null
-     */
-    public function getWorkflowId(): ?string
-    {
-        return $this->workflowId;
-    }
-
-    /**
-     * @return string|null
-     */
-    public function getRunId(): ?string
-    {
-        return $this->runId;
-    }
-
-    /**
-     * @return string|null
-     */
-    public function getActivityType(): ?string
-    {
-        return $this->activityType;
-    }
-
-    /**
-     * @return string|null
-     */
-    public function getActivityId(): ?string
-    {
-        return $this->activityId;
-    }
-
-    /**
      * @param \Throwable $e
      * @return static
      */
@@ -62,7 +30,7 @@ class ActivityCompletionException extends TemporalException
         return new static(
             $e->getMessage(),
             $e->getCode(),
-            $e
+            $e,
         );
     }
 
@@ -93,10 +61,10 @@ class ActivityCompletionException extends TemporalException
                     'runId' => $info->workflowExecution->getRunID(),
                     'activityId' => $info->id,
                     'activityType' => $info->type->name,
-                ]
+                ],
             ),
             $e === null ? 0 : $e->getCode(),
-            $e
+            $e,
         );
 
         $e->activityId = $info->id;
@@ -105,5 +73,37 @@ class ActivityCompletionException extends TemporalException
         $e->activityType = $info->type->name;
 
         return $e;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getWorkflowId(): ?string
+    {
+        return $this->workflowId;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getRunId(): ?string
+    {
+        return $this->runId;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getActivityType(): ?string
+    {
+        return $this->activityType;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getActivityId(): ?string
+    {
+        return $this->activityId;
     }
 }

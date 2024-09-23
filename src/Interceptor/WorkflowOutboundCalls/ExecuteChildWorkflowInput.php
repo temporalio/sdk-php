@@ -27,8 +27,7 @@ final class ExecuteChildWorkflowInput
         public readonly array $args = [],
         public readonly ?ChildWorkflowOptions $options = null,
         public readonly mixed $returnType = null,
-    ) {
-    }
+    ) {}
 
     public function with(
         ?string $type = null,
@@ -40,7 +39,7 @@ final class ExecuteChildWorkflowInput
             $type ?? $this->type,
             $args ?? $this->args,
             $options ?? $this->options,
-            $returnType ?? $this->returnType
+            $returnType ?? $this->returnType,
         );
     }
 }

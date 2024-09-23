@@ -19,8 +19,7 @@ final class StartUpdateOutput
         private readonly UpdateRef $reference,
         private readonly bool $hasResult,
         private readonly ?ValuesInterface $result,
-    ) {
-    }
+    ) {}
 
     public function getReference(): UpdateRef
     {

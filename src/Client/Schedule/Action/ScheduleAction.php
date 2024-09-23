@@ -9,6 +9,4 @@ namespace Temporal\Client\Schedule\Action;
  *
  * @see \Temporal\Api\Schedule\V1\ScheduleAction
  */
-abstract class ScheduleAction
-{
-}
+abstract class ScheduleAction {}

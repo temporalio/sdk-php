@@ -38,7 +38,7 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
     public function __construct(
         ServiceClientInterface $client,
         ClientOptions $clientOptions,
-        DataConverterInterface $converter
+        DataConverterInterface $converter,
     ) {
         $this->client = $client;
         $this->clientOptions = $clientOptions;
@@ -58,7 +58,7 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
             ->setRunId($runId ?? '')
             ->setActivityId($activityId);
 
-        $input = EncodedValues::fromValues(array_slice(func_get_args(), 3), $this->converter);
+        $input = EncodedValues::fromValues(\array_slice(\func_get_args(), 3), $this->converter);
         if (!$input->isEmpty()) {
             $r->setResult($input->toPayloads());
         }
@@ -86,7 +86,7 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
             ->setNamespace($this->clientOptions->namespace)
             ->setTaskToken($taskToken);
 
-        $input = EncodedValues::fromValues(array_slice(func_get_args(), 1), $this->converter);
+        $input = EncodedValues::fromValues(\array_slice(\func_get_args(), 1), $this->converter);
         if (!$input->isEmpty()) {
             $r->setResult($input->toPayloads());
         }
@@ -109,7 +109,7 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
         string $workflowId,
         ?string $runId,
         string $activityId,
-        \Throwable $error
+        \Throwable $error,
     ): void {
         $r = new Proto\RespondActivityTaskFailedByIdRequest();
         $r
@@ -167,7 +167,7 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
             ->setRunId($runId ?? '')
             ->setActivityId($activityId);
 
-        if (func_num_args() == 4) {
+        if (\func_num_args() == 4) {
             $r->setDetails(EncodedValues::fromValues([$details], $this->converter)->toPayloads());
         }
 
@@ -189,7 +189,7 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
             ->setNamespace($this->clientOptions->namespace)
             ->setTaskToken($taskToken);
 
-        if (func_num_args() == 2) {
+        if (\func_num_args() == 2) {
             $r->setDetails(EncodedValues::fromValues([$details], $this->converter)->toPayloads());
         }
 
@@ -213,7 +213,7 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
             ->setRunId($runId ?? '')
             ->setActivityId($activityId);
 
-        if (func_num_args() == 4) {
+        if (\func_num_args() == 4) {
             $r->setDetails(EncodedValues::fromValues([$details], $this->converter)->toPayloads());
         }
 
@@ -242,7 +242,7 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
             ->setNamespace($this->clientOptions->namespace)
             ->setTaskToken($taskToken);
 
-        if (func_num_args() == 2) {
+        if (\func_num_args() == 2) {
             $r->setDetails(EncodedValues::fromValues([$details], $this->converter)->toPayloads());
         }
 

@@ -46,20 +46,20 @@ class StackRenderer
                 continue;
             }
 
-            $path = str_replace('\\', '/', $line['file']);
+            $path = \str_replace('\\', '/', $line['file']);
             foreach (self::$ignorePaths as $str) {
-                if (str_contains($path, $str)) {
+                if (\str_contains($path, $str)) {
                     continue 2;
                 }
             }
 
-            $result[] = sprintf(
+            $result[] = \sprintf(
                 '%s:%s',
                 $line['file'] ?? '-',
-                $line['line'] ?? '-'
+                $line['line'] ?? '-',
             );
         }
 
-        return implode("\n", $result);
+        return \implode("\n", $result);
     }
 }

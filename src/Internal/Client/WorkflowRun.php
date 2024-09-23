@@ -26,8 +26,7 @@ final class WorkflowRun implements WorkflowRunInterface
     public function __construct(
         private WorkflowStubInterface $stub,
         private $returnType = null,
-    ) {
-    }
+    ) {}
 
     /**
      * @return WorkflowExecution

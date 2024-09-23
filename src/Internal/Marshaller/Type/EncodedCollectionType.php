@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Internal\Marshaller\Type;
 
 use Google\Protobuf\Internal\Message;
-use ReflectionNamedType;
 use Temporal\Api\Common\V1\Header;
 use Temporal\Api\Common\V1\Memo;
 use Temporal\Api\Common\V1\Payloads;
@@ -46,7 +45,7 @@ final class EncodedCollectionType extends Type implements DetectableTypeInterfac
     {
         $type = $property->getType();
 
-        if (!$type instanceof ReflectionNamedType || !self::match($type)) {
+        if (!$type instanceof \ReflectionNamedType || !self::match($type)) {
             return null;
         }
 

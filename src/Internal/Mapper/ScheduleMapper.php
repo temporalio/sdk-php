@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Temporal\Internal\Mapper;
 
 use Temporal\Api\Common\V1\Payloads;
-use Temporal\Api\Common\V1\RetryPolicy;
 use Temporal\Api\Common\V1\WorkflowType;
 use Temporal\Api\Schedule\V1\CalendarSpec;
 use Temporal\Api\Schedule\V1\IntervalSpec;
@@ -26,8 +25,7 @@ final class ScheduleMapper
     public function __construct(
         private readonly DataConverterInterface $converter,
         private readonly MarshallerInterface $marshaller,
-    ) {
-    }
+    ) {}
 
     public function toMessage(Schedule $dto): \Temporal\Api\Schedule\V1\Schedule
     {
@@ -48,6 +46,11 @@ final class ScheduleMapper
         isset($array['action']) and $array['action'] = $this->prepareAction($dto->action, $array['action']);
 
         return new \Temporal\Api\Schedule\V1\Schedule(self::cleanArray($array));
+    }
+
+    private static function cleanArray(array $array): array
+    {
+        return \array_filter($array, static fn($item): bool => $item !== null);
     }
 
     /**
@@ -121,10 +124,5 @@ final class ScheduleMapper
         }
 
         return $array;
-    }
-
-    private static function cleanArray(array $array): array
-    {
-        return \array_filter($array, static fn ($item): bool => $item !== null);
     }
 }

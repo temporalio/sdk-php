@@ -24,7 +24,7 @@ use Traversable;
  *
  * @implements IteratorAggregate<TKey, TValue>
  */
-class EncodedCollection implements IteratorAggregate, Countable
+class EncodedCollection implements \IteratorAggregate, \Countable
 {
     /**
      * @var DataConverterInterface|null
@@ -34,22 +34,60 @@ class EncodedCollection implements IteratorAggregate, Countable
     /**
      * @var TPayloadsCollection|null
      */
-    private ?ArrayAccess $payloads = null;
+    private ?\ArrayAccess $payloads = null;
 
     private array $values = [];
 
     /**
      * Cannot be constructed directly.
      */
-    private function __construct()
+    private function __construct() {}
+
+    /**
+     * @return static
+     */
+    public static function empty(): static
     {
+        $ev = new static();
+        $ev->values = [];
+
+        return $ev;
     }
 
-    public function __clone()
+    /**
+     * @param iterable $values
+     * @param DataConverterInterface|null $dataConverter
+     *
+     * @return static
+     */
+    public static function fromValues(iterable $values, ?DataConverterInterface $dataConverter = null): static
     {
-        if ($this->payloads !== null) {
-            $this->payloads = clone $this->payloads;
+        $ev = new static();
+        foreach ($values as $key => $value) {
+            $ev->values[$key] = $value;
         }
+        $ev->converter = $dataConverter;
+
+        return $ev;
+    }
+
+    /**
+     * @param iterable<array-key, Payload> $payloads
+     * @param DataConverterInterface $dataConverter
+     *
+     * @return EncodedCollection
+     */
+    public static function fromPayloadCollection(
+        array|\ArrayAccess $payloads,
+        DataConverterInterface $dataConverter,
+    ): static {
+        $ev = new static();
+        $ev->payloads = \is_array($payloads)
+            ? new \ArrayIterator($payloads)
+            : $payloads;
+        $ev->converter = $dataConverter;
+
+        return $ev;
     }
 
     public function count(): int
@@ -102,7 +140,7 @@ class EncodedCollection implements IteratorAggregate, Countable
         return $result;
     }
 
-    public function getIterator(): Traversable
+    public function getIterator(): \Traversable
     {
         yield from $this->values;
         if ($this->payloads !== null) {
@@ -163,50 +201,10 @@ class EncodedCollection implements IteratorAggregate, Countable
         $this->converter = $converter;
     }
 
-    /**
-     * @return static
-     */
-    public static function empty(): static
+    public function __clone()
     {
-        $ev = new static();
-        $ev->values = [];
-
-        return $ev;
-    }
-
-    /**
-     * @param iterable $values
-     * @param DataConverterInterface|null $dataConverter
-     *
-     * @return static
-     */
-    public static function fromValues(iterable $values, ?DataConverterInterface $dataConverter = null): static
-    {
-        $ev = new static();
-        foreach ($values as $key => $value) {
-            $ev->values[$key] = $value;
+        if ($this->payloads !== null) {
+            $this->payloads = clone $this->payloads;
         }
-        $ev->converter = $dataConverter;
-
-        return $ev;
-    }
-
-    /**
-     * @param iterable<array-key, Payload> $payloads
-     * @param DataConverterInterface $dataConverter
-     *
-     * @return EncodedCollection
-     */
-    public static function fromPayloadCollection(
-        array|ArrayAccess $payloads,
-        DataConverterInterface $dataConverter,
-    ): static {
-        $ev = new static();
-        $ev->payloads = \is_array($payloads)
-            ? new \ArrayIterator($payloads)
-            : $payloads;
-        $ev->converter = $dataConverter;
-
-        return $ev;
     }
 }

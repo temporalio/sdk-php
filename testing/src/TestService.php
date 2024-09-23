@@ -29,7 +29,7 @@ final class TestService
     public static function create(string $host): self
     {
         return new self(
-            new TestServiceClient($host, ['credentials' => ChannelCredentials::createInsecure()])
+            new TestServiceClient($host, ['credentials' => ChannelCredentials::createInsecure()]),
         );
     }
 

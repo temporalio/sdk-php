@@ -110,9 +110,9 @@ class LocalActivityOptions extends Options implements ActivityOptionsInterface
     #[Pure]
     public function withScheduleToCloseTimeout($timeout): self
     {
-        assert(DateInterval::assert($timeout));
+        \assert(DateInterval::assert($timeout));
         $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
-        assert($timeout->totalMicroseconds >= 0);
+        \assert($timeout->totalMicroseconds >= 0);
 
         $self = clone $this;
         $self->scheduleToCloseTimeout = $timeout;
@@ -132,9 +132,9 @@ class LocalActivityOptions extends Options implements ActivityOptionsInterface
     #[Pure]
     public function withStartToCloseTimeout($timeout): self
     {
-        assert(DateInterval::assert($timeout));
+        \assert(DateInterval::assert($timeout));
         $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
-        assert($timeout->totalMicroseconds >= 0);
+        \assert($timeout->totalMicroseconds >= 0);
 
         $self = clone $this;
         $self->startToCloseTimeout = $timeout;

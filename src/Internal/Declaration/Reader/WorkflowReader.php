@@ -97,7 +97,7 @@ class WorkflowReader extends Reader
 
     public function fromObject(object $object): WorkflowPrototype
     {
-        return $this->fromClass(get_class($object));
+        return $this->fromClass($object::class);
     }
 
     /**
@@ -173,7 +173,7 @@ class WorkflowReader extends Reader
                             'signal',
                             $contextClass->getName(),
                             $method->getName(),
-                        ])
+                        ]),
                     );
                 }
 
@@ -197,7 +197,7 @@ class WorkflowReader extends Reader
                             'query',
                             $contextClass->getName(),
                             $method->getName(),
-                        ])
+                        ]),
                     );
                 }
 
@@ -227,7 +227,7 @@ class WorkflowReader extends Reader
                         $method->getDeclaringClass()->getName(),
                         $method->getName(),
                         $validate->forUpdate,
-                    ])
+                    ]),
                 );
             }
 
@@ -238,7 +238,7 @@ class WorkflowReader extends Reader
                         'validate update',
                         $contextClass->getName(),
                         $method->getName(),
-                    ])
+                    ]),
                 );
             }
 
@@ -265,7 +265,7 @@ class WorkflowReader extends Reader
         }
 
         throw new \LogicException(
-            \sprintf(self::ERROR_WORKFLOW_INTERFACE_NOT_FOUND, $graph, WorkflowInterface::class)
+            \sprintf(self::ERROR_WORKFLOW_INTERFACE_NOT_FOUND, $graph, WorkflowInterface::class),
         );
     }
 
@@ -414,7 +414,7 @@ class WorkflowReader extends Reader
             $contextClass = $ctx->getDeclaringClass();
 
             throw new \LogicException(
-                \sprintf(self::ERROR_HANDLER_VISIBILITY, $contextClass->getName(), $ctx->getName())
+                \sprintf(self::ERROR_HANDLER_VISIBILITY, $contextClass->getName(), $ctx->getName()),
             );
         }
 

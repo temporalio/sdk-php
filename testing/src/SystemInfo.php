@@ -14,25 +14,21 @@ final class SystemInfo
         'linux' => 'linux',
         'windows' => 'windows',
     ];
-
     private const ARCHITECTURE_MAPPINGS = [
         'x64' => 'amd64',
         'amd64' => 'amd64',
-        'arm64' => 'aarch64'
+        'arm64' => 'aarch64',
     ];
-
     private const TEMPORAL_EXECUTABLE_MAP = [
         'darwin' => './temporal-test-server',
         'linux' => './temporal-test-server',
         'windows' => 'temporal-test-server.exe',
     ];
-
     private const TEMPORAL_CLI_EXECUTABLE_MAP = [
         'darwin' => './temporal',
         'linux' => './temporal',
         'windows' => 'temporal.exe',
     ];
-
     private const RR_EXECUTABLE_MAP = [
         'darwin' => './rr',
         'linux' => './rr',

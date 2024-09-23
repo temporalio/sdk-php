@@ -23,9 +23,7 @@ class ArrayQueue implements QueueInterface
     /**
      * Queue constructor.
      */
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * @param int $commandId

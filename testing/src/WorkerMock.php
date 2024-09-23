@@ -4,15 +4,12 @@ declare(strict_types=1);
 
 namespace Temporal\Testing;
 
-use Closure;
 use React\Promise\PromiseInterface;
 use Temporal\Internal\Events\EventEmitterTrait;
 use Temporal\Internal\Events\EventListenerInterface;
-use Temporal\Internal\Repository\Identifiable;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Worker\ActivityInvocationCache\ActivityInvocationCacheInterface;
 use Temporal\Worker\DispatcherInterface;
-use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Temporal\Worker\WorkerInterface;
 use Temporal\Worker\WorkerOptions;
@@ -26,7 +23,7 @@ final class WorkerMock implements WorkerInterface, EventListenerInterface, Dispa
 
     public function __construct(
         WorkerInterface $wrapped,
-        ActivityInvocationCacheInterface $activityInvocationCache
+        ActivityInvocationCacheInterface $activityInvocationCache,
     ) {
         $this->wrapped = $wrapped;
         $this->activityInvocationCache = $activityInvocationCache;
@@ -71,7 +68,7 @@ final class WorkerMock implements WorkerInterface, EventListenerInterface, Dispa
         return $this->wrapped->registerActivity($type, $factory);
     }
 
-    public function registerActivityFinalizer(Closure $finalizer): WorkerInterface
+    public function registerActivityFinalizer(\Closure $finalizer): WorkerInterface
     {
         return $this->wrapped->registerActivityFinalizer($finalizer);
     }

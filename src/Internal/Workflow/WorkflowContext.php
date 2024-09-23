@@ -11,11 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Workflow;
 
-use DateTimeInterface;
 use Ramsey\Uuid\UuidInterface;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
-use RuntimeException;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Activity\ActivityOptionsInterface;
 use Temporal\Activity\LocalActivityOptions;
@@ -218,7 +216,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     public function registerUpdate(string $name, callable $handler, ?callable $validator): static
     {
         $this->getWorkflowInstance()->addUpdateHandler($name, $handler);
-        $this->getWorkflowInstance()->addValidateUpdateHandler($name, $validator ?? fn() => null);
+        $this->getWorkflowInstance()->addValidateUpdateHandler($name, $validator ?? static fn() => null);
 
         return $this;
     }
@@ -320,7 +318,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     public function continueAsNew(
         string $type,
         array $args = [],
-        ContinueAsNewOptions $options = null
+        ContinueAsNewOptions $options = null,
     ): PromiseInterface {
         return $this->callsInterceptor->with(
             function (ContinueAsNewInput $input): PromiseInterface {
@@ -479,7 +477,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         $activities = $this->services->activitiesReader->fromClass($class);
 
         if (isset($activities[0]) && $activities[0]->isLocalActivity() && !$options instanceof LocalActivityOptions) {
-            throw new RuntimeException("Local activity can be used only with LocalActivityOptions");
+            throw new \RuntimeException("Local activity can be used only with LocalActivityOptions");
         }
 
         return new ActivityProxy(
@@ -638,7 +636,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     /**
      * {@inheritDoc}
      */
-    public function uuid7(?DateTimeInterface $dateTime = null): PromiseInterface
+    public function uuid7(?\DateTimeInterface $dateTime = null): PromiseInterface
     {
         return $this->sideEffect(static fn(): UuidInterface => \Ramsey\Uuid\Uuid::uuid7($dateTime));
     }
@@ -697,7 +695,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
                 $this->resolveConditionGroup($conditionGroupId);
                 return $result;
             },
-            function ($reason) use ($conditionGroupId) {
+            function ($reason) use ($conditionGroupId): void {
                 $this->rejectConditionGroup($conditionGroupId);
                 // Throw the first reason
                 // It need to avoid memory leak when the related workflow is destroyed

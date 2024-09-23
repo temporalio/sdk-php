@@ -27,25 +27,25 @@ final class Bytes implements \Stringable
     }
 
     /**
-     * @return string
-     */
-    public function __toString()
-    {
-        return $this->data;
-    }
-
-    /**
      * @return int
      */
     public function getSize(): int
     {
-        return strlen($this->data);
+        return \strlen($this->data);
     }
 
     /**
      * @return string
      */
     public function getData(): string
+    {
+        return $this->data;
+    }
+
+    /**
+     * @return string
+     */
+    public function __toString()
     {
         return $this->data;
     }

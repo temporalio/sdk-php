@@ -26,7 +26,7 @@ final class NewTimer extends Request
      */
     public function __construct(private \DateInterval $interval)
     {
-        parent::__construct(self::NAME, ['ms' => (int)CarbonInterval::make($interval)->totalMilliseconds]);
+        parent::__construct(self::NAME, ['ms' => (int) CarbonInterval::make($interval)->totalMilliseconds]);
     }
 
     /**

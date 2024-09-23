@@ -16,6 +16,4 @@ namespace Temporal\Internal\Interceptor;
  *
  * @internal
  */
-interface Interceptor
-{
-}
+interface Interceptor {}

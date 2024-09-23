@@ -13,7 +13,6 @@ namespace Temporal\Worker\Transport\Command;
 
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\HeaderInterface;
-use Temporal\Internal\Interceptor\HeaderCarrier;
 
 /**
  * @psalm-type RequestOptions = array<non-empty-string, mixed>

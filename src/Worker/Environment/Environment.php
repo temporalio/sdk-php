@@ -16,7 +16,6 @@ use Temporal\Worker\Transport\Command\Server\TickInfo;
 class Environment implements EnvironmentInterface
 {
     protected \DateTimeInterface $tickTime;
-
     protected bool $isReplaying = false;
 
     public function __construct()

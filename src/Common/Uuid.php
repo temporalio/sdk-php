@@ -63,10 +63,10 @@ final class Uuid
     {
         $bytes = \random_bytes(16);
 
-        $timeHi = (int)\unpack('n*', \substr($bytes, 6, 2))[1];
+        $timeHi = (int) \unpack('n*', \substr($bytes, 6, 2))[1];
         $timeHiAndVersion = \pack('n*', self::version($timeHi, 4));
 
-        $clockSeqHi = (int)\unpack('n*', \substr($bytes, 8, 2))[1];
+        $clockSeqHi = (int) \unpack('n*', \substr($bytes, 8, 2))[1];
         $clockSeqHiAndReserved = \pack('n*', self::variant($clockSeqHi));
 
         $bytes = \substr_replace($bytes, $timeHiAndVersion, 6, 2);

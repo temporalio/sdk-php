@@ -63,10 +63,10 @@ class JsonConverter extends Converter
     public function toPayload($value): ?Payload
     {
         if (\is_object($value)) {
-            $value = match(true) {
+            $value = match (true) {
                 $value instanceof \stdClass => $value,
                 $value instanceof UuidInterface => $value->toString(),
-                default => $this->marshaller->marshal($value)
+                default => $this->marshaller->marshal($value),
             };
         }
 
@@ -90,13 +90,13 @@ class JsonConverter extends Converter
                 $payload->getData(),
                 $type->getName() === Type::TYPE_ARRAY,
                 512,
-                self::JSON_FLAGS
+                self::JSON_FLAGS,
             );
         } catch (\Throwable $e) {
             throw new DataConverterException($e->getMessage(), $e->getCode(), $e);
         }
 
-        if ($data === null && $type->allowsNull()){
+        if ($data === null && $type->allowsNull()) {
             return null;
         }
 
@@ -179,13 +179,33 @@ class JsonConverter extends Converter
     }
 
     /**
+     * @return MarshallerInterface
+     */
+    private static function createDefaultMarshaller(): MarshallerInterface
+    {
+        return new Marshaller(new AttributeMapperFactory(self::createDefaultReader()));
+    }
+
+    /**
+     * @return ReaderInterface
+     */
+    private static function createDefaultReader(): ReaderInterface
+    {
+        if (\interface_exists(Reader::class)) {
+            return new SelectiveReader([new AnnotationReader(), new AttributeReader()]);
+        }
+
+        return new AttributeReader();
+    }
+
+    /**
      * @param object|array $context
      * @return array
      */
     private function toHashMap($context): array
     {
         if (\is_object($context)) {
-            $context = (array)$context;
+            $context = (array) $context;
         }
 
         foreach ($context as $key => $value) {
@@ -223,26 +243,6 @@ class JsonConverter extends Converter
         ]);
 
         return new DataConverterException($message);
-    }
-
-    /**
-     * @return MarshallerInterface
-     */
-    private static function createDefaultMarshaller(): MarshallerInterface
-    {
-        return new Marshaller(new AttributeMapperFactory(self::createDefaultReader()));
-    }
-
-    /**
-     * @return ReaderInterface
-     */
-    private static function createDefaultReader(): ReaderInterface
-    {
-        if (\interface_exists(Reader::class)) {
-            return new SelectiveReader([new AnnotationReader(), new AttributeReader()]);
-        }
-
-        return new AttributeReader();
     }
 
     /**

@@ -33,6 +33,6 @@ class Process
             throw new ProcessFailedException($process);
         }
 
-        return trim($process->getOutput());
+        return \trim($process->getOutput());
     }
 }

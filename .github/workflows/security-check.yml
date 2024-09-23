@@ -2,6 +2,10 @@ name: Security
 
 on: [push, pull_request]
 
+concurrency:
+  cancel-in-progress: ${{ !contains(github.ref, 'release/')}}
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+
 jobs:
   security:
     name: Security Checks (PHP ${{ matrix.php }}, OS ${{ matrix.os }})

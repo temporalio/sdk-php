@@ -69,7 +69,8 @@ final class Server implements ServerInterface
 
         $result instanceof PromiseInterface or throw new \BadMethodCallException(\sprintf(
             self::ERROR_INVALID_RETURN_TYPE,
-            PromiseInterface::class, \get_debug_type($result),
+            PromiseInterface::class,
+            \get_debug_type($result),
         ));
 
         $result->then($this->onFulfilled($request), $this->onRejected($request));

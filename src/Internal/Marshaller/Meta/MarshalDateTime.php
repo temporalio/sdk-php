@@ -21,7 +21,7 @@ final class MarshalDateTime extends Marshal
 {
     /**
      * @param non-empty-string|null $name
-     * @param class-string<DateTimeInterface>|null $of Local representation of the date.
+     * @param class-string<\DateTimeInterface>|null $of Local representation of the date.
      *        May be any of internal or Carbon {@see DatetimeInterface} implementations.
      * @param non-empty-string $to Datetime format or {@see Timestamp} class name.
      * @param bool $nullable

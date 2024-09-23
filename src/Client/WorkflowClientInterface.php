@@ -50,7 +50,7 @@ interface WorkflowClientInterface extends ClientContextInterface
         $workflow,
         string $signal,
         array $signalArgs = [],
-        array $startArgs = []
+        array $startArgs = [],
     ): WorkflowRunInterface;
 
     /**
@@ -105,7 +105,7 @@ interface WorkflowClientInterface extends ClientContextInterface
     public function newRunningWorkflowStub(
         string $class,
         string $workflowID,
-        ?string $runID = null
+        ?string $runID = null,
     ): object;
 
     /**
@@ -119,7 +119,7 @@ interface WorkflowClientInterface extends ClientContextInterface
     public function newUntypedRunningWorkflowStub(
         string $workflowID,
         ?string $runID = null,
-        ?string $workflowType = null
+        ?string $workflowType = null,
     ): WorkflowStubInterface;
 
     /**

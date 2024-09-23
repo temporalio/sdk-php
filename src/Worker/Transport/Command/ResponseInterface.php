@@ -11,6 +11,4 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Transport\Command;
 
-interface ResponseInterface extends CommandInterface
-{
-}
+interface ResponseInterface extends CommandInterface {}

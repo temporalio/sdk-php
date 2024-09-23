@@ -24,8 +24,7 @@ final class WorkflowExecutionInfoMapper
 {
     public function __construct(
         private readonly DataConverterInterface $converter,
-    ) {
-    }
+    ) {}
 
     public function fromMessage(WorkflowExecutionInfo $message): WorkflowExecutionInfoDto
     {
@@ -44,7 +43,7 @@ final class WorkflowExecutionInfoMapper
             startTime: $message->getStartTime()?->toDateTime(),
             closeTime: $message->getCloseTime()?->toDateTime(),
             status: WorkflowExecutionStatus::from($message->getStatus()),
-            historyLength: (int)$message->getHistoryLength(),
+            historyLength: (int) $message->getHistoryLength(),
             parentNamespaceId: $message->getParentNamespaceId(),
             parentExecution: $this->prepareWorkflowExecution($message->getParentExecution()),
             executionTime: $message->getExecutionTime()?->toDateTime(),
@@ -52,8 +51,8 @@ final class WorkflowExecutionInfoMapper
             searchAttributes: $this->prepareSearchAttributes($message->getSearchAttributes()),
             autoResetPoints: $this->prepareAutoResetPoints($message->getAutoResetPoints()),
             taskQueue: $message->getTaskQueue(),
-            stateTransitionCount: (int)$message->getStateTransitionCount(),
-            historySizeBytes: (int)$message->getHistorySizeBytes(),
+            stateTransitionCount: (int) $message->getStateTransitionCount(),
+            historySizeBytes: (int) $message->getHistorySizeBytes(),
             mostRecentWorkerVersionStamp: $this->prepareWorkerVersionStamp($message->getMostRecentWorkerVersionStamp()),
         );
     }
@@ -100,7 +99,7 @@ final class WorkflowExecutionInfoMapper
 
         return new WorkflowExecutionDto(
             id: $execution->getWorkflowId(),
-            runId: $execution->getRunId()
+            runId: $execution->getRunId(),
         );
     }
 
@@ -119,7 +118,7 @@ final class WorkflowExecutionInfoMapper
             $resetPoints[] = new ResetPointInfoDto(
                 binaryChecksum: $point->getBinaryChecksum(),
                 runId: $point->getRunId(),
-                firstWorkflowTaskCompletedId: (int)$point->getFirstWorkflowTaskCompletedId(),
+                firstWorkflowTaskCompletedId: (int) $point->getFirstWorkflowTaskCompletedId(),
                 createTime: $point->getCreateTime()?->toDateTime(),
                 expireTime: $point->getExpireTime()?->toDateTime(),
                 resettable: $point->getResettable(),

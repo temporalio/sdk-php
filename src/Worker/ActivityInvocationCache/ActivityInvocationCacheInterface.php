@@ -6,15 +6,20 @@ namespace Temporal\Worker\ActivityInvocationCache;
 
 use React\Promise\PromiseInterface;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
-use Throwable;
 
 interface ActivityInvocationCacheInterface
 {
     public function clear(): void;
 
-    public function saveCompletion(string $activityMethodName, $value): void;
+    /**
+     * @param non-empty-string $activityMethodName
+     */
+    public function saveCompletion(string $activityMethodName, mixed $value): void;
 
-    public function saveFailure(string $activityMethodName, Throwable $error): void;
+    /**
+     * @param non-empty-string $activityMethodName
+     */
+    public function saveFailure(string $activityMethodName, \Throwable $error): void;
 
     public function canHandle(ServerRequestInterface $request): bool;
 

@@ -56,38 +56,6 @@ final class Type
     }
 
     /**
-     * @return string
-     */
-    public function getName(): string
-    {
-        return $this->name;
-    }
-
-    /**
-     * @return bool
-     */
-    public function allowsNull(): bool
-    {
-        return $this->allowsNull;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isUntyped(): bool
-    {
-        return $this->name === self::TYPE_ANY;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isClass(): bool
-    {
-        return \class_exists($this->name);
-    }
-
-    /**
      * @param \ReflectionClass $class
      * @param bool $nullable
      * @return Type
@@ -145,6 +113,38 @@ final class Type
             default:
                 return new self();
         }
+    }
+
+    /**
+     * @return string
+     */
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    /**
+     * @return bool
+     */
+    public function allowsNull(): bool
+    {
+        return $this->allowsNull;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isUntyped(): bool
+    {
+        return $this->name === self::TYPE_ANY;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isClass(): bool
+    {
+        return \class_exists($this->name);
     }
 
     public function isArrayOf(): bool
