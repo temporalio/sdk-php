@@ -32,6 +32,18 @@ final class DateIntervalTestCase extends TestCase
         self::assertSame('0/0/0/6', $i->format('%y/%h/%i/%s'));
     }
 
+    public function testParseFromDuration(): void
+    {
+        $duration = (new \Google\Protobuf\Duration())
+            ->setSeconds(5124)
+            ->setNanos(123456000);
+
+        $i = DateInterval::parse($duration);
+
+        self::assertSame(5124, (int)$i->totalSeconds);
+        self::assertSame(123_456, $i->microseconds);
+    }
+
     public static function provideValuesToParse(): iterable
     {
         yield [1, DateInterval::FORMAT_MICROSECONDS, 1, '0/0/0/0'];
