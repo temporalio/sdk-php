@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace Temporal\Tests\Unit\Exception;
 
 use Exception;
+use Google\Protobuf\Duration;
 use Temporal\DataConverter\DataConverter;
+use Temporal\DataConverter\EncodedCollection;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Exception\Failure\FailureConverter;
+use Temporal\Internal\Support\DateInterval;
 use Temporal\Tests\Unit\AbstractUnit;
 
 final class FailureConverterTestCase extends AbstractUnit
@@ -19,13 +22,13 @@ final class FailureConverterTestCase extends AbstractUnit
             'message',
             'type',
             true,
-            EncodedValues::fromValues(['abc', 123])
+            EncodedValues::fromValues(['abc', 123]),
         );
 
         $failure = FailureConverter::mapExceptionToFailure($exception, DataConverter::createDefault());
         $restoredDetails = EncodedValues::fromPayloads(
             $failure->getApplicationFailureInfo()->getDetails(),
-            DataConverter::createDefault()
+            DataConverter::createDefault(),
         );
 
         $this->assertSame('abc', $restoredDetails->getValue(0));
@@ -103,5 +106,30 @@ final class FailureConverterTestCase extends AbstractUnit
             'call_user_func()',
             $trace,
         );
+    }
+
+    public function testMapFailureToException(): void
+    {
+        $converter = DataConverter::createDefault();
+        $failure = new \Temporal\Api\Failure\V1\Failure();
+        $failure->setApplicationFailureInfo($info = new \Temporal\Api\Failure\V1\ApplicationFailureInfo());
+        $failure->setStackTrace("test stack trace:\n#1\n#2\n#3");
+        // Populate the info
+        $info->setType('testType');
+        $info->setDetails(EncodedValues::fromValues(['foo', 'bar'], $converter)->toPayloads());
+        $info->setNonRetryable(true);
+        $info->setNextRetryDelay((new Duration())->setSeconds(13)->setNanos(15_000));
+
+        $exception = FailureConverter::mapFailureToException($failure, $converter);
+
+        $this->assertInstanceOf(ApplicationFailure::class, $exception);
+        $this->assertSame('testType', $exception->getType());
+        $this->assertTrue($exception->isNonRetryable());
+        $this->assertSame(['foo', 'bar'], $exception->getDetails()->getValues());
+        // Next retry delay
+        $this->assertSame(13, $exception->getNextRetryDelay()->seconds);
+        $this->assertSame(15, $exception->getNextRetryDelay()->microseconds);
+        $this->assertTrue($exception->hasOriginalStackTrace());
+        $this->assertSame("test stack trace:\n#1\n#2\n#3", $exception->getOriginalStackTrace());
     }
 }

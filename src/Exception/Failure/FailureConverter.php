@@ -26,6 +26,7 @@ use Temporal\Api\Failure\V1\TimeoutFailureInfo;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\Client\ActivityCanceledException;
+use Temporal\Internal\Support\DateInterval;
 
 final class FailureConverter
 {
@@ -192,11 +193,11 @@ final class FailureConverter
         switch (true) {
             case $failure->hasApplicationFailureInfo():
                 $info = $failure->getApplicationFailureInfo();
+                \assert($info instanceof ApplicationFailureInfo);
 
                 $details = $info->hasDetails()
                     ? EncodedValues::fromPayloads($info->getDetails(), $converter)
-                    : EncodedValues::empty()
-                ;
+                    : EncodedValues::empty();
 
                 return new ApplicationFailure(
                     $failure->getMessage(),
@@ -204,10 +205,12 @@ final class FailureConverter
                     $info->getNonRetryable(),
                     $details,
                     $previous,
+                    DateInterval::parseOrNull($info->getNextRetryDelay()),
                 );
 
             case $failure->hasTimeoutFailureInfo():
                 $info = $failure->getTimeoutFailureInfo();
+                \assert($info instanceof TimeoutFailureInfo);
 
                 $details = $info->hasLastHeartbeatDetails()
                     ? EncodedValues::fromPayloads($info->getLastHeartbeatDetails(), $converter)
@@ -218,6 +221,7 @@ final class FailureConverter
 
             case $failure->hasCanceledFailureInfo():
                 $info = $failure->getCanceledFailureInfo();
+                \assert($info instanceof CanceledFailureInfo);
 
                 $details = $info->hasDetails()
                     ? EncodedValues::fromPayloads($info->getDetails(), $converter)
@@ -231,14 +235,14 @@ final class FailureConverter
 
             case $failure->hasServerFailureInfo():
                 $info = $failure->getServerFailureInfo();
+                \assert($info instanceof ServerFailureInfo);
                 return new ServerFailure($failure->getMessage(), $info->getNonRetryable(), $previous);
 
             case $failure->hasResetWorkflowFailureInfo():
                 $info = $failure->getResetWorkflowFailureInfo();
                 $details = $info->hasLastHeartbeatDetails()
                     ? EncodedValues::fromPayloads($info->getLastHeartbeatDetails(), $converter)
-                    : EncodedValues::empty()
-                ;
+                    : EncodedValues::empty();
 
                 return new ApplicationFailure(
                     $failure->getMessage(),
@@ -250,6 +254,7 @@ final class FailureConverter
 
             case $failure->hasActivityFailureInfo():
                 $info = $failure->getActivityFailureInfo();
+                \assert($info instanceof ActivityFailureInfo);
 
                 return new ActivityFailure(
                     $info->getScheduledEventId(),
@@ -264,6 +269,8 @@ final class FailureConverter
             case $failure->hasChildWorkflowExecutionFailureInfo():
                 $info = $failure->getChildWorkflowExecutionFailureInfo();
                 $execution = $info->getWorkflowExecution();
+                \assert($info instanceof ChildWorkflowExecutionFailureInfo);
+                \assert($execution instanceof WorkflowExecution);
 
                 return new ChildWorkflowFailure(
                     $info->getInitiatedEventId(),
