@@ -133,7 +133,7 @@ final class FailureConverterTestCase extends AbstractUnit
         $this->assertSame("test stack trace:\n#1\n#2\n#3", $exception->getOriginalStackTrace());
     }
 
-    public function testMapExceptionToFailure(): void
+    public function testMapExceptionToFailureWithNextRetryDelay(): void
     {
         $converter = DataConverter::createDefault();
         $exception = new ApplicationFailure(
@@ -154,5 +154,22 @@ final class FailureConverterTestCase extends AbstractUnit
         )->getValues());
         $this->assertSame(5 * 60 + 13, $failure->getApplicationFailureInfo()->getNextRetryDelay()->getSeconds());
         $this->assertSame(15_000, $failure->getApplicationFailureInfo()->getNextRetryDelay()->getNanos());
+    }
+
+    public function testMapExceptionToFailure(): void
+    {
+        $converter = DataConverter::createDefault();
+        $exception = new ApplicationFailure(
+            'message',
+            'type',
+            true,
+        );
+
+        $failure = FailureConverter::mapExceptionToFailure($exception, $converter);
+
+        $this->assertSame('type', $failure->getApplicationFailureInfo()->getType());
+        $this->assertTrue($failure->getApplicationFailureInfo()->getNonRetryable());
+        $this->assertEmpty($failure->getApplicationFailureInfo()->getDetails());
+        $this->assertNull($failure->getApplicationFailureInfo()->getNextRetryDelay());
     }
 }

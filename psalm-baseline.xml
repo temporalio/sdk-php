@@ -363,14 +363,8 @@
     <PossiblyNullReference>
       <code><![CDATA[getName]]></code>
       <code><![CDATA[getName]]></code>
-      <code><![CDATA[getNonRetryable]]></code>
-      <code><![CDATA[getScheduledEventId]]></code>
       <code><![CDATA[getStackTrace]]></code>
       <code><![CDATA[getWorkflowExecution]]></code>
-      <code><![CDATA[getWorkflowId]]></code>
-      <code><![CDATA[hasDetails]]></code>
-      <code><![CDATA[hasDetails]]></code>
-      <code><![CDATA[hasLastHeartbeatDetails]]></code>
       <code><![CDATA[hasLastHeartbeatDetails]]></code>
       <code><![CDATA[setStackTrace]]></code>
     </PossiblyNullReference>

@@ -87,12 +87,15 @@ final class FailureConverter
                 $info->setType($e->getType());
                 $info->setNonRetryable($e->isNonRetryable());
 
+                // Set Next Retry Delay
+                $nextRetry = DateInterval::toDuration($e->getNextRetryDelay());
+                $nextRetry === null or $info->setNextRetryDelay($nextRetry);
+
                 if (!$e->getDetails()->isEmpty()) {
                     $info->setDetails($e->getDetails()->toPayloads());
                 }
 
                 $failure->setApplicationFailureInfo($info);
-                $info->setNextRetryDelay(DateInterval::toDuration($e->getNextRetryDelay()));
                 break;
 
             case $e instanceof TimeoutFailure:
@@ -270,7 +273,6 @@ final class FailureConverter
             case $failure->hasChildWorkflowExecutionFailureInfo():
                 $info = $failure->getChildWorkflowExecutionFailureInfo();
                 $execution = $info->getWorkflowExecution();
-                \assert($info instanceof ChildWorkflowExecutionFailureInfo);
                 \assert($execution instanceof WorkflowExecution);
 
                 return new ChildWorkflowFailure(
