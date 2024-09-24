@@ -92,6 +92,7 @@ final class FailureConverter
                 }
 
                 $failure->setApplicationFailureInfo($info);
+                $info->setNextRetryDelay(DateInterval::toDuration($e->getNextRetryDelay()));
                 break;
 
             case $e instanceof TimeoutFailure:

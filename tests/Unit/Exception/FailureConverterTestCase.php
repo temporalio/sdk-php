@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Exception;
 
+use Carbon\CarbonInterval;
 use Exception;
 use Google\Protobuf\Duration;
+use Temporal\Api\Failure\V1\Failure;
 use Temporal\DataConverter\DataConverter;
-use Temporal\DataConverter\EncodedCollection;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Exception\Failure\FailureConverter;
-use Temporal\Internal\Support\DateInterval;
 use Temporal\Tests\Unit\AbstractUnit;
 
 final class FailureConverterTestCase extends AbstractUnit
@@ -60,7 +60,7 @@ final class FailureConverterTestCase extends AbstractUnit
 
         try {
             $trace = FailureConverter::mapExceptionToFailure(
-                call_user_func(fn () => new Exception()),
+                call_user_func(fn() => new Exception()),
                 DataConverter::createDefault(),
             )->getStackTrace();
         } finally {
@@ -111,7 +111,7 @@ final class FailureConverterTestCase extends AbstractUnit
     public function testMapFailureToException(): void
     {
         $converter = DataConverter::createDefault();
-        $failure = new \Temporal\Api\Failure\V1\Failure();
+        $failure = new Failure();
         $failure->setApplicationFailureInfo($info = new \Temporal\Api\Failure\V1\ApplicationFailureInfo());
         $failure->setStackTrace("test stack trace:\n#1\n#2\n#3");
         // Populate the info
@@ -131,5 +131,28 @@ final class FailureConverterTestCase extends AbstractUnit
         $this->assertSame(15, $exception->getNextRetryDelay()->microseconds);
         $this->assertTrue($exception->hasOriginalStackTrace());
         $this->assertSame("test stack trace:\n#1\n#2\n#3", $exception->getOriginalStackTrace());
+    }
+
+    public function testMapExceptionToFailure(): void
+    {
+        $converter = DataConverter::createDefault();
+        $exception = new ApplicationFailure(
+            'message',
+            'type',
+            true,
+            EncodedValues::fromValues(['foo', 'bar'], $converter),
+            nextRetryDelay: CarbonInterval::fromString('5 minutes 13 seconds 15 microseconds'),
+        );
+
+        $failure = FailureConverter::mapExceptionToFailure($exception, $converter);
+
+        $this->assertSame('type', $failure->getApplicationFailureInfo()->getType());
+        $this->assertTrue($failure->getApplicationFailureInfo()->getNonRetryable());
+        $this->assertSame(['foo', 'bar'], EncodedValues::fromPayloads(
+            $failure->getApplicationFailureInfo()->getDetails(),
+            $converter,
+        )->getValues());
+        $this->assertSame(5 * 60 + 13, $failure->getApplicationFailureInfo()->getNextRetryDelay()->getSeconds());
+        $this->assertSame(15_000, $failure->getApplicationFailureInfo()->getNextRetryDelay()->getNanos());
     }
 }
