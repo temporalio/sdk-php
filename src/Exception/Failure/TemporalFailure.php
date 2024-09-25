@@ -81,7 +81,8 @@ class TemporalFailure extends TemporalException implements \Stringable
     }
 
     /**
-     * @return bool
+     * @psalm-assert-if-true non-empty-string $this->originalStackTrace
+     * @psalm-assert-if-false null $this->originalStackTrace
      */
     public function hasOriginalStackTrace(): bool
     {
