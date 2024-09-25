@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Temporal\Tests\Acceptance\App;
 
 use PHPUnit\Framework\Attributes\Test;
-use Temporal\FeatureFlags;
+use Temporal\Activity\ActivityInterface;
+use Temporal\DataConverter\PayloadConverterInterface;
 use Temporal\Tests\Acceptance\App\Input\Command;
 use Temporal\Tests\Acceptance\App\Input\Feature;
 use Temporal\Tests\Acceptance\App\Runtime\State;
-use Temporal\Activity\ActivityInterface;
-use Temporal\DataConverter\PayloadConverterInterface;
+use Temporal\Worker\FeatureFlags;
 use Temporal\Workflow\WorkflowInterface;
 
 final class RuntimeBuilder

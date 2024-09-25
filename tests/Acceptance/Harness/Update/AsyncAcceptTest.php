@@ -41,7 +41,7 @@ class AsyncAcceptTest extends TestCase
         # Unblock last update
         $stub->signal('unblock');
         self::assertSame(123, $handle->getResult());
-        // self::same($otherHandle->getResult(), 123);
+        self::assertSame(123, $otherHandle->getResult());
 
         # issue an async update that should throw
         $updateId = Uuid::uuid4()->toString();
