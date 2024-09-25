@@ -13,7 +13,6 @@ namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
 use Temporal\DataConverter\EncodedValues;
-use Temporal\FeatureFlags;
 use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
 use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\Instantiator\WorkflowInstantiator;
@@ -22,6 +21,7 @@ use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Workflow\Input;
 use Temporal\Internal\Workflow\Process\Process;
 use Temporal\Internal\Workflow\WorkflowContext;
+use Temporal\Worker\FeatureFlags;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInfo;
