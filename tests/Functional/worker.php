@@ -56,7 +56,12 @@ $workers = [
 
 // register all workflows
 foreach ($getClasses(__DIR__ . '/../Fixtures/src/Workflow', 'Temporal\\Tests\\Workflow\\') as $class) {
-    if (class_exists($class) && !\interface_exists($class)) {
+    if (\class_exists($class) && !\interface_exists($class)) {
+        $wfRef = new \ReflectionClass($class);
+        if ($wfRef->isAbstract()) {
+            continue;
+        }
+
         \array_walk(
             $workers,
             static fn (WorkerInterface $worker) => $worker->registerWorkflowTypes($class),

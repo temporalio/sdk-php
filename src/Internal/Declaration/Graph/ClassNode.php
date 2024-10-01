@@ -11,13 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration\Graph;
 
+use Temporal\Tests\Workflow\Inheritance\ExtendingWorkflow;
+
 final class ClassNode implements NodeInterface
 {
-    /**
-     * @var \ReflectionClass
-     */
-    private \ReflectionClass $class;
-
     /**
      * @var array|null
      */
@@ -26,17 +23,36 @@ final class ClassNode implements NodeInterface
     /**
      * @param \ReflectionClass $class
      */
-    public function __construct(\ReflectionClass $class)
-    {
-        $this->class = $class;
-    }
+    public function __construct(
+        private \ReflectionClass $class,
+    ) {}
 
-    /**
-     * @return \ReflectionClass
-     */
     public function getReflection(): \ReflectionClass
     {
         return $this->class;
+    }
+
+    /**
+     * Get all methods from the class and its parents without duplicates.
+     *
+     * @param int|null $flags
+     * @return array<non-empty-string, \ReflectionMethod>
+     *
+     * @throws \ReflectionException
+     */
+    public function getAllMethods(?int $flags = null): array {
+        /** @var array<non-empty-string, \ReflectionMethod> $result */
+        $result = [];
+
+        foreach ($this->getInheritance() as $classes) {
+            foreach ($classes as $class) {
+                foreach ($class->getReflection()->getMethods($flags) as $method) {
+                    $result[$method->getName()] ??= $method;
+                }
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -50,8 +66,9 @@ final class ClassNode implements NodeInterface
     }
 
     /**
-     * @param string $name
-     * @param bool $reverse
+     * Get a method with all the declared classes.
+     *
+     * @param non-empty-string $name
      * @return \Traversable<ClassNode, \ReflectionMethod>
      * @throws \ReflectionException
      */

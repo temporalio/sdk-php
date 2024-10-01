@@ -53,6 +53,6 @@ final class WorkflowInstantiator extends Instantiator
             $prototype->getID(),
         ));
 
-        return $handler->getDeclaringClass()->newInstanceWithoutConstructor();
+        return $prototype->getClass()->newInstanceWithoutConstructor();
     }
 }
