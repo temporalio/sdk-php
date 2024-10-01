@@ -10,6 +10,7 @@ use Temporal\Client\WorkflowClient;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Testing\ActivityMocker;
 use Temporal\Tests\TestCase;
+use Temporal\Tests\Workflow\Inheritance\ExtendingWorkflow;
 use Temporal\Tests\Workflow\SimpleWorkflow;
 use Temporal\Tests\Workflow\YieldGeneratorWorkflow;
 use Temporal\Tests\Workflow\YieldScalarsWorkflow;
@@ -117,6 +118,13 @@ final class SimpleWorkflowTestCase extends TestCase
         // When a generator is yielded, the coroutine doesn't return resolved value from the generator
         // but returns the generator result itself.
         $this->assertSame('bar', $run->getResult());
+    }
+
+    public function testWorkflowMethodInAbstractParent(): void
+    {
+        $workflow = $this->workflowClient->newWorkflowStub(ExtendingWorkflow::class);
+        $run = $this->workflowClient->start($workflow);
+        $this->assertNull($run->getResult(5));
     }
 
     private function assertContainsEvent(WorkflowExecution $execution, int $event): void

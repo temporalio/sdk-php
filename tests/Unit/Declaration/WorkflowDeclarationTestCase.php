@@ -14,6 +14,7 @@ namespace Temporal\Tests\Unit\Declaration;
 use Carbon\CarbonInterval;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\TestDox;
+use Spiral\Attributes\AttributeReader;
 use Temporal\Common\CronSchedule;
 use Temporal\Internal\Declaration\Instantiator\WorkflowInstantiator;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
@@ -215,5 +216,14 @@ class WorkflowDeclarationTestCase extends AbstractDeclaration
         );
 
         $this->assertInstanceOf(ExtendingWorkflow::class, $instance->getContext());
+    }
+
+    public function testWorkflowWithInterface(): void
+    {
+        $reader = new WorkflowReader(new AttributeReader());
+
+        $result = $reader->fromClass(\Temporal\Tests\Workflow\AggregatedWorkflowImpl::class);
+
+        $this->assertSame('AggregatedWorkflow', $result->getID());
     }
 }

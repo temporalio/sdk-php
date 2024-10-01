@@ -264,7 +264,7 @@ class UntypedWorkflowStubTestCase extends AbstractClient
         $signaller = $client->newUntypedRunningWorkflowStub($workflowId, $workflowRunId);
         $signaller->signal('addValue', 'test1');
 
-        $result = $workflowRun->getResult();
+        $result = $workflowRun->getResult(10);
         $this->assertEquals(['test1'], $result);
     }
 }

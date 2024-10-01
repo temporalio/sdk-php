@@ -333,15 +333,29 @@ class WorkflowReader extends Reader
                 //
                 //  - #[WorkflowInterface]
                 //
-                $interface = $this->reader->firstClassMetadata($graph->getReflection(), WorkflowInterface::class);
+                /** @var \ReflectionClass|null $context */
+                $context = null;
+                foreach ($graph->getIterator() as $edges) {
+                    foreach ($edges as $node) {
+                        $interface = $this->reader->firstClassMetadata(
+                            $context = $node->getReflection(),
+                            WorkflowInterface::class,
+                        );
+
+                        if ($interface !== null) {
+                            break 2;
+                        }
+                    }
+                }
 
                 // In case
                 if ($interface === null) {
                     continue;
                 }
 
+                \assert($context !== null);
                 if ($prototype === null) {
-                    $prototype = $this->findProto($handler, $method, $graph->getReflection());
+                    $prototype = $this->findProto($handler, $method, $context);
                 }
 
                 if ($prototype !== null && $retry !== null) {
@@ -371,7 +385,7 @@ class WorkflowReader extends Reader
     /**
      * @param \ReflectionMethod $handler First method in the inheritance chain
      * @param \ReflectionMethod $ctx Current method in the inheritance chain
-     * @param \ReflectionClass $class Prototype class
+     * @param \ReflectionClass $class Class or Interface with #[WorkflowInterface] attribute
      * @return WorkflowPrototype|null
      */
     private function findProto(
