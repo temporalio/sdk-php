@@ -355,7 +355,7 @@ class WorkflowReader extends Reader
 
                 \assert($context !== null);
                 if ($prototype === null) {
-                    $prototype = $this->findProto($handler, $method, $context);
+                    $prototype = $this->findProto($handler, $method, $context, $graph->getReflection());
                 }
 
                 if ($prototype !== null && $retry !== null) {
@@ -385,12 +385,14 @@ class WorkflowReader extends Reader
     /**
      * @param \ReflectionMethod $handler First method in the inheritance chain
      * @param \ReflectionMethod $ctx Current method in the inheritance chain
-     * @param \ReflectionClass $class Class or Interface with #[WorkflowInterface] attribute
+     * @param \ReflectionClass $interface Class or Interface with #[WorkflowInterface] attribute
+     * @param \ReflectionClass $class Target class
      * @return WorkflowPrototype|null
      */
     private function findProto(
         \ReflectionMethod $handler,
         \ReflectionMethod $ctx,
+        \ReflectionClass $interface,
         \ReflectionClass $class,
     ): ?WorkflowPrototype {
         // The name of the workflow handler must be generated based
@@ -431,7 +433,7 @@ class WorkflowReader extends Reader
             );
         }
 
-        $name = $info->name ?? $class->getShortName();
+        $name = $info->name ?? $interface->getShortName();
 
         return new WorkflowPrototype($name, $handler, $class);
     }

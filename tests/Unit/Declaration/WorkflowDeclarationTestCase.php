@@ -24,11 +24,11 @@ use Temporal\Tests\Unit\Declaration\Fixture\SimpleWorkflow;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithCron;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithCronAndRetry;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithCustomName;
-use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithInterface;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithoutHandler;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithQueries;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithRetry;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithSignals;
+use Temporal\Tests\Workflow\AggregatedWorkflowImpl;
 
 /**
  * @group unit
@@ -222,8 +222,20 @@ class WorkflowDeclarationTestCase extends AbstractDeclaration
     {
         $reader = new WorkflowReader(new AttributeReader());
 
-        $result = $reader->fromClass(\Temporal\Tests\Workflow\AggregatedWorkflowImpl::class);
+        $result = $reader->fromClass(AggregatedWorkflowImpl::class);
 
         $this->assertSame('AggregatedWorkflow', $result->getID());
+    }
+
+    public function testInstantiateWorkflowWithInterface(): void
+    {
+        $instantiator = new WorkflowInstantiator(new \Temporal\Interceptor\SimplePipelineProvider());
+        $reader = new WorkflowReader(new AttributeReader());
+        $prototype = $reader->fromClass(AggregatedWorkflowImpl::class);
+
+        $instance = $instantiator->instantiate($prototype);
+
+        $this->assertInstanceOf(AggregatedWorkflowImpl::class, $instance->getContext());
+        $this->assertSame('AggregatedWorkflow', $prototype->getID());
     }
 }

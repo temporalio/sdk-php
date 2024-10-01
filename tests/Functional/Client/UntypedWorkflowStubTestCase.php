@@ -18,7 +18,6 @@ use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\TerminatedFailure;
 use Temporal\Exception\IllegalStateException;
 use Temporal\Exception\InvalidArgumentException;
-use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithoutHandler;
 use Temporal\Workflow\WorkflowExecutionStatus;
 
 /**
