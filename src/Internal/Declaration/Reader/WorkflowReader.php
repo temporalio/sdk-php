@@ -303,7 +303,7 @@ class WorkflowReader extends Reader
             //
             $contextualRetry = $previousRetry;
 
-            foreach ($group as $ctx => $method) {
+            foreach ($group as $method) {
                 /** @var MethodRetry $retry */
                 $retry = $this->reader->firstFunctionMetadata($method, MethodRetry::class);
 
@@ -334,7 +334,7 @@ class WorkflowReader extends Reader
                 //  - #[WorkflowInterface]
                 //
                 /** @var \ReflectionClass|null $context */
-                $context = null;
+                $interface = $context = null;
                 foreach ($graph->getIterator() as $edges) {
                     foreach ($edges as $node) {
                         $interface = $this->reader->firstClassMetadata(

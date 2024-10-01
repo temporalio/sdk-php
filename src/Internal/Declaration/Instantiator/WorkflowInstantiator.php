@@ -48,7 +48,7 @@ final class WorkflowInstantiator extends Instantiator
      */
     protected function getInstance(PrototypeInterface $prototype): object
     {
-        $handler = $prototype->getHandler() ?? throw new InstantiationException(\sprintf(
+        $prototype->getHandler() ?? throw new InstantiationException(\sprintf(
             'Unable to instantiate workflow "%s" without handler method',
             $prototype->getID(),
         ));

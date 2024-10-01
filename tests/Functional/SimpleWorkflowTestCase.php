@@ -124,7 +124,7 @@ final class SimpleWorkflowTestCase extends TestCase
     {
         $workflow = $this->workflowClient->newWorkflowStub(ExtendingWorkflow::class);
         $run = $this->workflowClient->start($workflow);
-        $this->assertNull($run->getResult(5));
+        $this->assertNull($run->getResult(timeout: 5));
     }
 
     private function assertContainsEvent(WorkflowExecution $execution, int $event): void

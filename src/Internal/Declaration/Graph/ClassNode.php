@@ -35,7 +35,7 @@ final class ClassNode implements NodeInterface
     /**
      * Get all methods from the class and its parents without duplicates.
      *
-     * @param int|null $flags
+     * @param int<0, 119>|null $flags
      * @return array<non-empty-string, \ReflectionMethod>
      *
      * @throws \ReflectionException
