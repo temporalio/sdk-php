@@ -35,18 +35,17 @@ final class ClassNode implements NodeInterface
     /**
      * Get all methods from the class and its parents without duplicates.
      *
-     * @param int<0, 119>|null $flags
      * @return array<non-empty-string, \ReflectionMethod>
      *
      * @throws \ReflectionException
      */
-    public function getAllMethods(?int $flags = null): array {
+    public function getAllMethods(): array {
         /** @var array<non-empty-string, \ReflectionMethod> $result */
         $result = [];
 
         foreach ($this->getInheritance() as $classes) {
             foreach ($classes as $class) {
-                foreach ($class->getReflection()->getMethods($flags) as $method) {
+                foreach ($class->getReflection()->getMethods() as $method) {
                     $result[$method->getName()] ??= $method;
                 }
             }
