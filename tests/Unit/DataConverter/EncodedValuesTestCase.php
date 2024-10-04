@@ -1,18 +1,13 @@
 <?php
 
-/**
- * This file is part of Temporal package.
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 declare(strict_types=1);
 
-namespace Temporal\Tests\Unit\Protocol;
+namespace DataConverter;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+use Temporal\Api\Common\V1\Payloads;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Type;
@@ -22,15 +17,8 @@ use Temporal\Workflow\ReturnType;
  * @group unit
  * @group protocol
  */
-class EncodingTestCase extends AbstractProtocol
+final class EncodedValuesTestCase extends TestCase
 {
-    #[Test]
-    public function nullValuesAreReturned(): void
-    {
-        $encodedValues = EncodedValues::fromValues([null, 'something'], new DataConverter());
-        $this->assertNull($encodedValues->getValue(0));
-    }
-
     public static function getNotNullableTypes(): iterable
     {
         yield [Type::create(Type::TYPE_ARRAY)];
@@ -79,6 +67,13 @@ class EncodingTestCase extends AbstractProtocol
     }
 
     #[Test]
+    public function nullValuesAreReturned(): void
+    {
+        $encodedValues = EncodedValues::fromValues([null, 'something'], new DataConverter());
+        $this->assertNull($encodedValues->getValue(0));
+    }
+
+    #[Test]
     #[DataProvider('getNullableTypes')]
     public function payloadWithoutValueDecoding(mixed $type): void
     {
@@ -97,6 +92,25 @@ class EncodingTestCase extends AbstractProtocol
         self::expectExceptionMessage('DataConverter is not set');
 
         $encodedValues->getValue(0, $type);
+    }
+
+    public function testEmpty(): void
+    {
+        $ev = EncodedValues::empty();
+
+        $this->assertInstanceOf(EncodedValues::class, $ev);
+        $this->assertEmpty($ev->getValues());
+        $this->assertNull($ev->getValue(0));
+    }
+
+    public function testGetValuesFromEmptyPayloads(): void
+    {
+        $dataConverter = new DataConverter();
+        $ev = EncodedValues::fromPayloads(new Payloads(), $dataConverter);
+
+        $this->assertInstanceOf(EncodedValues::class, $ev);
+        $this->assertEmpty($ev->getValues());
+        $this->assertNull($ev->getValue(0));
     }
 
     private static function getReturnType(\Closure $closure): \ReflectionType

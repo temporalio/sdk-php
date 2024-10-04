@@ -168,7 +168,7 @@ class EncodedValues implements ValuesInterface
 
     public function getValues(): array
     {
-        $result = $this->values;
+        $result = (array) $this->values;
 
         if (empty($this->payloads)) {
             return $result;
