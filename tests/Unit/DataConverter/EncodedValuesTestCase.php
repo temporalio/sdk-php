@@ -86,7 +86,9 @@ final class EncodedValuesTestCase extends TestCase
     #[DataProvider('getNotNullableTypes')]
     public function payloadWithoutValueDecodingNotNullable(mixed $type): void
     {
-        $encodedValues = EncodedValues::fromPayloadCollection(new \ArrayIterator([]));
+        $encodedValues = EncodedValues::fromPayloadCollection(new \ArrayIterator([
+            new Payloads(),
+        ]));
 
         self::expectException(\LogicException::class);
         self::expectExceptionMessage('DataConverter is not set');
@@ -111,6 +113,25 @@ final class EncodedValuesTestCase extends TestCase
         $this->assertInstanceOf(EncodedValues::class, $ev);
         $this->assertEmpty($ev->getValues());
         $this->assertNull($ev->getValue(0));
+    }
+
+    public function testGetValueFromEmptyValues(): void
+    {
+        $ev = EncodedValues::fromValues([]);
+
+        $this->assertInstanceOf(EncodedValues::class, $ev);
+        $this->assertEmpty($ev->getValues());
+        $this->assertNull($ev->getValue(0));
+    }
+
+    public function testOutOfBounds(): void
+    {
+        $ev = EncodedValues::fromValues([]);
+
+        $this->expectException(\OutOfBoundsException::class);
+        $this->expectExceptionMessage('Index 1 is out of bounds.');
+
+        $ev->getValue(1);
     }
 
     private static function getReturnType(\Closure $closure): \ReflectionType
