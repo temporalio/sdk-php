@@ -112,8 +112,8 @@ final class StartWorkflow extends Route
                 /** @see WorkflowInboundCallsInterceptor::execute() */
                 'execute',
             )(
-            new WorkflowInput($context->getInfo(), $context->getInput(), $context->getHeader()),
-        );
+                new WorkflowInput($context->getInfo(), $context->getInput(), $context->getHeader()),
+            );
     }
 
     private function findWorkflowOrFail(WorkflowInfo $info): WorkflowPrototype
