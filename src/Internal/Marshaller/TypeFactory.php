@@ -19,7 +19,6 @@ use Temporal\Internal\Marshaller\Type\EncodedCollectionType;
 use Temporal\Internal\Marshaller\Type\EnumType;
 use Temporal\Internal\Marshaller\Type\EnumValueType;
 use Temporal\Internal\Marshaller\Type\ObjectType;
-use Temporal\Internal\Marshaller\Type\OneOfType;
 use Temporal\Internal\Marshaller\Type\RuleFactoryInterface as TypeRuleFactoryInterface;
 use Temporal\Internal\Marshaller\Type\TypeInterface;
 use Temporal\Internal\Marshaller\Type\UuidType;
@@ -136,7 +135,7 @@ class TypeFactory implements RuleFactoryInterface
     }
 
     /**
-     * @return list<class-string<DetectableTypeInterface|TypeRuleFactoryInterface>>
+     * @return iterable<class-string<DetectableTypeInterface|TypeRuleFactoryInterface>>
      */
     private function getDefaultMatchers(): iterable
     {
@@ -147,7 +146,6 @@ class TypeFactory implements RuleFactoryInterface
         yield UuidType::class;
         yield ArrayType::class;
         yield EncodedCollectionType::class;
-        yield OneOfType::class;
         yield ObjectType::class;
     }
 }

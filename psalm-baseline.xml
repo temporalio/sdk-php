@@ -632,6 +632,11 @@
       <code><![CDATA[NamedArgumentConstructor]]></code>
     </DeprecatedClass>
   </file>
+  <file src="src/Internal/Marshaller/Meta/MarshalAssocArray.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
   <file src="src/Internal/Marshaller/Meta/MarshalDateTime.php">
     <DeprecatedClass>
       <code><![CDATA[NamedArgumentConstructor]]></code>
@@ -744,7 +749,6 @@
     </InvalidReturnStatement>
     <InvalidReturnType>
       <code><![CDATA[?string]]></code>
-      <code><![CDATA[iterable<class-string<DetectableTypeInterface>>]]></code>
     </InvalidReturnType>
     <LessSpecificReturnStatement>
       <code><![CDATA[$result]]></code>
