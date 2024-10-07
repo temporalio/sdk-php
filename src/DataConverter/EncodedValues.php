@@ -20,8 +20,10 @@ use Temporal\Workflow\ReturnType;
 use Traversable;
 
 /**
+ * List of typed values.
+ *
  * @psalm-type TPayloadsCollection = Traversable&ArrayAccess&Countable
- * @psalm-type TKey = array-key
+ * @psalm-type TKey = int
  * @psalm-type TValue = string
  */
 class EncodedValues implements ValuesInterface

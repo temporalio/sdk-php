@@ -11,18 +11,16 @@ declare(strict_types=1);
 
 namespace Temporal\DataConverter;
 
-use ArrayAccess;
-use Countable;
-use IteratorAggregate;
 use Temporal\Api\Common\V1\Payload;
-use Traversable;
 
 /**
- * @psalm-type TPayloadsCollection = Traversable&ArrayAccess&Countable
+ * Assoc collection of typed values.
+ *
  * @psalm-type TKey = array-key
  * @psalm-type TValue = mixed
+ * @psalm-type TPayloadsCollection = \Traversable&\ArrayAccess<TKey, TValue>&\Countable
  *
- * @implements IteratorAggregate<TKey, TValue>
+ * @implements \IteratorAggregate<TKey, TValue>
  */
 class EncodedCollection implements \IteratorAggregate, \Countable
 {
@@ -36,16 +34,14 @@ class EncodedCollection implements \IteratorAggregate, \Countable
      */
     private ?\ArrayAccess $payloads = null;
 
+    /** @var array<TKey, TValue> */
     private array $values = [];
 
     /**
      * Cannot be constructed directly.
      */
-    private function __construct() {}
+    final private function __construct() {}
 
-    /**
-     * @return static
-     */
     public static function empty(): static
     {
         $ev = new static();
@@ -55,10 +51,7 @@ class EncodedCollection implements \IteratorAggregate, \Countable
     }
 
     /**
-     * @param iterable $values
-     * @param DataConverterInterface|null $dataConverter
-     *
-     * @return static
+     * @param iterable<TKey, TValue> $values
      */
     public static function fromValues(iterable $values, ?DataConverterInterface $dataConverter = null): static
     {
@@ -72,10 +65,7 @@ class EncodedCollection implements \IteratorAggregate, \Countable
     }
 
     /**
-     * @param iterable<array-key, Payload> $payloads
-     * @param DataConverterInterface $dataConverter
-     *
-     * @return EncodedCollection
+     * @param array<TKey, Payload>|TPayloadsCollection $payloads
      */
     public static function fromPayloadCollection(
         array|\ArrayAccess $payloads,
@@ -103,8 +93,6 @@ class EncodedCollection implements \IteratorAggregate, \Countable
     /**
      * @param array-key $name
      * @param Type|string|null $type
-     *
-     * @return mixed
      */
     public function getValue(int|string $name, mixed $type = null): mixed
     {
@@ -143,9 +131,8 @@ class EncodedCollection implements \IteratorAggregate, \Countable
     public function getIterator(): \Traversable
     {
         yield from $this->values;
-        if ($this->payloads !== null) {
-            $this->converter !== null or $this->payloads->count() === 0
-            or throw new \LogicException('DataConverter is not set.');
+        if ($this->payloads !== null && $this->payloads->count() > 0) {
+            $this->converter === null and throw new \LogicException('DataConverter is not set.');
 
             foreach ($this->payloads as $key => $payload) {
                 yield $key => $this->converter->fromPayload($payload, null);
@@ -166,9 +153,7 @@ class EncodedCollection implements \IteratorAggregate, \Countable
             return $data;
         }
 
-        if ($this->converter === null) {
-            throw new \LogicException('DataConverter is not set.');
-        }
+        $this->converter === null and throw new \LogicException('DataConverter is not set.');
 
         foreach ($this->values as $key => $value) {
             $data[$key] = $this->converter->toPayload($value);
@@ -177,6 +162,10 @@ class EncodedCollection implements \IteratorAggregate, \Countable
         return $data;
     }
 
+    /**
+     * @param TKey $name
+     * @param TValue $value
+     */
     public function withValue(int|string $name, mixed $value): static
     {
         $clone = clone $this;
@@ -193,9 +182,6 @@ class EncodedCollection implements \IteratorAggregate, \Countable
         return $clone;
     }
 
-    /**
-     * @param DataConverterInterface $converter
-     */
     public function setDataConverter(DataConverterInterface $converter): void
     {
         $this->converter = $converter;
