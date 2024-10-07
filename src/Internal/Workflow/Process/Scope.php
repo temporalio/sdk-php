@@ -136,7 +136,7 @@ class Scope implements CancellationScopeInterface, Destroyable
     /**
      * @param \Closure(ValuesInterface): mixed $handler
      */
-    public function start(\Closure $handler, ValuesInterface $values = null, bool $deferred): void
+    public function start(\Closure $handler, ?ValuesInterface $values, bool $deferred): void
     {
         // Create a coroutine generator
         $this->coroutine = $this->call($handler, $values ?? EncodedValues::empty());

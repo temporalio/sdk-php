@@ -14,17 +14,21 @@ namespace Temporal\Tests\Unit\Declaration;
 use Carbon\CarbonInterval;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\TestDox;
+use Spiral\Attributes\AttributeReader;
 use Temporal\Common\CronSchedule;
+use Temporal\Internal\Declaration\Instantiator\WorkflowInstantiator;
+use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
+use Temporal\Tests\Unit\Declaration\Fixture\Inheritance\ExtendingWorkflow;
 use Temporal\Tests\Unit\Declaration\Fixture\SimpleWorkflow;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithCron;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithCronAndRetry;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithCustomName;
-use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithInterface;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithoutHandler;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithQueries;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithRetry;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithSignals;
+use Temporal\Tests\Workflow\AggregatedWorkflowImpl;
 
 /**
  * @group unit
@@ -197,5 +201,41 @@ class WorkflowDeclarationTestCase extends AbstractDeclaration
         $prototype = $reader->fromClass(WorkflowWithCustomName::class);
 
         $this->assertSame('ExampleWorkflowName', $prototype->getID());
+    }
+
+    public function testHierarchicalWorkflow(): void
+    {
+        $instantiator = new WorkflowInstantiator(new \Temporal\Interceptor\SimplePipelineProvider());
+
+        $instance = $instantiator->instantiate(
+            new WorkflowPrototype(
+                'extending',
+                new \ReflectionMethod(ExtendingWorkflow::class, 'handler'),
+                new \ReflectionClass(ExtendingWorkflow::class),
+            ),
+        );
+
+        $this->assertInstanceOf(ExtendingWorkflow::class, $instance->getContext());
+    }
+
+    public function testWorkflowWithInterface(): void
+    {
+        $reader = new WorkflowReader(new AttributeReader());
+
+        $result = $reader->fromClass(AggregatedWorkflowImpl::class);
+
+        $this->assertSame('AggregatedWorkflow', $result->getID());
+    }
+
+    public function testInstantiateWorkflowWithInterface(): void
+    {
+        $instantiator = new WorkflowInstantiator(new \Temporal\Interceptor\SimplePipelineProvider());
+        $reader = new WorkflowReader(new AttributeReader());
+        $prototype = $reader->fromClass(AggregatedWorkflowImpl::class);
+
+        $instance = $instantiator->instantiate($prototype);
+
+        $this->assertInstanceOf(AggregatedWorkflowImpl::class, $instance->getContext());
+        $this->assertSame('AggregatedWorkflow', $prototype->getID());
     }
 }
