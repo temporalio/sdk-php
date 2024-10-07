@@ -79,11 +79,11 @@ class AssocArrayType extends Type
                 $result[$i] = $this->type->serialize($item);
             }
 
-            return (object)$result;
+            return (object) $result;
         }
 
         if (\is_array($value)) {
-            return (object)$value;
+            return (object) $value;
         }
 
         // Convert iterable to array
@@ -91,6 +91,6 @@ class AssocArrayType extends Type
         foreach ($value as $i => $item) {
             $result[$i] = $item;
         }
-        return (object)$result;
+        return (object) $result;
     }
 }
