@@ -107,9 +107,7 @@ class WorkflowReader extends Reader
      */
     protected function getWorkflowPrototypes(ClassNode $graph): \Traversable
     {
-        $class = $graph->getReflection();
-
-        foreach ($class->getMethods() as $reflection) {
+        foreach ($graph->getAllMethods() as $reflection) {
             if (!$this->isValidMethod($reflection)) {
                 continue;
             }
@@ -305,7 +303,7 @@ class WorkflowReader extends Reader
             //
             $contextualRetry = $previousRetry;
 
-            foreach ($group as $ctx => $method) {
+            foreach ($group as $method) {
                 /** @var MethodRetry $retry */
                 $retry = $this->reader->firstFunctionMetadata($method, MethodRetry::class);
 
@@ -335,15 +333,29 @@ class WorkflowReader extends Reader
                 //
                 //  - #[WorkflowInterface]
                 //
-                $interface = $this->reader->firstClassMetadata($ctx->getReflection(), WorkflowInterface::class);
+                /** @var \ReflectionClass|null $context */
+                $interface = $context = null;
+                foreach ($graph->getIterator() as $edges) {
+                    foreach ($edges as $node) {
+                        $interface = $this->reader->firstClassMetadata(
+                            $context = $node->getReflection(),
+                            WorkflowInterface::class,
+                        );
+
+                        if ($interface !== null) {
+                            break 2;
+                        }
+                    }
+                }
 
                 // In case
                 if ($interface === null) {
                     continue;
                 }
 
+                \assert($context !== null);
                 if ($prototype === null) {
-                    $prototype = $this->findProto($handler, $method);
+                    $prototype = $this->findProto($handler, $method, $context, $graph->getReflection());
                 }
 
                 if ($prototype !== null && $retry !== null) {
@@ -371,15 +383,18 @@ class WorkflowReader extends Reader
     }
 
     /**
-     * @param \ReflectionMethod $handler
-     * @param \ReflectionMethod $ctx
+     * @param \ReflectionMethod $handler First method in the inheritance chain
+     * @param \ReflectionMethod $ctx Current method in the inheritance chain
+     * @param \ReflectionClass $interface Class or Interface with #[WorkflowInterface] attribute
+     * @param \ReflectionClass $class Target class
      * @return WorkflowPrototype|null
      */
-    private function findProto(\ReflectionMethod $handler, \ReflectionMethod $ctx): ?WorkflowPrototype
-    {
-        $reflection = $ctx->getDeclaringClass();
-
-        //
+    private function findProto(
+        \ReflectionMethod $handler,
+        \ReflectionMethod $ctx,
+        \ReflectionClass $interface,
+        \ReflectionClass $class,
+    ): ?WorkflowPrototype {
         // The name of the workflow handler must be generated based
         // method's name which can be redefined using #[WorkflowMethod]
         // attribute.
@@ -418,8 +433,8 @@ class WorkflowReader extends Reader
             );
         }
 
-        $name = $info->name ?? $reflection->getShortName();
+        $name = $info->name ?? $interface->getShortName();
 
-        return new WorkflowPrototype($name, $handler, $reflection);
+        return new WorkflowPrototype($name, $handler, $class);
     }
 }
