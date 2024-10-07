@@ -129,15 +129,23 @@ final class StartWorkflow extends Route
             return null;
         }
 
-        $sa = (new SearchAttributes());
-        $sa->mergeFromJsonString(
-            \json_encode($param),
-            true,
-        );
+        if ($param === []) {
+            return EncodedCollection::empty();
+        }
 
-        return EncodedCollection::fromPayloadCollection(
-            $sa->getIndexedFields(),
-            $this->services->dataConverter,
-        );
+        try {
+            $sa = (new SearchAttributes());
+            $sa->mergeFromJsonString(
+                \json_encode($param),
+                true,
+            );
+
+            return EncodedCollection::fromPayloadCollection(
+                $sa->getIndexedFields(),
+                $this->services->dataConverter,
+            );
+        } catch (\Throwable) {
+            return null;
+        }
     }
 }

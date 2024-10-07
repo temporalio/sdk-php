@@ -136,7 +136,7 @@ class TypeFactory implements RuleFactoryInterface
     }
 
     /**
-     * @return iterable<class-string<DetectableTypeInterface>>
+     * @return list<class-string<DetectableTypeInterface|TypeRuleFactoryInterface>>
      */
     private function getDefaultMatchers(): iterable
     {
