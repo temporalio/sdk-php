@@ -12,6 +12,8 @@ declare(strict_types=1);
 namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
+use Temporal\Api\Common\V1\SearchAttributes;
+use Temporal\DataConverter\EncodedCollection;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
 use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
@@ -53,8 +55,13 @@ final class StartWorkflow extends Route
             $payloads = EncodedValues::sliceValues($this->services->dataConverter, $payloads, 0, $offset);
         }
 
+        // Search Attributes
+        $searchAttributes = $this->convertSearchAttributes($options['info']['SearchAttributes'] ?? null);
+        $options['info']['SearchAttributes'] = $searchAttributes?->getValues();
+
         /** @var Input $input */
         $input = $this->services->marshaller->unmarshal($options, new Input());
+
         /** @psalm-suppress InaccessibleProperty */
         $input->input = $payloads;
         /** @psalm-suppress InaccessibleProperty */
@@ -105,14 +112,32 @@ final class StartWorkflow extends Route
                 /** @see WorkflowInboundCallsInterceptor::execute() */
                 'execute',
             )(
-                new WorkflowInput($context->getInfo(), $context->getInput(), $context->getHeader()),
-            );
+            new WorkflowInput($context->getInfo(), $context->getInput(), $context->getHeader()),
+        );
     }
 
     private function findWorkflowOrFail(WorkflowInfo $info): WorkflowPrototype
     {
         return $this->services->workflows->find($info->type->name) ?? throw new \OutOfRangeException(
             \sprintf(self::ERROR_NOT_FOUND, $info->type->name),
+        );
+    }
+
+    private function convertSearchAttributes(?array $param): ?EncodedCollection
+    {
+        if (!\is_array($param)) {
+            return null;
+        }
+
+        $sa = (new SearchAttributes());
+        $sa->mergeFromJsonString(
+            \json_encode($param),
+            true,
+        );
+
+        return EncodedCollection::fromPayloadCollection(
+            $sa->getIndexedFields(),
+            $this->services->dataConverter,
         );
     }
 }

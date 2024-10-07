@@ -26,7 +26,7 @@ interface MarshallerInterface
     public function marshal(object $from): mixed;
 
     /**
-     * @template T of object
+     * @template T
      * @param array $from
      * @param T $to
      * @return T
