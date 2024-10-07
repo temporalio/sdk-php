@@ -49,6 +49,8 @@ class AssocArrayType extends Type
     /**
      * @psalm-assert array $value
      * @psalm-assert array $current
+     * @param mixed $value
+     * @param mixed $current
      */
     public function parse($value, $current): array
     {
