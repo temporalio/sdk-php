@@ -20,8 +20,10 @@ use Temporal\Workflow\ReturnType;
 use Traversable;
 
 /**
+ * List of typed values.
+ *
  * @psalm-type TPayloadsCollection = Traversable&ArrayAccess&Countable
- * @psalm-type TKey = array-key
+ * @psalm-type TKey = int
  * @psalm-type TValue = string
  */
 class EncodedValues implements ValuesInterface
@@ -100,7 +102,7 @@ class EncodedValues implements ValuesInterface
     public static function decodePromise(PromiseInterface $promise, $type = null): PromiseInterface
     {
         return $promise->then(
-            static function ($value) use ($type) {
+            static function (mixed $value) use ($type) {
                 if (!$value instanceof ValuesInterface || $value instanceof \Throwable) {
                     return $value;
                 }
@@ -153,22 +155,26 @@ class EncodedValues implements ValuesInterface
             return $this->values[$index];
         }
 
+        $count = $this->count();
         // External SDKs might return an empty array with metadata, alias to null
         // Most likely this is a void type
-        if ($index === 0 && $this->count() === 0 && $this->isVoidType($type)) {
+        if ($index === 0 && $count === 0 && $this->isVoidType($type)) {
             return null;
         }
 
-        if ($this->converter === null) {
-            throw new \LogicException('DataConverter is not set');
-        }
+        $count > $index or throw new \OutOfBoundsException("Index {$index} is out of bounds.");
+        $this->converter === null and throw new \LogicException('DataConverter is not set.');
 
-        return $this->converter->fromPayload($this->payloads[$index], $type);
+        \assert($this->payloads !== null);
+        return $this->converter->fromPayload(
+            $this->payloads[$index],
+            $type,
+        );
     }
 
     public function getValues(): array
     {
-        $result = $this->values;
+        $result = (array) $this->values;
 
         if (empty($this->payloads)) {
             return $result;

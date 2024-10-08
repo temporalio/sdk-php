@@ -11,8 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration\Graph;
 
-use Temporal\Tests\Workflow\Inheritance\ExtendingWorkflow;
-
 final class ClassNode implements NodeInterface
 {
     /**
@@ -39,7 +37,8 @@ final class ClassNode implements NodeInterface
      *
      * @throws \ReflectionException
      */
-    public function getAllMethods(): array {
+    public function getAllMethods(): array
+    {
         /** @var array<non-empty-string, \ReflectionMethod> $result */
         $result = [];
 

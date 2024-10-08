@@ -212,43 +212,14 @@
       <code><![CDATA[$name]]></code>
       <code><![CDATA[$value]]></code>
     </InvalidArgument>
-    <MismatchingDocblockParamType>
-      <code><![CDATA[iterable<array-key, Payload>]]></code>
-    </MismatchingDocblockParamType>
-    <MismatchingDocblockReturnType>
-      <code><![CDATA[EncodedCollection]]></code>
-    </MismatchingDocblockReturnType>
     <MoreSpecificImplementedParamType>
       <code><![CDATA[$type]]></code>
     </MoreSpecificImplementedParamType>
-    <PossiblyNullReference>
-      <code><![CDATA[fromPayload]]></code>
-    </PossiblyNullReference>
-    <UnsafeInstantiation>
-      <code><![CDATA[new static()]]></code>
-      <code><![CDATA[new static()]]></code>
-    </UnsafeInstantiation>
   </file>
   <file src="src/DataConverter/EncodedValues.php">
-    <InvalidNullableReturnType>
-      <code><![CDATA[array]]></code>
-    </InvalidNullableReturnType>
-    <MissingClosureParamType>
-      <code><![CDATA[$value]]></code>
-    </MissingClosureParamType>
-    <NullableReturnStatement>
-      <code><![CDATA[$result]]></code>
-      <code><![CDATA[$result]]></code>
-    </NullableReturnStatement>
-    <PossiblyNullArrayAccess>
-      <code><![CDATA[$this->payloads[$index]]]></code>
-    </PossiblyNullArrayAccess>
     <PossiblyNullIterator>
       <code><![CDATA[$this->values]]></code>
     </PossiblyNullIterator>
-    <PossiblyNullReference>
-      <code><![CDATA[$this->payloads]]></code>
-    </PossiblyNullReference>
     <UnsafeInstantiation>
       <code><![CDATA[new static()]]></code>
       <code><![CDATA[new static()]]></code>
@@ -661,6 +632,11 @@
       <code><![CDATA[NamedArgumentConstructor]]></code>
     </DeprecatedClass>
   </file>
+  <file src="src/Internal/Marshaller/Meta/MarshalAssocArray.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
   <file src="src/Internal/Marshaller/Meta/MarshalDateTime.php">
     <DeprecatedClass>
       <code><![CDATA[NamedArgumentConstructor]]></code>
@@ -694,12 +670,6 @@
     <InvalidFalsableReturnType>
       <code><![CDATA[\DateTimeImmutable]]></code>
     </InvalidFalsableReturnType>
-    <InvalidReturnStatement>
-      <code><![CDATA[\Temporal\Interceptor\Header::fromPayloadCollection($input->getFields(), $this->converter)]]></code>
-    </InvalidReturnStatement>
-    <InvalidReturnType>
-      <code><![CDATA[HeaderInterface]]></code>
-    </InvalidReturnType>
     <LessSpecificReturnStatement>
       <code><![CDATA[$mapper]]></code>
     </LessSpecificReturnStatement>
@@ -779,7 +749,6 @@
     </InvalidReturnStatement>
     <InvalidReturnType>
       <code><![CDATA[?string]]></code>
-      <code><![CDATA[iterable<class-string<DetectableTypeInterface>>]]></code>
     </InvalidReturnType>
     <LessSpecificReturnStatement>
       <code><![CDATA[$result]]></code>
@@ -1306,9 +1275,6 @@
     </PossiblyInvalidArgument>
   </file>
   <file src="src/Worker/Transport/Codec/JsonCodec/Decoder.php">
-    <InvalidArgument>
-      <code><![CDATA[Header::fromPayloadCollection($headers->getFields(), $this->dataConverter)]]></code>
-    </InvalidArgument>
     <InvalidReturnStatement>
       <code><![CDATA[match (true) {
             isset($command['command']) => $this->parseRequest($command, $info),
@@ -1344,9 +1310,6 @@
     <ArgumentTypeCoercion>
       <code><![CDATA[$msg->getCommand()]]></code>
     </ArgumentTypeCoercion>
-    <InvalidArgument>
-      <code><![CDATA[$header]]></code>
-    </InvalidArgument>
     <PossiblyNullArgument>
       <code><![CDATA[$msg->getFailure()]]></code>
       <code><![CDATA[$msg->getPayloads()]]></code>

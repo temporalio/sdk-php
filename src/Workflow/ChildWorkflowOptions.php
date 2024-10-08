@@ -20,6 +20,7 @@ use Temporal\Common\MethodRetry;
 use Temporal\Common\RetryOptions;
 use Temporal\Exception\FailedCancellationException;
 use Temporal\Internal\Marshaller\Meta\Marshal;
+use Temporal\Internal\Marshaller\Meta\MarshalAssocArray;
 use Temporal\Internal\Marshaller\Type\ArrayType;
 use Temporal\Internal\Marshaller\Type\ChildWorkflowCancellationType as ChildWorkflowCancellationMarshalType;
 use Temporal\Internal\Marshaller\Type\CronType;
@@ -153,7 +154,7 @@ final class ChildWorkflowOptions extends Options
      *
      * @psalm-var array<string, mixed>|null
      */
-    #[Marshal(name: 'SearchAttributes', type: NullableType::class, of: ArrayType::class)]
+    #[MarshalAssocArray(name: 'SearchAttributes', nullable: true)]
     public ?array $searchAttributes = null;
 
     /**
