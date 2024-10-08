@@ -27,7 +27,7 @@ use Temporal\Workflow\ChildWorkflowOptions;
 use Temporal\Workflow\ChildWorkflowStubInterface;
 use Temporal\Workflow\ContinueAsNewOptions;
 use Temporal\Workflow\ExternalWorkflowStubInterface;
-use Temporal\Workflow\MutexInterface;
+use Temporal\Workflow\Mutex;
 use Temporal\Workflow\ScopedContextInterface;
 use Temporal\Workflow\UpdateContext;
 use Temporal\Workflow\WorkflowContextInterface;
@@ -997,44 +997,23 @@ final class Workflow extends Facade
     }
 
     /**
-     * Create a new mutex.
-     *
-     * If a mutex is yielded without calling `lock()`, the Workflow will continue
-     * only when the lock is released.
-     *
-     * ```php
-     * $this->>mutex = Workflow::mutex();
-     *
-     * // Continue only when the lock is released
-     * yield $this->mutex;
-     *
-     * // Continue only when the lock is acquired
-     * yield Workflow::mutex('my-mutex')->lock();
-     * ```
-     *
-     * Note: in the last case, if the lock is already acquired, the Workflow will be blocked until it's released.
-     */
-    public static function mutex(): MutexInterface
-    {
-        /** @var WorkflowContextInterface $context */
-        $context = self::getCurrentContext();
-
-        return $context->mutex();
-    }
-
-    /**
      * Run a function when the mutex is released.
      * The mutex is locked for the duration of the function.
      *
-     * @param non-empty-string|MutexInterface $mutex Mutex name or instance.
-     *@see Workflow::conditionalMutex()
+     * @template T
+     * @param Mutex $mutex Mutex name or instance.
+     * @param callable(): T $callable Function to run.
      *
+     * @return PromiseInterface<T>
      */
-    public function runLocked(string|MutexInterface $mutex, callable $callable): PromiseInterface
+    public function runLocked(Mutex $mutex, callable $callable): PromiseInterface
     {
-        /** @var WorkflowContextInterface $context */
-        $context = self::getCurrentContext();
-
-        return $context->runLocked($mutex, $callable);
+        return $mutex->lock()->then(static function (Mutex $mutex) use ($callable): mixed {
+            try {
+                return $callable();
+            } finally {
+                $mutex->unlock();
+            }
+        });
     }
 }

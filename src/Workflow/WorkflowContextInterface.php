@@ -384,15 +384,4 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @return PromiseInterface<UuidInterface>
      */
     public function uuid7(?\DateTimeInterface $dateTime = null): PromiseInterface;
-
-    /**
-     * Create a mutex.
-     */
-    public function mutex(): MutexInterface;
-
-    /**
-     * Run a function when the mutex is released.
-     * The mutex will be locked for the duration of the function.
-     */
-    public function runLocked(MutexInterface $mutex, callable $callable): PromiseInterface;
 }
