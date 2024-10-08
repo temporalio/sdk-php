@@ -1472,6 +1472,7 @@
       <code><![CDATA[T]]></code>
     </InvalidReturnType>
     <TooManyTemplateParams>
+      <code><![CDATA[PromiseInterface<T>]]></code>
       <code><![CDATA[PromiseInterface<TReturn>]]></code>
       <code><![CDATA[PromiseInterface<UuidInterface>]]></code>
       <code><![CDATA[PromiseInterface<UuidInterface>]]></code>
@@ -1496,6 +1497,11 @@
     <MissingParamType>
       <code><![CDATA[$returnType]]></code>
     </MissingParamType>
+  </file>
+  <file src="src/Workflow/Mutex.php">
+    <TooManyTemplateParams>
+      <code><![CDATA[PromiseInterface<self>]]></code>
+    </TooManyTemplateParams>
   </file>
   <file src="src/Workflow/QueryMethod.php">
     <DeprecatedClass>
