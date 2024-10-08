@@ -34,7 +34,7 @@ final class Mutex
      *  yield $this->mutex->lock();
      * ```
      *
-     * @return PromiseInterface A promise that resolves when the lock is acquired.
+     * @return PromiseInterface<self> A promise that resolves when the lock is acquired.
      */
     public function lock(): PromiseInterface
     {
