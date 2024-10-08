@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Promise;
 
 use ArrayAccess;
-use Countable;
 use Iterator;
-use RuntimeException;
 use Traversable;
 
 /**
@@ -18,7 +16,7 @@ use Traversable;
  * @implements Iterator<TKey, TValue>
  * @implements ArrayAccess<TKey, TValue>
  */
-final class Reasons extends RuntimeException implements Iterator, ArrayAccess, Countable
+final class Reasons extends \RuntimeException implements \Iterator, \ArrayAccess, \Countable
 {
     /**
      * @param array<TKey, TValue> $collection
@@ -46,7 +44,7 @@ final class Reasons extends RuntimeException implements Iterator, ArrayAccess, C
 
     public function valid(): bool
     {
-        return null !== \key($this->collection);
+        return \key($this->collection) !== null;
     }
 
     public function rewind(): void
@@ -63,7 +61,7 @@ final class Reasons extends RuntimeException implements Iterator, ArrayAccess, C
      * @param TKey $offset
      * @return TValue
      */
-    public function offsetGet(mixed $offset): Traversable
+    public function offsetGet(mixed $offset): \Traversable
     {
         return $this->collection[$offset];
     }

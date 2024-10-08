@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Marshaller\Type;
 
-use stdClass;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 
 /**
@@ -74,7 +73,7 @@ class OneOfType extends Type
             ? $current
             : $this->emptyInstance($dtoClass);
 
-        if ($dtoClass === stdClass::class) {
+        if ($dtoClass === \stdClass::class) {
             foreach ($value as $key => $val) {
                 $current->$key = $val;
             }

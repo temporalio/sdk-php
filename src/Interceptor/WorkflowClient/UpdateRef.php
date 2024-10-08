@@ -19,7 +19,6 @@ final class UpdateRef
         #[Marshal(name: 'workflow_execution')]
         public readonly WorkflowExecution $workflowExecution,
         #[Marshal(name: 'update_id')]
-        public readonly string $updateId
-    ) {
-    }
+        public readonly string $updateId,
+    ) {}
 }

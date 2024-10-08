@@ -45,7 +45,7 @@ final class MethodRetry extends RetryOptions
         $maximumInterval = self::DEFAULT_MAXIMUM_INTERVAL,
         int $maximumAttempts = self::DEFAULT_MAXIMUM_ATTEMPTS,
         float $backoffCoefficient = self::DEFAULT_BACKOFF_COEFFICIENT,
-        array $nonRetryableExceptions = self::DEFAULT_NON_RETRYABLE_EXCEPTIONS
+        array $nonRetryableExceptions = self::DEFAULT_NON_RETRYABLE_EXCEPTIONS,
     ) {
         parent::__construct();
 

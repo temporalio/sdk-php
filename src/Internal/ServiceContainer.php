@@ -33,6 +33,7 @@ final class ServiceContainer
 {
     /** @var RepositoryInterface<WorkflowPrototype> */
     public readonly RepositoryInterface $workflows;
+
     public readonly ProcessCollection $running;
     public readonly ActivityCollection $activities;
     public readonly WorkflowReader $workflowsReader;

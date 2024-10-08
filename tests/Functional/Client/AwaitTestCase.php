@@ -63,7 +63,7 @@ class AwaitTestCase extends AbstractClient
                 'test3',
                 'test4'
             ],
-            $run->getResult(Type::TYPE_ARRAY)
+            $run->getResult(Type::TYPE_ARRAY, 3)
         );
     }
 

@@ -17,7 +17,6 @@ use React\Promise\PromiseInterface;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Exception\Failure\CanceledFailure;
-use Temporal\FeatureFlags;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
@@ -27,6 +26,7 @@ use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Workflow\Input;
 use Temporal\Internal\Workflow\WorkflowContext;
+use Temporal\Worker\FeatureFlags;
 use Temporal\Worker\LoopInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\HandlerUnfinishedPolicy as HandlerPolicy;
@@ -78,7 +78,7 @@ class Process extends Scope implements ProcessInterface
                                 $this->scopeContext->getInfo(),
                                 $input->arguments,
                                 $input->header,
-                            )
+                            ),
                         ));
                         $handler($input->arguments);
                     },
@@ -104,7 +104,7 @@ class Process extends Scope implements ProcessInterface
                 );
 
                 $scope->startUpdate(
-                    function () use ($handler, $inboundPipeline, $input): mixed {
+                    static function () use ($handler, $inboundPipeline, $input): mixed {
                         return $inboundPipeline->with(
                             static fn(UpdateInput $input): mixed => $handler($input->arguments),
                             /** @see WorkflowInboundCallsInterceptor::handleUpdate() */
@@ -128,7 +128,7 @@ class Process extends Scope implements ProcessInterface
                 Workflow::setCurrentContext($this->scopeContext);
 
                 $inboundPipeline->with(
-                    function (SignalInput $input) use ($handler) {
+                    function (SignalInput $input) use ($handler): void {
                         $this->createScope(
                             true,
                             LoopInterface::ON_SIGNAL,
@@ -156,7 +156,7 @@ class Process extends Scope implements ProcessInterface
                     $arguments,
                     $this->scopeContext->getHeader(),
                 ));
-            }
+            },
         );
 
         // unlike other scopes Process will notify the server when complete instead of pushing the result
@@ -174,7 +174,7 @@ class Process extends Scope implements ProcessInterface
     /**
      * @param \Closure(ValuesInterface): mixed $handler
      */
-    public function start(\Closure $handler, ValuesInterface $values = null, bool $deferred): void
+    public function start(\Closure $handler, ?ValuesInterface $values, bool $deferred): void
     {
         try {
             $this->makeCurrent();

@@ -16,34 +16,22 @@ use Google\Protobuf\Duration;
 
 /**
  * @psalm-type DateIntervalFormat = DateInterval::FORMAT_*
- * @psalm-type DateIntervalValue = string | int | float | \DateInterval
+ * @psalm-type DateIntervalValue = string | int | float | \DateInterval | Duration
  */
 final class DateInterval
 {
     public const FORMAT_YEARS = 'years';
-
     public const FORMAT_MONTHS = 'months';
-
     public const FORMAT_WEEKS = 'weeks';
-
     public const FORMAT_DAYS = 'days';
-
     public const FORMAT_HOURS = 'hours';
-
     public const FORMAT_MINUTES = 'minutes';
-
     public const FORMAT_SECONDS = 'seconds';
-
     public const FORMAT_MILLISECONDS = 'milliseconds';
-
     public const FORMAT_MICROSECONDS = 'microseconds';
-
     public const FORMAT_NANOSECONDS = 'nanoseconds';
-
     private const ERROR_INVALID_DATETIME = 'Unrecognized date time interval format';
-
     private const ERROR_INVALID_FORMAT = 'Invalid date interval format "%s", available formats: %s';
-
     private const AVAILABLE_FORMATS = [
         self::FORMAT_YEARS,
         self::FORMAT_MONTHS,
@@ -112,6 +100,12 @@ final class DateInterval
                     seconds: $seconds % 60,
                     microseconds: $micros % 1000_000,
                 );
+
+            case $interval instanceof Duration:
+                return self::parse(
+                    $interval->getSeconds() * 1e6 + $interval->getNanos() / 1e3,
+                    self::FORMAT_MICROSECONDS,
+                );
             default:
                 throw new \InvalidArgumentException(self::ERROR_INVALID_DATETIME);
         }
@@ -144,7 +138,7 @@ final class DateInterval
 
     /**
      * @param \DateInterval|null $i
-     * @return Duration|null
+     * @return ($i is null ? null : Duration)
      */
     public static function toDuration(\DateInterval $i = null): ?Duration
     {
@@ -154,7 +148,7 @@ final class DateInterval
 
         $d = new Duration();
         $parsed = self::parse($i);
-        $d->setSeconds((int)$parsed->totalSeconds);
+        $d->setSeconds((int) $parsed->totalSeconds);
         $d->setNanos($parsed->microseconds * 1000);
 
         return $d;

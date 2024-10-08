@@ -23,12 +23,12 @@ class AutowiredPayloads extends Dispatcher
     public function dispatchValues(object $ctx, ValuesInterface $values): mixed
     {
         $arguments = [];
-        for ($i = 0; $i < $values->count(); $i++) {
-            try {
+        try {
+            for ($i = 0, $count = $values->count(); $i < $count; $i++) {
                 $arguments[] = $values->getValue($i, $this->getArgumentTypes()[$i] ?? null);
-            } catch (\Throwable $e) {
-                throw new InvalidArgumentException($e->getMessage(), $e->getCode(), $e);
             }
+        } catch (\Throwable $e) {
+            throw new InvalidArgumentException($e->getMessage(), $e->getCode(), $e);
         }
 
         try {

@@ -14,11 +14,6 @@ namespace Temporal\Internal\Declaration\Graph;
 final class ClassNode implements NodeInterface
 {
     /**
-     * @var \ReflectionClass
-     */
-    private \ReflectionClass $class;
-
-    /**
      * @var array|null
      */
     private ?array $inheritance = null;
@@ -26,25 +21,36 @@ final class ClassNode implements NodeInterface
     /**
      * @param \ReflectionClass $class
      */
-    public function __construct(\ReflectionClass $class)
-    {
-        $this->class = $class;
-    }
+    public function __construct(
+        private \ReflectionClass $class,
+    ) {}
 
-    /**
-     * @return string
-     */
-    public function __toString(): string
-    {
-        return $this->class->getName();
-    }
-
-    /**
-     * @return \ReflectionClass
-     */
     public function getReflection(): \ReflectionClass
     {
         return $this->class;
+    }
+
+    /**
+     * Get all methods from the class and its parents without duplicates.
+     *
+     * @return array<non-empty-string, \ReflectionMethod>
+     *
+     * @throws \ReflectionException
+     */
+    public function getAllMethods(): array
+    {
+        /** @var array<non-empty-string, \ReflectionMethod> $result */
+        $result = [];
+
+        foreach ($this->getInheritance() as $classes) {
+            foreach ($classes as $class) {
+                foreach ($class->getReflection()->getMethods() as $method) {
+                    $result[$method->getName()] ??= $method;
+                }
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -53,13 +59,14 @@ final class ClassNode implements NodeInterface
     public function count(): int
     {
         return \count(
-            $this->inheritance ??= $this->getClassInheritance()
+            $this->inheritance ??= $this->getClassInheritance(),
         );
     }
 
     /**
-     * @param string $name
-     * @param bool $reverse
+     * Get a method with all the declared classes.
+     *
+     * @param non-empty-string $name
      * @return \Traversable<ClassNode, \ReflectionMethod>
      * @throws \ReflectionException
      */
@@ -85,8 +92,16 @@ final class ClassNode implements NodeInterface
     public function getIterator(): \Traversable
     {
         return new \ArrayIterator(
-            $this->inheritance ??= $this->getClassInheritance()
+            $this->inheritance ??= $this->getClassInheritance(),
         );
+    }
+
+    /**
+     * @return string
+     */
+    public function __toString(): string
+    {
+        return $this->class->getName();
     }
 
     /**

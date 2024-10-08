@@ -49,5 +49,5 @@ interface ScheduleClientInterface extends ClientContextInterface
      *
      * @return Paginator<ScheduleListEntry>
      */
-    public function listSchedules(?string $namespace = null, int $pageSize = 0,): Paginator;
+    public function listSchedules(?string $namespace = null, int $pageSize = 0): Paginator;
 }

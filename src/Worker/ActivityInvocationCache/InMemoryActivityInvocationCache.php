@@ -5,23 +5,20 @@ declare(strict_types=1);
 namespace Temporal\Worker\ActivityInvocationCache;
 
 use React\Promise\PromiseInterface;
-use Spiral\Goridge\RPC\RPC;
-use Spiral\RoadRunner\KeyValue\Factory;
-use Spiral\RoadRunner\KeyValue\StorageInterface;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
-use Temporal\DataConverter\EncodedValues;
-use Temporal\Exception\InvalidArgumentException;
-use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
-use Throwable;
 
 use function React\Promise\reject;
 use function React\Promise\resolve;
 
 final class InMemoryActivityInvocationCache implements ActivityInvocationCacheInterface
 {
+    /**
+     * @var array<non-empty-string, ActivityInvocationFailure|ActivityInvocationResult>
+     */
     private array $cache = [];
+
     private DataConverterInterface $dataConverter;
 
     public function __construct(DataConverterInterface $dataConverter = null)
@@ -34,12 +31,12 @@ final class InMemoryActivityInvocationCache implements ActivityInvocationCacheIn
         $this->cache = [];
     }
 
-    public function saveCompletion(string $activityMethodName, $value): void
+    public function saveCompletion(string $activityMethodName, mixed $value): void
     {
         $this->cache[$activityMethodName] = ActivityInvocationResult::fromValue($value, $this->dataConverter);
     }
 
-    public function saveFailure(string $activityMethodName, Throwable $error): void
+    public function saveFailure(string $activityMethodName, \Throwable $error): void
     {
         $this->cache[$activityMethodName] = ActivityInvocationFailure::fromThrowable($error);
     }
@@ -60,14 +57,8 @@ final class InMemoryActivityInvocationCache implements ActivityInvocationCacheIn
         $activityMethodName = $request->getOptions()['name'];
         $value = $this->cache[$activityMethodName];
 
-        if ($value instanceof ActivityInvocationFailure) {
-            return reject($value->toThrowable());
-        }
-
-        if ($value instanceof ActivityInvocationResult) {
-            return resolve($value->toEncodedValues($this->dataConverter));
-        }
-
-        return reject(new InvalidArgumentException('Invalid cache value'));
+        return $value instanceof ActivityInvocationFailure
+            ? reject($value->toThrowable())
+            : resolve($value->toEncodedValues($this->dataConverter));
     }
 }

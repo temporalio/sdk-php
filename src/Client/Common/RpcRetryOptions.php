@@ -36,7 +36,7 @@ final class RpcRetryOptions extends RetryOptions
      */
     public static function fromRetryOptions(RetryOptions $options): self
     {
-        return $options instanceof self ? $options :  (new self())
+        return $options instanceof self ? $options : (new self())
             ->withInitialInterval($options->initialInterval)
             ->withBackoffCoefficient($options->backoffCoefficient)
             ->withMaximumInterval($options->maximumInterval)
@@ -59,7 +59,7 @@ final class RpcRetryOptions extends RetryOptions
     public function withCongestionInitialInterval($interval): self
     {
         $interval === null || DateInterval::assert($interval) or throw new \InvalidArgumentException(
-            'Invalid interval value.'
+            'Invalid interval value.',
         );
 
         $self = clone $this;
@@ -82,7 +82,7 @@ final class RpcRetryOptions extends RetryOptions
     public function withMaximumJitterCoefficient(?float $coefficient): self
     {
         $coefficient === null || ($coefficient >= 0.0 && $coefficient < 1.0) or throw new \InvalidArgumentException(
-            'Maximum jitter coefficient must be in range [0, 1).'
+            'Maximum jitter coefficient must be in range [0, 1).',
         );
 
         $self = clone $this;

@@ -135,7 +135,7 @@ class ActivityReader extends Reader
                         $reflection = $method->getDeclaringClass();
 
                         throw new \LogicException(
-                            \sprintf(self::ERROR_BAD_DECLARATION, $reflection->getName(), $method->getName())
+                            \sprintf(self::ERROR_BAD_DECLARATION, $reflection->getName(), $method->getName()),
                         );
                     }
 
@@ -174,7 +174,7 @@ class ActivityReader extends Reader
     private function activityName(
         \ReflectionMethod $ref,
         ActivityInterface $int,
-        ?ActivityMethod $method
+        ?ActivityMethod $method,
     ): string {
         return $method === null
             ? $int->prefix . $ref->getName()
@@ -191,7 +191,7 @@ class ActivityReader extends Reader
         string $name,
         array $activities,
         \ReflectionClass $class,
-        \ReflectionMethod $method
+        \ReflectionMethod $method,
     ): void {
         if (!isset($activities[$name])) {
             return;

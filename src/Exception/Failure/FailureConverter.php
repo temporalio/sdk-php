@@ -26,6 +26,7 @@ use Temporal\Api\Failure\V1\TimeoutFailureInfo;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\Client\ActivityCanceledException;
+use Temporal\Internal\Support\DateInterval;
 
 final class FailureConverter
 {
@@ -86,6 +87,10 @@ final class FailureConverter
                 $info->setType($e->getType());
                 $info->setNonRetryable($e->isNonRetryable());
 
+                // Set Next Retry Delay
+                $nextRetry = DateInterval::toDuration($e->getNextRetryDelay());
+                $nextRetry === null or $info->setNextRetryDelay($nextRetry);
+
                 if (!$e->getDetails()->isEmpty()) {
                     $info->setDetails($e->getDetails()->toPayloads());
                 }
@@ -126,7 +131,7 @@ final class FailureConverter
                 $info
                     ->setActivityId($e->getActivityId())
                     ->setActivityType(new ActivityType([
-                        'name' => $e->getActivityType()
+                        'name' => $e->getActivityType(),
                     ]))
                     ->setIdentity($e->getIdentity())
                     ->setRetryState($e->getRetryState())
@@ -144,7 +149,7 @@ final class FailureConverter
                     ->setNamespace($e->getNamespace())
                     ->setRetryState($e->getRetryState())
                     ->setWorkflowType(new WorkflowType([
-                        'name' => $e->getWorkflowType()
+                        'name' => $e->getWorkflowType(),
                     ]))
                     ->setWorkflowExecution(new WorkflowExecution([
                         'workflow_id' => $e->getExecution()->getID(),
@@ -192,22 +197,24 @@ final class FailureConverter
         switch (true) {
             case $failure->hasApplicationFailureInfo():
                 $info = $failure->getApplicationFailureInfo();
+                \assert($info instanceof ApplicationFailureInfo);
 
                 $details = $info->hasDetails()
                     ? EncodedValues::fromPayloads($info->getDetails(), $converter)
-                    : EncodedValues::empty()
-                ;
+                    : EncodedValues::empty();
 
                 return new ApplicationFailure(
                     $failure->getMessage(),
                     $info->getType(),
                     $info->getNonRetryable(),
                     $details,
-                    $previous
+                    $previous,
+                    DateInterval::parseOrNull($info->getNextRetryDelay()),
                 );
 
             case $failure->hasTimeoutFailureInfo():
                 $info = $failure->getTimeoutFailureInfo();
+                \assert($info instanceof TimeoutFailureInfo);
 
                 $details = $info->hasLastHeartbeatDetails()
                     ? EncodedValues::fromPayloads($info->getLastHeartbeatDetails(), $converter)
@@ -218,6 +225,7 @@ final class FailureConverter
 
             case $failure->hasCanceledFailureInfo():
                 $info = $failure->getCanceledFailureInfo();
+                \assert($info instanceof CanceledFailureInfo);
 
                 $details = $info->hasDetails()
                     ? EncodedValues::fromPayloads($info->getDetails(), $converter)
@@ -231,25 +239,26 @@ final class FailureConverter
 
             case $failure->hasServerFailureInfo():
                 $info = $failure->getServerFailureInfo();
+                \assert($info instanceof ServerFailureInfo);
                 return new ServerFailure($failure->getMessage(), $info->getNonRetryable(), $previous);
 
             case $failure->hasResetWorkflowFailureInfo():
                 $info = $failure->getResetWorkflowFailureInfo();
                 $details = $info->hasLastHeartbeatDetails()
                     ? EncodedValues::fromPayloads($info->getLastHeartbeatDetails(), $converter)
-                    : EncodedValues::empty()
-                ;
+                    : EncodedValues::empty();
 
                 return new ApplicationFailure(
                     $failure->getMessage(),
                     'ResetWorkflow',
                     false,
                     $details,
-                    $previous
+                    $previous,
                 );
 
             case $failure->hasActivityFailureInfo():
                 $info = $failure->getActivityFailureInfo();
+                \assert($info instanceof ActivityFailureInfo);
 
                 return new ActivityFailure(
                     $info->getScheduledEventId(),
@@ -258,12 +267,13 @@ final class FailureConverter
                     $info->getActivityId(),
                     $info->getRetryState(),
                     $info->getIdentity(),
-                    $previous
+                    $previous,
                 );
 
             case $failure->hasChildWorkflowExecutionFailureInfo():
                 $info = $failure->getChildWorkflowExecutionFailureInfo();
                 $execution = $info->getWorkflowExecution();
+                \assert($execution instanceof WorkflowExecution);
 
                 return new ChildWorkflowFailure(
                     $info->getInitiatedEventId(),
@@ -275,7 +285,7 @@ final class FailureConverter
                     ),
                     $info->getNamespace(),
                     $info->getRetryState(),
-                    $previous
+                    $previous,
                 );
 
             default:
@@ -297,7 +307,7 @@ final class FailureConverter
          */
         $frames = $e->getTrace();
 
-        $numPad = \strlen((string)(\count($frames) - 1)) + 2;
+        $numPad = \strlen((string) (\count($frames) - 1)) + 2;
         // Skipped frames
         $internals = [];
         $isFirst = true;
@@ -359,18 +369,19 @@ final class FailureConverter
 
         $result = [];
         foreach ($args as $arg) {
-            $result[] = match(true) {
+            $result[] = match (true) {
                 $arg => 'true',
                 $arg === false => 'false',
                 $arg === null => 'null',
-                \is_array($arg) => 'array(' . count($arg) . ')',
+                \is_array($arg) => 'array(' . \count($arg) . ')',
                 \is_object($arg) => \get_class($arg),
-                \is_string($arg) => (string)\json_encode(
+                \is_string($arg) => (string) \json_encode(
                     \strlen($arg) > 50
                         ? \substr($arg, 0, 50) . '...'
-                        : $arg, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE
+                        : $arg,
+                    JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE,
                 ),
-                \is_scalar($arg) => (string)$arg,
+                \is_scalar($arg) => (string) $arg,
                 default => \get_debug_type($arg),
             };
         }

@@ -20,6 +20,7 @@ use Temporal\Common\MethodRetry;
 use Temporal\Common\RetryOptions;
 use Temporal\Exception\FailedCancellationException;
 use Temporal\Internal\Marshaller\Meta\Marshal;
+use Temporal\Internal\Marshaller\Meta\MarshalAssocArray;
 use Temporal\Internal\Marshaller\Type\ArrayType;
 use Temporal\Internal\Marshaller\Type\ChildWorkflowCancellationType as ChildWorkflowCancellationMarshalType;
 use Temporal\Internal\Marshaller\Type\CronType;
@@ -153,7 +154,7 @@ final class ChildWorkflowOptions extends Options
      *
      * @psalm-var array<string, mixed>|null
      */
-    #[Marshal(name: 'SearchAttributes', type: NullableType::class, of: ArrayType::class)]
+    #[MarshalAssocArray(name: 'SearchAttributes', nullable: true)]
     public ?array $searchAttributes = null;
 
     /**
@@ -262,9 +263,9 @@ final class ChildWorkflowOptions extends Options
     #[Pure]
     public function withWorkflowExecutionTimeout($timeout): self
     {
-        assert(DateInterval::assert($timeout));
+        \assert(DateInterval::assert($timeout));
         $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
-        assert($timeout->totalMicroseconds >= 0);
+        \assert($timeout->totalMicroseconds >= 0);
 
         $self = clone $this;
         $self->workflowExecutionTimeout = $timeout;
@@ -284,9 +285,9 @@ final class ChildWorkflowOptions extends Options
     #[Pure]
     public function withWorkflowRunTimeout($timeout): self
     {
-        assert(DateInterval::assert($timeout));
+        \assert(DateInterval::assert($timeout));
         $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
-        assert($timeout->totalMicroseconds >= 0);
+        \assert($timeout->totalMicroseconds >= 0);
 
         $self = clone $this;
         $self->workflowRunTimeout = $timeout;
@@ -305,9 +306,9 @@ final class ChildWorkflowOptions extends Options
     #[Pure]
     public function withWorkflowTaskTimeout($timeout): self
     {
-        assert(DateInterval::assert($timeout));
+        \assert(DateInterval::assert($timeout));
         $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
-        assert($timeout->totalMicroseconds >= 0 && $timeout->totalSeconds <= 60);
+        \assert($timeout->totalMicroseconds >= 0 && $timeout->totalSeconds <= 60);
 
         $self = clone $this;
         $self->workflowTaskTimeout = $timeout;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * This file is part of Temporal package.
  *
@@ -25,8 +27,7 @@ class GetResultInput
         public readonly ?string $workflowType,
         public readonly ?int $timeout,
         public readonly mixed $type,
-    ) {
-    }
+    ) {}
 
     public function with(
         WorkflowExecution $workflowExecution = null,

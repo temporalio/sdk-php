@@ -12,8 +12,9 @@ declare(strict_types=1);
 namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
+use Temporal\Api\Common\V1\SearchAttributes;
+use Temporal\DataConverter\EncodedCollection;
 use Temporal\DataConverter\EncodedValues;
-use Temporal\FeatureFlags;
 use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
 use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\Instantiator\WorkflowInstantiator;
@@ -22,6 +23,7 @@ use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Workflow\Input;
 use Temporal\Internal\Workflow\Process\Process;
 use Temporal\Internal\Workflow\WorkflowContext;
+use Temporal\Worker\FeatureFlags;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInfo;
@@ -53,8 +55,13 @@ final class StartWorkflow extends Route
             $payloads = EncodedValues::sliceValues($this->services->dataConverter, $payloads, 0, $offset);
         }
 
+        // Search Attributes
+        $searchAttributes = $this->convertSearchAttributes($options['info']['SearchAttributes'] ?? null);
+        $options['info']['SearchAttributes'] = $searchAttributes?->getValues();
+
         /** @var Input $input */
         $input = $this->services->marshaller->unmarshal($options, new Input());
+
         /** @psalm-suppress InaccessibleProperty */
         $input->input = $payloads;
         /** @psalm-suppress InaccessibleProperty */
@@ -76,7 +83,7 @@ final class StartWorkflow extends Route
             $this->services->client,
             $instance,
             $input,
-            $lastCompletionResult
+            $lastCompletionResult,
         );
         $runId = $request->getID();
 
@@ -114,5 +121,31 @@ final class StartWorkflow extends Route
         return $this->services->workflows->find($info->type->name) ?? throw new \OutOfRangeException(
             \sprintf(self::ERROR_NOT_FOUND, $info->type->name),
         );
+    }
+
+    private function convertSearchAttributes(?array $param): ?EncodedCollection
+    {
+        if (!\is_array($param)) {
+            return null;
+        }
+
+        if ($param === []) {
+            return EncodedCollection::empty();
+        }
+
+        try {
+            $sa = (new SearchAttributes());
+            $sa->mergeFromJsonString(
+                \json_encode($param),
+                true,
+            );
+
+            return EncodedCollection::fromPayloadCollection(
+                $sa->getIndexedFields(),
+                $this->services->dataConverter,
+            );
+        } catch (\Throwable) {
+            return null;
+        }
     }
 }

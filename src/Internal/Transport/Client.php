@@ -32,7 +32,6 @@ final class Client implements ClientInterface
     private const ERROR_REQUEST_ID_DUPLICATION =
         'Unable to create a new request because a ' .
         'request with id %d has already been sent';
-
     private const ERROR_REQUEST_NOT_FOUND =
         'Unable to receive a request with id %d because ' .
         'a request with that identifier was not sent';

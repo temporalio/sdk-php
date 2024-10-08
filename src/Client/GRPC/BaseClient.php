@@ -12,10 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Client\GRPC;
 
 use Carbon\CarbonInterval;
-use Closure;
-use DateTimeImmutable;
-use Exception;
-use Fiber;
 use Grpc\UnaryCall;
 use Temporal\Api\Workflowservice\V1\GetSystemInfoRequest;
 use Temporal\Api\Workflowservice\V1\WorkflowServiceClient;
@@ -38,21 +34,21 @@ abstract class BaseClient implements ServiceClientInterface
         StatusCode::UNKNOWN,
     ];
 
-    /** @var null|Closure(string $method, object $arg, ContextInterface $ctx): object */
-    private ?Closure $invokePipeline = null;
+    /** @var null|\Closure(string $method, object $arg, ContextInterface $ctx): object */
+    private ?\Closure $invokePipeline = null;
 
     private Connection $connection;
     private ContextInterface $context;
     private \Stringable|string $apiKey = '';
 
     /**
-     * @param WorkflowServiceClient|Closure(): WorkflowServiceClient $workflowService Service Client or its factory
+     * @param WorkflowServiceClient|\Closure(): WorkflowServiceClient $workflowService Service Client or its factory
      *
      * @private Use static factory methods instead
      * @see self::create()
      * @see self::createSSL()
      */
-    final public function __construct(WorkflowServiceClient|Closure $workflowService)
+    final public function __construct(WorkflowServiceClient|\Closure $workflowService)
     {
         if ($workflowService instanceof WorkflowServiceClient) {
             \trigger_error(
@@ -64,6 +60,72 @@ abstract class BaseClient implements ServiceClientInterface
 
         $this->connection = new Connection($workflowService);
         $this->context = Context::default();
+    }
+
+    /**
+     * @param non-empty-string $address Temporal service address in format `host:port`
+     * @return static
+     * @psalm-suppress UndefinedClass
+     */
+    public static function create(string $address): static
+    {
+        if (!\extension_loaded('grpc')) {
+            throw new \RuntimeException('The gRPC extension is required to use Temporal Client.');
+        }
+
+        return new static(static fn(): WorkflowServiceClient => new WorkflowServiceClient(
+            $address,
+            ['credentials' => \Grpc\ChannelCredentials::createInsecure()],
+        ));
+    }
+
+    /**
+     * @param non-empty-string $address Temporal service address in format `host:port`
+     * @param non-empty-string|null $crt Root certificates string or file in PEM format.
+     *        If null provided, default gRPC root certificates are used.
+     * @param non-empty-string|null $clientKey Client private key string or file in PEM format.
+     * @param non-empty-string|null $clientPem Client certificate chain string or file in PEM format.
+     * @param non-empty-string|null $overrideServerName
+     * @return static
+     *
+     * @psalm-suppress UndefinedClass
+     * @psalm-suppress UnusedVariable
+     */
+    public static function createSSL(
+        string $address,
+        string $crt = null,
+        string $clientKey = null,
+        string $clientPem = null,
+        string $overrideServerName = null,
+    ): static {
+        if (!\extension_loaded('grpc')) {
+            throw new \RuntimeException('The gRPC extension is required to use Temporal Client.');
+        }
+
+        $loadCert = static function (?string $cert): ?string {
+            return match (true) {
+                $cert === null, $cert === '' => null,
+                \is_file($cert) => false === ($content = \file_get_contents($cert))
+                    ? throw new \InvalidArgumentException("Failed to load certificate from file `$cert`.")
+                    : $content,
+                default => $cert,
+            };
+        };
+
+        $options = [
+            'credentials' => \Grpc\ChannelCredentials::createSsl(
+                $loadCert($crt),
+                $loadCert($clientKey),
+                $loadCert($clientPem),
+            ),
+        ];
+
+        if ($overrideServerName !== null) {
+            $options['grpc.default_authority'] = $overrideServerName;
+            $options['grpc.ssl_target_name_override'] = $overrideServerName;
+        }
+
+        return new static(static fn(): WorkflowServiceClient => new WorkflowServiceClient($address, $options));
     }
 
     public function getContext(): ContextInterface
@@ -99,72 +161,6 @@ abstract class BaseClient implements ServiceClientInterface
     public function close(): void
     {
         $this->connection->disconnect();
-    }
-
-    /**
-     * @param non-empty-string $address Temporal service address in format `host:port`
-     * @return static
-     * @psalm-suppress UndefinedClass
-     */
-    public static function create(string $address): static
-    {
-        if (!\extension_loaded('grpc')) {
-            throw new \RuntimeException('The gRPC extension is required to use Temporal Client.');
-        }
-
-        return new static(static fn(): WorkflowServiceClient => new WorkflowServiceClient(
-            $address,
-            ['credentials' => \Grpc\ChannelCredentials::createInsecure()]
-        ));
-    }
-
-    /**
-     * @param non-empty-string $address Temporal service address in format `host:port`
-     * @param non-empty-string|null $crt Root certificates string or file in PEM format.
-     *        If null provided, default gRPC root certificates are used.
-     * @param non-empty-string|null $clientKey Client private key string or file in PEM format.
-     * @param non-empty-string|null $clientPem Client certificate chain string or file in PEM format.
-     * @param non-empty-string|null $overrideServerName
-     * @return static
-     *
-     * @psalm-suppress UndefinedClass
-     * @psalm-suppress UnusedVariable
-     */
-    public static function createSSL(
-        string $address,
-        string $crt = null,
-        string $clientKey = null,
-        string $clientPem = null,
-        string $overrideServerName = null
-    ): static {
-        if (!\extension_loaded('grpc')) {
-            throw new \RuntimeException('The gRPC extension is required to use Temporal Client.');
-        }
-
-        $loadCert = static function (?string $cert): ?string {
-            return match (true) {
-                $cert === null, $cert === '' => null,
-                \is_file($cert) => false === ($content = \file_get_contents($cert))
-                    ? throw new \InvalidArgumentException("Failed to load certificate from file `$cert`.")
-                    : $content,
-                default => $cert,
-            };
-        };
-
-        $options = [
-            'credentials' => \Grpc\ChannelCredentials::createSsl(
-                $loadCert($crt),
-                $loadCert($clientKey),
-                $loadCert($clientPem),
-            )
-        ];
-
-        if ($overrideServerName !== null) {
-            $options['grpc.default_authority'] = $overrideServerName;
-            $options['grpc.ssl_target_name_override'] = $overrideServerName;
-        }
-
-        return new static(static fn(): WorkflowServiceClient => new WorkflowServiceClient($address, $options));
     }
 
     /**
@@ -230,7 +226,8 @@ abstract class BaseClient implements ServiceClientInterface
     /**
      * Note: Experimental
      */
-    public function getConnection(): ConnectionInterface {
+    public function getConnection(): ConnectionInterface
+    {
         return $this->connection;
     }
 
@@ -248,7 +245,7 @@ abstract class BaseClient implements ServiceClientInterface
         $ctx ??= $this->context;
 
         // Add the API key to the context
-        $key = (string)$this->apiKey;
+        $key = (string) $this->apiKey;
         if ($key !== '') {
             $ctx = $ctx->withMetadata([
                 'Authorization' => ["Bearer $key"],
@@ -270,7 +267,7 @@ abstract class BaseClient implements ServiceClientInterface
      *
      * @return object
      *
-     * @throws Exception
+     * @throws \Exception
      */
     private function call(string $method, object $arg, ContextInterface $ctx): object
     {
@@ -316,25 +313,25 @@ abstract class BaseClient implements ServiceClientInterface
                     throw $e;
                 }
 
-                if ($ctx->getDeadline() !== null && new DateTimeImmutable() > $ctx->getDeadline()) {
+                if ($ctx->getDeadline() !== null && new \DateTimeImmutable() > $ctx->getDeadline()) {
                     // Deadline is reached
                     throw new TimeoutException('Call timeout has been reached');
                 }
 
                 // Init interval values in milliseconds
                 $initialIntervalMs ??= $retryOption->initialInterval === null
-                    ? (int)CarbonInterval::millisecond(50)->totalMilliseconds
-                    : (int)(new CarbonInterval($retryOption->initialInterval))->totalMilliseconds;
+                    ? (int) CarbonInterval::millisecond(50)->totalMilliseconds
+                    : (int) (new CarbonInterval($retryOption->initialInterval))->totalMilliseconds;
                 $congestionInitialIntervalMs ??= $retryOption->congestionInitialInterval === null
-                    ? (int)CarbonInterval::millisecond(1000)->totalMilliseconds
-                    : (int)(new CarbonInterval($retryOption->congestionInitialInterval))->totalMilliseconds;
+                    ? (int) CarbonInterval::millisecond(1000)->totalMilliseconds
+                    : (int) (new CarbonInterval($retryOption->congestionInitialInterval))->totalMilliseconds;
 
                 $throttler ??= new BackoffThrottler(
                     maxInterval: $retryOption->maximumInterval !== null
-                        ? (int)(new CarbonInterval($retryOption->maximumInterval))->totalMilliseconds
+                        ? (int) (new CarbonInterval($retryOption->maximumInterval))->totalMilliseconds
                         : $initialIntervalMs * 200,
                     maxJitterCoefficient: $retryOption->maximumJitterCoefficient,
-                    backoffCoefficient: $retryOption->backoffCoefficient
+                    backoffCoefficient: $retryOption->backoffCoefficient,
                 );
 
                 // Initial interval always depends on the *most recent* failure.
@@ -355,15 +352,15 @@ abstract class BaseClient implements ServiceClientInterface
      */
     private function usleep(int $param): void
     {
-        if (Fiber::getCurrent() === null) {
+        if (\Fiber::getCurrent() === null) {
             \usleep($param);
             return;
         }
 
-        $deadline = \microtime(true) + (float)($param / 1_000_000);
+        $deadline = \microtime(true) + (float) ($param / 1_000_000);
 
         while (\microtime(true) < $deadline) {
-            Fiber::suspend();
+            \Fiber::suspend();
         }
     }
 }

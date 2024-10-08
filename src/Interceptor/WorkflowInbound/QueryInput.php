@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * This file is part of Temporal package.
  *
@@ -23,8 +25,7 @@ class QueryInput
     public function __construct(
         public readonly string $queryName,
         public readonly ValuesInterface $arguments,
-    ) {
-    }
+    ) {}
 
     public function with(
         ValuesInterface $arguments = null,

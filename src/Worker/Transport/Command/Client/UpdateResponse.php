@@ -24,8 +24,7 @@ final class UpdateResponse implements ResponseInterface
         private ?ValuesInterface $values,
         private readonly ?\Throwable $failure,
         private string|int $updateId,
-    ) {
-    }
+    ) {}
 
     public function getID(): int
     {

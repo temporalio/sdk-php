@@ -39,7 +39,7 @@ class WorkflowStub
         }
 
         throw new InvalidArgumentException(
-            \sprintf('Only workflow stubs can be started, %s given', \get_debug_type($workflow))
+            \sprintf('Only workflow stubs can be started, %s given', \get_debug_type($workflow)),
         );
     }
 }

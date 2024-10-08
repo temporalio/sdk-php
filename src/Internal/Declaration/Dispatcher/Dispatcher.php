@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Internal\Declaration\Dispatcher;
 
 use JetBrains\PhpStorm\Pure;
-use ReflectionType;
 
 /**
  * @psalm-type FunctionExecutor = \Closure(object, array): mixed
@@ -36,7 +35,7 @@ class Dispatcher implements DispatcherInterface
     private \Closure $executor;
 
     /**
-     * @var array<ReflectionType>
+     * @var array<\ReflectionType>
      */
     private $types;
 
@@ -88,7 +87,7 @@ class Dispatcher implements DispatcherInterface
     }
 
     /**
-     * @return array<ReflectionType>
+     * @return array<\ReflectionType>
      */
     public function getArgumentTypes(): array
     {

@@ -45,7 +45,5 @@ final class ScheduleListInfo
     /**
      * The DTO is a result of a query, so it is not possible to create it manually.
      */
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 }

@@ -36,5 +36,4 @@ enum WorkflowIdConflictPolicy: int
      * Terminate the running workflow before starting a new one.
      */
     case TerminateExisting = 3;
-
 }

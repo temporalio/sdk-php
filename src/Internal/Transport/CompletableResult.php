@@ -69,7 +69,7 @@ class CompletableResult implements CompletableResultInterface
         WorkflowContextInterface $context,
         LoopInterface $loop,
         PromiseInterface $promise,
-        string $layer
+        string $layer,
     ) {
         $this->context = $context;
         $this->loop = $loop;
@@ -123,36 +123,6 @@ class CompletableResult implements CompletableResultInterface
         return $this->deferred->promise();
     }
 
-    private function onFulfilled(mixed $result): void
-    {
-        $this->resolved = true;
-        $this->value = $result;
-
-        $this->loop->once(
-            $this->layer,//LoopInterface::ON_CALLBACK,
-            function (): void {
-                Workflow::setCurrentContext($this->context);
-                $this->deferred->resolve($this->value);
-            }
-        );
-    }
-
-    /**
-     * @param \Throwable $e
-     */
-    private function onRejected(\Throwable $e): void
-    {
-        $this->resolved = true;
-
-        $this->loop->once(
-            $this->layer,//  LoopInterface::ON_CALLBACK,
-            function () use ($e): void {
-                Workflow::setCurrentContext($this->context);
-                $this->deferred->reject($e);
-            }
-        );
-    }
-
     public function catch(callable $onRejected): PromiseInterface
     {
         return $this->promise()
@@ -185,6 +155,36 @@ class CompletableResult implements CompletableResultInterface
     public function always(callable $onFulfilledOrRejected): PromiseInterface
     {
         return $this->finally($this->wrapContext($onFulfilledOrRejected));
+    }
+
+    private function onFulfilled(mixed $result): void
+    {
+        $this->resolved = true;
+        $this->value = $result;
+
+        $this->loop->once(
+            $this->layer,//LoopInterface::ON_CALLBACK,
+            function (): void {
+                Workflow::setCurrentContext($this->context);
+                $this->deferred->resolve($this->value);
+            },
+        );
+    }
+
+    /**
+     * @param \Throwable $e
+     */
+    private function onRejected(\Throwable $e): void
+    {
+        $this->resolved = true;
+
+        $this->loop->once(
+            $this->layer,//  LoopInterface::ON_CALLBACK,
+            function () use ($e): void {
+                Workflow::setCurrentContext($this->context);
+                $this->deferred->reject($e);
+            },
+        );
     }
 
     /**

@@ -24,8 +24,7 @@ final class GetVersionInput
         public readonly string $changeId,
         public readonly int $minSupported,
         public readonly int $maxSupported,
-    ) {
-    }
+    ) {}
 
     public function with(
         ?string $changeId = null,

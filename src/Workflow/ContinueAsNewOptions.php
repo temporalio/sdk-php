@@ -105,9 +105,9 @@ final class ContinueAsNewOptions
     #[Pure]
     public function withWorkflowRunTimeout($timeout): self
     {
-        assert(DateInterval::assert($timeout));
+        \assert(DateInterval::assert($timeout));
         $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
-        assert($timeout->totalMicroseconds >= 0);
+        \assert($timeout->totalMicroseconds >= 0);
 
         $self = clone $this;
         $self->workflowRunTimeout = $timeout;
@@ -126,9 +126,9 @@ final class ContinueAsNewOptions
     #[Pure]
     public function withWorkflowTaskTimeout($timeout): self
     {
-        assert(DateInterval::assert($timeout));
+        \assert(DateInterval::assert($timeout));
         $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
-        assert($timeout->totalMicroseconds >= 0 && $timeout->totalSeconds <= 60);
+        \assert($timeout->totalMicroseconds >= 0 && $timeout->totalSeconds <= 60);
 
         $self = clone $this;
         $self->workflowTaskTimeout = $timeout;

@@ -27,8 +27,7 @@ class MarshallingRule
         public ?string $name = null,
         public ?string $type = null,
         public self|string|null $of = null,
-    ) {
-    }
+    ) {}
 
     public function hasType(): bool
     {

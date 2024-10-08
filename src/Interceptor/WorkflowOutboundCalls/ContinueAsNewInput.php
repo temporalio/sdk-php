@@ -26,8 +26,7 @@ final class ContinueAsNewInput
         public readonly string $type,
         public readonly array $args = [],
         public readonly ?ContinueAsNewOptions $options = null,
-    ) {
-    }
+    ) {}
 
     public function with(
         ?string $type = null,

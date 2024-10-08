@@ -4,11 +4,8 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Schedule;
 
-use ArrayIterator;
-use Countable;
-use DateTimeImmutable;
-use DateTimeInterface;
 use Google\Protobuf\Timestamp;
+use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\Api\Schedule\V1\BackfillRequest;
 use Temporal\Api\Schedule\V1\SchedulePatch;
 use Temporal\Api\Schedule\V1\TriggerImmediatelyRequest;
@@ -22,13 +19,14 @@ use Temporal\Client\Common\ClientContextTrait;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Client\Schedule\Info\ScheduleDescription;
 use Temporal\Client\Schedule\Policy\ScheduleOverlapPolicy;
+use Temporal\Client\Schedule\Update\ScheduleUpdate;
+use Temporal\Client\Schedule\Update\ScheduleUpdateInput;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\InvalidArgumentException;
 use Temporal\Internal\Mapper\ScheduleMapper;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Marshaller\ProtoToArrayConverter;
-use Traversable;
 
 final class ScheduleHandle
 {
@@ -57,28 +55,73 @@ final class ScheduleHandle
     /**
      * Update the Schedule.
      *
+     * Examples:
+     *
+     * Add a search attribute to the schedule:
+     * ```
+     *  $handle->update(function (ScheduleUpdateInput $input): ScheduleUpdate {
+     *      return ScheduleUpdate::new($input->description->schedule)
+     *          ->withSearchAttributes($input->description->searchAttributes
+     *              ->withValue('foo', 'bar'),
+     *              ->withValue('bar', 42),
+     *          );
+     * });
+     * ```
+     *
+     * Pause a described schedule:
+     * ```
+     *  $description = $handle->describe();
+     *  $schedule = $description->schedule;
+     *  $handle->update(
+     *      $schedule
+     *          ->withState($schedule->state->withPaused(true)),
+     *      $description->conflictToken,
+     *  );
+     * ```
+     *
      * NOTE: If two Update calls are made in parallel to the same Schedule there is the potential
      * for a race condition. Use $conflictToken to avoid this.
      *
-     * @param Schedule $schedule The new Schedule to update to.
+     * @param Schedule|\Closure(ScheduleUpdateInput): ScheduleUpdate $schedule The new Schedule to update to or
+     *        a closure that will be passed the current ScheduleDescription and should return a ScheduleUpdate.
      * @param string|null $conflictToken Can be the value of {@see ScheduleDescription::$conflictToken},
      *        which will cause this request to fail if the schedule has been modified
      *        between the {@see self::describe()} and this Update.
      *        If missing, the schedule will be updated unconditionally.
      */
     public function update(
-        Schedule $schedule,
+        Schedule|\Closure $schedule,
         ?string $conflictToken = null,
     ): void {
-        $mapper = new ScheduleMapper($this->converter, $this->marshaller);
-        $scheduleMessage = $mapper->toMessage($schedule);
-
         $request = (new UpdateScheduleRequest())
             ->setScheduleId($this->id)
             ->setNamespace($this->namespace)
             ->setConflictToken((string) $conflictToken)
             ->setIdentity($this->clientOptions->identity)
-            ->setSchedule($scheduleMessage);
+            ->setRequestId(Uuid::v4());
+
+        if ($schedule instanceof \Closure) {
+            $description = $this->describe();
+            $update = $schedule(new ScheduleUpdateInput($description));
+            $update instanceof ScheduleUpdate or throw new InvalidArgumentException(
+                'Closure for the schedule update method must return a ScheduleUpdate.',
+            );
+
+            $schedule = $update->schedule;
+
+            // Search attributes
+            if ($update->searchAttributes !== null) {
+                $update->searchAttributes->setDataConverter($this->converter);
+                $payloads = $update->searchAttributes->toPayloadArray();
+                $encodedSa = (new SearchAttributes())->setIndexedFields($payloads);
+                $request->setSearchAttributes($encodedSa);
+            }
+        }
+
+        $mapper = new ScheduleMapper($this->converter, $this->marshaller);
+        $scheduleMessage = $mapper->toMessage($schedule);
+        $request->setSchedule($scheduleMessage);
+
 
         $this->client->UpdateSchedule($request);
     }
@@ -102,12 +145,12 @@ final class ScheduleHandle
     /**
      * Lists matching times within a range.
      *
-     * @return Countable&Traversable<int, DateTimeImmutable>
+     * @return \Countable&\Traversable<int, \DateTimeImmutable>
      */
     public function listScheduleMatchingTimes(
-        DateTimeInterface $startTime,
-        DateTimeInterface $endTime,
-    ): Countable&Traversable {
+        \DateTimeInterface $startTime,
+        \DateTimeInterface $endTime,
+    ): \Countable&\Traversable {
         $request = (new ListScheduleMatchingTimesRequest())
             ->setScheduleId($this->id)
             ->setNamespace($this->namespace)
@@ -115,15 +158,15 @@ final class ScheduleHandle
             ->setEndTime((new Timestamp())->setSeconds($endTime->getTimestamp()));
 
         $response = $this->client->ListScheduleMatchingTimes($request);
-        /** @var list<DateTimeInterface> $list */
+        /** @var list<\DateTimeInterface> $list */
         $list = [];
         foreach ($response->getStartTime() as $timestamp) {
             \assert($timestamp instanceof Timestamp);
 
-            $list[] = new \DateTimeImmutable('@' . $timestamp->getSeconds());
+            $list[] = new \DateTimeImmutable("@{$timestamp->getSeconds()}");
         }
 
-        return new ArrayIterator($list);
+        return new \ArrayIterator($list);
     }
 
     /**
@@ -137,7 +180,7 @@ final class ScheduleHandle
         $backfill = [];
         foreach ($periods as $period) {
             $period instanceof BackfillPeriod or throw new InvalidArgumentException(
-                'Backfill periods must be of type BackfillPeriod.'
+                'Backfill periods must be of type BackfillPeriod.',
             );
 
             $backfill[] = (new BackfillRequest())

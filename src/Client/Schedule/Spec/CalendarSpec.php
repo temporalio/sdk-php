@@ -61,8 +61,7 @@ final class CalendarSpec
         public readonly string $dayOfWeek,
         #[Marshal(name: 'comment')]
         public readonly string $comment,
-    ) {
-    }
+    ) {}
 
     /**
      * @param string $second Expression to match seconds.
@@ -89,37 +88,37 @@ final class CalendarSpec
 
     public function withSecond(string|int $second): self
     {
-        return $this->with('second', (string)$second);
+        return $this->with('second', (string) $second);
     }
 
     public function withMinute(string|int $minute): self
     {
-        return $this->with('minute', (string)$minute);
+        return $this->with('minute', (string) $minute);
     }
 
     public function withHour(string|int $hour): self
     {
-        return $this->with('hour', (string)$hour);
+        return $this->with('hour', (string) $hour);
     }
 
     public function withDayOfMonth(string|int $dayOfMonth): self
     {
-        return $this->with('dayOfMonth', (string)$dayOfMonth);
+        return $this->with('dayOfMonth', (string) $dayOfMonth);
     }
 
     public function withMonth(string|int $month): self
     {
-        return $this->with('month', (string)$month);
+        return $this->with('month', (string) $month);
     }
 
     public function withYear(string|int $year): self
     {
-        return $this->with('year', (string)$year);
+        return $this->with('year', (string) $year);
     }
 
     public function withDayOfWeek(string|int $dayOfWeek): self
     {
-        return $this->with('dayOfWeek', (string)$dayOfWeek);
+        return $this->with('dayOfWeek', (string) $dayOfWeek);
     }
 
     public function withComment(string $comment): self

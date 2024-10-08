@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * This file is part of Temporal package.
  *
@@ -29,8 +31,7 @@ class SignalInput
         public readonly WorkflowInfo $info,
         public readonly ValuesInterface $arguments,
         public readonly HeaderInterface $header,
-    ) {
-    }
+    ) {}
 
     public function with(
         WorkflowInfo $info = null,
@@ -41,7 +42,7 @@ class SignalInput
             $this->signalName,
             $info ?? $this->info,
             $arguments ?? $this->arguments,
-            $header ?? $this->header
+            $header ?? $this->header,
         );
     }
 }

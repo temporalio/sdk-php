@@ -16,6 +16,4 @@ use Temporal\Internal\Repository\ArrayRepository;
 /**
  * @template-extends ArrayRepository<WorkflowPrototype>
  */
-final class WorkflowCollection extends ArrayRepository
-{
-}
+final class WorkflowCollection extends ArrayRepository {}

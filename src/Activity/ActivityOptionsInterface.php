@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-
 namespace Temporal\Activity;
 
 use Temporal\Common\MethodRetry;

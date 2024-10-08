@@ -18,11 +18,6 @@ final class TaskQueue implements \Stringable
     #[Marshal]
     public readonly string $name;
 
-    public function __toString(): string
-    {
-        return $this->name;
-    }
-
     private function __construct(string $name)
     {
         $this->name = $name;
@@ -37,5 +32,10 @@ final class TaskQueue implements \Stringable
     {
         /** @see self::$name */
         return $this->with('name', $name);
+    }
+
+    public function __toString(): string
+    {
+        return $this->name;
     }
 }

@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Marshaller\Type;
 
-use stdClass;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Marshaller\MarshallingRule;
 
@@ -33,7 +32,7 @@ class ObjectType extends Type implements DetectableTypeInterface, RuleFactoryInt
      */
     public function __construct(MarshallerInterface $marshaller, string $class = null)
     {
-        $this->reflection = new \ReflectionClass($class ?? stdClass::class);
+        $this->reflection = new \ReflectionClass($class ?? \stdClass::class);
 
         parent::__construct($marshaller);
     }
@@ -79,7 +78,7 @@ class ObjectType extends Type implements DetectableTypeInterface, RuleFactoryInt
             $current = $this->emptyInstance();
         }
 
-        if ($current::class === stdClass::class && $this->reflection->getName() === stdClass::class) {
+        if ($current::class === \stdClass::class && $this->reflection->getName() === \stdClass::class) {
             foreach ($value as $key => $val) {
                 $current->$key = $val;
             }
@@ -95,8 +94,8 @@ class ObjectType extends Type implements DetectableTypeInterface, RuleFactoryInt
      */
     public function serialize($value): array
     {
-        return $this->reflection->getName() === stdClass::class
-            ? (array)$value
+        return $this->reflection->getName() === \stdClass::class
+            ? (array) $value
             : $this->marshaller->marshal($value);
     }
 
@@ -120,8 +119,8 @@ class ObjectType extends Type implements DetectableTypeInterface, RuleFactoryInt
      */
     protected function instance(array $data): object
     {
-        return $this->reflection->getName() === stdClass::class
-            ? (object)$data
+        return $this->reflection->getName() === \stdClass::class
+            ? (object) $data
             : $this->marshaller->unmarshal($data, $this->reflection->newInstanceWithoutConstructor());
     }
 }

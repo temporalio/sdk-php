@@ -38,7 +38,7 @@ class ChildWorkflowFailure extends TemporalFailure
         WorkflowExecution $execution,
         string $namespace,
         int $retryState,
-        \Throwable $previous = null
+        \Throwable $previous = null,
     ) {
         parent::__construct(
             self::buildMessage(
@@ -50,10 +50,10 @@ class ChildWorkflowFailure extends TemporalFailure
                     'startedEventId' => $startedEventId,
                     'namespace' => $namespace,
                     'retryState' => $retryState,
-                ]
+                ],
             ),
             null,
-            $previous
+            $previous,
         );
 
         $this->initiatedEventId = $initiatedEventId;

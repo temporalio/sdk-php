@@ -18,8 +18,7 @@ abstract class ServerResponse implements ServerResponseInterface
     public function __construct(
         private readonly string|int $id,
         private readonly TickInfo $info,
-    ) {
-    }
+    ) {}
 
     public function getID(): string|int
     {

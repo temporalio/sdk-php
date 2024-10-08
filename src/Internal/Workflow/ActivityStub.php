@@ -28,6 +28,7 @@ final class ActivityStub implements ActivityStubInterface
 {
     /** @var MarshallerInterface<array> */
     private MarshallerInterface $marshaller;
+
     private ActivityOptionsInterface $options;
     private HeaderInterface $header;
 
@@ -69,7 +70,7 @@ final class ActivityStub implements ActivityStubInterface
         string $name,
         array $args = [],
         Type|string|\ReflectionClass|\ReflectionType $returnType = null,
-        bool $isLocalActivity = false
+        bool $isLocalActivity = false,
     ): PromiseInterface {
         $request = $isLocalActivity ?
             new ExecuteLocalActivity($name, EncodedValues::fromValues($args), $this->getOptionsArray(), $this->header) :

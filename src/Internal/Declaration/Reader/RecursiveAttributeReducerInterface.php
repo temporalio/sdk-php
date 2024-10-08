@@ -24,7 +24,7 @@ interface RecursiveAttributeReducerInterface
         \ReflectionClass $class,
         \ReflectionMethod $method,
         ?object $interface,
-        array $attributes
+        array $attributes,
     );
 
     /**
@@ -38,6 +38,6 @@ interface RecursiveAttributeReducerInterface
         \ReflectionClass $class,
         \ReflectionMethod $method,
         ?object $interface,
-        array $attributes
+        array $attributes,
     );
 }

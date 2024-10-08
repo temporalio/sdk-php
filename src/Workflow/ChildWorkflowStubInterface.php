@@ -51,7 +51,7 @@ interface ChildWorkflowStubInterface
     public function getResult($returnType = null): PromiseInterface;
 
     /**
-     * @param string $name
+     * @param non-empty-string $name
      * @param array $args
      *
      * @return CompletableResultInterface

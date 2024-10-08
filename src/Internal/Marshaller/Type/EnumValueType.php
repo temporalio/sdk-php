@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Marshaller\Type;
 
-use BackedEnum;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Marshaller\MarshallingRule;
 
@@ -31,7 +30,7 @@ class EnumValueType extends Type implements RuleFactoryInterface
     public function __construct(MarshallerInterface $marshaller, ?string $class = null)
     {
         $this->classFQCN = $class ?? throw new \RuntimeException('Enum is required.');
-        \is_a($class, BackedEnum::class, true) ?: throw new \RuntimeException(
+        \is_a($class, \BackedEnum::class, true) ?: throw new \RuntimeException(
             'Class for EnumValueType must be an instance of BackedEnum.',
         );
         parent::__construct($marshaller);

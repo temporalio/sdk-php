@@ -6,7 +6,6 @@ namespace Temporal\Testing;
 
 use Temporal\Worker\ActivityInvocationCache\ActivityInvocationCacheInterface;
 use Temporal\Worker\ActivityInvocationCache\RoadRunnerActivityInvocationCache;
-use Throwable;
 
 final class ActivityMocker
 {
@@ -27,7 +26,7 @@ final class ActivityMocker
         $this->cache->saveCompletion($activityMethodName, $value);
     }
 
-    public function expectFailure(string $activityMethodName, Throwable $error): void
+    public function expectFailure(string $activityMethodName, \Throwable $error): void
     {
         $this->cache->saveFailure($activityMethodName, $error);
     }

@@ -50,20 +50,22 @@ class ApplicationFailure extends TemporalFailure
      * @param string $message
      * @param string $type
      * @param bool $nonRetryable
-     * @param ValuesInterface|null $details
+     * @param ValuesInterface|null $details Optional details about the failure.
      * @param \Throwable|null $previous
+     * @param \DateInterval|null $nextRetryDelay Delay before the next retry attempt.
      */
     public function __construct(
         string $message,
         string $type,
         bool $nonRetryable,
         ValuesInterface $details = null,
-        \Throwable $previous = null
+        \Throwable $previous = null,
+        private ?\DateInterval $nextRetryDelay = null,
     ) {
         parent::__construct(
-            self::buildMessage(compact('message', 'type', 'nonRetryable')),
+            self::buildMessage(\compact('message', 'type', 'nonRetryable')),
             $message,
-            $previous
+            $previous,
         );
 
         $this->type = $type;
@@ -85,6 +87,11 @@ class ApplicationFailure extends TemporalFailure
     public function getDetails(): ValuesInterface
     {
         return $this->details;
+    }
+
+    public function getNextRetryDelay(): ?\DateInterval
+    {
+        return $this->nextRetryDelay;
     }
 
     /**
@@ -109,5 +116,10 @@ class ApplicationFailure extends TemporalFailure
     public function setDataConverter(DataConverterInterface $converter): void
     {
         $this->details->setDataConverter($converter);
+    }
+
+    public function setNextRetryDelay(?\DateInterval $nextRetryDelay): void
+    {
+        $this->nextRetryDelay = $nextRetryDelay;
     }
 }

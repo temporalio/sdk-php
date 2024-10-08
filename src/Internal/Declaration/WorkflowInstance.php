@@ -190,7 +190,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
 
     /**
      * @param string $name
-     * @param callable(ValuesInterface):mixed $handler
+     * @param callable $handler
      * @throws \ReflectionException
      */
     public function addQueryHandler(string $name, callable $handler): void
@@ -208,7 +208,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
 
     /**
      * @param non-empty-string $name
-     * @param callable(ValuesInterface):mixed $handler
+     * @param callable $handler
      * @throws \ReflectionException
      */
     public function addUpdateHandler(string $name, callable $handler): void
@@ -222,6 +222,17 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
             /** @see WorkflowInboundCallsInterceptor::handleUpdate() */
             'handleUpdate',
         )(...);
+    }
+
+    /**
+     * @param non-empty-string $name
+     * @param callable $handler
+     * @throws \ReflectionException
+     */
+    public function addValidateUpdateHandler(string $name, callable $handler): void
+    {
+        $fn = $this->createCallableHandler($handler);
+        $this->validateUpdateHandlers[$name] = fn(UpdateInput $input): mixed => ($this->updateValidator)($input, $fn);
     }
 
     /**
@@ -242,7 +253,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
 
     public function getSignalHandler(string $name): \Closure
     {
-        return fn (ValuesInterface $values) => $this->signalQueue->push($name, $values);
+        return fn(ValuesInterface $values) => $this->signalQueue->push($name, $values);
     }
 
     /**

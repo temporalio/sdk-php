@@ -15,7 +15,5 @@ if (!\class_exists(\Temporal\Client\Common\ServerCapabilities::class)) {
     /**
      * @deprecated use {@see \Temporal\Client\Common\ServerCapabilities} instead. Will be removed in the future.
      */
-    class ServerCapabilities
-    {
-    }
+    class ServerCapabilities {}
 }

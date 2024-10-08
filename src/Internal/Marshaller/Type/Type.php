@@ -25,9 +25,8 @@ abstract class Type implements TypeInterface
      * @param MarshallerInterface<array> $marshaller
      */
     public function __construct(
-        protected MarshallerInterface $marshaller
-    ) {
-    }
+        protected MarshallerInterface $marshaller,
+    ) {}
 
     /**
      * @param MarshallerInterface $marshaller

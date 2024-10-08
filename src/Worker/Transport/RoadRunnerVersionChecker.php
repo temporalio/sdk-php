@@ -22,18 +22,8 @@ final class RoadRunnerVersionChecker
 {
     public function __construct(
         private readonly VersionChecker $checker = new VersionChecker(),
-        private readonly LoggerInterface $logger = new Logger()
-    ) {
-    }
-
-    public function check(): void
-    {
-        try {
-            $this->checker->greaterThan();
-        } catch (UnsupportedVersionException|RoadrunnerNotInstalledException $e) {
-            $this->logger->warning($e->getMessage());
-        }
-    }
+        private readonly LoggerInterface $logger = new Logger(),
+    ) {}
 
     public static function postUpdate(Event $event): void
     {
@@ -43,6 +33,15 @@ final class RoadRunnerVersionChecker
             $checker->greaterThan();
         } catch (UnsupportedVersionException|RoadrunnerNotInstalledException $e) {
             $event->getIO()->warning($e->getMessage());
+        }
+    }
+
+    public function check(): void
+    {
+        try {
+            $this->checker->greaterThan();
+        } catch (UnsupportedVersionException|RoadrunnerNotInstalledException $e) {
+            $this->logger->warning($e->getMessage());
         }
     }
 }

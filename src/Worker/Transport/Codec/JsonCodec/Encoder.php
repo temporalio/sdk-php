@@ -52,13 +52,13 @@ class Encoder
                     'id' => $cmd->getID(),
                     'command' => $cmd->getName(),
                     'options' => $options,
-                    'payloads' => base64_encode($cmd->getPayloads()->toPayloads()->serializeToString()),
-                    'header' => base64_encode($header->toHeader()->serializeToString()),
+                    'payloads' => \base64_encode($cmd->getPayloads()->toPayloads()->serializeToString()),
+                    'header' => \base64_encode($header->toHeader()->serializeToString()),
                 ];
 
                 if ($cmd->getFailure() !== null) {
                     $failure = FailureConverter::mapExceptionToFailure($cmd->getFailure(), $this->converter);
-                    $data['failure'] = base64_encode($failure->serializeToString());
+                    $data['failure'] = \base64_encode($failure->serializeToString());
                 }
 
                 return $data;

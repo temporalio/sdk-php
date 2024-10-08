@@ -20,21 +20,18 @@ use Temporal\Workflow\ReturnType;
 use Traversable;
 
 /**
+ * List of typed values.
+ *
  * @psalm-type TPayloadsCollection = Traversable&ArrayAccess&Countable
- * @psalm-type TKey = array-key
+ * @psalm-type TKey = int
  * @psalm-type TValue = string
  */
 class EncodedValues implements ValuesInterface
 {
     /**
-     * @var DataConverterInterface|null
-     */
-    private ?DataConverterInterface $converter = null;
-
-    /**
      * @var TPayloadsCollection|null
      */
-    protected ?Traversable $payloads = null;
+    protected ?\Traversable $payloads = null;
 
     /**
      * @var array<TKey, TValue>|null
@@ -42,11 +39,14 @@ class EncodedValues implements ValuesInterface
     protected ?array $values = null;
 
     /**
+     * @var DataConverterInterface|null
+     */
+    private ?DataConverterInterface $converter = null;
+
+    /**
      * Can not be constructed directly.
      */
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 
     /**
      * @return static
@@ -70,11 +70,6 @@ class EncodedValues implements ValuesInterface
         return static::fromPayloadCollection($payloads->getPayloads(), $dataConverter);
     }
 
-    public function toPayloads(): Payloads
-    {
-        return new Payloads(['payloads' => $this->toProtoCollection()]);
-    }
-
     /**
      * @param DataConverterInterface $converter
      * @param ValuesInterface $values
@@ -91,7 +86,7 @@ class EncodedValues implements ValuesInterface
     ): ValuesInterface {
         $payloads = $values->toPayloads();
         $newPayloads = new Payloads();
-        $newPayloads->setPayloads(array_slice(iterator_to_array($payloads->getPayloads()), $offset, $length));
+        $newPayloads->setPayloads(\array_slice(\iterator_to_array($payloads->getPayloads()), $offset, $length));
 
         return self::fromPayloads($newPayloads, $converter);
     }
@@ -107,7 +102,7 @@ class EncodedValues implements ValuesInterface
     public static function decodePromise(PromiseInterface $promise, $type = null): PromiseInterface
     {
         return $promise->then(
-            function ($value) use ($type) {
+            static function (mixed $value) use ($type) {
                 if (!$value instanceof ValuesInterface || $value instanceof \Throwable) {
                     return $value;
                 }
@@ -115,50 +110,6 @@ class EncodedValues implements ValuesInterface
                 return $value->getValue(0, $type);
             },
         );
-    }
-
-    public function getValue(int|string $index, $type = null): mixed
-    {
-        if (\is_array($this->values) && \array_key_exists($index, $this->values)) {
-            return $this->values[$index];
-        }
-
-        // External SDKs might return an empty array with metadata, alias to null
-        // Most likely this is a void type
-        if ($index === 0 && $this->count() === 0 && $this->isVoidType($type)) {
-            return null;
-        }
-
-        if ($this->converter === null) {
-            throw new \LogicException('DataConverter is not set');
-        }
-
-        return $this->converter->fromPayload($this->payloads[$index], $type);
-    }
-
-    public function getValues(): array
-    {
-        $result = $this->values;
-
-        if (empty($this->payloads)) {
-            return $result;
-        }
-
-        $this->converter === null and throw new \LogicException('DataConverter is not set.');
-
-        foreach ($this->payloads as $key => $payload) {
-            $result[$key] = $this->converter->fromPayload($payload, null);
-        }
-
-        return $result;
-    }
-
-    /**
-     * @param DataConverterInterface $converter
-     */
-    public function setDataConverter(DataConverterInterface $converter): void
-    {
-        $this->converter = $converter;
     }
 
     /**
@@ -183,7 +134,7 @@ class EncodedValues implements ValuesInterface
      * @return static
      */
     public static function fromPayloadCollection(
-        Traversable $payloads,
+        \Traversable $payloads,
         ?DataConverterInterface $dataConverter = null,
     ): static {
         $ev = new static();
@@ -191,6 +142,59 @@ class EncodedValues implements ValuesInterface
         $ev->converter = $dataConverter;
 
         return $ev;
+    }
+
+    public function toPayloads(): Payloads
+    {
+        return new Payloads(['payloads' => $this->toProtoCollection()]);
+    }
+
+    public function getValue(int|string $index, $type = null): mixed
+    {
+        if (\is_array($this->values) && \array_key_exists($index, $this->values)) {
+            return $this->values[$index];
+        }
+
+        $count = $this->count();
+        // External SDKs might return an empty array with metadata, alias to null
+        // Most likely this is a void type
+        if ($index === 0 && $count === 0 && $this->isVoidType($type)) {
+            return null;
+        }
+
+        $count > $index or throw new \OutOfBoundsException("Index {$index} is out of bounds.");
+        $this->converter === null and throw new \LogicException('DataConverter is not set.');
+
+        \assert($this->payloads !== null);
+        return $this->converter->fromPayload(
+            $this->payloads[$index],
+            $type,
+        );
+    }
+
+    public function getValues(): array
+    {
+        $result = (array) $this->values;
+
+        if (empty($this->payloads)) {
+            return $result;
+        }
+
+        $this->converter === null and throw new \LogicException('DataConverter is not set.');
+
+        foreach ($this->payloads as $key => $payload) {
+            $result[$key] = $this->converter->fromPayload($payload, null);
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param DataConverterInterface $converter
+     */
+    public function setDataConverter(DataConverterInterface $converter): void
+    {
+        $this->converter = $converter;
     }
 
     /**

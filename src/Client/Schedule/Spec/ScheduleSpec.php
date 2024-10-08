@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Schedule\Spec;
 
-use DateTimeInterface;
 use Google\Protobuf\Duration;
 use Google\Protobuf\Timestamp;
 use Temporal\Internal\Marshaller\Meta\Marshal;
@@ -94,13 +93,13 @@ final class ScheduleSpec
      * (Together, startTime and endTime make an inclusive interval.)
      */
     #[MarshalDateTime(name: 'start_time', to: Timestamp::class, nullable: true)]
-    public readonly ?DateTimeInterface $startTime;
+    public readonly ?\DateTimeInterface $startTime;
 
     /**
      * If endTime is set, any timestamps after endTime will be skipped.
      */
     #[MarshalDateTime(name: 'end_time', to: Timestamp::class, nullable: true)]
-    public readonly ?DateTimeInterface $endTime;
+    public readonly ?\DateTimeInterface $endTime;
 
     /**
      * All timestamps will be incremented by a random value from 0 to this
@@ -165,7 +164,7 @@ final class ScheduleSpec
     public function withCronStringList(\Stringable|string ...$cron): self
     {
         /** @see self::$cronStringList */
-        return $this->with('cronStringList', \array_map(static fn($item) => (string)$item, $cron));
+        return $this->with('cronStringList', \array_map(static fn($item) => (string) $item, $cron));
     }
 
     /**
@@ -178,7 +177,7 @@ final class ScheduleSpec
     public function withAddedCronString(\Stringable|string $cron): self
     {
         $value = $this->cronStringList;
-        $value[] = (string)$cron;
+        $value[] = (string) $cron;
 
         /** @see self::$cronStringList */
         return $this->with('cronStringList', $value);
@@ -290,7 +289,7 @@ final class ScheduleSpec
      * If startTime is set, any timestamps before startTime will be skipped.
      * (Together, startTime and endTime make an inclusive interval.)
      */
-    public function withStartTime(DateTimeInterface|string|null $dateTime): self
+    public function withStartTime(\DateTimeInterface|string|null $dateTime): self
     {
         /** @see self::$startTime */
         return $this->with('startTime', $dateTime === null ? null : DateTime::parse($dateTime));
@@ -299,7 +298,7 @@ final class ScheduleSpec
     /**
      * If endTime is set, any timestamps after endTime will be skipped.
      */
-    public function withEndTime(DateTimeInterface|string|null $dateTime): self
+    public function withEndTime(\DateTimeInterface|string|null $dateTime): self
     {
         /** @see self::$endTime */
         return $this->with('endTime', $dateTime === null ? null : DateTime::parse($dateTime));

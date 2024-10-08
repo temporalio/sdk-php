@@ -13,7 +13,6 @@ namespace Temporal\Internal\Workflow;
 
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\Type;
-use Temporal\Internal\Client\WorkflowProxy;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Support\Reflection;
 use Temporal\Internal\Transport\CompletableResultInterface;
@@ -25,10 +24,8 @@ final class ChildWorkflowProxy extends Proxy
 {
     private const ERROR_UNDEFINED_WORKFLOW_METHOD =
         'The given stub class "%s" does not contain a workflow method named "%s"';
-
     private const ERROR_UNDEFINED_METHOD =
         'The given stub class "%s" does not contain a workflow or signal method named "%s"';
-
     private const ERROR_UNSUPPORTED_METHOD =
         'The method named "%s" (%s) cannot be executed from a child workflow stub. ' .
         'Only workflow and signal methods are allowed';
@@ -43,8 +40,7 @@ final class ChildWorkflowProxy extends Proxy
         private readonly WorkflowPrototype $workflow,
         private readonly ChildWorkflowOptions $options,
         private readonly WorkflowContextInterface $context,
-    ) {
-    }
+    ) {}
 
     /**
      * @param non-empty-string $method
@@ -61,7 +57,7 @@ final class ChildWorkflowProxy extends Proxy
 
             if ($method !== $handler?->getName()) {
                 throw new \BadMethodCallException(
-                    \sprintf(self::ERROR_UNDEFINED_WORKFLOW_METHOD, $this->class, $method)
+                    \sprintf(self::ERROR_UNDEFINED_WORKFLOW_METHOD, $this->class, $method),
                 );
             }
 
@@ -70,7 +66,7 @@ final class ChildWorkflowProxy extends Proxy
             //  - #[CronSchedule]
             $options = $this->options->mergeWith(
                 $this->workflow->getMethodRetry(),
-                $this->workflow->getCronSchedule()
+                $this->workflow->getCronSchedule(),
             );
 
             $this->stub = $this->context->newUntypedChildWorkflowStub(
@@ -97,12 +93,12 @@ final class ChildWorkflowProxy extends Proxy
         // Otherwise, we try to find a suitable workflow "query" method.
         foreach ($this->workflow->getQueryHandlers() as $name => $definition) {
             $definition->method->getName() === $method and throw new \BadMethodCallException(
-                \sprintf(self::ERROR_UNSUPPORTED_METHOD, $method, $name)
+                \sprintf(self::ERROR_UNSUPPORTED_METHOD, $method, $name),
             );
         }
 
         throw new \BadMethodCallException(
-            \sprintf(self::ERROR_UNDEFINED_METHOD, $this->class, $method)
+            \sprintf(self::ERROR_UNDEFINED_METHOD, $this->class, $method),
         );
     }
 

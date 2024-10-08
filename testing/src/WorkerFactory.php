@@ -64,7 +64,8 @@ class WorkerFactory extends \Temporal\WorkerFactory
                     $interceptorProvider ?? new SimplePipelineProvider(),
                 ),
                 $this->rpc,
-            ), $this->activityCache
+            ),
+            $this->activityCache,
         );
         $this->queues->add($worker);
 

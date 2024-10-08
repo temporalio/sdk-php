@@ -20,6 +20,5 @@ final class WorkerVersionStamp
         /** @deprecated that field was removed {@link https://github.com/temporalio/api/pull/393} */
         public string $bundleId = '',
         public bool $useVersioning = false,
-    ) {
-    }
+    ) {}
 }

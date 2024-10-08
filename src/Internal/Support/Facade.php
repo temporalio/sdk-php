@@ -40,18 +40,6 @@ abstract class Facade
     }
 
     /**
-     * @param string $name
-     * @param array $arguments
-     * @return mixed
-     */
-    public static function __callStatic(string $name, array $arguments)
-    {
-        $context = self::getCurrentContext();
-
-        return $context->$name(...$arguments);
-    }
-
-    /**
      * @param object<T>|null $ctx
      * @internal
      */
@@ -84,5 +72,17 @@ abstract class Facade
         }
 
         return \spl_object_id(self::$ctx);
+    }
+
+    /**
+     * @param string $name
+     * @param array $arguments
+     * @return mixed
+     */
+    public static function __callStatic(string $name, array $arguments)
+    {
+        $context = self::getCurrentContext();
+
+        return $context->$name(...$arguments);
     }
 }

@@ -23,8 +23,7 @@ final class CompleteInput
     public function __construct(
         public readonly ?array $result,
         public readonly ?\Throwable $failure,
-    ) {
-    }
+    ) {}
 
     public function with(
         ?array $result = null,

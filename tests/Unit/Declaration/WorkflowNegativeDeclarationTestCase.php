@@ -21,7 +21,6 @@ use Temporal\Tests\Unit\Declaration\Fixture\UnannotatedClass;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithMultipleMethods;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithoutHandler;
 use Temporal\Workflow\WorkflowInterface;
-use Temporal\Workflow\WorkflowMethod;
 
 /**
  * @group unit

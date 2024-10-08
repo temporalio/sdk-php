@@ -21,7 +21,7 @@ class WorkflowUpdateException extends WorkflowException
         ?string $workflowType,
         private readonly string $updateId,
         private readonly string $updateName,
-        ?\Throwable $previous = null
+        ?\Throwable $previous = null,
     ) {
         parent::__construct($message, $execution, $workflowType, $previous);
     }

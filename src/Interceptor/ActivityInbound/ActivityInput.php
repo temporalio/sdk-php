@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * This file is part of Temporal package.
  *
@@ -24,8 +26,7 @@ class ActivityInput
     public function __construct(
         public readonly ValuesInterface $arguments,
         public readonly HeaderInterface $header,
-    ) {
-    }
+    ) {}
 
     public function with(
         ValuesInterface $arguments = null,
@@ -33,7 +34,7 @@ class ActivityInput
     ): self {
         return new self(
             $arguments ?? $this->arguments,
-            $header ?? $this->header
+            $header ?? $this->header,
         );
     }
 }

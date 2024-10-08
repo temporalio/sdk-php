@@ -17,7 +17,6 @@ final class ScheduleOptions
     use CloneWith;
 
     public readonly string $namespace;
-
     public readonly bool $triggerImmediately;
 
     /**
@@ -26,7 +25,6 @@ final class ScheduleOptions
     public readonly array $backfills;
 
     public readonly EncodedCollection $memo;
-
     public readonly EncodedCollection $searchAttributes;
 
     private function __construct()

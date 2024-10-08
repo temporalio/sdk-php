@@ -25,7 +25,7 @@ final class GetVersion extends Request
     public function __construct(
         private string $changeId,
         private int $minSupported,
-        private int $maxSupported
+        private int $maxSupported,
     ) {
         parent::__construct(
             self::NAME,
@@ -33,7 +33,7 @@ final class GetVersion extends Request
                 'changeID' => $changeId,
                 'minSupported' => $minSupported,
                 'maxSupported' => $maxSupported,
-            ]
+            ],
         );
     }
 

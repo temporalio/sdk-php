@@ -17,6 +17,7 @@ use Temporal\Workflow\ParentClosePolicy;
 final class GetChildWorkflowExecution extends Request
 {
     public const NAME = 'GetChildWorkflowExecution';
+
     /** @see ParentClosePolicy */
     private int $parentClosePolicy;
 

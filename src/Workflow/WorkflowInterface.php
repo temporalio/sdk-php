@@ -26,6 +26,4 @@ use Spiral\Attributes\NamedArgumentConstructor;
  *  Problem is relevant for doctrine/annotations 1.11 or lower on any PHP version.
  */
 #[\Attribute(\Attribute::TARGET_CLASS), NamedArgumentConstructor]
-class WorkflowInterface
-{
-}
+class WorkflowInterface {}

@@ -59,7 +59,7 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
 
             // Validation
 
-            $isReplay = (bool)($request->getOptions()['replay'] ?? false);
+            $isReplay = (bool) ($request->getOptions()['replay'] ?? false);
             if ($isReplay) {
                 // On replay, we don't need to execute validation handlers
                 $context->getClient()->send(new UpdateResponse(
@@ -90,7 +90,7 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
                     values: null,
                     failure: $e,
                     updateId: $updateId,
-                )
+                ),
             );
             return;
         }
@@ -127,7 +127,7 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
     private function getUpdateHandler(WorkflowInstanceInterface $instance, string $name): \Closure
     {
         return $instance->findUpdateHandler($name) ?? throw new \LogicException(
-            \sprintf(self::ERROR_HANDLER_NOT_FOUND, $name, \implode(' ', $instance->getUpdateHandlerNames()))
+            \sprintf(self::ERROR_HANDLER_NOT_FOUND, $name, \implode(' ', $instance->getUpdateHandlerNames())),
         );
     }
 }

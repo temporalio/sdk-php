@@ -32,6 +32,20 @@ final class DataConverter implements DataConverterInterface
     }
 
     /**
+     * @return DataConverterInterface
+     */
+    public static function createDefault(): DataConverterInterface
+    {
+        return new DataConverter(
+            new NullConverter(),
+            new BinaryConverter(),
+            new ProtoJsonConverter(),
+            new ProtoConverter(),
+            new JsonConverter(),
+        );
+    }
+
+    /**
      * {@inheritDoc}
      */
     public function fromPayload(Payload $payload, $type)
@@ -42,12 +56,12 @@ final class DataConverter implements DataConverterInterface
         $encoding = $meta[EncodingKeys::METADATA_ENCODING_KEY];
 
         if (!isset($this->converters[$encoding])) {
-            throw new DataConverterException(sprintf('Undefined payload encoding %s', $encoding));
+            throw new DataConverterException(\sprintf('Undefined payload encoding %s', $encoding));
         }
 
         $type = Type::create($type);
         if (\in_array($type->getName(), [Type::TYPE_VOID, Type::TYPE_NULL, Type::TYPE_FALSE, Type::TYPE_TRUE], true)) {
-            return match($type->getName()) {
+            return match ($type->getName()) {
                 Type::TYPE_VOID, Type::TYPE_NULL => null,
                 Type::TYPE_TRUE => true,
                 Type::TYPE_FALSE => false,
@@ -74,21 +88,7 @@ final class DataConverter implements DataConverterInterface
         }
 
         throw new DataConverterException(
-            \sprintf('Unable to convert value of type %s to Payload', \get_debug_type($value))
-        );
-    }
-
-    /**
-     * @return DataConverterInterface
-     */
-    public static function createDefault(): DataConverterInterface
-    {
-        return new DataConverter(
-            new NullConverter(),
-            new BinaryConverter(),
-            new ProtoJsonConverter(),
-            new ProtoConverter(),
-            new JsonConverter()
+            \sprintf('Unable to convert value of type %s to Payload', \get_debug_type($value)),
         );
     }
 }

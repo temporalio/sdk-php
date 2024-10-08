@@ -31,6 +31,14 @@ class ExceptionInterceptor implements ExceptionInterceptorInterface
     }
 
     /**
+     * @return static
+     */
+    public static function createDefault(): self
+    {
+        return new self([\Error::class]);
+    }
+
+    /**
      * @param \Throwable $e
      * @return bool
      */
@@ -43,13 +51,5 @@ class ExceptionInterceptor implements ExceptionInterceptorInterface
         }
 
         return false;
-    }
-
-    /**
-     * @return static
-     */
-    public static function createDefault(): self
-    {
-        return new self([\Error::class]);
     }
 }

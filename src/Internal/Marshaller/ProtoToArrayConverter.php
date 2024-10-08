@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Marshaller;
 
-use DateTimeImmutable;
 use Google\Protobuf\Duration;
 use Google\Protobuf\Internal\MapField;
 use Google\Protobuf\Internal\Message;
@@ -29,8 +28,7 @@ final class ProtoToArrayConverter
 {
     public function __construct(
         private readonly DataConverterInterface $converter,
-    ) {
-    }
+    ) {}
 
     public function convert(mixed $message): mixed
     {
@@ -48,7 +46,7 @@ final class ProtoToArrayConverter
     private function getMapper(Message $message): ?\Closure
     {
         $mapper = match ($message::class) {
-            Timestamp::class => static fn(Timestamp $input): DateTimeImmutable => DateTimeImmutable::createFromFormat(
+            Timestamp::class => static fn(Timestamp $input): \DateTimeImmutable => \DateTimeImmutable::createFromFormat(
                 'U.u',
                 \sprintf('%d.%d', $input->getSeconds(), $input->getNanos() / 1000),
             ),
@@ -56,8 +54,8 @@ final class ProtoToArrayConverter
                 $now = new \DateTimeImmutable('@0');
                 return $now->diff(
                     $now->modify(
-                        \sprintf('+%d seconds +%d microseconds', $input->getSeconds(), $input->getNanos() / 1000)
-                    )
+                        \sprintf('+%d seconds +%d microseconds', $input->getSeconds(), $input->getNanos() / 1000),
+                    ),
                 );
             },
             SearchAttributes::class => fn(SearchAttributes $input): EncodedCollection =>
@@ -77,7 +75,7 @@ final class ProtoToArrayConverter
             ScheduleAction::class => fn(ScheduleAction $scheduleAction): array => [
                 'action' => $this->convert(
                     // Use getter for `oneOf` field
-                    $scheduleAction->{'get' . \str_replace('_', '', \ucwords($scheduleAction->getAction(), '_'))}()
+                    $scheduleAction->{'get' . \str_replace('_', '', \ucwords($scheduleAction->getAction(), '_'))}(),
                 ),
                 'start_workflow' => $this->convert($scheduleAction->getStartWorkflow()),
             ],

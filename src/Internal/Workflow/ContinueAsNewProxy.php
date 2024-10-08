@@ -66,7 +66,7 @@ class ContinueAsNewProxy extends Proxy
         string $class,
         WorkflowPrototype $workflow,
         ContinueAsNewOptions $options,
-        WorkflowContextInterface $context
+        WorkflowContextInterface $context,
     ) {
         $this->class = $class;
         $this->workflow = $workflow;
@@ -83,7 +83,7 @@ class ContinueAsNewProxy extends Proxy
     {
         if ($this->isContinued()) {
             throw new \BadMethodCallException(
-                \sprintf(self::ERROR_ALREADY_CONTINUED, $this->workflow->getID())
+                \sprintf(self::ERROR_ALREADY_CONTINUED, $this->workflow->getID()),
             );
         }
 
@@ -91,7 +91,7 @@ class ContinueAsNewProxy extends Proxy
 
         if ($method !== $handler?->getName()) {
             throw new \BadMethodCallException(
-                \sprintf(self::ERROR_UNDEFINED_WORKFLOW_METHOD, $this->class, $method)
+                \sprintf(self::ERROR_UNDEFINED_WORKFLOW_METHOD, $this->class, $method),
             );
         }
 

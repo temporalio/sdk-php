@@ -30,11 +30,12 @@ final class Pipeline
     /** @var non-empty-string */
     private string $method;
 
-    /** @var Closure */
-    private Closure $last;
+    /** @var \Closure */
+    private \Closure $last;
 
     /** @var list<TInterceptor> */
     private array $interceptors = [];
+
     /** @var int<0, max> Current interceptor key */
     private int $current = 0;
 
@@ -65,7 +66,7 @@ final class Pipeline
     }
 
     /**
-     * @param Closure $last
+     * @param \Closure $last
      * @param non-empty-string $method Method name of the all interceptors.
      *
      * @return TCallable

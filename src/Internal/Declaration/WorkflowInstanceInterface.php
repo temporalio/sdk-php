@@ -45,6 +45,12 @@ interface WorkflowInstanceInterface extends InstanceInterface
 
     /**
      * @param non-empty-string $name
+     * @param callable $handler
+     */
+    public function addValidateUpdateHandler(string $name, callable $handler): void;
+
+    /**
+     * @param non-empty-string $name
      * @return \Closure(ValuesInterface): void
      */
     public function getSignalHandler(string $name): \Closure;

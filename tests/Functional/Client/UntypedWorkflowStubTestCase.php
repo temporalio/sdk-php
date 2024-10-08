@@ -18,7 +18,6 @@ use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\TerminatedFailure;
 use Temporal\Exception\IllegalStateException;
 use Temporal\Exception\InvalidArgumentException;
-use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithoutHandler;
 use Temporal\Workflow\WorkflowExecutionStatus;
 
 /**
@@ -264,7 +263,7 @@ class UntypedWorkflowStubTestCase extends AbstractClient
         $signaller = $client->newUntypedRunningWorkflowStub($workflowId, $workflowRunId);
         $signaller->signal('addValue', 'test1');
 
-        $result = $workflowRun->getResult();
+        $result = $workflowRun->getResult(timeout: 10);
         $this->assertEquals(['test1'], $result);
     }
 }

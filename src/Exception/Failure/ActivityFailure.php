@@ -36,7 +36,7 @@ class ActivityFailure extends TemporalFailure
         string $activityId,
         int $retryState,
         string $identity,
-        \Throwable $previous = null
+        \Throwable $previous = null,
     ) {
         parent::__construct(
             self::buildMessage(
@@ -47,10 +47,10 @@ class ActivityFailure extends TemporalFailure
                     'activityId' => $activityId,
                     'identity' => $identity,
                     'retryState' => $retryState,
-                ]
+                ],
             ),
             null,
-            $previous
+            $previous,
         );
 
         $this->scheduledEventId = $scheduledEventId;

@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Client;
 
 use Carbon\CarbonInterval;
-use JetBrains\PhpStorm\ExpectedValues;
 use JetBrains\PhpStorm\Pure;
 use Temporal\Api\Common\V1\Memo;
 use Temporal\Api\Common\V1\SearchAttributes;
@@ -254,9 +253,9 @@ final class WorkflowOptions extends Options
     #[Pure]
     public function withWorkflowExecutionTimeout($timeout): self
     {
-        assert(DateInterval::assert($timeout));
+        \assert(DateInterval::assert($timeout));
         $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
-        assert($timeout->totalMicroseconds >= 0);
+        \assert($timeout->totalMicroseconds >= 0);
 
         $self = clone $this;
         $self->workflowExecutionTimeout = $timeout;
@@ -276,9 +275,9 @@ final class WorkflowOptions extends Options
     #[Pure]
     public function withWorkflowRunTimeout($timeout): self
     {
-        assert(DateInterval::assert($timeout));
+        \assert(DateInterval::assert($timeout));
         $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
-        assert($timeout->totalMicroseconds >= 0);
+        \assert($timeout->totalMicroseconds >= 0);
 
         $self = clone $this;
         $self->workflowRunTimeout = $timeout;
@@ -297,9 +296,9 @@ final class WorkflowOptions extends Options
     #[Pure]
     public function withWorkflowTaskTimeout($timeout): self
     {
-        assert(DateInterval::assert($timeout));
+        \assert(DateInterval::assert($timeout));
         $timeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
-        assert($timeout->totalMicroseconds >= 0 && $timeout->totalSeconds <= 60);
+        \assert($timeout->totalMicroseconds >= 0 && $timeout->totalSeconds <= 60);
 
         $self = clone $this;
         $self->workflowTaskTimeout = $timeout;
@@ -320,7 +319,7 @@ final class WorkflowOptions extends Options
     #[Pure]
     public function withWorkflowStartDelay($delay): self
     {
-        assert(DateInterval::assert($delay));
+        \assert(DateInterval::assert($delay));
         $delay = DateInterval::parse($delay, DateInterval::FORMAT_SECONDS);
 
         $self = clone $this;

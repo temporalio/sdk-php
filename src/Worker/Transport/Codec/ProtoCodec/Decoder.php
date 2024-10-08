@@ -28,7 +28,7 @@ use Temporal\Worker\Transport\Command\SuccessResponseInterface;
 class Decoder
 {
     public function __construct(
-        private readonly DataConverterInterface $dataConverter
+        private readonly DataConverterInterface $dataConverter,
     ) {}
 
     public function decode(Message $msg, TickInfo $info): ServerRequestInterface|ServerResponse

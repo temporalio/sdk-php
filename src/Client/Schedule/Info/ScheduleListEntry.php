@@ -41,7 +41,5 @@ final class ScheduleListEntry
     /**
      * @internal The DTO is a result of a query, so it is not possible to create it manually.
      */
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 }

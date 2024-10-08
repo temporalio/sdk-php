@@ -11,6 +11,4 @@ declare(strict_types=1);
 
 namespace Temporal\Exception;
 
-class ProtocolException extends TransportException
-{
-}
+class ProtocolException extends TransportException {}

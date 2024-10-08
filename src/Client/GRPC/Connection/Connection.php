@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Temporal\Client\GRPC\Connection;
 
-use Closure;
-use Fiber;
 use Temporal\Api\Workflowservice\V1\WorkflowServiceClient;
 use Temporal\Client\Common\ServerCapabilities;
 
@@ -23,17 +21,12 @@ final class Connection implements ConnectionInterface
     private bool $closed = true;
 
     /**
-     * @param Closure(): WorkflowServiceClient $clientFactory Service Client factory
+     * @param \Closure(): WorkflowServiceClient $clientFactory Service Client factory
      */
     public function __construct(
-        public Closure $clientFactory,
+        public \Closure $clientFactory,
     ) {
         $this->initClient();
-    }
-
-    public function __destruct()
-    {
-        $this->disconnect();
     }
 
     public function isConnected(): bool
@@ -57,11 +50,11 @@ final class Connection implements ConnectionInterface
 
         // Start connecting
         $this->getState(true);
-        $isFiber = Fiber::getCurrent() !== null;
+        $isFiber = \Fiber::getCurrent() !== null;
         do {
             // Wait a bit
             if ($isFiber) {
-                Fiber::suspend();
+                \Fiber::suspend();
             } else {
                 $this->workflowService->waitForReady(50);
             }
@@ -72,13 +65,13 @@ final class Connection implements ConnectionInterface
 
         $alive or throw new \RuntimeException('Failed to connect to Temporal service. Timeout exceeded.');
         $state === ConnectionState::Idle and throw new \RuntimeException(
-            'Failed to connect to Temporal service. Channel is in idle state.'
+            'Failed to connect to Temporal service. Channel is in idle state.',
         );
         $state === ConnectionState::TransientFailure and throw new \RuntimeException(
-            'Failed to connect to Temporal service. Channel is in transient failure state.'
+            'Failed to connect to Temporal service. Channel is in transient failure state.',
         );
         $state === ConnectionState::Shutdown and throw new \RuntimeException(
-            'Failed to connect to Temporal service. Channel is in shutdown state.'
+            'Failed to connect to Temporal service. Channel is in shutdown state.',
         );
     }
 
@@ -100,6 +93,11 @@ final class Connection implements ConnectionInterface
     {
         $this->initClient();
         return $this->workflowService;
+    }
+
+    public function __destruct()
+    {
+        $this->disconnect();
     }
 
     private function getState(bool $tryToConnect = false): ConnectionState
@@ -131,6 +129,6 @@ final class Connection implements ConnectionInterface
     private function waitForReady(float $timeout): bool
     {
         /** @psalm-suppress InvalidOperand */
-        return $this->workflowService->waitForReady((int)($timeout * 1_000_000));
+        return $this->workflowService->waitForReady((int) ($timeout * 1_000_000));
     }
 }

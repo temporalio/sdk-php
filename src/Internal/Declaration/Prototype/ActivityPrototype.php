@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration\Prototype;
 
-use Closure;
 use Temporal\Activity\ActivityInterface;
 use Temporal\Activity\LocalActivityInterface;
 use Temporal\Common\MethodRetry;
@@ -29,8 +28,7 @@ final class ActivityPrototype extends Prototype
      */
     private ?ActivityInstance $instance = null;
 
-    private ?Closure $factory = null;
-
+    private ?\Closure $factory = null;
     private bool $isLocalActivity;
 
     /**
@@ -53,7 +51,7 @@ final class ActivityPrototype extends Prototype
     public function getHandler(): \ReflectionMethod
     {
         $handler = parent::getHandler();
-        assert($handler !== null);
+        \assert($handler !== null);
 
         return $handler;
     }
@@ -81,7 +79,7 @@ final class ActivityPrototype extends Prototype
         }
 
         if ($this->factory !== null) {
-            $instance = call_user_func($this->factory, $this->getClass());
+            $instance = \call_user_func($this->factory, $this->getClass());
             return new ActivityInstance($this, $instance);
         }
 
@@ -100,7 +98,7 @@ final class ActivityPrototype extends Prototype
         return $proto;
     }
 
-    public function withFactory(Closure $factory): self
+    public function withFactory(\Closure $factory): self
     {
         $proto = clone $this;
         $proto->factory = $factory;
@@ -113,7 +111,7 @@ final class ActivityPrototype extends Prototype
         return $this->isLocalActivity;
     }
 
-    public function getFactory(): ?Closure
+    public function getFactory(): ?\Closure
     {
         return $this->factory;
     }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * This file is part of Temporal package.
  *
@@ -26,8 +28,7 @@ class SignalInput
         public readonly ?string $workflowType,
         public readonly string $signalName,
         public readonly ValuesInterface $arguments,
-    ) {
-    }
+    ) {}
 
     public function with(
         string $signalName = null,

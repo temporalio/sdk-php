@@ -29,9 +29,9 @@ class ServerRequest implements ServerRequestInterface
 {
     use RequestTrait;
 
-    private string $id;
     protected ValuesInterface $payloads;
     protected HeaderInterface $header;
+    private string $id;
 
     /**
      * @param non-empty-string $name

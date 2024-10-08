@@ -37,6 +37,29 @@ final class WorkflowProxy extends Proxy
         private readonly WorkflowPrototype $prototype,
     ) {}
 
+    public function hasHandler(): bool
+    {
+        return $this->prototype->getHandler() !== null;
+    }
+
+    /**
+     * @return \ReflectionMethod
+     */
+    public function getHandlerReflection(): \ReflectionMethod
+    {
+        return $this->prototype->getHandler() ?? throw new \LogicException(
+            'The workflow does not contain a handler method.',
+        );
+    }
+
+    /**
+     * @param non-empty-string $name Signal name
+     */
+    public function findSignalReflection(string $name): ?\ReflectionMethod
+    {
+        return ($this->prototype->getSignalHandlers()[$name] ?? null)?->method;
+    }
+
     /**
      * @param non-empty-string $method
      * @return mixed|void
@@ -114,28 +137,5 @@ final class WorkflowProxy extends Proxy
     public function __getReturnType(): ?ReturnType
     {
         return $this->prototype->getReturnType();
-    }
-
-    public function hasHandler(): bool
-    {
-        return $this->prototype->getHandler() !== null;
-    }
-
-    /**
-     * @return \ReflectionMethod
-     */
-    public function getHandlerReflection(): \ReflectionMethod
-    {
-        return $this->prototype->getHandler() ?? throw new \LogicException(
-            'The workflow does not contain a handler method.',
-        );
-    }
-
-    /**
-     * @param non-empty-string $name Signal name
-     */
-    public function findSignalReflection(string $name): ?\ReflectionMethod
-    {
-        return ($this->prototype->getSignalHandlers()[$name] ?? null)?->method;
     }
 }

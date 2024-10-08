@@ -68,6 +68,6 @@ final class CronSchedule implements \Stringable
      */
     public function __toString(): string
     {
-        return (string)$this->interval;
+        return (string) $this->interval;
     }
 }

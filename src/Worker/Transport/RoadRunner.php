@@ -54,7 +54,7 @@ final class RoadRunner implements HostConnectionInterface
      */
     public static function create(
         EnvironmentInterface $env = null,
-        RoadRunnerVersionChecker $versionChecker = null
+        RoadRunnerVersionChecker $versionChecker = null,
     ): HostConnectionInterface {
         $versionChecker ??= new RoadRunnerVersionChecker();
         $versionChecker->check();
@@ -78,7 +78,7 @@ final class RoadRunner implements HostConnectionInterface
 
         return new CommandBatch(
             $payload->body,
-            $this->decodeHeaders($payload->header)
+            $this->decodeHeaders($payload->header),
         );
     }
 
@@ -102,7 +102,7 @@ final class RoadRunner implements HostConnectionInterface
     public function error(\Throwable $error): void
     {
         try {
-            $this->worker->error((string)$error);
+            $this->worker->error((string) $error);
         } catch (\Throwable $e) {
             throw new TransportException($e->getMessage(), $e->getCode(), $e);
         }

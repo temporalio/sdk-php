@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Workflow;
 
-use DateTimeInterface;
 use Ramsey\Uuid\UuidInterface;
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
@@ -78,6 +77,15 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @return $this
      */
     public function registerSignal(string $queryType, callable $handler): self;
+
+    /**
+     * Registers an update method with an optional validator.
+     *
+     * @see Workflow::registerUpdate()
+     *
+     * @param non-empty-string $name
+     */
+    public function registerUpdate(string $name, callable $handler, ?callable $validator): static;
 
     /**
      * Exchanges data between worker and host process.
@@ -154,7 +162,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
     public function continueAsNew(
         string $type,
         array $args = [],
-        ContinueAsNewOptions $options = null
+        ContinueAsNewOptions $options = null,
     ): PromiseInterface;
 
     /**
@@ -275,7 +283,8 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @return T
      */
-    public function newActivityStub(string $class,
+    public function newActivityStub(
+        string $class,
         ActivityOptionsInterface $options = null,
     ): object;
 
@@ -368,13 +377,13 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @see Workflow::uuid7()
      *
-     * @param DateTimeInterface|null $dateTime An optional date/time from which
+     * @param \DateTimeInterface|null $dateTime An optional date/time from which
      *     to create the version 7 UUID. If not provided, the UUID is generated
      *     using the current date/time.
      *
      * @return PromiseInterface<UuidInterface>
      */
-    public function uuid7(?DateTimeInterface $dateTime = null): PromiseInterface;
+    public function uuid7(?\DateTimeInterface $dateTime = null): PromiseInterface;
 
     /**
      * Create a mutex.
