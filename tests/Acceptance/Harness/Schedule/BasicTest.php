@@ -66,12 +66,18 @@ class BasicTest extends TestCase
 
             // Confirm simple list
             $found = false;
+            $deadline = \microtime(true) + 10;
+            find:
             foreach ($client->listSchedules() as $schedule) {
                 if ($schedule->scheduleId === $scheduleId) {
                     $found = true;
                     break;
                 }
             }
+            if (!$found and \microtime(true) < $deadline) {
+                goto find;
+            }
+
             $found or throw new \Exception('Schedule not found');
 
             // Wait for first completion

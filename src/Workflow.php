@@ -1003,13 +1003,15 @@ final class Workflow extends Facade
      * @param Mutex $mutex Mutex name or instance.
      * @param callable(): T $callable Function to run.
      *
-     * @return PromiseInterface<T>
+     * @return CancellationScopeInterface<T>
      */
-    public function runLocked(Mutex $mutex, callable $callable): PromiseInterface
+    public static function runLocked(Mutex $mutex, callable $callable): CancellationScopeInterface
     {
-        return $mutex->lock()->then(static function (Mutex $mutex) use ($callable): mixed {
+        return Workflow::async(static function () use ($mutex, $callable): \Generator {
+            yield $mutex->lock();
+
             try {
-                return $callable();
+                return yield $callable();
             } finally {
                 $mutex->unlock();
             }

@@ -15,6 +15,7 @@ use React\Promise\PromiseInterface;
 
 /**
  * @template T
+ * @yield T
  * @extends PromiseInterface<T>
  */
 interface CancellationScopeInterface extends PromiseInterface

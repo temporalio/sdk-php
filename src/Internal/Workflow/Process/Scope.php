@@ -221,7 +221,7 @@ class Scope implements CancellationScopeInterface, Destroyable
     /**
      * @param \Throwable|null $reason
      */
-    public function cancel(\Throwable $reason = null): void
+    public function cancel(?\Throwable $reason = null): void
     {
         if ($this->detached && !$reason instanceof DestructMemorizedInstanceException) {
             // detaches scopes can be offload via memory flush
@@ -291,7 +291,7 @@ class Scope implements CancellationScopeInterface, Destroyable
      */
     public function onAwait(Deferred $deferred): void
     {
-        $this->onCancel[++$this->cancelID] = static function (\Throwable $e = null) use ($deferred): void {
+        $this->onCancel[++$this->cancelID] = static function (?\Throwable $e = null) use ($deferred): void {
             $deferred->reject($e ?? new CanceledFailure(''));
         };
 
