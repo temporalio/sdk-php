@@ -281,7 +281,7 @@ final class Workflow extends Facade
      *  }
      * ```
      *
-     * @param callable|PromiseInterface ...$conditions
+     * @param callable|PromiseInterface|Mutex ...$conditions
      * @return PromiseInterface
      */
     public static function await(...$conditions): PromiseInterface
@@ -311,7 +311,7 @@ final class Workflow extends Facade
      * ```
      *
      * @param DateIntervalValue $interval
-     * @param callable|PromiseInterface ...$conditions
+     * @param callable|PromiseInterface|Mutex ...$conditions
      * @return PromiseInterface<bool>
      */
     public static function awaitWithTimeout($interval, ...$conditions): PromiseInterface

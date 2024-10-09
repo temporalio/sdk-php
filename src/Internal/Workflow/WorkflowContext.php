@@ -61,6 +61,7 @@ use Temporal\Workflow\ChildWorkflowOptions;
 use Temporal\Workflow\ChildWorkflowStubInterface;
 use Temporal\Workflow\ContinueAsNewOptions;
 use Temporal\Workflow\ExternalWorkflowStubInterface;
+use Temporal\Workflow\Mutex;
 use Temporal\Workflow\WorkflowContextInterface;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowInfo;
@@ -661,7 +662,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     }
 
     /**
-     * @param callable|PromiseInterface ...$conditions
+     * @param callable|Mutex|PromiseInterface ...$conditions
      */
     protected function awaitRequest(...$conditions): PromiseInterface
     {
@@ -669,7 +670,10 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         $conditionGroupId = Uuid::v4();
 
         foreach ($conditions as $condition) {
-            \assert(\is_callable($condition) || $condition instanceof PromiseInterface);
+            \assert(\is_callable($condition) || $condition instanceof PromiseInterface || $condition instanceof Mutex);
+
+            // Wrap Mutex into callable
+            $condition instanceof Mutex and $condition = static fn(): bool => !$condition->isLocked();
 
             if ($condition instanceof \Closure) {
                 $callableResult = $condition($conditionGroupId);

@@ -429,6 +429,10 @@ class Scope implements CancellationScopeInterface, Destroyable
         $this->context->resolveConditions();
 
         switch (true) {
+            case $current instanceof Workflow\Mutex:
+                $this->nextPromise($this->context->await($current));
+                break;
+
             case $current instanceof PromiseInterface:
                 $this->nextPromise($current);
                 break;
