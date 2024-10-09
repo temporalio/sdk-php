@@ -56,7 +56,7 @@ final class WorkflowStubInjector implements InjectorInterface
         $deadline = \microtime(true) + 5;
         checkStart:
         $description = $run->describe();
-        if ($description->info->startTime === null) {
+        if ($description->info->historyLength <= 2) {
             if (\microtime(true) < $deadline) {
                 goto checkStart;
             }

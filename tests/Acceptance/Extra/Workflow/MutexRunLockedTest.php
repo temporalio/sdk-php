@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Acceptance\Extra\Workflow\Mutex;
+namespace Temporal\Tests\Acceptance\Extra\Workflow\MutexRunLocked;
 
 use PHPUnit\Framework\Attributes\Test;
 use React\Promise\PromiseInterface;
@@ -14,11 +14,11 @@ use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
-class MutexTest extends TestCase
+class MutexRunLockedTest extends TestCase
 {
     #[Test]
     public function runLockedWithGeneratorAndAwait(
-        #[Stub('Extra_Workflow_Mutex')]
+        #[Stub('Extra_Workflow_MutexRunLocked')]
         WorkflowStubInterface $stub,
     ): void {
         $stub->signal('unblock');
@@ -32,7 +32,7 @@ class MutexTest extends TestCase
 
     #[Test]
     public function runLockedAndCancel(
-        #[Stub('Extra_Workflow_Mutex')]
+        #[Stub('Extra_Workflow_MutexRunLocked')]
         WorkflowStubInterface $stub,
     ): void {
         $stub->signal('cancel');
@@ -60,7 +60,7 @@ class TestWorkflow
         $this->mutex = new Workflow\Mutex();
     }
 
-    #[WorkflowMethod(name: "Extra_Workflow_Mutex")]
+    #[WorkflowMethod(name: "Extra_Workflow_MutexRunLocked")]
     #[Workflow\ReturnType(Type::TYPE_ARRAY)]
     public function handle(): \Generator
     {

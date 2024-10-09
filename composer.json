@@ -59,7 +59,7 @@
         "jetbrains/phpstorm-attributes": "dev-master@dev",
         "laminas/laminas-code": "^4.0",
         "phpunit/phpunit": "^10.5",
-        "spiral/code-style": "^2.1.2",
+        "spiral/code-style": "~2.1.2",
         "spiral/core": "^3.13",
         "symfony/var-dumper": "^6.0 || ^7.0",
         "vimeo/psalm": "^4.30 || ^5.4"
