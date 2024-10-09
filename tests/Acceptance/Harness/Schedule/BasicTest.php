@@ -66,7 +66,7 @@ class BasicTest extends TestCase
 
             // Confirm simple list
             $found = false;
-            $deadline = \microtime(true) + 10;
+            $findDeadline = \microtime(true) + 10;
             find:
             foreach ($client->listSchedules() as $schedule) {
                 if ($schedule->scheduleId === $scheduleId) {
@@ -74,7 +74,7 @@ class BasicTest extends TestCase
                     break;
                 }
             }
-            if (!$found and \microtime(true) < $deadline) {
+            if (!$found and \microtime(true) < $findDeadline) {
                 goto find;
             }
 

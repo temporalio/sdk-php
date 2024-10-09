@@ -553,7 +553,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     /**
      * {@inheritDoc}
      */
-    public function await(...$conditions): PromiseInterface
+    public function await(callable|Mutex|PromiseInterface ...$conditions): PromiseInterface
     {
         return $this->callsInterceptor->with(
             fn(AwaitInput $input): PromiseInterface => $this->awaitRequest(...$input->conditions),
@@ -565,7 +565,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     /**
      * {@inheritDoc}
      */
-    public function awaitWithTimeout($interval, ...$conditions): PromiseInterface
+    public function awaitWithTimeout($interval, callable|Mutex|PromiseInterface ...$conditions): PromiseInterface
     {
         $intervalObject = DateInterval::parse($interval, DateInterval::FORMAT_SECONDS);
 
@@ -661,17 +661,12 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         unset($this->workflowInstance);
     }
 
-    /**
-     * @param callable|Mutex|PromiseInterface ...$conditions
-     */
-    protected function awaitRequest(...$conditions): PromiseInterface
+    protected function awaitRequest(callable|Mutex|PromiseInterface ...$conditions): PromiseInterface
     {
         $result = [];
         $conditionGroupId = Uuid::v4();
 
         foreach ($conditions as $condition) {
-            \assert(\is_callable($condition) || $condition instanceof PromiseInterface || $condition instanceof Mutex);
-
             // Wrap Mutex into callable
             $condition instanceof Mutex and $condition = static fn(): bool => !$condition->isLocked();
 

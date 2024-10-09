@@ -310,7 +310,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @param callable|Mutex|PromiseInterface ...$conditions
      * @return PromiseInterface
      */
-    public function await(...$conditions): PromiseInterface;
+    public function await(callable|Mutex|PromiseInterface ...$conditions): PromiseInterface;
 
     /**
      * Checks if any conditions were met or the timeout was reached.
@@ -324,7 +324,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @param callable|Mutex|PromiseInterface ...$conditions
      * @return PromiseInterface<bool>
      */
-    public function awaitWithTimeout($interval, ...$conditions): PromiseInterface;
+    public function awaitWithTimeout($interval, callable|Mutex|PromiseInterface ...$conditions): PromiseInterface;
 
     /**
      * Returns a complete trace of the last calls (for debugging).
