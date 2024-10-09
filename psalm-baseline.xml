@@ -1497,6 +1497,11 @@
       <code><![CDATA[$returnType]]></code>
     </MissingParamType>
   </file>
+  <file src="src/Workflow/Mutex.php">
+    <TooManyTemplateParams>
+      <code><![CDATA[PromiseInterface<self>]]></code>
+    </TooManyTemplateParams>
+  </file>
   <file src="src/Workflow/QueryMethod.php">
     <DeprecatedClass>
       <code><![CDATA[NamedArgumentConstructor]]></code>

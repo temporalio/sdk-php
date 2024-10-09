@@ -43,7 +43,8 @@ jobs:
     name: PHP${{ matrix.php }}${{ matrix.extensions-suffix }}, ${{ matrix.os }}, ${{ matrix.dependencies }} deps
     runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ matrix.timeout-minutes }}
-    env: {GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'}
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     strategy:
       fail-fast: ${{ inputs.fail-fast }}
       matrix:

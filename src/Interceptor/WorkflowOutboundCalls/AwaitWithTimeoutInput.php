@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Interceptor\WorkflowOutboundCalls;
 
 use React\Promise\PromiseInterface;
+use Temporal\Workflow\Mutex;
 
 /**
  * @psalm-immutable
@@ -22,7 +23,7 @@ final class AwaitWithTimeoutInput
      * @no-named-arguments
      * @internal Don't use the constructor. Use {@see self::with()} instead.
      *
-     * @param array<callable|PromiseInterface> $conditions
+     * @param array<callable|Mutex|PromiseInterface> $conditions
      */
     public function __construct(
         public readonly \DateInterval $interval,
@@ -30,7 +31,7 @@ final class AwaitWithTimeoutInput
     ) {}
 
     /**
-     * @param array<callable|PromiseInterface> $conditions
+     * @param array<callable|Mutex|PromiseInterface> $conditions
      */
     public function with(
         ?\DateInterval $interval = null,
