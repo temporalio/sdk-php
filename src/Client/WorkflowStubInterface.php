@@ -53,7 +53,7 @@ interface WorkflowStubInterface extends WorkflowRunInterface
     public function getExecution(): WorkflowExecution;
 
     /**
-     * Check if workflow was stater and has associated execution.
+     * Check if workflow was started and has associated execution.
      *
      * @return bool
      */
