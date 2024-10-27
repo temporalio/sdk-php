@@ -6,6 +6,7 @@ namespace Temporal\Worker\ActivityInvocationCache;
 
 use React\Promise\PromiseInterface;
 use Spiral\Goridge\RPC\RPC;
+use Spiral\RoadRunner\Environment;
 use Spiral\RoadRunner\KeyValue\Factory;
 use Spiral\RoadRunner\KeyValue\StorageInterface;
 use Temporal\DataConverter\DataConverter;
@@ -31,7 +32,8 @@ final class RoadRunnerActivityInvocationCache implements ActivityInvocationCache
 
     public static function create(DataConverterInterface $dataConverter = null): self
     {
-        return new self('tcp://127.0.0.1:6001', self::CACHE_NAME, $dataConverter);
+        $env = Environment::fromGlobals();
+        return new self($env->getRPCAddress(), self::CACHE_NAME, $dataConverter);
     }
 
     public function clear(): void
