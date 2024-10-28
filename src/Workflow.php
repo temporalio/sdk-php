@@ -27,6 +27,7 @@ use Temporal\Workflow\ChildWorkflowOptions;
 use Temporal\Workflow\ChildWorkflowStubInterface;
 use Temporal\Workflow\ContinueAsNewOptions;
 use Temporal\Workflow\ExternalWorkflowStubInterface;
+use Temporal\Workflow\Mutex;
 use Temporal\Workflow\ScopedContextInterface;
 use Temporal\Workflow\UpdateContext;
 use Temporal\Workflow\WorkflowExecution;
@@ -280,10 +281,10 @@ final class Workflow extends Facade
      *  }
      * ```
      *
-     * @param callable|PromiseInterface ...$conditions
+     * @param callable|PromiseInterface|Mutex ...$conditions
      * @return PromiseInterface
      */
-    public static function await(...$conditions): PromiseInterface
+    public static function await(callable|Mutex|PromiseInterface ...$conditions): PromiseInterface
     {
         return self::getCurrentContext()->await(...$conditions);
     }
@@ -310,10 +311,10 @@ final class Workflow extends Facade
      * ```
      *
      * @param DateIntervalValue $interval
-     * @param callable|PromiseInterface ...$conditions
+     * @param callable|PromiseInterface|Mutex ...$conditions
      * @return PromiseInterface<bool>
      */
-    public static function awaitWithTimeout($interval, ...$conditions): PromiseInterface
+    public static function awaitWithTimeout($interval, callable|Mutex|PromiseInterface ...$conditions): PromiseInterface
     {
         return self::getCurrentContext()->awaitWithTimeout($interval, ...$conditions);
     }
@@ -992,5 +993,28 @@ final class Workflow extends Facade
         $context = self::getCurrentContext();
 
         return $context->uuid7($dateTime);
+    }
+
+    /**
+     * Run a function when the mutex is released.
+     * The mutex is locked for the duration of the function.
+     *
+     * @template T
+     * @param Mutex $mutex Mutex name or instance.
+     * @param callable(): T $callable Function to run.
+     *
+     * @return CancellationScopeInterface<T>
+     */
+    public static function runLocked(Mutex $mutex, callable $callable): CancellationScopeInterface
+    {
+        return Workflow::async(static function () use ($mutex, $callable): \Generator {
+            yield $mutex->lock();
+
+            try {
+                return yield $callable();
+            } finally {
+                $mutex->unlock();
+            }
+        });
     }
 }

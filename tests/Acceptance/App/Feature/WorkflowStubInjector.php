@@ -50,7 +50,25 @@ final class WorkflowStubInjector implements InjectorInterface
         $attribute->memo === [] or $options = $options->withMemo($attribute->memo);
 
         $stub = $client->newUntypedWorkflowStub($attribute->type, $options);
-        $client->start($stub, ...$attribute->args);
+        $run = $client->start($stub, ...$attribute->args);
+
+        // Wait 5 seconds for the workflow to start
+        $deadline = \microtime(true) + 5;
+        checkStart:
+        $description = $run->describe();
+        if ($description->info->historyLength <= 2) {
+            if (\microtime(true) < $deadline) {
+                goto checkStart;
+            }
+
+            throw new \RuntimeException(
+                \sprintf(
+                    'Workflow %s did not start. TaskQueue: %s',
+                    $attribute->type,
+                    $feature->taskQueue,
+                ),
+            );
+        }
 
         return $stub;
     }
