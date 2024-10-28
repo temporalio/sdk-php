@@ -14,10 +14,6 @@ namespace Temporal\Internal\Declaration\Reader;
 interface RecursiveAttributeReducerInterface
 {
     /**
-     * @param \ReflectionClass $class
-     * @param \ReflectionMethod $method
-     * @param object|null $interface
-     * @param array $attributes
      * @return mixed
      */
     public function root(
@@ -28,10 +24,6 @@ interface RecursiveAttributeReducerInterface
     );
 
     /**
-     * @param \ReflectionClass $class
-     * @param \ReflectionMethod $method
-     * @param object|null $interface
-     * @param array $attributes
      * @return mixed
      */
     public function each(

@@ -21,7 +21,6 @@ class ActivityType
     /**
      * @psalm-readonly
      * @psalm-allow-private-mutation
-     * @var string
      */
     #[Marshal(name: 'Name')]
     public string $name = '';

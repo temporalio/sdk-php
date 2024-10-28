@@ -16,9 +16,6 @@ use Temporal\Exception\DataConverterException;
 
 class BinaryConverter extends Converter
 {
-    /**
-     * @return string
-     */
     public function getEncodingType(): string
     {
         return EncodingKeys::METADATA_ENCODING_RAW;
@@ -26,7 +23,6 @@ class BinaryConverter extends Converter
 
     /**
      * @param mixed $value
-     * @return Payload|null
      */
     public function toPayload($value): ?Payload
     {
@@ -38,8 +34,6 @@ class BinaryConverter extends Converter
     }
 
     /**
-     * @param Payload $payload
-     * @param Type $type
      * @return Bytes
      */
     public function fromPayload(Payload $payload, Type $type)

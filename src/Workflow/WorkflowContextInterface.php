@@ -32,7 +32,6 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @see Workflow::getInfo()
      *
-     * @return WorkflowInfo
      */
     public function getInfo(): WorkflowInfo;
 
@@ -41,7 +40,6 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @see Workflow::getInput()
      *
-     * @return ValuesInterface
      */
     public function getInput(): ValuesInterface;
 
@@ -61,8 +59,6 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @see Workflow::registerQuery()
      *
-     * @param string $queryType
-     * @param callable $handler
      * @return $this
      */
     public function registerQuery(string $queryType, callable $handler): self;
@@ -72,8 +68,6 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @see Workflow::registerSignal()
      *
-     * @param string $queryType
-     * @param callable $handler
      * @return $this
      */
     public function registerSignal(string $queryType, callable $handler): self;
@@ -92,9 +86,6 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @internal This is an internal method
      *
-     * @param RequestInterface $request
-     * @param bool $cancellable
-     * @return PromiseInterface
      */
     public function request(RequestInterface $request, bool $cancellable = true): PromiseInterface;
 
@@ -103,10 +94,6 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @see Workflow::getVersion()
      *
-     * @param string $changeId
-     * @param int $minSupported
-     * @param int $maxSupported
-     * @return PromiseInterface
      */
     public function getVersion(string $changeId, int $minSupported, int $maxSupported): PromiseInterface;
 
@@ -124,17 +111,12 @@ interface WorkflowContextInterface extends EnvironmentInterface
     /**
      * @internal This is an internal method
      *
-     * @param array|null $result
-     * @param \Throwable|null $failure
-     * @return PromiseInterface
      */
     public function complete(array $result = null, \Throwable $failure = null): PromiseInterface;
 
     /**
      * @internal This is an internal method
      *
-     * @param \Throwable|null $failure
-     * @return PromiseInterface
      */
     public function panic(\Throwable $failure = null): PromiseInterface;
 
@@ -144,7 +126,6 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @see Workflow::timer()
      *
      * @param DateIntervalValue $interval
-     * @return PromiseInterface
      * @see DateInterval
      */
     public function timer($interval): PromiseInterface;
@@ -154,10 +135,6 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @see Workflow::continueAsNew()
      *
-     * @param string $type
-     * @param array $args
-     * @param ContinueAsNewOptions|null $options
-     * @return PromiseInterface
      */
     public function continueAsNew(
         string $type,
@@ -172,7 +149,6 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @psalm-template T of object
      * @param class-string<T> $class
-     * @param ContinueAsNewOptions|null $options
      * @return T
      */
     public function newContinueAsNewStub(string $class, ContinueAsNewOptions $options = null): object;
@@ -182,12 +158,8 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @see Workflow::executeChildWorkflow()
      *
-     * @param string $type
-     * @param array $args
-     * @param ChildWorkflowOptions|null $options
      * @param Type|string|\ReflectionType|\ReflectionClass|null $returnType
      *
-     * @return PromiseInterface
      */
     public function executeChildWorkflow(
         string $type,
@@ -203,7 +175,6 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @psalm-template T of object
      * @param class-string<T> $class
-     * @param ChildWorkflowOptions|null $options
      *
      * @return T
      */
@@ -217,10 +188,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @see Workflow::newUntypedChildWorkflowStub()
      *
-     * @param string $type
-     * @param ChildWorkflowOptions|null $options
      *
-     * @return ChildWorkflowStubInterface
      */
     public function newUntypedChildWorkflowStub(
         string $type,
@@ -235,7 +203,6 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @psalm-template T of object
      * @param class-string<T> $class
-     * @param WorkflowExecution $execution
      * @return T
      */
     public function newExternalWorkflowStub(string $class, WorkflowExecution $execution): object;
@@ -246,8 +213,6 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @see Workflow::newUntypedExternalWorkflowStub()
      *
-     * @param WorkflowExecution $execution
-     * @return ExternalWorkflowStubInterface
      */
     public function newUntypedExternalWorkflowStub(WorkflowExecution $execution): ExternalWorkflowStubInterface;
 
@@ -256,10 +221,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @see Workflow::executeActivity()
      *
-     * @param string $type
-     * @param array $args
      * @param ActivityOptions|null $options
-     * @param Type|string|null|\ReflectionClass|\ReflectionType $returnType
      *
      * @return PromiseInterface<mixed>
      */
@@ -279,7 +241,6 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @psalm-template T of object
      * @param class-string<T> $class
-     * @param ActivityOptionsInterface|null $options
      *
      * @return T
      */
@@ -294,9 +255,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @see Workflow::newUntypedActivityStub()
      *
-     * @param ActivityOptionsInterface|null $options
      *
-     * @return ActivityStubInterface
      */
     public function newUntypedActivityStub(
         ActivityOptionsInterface $options = null,
@@ -308,7 +267,6 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @see Workflow::await()
      *
      * @param callable|PromiseInterface ...$conditions
-     * @return PromiseInterface
      */
     public function await(...$conditions): PromiseInterface;
 
@@ -331,7 +289,6 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @see Workflow::getStackTrace()
      *
-     * @return string
      */
     public function getStackTrace(): string;
 

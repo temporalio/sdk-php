@@ -19,7 +19,6 @@ use Temporal\Internal\Marshaller\Type\TypeInterface;
 class MarshallingRule
 {
     /**
-     * @param string|null $name
      * @param class-string<TypeInterface>|null $type
      * @param self|class-string<TypeInterface>|string|null $of
      */

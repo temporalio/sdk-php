@@ -21,17 +21,11 @@ final class NewTimer extends Request
 {
     public const NAME = 'NewTimer';
 
-    /**
-     * @param \DateInterval $interval
-     */
     public function __construct(private \DateInterval $interval)
     {
         parent::__construct(self::NAME, ['ms' => (int) CarbonInterval::make($interval)->totalMilliseconds]);
     }
 
-    /**
-     * @return \DateInterval
-     */
     public function getInterval(): \DateInterval
     {
         return $this->interval;

@@ -46,11 +46,6 @@ final class ScheduleClient implements ScheduleClientInterface
     private MarshallerInterface $marshaller;
     private ProtoToArrayConverter $protoConverter;
 
-    /**
-     * @param ServiceClientInterface $serviceClient
-     * @param ClientOptions|null $options
-     * @param DataConverterInterface|null $converter
-     */
     public function __construct(
         ServiceClientInterface $serviceClient,
         ClientOptions $options = null,

@@ -22,9 +22,7 @@ class ProcessCollection extends ArrayRepository
     private const ERROR_PROCESS_NOT_FOUND = 'Process #%s not found.';
 
     /**
-     * @param string $runId
      * @param non-empty-string|null $error Error message if the process was not found.
-     * @return Process
      */
     public function pull(string $runId, ?string $error = null): Process
     {

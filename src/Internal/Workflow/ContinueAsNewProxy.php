@@ -31,37 +31,16 @@ class ContinueAsNewProxy extends Proxy
     private const ERROR_ALREADY_CONTINUED =
         'Workflow "%s" has already been called within this "continue as new" stub';
 
-    /**
-     * @var string
-     */
     private string $class;
 
-    /**
-     * @var WorkflowPrototype
-     */
     private WorkflowPrototype $workflow;
 
-    /**
-     * @var ContinueAsNewOptions
-     */
     private ContinueAsNewOptions $options;
 
-    /**
-     * @var WorkflowContextInterface
-     */
     private WorkflowContextInterface $context;
 
-    /**
-     * @var bool
-     */
     private bool $isContinued = false;
 
-    /**
-     * @param string $class
-     * @param WorkflowPrototype $workflow
-     * @param ContinueAsNewOptions $options
-     * @param WorkflowContextInterface $context
-     */
     public function __construct(
         string $class,
         WorkflowPrototype $workflow,
@@ -75,8 +54,6 @@ class ContinueAsNewProxy extends Proxy
     }
 
     /**
-     * @param string $method
-     * @param array $args
      * @return PromiseInterface
      */
     public function __call(string $method, array $args)
@@ -104,9 +81,6 @@ class ContinueAsNewProxy extends Proxy
         return $this->context->continueAsNew($this->workflow->getID(), $args, $this->options);
     }
 
-    /**
-     * @return bool
-     */
     private function isContinued(): bool
     {
         return $this->isContinued;

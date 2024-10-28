@@ -13,13 +13,7 @@ namespace Temporal\Worker\Environment;
 
 interface EnvironmentInterface
 {
-    /**
-     * @return \DateTimeInterface
-     */
     public function now(): \DateTimeInterface;
 
-    /**
-     * @return bool
-     */
     public function isReplaying(): bool;
 }

@@ -70,7 +70,6 @@ final class Workflow extends Facade
      *
      * And each other like this.
      *
-     * @return \DateTimeInterface
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function now(): \DateTimeInterface
@@ -85,7 +84,6 @@ final class Workflow extends Facade
      *
      * In the case that the workflow is started for the first time, the **true** value will be returned.
      *
-     * @return bool
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function isReplaying(): bool
@@ -96,7 +94,6 @@ final class Workflow extends Facade
     /**
      * Returns information about current workflow execution.
      *
-     * @return WorkflowInfo
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function getInfo(): WorkflowInfo
@@ -140,7 +137,6 @@ final class Workflow extends Facade
      *  $second = $arguments->getValue(1, Type::TYPE_STRING);
      * ```
      *
-     * @return ValuesInterface
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function getInput(): ValuesInterface
@@ -182,8 +178,6 @@ final class Workflow extends Facade
      * You can see more information about the capabilities of the child
      * asynchronous task in {@see CancellationScopeInterface} interface.
      *
-     * @param callable $task
-     * @return CancellationScopeInterface
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function async(callable $task): CancellationScopeInterface
@@ -232,8 +226,6 @@ final class Workflow extends Facade
      *
      * Use asyncDetached to handle cleanup and compensation logic.
      *
-     * @param callable $task
-     * @return CancellationScopeInterface
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function asyncDetached(callable $task): CancellationScopeInterface
@@ -281,7 +273,6 @@ final class Workflow extends Facade
      * ```
      *
      * @param callable|PromiseInterface ...$conditions
-     * @return PromiseInterface
      */
     public static function await(...$conditions): PromiseInterface
     {
@@ -343,8 +334,6 @@ final class Workflow extends Facade
      * to call such query handlers as in the case of ordinary query methods.
      *
      * @param string|class-string $queryType
-     * @param callable $handler
-     * @return ScopedContextInterface
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function registerQuery(string $queryType, callable $handler): ScopedContextInterface
@@ -365,8 +354,6 @@ final class Workflow extends Facade
      * to call such signal handlers as in the case of ordinary signal methods.
      *
      * @param non-empty-string $queryType
-     * @param callable $handler
-     * @return ScopedContextInterface
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function registerSignal(string $queryType, callable $handler): ScopedContextInterface
@@ -430,9 +417,6 @@ final class Workflow extends Facade
      *  }
      * ```
      *
-     * @param string $changeId
-     * @param int $minSupported
-     * @param int $maxSupported
      * @return PromiseInterface<int>
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
@@ -518,10 +502,6 @@ final class Workflow extends Facade
      *  }
      * ```
      *
-     * @param string $type
-     * @param array $args
-     * @param ContinueAsNewOptions|null $options
-     * @return PromiseInterface
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function continueAsNew(
@@ -565,7 +545,6 @@ final class Workflow extends Facade
      * @psalm-template T of object
      *
      * @param class-string<T> $class
-     * @param ContinueAsNewOptions|null $options
      * @return T
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
@@ -617,12 +596,8 @@ final class Workflow extends Facade
      *  }
      * ```
      *
-     * @param string $type
-     * @param array $args
-     * @param ChildWorkflowOptions|null $options
      * @param Type|string|\ReflectionType|\ReflectionClass|null $returnType
      *
-     * @return PromiseInterface
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function executeChildWorkflow(
@@ -670,7 +645,6 @@ final class Workflow extends Facade
      * @psalm-template T of object
      *
      * @param class-string<T> $class
-     * @param ChildWorkflowOptions|null $options
      *
      * @return T
      * @throws OutOfContextException in the absence of the workflow execution context.
@@ -722,10 +696,6 @@ final class Workflow extends Facade
      *  }
      * ```
      *
-     * @param string $name
-     * @param ChildWorkflowOptions|null $options
-     *
-     * @return ChildWorkflowStubInterface
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function newUntypedChildWorkflowStub(
@@ -755,7 +725,6 @@ final class Workflow extends Facade
      * @psalm-template T of object
      *
      * @param class-string<T> $class
-     * @param WorkflowExecution $execution
      * @return T
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
@@ -784,8 +753,6 @@ final class Workflow extends Facade
      *  }
      * ```
      *
-     * @param WorkflowExecution $execution
-     * @return ExternalWorkflowStubInterface
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function newUntypedExternalWorkflowStub(WorkflowExecution $execution): ExternalWorkflowStubInterface
@@ -823,10 +790,7 @@ final class Workflow extends Facade
      *  }
      * ```
      *
-     * @param string $type
-     * @param array $args
      * @param ActivityOptions|null $options
-     * @param Type|string|null|\ReflectionClass|\ReflectionType $returnType
      * @return PromiseInterface<mixed>
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
@@ -868,7 +832,6 @@ final class Workflow extends Facade
      * @psalm-template T of object
      *
      * @param class-string<T> $class
-     * @param ActivityOptionsInterface|null $options
      *
      * @return T
      * @throws OutOfContextException in the absence of the workflow execution context.
@@ -899,9 +862,6 @@ final class Workflow extends Facade
      *  }
      * ```
      *
-     * @param ActivityOptionsInterface|null $options
-     *
-     * @return ActivityStubInterface
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function newUntypedActivityStub(
@@ -913,7 +873,6 @@ final class Workflow extends Facade
     /**
      * Returns a complete trace of the last calls (for debugging).
      *
-     * @return string
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function getStackTrace(): string

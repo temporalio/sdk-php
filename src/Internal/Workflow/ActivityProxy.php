@@ -35,26 +35,14 @@ final class ActivityProxy extends Proxy
      */
     private array $activities;
 
-    /**
-     * @var string
-     */
     private string $class;
 
-    /**
-     * @var ActivityOptionsInterface
-     */
     private ActivityOptionsInterface $options;
 
-    /**
-     * @var WorkflowContextInterface
-     */
     private WorkflowContextInterface $ctx;
 
     /**
-     * @param string $class
      * @param array<ActivityPrototype> $activities
-     * @param ActivityOptionsInterface $options
-     * @param WorkflowContextInterface $ctx
      * @param Pipeline<WorkflowOutboundCallsInterceptor, PromiseInterface> $callsInterceptor
      */
     public function __construct(
@@ -71,8 +59,6 @@ final class ActivityProxy extends Proxy
     }
 
     /**
-     * @param string $method
-     * @param array $args
      * @return CompletableResultInterface
      */
     public function __call(string $method, array $args = []): PromiseInterface
@@ -119,10 +105,6 @@ final class ActivityProxy extends Proxy
             );
     }
 
-    /**
-     * @param string $name
-     * @return ActivityPrototype
-     */
     private function findPrototypeByHandlerNameOrFail(string $name): ActivityPrototype
     {
         $prototype = $this->findPrototypeByHandlerName($this->activities, $name);

@@ -26,7 +26,6 @@ class ObjectType extends Type implements DetectableTypeInterface, RuleFactoryInt
     private \ReflectionClass $reflection;
 
     /**
-     * @param MarshallerInterface $marshaller
      * @param class-string<TClass>|null $class
      * @throws \ReflectionException
      */
@@ -37,17 +36,11 @@ class ObjectType extends Type implements DetectableTypeInterface, RuleFactoryInt
         parent::__construct($marshaller);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public static function match(\ReflectionNamedType $type): bool
     {
         return !$type->isBuiltin() || $type->getName() === 'object';
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public static function makeRule(\ReflectionProperty $property): ?MarshallingRule
     {
         $type = $property->getType();
@@ -65,9 +58,6 @@ class ObjectType extends Type implements DetectableTypeInterface, RuleFactoryInt
             : new MarshallingRule($property->getName(), self::class, $type->getName());
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function parse($value, $current): object
     {
         if (\is_object($value)) {
@@ -89,9 +79,6 @@ class ObjectType extends Type implements DetectableTypeInterface, RuleFactoryInt
         return $this->marshaller->unmarshal($value ?? [], $current);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function serialize($value): array
     {
         return $this->reflection->getName() === \stdClass::class
@@ -110,7 +97,6 @@ class ObjectType extends Type implements DetectableTypeInterface, RuleFactoryInt
     }
 
     /**
-     * @param array $data
      *
      * @return TClass
      * @throws \ReflectionException

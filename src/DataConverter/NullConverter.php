@@ -16,9 +16,6 @@ use Temporal\Exception\DataConverterException;
 
 class NullConverter extends Converter
 {
-    /**
-     * @return string
-     */
     public function getEncodingType(): string
     {
         return EncodingKeys::METADATA_ENCODING_NULL;
@@ -26,7 +23,6 @@ class NullConverter extends Converter
 
     /**
      * @param mixed $value
-     * @return Payload|null
      */
     public function toPayload($value): ?Payload
     {
@@ -38,8 +34,6 @@ class NullConverter extends Converter
     }
 
     /**
-     * @param Payload $payload
-     * @param Type $type
      * @return null
      */
     public function fromPayload(Payload $payload, Type $type)

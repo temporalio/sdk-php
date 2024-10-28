@@ -26,18 +26,11 @@ class Marshaller implements MarshallerInterface
      */
     private array $mappers = [];
 
-    /**
-     * @var TypeFactory
-     */
     private TypeFactory $type;
 
-    /**
-     * @var MapperFactoryInterface
-     */
     private MapperFactoryInterface $mapper;
 
     /**
-     * @param MapperFactoryInterface $mapper
      * @param array<CallableTypeMatcher> $matchers
      */
     public function __construct(MapperFactoryInterface $mapper, array $matchers = [])
@@ -47,7 +40,7 @@ class Marshaller implements MarshallerInterface
     }
 
     /**
-     * {@inheritDoc}
+     *
      *
      * @throws \ReflectionException
      */
@@ -72,7 +65,7 @@ class Marshaller implements MarshallerInterface
     }
 
     /**
-     * {@inheritDoc}
+     *
      *
      * @throws \ReflectionException
      */
@@ -111,7 +104,6 @@ class Marshaller implements MarshallerInterface
 
     /**
      * @param class-string $class
-     * @return MapperInterface
      * @throws \ReflectionException
      */
     private function factory(string $class): MapperInterface
@@ -123,7 +115,6 @@ class Marshaller implements MarshallerInterface
 
     /**
      * @param class-string $class
-     * @return MapperInterface
      * @throws \ReflectionException
      */
     private function getMapper(string $class): MapperInterface

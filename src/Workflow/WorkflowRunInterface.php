@@ -23,7 +23,6 @@ interface WorkflowRunInterface
     /**
      * Returns attached workflow execution.
      *
-     * @return WorkflowExecution
      */
     public function getExecution(): WorkflowExecution;
 
@@ -42,7 +41,6 @@ interface WorkflowRunInterface
      *
      * @param string|\ReflectionClass|\ReflectionType|Type|null $type
      * @param int|null $timeout Timeout in seconds. Infinite by the default.
-     * @return mixed
      * @throws WorkflowFailedException
      *
      * @see DateInterval

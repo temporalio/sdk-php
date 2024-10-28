@@ -34,22 +34,13 @@ class JsonConverter extends Converter
      */
     public const JSON_FLAGS = \JSON_THROW_ON_ERROR | \JSON_PRESERVE_ZERO_FRACTION;
 
-    /**
-     * @var MarshallerInterface
-     */
     private MarshallerInterface $marshaller;
 
-    /**
-     * @param MarshallerInterface|null $marshaller
-     */
     public function __construct(MarshallerInterface $marshaller = null)
     {
         $this->marshaller = $marshaller ?? self::createDefaultMarshaller();
     }
 
-    /**
-     * @return string
-     */
     public function getEncodingType(): string
     {
         return EncodingKeys::METADATA_ENCODING_JSON;
@@ -57,7 +48,6 @@ class JsonConverter extends Converter
 
     /**
      * @param mixed $value
-     * @return Payload|null
      * @throws DataConverterException
      */
     public function toPayload($value): ?Payload
@@ -78,8 +68,6 @@ class JsonConverter extends Converter
     }
 
     /**
-     * @param Payload $payload
-     * @param Type $type
      * @return mixed|void
      * @throws DataConverterException
      */
@@ -178,17 +166,11 @@ class JsonConverter extends Converter
         throw $this->errorInvalidTypeName($type);
     }
 
-    /**
-     * @return MarshallerInterface
-     */
     private static function createDefaultMarshaller(): MarshallerInterface
     {
         return new Marshaller(new AttributeMapperFactory(self::createDefaultReader()));
     }
 
-    /**
-     * @return ReaderInterface
-     */
     private static function createDefaultReader(): ReaderInterface
     {
         if (\interface_exists(Reader::class)) {
@@ -200,7 +182,6 @@ class JsonConverter extends Converter
 
     /**
      * @param object|array $context
-     * @return array
      */
     private function toHashMap($context): array
     {
@@ -217,10 +198,6 @@ class JsonConverter extends Converter
         return $context;
     }
 
-    /**
-     * @param Type $type
-     * @return DataConverterException
-     */
     private function errorInvalidTypeName(Type $type): DataConverterException
     {
         $message = \vsprintf('Type named "%s" is not a valid type name', [
@@ -231,9 +208,7 @@ class JsonConverter extends Converter
     }
 
     /**
-     * @param Type $type
      * @param mixed $data
-     * @return DataConverterException
      */
     private function errorInvalidType(Type $type, $data): DataConverterException
     {
@@ -248,7 +223,6 @@ class JsonConverter extends Converter
     /**
      * @template T of object
      *
-     * @param object|array $data
      * @param \ReflectionClass<T> $reflection
      *
      * @return T

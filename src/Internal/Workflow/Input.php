@@ -23,7 +23,6 @@ use Temporal\Workflow\WorkflowInfo;
 final class Input
 {
     /**
-     * @var WorkflowInfo
      * @psalm-readonly
      */
     #[Marshal(name: 'info')]
@@ -31,7 +30,6 @@ final class Input
     public WorkflowInfo $info;
 
     /**
-     * @var ValuesInterface
      * @psalm-readonly
      */
     #[Immutable]
@@ -43,10 +41,6 @@ final class Input
     #[Immutable]
     public Header $header;
 
-    /**
-     * @param WorkflowInfo|null $info
-     * @param ValuesInterface|null $args
-     */
     public function __construct(WorkflowInfo $info = null, ValuesInterface $args = null, HeaderInterface $header = null)
     {
         $this->info = $info ?? new WorkflowInfo();

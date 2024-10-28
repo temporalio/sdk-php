@@ -19,14 +19,9 @@ use Temporal\Internal\Marshaller\MarshallingRule;
  */
 class NullableType extends Type
 {
-    /**
-     * @var TypeInterface|null
-     */
     private ?TypeInterface $type = null;
 
     /**
-     * @param MarshallerInterface $marshaller
-     * @param MarshallingRule|string|null $typeOrClass
      *
      * @throws \ReflectionException
      */

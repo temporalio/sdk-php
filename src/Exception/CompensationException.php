@@ -18,9 +18,6 @@ class CompensationException extends TemporalException
      */
     private array $suppressed = [];
 
-    /**
-     * @param \Throwable $e
-     */
     public function addSuppressed(\Throwable $e): void
     {
         $this->suppressed[] = $e;

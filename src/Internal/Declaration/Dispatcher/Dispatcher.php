@@ -39,47 +39,29 @@ class Dispatcher implements DispatcherInterface
      */
     private $types;
 
-    /**
-     * @var int
-     */
     private int $scope = 0;
 
-    /**
-     * @param \ReflectionFunctionAbstract $fun
-     */
     public function __construct(\ReflectionFunctionAbstract $fun)
     {
         $this->boot($fun);
     }
 
-    /**
-     * @return bool
-     */
     public function isObjectContextRequired(): bool
     {
         return $this->scope === static::SCOPE_OBJECT;
     }
 
-    /**
-     * @return bool
-     */
     #[Pure]
     public function isObjectContextAllowed(): bool
     {
         return $this->scopeMatches(static::SCOPE_OBJECT);
     }
 
-    /**
-     * @return bool
-     */
     public function isStaticContextRequired(): bool
     {
         return $this->scope === static::SCOPE_STATIC;
     }
 
-    /**
-     * @return bool
-     */
     #[Pure]
     public function isStaticContextAllowed(): bool
     {
@@ -99,10 +81,6 @@ class Dispatcher implements DispatcherInterface
         return ($this->executor)($ctx, $arguments);
     }
 
-    /**
-     * @param int $scope
-     * @return bool
-     */
     #[Pure]
     private function scopeMatches(int $scope): bool
     {
@@ -112,7 +90,6 @@ class Dispatcher implements DispatcherInterface
     /**
      * @psalm-return FunctionExecutor
      *
-     * @param \ReflectionMethod $fun
      * @return \Closure(object, array): mixed
      */
     private function createExecutorFromMethod(\ReflectionMethod $fun): \Closure
@@ -129,7 +106,6 @@ class Dispatcher implements DispatcherInterface
     /**
      * @psalm-return FunctionExecutor
      *
-     * @param \ReflectionFunction $fun
      * @return \Closure(object, array): mixed
      */
     private function createExecutorFromFunction(\ReflectionFunction $fun): \Closure
@@ -154,8 +130,6 @@ class Dispatcher implements DispatcherInterface
     /**
      * @psalm-return FunctionExecutor
      *
-     * @param \ReflectionFunctionAbstract $fun
-     * @return void
      */
     private function boot(\ReflectionFunctionAbstract $fun): void
     {

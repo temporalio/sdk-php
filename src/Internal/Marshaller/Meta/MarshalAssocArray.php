@@ -26,11 +26,6 @@ use Temporal\Internal\Marshaller\Type\AssocArrayType;
 #[\Attribute(\Attribute::TARGET_PROPERTY | \Attribute::IS_REPEATABLE), NamedArgumentConstructor]
 final class MarshalAssocArray extends Marshal
 {
-    /**
-     * @param string|null $name
-     * @param Marshal|string|null $of
-     * @param bool $nullable
-     */
     public function __construct(
         string $name = null,
         Marshal|string|null $of = null,

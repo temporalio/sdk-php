@@ -35,9 +35,6 @@ final class Router implements RouterInterface
      */
     private array $routes = [];
 
-    /**
-     * {@inheritDoc}
-     */
     public function add(RouteInterface $route, bool $overwrite = false): void
     {
         if ($overwrite === false && isset($this->routes[$route->getName()])) {
@@ -47,26 +44,16 @@ final class Router implements RouterInterface
         $this->routes[$route->getName()] = $route;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function remove(ServerRequestInterface $route): void
     {
         unset($this->routes[$route->getName()]);
     }
 
-    /**
-     * @param ServerRequestInterface $request
-     * @return RouteInterface|null
-     */
     public function match(ServerRequestInterface $request): ?RouteInterface
     {
         return $this->routes[$request->getName()] ?? null;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function dispatch(ServerRequestInterface $request, array $headers = []): PromiseInterface
     {
         // assert($request instanceof ServerRequestInterface);

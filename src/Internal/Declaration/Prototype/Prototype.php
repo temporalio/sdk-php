@@ -15,26 +15,12 @@ use Temporal\Internal\Repository\RepositoryInterface;
 
 abstract class Prototype implements PrototypeInterface
 {
-    /**
-     * @var string
-     */
     protected string $name;
 
-    /**
-     * @var \ReflectionMethod|null
-     */
     protected ?\ReflectionMethod $handler;
 
-    /**
-     * @var \ReflectionClass
-     */
     private \ReflectionClass $class;
 
-    /**
-     * @param string $name
-     * @param \ReflectionMethod|null $handler
-     * @param \ReflectionClass $class
-     */
     public function __construct(string $name, ?\ReflectionMethod $handler, \ReflectionClass $class)
     {
         $this->handler = $handler;
@@ -45,8 +31,6 @@ abstract class Prototype implements PrototypeInterface
     /**
      * @template T of PrototypeInterface
      *
-     * @param string $class
-     * @param string $method
      * @param RepositoryInterface<T> $repository
      * @return T|null
      */
@@ -62,35 +46,21 @@ abstract class Prototype implements PrototypeInterface
         return null;
     }
 
-    /**
-     * @return string
-     */
     public function getID(): string
     {
         return $this->name;
     }
 
-    /**
-     * @return \ReflectionClass
-     */
     public function getClass(): \ReflectionClass
     {
         return $this->class;
     }
 
-    /**
-     * @return \ReflectionMethod|null
-     */
     public function getHandler(): ?\ReflectionMethod
     {
         return $this->handler;
     }
 
-    /**
-     * @param PrototypeInterface $prototype
-     * @param string $class
-     * @return bool
-     */
     private static function matchClass(PrototypeInterface $prototype, string $class): bool
     {
         $reflection = $prototype->getClass();
@@ -98,11 +68,6 @@ abstract class Prototype implements PrototypeInterface
         return $reflection && $reflection->getName() === \trim($class, '\\');
     }
 
-    /**
-     * @param PrototypeInterface $prototype
-     * @param string $method
-     * @return bool
-     */
     private static function matchMethod(PrototypeInterface $prototype, string $method): bool
     {
         $handler = $prototype->getHandler();

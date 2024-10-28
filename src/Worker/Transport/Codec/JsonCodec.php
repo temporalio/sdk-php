@@ -24,10 +24,6 @@ final class JsonCodec implements CodecInterface
     private Decoder $parser;
     private Encoder $serializer;
 
-    /**
-     * @param DataConverterInterface $dataConverter
-     * @param int $maxDepth
-     */
     public function __construct(DataConverterInterface $dataConverter, int $maxDepth = 64)
     {
         $this->maxDepth = $maxDepth;
@@ -36,9 +32,6 @@ final class JsonCodec implements CodecInterface
         $this->serializer = new Encoder($dataConverter);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function encode(iterable $commands): string
     {
         try {
@@ -55,9 +48,6 @@ final class JsonCodec implements CodecInterface
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function decode(string $batch, array $headers = []): iterable
     {
         static $tz = new \DateTimeZone('UTC');

@@ -26,7 +26,6 @@ final class Activity extends Facade
     /**
      * Returns information about current activity execution.
      *
-     * @return ActivityInfo
      * @throws OutOfContextException in the absence of the activity execution context.
      */
     public static function getInfo(): ActivityInfo
@@ -53,7 +52,6 @@ final class Activity extends Facade
      *  }
      * ```
      *
-     * @return ValuesInterface
      * @throws OutOfContextException in the absence of the activity execution context.
      */
     public static function getInput(): ValuesInterface
@@ -69,7 +67,6 @@ final class Activity extends Facade
      *
      * This method returns **true** if the first argument has been passed to the {@see Activity::heartbeat()} method.
      *
-     * @return bool
      * @throws OutOfContextException in the absence of the activity execution context.
      */
     public static function hasHeartbeatDetails(): bool

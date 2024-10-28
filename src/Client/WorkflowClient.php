@@ -64,12 +64,6 @@ class WorkflowClient implements WorkflowClientInterface
     /** @var Pipeline<WorkflowClientCallsInterceptor, mixed> */
     private Pipeline $interceptorPipeline;
 
-    /**
-     * @param ServiceClientInterface $serviceClient
-     * @param ClientOptions|null $options
-     * @param DataConverterInterface|null $converter
-     * @param PipelineProvider|null $interceptorProvider
-     */
     public function __construct(
         ServiceClientInterface $serviceClient,
         ClientOptions $options = null,
@@ -85,9 +79,6 @@ class WorkflowClient implements WorkflowClientInterface
     }
 
     /**
-     * @param ServiceClientInterface $serviceClient
-     * @param ClientOptions|null $options
-     * @param DataConverterInterface|null $converter
      * @return static
      */
     public static function create(
@@ -99,9 +90,6 @@ class WorkflowClient implements WorkflowClientInterface
         return new self($serviceClient, $options, $converter, $interceptorProvider);
     }
 
-    /**
-     * @return ServiceClientInterface
-     */
     public function getServiceClient(): ServiceClientInterface
     {
         return $this->client;
@@ -113,7 +101,6 @@ class WorkflowClient implements WorkflowClientInterface
      *
      * @param object|WorkflowStubInterface $workflow
      * @param mixed ...$args
-     * @return WorkflowRunInterface
      */
     public function start($workflow, ...$args): WorkflowRunInterface
     {
@@ -159,10 +146,6 @@ class WorkflowClient implements WorkflowClientInterface
 
     /**
      * @param object|WorkflowStubInterface $workflow
-     * @param string $signal
-     * @param array $signalArgs
-     * @param array $startArgs
-     * @return WorkflowRunInterface
      */
     public function startWithSignal(
         $workflow,
@@ -222,9 +205,6 @@ class WorkflowClient implements WorkflowClientInterface
         );
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function newWorkflowStub(
         string $class,
         WorkflowOptions $options = null,
@@ -238,9 +218,6 @@ class WorkflowClient implements WorkflowClientInterface
         );
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function newUntypedWorkflowStub(
         string $workflowType,
         WorkflowOptions $options = null,
@@ -257,9 +234,6 @@ class WorkflowClient implements WorkflowClientInterface
         );
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function newRunningWorkflowStub(string $class, string $workflowID, ?string $runID = null): object
     {
         $workflow = $this->reader->fromClass($class);
@@ -271,9 +245,6 @@ class WorkflowClient implements WorkflowClientInterface
         );
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function newUntypedRunningWorkflowStub(
         string $workflowID,
         ?string $runID = null,
@@ -291,17 +262,11 @@ class WorkflowClient implements WorkflowClientInterface
         return $untyped;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function newActivityCompletionClient(): ActivityCompletionClientInterface
     {
         return new ActivityCompletionClient($this->client, $this->clientOptions, $this->converter);
     }
 
-    /**
-     * @inheritDoc
-     */
     public function listWorkflowExecutions(
         string $query,
         ?string $namespace = null,
@@ -338,9 +303,6 @@ class WorkflowClient implements WorkflowClientInterface
         return Paginator::createFromGenerator($loader($request), $counter);
     }
 
-    /**
-     * @inheritDoc
-     */
     public function countWorkflowExecutions(
         string $query,
         ?string $namespace = null,
@@ -356,9 +318,6 @@ class WorkflowClient implements WorkflowClientInterface
         );
     }
 
-    /**
-     * @inheritDoc
-     */
     public function getWorkflowHistory(
         WorkflowExecution $execution,
         ?string $namespace = null,
@@ -404,9 +363,6 @@ class WorkflowClient implements WorkflowClientInterface
         $this->starter = null;
     }
 
-    /**
-     * @return ReaderInterface
-     */
     private function createReader(): ReaderInterface
     {
         if (\interface_exists(Reader::class)) {

@@ -15,10 +15,5 @@ use Temporal\Internal\Marshaller\TypeFactoryInterface;
 
 interface MapperFactoryInterface
 {
-    /**
-     * @param \ReflectionClass $class
-     * @param TypeFactoryInterface $types
-     * @return MapperInterface
-     */
     public function create(\ReflectionClass $class, TypeFactoryInterface $types): MapperInterface;
 }

@@ -15,11 +15,6 @@ use Temporal\Workflow\WorkflowExecution;
 
 class WorkflowExecutionAlreadyStartedException extends WorkflowException
 {
-    /**
-     * @param WorkflowExecution $execution
-     * @param string|null $type
-     * @param \Throwable|null $previous
-     */
     public function __construct(
         WorkflowExecution $execution,
         string $type = null,

@@ -21,8 +21,6 @@ interface HeaderCarrier
     /**
      * Get configured Header set.
      *
-     * @return HeaderInterface
-     *
      * @psalm-mutation-free
      */
     public function getHeader(): HeaderInterface;

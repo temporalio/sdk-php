@@ -64,7 +64,6 @@ abstract class BaseClient implements ServiceClientInterface
 
     /**
      * @param non-empty-string $address Temporal service address in format `host:port`
-     * @return static
      * @psalm-suppress UndefinedClass
      */
     public static function create(string $address): static
@@ -86,7 +85,6 @@ abstract class BaseClient implements ServiceClientInterface
      * @param non-empty-string|null $clientKey Client private key string or file in PEM format.
      * @param non-empty-string|null $clientPem Client certificate chain string or file in PEM format.
      * @param non-empty-string|null $overrideServerName
-     * @return static
      *
      * @psalm-suppress UndefinedClass
      * @psalm-suppress UnusedVariable
@@ -166,7 +164,6 @@ abstract class BaseClient implements ServiceClientInterface
     /**
      * @param null|Pipeline<GrpcClientInterceptor, object> $pipeline
      *
-     * @return static
      */
     final public function withInterceptorPipeline(?Pipeline $pipeline): static
     {
@@ -233,10 +230,6 @@ abstract class BaseClient implements ServiceClientInterface
 
     /**
      * @param non-empty-string $method RPC method name
-     * @param object $arg
-     * @param ContextInterface|null $ctx
-     *
-     * @return mixed
      *
      * @throw ClientException
      */
@@ -262,10 +255,6 @@ abstract class BaseClient implements ServiceClientInterface
      * Used in {@see withInterceptorPipeline()}
      *
      * @param non-empty-string $method
-     * @param object $arg
-     * @param ContextInterface $ctx
-     *
-     * @return object
      *
      * @throws \Exception
      */

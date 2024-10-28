@@ -35,8 +35,6 @@ final class Server implements ServerInterface
 
     /**
      * @psalm-param OnMessageHandler $onMessage
-     * @param QueueInterface $queue
-     * @param callable $onMessage
      */
     public function __construct(QueueInterface $queue, callable $onMessage)
     {
@@ -45,9 +43,6 @@ final class Server implements ServerInterface
         $this->onMessage($onMessage);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function onMessage(callable $then): void
     {
         $this->onMessage = $then(...);
@@ -55,7 +50,6 @@ final class Server implements ServerInterface
 
     /**
      * @param RequestInterface $request
-     * @param array $headers
      */
     public function dispatch(ServerRequestInterface $request, array $headers): void
     {

@@ -24,7 +24,6 @@ interface WorkerInterface extends Identifiable
     /**
      * Returns processing options associated with specific worker task queue.
      *
-     * @return WorkerOptions
      */
     public function getOptions(): WorkerOptions;
 
@@ -57,7 +56,6 @@ interface WorkerInterface extends Identifiable
      * @see WorkerInterface::registerActivity
      * @deprecated use {@see registerActivity()} instead.
      *
-     * @param object ...$activity
      * @return $this
      */
     public function registerActivityImplementations(object ...$activity): self;

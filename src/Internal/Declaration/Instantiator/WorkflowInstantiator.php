@@ -27,9 +27,6 @@ final class WorkflowInstantiator extends Instantiator
         private PipelineProvider $interceptorProvider,
     ) {}
 
-    /**
-     * {@inheritDoc}
-     */
     public function instantiate(PrototypeInterface $prototype): WorkflowInstance
     {
         \assert($prototype instanceof WorkflowPrototype, 'Precondition failed');
@@ -42,8 +39,6 @@ final class WorkflowInstantiator extends Instantiator
     }
 
     /**
-     * @param PrototypeInterface $prototype
-     * @return object
      * @throws \ReflectionException
      */
     protected function getInstance(PrototypeInterface $prototype): object

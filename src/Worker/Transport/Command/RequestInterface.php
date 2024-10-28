@@ -31,21 +31,14 @@ interface RequestInterface extends CommandInterface
      */
     public function getOptions(): array;
 
-    /**
-     * @return ValuesInterface
-     */
     public function getPayloads(): ValuesInterface;
 
     /**
      * Optional failure.
      *
-     * @return \Throwable|null
      */
     public function getFailure(): ?\Throwable;
 
-    /**
-     * @return HeaderInterface
-     */
     public function getHeader(): HeaderInterface;
 
     /**

@@ -24,14 +24,9 @@ class ArrayType extends Type implements DetectableTypeInterface, RuleFactoryInte
      */
     private const ERROR_INVALID_TYPE = 'Passed value must be a type of array, but %s given';
 
-    /**
-     * @var TypeInterface|null
-     */
     private ?TypeInterface $type = null;
 
     /**
-     * @param MarshallerInterface $marshaller
-     * @param MarshallingRule|string|null $typeOrClass
      *
      * @throws \ReflectionException
      */
@@ -44,17 +39,11 @@ class ArrayType extends Type implements DetectableTypeInterface, RuleFactoryInte
         parent::__construct($marshaller);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public static function match(\ReflectionNamedType $type): bool
     {
         return $type->getName() === 'array' || $type->getName() === 'iterable';
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public static function makeRule(\ReflectionProperty $property): ?MarshallingRule
     {
         $type = $property->getType();
@@ -95,7 +84,6 @@ class ArrayType extends Type implements DetectableTypeInterface, RuleFactoryInte
     /**
      * @param iterable $value
      *
-     * @return array
      */
     public function serialize($value): array
     {

@@ -37,12 +37,6 @@ final class ActivityContext implements ActivityContextInterface, HeaderCarrier
     private ValuesInterface $input;
     private HeaderInterface $header;
 
-    /**
-     * @param RPCConnectionInterface $rpc
-     * @param DataConverterInterface $converter
-     * @param ValuesInterface $input
-     * @param ValuesInterface|null $lastHeartbeatDetails
-     */
     public function __construct(
         RPCConnectionInterface $rpc,
         DataConverterInterface $converter,
@@ -58,17 +52,11 @@ final class ActivityContext implements ActivityContextInterface, HeaderCarrier
         $this->header = $header;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getInfo(): ActivityInfo
     {
         return $this->info;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getInput(): ValuesInterface
     {
         return $this->input;
@@ -95,17 +83,11 @@ final class ActivityContext implements ActivityContextInterface, HeaderCarrier
         return $context;
     }
 
-    /**
-     * @return DataConverterInterface
-     */
     public function getDataConverter(): DataConverterInterface
     {
         return $this->converter;
     }
 
-    /**
-     * @return bool
-     */
     public function hasHeartbeatDetails(): bool
     {
         return $this->heartbeatDetails !== null;
@@ -124,17 +106,11 @@ final class ActivityContext implements ActivityContextInterface, HeaderCarrier
         return $this->heartbeatDetails->getValue(0, $type);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function doNotCompleteOnReturn(): void
     {
         $this->doNotCompleteOnReturn = true;
     }
 
-    /**
-     * @return bool
-     */
     public function isDoNotCompleteOnReturn(): bool
     {
         return $this->doNotCompleteOnReturn;

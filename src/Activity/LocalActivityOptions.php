@@ -79,7 +79,6 @@ class LocalActivityOptions extends Options implements ActivityOptionsInterface
     }
 
     /**
-     * @param MethodRetry|null $retry
      * @return $this
      */
     public function mergeWith(MethodRetry $retry = null): self
@@ -142,7 +141,6 @@ class LocalActivityOptions extends Options implements ActivityOptionsInterface
     }
 
     /**
-     * @param RetryOptions|null $options
      * @return $this
      */
     #[Pure]

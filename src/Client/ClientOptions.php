@@ -31,14 +31,8 @@ class ClientOptions
      */
     public string $namespace = self::DEFAULT_NAMESPACE;
 
-    /**
-     * @var string
-     */
     public string $identity;
 
-    /**
-     * @var int
-     */
     #[ExpectedValues(valuesFromClass: QueryRejectCondition::class)]
     public int $queryRejectionCondition = QueryRejectCondition::QUERY_REJECT_CONDITION_NONE;
 
@@ -65,7 +59,6 @@ class ClientOptions
     }
 
     /**
-     * @param string $identity
      * @return $this
      */
     #[Pure]

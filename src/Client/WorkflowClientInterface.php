@@ -23,9 +23,6 @@ use Temporal\Workflow\WorkflowRunInterface;
 
 interface WorkflowClientInterface extends ClientContextInterface
 {
-    /**
-     * @return ServiceClientInterface
-     */
     public function getServiceClient(): ServiceClientInterface;
 
     /**
@@ -33,7 +30,6 @@ interface WorkflowClientInterface extends ClientContextInterface
      *
      * @param WorkflowStubInterface|object $workflow
      * @param mixed $args
-     * @return WorkflowRunInterface
      */
     public function start($workflow, ...$args): WorkflowRunInterface;
 
@@ -41,10 +37,6 @@ interface WorkflowClientInterface extends ClientContextInterface
      * Starts untyped and typed workflow stubs in async mode. Sends signal on start.
      *
      * @param object|WorkflowStubInterface $workflow
-     * @param string $signal
-     * @param array $signalArgs
-     * @param array $startArgs
-     * @return WorkflowRunInterface
      */
     public function startWithSignal(
         $workflow,
@@ -66,7 +58,6 @@ interface WorkflowClientInterface extends ClientContextInterface
      *
      * @psalm-template T of object
      * @param class-string<T> $class
-     * @param WorkflowOptions|null $options
      * @return T
      */
     public function newWorkflowStub(
@@ -84,9 +75,6 @@ interface WorkflowClientInterface extends ClientContextInterface
      * IMPORTANT! Stub is per workflow instance. So new stub should be created
      * for each new one.
      *
-     * @param string $workflowType
-     * @param WorkflowOptions|null $options
-     * @return WorkflowStubInterface
      */
     public function newUntypedWorkflowStub(
         string $workflowType,
@@ -98,8 +86,6 @@ interface WorkflowClientInterface extends ClientContextInterface
      *
      * @psalm-template T of object
      * @param class-string<T> $class
-     * @param string $workflowID
-     * @param string|null $runID
      * @return T
      */
     public function newRunningWorkflowStub(
@@ -111,10 +97,6 @@ interface WorkflowClientInterface extends ClientContextInterface
     /**
      * Returns untyped workflow stub associated with running workflow.
      *
-     * @param string $workflowID
-     * @param string|null $runID
-     * @param string|null $workflowType
-     * @return WorkflowStubInterface
      */
     public function newUntypedRunningWorkflowStub(
         string $workflowID,
@@ -130,7 +112,6 @@ interface WorkflowClientInterface extends ClientContextInterface
      *
      * @see ActivityCompletionClient
      *
-     * @return ActivityCompletionClientInterface
      */
     public function newActivityCompletionClient(): ActivityCompletionClientInterface;
 
@@ -177,18 +158,15 @@ interface WorkflowClientInterface extends ClientContextInterface
     ): CountWorkflowExecutions;
 
     /**
-     * @param WorkflowExecution $execution
      * @param non-empty-string|null $namespace If null, the preconfigured namespace will be used.
      * @param bool $waitNewEvent If set to true, the RPC call will not resolve until there is a new event which matches,
      *        the $historyEventFilterType, or a timeout is hit. The RPC call will be resolved immediately if the
      *        workflow was already finished.
      * @param int<0, 2>| $historyEventFilterType Filter returned events such that they match the specified filter type.
      *        Available values are {@see HistoryEventFilterType} constants.
-     * @param bool $skipArchival
      * @param int<0, max> $pageSize Size of the pages to be requested. It affects internal queries only. Use it if you
      *        want to load limited number of events from the history.
      *
-     * @return WorkflowExecutionHistory
      */
     public function getWorkflowHistory(
         WorkflowExecution $execution,

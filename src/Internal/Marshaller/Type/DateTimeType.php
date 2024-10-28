@@ -23,9 +23,6 @@ use Temporal\Internal\Support\Inheritance;
  */
 class DateTimeType extends Type implements DetectableTypeInterface, RuleFactoryInterface
 {
-    /**
-     * @var string
-     */
     private string $format;
 
     /**
@@ -34,9 +31,7 @@ class DateTimeType extends Type implements DetectableTypeInterface, RuleFactoryI
     private string $class;
 
     /**
-     * @param MarshallerInterface $marshaller
      * @param class-string<\DateTimeInterface>|null $class
-     * @param string $format
      */
     #[Pure]
     public function __construct(
@@ -51,17 +46,11 @@ class DateTimeType extends Type implements DetectableTypeInterface, RuleFactoryI
         $this->class = $class;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public static function match(\ReflectionNamedType $type): bool
     {
         return !$type->isBuiltin() && Inheritance::implements($type->getName(), \DateTimeInterface::class);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public static function makeRule(\ReflectionProperty $property): ?MarshallingRule
     {
         $type = $property->getType();
@@ -79,9 +68,6 @@ class DateTimeType extends Type implements DetectableTypeInterface, RuleFactoryI
             : new MarshallingRule($property->getName(), self::class, $type->getName());
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function parse($value, $current): \DateTimeInterface
     {
         return DateTime::parse($value, class: $this->class);

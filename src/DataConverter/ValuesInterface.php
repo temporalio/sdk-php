@@ -23,13 +23,9 @@ interface ValuesInterface extends \Countable
     /**
      * Checks if any value present.
      *
-     * @return bool
      */
     public function isEmpty(): bool;
 
-    /**
-     * @param DataConverterInterface $converter
-     */
     public function setDataConverter(DataConverterInterface $converter);
 
     /**
@@ -38,7 +34,6 @@ interface ValuesInterface extends \Countable
      * Returns {@see null} if there are no values and $type has null value
      * like {@see null}, {@see Type::TYPE_VOID} or {@see Type::TYPE_NULL}.
      *
-     * @param int $index
      * @param string|\ReflectionClass|\ReflectionType|Type|null $type
      * @return mixed
      */
@@ -47,7 +42,6 @@ interface ValuesInterface extends \Countable
     /**
      * Returns associated payloads.
      *
-     * @return Payloads
      */
     public function toPayloads(): Payloads;
 }

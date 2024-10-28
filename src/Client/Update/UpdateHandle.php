@@ -57,7 +57,6 @@ final class UpdateHandle
     /**
      * Check there is a cached accepted result or failure for this update request.
      *
-     * @return bool
      */
     public function hasResult(): bool
     {

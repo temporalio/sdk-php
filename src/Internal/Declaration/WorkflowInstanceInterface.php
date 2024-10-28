@@ -31,21 +31,15 @@ interface WorkflowInstanceInterface extends InstanceInterface
      */
     public function findQueryHandler(string $name): ?\Closure;
 
-    /**
-     * @param string $name
-     * @param callable $handler
-     */
     public function addQueryHandler(string $name, callable $handler): void;
 
     /**
      * @param non-empty-string $name
-     * @param callable $handler
      */
     public function addUpdateHandler(string $name, callable $handler): void;
 
     /**
      * @param non-empty-string $name
-     * @param callable $handler
      */
     public function addValidateUpdateHandler(string $name, callable $handler): void;
 
@@ -61,10 +55,6 @@ interface WorkflowInstanceInterface extends InstanceInterface
      */
     public function findUpdateHandler(string $name): ?\Closure;
 
-    /**
-     * @param string $name
-     * @param callable $handler
-     */
     public function addSignalHandler(string $name, callable $handler): void;
 
     public function clearSignalQueue(): void;

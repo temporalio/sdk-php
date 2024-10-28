@@ -23,9 +23,6 @@ class CancelWorkflow extends WorkflowProcessAwareRoute
      */
     private const ERROR_PROCESS_NOT_DEFINED = 'Unable to cancel workflow because workflow process #%s was not found';
 
-    /**
-     * {@inheritDoc}
-     */
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
         $this->cancel($request->getID());
@@ -33,10 +30,6 @@ class CancelWorkflow extends WorkflowProcessAwareRoute
         $resolver->resolve(EncodedValues::fromValues([null]));
     }
 
-    /**
-     * @param string $runId
-     * @return array
-     */
     public function cancel(string $runId): array
     {
         /** @var Process $process */

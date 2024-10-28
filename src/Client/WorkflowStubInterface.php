@@ -32,16 +32,12 @@ use Temporal\Workflow\WorkflowRunInterface;
  */
 interface WorkflowStubInterface extends WorkflowRunInterface
 {
-    /**
-     * @return string|null
-     */
     public function getWorkflowType(): ?string;
 
     /**
      * Returns associated workflow options. Empty for running workflows. Workflow options are immutable and can
      * not be changed after the workflow was created.
      *
-     * @return WorkflowOptions|null
      */
     public function getOptions(): ?WorkflowOptions;
 
@@ -55,21 +51,18 @@ interface WorkflowStubInterface extends WorkflowRunInterface
     /**
      * Check if workflow was started and has associated execution.
      *
-     * @return bool
      */
     public function hasExecution(): bool;
 
     /**
      * Attaches running workflow context to the workflow stub.
      *
-     * @param WorkflowExecution $execution
      */
     public function setExecution(WorkflowExecution $execution): void;
 
     /**
      * Sends named signal to the workflow execution.
      *
-     * @param string $name
      * @param mixed ...$args
      */
     public function signal(string $name, ...$args): void;
@@ -79,9 +72,7 @@ interface WorkflowStubInterface extends WorkflowRunInterface
      *
      * Usually a query handler is a method annotated with {@see QueryMethod}.
      *
-     * @param string $name
      * @param mixed ...$args
-     * @return ValuesInterface|null
      */
     public function query(string $name, ...$args): ?ValuesInterface;
 
@@ -92,7 +83,6 @@ interface WorkflowStubInterface extends WorkflowRunInterface
      *
      * @param non-empty-string $name Name of the update handler.
      * @param mixed ...$args Arguments to pass to the update handler.
-     * @return ValuesInterface|null
      * @throws WorkflowUpdateException
      * @throws WorkflowUpdateRPCTimeoutOrCanceledException
      */
@@ -130,7 +120,6 @@ interface WorkflowStubInterface extends WorkflowRunInterface
      * main workflow method. Note that workflow can take long time to get
      * canceled or even completely ignore the cancellation request.
      *
-     * @return void
      */
     public function cancel(): void;
 
@@ -140,9 +129,6 @@ interface WorkflowStubInterface extends WorkflowRunInterface
      * Termination is a hard stop of a workflow execution which doesn't give
      * workflow code any chance to perform cleanup.
      *
-     * @param string $reason
-     * @param array $details
-     * @return void
      */
     public function terminate(string $reason, array $details = []): void;
 }

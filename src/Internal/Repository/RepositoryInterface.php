@@ -31,8 +31,6 @@ interface RepositoryInterface extends \IteratorAggregate, \Countable
     /**
      * Register a new {@see Identifiable} inside the repository.
      *
-     * @param Identifiable $entry
-     * @param bool $overwrite
      */
     public function add(Identifiable $entry, bool $overwrite = false): void;
 
@@ -51,7 +49,6 @@ interface RepositoryInterface extends \IteratorAggregate, \Countable
      * otherwise.
      *
      * @param Identifier $id
-     * @return bool
      */
     public function has($id): bool;
 

@@ -63,7 +63,6 @@ final class DateTime
      * TODO: This match function can only parse the "Z" timezone, and in the
      *       case of an explicit timezone "+00:00" this case will be ignored.
      *
-     * @param string $time
      * @return null|array{0: string, 1: string}
      */
     private static function extractRfc3339Accuracy(string $time): ?array

@@ -28,10 +28,7 @@ use Temporal\Internal\Marshaller\MarshallingRule;
 class Marshal extends MarshallingRule
 {
     /**
-     * @param string|null $name
      * @param class-string|null $type
-     * @param null|Marshal|string $of
-     * @param bool $nullable
      */
     public function __construct(
         ?string $name = null,
@@ -42,9 +39,6 @@ class Marshal extends MarshallingRule
         parent::__construct($name, $type, $of);
     }
 
-    /**
-     * @return MarshallingRule
-     */
     public function toTypeDto(): MarshallingRule
     {
         if (!$this->nullable) {

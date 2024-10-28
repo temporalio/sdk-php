@@ -51,8 +51,6 @@ final class RpcRetryOptions extends RetryOptions
      * @param DateIntervalValue|null $interval Interval to wait on first retry, on congestion failures.
      *        Defaults to 1000ms, which is used if set to {@see null}.
      *
-     * @return self
-     *
      * @psalm-suppress ImpureMethodCall
      */
     #[Pure]
@@ -76,7 +74,6 @@ final class RpcRetryOptions extends RetryOptions
      * @param null|float $coefficient Maximum amount of jitter.
      *        Default will be used if set to {@see null}.
      *
-     * @return self
      */
     #[Pure]
     public function withMaximumJitterCoefficient(?float $coefficient): self

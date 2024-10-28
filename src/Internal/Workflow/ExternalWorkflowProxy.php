@@ -31,20 +31,12 @@ class ExternalWorkflowProxy extends Proxy
      */
     private string $class;
 
-    /**
-     * @var WorkflowPrototype
-     */
     private WorkflowPrototype $workflow;
 
-    /**
-     * @var ExternalWorkflowStubInterface
-     */
     private ExternalWorkflowStubInterface $stub;
 
     /**
      * @param class-string $class
-     * @param WorkflowPrototype $workflow
-     * @param ExternalWorkflowStubInterface $stub
      */
     public function __construct(string $class, WorkflowPrototype $workflow, ExternalWorkflowStubInterface $stub)
     {
@@ -53,11 +45,6 @@ class ExternalWorkflowProxy extends Proxy
         $this->stub = $stub;
     }
 
-    /**
-     * @param string $method
-     * @param array $args
-     * @return PromiseInterface
-     */
     public function __call(string $method, array $args): PromiseInterface
     {
         foreach ($this->workflow->getSignalHandlers() as $name => $definition) {

@@ -23,9 +23,6 @@ use Temporal\Workflow\WorkflowContextInterface;
  */
 class CompletableResult implements CompletableResultInterface
 {
-    /**
-     * @var bool
-     */
     private bool $resolved = false;
 
     /**
@@ -33,37 +30,18 @@ class CompletableResult implements CompletableResultInterface
      */
     private $value;
 
-    /**
-     * @var WorkflowContextInterface
-     */
     private WorkflowContextInterface $context;
 
-    /**
-     * @var LoopInterface
-     */
     private LoopInterface $loop;
 
-    /**
-     * @var PromiseInterface
-     */
     private PromiseInterface $promise;
 
-    /**
-     * @var Deferred
-     */
     private Deferred $deferred;
 
-    /**
-     * @var string
-     */
     private string $layer;
 
     /**
      * CompletableResult constructor.
-     * @param WorkflowContextInterface $context
-     * @param LoopInterface $loop
-     * @param PromiseInterface $promise
-     * @param string $layer
      */
     public function __construct(
         WorkflowContextInterface $context,
@@ -82,9 +60,6 @@ class CompletableResult implements CompletableResultInterface
         );
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function isComplete(): bool
     {
         return $this->resolved;
@@ -101,9 +76,7 @@ class CompletableResult implements CompletableResultInterface
     /**
      * @param (callable(mixed): mixed)|null $onFulfilled
      * @param (callable(\Throwable): mixed)|null $onRejected
-     * @param callable|null $onProgress
      *
-     * @return PromiseInterface
      */
     public function then(
         ?callable $onFulfilled = null,
@@ -171,9 +144,6 @@ class CompletableResult implements CompletableResultInterface
         );
     }
 
-    /**
-     * @param \Throwable $e
-     */
     private function onRejected(\Throwable $e): void
     {
         $this->resolved = true;

@@ -22,7 +22,6 @@ class ActivityCompletionException extends TemporalException
     private ?string $activityId = null;
 
     /**
-     * @param \Throwable $e
      * @return static
      */
     public static function fromPrevious(\Throwable $e): self
@@ -35,8 +34,6 @@ class ActivityCompletionException extends TemporalException
     }
 
     /**
-     * @param string $activityId
-     * @param \Throwable $e
      * @return static
      */
     public static function fromPreviousWithActivityId(string $activityId, \Throwable $e): self
@@ -48,8 +45,6 @@ class ActivityCompletionException extends TemporalException
     }
 
     /**
-     * @param ActivityInfo $info
-     * @param \Throwable|null $e
      * @return static
      */
     public static function fromActivityInfo(ActivityInfo $info, \Throwable $e = null): self
@@ -75,33 +70,21 @@ class ActivityCompletionException extends TemporalException
         return $e;
     }
 
-    /**
-     * @return string|null
-     */
     public function getWorkflowId(): ?string
     {
         return $this->workflowId;
     }
 
-    /**
-     * @return string|null
-     */
     public function getRunId(): ?string
     {
         return $this->runId;
     }
 
-    /**
-     * @return string|null
-     */
     public function getActivityType(): ?string
     {
         return $this->activityType;
     }
 
-    /**
-     * @return string|null
-     */
     public function getActivityId(): ?string
     {
         return $this->activityId;

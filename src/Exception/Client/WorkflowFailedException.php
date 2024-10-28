@@ -18,11 +18,7 @@ class WorkflowFailedException extends WorkflowException
     private int $lastWorkflowTaskCompletedEventId;
 
     /**
-     * @param WorkflowExecution $execution
      * @param non-empty-string|null $type
-     * @param int $lastWorkflowTaskCompletedEventId
-     * @param int $retryState
-     * @param \Throwable|null $previous
      */
     public function __construct(
         WorkflowExecution $execution,
@@ -46,9 +42,6 @@ class WorkflowFailedException extends WorkflowException
         $this->lastWorkflowTaskCompletedEventId = $lastWorkflowTaskCompletedEventId;
     }
 
-    /**
-     * @return int
-     */
     public function getWorkflowTaskCompletedEventId(): int
     {
         return $this->lastWorkflowTaskCompletedEventId;

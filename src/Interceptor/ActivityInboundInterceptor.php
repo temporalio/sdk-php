@@ -26,10 +26,8 @@ interface ActivityInboundInterceptor extends Interceptor
     /**
      * Intercepts a call to the main activity entry method.
      *
-     * @param ActivityInput $input
      * @param callable(ActivityInput): mixed $next
      *
-     * @return mixed
      */
     public function handleActivityInbound(ActivityInput $input, callable $next): mixed;
 }

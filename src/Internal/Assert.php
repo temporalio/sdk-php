@@ -16,7 +16,6 @@ final class Assert
     /**
      * @param mixed $value
      * @param class-string $enum
-     * @return bool
      */
     public static function enum($value, string $enum): bool
     {
@@ -38,7 +37,6 @@ final class Assert
     /**
      * @param array<object> $values
      * @param class-string $of
-     * @return bool
      */
     public static function valuesInstanceOf(array $values, string $of): bool
     {
@@ -48,7 +46,6 @@ final class Assert
     /**
      * @param array<class-string> $values
      * @param class-string $of
-     * @return bool
      */
     public static function valuesSubclassOfOrSameClass(array $values, string $of): bool
     {
@@ -57,8 +54,6 @@ final class Assert
 
     /**
      * @param array<mixed> $values
-     * @param callable $filter
-     * @return bool
      */
     public static function all(array $values, callable $filter): bool
     {

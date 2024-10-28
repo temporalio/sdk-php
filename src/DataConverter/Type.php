@@ -30,15 +30,10 @@ final class Type
     public const TYPE_TRUE      = 'true';
     public const TYPE_FALSE     = 'false';
 
-    /**
-     * @var bool
-     */
     private readonly bool $allowsNull;
 
     /**
      * @param TypeEnum|string $name
-     * @param bool|null $allowsNull
-     * @param bool $isArrayOf
      */
     public function __construct(
         private readonly string $name = Type::TYPE_ANY,
@@ -55,20 +50,11 @@ final class Type
         return new self($class, null, true);
     }
 
-    /**
-     * @param \ReflectionClass $class
-     * @param bool $nullable
-     * @return Type
-     */
     public static function fromReflectionClass(\ReflectionClass $class, bool $nullable = false): self
     {
         return new self($class->getName(), $nullable);
     }
 
-    /**
-     * @param \ReflectionType $type
-     * @return Type
-     */
     public static function fromReflectionType(\ReflectionType $type): self
     {
         if ($type instanceof \ReflectionNamedType) {
@@ -90,7 +76,6 @@ final class Type
 
     /**
      * @param string|\ReflectionClass|\ReflectionType|Type|ReturnType $type
-     * @return Type
      */
     public static function create($type): Type
     {
@@ -115,33 +100,21 @@ final class Type
         }
     }
 
-    /**
-     * @return string
-     */
     public function getName(): string
     {
         return $this->name;
     }
 
-    /**
-     * @return bool
-     */
     public function allowsNull(): bool
     {
         return $this->allowsNull;
     }
 
-    /**
-     * @return bool
-     */
     public function isUntyped(): bool
     {
         return $this->name === self::TYPE_ANY;
     }
 
-    /**
-     * @return bool
-     */
     public function isClass(): bool
     {
         return \class_exists($this->name);
