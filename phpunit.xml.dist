@@ -14,6 +14,9 @@
         <testsuite name="Acceptance">
             <directory suffix="Test.php">tests/Acceptance/Harness</directory>
         </testsuite>
+        <testsuite name="Arch">
+            <directory suffix="Test.php">tests/Arch</directory>
+        </testsuite>
         <testsuite name="Unit">
             <directory suffix="TestCase.php">tests/Unit</directory>
         </testsuite>
