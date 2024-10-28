@@ -16,7 +16,6 @@ use Temporal\Workflow\WorkflowExecution;
 class WorkflowQueryRejectedException extends WorkflowQueryException
 {
     private int $queryRejectCondition;
-
     private int $workflowExecutionStatus;
 
     public function __construct(

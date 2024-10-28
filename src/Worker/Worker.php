@@ -30,13 +30,9 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
     use EventEmitterTrait;
 
     private string $name;
-
     private WorkerOptions $options;
-
     private RouterInterface $router;
-
     private ServiceContainer $services;
-
     private RPCConnectionInterface $rpc;
 
     public function __construct(

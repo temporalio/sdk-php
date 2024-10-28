@@ -455,6 +455,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
     /**
      *
      *
+     * @param null|mixed $type
      * @throws \Throwable
      */
     public function getResult($type = null, int $timeout = null): mixed

@@ -16,9 +16,7 @@ use Temporal\Internal\Repository\RepositoryInterface;
 abstract class Prototype implements PrototypeInterface
 {
     protected string $name;
-
     protected ?\ReflectionMethod $handler;
-
     private \ReflectionClass $class;
 
     public function __construct(string $name, ?\ReflectionMethod $handler, \ReflectionClass $class)

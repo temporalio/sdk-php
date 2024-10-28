@@ -100,9 +100,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     private const HEADER_TASK_QUEUE = 'taskQueue';
 
     protected DataConverterInterface $converter;
-
     protected ReaderInterface $reader;
-
     protected RouterInterface $router;
 
     /**
@@ -111,13 +109,9 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     protected RepositoryInterface $queues;
 
     protected CodecInterface $codec;
-
     protected ClientInterface $client;
-
     protected ServerInterface $server;
-
     protected QueueInterface $responses;
-
     protected RPCConnectionInterface $rpc;
 
     /**

@@ -19,9 +19,7 @@ use Temporal\Internal\Declaration\ActivityInstance;
 final class ActivityPrototype extends Prototype
 {
     private ?MethodRetry $methodRetry = null;
-
     private ?ActivityInstance $instance = null;
-
     private ?\Closure $factory = null;
     private bool $isLocalActivity;
 

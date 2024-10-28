@@ -32,13 +32,9 @@ class ContinueAsNewProxy extends Proxy
         'Workflow "%s" has already been called within this "continue as new" stub';
 
     private string $class;
-
     private WorkflowPrototype $workflow;
-
     private ContinueAsNewOptions $options;
-
     private WorkflowContextInterface $context;
-
     private bool $isContinued = false;
 
     public function __construct(

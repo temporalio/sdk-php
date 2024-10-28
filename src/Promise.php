@@ -273,6 +273,7 @@ final class Promise
      *
      * If `$promiseOrValue` is a promise, it will be returned as is.
      *
+     * @param null|mixed $promiseOrValue
      */
     public static function resolve($promiseOrValue = null): PromiseInterface
     {
@@ -292,6 +293,7 @@ final class Promise
      * throwing an exception. For example, it allows you to propagate a rejection with
      * the value of another promise.
      *
+     * @param null|mixed $promiseOrValue
      * @return PromiseInterface<never>
      */
     public static function reject($promiseOrValue = null): PromiseInterface

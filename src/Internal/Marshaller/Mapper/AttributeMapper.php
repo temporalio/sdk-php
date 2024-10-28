@@ -26,7 +26,6 @@ use Temporal\Internal\Marshaller\TypeFactoryInterface;
 class AttributeMapper implements MapperInterface
 {
     private \ReflectionClass $class;
-
     private ReaderInterface $reader;
 
     /**
@@ -40,7 +39,6 @@ class AttributeMapper implements MapperInterface
     private array $setters = [];
 
     private Scope $scope;
-
     private TypeFactoryInterface $factory;
 
     public function __construct(\ReflectionClass $class, TypeFactoryInterface $factory, ReaderInterface $reader)

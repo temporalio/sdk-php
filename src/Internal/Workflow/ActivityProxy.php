@@ -36,9 +36,7 @@ final class ActivityProxy extends Proxy
     private array $activities;
 
     private string $class;
-
     private ActivityOptionsInterface $options;
-
     private WorkflowContextInterface $ctx;
 
     /**

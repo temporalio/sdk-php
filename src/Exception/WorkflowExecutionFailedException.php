@@ -16,9 +16,7 @@ use Temporal\Api\Failure\V1\Failure;
 class WorkflowExecutionFailedException extends TemporalException
 {
     private Failure $failure;
-
     private int $lastWorkflowTaskCompletedEventId;
-
     private int $retryState;
 
     /**

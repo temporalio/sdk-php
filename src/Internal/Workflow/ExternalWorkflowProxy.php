@@ -32,7 +32,6 @@ class ExternalWorkflowProxy extends Proxy
     private string $class;
 
     private WorkflowPrototype $workflow;
-
     private ExternalWorkflowStubInterface $stub;
 
     /**

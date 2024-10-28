@@ -24,7 +24,6 @@ use Temporal\Worker\WorkerInterface;
 final class GetWorkerInfo extends Route
 {
     private RepositoryInterface $queues;
-
     private MarshallerInterface $marshaller;
 
     public function __construct(RepositoryInterface $queues, MarshallerInterface $marshaller)

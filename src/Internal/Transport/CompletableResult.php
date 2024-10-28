@@ -31,13 +31,9 @@ class CompletableResult implements CompletableResultInterface
     private $value;
 
     private WorkflowContextInterface $context;
-
     private LoopInterface $loop;
-
     private PromiseInterface $promise;
-
     private Deferred $deferred;
-
     private string $layer;
 
     /**

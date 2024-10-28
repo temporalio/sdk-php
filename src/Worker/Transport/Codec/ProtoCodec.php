@@ -26,7 +26,6 @@ use Temporal\Worker\Transport\Command\Server\TickInfo;
 final class ProtoCodec implements CodecInterface
 {
     private Decoder $parser;
-
     private Encoder $encoder;
 
     public function __construct(DataConverterInterface $dataConverter)

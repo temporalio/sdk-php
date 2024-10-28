@@ -27,7 +27,6 @@ class Marshaller implements MarshallerInterface
     private array $mappers = [];
 
     private TypeFactory $type;
-
     private MapperFactoryInterface $mapper;
 
     /**

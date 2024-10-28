@@ -38,9 +38,7 @@ final class WorkflowPrototype extends Prototype
     private array $updateValidators = [];
 
     private ?CronSchedule $cronSchedule = null;
-
     private ?MethodRetry $methodRetry = null;
-
     private ?ReturnType $returnType = null;
 
     public function getCronSchedule(): ?CronSchedule

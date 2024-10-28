@@ -17,7 +17,6 @@ use Temporal\Workflow\WorkflowExecution;
 class WorkflowException extends TemporalException
 {
     private WorkflowExecution $execution;
-
     private ?string $type;
 
     public function __construct(
