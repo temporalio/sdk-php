@@ -16,7 +16,7 @@ final class ArchTest extends TestCase
 
     use ArchitectureAsserts;
 
-    public function testDontForgetDebugFunctions(): void
+    public function testForgottenDebugFunctions(): void
     {
         $functions = ['dump', 'trap', 'tr', 'td', 'var_dump'];
         $layer = $this->layer();

@@ -139,7 +139,6 @@ final class UpdateHandle
         $failure = $result->getFailure();
         \assert($failure !== null);
         $e = FailureConverter::mapFailureToException($failure, $this->converter);
-        tr($e);
 
         $this->result = new WorkflowUpdateException(
             $e->getMessage(),
