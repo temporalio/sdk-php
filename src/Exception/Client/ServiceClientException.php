@@ -31,7 +31,11 @@ class ServiceClientException extends \RuntimeException
             $this->status->mergeFromString($status->metadata['grpc-status-details-bin'][0]);
         }
 
-        parent::__construct($status->details . " (code: $status->code)", $status->code, $previous);
+        parent::__construct(\sprintf(
+            "%s (code: %d)",
+            isset($status->details) ? (string) $status->details : '',
+            $status->code,
+        ), $status->code, $previous);
     }
 
     public function getStatus(): Status
