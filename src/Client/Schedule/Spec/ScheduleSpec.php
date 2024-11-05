@@ -76,6 +76,8 @@ final class ScheduleSpec
      * Any timestamps matching any of exclude* will be skipped.
      *
      * @var list<CalendarSpec>
+     *
+     * @deprecated
      */
     #[MarshalArray(name: 'exclude_calendar', of: CalendarSpec::class)]
     public readonly array $excludeCalendarList;
