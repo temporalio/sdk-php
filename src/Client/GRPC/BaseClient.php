@@ -328,7 +328,7 @@ abstract class BaseClient implements ServiceClientInterface
                     ? $congestionInitialIntervalMs
                     : $initialIntervalMs;
 
-                $wait = $throttler->calculateSleepTime(failureCount: $attempt, initialInterval: $baseInterval);
+                $wait = $throttler->calculateSleepTime(failureCount: $attempt, initialInterval: $baseInterval) * 1000;
 
                 // wait till the next call
                 $this->usleep($wait);
