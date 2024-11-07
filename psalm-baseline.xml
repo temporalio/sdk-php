@@ -112,6 +112,7 @@
   <file src="src/Client/Schedule/Spec/ScheduleSpec.php">
     <DeprecatedProperty>
       <code><![CDATA[$this->excludeCalendarList]]></code>
+      <code><![CDATA[$this->excludeCalendarList]]></code>
     </DeprecatedProperty>
   </file>
   <file src="src/Client/Update/UpdateHandle.php">

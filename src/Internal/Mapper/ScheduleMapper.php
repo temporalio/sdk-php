@@ -92,7 +92,10 @@ final class ScheduleMapper
             $result['calendar'] ?? [],
         );
 
-        unset($result['exclude_calendar']);
+        $result['exclude_calendar'] = \array_map(
+            static fn(array $item): CalendarSpec => new CalendarSpec($item),
+            $result['exclude_calendar'] ?? [],
+        );
 
         $result['interval'] = \array_map(
             static fn(array $item): IntervalSpec => new IntervalSpec($item),

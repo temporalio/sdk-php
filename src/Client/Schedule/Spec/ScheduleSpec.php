@@ -246,25 +246,31 @@ final class ScheduleSpec
     }
 
     /**
-     * Does nothing.
+     * Returns a new instance with the replaced exclude calendar list.
      *
      * @deprecated This method is deprecated and will be removed in the next major release.
      */
     public function withExcludeCalendarList(CalendarSpec ...$calendar): self
     {
         @\trigger_error('ScheduleSpec::withExcludeCalendarList() is deprecated', E_USER_DEPRECATED);
-        return $this;
+
+        /** @see self::$excludeCalendarList */
+        return $this->with('excludeCalendarList', $calendar);
     }
 
     /**
-     * Does nothing.
+     * Any timestamps matching any of exclude* will be skipped.
      *
      * @deprecated This method is deprecated and will be removed in the next major release.
      */
     public function withAddedExcludeCalendar(CalendarSpec $calendar): self
     {
         @\trigger_error('ScheduleSpec::withAddedExcludeCalendar() is deprecated', E_USER_DEPRECATED);
-        return $this;
+        $value = $this->excludeCalendarList;
+        $value[] = $calendar;
+
+        /** @see self::$excludeCalendarList */
+        return $this->with('excludeCalendarList', $value);
     }
 
     /**
