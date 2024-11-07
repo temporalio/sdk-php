@@ -109,6 +109,12 @@
       <code><![CDATA[$workflowType]]></code>
     </PropertyNotSetInConstructor>
   </file>
+  <file src="src/Client/Schedule/Spec/ScheduleSpec.php">
+    <DeprecatedProperty>
+      <code><![CDATA[$this->excludeCalendarList]]></code>
+      <code><![CDATA[$this->excludeCalendarList]]></code>
+    </DeprecatedProperty>
+  </file>
   <file src="src/Client/Update/UpdateHandle.php">
     <PossiblyNullArgument>
       <code><![CDATA[$result->getSuccess()]]></code>
@@ -508,7 +514,6 @@
   </file>
   <file src="src/Internal/Declaration/Reader/WorkflowReader.php">
     <ArgumentTypeCoercion>
-      <code><![CDATA[$class]]></code>
       <code><![CDATA[$contextualRetry]]></code>
       <code><![CDATA[$method]]></code>
       <code><![CDATA[$name]]></code>
@@ -1218,10 +1223,6 @@
     <InvalidOperand>
       <code><![CDATA[$promisesOrValues]]></code>
     </InvalidOperand>
-    <MissingParamType>
-      <code><![CDATA[$promiseOrValue]]></code>
-      <code><![CDATA[$promiseOrValue]]></code>
-    </MissingParamType>
     <TooManyArguments>
       <code><![CDATA[$reduce($c, $value, $i++, $total)]]></code>
     </TooManyArguments>
@@ -1366,11 +1367,6 @@
       <code><![CDATA[$env->getRPCAddress()]]></code>
       <code><![CDATA[$method]]></code>
     </ArgumentTypeCoercion>
-  </file>
-  <file src="src/Worker/Transport/RPCConnectionInterface.php">
-    <MissingParamType>
-      <code><![CDATA[$payload]]></code>
-    </MissingParamType>
   </file>
   <file src="src/Worker/Transport/RoadRunner.php">
     <ArgumentTypeCoercion>

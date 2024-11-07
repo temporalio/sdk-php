@@ -32,6 +32,7 @@ final class InvokeActivityTestCase extends AbstractUnit
 {
     private ServiceContainer $services;
     private InvokeActivity $router;
+    private ActivityContext $activityContext;
 
     protected function setUp(): void
     {
