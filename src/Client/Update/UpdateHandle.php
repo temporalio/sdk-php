@@ -13,6 +13,7 @@ use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\Client\CanceledException;
 use Temporal\Exception\Client\TimeoutException;
 use Temporal\Exception\Client\WorkflowUpdateException;
+use Temporal\Exception\Client\WorkflowUpdateResultException;
 use Temporal\Exception\Client\WorkflowUpdateRPCTimeoutOrCanceledException;
 use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Workflow\WorkflowExecution;
@@ -127,7 +128,13 @@ final class UpdateHandle
 
         // Workflow Uprate accepted
         $result = $response->getOutcome();
-        \assert($result !== null);
+        $result === null and throw new WorkflowUpdateResultException(
+            LifecycleStage::tryFrom($response->getStage()),
+            execution: $this->getExecution(),
+            workflowType: $this->workflowType ?? '',
+            updateId: $this->getId(),
+            updateName: $this->updateName,
+        );
 
         // Accepted with result
         if ($result->getSuccess() !== null) {
