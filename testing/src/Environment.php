@@ -50,7 +50,10 @@ final class Environment
         $this->startRoadRunner($rrCommand, $commandTimeout, $envs);
     }
 
-    public function startTemporalServer(int $commandTimeout = 10): void
+    /**
+     * @param string[] $parameters
+     */
+    public function startTemporalServer(int $commandTimeout = 10, array $parameters = []): void
     {
         $temporalPort = \parse_url(\getenv('TEMPORAL_ADDRESS') ?: '127.0.0.1:7233', PHP_URL_PORT);
 
@@ -67,6 +70,7 @@ final class Environment
                 '--search-attribute', 'bar=int',
                 '--log-level', 'error',
                 '--headless',
+                ...$parameters,
             ],
         );
         $this->temporalServerProcess->setTimeout($commandTimeout);
