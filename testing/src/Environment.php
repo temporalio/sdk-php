@@ -51,7 +51,7 @@ final class Environment
     }
 
     /**
-     * @param string[] $parameters
+     * @param list<non-empty-string> $parameters
      */
     public function startTemporalServer(int $commandTimeout = 10, array $parameters = []): void
     {
