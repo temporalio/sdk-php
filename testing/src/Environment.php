@@ -62,6 +62,7 @@ final class Environment
                 "--port", $temporalPort,
                 '--dynamic-config-value', 'frontend.enableUpdateWorkflowExecution=true',
                 '--dynamic-config-value', 'frontend.enableUpdateWorkflowExecutionAsyncAccepted=true',
+                '--dynamic-config-value', 'frontend.enableExecuteMultiOperation=true',
                 '--dynamic-config-value', 'system.enableEagerWorkflowStart=true',
                 '--search-attribute', 'foo=text',
                 '--search-attribute', 'bar=int',
