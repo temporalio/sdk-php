@@ -19,6 +19,8 @@ use Temporal\DataConverter\ValuesInterface;
 class SignalWithStartInput
 {
     /**
+     * @param non-empty-string $signalName
+     *
      * @no-named-arguments
      * @internal Don't use the constructor. Use {@see self::with()} instead.
      */
@@ -28,6 +30,9 @@ class SignalWithStartInput
         public readonly ValuesInterface $signalArguments,
     ) {}
 
+    /**
+     * @param non-empty-string|null $signalName
+     */
     public function with(
         StartInput $workflowStartInput = null,
         string $signalName = null,

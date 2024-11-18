@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client;
 
 use Doctrine\Common\Annotations\Reader;
+use JetBrains\PhpStorm\Deprecated;
 use Spiral\Attributes\AnnotationReader;
 use Spiral\Attributes\AttributeReader;
 use Spiral\Attributes\Composite\SelectiveReader;
@@ -158,13 +159,9 @@ class WorkflowClient implements WorkflowClientInterface
     }
 
     /**
-     * @param object|WorkflowStubInterface $workflow
-     * @param string $signal
-     * @param array $signalArgs
-     * @param array $startArgs
-     * @return WorkflowRunInterface
+     * {@inheritDoc}
      */
-    public function startWithSignal(
+    public function signalWithStart(
         $workflow,
         string $signal,
         array $signalArgs = [],
@@ -220,6 +217,19 @@ class WorkflowClient implements WorkflowClientInterface
             stub: $workflowStub,
             returnType: $returnType !== null ? Type::create($returnType) : null,
         );
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    #[Deprecated(replacement: '%class%->signalWithStart(%parametersList%)')]
+    public function startWithSignal(
+        $workflow,
+        string $signal,
+        array $signalArgs = [],
+        array $startArgs = [],
+    ): WorkflowRunInterface {
+        return $this->signalWithStart($workflow, $signal, $signalArgs, $startArgs);
     }
 
     /**

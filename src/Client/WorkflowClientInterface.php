@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
+use JetBrains\PhpStorm\Deprecated;
 use Temporal\Api\Enums\V1\HistoryEventFilterType;
 use Temporal\Client\Common\ClientContextInterface;
 use Temporal\Client\Common\Paginator;
@@ -41,11 +42,22 @@ interface WorkflowClientInterface extends ClientContextInterface
      * Starts untyped and typed workflow stubs in async mode. Sends signal on start.
      *
      * @param object|WorkflowStubInterface $workflow
-     * @param string $signal
+     * @param non-empty-string $signal
      * @param array $signalArgs
      * @param array $startArgs
      * @return WorkflowRunInterface
      */
+    public function signalWithStart(
+        $workflow,
+        string $signal,
+        array $signalArgs = [],
+        array $startArgs = [],
+    ): WorkflowRunInterface;
+
+    /**
+     * @deprecated Use {@see self::signalWithStart()} instead.
+     */
+    #[Deprecated(replacement: '%class%->signalWithStart(%parametersList%)')]
     public function startWithSignal(
         $workflow,
         string $signal,
