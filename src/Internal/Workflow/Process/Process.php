@@ -155,6 +155,7 @@ class Process extends Scope implements ProcessInterface
                     $this->scopeContext->getInfo(),
                     $arguments,
                     $this->scopeContext->getHeader(),
+                    $this->scopeContext->isReplaying(),
                 ));
             },
         );

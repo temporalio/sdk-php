@@ -28,6 +28,7 @@ class WorkflowInput
         public readonly WorkflowInfo $info,
         public readonly ValuesInterface $arguments,
         public readonly HeaderInterface $header,
+        public readonly bool $isReplaying,
     ) {}
 
     public function with(
@@ -39,6 +40,7 @@ class WorkflowInput
             $info ?? $this->info,
             $arguments ?? $this->arguments,
             $header ?? $this->header,
+            $this->isReplaying,
         );
     }
 }

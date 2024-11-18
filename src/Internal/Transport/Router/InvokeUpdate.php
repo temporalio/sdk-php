@@ -55,6 +55,7 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
                 info: $context->getInfo(),
                 arguments: $request->getPayloads(),
                 header: $request->getHeader(),
+                isReplaying: $context->isReplaying(),
             );
 
             // Validation

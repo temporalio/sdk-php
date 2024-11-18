@@ -112,7 +112,12 @@ final class StartWorkflow extends Route
                 /** @see WorkflowInboundCallsInterceptor::execute() */
                 'execute',
             )(
-                new WorkflowInput($context->getInfo(), $context->getInput(), $context->getHeader()),
+                new WorkflowInput(
+                    $context->getInfo(),
+                    $context->getInput(),
+                    $context->getHeader(),
+                    $context->isReplaying(),
+                ),
             );
     }
 

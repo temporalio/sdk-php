@@ -75,7 +75,7 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
                     /** @psalm-suppress InaccessibleProperty */
                     $info->shouldContinueAsNew = $tickInfo->continueAsNewSuggested;
 
-                    $result = $handler(new QueryInput($name, $request->getPayloads()));
+                    $result = $handler(new QueryInput($name, $request->getPayloads(), $info));
                     $resolver->resolve(EncodedValues::fromValues([$result]));
                 } catch (\Throwable $e) {
                     $resolver->reject($e);
