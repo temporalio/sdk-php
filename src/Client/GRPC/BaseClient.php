@@ -202,6 +202,7 @@ abstract class BaseClient implements ServiceClientInterface
                 eagerWorkflowStart: $capabilities->getEagerWorkflowStart(),
                 sdkMetadata: $capabilities->getSdkMetadata(),
                 countGroupByExecutionStatus: $capabilities->getCountGroupByExecutionStatus(),
+                nexus: $capabilities->getNexus(),
             );
         } catch (ServiceClientException $e) {
             if ($e->getCode() === StatusCode::UNIMPLEMENTED) {
