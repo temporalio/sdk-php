@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Interceptor\WorkflowInbound;
 
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Workflow\WorkflowInfo;
 
 /**
  * @psalm-immutable
@@ -25,14 +26,17 @@ class QueryInput
     public function __construct(
         public readonly string $queryName,
         public readonly ValuesInterface $arguments,
+        public readonly WorkflowInfo $info,
     ) {}
 
     public function with(
-        ValuesInterface $arguments = null,
+        ?ValuesInterface $arguments = null,
+        ?workflowInfo $info = null,
     ): self {
         return new self(
             $this->queryName,
             $arguments ?? $this->arguments,
+            $info ?? $this->info,
         );
     }
 }
