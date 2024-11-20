@@ -14,10 +14,16 @@ namespace Temporal\Internal\Client;
 use Temporal\Api\Common\V1\WorkflowType;
 use Temporal\Api\Errordetails\V1\WorkflowExecutionAlreadyStartedFailure;
 use Temporal\Api\Taskqueue\V1\TaskQueue;
+use Temporal\Api\Update\V1\Request as UpdateRequestMessage;
+use Temporal\Api\Workflowservice\V1\ExecuteMultiOperationRequest;
+use Temporal\Api\Workflowservice\V1\ExecuteMultiOperationRequest\Operation;
 use Temporal\Api\Workflowservice\V1\SignalWithStartWorkflowExecutionRequest;
 use Temporal\Api\Workflowservice\V1\StartWorkflowExecutionRequest;
+use Temporal\Api\Workflowservice\V1\UpdateWorkflowExecutionRequest;
 use Temporal\Client\ClientOptions;
 use Temporal\Client\GRPC\ServiceClientInterface;
+use Temporal\Client\Update\UpdateHandle;
+use Temporal\Client\Update\UpdateOptions;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverterInterface;
@@ -28,6 +34,8 @@ use Temporal\Interceptor\Header;
 use Temporal\Interceptor\HeaderInterface;
 use Temporal\Interceptor\WorkflowClient\SignalWithStartInput;
 use Temporal\Interceptor\WorkflowClient\StartInput;
+use Temporal\Interceptor\WorkflowClient\UpdateInput;
+use Temporal\Interceptor\WorkflowClient\UpdateWithStartInput;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Internal\Support\DateInterval;
@@ -125,6 +133,89 @@ final class WorkflowStarter
                 new StartInput($options->workflowId, $workflowType, $header, $arguments, $options),
                 $signal,
                 $signalArguments,
+            ),
+        );
+    }
+
+    public function updateWithStart(
+        string $workflowType,
+        WorkflowOptions $options,
+        UpdateOptions $update,
+        array $updateArgs = [],
+        array $startArgs = [],
+    ): UpdateHandle {
+        $arguments = EncodedValues::fromValues($startArgs, $this->converter);
+        $updateArguments = EncodedValues::fromValues($updateArgs, $this->converter);
+
+        return $this->interceptors->with(
+            function (UpdateWithStartInput $input): UpdateHandle {
+                $startRequest = $this->configureExecutionRequest(
+                    new StartWorkflowExecutionRequest(),
+                    $input->workflowStartInput,
+                );
+
+                $updateRequest = (new UpdateWorkflowExecutionRequest())
+                    ->setNamespace($this->clientOptions->namespace)
+                    ->setWorkflowExecution($input->updateInput->workflowExecution->toProtoWorkflowExecution())
+                    ->setRequest($r = new UpdateRequestMessage())
+                    ->setWaitPolicy(
+                        (new \Temporal\Api\Update\V1\WaitPolicy())
+                            ->setLifecycleStage($input->updateInput->waitPolicy->lifecycleStage->value),
+                    );
+
+                // Configure Meta
+                $meta = new \Temporal\Api\Update\V1\Meta();
+                $meta->setIdentity($this->clientOptions->identity);
+                $meta->setUpdateId($input->updateInput->updateId);
+                $r->setMeta($meta);
+
+                // Configure update Input
+                $i = new \Temporal\Api\Update\V1\Input();
+                $i->setName($input->updateInput->updateName);
+                $input->updateInput->arguments->setDataConverter($this->converter);
+                $input->updateInput->arguments->isEmpty() or $i->setArgs($input->updateInput->arguments->toPayloads());
+                $input->updateInput->header->isEmpty() or $i->setHeader($input->updateInput->header->toHeader());
+                $r->setInput($i);
+
+                $ops = [
+                    (new Operation())->setStartWorkflow($startRequest),
+                    (new Operation())->setUpdateWorkflow($updateRequest),
+                ];
+
+                $response = $this->serviceClient->ExecuteMultiOperation(
+                    (new ExecuteMultiOperationRequest())
+                        ->setNamespace($this->clientOptions->namespace)
+                        ->setOperations($ops),
+                );
+
+                return new UpdateHandle(
+                    client: $this->serviceClient,
+                    clientOptions: $this->clientOptions,
+                    converter: $this->converter,
+                    execution: $input->updateInput->workflowExecution,
+                    workflowType: $input->updateInput->workflowType,
+                    updateName: $input->updateInput->updateName,
+                    resultType: $input->updateInput->resultType,
+                    updateId: $input->updateInput->updateId,
+                    result: null,
+                );
+            },
+            /** @see WorkflowClientCallsInterceptor::updateWithStart() */
+            'updateWithStart',
+        )(
+            new UpdateWithStartInput(
+                new StartInput($options->workflowId, $workflowType, Header::empty(), $arguments, $options),
+                new UpdateInput(
+                    new WorkflowExecution($options->workflowId),
+                    $workflowType,
+                    $update->updateName,
+                    $updateArguments,
+                    Header::empty(),
+                    $update->waitPolicy,
+                    $update->updateId ?? Uuid::v4(),
+                    '',
+                    null, // todo?
+                ),
             ),
         );
     }
