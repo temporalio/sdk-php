@@ -9,34 +9,29 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Temporal\Interceptor\WorkflowInbound;
-
-use Temporal\DataConverter\ValuesInterface;
-use Temporal\Workflow\WorkflowInfo;
+namespace Temporal\Interceptor\WorkflowClient;
 
 /**
  * @psalm-immutable
  */
-class QueryInput
+class UpdateWithStartInput
 {
     /**
      * @no-named-arguments
      * @internal Don't use the constructor. Use {@see self::with()} instead.
      */
     public function __construct(
-        public readonly string $queryName,
-        public readonly ValuesInterface $arguments,
-        public readonly WorkflowInfo $info,
+        public readonly StartInput $workflowStartInput,
+        public readonly UpdateInput $updateInput,
     ) {}
 
     public function with(
-        ?ValuesInterface $arguments = null,
-        ?WorkflowInfo $info = null,
+        StartInput $workflowStartInput = null,
+        UpdateInput $updateInput = null,
     ): self {
         return new self(
-            $this->queryName,
-            $arguments ?? $this->arguments,
-            $info ?? $this->info,
+            $workflowStartInput ?? $this->workflowStartInput,
+            $updateInput ?? $this->updateInput,
         );
     }
 }
