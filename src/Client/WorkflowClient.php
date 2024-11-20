@@ -25,6 +25,9 @@ use Temporal\Api\Workflowservice\V1\ListWorkflowExecutionsRequest;
 use Temporal\Client\Common\ClientContextTrait;
 use Temporal\Client\Common\Paginator;
 use Temporal\Client\GRPC\ServiceClientInterface;
+use Temporal\Client\Update\LifecycleStage;
+use Temporal\Client\Update\UpdateHandle;
+use Temporal\Client\Update\UpdateOptions;
 use Temporal\Client\Workflow\CountWorkflowExecutions;
 use Temporal\Client\Workflow\WorkflowExecutionHistory;
 use Temporal\DataConverter\DataConverter;
@@ -230,6 +233,38 @@ class WorkflowClient implements WorkflowClientInterface
         array $startArgs = [],
     ): WorkflowRunInterface {
         return $this->signalWithStart($workflow, $signal, $signalArgs, $startArgs);
+    }
+
+    public function updateWithStart(
+        $workflow,
+        string|UpdateOptions $update,
+        array $updateArgs = [],
+        array $startArgs = [],
+    ): UpdateHandle {
+        $workflow instanceof WorkflowProxy && !$workflow->hasHandler() && throw new InvalidArgumentException(
+            'Unable to start workflow without workflow handler',
+        );
+
+        $update = \is_string($update) ? UpdateOptions::new($update, LifecycleStage::StageAccepted) : $update;
+
+        $workflowStub = WorkflowStubConverter::fromWorkflow($workflow);
+
+        $workflowType = $workflowStub->getWorkflowType() ?? throw new InvalidArgumentException(
+            'Unable to start untyped workflow without given workflowType',
+        );
+        $workflowStub->hasExecution() and throw new InvalidArgumentException(self::ERROR_WORKFLOW_START_DUPLICATION);
+
+        $handle = $this->getStarter()->updateWithStart(
+            $workflowType,
+            $workflowStub->getOptions() ?? WorkflowOptions::new(),
+            $update,
+            $updateArgs,
+            $startArgs,
+        );
+
+        $workflowStub->setExecution($handle->getExecution());
+
+        return $handle;
     }
 
     /**
