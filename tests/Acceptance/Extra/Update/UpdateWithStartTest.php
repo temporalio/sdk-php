@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Temporal\Tests\Acceptance\Extra\Update\UpdateWithStart;
 
 use PHPUnit\Framework\Attributes\Test;
+use Ramsey\Uuid\Uuid;
 use React\Promise\PromiseInterface;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
+use Temporal\Exception\Client\WorkflowExecutionAlreadyStartedException;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Tests\Acceptance\App\TestCase;
@@ -18,7 +20,7 @@ use Temporal\Workflow\WorkflowMethod;
 class UpdateWithStartTest extends TestCase
 {
     #[Test]
-    public function fetchResolvedResultAfterWorkflowCompleted(
+    public function runInGoodWay(
         WorkflowClientInterface $client,
         Feature $feature,
     ): void {
@@ -37,6 +39,33 @@ class UpdateWithStartTest extends TestCase
 
         $this->assertSame(['key' => null], (array)$result);
         $this->assertFalse($handle->hasResult());
+    }
+
+    #[Test]
+    public function failOnReuseExistingWorkflowId(
+        WorkflowClientInterface $client,
+        Feature $feature,
+    ): void {
+        $id = Uuid::uuid7()->__toString();
+        $stub1 = $client->newUntypedWorkflowStub(
+            'Extra_Update_UpdateWithStart',
+            WorkflowOptions::new()->withTaskQueue($feature->taskQueue)->withWorkflowId($id),
+        );
+        $stub2 = $client->newUntypedWorkflowStub(
+            'Extra_Update_UpdateWithStart',
+            WorkflowOptions::new()->withTaskQueue($feature->taskQueue)->withWorkflowId($id),
+        );
+
+        // Run first
+        /** @see TestWorkflow::add */
+        $client->updateWithStart($stub1, 'await', ['key']);
+        try {
+            $this->expectException(WorkflowExecutionAlreadyStartedException::class);
+            // Run second
+            $client->updateWithStart($stub2, 'await', ['key']);
+        } finally {
+            $stub1->signal('exit');
+        }
     }
 }
 

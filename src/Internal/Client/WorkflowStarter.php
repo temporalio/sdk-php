@@ -12,7 +12,9 @@ declare(strict_types=1);
 namespace Temporal\Internal\Client;
 
 use Temporal\Api\Common\V1\WorkflowType;
+use Temporal\Api\Errordetails\V1\MultiOperationExecutionFailure;
 use Temporal\Api\Errordetails\V1\WorkflowExecutionAlreadyStartedFailure;
+use Temporal\Api\Failure\V1\MultiOperationExecutionAborted;
 use Temporal\Api\Taskqueue\V1\TaskQueue;
 use Temporal\Api\Update\V1\Request as UpdateRequestMessage;
 use Temporal\Api\Workflowservice\V1\ExecuteMultiOperationRequest;
@@ -28,8 +30,10 @@ use Temporal\Client\WorkflowOptions;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\Exception\Client\MultyOperation\OperationStatus;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Client\WorkflowExecutionAlreadyStartedException;
+use Temporal\Exception\Client\WorkflowServiceException;
 use Temporal\Interceptor\Header;
 use Temporal\Interceptor\HeaderInterface;
 use Temporal\Interceptor\WorkflowClient\SignalWithStartInput;
@@ -182,11 +186,41 @@ final class WorkflowStarter
                     (new Operation())->setUpdateWorkflow($updateRequest),
                 ];
 
-                $response = $this->serviceClient->ExecuteMultiOperation(
-                    (new ExecuteMultiOperationRequest())
-                        ->setNamespace($this->clientOptions->namespace)
-                        ->setOperations($ops),
-                );
+                try {
+                    $this->serviceClient->ExecuteMultiOperation(
+                        (new ExecuteMultiOperationRequest())
+                            ->setNamespace($this->clientOptions->namespace)
+                            ->setOperations($ops),
+                    );
+                } catch (ServiceClientException $e) {
+                    $failure = $e->getFailure(MultiOperationExecutionFailure::class) ?? throw $e;
+                    /** @var \ArrayAccess<MultiOperationExecutionFailure\OperationStatus> $fails */
+                    $fails = $failure->getStatuses();
+
+                    $updateStatus = isset($fails[1]) ? OperationStatus::fromMessage($fails[1]) : null;
+                    if ($updateStatus?->getFailure(MultiOperationExecutionAborted::class)) {
+                        $startStatus = OperationStatus::fromMessage($fails[0]);
+                        if ($f = $startStatus?->getFailure(WorkflowExecutionAlreadyStartedFailure::class)) {
+                            \assert($f instanceof WorkflowExecutionAlreadyStartedFailure);
+                            $execution = new WorkflowExecution($input->workflowStartInput->workflowId, $f->getRunId());
+
+                            throw new WorkflowExecutionAlreadyStartedException(
+                                $execution,
+                                $input->workflowStartInput->workflowType,
+                                $e,
+                            );
+                        }
+
+                        throw $e;
+                    }
+
+                    throw new WorkflowServiceException(
+                        $updateStatus?->getMessage(),
+                        $input->updateInput->workflowExecution,
+                        $input->workflowStartInput->workflowType,
+                        $e,
+                    );
+                }
 
                 return new UpdateHandle(
                     client: $this->serviceClient,
@@ -235,19 +269,16 @@ final class WorkflowStarter
                 ? $this->serviceClient->StartWorkflowExecution($request)
                 : $this->serviceClient->SignalWithStartWorkflowExecution($request);
         } catch (ServiceClientException $e) {
-            $f = $e->getFailure(WorkflowExecutionAlreadyStartedFailure::class);
+            $f = $e->getFailure(WorkflowExecutionAlreadyStartedFailure::class) ?? throw $e;
 
-            if ($f instanceof WorkflowExecutionAlreadyStartedFailure) {
-                $execution = new WorkflowExecution($request->getWorkflowId(), $f->getRunId());
+            \assert($f instanceof WorkflowExecutionAlreadyStartedFailure);
+            $execution = new WorkflowExecution($request->getWorkflowId(), $f->getRunId());
 
-                throw new WorkflowExecutionAlreadyStartedException(
-                    $execution,
-                    $request->getWorkflowType()->getName(),
-                    $e,
-                );
-            }
-
-            throw $e;
+            throw new WorkflowExecutionAlreadyStartedException(
+                $execution,
+                $request->getWorkflowType()->getName(),
+                $e,
+            );
         }
 
         return new WorkflowExecution(

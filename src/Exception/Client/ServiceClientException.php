@@ -14,10 +14,11 @@ namespace Temporal\Exception\Client;
 use Google\Protobuf\Any;
 use Google\Protobuf\Internal\RepeatedField;
 use Google\Rpc\Status;
-use GPBMetadata\Temporal\Api\Errordetails\V1\Message;
 
 class ServiceClientException extends \RuntimeException
 {
+    use UnpackDetailsTrait;
+
     /**
      * @var Status
      */
@@ -48,37 +49,10 @@ class ServiceClientException extends \RuntimeException
     }
 
     /**
-     * @return RepeatedField
+     * @return \ArrayAccess<int, Any>&RepeatedField
      */
     public function getDetails(): RepeatedField
     {
         return $this->status->getDetails();
-    }
-
-    /**
-     * @link https://dev.to/khepin/grpc-advanced-error-handling-from-go-to-php-1omc
-     *
-     * @param string $class
-     * @return object|null
-     * @throws \Exception
-     */
-    public function getFailure(string $class): ?object
-    {
-        $details = $this->getDetails();
-        if ($details->count() === 0) {
-            return null;
-        }
-
-        // ensures that message descriptor was added to the pool
-        Message::initOnce();
-
-        /** @var Any $detail */
-        foreach ($details as $detail) {
-            if ($detail->is($class)) {
-                return $detail->unpack();
-            }
-        }
-
-        return null;
     }
 }
