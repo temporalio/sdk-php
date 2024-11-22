@@ -52,9 +52,10 @@ class UpdateWithStartTest extends TestCase
         );
 
         try {
-            $this->expectException(WorkflowUpdateException::class);
             $client->updateWithStart($stub, 'await1234', ['key']);
             $this->fail('Update must fail');
+        } catch (WorkflowUpdateException $e) {
+            $this->assertStringContainsString('await1234', $e->getPrevious()->getMessage());
         } finally {
             try {
                 $stub->getResult(timeout: 1);

@@ -262,6 +262,7 @@ class WorkflowClient implements WorkflowClientInterface
             $startArgs,
         );
 
+        // todo: set execution if UpdateWorkflow was failed but WF was started
         $workflowStub->setExecution($handle->getExecution());
 
         return $handle;

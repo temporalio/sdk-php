@@ -19,6 +19,7 @@ use Temporal\Api\Taskqueue\V1\TaskQueue;
 use Temporal\Api\Update\V1\Request as UpdateRequestMessage;
 use Temporal\Api\Workflowservice\V1\ExecuteMultiOperationRequest;
 use Temporal\Api\Workflowservice\V1\ExecuteMultiOperationRequest\Operation;
+use Temporal\Api\Workflowservice\V1\ExecuteMultiOperationResponse\Response;
 use Temporal\Api\Workflowservice\V1\SignalWithStartWorkflowExecutionRequest;
 use Temporal\Api\Workflowservice\V1\StartWorkflowExecutionRequest;
 use Temporal\Api\Workflowservice\V1\UpdateWorkflowExecutionRequest;
@@ -187,7 +188,7 @@ final class WorkflowStarter
                 ];
 
                 try {
-                    $this->serviceClient->ExecuteMultiOperation(
+                    $response = $this->serviceClient->ExecuteMultiOperation(
                         (new ExecuteMultiOperationRequest())
                             ->setNamespace($this->clientOptions->namespace)
                             ->setOperations($ops),
@@ -222,16 +223,37 @@ final class WorkflowStarter
                     );
                 }
 
+                // Extract result
+                /** @var \ArrayAccess<int, Response> $responses */
+                $responses = $response->getResponses();
+
+                // Start Workflow: get execution
+                $startResponse = $responses[0]->getStartWorkflow();
+                \assert($startResponse !== null);
+                $execution = new WorkflowExecution($input->workflowStartInput->workflowId, $startResponse->getRunId());
+
+                // Update Workflow: get handler
+                $updateResponse = $responses[1]->getUpdateWorkflow();
+                \assert($updateResponse !== null);
+
+                $updateResult = (new \Temporal\Internal\Client\ResponseToResultMapper($this->converter))
+                    ->mapUpdateWorkflowResponse(
+                        $updateResponse,
+                        updateName: $input->updateInput->updateName,
+                        workflowType: $input->workflowStartInput->workflowType,
+                        workflowExecution: $execution,
+                    );
+
                 return new UpdateHandle(
                     client: $this->serviceClient,
                     clientOptions: $this->clientOptions,
                     converter: $this->converter,
-                    execution: $input->updateInput->workflowExecution,
+                    execution: $updateResult->getReference()->workflowExecution,
                     workflowType: $input->updateInput->workflowType,
                     updateName: $input->updateInput->updateName,
                     resultType: $input->updateInput->resultType,
-                    updateId: $input->updateInput->updateId,
-                    result: null,
+                    updateId: $updateResult->getReference()->updateId,
+                    result: $updateResult->getResult(),
                 );
             },
             /** @see WorkflowClientCallsInterceptor::updateWithStart() */

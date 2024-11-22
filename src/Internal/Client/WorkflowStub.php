@@ -338,52 +338,13 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                     throw new WorkflowServiceException(null, $input->workflowExecution, $input->workflowType, $e);
                 }
 
-                $outcome = $result->getOutcome();
-                $updateRef = $result->getUpdateRef();
-                \assert($updateRef !== null);
-                $updateRefDto = new UpdateRef(
-                    new WorkflowExecution(
-                        (string) $updateRef->getWorkflowExecution()?->getWorkflowId(),
-                        $updateRef->getWorkflowExecution()?->getRunId(),
-                    ),
-                    $updateRef->getUpdateId(),
-                );
-
-                if ($outcome === null) {
-                    // Not completed
-                    return new StartUpdateOutput($updateRefDto, false, null);
-                }
-
-                $failure = $outcome->getFailure();
-                $success = $outcome->getSuccess();
-
-
-                if ($success !== null) {
-                    return new StartUpdateOutput(
-                        $updateRefDto,
-                        true,
-                        EncodedValues::fromPayloads($success, $converter),
+                return (new \Temporal\Internal\Client\ResponseToResultMapper($converter))
+                    ->mapUpdateWorkflowResponse(
+                        $result,
+                        $input->updateName,
+                        $input->workflowType,
+                        $input->workflowExecution,
                     );
-                }
-
-                if ($failure !== null) {
-                    $execution = $updateRef->getWorkflowExecution();
-                    throw new WorkflowUpdateException(
-                        null,
-                        $execution === null
-                            ? $input->workflowExecution
-                            : new WorkflowExecution($execution->getWorkflowId(), $execution->getRunId()),
-                        workflowType: $input->workflowType,
-                        updateId: $updateRef->getUpdateId(),
-                        updateName: $input->updateName,
-                        previous: FailureConverter::mapFailureToException($failure, $converter),
-                    );
-                }
-
-                throw new \RuntimeException(\sprintf(
-                    'Received unexpected outcome from update request: %s',
-                    $outcome->getValue(),
-                ));
             },
             /** @see WorkflowClientCallsInterceptor::update() */
             'update',
