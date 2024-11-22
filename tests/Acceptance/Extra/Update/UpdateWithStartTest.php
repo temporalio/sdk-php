@@ -6,11 +6,11 @@ namespace Temporal\Tests\Acceptance\Extra\Update\UpdateWithStart;
 
 use PHPUnit\Framework\Attributes\Test;
 use Ramsey\Uuid\Uuid;
-use React\Promise\PromiseInterface;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Exception\Client\WorkflowExecutionAlreadyStartedException;
-use Temporal\Internal\Support\DateInterval;
+use Temporal\Exception\Client\WorkflowFailedException;
+use Temporal\Exception\Client\WorkflowUpdateException;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
@@ -39,6 +39,30 @@ class UpdateWithStartTest extends TestCase
 
         $this->assertSame(['key' => null], (array)$result);
         $this->assertFalse($handle->hasResult());
+    }
+
+    #[Test]
+    public function failWithBadUpdateName(
+        WorkflowClientInterface $client,
+        Feature $feature,
+    ): void {
+        $stub = $client->newUntypedWorkflowStub(
+            'Extra_Update_UpdateWithStart',
+            WorkflowOptions::new()->withTaskQueue($feature->taskQueue),
+        );
+
+        try {
+            $this->expectException(WorkflowUpdateException::class);
+            $client->updateWithStart($stub, 'await1234', ['key']);
+            $this->fail('Update must fail');
+        } finally {
+            try {
+                $stub->getResult(timeout: 1);
+                $this->fail('Workflow must fail');
+            } catch (WorkflowFailedException $e) {
+                $this->assertTrue(true);
+            }
+        }
     }
 
     #[Test]
@@ -101,70 +125,6 @@ class TestWorkflow
     public function validateAdd(string $name): void
     {
         empty($name) and throw new \InvalidArgumentException('Name must not be empty');
-    }
-
-    /**
-     * @param non-empty-string $name
-     * @return PromiseInterface<bool>
-     */
-    #[Workflow\UpdateMethod(name: 'awaitWithTimeout')]
-    public function addWithTimeout(string $name, string|int $timeout, mixed $value): mixed
-    {
-        $this->updateStarted = true;
-        $this->awaits[$name] ??= null;
-        if ($this->awaits[$name] !== null) {
-            return $this->awaits[$name];
-        }
-
-        $notTimeout = yield Workflow::awaitWithTimeout(
-            $timeout,
-            fn() => $this->awaits[$name] !== null,
-        );
-
-        if (!$notTimeout) {
-            return $this->awaits[$name] = $value;
-        }
-
-        return $this->awaits[$name];
-    }
-
-    #[Workflow\UpdateValidatorMethod(forUpdate: 'awaitWithTimeout')]
-    public function validateAddWithTimeout(string $name, string|int $timeout, mixed $value): void
-    {
-        $value === null and throw new \InvalidArgumentException('Value must not be null');
-        empty($name) and throw new \InvalidArgumentException('Name must not be empty');
-        DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS)->isEmpty() and throw new \InvalidArgumentException(
-            'Timeout must not be empty'
-        );
-    }
-
-    /**
-     * @param non-empty-string $name
-     * @return mixed
-     */
-    #[Workflow\UpdateMethod(name: 'resolveValue')]
-    public function resolve(string $name, mixed $value): mixed
-    {
-        $this->updateStarted = true;
-        return $this->awaits[$name] = $value;
-    }
-
-    #[Workflow\UpdateValidatorMethod(forUpdate: 'resolveValue')]
-    public function validateResolve(string $name, mixed $value): void
-    {
-        $value === null and throw new \InvalidArgumentException('Value must not be null');
-        \array_key_exists($name, $this->awaits) or throw new \InvalidArgumentException('Name not found');
-        $this->awaits[$name] === null or throw new \InvalidArgumentException('Name already resolved');
-    }
-
-    /**
-     * @param non-empty-string $name
-     * @return mixed
-     */
-    #[Workflow\QueryMethod(name: 'getValue')]
-    public function get(string $name): mixed
-    {
-        return $this->awaits[$name] ?? null;
     }
 
     #[Workflow\SignalMethod]
