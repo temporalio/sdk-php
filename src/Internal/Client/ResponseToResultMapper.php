@@ -33,7 +33,7 @@ final class ResponseToResultMapper
         \assert($updateRef !== null);
         $updateRefDto = new UpdateRef(
             new WorkflowExecution(
-                (string)$updateRef->getWorkflowExecution()?->getWorkflowId(),
+                (string) $updateRef->getWorkflowExecution()?->getWorkflowId(),
                 $updateRef->getWorkflowExecution()?->getRunId(),
             ),
             $updateRef->getUpdateId(),
