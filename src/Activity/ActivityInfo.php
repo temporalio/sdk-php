@@ -38,26 +38,16 @@ final class ActivityInfo
      *
      * @see ActivityCompletionClientInterface::complete()
      *
-     * @var string
      */
     #[Marshal(name: 'TaskToken')]
     public string $taskToken;
 
-    /**
-     * @var WorkflowType|null
-     */
     #[Marshal(name: 'WorkflowType', type: NullableType::class, of: WorkflowType::class)]
     public ?WorkflowType $workflowType = null;
 
-    /**
-     * @var string
-     */
     #[Marshal(name: 'WorkflowNamespace')]
     public string $workflowNamespace = 'default';
 
-    /**
-     * @var WorkflowExecution|null
-     */
     #[Marshal(name: 'WorkflowExecution', type: NullableType::class, of: WorkflowExecution::class)]
     public ?WorkflowExecution $workflowExecution = null;
 
@@ -67,7 +57,6 @@ final class ActivityInfo
      *
      * @see ActivityCompletionClientInterface::complete()
      *
-     * @var string
      */
     #[Marshal(name: 'ActivityID')]
     public string $id;
@@ -75,21 +64,16 @@ final class ActivityInfo
     /**
      * Type (name) of the activity.
      *
-     * @var ActivityType
      */
     #[Marshal(name: 'ActivityType', type: ObjectType::class, of: ActivityType::class)]
     public ActivityType $type;
 
-    /**
-     * @var string
-     */
     #[Marshal(name: 'TaskQueue')]
     public string $taskQueue = WorkerFactoryInterface::DEFAULT_TASK_QUEUE;
 
     /**
      * Maximum time between heartbeats. 0 means no heartbeat needed.
      *
-     * @var \DateInterval
      */
     #[Marshal(name: 'HeartbeatTimeout', type: DateIntervalType::class)]
     public \DateInterval $heartbeatTimeout;
@@ -97,7 +81,6 @@ final class ActivityInfo
     /**
      * Time of activity scheduled by a workflow
      *
-     * @var \DateTimeInterface
      */
     #[Marshal(name: 'ScheduledTime', type: DateTimeType::class)]
     public \DateTimeInterface $scheduledTime;
@@ -105,7 +88,6 @@ final class ActivityInfo
     /**
      * Time of activity start
      *
-     * @var \DateTimeInterface
      */
     #[Marshal(name: 'StartedTime', type: DateTimeType::class)]
     public \DateTimeInterface $startedTime;
@@ -113,7 +95,6 @@ final class ActivityInfo
     /**
      * Time of activity timeout
      *
-     * @var \DateTimeInterface
      */
     #[Marshal(name: 'Deadline', type: DateTimeType::class)]
     public \DateTimeInterface $deadline;
@@ -122,7 +103,6 @@ final class ActivityInfo
      * Attempt starts from 1, and increased by 1 for every retry if
      * retry policy is specified.
      *
-     * @var int
      */
     #[Marshal(name: 'Attempt')]
     public int $attempt = 1;

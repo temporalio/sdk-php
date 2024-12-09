@@ -25,10 +25,6 @@ class ArrayQueue implements QueueInterface
      */
     public function __construct() {}
 
-    /**
-     * @param int $commandId
-     * @return CommandInterface|null
-     */
     public function pull(int $commandId): ?CommandInterface
     {
         foreach ($this->commands as $i => $command) {
@@ -41,10 +37,6 @@ class ArrayQueue implements QueueInterface
         return null;
     }
 
-    /**
-     * @param int $commandId
-     * @return bool
-     */
     public function has(int $commandId): bool
     {
         foreach ($this->commands as $command) {
@@ -56,9 +48,6 @@ class ArrayQueue implements QueueInterface
         return false;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getIterator(): \Traversable
     {
         while (\count($this->commands)) {
@@ -66,17 +55,11 @@ class ArrayQueue implements QueueInterface
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function count(): int
     {
         return \count($this->commands);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function push(CommandInterface $command): void
     {
         $this->commands[] = $command;

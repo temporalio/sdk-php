@@ -13,14 +13,8 @@ namespace Temporal\Internal\Declaration\Graph;
 
 final class ClassNode implements NodeInterface
 {
-    /**
-     * @var array|null
-     */
     private ?array $inheritance = null;
 
-    /**
-     * @param \ReflectionClass $class
-     */
     public function __construct(
         private \ReflectionClass $class,
     ) {}
@@ -53,9 +47,6 @@ final class ClassNode implements NodeInterface
         return $result;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function count(): int
     {
         return \count(
@@ -96,17 +87,11 @@ final class ClassNode implements NodeInterface
         );
     }
 
-    /**
-     * @return string
-     */
     public function __toString(): string
     {
         return $this->class->getName();
     }
 
-    /**
-     * @return array
-     */
     private function getClassInheritance(): array
     {
         $result = [];
@@ -161,10 +146,6 @@ final class ClassNode implements NodeInterface
         }
     }
 
-    /**
-     * @param \ReflectionClass $interface
-     * @return bool
-     */
     private function isDirectInterfaceImplementation(\ReflectionClass $interface): bool
     {
         if ($parent = $this->class->getParentClass()) {
@@ -175,8 +156,6 @@ final class ClassNode implements NodeInterface
     }
 
     /**
-     * @param string $name
-     * @return bool
      * @throws \ReflectionException
      */
     private function isDirectMethodImplementation(string $name): bool
@@ -192,9 +171,6 @@ final class ClassNode implements NodeInterface
         return false;
     }
 
-    /**
-     * @return ClassNode|null
-     */
     private function getParent(): ?ClassNode
     {
         if ($parent = $this->class->getParentClass()) {
@@ -214,8 +190,6 @@ final class ClassNode implements NodeInterface
 
     /**
      * @param iterable<ClassNode> $classes
-     * @param string $name
-     * @return array
      * @throws \ReflectionException
      */
     private function boxMethods(iterable $classes, string $name): array
@@ -231,10 +205,6 @@ final class ClassNode implements NodeInterface
         return $result;
     }
 
-    /**
-     * @param array $boxed
-     * @return \Traversable
-     */
     private function unboxMethods(array $boxed): \Traversable
     {
         $unpack = static function () use ($boxed) {

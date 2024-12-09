@@ -57,7 +57,6 @@ final class UpdateHandle
     /**
      * Check there is a cached accepted result or failure for this update request.
      *
-     * @return bool
      */
     public function hasResult(): bool
     {
@@ -139,7 +138,6 @@ final class UpdateHandle
         $failure = $result->getFailure();
         \assert($failure !== null);
         $e = FailureConverter::mapFailureToException($failure, $this->converter);
-        tr($e);
 
         $this->result = new WorkflowUpdateException(
             $e->getMessage(),

@@ -48,7 +48,6 @@ final class DateInterval
     /**
      * @param DateIntervalValue $interval
      * @param DateIntervalFormat $format
-     * @return CarbonInterval
      * @psalm-suppress InvalidOperand
      */
     public static function parse($interval, string $format = self::FORMAT_MILLISECONDS): CarbonInterval
@@ -114,7 +113,6 @@ final class DateInterval
     /**
      * @param DateIntervalValue|null $interval
      * @param DateIntervalFormat $format
-     * @return CarbonInterval|null
      */
     public static function parseOrNull($interval, string $format = self::FORMAT_MILLISECONDS): ?CarbonInterval
     {
@@ -127,7 +125,6 @@ final class DateInterval
 
     /**
      * @param DateIntervalValue $interval
-     * @return bool
      */
     public static function assert($interval): bool
     {
@@ -137,10 +134,9 @@ final class DateInterval
     }
 
     /**
-     * @param \DateInterval|null $i
      * @return ($i is null ? null : Duration)
      */
-    public static function toDuration(\DateInterval $i = null): ?Duration
+    public static function toDuration(?\DateInterval $i = null): ?Duration
     {
         if ($i === null) {
             return null;
@@ -154,10 +150,6 @@ final class DateInterval
         return $d;
     }
 
-    /**
-     * @param string $format
-     * @return void
-     */
     private static function validateFormat(string $format): void
     {
         if (!\in_array($format, self::AVAILABLE_FORMATS, true)) {

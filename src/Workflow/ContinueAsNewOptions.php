@@ -79,7 +79,6 @@ final class ContinueAsNewOptions
      *
      * @psalm-suppress ImpureMethodCall
      *
-     * @param string $taskQueue
      * @return $this
      */
     #[Pure]

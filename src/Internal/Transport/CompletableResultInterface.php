@@ -19,9 +19,6 @@ use React\Promise\PromiseInterface;
  */
 interface CompletableResultInterface extends PromiseInterface
 {
-    /**
-     * @return bool
-     */
     public function isComplete(): bool;
 
     /**

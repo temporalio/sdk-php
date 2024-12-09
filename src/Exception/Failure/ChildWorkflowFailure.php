@@ -22,15 +22,6 @@ class ChildWorkflowFailure extends TemporalFailure
     private WorkflowExecution $execution;
     private string $workflowType;
 
-    /**
-     * @param int $initiatedEventId
-     * @param int $startedEventId
-     * @param string $workflowType
-     * @param WorkflowExecution $execution
-     * @param string $namespace
-     * @param int $retryState
-     * @param \Throwable|null $previous
-     */
     public function __construct(
         int $initiatedEventId,
         int $startedEventId,
@@ -38,7 +29,7 @@ class ChildWorkflowFailure extends TemporalFailure
         WorkflowExecution $execution,
         string $namespace,
         int $retryState,
-        \Throwable $previous = null,
+        ?\Throwable $previous = null,
     ) {
         parent::__construct(
             self::buildMessage(
@@ -64,49 +55,31 @@ class ChildWorkflowFailure extends TemporalFailure
         $this->retryState = $retryState;
     }
 
-    /**
-     * @return int
-     */
     public function getInitiatedEventId(): int
     {
         return $this->initiatedEventId;
     }
 
-    /**
-     * @return int
-     */
     public function getStartedEventId(): int
     {
         return $this->startedEventId;
     }
 
-    /**
-     * @return string
-     */
     public function getNamespace(): string
     {
         return $this->namespace;
     }
 
-    /**
-     * @return int
-     */
     public function getRetryState(): int
     {
         return $this->retryState;
     }
 
-    /**
-     * @return WorkflowExecution
-     */
     public function getExecution(): WorkflowExecution
     {
         return $this->execution;
     }
 
-    /**
-     * @return string
-     */
     public function getWorkflowType(): string
     {
         return $this->workflowType;

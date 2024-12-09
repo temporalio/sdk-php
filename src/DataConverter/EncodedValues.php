@@ -38,9 +38,6 @@ class EncodedValues implements ValuesInterface
      */
     protected ?array $values = null;
 
-    /**
-     * @var DataConverterInterface|null
-     */
     private ?DataConverterInterface $converter = null;
 
     /**
@@ -48,9 +45,6 @@ class EncodedValues implements ValuesInterface
      */
     private function __construct() {}
 
-    /**
-     * @return static
-     */
     public static function empty(): static
     {
         $ev = new static();
@@ -59,30 +53,16 @@ class EncodedValues implements ValuesInterface
         return $ev;
     }
 
-    /**
-     * @param Payloads $payloads
-     * @param DataConverterInterface $dataConverter
-     *
-     * @return EncodedValues
-     */
     public static function fromPayloads(Payloads $payloads, DataConverterInterface $dataConverter): EncodedValues
     {
         return static::fromPayloadCollection($payloads->getPayloads(), $dataConverter);
     }
 
-    /**
-     * @param DataConverterInterface $converter
-     * @param ValuesInterface $values
-     * @param int $offset
-     * @param int|null $length
-     *
-     * @return ValuesInterface
-     */
     public static function sliceValues(
         DataConverterInterface $converter,
         ValuesInterface $values,
         int $offset,
-        int $length = null,
+        ?int $length = null,
     ): ValuesInterface {
         $payloads = $values->toPayloads();
         $newPayloads = new Payloads();
@@ -94,10 +74,8 @@ class EncodedValues implements ValuesInterface
     /**
      * Decode promise response upon returning it to the domain layer.
      *
-     * @param PromiseInterface $promise
      * @param string|\ReflectionClass|\ReflectionType|Type|null $type
      *
-     * @return PromiseInterface
      */
     public static function decodePromise(PromiseInterface $promise, $type = null): PromiseInterface
     {
@@ -112,13 +90,7 @@ class EncodedValues implements ValuesInterface
         );
     }
 
-    /**
-     * @param array $values
-     * @param DataConverterInterface|null $dataConverter
-     *
-     * @return static
-     */
-    public static function fromValues(array $values, DataConverterInterface $dataConverter = null): static
+    public static function fromValues(array $values, ?DataConverterInterface $dataConverter = null): static
     {
         $ev = new static();
         $ev->values = \array_values($values);
@@ -129,9 +101,7 @@ class EncodedValues implements ValuesInterface
 
     /**
      * @param TPayloadsCollection $payloads
-     * @param ?DataConverterInterface $dataConverter
      *
-     * @return static
      */
     public static function fromPayloadCollection(
         \Traversable $payloads,
@@ -189,9 +159,6 @@ class EncodedValues implements ValuesInterface
         return $result;
     }
 
-    /**
-     * @param DataConverterInterface $converter
-     */
     public function setDataConverter(DataConverterInterface $converter): void
     {
         $this->converter = $converter;

@@ -30,9 +30,9 @@ class GetResultInput
     ) {}
 
     public function with(
-        WorkflowExecution $workflowExecution = null,
-        string $workflowType = null,
-        int $timeout = null,
+        ?WorkflowExecution $workflowExecution = null,
+        ?string $workflowType = null,
+        ?int $timeout = null,
     ): self {
         return new self(
             $workflowExecution ?? $this->workflowExecution,

@@ -37,64 +37,35 @@ final class WorkflowPrototype extends Prototype
      */
     private array $updateValidators = [];
 
-    /**
-     * @var CronSchedule|null
-     */
     private ?CronSchedule $cronSchedule = null;
-
-    /**
-     * @var MethodRetry|null
-     */
     private ?MethodRetry $methodRetry = null;
-
-    /**
-     * @var ReturnType|null
-     */
     private ?ReturnType $returnType = null;
 
-    /**
-     * @return CronSchedule|null
-     */
     public function getCronSchedule(): ?CronSchedule
     {
         return $this->cronSchedule;
     }
 
-    /**
-     * @param CronSchedule|null $attribute
-     */
     public function setCronSchedule(?CronSchedule $attribute): void
     {
         $this->cronSchedule = $attribute;
     }
 
-    /**
-     * @return MethodRetry|null
-     */
     public function getMethodRetry(): ?MethodRetry
     {
         return $this->methodRetry;
     }
 
-    /**
-     * @param MethodRetry|null $attribute
-     */
     public function setMethodRetry(?MethodRetry $attribute): void
     {
         $this->methodRetry = $attribute;
     }
 
-    /**
-     * @return ReturnType|null
-     */
     public function getReturnType(): ?ReturnType
     {
         return $this->returnType;
     }
 
-    /**
-     * @param ReturnType|null $attribute
-     */
     public function setReturnType(?ReturnType $attribute): void
     {
         $this->returnType = $attribute;
@@ -133,7 +104,6 @@ final class WorkflowPrototype extends Prototype
 
     /**
      * @param non-empty-string $name
-     * @param \ReflectionFunctionAbstract $fun
      */
     public function addValidateUpdateHandler(string $name, \ReflectionFunctionAbstract $fun): void
     {

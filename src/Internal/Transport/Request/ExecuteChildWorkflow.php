@@ -29,9 +29,7 @@ final class ExecuteChildWorkflow extends Request
 
     /**
      * @param non-empty-string $name Workflow name
-     * @param ValuesInterface $input
      * @param RequestOptions $options
-     * @param HeaderInterface $header
      */
     public function __construct(string $name, ValuesInterface $input, array $options, HeaderInterface $header)
     {

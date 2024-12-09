@@ -28,8 +28,8 @@ class TerminateInput
     ) {}
 
     public function with(
-        WorkflowExecution $workflowExecution = null,
-        string $reason = null,
+        ?WorkflowExecution $workflowExecution = null,
+        ?string $reason = null,
     ): self {
         return new self(
             $workflowExecution ?? $this->workflowExecution,

@@ -60,10 +60,8 @@ trait WorkflowOutboundRequestInterceptorTrait
     }
 
     /**
-     * @param ExecuteActivity $request
      * @param callable(ExecuteActivity): PromiseInterface $next
      *
-     * @return PromiseInterface
      */
     private function executeActivityRequest(ExecuteActivity $request, callable $next): PromiseInterface
     {
@@ -71,10 +69,8 @@ trait WorkflowOutboundRequestInterceptorTrait
     }
 
     /**
-     * @param ExecuteLocalActivity $request
      * @param callable(ExecuteLocalActivity): PromiseInterface $next
      *
-     * @return PromiseInterface
      */
     private function executeLocalActivityRequest(ExecuteLocalActivity $request, callable $next): PromiseInterface
     {
@@ -82,10 +78,8 @@ trait WorkflowOutboundRequestInterceptorTrait
     }
 
     /**
-     * @param ExecuteChildWorkflow $request
      * @param callable(ExecuteChildWorkflow): PromiseInterface $next
      *
-     * @return PromiseInterface
      */
     private function executeChildWorkflowRequest(ExecuteChildWorkflow $request, callable $next): PromiseInterface
     {
@@ -93,10 +87,8 @@ trait WorkflowOutboundRequestInterceptorTrait
     }
 
     /**
-     * @param NewTimer $request
      * @param callable(NewTimer): PromiseInterface $next
      *
-     * @return PromiseInterface
      */
     private function newTimerRequest(NewTimer $request, callable $next): PromiseInterface
     {
@@ -104,10 +96,8 @@ trait WorkflowOutboundRequestInterceptorTrait
     }
 
     /**
-     * @param ContinueAsNew $request
      * @param callable(ContinueAsNew): PromiseInterface $next
      *
-     * @return PromiseInterface
      */
     private function continueAsNewRequest(ContinueAsNew $request, callable $next): PromiseInterface
     {
@@ -115,10 +105,8 @@ trait WorkflowOutboundRequestInterceptorTrait
     }
 
     /**
-     * @param SignalExternalWorkflow $request
      * @param callable(SignalExternalWorkflow): PromiseInterface $next
      *
-     * @return PromiseInterface
      */
     private function signalExternalWorkflowRequest(SignalExternalWorkflow $request, callable $next): PromiseInterface
     {
@@ -126,10 +114,8 @@ trait WorkflowOutboundRequestInterceptorTrait
     }
 
     /**
-     * @param CompleteWorkflow $request
      * @param callable(CompleteWorkflow): PromiseInterface $next
      *
-     * @return PromiseInterface
      */
     private function completeWorkflowRequest(CompleteWorkflow $request, callable $next): PromiseInterface
     {
@@ -137,10 +123,8 @@ trait WorkflowOutboundRequestInterceptorTrait
     }
 
     /**
-     * @param CancelExternalWorkflow $request
      * @param callable(CancelExternalWorkflow): PromiseInterface $next
      *
-     * @return PromiseInterface
      */
     private function cancelExternalWorkflowRequest(CancelExternalWorkflow $request, callable $next): PromiseInterface
     {
@@ -148,10 +132,8 @@ trait WorkflowOutboundRequestInterceptorTrait
     }
 
     /**
-     * @param GetVersion $request
      * @param callable(GetVersion): PromiseInterface $next
      *
-     * @return PromiseInterface
      */
     private function getVersionRequest(GetVersion $request, callable $next): PromiseInterface
     {
@@ -159,10 +141,8 @@ trait WorkflowOutboundRequestInterceptorTrait
     }
 
     /**
-     * @param Panic $request
      * @param callable(Panic): PromiseInterface $next
      *
-     * @return PromiseInterface
      */
     private function panicRequest(Panic $request, callable $next): PromiseInterface
     {
@@ -170,10 +150,8 @@ trait WorkflowOutboundRequestInterceptorTrait
     }
 
     /**
-     * @param SideEffect $request
      * @param callable(SideEffect): PromiseInterface $next
      *
-     * @return PromiseInterface
      */
     private function sideEffectRequest(SideEffect $request, callable $next): PromiseInterface
     {
@@ -181,10 +159,8 @@ trait WorkflowOutboundRequestInterceptorTrait
     }
 
     /**
-     * @param UpsertSearchAttributes $request
      * @param callable(UpsertSearchAttributes): PromiseInterface $next
      *
-     * @return PromiseInterface
      */
     private function upsertSearchAttributesRequest(UpsertSearchAttributes $request, callable $next): PromiseInterface
     {
@@ -192,10 +168,8 @@ trait WorkflowOutboundRequestInterceptorTrait
     }
 
     /**
-     * @param Cancel $request
      * @param callable(Cancel): PromiseInterface $next
      *
-     * @return PromiseInterface
      */
     private function cancelRequest(Cancel $request, callable $next): PromiseInterface
     {

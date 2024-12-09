@@ -36,11 +36,6 @@ class InvokeActivity extends Route
     private RPCConnectionInterface $rpc;
     private PipelineProvider $interceptorProvider;
 
-    /**
-     * @param ServiceContainer $services
-     * @param RPCConnectionInterface $rpc
-     * @param PipelineProvider $interceptorProvider
-     */
     public function __construct(
         ServiceContainer $services,
         RPCConnectionInterface $rpc,
@@ -51,9 +46,6 @@ class InvokeActivity extends Route
         $this->interceptorProvider = $interceptorProvider;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
         $options = $request->getOptions();
@@ -121,10 +113,6 @@ class InvokeActivity extends Route
         }
     }
 
-    /**
-     * @param ActivityInfo $info
-     * @return ActivityPrototype
-     */
     private function findDeclarationOrFail(ActivityInfo $info): ActivityPrototype
     {
         $activity = $this->services->activities->find($info->type->name);

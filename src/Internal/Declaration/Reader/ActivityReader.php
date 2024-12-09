@@ -47,7 +47,6 @@ class ActivityReader extends Reader
     }
 
     /**
-     * @param \ReflectionClass $class
      * @return array<ActivityPrototype>
      * @throws \ReflectionException
      */
@@ -68,8 +67,6 @@ class ActivityReader extends Reader
     }
 
     /**
-     * @param ClassNode $graph
-     * @param \ReflectionMethod $root
      * @return array<ActivityPrototype>
      * @throws \ReflectionException
      */
@@ -165,12 +162,6 @@ class ActivityReader extends Reader
         return $prototypes;
     }
 
-    /**
-     * @param \ReflectionMethod $ref
-     * @param ActivityInterface $int
-     * @param ActivityMethod|null $method
-     * @return string
-     */
     private function activityName(
         \ReflectionMethod $ref,
         ActivityInterface $int,
@@ -181,12 +172,6 @@ class ActivityReader extends Reader
             : $int->prefix . ($method->name ?? $ref->getName());
     }
 
-    /**
-     * @param string $name
-     * @param array $activities
-     * @param \ReflectionClass $class
-     * @param \ReflectionMethod $method
-     */
     private function assertActivityNotExists(
         string $name,
         array $activities,

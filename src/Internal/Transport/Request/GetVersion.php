@@ -18,7 +18,6 @@ final class GetVersion extends Request
     public const NAME = 'GetVersion';
 
     /**
-     * @param string $changeId
      * @param positive-int $minSupported
      * @param positive-int $maxSupported
      */
@@ -37,25 +36,16 @@ final class GetVersion extends Request
         );
     }
 
-    /**
-     * @return string
-     */
     public function getChangeId(): string
     {
         return $this->changeId;
     }
 
-    /**
-     * @return int
-     */
     public function getMinSupported(): int
     {
         return $this->minSupported;
     }
 
-    /**
-     * @return int
-     */
     public function getMaxSupported(): int
     {
         return $this->maxSupported;

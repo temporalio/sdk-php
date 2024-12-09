@@ -30,11 +30,6 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
     private ClientOptions $clientOptions;
     private DataConverterInterface $converter;
 
-    /**
-     * @param ServiceClientInterface $client
-     * @param ClientOptions $clientOptions
-     * @param DataConverterInterface $converter
-     */
     public function __construct(
         ServiceClientInterface $client,
         ClientOptions $clientOptions,
@@ -45,9 +40,6 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
         $this->converter = $converter;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function complete(string $workflowId, ?string $runId, string $activityId, $result = null): void
     {
         $r = new Proto\RespondActivityTaskCompletedByIdRequest();
@@ -74,9 +66,6 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function completeByToken(string $taskToken, $result = null): void
     {
         $r = new Proto\RespondActivityTaskCompletedRequest();
@@ -102,9 +91,6 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function completeExceptionally(
         string $workflowId,
         ?string $runId,
@@ -131,9 +117,6 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function completeExceptionallyByToken(string $taskToken, \Throwable $error): void
     {
         $r = new Proto\RespondActivityTaskFailedRequest();
@@ -154,9 +137,6 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function reportCancellation(string $workflowId, ?string $runId, string $activityId, $details = null): void
     {
         $r = new Proto\RespondActivityTaskCanceledByIdRequest();
@@ -178,9 +158,6 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function reportCancellationByToken(string $taskToken, $details = null): void
     {
         $r = new Proto\RespondActivityTaskCanceledRequest();
@@ -200,9 +177,6 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function recordHeartbeat(string $workflowId, ?string $runId, string $activityId, $details = null): void
     {
         $r = new Proto\RecordActivityTaskHeartbeatByIdRequest();
@@ -231,9 +205,6 @@ final class ActivityCompletionClient implements ActivityCompletionClientInterfac
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function recordHeartbeatByToken(string $taskToken, $details = null): void
     {
         $r = new Proto\RecordActivityTaskHeartbeatRequest();

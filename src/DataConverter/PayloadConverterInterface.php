@@ -19,7 +19,6 @@ interface PayloadConverterInterface
     /**
      * Returns associated encoding type.
      *
-     * @return string
      */
     public function getEncodingType(): string;
 
@@ -27,15 +26,12 @@ interface PayloadConverterInterface
      * Implements conversion of a single value to Payload. Must return null if value can't be encoded.
      *
      * @param mixed $value
-     * @return Payload|null
      *
      * @throws DataConverterException
      */
     public function toPayload($value): ?Payload;
 
     /**
-     * @param Payload $payload
-     * @param Type $type
      * @return mixed
      *
      * @throws DataConverterException

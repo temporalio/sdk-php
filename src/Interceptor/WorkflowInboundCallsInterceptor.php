@@ -41,31 +41,26 @@ use Temporal\Internal\Interceptor\Interceptor;
 interface WorkflowInboundCallsInterceptor extends Interceptor
 {
     /**
-     * @param WorkflowInput $input
      * @param callable(WorkflowInput): void $next
      */
     public function execute(WorkflowInput $input, callable $next): void;
 
     /**
-     * @param SignalInput $input
      * @param callable(SignalInput): void $next
      */
     public function handleSignal(SignalInput $input, callable $next): void;
 
     /**
-     * @param QueryInput $input
      * @param callable(QueryInput): mixed $next
      */
     public function handleQuery(QueryInput $input, callable $next): mixed;
 
     /**
-     * @param UpdateInput $input
      * @param callable(UpdateInput): mixed $next
      */
     public function handleUpdate(UpdateInput $input, callable $next): mixed;
 
     /**
-     * @param UpdateInput $input
      * @param callable(UpdateInput): void $next
      */
     public function validateUpdate(UpdateInput $input, callable $next): void;

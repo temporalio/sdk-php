@@ -18,23 +18,15 @@ use Temporal\Internal\Transport\CompletableResultInterface;
 interface ChildWorkflowStubInterface
 {
     /**
-     * @return PromiseInterface
      * @throws \LogicException
      */
     public function getExecution(): PromiseInterface;
 
-    /**
-     * @return string
-     */
     public function getChildWorkflowType(): string;
 
-    /**
-     * @return ChildWorkflowOptions
-     */
     public function getOptions(): ChildWorkflowOptions;
 
     /**
-     * @param array $args
      * @param Type|string|\ReflectionType|\ReflectionClass|null $returnType
      *
      * @return CompletableResultInterface
@@ -52,7 +44,6 @@ interface ChildWorkflowStubInterface
 
     /**
      * @param non-empty-string $name
-     * @param array $args
      *
      * @return CompletableResultInterface
      * @throws \LogicException

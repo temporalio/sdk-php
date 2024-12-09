@@ -21,9 +21,6 @@ final class GetChildWorkflowExecution extends Request
     /** @see ParentClosePolicy */
     private int $parentClosePolicy;
 
-    /**
-     * @param ExecuteChildWorkflow $execution
-     */
     public function __construct(ExecuteChildWorkflow $execution)
     {
         $this->parentClosePolicy = $execution->getOptions()['options']['ParentClosePolicy'] ?? ParentClosePolicy::POLICY_UNSPECIFIED;

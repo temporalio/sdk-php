@@ -21,9 +21,6 @@ final class DataConverter implements DataConverterInterface
      */
     private array $converters = [];
 
-    /**
-     * @param PayloadConverterInterface ...$converter
-     */
     public function __construct(PayloadConverterInterface ...$converter)
     {
         foreach ($converter as $c) {
@@ -31,9 +28,6 @@ final class DataConverter implements DataConverterInterface
         }
     }
 
-    /**
-     * @return DataConverterInterface
-     */
     public static function createDefault(): DataConverterInterface
     {
         return new DataConverter(
@@ -45,9 +39,6 @@ final class DataConverter implements DataConverterInterface
         );
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function fromPayload(Payload $payload, $type)
     {
         /** @var \ArrayAccess $meta */
@@ -73,7 +64,6 @@ final class DataConverter implements DataConverterInterface
 
     /**
      * @param mixed $value
-     * @return Payload
      *
      * @throws DataConverterException
      */

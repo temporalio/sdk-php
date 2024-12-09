@@ -26,7 +26,6 @@ final class Saga
      * false, then the compensation operations will be run the reverse order as they are added.
      *
      * @param bool $parallelCompensation default is false.
-     * @return self
      */
     public function setParallelCompensation(bool $parallelCompensation): self
     {
@@ -43,7 +42,6 @@ final class Saga
      * @param bool $continueWithError whether to proceed with the next compensation operation if the
      *     previous throws exception. This only applies to sequential compensation. Default is
      *     false.
-     * @return self
      */
     public function setContinueWithError(bool $continueWithError): self
     {
@@ -51,9 +49,6 @@ final class Saga
         return $this;
     }
 
-    /**
-     * @param callable $handler
-     */
     public function addCompensation(callable $handler): void
     {
         $this->compensate[] = $handler;

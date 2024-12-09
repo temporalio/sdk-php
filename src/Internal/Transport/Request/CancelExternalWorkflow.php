@@ -20,11 +20,6 @@ class CancelExternalWorkflow extends Request
 {
     public const NAME = 'CancelExternalWorkflow';
 
-    /**
-     * @param string $namespace
-     * @param string $workflowId
-     * @param string|null $runId
-     */
     public function __construct(
         private string $namespace,
         private string $workflowId,
@@ -39,25 +34,16 @@ class CancelExternalWorkflow extends Request
         parent::__construct(self::NAME, $options, null);
     }
 
-    /**
-     * @return string
-     */
     public function getNamespace(): string
     {
         return $this->namespace;
     }
 
-    /**
-     * @return string
-     */
     public function getWorkflowId(): string
     {
         return $this->workflowId;
     }
 
-    /**
-     * @return null|string
-     */
     public function getRunId(): ?string
     {
         return $this->runId;
