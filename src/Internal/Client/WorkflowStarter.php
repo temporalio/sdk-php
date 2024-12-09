@@ -25,7 +25,6 @@ use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Client\WorkflowExecutionAlreadyStartedException;
 use Temporal\Interceptor\Header;
-use Temporal\Interceptor\HeaderInterface;
 use Temporal\Interceptor\WorkflowClient\SignalWithStartInput;
 use Temporal\Interceptor\WorkflowClient\StartInput;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
@@ -39,9 +38,6 @@ use Temporal\Workflow\WorkflowExecution;
 final class WorkflowStarter
 {
     /**
-     * @param ServiceClientInterface $serviceClient
-     * @param DataConverterInterface $converter
-     * @param ClientOptions $clientOptions
      * @param Pipeline<WorkflowClientCallsInterceptor, WorkflowExecution> $interceptors
      */
     public function __construct(
@@ -52,12 +48,7 @@ final class WorkflowStarter
     ) {}
 
     /**
-     * @param string $workflowType
-     * @param WorkflowOptions $options
-     * @param array $args
-     * @param HeaderInterface|null $header
      *
-     * @return WorkflowExecution
      *
      * @throws ServiceClientException
      * @throws WorkflowExecutionAlreadyStartedException
@@ -80,14 +71,7 @@ final class WorkflowStarter
     }
 
     /**
-     * @param string $workflowType
-     * @param WorkflowOptions $options
-     * @param string $signal
-     * @param array $signalArgs
-     * @param array $startArgs
-     * @param HeaderInterface|null $header
      *
-     * @return WorkflowExecution
      *
      * @throws ServiceClientException
      * @throws WorkflowExecutionAlreadyStartedException
@@ -169,7 +153,6 @@ final class WorkflowStarter
      * @template TRequest of StartWorkflowExecutionRequest|SignalWithStartWorkflowExecutionRequest
      *
      * @param TRequest $req
-     * @param StartInput $input
      *
      * @return TRequest
      *

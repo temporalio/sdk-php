@@ -49,9 +49,6 @@ class ActivityInterface
     #[Immutable]
     public string $prefix = '';
 
-    /**
-     * @param string $prefix
-     */
     public function __construct(string $prefix = '')
     {
         $this->prefix = $prefix;

@@ -39,22 +39,15 @@ final class RoadRunner implements HostConnectionInterface
     private RoadRunnerWorker $worker;
     private CodecInterface $codec;
 
-    /**
-     * @param RoadRunnerWorker $worker
-     */
     public function __construct(RoadRunnerWorker $worker)
     {
         $this->worker = $worker;
         $this->codec = new JsonCodec();
     }
 
-    /**
-     * @param EnvironmentInterface|null $env
-     * @return HostConnectionInterface
-     */
     public static function create(
-        EnvironmentInterface $env = null,
-        RoadRunnerVersionChecker $versionChecker = null,
+        ?EnvironmentInterface $env = null,
+        ?RoadRunnerVersionChecker $versionChecker = null,
     ): HostConnectionInterface {
         $versionChecker ??= new RoadRunnerVersionChecker();
         $versionChecker->check();
@@ -64,9 +57,6 @@ final class RoadRunner implements HostConnectionInterface
         return new self(new Worker(Relay::create($env->getRelayAddress())));
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function waitBatch(): ?CommandBatch
     {
         /** @var Payload $payload */
@@ -82,9 +72,6 @@ final class RoadRunner implements HostConnectionInterface
         );
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function send(string $frame, array $headers = []): void
     {
         $json = $this->encodeHeaders($headers);
@@ -96,9 +83,6 @@ final class RoadRunner implements HostConnectionInterface
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function error(\Throwable $error): void
     {
         try {
@@ -113,7 +97,7 @@ final class RoadRunner implements HostConnectionInterface
      * @return array<string, string>
      * @throws ProtocolException
      */
-    private function decodeHeaders(string $headers = null): array
+    private function decodeHeaders(?string $headers = null): array
     {
         if ($headers === null) {
             return [];

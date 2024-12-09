@@ -36,9 +36,6 @@ class EnumValueType extends Type implements RuleFactoryInterface
         parent::__construct($marshaller);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public static function makeRule(\ReflectionProperty $property): ?MarshallingRule
     {
         $type = $property->getType();
@@ -56,9 +53,6 @@ class EnumValueType extends Type implements RuleFactoryInterface
             : new MarshallingRule($property->getName(), self::class, $type->getName());
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function parse($value, $current)
     {
         if (\is_object($value)) {

@@ -60,21 +60,17 @@ class Diff
     }
 
     /**
-     * @param object $context
      * @param non-empty-string|null $property
-     * @return bool
      */
-    public function isPresent(object $context, string $property = null): bool
+    public function isPresent(object $context, ?string $property = null): bool
     {
         return !$this->isChanged($context, $property);
     }
 
     /**
-     * @param object $context
      * @param non-empty-string|null $property
-     * @return bool
      */
-    public function isChanged(object $context, string $property = null): bool
+    public function isChanged(object $context, ?string $property = null): bool
     {
         $this->matchContext($context);
 
@@ -91,7 +87,6 @@ class Diff
     }
 
     /**
-     * @param object $context
      * @return array<string>
      */
     public function getPresentPropertyNames(object $context): array
@@ -108,7 +103,6 @@ class Diff
     }
 
     /**
-     * @param object $context
      * @return array<string, mixed>
      */
     public function getPresentProperties(object $context): array
@@ -120,7 +114,6 @@ class Diff
     }
 
     /**
-     * @param object $context
      * @return array<string>
      */
     public function getChangedPropertyNames(object $context): array
@@ -129,7 +122,6 @@ class Diff
     }
 
     /**
-     * @param object $context
      * @return array<string, mixed>
      */
     public function getChangedProperties(object $context): array
@@ -164,10 +156,6 @@ class Diff
         }
     }
 
-    /**
-     * @param object $context
-     * @return bool
-     */
     private function isChangedAnyProperty(object $context): bool
     {
         foreach ($this->properties as $name => $value) {

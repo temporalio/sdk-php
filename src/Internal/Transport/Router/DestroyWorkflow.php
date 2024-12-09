@@ -38,9 +38,6 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
         parent::__construct($running);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
         $this->kill($request->getID());
@@ -48,10 +45,6 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
         $resolver->resolve(EncodedValues::fromValues([null]));
     }
 
-    /**
-     * @param string $runId
-     * @return array
-     */
     public function kill(string $runId): array
     {
         /** @var Process $process */

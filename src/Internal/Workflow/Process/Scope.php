@@ -39,28 +39,20 @@ use Temporal\Workflow\CancellationScopeInterface;
  */
 class Scope implements CancellationScopeInterface, Destroyable
 {
-    /**
-     * @var ServiceContainer
-     */
     protected ServiceContainer $services;
 
     /**
      * Workflow context.
      *
-     * @var WorkflowContext
      */
     protected WorkflowContext $context;
 
     /**
      * Coroutine scope context.
      *
-     * @var ScopeContext
      */
     protected ScopeContext $scopeContext;
 
-    /**
-     * @var Deferred
-     */
     protected Deferred $deferred;
 
     /**
@@ -174,7 +166,6 @@ class Scope implements CancellationScopeInterface, Destroyable
     }
 
     /**
-     * @param callable $handler
      * @param non-empty-string $name
      */
     public function startSignal(callable $handler, ValuesInterface $values, string $name): void
@@ -218,9 +209,6 @@ class Scope implements CancellationScopeInterface, Destroyable
         return $this;
     }
 
-    /**
-     * @param \Throwable|null $reason
-     */
     public function cancel(?\Throwable $reason = null): void
     {
         if ($this->detached && !$reason instanceof DestructMemorizedInstanceException) {
@@ -243,7 +231,7 @@ class Scope implements CancellationScopeInterface, Destroyable
     /**
      * @param non-empty-string|null $layer
      */
-    public function startScope(callable $handler, bool $detached, string $layer = null): CancellationScopeInterface
+    public function startScope(callable $handler, bool $detached, ?string $layer = null): CancellationScopeInterface
     {
         $scope = $this->createScope($detached, $layer);
         $scope->start($handler, null, false);
@@ -257,9 +245,9 @@ class Scope implements CancellationScopeInterface, Destroyable
     }
 
     public function then(
-        callable $onFulfilled = null,
-        callable $onRejected = null,
-        callable $onProgress = null,
+        ?callable $onFulfilled = null,
+        ?callable $onRejected = null,
+        ?callable $onProgress = null,
     ): PromiseInterface {
         return $this->deferred->promise()->then($onFulfilled, $onRejected);
     }
@@ -287,7 +275,6 @@ class Scope implements CancellationScopeInterface, Destroyable
     /**
      * Connects promise to scope context to be cancelled on promise cancel.
      *
-     * @param Deferred $deferred
      */
     public function onAwait(Deferred $deferred): void
     {
@@ -321,7 +308,7 @@ class Scope implements CancellationScopeInterface, Destroyable
     protected function createScope(
         bool $detached,
         ?string $layer = null,
-        WorkflowContext $context = null,
+        ?WorkflowContext $context = null,
         ?Workflow\UpdateContext $updateContext = null,
     ): self {
         $scope = new Scope($this->services, $context ?? $this->context, $updateContext);
@@ -368,10 +355,6 @@ class Scope implements CancellationScopeInterface, Destroyable
         }, $values)->catch($this->onException(...));
     }
 
-    /**
-     * @param RequestInterface $request
-     * @param PromiseInterface $promise
-     */
     protected function onRequest(RequestInterface $request, PromiseInterface $promise): void
     {
         $this->onCancel[++$this->cancelID] = function (?\Throwable $reason = null) use ($request): void {
@@ -402,17 +385,11 @@ class Scope implements CancellationScopeInterface, Destroyable
         $promise->then($cleanup, $cleanup);
     }
 
-    /**
-     * @return void
-     */
     protected function makeCurrent(): void
     {
         Workflow::setCurrentContext($this->scopeContext);
     }
 
-    /**
-     * @return void
-     */
     protected function next(): void
     {
         $this->makeCurrent();
@@ -523,9 +500,6 @@ class Scope implements CancellationScopeInterface, Destroyable
         $this->next();
     }
 
-    /**
-     * @param \Throwable $e
-     */
     private function onException(\Throwable $e): void
     {
         $this->deferred->reject($e);
@@ -538,9 +512,6 @@ class Scope implements CancellationScopeInterface, Destroyable
         }
     }
 
-    /**
-     * @param mixed $result
-     */
     private function onResult(mixed $result): void
     {
         $this->deferred->resolve($result);

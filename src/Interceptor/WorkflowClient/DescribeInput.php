@@ -28,8 +28,8 @@ class DescribeInput
     ) {}
 
     public function with(
-        WorkflowExecution $workflowExecution = null,
-        string $namespace = null,
+        ?WorkflowExecution $workflowExecution = null,
+        ?string $namespace = null,
     ): self {
         return new self(
             $workflowExecution ?? $this->workflowExecution,

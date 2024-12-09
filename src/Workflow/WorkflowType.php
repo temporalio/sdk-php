@@ -21,7 +21,6 @@ class WorkflowType
     /**
      * @psalm-allow-private-mutation
      * @psalm-readonly
-     * @var string
      */
     #[Marshal(name: 'Name')]
     #[Marshal(name: 'name')]

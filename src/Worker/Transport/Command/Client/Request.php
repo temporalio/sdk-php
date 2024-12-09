@@ -40,7 +40,7 @@ class Request implements RequestInterface
     public function __construct(
         protected string $name,
         protected array $options = [],
-        ValuesInterface $payloads = null,
+        ?ValuesInterface $payloads = null,
         ?HeaderInterface $header = null,
     ) {
         $this->payloads = $payloads ?? EncodedValues::empty();

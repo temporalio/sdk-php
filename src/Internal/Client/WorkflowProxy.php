@@ -42,9 +42,6 @@ final class WorkflowProxy extends Proxy
         return $this->prototype->getHandler() !== null;
     }
 
-    /**
-     * @return \ReflectionMethod
-     */
     public function getHandlerReflection(): \ReflectionMethod
     {
         return $this->prototype->getHandler() ?? throw new \LogicException(

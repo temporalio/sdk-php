@@ -19,18 +19,13 @@ use Temporal\Internal\Marshaller\MarshallingRule;
  */
 class NullableType extends Type
 {
-    /**
-     * @var TypeInterface|null
-     */
     private ?TypeInterface $type = null;
 
     /**
-     * @param MarshallerInterface $marshaller
-     * @param MarshallingRule|string|null $typeOrClass
      *
      * @throws \ReflectionException
      */
-    public function __construct(MarshallerInterface $marshaller, MarshallingRule|string $typeOrClass = null)
+    public function __construct(MarshallerInterface $marshaller, MarshallingRule|string|null $typeOrClass = null)
     {
         if ($typeOrClass !== null) {
             $this->type = $this->ofType($marshaller, $typeOrClass);

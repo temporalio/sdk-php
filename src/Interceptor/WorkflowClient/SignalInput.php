@@ -31,8 +31,8 @@ class SignalInput
     ) {}
 
     public function with(
-        string $signalName = null,
-        ValuesInterface $arguments = null,
+        ?string $signalName = null,
+        ?ValuesInterface $arguments = null,
     ): self {
         return new self(
             $this->workflowExecution,

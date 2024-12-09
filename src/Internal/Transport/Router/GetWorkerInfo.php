@@ -23,29 +23,15 @@ use Temporal\Worker\WorkerInterface;
 
 final class GetWorkerInfo extends Route
 {
-    /**
-     * @var RepositoryInterface
-     */
     private RepositoryInterface $queues;
-
-    /**
-     * @var MarshallerInterface
-     */
     private MarshallerInterface $marshaller;
 
-    /**
-     * @param RepositoryInterface $queues
-     * @param MarshallerInterface $marshaller
-     */
     public function __construct(RepositoryInterface $queues, MarshallerInterface $marshaller)
     {
         $this->queues = $queues;
         $this->marshaller = $marshaller;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
         $result = [];
@@ -57,10 +43,6 @@ final class GetWorkerInfo extends Route
         $resolver->resolve(EncodedValues::fromValues($result));
     }
 
-    /**
-     * @param WorkerInterface $worker
-     * @return array
-     */
     private function workerToArray(WorkerInterface $worker): array
     {
         $workflowMap = static fn(WorkflowPrototype $workflow): array => [
@@ -86,11 +68,6 @@ final class GetWorkerInfo extends Route
         ];
     }
 
-    /**
-     * @param iterable $items
-     * @param \Closure $map
-     * @return array
-     */
     private function map(iterable $items, \Closure $map): array
     {
         $result = [];

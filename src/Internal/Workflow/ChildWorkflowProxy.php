@@ -44,7 +44,6 @@ final class ChildWorkflowProxy extends Proxy
 
     /**
      * @param non-empty-string $method
-     * @param array $args
      * @return CompletableResultInterface
      */
     public function __call(string $method, array $args): PromiseInterface
@@ -102,10 +101,6 @@ final class ChildWorkflowProxy extends Proxy
         );
     }
 
-    /**
-     * @param WorkflowPrototype $prototype
-     * @return Type|null
-     */
     private function resolveReturnType(WorkflowPrototype $prototype): ?Type
     {
         if ($attribute = $prototype->getReturnType()) {

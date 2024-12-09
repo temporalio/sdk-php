@@ -26,18 +26,13 @@ class AssocArrayType extends Type
      */
     private const ERROR_INVALID_TYPE = 'Passed value must be a type of array, but %s given';
 
-    /**
-     * @var TypeInterface|null
-     */
     private ?TypeInterface $type = null;
 
     /**
-     * @param MarshallerInterface $marshaller
-     * @param MarshallingRule|string|null $typeOrClass
      *
      * @throws \ReflectionException
      */
-    public function __construct(MarshallerInterface $marshaller, MarshallingRule|string $typeOrClass = null)
+    public function __construct(MarshallerInterface $marshaller, MarshallingRule|string|null $typeOrClass = null)
     {
         if ($typeOrClass !== null) {
             $this->type = $this->ofType($marshaller, $typeOrClass);

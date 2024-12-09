@@ -16,8 +16,6 @@ use Temporal\Internal\Declaration\Prototype\PrototypeInterface;
 abstract class Instantiator implements InstantiatorInterface
 {
     /**
-     * @param PrototypeInterface $prototype
-     * @return object
      * @throws \ReflectionException
      */
     protected function getInstance(PrototypeInterface $prototype): object

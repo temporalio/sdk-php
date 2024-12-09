@@ -24,10 +24,9 @@ final class MarshalDateTime extends Marshal
      * @param class-string<\DateTimeInterface>|null $of Local representation of the date.
      *        May be any of internal or Carbon {@see DatetimeInterface} implementations.
      * @param non-empty-string $to Datetime format or {@see Timestamp} class name.
-     * @param bool $nullable
      */
     public function __construct(
-        string $name = null,
+        ?string $name = null,
         ?string $of = null,
         private string $to = \DateTimeInterface::RFC3339,
         bool $nullable = true,

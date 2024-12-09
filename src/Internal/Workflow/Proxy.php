@@ -15,17 +15,12 @@ use Temporal\Internal\Declaration\Prototype\Prototype;
 
 abstract class Proxy
 {
-    /**
-     * @param string $method
-     * @param array $args
-     */
     abstract public function __call(string $method, array $args);
 
     /**
      * @psalm-template T of Prototype
      *
      * @param array<T> $prototypes
-     * @param string $name
      * @return T|null
      */
     protected function findPrototypeByHandlerName(array $prototypes, string $name): ?Prototype

@@ -18,17 +18,12 @@ use GPBMetadata\Temporal\Api\Errordetails\V1\Message;
 
 class ServiceClientException extends \RuntimeException
 {
-    /**
-     * @var Status
-     */
     private Status $status;
 
     /**
-     * @param \stdClass $status
-     * @param \Throwable|null $previous
      * @throws \Exception
      */
-    public function __construct(\stdClass $status, \Throwable $previous = null)
+    public function __construct(\stdClass $status, ?\Throwable $previous = null)
     {
         $this->status = new Status();
 
@@ -36,20 +31,18 @@ class ServiceClientException extends \RuntimeException
             $this->status->mergeFromString($status->metadata['grpc-status-details-bin'][0]);
         }
 
-        parent::__construct($status->details . " (code: $status->code)", $status->code, $previous);
+        parent::__construct(\sprintf(
+            "%s (code: %d)",
+            isset($status->details) ? (string) $status->details : '',
+            $status->code,
+        ), $status->code, $previous);
     }
 
-    /**
-     * @return Status
-     */
     public function getStatus(): Status
     {
         return $this->status;
     }
 
-    /**
-     * @return RepeatedField
-     */
     public function getDetails(): RepeatedField
     {
         return $this->status->getDetails();
@@ -58,8 +51,6 @@ class ServiceClientException extends \RuntimeException
     /**
      * @link https://dev.to/khepin/grpc-advanced-error-handling-from-go-to-php-1omc
      *
-     * @param string $class
-     * @return object|null
      * @throws \Exception
      */
     public function getFailure(string $class): ?object

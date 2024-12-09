@@ -25,9 +25,6 @@ final class Cancel extends Request
     /** @var int[] */
     private array $requestIds;
 
-    /**
-     * @param int ...$requestId
-     */
     public function __construct(int ...$requestId)
     {
         $this->requestIds = $requestId;

@@ -18,16 +18,8 @@ use Temporal\Internal\Declaration\ActivityInstance;
 
 final class ActivityPrototype extends Prototype
 {
-    /**
-     * @var MethodRetry|null
-     */
     private ?MethodRetry $methodRetry = null;
-
-    /**
-     * @var ActivityInstance|null
-     */
     private ?ActivityInstance $instance = null;
-
     private ?\Closure $factory = null;
     private bool $isLocalActivity;
 
@@ -45,9 +37,6 @@ final class ActivityPrototype extends Prototype
         parent::__construct($name, $handler, $class);
     }
 
-    /**
-     * @return \ReflectionMethod
-     */
     public function getHandler(): \ReflectionMethod
     {
         $handler = parent::getHandler();
@@ -56,17 +45,11 @@ final class ActivityPrototype extends Prototype
         return $handler;
     }
 
-    /**
-     * @return MethodRetry|null
-     */
     public function getMethodRetry(): ?MethodRetry
     {
         return $this->methodRetry;
     }
 
-    /**
-     * @param MethodRetry|null $attribute
-     */
     public function setMethodRetry(?MethodRetry $attribute): void
     {
         $this->methodRetry = $attribute;
@@ -87,7 +70,6 @@ final class ActivityPrototype extends Prototype
     }
 
     /**
-     * @param object $instance
      * @return $this
      */
     public function withInstance(object $instance): self

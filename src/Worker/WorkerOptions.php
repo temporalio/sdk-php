@@ -623,7 +623,6 @@ class WorkerOptions
      * For now, if user doesn't specify one, a new uuid will be used as the
      * resourceID.
      *
-     * @param string|null $identifier
      */
     #[Pure]
     public function withSessionResourceId(?string $identifier): self

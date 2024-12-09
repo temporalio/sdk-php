@@ -147,9 +147,6 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
         }
     }
 
-    /**
-     * @return SignalQueue
-     */
     public function getSignalQueue(): SignalQueue
     {
         return $this->signalQueue;
@@ -189,8 +186,6 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     }
 
     /**
-     * @param string $name
-     * @param callable $handler
      * @throws \ReflectionException
      */
     public function addQueryHandler(string $name, callable $handler): void
@@ -208,7 +203,6 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
 
     /**
      * @param non-empty-string $name
-     * @param callable $handler
      * @throws \ReflectionException
      */
     public function addUpdateHandler(string $name, callable $handler): void
@@ -226,7 +220,6 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
 
     /**
      * @param non-empty-string $name
-     * @param callable $handler
      * @throws \ReflectionException
      */
     public function addValidateUpdateHandler(string $name, callable $handler): void
@@ -257,8 +250,6 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     }
 
     /**
-     * @param string $name
-     * @param callable $handler
      * @throws \ReflectionException
      */
     public function addSignalHandler(string $name, callable $handler): void
@@ -296,8 +287,6 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
 
     /**
      * Make a Closure from a callable.
-     *
-     * @param callable $handler
      *
      * @return \Closure(ValuesInterface): mixed
      * @throws \ReflectionException

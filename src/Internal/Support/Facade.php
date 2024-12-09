@@ -62,7 +62,6 @@ abstract class Facade
     }
 
     /**
-     * @return int
      * @throws OutOfContextException
      */
     public static function getContextId(): int
@@ -75,8 +74,6 @@ abstract class Facade
     }
 
     /**
-     * @param string $name
-     * @param array $arguments
      * @return mixed
      */
     public static function __callStatic(string $name, array $arguments)

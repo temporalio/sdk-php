@@ -23,9 +23,6 @@ class WorkflowStub
     /**
      * Get untyped workflow stub using provided workflow proxy or workflow stub instance.
      *
-     * @param object $workflow
-     * @return WorkflowStubInterface
-     *
      * @psalm-assert WorkflowStubInterface|WorkflowProxy $workflow
      */
     public static function fromWorkflow(object $workflow): WorkflowStubInterface

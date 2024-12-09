@@ -17,9 +17,6 @@ namespace Temporal\Internal\Marshaller\Mapper;
  */
 interface MapperInterface
 {
-    /**
-     * @return bool
-     */
     public function isCopyOnWrite(): bool;
 
     /**

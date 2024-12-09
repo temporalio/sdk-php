@@ -19,8 +19,5 @@ use Temporal\Internal\Repository\Identifiable;
  */
 interface ProcessInterface extends CancellationScopeInterface, Identifiable
 {
-    /**
-     * @return WorkflowContextInterface
-     */
     public function getContext(): WorkflowContextInterface;
 }

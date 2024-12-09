@@ -27,7 +27,6 @@ use Temporal\Workflow\WorkflowExecution;
 final class ExternalWorkflowStub implements ExternalWorkflowStubInterface
 {
     /**
-     * @param WorkflowExecution $execution
      * @param Pipeline<WorkflowOutboundCallsInterceptor, PromiseInterface> $callsInterceptor
      */
     public function __construct(
@@ -35,17 +34,11 @@ final class ExternalWorkflowStub implements ExternalWorkflowStubInterface
         private Pipeline $callsInterceptor,
     ) {}
 
-    /**
-     * {@inheritDoc}
-     */
     public function getExecution(): WorkflowExecution
     {
         return $this->execution;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function signal(string $name, array $args = []): PromiseInterface
     {
         return $this->callsInterceptor->with(
@@ -71,9 +64,6 @@ final class ExternalWorkflowStub implements ExternalWorkflowStubInterface
         ));
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function cancel(): PromiseInterface
     {
         return $this->callsInterceptor->with(
@@ -84,10 +74,6 @@ final class ExternalWorkflowStub implements ExternalWorkflowStubInterface
         )(new CancelExternalWorkflowInput('', $this->execution->getID(), $this->execution->getRunID()));
     }
 
-    /**
-     * @param RequestInterface $request
-     * @return PromiseInterface
-     */
     private function request(RequestInterface $request): PromiseInterface
     {
         // todo intercept

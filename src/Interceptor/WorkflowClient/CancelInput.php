@@ -27,7 +27,7 @@ class CancelInput
     ) {}
 
     public function with(
-        WorkflowExecution $workflowExecution = null,
+        ?WorkflowExecution $workflowExecution = null,
     ): self {
         return new self(
             $workflowExecution ?? $this->workflowExecution,

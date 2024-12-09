@@ -21,8 +21,6 @@ class Process
     /**
      * Run process with arguments and get result.
      *
-     * @param string ...$cmd
-     * @return string
      */
     public static function run(string ...$cmd): string
     {

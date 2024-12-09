@@ -15,10 +15,6 @@ use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 
 final class ActivityInstance extends Instance implements ActivityInstanceInterface
 {
-    /**
-     * @param ActivityPrototype $prototype
-     * @param object $context
-     */
     public function __construct(
         ActivityPrototype $prototype,
         object $context,

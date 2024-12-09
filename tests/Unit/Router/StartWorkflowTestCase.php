@@ -37,6 +37,8 @@ final class StartWorkflowTestCase extends AbstractUnit
 {
     private ServiceContainer $services;
     private StartWorkflow $router;
+    private WorkflowContext $workflowContext;
+    private MarshallerInterface $marshaller;
 
     protected function setUp(): void
     {

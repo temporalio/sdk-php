@@ -22,7 +22,6 @@ interface ActivityContextInterface
      *
      * @see Activity::getInfo()
      *
-     * @return ActivityInfo
      */
     public function getInfo(): ActivityInfo;
 
@@ -31,7 +30,6 @@ interface ActivityContextInterface
      *
      * @see Activity::getInput()
      *
-     * @return ValuesInterface
      */
     public function getInput(): ValuesInterface;
 
@@ -40,7 +38,6 @@ interface ActivityContextInterface
      *
      * @see Activity::hasHeartbeatDetails()
      *
-     * @return bool
      */
     public function hasHeartbeatDetails(): bool;
 
@@ -59,7 +56,6 @@ interface ActivityContextInterface
      *
      * @see Activity::doNotCompleteOnReturn()
      *
-     * @return void
      */
     public function doNotCompleteOnReturn(): void;
 

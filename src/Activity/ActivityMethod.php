@@ -33,10 +33,7 @@ final class ActivityMethod
     #[Immutable]
     public ?string $name = null;
 
-    /**
-     * @param string|null $name
-     */
-    public function __construct(string $name = null)
+    public function __construct(?string $name = null)
     {
         $this->name = $name;
     }

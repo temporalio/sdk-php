@@ -17,14 +17,8 @@ namespace Temporal\Exception;
  */
 class ExceptionInterceptor implements ExceptionInterceptorInterface
 {
-    /**
-     * @var array
-     */
     private array $retryableErrors;
 
-    /**
-     * @param array $retryableErrors
-     */
     public function __construct(array $retryableErrors)
     {
         $this->retryableErrors = $retryableErrors;
@@ -38,10 +32,6 @@ class ExceptionInterceptor implements ExceptionInterceptorInterface
         return new self([\Error::class]);
     }
 
-    /**
-     * @param \Throwable $e
-     * @return bool
-     */
     public function isRetryable(\Throwable $e): bool
     {
         foreach ($this->retryableErrors as $retryableError) {

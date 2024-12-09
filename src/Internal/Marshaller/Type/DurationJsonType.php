@@ -30,7 +30,6 @@ class DurationJsonType extends Type implements DetectableTypeInterface, RuleFact
     private string $fallbackFormat;
 
     /**
-     * @param MarshallerInterface $marshaller
      * @param DateIntervalFormat $format Fall back format for parsing when the value is not an array.
      */
     public function __construct(MarshallerInterface $marshaller, string $format = DateInterval::FORMAT_NANOSECONDS)
@@ -40,17 +39,11 @@ class DurationJsonType extends Type implements DetectableTypeInterface, RuleFact
         parent::__construct($marshaller);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public static function match(\ReflectionNamedType $type): bool
     {
         return !$type->isBuiltin() && Inheritance::extends($type->getName(), \DateInterval::class);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public static function makeRule(\ReflectionProperty $property): ?MarshallingRule
     {
         $type = $property->getType();
@@ -64,9 +57,6 @@ class DurationJsonType extends Type implements DetectableTypeInterface, RuleFact
             : new MarshallingRule($property->getName(), self::class);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function serialize($value): ?array
     {
         $duration = match (true) {
@@ -82,9 +72,6 @@ class DurationJsonType extends Type implements DetectableTypeInterface, RuleFact
         return ['seconds' => $duration->getSeconds(), 'nanos' => $duration->getNanos()];
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function parse($value, $current): CarbonInterval
     {
         if (\is_array($value) && isset($value['seconds']) && isset($value['nanos'])) {

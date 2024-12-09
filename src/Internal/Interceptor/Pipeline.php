@@ -30,7 +30,6 @@ final class Pipeline
     /** @var non-empty-string */
     private string $method;
 
-    /** @var \Closure */
     private \Closure $last;
 
     /** @var list<TInterceptor> */
@@ -66,7 +65,6 @@ final class Pipeline
     }
 
     /**
-     * @param \Closure $last
      * @param non-empty-string $method Method name of the all interceptors.
      *
      * @return TCallable
@@ -83,8 +81,6 @@ final class Pipeline
 
     /**
      * Must be used after {@see self::with()} method.
-     *
-     * @param mixed ...$arguments
      *
      * @return TReturn
      */

@@ -24,9 +24,6 @@ use Temporal\Api\Common\V1\Payload;
  */
 class EncodedCollection implements \IteratorAggregate, \Countable
 {
-    /**
-     * @var DataConverterInterface|null
-     */
     private ?DataConverterInterface $converter = null;
 
     /**

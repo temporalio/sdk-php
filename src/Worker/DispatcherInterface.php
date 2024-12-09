@@ -16,10 +16,5 @@ use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 interface DispatcherInterface
 {
-    /**
-     * @param ServerRequestInterface $request
-     * @param array $headers
-     * @return PromiseInterface
-     */
     public function dispatch(ServerRequestInterface $request, array $headers): PromiseInterface;
 }

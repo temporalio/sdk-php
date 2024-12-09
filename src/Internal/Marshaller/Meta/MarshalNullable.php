@@ -25,7 +25,7 @@ final class MarshalNullable extends Marshal
      * @param non-empty-string|null $name
      */
     public function __construct(
-        string $name = null,
+        ?string $name = null,
         string|MarshallingRule|null $rule = null,
     ) {
         parent::__construct($name, NullableType::class, $rule);

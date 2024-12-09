@@ -29,9 +29,9 @@ class SignalWithStartInput
     ) {}
 
     public function with(
-        StartInput $workflowStartInput = null,
-        string $signalName = null,
-        ValuesInterface $signalArguments = null,
+        ?StartInput $workflowStartInput = null,
+        ?string $signalName = null,
+        ?ValuesInterface $signalArguments = null,
     ): self {
         return new self(
             $workflowStartInput ?? $this->workflowStartInput,

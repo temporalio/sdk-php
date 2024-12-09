@@ -16,22 +16,13 @@ use Temporal\Internal\Marshaller\TypeFactoryInterface;
 
 class AttributeMapperFactory implements MapperFactoryInterface
 {
-    /**
-     * @var ReaderInterface
-     */
     private ReaderInterface $reader;
 
-    /**
-     * @param ReaderInterface $reader
-     */
     public function __construct(ReaderInterface $reader)
     {
         $this->reader = $reader;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function create(\ReflectionClass $class, TypeFactoryInterface $types): MapperInterface
     {
         return new AttributeMapper($class, $types, $this->reader);

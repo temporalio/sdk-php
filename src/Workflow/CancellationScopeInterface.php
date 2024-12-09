@@ -23,21 +23,18 @@ interface CancellationScopeInterface extends PromiseInterface
     /**
      * Detached scopes can continue working even if parent scope was cancelled.
      *
-     * @return bool
      */
     public function isDetached(): bool;
 
     /**
      * Returns true if cancel request was sent to scope.
      *
-     * @return bool
      */
     public function isCancelled(): bool;
 
     /**
      * Triggered when cancel request sent to scope.
      *
-     * @param callable $then
      * @return $this
      */
     public function onCancel(callable $then): self;
@@ -49,7 +46,6 @@ interface CancellationScopeInterface extends PromiseInterface
      * Once a promise is settled (either fulfilled or rejected), calling `cancel()` on
      * a promise has no effect.
      *
-     * @return void
      */
     public function cancel(): void;
 }

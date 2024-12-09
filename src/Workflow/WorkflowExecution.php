@@ -24,7 +24,6 @@ class WorkflowExecution
     /**
      * @psalm-readonly
      * @psalm-allow-private-mutation
-     * @var string
      */
     #[Marshal(name: 'ID')]
     #[Marshal(name: 'workflow_id')]
@@ -33,41 +32,27 @@ class WorkflowExecution
     /**
      * @psalm-readonly
      * @psalm-allow-private-mutation
-     * @var string|null
      */
     #[Marshal(name: 'RunID')]
     #[Marshal(name: 'run_id')]
     private ?string $runId;
 
-    /**
-     * @param string|null $id
-     * @param string|null $runId
-     */
-    public function __construct(string $id = null, ?string $runId = null)
+    public function __construct(?string $id = null, ?string $runId = null)
     {
         $this->id = $id ?? Uuid::nil();
         $this->runId = $runId;
     }
 
-    /**
-     * @return string
-     */
     public function getID(): string
     {
         return $this->id;
     }
 
-    /**
-     * @return string|null
-     */
     public function getRunID(): ?string
     {
         return $this->runId;
     }
 
-    /**
-     * @return \Temporal\Api\Common\V1\WorkflowExecution
-     */
     public function toProtoWorkflowExecution(): \Temporal\Api\Common\V1\WorkflowExecution
     {
         $e = new \Temporal\Api\Common\V1\WorkflowExecution();

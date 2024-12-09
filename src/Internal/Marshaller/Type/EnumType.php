@@ -25,7 +25,7 @@ class EnumType extends Type implements RuleFactoryInterface
     /** @var class-string<\UnitEnum> */
     private string $classFQCN;
 
-    public function __construct(MarshallerInterface $marshaller, string $class = null)
+    public function __construct(MarshallerInterface $marshaller, ?string $class = null)
     {
         if ($class === null) {
             throw new \RuntimeException('Enum is required');
@@ -35,9 +35,6 @@ class EnumType extends Type implements RuleFactoryInterface
         parent::__construct($marshaller);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public static function makeRule(\ReflectionProperty $property): ?MarshallingRule
     {
         $type = $property->getType();
@@ -55,9 +52,6 @@ class EnumType extends Type implements RuleFactoryInterface
             : new MarshallingRule($property->getName(), self::class, $type->getName());
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function parse($value, $current)
     {
         if (\is_object($value)) {

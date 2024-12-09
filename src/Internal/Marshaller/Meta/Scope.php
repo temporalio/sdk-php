@@ -50,14 +50,10 @@ class Scope
     #[ExpectedValues(valuesFromClass: Scope::class)]
     public int $properties;
 
-    /**
-     * @var bool
-     */
     public bool $copyOnWrite;
 
     /**
      * @param ExportScope $properties
-     * @param bool $copyOnWrite
      */
     public function __construct(
         int $properties = self::VISIBILITY_PUBLIC,

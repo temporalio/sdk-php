@@ -18,7 +18,6 @@ interface EventListenerInterface
 {
     /**
      * @param T $event
-     * @param callable $then
      * @return $this
      */
     public function once(string $event, callable $then): self;
