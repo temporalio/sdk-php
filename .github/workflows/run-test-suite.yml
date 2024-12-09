@@ -55,6 +55,7 @@ jobs:
           - os: windows-latest
             extensions-suffix: ', protobuf'
             php: 8.1
+            dependencies: highest
     steps:
       - name: Set Git To Use LF
         run: |
@@ -77,6 +78,10 @@ jobs:
       - name: Validate composer.json and composer.lock
         run: composer validate --strict
 
+      - name: Download CPX (PHP 8.4)
+        if: inputs.download-binaries == true && matrix.php == '8.4'
+        run: composer global require cpx/cpx
+
       - name: Get Composer Cache Directory
         id: composer-cache
         run: |
@@ -94,7 +99,7 @@ jobs:
         if: matrix.dependencies == 'lowest' && matrix.php != '8.4'
         run: composer update --no-interaction --no-progress --prefer-lowest
 
-      - name: Install lowest dependencies from composer.json
+      - name: Install lowest dependencies from composer.json ignoring ext-php constraint (PHP 8.4)
         if: matrix.dependencies == 'lowest' && matrix.php == '8.4'
         run: composer update --no-interaction --no-progress --prefer-lowest --ignore-platform-req php
 
@@ -110,13 +115,18 @@ jobs:
         if: matrix.dependencies == 'highest' && matrix.php != '8.4'
         run: composer update --no-interaction --no-progress
 
-      - name: Install highest dependencies from composer.json
+      - name: Install highest dependencies from composer.json ignoring ext-php constraint (PHP 8.4)
         if: matrix.dependencies == 'highest' && matrix.php == '8.4'
         run: composer update --no-interaction --no-progress --ignore-platform-req php
 
+
       - name: Download binaries
-        if: inputs.download-binaries == true
+        if: inputs.download-binaries == true && matrix.php != '8.4'
         run: composer get:binaries
+
+      - name: Download binaries (PHP 8.4)
+        if: inputs.download-binaries == true && matrix.php == '8.4'
+        run: cpx internal/dload get --no-interaction
 
       - name: Run tests
         run: ${{ inputs.test-command }}
