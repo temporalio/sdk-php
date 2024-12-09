@@ -61,7 +61,6 @@
         "phpunit/phpunit": "^10.5",
         "spiral/code-style": "~2.1.2",
         "spiral/core": "^3.13",
-        "symfony/var-dumper": "^6.0 || ^7.0",
         "ta-tikoma/phpunit-architecture-test": "^0.8.4",
         "vimeo/psalm": "^4.30 || ^5.4"
     },
