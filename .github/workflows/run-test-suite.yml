@@ -42,7 +42,7 @@ jobs:
   test:
     name: PHP${{ matrix.php }}${{ matrix.extensions-suffix }}, ${{ matrix.os }}, ${{ matrix.dependencies }} deps
     runs-on: ${{ matrix.os }}
-    timeout-minutes: ${{ matrix.timeout-minutes }}
+    timeout-minutes: ${{ inputs.test-timeout }}
     env: {GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'}
     strategy:
       fail-fast: ${{ inputs.fail-fast }}
@@ -51,7 +51,6 @@ jobs:
         os: [ ubuntu-latest ]
         extensions-suffix: [ '', ', protobuf' ]
         dependencies: [ lowest , highest ]
-        timeout-minutes: [ '${{ inputs.test-timeout }}' ]
         include:
           - os: windows-latest
             extensions-suffix: ', protobuf'
