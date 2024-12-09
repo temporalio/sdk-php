@@ -236,7 +236,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         return $this->services->env->isReplaying();
     }
 
-    public function complete(array $result = null, \Throwable $failure = null): PromiseInterface
+    public function complete(?array $result = null, ?\Throwable $failure = null): PromiseInterface
     {
         if ($failure !== null) {
             $this->workflowInstance->clearSignalQueue();
@@ -255,7 +255,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         )(new CompleteInput($result, $failure));
     }
 
-    public function panic(\Throwable $failure = null): PromiseInterface
+    public function panic(?\Throwable $failure = null): PromiseInterface
     {
         return $this->callsInterceptor->with(
             fn(PanicInput $failure): PromiseInterface => $this->request(new Panic($failure->failure), false),
@@ -267,7 +267,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     public function continueAsNew(
         string $type,
         array $args = [],
-        ContinueAsNewOptions $options = null,
+        ?ContinueAsNewOptions $options = null,
     ): PromiseInterface {
         return $this->callsInterceptor->with(
             function (ContinueAsNewInput $input): PromiseInterface {
@@ -288,7 +288,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         )(new ContinueAsNewInput($type, $args, $options));
     }
 
-    public function newContinueAsNewStub(string $class, ContinueAsNewOptions $options = null): object
+    public function newContinueAsNewStub(string $class, ?ContinueAsNewOptions $options = null): object
     {
         $options ??= new ContinueAsNewOptions();
 
@@ -305,7 +305,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     public function executeChildWorkflow(
         string $type,
         array $args = [],
-        ChildWorkflowOptions $options = null,
+        ?ChildWorkflowOptions $options = null,
         mixed $returnType = null,
     ): PromiseInterface {
         return $this->callsInterceptor->with(
@@ -319,7 +319,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
 
     public function newUntypedChildWorkflowStub(
         string $type,
-        ChildWorkflowOptions $options = null,
+        ?ChildWorkflowOptions $options = null,
     ): ChildWorkflowStubInterface {
         $options ??= new ChildWorkflowOptions();
 
@@ -328,7 +328,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
 
     public function newChildWorkflowStub(
         string $class,
-        ChildWorkflowOptions $options = null,
+        ?ChildWorkflowOptions $options = null,
     ): object {
         $workflow = $this->services->workflowsReader->fromClass($class);
         $options = $options ?? (new ChildWorkflowOptions())
@@ -359,8 +359,8 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     public function executeActivity(
         string $type,
         array $args = [],
-        ActivityOptionsInterface $options = null,
-        Type|string|\ReflectionClass|\ReflectionType $returnType = null,
+        ?ActivityOptionsInterface $options = null,
+        Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
     ): PromiseInterface {
         $isLocal = $options instanceof LocalActivityOptions;
 
@@ -382,7 +382,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     }
 
     public function newUntypedActivityStub(
-        ActivityOptionsInterface $options = null,
+        ?ActivityOptionsInterface $options = null,
     ): ActivityStubInterface {
         $options ??= new ActivityOptions();
 
@@ -391,7 +391,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
 
     public function newActivityStub(
         string $class,
-        ActivityOptionsInterface $options = null,
+        ?ActivityOptionsInterface $options = null,
     ): ActivityProxy {
         $activities = $this->services->activitiesReader->fromClass($class);
 

@@ -26,7 +26,7 @@ final class MarshalDateTime extends Marshal
      * @param non-empty-string $to Datetime format or {@see Timestamp} class name.
      */
     public function __construct(
-        string $name = null,
+        ?string $name = null,
         ?string $of = null,
         private string $to = \DateTimeInterface::RFC3339,
         bool $nullable = true,

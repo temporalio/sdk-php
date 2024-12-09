@@ -125,7 +125,7 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
     /**
      * @return $this
      */
-    public function mergeWith(MethodRetry $retry = null): self
+    public function mergeWith(?MethodRetry $retry = null): self
     {
         $self = clone $this;
 

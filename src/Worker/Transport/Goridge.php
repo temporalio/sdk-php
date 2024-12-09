@@ -29,7 +29,7 @@ final class Goridge implements RPCConnectionInterface
         $this->rpc = new RPC($relay);
     }
 
-    public static function create(EnvironmentInterface $env = null): RPCConnectionInterface
+    public static function create(?EnvironmentInterface $env = null): RPCConnectionInterface
     {
         $env ??= Environment::fromGlobals();
 

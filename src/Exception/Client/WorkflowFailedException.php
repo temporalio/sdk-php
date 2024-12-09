@@ -25,7 +25,7 @@ class WorkflowFailedException extends WorkflowException
         ?string $type,
         int $lastWorkflowTaskCompletedEventId,
         int $retryState,
-        \Throwable $previous = null,
+        ?\Throwable $previous = null,
     ) {
         parent::__construct(null, $execution, $type, $previous);
 

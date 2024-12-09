@@ -41,7 +41,7 @@ final class Input
     #[Immutable]
     public Header $header;
 
-    public function __construct(WorkflowInfo $info = null, ValuesInterface $args = null, HeaderInterface $header = null)
+    public function __construct(?WorkflowInfo $info = null, ?ValuesInterface $args = null, ?HeaderInterface $header = null)
     {
         $this->info = $info ?? new WorkflowInfo();
         $this->input = $args ?? EncodedValues::empty();

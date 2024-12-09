@@ -36,7 +36,7 @@ class JsonConverter extends Converter
 
     private MarshallerInterface $marshaller;
 
-    public function __construct(MarshallerInterface $marshaller = null)
+    public function __construct(?MarshallerInterface $marshaller = null)
     {
         $this->marshaller = $marshaller ?? self::createDefaultMarshaller();
     }

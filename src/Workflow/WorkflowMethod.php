@@ -33,7 +33,7 @@ final class WorkflowMethod
     #[Immutable]
     public ?string $name = null;
 
-    public function __construct(string $name = null)
+    public function __construct(?string $name = null)
     {
         $this->name = $name;
     }

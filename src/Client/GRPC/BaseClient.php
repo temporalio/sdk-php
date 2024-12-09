@@ -91,10 +91,10 @@ abstract class BaseClient implements ServiceClientInterface
      */
     public static function createSSL(
         string $address,
-        string $crt = null,
-        string $clientKey = null,
-        string $clientPem = null,
-        string $overrideServerName = null,
+        ?string $crt = null,
+        ?string $clientKey = null,
+        ?string $clientPem = null,
+        ?string $overrideServerName = null,
     ): static {
         if (!\extension_loaded('grpc')) {
             throw new \RuntimeException('The gRPC extension is required to use Temporal Client.');

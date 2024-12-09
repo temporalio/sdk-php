@@ -507,7 +507,7 @@ final class Workflow extends Facade
     public static function continueAsNew(
         string $type,
         array $args = [],
-        ContinueAsNewOptions $options = null,
+        ?ContinueAsNewOptions $options = null,
     ): PromiseInterface {
         return self::getCurrentContext()->continueAsNew($type, $args, $options);
     }
@@ -548,7 +548,7 @@ final class Workflow extends Facade
      * @return T
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
-    public static function newContinueAsNewStub(string $class, ContinueAsNewOptions $options = null): object
+    public static function newContinueAsNewStub(string $class, ?ContinueAsNewOptions $options = null): object
     {
         return self::getCurrentContext()->newContinueAsNewStub($class, $options);
     }
@@ -603,7 +603,7 @@ final class Workflow extends Facade
     public static function executeChildWorkflow(
         string $type,
         array $args = [],
-        ChildWorkflowOptions $options = null,
+        ?ChildWorkflowOptions $options = null,
         mixed $returnType = null,
     ): PromiseInterface {
         return self::getCurrentContext()->executeChildWorkflow($type, $args, $options, $returnType);
@@ -651,7 +651,7 @@ final class Workflow extends Facade
      */
     public static function newChildWorkflowStub(
         string $class,
-        ChildWorkflowOptions $options = null,
+        ?ChildWorkflowOptions $options = null,
     ): object {
         return self::getCurrentContext()->newChildWorkflowStub($class, $options);
     }
@@ -700,7 +700,7 @@ final class Workflow extends Facade
      */
     public static function newUntypedChildWorkflowStub(
         string $name,
-        ChildWorkflowOptions $options = null,
+        ?ChildWorkflowOptions $options = null,
     ): ChildWorkflowStubInterface {
         return self::getCurrentContext()->newUntypedChildWorkflowStub($name, $options);
     }
@@ -797,8 +797,8 @@ final class Workflow extends Facade
     public static function executeActivity(
         string $type,
         array $args = [],
-        ActivityOptionsInterface $options = null,
-        Type|string|\ReflectionClass|\ReflectionType $returnType = null,
+        ?ActivityOptionsInterface $options = null,
+        Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
     ): PromiseInterface {
         return self::getCurrentContext()->executeActivity($type, $args, $options, $returnType);
     }
@@ -838,7 +838,7 @@ final class Workflow extends Facade
      */
     public static function newActivityStub(
         string $class,
-        ActivityOptionsInterface $options = null,
+        ?ActivityOptionsInterface $options = null,
     ): object {
         return self::getCurrentContext()->newActivityStub($class, $options);
     }
@@ -865,7 +865,7 @@ final class Workflow extends Facade
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function newUntypedActivityStub(
-        ActivityOptionsInterface $options = null,
+        ?ActivityOptionsInterface $options = null,
     ): ActivityStubInterface {
         return self::getCurrentContext()->newUntypedActivityStub($options);
     }

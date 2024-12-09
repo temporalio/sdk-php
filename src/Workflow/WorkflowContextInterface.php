@@ -112,13 +112,13 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @internal This is an internal method
      *
      */
-    public function complete(array $result = null, \Throwable $failure = null): PromiseInterface;
+    public function complete(?array $result = null, ?\Throwable $failure = null): PromiseInterface;
 
     /**
      * @internal This is an internal method
      *
      */
-    public function panic(\Throwable $failure = null): PromiseInterface;
+    public function panic(?\Throwable $failure = null): PromiseInterface;
 
     /**
      * Stops workflow execution work for a specified period.
@@ -139,7 +139,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
     public function continueAsNew(
         string $type,
         array $args = [],
-        ContinueAsNewOptions $options = null,
+        ?ContinueAsNewOptions $options = null,
     ): PromiseInterface;
 
     /**
@@ -151,7 +151,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @param class-string<T> $class
      * @return T
      */
-    public function newContinueAsNewStub(string $class, ContinueAsNewOptions $options = null): object;
+    public function newContinueAsNewStub(string $class, ?ContinueAsNewOptions $options = null): object;
 
     /**
      * Calls an external workflow without stopping the current one.
@@ -164,7 +164,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
     public function executeChildWorkflow(
         string $type,
         array $args = [],
-        ChildWorkflowOptions $options = null,
+        ?ChildWorkflowOptions $options = null,
         $returnType = null,
     ): PromiseInterface;
 
@@ -180,7 +180,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      */
     public function newChildWorkflowStub(
         string $class,
-        ChildWorkflowOptions $options = null,
+        ?ChildWorkflowOptions $options = null,
     ): object;
 
     /**
@@ -192,7 +192,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      */
     public function newUntypedChildWorkflowStub(
         string $type,
-        ChildWorkflowOptions $options = null,
+        ?ChildWorkflowOptions $options = null,
     ): ChildWorkflowStubInterface;
 
     /**
@@ -228,8 +228,8 @@ interface WorkflowContextInterface extends EnvironmentInterface
     public function executeActivity(
         string $type,
         array $args = [],
-        ActivityOptionsInterface $options = null,
-        Type|string|\ReflectionClass|\ReflectionType $returnType = null,
+        ?ActivityOptionsInterface $options = null,
+        Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
     ): PromiseInterface;
 
     /**
@@ -246,7 +246,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      */
     public function newActivityStub(
         string $class,
-        ActivityOptionsInterface $options = null,
+        ?ActivityOptionsInterface $options = null,
     ): object;
 
     /**
@@ -258,7 +258,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      */
     public function newUntypedActivityStub(
-        ActivityOptionsInterface $options = null,
+        ?ActivityOptionsInterface $options = null,
     ): ActivityStubInterface;
 
     /**

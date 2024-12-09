@@ -63,7 +63,7 @@ final class WorkerMock implements WorkerInterface, EventListenerInterface, Dispa
         return $this->wrapped->registerActivityImplementations(...$activity);
     }
 
-    public function registerActivity(string $type, callable $factory = null): WorkerInterface
+    public function registerActivity(string $type, ?callable $factory = null): WorkerInterface
     {
         return $this->wrapped->registerActivity($type, $factory);
     }

@@ -45,7 +45,7 @@ interface WorkflowRunInterface
      *
      * @see DateInterval
      */
-    public function getResult($type = null, int $timeout = null): mixed;
+    public function getResult($type = null, ?int $timeout = null): mixed;
 
     public function describe(): WorkflowExecutionDescription;
 }

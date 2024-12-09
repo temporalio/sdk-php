@@ -23,7 +23,7 @@ class ServiceClientException extends \RuntimeException
     /**
      * @throws \Exception
      */
-    public function __construct(\stdClass $status, \Throwable $previous = null)
+    public function __construct(\stdClass $status, ?\Throwable $previous = null)
     {
         $this->status = new Status();
 

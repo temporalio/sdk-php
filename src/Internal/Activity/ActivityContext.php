@@ -42,7 +42,7 @@ final class ActivityContext implements ActivityContextInterface, HeaderCarrier
         DataConverterInterface $converter,
         ValuesInterface $input,
         HeaderInterface $header,
-        ValuesInterface $lastHeartbeatDetails = null,
+        ?ValuesInterface $lastHeartbeatDetails = null,
     ) {
         $this->info = new ActivityInfo();
         $this->rpc = $rpc;

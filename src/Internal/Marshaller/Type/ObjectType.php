@@ -29,7 +29,7 @@ class ObjectType extends Type implements DetectableTypeInterface, RuleFactoryInt
      * @param class-string<TClass>|null $class
      * @throws \ReflectionException
      */
-    public function __construct(MarshallerInterface $marshaller, string $class = null)
+    public function __construct(MarshallerInterface $marshaller, ?string $class = null)
     {
         $this->reflection = new \ReflectionClass($class ?? \stdClass::class);
 

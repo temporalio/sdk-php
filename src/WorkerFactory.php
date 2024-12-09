@@ -132,8 +132,8 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     }
 
     public static function create(
-        DataConverterInterface $converter = null,
-        RPCConnectionInterface $rpc = null,
+        ?DataConverterInterface $converter = null,
+        ?RPCConnectionInterface $rpc = null,
     ): WorkerFactoryInterface {
         return new static(
             $converter ?? DataConverter::createDefault(),
@@ -143,9 +143,9 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
 
     public function newWorker(
         string $taskQueue = self::DEFAULT_TASK_QUEUE,
-        WorkerOptions $options = null,
-        ExceptionInterceptorInterface $exceptionInterceptor = null,
-        PipelineProvider $interceptorProvider = null,
+        ?WorkerOptions $options = null,
+        ?ExceptionInterceptorInterface $exceptionInterceptor = null,
+        ?PipelineProvider $interceptorProvider = null,
     ): WorkerInterface {
         $worker = new Worker(
             $taskQueue,
@@ -195,7 +195,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         return $this->env;
     }
 
-    public function run(HostConnectionInterface $host = null): int
+    public function run(?HostConnectionInterface $host = null): int
     {
         $host ??= RoadRunner::create();
         $this->codec = $this->createCodec();

@@ -24,13 +24,13 @@ final class RoadRunnerActivityInvocationCache implements ActivityInvocationCache
     private StorageInterface $cache;
     private DataConverterInterface $dataConverter;
 
-    public function __construct(string $host, string $cacheName, DataConverterInterface $dataConverter = null)
+    public function __construct(string $host, string $cacheName, ?DataConverterInterface $dataConverter = null)
     {
         $this->cache = (new Factory(RPC::create($host)))->select($cacheName);
         $this->dataConverter = $dataConverter ?? DataConverter::createDefault();
     }
 
-    public static function create(DataConverterInterface $dataConverter = null): self
+    public static function create(?DataConverterInterface $dataConverter = null): self
     {
         $env = Environment::fromGlobals();
         return new self($env->getRPCAddress(), self::CACHE_NAME, $dataConverter);

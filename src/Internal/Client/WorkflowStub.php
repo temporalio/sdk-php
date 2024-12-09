@@ -458,7 +458,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
      * @param null|mixed $type
      * @throws \Throwable
      */
-    public function getResult($type = null, int $timeout = null): mixed
+    public function getResult($type = null, ?int $timeout = null): mixed
     {
         /** @var ValuesInterface|null $result */
         $result = $this->interceptors->with(
@@ -528,7 +528,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
     /**
      * @throws \ErrorException
      */
-    private function fetchResult(int $timeout = null): ?EncodedValues
+    private function fetchResult(?int $timeout = null): ?EncodedValues
     {
         $this->assertStarted(__FUNCTION__);
 
@@ -606,7 +606,7 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
     /**
      * @throws \ErrorException
      */
-    private function getCloseEvent(int $timeout = null): HistoryEvent
+    private function getCloseEvent(?int $timeout = null): HistoryEvent
     {
         $historyRequest = new GetWorkflowExecutionHistoryRequest();
         $historyRequest

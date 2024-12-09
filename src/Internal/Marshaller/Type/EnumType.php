@@ -25,7 +25,7 @@ class EnumType extends Type implements RuleFactoryInterface
     /** @var class-string<\UnitEnum> */
     private string $classFQCN;
 
-    public function __construct(MarshallerInterface $marshaller, string $class = null)
+    public function __construct(MarshallerInterface $marshaller, ?string $class = null)
     {
         if ($class === null) {
             throw new \RuntimeException('Enum is required');

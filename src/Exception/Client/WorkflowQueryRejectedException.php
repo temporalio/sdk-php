@@ -23,7 +23,7 @@ class WorkflowQueryRejectedException extends WorkflowQueryException
         string $type,
         int $queryRejectCondition,
         int $workflowExecutionStatus,
-        \Throwable $previous = null,
+        ?\Throwable $previous = null,
     ) {
         parent::__construct(null, $execution, $type, $previous);
         $this->queryRejectCondition = $queryRejectCondition;

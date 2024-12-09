@@ -36,7 +36,7 @@ interface WorkerFactoryInterface
      */
     public function newWorker(
         string $taskQueue = self::DEFAULT_TASK_QUEUE,
-        WorkerOptions $options = null,
+        ?WorkerOptions $options = null,
     ): WorkerInterface;
 
     /**

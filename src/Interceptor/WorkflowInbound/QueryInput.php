@@ -28,7 +28,7 @@ class QueryInput
     ) {}
 
     public function with(
-        ValuesInterface $arguments = null,
+        ?ValuesInterface $arguments = null,
     ): self {
         return new self(
             $this->queryName,

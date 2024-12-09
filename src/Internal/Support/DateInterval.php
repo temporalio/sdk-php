@@ -136,7 +136,7 @@ final class DateInterval
     /**
      * @return ($i is null ? null : Duration)
      */
-    public static function toDuration(\DateInterval $i = null): ?Duration
+    public static function toDuration(?\DateInterval $i = null): ?Duration
     {
         if ($i === null) {
             return null;

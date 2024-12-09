@@ -28,7 +28,7 @@ use Temporal\Internal\Marshaller\Type\ArrayType;
 final class MarshalArray extends Marshal
 {
     public function __construct(
-        string $name = null,
+        ?string $name = null,
         Marshal|string|null $of = null,
         bool $nullable = true,
     ) {

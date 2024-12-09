@@ -20,7 +20,7 @@ final class Panic extends Request
 {
     public const NAME = 'Panic';
 
-    public function __construct(\Throwable $failure = null)
+    public function __construct(?\Throwable $failure = null)
     {
         parent::__construct(self::NAME, [], null);
         $this->setFailure($failure);

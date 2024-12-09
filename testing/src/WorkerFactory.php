@@ -47,9 +47,9 @@ class WorkerFactory extends \Temporal\WorkerFactory
 
     public function newWorker(
         string $taskQueue = self::DEFAULT_TASK_QUEUE,
-        WorkerOptions $options = null,
-        ExceptionInterceptorInterface $exceptionInterceptor = null,
-        PipelineProvider $interceptorProvider = null,
+        ?WorkerOptions $options = null,
+        ?ExceptionInterceptorInterface $exceptionInterceptor = null,
+        ?PipelineProvider $interceptorProvider = null,
     ): WorkerInterface {
         $worker = new WorkerMock(
             new Worker(

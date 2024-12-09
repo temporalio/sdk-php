@@ -47,7 +47,7 @@ class ActivityCompletionException extends TemporalException
     /**
      * @return static
      */
-    public static function fromActivityInfo(ActivityInfo $info, \Throwable $e = null): self
+    public static function fromActivityInfo(ActivityInfo $info, ?\Throwable $e = null): self
     {
         $e = new static(
             self::buildMessage(

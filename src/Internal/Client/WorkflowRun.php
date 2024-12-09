@@ -32,7 +32,7 @@ final class WorkflowRun implements WorkflowRunInterface
         return $this->stub->getExecution();
     }
 
-    public function getResult($type = null, int $timeout = null): mixed
+    public function getResult($type = null, ?int $timeout = null): mixed
     {
         return $this->stub->getResult($type ?? $this->returnType, $timeout);
     }
