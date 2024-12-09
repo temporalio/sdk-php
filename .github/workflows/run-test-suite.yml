@@ -106,8 +106,7 @@ jobs:
 
       - name: Download RoadRunner
         if: inputs.download-binaries == true
-        run: |
-          vendor/bin/dload get --no-interaction -vv
+        run: composer get:binaries
 
       - name: Run tests
         run: ${{ inputs.test-command }}
