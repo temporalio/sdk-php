@@ -62,7 +62,7 @@ class Diff
     /**
      * @param non-empty-string|null $property
      */
-    public function isPresent(object $context, string $property = null): bool
+    public function isPresent(object $context, ?string $property = null): bool
     {
         return !$this->isChanged($context, $property);
     }
@@ -70,7 +70,7 @@ class Diff
     /**
      * @param non-empty-string|null $property
      */
-    public function isChanged(object $context, string $property = null): bool
+    public function isChanged(object $context, ?string $property = null): bool
     {
         $this->matchContext($context);
 

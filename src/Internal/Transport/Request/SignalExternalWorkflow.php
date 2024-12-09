@@ -26,7 +26,7 @@ final class SignalExternalWorkflow extends Request
         string $workflowId,
         ?string $runId,
         string $signal,
-        ValuesInterface $input = null,
+        ?ValuesInterface $input = null,
         bool $childWorkflowOnly = false,
     ) {
         $options = [

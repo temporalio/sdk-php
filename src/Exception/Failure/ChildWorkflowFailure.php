@@ -29,7 +29,7 @@ class ChildWorkflowFailure extends TemporalFailure
         WorkflowExecution $execution,
         string $namespace,
         int $retryState,
-        \Throwable $previous = null,
+        ?\Throwable $previous = null,
     ) {
         parent::__construct(
             self::buildMessage(

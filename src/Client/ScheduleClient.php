@@ -48,8 +48,8 @@ final class ScheduleClient implements ScheduleClientInterface
 
     public function __construct(
         ServiceClientInterface $serviceClient,
-        ClientOptions $options = null,
-        DataConverterInterface $converter = null,
+        ?ClientOptions $options = null,
+        ?DataConverterInterface $converter = null,
     ) {
         $this->client = $serviceClient;
         $this->clientOptions = $options ?? new ClientOptions();
@@ -62,8 +62,8 @@ final class ScheduleClient implements ScheduleClientInterface
 
     public static function create(
         ServiceClientInterface $serviceClient,
-        ClientOptions $options = null,
-        DataConverterInterface $converter = null,
+        ?ClientOptions $options = null,
+        ?DataConverterInterface $converter = null,
     ): ScheduleClientInterface {
         return new self($serviceClient, $options, $converter);
     }

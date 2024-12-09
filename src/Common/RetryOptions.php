@@ -106,7 +106,7 @@ class RetryOptions extends Options
     #[Marshal(name: 'non_retryable_error_types')]
     public array $nonRetryableExceptions = self::DEFAULT_NON_RETRYABLE_EXCEPTIONS;
 
-    public function mergeWith(MethodRetry $retry = null): self
+    public function mergeWith(?MethodRetry $retry = null): self
     {
         $self = clone $this;
 

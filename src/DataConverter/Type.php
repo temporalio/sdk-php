@@ -37,7 +37,7 @@ final class Type
      */
     public function __construct(
         private readonly string $name = Type::TYPE_ANY,
-        bool $allowsNull = null,
+        ?bool $allowsNull = null,
         private readonly bool $isArrayOf = false,
     ) {
         $this->allowsNull = $allowsNull ?? (

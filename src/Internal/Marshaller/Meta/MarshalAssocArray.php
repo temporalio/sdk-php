@@ -27,7 +27,7 @@ use Temporal\Internal\Marshaller\Type\AssocArrayType;
 final class MarshalAssocArray extends Marshal
 {
     public function __construct(
-        string $name = null,
+        ?string $name = null,
         Marshal|string|null $of = null,
         bool $nullable = true,
     ) {

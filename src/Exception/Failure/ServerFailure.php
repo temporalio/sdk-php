@@ -15,7 +15,7 @@ class ServerFailure extends TemporalFailure
 {
     private bool $nonRetryable;
 
-    public function __construct(string $message, bool $nonRetryable, \Throwable $previous = null)
+    public function __construct(string $message, bool $nonRetryable, ?\Throwable $previous = null)
     {
         parent::__construct(
             $message,

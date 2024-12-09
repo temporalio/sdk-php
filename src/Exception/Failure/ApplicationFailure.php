@@ -54,8 +54,8 @@ class ApplicationFailure extends TemporalFailure
         string $message,
         string $type,
         bool $nonRetryable,
-        ValuesInterface $details = null,
-        \Throwable $previous = null,
+        ?ValuesInterface $details = null,
+        ?\Throwable $previous = null,
         private ?\DateInterval $nextRetryDelay = null,
     ) {
         parent::__construct(

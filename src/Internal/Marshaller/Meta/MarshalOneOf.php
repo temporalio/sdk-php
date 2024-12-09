@@ -24,7 +24,7 @@ final class MarshalOneOf extends Marshal
      */
     public function __construct(
         private array $cases,
-        string $name = null,
+        ?string $name = null,
         ?string $of = null,
         bool $nullable = true,
     ) {

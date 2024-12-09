@@ -72,7 +72,7 @@ interface WorkerInterface extends Identifiable
      *
      * $worker->registerActivity(MyActivity::class, fn(ReflectionClass $class) => $container->create($class->getName()));
      */
-    public function registerActivity(string $type, callable $factory = null): self;
+    public function registerActivity(string $type, ?callable $factory = null): self;
 
     /**
      * Returns list of registered activities.

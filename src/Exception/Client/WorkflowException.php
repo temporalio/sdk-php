@@ -22,8 +22,8 @@ class WorkflowException extends TemporalException
     public function __construct(
         ?string $message,
         WorkflowExecution $execution,
-        string $workflowType = null,
-        \Throwable $previous = null,
+        ?string $workflowType = null,
+        ?\Throwable $previous = null,
     ) {
         parent::__construct(
             self::buildMessage(
@@ -42,8 +42,8 @@ class WorkflowException extends TemporalException
 
     public static function withoutMessage(
         WorkflowExecution $execution,
-        string $workflowType = null,
-        \Throwable $previous = null,
+        ?string $workflowType = null,
+        ?\Throwable $previous = null,
     ): WorkflowException {
         return new static(null, $execution, $workflowType, $previous);
     }

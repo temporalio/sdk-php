@@ -62,7 +62,7 @@ class EncodedValues implements ValuesInterface
         DataConverterInterface $converter,
         ValuesInterface $values,
         int $offset,
-        int $length = null,
+        ?int $length = null,
     ): ValuesInterface {
         $payloads = $values->toPayloads();
         $newPayloads = new Payloads();
@@ -90,7 +90,7 @@ class EncodedValues implements ValuesInterface
         );
     }
 
-    public static function fromValues(array $values, DataConverterInterface $dataConverter = null): static
+    public static function fromValues(array $values, ?DataConverterInterface $dataConverter = null): static
     {
         $ev = new static();
         $ev->values = \array_values($values);

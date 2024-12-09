@@ -46,8 +46,8 @@ final class RoadRunner implements HostConnectionInterface
     }
 
     public static function create(
-        EnvironmentInterface $env = null,
-        RoadRunnerVersionChecker $versionChecker = null,
+        ?EnvironmentInterface $env = null,
+        ?RoadRunnerVersionChecker $versionChecker = null,
     ): HostConnectionInterface {
         $versionChecker ??= new RoadRunnerVersionChecker();
         $versionChecker->check();
@@ -97,7 +97,7 @@ final class RoadRunner implements HostConnectionInterface
      * @return array<string, string>
      * @throws ProtocolException
      */
-    private function decodeHeaders(string $headers = null): array
+    private function decodeHeaders(?string $headers = null): array
     {
         if ($headers === null) {
             return [];

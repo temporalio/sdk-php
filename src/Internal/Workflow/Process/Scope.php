@@ -209,7 +209,7 @@ class Scope implements CancellationScopeInterface, Destroyable
         return $this;
     }
 
-    public function cancel(\Throwable $reason = null): void
+    public function cancel(?\Throwable $reason = null): void
     {
         if ($this->detached && !$reason instanceof DestructMemorizedInstanceException) {
             // detaches scopes can be offload via memory flush
@@ -231,7 +231,7 @@ class Scope implements CancellationScopeInterface, Destroyable
     /**
      * @param non-empty-string|null $layer
      */
-    public function startScope(callable $handler, bool $detached, string $layer = null): CancellationScopeInterface
+    public function startScope(callable $handler, bool $detached, ?string $layer = null): CancellationScopeInterface
     {
         $scope = $this->createScope($detached, $layer);
         $scope->start($handler, null, false);
@@ -245,9 +245,9 @@ class Scope implements CancellationScopeInterface, Destroyable
     }
 
     public function then(
-        callable $onFulfilled = null,
-        callable $onRejected = null,
-        callable $onProgress = null,
+        ?callable $onFulfilled = null,
+        ?callable $onRejected = null,
+        ?callable $onProgress = null,
     ): PromiseInterface {
         return $this->deferred->promise()->then($onFulfilled, $onRejected);
     }
@@ -278,7 +278,7 @@ class Scope implements CancellationScopeInterface, Destroyable
      */
     public function onAwait(Deferred $deferred): void
     {
-        $this->onCancel[++$this->cancelID] = static function (\Throwable $e = null) use ($deferred): void {
+        $this->onCancel[++$this->cancelID] = static function (?\Throwable $e = null) use ($deferred): void {
             $deferred->reject($e ?? new CanceledFailure(''));
         };
 
@@ -308,7 +308,7 @@ class Scope implements CancellationScopeInterface, Destroyable
     protected function createScope(
         bool $detached,
         ?string $layer = null,
-        WorkflowContext $context = null,
+        ?WorkflowContext $context = null,
         ?Workflow\UpdateContext $updateContext = null,
     ): self {
         $scope = new Scope($this->services, $context ?? $this->context, $updateContext);

@@ -37,7 +37,7 @@ class WorkflowExecution
     #[Marshal(name: 'run_id')]
     private ?string $runId;
 
-    public function __construct(string $id = null, ?string $runId = null)
+    public function __construct(?string $id = null, ?string $runId = null)
     {
         $this->id = $id ?? Uuid::nil();
         $this->runId = $runId;

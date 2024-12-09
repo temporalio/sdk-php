@@ -35,7 +35,7 @@ class TemporalFailure extends TemporalException implements \Stringable
     private string $originalMessage;
     private ?string $originalStackTrace = null;
 
-    public function __construct(string $message, string $originalMessage = null, \Throwable $previous = null)
+    public function __construct(string $message, ?string $originalMessage = null, ?\Throwable $previous = null)
     {
         parent::__construct($message, 0, $previous);
 

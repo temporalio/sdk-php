@@ -62,7 +62,7 @@ interface WorkflowClientInterface extends ClientContextInterface
      */
     public function newWorkflowStub(
         string $class,
-        WorkflowOptions $options = null,
+        ?WorkflowOptions $options = null,
     ): object;
 
     /**
@@ -78,7 +78,7 @@ interface WorkflowClientInterface extends ClientContextInterface
      */
     public function newUntypedWorkflowStub(
         string $workflowType,
-        WorkflowOptions $options = null,
+        ?WorkflowOptions $options = null,
     ): WorkflowStubInterface;
 
     /**

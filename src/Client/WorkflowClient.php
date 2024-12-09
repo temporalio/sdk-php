@@ -66,9 +66,9 @@ class WorkflowClient implements WorkflowClientInterface
 
     public function __construct(
         ServiceClientInterface $serviceClient,
-        ClientOptions $options = null,
-        DataConverterInterface $converter = null,
-        PipelineProvider $interceptorProvider = null,
+        ?ClientOptions $options = null,
+        ?DataConverterInterface $converter = null,
+        ?PipelineProvider $interceptorProvider = null,
     ) {
         $this->client = $serviceClient;
         $this->interceptorPipeline = ($interceptorProvider ?? new SimplePipelineProvider())
@@ -83,9 +83,9 @@ class WorkflowClient implements WorkflowClientInterface
      */
     public static function create(
         ServiceClientInterface $serviceClient,
-        ClientOptions $options = null,
-        DataConverterInterface $converter = null,
-        PipelineProvider $interceptorProvider = null,
+        ?ClientOptions $options = null,
+        ?DataConverterInterface $converter = null,
+        ?PipelineProvider $interceptorProvider = null,
     ): self {
         return new self($serviceClient, $options, $converter, $interceptorProvider);
     }
@@ -207,7 +207,7 @@ class WorkflowClient implements WorkflowClientInterface
 
     public function newWorkflowStub(
         string $class,
-        WorkflowOptions $options = null,
+        ?WorkflowOptions $options = null,
     ): object {
         $workflow = $this->reader->fromClass($class);
 
@@ -220,7 +220,7 @@ class WorkflowClient implements WorkflowClientInterface
 
     public function newUntypedWorkflowStub(
         string $workflowType,
-        WorkflowOptions $options = null,
+        ?WorkflowOptions $options = null,
     ): WorkflowStubInterface {
         $options ??= new WorkflowOptions();
 

@@ -30,7 +30,7 @@ interface ActivityStubInterface
     public function execute(
         string $name,
         array $args = [],
-        Type|string|\ReflectionClass|\ReflectionType $returnType = null,
+        Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
         bool $isLocalActivity = false,
     ): PromiseInterface;
 }

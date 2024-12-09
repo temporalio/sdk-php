@@ -88,7 +88,7 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
         return $this;
     }
 
-    public function registerActivity(string $type, callable $factory = null): WorkerInterface
+    public function registerActivity(string $type, ?callable $factory = null): WorkerInterface
     {
         foreach ($this->services->activitiesReader->fromClass($type) as $proto) {
             if ($factory !== null) {
