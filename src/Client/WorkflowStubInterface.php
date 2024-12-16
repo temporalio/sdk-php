@@ -32,6 +32,9 @@ use Temporal\Workflow\WorkflowRunInterface;
  */
 interface WorkflowStubInterface extends WorkflowRunInterface
 {
+    /**
+     * @return non-empty-string|null
+     */
     public function getWorkflowType(): ?string;
 
     /**

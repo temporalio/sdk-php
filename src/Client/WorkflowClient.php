@@ -235,7 +235,7 @@ class WorkflowClient implements WorkflowClientInterface
         );
         $workflowStub->hasExecution() and throw new InvalidArgumentException(self::ERROR_WORKFLOW_START_DUPLICATION);
 
-        $handle = $this->getStarter()->updateWithStart(
+        [$execution, $handle] = $this->getStarter()->updateWithStart(
             $workflowType,
             $workflowStub->getOptions() ?? WorkflowOptions::new(),
             $update,
@@ -243,10 +243,11 @@ class WorkflowClient implements WorkflowClientInterface
             $startArgs,
         );
 
-        // todo: set execution if UpdateWorkflow was failed but WF was started
-        $workflowStub->setExecution($handle->getExecution());
+        $workflowStub->setExecution($execution);
 
-        return $handle;
+        return $handle instanceof \Throwable
+            ? throw $handle
+            : $handle;
     }
 
     public function newWorkflowStub(
