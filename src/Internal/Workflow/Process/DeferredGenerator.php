@@ -18,9 +18,6 @@ final class DeferredGenerator implements \Iterator
 {
     private bool $started = false;
     private bool $finished = false;
-    private mixed $key = null;
-    private mixed $value = null;
-    private mixed $result = null;
     private \Generator $generator;
 
     /** @var array<\Closure(\Throwable): mixed> */
@@ -50,7 +47,6 @@ final class DeferredGenerator implements \Iterator
         $self = new self();
         $self->generator = $generator;
         $self->started = true;
-        $self->fill();
         return $self;
     }
 
@@ -67,10 +63,8 @@ final class DeferredGenerator implements \Iterator
         );
         try {
             $this->generator->throw($exception);
-            $this->fill();
         } catch (\Throwable $e) {
             $this->handleException($e);
-            throw $e;
         }
     }
 
@@ -81,15 +75,12 @@ final class DeferredGenerator implements \Iterator
      */
     public function send(mixed $value): mixed
     {
-        $this->started or throw new \LogicException('Cannot send value to a generator that was not started.');
+        $this->start();
         $this->finished and throw new \LogicException('Cannot send value to a generator that was already finished.');
         try {
-            $result = $this->generator->send($value);
-            $this->fill();
-            return $result;
+            return $this->generator->send($value);
         } catch (\Throwable $e) {
             $this->handleException($e);
-            throw $e;
         }
     }
 
@@ -98,8 +89,11 @@ final class DeferredGenerator implements \Iterator
      */
     public function getReturn(): mixed
     {
-        $this->finished or throw new \LogicException('Cannot get return value of a generator that was not finished.');
-        return $this->result;
+        try {
+            return $this->generator->getReturn();
+        } catch (\Throwable $e) {
+            $this->handleException($e);
+        }
     }
 
     /**
@@ -108,7 +102,11 @@ final class DeferredGenerator implements \Iterator
     public function current(): mixed
     {
         $this->start();
-        return $this->value;
+        try {
+            return $this->generator->current();
+        } catch (\Throwable $e) {
+            $this->handleException($e);
+        }
     }
 
     /**
@@ -117,7 +115,11 @@ final class DeferredGenerator implements \Iterator
     public function key(): mixed
     {
         $this->start();
-        return $this->key;
+        try {
+            return $this->generator->key();
+        } catch (\Throwable $e) {
+            $this->handleException($e);
+        }
     }
 
     /**
@@ -132,10 +134,8 @@ final class DeferredGenerator implements \Iterator
 
         try {
             $this->generator->next();
-            $this->fill();
         } catch (\Throwable $e) {
             $this->handleException($e);
-            throw $e;
         }
     }
 
@@ -147,12 +147,16 @@ final class DeferredGenerator implements \Iterator
     public function valid(): bool
     {
         $this->start();
-        return !$this->finished;
+        try {
+            return $this->generator->valid();
+        } catch (\Throwable $e) {
+            $this->handleException($e);
+        }
     }
 
     public function rewind(): void
     {
-        $this->started and throw new \LogicException('Cannot rewind a generator that was already run.');
+        $this->generator->rewind();
     }
 
     /**
@@ -178,34 +182,34 @@ final class DeferredGenerator implements \Iterator
 
             if ($result instanceof \Generator) {
                 $this->generator = $result;
-                $this->fill();
                 return;
             }
 
-            $this->result = $result;
+            $this->generator = (static function (mixed $result) {
+                return $result;
+                yield;
+            })($result);
             $this->finished = true;
         } catch (\Throwable $e) {
             $this->handleException($e);
-            throw $e;
         } finally {
             unset($this->handler, $this->values);
         }
     }
 
-    private function fill(): void
+    private function handleException(\Throwable $e): never
     {
-        $this->key = $this->generator->key();
-        $this->value = $this->generator->current();
-        $this->finished = !$this->generator->valid() and $this->result = $this->generator->getReturn();
-    }
-
-    private function handleException(\Throwable $e): void
-    {
-        $this->key = null;
-        $this->value = null;
+        $this->finished and throw $e;
         $this->finished = true;
         foreach ($this->catchers as $catch) {
-            $catch($e);
+            try {
+                $catch($e);
+            } catch (\Throwable) {
+                // Do nothing.
+            }
         }
+
+        $this->catchers = [];
+        throw $e;
     }
 }

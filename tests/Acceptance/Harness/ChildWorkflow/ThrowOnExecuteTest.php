@@ -51,8 +51,6 @@ class MainWorkflow
     {
         return yield Workflow::newChildWorkflowStub(
             ChildWorkflow::class,
-            // TODO: remove after https://github.com/temporalio/sdk-php/issues/451 is fixed
-            Workflow\ChildWorkflowOptions::new()->withTaskQueue(Workflow::getInfo()->taskQueue),
         )->run();
     }
 }
