@@ -70,6 +70,7 @@ final class DeferredGenerator implements \Iterator
             $this->fill();
         } catch (\Throwable $e) {
             $this->handleException($e);
+            throw $e;
         }
     }
 
@@ -88,7 +89,7 @@ final class DeferredGenerator implements \Iterator
             return $result;
         } catch (\Throwable $e) {
             $this->handleException($e);
-            return null;
+            throw $e;
         }
     }
 
@@ -134,6 +135,7 @@ final class DeferredGenerator implements \Iterator
             $this->fill();
         } catch (\Throwable $e) {
             $this->handleException($e);
+            throw $e;
         }
     }
 
@@ -184,6 +186,7 @@ final class DeferredGenerator implements \Iterator
             $this->finished = true;
         } catch (\Throwable $e) {
             $this->handleException($e);
+            throw $e;
         } finally {
             unset($this->handler, $this->values);
         }
