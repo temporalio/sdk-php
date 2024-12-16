@@ -29,37 +29,12 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
 {
     use EventEmitterTrait;
 
-    /**
-     * @var string
-     */
     private string $name;
-
-    /**
-     * @var WorkerOptions
-     */
     private WorkerOptions $options;
-
-    /**
-     * @var RouterInterface
-     */
     private RouterInterface $router;
-
-    /**
-     * @var ServiceContainer
-     */
     private ServiceContainer $services;
-
-    /**
-     * @var RPCConnectionInterface
-     */
     private RPCConnectionInterface $rpc;
 
-    /**
-     * @param string $taskQueue
-     * @param WorkerOptions $options
-     * @param ServiceContainer $serviceContainer
-     * @param RPCConnectionInterface $rpc
-     */
     public function __construct(
         string $taskQueue,
         WorkerOptions $options,
@@ -74,33 +49,21 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
         $this->router = $this->createRouter();
     }
 
-    /**
-     * @return WorkerOptions
-     */
     public function getOptions(): WorkerOptions
     {
         return $this->options;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function dispatch(ServerRequestInterface $request, array $headers): PromiseInterface
     {
         return $this->router->dispatch($request, $headers);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getID(): string
     {
         return $this->name;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function registerWorkflowTypes(string ...$class): WorkerInterface
     {
         foreach ($class as $workflow) {
@@ -111,17 +74,11 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
         return $this;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getWorkflows(): RepositoryInterface
     {
         return $this->services->workflows;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function registerActivityImplementations(object ...$activity): WorkerInterface
     {
         foreach ($activity as $act) {
@@ -131,7 +88,7 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
         return $this;
     }
 
-    public function registerActivity(string $type, callable $factory = null): WorkerInterface
+    public function registerActivity(string $type, ?callable $factory = null): WorkerInterface
     {
         foreach ($this->services->activitiesReader->fromClass($type) as $proto) {
             if ($factory !== null) {
@@ -150,17 +107,11 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
         return $this;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getActivities(): RepositoryInterface
     {
         return $this->services->activities;
     }
 
-    /**
-     * @return RouterInterface
-     */
     protected function createRouter(): RouterInterface
     {
         $router = new Router();

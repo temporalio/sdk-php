@@ -20,15 +20,6 @@ class ActivityFailure extends TemporalFailure
     private string $identity;
     private int $retryState;
 
-    /**
-     * @param int $scheduledEventId
-     * @param int $startedEventId
-     * @param string $activityType
-     * @param string $activityId
-     * @param int $retryState
-     * @param string $identity
-     * @param \Throwable|null $previous
-     */
     public function __construct(
         int $scheduledEventId,
         int $startedEventId,
@@ -36,7 +27,7 @@ class ActivityFailure extends TemporalFailure
         string $activityId,
         int $retryState,
         string $identity,
-        \Throwable $previous = null,
+        ?\Throwable $previous = null,
     ) {
         parent::__construct(
             self::buildMessage(
@@ -61,49 +52,31 @@ class ActivityFailure extends TemporalFailure
         $this->retryState = $retryState;
     }
 
-    /**
-     * @return int
-     */
     public function getScheduledEventId(): int
     {
         return $this->scheduledEventId;
     }
 
-    /**
-     * @return int
-     */
     public function getStartedEventId(): int
     {
         return $this->startedEventId;
     }
 
-    /**
-     * @return string
-     */
     public function getActivityType(): string
     {
         return $this->activityType;
     }
 
-    /**
-     * @return string
-     */
     public function getActivityId(): string
     {
         return $this->activityId;
     }
 
-    /**
-     * @return string
-     */
     public function getIdentity(): string
     {
         return $this->identity;
     }
 
-    /**
-     * @return int
-     */
     public function getRetryState(): int
     {
         return $this->retryState;

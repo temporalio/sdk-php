@@ -44,13 +44,9 @@ class TypeFactory implements RuleFactoryInterface
      */
     private array $typeDtoMatchers = [];
 
-    /**
-     * @var MarshallerInterface
-     */
     private MarshallerInterface $marshaller;
 
     /**
-     * @param MarshallerInterface $marshaller
      * @param array<CallableTypeMatcher|DetectableTypeInterface|TypeRuleFactoryInterface> $matchers
      */
     public function __construct(MarshallerInterface $marshaller, array $matchers)
@@ -61,9 +57,6 @@ class TypeFactory implements RuleFactoryInterface
         $this->createMatchers($this->getDefaultMatchers());
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function create(string $type, array $args): ?TypeInterface
     {
         if (!\is_subclass_of($type, TypeInterface::class)) {
@@ -73,9 +66,6 @@ class TypeFactory implements RuleFactoryInterface
         return new $type($this->marshaller, ...$args);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function detect(?\ReflectionType $type): ?string
     {
         /**
@@ -96,9 +86,6 @@ class TypeFactory implements RuleFactoryInterface
         return null;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function makeRule(\ReflectionProperty $property): ?MarshallingRule
     {
         foreach ($this->typeDtoMatchers as $matcher) {

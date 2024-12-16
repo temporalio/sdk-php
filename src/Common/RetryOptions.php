@@ -106,11 +106,7 @@ class RetryOptions extends Options
     #[Marshal(name: 'non_retryable_error_types')]
     public array $nonRetryableExceptions = self::DEFAULT_NON_RETRYABLE_EXCEPTIONS;
 
-    /**
-     * @param MethodRetry|null $retry
-     * @return self
-     */
-    public function mergeWith(MethodRetry $retry = null): self
+    public function mergeWith(?MethodRetry $retry = null): self
     {
         $self = clone $this;
 
@@ -142,7 +138,6 @@ class RetryOptions extends Options
     /**
      * @psalm-suppress ImpureMethodCall
      *
-     * @param float $coefficient
      * @return static
      */
     #[Pure]
@@ -207,7 +202,6 @@ class RetryOptions extends Options
     /**
      * Converts DTO to protobuf object
      *
-     * @return RetryPolicy
      * @psalm-suppress ImpureMethodCall
      */
     public function toWorkflowRetryPolicy(): RetryPolicy

@@ -39,10 +39,8 @@ use Temporal\Worker\Transport\Command\RequestInterface;
 interface WorkflowOutboundRequestInterceptor extends Interceptor
 {
     /**
-     * @param RequestInterface $request
      * @param callable(RequestInterface): PromiseInterface $next
      *
-     * @return PromiseInterface
      */
     public function handleOutboundRequest(RequestInterface $request, callable $next): PromiseInterface;
 }

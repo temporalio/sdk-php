@@ -23,9 +23,6 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
 {
     private const ERROR_HANDLER_NOT_FOUND = 'unknown update method %s. KnownUpdateNames=[%s]';
 
-    /**
-     * {@inheritDoc}
-     */
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
         $process = $this->findProcessOrFail($request->getID());

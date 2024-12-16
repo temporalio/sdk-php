@@ -21,7 +21,7 @@ final class InMemoryActivityInvocationCache implements ActivityInvocationCacheIn
 
     private DataConverterInterface $dataConverter;
 
-    public function __construct(DataConverterInterface $dataConverter = null)
+    public function __construct(?DataConverterInterface $dataConverter = null)
     {
         $this->dataConverter = $dataConverter ?? DataConverter::createDefault();
     }

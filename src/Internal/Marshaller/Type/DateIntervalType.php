@@ -24,15 +24,8 @@ use Temporal\Internal\Support\Inheritance;
  */
 class DateIntervalType extends Type implements DetectableTypeInterface, RuleFactoryInterface
 {
-    /**
-     * @var string
-     */
     private string $format;
 
-    /**
-     * @param MarshallerInterface $marshaller
-     * @param string $format
-     */
     public function __construct(MarshallerInterface $marshaller, string $format = DateInterval::FORMAT_NANOSECONDS)
     {
         $this->format = $format;
@@ -40,17 +33,11 @@ class DateIntervalType extends Type implements DetectableTypeInterface, RuleFact
         parent::__construct($marshaller);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public static function match(\ReflectionNamedType $type): bool
     {
         return !$type->isBuiltin() && Inheritance::extends($type->getName(), \DateInterval::class);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public static function makeRule(\ReflectionProperty $property): ?MarshallingRule
     {
         $type = $property->getType();
@@ -64,9 +51,6 @@ class DateIntervalType extends Type implements DetectableTypeInterface, RuleFact
             : new MarshallingRule($property->getName(), self::class);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function serialize($value): int|Duration
     {
         if ($this->format === DateInterval::FORMAT_NANOSECONDS) {
@@ -89,9 +73,6 @@ class DateIntervalType extends Type implements DetectableTypeInterface, RuleFact
         return (int) (DateInterval::parse($value, $this->format)->$method);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function parse($value, $current): CarbonInterval
     {
         return DateInterval::parse($value, $this->format);

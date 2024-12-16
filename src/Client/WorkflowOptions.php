@@ -163,12 +163,10 @@ final class WorkflowOptions extends Options
     }
 
     /**
-     * @param MethodRetry|null $retry
-     * @param CronSchedule|null $cron
      *
      * @return self return a new {@see self} instance with merged options
      */
-    public function mergeWith(MethodRetry $retry = null, CronSchedule $cron = null): self
+    public function mergeWith(?MethodRetry $retry = null, ?CronSchedule $cron = null): self
     {
         $self = clone $this;
 
@@ -189,7 +187,6 @@ final class WorkflowOptions extends Options
      * deduplication will happen based on the generated id. So prefer assigning
      * business meaningful ids if possible.
      *
-     * @param string $workflowId
      * @return $this
      */
     #[Pure]
@@ -207,7 +204,6 @@ final class WorkflowOptions extends Options
      * specified when creating a {@see Worker} that hosts the
      * workflow code.
      *
-     * @param string $taskQueue
      * @return $this
      */
     #[Pure]
@@ -227,7 +223,6 @@ final class WorkflowOptions extends Options
      * Eager Workflow Dispatch can be enabled if the server supports it and a local worker
      * is available the task is fed directly to the worker.
      *
-     * @param bool $value
      * @return $this
      */
     #[Pure]
@@ -375,7 +370,6 @@ final class WorkflowOptions extends Options
      * RetryOptions that define how child workflow is retried in case of
      * failure. Default is null which is no reties.
      *
-     * @param RetryOptions|null $options
      * @return $this
      */
     #[Pure]
@@ -389,7 +383,6 @@ final class WorkflowOptions extends Options
     }
 
     /**
-     * @param string|null $expression
      * @return $this
      */
     #[Pure]
@@ -405,7 +398,6 @@ final class WorkflowOptions extends Options
     /**
      * Specifies additional non-indexed information in result of list workflow.
      *
-     * @param array|null $memo
      * @return $this
      */
     #[Pure]
@@ -421,7 +413,6 @@ final class WorkflowOptions extends Options
     /**
      * Specifies additional indexed information in result of list workflow.
      *
-     * @param array|null $searchAttributes
      * @return $this
      */
     #[Pure]
@@ -435,8 +426,6 @@ final class WorkflowOptions extends Options
     }
 
     /**
-     * @param DataConverterInterface $converter
-     * @return Memo|null
      * @internal
      */
     public function toMemo(DataConverterInterface $converter): ?Memo
@@ -458,8 +447,6 @@ final class WorkflowOptions extends Options
     }
 
     /**
-     * @param DataConverterInterface $converter
-     * @return SearchAttributes|null
      * @internal
      */
     public function toSearchAttributes(DataConverterInterface $converter): ?SearchAttributes

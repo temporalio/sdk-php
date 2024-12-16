@@ -34,8 +34,6 @@ final class ActivityStub implements ActivityStubInterface
 
     /**
      * @param MarshallerInterface<array> $marshaller
-     * @param ActivityOptionsInterface $options
-     * @param HeaderInterface|array $header
      */
     public function __construct(
         MarshallerInterface $marshaller,
@@ -47,29 +45,20 @@ final class ActivityStub implements ActivityStubInterface
         $this->header = \is_array($header) ? Header::fromValues($header) : $header;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getOptions(): ActivityOptionsInterface
     {
         return $this->options;
     }
 
-    /**
-     * @return array
-     */
     public function getOptionsArray(): array
     {
         return $this->marshaller->marshal($this->getOptions());
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function execute(
         string $name,
         array $args = [],
-        Type|string|\ReflectionClass|\ReflectionType $returnType = null,
+        Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
         bool $isLocalActivity = false,
     ): PromiseInterface {
         $request = $isLocalActivity ?
@@ -79,10 +68,6 @@ final class ActivityStub implements ActivityStubInterface
         return EncodedValues::decodePromise($this->request($request), $returnType);
     }
 
-    /**
-     * @param RequestInterface $request
-     * @return PromiseInterface
-     */
     protected function request(RequestInterface $request): PromiseInterface
     {
         /** @var Workflow\WorkflowContextInterface $context */

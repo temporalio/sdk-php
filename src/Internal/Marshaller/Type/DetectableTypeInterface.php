@@ -13,9 +13,5 @@ namespace Temporal\Internal\Marshaller\Type;
 
 interface DetectableTypeInterface
 {
-    /**
-     * @param \ReflectionNamedType $type
-     * @return bool
-     */
     public static function match(\ReflectionNamedType $type): bool;
 }

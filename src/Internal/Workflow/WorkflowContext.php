@@ -103,49 +103,31 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
             ->getPipeline(WorkflowOutboundCallsInterceptor::class);
     }
 
-    /**
-     * @return WorkflowInstanceInterface
-     */
     public function getWorkflowInstance(): WorkflowInstanceInterface
     {
         return $this->workflowInstance;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function now(): \DateTimeInterface
     {
         return $this->services->env->now();
     }
 
-    /**
-     * @return string
-     */
     public function getRunId(): string
     {
         return $this->input->info->execution->getRunID();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getInfo(): WorkflowInfo
     {
         return $this->input->info;
     }
 
-    /**
-     * @inheritDoc
-     */
     public function getHeader(): HeaderInterface
     {
         return $this->input->header;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getInput(): ValuesInterface
     {
         return $this->input->input;
@@ -160,9 +142,6 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         return $clone;
     }
 
-    /**
-     * @return ValuesInterface|null
-     */
     public function getLastCompletionResultValues(): ?ValuesInterface
     {
         return $this->lastCompletionResult;
@@ -183,17 +162,11 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         return $this->lastCompletionResult->getValue(0, $type);
     }
 
-    /**
-     * @return ClientInterface
-     */
     public function getClient(): ClientInterface
     {
         return $this->client;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function registerQuery(string $queryType, callable $handler): WorkflowContextInterface
     {
         $this->getWorkflowInstance()->addQueryHandler($queryType, $handler);
@@ -201,9 +174,6 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         return $this;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function registerSignal(string $queryType, callable $handler): WorkflowContextInterface
     {
         $this->getWorkflowInstance()->addSignalHandler($queryType, $handler);
@@ -211,9 +181,6 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         return $this;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function registerUpdate(string $name, callable $handler, ?callable $validator): static
     {
         $this->getWorkflowInstance()->addUpdateHandler($name, $handler);
@@ -222,9 +189,6 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         return $this;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getVersion(string $changeId, int $minSupported, int $maxSupported): PromiseInterface
     {
         return $this->callsInterceptor->with(
@@ -237,9 +201,6 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         )(new GetVersionInput($changeId, $minSupported, $maxSupported));
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function sideEffect(callable $context): PromiseInterface
     {
         $value = null;
@@ -271,18 +232,12 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         return $last();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function isReplaying(): bool
     {
         return $this->services->env->isReplaying();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function complete(array $result = null, \Throwable $failure = null): PromiseInterface
+    public function complete(?array $result = null, ?\Throwable $failure = null): PromiseInterface
     {
         if ($failure !== null) {
             $this->workflowInstance->clearSignalQueue();
@@ -301,10 +256,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         )(new CompleteInput($result, $failure));
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function panic(\Throwable $failure = null): PromiseInterface
+    public function panic(?\Throwable $failure = null): PromiseInterface
     {
         return $this->callsInterceptor->with(
             fn(PanicInput $failure): PromiseInterface => $this->request(new Panic($failure->failure), false),
@@ -313,13 +265,10 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         )(new PanicInput($failure));
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function continueAsNew(
         string $type,
         array $args = [],
-        ContinueAsNewOptions $options = null,
+        ?ContinueAsNewOptions $options = null,
     ): PromiseInterface {
         return $this->callsInterceptor->with(
             function (ContinueAsNewInput $input): PromiseInterface {
@@ -340,10 +289,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         )(new ContinueAsNewInput($type, $args, $options));
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function newContinueAsNewStub(string $class, ContinueAsNewOptions $options = null): object
+    public function newContinueAsNewStub(string $class, ?ContinueAsNewOptions $options = null): object
     {
         $options ??= new ContinueAsNewOptions();
 
@@ -352,21 +298,15 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         return new ContinueAsNewProxy($class, $workflow, $options, $this);
     }
 
-    /**
-     * @return bool
-     */
     public function isContinuedAsNew(): bool
     {
         return $this->continueAsNew;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function executeChildWorkflow(
         string $type,
         array $args = [],
-        ChildWorkflowOptions $options = null,
+        ?ChildWorkflowOptions $options = null,
         mixed $returnType = null,
     ): PromiseInterface {
         return $this->callsInterceptor->with(
@@ -378,24 +318,18 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         )(new ExecuteChildWorkflowInput($type, $args, $options, $returnType));
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function newUntypedChildWorkflowStub(
         string $type,
-        ChildWorkflowOptions $options = null,
+        ?ChildWorkflowOptions $options = null,
     ): ChildWorkflowStubInterface {
         $options ??= new ChildWorkflowOptions();
 
         return new ChildWorkflowStub($this->services->marshaller, $type, $options, $this->getHeader());
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function newChildWorkflowStub(
         string $class,
-        ChildWorkflowOptions $options = null,
+        ?ChildWorkflowOptions $options = null,
     ): object {
         $workflow = $this->services->workflowsReader->fromClass($class);
         $options = $options ?? (new ChildWorkflowOptions())
@@ -409,9 +343,6 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         );
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function newExternalWorkflowStub(string $class, WorkflowExecution $execution): object
     {
         $workflow = $this->services->workflowsReader->fromClass($class);
@@ -421,22 +352,16 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         return new ExternalWorkflowProxy($class, $workflow, $stub);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function newUntypedExternalWorkflowStub(WorkflowExecution $execution): ExternalWorkflowStubInterface
     {
         return new ExternalWorkflowStub($execution, $this->callsInterceptor);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function executeActivity(
         string $type,
         array $args = [],
-        ActivityOptionsInterface $options = null,
-        Type|string|\ReflectionClass|\ReflectionType $returnType = null,
+        ?ActivityOptionsInterface $options = null,
+        Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
     ): PromiseInterface {
         $isLocal = $options instanceof LocalActivityOptions;
 
@@ -457,23 +382,17 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
             )(new ExecuteActivityInput($type, $args, $options, $returnType));
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function newUntypedActivityStub(
-        ActivityOptionsInterface $options = null,
+        ?ActivityOptionsInterface $options = null,
     ): ActivityStubInterface {
         $options ??= new ActivityOptions();
 
         return new ActivityStub($this->services->marshaller, $options, $this->getHeader());
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function newActivityStub(
         string $class,
-        ActivityOptionsInterface $options = null,
+        ?ActivityOptionsInterface $options = null,
     ): ActivityProxy {
         $activities = $this->services->activitiesReader->fromClass($class);
 
@@ -490,9 +409,6 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         );
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function timer($interval): PromiseInterface
     {
         $dateInterval = DateInterval::parse($interval, DateInterval::FORMAT_SECONDS);
@@ -504,9 +420,6 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         )(new TimerInput($dateInterval));
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function request(RequestInterface $request, bool $cancellable = true): PromiseInterface
     {
         $this->recordTrace();
@@ -521,25 +434,16 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         )($request);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getStackTrace(): string
     {
         return StackRenderer::renderTrace($this->trace);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function allHandlersFinished(): bool
     {
         return !$this->handlers->hasRunningHandlers();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function upsertSearchAttributes(array $searchAttributes): void
     {
         $this->callsInterceptor->with(
@@ -550,9 +454,6 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         )(new UpsertSearchAttributesInput($searchAttributes));
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function await(callable|Mutex|PromiseInterface ...$conditions): PromiseInterface
     {
         return $this->callsInterceptor->with(
@@ -562,9 +463,6 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         )(new AwaitInput($conditions));
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function awaitWithTimeout($interval, callable|Mutex|PromiseInterface ...$conditions): PromiseInterface
     {
         $intervalObject = DateInterval::parse($interval, DateInterval::FORMAT_SECONDS);
@@ -618,25 +516,16 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         unset($this->awaits[$conditionGroupId]);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function uuid(): PromiseInterface
     {
         return $this->sideEffect(static fn(): UuidInterface => \Ramsey\Uuid\Uuid::uuid4());
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function uuid4(): PromiseInterface
     {
         return $this->sideEffect(static fn(): UuidInterface => \Ramsey\Uuid\Uuid::uuid4());
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function uuid7(?\DateTimeInterface $dateTime = null): PromiseInterface
     {
         return $this->sideEffect(static fn(): UuidInterface => \Ramsey\Uuid\Uuid::uuid7($dateTime));
@@ -711,8 +600,6 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
 
     /**
      * @param non-empty-string $conditionGroupId
-     * @param callable $condition
-     * @return PromiseInterface
      */
     protected function addCondition(string $conditionGroupId, callable $condition): PromiseInterface
     {
@@ -725,7 +612,6 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     /**
      * Record last stack trace of the call.
      *
-     * @return void
      */
     protected function recordTrace(): void
     {

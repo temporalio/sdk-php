@@ -25,9 +25,6 @@ final class Uuid
      */
     public const NIL = '00000000-0000-0000-0000-000000000000';
 
-    /**
-     * @return string
-     */
     public static function nil(): string
     {
         return self::NIL;
@@ -56,7 +53,6 @@ final class Uuid
     }
 
     /**
-     * @return string
      * @throws \Exception
      */
     private static function bytes(): string
@@ -81,9 +77,6 @@ final class Uuid
      * @see http://tools.ietf.org/html/rfc4122#section-4.1.3
      *
      * @psalm-pure
-     * @param int $timeHi
-     * @param int $version
-     * @return int
      */
     private static function version(int $timeHi, int $version): int
     {
@@ -96,8 +89,6 @@ final class Uuid
      * @see http://tools.ietf.org/html/rfc4122#section-4.1.1
      *
      * @psalm-pure
-     * @param int $clockSeq
-     * @return int
      */
     private static function variant(int $clockSeq): int
     {

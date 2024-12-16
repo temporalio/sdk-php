@@ -19,10 +19,6 @@ final class CommandBatch
     public string $messages;
     public array $context;
 
-    /**
-     * @param string $messages
-     * @param array $context
-     */
     public function __construct(string $messages, array $context)
     {
         $this->messages = $messages;

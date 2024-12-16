@@ -17,9 +17,6 @@ use Temporal\Exception\DataConverterException;
 
 class ProtoJsonConverter extends Converter
 {
-    /**
-     * @return string
-     */
     public function getEncodingType(): string
     {
         return EncodingKeys::METADATA_ENCODING_PROTOBUF_JSON;
@@ -27,7 +24,6 @@ class ProtoJsonConverter extends Converter
 
     /**
      * @param mixed $value
-     * @return Payload|null
      */
     public function toPayload($value): ?Payload
     {
@@ -48,8 +44,6 @@ class ProtoJsonConverter extends Converter
     }
 
     /**
-     * @param Payload $payload
-     * @param Type $type
      * @return Message
      * @throws DataConverterException
      */

@@ -19,19 +19,16 @@ use Temporal\Exception\TransportException;
 interface HostConnectionInterface
 {
     /**
-     * @return CommandBatch|null
      * @throws TransportException
      */
     public function waitBatch(): ?CommandBatch;
 
     /**
-     * @param string $frame
      * @throws TransportException
      */
     public function send(string $frame): void;
 
     /**
-     * @param \Throwable $error
      * @throws TransportException
      */
     public function error(\Throwable $error): void;

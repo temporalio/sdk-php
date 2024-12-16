@@ -123,10 +123,9 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
     }
 
     /**
-     * @param MethodRetry|null $retry
      * @return $this
      */
-    public function mergeWith(MethodRetry $retry = null): self
+    public function mergeWith(?MethodRetry $retry = null): self
     {
         $self = clone $this;
 
@@ -142,7 +141,6 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
      *
      * By default, it is the same task list name the workflow was started with.
      *
-     * @param string|null $taskQueue
      * @return $this
      */
     #[Pure]
@@ -269,7 +267,6 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
     }
 
     /**
-     * @param string $activityId
      * @return $this
      */
     #[Pure]
@@ -283,7 +280,6 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
     }
 
     /**
-     * @param RetryOptions|null $options
      * @return $this
      */
     #[Pure]

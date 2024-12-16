@@ -36,9 +36,9 @@ class UpdateInput
     ) {}
 
     public function with(
-        WorkflowInfo $info = null,
-        ValuesInterface $arguments = null,
-        HeaderInterface $header = null,
+        ?WorkflowInfo $info = null,
+        ?ValuesInterface $arguments = null,
+        ?HeaderInterface $header = null,
     ): self {
         return new self(
             $this->updateName,

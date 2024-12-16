@@ -80,12 +80,8 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
     private HeaderInterface $header;
 
     /**
-     * @param ServiceClientInterface $serviceClient
-     * @param ClientOptions $clientOptions
-     * @param DataConverterInterface $converter
      * @param Pipeline<WorkflowClientCallsInterceptor, void> $interceptors
      * @param non-empty-string|null $workflowType
-     * @param WorkflowOptions|null $options
      */
     public function __construct(
         private readonly ServiceClientInterface $serviceClient,
@@ -98,17 +94,11 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
         $this->header = Header::empty();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getWorkflowType(): ?string
     {
         return $this->workflowType;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getOptions(): ?WorkflowOptions
     {
         return $this->options;
@@ -119,9 +109,6 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
         return $this->header;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getExecution(): WorkflowExecution
     {
         $this->assertStarted(__FUNCTION__);
@@ -132,24 +119,17 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
     /**
      * Connects stub to running workflow.
      *
-     * @param WorkflowExecution $execution
      */
     public function setExecution(WorkflowExecution $execution): void
     {
         $this->execution = $execution;
     }
 
-    /**
-     * @return bool
-     */
     public function hasExecution(): bool
     {
         return $this->execution !== null;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function signal(string $name, ...$args): void
     {
         $this->assertStarted(__FUNCTION__);
@@ -193,9 +173,6 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
         ));
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function query(string $name, ...$args): ?ValuesInterface
     {
         $this->assertStarted(__FUNCTION__);
@@ -262,9 +239,6 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
         ));
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function update(string $name, ...$args): ?ValuesInterface
     {
         $options = UpdateOptions::new($name)
@@ -273,9 +247,6 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
         return $this->startUpdate($options, ...$args)->getEncodedValues();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function startUpdate(string|UpdateOptions $nameOrOptions, ...$args): UpdateHandle
     {
         $nameOrOptions = \is_string($nameOrOptions)
@@ -371,9 +342,6 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
         );
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getUpdateHandle(string $updateId, mixed $resultType = null): UpdateHandle
     {
         return new UpdateHandle(
@@ -389,9 +357,6 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
         );
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function cancel(): void
     {
         $this->assertStarted(__FUNCTION__);
@@ -416,9 +381,6 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
         ));
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function terminate(string $reason, array $details = []): void
     {
         $this->assertStarted(__FUNCTION__);
@@ -450,11 +412,12 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
     }
 
     /**
-     * {@inheritDoc}
      *
+     *
+     * @param null|mixed $type
      * @throws \Throwable
      */
-    public function getResult($type = null, int $timeout = null): mixed
+    public function getResult($type = null, ?int $timeout = null): mixed
     {
         /** @var ValuesInterface|null $result */
         $result = $this->interceptors->with(
@@ -510,7 +473,6 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
     }
 
     /**
-     * @param string $method
      * @psalm-assert !null $this->execution
      */
     private function assertStarted(string $method): void
@@ -523,11 +485,9 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
     }
 
     /**
-     * @param int|null $timeout
-     * @return EncodedValues|null
      * @throws \ErrorException
      */
-    private function fetchResult(int $timeout = null): ?EncodedValues
+    private function fetchResult(?int $timeout = null): ?EncodedValues
     {
         $this->assertStarted(__FUNCTION__);
 
@@ -603,11 +563,9 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
     }
 
     /**
-     * @param int|null $timeout
-     * @return HistoryEvent
      * @throws \ErrorException
      */
-    private function getCloseEvent(int $timeout = null): HistoryEvent
+    private function getCloseEvent(?int $timeout = null): HistoryEvent
     {
         $historyRequest = new GetWorkflowExecutionHistoryRequest();
         $historyRequest
@@ -662,10 +620,6 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
         } while (true);
     }
 
-    /**
-     * @param \Throwable $failure
-     * @return \Throwable
-     */
     private function mapWorkflowFailureToException(\Throwable $failure): \Throwable
     {
         switch (true) {

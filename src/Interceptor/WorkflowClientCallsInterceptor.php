@@ -52,34 +52,22 @@ use Temporal\Workflow\WorkflowExecution;
 interface WorkflowClientCallsInterceptor extends Interceptor
 {
     /**
-     * @param StartInput $input
      * @param callable(StartInput): WorkflowExecution $next
-     *
-     * @return WorkflowExecution
      */
     public function start(StartInput $input, callable $next): WorkflowExecution;
 
     /**
-     * @param SignalInput $input
      * @param callable(SignalInput): void $next
-     *
-     * @return void
      */
     public function signal(SignalInput $input, callable $next): void;
 
     /**
-     * @param UpdateInput $input
      * @param callable(UpdateInput): StartUpdateOutput $next
-     *
-     * @return StartUpdateOutput
      */
     public function update(UpdateInput $input, callable $next): StartUpdateOutput;
 
     /**
-     * @param SignalWithStartInput $input
      * @param callable(SignalWithStartInput): WorkflowExecution $next
-     *
-     * @return WorkflowExecution
      */
     public function signalWithStart(SignalWithStartInput $input, callable $next): WorkflowExecution;
 
@@ -92,42 +80,27 @@ interface WorkflowClientCallsInterceptor extends Interceptor
     public function updateWithStart(UpdateWithStartInput $input, callable $next): UpdateHandle;
 
     /**
-     * @param GetResultInput $input
      * @param callable(GetResultInput): ?ValuesInterface $next
-     *
-     * @return ValuesInterface|null
      */
     public function getResult(GetResultInput $input, callable $next): ?ValuesInterface;
 
     /**
-     * @param QueryInput $input
      * @param callable(QueryInput): ?ValuesInterface $next
-     *
-     * @return ValuesInterface|null
      */
     public function query(QueryInput $input, callable $next): ?ValuesInterface;
 
     /**
-     * @param CancelInput $input
      * @param callable(CancelInput): void $next
-     *
-     * @return void
      */
     public function cancel(CancelInput $input, callable $next): void;
 
     /**
-     * @param TerminateInput $input
      * @param callable(TerminateInput): void $next
-     *
-     * @return void
      */
     public function terminate(TerminateInput $input, callable $next): void;
 
     /**
-     * @param DescribeInput $input
      * @param callable(DescribeInput): void $next
-     *
-     * @return WorkflowExecutionDescription
      */
     public function describe(DescribeInput $input, callable $next): WorkflowExecutionDescription;
 }

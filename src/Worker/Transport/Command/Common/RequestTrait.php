@@ -25,9 +25,6 @@ trait RequestTrait
         return $this->payloads;
     }
 
-    /**
-     * @return Header
-     */
     public function getHeader(): Header
     {
         return $this->header;

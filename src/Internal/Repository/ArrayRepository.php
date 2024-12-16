@@ -31,7 +31,6 @@ class ArrayRepository implements RepositoryInterface
 
     /**
      * @param iterable<Identifiable> $entries
-     * @param bool $overwrite
      */
     public function __construct(iterable $entries = [], bool $overwrite = false)
     {
@@ -40,33 +39,21 @@ class ArrayRepository implements RepositoryInterface
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function filter(callable $filter): RepositoryInterface
     {
         return new static(\array_filter($this->entries, $filter));
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getIterator(): \Traversable
     {
         return new \ArrayIterator($this->entries);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function count(): int
     {
         return \count($this->entries);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function add(Identifiable $entry, bool $overwrite = false): void
     {
         $name = $entry->getID();
@@ -78,25 +65,16 @@ class ArrayRepository implements RepositoryInterface
         $this->entries[$name] = $entry;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function find($id): ?Identifiable
     {
         return $this->entries[$id] ?? null;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function has($id): bool
     {
         return isset($this->entries[$id]);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function remove($id): void
     {
         unset($this->entries[$id]);

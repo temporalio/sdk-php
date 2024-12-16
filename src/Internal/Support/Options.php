@@ -15,9 +15,6 @@ use JetBrains\PhpStorm\Pure;
 
 abstract class Options
 {
-    /**
-     * @var Diff
-     */
     protected Diff $diff;
 
     /**
@@ -28,18 +25,12 @@ abstract class Options
         $this->diff = new Diff($this);
     }
 
-    /**
-     * @return static
-     */
     #[Pure]
     public static function new(): static
     {
         return new static();
     }
 
-    /**
-     * @return array
-     */
     public function __debugInfo(): array
     {
         $properties = \get_object_vars($this);

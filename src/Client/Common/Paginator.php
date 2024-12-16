@@ -111,7 +111,6 @@ final class Paginator implements \IteratorAggregate, \Countable
      * Note: the method may call yet another RPC to get total number of items.
      * It means that the result may be different from the number of items at the moment of the pagination start.
      *
-     * @return int
      * @throws \LogicException If counter is not set.
      */
     public function count(): int

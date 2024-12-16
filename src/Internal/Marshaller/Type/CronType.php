@@ -23,9 +23,6 @@ class CronType extends Type
         'Passed value must be a type of ' .
         'cron-like string or cron expression, but %s given';
 
-    /**
-     * {@inheritDoc}
-     */
     public function parse($value, $current)
     {
         if ($value === '') {
@@ -40,9 +37,6 @@ class CronType extends Type
         throw new \InvalidArgumentException(\sprintf(self::ERROR_INVALID_TYPE, \get_debug_type($value)));
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function serialize($value): string
     {
         if (\is_string($value) || $value instanceof \Stringable) {

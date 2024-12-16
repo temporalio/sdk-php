@@ -35,45 +35,28 @@ class TemporalFailure extends TemporalException implements \Stringable
     private string $originalMessage;
     private ?string $originalStackTrace = null;
 
-    /**
-     * @param string $message
-     * @param string|null $originalMessage
-     * @param \Throwable|null $previous
-     */
-    public function __construct(string $message, string $originalMessage = null, \Throwable $previous = null)
+    public function __construct(string $message, ?string $originalMessage = null, ?\Throwable $previous = null)
     {
         parent::__construct($message, 0, $previous);
 
         $this->originalMessage = $originalMessage ?? '';
     }
 
-    /**
-     * @return Failure|null
-     */
     public function getFailure(): ?Failure
     {
         return $this->failure;
     }
 
-    /**
-     * @param Failure|null $failure
-     */
     public function setFailure(?Failure $failure): void
     {
         $this->failure = $failure;
     }
 
-    /**
-     * @return string
-     */
     public function getOriginalMessage(): string
     {
         return $this->originalMessage;
     }
 
-    /**
-     * @param string $stackTrace
-     */
     public function setOriginalStackTrace(string $stackTrace): void
     {
         $this->originalStackTrace = $stackTrace;
@@ -89,25 +72,16 @@ class TemporalFailure extends TemporalException implements \Stringable
         return $this->originalStackTrace !== null;
     }
 
-    /**
-     * @return string|null
-     */
     public function getOriginalStackTrace(): ?string
     {
         return $this->originalStackTrace;
     }
 
-    /**
-     * @param DataConverterInterface $converter
-     */
     public function setDataConverter(DataConverterInterface $converter): void
     {
         // typically handled by children
     }
 
-    /**
-     * @return string
-     */
     public function __toString(): string
     {
         if ($this->hasOriginalStackTrace()) {
@@ -120,8 +94,6 @@ class TemporalFailure extends TemporalException implements \Stringable
     /**
      * Explain known types of key=>value pairs.
      *
-     * @param array $values
-     * @return string
      */
     protected static function buildMessage(array $values): string
     {

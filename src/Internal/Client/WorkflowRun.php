@@ -20,7 +20,6 @@ use Temporal\Workflow\WorkflowRunInterface;
 final class WorkflowRun implements WorkflowRunInterface
 {
     /**
-     * @param WorkflowStubInterface $stub
      * @param \ReflectionClass|\ReflectionType|string|Type|null $returnType
      */
     public function __construct(
@@ -28,18 +27,12 @@ final class WorkflowRun implements WorkflowRunInterface
         private $returnType = null,
     ) {}
 
-    /**
-     * @return WorkflowExecution
-     */
     public function getExecution(): WorkflowExecution
     {
         return $this->stub->getExecution();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function getResult($type = null, int $timeout = null): mixed
+    public function getResult($type = null, ?int $timeout = null): mixed
     {
         return $this->stub->getResult($type ?? $this->returnType, $timeout);
     }

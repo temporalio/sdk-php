@@ -39,7 +39,7 @@
         "spiral/roadrunner-kv": "^4.2",
         "spiral/roadrunner-worker": "^3.5",
         "symfony/filesystem": "^5.4 || ^6.0 || ^7.0",
-        "symfony/http-client": "^5.4 || ^6.0 || ^7.0",
+        "symfony/http-client": "^5.4.3 || ^6.0.3 || ^7.0",
         "symfony/process": "^5.4 || ^6.0 || ^7.0"
     },
     "autoload": {
@@ -61,7 +61,7 @@
         "phpunit/phpunit": "^10.5",
         "spiral/code-style": "~2.1.2",
         "spiral/core": "^3.13",
-        "symfony/var-dumper": "^6.0 || ^7.0",
+        "ta-tikoma/phpunit-architecture-test": "^0.8.4",
         "vimeo/psalm": "^4.30 || ^5.4"
     },
     "autoload-dev": {
@@ -81,12 +81,14 @@
     },
     "scripts": {
         "post-update-cmd": "Temporal\\Worker\\Transport\\RoadRunnerVersionChecker::postUpdate",
+        "get:binaries": "dload get --no-interaction -vv",
         "cs:diff": "php-cs-fixer fix --dry-run -v --diff --show-progress dots",
         "cs:fix": "php-cs-fixer fix -v",
         "psalm": "psalm",
         "psalm:baseline": "psalm --set-baseline=psalm-baseline.xml",
         "test:unit": "phpunit --testsuite=Unit --color=always --testdox",
         "test:func": "phpunit --testsuite=Functional --color=always --testdox",
+        "test:arch": "phpunit --testsuite=Arch --color=always --testdox",
         "test:accept": "phpunit --testsuite=Acceptance --color=always --testdox"
     },
     "extra": {

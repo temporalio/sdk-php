@@ -27,9 +27,6 @@ trait EventEmitterTrait
      */
     protected array $once = [];
 
-    /**
-     * {@inheritDoc}
-     */
     public function once(string $event, callable $then): self
     {
         $this->once[$event][] = $then;
@@ -37,9 +34,6 @@ trait EventEmitterTrait
         return $this;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function emit(string $event, array $arguments = []): void
     {
         while (($this->once[$event] ?? []) !== []) {

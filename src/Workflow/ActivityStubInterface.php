@@ -18,9 +18,6 @@ use Temporal\Internal\Transport\CompletableResultInterface;
 
 interface ActivityStubInterface
 {
-    /**
-     * @return ActivityOptionsInterface
-     */
     public function getOptions(): ActivityOptionsInterface;
 
     /**
@@ -28,14 +25,12 @@ interface ActivityStubInterface
      *
      * @param string $name name of an activity type to execute.
      * @param array $args arguments of the activity.
-     * @param Type|string|null|\ReflectionClass|\ReflectionType $returnType
-     * @param bool $isLocalActivity
      * @return CompletableResultInterface Promise to the activity result.
      */
     public function execute(
         string $name,
         array $args = [],
-        Type|string|\ReflectionClass|\ReflectionType $returnType = null,
+        Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
         bool $isLocalActivity = false,
     ): PromiseInterface;
 }

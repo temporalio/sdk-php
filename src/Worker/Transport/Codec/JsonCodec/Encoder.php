@@ -25,9 +25,6 @@ class Encoder
 
     private DataConverterInterface $converter;
 
-    /**
-     * @param DataConverterInterface $dataConverter
-     */
     public function __construct(DataConverterInterface $dataConverter)
     {
         $this->converter = $dataConverter;

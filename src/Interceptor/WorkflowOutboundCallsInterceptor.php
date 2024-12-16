@@ -54,10 +54,8 @@ use Temporal\Internal\Interceptor\Interceptor;
 interface WorkflowOutboundCallsInterceptor extends Interceptor
 {
     /**
-     * @param ExecuteActivityInput $input
      * @param callable(ExecuteActivityInput): PromiseInterface $next
      *
-     * @return PromiseInterface
      */
     public function executeActivity(
         ExecuteActivityInput $input,
@@ -65,41 +63,32 @@ interface WorkflowOutboundCallsInterceptor extends Interceptor
     ): PromiseInterface;
 
     /**
-     * @param ExecuteLocalActivityInput $input
      * @param callable(ExecuteLocalActivityInput): PromiseInterface $next
      *
-     * @return PromiseInterface
      */
     public function executeLocalActivity(ExecuteLocalActivityInput $input, callable $next): PromiseInterface;
 
     /**
-     * @param ExecuteChildWorkflowInput $input
      * @param callable(ExecuteChildWorkflowInput): PromiseInterface $next
      *
-     * @return PromiseInterface
      */
     public function executeChildWorkflow(ExecuteChildWorkflowInput $input, callable $next): PromiseInterface;
 
     /**
-     * @param SignalExternalWorkflowInput $input
      * @param callable(SignalExternalWorkflowInput): PromiseInterface $next
      *
-     * @return PromiseInterface
      */
     public function signalExternalWorkflow(SignalExternalWorkflowInput $input, callable $next): PromiseInterface;
 
     /**
-     * @param CancelExternalWorkflowInput $input
      * @param callable(CancelExternalWorkflowInput): PromiseInterface $next
      *
-     * @return PromiseInterface
      */
     public function cancelExternalWorkflow(CancelExternalWorkflowInput $input, callable $next): PromiseInterface;
 
     /**
      * Intercept {@see SideEffectInput::$callable} execution.
      *
-     * @param SideEffectInput $input
      * @param callable(SideEffectInput): mixed $next
      *
      * @return mixed The result of the callable execution.
@@ -107,66 +96,50 @@ interface WorkflowOutboundCallsInterceptor extends Interceptor
     public function sideEffect(SideEffectInput $input, callable $next): mixed;
 
     /**
-     * @param TimerInput $input
      * @param callable(TimerInput): PromiseInterface $next
      *
-     * @return PromiseInterface
      */
     public function timer(TimerInput $input, callable $next): PromiseInterface;
 
     /**
-     * @param PanicInput $input
      * @param callable(PanicInput): PromiseInterface $next
      *
-     * @return PromiseInterface
      */
     public function panic(PanicInput $input, callable $next): PromiseInterface;
 
     /**
-     * @param CompleteInput $input
      * @param callable(CompleteInput): PromiseInterface $next
      *
-     * @return PromiseInterface
      */
     public function complete(CompleteInput $input, callable $next): PromiseInterface;
 
     /**
-     * @param ContinueAsNewInput $input
      * @param callable(ContinueAsNewInput): PromiseInterface $next
      *
-     * @return PromiseInterface
      */
     public function continueAsNew(ContinueAsNewInput $input, callable $next): PromiseInterface;
 
     /**
-     * @param GetVersionInput $input
      * @param callable(GetVersionInput): PromiseInterface $next
      *
-     * @return PromiseInterface
      */
     public function getVersion(GetVersionInput $input, callable $next): PromiseInterface;
 
     /**
-     * @param UpsertSearchAttributesInput $input
      * @param callable(UpsertSearchAttributesInput): PromiseInterface $next
      *
-     * @return PromiseInterface
      */
     public function upsertSearchAttributes(UpsertSearchAttributesInput $input, callable $next): PromiseInterface;
 
     /**
-     * @param AwaitInput $input
      * @param callable(AwaitInput): PromiseInterface $next
      *
-     * @return PromiseInterface
      */
     public function await(AwaitInput $input, callable $next): PromiseInterface;
 
     /**
-     * @param AwaitWithTimeoutInput $input
      * @param callable(AwaitWithTimeoutInput): PromiseInterface $next
      *
-     * @return PromiseInterface
      */
     public function awaitWithTimeout(AwaitWithTimeoutInput $input, callable $next): PromiseInterface;
 }

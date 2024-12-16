@@ -21,11 +21,7 @@ final class CompleteWorkflow extends Request
 {
     public const NAME = 'CompleteWorkflow';
 
-    /**
-     * @param ValuesInterface $values
-     * @param \Throwable|null $failure
-     */
-    public function __construct(ValuesInterface $values, \Throwable $failure = null)
+    public function __construct(ValuesInterface $values, ?\Throwable $failure = null)
     {
         parent::__construct(self::NAME, [], $values);
         $this->setFailure($failure);

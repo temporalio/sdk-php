@@ -25,28 +25,15 @@ use Temporal\Worker\Transport\Command\Server\TickInfo;
  */
 final class ProtoCodec implements CodecInterface
 {
-    /**
-     * @var Decoder
-     */
     private Decoder $parser;
-
-    /**
-     * @var Encoder
-     */
     private Encoder $encoder;
 
-    /**
-     * @param DataConverterInterface $dataConverter
-     */
     public function __construct(DataConverterInterface $dataConverter)
     {
         $this->parser = new Decoder($dataConverter);
         $this->encoder = new Encoder($dataConverter);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function encode(iterable $commands): string
     {
         try {
@@ -66,9 +53,6 @@ final class ProtoCodec implements CodecInterface
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function decode(string $batch, array $headers = []): iterable
     {
         static $tz = new \DateTimeZone('UTC');

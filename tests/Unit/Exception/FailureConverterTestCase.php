@@ -72,10 +72,17 @@ final class FailureConverterTestCase extends AbstractUnit
             $trace,
         );
 
-        self::assertStringContainsString(
-            'Temporal\Tests\Unit\Exception\FailureConverterTestCase->Temporal\Tests\Unit\Exception\{closure}()',
-            $trace,
-        );
+        if (\PHP_VERSION_ID < 80400) {
+            self::assertStringContainsString(
+                'Temporal\Tests\Unit\Exception\FailureConverterTestCase->Temporal\Tests\Unit\Exception\{closure}()',
+                $trace,
+            );
+        } else {
+            self::assertStringContainsString(
+                'Temporal\Tests\Unit\Exception\FailureConverterTestCase->{closure:Temporal\Tests\Unit\Exception\FailureConverterTestCase::testStackTraceStringForAdditionalContextEvenWhenClassIsNotPresented()',
+                $trace,
+            );
+        }
 
         self::assertStringContainsString(
             'call_user_func(Closure)',

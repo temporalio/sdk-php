@@ -26,8 +26,8 @@ class UpdateWithStartInput
     ) {}
 
     public function with(
-        StartInput $workflowStartInput = null,
-        UpdateInput $updateInput = null,
+        ?StartInput $workflowStartInput = null,
+        ?UpdateInput $updateInput = null,
     ): self {
         return new self(
             $workflowStartInput ?? $this->workflowStartInput,

@@ -18,7 +18,6 @@ final class Reflection
      *
      * @template T
      *
-     * @param \ReflectionFunctionAbstract $method
      * @param array<int|string, T> $args
      * @return list<T> Unnamed list of arguments in the correct order.
      */

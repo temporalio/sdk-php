@@ -64,7 +64,6 @@ abstract class BaseClient implements ServiceClientInterface
 
     /**
      * @param non-empty-string $address Temporal service address in format `host:port`
-     * @return static
      * @psalm-suppress UndefinedClass
      */
     public static function create(string $address): static
@@ -86,17 +85,16 @@ abstract class BaseClient implements ServiceClientInterface
      * @param non-empty-string|null $clientKey Client private key string or file in PEM format.
      * @param non-empty-string|null $clientPem Client certificate chain string or file in PEM format.
      * @param non-empty-string|null $overrideServerName
-     * @return static
      *
      * @psalm-suppress UndefinedClass
      * @psalm-suppress UnusedVariable
      */
     public static function createSSL(
         string $address,
-        string $crt = null,
-        string $clientKey = null,
-        string $clientPem = null,
-        string $overrideServerName = null,
+        ?string $crt = null,
+        ?string $clientKey = null,
+        ?string $clientPem = null,
+        ?string $overrideServerName = null,
     ): static {
         if (!\extension_loaded('grpc')) {
             throw new \RuntimeException('The gRPC extension is required to use Temporal Client.');
@@ -166,7 +164,6 @@ abstract class BaseClient implements ServiceClientInterface
     /**
      * @param null|Pipeline<GrpcClientInterceptor, object> $pipeline
      *
-     * @return static
      */
     final public function withInterceptorPipeline(?Pipeline $pipeline): static
     {
@@ -234,10 +231,6 @@ abstract class BaseClient implements ServiceClientInterface
 
     /**
      * @param non-empty-string $method RPC method name
-     * @param object $arg
-     * @param ContextInterface|null $ctx
-     *
-     * @return mixed
      *
      * @throw ClientException
      */
@@ -263,10 +256,6 @@ abstract class BaseClient implements ServiceClientInterface
      * Used in {@see withInterceptorPipeline()}
      *
      * @param non-empty-string $method
-     * @param object $arg
-     * @param ContextInterface $ctx
-     *
-     * @return object
      *
      * @throws \Exception
      */
@@ -340,7 +329,7 @@ abstract class BaseClient implements ServiceClientInterface
                     ? $congestionInitialIntervalMs
                     : $initialIntervalMs;
 
-                $wait = $throttler->calculateSleepTime(failureCount: $attempt, initialInterval: $baseInterval);
+                $wait = $throttler->calculateSleepTime(failureCount: $attempt, initialInterval: $baseInterval) * 1000;
 
                 // wait till the next call
                 $this->usleep($wait);

@@ -18,14 +18,8 @@ use Spiral\Attributes\ReaderInterface;
  */
 abstract class Reader
 {
-    /**
-     * @var ReaderInterface
-     */
     protected ReaderInterface $reader;
 
-    /**
-     * @param ReaderInterface $reader
-     */
     public function __construct(ReaderInterface $reader)
     {
         $this->reader = $reader;
@@ -37,10 +31,6 @@ abstract class Reader
      */
     abstract public function fromClass(string $class);
 
-    /**
-     * @param \ReflectionMethod $method
-     * @return bool
-     */
     protected function isValidMethod(\ReflectionMethod $method): bool
     {
         return !$method->isStatic() && $method->isPublic();

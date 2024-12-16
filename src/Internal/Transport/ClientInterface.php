@@ -31,21 +31,14 @@ interface ClientInterface
     /**
      * Check if command still in sending queue.
      *
-     * @param CommandInterface $command
-     * @return bool
      */
     public function isQueued(CommandInterface $command): bool;
 
-    /**
-     * @param CommandInterface $command
-     */
     public function cancel(CommandInterface $command): void;
 
     /**
      * Reject pending promise.
      *
-     * @param CommandInterface $command
-     * @param \Throwable $reason
      */
     public function reject(CommandInterface $command, \Throwable $reason): void;
 }

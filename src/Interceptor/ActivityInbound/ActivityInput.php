@@ -29,8 +29,8 @@ class ActivityInput
     ) {}
 
     public function with(
-        ValuesInterface $arguments = null,
-        HeaderInterface $header = null,
+        ?ValuesInterface $arguments = null,
+        ?HeaderInterface $header = null,
     ): self {
         return new self(
             $arguments ?? $this->arguments,
