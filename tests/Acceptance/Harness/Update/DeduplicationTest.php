@@ -9,6 +9,7 @@ use Temporal\Client\Update\LifecycleStage;
 use Temporal\Client\Update\UpdateOptions;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowStubInterface;
+use Temporal\Exception\Client\WorkflowUpdateException;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
@@ -39,8 +40,13 @@ class DeduplicationTest extends TestCase
         self::assertSame(1, $handle1->getResult(1));
         self::assertSame(1, $handle2->getResult(1));
 
-        # This only needs to start to unblock the workflow
-        $stub->startUpdate('my_update');
+        try {
+            # This only needs to start to unblock the workflow
+            $stub->startUpdate('my_update');
+        } catch (WorkflowUpdateException) {
+            # Workflow Update failed because the Workflow completed before the Update completed
+            # It's OK in this case
+        }
 
         # There should be two accepted updates, and only one of them should be completed with the set id
         $totalUpdates = 0;
