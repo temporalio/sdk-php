@@ -82,6 +82,9 @@ final class WorkflowStarter
     }
 
     /**
+     * @param non-empty-string $workflowType
+     * @param non-empty-string $signal
+     *
      * @throws ServiceClientException
      * @throws WorkflowExecutionAlreadyStartedException
      */
