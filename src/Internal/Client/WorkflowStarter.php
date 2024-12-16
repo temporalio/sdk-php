@@ -61,8 +61,6 @@ final class WorkflowStarter
     ) {}
 
     /**
-     *
-     *
      * @throws ServiceClientException
      * @throws WorkflowExecutionAlreadyStartedException
      */
@@ -84,8 +82,6 @@ final class WorkflowStarter
     }
 
     /**
-     *
-     *
      * @throws ServiceClientException
      * @throws WorkflowExecutionAlreadyStartedException
      */

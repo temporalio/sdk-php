@@ -22,7 +22,6 @@ class NullableType extends Type
     private ?TypeInterface $type = null;
 
     /**
-     *
      * @throws \ReflectionException
      */
     public function __construct(MarshallerInterface $marshaller, MarshallingRule|string|null $typeOrClass = null)

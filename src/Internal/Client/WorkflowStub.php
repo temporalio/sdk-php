@@ -412,8 +412,6 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
     }
 
     /**
-     *
-     *
      * @param null|mixed $type
      * @throws \Throwable
      */
