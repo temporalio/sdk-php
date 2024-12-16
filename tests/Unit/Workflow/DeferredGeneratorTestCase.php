@@ -32,7 +32,7 @@ final class DeferredGeneratorTestCase extends TestCase
         );
     }
 
-    public function testSendingValues(): void
+    public function testCompareSendingValues(): void
     {
         $this->compare(
             fn() => (function () {
@@ -50,7 +50,7 @@ final class DeferredGeneratorTestCase extends TestCase
         );
     }
 
-    public function testThrowingExceptions(): void
+    public function testCompareThrowingExceptions(): void
     {
         $this->compare(
             fn() => (function () {
@@ -71,7 +71,7 @@ final class DeferredGeneratorTestCase extends TestCase
         );
     }
 
-    public function testReturn(): void
+    public function testCompareReturn(): void
     {
         $this->compare(
             fn() => (function () {
@@ -86,7 +86,7 @@ final class DeferredGeneratorTestCase extends TestCase
         );
     }
 
-    public function testEmpty(): void
+    public function testCompareEmpty(): void
     {
         $this->compare(
             fn() => (function () {
@@ -100,7 +100,7 @@ final class DeferredGeneratorTestCase extends TestCase
         );
     }
 
-    public function testEmptyReturn(): void
+    public function testCompareEmptyReturn(): void
     {
         $this->compare(
             fn() => (function () {
@@ -115,7 +115,7 @@ final class DeferredGeneratorTestCase extends TestCase
         );
     }
 
-    public function testEmptyThrow(): void
+    public function testCompareEmptyThrow(): void
     {
         $this->compare(
             fn() => (function () {
@@ -126,7 +126,7 @@ final class DeferredGeneratorTestCase extends TestCase
         );
     }
 
-    public function testEmptyThrowValid(): void
+    public function testCompareEmptyThrowValid(): void
     {
         $this->compare(
             fn() => (function () {
@@ -137,7 +137,7 @@ final class DeferredGeneratorTestCase extends TestCase
         );
     }
 
-    public function testEmptyThrowGetReturn(): void
+    public function testCompareEmptyThrowGetReturn(): void
     {
         $this->compare(
             fn() => (function () {
@@ -148,7 +148,7 @@ final class DeferredGeneratorTestCase extends TestCase
         );
     }
 
-    public function testEmptyThrowGetKey(): void
+    public function testCompareEmptyThrowGetKey(): void
     {
         $this->compare(
             fn() => (function () {
@@ -157,6 +157,45 @@ final class DeferredGeneratorTestCase extends TestCase
             })(),
             ['key', 'key'],
         );
+    }
+
+    public function testLazyNotGeneratorValidGetReturn(): void
+    {
+        $lazy = DeferredGenerator::fromHandler(fn() => 42, EncodedValues::empty());
+
+        $this->assertFalse($lazy->valid());
+        $this->assertSame(42, $lazy->getReturn());
+    }
+
+    public function testLazyNotGeneratorCurrent(): void
+    {
+        $lazy = DeferredGenerator::fromHandler(fn() => 42, EncodedValues::empty());
+
+        $this->assertNull($lazy->current());
+    }
+
+    public function testLazyNotGeneratorWithException(): void
+    {
+        $lazy = DeferredGenerator::fromHandler(fn() => throw new \Exception('foo'), EncodedValues::empty());
+
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('foo');
+
+        $lazy->current();
+    }
+
+
+    public function testLazyNotGeneratorWithException2(): void
+    {
+        $lazy = DeferredGenerator::fromHandler(fn() => throw new \Exception('foo'), EncodedValues::empty());
+
+        try {
+            $lazy->current();
+        } catch (\Exception) {
+            // ignore
+        }
+
+        $this->assertNull($lazy->current());
     }
 
     /**

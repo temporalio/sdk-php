@@ -89,6 +89,7 @@ final class DeferredGenerator implements \Iterator
      */
     public function getReturn(): mixed
     {
+        // $this->start();
         try {
             return $this->generator->getReturn();
         } catch (\Throwable $e) {
@@ -170,6 +171,20 @@ final class DeferredGenerator implements \Iterator
         return $this;
     }
 
+    private static function getDummyGenerator(): \Generator
+    {
+        static $generator;
+
+        if ($generator === null) {
+            $generator = (static function (): \Generator {
+                yield;
+            })();
+            $generator->current();
+        }
+
+        return $generator;
+    }
+
     private function start(): void
     {
         if ($this->started) {
@@ -185,12 +200,14 @@ final class DeferredGenerator implements \Iterator
                 return;
             }
 
-            $this->generator = (static function (mixed $result) {
+            /** @psalm-suppress all */
+            $this->generator = (static function (mixed $result): \Generator {
                 return $result;
                 yield;
             })($result);
             $this->finished = true;
         } catch (\Throwable $e) {
+            $this->generator = self::getDummyGenerator();
             $this->handleException($e);
         } finally {
             unset($this->handler, $this->values);

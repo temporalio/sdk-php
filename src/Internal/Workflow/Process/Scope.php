@@ -131,7 +131,8 @@ class Scope implements CancellationScopeInterface, Destroyable
     public function start(\Closure $handler, ?ValuesInterface $values, bool $deferred): void
     {
         // Create a coroutine generator
-        $this->coroutine = $this->call($handler, $values ?? EncodedValues::empty());
+        $this->coroutine = DeferredGenerator::fromHandler($handler, $values ?? EncodedValues::empty())
+            ->catch($this->onException(...));
 
         $deferred
             ? $this->services->loop->once($this->layer, $this->next(...))
@@ -331,19 +332,6 @@ class Scope implements CancellationScopeInterface, Destroyable
     }
 
     /**
-     * @param \Closure(ValuesInterface): mixed $handler
-     */
-    protected function call(\Closure $handler, ValuesInterface $values): DeferredGenerator
-    {
-        $generator = DeferredGenerator::fromHandler($handler, $values)
-            ->catch(tr(...))
-            ->catch($this->onException(...));
-        // Run lazy generator
-        $generator->current();
-        return $generator;
-    }
-
-    /**
      * Call a Signal or Update method. In this case deserialization errors are skipped.
      *
      * @param callable(ValuesInterface): mixed $handler
@@ -441,7 +429,11 @@ class Scope implements CancellationScopeInterface, Destroyable
                 break;
 
             default:
-                $this->coroutine->send($current);
+                try {
+                    $this->coroutine->send($current);
+                } catch (\Throwable) {
+                    // Ignore
+                }
                 goto begin;
         }
     }
