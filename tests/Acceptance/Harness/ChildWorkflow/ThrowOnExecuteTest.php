@@ -61,6 +61,7 @@ class ChildWorkflow
     #[WorkflowMethod('Harness_ChildWorkflow_ThrowsOnExecute_Child')]
     public function run()
     {
+        yield 1;
         throw new ApplicationFailure('Test message', 'TestError', true, EncodedValues::fromValues([['foo' => 'bar']]));
     }
 }

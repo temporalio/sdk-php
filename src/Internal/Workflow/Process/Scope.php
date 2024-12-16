@@ -335,7 +335,12 @@ class Scope implements CancellationScopeInterface, Destroyable
      */
     protected function call(\Closure $handler, ValuesInterface $values): DeferredGenerator
     {
-        return DeferredGenerator::fromHandler($handler, $values)->catch($this->onException(...));
+        $generator = DeferredGenerator::fromHandler($handler, $values)
+            ->catch(tr(...))
+            ->catch($this->onException(...));
+        // Run lazy generator
+        $generator->current();
+        return $generator;
     }
 
     /**
@@ -397,7 +402,11 @@ class Scope implements CancellationScopeInterface, Destroyable
         $this->context->resolveConditions();
 
         if (!$this->coroutine->valid()) {
-            $this->onResult($this->coroutine->getReturn());
+            try {
+                $this->onResult($this->coroutine->getReturn());
+            } catch (\Throwable) {
+                $this->onResult(null);
+            }
 
             return;
         }
