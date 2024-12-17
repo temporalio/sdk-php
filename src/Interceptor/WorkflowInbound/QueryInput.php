@@ -31,7 +31,7 @@ class QueryInput
 
     public function with(
         ?ValuesInterface $arguments = null,
-        ?workflowInfo $info = null,
+        ?WorkflowInfo $info = null,
     ): self {
         return new self(
             $this->queryName,

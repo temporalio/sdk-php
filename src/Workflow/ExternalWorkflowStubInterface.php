@@ -18,7 +18,6 @@ interface ExternalWorkflowStubInterface
     public function getExecution(): WorkflowExecution;
 
     /**
-     *
      * @throws \LogicException
      */
     public function signal(string $name, array $args = []): PromiseInterface;

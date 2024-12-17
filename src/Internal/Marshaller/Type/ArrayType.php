@@ -27,7 +27,6 @@ class ArrayType extends Type implements DetectableTypeInterface, RuleFactoryInte
     private ?TypeInterface $type = null;
 
     /**
-     *
      * @throws \ReflectionException
      */
     public function __construct(MarshallerInterface $marshaller, MarshallingRule|string|null $typeOrClass = null)

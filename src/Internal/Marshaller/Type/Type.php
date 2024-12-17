@@ -29,7 +29,6 @@ abstract class Type implements TypeInterface
     ) {}
 
     /**
-     *
      * @throws \ReflectionException
      */
     protected function ofType(MarshallerInterface $marshaller, MarshallingRule|string $type): ?TypeInterface

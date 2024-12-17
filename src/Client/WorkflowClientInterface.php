@@ -11,10 +11,13 @@ declare(strict_types=1);
 
 namespace Temporal\Client;
 
+use JetBrains\PhpStorm\Deprecated;
 use Temporal\Api\Enums\V1\HistoryEventFilterType;
 use Temporal\Client\Common\ClientContextInterface;
 use Temporal\Client\Common\Paginator;
 use Temporal\Client\GRPC\ServiceClientInterface;
+use Temporal\Client\Update\UpdateHandle;
+use Temporal\Client\Update\UpdateOptions;
 use Temporal\Client\Workflow\CountWorkflowExecutions;
 use Temporal\Client\Workflow\WorkflowExecutionHistory;
 use Temporal\Workflow\WorkflowExecution;
@@ -37,13 +40,47 @@ interface WorkflowClientInterface extends ClientContextInterface
      * Starts untyped and typed workflow stubs in async mode. Sends signal on start.
      *
      * @param object|WorkflowStubInterface $workflow
+     * @param non-empty-string $signal
+     *
+     * @since 2.12.0
      */
+    public function signalWithStart(
+        $workflow,
+        string $signal,
+        array $signalArgs = [],
+        array $startArgs = [],
+    ): WorkflowRunInterface;
+
+    /**
+     * @deprecated Use {@see self::signalWithStart()} instead.
+     */
+    #[Deprecated(replacement: '%class%->signalWithStart(%parametersList%)')]
     public function startWithSignal(
         $workflow,
         string $signal,
         array $signalArgs = [],
         array $startArgs = [],
     ): WorkflowRunInterface;
+
+    /**
+     * Starts untyped and typed workflow stubs in async mode. Sends Update on start.
+     *
+     * @param object|WorkflowStubInterface $workflow
+     * @param non-empty-string|UpdateOptions $update Name of the update handler or update options.
+     * @param array $updateArgs
+     * @param array $startArgs
+     *
+     * @return UpdateHandle
+     *
+     * @note Experimental feature.
+     * @since 2.12.0
+     */
+    public function updateWithStart(
+        $workflow,
+        string|UpdateOptions $update,
+        array $updateArgs = [],
+        array $startArgs = [],
+    ): UpdateHandle;
 
     /**
      * Creates workflow client stub that can be used to start a single workflow execution.

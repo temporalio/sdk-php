@@ -43,7 +43,9 @@ final class ServerCapabilities
      *       it in history
      * @param bool $countGroupByExecutionStatus
      *       True if the server supports count group by execution status
-     *       (-- api-linter: core::0140::prepositions=disabled --)
+     * @param bool $nexus
+     *       True if the server supports Nexus operations.
+     *       This flag is dependent both on server version and for Nexus to be enabled via server configuration.
      */
     public function __construct(
         public readonly bool $signalAndQueryHeader = false,
@@ -56,6 +58,7 @@ final class ServerCapabilities
         public readonly bool $eagerWorkflowStart = false,
         public readonly bool $sdkMetadata = false,
         public readonly bool $countGroupByExecutionStatus = false,
+        public readonly bool $nexus = false,
     ) {}
 
     /**

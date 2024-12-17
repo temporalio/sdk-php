@@ -123,6 +123,7 @@
   <file src="src/Client/WorkflowClient.php">
     <ArgumentTypeCoercion>
       <code><![CDATA[$counter]]></code>
+      <code><![CDATA[$signal]]></code>
       <code><![CDATA[$workflowType]]></code>
       <code><![CDATA[$workflowType]]></code>
     </ArgumentTypeCoercion>
@@ -148,6 +149,9 @@
     <LessSpecificReturnStatement>
       <code><![CDATA[new self($serviceClient, $options, $converter, $interceptorProvider)]]></code>
     </LessSpecificReturnStatement>
+    <MissingParamType>
+      <code><![CDATA[$workflow]]></code>
+    </MissingParamType>
     <MoreSpecificReturnType>
       <code><![CDATA[static]]></code>
     </MoreSpecificReturnType>
@@ -155,6 +159,14 @@
       <code><![CDATA[\sprintf]]></code>
       <code><![CDATA[\sprintf]]></code>
     </RedundantFunctionCall>
+    <TypeDoesNotContainType>
+      <code><![CDATA[$signal === '']]></code>
+    </TypeDoesNotContainType>
+  </file>
+  <file src="src/Client/WorkflowClientInterface.php">
+    <MissingParamType>
+      <code><![CDATA[$workflow]]></code>
+    </MissingParamType>
   </file>
   <file src="src/Client/WorkflowOptions.php">
     <ImpureMethodCall>
@@ -384,6 +396,14 @@
     </MissingParamType>
   </file>
   <file src="src/Internal/Client/WorkflowStarter.php">
+    <InvalidArgument>
+      <code><![CDATA[0]]></code>
+      <code><![CDATA[1]]></code>
+      <code><![CDATA[1]]></code>
+    </InvalidArgument>
+    <MissingTemplateParam>
+      <code><![CDATA[$fails]]></code>
+    </MissingTemplateParam>
     <PossiblyNullArgument>
       <code><![CDATA[$options->retryOptions ? $options->retryOptions->toWorkflowRetryPolicy() : null]]></code>
       <code><![CDATA[$options->toMemo($this->converter)]]></code>
@@ -395,6 +415,9 @@
     <RedundantConditionGivenDocblockType>
       <code><![CDATA[$delay !== null]]></code>
     </RedundantConditionGivenDocblockType>
+    <UndefinedInterfaceMethod>
+      <code><![CDATA[toHeader]]></code>
+    </UndefinedInterfaceMethod>
   </file>
   <file src="src/Internal/Client/WorkflowStub.php">
     <PossiblyInvalidArgument>
@@ -404,6 +427,7 @@
       <code><![CDATA[$attr->getDetails()]]></code>
       <code><![CDATA[$attr->getFailure()]]></code>
       <code><![CDATA[$attr->getResult()]]></code>
+      <code><![CDATA[$input->workflowType]]></code>
       <code><![CDATA[$input->workflowType]]></code>
       <code><![CDATA[$result->getQueryResult()]]></code>
       <code><![CDATA[$this->execution]]></code>

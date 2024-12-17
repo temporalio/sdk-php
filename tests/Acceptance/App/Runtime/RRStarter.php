@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Acceptance\App\Runtime;
 
 use Temporal\Testing\Environment;
+use Temporal\Testing\SystemInfo;
 
 final class RRStarter
 {
@@ -24,9 +25,11 @@ final class RRStarter
             return;
         }
 
+        $sysInfo = SystemInfo::detect();
         $run = $this->runtime->command;
+
         $rrCommand = [
-            $this->runtime->workDir . DIRECTORY_SEPARATOR . 'rr',
+            $this->runtime->workDir . DIRECTORY_SEPARATOR . $sysInfo->rrExecutable,
             'serve',
             '-w',
             $this->runtime->rrConfigDir,

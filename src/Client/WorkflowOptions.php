@@ -163,7 +163,6 @@ final class WorkflowOptions extends Options
     }
 
     /**
-     *
      * @return self return a new {@see self} instance with merged options
      */
     public function mergeWith(?MethodRetry $retry = null, ?CronSchedule $cron = null): self
