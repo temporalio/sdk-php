@@ -37,7 +37,6 @@ final class MethodRetry extends RetryOptions
      * @param DateIntervalValue|null $initialInterval
      * @param DateIntervalValue|null $maximumInterval
      * @param int<0, max> $maximumAttempts
-     * @param float $backoffCoefficient
      * @param ExceptionsList $nonRetryableExceptions
      */
     public function __construct(

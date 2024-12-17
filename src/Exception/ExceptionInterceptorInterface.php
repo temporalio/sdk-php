@@ -17,9 +17,5 @@ namespace Temporal\Exception;
  */
 interface ExceptionInterceptorInterface
 {
-    /**
-     * @param \Throwable $e
-     * @return bool
-     */
     public function isRetryable(\Throwable $e): bool;
 }

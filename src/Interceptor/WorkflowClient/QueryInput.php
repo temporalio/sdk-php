@@ -31,9 +31,9 @@ class QueryInput
     ) {}
 
     public function with(
-        WorkflowExecution $workflowExecution = null,
-        string $queryType = null,
-        ValuesInterface $arguments = null,
+        ?WorkflowExecution $workflowExecution = null,
+        ?string $queryType = null,
+        ?ValuesInterface $arguments = null,
     ): self {
         return new self(
             $workflowExecution ?? $this->workflowExecution,

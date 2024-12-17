@@ -33,7 +33,6 @@ final class Promise
      * the resolution values of each item in `$promises`.
      *
      * @param iterable<int, PromiseInterface|mixed> $promises
-     * @return PromiseInterface
      */
     public static function all(iterable $promises): PromiseInterface
     {
@@ -51,7 +50,6 @@ final class Promise
      * {@see LengthException}.
      *
      * @param iterable<int, PromiseInterface|mixed> $promises
-     * @return PromiseInterface
      */
     public static function any(iterable $promises): PromiseInterface
     {
@@ -74,8 +72,6 @@ final class Promise
      * reject with a {@see LengthException}.
      *
      * @param iterable<int, PromiseInterface|mixed> $promises
-     * @param int $count
-     * @return PromiseInterface
      */
     public static function some(iterable $promises, int $count): PromiseInterface
     {
@@ -159,8 +155,6 @@ final class Promise
      *
      * @psalm-param PromiseMapCallback $map
      * @param iterable<int, PromiseInterface|mixed> $promises
-     * @param callable $map
-     * @return PromiseInterface
      */
     public static function map(iterable $promises, callable $map): PromiseInterface
     {
@@ -213,7 +207,6 @@ final class Promise
      * @param iterable<int, PromiseInterface|mixed> $promises
      * @param callable(mixed $current, mixed $carry, int $current, positive-int $items): mixed $reduce
      * @param mixed $initial
-     * @return PromiseInterface
      */
     public static function reduce(iterable $promises, callable $reduce, $initial = null): PromiseInterface
     {
@@ -280,8 +273,7 @@ final class Promise
      *
      * If `$promiseOrValue` is a promise, it will be returned as is.
      *
-     * @param $promiseOrValue
-     * @return PromiseInterface
+     * @param null|mixed $promiseOrValue
      */
     public static function resolve($promiseOrValue = null): PromiseInterface
     {
@@ -301,7 +293,7 @@ final class Promise
      * throwing an exception. For example, it allows you to propagate a rejection with
      * the value of another promise.
      *
-     * @param $promiseOrValue
+     * @param null|mixed $promiseOrValue
      * @return PromiseInterface<never>
      */
     public static function reject($promiseOrValue = null): PromiseInterface

@@ -15,8 +15,5 @@ use Temporal\DataConverter\ValuesInterface;
 
 interface SuccessResponseInterface extends CommandInterface
 {
-    /**
-     * @return ValuesInterface
-     */
     public function getPayloads(): ValuesInterface;
 }

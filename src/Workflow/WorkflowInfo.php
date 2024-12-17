@@ -26,15 +26,9 @@ use Temporal\Worker\WorkerFactoryInterface;
 #[Immutable]
 final class WorkflowInfo
 {
-    /**
-     * @var WorkflowExecution
-     */
     #[Marshal(name: 'WorkflowExecution', type: ObjectType::class, of: WorkflowExecution::class)]
     public WorkflowExecution $execution;
 
-    /**
-     * @var WorkflowType
-     */
     #[Marshal(name: 'WorkflowType', type: ObjectType::class, of: WorkflowType::class)]
     public WorkflowType $type;
 
@@ -44,27 +38,15 @@ final class WorkflowInfo
     #[Marshal(name: 'TaskQueueName')]
     public string $taskQueue = WorkerFactoryInterface::DEFAULT_TASK_QUEUE;
 
-    /**
-     * @var \DateInterval
-     */
     #[Marshal(name: 'WorkflowExecutionTimeout', type: DateIntervalType::class)]
     public \DateInterval $executionTimeout;
 
-    /**
-     * @var \DateInterval
-     */
     #[Marshal(name: 'WorkflowRunTimeout', type: DateIntervalType::class)]
     public \DateInterval $runTimeout;
 
-    /**
-     * @var \DateInterval
-     */
     #[Marshal(name: 'WorkflowTaskTimeout', type: DateIntervalType::class)]
     public \DateInterval $taskTimeout;
 
-    /**
-     * @var string
-     */
     #[Marshal(name: 'Namespace')]
     public string $namespace = ClientOptions::DEFAULT_NAMESPACE;
 
@@ -112,44 +94,25 @@ final class WorkflowInfo
     /**
      * @see CronSchedule::$interval for more info about cron format.
      *
-     * @var string|null
      */
     #[Marshal(name: 'CronSchedule', type: NullableType::class, of: CronType::class)]
     public ?string $cronSchedule = null;
 
-    /**
-     * @var string|null
-     */
     #[Marshal(name: 'ContinuedExecutionRunID')]
     public ?string $continuedExecutionRunId = null;
 
-    /**
-     * @var string|null
-     */
     #[Marshal(name: 'ParentWorkflowNamespace')]
     public ?string $parentNamespace = null;
 
-    /**
-     * @var WorkflowExecution|null
-     */
     #[Marshal(name: 'ParentWorkflowExecution', type: NullableType::class, of: WorkflowExecution::class)]
     public ?WorkflowExecution $parentExecution = null;
 
-    /**
-     * @var array|null
-     */
     #[Marshal(name: 'SearchAttributes', type: NullableType::class, of: ArrayType::class)]
     public ?array $searchAttributes = null;
 
-    /**
-     * @var array|null
-     */
     #[Marshal(name: 'Memo', type: NullableType::class, of: ArrayType::class)]
     public ?array $memo = null;
 
-    /**
-     * @var string
-     */
     #[Marshal(name: 'BinaryChecksum')]
     public string $binaryChecksum = '';
 

@@ -9,7 +9,7 @@ use React\Promise\PromiseInterface;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Exception\Client\TimeoutException;
-use Temporal\Exception\Client\WorkflowUpdateException;
+use Temporal\Exception\Client\UntypedStubException;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\TestCase;
@@ -21,7 +21,7 @@ class UntypedStubTest extends TestCase
 {
     #[Test]
     public function fetchResolvedResultAfterWorkflowCompleted(
-        #[Stub('Extra_Update_WorkflowUpdate')] WorkflowStubInterface $stub,
+        #[Stub('Extra_Update_UntypedStub')] WorkflowStubInterface $stub,
     ): void
     {
         /** @see TestWorkflow::add */
@@ -45,7 +45,7 @@ class UntypedStubTest extends TestCase
 
     #[Test]
     public function fetchResultWithTimeout(
-        #[Stub('Extra_Update_WorkflowUpdate')] WorkflowStubInterface $stub,
+        #[Stub('Extra_Update_UntypedStub')] WorkflowStubInterface $stub,
     ): void {
         /** @see TestWorkflow::add */
         $handle = $stub->startUpdate('await', 'key');
@@ -70,12 +70,12 @@ class UntypedStubTest extends TestCase
 
     #[Test]
     public function handleUnknownUpdate(
-        #[Stub('Extra_Update_WorkflowUpdate')] WorkflowStubInterface $stub,
+        #[Stub('Extra_Update_UntypedStub')] WorkflowStubInterface $stub,
     ): void {
         try {
             $stub->startUpdate('unknownUpdateMethod', '42');
             $this->fail('Should throw exception');
-        } catch (WorkflowUpdateException $e) {
+        } catch (UntypedStubException $e) {
             $this->assertStringContainsString(
                 'unknown update method unknownUpdateMethod',
                 $e->getPrevious()->getMessage(),
@@ -85,7 +85,7 @@ class UntypedStubTest extends TestCase
 
     #[Test]
     public function singleAwaitsWithoutTimeout(
-        #[Stub('Extra_Update_WorkflowUpdate')] WorkflowStubInterface $stub,
+        #[Stub('Extra_Update_UntypedStub')] WorkflowStubInterface $stub,
     ): void {
         /** @see TestWorkflow::add */
         $handle = $stub->startUpdate('await', 'key');
@@ -110,7 +110,7 @@ class UntypedStubTest extends TestCase
 
     #[Test]
     public function multipleAwaitsWithoutTimeout(
-        #[Stub('Extra_Update_WorkflowUpdate')] WorkflowStubInterface $stub,
+        #[Stub('Extra_Update_UntypedStub')] WorkflowStubInterface $stub,
     ): void {
         for ($i = 1; $i <= 5; $i++) {
             /** @see TestWorkflow::add */
@@ -145,7 +145,7 @@ class UntypedStubTest extends TestCase
 
     #[Test]
     public function multipleAwaitsWithTimeout(
-        #[Stub('Extra_Update_WorkflowUpdate')] WorkflowStubInterface $stub,
+        #[Stub('Extra_Update_UntypedStub')] WorkflowStubInterface $stub,
     ): void {
         for ($i = 1; $i <= 5; $i++) {
             /** @see TestWorkflow::addWithTimeout */
@@ -173,7 +173,7 @@ class UntypedStubTest extends TestCase
 
     #[Test]
     public function getUpdateHandler(
-        #[Stub('Extra_Update_WorkflowUpdate')] WorkflowStubInterface $stub,
+        #[Stub('Extra_Update_UntypedStub')] WorkflowStubInterface $stub,
     ): void {
         /** @see TestWorkflow::add */
         $handle = $stub->startUpdate('await', 'key');
@@ -201,7 +201,7 @@ class UntypedStubTest extends TestCase
 
     #[Test]
     public function getUpdateHandlerFromNewRunningWorkflowStub(
-        #[Stub('Extra_Update_WorkflowUpdate')] WorkflowStubInterface $stub,
+        #[Stub('Extra_Update_UntypedStub')] WorkflowStubInterface $stub,
         WorkflowClientInterface $client,
     ): void {
         /** @see TestWorkflow::add */
@@ -243,7 +243,7 @@ class TestWorkflow
     private array $awaits = [];
     private bool $exit = false;
 
-    #[WorkflowMethod(name: "Extra_Update_WorkflowUpdate")]
+    #[WorkflowMethod(name: "Extra_Update_UntypedStub")]
     public function handle()
     {
         yield Workflow::await(fn() => $this->exit);

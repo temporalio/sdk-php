@@ -17,7 +17,6 @@ use Temporal\Exception\DataConverterException;
 interface DataConverterInterface
 {
     /**
-     * @param Payload $payload
      * @param string|\ReflectionClass|\ReflectionType|Type|null $type
      * @return mixed
      *
@@ -28,7 +27,6 @@ interface DataConverterInterface
 
     /**
      * @param mixed $value
-     * @return Payload
      *
      * @throws DataConverterException
      */

@@ -109,6 +109,12 @@
       <code><![CDATA[$workflowType]]></code>
     </PropertyNotSetInConstructor>
   </file>
+  <file src="src/Client/Schedule/Spec/ScheduleSpec.php">
+    <DeprecatedProperty>
+      <code><![CDATA[$this->excludeCalendarList]]></code>
+      <code><![CDATA[$this->excludeCalendarList]]></code>
+    </DeprecatedProperty>
+  </file>
   <file src="src/Client/Update/UpdateHandle.php">
     <PossiblyNullArgument>
       <code><![CDATA[$result->getSuccess()]]></code>
@@ -117,6 +123,7 @@
   <file src="src/Client/WorkflowClient.php">
     <ArgumentTypeCoercion>
       <code><![CDATA[$counter]]></code>
+      <code><![CDATA[$signal]]></code>
       <code><![CDATA[$workflowType]]></code>
       <code><![CDATA[$workflowType]]></code>
     </ArgumentTypeCoercion>
@@ -142,6 +149,9 @@
     <LessSpecificReturnStatement>
       <code><![CDATA[new self($serviceClient, $options, $converter, $interceptorProvider)]]></code>
     </LessSpecificReturnStatement>
+    <MissingParamType>
+      <code><![CDATA[$workflow]]></code>
+    </MissingParamType>
     <MoreSpecificReturnType>
       <code><![CDATA[static]]></code>
     </MoreSpecificReturnType>
@@ -149,6 +159,14 @@
       <code><![CDATA[\sprintf]]></code>
       <code><![CDATA[\sprintf]]></code>
     </RedundantFunctionCall>
+    <TypeDoesNotContainType>
+      <code><![CDATA[$signal === '']]></code>
+    </TypeDoesNotContainType>
+  </file>
+  <file src="src/Client/WorkflowClientInterface.php">
+    <MissingParamType>
+      <code><![CDATA[$workflow]]></code>
+    </MissingParamType>
   </file>
   <file src="src/Client/WorkflowOptions.php">
     <ImpureMethodCall>
@@ -378,6 +396,14 @@
     </MissingParamType>
   </file>
   <file src="src/Internal/Client/WorkflowStarter.php">
+    <InvalidArgument>
+      <code><![CDATA[0]]></code>
+      <code><![CDATA[1]]></code>
+      <code><![CDATA[1]]></code>
+    </InvalidArgument>
+    <MissingTemplateParam>
+      <code><![CDATA[$fails]]></code>
+    </MissingTemplateParam>
     <PossiblyNullArgument>
       <code><![CDATA[$options->retryOptions ? $options->retryOptions->toWorkflowRetryPolicy() : null]]></code>
       <code><![CDATA[$options->toMemo($this->converter)]]></code>
@@ -389,6 +415,9 @@
     <RedundantConditionGivenDocblockType>
       <code><![CDATA[$delay !== null]]></code>
     </RedundantConditionGivenDocblockType>
+    <UndefinedInterfaceMethod>
+      <code><![CDATA[toHeader]]></code>
+    </UndefinedInterfaceMethod>
   </file>
   <file src="src/Internal/Client/WorkflowStub.php">
     <PossiblyInvalidArgument>
@@ -398,6 +427,7 @@
       <code><![CDATA[$attr->getDetails()]]></code>
       <code><![CDATA[$attr->getFailure()]]></code>
       <code><![CDATA[$attr->getResult()]]></code>
+      <code><![CDATA[$input->workflowType]]></code>
       <code><![CDATA[$input->workflowType]]></code>
       <code><![CDATA[$result->getQueryResult()]]></code>
       <code><![CDATA[$this->execution]]></code>
@@ -508,7 +538,6 @@
   </file>
   <file src="src/Internal/Declaration/Reader/WorkflowReader.php">
     <ArgumentTypeCoercion>
-      <code><![CDATA[$class]]></code>
       <code><![CDATA[$contextualRetry]]></code>
       <code><![CDATA[$method]]></code>
       <code><![CDATA[$name]]></code>
@@ -1218,10 +1247,6 @@
     <InvalidOperand>
       <code><![CDATA[$promisesOrValues]]></code>
     </InvalidOperand>
-    <MissingParamType>
-      <code><![CDATA[$promiseOrValue]]></code>
-      <code><![CDATA[$promiseOrValue]]></code>
-    </MissingParamType>
     <TooManyArguments>
       <code><![CDATA[$reduce($c, $value, $i++, $total)]]></code>
     </TooManyArguments>
@@ -1367,11 +1392,6 @@
       <code><![CDATA[$method]]></code>
     </ArgumentTypeCoercion>
   </file>
-  <file src="src/Worker/Transport/RPCConnectionInterface.php">
-    <MissingParamType>
-      <code><![CDATA[$payload]]></code>
-    </MissingParamType>
-  </file>
   <file src="src/Worker/Transport/RoadRunner.php">
     <ArgumentTypeCoercion>
       <code><![CDATA[$env->getRelayAddress()]]></code>
@@ -1457,6 +1477,7 @@
       <code><![CDATA[new static(
             $converter ?? DataConverter::createDefault(),
             $rpc ?? Goridge::create(),
+            $credentials ?? ServiceCredentials::create(),
         )]]></code>
     </UnsafeInstantiation>
   </file>

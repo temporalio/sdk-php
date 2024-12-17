@@ -50,22 +50,15 @@ final class CronSchedule implements \Stringable
      *  * * * * *
      * ```
      *
-     * @var string
      */
     #[Immutable]
     public string $interval;
 
-    /**
-     * @param string $interval
-     */
     public function __construct(string $interval)
     {
         $this->interval = $interval;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function __toString(): string
     {
         return (string) $this->interval;

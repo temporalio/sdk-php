@@ -31,9 +31,7 @@ final class ExecuteLocalActivity extends Request
 
     /**
      * @param non-empty-string $name Activity name
-     * @param ValuesInterface $args
      * @param RequestOptions $options
-     * @param HeaderInterface $header
      */
     public function __construct(string $name, ValuesInterface $args, array $options, HeaderInterface $header)
     {

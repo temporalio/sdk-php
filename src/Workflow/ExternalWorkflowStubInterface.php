@@ -15,22 +15,12 @@ use React\Promise\PromiseInterface;
 
 interface ExternalWorkflowStubInterface
 {
-    /**
-     * @return WorkflowExecution
-     */
     public function getExecution(): WorkflowExecution;
 
     /**
-     * @param string $name
-     * @param array $args
-     *
-     * @return PromiseInterface
      * @throws \LogicException
      */
     public function signal(string $name, array $args = []): PromiseInterface;
 
-    /**
-     * @return PromiseInterface
-     */
     public function cancel(): PromiseInterface;
 }

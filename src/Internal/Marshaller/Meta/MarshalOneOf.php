@@ -21,11 +21,10 @@ final class MarshalOneOf extends Marshal
      * @param non-empty-array<non-empty-string, class-string> $cases
      * @param non-empty-string|null $name
      * @param class-string|null $of
-     * @param bool $nullable
      */
     public function __construct(
         private array $cases,
-        string $name = null,
+        ?string $name = null,
         ?string $of = null,
         bool $nullable = true,
     ) {

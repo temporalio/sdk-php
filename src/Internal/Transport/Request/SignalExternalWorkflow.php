@@ -21,20 +21,12 @@ final class SignalExternalWorkflow extends Request
 {
     public const NAME = 'SignalExternalWorkflow';
 
-    /**
-     * @param string $namespace
-     * @param string $workflowId
-     * @param string|null $runId
-     * @param string $signal
-     * @param ValuesInterface|null $input
-     * @param bool $childWorkflowOnly
-     */
     public function __construct(
         string $namespace,
         string $workflowId,
         ?string $runId,
         string $signal,
-        ValuesInterface $input = null,
+        ?ValuesInterface $input = null,
         bool $childWorkflowOnly = false,
     ) {
         $options = [

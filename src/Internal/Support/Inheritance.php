@@ -16,7 +16,6 @@ class Inheritance
     /**
      * @param class-string $haystack
      * @param class-string $trait
-     * @return bool
      */
     public static function uses(string $haystack, string $trait): bool
     {
@@ -40,7 +39,6 @@ class Inheritance
     /**
      * @param class-string $haystack
      * @param class-string $class
-     * @return bool
      */
     public static function extends(string $haystack, string $class): bool
     {
@@ -67,7 +65,6 @@ class Inheritance
      * @param class-string $haystack
      * @param class-string<A> $interface
      *
-     * @return bool
      * @psalm-assert-if-true class-string<A> $haystack
      */
     public static function implements(string $haystack, string $interface): bool

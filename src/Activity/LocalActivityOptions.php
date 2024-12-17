@@ -79,10 +79,9 @@ class LocalActivityOptions extends Options implements ActivityOptionsInterface
     }
 
     /**
-     * @param MethodRetry|null $retry
      * @return $this
      */
-    public function mergeWith(MethodRetry $retry = null): self
+    public function mergeWith(?MethodRetry $retry = null): self
     {
         $self = clone $this;
 
@@ -142,7 +141,6 @@ class LocalActivityOptions extends Options implements ActivityOptionsInterface
     }
 
     /**
-     * @param RetryOptions|null $options
      * @return $this
      */
     #[Pure]

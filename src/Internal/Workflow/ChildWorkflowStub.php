@@ -36,9 +36,6 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
 
     /**
      * @param MarshallerInterface<array> $marshaller
-     * @param string $workflow
-     * @param ChildWorkflowOptions $options
-     * @param HeaderInterface|array $header
      */
     public function __construct(
         private readonly MarshallerInterface $marshaller,
@@ -50,17 +47,11 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
         $this->header = \is_array($header) ? Header::fromValues($header) : $header;
     }
 
-    /**
-     * @return string
-     */
     public function getChildWorkflowType(): string
     {
         return $this->workflow;
     }
 
-    /**
-     * @return PromiseInterface
-     */
     public function getExecution(): PromiseInterface
     {
         return $this->execution->promise();
@@ -99,25 +90,16 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
         return EncodedValues::decodePromise($this->result, $returnType);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function execute(array $args = [], $returnType = null): PromiseInterface
     {
         return $this->start(...$args)->then(fn() => $this->getResult($returnType));
     }
 
-    /**
-     * @return ChildWorkflowOptions
-     */
     public function getOptions(): ChildWorkflowOptions
     {
         return $this->options;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function signal(string $name, array $args = []): PromiseInterface
     {
         return $this->execution->promise()->then(
@@ -136,10 +118,6 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
         );
     }
 
-    /**
-     * @param RequestInterface $request
-     * @return PromiseInterface
-     */
     protected function request(RequestInterface $request): PromiseInterface
     {
         /** @var Workflow\WorkflowContextInterface $context */
@@ -148,9 +126,6 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
         return $context->request($request);
     }
 
-    /**
-     * @return array
-     */
     private function getOptionArray(): array
     {
         return $this->marshaller->marshal($this->getOptions());

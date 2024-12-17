@@ -69,8 +69,6 @@ class WorkflowReader extends Reader
     ;
 
     /**
-     * @param string $class
-     * @return WorkflowPrototype
      * @throws \ReflectionException
      */
     public function fromClass(string $class): WorkflowPrototype
@@ -101,7 +99,6 @@ class WorkflowReader extends Reader
     }
 
     /**
-     * @param ClassNode $graph
      * @return \Traversable<ActivityPrototype>
      * @throws \ReflectionException
      */
@@ -119,9 +116,6 @@ class WorkflowReader extends Reader
     }
 
     /**
-     * @param ClassNode $graph
-     * @param WorkflowPrototype $prototype
-     * @return WorkflowPrototype
      * @throws \ReflectionException
      */
     private function withMethods(ClassNode $graph, WorkflowPrototype $prototype): WorkflowPrototype
@@ -247,9 +241,6 @@ class WorkflowReader extends Reader
         return $prototype;
     }
 
-    /**
-     * @param ClassNode $graph
-     */
     private function assertWorkflowInterface(ClassNode $graph): void
     {
         foreach ($graph as $edge) {
@@ -268,10 +259,6 @@ class WorkflowReader extends Reader
     }
 
     /**
-     * @param ClassNode $graph
-     * @param \ReflectionMethod $handler
-     * @param string $name
-     * @return object|null
      * @throws \ReflectionException
      */
     private function getAttributedMethod(ClassNode $graph, \ReflectionMethod $handler, string $name): ?object
@@ -290,9 +277,6 @@ class WorkflowReader extends Reader
     }
 
     /**
-     * @param ClassNode $graph
-     * @param \ReflectionMethod $handler
-     * @return WorkflowPrototype|null
      * @throws \ReflectionException
      */
     private function getPrototype(ClassNode $graph, \ReflectionMethod $handler): ?WorkflowPrototype
@@ -387,7 +371,6 @@ class WorkflowReader extends Reader
      * @param \ReflectionMethod $ctx Current method in the inheritance chain
      * @param \ReflectionClass $interface Class or Interface with #[WorkflowInterface] attribute
      * @param \ReflectionClass $class Target class
-     * @return WorkflowPrototype|null
      */
     private function findProto(
         \ReflectionMethod $handler,

@@ -20,9 +20,6 @@ use Temporal\Internal\Declaration\Prototype\PrototypeInterface;
  */
 final class ActivityInstantiator extends Instantiator
 {
-    /**
-     * {@inheritDoc}
-     */
     public function instantiate(PrototypeInterface $prototype): ActivityInstance
     {
         \assert($prototype instanceof ActivityPrototype, 'Precondition failed');

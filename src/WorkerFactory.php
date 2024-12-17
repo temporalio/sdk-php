@@ -42,6 +42,7 @@ use Temporal\Internal\Transport\ServerInterface;
 use Temporal\Worker\Environment\Environment;
 use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Worker\LoopInterface;
+use Temporal\Worker\ServiceCredentials;
 use Temporal\Worker\Transport\Codec\CodecInterface;
 use Temporal\Worker\Transport\Codec\JsonCodec;
 use Temporal\Worker\Transport\Codec\ProtoCodec;
@@ -74,44 +75,14 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
 {
     use EventEmitterTrait;
 
-    /**
-     * @var string
-     */
     private const ERROR_MESSAGE_TYPE = 'Received message type must be a string, but %s given';
-
-    /**
-     * @var string
-     */
     private const ERROR_HEADERS_TYPE = 'Received headers type must be a string, but %s given';
-
-    /**
-     * @var string
-     */
     private const ERROR_HEADER_NOT_STRING_TYPE = 'Header "%s" argument type must be a string, but %s given';
-
-    /**
-     * @var string
-     */
     private const ERROR_QUEUE_NOT_FOUND = 'Cannot find a worker for task queue "%s"';
-
-    /**
-     * @var string
-     */
     private const HEADER_TASK_QUEUE = 'taskQueue';
 
-    /**
-     * @var DataConverterInterface
-     */
     protected DataConverterInterface $converter;
-
-    /**
-     * @var ReaderInterface
-     */
     protected ReaderInterface $reader;
-
-    /**
-     * @var RouterInterface
-     */
     protected RouterInterface $router;
 
     /**
@@ -119,79 +90,44 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
      */
     protected RepositoryInterface $queues;
 
-    /**
-     * @var CodecInterface
-     */
     protected CodecInterface $codec;
-
-    /**
-     * @var ClientInterface
-     */
     protected ClientInterface $client;
-
-    /**
-     * @var ServerInterface
-     */
     protected ServerInterface $server;
-
-    /**
-     * @var QueueInterface
-     */
     protected QueueInterface $responses;
-
-    /**
-     * @var RPCConnectionInterface
-     */
-    protected RPCConnectionInterface $rpc;
 
     /**
      * @var MarshallerInterface<array>
      */
     protected MarshallerInterface $marshaller;
 
-    /**
-     * @var EnvironmentInterface
-     */
     protected EnvironmentInterface $env;
 
-    /**
-     * @param DataConverterInterface $dataConverter
-     * @param RPCConnectionInterface $rpc
-     */
     public function __construct(
         DataConverterInterface $dataConverter,
-        RPCConnectionInterface $rpc,
+        protected RPCConnectionInterface $rpc,
+        ServiceCredentials $credentials,
     ) {
         $this->converter = $dataConverter;
-        $this->rpc = $rpc;
-
-        $this->boot();
+        $this->boot($credentials);
     }
 
-    /**
-     * @param DataConverterInterface|null $converter
-     * @param RPCConnectionInterface|null $rpc
-     *
-     * @return WorkerFactoryInterface
-     */
     public static function create(
-        DataConverterInterface $converter = null,
-        RPCConnectionInterface $rpc = null,
+        ?DataConverterInterface $converter = null,
+        ?RPCConnectionInterface $rpc = null,
+        ?ServiceCredentials $credentials = null,
     ): WorkerFactoryInterface {
         return new static(
             $converter ?? DataConverter::createDefault(),
             $rpc ?? Goridge::create(),
+            $credentials ?? ServiceCredentials::create(),
         );
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function newWorker(
         string $taskQueue = self::DEFAULT_TASK_QUEUE,
-        WorkerOptions $options = null,
-        ExceptionInterceptorInterface $exceptionInterceptor = null,
-        PipelineProvider $interceptorProvider = null,
+        ?WorkerOptions $options = null,
+        ?ExceptionInterceptorInterface $exceptionInterceptor = null,
+        ?PipelineProvider $interceptorProvider = null,
     ): WorkerInterface {
         $worker = new Worker(
             $taskQueue,
@@ -208,33 +144,21 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         return $worker;
     }
 
-    /**
-     * @return ReaderInterface
-     */
     public function getReader(): ReaderInterface
     {
         return $this->reader;
     }
 
-    /**
-     * @return ClientInterface
-     */
     public function getClient(): ClientInterface
     {
         return $this->client;
     }
 
-    /**
-     * @return QueueInterface
-     */
     public function getQueue(): QueueInterface
     {
         return $this->responses;
     }
 
-    /**
-     * @return DataConverterInterface
-     */
     public function getDataConverter(): DataConverterInterface
     {
         return $this->converter;
@@ -248,18 +172,12 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         return $this->marshaller;
     }
 
-    /**
-     * @return EnvironmentInterface
-     */
     public function getEnvironment(): EnvironmentInterface
     {
         return $this->env;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function run(HostConnectionInterface $host = null): int
+    public function run(?HostConnectionInterface $host = null): int
     {
         $host ??= RoadRunner::create();
         $this->codec = $this->createCodec();
@@ -275,9 +193,6 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         return 0;
     }
 
-    /**
-     * @return void
-     */
     public function tick(): void
     {
         $this->emit(LoopInterface::ON_SIGNAL);
@@ -287,9 +202,6 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         $this->emit(LoopInterface::ON_FINALLY);
     }
 
-    /**
-     * @return ReaderInterface
-     */
     protected function createReader(): ReaderInterface
     {
         if (\interface_exists(Reader::class)) {
@@ -307,44 +219,31 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         return new ArrayRepository();
     }
 
-    /**
-     * @return RouterInterface
-     */
-    protected function createRouter(): RouterInterface
+    protected function createRouter(ServiceCredentials $credentials): RouterInterface
     {
         $router = new Router();
-        $router->add(new Router\GetWorkerInfo($this->queues, $this->marshaller));
+        $router->add(new Router\GetWorkerInfo($this->queues, $this->marshaller, $credentials));
 
         return $router;
     }
 
-    /**
-     * @return QueueInterface
-     */
     protected function createQueue(): QueueInterface
     {
         return new ArrayQueue();
     }
 
-    /**
-     * @return ClientInterface
-     */
     #[Pure]
     protected function createClient(): ClientInterface
     {
         return new Client($this->responses);
     }
 
-    /**
-     * @return ServerInterface
-     */
     protected function createServer(): ServerInterface
     {
         return new Server($this->responses, $this->onRequest(...));
     }
 
     /**
-     * @param ReaderInterface $reader
      * @return MarshallerInterface<array>
      */
     protected function createMarshaller(ReaderInterface $reader): MarshallerInterface
@@ -352,24 +251,18 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         return new Marshaller(new AttributeMapperFactory($reader));
     }
 
-    /**
-     * @return void
-     */
-    private function boot(): void
+    private function boot(ServiceCredentials $credentials): void
     {
         $this->reader = $this->createReader();
         $this->marshaller = $this->createMarshaller($this->reader);
         $this->queues = $this->createTaskQueue();
-        $this->router = $this->createRouter();
+        $this->router = $this->createRouter($credentials);
         $this->responses = $this->createQueue();
         $this->client = $this->createClient();
         $this->server = $this->createServer();
         $this->env = new Environment();
     }
 
-    /**
-     * @return CodecInterface
-     */
     private function createCodec(): CodecInterface
     {
         switch ($_SERVER['RR_CODEC'] ?? null) {
@@ -381,11 +274,6 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         }
     }
 
-    /**
-     * @param string $messages
-     * @param array $headers
-     * @return string
-     */
     private function dispatch(string $messages, array $headers): string
     {
         $commands = $this->codec->decode($messages, $headers);
@@ -407,11 +295,6 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         return $this->codec->encode($this->responses);
     }
 
-    /**
-     * @param ServerRequestInterface $request
-     * @param array $headers
-     * @return PromiseInterface
-     */
     private function onRequest(ServerRequestInterface $request, array $headers): PromiseInterface
     {
         if (!isset($headers[self::HEADER_TASK_QUEUE])) {
@@ -425,10 +308,6 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         return $queue->dispatch($request, $headers);
     }
 
-    /**
-     * @param string $taskQueueName
-     * @return WorkerInterface
-     */
     private function findTaskQueueOrFail(string $taskQueueName): WorkerInterface
     {
         $queue = $this->queues->find($taskQueueName);
@@ -440,10 +319,6 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         return $queue;
     }
 
-    /**
-     * @param array $headers
-     * @return string
-     */
     private function findTaskQueueNameOrFail(array $headers): string
     {
         $taskQueue = $headers[self::HEADER_TASK_QUEUE];

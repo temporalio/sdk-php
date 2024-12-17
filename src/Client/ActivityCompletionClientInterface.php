@@ -20,25 +20,15 @@ namespace Temporal\Client;
 interface ActivityCompletionClientInterface
 {
     /**
-     * @param string $workflowId
-     * @param string|null $runId
-     * @param string $activityId
      * @param mixed $result
      */
     public function complete(string $workflowId, ?string $runId, string $activityId, $result = null): void;
 
     /**
-     * @param string $taskToken
      * @param mixed $result
      */
     public function completeByToken(string $taskToken, $result = null): void;
 
-    /**
-     * @param string $workflowId
-     * @param string|null $runId
-     * @param string $activityId
-     * @param \Throwable $error
-     */
     public function completeExceptionally(
         string $workflowId,
         ?string $runId,
@@ -46,18 +36,8 @@ interface ActivityCompletionClientInterface
         \Throwable $error,
     ): void;
 
-    /**
-     * @param string $taskToken
-     * @param \Throwable $error
-     */
     public function completeExceptionallyByToken(string $taskToken, \Throwable $error): void;
 
-    /**
-     * @param string $workflowId
-     * @param string|null $runId
-     * @param string $activityId
-     * @param $details
-     */
     public function reportCancellation(
         string $workflowId,
         ?string $runId,
@@ -65,16 +45,9 @@ interface ActivityCompletionClientInterface
         $details = null,
     ): void;
 
-    /**
-     * @param string $taskToken
-     * @param $details
-     */
     public function reportCancellationByToken(string $taskToken, $details = null): void;
 
     /**
-     * @param string $workflowId
-     * @param string|null $runId
-     * @param string $activityId
      * @param mixed $details
      *
      * @throw ActivityCanceledException
@@ -87,7 +60,6 @@ interface ActivityCompletionClientInterface
     );
 
     /**
-     * @param string $taskToken
      * @param mixed $details
      *
      * @throw ActivityCanceledException

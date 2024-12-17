@@ -37,7 +37,6 @@ final class SignalQueue
 
     /**
      * @param non-empty-string $signal
-     * @param ValuesInterface $values
      */
     public function push(string $signal, ValuesInterface $values): void
     {
@@ -59,9 +58,7 @@ final class SignalQueue
     }
 
     /**
-     * @param string $signal
      * @param Consumer $consumer
-     * @return void
      */
     public function attach(string $signal, callable $consumer): void
     {
@@ -75,7 +72,6 @@ final class SignalQueue
     }
 
     /**
-     * @param string $signal
      * @psalm-suppress UnusedVariable
      */
     private function flush(string $signal): void

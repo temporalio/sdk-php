@@ -20,13 +20,11 @@ interface CodecInterface
 {
     /**
      * @param iterable<CommandInterface> $commands
-     * @return string
      * @throws ProtocolException
      */
     public function encode(iterable $commands): string;
 
     /**
-     * @param string $batch
      * @return iterable<ServerRequestInterface|ServerResponseInterface>
      * @throws ProtocolException
      */

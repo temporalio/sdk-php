@@ -18,34 +18,18 @@ use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Repository\RepositoryInterface;
+use Temporal\Worker\ServiceCredentials;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Temporal\Worker\WorkerInterface;
 
 final class GetWorkerInfo extends Route
 {
-    /**
-     * @var RepositoryInterface
-     */
-    private RepositoryInterface $queues;
+    public function __construct(
+        private readonly RepositoryInterface $queues,
+        private readonly MarshallerInterface $marshaller,
+        private readonly ServiceCredentials $credentials,
+    ) {}
 
-    /**
-     * @var MarshallerInterface
-     */
-    private MarshallerInterface $marshaller;
-
-    /**
-     * @param RepositoryInterface $queues
-     * @param MarshallerInterface $marshaller
-     */
-    public function __construct(RepositoryInterface $queues, MarshallerInterface $marshaller)
-    {
-        $this->queues = $queues;
-        $this->marshaller = $marshaller;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
         $result = [];
@@ -57,10 +41,6 @@ final class GetWorkerInfo extends Route
         $resolver->resolve(EncodedValues::fromValues($result));
     }
 
-    /**
-     * @param WorkerInterface $worker
-     * @return array
-     */
     private function workerToArray(WorkerInterface $worker): array
     {
         $workflowMap = static fn(WorkflowPrototype $workflow): array => [
@@ -82,15 +62,10 @@ final class GetWorkerInfo extends Route
             // ActivityInfo[]
             'Activities' => $this->map($worker->getActivities(), $activityMap),
             'PhpSdkVersion' => SdkVersion::getSdkVersion(),
-            'Flags' => (object) [],
+            'Flags' => (object) $this->prepareFlags(),
         ];
     }
 
-    /**
-     * @param iterable $items
-     * @param \Closure $map
-     * @return array
-     */
     private function map(iterable $items, \Closure $map): array
     {
         $result = [];
@@ -100,5 +75,15 @@ final class GetWorkerInfo extends Route
         }
 
         return $result;
+    }
+
+    /**
+     * @return array<non-empty-string, mixed>
+     */
+    private function prepareFlags(): array
+    {
+        return [
+            'ApiKey' => $this->credentials->apiKey,
+        ];
     }
 }

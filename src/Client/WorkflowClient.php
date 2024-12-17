@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client;
 
 use Doctrine\Common\Annotations\Reader;
+use JetBrains\PhpStorm\Deprecated;
 use Spiral\Attributes\AnnotationReader;
 use Spiral\Attributes\AttributeReader;
 use Spiral\Attributes\Composite\SelectiveReader;
@@ -24,6 +25,9 @@ use Temporal\Api\Workflowservice\V1\ListWorkflowExecutionsRequest;
 use Temporal\Client\Common\ClientContextTrait;
 use Temporal\Client\Common\Paginator;
 use Temporal\Client\GRPC\ServiceClientInterface;
+use Temporal\Client\Update\LifecycleStage;
+use Temporal\Client\Update\UpdateHandle;
+use Temporal\Client\Update\UpdateOptions;
 use Temporal\Client\Workflow\CountWorkflowExecutions;
 use Temporal\Client\Workflow\WorkflowExecutionHistory;
 use Temporal\DataConverter\DataConverter;
@@ -64,17 +68,11 @@ class WorkflowClient implements WorkflowClientInterface
     /** @var Pipeline<WorkflowClientCallsInterceptor, mixed> */
     private Pipeline $interceptorPipeline;
 
-    /**
-     * @param ServiceClientInterface $serviceClient
-     * @param ClientOptions|null $options
-     * @param DataConverterInterface|null $converter
-     * @param PipelineProvider|null $interceptorProvider
-     */
     public function __construct(
         ServiceClientInterface $serviceClient,
-        ClientOptions $options = null,
-        DataConverterInterface $converter = null,
-        PipelineProvider $interceptorProvider = null,
+        ?ClientOptions $options = null,
+        ?DataConverterInterface $converter = null,
+        ?PipelineProvider $interceptorProvider = null,
     ) {
         $this->client = $serviceClient;
         $this->interceptorPipeline = ($interceptorProvider ?? new SimplePipelineProvider())
@@ -85,23 +83,17 @@ class WorkflowClient implements WorkflowClientInterface
     }
 
     /**
-     * @param ServiceClientInterface $serviceClient
-     * @param ClientOptions|null $options
-     * @param DataConverterInterface|null $converter
      * @return static
      */
     public static function create(
         ServiceClientInterface $serviceClient,
-        ClientOptions $options = null,
-        DataConverterInterface $converter = null,
-        PipelineProvider $interceptorProvider = null,
+        ?ClientOptions $options = null,
+        ?DataConverterInterface $converter = null,
+        ?PipelineProvider $interceptorProvider = null,
     ): self {
         return new self($serviceClient, $options, $converter, $interceptorProvider);
     }
 
-    /**
-     * @return ServiceClientInterface
-     */
     public function getServiceClient(): ServiceClientInterface
     {
         return $this->client;
@@ -113,7 +105,6 @@ class WorkflowClient implements WorkflowClientInterface
      *
      * @param object|WorkflowStubInterface $workflow
      * @param mixed ...$args
-     * @return WorkflowRunInterface
      */
     public function start($workflow, ...$args): WorkflowRunInterface
     {
@@ -157,14 +148,7 @@ class WorkflowClient implements WorkflowClientInterface
         );
     }
 
-    /**
-     * @param object|WorkflowStubInterface $workflow
-     * @param string $signal
-     * @param array $signalArgs
-     * @param array $startArgs
-     * @return WorkflowRunInterface
-     */
-    public function startWithSignal(
+    public function signalWithStart(
         $workflow,
         string $signal,
         array $signalArgs = [],
@@ -222,12 +206,53 @@ class WorkflowClient implements WorkflowClientInterface
         );
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    #[Deprecated(replacement: '%class%->signalWithStart(%parametersList%)')]
+    public function startWithSignal(
+        $workflow,
+        string $signal,
+        array $signalArgs = [],
+        array $startArgs = [],
+    ): WorkflowRunInterface {
+        return $this->signalWithStart($workflow, $signal, $signalArgs, $startArgs);
+    }
+
+    public function updateWithStart(
+        $workflow,
+        string|UpdateOptions $update,
+        array $updateArgs = [],
+        array $startArgs = [],
+    ): UpdateHandle {
+        $workflow instanceof WorkflowProxy && !$workflow->hasHandler() && throw new InvalidArgumentException(
+            'Unable to start workflow without workflow handler',
+        );
+
+        $update = \is_string($update) ? UpdateOptions::new($update, LifecycleStage::StageAccepted) : $update;
+
+        $workflowStub = WorkflowStubConverter::fromWorkflow($workflow);
+
+        $workflowType = $workflowStub->getWorkflowType() ?? throw new InvalidArgumentException(
+            'Unable to start untyped workflow without given workflowType',
+        );
+        $workflowStub->hasExecution() and throw new InvalidArgumentException(self::ERROR_WORKFLOW_START_DUPLICATION);
+
+        [$execution, $handle] = $this->getStarter()->updateWithStart(
+            $workflowType,
+            $workflowStub->getOptions() ?? WorkflowOptions::new(),
+            $update,
+            $updateArgs,
+            $startArgs,
+        );
+
+        $workflowStub->setExecution($execution);
+
+        return $handle instanceof \Throwable
+            ? throw $handle
+            : $handle;
+    }
+
     public function newWorkflowStub(
         string $class,
-        WorkflowOptions $options = null,
+        ?WorkflowOptions $options = null,
     ): object {
         $workflow = $this->reader->fromClass($class);
 
@@ -238,12 +263,9 @@ class WorkflowClient implements WorkflowClientInterface
         );
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function newUntypedWorkflowStub(
         string $workflowType,
-        WorkflowOptions $options = null,
+        ?WorkflowOptions $options = null,
     ): WorkflowStubInterface {
         $options ??= new WorkflowOptions();
 
@@ -257,9 +279,6 @@ class WorkflowClient implements WorkflowClientInterface
         );
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function newRunningWorkflowStub(string $class, string $workflowID, ?string $runID = null): object
     {
         $workflow = $this->reader->fromClass($class);
@@ -271,9 +290,6 @@ class WorkflowClient implements WorkflowClientInterface
         );
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function newUntypedRunningWorkflowStub(
         string $workflowID,
         ?string $runID = null,
@@ -291,17 +307,11 @@ class WorkflowClient implements WorkflowClientInterface
         return $untyped;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function newActivityCompletionClient(): ActivityCompletionClientInterface
     {
         return new ActivityCompletionClient($this->client, $this->clientOptions, $this->converter);
     }
 
-    /**
-     * @inheritDoc
-     */
     public function listWorkflowExecutions(
         string $query,
         ?string $namespace = null,
@@ -338,9 +348,6 @@ class WorkflowClient implements WorkflowClientInterface
         return Paginator::createFromGenerator($loader($request), $counter);
     }
 
-    /**
-     * @inheritDoc
-     */
     public function countWorkflowExecutions(
         string $query,
         ?string $namespace = null,
@@ -356,9 +363,6 @@ class WorkflowClient implements WorkflowClientInterface
         );
     }
 
-    /**
-     * @inheritDoc
-     */
     public function getWorkflowHistory(
         WorkflowExecution $execution,
         ?string $namespace = null,
@@ -404,9 +408,6 @@ class WorkflowClient implements WorkflowClientInterface
         $this->starter = null;
     }
 
-    /**
-     * @return ReaderInterface
-     */
     private function createReader(): ReaderInterface
     {
         if (\interface_exists(Reader::class)) {

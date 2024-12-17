@@ -47,9 +47,6 @@ abstract class Instance implements InstanceInterface, Destroyable
         return $this->context;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getHandler(): callable
     {
         return $this->handler;
@@ -61,7 +58,6 @@ abstract class Instance implements InstanceInterface, Destroyable
     }
 
     /**
-     * @param \ReflectionFunctionAbstract $func
      * @return \Closure(ValuesInterface): mixed
      *
      * @psalm-return DispatchableHandler

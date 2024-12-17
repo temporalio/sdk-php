@@ -32,12 +32,13 @@ class UpdateInput
         public readonly WorkflowInfo $info,
         public readonly ValuesInterface $arguments,
         public readonly HeaderInterface $header,
+        public readonly bool $isReplaying,
     ) {}
 
     public function with(
-        WorkflowInfo $info = null,
-        ValuesInterface $arguments = null,
-        HeaderInterface $header = null,
+        ?WorkflowInfo $info = null,
+        ?ValuesInterface $arguments = null,
+        ?HeaderInterface $header = null,
     ): self {
         return new self(
             $this->updateName,
@@ -45,6 +46,7 @@ class UpdateInput
             $info ?? $this->info,
             $arguments ?? $this->arguments,
             $header ?? $this->header,
+            $this->isReplaying,
         );
     }
 }

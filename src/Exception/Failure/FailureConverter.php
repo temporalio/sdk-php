@@ -30,16 +30,8 @@ use Temporal\Internal\Support\DateInterval;
 
 final class FailureConverter
 {
-    /**
-     * @var LoggerInterface|null
-     */
     private static ?LoggerInterface $logger;
 
-    /**
-     * @param Failure $failure
-     * @param DataConverterInterface $converter
-     * @return TemporalFailure
-     */
     public static function mapFailureToException(Failure $failure, DataConverterInterface $converter): TemporalFailure
     {
         $e = self::createFailureException($failure, $converter);
@@ -52,11 +44,6 @@ final class FailureConverter
         return $e;
     }
 
-    /**
-     * @param \Throwable $e
-     * @param DataConverterInterface $converter
-     * @return Failure
-     */
     public static function mapExceptionToFailure(\Throwable $e, DataConverterInterface $converter): Failure
     {
         $failure = new Failure();
@@ -173,19 +160,11 @@ final class FailureConverter
         return $failure;
     }
 
-    /**
-     * @param LoggerInterface $logger
-     */
     public function setLogger(LoggerInterface $logger): void
     {
         self::$logger = $logger;
     }
 
-    /**
-     * @param Failure $failure
-     * @param DataConverterInterface $converter
-     * @return TemporalFailure
-     */
     private static function createFailureException(Failure $failure, DataConverterInterface $converter): TemporalFailure
     {
         $previous = null;

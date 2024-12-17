@@ -18,8 +18,6 @@ interface EventEmitterInterface
 {
     /**
      * @param T $event
-     * @param array $arguments
-     * @return void
      */
     public function emit(string $event, array $arguments = []): void;
 }

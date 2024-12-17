@@ -17,7 +17,6 @@ class TemporalException extends \RuntimeException
      * Build key-value list to explain exception. Skips empty values.
      *
      * @param array<non-empty-string, mixed> $values
-     * @return string
      */
     protected static function buildMessage(array $values): string
     {

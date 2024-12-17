@@ -25,9 +25,6 @@ class SimplePipelineProvider implements PipelineProvider
         private iterable $interceptors = [],
     ) {}
 
-    /**
-     * @inheritDoc
-     */
     public function getPipeline(string $interceptorClass): Pipeline
     {
         return $this->cache[$interceptorClass] ??= Pipeline::prepare(

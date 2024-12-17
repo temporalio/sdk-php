@@ -20,7 +20,7 @@ final class ActivityInvocationResult
         return new self($value->toPayloads());
     }
 
-    public function toValue(Type|string $type = null, ?DataConverterInterface $dataConverter = null)
+    public function toValue(Type|string|null $type = null, ?DataConverterInterface $dataConverter = null)
     {
         return $this->toEncodedValues($dataConverter)->getValue(0, $type);
     }

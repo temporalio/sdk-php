@@ -18,20 +18,9 @@ use Temporal\Worker\Transport\Command\CommandInterface;
  */
 interface QueueInterface extends \IteratorAggregate, \Countable
 {
-    /**
-     * @param CommandInterface $command
-     */
     public function push(CommandInterface $command): void;
 
-    /**
-     * @param int $commandId
-     * @return CommandInterface|null
-     */
     public function pull(int $commandId): ?CommandInterface;
 
-    /**
-     * @param int $commandId
-     * @return bool
-     */
     public function has(int $commandId): bool;
 }

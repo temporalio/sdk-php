@@ -25,14 +25,7 @@ use Temporal\Internal\Marshaller\TypeFactoryInterface;
  */
 class AttributeMapper implements MapperInterface
 {
-    /**
-     * @var \ReflectionClass
-     */
     private \ReflectionClass $class;
-
-    /**
-     * @var ReaderInterface
-     */
     private ReaderInterface $reader;
 
     /**
@@ -45,21 +38,9 @@ class AttributeMapper implements MapperInterface
      */
     private array $setters = [];
 
-    /**
-     * @var Scope
-     */
     private Scope $scope;
-
-    /**
-     * @var TypeFactoryInterface
-     */
     private TypeFactoryInterface $factory;
 
-    /**
-     * @param \ReflectionClass $class
-     * @param TypeFactoryInterface $factory
-     * @param ReaderInterface $reader
-     */
     public function __construct(\ReflectionClass $class, TypeFactoryInterface $factory, ReaderInterface $reader)
     {
         $this->class = $class;
@@ -76,33 +57,21 @@ class AttributeMapper implements MapperInterface
         }
     }
 
-    /**
-     * @return bool
-     */
     public function isCopyOnWrite(): bool
     {
         return $this->scope->copyOnWrite;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getGetters(): iterable
     {
         return $this->getters;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getSetters(): iterable
     {
         return $this->setters;
     }
 
-    /**
-     * @return Scope
-     */
     private function getScope(): Scope
     {
         return $this->reader->firstClassMetadata($this->class, Scope::class) ?? new Scope();
@@ -111,8 +80,6 @@ class AttributeMapper implements MapperInterface
     /**
      * Generates property name as key and related {@see MarshallingRule} or {@see null} (if no {@see Marshal}
      * attributes found) as value.
-     *
-     * @param Scope $scope
      *
      * @return iterable<\ReflectionProperty, array{MarshallingRule|null, bool}>
      */
@@ -136,22 +103,11 @@ class AttributeMapper implements MapperInterface
         }
     }
 
-    /**
-     * @param \ReflectionProperty $property
-     * @param Scope $scope
-     * @return bool
-     */
     private function isValidScope(\ReflectionProperty $property, Scope $scope): bool
     {
         return ($property->getModifiers() & $scope->properties) === $scope->properties;
     }
 
-    /**
-     * @param \ReflectionProperty $property
-     * @param MarshallingRule|null $rule
-     *
-     * @return TypeInterface|null
-     */
     private function detectType(\ReflectionProperty $property, ?MarshallingRule &$rule): ?TypeInterface
     {
         if (($rule === null || !$rule->hasType()) && $this->factory instanceof RuleFactoryInterface) {
@@ -175,11 +131,6 @@ class AttributeMapper implements MapperInterface
         return $this->factory->create($rule->type, $rule->getConstructorArgs());
     }
 
-    /**
-     * @param string $name
-     * @param TypeInterface|null $type
-     * @return \Closure
-     */
     private function createGetter(string $name, ?TypeInterface $type): \Closure
     {
         return function () use ($name, $type) {
@@ -193,11 +144,6 @@ class AttributeMapper implements MapperInterface
         };
     }
 
-    /**
-     * @param string $name
-     * @param TypeInterface|null $type
-     * @return \Closure
-     */
     private function createSetter(string $name, ?TypeInterface $type): \Closure
     {
         return function ($value) use ($name, $type): void {

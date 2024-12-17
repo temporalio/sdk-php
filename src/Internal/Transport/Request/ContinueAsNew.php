@@ -29,7 +29,6 @@ final class ContinueAsNew extends Request
 
     /**
      * @param non-empty-string $name
-     * @param ValuesInterface $input
      * @param RequestOptions $options
      */
     public function __construct(string $name, ValuesInterface $input, array $options, HeaderInterface $header)

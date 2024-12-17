@@ -179,8 +179,6 @@ final class ChildWorkflowOptions extends Options
     }
 
     /**
-     * @param MethodRetry|null $retry
-     * @param CronSchedule|null $cron
      * @return $this
      */
     public function mergeWith(?MethodRetry $retry = null, ?CronSchedule $cron = null): self
@@ -201,7 +199,6 @@ final class ChildWorkflowOptions extends Options
     /**
      * Specify namespace in which workflow should be started.
      *
-     * @param string $namespace
      * @return $this
      */
     #[Pure]
@@ -220,7 +217,6 @@ final class ChildWorkflowOptions extends Options
      * deduplication will happen based on the generated id. So prefer assigning
      * business meaningful ids if possible.
      *
-     * @param string $workflowId
      * @return $this
      */
     #[Pure]
@@ -237,7 +233,6 @@ final class ChildWorkflowOptions extends Options
      * Task queue to use for workflow tasks. It should match a task queue
      * specified when creating a {@see Worker} that hosts the workflow code.
      *
-     * @param string $taskQueue
      * @return $this
      */
     #[Pure]
@@ -366,7 +361,6 @@ final class ChildWorkflowOptions extends Options
      * RetryOptions that define how child workflow is retried in case of
      * failure. Default is null which is no reties.
      *
-     * @param RetryOptions|null $options
      * @return $this
      */
     #[Pure]
@@ -384,7 +378,6 @@ final class ChildWorkflowOptions extends Options
      *
      * @see CronSchedule::$interval for more info about cron format.
      *
-     * @param string|null $expression
      * @return $this
      */
     #[Pure]
@@ -400,7 +393,6 @@ final class ChildWorkflowOptions extends Options
     /**
      * Specifies additional non-indexed information in result of list workflow.
      *
-     * @param array|null $memo
      * @return $this
      */
     public function withMemo(?array $memo): self
@@ -415,7 +407,6 @@ final class ChildWorkflowOptions extends Options
     /**
      * Specifies additional indexed information in result of list workflow.
      *
-     * @param array|null $searchAttributes
      * @return $this
      */
     public function withSearchAttributes(?array $searchAttributes): self

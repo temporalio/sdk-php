@@ -17,9 +17,6 @@ use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 final class InvokeSignal extends WorkflowProcessAwareRoute
 {
-    /**
-     * {@inheritDoc}
-     */
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
         $instance = $this->findInstanceOrFail($request->getID());

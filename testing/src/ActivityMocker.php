@@ -11,7 +11,7 @@ final class ActivityMocker
 {
     private ActivityInvocationCacheInterface $cache;
 
-    public function __construct(ActivityInvocationCacheInterface $cache = null)
+    public function __construct(?ActivityInvocationCacheInterface $cache = null)
     {
         $this->cache = $cache ?? RoadRunnerActivityInvocationCache::create();
     }

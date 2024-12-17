@@ -46,15 +46,10 @@ final class ScheduleClient implements ScheduleClientInterface
     private MarshallerInterface $marshaller;
     private ProtoToArrayConverter $protoConverter;
 
-    /**
-     * @param ServiceClientInterface $serviceClient
-     * @param ClientOptions|null $options
-     * @param DataConverterInterface|null $converter
-     */
     public function __construct(
         ServiceClientInterface $serviceClient,
-        ClientOptions $options = null,
-        DataConverterInterface $converter = null,
+        ?ClientOptions $options = null,
+        ?DataConverterInterface $converter = null,
     ) {
         $this->client = $serviceClient;
         $this->clientOptions = $options ?? new ClientOptions();
@@ -67,8 +62,8 @@ final class ScheduleClient implements ScheduleClientInterface
 
     public static function create(
         ServiceClientInterface $serviceClient,
-        ClientOptions $options = null,
-        DataConverterInterface $converter = null,
+        ?ClientOptions $options = null,
+        ?DataConverterInterface $converter = null,
     ): ScheduleClientInterface {
         return new self($serviceClient, $options, $converter);
     }
@@ -149,11 +144,13 @@ final class ScheduleClient implements ScheduleClientInterface
     public function listSchedules(
         ?string $namespace = null,
         int $pageSize = 0,
+        string $query = '',
     ): Paginator {
         // Build request
         $request = (new ListSchedulesRequest())
             ->setNamespace($namespace ?? $this->clientOptions->namespace)
-            ->setMaximumPageSize($pageSize);
+            ->setMaximumPageSize($pageSize)
+            ->setQuery($query);
 
         $loader = function (ListSchedulesRequest $request): \Generator {
             do {

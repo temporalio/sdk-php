@@ -16,27 +16,14 @@ use Temporal\Workflow\WorkflowExecution;
 
 class WorkflowException extends TemporalException
 {
-    /**
-     * @var WorkflowExecution
-     */
     private WorkflowExecution $execution;
-
-    /**
-     * @var string|null
-     */
     private ?string $type;
 
-    /**
-     * @param string|null $message
-     * @param WorkflowExecution $execution
-     * @param string|null $workflowType
-     * @param \Throwable|null $previous
-     */
     public function __construct(
         ?string $message,
         WorkflowExecution $execution,
-        string $workflowType = null,
-        \Throwable $previous = null,
+        ?string $workflowType = null,
+        ?\Throwable $previous = null,
     ) {
         parent::__construct(
             self::buildMessage(
@@ -53,31 +40,19 @@ class WorkflowException extends TemporalException
         $this->type = $workflowType;
     }
 
-    /**
-     * @param WorkflowExecution $execution
-     * @param string|null $workflowType
-     * @param \Throwable|null $previous
-     * @return WorkflowException
-     */
     public static function withoutMessage(
         WorkflowExecution $execution,
-        string $workflowType = null,
-        \Throwable $previous = null,
+        ?string $workflowType = null,
+        ?\Throwable $previous = null,
     ): WorkflowException {
         return new static(null, $execution, $workflowType, $previous);
     }
 
-    /**
-     * @return WorkflowExecution
-     */
     public function getExecution(): WorkflowExecution
     {
         return $this->execution;
     }
 
-    /**
-     * @return string|null
-     */
     public function getWorkflowType(): ?string
     {
         return $this->type;

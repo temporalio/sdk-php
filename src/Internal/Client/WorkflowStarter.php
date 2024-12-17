@@ -12,22 +12,34 @@ declare(strict_types=1);
 namespace Temporal\Internal\Client;
 
 use Temporal\Api\Common\V1\WorkflowType;
+use Temporal\Api\Errordetails\V1\MultiOperationExecutionFailure;
 use Temporal\Api\Errordetails\V1\WorkflowExecutionAlreadyStartedFailure;
+use Temporal\Api\Failure\V1\MultiOperationExecutionAborted;
 use Temporal\Api\Taskqueue\V1\TaskQueue;
+use Temporal\Api\Update\V1\Request as UpdateRequestMessage;
+use Temporal\Api\Workflowservice\V1\ExecuteMultiOperationRequest;
+use Temporal\Api\Workflowservice\V1\ExecuteMultiOperationRequest\Operation;
+use Temporal\Api\Workflowservice\V1\ExecuteMultiOperationResponse\Response;
 use Temporal\Api\Workflowservice\V1\SignalWithStartWorkflowExecutionRequest;
 use Temporal\Api\Workflowservice\V1\StartWorkflowExecutionRequest;
+use Temporal\Api\Workflowservice\V1\UpdateWorkflowExecutionRequest;
 use Temporal\Client\ClientOptions;
 use Temporal\Client\GRPC\ServiceClientInterface;
+use Temporal\Client\Update\UpdateHandle;
+use Temporal\Client\Update\UpdateOptions;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\Exception\Client\MultyOperation\OperationStatus;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\Client\WorkflowExecutionAlreadyStartedException;
+use Temporal\Exception\Client\WorkflowServiceException;
 use Temporal\Interceptor\Header;
-use Temporal\Interceptor\HeaderInterface;
 use Temporal\Interceptor\WorkflowClient\SignalWithStartInput;
 use Temporal\Interceptor\WorkflowClient\StartInput;
+use Temporal\Interceptor\WorkflowClient\UpdateInput;
+use Temporal\Interceptor\WorkflowClient\UpdateWithStartInput;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Internal\Support\DateInterval;
@@ -39,9 +51,6 @@ use Temporal\Workflow\WorkflowExecution;
 final class WorkflowStarter
 {
     /**
-     * @param ServiceClientInterface $serviceClient
-     * @param DataConverterInterface $converter
-     * @param ClientOptions $clientOptions
      * @param Pipeline<WorkflowClientCallsInterceptor, WorkflowExecution> $interceptors
      */
     public function __construct(
@@ -52,13 +61,6 @@ final class WorkflowStarter
     ) {}
 
     /**
-     * @param string $workflowType
-     * @param WorkflowOptions $options
-     * @param array $args
-     * @param HeaderInterface|null $header
-     *
-     * @return WorkflowExecution
-     *
      * @throws ServiceClientException
      * @throws WorkflowExecutionAlreadyStartedException
      */
@@ -80,14 +82,8 @@ final class WorkflowStarter
     }
 
     /**
-     * @param string $workflowType
-     * @param WorkflowOptions $options
-     * @param string $signal
-     * @param array $signalArgs
-     * @param array $startArgs
-     * @param HeaderInterface|null $header
-     *
-     * @return WorkflowExecution
+     * @param non-empty-string $workflowType
+     * @param non-empty-string $signal
      *
      * @throws ServiceClientException
      * @throws WorkflowExecutionAlreadyStartedException
@@ -130,6 +126,149 @@ final class WorkflowStarter
     }
 
     /**
+     * @param non-empty-string $workflowType
+     *
+     * @return array{WorkflowExecution, UpdateHandle|\Throwable}
+     */
+    public function updateWithStart(
+        string $workflowType,
+        WorkflowOptions $options,
+        UpdateOptions $update,
+        array $updateArgs = [],
+        array $startArgs = [],
+    ): array {
+        $arguments = EncodedValues::fromValues($startArgs, $this->converter);
+        $updateArguments = EncodedValues::fromValues($updateArgs, $this->converter);
+
+        return $this->interceptors->with(
+            function (UpdateWithStartInput $input): array {
+                $startRequest = $this->configureExecutionRequest(
+                    new StartWorkflowExecutionRequest(),
+                    $input->workflowStartInput,
+                );
+
+                $updateRequest = (new UpdateWorkflowExecutionRequest())
+                    ->setNamespace($this->clientOptions->namespace)
+                    ->setWorkflowExecution($input->updateInput->workflowExecution->toProtoWorkflowExecution())
+                    ->setRequest($r = new UpdateRequestMessage())
+                    ->setWaitPolicy(
+                        (new \Temporal\Api\Update\V1\WaitPolicy())
+                            ->setLifecycleStage($input->updateInput->waitPolicy->lifecycleStage->value),
+                    );
+
+                // Configure Meta
+                $meta = new \Temporal\Api\Update\V1\Meta();
+                $meta->setIdentity($this->clientOptions->identity);
+                $meta->setUpdateId($input->updateInput->updateId);
+                $r->setMeta($meta);
+
+                // Configure update Input
+                $i = new \Temporal\Api\Update\V1\Input();
+                $i->setName($input->updateInput->updateName);
+                $input->updateInput->arguments->setDataConverter($this->converter);
+                $input->updateInput->arguments->isEmpty() or $i->setArgs($input->updateInput->arguments->toPayloads());
+                $input->updateInput->header->isEmpty() or $i->setHeader($input->updateInput->header->toHeader());
+                $r->setInput($i);
+
+                $ops = [
+                    (new Operation())->setStartWorkflow($startRequest),
+                    (new Operation())->setUpdateWorkflow($updateRequest),
+                ];
+
+                try {
+                    $response = $this->serviceClient->ExecuteMultiOperation(
+                        (new ExecuteMultiOperationRequest())
+                            ->setNamespace($this->clientOptions->namespace)
+                            ->setOperations($ops),
+                    );
+                } catch (ServiceClientException $e) {
+                    $failure = $e->getFailure(MultiOperationExecutionFailure::class) ?? throw $e;
+                    /** @var \ArrayAccess<MultiOperationExecutionFailure\OperationStatus> $fails */
+                    $fails = $failure->getStatuses();
+
+                    $updateStatus = isset($fails[1]) ? OperationStatus::fromMessage($fails[1]) : null;
+                    if ($updateStatus?->getFailure(MultiOperationExecutionAborted::class)) {
+                        $startStatus = OperationStatus::fromMessage($fails[0]);
+                        if ($f = $startStatus?->getFailure(WorkflowExecutionAlreadyStartedFailure::class)) {
+                            \assert($f instanceof WorkflowExecutionAlreadyStartedFailure);
+                            $execution = new WorkflowExecution($input->workflowStartInput->workflowId, $f->getRunId());
+
+                            throw new WorkflowExecutionAlreadyStartedException(
+                                $execution,
+                                $input->workflowStartInput->workflowType,
+                                $e,
+                            );
+                        }
+
+                        throw $e;
+                    }
+
+                    throw new WorkflowServiceException(
+                        $updateStatus?->getMessage(),
+                        $input->updateInput->workflowExecution,
+                        $input->workflowStartInput->workflowType,
+                        $e,
+                    );
+                }
+
+                // Extract result
+                /** @var \ArrayAccess<int, Response> $responses */
+                $responses = $response->getResponses();
+
+                // Start Workflow: get execution
+                $startResponse = $responses[0]->getStartWorkflow();
+                \assert($startResponse !== null);
+                $execution = new WorkflowExecution($input->workflowStartInput->workflowId, $startResponse->getRunId());
+
+                // Update Workflow: get handler
+                $updateResponse = $responses[1]->getUpdateWorkflow();
+                \assert($updateResponse !== null);
+
+                try {
+                    $updateResult = (new \Temporal\Internal\Client\ResponseToResultMapper($this->converter))
+                        ->mapUpdateWorkflowResponse(
+                            $updateResponse,
+                            updateName: $input->updateInput->updateName,
+                            workflowType: $input->workflowStartInput->workflowType,
+                            workflowExecution: $execution,
+                        );
+                } catch (\RuntimeException $e) {
+                    return [$execution, $e];
+                }
+
+                return [$execution, new UpdateHandle(
+                    client: $this->serviceClient,
+                    clientOptions: $this->clientOptions,
+                    converter: $this->converter,
+                    execution: $updateResult->getReference()->workflowExecution,
+                    workflowType: $input->updateInput->workflowType,
+                    updateName: $input->updateInput->updateName,
+                    resultType: $input->updateInput->resultType,
+                    updateId: $updateResult->getReference()->updateId,
+                    result: $updateResult->getResult(),
+                )];
+            },
+            /** @see WorkflowClientCallsInterceptor::updateWithStart() */
+            'updateWithStart',
+        )(
+            new UpdateWithStartInput(
+                new StartInput($options->workflowId, $workflowType, Header::empty(), $arguments, $options),
+                new UpdateInput(
+                    new WorkflowExecution($options->workflowId),
+                    $workflowType,
+                    $update->updateName,
+                    $updateArguments,
+                    Header::empty(),
+                    $update->waitPolicy,
+                    $update->updateId ?? Uuid::v4(),
+                    '',
+                    null, // todo?
+                ),
+            ),
+        );
+    }
+
+    /**
      * @param StartWorkflowExecutionRequest|SignalWithStartWorkflowExecutionRequest $request
      *        use {@see configureExecutionRequest()} to prepare request
      *
@@ -144,19 +283,16 @@ final class WorkflowStarter
                 ? $this->serviceClient->StartWorkflowExecution($request)
                 : $this->serviceClient->SignalWithStartWorkflowExecution($request);
         } catch (ServiceClientException $e) {
-            $f = $e->getFailure(WorkflowExecutionAlreadyStartedFailure::class);
+            $f = $e->getFailure(WorkflowExecutionAlreadyStartedFailure::class) ?? throw $e;
 
-            if ($f instanceof WorkflowExecutionAlreadyStartedFailure) {
-                $execution = new WorkflowExecution($request->getWorkflowId(), $f->getRunId());
+            \assert($f instanceof WorkflowExecutionAlreadyStartedFailure);
+            $execution = new WorkflowExecution($request->getWorkflowId(), $f->getRunId());
 
-                throw new WorkflowExecutionAlreadyStartedException(
-                    $execution,
-                    $request->getWorkflowType()->getName(),
-                    $e,
-                );
-            }
-
-            throw $e;
+            throw new WorkflowExecutionAlreadyStartedException(
+                $execution,
+                $request->getWorkflowType()->getName(),
+                $e,
+            );
         }
 
         return new WorkflowExecution(
@@ -169,7 +305,6 @@ final class WorkflowStarter
      * @template TRequest of StartWorkflowExecutionRequest|SignalWithStartWorkflowExecutionRequest
      *
      * @param TRequest $req
-     * @param StartInput $input
      *
      * @return TRequest
      *

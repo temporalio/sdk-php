@@ -17,10 +17,5 @@ namespace Temporal\Internal\Marshaller;
  */
 interface RuleFactoryInterface extends TypeFactoryInterface
 {
-    /**
-     * @param \ReflectionProperty $property
-     *
-     * @return null|MarshallingRule
-     */
     public function makeRule(\ReflectionProperty $property): ?MarshallingRule;
 }

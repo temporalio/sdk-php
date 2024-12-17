@@ -33,13 +33,10 @@ interface WorkerFactoryInterface
     /**
      * Create a new Temporal Worker with the name of the task queue and register in worker.
      *
-     * @param string $taskQueue
-     * @param WorkerOptions|null $options
-     * @return WorkerInterface
      */
     public function newWorker(
         string $taskQueue = self::DEFAULT_TASK_QUEUE,
-        WorkerOptions $options = null,
+        ?WorkerOptions $options = null,
     ): WorkerInterface;
 
     /**

@@ -24,7 +24,6 @@ interface ServerInterface
 {
     /**
      * @psalm-param OnMessageHandler $then
-     * @param callable $then
      */
     public function onMessage(callable $then): void;
 }

@@ -13,30 +13,18 @@ namespace Temporal\DataConverter;
 
 final class Bytes implements \Stringable
 {
-    /**
-     * @var string
-     */
     private string $data;
 
-    /**
-     * @param string $data
-     */
     public function __construct(string $data)
     {
         $this->data = $data;
     }
 
-    /**
-     * @return int
-     */
     public function getSize(): int
     {
         return \strlen($this->data);
     }
 
-    /**
-     * @return string
-     */
     public function getData(): string
     {
         return $this->data;

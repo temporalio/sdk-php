@@ -28,15 +28,8 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
      */
     private const ERROR_QUERY_NOT_FOUND = 'unknown queryType %s. KnownQueryTypes=[%s]';
 
-    /**
-     * @var LoopInterface
-     */
     private LoopInterface $loop;
 
-    /**
-     * @param RepositoryInterface $running
-     * @param LoopInterface $loop
-     */
     #[Pure]
     public function __construct(
         RepositoryInterface $running,
@@ -47,9 +40,6 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
         parent::__construct($running);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
         /** @var non-empty-string $name */
@@ -75,7 +65,7 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
                     /** @psalm-suppress InaccessibleProperty */
                     $info->shouldContinueAsNew = $tickInfo->continueAsNewSuggested;
 
-                    $result = $handler(new QueryInput($name, $request->getPayloads()));
+                    $result = $handler(new QueryInput($name, $request->getPayloads(), $info));
                     $resolver->resolve(EncodedValues::fromValues([$result]));
                 } catch (\Throwable $e) {
                     $resolver->reject($e);
@@ -85,7 +75,6 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
     }
 
     /**
-     * @param WorkflowInstanceInterface $instance
      * @param non-empty-string $name
      * @return \Closure(QueryInput): mixed
      */

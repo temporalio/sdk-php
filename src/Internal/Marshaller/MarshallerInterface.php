@@ -27,7 +27,6 @@ interface MarshallerInterface
 
     /**
      * @template T of object
-     * @param array $from
      * @param T $to
      * @return T
      *

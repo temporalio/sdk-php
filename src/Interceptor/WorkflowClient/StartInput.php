@@ -33,9 +33,9 @@ class StartInput
     ) {}
 
     public function with(
-        HeaderInterface $header = null,
-        ValuesInterface $arguments = null,
-        WorkflowOptions $options = null,
+        ?HeaderInterface $header = null,
+        ?ValuesInterface $arguments = null,
+        ?WorkflowOptions $options = null,
     ): self {
         return new self(
             $this->workflowId,

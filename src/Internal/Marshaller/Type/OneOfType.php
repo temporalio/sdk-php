@@ -32,9 +32,6 @@ class OneOfType extends Type
         parent::__construct($marshaller);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function parse(mixed $value, mixed $current): ?object
     {
         if (\is_object($value)) {
@@ -84,9 +81,6 @@ class OneOfType extends Type
         return $this->marshaller->unmarshal($value, $dto);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function serialize(mixed $value): array
     {
         if ($this->nullable && $value === null) {
