@@ -46,8 +46,9 @@ interface ScheduleClientInterface extends ClientContextInterface
      *
      * @param non-empty-string|null $namespace If null, the preconfigured namespace will be used.
      * @param int<0, max> $pageSize Maximum number of Schedule info per page.
+     * @param string $query Temporal Visibility Query. {@link https://docs.temporal.io/visibility#list-filter}
      *
      * @return Paginator<ScheduleListEntry>
      */
-    public function listSchedules(?string $namespace = null, int $pageSize = 0): Paginator;
+    public function listSchedules(?string $namespace = null, int $pageSize = 0, string $query = ''): Paginator;
 }
