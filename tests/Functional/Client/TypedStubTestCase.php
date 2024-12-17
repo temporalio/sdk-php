@@ -11,7 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Functional\Client;
 
+use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Client\WorkflowQueryException;
+use Temporal\Exception\Failure\ActivityFailure;
 use Temporal\Exception\InvalidArgumentException;
 use Temporal\Tests\DTO\Message;
 use Temporal\Tests\DTO\User;
@@ -149,6 +151,34 @@ class TypedStubTestCase extends AbstractClient
             ],
             $simple->handler('hello world')
         );
+    }
+
+    public function testGeneratorErrorCoroutines()
+    {
+        $client = $this->createClient();
+        $simple = $client->newWorkflowStub(GeneratorWorkflow::class);
+
+        try {
+            $simple->handler('error');
+            $this->fail('Expected exception to be thrown');
+        } catch (WorkflowFailedException $e) {
+            $this->assertStringContainsString('error from generator', $e->getPrevious()->getMessage());
+        }
+    }
+
+    public function testGeneratorErrorInNestedActionCoroutines()
+    {
+        $client = $this->createClient();
+        $simple = $client->newWorkflowStub(GeneratorWorkflow::class);
+
+        try {
+            $simple->handler('failure');
+            $this->fail('Expected exception to be thrown');
+        } catch (WorkflowFailedException $e) {
+            $this->assertStringNotContainsString('Unreachable statement', $e->getPrevious()->getMessage());
+            $this->assertInstanceOf(ActivityFailure::class, $e->getPrevious());
+            $this->assertStringContainsString('failed activity', $e->getPrevious()->getPrevious()->getMessage());
+        }
     }
 
     /**
