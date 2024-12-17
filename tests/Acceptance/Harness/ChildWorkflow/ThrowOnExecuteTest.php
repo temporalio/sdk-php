@@ -51,8 +51,6 @@ class MainWorkflow
     {
         return yield Workflow::newChildWorkflowStub(
             ChildWorkflow::class,
-            // TODO: remove after https://github.com/temporalio/sdk-php/issues/451 is fixed
-            Workflow\ChildWorkflowOptions::new()->withTaskQueue(Workflow::getInfo()->taskQueue),
         )->run();
     }
 }
@@ -63,6 +61,7 @@ class ChildWorkflow
     #[WorkflowMethod('Harness_ChildWorkflow_ThrowsOnExecute_Child')]
     public function run()
     {
+        yield 1;
         throw new ApplicationFailure('Test message', 'TestError', true, EncodedValues::fromValues([['foo' => 'bar']]));
     }
 }
