@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Acceptance\Extra\Update\DynamicUpdate;
+namespace Temporal\Tests\Acceptance\Extra\Update\ScheduleUpdate;
 
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Client\Schedule\Action\StartWorkflowAction;

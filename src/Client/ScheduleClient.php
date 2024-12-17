@@ -144,11 +144,13 @@ final class ScheduleClient implements ScheduleClientInterface
     public function listSchedules(
         ?string $namespace = null,
         int $pageSize = 0,
+        string $query = '',
     ): Paginator {
         // Build request
         $request = (new ListSchedulesRequest())
             ->setNamespace($namespace ?? $this->clientOptions->namespace)
-            ->setMaximumPageSize($pageSize);
+            ->setMaximumPageSize($pageSize)
+            ->setQuery($query);
 
         $loader = function (ListSchedulesRequest $request): \Generator {
             do {
