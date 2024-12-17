@@ -13,6 +13,7 @@ use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Worker\ActivityInvocationCache\ActivityInvocationCacheInterface;
 use Temporal\Worker\ActivityInvocationCache\RoadRunnerActivityInvocationCache;
+use Temporal\Worker\ServiceCredentials;
 use Temporal\Worker\Transport\Goridge;
 use Temporal\Worker\Transport\RPCConnectionInterface;
 use Temporal\Worker\Worker;
@@ -27,21 +28,24 @@ class WorkerFactory extends \Temporal\WorkerFactory
         DataConverterInterface $dataConverter,
         RPCConnectionInterface $rpc,
         ActivityInvocationCacheInterface $activityCache,
+        ServiceCredentials $credentials,
     ) {
         $this->activityCache = $activityCache;
 
-        parent::__construct($dataConverter, $rpc);
+        parent::__construct($dataConverter, $rpc, $credentials);
     }
 
     public static function create(
         ?DataConverterInterface $converter = null,
         ?RPCConnectionInterface $rpc = null,
+        ?ServiceCredentials $credentials = null,
         ?ActivityInvocationCacheInterface $activityCache = null,
     ): static {
         return new static(
             $converter ?? DataConverter::createDefault(),
             $rpc ?? Goridge::create(),
             $activityCache ?? RoadRunnerActivityInvocationCache::create($converter),
+            $credentials ?? ServiceCredentials::create(),
         );
     }
 

@@ -18,19 +18,17 @@ use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Repository\RepositoryInterface;
+use Temporal\Worker\ServiceCredentials;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Temporal\Worker\WorkerInterface;
 
 final class GetWorkerInfo extends Route
 {
-    private RepositoryInterface $queues;
-    private MarshallerInterface $marshaller;
-
-    public function __construct(RepositoryInterface $queues, MarshallerInterface $marshaller)
-    {
-        $this->queues = $queues;
-        $this->marshaller = $marshaller;
-    }
+    public function __construct(
+        private readonly RepositoryInterface $queues,
+        private readonly MarshallerInterface $marshaller,
+        private readonly ServiceCredentials $credentials,
+    ) {}
 
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
@@ -64,7 +62,7 @@ final class GetWorkerInfo extends Route
             // ActivityInfo[]
             'Activities' => $this->map($worker->getActivities(), $activityMap),
             'PhpSdkVersion' => SdkVersion::getSdkVersion(),
-            'Flags' => (object) [],
+            'Flags' => (object) $this->prepareFlags(),
         ];
     }
 
@@ -77,5 +75,15 @@ final class GetWorkerInfo extends Route
         }
 
         return $result;
+    }
+
+    /**
+     * @return array<non-empty-string, mixed>
+     */
+    private function prepareFlags(): array
+    {
+        return [
+            'ApiKey' => $this->credentials->apiKey,
+        ];
     }
 }

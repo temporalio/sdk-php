@@ -145,6 +145,8 @@ abstract class BaseClient implements ServiceClientInterface
      * This will overwrite any "Authorization" header that may be on the context before each request to the
      * Temporal service.
      * You may pass your own {@see \Stringable} implementation to be able to change the key dynamically.
+     *
+     * @link https://docs.temporal.io/cloud/api-keys
      */
     public function withAuthKey(\Stringable|string $key): static
     {

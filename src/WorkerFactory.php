@@ -42,6 +42,7 @@ use Temporal\Internal\Transport\ServerInterface;
 use Temporal\Worker\Environment\Environment;
 use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Worker\LoopInterface;
+use Temporal\Worker\ServiceCredentials;
 use Temporal\Worker\Transport\Codec\CodecInterface;
 use Temporal\Worker\Transport\Codec\JsonCodec;
 use Temporal\Worker\Transport\Codec\ProtoCodec;
@@ -74,29 +75,10 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
 {
     use EventEmitterTrait;
 
-    /**
-     * @var string
-     */
     private const ERROR_MESSAGE_TYPE = 'Received message type must be a string, but %s given';
-
-    /**
-     * @var string
-     */
     private const ERROR_HEADERS_TYPE = 'Received headers type must be a string, but %s given';
-
-    /**
-     * @var string
-     */
     private const ERROR_HEADER_NOT_STRING_TYPE = 'Header "%s" argument type must be a string, but %s given';
-
-    /**
-     * @var string
-     */
     private const ERROR_QUEUE_NOT_FOUND = 'Cannot find a worker for task queue "%s"';
-
-    /**
-     * @var string
-     */
     private const HEADER_TASK_QUEUE = 'taskQueue';
 
     protected DataConverterInterface $converter;
@@ -112,7 +94,6 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     protected ClientInterface $client;
     protected ServerInterface $server;
     protected QueueInterface $responses;
-    protected RPCConnectionInterface $rpc;
 
     /**
      * @var MarshallerInterface<array>
@@ -123,21 +104,22 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
 
     public function __construct(
         DataConverterInterface $dataConverter,
-        RPCConnectionInterface $rpc,
+        protected RPCConnectionInterface $rpc,
+        ServiceCredentials $credentials,
     ) {
         $this->converter = $dataConverter;
-        $this->rpc = $rpc;
-
-        $this->boot();
+        $this->boot($credentials);
     }
 
     public static function create(
         ?DataConverterInterface $converter = null,
         ?RPCConnectionInterface $rpc = null,
+        ?ServiceCredentials $credentials = null,
     ): WorkerFactoryInterface {
         return new static(
             $converter ?? DataConverter::createDefault(),
             $rpc ?? Goridge::create(),
+            $credentials ?? ServiceCredentials::create(),
         );
     }
 
@@ -237,10 +219,10 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         return new ArrayRepository();
     }
 
-    protected function createRouter(): RouterInterface
+    protected function createRouter(ServiceCredentials $credentials): RouterInterface
     {
         $router = new Router();
-        $router->add(new Router\GetWorkerInfo($this->queues, $this->marshaller));
+        $router->add(new Router\GetWorkerInfo($this->queues, $this->marshaller, $credentials));
 
         return $router;
     }
@@ -269,12 +251,12 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         return new Marshaller(new AttributeMapperFactory($reader));
     }
 
-    private function boot(): void
+    private function boot(ServiceCredentials $credentials): void
     {
         $this->reader = $this->createReader();
         $this->marshaller = $this->createMarshaller($this->reader);
         $this->queues = $this->createTaskQueue();
-        $this->router = $this->createRouter();
+        $this->router = $this->createRouter($credentials);
         $this->responses = $this->createQueue();
         $this->client = $this->createClient();
         $this->server = $this->createServer();

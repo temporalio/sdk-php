@@ -33,6 +33,7 @@ use Temporal\Internal\Transport\ServerInterface;
 use Temporal\Worker\Environment\Environment;
 use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Worker\LoopInterface;
+use Temporal\Worker\ServiceCredentials;
 use Temporal\Worker\Transport\Codec\CodecInterface;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Temporal\Worker\Transport\Command\ServerResponseInterface;
@@ -183,7 +184,7 @@ class WorkerFactoryMock implements WorkerFactoryInterface, LoopInterface
     private function createRouter(): RouterInterface
     {
         $router = new Router();
-        $router->add(new Router\GetWorkerInfo($this->queues, $this->marshaller));
+        $router->add(new Router\GetWorkerInfo($this->queues, $this->marshaller, ServiceCredentials::create()));
 
         return $router;
     }

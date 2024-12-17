@@ -1477,6 +1477,7 @@
       <code><![CDATA[new static(
             $converter ?? DataConverter::createDefault(),
             $rpc ?? Goridge::create(),
+            $credentials ?? ServiceCredentials::create(),
         )]]></code>
     </UnsafeInstantiation>
   </file>
