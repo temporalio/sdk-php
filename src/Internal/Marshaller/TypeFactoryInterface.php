@@ -22,7 +22,6 @@ interface TypeFactoryInterface
     public function create(string $type, array $args): ?TypeInterface;
 
     /**
-     *
      * @return class-string<TypeInterface>|null
      */
     public function detect(?\ReflectionType $type): ?string;

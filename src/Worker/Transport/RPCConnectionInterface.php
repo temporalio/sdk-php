@@ -16,7 +16,6 @@ use Temporal\Exception\TransportException;
 interface RPCConnectionInterface
 {
     /**
-     *
      * @param mixed $payload
      * @return mixed
      * @throws TransportException

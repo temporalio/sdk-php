@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Interceptor;
 
+use Temporal\Client\Update\UpdateHandle;
 use Temporal\Client\Workflow\WorkflowExecutionDescription;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\Trait\WorkflowClientCallsInterceptorTrait;
@@ -24,6 +25,7 @@ use Temporal\Interceptor\WorkflowClient\StartInput;
 use Temporal\Interceptor\WorkflowClient\StartUpdateOutput;
 use Temporal\Interceptor\WorkflowClient\TerminateInput;
 use Temporal\Interceptor\WorkflowClient\UpdateInput;
+use Temporal\Interceptor\WorkflowClient\UpdateWithStartInput;
 use Temporal\Internal\Interceptor\Interceptor;
 use Temporal\Workflow\WorkflowExecution;
 
@@ -51,55 +53,54 @@ interface WorkflowClientCallsInterceptor extends Interceptor
 {
     /**
      * @param callable(StartInput): WorkflowExecution $next
-     *
      */
     public function start(StartInput $input, callable $next): WorkflowExecution;
 
     /**
      * @param callable(SignalInput): void $next
-     *
      */
     public function signal(SignalInput $input, callable $next): void;
 
     /**
      * @param callable(UpdateInput): StartUpdateOutput $next
-     *
      */
     public function update(UpdateInput $input, callable $next): StartUpdateOutput;
 
     /**
      * @param callable(SignalWithStartInput): WorkflowExecution $next
-     *
      */
     public function signalWithStart(SignalWithStartInput $input, callable $next): WorkflowExecution;
 
     /**
-     * @param callable(GetResultInput): ?ValuesInterface $next
+     * @param UpdateWithStartInput $input
+     * @param callable(UpdateWithStartInput): WorkflowExecution $next
      *
+     * @return UpdateHandle
+     */
+    public function updateWithStart(UpdateWithStartInput $input, callable $next): UpdateHandle;
+
+    /**
+     * @param callable(GetResultInput): ?ValuesInterface $next
      */
     public function getResult(GetResultInput $input, callable $next): ?ValuesInterface;
 
     /**
      * @param callable(QueryInput): ?ValuesInterface $next
-     *
      */
     public function query(QueryInput $input, callable $next): ?ValuesInterface;
 
     /**
      * @param callable(CancelInput): void $next
-     *
      */
     public function cancel(CancelInput $input, callable $next): void;
 
     /**
      * @param callable(TerminateInput): void $next
-     *
      */
     public function terminate(TerminateInput $input, callable $next): void;
 
     /**
      * @param callable(DescribeInput): void $next
-     *
      */
     public function describe(DescribeInput $input, callable $next): WorkflowExecutionDescription;
 }

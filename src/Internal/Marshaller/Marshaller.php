@@ -39,8 +39,6 @@ class Marshaller implements MarshallerInterface
     }
 
     /**
-     *
-     *
      * @throws \ReflectionException
      */
     public function marshal(object $from): array
@@ -64,8 +62,6 @@ class Marshaller implements MarshallerInterface
     }
 
     /**
-     *
-     *
      * @throws \ReflectionException
      */
     public function unmarshal(array $from, object $to): object

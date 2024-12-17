@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Client;
 
 use Doctrine\Common\Annotations\Reader;
+use JetBrains\PhpStorm\Deprecated;
 use Spiral\Attributes\AnnotationReader;
 use Spiral\Attributes\AttributeReader;
 use Spiral\Attributes\Composite\SelectiveReader;
@@ -24,6 +25,9 @@ use Temporal\Api\Workflowservice\V1\ListWorkflowExecutionsRequest;
 use Temporal\Client\Common\ClientContextTrait;
 use Temporal\Client\Common\Paginator;
 use Temporal\Client\GRPC\ServiceClientInterface;
+use Temporal\Client\Update\LifecycleStage;
+use Temporal\Client\Update\UpdateHandle;
+use Temporal\Client\Update\UpdateOptions;
 use Temporal\Client\Workflow\CountWorkflowExecutions;
 use Temporal\Client\Workflow\WorkflowExecutionHistory;
 use Temporal\DataConverter\DataConverter;
@@ -144,10 +148,7 @@ class WorkflowClient implements WorkflowClientInterface
         );
     }
 
-    /**
-     * @param object|WorkflowStubInterface $workflow
-     */
-    public function startWithSignal(
+    public function signalWithStart(
         $workflow,
         string $signal,
         array $signalArgs = [],
@@ -203,6 +204,50 @@ class WorkflowClient implements WorkflowClientInterface
             stub: $workflowStub,
             returnType: $returnType !== null ? Type::create($returnType) : null,
         );
+    }
+
+    #[Deprecated(replacement: '%class%->signalWithStart(%parametersList%)')]
+    public function startWithSignal(
+        $workflow,
+        string $signal,
+        array $signalArgs = [],
+        array $startArgs = [],
+    ): WorkflowRunInterface {
+        return $this->signalWithStart($workflow, $signal, $signalArgs, $startArgs);
+    }
+
+    public function updateWithStart(
+        $workflow,
+        string|UpdateOptions $update,
+        array $updateArgs = [],
+        array $startArgs = [],
+    ): UpdateHandle {
+        $workflow instanceof WorkflowProxy && !$workflow->hasHandler() && throw new InvalidArgumentException(
+            'Unable to start workflow without workflow handler',
+        );
+
+        $update = \is_string($update) ? UpdateOptions::new($update, LifecycleStage::StageAccepted) : $update;
+
+        $workflowStub = WorkflowStubConverter::fromWorkflow($workflow);
+
+        $workflowType = $workflowStub->getWorkflowType() ?? throw new InvalidArgumentException(
+            'Unable to start untyped workflow without given workflowType',
+        );
+        $workflowStub->hasExecution() and throw new InvalidArgumentException(self::ERROR_WORKFLOW_START_DUPLICATION);
+
+        [$execution, $handle] = $this->getStarter()->updateWithStart(
+            $workflowType,
+            $workflowStub->getOptions() ?? WorkflowOptions::new(),
+            $update,
+            $updateArgs,
+            $startArgs,
+        );
+
+        $workflowStub->setExecution($execution);
+
+        return $handle instanceof \Throwable
+            ? throw $handle
+            : $handle;
     }
 
     public function newWorkflowStub(
