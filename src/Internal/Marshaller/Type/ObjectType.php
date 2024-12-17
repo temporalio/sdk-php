@@ -97,7 +97,6 @@ class ObjectType extends Type implements DetectableTypeInterface, RuleFactoryInt
     }
 
     /**
-     *
      * @return TClass
      * @throws \ReflectionException
      *

@@ -11,37 +11,27 @@ declare(strict_types=1);
 
 namespace Temporal\Interceptor\WorkflowClient;
 
-use Temporal\DataConverter\ValuesInterface;
-
 /**
  * @psalm-immutable
  */
-class SignalWithStartInput
+class UpdateWithStartInput
 {
     /**
-     * @param non-empty-string $signalName
-     *
      * @no-named-arguments
      * @internal Don't use the constructor. Use {@see self::with()} instead.
      */
     public function __construct(
         public readonly StartInput $workflowStartInput,
-        public readonly string $signalName,
-        public readonly ValuesInterface $signalArguments,
+        public readonly UpdateInput $updateInput,
     ) {}
 
-    /**
-     * @param non-empty-string|null $signalName
-     */
     public function with(
         ?StartInput $workflowStartInput = null,
-        ?string $signalName = null,
-        ?ValuesInterface $signalArguments = null,
+        ?UpdateInput $updateInput = null,
     ): self {
         return new self(
             $workflowStartInput ?? $this->workflowStartInput,
-            $signalName ?? $this->signalName,
-            $signalArguments ?? $this->signalArguments,
+            $updateInput ?? $this->updateInput,
         );
     }
 }
