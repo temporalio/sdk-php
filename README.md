@@ -21,13 +21,13 @@ composer require temporal/sdk
 [![License](https://img.shields.io/packagist/l/temporal/sdk.svg?style=flat-square)](LICENSE.md)
 [![Total DLoads](https://img.shields.io/packagist/dt/temporal/sdk.svg?style=flat-square)](https://packagist.org/packages/temporal/sdk/stats)
 
-The SDK includes two main components: [Clients](https://docs.temporal.io/develop/php/temporal-clients) and Workers.
+The SDK includes two main components: [Clients](https://docs.temporal.io/develop/php/temporal-clients) and Workers.  
 The Clients component is used to start, schedule, and manage Workflows;
 the Workers component is used to execute Workflows and Activities.
 
-The client part of the SDK requires the [`grpc` extension](https://pecl.php.net/package/grpc),
+The client part of the SDK requires the [`grpc`](https://pecl.php.net/package/grpc) extension,
 and the worker requires [RoadRunner](https://roadrunner.dev).
-It is recommended to use both SDK components with the [`protobuf` extension](https://pecl.php.net/package/protobuf)
+It is recommended to use both SDK components with the [`protobuf`](https://pecl.php.net/package/protobuf) extension
 in production to improve performance.
 
 |              | Client      | Worker      |
@@ -54,7 +54,13 @@ If you are using the SDK without integrations, the following sections of the doc
 - [How to start a Workflow Execution](https://docs.temporal.io/develop/php/temporal-clients#start-workflow-execution)
 
 > [!NOTE]
-> Check out [the repository with examples](https://github.com/temporalio/samples-php) of using the SDK.
+> Check out [the repository with examples](https://github.com/temporalio/samples-php) of using the PHP SDK.
+
+> [!WARNING]
+> Since version [`2.11.0`](https://github.com/temporalio/sdk-php/releases/tag/v2.11.0),
+> [feature flags](https://github.com/temporalio/sdk-php/blob/master/src/Worker/FeatureFlags.php) were introduced
+> that change the behavior of the entire PHP worker.  
+> It's recommended to disable deprecated behavior.
 
 ## Testing
 
@@ -104,6 +110,6 @@ Additional
 
 ## License
 
-Buggregator Trap is open-sourced software licensed under the [MIT License](https://opensource.org/licenses/MIT).
+Temporal PHP SDK is open-sourced software licensed under the [MIT License](https://opensource.org/licenses/MIT).
 
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ftemporalio%2Fsdk-php.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Ftemporalio%2Fsdk-php?ref=badge_large)
