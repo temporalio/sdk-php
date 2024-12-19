@@ -55,7 +55,6 @@ interface WorkflowOutboundCallsInterceptor extends Interceptor
 {
     /**
      * @param callable(ExecuteActivityInput): PromiseInterface $next
-     *
      */
     public function executeActivity(
         ExecuteActivityInput $input,
@@ -64,25 +63,21 @@ interface WorkflowOutboundCallsInterceptor extends Interceptor
 
     /**
      * @param callable(ExecuteLocalActivityInput): PromiseInterface $next
-     *
      */
     public function executeLocalActivity(ExecuteLocalActivityInput $input, callable $next): PromiseInterface;
 
     /**
      * @param callable(ExecuteChildWorkflowInput): PromiseInterface $next
-     *
      */
     public function executeChildWorkflow(ExecuteChildWorkflowInput $input, callable $next): PromiseInterface;
 
     /**
      * @param callable(SignalExternalWorkflowInput): PromiseInterface $next
-     *
      */
     public function signalExternalWorkflow(SignalExternalWorkflowInput $input, callable $next): PromiseInterface;
 
     /**
      * @param callable(CancelExternalWorkflowInput): PromiseInterface $next
-     *
      */
     public function cancelExternalWorkflow(CancelExternalWorkflowInput $input, callable $next): PromiseInterface;
 
@@ -97,49 +92,41 @@ interface WorkflowOutboundCallsInterceptor extends Interceptor
 
     /**
      * @param callable(TimerInput): PromiseInterface $next
-     *
      */
     public function timer(TimerInput $input, callable $next): PromiseInterface;
 
     /**
      * @param callable(PanicInput): PromiseInterface $next
-     *
      */
     public function panic(PanicInput $input, callable $next): PromiseInterface;
 
     /**
      * @param callable(CompleteInput): PromiseInterface $next
-     *
      */
     public function complete(CompleteInput $input, callable $next): PromiseInterface;
 
     /**
      * @param callable(ContinueAsNewInput): PromiseInterface $next
-     *
      */
     public function continueAsNew(ContinueAsNewInput $input, callable $next): PromiseInterface;
 
     /**
      * @param callable(GetVersionInput): PromiseInterface $next
-     *
      */
     public function getVersion(GetVersionInput $input, callable $next): PromiseInterface;
 
     /**
      * @param callable(UpsertSearchAttributesInput): PromiseInterface $next
-     *
      */
     public function upsertSearchAttributes(UpsertSearchAttributesInput $input, callable $next): PromiseInterface;
 
     /**
      * @param callable(AwaitInput): PromiseInterface $next
-     *
      */
     public function await(AwaitInput $input, callable $next): PromiseInterface;
 
     /**
      * @param callable(AwaitWithTimeoutInput): PromiseInterface $next
-     *
      */
     public function awaitWithTimeout(AwaitWithTimeoutInput $input, callable $next): PromiseInterface;
 }

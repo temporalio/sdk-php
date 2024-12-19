@@ -35,7 +35,6 @@ interface RequestInterface extends CommandInterface
 
     /**
      * Optional failure.
-     *
      */
     public function getFailure(): ?\Throwable;
 

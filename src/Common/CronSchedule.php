@@ -49,7 +49,6 @@ final class CronSchedule implements \Stringable
      *  │ │ │ │ │
      *  * * * * *
      * ```
-     *
      */
     #[Immutable]
     public string $interval;

@@ -40,7 +40,6 @@ interface WorkflowStubInterface extends WorkflowRunInterface
     /**
      * Returns associated workflow options. Empty for running workflows. Workflow options are immutable and can
      * not be changed after the workflow was created.
-     *
      */
     public function getOptions(): ?WorkflowOptions;
 
@@ -53,13 +52,11 @@ interface WorkflowStubInterface extends WorkflowRunInterface
 
     /**
      * Check if workflow was started and has associated execution.
-     *
      */
     public function hasExecution(): bool;
 
     /**
      * Attaches running workflow context to the workflow stub.
-     *
      */
     public function setExecution(WorkflowExecution $execution): void;
 
@@ -122,7 +119,6 @@ interface WorkflowStubInterface extends WorkflowRunInterface
      * Cancellation cancels {@see CancellationScopeInterface} that wraps the
      * main workflow method. Note that workflow can take long time to get
      * canceled or even completely ignore the cancellation request.
-     *
      */
     public function cancel(): void;
 
@@ -131,7 +127,6 @@ interface WorkflowStubInterface extends WorkflowRunInterface
      *
      * Termination is a hard stop of a workflow execution which doesn't give
      * workflow code any chance to perform cleanup.
-     *
      */
     public function terminate(string $reason, array $details = []): void;
 }

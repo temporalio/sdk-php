@@ -82,7 +82,6 @@ class ArrayType extends Type implements DetectableTypeInterface, RuleFactoryInte
 
     /**
      * @param iterable $value
-     *
      */
     public function serialize($value): array
     {

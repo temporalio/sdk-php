@@ -30,7 +30,6 @@ interface RepositoryInterface extends \IteratorAggregate, \Countable
 
     /**
      * Register a new {@see Identifiable} inside the repository.
-     *
      */
     public function add(Identifiable $entry, bool $overwrite = false): void;
 

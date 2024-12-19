@@ -118,7 +118,6 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
 
     /**
      * Connects stub to running workflow.
-     *
      */
     public function setExecution(WorkflowExecution $execution): void
     {

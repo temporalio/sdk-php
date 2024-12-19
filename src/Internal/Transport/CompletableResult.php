@@ -72,7 +72,6 @@ class CompletableResult implements CompletableResultInterface
     /**
      * @param (callable(mixed): mixed)|null $onFulfilled
      * @param (callable(\Throwable): mixed)|null $onRejected
-     *
      */
     public function then(
         ?callable $onFulfilled = null,
