@@ -36,9 +36,9 @@ The SDK includes two main components: [Clients](https://docs.temporal.io/develop
 The Clients component is used to start, schedule, and manage Workflows;
 the Workers component is used to execute Workflows and Activities.
 
-The client part of the SDK requires the [`grpc`](https://pecl.php.net/package/grpc) extension,
-and the worker requires [RoadRunner](https://roadrunner.dev).
-It is recommended to use both SDK components with the [`protobuf`](https://pecl.php.net/package/protobuf) extension
+The Clients component requires the [`grpc`](https://pecl.php.net/package/grpc) extension,
+and the Workers component requires [RoadRunner](https://roadrunner.dev).
+It's recommended to use both components with the [`protobuf`](https://pecl.php.net/package/protobuf) extension
 in production to improve performance.
 
 |              | Client      | Worker      |
@@ -50,7 +50,7 @@ in production to improve performance.
 To download RoadRunner, you can use the following command:
 
 ```bash
-vendor/bin/rr get
+./vendor/bin/rr get
 ```
 
 ### Usage
