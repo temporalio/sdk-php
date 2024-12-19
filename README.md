@@ -111,7 +111,7 @@ During development, you might need to dump a variable, throw an error trace, or 
 Since Workflows and Activities run in RoadRunner workers, you cannot use `var_dump`,
 `print_r`, `echo`, and other functions that output data to STDOUT.
 
-Instead, use [Buggregator](https://buggregator.dev) along with the `buggregator/trap` package.
+Instead, use [Buggregator](https://buggregator.dev) along with [Trap](https://github.com/buggregator/trap).
 In this case, dumps, traces, and logs will be sent via socket to your local Buggregator server,
 where you can view them in a convenient web interface.
 
