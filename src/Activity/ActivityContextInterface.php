@@ -21,7 +21,6 @@ interface ActivityContextInterface
      * Returns information about current activity execution.
      *
      * @see Activity::getInfo()
-     *
      */
     public function getInfo(): ActivityInfo;
 
@@ -29,7 +28,6 @@ interface ActivityContextInterface
      * Returns activity execution input arguments.
      *
      * @see Activity::getInput()
-     *
      */
     public function getInput(): ValuesInterface;
 
@@ -37,7 +35,6 @@ interface ActivityContextInterface
      * Check if the heartbeat's first argument has been passed.
      *
      * @see Activity::hasHeartbeatDetails()
-     *
      */
     public function hasHeartbeatDetails(): bool;
 
@@ -55,7 +52,6 @@ interface ActivityContextInterface
      * Marks the activity as incomplete for asynchronous completion.
      *
      * @see Activity::doNotCompleteOnReturn()
-     *
      */
     public function doNotCompleteOnReturn(): void;
 

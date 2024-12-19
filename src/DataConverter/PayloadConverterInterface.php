@@ -18,7 +18,6 @@ interface PayloadConverterInterface
 {
     /**
      * Returns associated encoding type.
-     *
      */
     public function getEncodingType(): string;
 

@@ -30,7 +30,6 @@ interface ClientInterface
 
     /**
      * Check if command still in sending queue.
-     *
      */
     public function isQueued(CommandInterface $command): bool;
 
@@ -38,7 +37,6 @@ interface ClientInterface
 
     /**
      * Reject pending promise.
-     *
      */
     public function reject(CommandInterface $command, \Throwable $reason): void;
 }

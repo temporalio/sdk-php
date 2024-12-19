@@ -17,19 +17,16 @@ interface PrototypeInterface extends Identifiable
 {
     /**
      * Returns the name of the main handler.
-     *
      */
     public function getID(): string;
 
     /**
      * Returns a link to the class within which the handler is defined.
-     *
      */
     public function getClass(): \ReflectionClass;
 
     /**
      * Returns the reflection of the handler function.
-     *
      */
     public function getHandler(): ?\ReflectionMethod;
 }

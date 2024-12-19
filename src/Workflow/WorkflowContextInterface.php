@@ -31,7 +31,6 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * Returns information about current workflow execution.
      *
      * @see Workflow::getInfo()
-     *
      */
     public function getInfo(): WorkflowInfo;
 
@@ -39,7 +38,6 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * Returns workflow execution input arguments.
      *
      * @see Workflow::getInput()
-     *
      */
     public function getInput(): ValuesInterface;
 
@@ -85,7 +83,6 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * Exchanges data between worker and host process.
      *
      * @internal This is an internal method
-     *
      */
     public function request(RequestInterface $request, bool $cancellable = true): PromiseInterface;
 
@@ -93,7 +90,6 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * Updates the behavior of an existing workflow to resolve inconsistency errors during replay.
      *
      * @see Workflow::getVersion()
-     *
      */
     public function getVersion(string $changeId, int $minSupported, int $maxSupported): PromiseInterface;
 
@@ -110,13 +106,11 @@ interface WorkflowContextInterface extends EnvironmentInterface
 
     /**
      * @internal This is an internal method
-     *
      */
     public function complete(?array $result = null, ?\Throwable $failure = null): PromiseInterface;
 
     /**
      * @internal This is an internal method
-     *
      */
     public function panic(?\Throwable $failure = null): PromiseInterface;
 
@@ -134,7 +128,6 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * Completes the current workflow execution atomically and starts a new execution with the same Workflow Id.
      *
      * @see Workflow::continueAsNew()
-     *
      */
     public function continueAsNew(
         string $type,
@@ -159,7 +152,6 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @see Workflow::executeChildWorkflow()
      *
      * @param Type|string|\ReflectionType|\ReflectionClass|null $returnType
-     *
      */
     public function executeChildWorkflow(
         string $type,
@@ -187,8 +179,6 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * Creates a proxy for a workflow by name to execute as a child workflow.
      *
      * @see Workflow::newUntypedChildWorkflowStub()
-     *
-     *
      */
     public function newUntypedChildWorkflowStub(
         string $type,
@@ -212,7 +202,6 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * workflow.
      *
      * @see Workflow::newUntypedExternalWorkflowStub()
-     *
      */
     public function newUntypedExternalWorkflowStub(WorkflowExecution $execution): ExternalWorkflowStubInterface;
 
@@ -254,8 +243,6 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * that allows to call an activities with the passed options.
      *
      * @see Workflow::newUntypedActivityStub()
-     *
-     *
      */
     public function newUntypedActivityStub(
         ?ActivityOptionsInterface $options = null,
@@ -288,7 +275,6 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * Returns a complete trace of the last calls (for debugging).
      *
      * @see Workflow::getStackTrace()
-     *
      */
     public function getStackTrace(): string;
 

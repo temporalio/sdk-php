@@ -129,7 +129,6 @@ class Dispatcher implements DispatcherInterface
 
     /**
      * @psalm-return FunctionExecutor
-     *
      */
     private function boot(\ReflectionFunctionAbstract $fun): void
     {

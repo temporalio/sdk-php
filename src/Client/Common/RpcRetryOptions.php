@@ -73,7 +73,6 @@ final class RpcRetryOptions extends RetryOptions
      *
      * @param null|float $coefficient Maximum amount of jitter.
      *        Default will be used if set to {@see null}.
-     *
      */
     #[Pure]
     public function withMaximumJitterCoefficient(?float $coefficient): self
