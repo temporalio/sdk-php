@@ -6,6 +6,17 @@ and resilient way.
 
 Temporal PHP SDK is the framework for authoring [Workflows](https://docs.temporal.io/workflows) and [Activities](https://docs.temporal.io/activities) using PHP language.
 
+**Table of contents:**
+- [Get starting](#get-starting)
+  - [Installation](#installation)
+  - [Usage](#usage)
+- [Testing](#testing)
+- [Dev environment](#dev-environment)
+  - [Temporal CLI](#temporal-cli)
+  - [Buggregator](#buggregator)
+- [Resources](#resources)
+- [License](#license)
+
 ## Get starting
 
 ### Installation
@@ -118,10 +129,11 @@ docker run --rm -p 8000:8000 -p 1025:1025 -p 9912:9912 -p 9913:9913 ghcr.io/bugg
 If you are not using Docker or running PHP code outside a container, you can use Trap as a compact server:
 
 ```bash
-./vendor/bin/trap --ui
+./vendor/bin/trap --ui=8000
 ```
 
 Now use the `trap()`, `tr()`, or `dump()` functions to output data to Buggregator.
+Web UI will be available at `http://localhost:8000`.
 
 ## Resources
 
@@ -131,8 +143,9 @@ Read the docs
 [![PHP SDK API](https://img.shields.io/static/v1?style=flat-square&label=PHP+SDK&message=API&logo=PHP&color=447723&logoColor=aa88ff)](https://php.temporal.io/)
 
 Ask a question  
-[![Slack](https://img.shields.io/static/v1?style=flat-square&label=&message=Slack&logo=Slack&color=cc4444)](https://t.mp/slack/)
-[![Forum](https://img.shields.io/static/v1?style=flat-square&label=&message=Forum&logo=Discourse&color=4477ee)](https://community.temporal.io/)
+[![Github issues](https://img.shields.io/static/v1?style=flat-square&label=&message=Issues&logo=Github&color=202020)](https://github.com/temporalio/sdk-php/issues)
+[![Slack](https://img.shields.io/static/v1?style=flat-square&label=&message=Slack&logo=Slack&color=cc4444)](https://t.mp/slack)
+[![Forum](https://img.shields.io/static/v1?style=flat-square&label=&message=Forum&logo=Discourse&color=4477ee)](https://community.temporal.io/tag/php-sdk)
 [![Discord](https://img.shields.io/static/v1?style=flat-square&label=&message=Discord&logo=Discord&color=333333)](https://discord.gg/FwmDtGQe55)
 
 Additionally  
