@@ -148,11 +148,15 @@ Ask a question
 [![Forum](https://img.shields.io/static/v1?style=flat-square&label=&message=Forum&logo=Discourse&color=4477ee)](https://community.temporal.io/tag/php-sdk)
 [![Discord](https://img.shields.io/static/v1?style=flat-square&label=&message=Discord&logo=Discord&color=333333)](https://discord.gg/FwmDtGQe55)
 
+Stay tuned  
+[![Read Blog](https://img.shields.io/static/v1?style=flat-square&label=&message=Read+the+Blog&logo=Temporal&color=312f2b)](https://temporal.io/blog)
+[![Temporal YT Channel](https://img.shields.io/static/v1?style=flat-square&label=&message=Watch+on+Youtube&logo=youtube&color=b9002a)](https://www.youtube.com/temporalio)
+[![X](https://img.shields.io/badge/-Follow-black?style=flat-square&logo=X)](https://x.com/temporalio)
+
 Additionally  
 [![Temporal community](https://img.shields.io/static/v1?style=flat-square&label=&message=Community&color=ff6644&logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NyIgaGVpZ2h0PSI3NiI+PHBhdGggZD0iTTQyLjc0MDMgMTYuNTYyMkM0My43MjA0IDE3LjI3NzUgNDcuNjY3MyAyMC40Mjk3IDQ4LjY0NzQgMjEuMTk3OUM0OS42Mjc1IDIwLjM3NjcgNTMuNTc0NCAxNy4yNzc1IDU0LjU1NDUgMTYuNTYyMkM3NC41Mjc0IDEuNjIyMjggOTAuNTAwNSAtMi44MDE0MiA5NC45NTA3IDEuNjQ4NzhDOTkuNDAwOSA2LjA5ODk4IDk1LjAwMzcgMjIuMDQ1NSA4MC4wMzcyIDQyLjA0NUM3OS4zMjIgNDMuMDI1MSA3Ni4xNjk4IDQ2Ljk3MiA3NS40MDE2IDQ3Ljk1MjFDNzEuNjY2NiA1Mi40ODE3IDY3LjQ4MTMgNTcuMTk2OCA2Mi42ODY3IDYxLjk5MTRDNTcuODkyMSA2Ni43ODYgNTMuMjMgNzAuOTcxMyA0OC42NDc0IDc0LjcwNjNDNDQuMTE3NyA3MC45NzEzIDM5LjQwMjYgNjYuNzg2IDM0LjYwOCA2MS45OTE0QzI5LjgxMzUgNTcuMTk2OCAyNS42MjgyIDUyLjUzNDcgMjEuODkzMiA0Ny45NTIxQzIxLjA3MiA0Ni45NzIgMTcuOTcyOCA0My4wMjUxIDE3LjI1NzYgNDIuMDQ1QzIuMzE3NiAyMi4wNzIgLTIuMTA2MTEgNi4wOTg5OSAyLjM0NDA5IDEuNjQ4NzlDNi43OTQyOSAtMi44MDE0MSAyMi43NjczIDEuNjIyMjcgNDIuNzQwMyAxNi41NjIyWiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==)](https://temporal.io/community)
 [![Awesome Temporal](https://img.shields.io/static/v1?style=flat-square&label=&message=Awesome+Temporal&logo=Awesome-Lists&color=4b4567)](https://github.com/temporalio/awesome-temporal)
 
-[//]: # ([![Temporal YT Channel]&#40;https://img.shields.io/static/v1?style=flat-square&label=&message=Watch+on+Youtube&logo=youtube&color=FF2052&#41;]&#40;https://www.youtube.com/temporalio&#41;)
 
 ## License
 
