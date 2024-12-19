@@ -43,13 +43,11 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     /**
      * Workflow context.
-     *
      */
     protected WorkflowContext $context;
 
     /**
      * Coroutine scope context.
-     *
      */
     protected ScopeContext $scopeContext;
 
@@ -275,7 +273,6 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     /**
      * Connects promise to scope context to be cancelled on promise cancel.
-     *
      */
     public function onAwait(Deferred $deferred): void
     {

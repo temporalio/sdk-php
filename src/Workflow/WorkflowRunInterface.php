@@ -22,7 +22,6 @@ interface WorkflowRunInterface
 {
     /**
      * Returns attached workflow execution.
-     *
      */
     public function getExecution(): WorkflowExecution;
 

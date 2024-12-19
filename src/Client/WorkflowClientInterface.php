@@ -29,10 +29,13 @@ interface WorkflowClientInterface extends ClientContextInterface
     public function getServiceClient(): ServiceClientInterface;
 
     /**
-     * Starts untyped and typed workflow stubs in async mode.
+     * Starts workflow in async mode.
+     *
+     * Returns WorkflowRun object which can be used to wait for the execution result.
+     * WorkflowRun objects created by typed workflow stubs will attempt to type the execution result as well.
      *
      * @param WorkflowStubInterface|object $workflow
-     * @param mixed $args
+     * @param mixed ...$args
      */
     public function start($workflow, ...$args): WorkflowRunInterface;
 
@@ -111,7 +114,6 @@ interface WorkflowClientInterface extends ClientContextInterface
      *
      * IMPORTANT! Stub is per workflow instance. So new stub should be created
      * for each new one.
-     *
      */
     public function newUntypedWorkflowStub(
         string $workflowType,
@@ -133,7 +135,6 @@ interface WorkflowClientInterface extends ClientContextInterface
 
     /**
      * Returns untyped workflow stub associated with running workflow.
-     *
      */
     public function newUntypedRunningWorkflowStub(
         string $workflowID,
@@ -148,7 +149,6 @@ interface WorkflowClientInterface extends ClientContextInterface
      * Only relevant for activity implementations that called {@see ActivityContext::doNotCompleteOnReturn()}.
      *
      * @see ActivityCompletionClient
-     *
      */
     public function newActivityCompletionClient(): ActivityCompletionClientInterface;
 
@@ -203,7 +203,6 @@ interface WorkflowClientInterface extends ClientContextInterface
      *        Available values are {@see HistoryEventFilterType} constants.
      * @param int<0, max> $pageSize Size of the pages to be requested. It affects internal queries only. Use it if you
      *        want to load limited number of events from the history.
-     *
      */
     public function getWorkflowHistory(
         WorkflowExecution $execution,

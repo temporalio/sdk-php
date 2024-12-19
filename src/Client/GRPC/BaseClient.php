@@ -165,7 +165,6 @@ abstract class BaseClient implements ServiceClientInterface
 
     /**
      * @param null|Pipeline<GrpcClientInterceptor, object> $pipeline
-     *
      */
     final public function withInterceptorPipeline(?Pipeline $pipeline): static
     {

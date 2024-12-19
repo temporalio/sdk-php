@@ -22,7 +22,6 @@ interface RuleFactoryInterface extends TypeInterface
 {
     /**
      * Make a marshalling rule for the given property.
-     *
      */
     public static function makeRule(\ReflectionProperty $property): ?MarshallingRule;
 }

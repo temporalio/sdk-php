@@ -37,7 +37,6 @@ final class ActivityInfo
      * A correlation token that can be used to complete the activity through `complete` method.
      *
      * @see ActivityCompletionClientInterface::complete()
-     *
      */
     #[Marshal(name: 'TaskToken')]
     public string $taskToken;
@@ -56,14 +55,12 @@ final class ActivityInfo
      * activity through `complete` method.
      *
      * @see ActivityCompletionClientInterface::complete()
-     *
      */
     #[Marshal(name: 'ActivityID')]
     public string $id;
 
     /**
      * Type (name) of the activity.
-     *
      */
     #[Marshal(name: 'ActivityType', type: ObjectType::class, of: ActivityType::class)]
     public ActivityType $type;
@@ -73,28 +70,24 @@ final class ActivityInfo
 
     /**
      * Maximum time between heartbeats. 0 means no heartbeat needed.
-     *
      */
     #[Marshal(name: 'HeartbeatTimeout', type: DateIntervalType::class)]
     public \DateInterval $heartbeatTimeout;
 
     /**
      * Time of activity scheduled by a workflow
-     *
      */
     #[Marshal(name: 'ScheduledTime', type: DateTimeType::class)]
     public \DateTimeInterface $scheduledTime;
 
     /**
      * Time of activity start
-     *
      */
     #[Marshal(name: 'StartedTime', type: DateTimeType::class)]
     public \DateTimeInterface $startedTime;
 
     /**
      * Time of activity timeout
-     *
      */
     #[Marshal(name: 'Deadline', type: DateTimeType::class)]
     public \DateTimeInterface $deadline;
@@ -102,7 +95,6 @@ final class ActivityInfo
     /**
      * Attempt starts from 1, and increased by 1 for every retry if
      * retry policy is specified.
-     *
      */
     #[Marshal(name: 'Attempt')]
     public int $attempt = 1;

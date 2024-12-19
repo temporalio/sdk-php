@@ -17,7 +17,6 @@ interface TypeFactoryInterface
 {
     /**
      * @param class-string<TypeInterface> $type
-     *
      */
     public function create(string $type, array $args): ?TypeInterface;
 

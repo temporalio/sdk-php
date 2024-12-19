@@ -611,7 +611,6 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
 
     /**
      * Record last stack trace of the call.
-     *
      */
     protected function recordTrace(): void
     {

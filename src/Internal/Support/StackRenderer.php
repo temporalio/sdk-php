@@ -15,7 +15,6 @@ class StackRenderer
 {
     /**
      * Sets files and prefixes to be ignored from the stack trace.
-     *
      */
     private static array $ignorePaths = [
         'temporal/sdk/src/Internal/',
@@ -31,7 +30,6 @@ class StackRenderer
 
     /**
      * Renders trace in easy to digest form, removes references to internal functionality.
-     *
      */
     public static function renderTrace(array $stackTrace): string
     {

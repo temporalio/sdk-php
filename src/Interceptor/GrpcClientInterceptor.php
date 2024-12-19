@@ -24,7 +24,6 @@ interface GrpcClientInterceptor extends Interceptor
      *
      * @param non-empty-string $method
      * @param callable(non-empty-string, object, ContextInterface): object $next
-     *
      */
     public function interceptCall(string $method, object $arg, ContextInterface $ctx, callable $next): object;
 }

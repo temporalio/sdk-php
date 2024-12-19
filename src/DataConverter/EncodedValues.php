@@ -75,7 +75,6 @@ class EncodedValues implements ValuesInterface
      * Decode promise response upon returning it to the domain layer.
      *
      * @param string|\ReflectionClass|\ReflectionType|Type|null $type
-     *
      */
     public static function decodePromise(PromiseInterface $promise, $type = null): PromiseInterface
     {
@@ -101,7 +100,6 @@ class EncodedValues implements ValuesInterface
 
     /**
      * @param TPayloadsCollection $payloads
-     *
      */
     public static function fromPayloadCollection(
         \Traversable $payloads,

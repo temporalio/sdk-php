@@ -23,7 +23,6 @@ interface WorkerInterface extends Identifiable
 {
     /**
      * Returns processing options associated with specific worker task queue.
-     *
      */
     public function getOptions(): WorkerOptions;
 

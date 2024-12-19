@@ -30,10 +30,12 @@ final class ServiceCredentials
      *
      * To update the API key in runtime, call the `UpdateAPIKey` RPC method with the new key:
      *
-     *      $result = \Temporal\Worker\Transport\Goridge::create()->call(
-     *          'temporal.UpdateAPIKey',
-     *          $newApiKey,
-     *      );
+     * ```
+     *  $result = \Temporal\Worker\Transport\Goridge::create()->call(
+     *      'temporal.UpdateAPIKey',
+     *      $newApiKey,
+     *  );
+     * ```
      *
      * @link https://docs.temporal.io/cloud/api-keys
      * @since SDK 2.12.0

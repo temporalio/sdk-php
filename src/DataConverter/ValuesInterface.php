@@ -22,7 +22,6 @@ interface ValuesInterface extends \Countable
 {
     /**
      * Checks if any value present.
-     *
      */
     public function isEmpty(): bool;
 
@@ -41,7 +40,6 @@ interface ValuesInterface extends \Countable
 
     /**
      * Returns associated payloads.
-     *
      */
     public function toPayloads(): Payloads;
 }

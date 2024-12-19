@@ -20,7 +20,6 @@ class Process
 {
     /**
      * Run process with arguments and get result.
-     *
      */
     public static function run(string ...$cmd): string
     {

@@ -22,13 +22,11 @@ interface CancellationScopeInterface extends PromiseInterface
 {
     /**
      * Detached scopes can continue working even if parent scope was cancelled.
-     *
      */
     public function isDetached(): bool;
 
     /**
      * Returns true if cancel request was sent to scope.
-     *
      */
     public function isCancelled(): bool;
 
@@ -45,7 +43,6 @@ interface CancellationScopeInterface extends PromiseInterface
      *
      * Once a promise is settled (either fulfilled or rejected), calling `cancel()` on
      * a promise has no effect.
-     *
      */
     public function cancel(): void;
 }

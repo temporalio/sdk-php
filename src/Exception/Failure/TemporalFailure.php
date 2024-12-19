@@ -93,7 +93,6 @@ class TemporalFailure extends TemporalException implements \Stringable
 
     /**
      * Explain known types of key=>value pairs.
-     *
      */
     protected static function buildMessage(array $values): string
     {

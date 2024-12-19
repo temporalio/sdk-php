@@ -93,7 +93,6 @@ final class WorkflowInfo
 
     /**
      * @see CronSchedule::$interval for more info about cron format.
-     *
      */
     #[Marshal(name: 'CronSchedule', type: NullableType::class, of: CronType::class)]
     public ?string $cronSchedule = null;
