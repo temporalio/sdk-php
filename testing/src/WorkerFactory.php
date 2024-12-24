@@ -28,11 +28,11 @@ class WorkerFactory extends \Temporal\WorkerFactory
         DataConverterInterface $dataConverter,
         RPCConnectionInterface $rpc,
         ActivityInvocationCacheInterface $activityCache,
-        ServiceCredentials $credentials,
+        ?ServiceCredentials $credentials = null,
     ) {
         $this->activityCache = $activityCache;
 
-        parent::__construct($dataConverter, $rpc, $credentials);
+        parent::__construct($dataConverter, $rpc, $credentials ?? ServiceCredentials::create());
     }
 
     public static function create(
@@ -45,7 +45,7 @@ class WorkerFactory extends \Temporal\WorkerFactory
             $converter ?? DataConverter::createDefault(),
             $rpc ?? Goridge::create(),
             $activityCache ?? RoadRunnerActivityInvocationCache::create($converter),
-            $credentials ?? ServiceCredentials::create(),
+            $credentials,
         );
     }
 

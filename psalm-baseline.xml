@@ -1443,6 +1443,9 @@
     <DeprecatedClass>
       <code><![CDATA[new AnnotationReader()]]></code>
     </DeprecatedClass>
+    <ImpureMethodCall>
+      <code><![CDATA[create]]></code>
+    </ImpureMethodCall>
     <InternalClass>
       <code><![CDATA[new Client($this->responses)]]></code>
     </InternalClass>
@@ -1477,7 +1480,7 @@
       <code><![CDATA[new static(
             $converter ?? DataConverter::createDefault(),
             $rpc ?? Goridge::create(),
-            $credentials ?? ServiceCredentials::create(),
+            $credentials,
         )]]></code>
     </UnsafeInstantiation>
   </file>
