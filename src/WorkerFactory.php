@@ -105,10 +105,10 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     public function __construct(
         DataConverterInterface $dataConverter,
         protected RPCConnectionInterface $rpc,
-        ServiceCredentials $credentials,
+        ?ServiceCredentials $credentials = null,
     ) {
         $this->converter = $dataConverter;
-        $this->boot($credentials);
+        $this->boot($credentials ?? ServiceCredentials::create());
     }
 
     public static function create(
@@ -119,7 +119,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         return new static(
             $converter ?? DataConverter::createDefault(),
             $rpc ?? Goridge::create(),
-            $credentials ?? ServiceCredentials::create(),
+            $credentials,
         );
     }
 
