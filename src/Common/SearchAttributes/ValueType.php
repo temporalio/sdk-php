@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\DataConverter\SearchAttributes;
+namespace Temporal\Common\SearchAttributes;
 
 enum ValueType: string
 {

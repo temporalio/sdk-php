@@ -15,6 +15,7 @@ use Carbon\CarbonInterval;
 use JetBrains\PhpStorm\Immutable;
 use Temporal\Client\ClientOptions;
 use Temporal\Common\CronSchedule;
+use Temporal\Common\TypedSearchAttributes;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\ArrayType;
 use Temporal\Internal\Marshaller\Type\CronType;
@@ -108,6 +109,8 @@ final class WorkflowInfo
 
     #[Marshal(name: 'SearchAttributes', type: NullableType::class, of: ArrayType::class)]
     public ?array $searchAttributes = null;
+
+    public TypedSearchAttributes $typedSearchAttributes;
 
     #[Marshal(name: 'Memo', type: NullableType::class, of: ArrayType::class)]
     public ?array $memo = null;
