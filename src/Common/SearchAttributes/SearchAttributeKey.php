@@ -13,17 +13,15 @@ use Temporal\Common\SearchAttributes\SearchAttributeKey\KeywordValue;
 use Temporal\Common\SearchAttributes\SearchAttributeKey\StringValue;
 
 /**
- * @template-covariant TValue
  * @psalm-immutable
  */
 abstract class SearchAttributeKey
 {
     /**
      * @param non-empty-string $key
-     * @param TValue $value
      */
     final protected function __construct(
-        protected readonly string $key,
+        private readonly string $key,
     ) {}
 
     /**

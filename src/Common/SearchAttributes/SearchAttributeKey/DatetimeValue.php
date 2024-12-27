@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace Temporal\Common\SearchAttributes\SearchAttributeKey;
 
-use DateTimeImmutable;
 use Temporal\Common\SearchAttributes\SearchAttributeKey;
 use Temporal\Common\SearchAttributes\SearchAttributeUpdate;
 use Temporal\Common\SearchAttributes\ValueType;
 
 /**
- * @template-extends SearchAttributeKey<DateTimeImmutable>
  * @psalm-immutable
  */
 final class DatetimeValue extends SearchAttributeKey

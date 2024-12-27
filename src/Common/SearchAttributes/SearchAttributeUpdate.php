@@ -8,6 +8,7 @@ use Temporal\Common\SearchAttributes\SearchAttributeUpdate\ValueSet;
 use Temporal\Common\SearchAttributes\SearchAttributeUpdate\ValueUnset;
 
 /**
+ * @internal
  * @psalm-immutable
  */
 abstract class SearchAttributeUpdate

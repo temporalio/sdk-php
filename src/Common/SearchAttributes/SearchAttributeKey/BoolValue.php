@@ -9,7 +9,6 @@ use Temporal\Common\SearchAttributes\SearchAttributeUpdate;
 use Temporal\Common\SearchAttributes\ValueType;
 
 /**
- * @template-extends SearchAttributeKey<bool>
  * @psalm-immutable
  */
 final class BoolValue extends SearchAttributeKey

@@ -9,7 +9,6 @@ use Temporal\Common\SearchAttributes\SearchAttributeUpdate;
 use Temporal\Common\SearchAttributes\ValueType;
 
 /**
- * @template-extends SearchAttributeKey<list<string>>
  * @psalm-immutable
  */
 final class KeywordListValue extends SearchAttributeKey

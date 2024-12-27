@@ -9,7 +9,6 @@ use Temporal\Common\SearchAttributes\SearchAttributeUpdate;
 use Temporal\Common\SearchAttributes\ValueType;
 
 /**
- * @template-extends SearchAttributeKey<float>
  * @psalm-immutable
  */
 final class FloatValue extends SearchAttributeKey
