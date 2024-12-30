@@ -13,7 +13,7 @@ class UpsertTypedSearchAttributes extends Request
     public const NAME = 'UpsertWorkflowTypedSearchAttributes';
 
     /**
-     * @param list<SearchAttributeUpdate> $searchAttributes
+     * @param array<array-key, SearchAttributeUpdate> $searchAttributes
      */
     public function __construct(
         private readonly array $searchAttributes,
@@ -22,7 +22,7 @@ class UpsertTypedSearchAttributes extends Request
     }
 
     /**
-     * @return list<SearchAttributeUpdate>
+     * @return array<array-key, SearchAttributeUpdate>
      */
     public function getSearchAttributes(): array
     {

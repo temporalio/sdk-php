@@ -16,6 +16,7 @@ use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Activity\ActivityOptionsInterface;
 use Temporal\Client\WorkflowStubInterface;
+use Temporal\Common\SearchAttributes\SearchAttributeUpdate;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\OutOfContextException;
@@ -909,6 +910,21 @@ final class Workflow extends Facade
     public static function upsertSearchAttributes(array $searchAttributes): void
     {
         self::getCurrentContext()->upsertSearchAttributes($searchAttributes);
+    }
+
+    /**
+     * Upsert typed Search Attributes
+     *
+     * ```php
+     *  Workflow::upsertTypedSearchAttributes(
+     *      SearchAttributeKey::forKeyword('CustomKeyword')->valueSet('CustomValue'),
+     *      SearchAttributeKey::forInt('MyCounter')->valueSet(42),
+     *  );
+     * ```
+     */
+    public static function upsertTypedSearchAttributes(SearchAttributeUpdate ...$updates): void
+    {
+        self::getCurrentContext()->upsertTypedSearchAttributes(...$updates);
     }
 
     /**

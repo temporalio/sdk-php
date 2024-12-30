@@ -113,9 +113,7 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
 
     public function upsertTypedSearchAttributes(SearchAttributeUpdate ...$updates): void
     {
-        $this->request(
-            new UpsertTypedSearchAttributes($updates),
-        );
+        $this->request(new UpsertTypedSearchAttributes($updates));
     }
 
     #[\Override]
