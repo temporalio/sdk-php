@@ -14,10 +14,10 @@ use Temporal\Common\SearchAttributes\SearchAttributeUpdate\ValueUnset;
 abstract class SearchAttributeUpdate
 {
     /**
-     * @param non-empty-string $key
+     * @param non-empty-string $name
      */
     protected function __construct(
-        public readonly string $key,
+        public readonly string $name,
         public readonly ValueType $type,
     ) {}
 

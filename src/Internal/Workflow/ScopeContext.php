@@ -13,8 +13,10 @@ namespace Temporal\Internal\Workflow;
 
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
+use Temporal\Common\SearchAttributes\SearchAttributeUpdate;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Internal\Transport\CompletableResult;
+use Temporal\Internal\Transport\Request\UpsertTypedSearchAttributes;
 use Temporal\Internal\Workflow\Process\Scope;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow\CancellationScopeInterface;
@@ -106,6 +108,13 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
     {
         $this->request(
             new UpsertSearchAttributes($searchAttributes),
+        );
+    }
+
+    public function upsertTypedSearchAttributes(SearchAttributeUpdate ...$updates): void
+    {
+        $this->request(
+            new UpsertTypedSearchAttributes($updates),
         );
     }
 
