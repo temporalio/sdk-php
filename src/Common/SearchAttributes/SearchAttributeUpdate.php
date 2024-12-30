@@ -24,7 +24,7 @@ abstract class SearchAttributeUpdate
     /**
      * @param non-empty-string $key
      */
-    public static function valueSet(string $key, ValueType $type, mixed $value): self
+    public static function valueSet(string $key, ValueType $type, mixed $value): ValueSet
     {
         return new ValueSet($key, $type, $value);
     }
@@ -32,7 +32,7 @@ abstract class SearchAttributeUpdate
     /**
      * @param non-empty-string $key
      */
-    public static function valueUnset(string $key, ValueType $type): self
+    public static function valueUnset(string $key, ValueType $type): ValueUnset
     {
         return new ValueUnset($key, $type);
     }
