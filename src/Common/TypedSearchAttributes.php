@@ -60,7 +60,7 @@ class TypedSearchAttributes implements \Countable
      */
     public function get(SearchAttributeKey $key): mixed
     {
-        $found = $this->findByName($key->getName());
+        $found = $this->getByName($key->getName());
 
         return match (true) {
             $found === null => null,
@@ -71,7 +71,7 @@ class TypedSearchAttributes implements \Countable
 
     public function hasKey(SearchAttributeKey $key): bool
     {
-        return $this->findByName($key->getName()) !== null;
+        return $this->getByName($key->getName()) !== null;
     }
 
     public function withValue(SearchAttributeKey $key, mixed $value): self {}
@@ -86,7 +86,10 @@ class TypedSearchAttributes implements \Countable
         return $count;
     }
 
-    private function findByName(string $name): ?SearchAttributeKey
+    /**
+     * @param non-empty-string $name
+     */
+    public function getByName(string $name): ?SearchAttributeKey
     {
         foreach ($this->collection ?? [] as $item) {
             if ($item->getName() === $name) {

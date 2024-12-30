@@ -889,7 +889,7 @@ final class Workflow extends Facade
      * interruption of in-progress handlers by workflow exit:
      *
      * ```php
-     * yield Workflow.await(static fn() => Workflow::allHandlersFinished());
+     *  yield Workflow.await(static fn() => Workflow::allHandlersFinished());
      * ```
      *
      * @return bool True if all handlers have finished executing.
@@ -957,8 +957,8 @@ final class Workflow extends Facade
      * Generate a UUID version 7 (Unix Epoch time).
      *
      * @param \DateTimeInterface|null $dateTime An optional date/time from which
-     *     to create the version 7 UUID. If not provided, the UUID is generated
-     *     using the current date/time.
+     *        to create the version 7 UUID. If not provided, the UUID is generated
+     *        using the current date/time.
      *
      * @return PromiseInterface<UuidInterface>
      */

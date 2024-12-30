@@ -23,7 +23,11 @@ final class TemporalStarter
             return;
         }
 
-        $this->environment->startTemporalServer();
+        $this->environment->startTemporalServer(parameters: [
+            '--search-attribute', 'foo=text',
+            '--search-attribute', 'bar=int',
+            '--search-attribute', 'testFloat=double',
+        ]);
         $this->started = true;
     }
 
