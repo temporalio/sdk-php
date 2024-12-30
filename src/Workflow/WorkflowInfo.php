@@ -129,5 +129,6 @@ final class WorkflowInfo
         $this->executionTimeout = CarbonInterval::years(10);
         $this->runTimeout = CarbonInterval::years(10);
         $this->taskTimeout = CarbonInterval::years(10);
+        $this->typedSearchAttributes = TypedSearchAttributes::empty();
     }
 }
