@@ -12,7 +12,6 @@ use Temporal\Activity\ActivityInterface;
 use Temporal\Activity\ActivityMethod;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Client\WorkflowStubInterface;
-use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\Runtime\RRStarter;
 use Temporal\Tests\Acceptance\App\TestCase;
@@ -32,7 +31,6 @@ class WorkerRestartTest extends TestCase
         ContainerInterface $c,
         RRStarter $runner,
     ): void {
-        $c->get(StorageInterface::class)->set(KV_ACTIVITY_BLOCKED, true);
         $handle = $stub->startUpdate('do_activities');
 
         # Wait for the activity to start.
@@ -95,9 +93,8 @@ class FeatureActivity
         $this->kv->set(KV_ACTIVITY_STARTED, true);
 
         do {
-            $blocked = $this->kv->get(KV_ACTIVITY_BLOCKED);
+            $blocked = $this->kv->get(KV_ACTIVITY_BLOCKED, true);
 
-            \is_bool($blocked) or throw new ApplicationFailure('KV BLOCKED key not set', 'KvNotSet', true);
             if (!$blocked) {
                 break;
             }
