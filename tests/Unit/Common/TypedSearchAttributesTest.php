@@ -1,0 +1,92 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Temporal\Tests\Unit\Common;
+
+use Temporal\Common\SearchAttributes\SearchAttributeKey;
+use Temporal\Common\TypedSearchAttributes;
+use PHPUnit\Framework\TestCase;
+
+class TypedSearchAttributesTest extends TestCase
+{
+    public function testCount(): void
+    {
+        $collection1 = TypedSearchAttributes::empty();
+        $collection2 = $collection1->withValue(SearchAttributeKey::forBool('name1'), true);
+        $collection3 = $collection2->withValue(SearchAttributeKey::forBool('name2'), false);
+
+        self::assertCount(0, $collection1);
+        self::assertCount(1, $collection2);
+        self::assertCount(2, $collection3);
+    }
+
+    public function testWithValueImmutability(): void
+    {
+        $collection1 = TypedSearchAttributes::empty();
+        $collection2 = $collection1->withValue(SearchAttributeKey::forBool('name1'), true);
+        $collection3 = $collection2->withValue(SearchAttributeKey::forBool('name2'), false);
+
+        self::assertNotSame($collection1, $collection2);
+        self::assertNotSame($collection2, $collection3);
+        self::assertNotSame($collection1, $collection3);
+
+        self::assertFalse($collection1->hasKey(SearchAttributeKey::forBool('name1')));
+        self::assertTrue($collection2->hasKey(SearchAttributeKey::forBool('name1')));
+        self::assertFalse($collection2->hasKey(SearchAttributeKey::forBool('name2')));
+        self::assertTrue($collection3->hasKey(SearchAttributeKey::forBool('name1')));
+        self::assertTrue($collection3->hasKey(SearchAttributeKey::forBool('name2')));
+    }
+
+    public function testIteratorAggregate(): void
+    {
+        $collection = TypedSearchAttributes::empty()
+            ->withValue(SearchAttributeKey::forBool('name1'), true)
+            ->withValue(SearchAttributeKey::forBool('name2'), false)
+            ->withValue(SearchAttributeKey::forInteger('name3'), 42);
+
+        foreach ($collection as $key => $value) {
+            $this->assertInstanceOf(SearchAttributeKey::class, $key);
+            $this->assertIsScalar($value);
+        }
+
+        self::assertSame([true, false, 42], \iterator_to_array($collection, false));
+    }
+
+    public function testOffsetGet(): void
+    {
+        $collection1 = TypedSearchAttributes::empty();
+        $collection2 = $collection1->withValue(SearchAttributeKey::forBool('name1'), true);
+        $collection3 = $collection2->withValue(SearchAttributeKey::forBool('name2'), false);
+
+        self::assertNull($collection1->offsetGet('name1'));
+        self::assertTrue($collection2->offsetGet('name1'));
+        self::assertNull($collection2->offsetGet('name2'));
+        self::assertTrue($collection3->offsetGet('name1'));
+        self::assertFalse($collection3->offsetGet('name2'));
+    }
+
+    public function testGet(): void
+    {
+        $collection = TypedSearchAttributes::empty()
+            ->withValue($v1 = SearchAttributeKey::forBool('name1'), true)
+            ->withValue($v2 = SearchAttributeKey::forBool('name2'), false);
+        $v3 = SearchAttributeKey::forInteger('name3');
+
+        self::assertTrue($collection->get($v1));
+        self::assertFalse($collection->get($v2));
+        self::assertNull($collection->get($v3));
+    }
+
+    public function testHasKey(): void
+    {
+        $collection = TypedSearchAttributes::empty()
+            ->withValue($v1 = SearchAttributeKey::forBool('name1'), true)
+            ->withValue($v2 = SearchAttributeKey::forBool('name2'), false);
+        $v3 = SearchAttributeKey::forInteger('name3');
+
+        self::assertTrue($collection->hasKey($v1));
+        self::assertTrue($collection->hasKey($v2));
+        self::assertFalse($collection->hasKey($v3));
+    }
+}

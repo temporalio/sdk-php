@@ -25,7 +25,7 @@ final class DatetimeValue extends SearchAttributeKey
         });
     }
 
-    protected function getType(): ValueType
+    public function getType(): ValueType
     {
         return ValueType::Datetime;
     }

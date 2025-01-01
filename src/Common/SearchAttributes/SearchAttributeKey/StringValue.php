@@ -18,7 +18,7 @@ final class StringValue extends SearchAttributeKey
         return $this->prepareValueSet((string) $value);
     }
 
-    protected function getType(): ValueType
+    public function getType(): ValueType
     {
         return ValueType::String;
     }

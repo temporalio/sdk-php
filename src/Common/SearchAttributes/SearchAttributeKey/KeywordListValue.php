@@ -26,7 +26,7 @@ final class KeywordListValue extends SearchAttributeKey
         return $this->prepareValueSet($values);
     }
 
-    protected function getType(): ValueType
+    public function getType(): ValueType
     {
         return ValueType::KeywordList;
     }

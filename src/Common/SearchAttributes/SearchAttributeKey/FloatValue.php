@@ -18,7 +18,7 @@ final class FloatValue extends SearchAttributeKey
         return $this->prepareValueSet($value);
     }
 
-    protected function getType(): ValueType
+    public function getType(): ValueType
     {
         return ValueType::Float;
     }

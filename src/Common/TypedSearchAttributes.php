@@ -7,7 +7,10 @@ namespace Temporal\Common;
 use Temporal\Common\SearchAttributes\SearchAttributeKey;
 use Temporal\Common\SearchAttributes\ValueType;
 
-class TypedSearchAttributes implements \Countable
+/**
+ * @implements \IteratorAggregate<SearchAttributeKey, mixed>
+ */
+class TypedSearchAttributes implements \IteratorAggregate, \Countable
 {
     /**
      * @param null|\SplObjectStorage<SearchAttributeKey, mixed> $collection
@@ -60,7 +63,7 @@ class TypedSearchAttributes implements \Countable
      */
     public function get(SearchAttributeKey $key): mixed
     {
-        $found = $this->getByName($key->getName());
+        $found = $this->getKeyByName($key->getName());
 
         return match (true) {
             $found === null => null,
@@ -71,10 +74,18 @@ class TypedSearchAttributes implements \Countable
 
     public function hasKey(SearchAttributeKey $key): bool
     {
-        return $this->getByName($key->getName()) !== null;
+        return $this->getKeyByName($key->getName()) !== null;
     }
 
-    public function withValue(SearchAttributeKey $key, mixed $value): self {}
+    public function withValue(SearchAttributeKey $key, mixed $value): self
+    {
+        $collection = $this->collection === null
+            ? new \SplObjectStorage()
+            : clone $this->collection;
+        $collection->offsetSet($key, $value);
+
+        return new self($collection);
+    }
 
     /**
      * @return int<0, max>
@@ -87,9 +98,35 @@ class TypedSearchAttributes implements \Countable
     }
 
     /**
+     * @return \Traversable<SearchAttributeKey, mixed>
+     */
+    public function getIterator(): \Traversable
+    {
+        if ($this->collection === null) {
+            return;
+        }
+
+        foreach ($this->collection as $key) {
+            yield $key => $this->collection[$key];
+        }
+    }
+
+    /**
+     * Get the value associated with the Search Attribute name.
+     *
      * @param non-empty-string $name
      */
-    public function getByName(string $name): ?SearchAttributeKey
+    public function offsetGet(string $name): mixed
+    {
+        $key = $this->getKeyByName($name);
+
+        return $key === null ? null : $this->collection[$key];
+    }
+
+    /**
+     * @param non-empty-string $name
+     */
+    private function getKeyByName(string $name): ?SearchAttributeKey
     {
         foreach ($this->collection ?? [] as $item) {
             if ($item->getName() === $name) {
