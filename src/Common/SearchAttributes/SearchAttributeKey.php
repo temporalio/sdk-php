@@ -82,7 +82,10 @@ abstract class SearchAttributeKey
         return new KeywordListValue($name);
     }
 
-    public static function for(ValueType $tryFrom, mixed $name): self
+    /**
+     * @param non-empty-string $name
+     */
+    public static function for(ValueType $tryFrom, string $name): self
     {
         return match ($tryFrom) {
             ValueType::Bool => self::forBool($name),
@@ -102,13 +105,13 @@ abstract class SearchAttributeKey
 
     public function valueUnset(): SearchAttributeUpdate
     {
-        return SearchAttributeUpdate::valueUnset($this->key, $this->getType());
+        return SearchAttributeUpdate::valueUnset($this->name, $this->getType());
     }
 
     abstract public function getType(): ValueType;
 
     protected function prepareValueSet(mixed $value): SearchAttributeUpdate
     {
-        return SearchAttributeUpdate::valueSet($this->key, $this->getType(), $value);
+        return SearchAttributeUpdate::valueSet($this->name, $this->getType(), $value);
     }
 }

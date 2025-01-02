@@ -89,4 +89,62 @@ class TypedSearchAttributesTest extends TestCase
         self::assertTrue($collection->hasKey($v2));
         self::assertFalse($collection->hasKey($v3));
     }
+
+    public function testEmpty(): void
+    {
+        $collection = TypedSearchAttributes::empty();
+
+        self::assertCount(0, $collection);
+        self::assertNull($collection->offsetGet('name'));
+        self::assertSame([], \iterator_to_array($collection, false));
+    }
+
+    public function testFromJsonArray(): void
+    {
+        $collection = TypedSearchAttributes::fromJsonArray([
+            'name1' => [
+                'type' => 'bool',
+                'value' => true,
+            ],
+            'name2' => [
+                'type' => 'bool',
+                'value' => false,
+            ],
+            'name3' => [
+                'type' => 'int',
+                'value' => 42,
+            ],
+            'name4' => [
+                'type' => 'keyword',
+                'value' => 'bar',
+            ],
+            'name5' => [
+                'type' => 'float64',
+                'value' => 3.14,
+            ],
+            'name6' => [
+                'type' => 'string',
+                'value' => 'foo',
+            ],
+            'name7' => [
+                'type' => 'datetime',
+                'value' => '2021-01-01T00:00:00+00:00',
+            ],
+            'name8' => [
+                'type' => 'keyword_list',
+                'value' => ['foo', 'bar'],
+            ],
+        ]);
+
+        self::assertCount(8, $collection);
+        self::assertTrue($collection->get(SearchAttributeKey::forBool('name1')));
+        self::assertFalse($collection->get(SearchAttributeKey::forBool('name2')));
+        self::assertSame(42, $collection->get(SearchAttributeKey::forInteger('name3')));
+        self::assertSame('bar', $collection->get(SearchAttributeKey::forKeyword('name4')));
+        self::assertSame(3.14, $collection->get(SearchAttributeKey::forFloat('name5')));
+        self::assertSame('foo', $collection->get(SearchAttributeKey::forString('name6')));
+        self::assertInstanceOf(\DateTimeImmutable::class, $collection->get(SearchAttributeKey::forDatetime('name7')));
+        self::assertSame('2021-01-01T00:00:00+00:00', $collection->get(SearchAttributeKey::forDatetime('name7'))->format(DATE_RFC3339));
+        self::assertSame(['foo', 'bar'], $collection->get(SearchAttributeKey::forKeywordList('name8')));
+    }
 }
