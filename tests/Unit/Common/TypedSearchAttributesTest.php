@@ -38,6 +38,23 @@ class TypedSearchAttributesTest extends TestCase
         self::assertTrue($collection3->hasKey(SearchAttributeKey::forBool('name2')));
     }
 
+    public function testWithUntypedValueImmutability(): void
+    {
+        $collection1 = TypedSearchAttributes::empty();
+        $collection2 = $collection1->withUntypedValue('name1', true);
+        $collection3 = $collection2->withUntypedValue('name2', false);
+
+        self::assertNotSame($collection1, $collection2);
+        self::assertNotSame($collection2, $collection3);
+        self::assertNotSame($collection1, $collection3);
+
+        self::assertFalse($collection1->hasKey(SearchAttributeKey::forBool('name1')));
+        self::assertTrue($collection2->hasKey(SearchAttributeKey::forBool('name1')));
+        self::assertFalse($collection2->hasKey(SearchAttributeKey::forBool('name2')));
+        self::assertTrue($collection3->hasKey(SearchAttributeKey::forBool('name1')));
+        self::assertTrue($collection3->hasKey(SearchAttributeKey::forBool('name2')));
+    }
+
     public function testIteratorAggregate(): void
     {
         $collection = TypedSearchAttributes::empty()
@@ -143,6 +160,32 @@ class TypedSearchAttributesTest extends TestCase
         self::assertSame('bar', $collection->get(SearchAttributeKey::forKeyword('name4')));
         self::assertSame(3.14, $collection->get(SearchAttributeKey::forFloat('name5')));
         self::assertSame('foo', $collection->get(SearchAttributeKey::forString('name6')));
+        self::assertInstanceOf(\DateTimeImmutable::class, $collection->get(SearchAttributeKey::forDatetime('name7')));
+        self::assertSame(
+            '2021-01-01T00:00:00+00:00',
+            $collection->get(SearchAttributeKey::forDatetime('name7'))->format(DATE_RFC3339),
+        );
+        self::assertSame(['foo', 'bar'], $collection->get(SearchAttributeKey::forKeywordList('name8')));
+    }
+
+    public function testFromUntypedCollection(): void
+    {
+        $collection = TypedSearchAttributes::fromCollection([
+            'name1' => true,
+            'name2' => false,
+            'name3' => 42,
+            'name4' => 'bar',
+            'name5' => 3.14,
+            'name7' => new \DateTimeImmutable('2021-01-01T00:00:00+00:00'),
+            'name8' => ['foo', 'bar'],
+        ]);
+
+        self::assertCount(7, $collection);
+        self::assertTrue($collection->get(SearchAttributeKey::forBool('name1')));
+        self::assertFalse($collection->get(SearchAttributeKey::forBool('name2')));
+        self::assertSame(42, $collection->get(SearchAttributeKey::forInteger('name3')));
+        self::assertSame('bar', $collection->get(SearchAttributeKey::forString('name4')));
+        self::assertSame(3.14, $collection->get(SearchAttributeKey::forFloat('name5')));
         self::assertInstanceOf(\DateTimeImmutable::class, $collection->get(SearchAttributeKey::forDatetime('name7')));
         self::assertSame('2021-01-01T00:00:00+00:00', $collection->get(SearchAttributeKey::forDatetime('name7'))->format(DATE_RFC3339));
         self::assertSame(['foo', 'bar'], $collection->get(SearchAttributeKey::forKeywordList('name8')));

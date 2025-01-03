@@ -25,6 +25,21 @@ class TypedSearchAttributes implements \IteratorAggregate, \Countable
     }
 
     /**
+     * Create a new instance from the provided collection of untyped Search Attributes.
+     *
+     * @param array<non-empty-string, mixed> $array
+     */
+    public static function fromCollection(array $array): self
+    {
+        $result = self::empty();
+        foreach ($array as $name => $value) {
+            $result = $result->withUntypedValue($name, $value);
+        }
+
+        return $result;
+    }
+
+    /**
      * @param array<non-empty-string, array{value: string, type: non-empty-string}> $array
      *
      * ```php
@@ -85,6 +100,25 @@ class TypedSearchAttributes implements \IteratorAggregate, \Countable
         $collection->offsetSet($key, $value);
 
         return new self($collection);
+    }
+
+    /**
+     * @param non-empty-string $name
+     *
+     * @throws \InvalidArgumentException If the value type is not supported.
+     */
+    public function withUntypedValue(string $name, mixed $value): self
+    {
+        return match (true) {
+            \is_bool($value) => $this->withValue(SearchAttributeKey::forBool($name), $value),
+            \is_int($value) => $this->withValue(SearchAttributeKey::forInteger($name), $value),
+            \is_float($value) => $this->withValue(SearchAttributeKey::forFloat($name), $value),
+            \is_array($value) => $this->withValue(SearchAttributeKey::forKeywordList($name), $value),
+            $value instanceof \Stringable,
+            \is_string($value) => $this->withValue(SearchAttributeKey::forString($name), $value),
+            $value instanceof \DateTimeInterface => $this->withValue(SearchAttributeKey::forDatetime($name), $value),
+            default => throw new \InvalidArgumentException('Unsupported value type.'),
+        };
     }
 
     /**
