@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<meta-storm xmlns="meta-storm">
+    <definitions>
+        <classMethod
+            class="\Temporal\Client\WorkflowClientInterface"
+            method="newUntypedWorkflowStub"
+            argument="0"
+        >
+            <collection name="workflow-type" argument="0" />
+        </classMethod>
+        <classMethod
+            class="\Temporal\Client\WorkflowClientInterface"
+            method="newUntypedRunningWorkflowStub"
+            argument="2"
+        >
+            <collection name="workflow-type" argument="0" />
+        </classMethod>
+        <classMethod
+            class="\Temporal\Client\WorkflowClientInterface"
+            method="newWorkflowStub"
+            argument="0"
+        >
+            <collection name="workflow-class" argument="0" />
+        </classMethod>
+    </definitions>
+    <collections>
+        <attributeArgument
+            name="workflow-type"
+            class="\Temporal\Workflow\WorkflowMethod"
+            argument="0"
+        />
+        <attributeClass
+            name="workflow-class"
+            class="\Temporal\Workflow\WorkflowInterface"
+        />
+    </collections>
+</meta-storm>
