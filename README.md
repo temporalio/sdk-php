@@ -135,6 +135,11 @@ If you are not using Docker or running PHP code outside a container, you can use
 Now use the `trap()`, `tr()`, or `dump()` functions to output data to Buggregator.
 Web UI will be available at `http://localhost:8000`.
 
+### IDE Plugin
+
+For advanced autocomplete while coding in IntelliJ IDEA, use the [MetaStorm plugin](https://github.com/xepozz/meta-storm-idea-plugin).
+The plugin will suggest classes and Workflow names in the client methods.
+
 ## Resources
 
 Read the docs  
