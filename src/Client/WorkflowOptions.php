@@ -426,8 +426,6 @@ final class WorkflowOptions extends Options
      * The key and its value type must be registered on Temporal server side.
      *
      * @return $this
-     *
-     * @deprecated Use {@see withTypedSearchAttributes()} instead.
      */
     #[Pure]
     public function withSearchAttributes(?array $searchAttributes): self
