@@ -428,7 +428,6 @@
       <code><![CDATA[$attr->getFailure()]]></code>
       <code><![CDATA[$attr->getResult()]]></code>
       <code><![CDATA[$input->workflowType]]></code>
-      <code><![CDATA[$input->workflowType]]></code>
       <code><![CDATA[$result->getQueryResult()]]></code>
       <code><![CDATA[$this->execution]]></code>
       <code><![CDATA[$this->execution]]></code>
