@@ -137,7 +137,7 @@ Web UI will be available at `http://localhost:8000`.
 
 ### IDE Plugin
 
-For advanced autocomplete while coding in IntelliJ IDEA, use the [MetaStorm plugin](https://github.com/xepozz/meta-storm-idea-plugin).
+For advanced autocomplete while coding in IntelliJ IDEA, use the [Meta Storm plugin](https://github.com/xepozz/meta-storm-idea-plugin).
 The plugin will suggest classes and Workflow names in the client methods.
 
 ## Resources

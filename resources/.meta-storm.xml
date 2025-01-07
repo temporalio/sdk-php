@@ -6,31 +6,31 @@
             method="newUntypedWorkflowStub"
             argument="0"
         >
-            <collection name="workflow-type" argument="0" />
+            <collection name="temporal/sdk:workflow-type" argument="0" />
         </classMethod>
         <classMethod
             class="\Temporal\Client\WorkflowClientInterface"
             method="newUntypedRunningWorkflowStub"
             argument="2"
         >
-            <collection name="workflow-type" argument="0" />
+            <collection name="temporal/sdk:workflow-type" argument="0" />
         </classMethod>
         <classMethod
             class="\Temporal\Client\WorkflowClientInterface"
             method="newWorkflowStub"
             argument="0"
         >
-            <collection name="workflow-class" argument="0" />
+            <collection name="temporal/sdk:workflow-class" argument="0" />
         </classMethod>
     </definitions>
     <collections>
         <attributeArgument
-            name="workflow-type"
+            name="temporal/sdk:workflow-type"
             class="\Temporal\Workflow\WorkflowMethod"
             argument="0"
         />
         <attributeClass
-            name="workflow-class"
+            name="temporal/sdk:workflow-class"
             class="\Temporal\Workflow\WorkflowInterface"
         />
     </collections>
