@@ -69,6 +69,19 @@ class UntypedStubTest extends TestCase
     }
 
     #[Test]
+    public function useClientRunningWorkflowStub(
+        #[Stub('Extra_Update_UntypedStub')] WorkflowStubInterface $stub,
+        WorkflowClientInterface $client,
+    ): void {
+        $untyped = $client->newUntypedRunningWorkflowStub(
+            $stub->getExecution()->getID(),
+            $stub->getExecution()->getRunID(),
+        );
+
+        $this->fetchResolvedResultAfterWorkflowCompleted($untyped);
+    }
+
+    #[Test]
     public function handleUnknownUpdate(
         #[Stub('Extra_Update_UntypedStub')] WorkflowStubInterface $stub,
     ): void {
