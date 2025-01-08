@@ -17,6 +17,7 @@ use Temporal\Client\Schedule\Action\StartWorkflowAction;
 use Temporal\Client\Schedule\Policy\ScheduleOverlapPolicy;
 use Temporal\Client\Schedule\Policy\SchedulePolicies;
 use Temporal\Client\Schedule\Schedule;
+use Temporal\Client\Schedule\ScheduleOptions;
 use Temporal\Client\Schedule\Spec\CalendarSpec;
 use Temporal\Client\Schedule\Spec\Range;
 use Temporal\Client\Schedule\Spec\ScheduleSpec;
@@ -61,6 +62,59 @@ class ScheduleClientTestCase extends TestCase
             'workflow-id',
             $testContext->request->getSchedule()->getAction()->getStartWorkflow()->getWorkflowId(),
         );
+    }
+
+    public function testCreateScheduleNamespaceFromOptions(): void
+    {
+        $testContext = new class {
+            public CreateScheduleRequest $request;
+        };
+        // Prepare mocks
+        $clientMock = $this->createMock(ServiceClientInterface::class);
+        $clientMock->expects($this->once())
+            ->method('CreateSchedule')
+            ->with($this->callback(fn(CreateScheduleRequest $request) => $testContext->request = $request or true))
+            ->willReturn((new CreateScheduleResponse())->setConflictToken('test-conflict-token'));
+        $scheduleClient = $this->createScheduleClient(
+            client: $clientMock,
+        );
+        $scheduleDto = $this->getScheduleDto();
+
+        $scheduleClient->createSchedule(
+            $scheduleDto,
+            options: ScheduleOptions::new()->withNamespace('test-namespace'),
+            scheduleId: 'test-id',
+        );
+
+        $this->assertTrue(isset($testContext->request));
+        $this->assertSame('test-namespace', $testContext->request->getNamespace());
+    }
+
+    public function testCreateScheduleNamespaceFromServiceClient(): void
+    {
+        $testContext = new class {
+            public CreateScheduleRequest $request;
+        };
+        // Prepare mocks
+        $clientMock = $this->createMock(ServiceClientInterface::class);
+        $clientMock->expects($this->once())
+            ->method('CreateSchedule')
+            ->with($this->callback(fn(CreateScheduleRequest $request) => $testContext->request = $request or true))
+            ->willReturn((new CreateScheduleResponse())->setConflictToken('test-conflict-token'));
+        $scheduleClient = $this->createScheduleClient(
+            client: $clientMock,
+            clientOptions: (new ClientOptions())->withNamespace('test-namespace'),
+        );
+        $scheduleDto = $this->getScheduleDto();
+
+        $scheduleClient->createSchedule(
+            $scheduleDto,
+            options: ScheduleOptions::new(),
+            scheduleId: 'test-id',
+        );
+
+        $this->assertTrue(isset($testContext->request));
+        $this->assertSame('test-namespace', $testContext->request->getNamespace());
     }
 
     public function testCreateScheduleWithoutWorkflowId(): void

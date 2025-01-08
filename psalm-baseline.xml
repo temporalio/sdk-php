@@ -109,10 +109,21 @@
       <code><![CDATA[$workflowType]]></code>
     </PropertyNotSetInConstructor>
   </file>
+  <file src="src/Client/Schedule/ScheduleOptions.php">
+    <DeprecatedProperty>
+      <code><![CDATA[$this->namespace]]></code>
+    </DeprecatedProperty>
+  </file>
   <file src="src/Client/Schedule/Spec/ScheduleSpec.php">
     <DeprecatedProperty>
       <code><![CDATA[$this->excludeCalendarList]]></code>
       <code><![CDATA[$this->excludeCalendarList]]></code>
+    </DeprecatedProperty>
+  </file>
+  <file src="src/Client/ScheduleClient.php">
+    <DeprecatedProperty>
+      <code><![CDATA[$options->namespace]]></code>
+      <code><![CDATA[$options->namespace]]></code>
     </DeprecatedProperty>
   </file>
   <file src="src/Client/Update/UpdateHandle.php">
