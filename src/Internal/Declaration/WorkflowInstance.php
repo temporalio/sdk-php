@@ -22,7 +22,6 @@ use Temporal\Internal\Declaration\WorkflowInstance\SignalQueue;
 use Temporal\Internal\Interceptor;
 
 /**
- * @psalm-import-type DispatchableHandler from InstanceInterface
  * @psalm-type QueryHandler = \Closure(QueryInput): mixed
  * @psalm-type UpdateHandler = \Closure(UpdateInput, Deferred): PromiseInterface
  * @psalm-type ValidateUpdateHandler = \Closure(UpdateInput): void
@@ -39,7 +38,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     private array $queryHandlers = [];
 
     /**
-     * @var array<non-empty-string, DispatchableHandler>
+     * @var array<non-empty-string, MethodHandler>
      */
     private array $signalHandlers = [];
 
@@ -288,12 +287,9 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     /**
      * Make a Closure from a callable.
      *
-     * @return \Closure(ValuesInterface): mixed
      * @throws \ReflectionException
-     *
-     * @psalm-return DispatchableHandler
      */
-    protected function createCallableHandler(callable $handler): \Closure
+    protected function createCallableHandler(callable $handler): MethodHandler
     {
         return $this->createHandler(
             new \ReflectionFunction($handler instanceof \Closure ? $handler : \Closure::fromCallable($handler)),

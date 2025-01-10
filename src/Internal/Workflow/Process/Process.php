@@ -21,6 +21,7 @@ use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
+use Temporal\Internal\Declaration\MethodHandler;
 use Temporal\Internal\Declaration\WorkflowInstance;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\ServiceContainer;
@@ -173,9 +174,9 @@ class Process extends Scope implements ProcessInterface
     }
 
     /**
-     * @param \Closure(ValuesInterface): mixed $handler
+     * @param MethodHandler|\Closure(ValuesInterface): mixed $handler
      */
-    public function start(\Closure $handler, ?ValuesInterface $values, bool $deferred): void
+    public function start(MethodHandler|\Closure $handler, ?ValuesInterface $values, bool $deferred): void
     {
         try {
             $this->makeCurrent();
