@@ -130,6 +130,7 @@ class Scope implements CancellationScopeInterface, Destroyable
     {
         // Create a coroutine generator
         $this->coroutine = DeferredGenerator::fromHandler($handler, $values ?? EncodedValues::empty())
+            // ->catch(tr(...));
             ->catch($this->onException(...));
 
         $deferred
@@ -186,7 +187,8 @@ class Scope implements CancellationScopeInterface, Destroyable
      */
     public function attach(\Generator $generator): self
     {
-        $this->coroutine = DeferredGenerator::fromGenerator($generator);
+        $this->coroutine = DeferredGenerator::fromGenerator($generator)
+            ->catch($this->onException(...));
 
         $this->next();
         return $this;
@@ -418,11 +420,7 @@ class Scope implements CancellationScopeInterface, Destroyable
                 break;
 
             case $current instanceof \Generator:
-                try {
-                    $this->nextPromise($this->createScope(false)->attach($current));
-                } catch (\Throwable $e) {
-                    $this->coroutine->throw($e);
-                }
+                $this->nextPromise($this->createScope(false)->attach($current));
                 break;
 
             default:

@@ -81,7 +81,6 @@ final class DeferredGeneratorTestCase extends TestCase
             [
                 'current', 'key', 'current', 'key', 'valid',
                 'next',
-                'getReturn',
             ],
         );
     }
@@ -134,17 +133,6 @@ final class DeferredGeneratorTestCase extends TestCase
                 yield;
             })(),
             ['valid', 'valid'],
-        );
-    }
-
-    public function testCompareEmptyThrowGetReturn(): void
-    {
-        $this->compare(
-            fn() => (function () {
-                throw new \Exception('foo');
-                yield;
-            })(),
-            ['getReturn', 'getReturn'],
         );
     }
 
@@ -212,6 +200,18 @@ final class DeferredGeneratorTestCase extends TestCase
         }
 
         $this->assertNull($lazy->current());
+    }
+
+    public function testGetResultFromNotStartedGenerator(): void
+    {
+        $closure = fn() => (function () {
+            yield 1;
+        });
+
+        $handler = DeferredGenerator::fromHandler($closure, EncodedValues::empty());
+
+        $this->expectException(\LogicException::class);
+        $handler->getReturn();
     }
 
     /**
