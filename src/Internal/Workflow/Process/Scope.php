@@ -386,13 +386,13 @@ class Scope implements CancellationScopeInterface, Destroyable
         begin:
         $this->context->resolveConditions();
 
-        if (!$this->coroutine->valid()) {
-            try {
+        try {
+            if (!$this->coroutine->valid()) {
                 $this->onResult($this->coroutine->getReturn());
-            } catch (\Throwable) {
-                $this->onResult(null);
+                return;
             }
-
+        } catch (\Throwable) {
+            $this->onResult(null);
             return;
         }
 

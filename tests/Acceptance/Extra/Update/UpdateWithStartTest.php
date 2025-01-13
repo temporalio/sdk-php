@@ -60,7 +60,7 @@ class UpdateWithStartTest extends TestCase
             try {
                 $stub->getResult(timeout: 1);
                 $this->fail('Workflow must fail');
-            } catch (WorkflowFailedException $e) {
+            } catch (WorkflowFailedException) {
                 $this->assertTrue(true);
             }
         }

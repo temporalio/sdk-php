@@ -22,7 +22,7 @@ class ThrowOnExecuteTest extends TestCase
     public static function throwExceptionOnInit(#[Stub('Harness_ChildWorkflow_ThrowsOnExecute')]WorkflowStubInterface $stub): void
     {
         try {
-            $stub->getResult(timeout: 10);
+            $stub->getResult();
             throw new \Exception('Expected exception');
         } catch (WorkflowFailedException $e) {
             self::assertSame('Harness_ChildWorkflow_ThrowsOnExecute', $e->getWorkflowType());
@@ -48,7 +48,7 @@ class ThrowOnExecuteTest extends TestCase
         WorkflowStubInterface $stub,
     ): void {
         try {
-            $stub->getResult(timeout: 10);
+            $stub->getResult();
             throw new \Exception('Expected exception');
         } catch (WorkflowFailedException $e) {
             self::assertSame('Harness_ChildWorkflow_ThrowsOnExecute', $e->getWorkflowType());
