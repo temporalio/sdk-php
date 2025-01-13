@@ -37,7 +37,11 @@ class UntypedStubTest extends TestCase
 
         $this->assertSame(['key' => 'resolved'], (array)$result, 'Workflow result contains resolved value');
         $this->assertFalse($handle->hasResult());
-        $this->assertFalse($resolver->hasResult(), 'Resolver should not have result because of wait policy');
+
+        // Since Temporal CLI 1.2.0, the result is available immediately after the operation
+        $this->assertTrue($resolver->hasResult());
+        $this->assertSame('resolved', $resolver->getResult());
+
         // Fetch result
         $this->assertSame('resolved', $handle->getResult());
         $this->assertTrue($handle->hasResult());
