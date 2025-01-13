@@ -81,7 +81,6 @@ final class DeferredGeneratorTestCase extends TestCase
             [
                 'current', 'key', 'current', 'key', 'valid',
                 'next',
-                'getReturn',
             ],
         );
     }
@@ -137,17 +136,6 @@ final class DeferredGeneratorTestCase extends TestCase
         );
     }
 
-    public function testCompareEmptyThrowGetReturn(): void
-    {
-        $this->compare(
-            fn() => (function () {
-                throw new \Exception('foo');
-                yield;
-            })(),
-            ['getReturn', 'getReturn'],
-        );
-    }
-
     public function testCompareEmptyThrowGetKey(): void
     {
         $this->compare(
@@ -184,7 +172,6 @@ final class DeferredGeneratorTestCase extends TestCase
         $lazy->current();
     }
 
-
     public function testLazyNotGeneratorWithException2(): void
     {
         $lazy = DeferredGenerator::fromHandler(fn() => throw new \Exception('foo'), EncodedValues::empty());
@@ -196,6 +183,35 @@ final class DeferredGeneratorTestCase extends TestCase
         }
 
         $this->assertNull($lazy->current());
+    }
+
+    public function testLazyOnGeneratorHandler(): void
+    {
+        $lazy = DeferredGenerator::fromHandler(static function () {
+            throw new \LogicException('foo');
+            yield;
+        }, EncodedValues::empty());
+
+        try {
+            $lazy->current();
+            $this->fail('Exception was not thrown');
+        } catch (\LogicException) {
+            // ignore
+        }
+
+        $this->assertNull($lazy->current());
+    }
+
+    public function testGetResultFromNotStartedGenerator(): void
+    {
+        $closure = fn() => (function () {
+            yield 1;
+        });
+
+        $handler = DeferredGenerator::fromHandler($closure, EncodedValues::empty());
+
+        $this->expectException(\LogicException::class);
+        $handler->getReturn();
     }
 
     /**

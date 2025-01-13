@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\Test;
 use React\Promise\PromiseInterface;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\DataConverter\Type;
+use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
@@ -28,6 +29,7 @@ class MutexRunLockedTest extends TestCase
         $this->assertTrue($result[0], 'Mutex must be unlocked after runLocked is finished');
         $this->assertTrue($result[1], 'The function inside runLocked mist wait for signal');
         $this->assertTrue($result[2], 'Mutex must be locked during runLocked');
+        $this->assertNull($result[3], 'No exception must be thrown');
     }
 
     #[Test]
@@ -41,6 +43,7 @@ class MutexRunLockedTest extends TestCase
 
         $this->assertTrue($result[0], 'Mutex must be unlocked after runLocked is cancelled');
         $this->assertNull($result[2], 'Mutex must be locked during runLocked');
+        $this->assertSame(CanceledFailure::class, $result[3], 'CanceledFailure must be thrown');
     }
 }
 
@@ -64,7 +67,12 @@ class TestWorkflow
     #[Workflow\ReturnType(Type::TYPE_ARRAY)]
     public function handle(): \Generator
     {
-        $result = yield $this->promise = Workflow::runLocked($this->mutex, $this->runLocked(...));
+        $exception = null;
+        try {
+            $result = yield $this->promise = Workflow::runLocked($this->mutex, $this->runLocked(...));
+        } catch (\Throwable $e) {
+            $exception = $e::class;
+        }
 
         $trailed = false;
         yield Workflow::await(
@@ -78,7 +86,7 @@ class TestWorkflow
         // that was created inside the first runLocked
         $trailed and throw new \Exception('The trailed runLocked must not be executed.');
 
-        return [$this->unlocked, $this->unblock, $result];
+        return [$this->unlocked, $this->unblock, $result, $exception];
     }
 
     #[Workflow\SignalMethod]

@@ -120,7 +120,10 @@ class Dispatcher implements DispatcherInterface
                     throw new \BadMethodCallException($message, $type, $error);
                 });
 
-                return $closure->call($ctx, ...$arguments);
+
+                return $fun->isStatic()
+                    ? $closure->bindTo(null, $ctx::class)?->__invoke(...$arguments) ?? $closure(...$arguments)
+                    : $closure->call($ctx, ...$arguments);
             } finally {
                 \restore_error_handler();
             }

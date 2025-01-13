@@ -40,6 +40,17 @@ class ScheduleClientTest extends TestCase
             );
         }
 
+        // Wait for schedules to be created
+        $deadline = \microtime(true) + 5;
+        check:
+        $paginator = $client->listSchedules(
+            pageSize: 10,
+            query: 'bar = 4242'
+        );
+        if (\count($paginator->getPageItems()) < 6 && \microtime(true) < $deadline) {
+            goto check;
+        }
+
         try {
             $paginator = $client->listSchedules(
                 pageSize: 5,
