@@ -184,7 +184,6 @@ final class DeferredGeneratorTestCase extends TestCase
         $lazy->current();
     }
 
-
     public function testLazyNotGeneratorWithException2(): void
     {
         $lazy = DeferredGenerator::fromHandler(fn() => throw new \Exception('foo'), EncodedValues::empty());
@@ -192,6 +191,23 @@ final class DeferredGeneratorTestCase extends TestCase
         try {
             $lazy->current();
         } catch (\Exception) {
+            // ignore
+        }
+
+        $this->assertNull($lazy->current());
+    }
+
+    public function testLazyOnGeneratorHandler(): void
+    {
+        $lazy = DeferredGenerator::fromHandler(static function () {
+            throw new \LogicException('foo');
+            yield;
+        }, EncodedValues::empty());
+
+        try {
+            $lazy->current();
+            $this->fail('Exception was not thrown');
+        } catch (\LogicException) {
             // ignore
         }
 
