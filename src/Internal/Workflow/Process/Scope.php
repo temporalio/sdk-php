@@ -130,7 +130,6 @@ class Scope implements CancellationScopeInterface, Destroyable
     {
         // Create a coroutine generator
         $this->coroutine = DeferredGenerator::fromHandler($handler, $values ?? EncodedValues::empty())
-            // ->catch(tr(...));
             ->catch($this->onException(...));
 
         $deferred
