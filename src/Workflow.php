@@ -390,7 +390,7 @@ final class Workflow extends Facade
      *        if the input is invalid.
      *        Note that the validator must have the same parameters as the handler.
      * @throws OutOfContextException in the absence of the workflow execution context.
-     * @since 2.11.0
+     * @since SDK 2.11.0
      */
     public static function registerUpdate(
         string $name,

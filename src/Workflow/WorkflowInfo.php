@@ -65,7 +65,7 @@ final class WorkflowInfo
      * This value changes during the lifetime of a Workflow Execution.
      *
      * @var int<0, max>
-     * @since 2.6.0
+     * @since SDK 2.6.0
      * @since RoadRunner 2023.2. With lower versions, this field is always 0.
      */
     #[Marshal(name: 'HistoryLength')]
@@ -76,7 +76,7 @@ final class WorkflowInfo
      * This value changes during the lifetime of a Workflow Execution.
      *
      * @var int<0, max>
-     * @since 2.11.0
+     * @since SDK 2.11.0
      * @since RoadRunner 2024.2. With lower versions, this field is always 0.
      */
     #[Marshal(name: 'HistorySize')]
@@ -86,7 +86,7 @@ final class WorkflowInfo
      * Contains true if the server is configured to suggest continue as new and it is suggested.
      * This value changes during the lifetime of a Workflow Execution.
      *
-     * @since 2.11.0
+     * @since SDK 2.11.0
      * @since RoadRunner 2024.2. With lower versions, this field is always false.
      */
     #[Marshal(name: 'ShouldContinueAsNew')]
@@ -110,6 +110,11 @@ final class WorkflowInfo
     #[Marshal(name: 'SearchAttributes', type: NullableType::class, of: ArrayType::class)]
     public ?array $searchAttributes = null;
 
+    /**
+     * @since SDK 2.13.0
+     * @since RoadRunner 2024.3.2
+     */
+    #[Marshal(name: 'TypedSearchAttributes')]
     public TypedSearchAttributes $typedSearchAttributes;
 
     #[Marshal(name: 'Memo', type: NullableType::class, of: ArrayType::class)]
