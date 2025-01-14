@@ -109,10 +109,21 @@
       <code><![CDATA[$workflowType]]></code>
     </PropertyNotSetInConstructor>
   </file>
+  <file src="src/Client/Schedule/ScheduleOptions.php">
+    <DeprecatedProperty>
+      <code><![CDATA[$this->namespace]]></code>
+    </DeprecatedProperty>
+  </file>
   <file src="src/Client/Schedule/Spec/ScheduleSpec.php">
     <DeprecatedProperty>
       <code><![CDATA[$this->excludeCalendarList]]></code>
       <code><![CDATA[$this->excludeCalendarList]]></code>
+    </DeprecatedProperty>
+  </file>
+  <file src="src/Client/ScheduleClient.php">
+    <DeprecatedProperty>
+      <code><![CDATA[$options->namespace]]></code>
+      <code><![CDATA[$options->namespace]]></code>
     </DeprecatedProperty>
   </file>
   <file src="src/Client/Update/UpdateHandle.php">
@@ -427,7 +438,6 @@
       <code><![CDATA[$attr->getDetails()]]></code>
       <code><![CDATA[$attr->getFailure()]]></code>
       <code><![CDATA[$attr->getResult()]]></code>
-      <code><![CDATA[$input->workflowType]]></code>
       <code><![CDATA[$input->workflowType]]></code>
       <code><![CDATA[$result->getQueryResult()]]></code>
       <code><![CDATA[$this->execution]]></code>
@@ -1443,6 +1453,9 @@
     <DeprecatedClass>
       <code><![CDATA[new AnnotationReader()]]></code>
     </DeprecatedClass>
+    <ImpureMethodCall>
+      <code><![CDATA[create]]></code>
+    </ImpureMethodCall>
     <InternalClass>
       <code><![CDATA[new Client($this->responses)]]></code>
     </InternalClass>
@@ -1477,7 +1490,7 @@
       <code><![CDATA[new static(
             $converter ?? DataConverter::createDefault(),
             $rpc ?? Goridge::create(),
-            $credentials ?? ServiceCredentials::create(),
+            $credentials,
         )]]></code>
     </UnsafeInstantiation>
   </file>
