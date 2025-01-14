@@ -8,7 +8,7 @@ use Temporal\Common\SearchAttributes\SearchAttributeUpdate;
 use Temporal\Common\SearchAttributes\SearchAttributeUpdate\ValueSet;
 use Temporal\Worker\Transport\Command\Client\Request;
 
-class UpsertTypedSearchAttributes extends Request
+final class UpsertTypedSearchAttributes extends Request
 {
     public const NAME = 'UpsertWorkflowTypedSearchAttributes';
 
