@@ -26,10 +26,13 @@ final class TemporalStarter
         $this->environment->startTemporalServer(parameters: [
             '--search-attribute', 'foo=text',
             '--search-attribute', 'bar=int',
+            '--search-attribute', 'testBool=bool',
             '--search-attribute', 'testInt=int',
             '--search-attribute', 'testFloat=double',
             '--search-attribute', 'testString=text',
             '--search-attribute', 'testKeyword=keyword',
+            '--search-attribute', 'testKeywordList=keywordList',
+            '--search-attribute', 'testDatetime=datetime',
         ]);
         $this->started = true;
     }

@@ -31,6 +31,15 @@ class TypedSearchAttributesTest extends TestCase
                 ->withTypedSearchAttributes(
                     TypedSearchAttributes::empty()
                         ->withValue(SearchAttributeKey::forFloat('testFloat'), 1.1)
+                        ->withValue(SearchAttributeKey::forInteger('testInt'), -2)
+                        ->withValue(SearchAttributeKey::forBool('testBool'), false)
+                        ->withValue(SearchAttributeKey::forString('testString'), 'foo')
+                        ->withValue(SearchAttributeKey::forKeyword('testKeyword'), 'bar')
+                        ->withValue(SearchAttributeKey::forKeywordList('testKeywordList'), ['baz'])
+                        ->withValue(
+                            SearchAttributeKey::forDatetime('testDatetime'),
+                            new \DateTimeImmutable('2019-01-01T00:00:00Z'),
+                        )
                 ),
         );
 
@@ -42,7 +51,16 @@ class TypedSearchAttributesTest extends TestCase
         $stub->signal('exit');
         $result = $stub->getResult();
 
-        $this->assertSame(['testFloat' => 1.1], (array)$result);
+        $this->assertEquals([
+            'testBool' => false,
+            'testInt' => -2,
+            'testFloat' => 1.1,
+            'testString' => 'foo',
+            'testKeyword' => 'bar',
+            'testKeywordList' => ['baz'],
+            'testDatetime' => (new \DateTimeImmutable('2019-01-01T00:00:00Z'))
+                ->format(\DateTimeInterface::RFC3339),
+        ], (array)$result);
     }
 
     #[Test]
@@ -54,11 +72,26 @@ class TypedSearchAttributesTest extends TestCase
             'Extra_Workflow_TypedSearchAttributes',
             WorkflowOptions::new()
                 ->withTaskQueue($feature->taskQueue)
-                ->withSearchAttributes(['testFloat' => 1.1])
+                ->withSearchAttributes([
+                    'testBool' => false,
+                    'testInt' => -2,
+                    'testFloat' => 1.1,
+                    'testString' => 'foo',
+                    'testKeyword' => 'bar',
+                    'testKeywordList' => ['baz'],
+                    'testDatetime' => (new \DateTimeImmutable('2019-01-01T00:00:00Z'))
+                        ->format(\DateTimeInterface::RFC3339),
+                ])
         );
 
         $toSend = [
+            'testBool' => true,
+            'testInt' => 42,
             'testFloat' => 3.25,
+            'testString' => 'foo bar baz',
+            'testKeyword' => 'foo-bar-baz',
+            'testKeywordList' => ['foo', 'bar', 'baz'],
+            'testDatetime' => (new \DateTimeImmutable('2021-01-01T00:00:00Z'))->format(\DateTimeInterface::RFC3339),
         ];
 
         /** @see TestWorkflow::handle() */
