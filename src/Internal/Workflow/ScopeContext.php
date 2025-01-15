@@ -13,6 +13,7 @@ namespace Temporal\Internal\Workflow;
 
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
+use Temporal\Common\SearchAttributes\SearchAttributeKey;
 use Temporal\Common\SearchAttributes\SearchAttributeUpdate;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Internal\Transport\CompletableResult;
@@ -121,6 +122,23 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
     public function upsertTypedSearchAttributes(SearchAttributeUpdate ...$updates): void
     {
         $this->request(new UpsertTypedSearchAttributes($updates), waitResponse: false);
+
+        // Merge changes
+        $tsa = $this->input->info->typedSearchAttributes;
+        foreach ($updates as $update) {
+            if ($update instanceof SearchAttributeUpdate\ValueUnset) {
+                $tsa = $tsa->withoutValue($update->name);
+                continue;
+            }
+
+            \assert($update instanceof SearchAttributeUpdate\ValueSet);
+            $tsa = $tsa->withValue(
+                SearchAttributeKey::for($update->type, $update->name),
+                $update->value,
+            );
+        }
+
+        $this->input->info->typedSearchAttributes = $tsa;
     }
 
     #[\Override]

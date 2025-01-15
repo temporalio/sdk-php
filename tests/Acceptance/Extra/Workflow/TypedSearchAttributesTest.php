@@ -72,16 +72,19 @@ class TypedSearchAttributesTest extends TestCase
             'Extra_Workflow_TypedSearchAttributes',
             WorkflowOptions::new()
                 ->withTaskQueue($feature->taskQueue)
-                ->withSearchAttributes([
-                    'testBool' => false,
-                    'testInt' => -2,
-                    'testFloat' => 1.1,
-                    'testString' => 'foo',
-                    'testKeyword' => 'bar',
-                    'testKeywordList' => ['baz'],
-                    'testDatetime' => (new \DateTimeImmutable('2019-01-01T00:00:00Z'))
-                        ->format(\DateTimeInterface::RFC3339),
-                ])
+                ->withTypedSearchAttributes(
+                    TypedSearchAttributes::empty()
+                        ->withValue(SearchAttributeKey::forFloat('testFloat'), 1.1)
+                        ->withValue(SearchAttributeKey::forInteger('testInt'), -2)
+                        ->withValue(SearchAttributeKey::forBool('testBool'), false)
+                        ->withValue(SearchAttributeKey::forString('testString'), 'foo')
+                        ->withValue(SearchAttributeKey::forKeyword('testKeyword'), 'bar')
+                        ->withValue(SearchAttributeKey::forKeywordList('testKeywordList'), ['baz'])
+                        ->withValue(
+                            SearchAttributeKey::forDatetime('testDatetime'),
+                            new \DateTimeImmutable('2019-01-01T00:00:00Z'),
+                        )
+                ),
         );
 
         $toSend = [
@@ -91,7 +94,7 @@ class TypedSearchAttributesTest extends TestCase
             'testString' => 'foo bar baz',
             'testKeyword' => 'foo-bar-baz',
             'testKeywordList' => ['foo', 'bar', 'baz'],
-            'testDatetime' => (new \DateTimeImmutable('2021-01-01T00:00:00Z'))->format(\DateTimeInterface::RFC3339),
+            'testDatetime' => '2021-01-01T00:00:00+00:00',
         ];
 
         /** @see TestWorkflow::handle() */
@@ -104,8 +107,8 @@ class TypedSearchAttributesTest extends TestCase
 
             // Get Search Attributes using Client API
             $clientSA = \array_intersect_key(
-                $toSend,
                 $stub->describe()->info->searchAttributes->getValues(),
+                $toSend,
             );
 
             // Complete workflow
@@ -119,7 +122,71 @@ class TypedSearchAttributesTest extends TestCase
         // Get Search Attributes as a Workflow result
         $result = $stub->getResult();
 
-        $this->assertSame($toSend, $clientSA);
+        // Normalize datetime field
+        $clientSA['testDatetime'] = (new \DateTimeImmutable($clientSA['testDatetime']))
+            ->format(\DateTimeInterface::RFC3339);
+
+        $this->assertEquals($toSend, $clientSA);
+        $this->assertEquals($toSend, (array) $result);
+    }
+
+    #[Test]
+    public function testUpsertTypedSearchAttributesUnset(
+        WorkflowClientInterface $client,
+        Feature $feature,
+    ): void {
+        $stub = $client->newUntypedWorkflowStub(
+            'Extra_Workflow_TypedSearchAttributes',
+            WorkflowOptions::new()
+                ->withTaskQueue($feature->taskQueue)
+                ->withTypedSearchAttributes(
+                    TypedSearchAttributes::empty()
+                        ->withValue(SearchAttributeKey::forFloat('testFloat'), 1.1)
+                        ->withValue(SearchAttributeKey::forInteger('testInt'), -2)
+                        ->withValue(SearchAttributeKey::forBool('testBool'), false)
+                        ->withValue(SearchAttributeKey::forString('testString'), 'foo')
+                        ->withValue(SearchAttributeKey::forKeyword('testKeyword'), 'bar')
+                        ->withValue(SearchAttributeKey::forKeywordList('testKeywordList'), ['baz'])
+                        ->withValue(
+                            SearchAttributeKey::forDatetime('testDatetime'),
+                            new \DateTimeImmutable('2019-01-01T00:00:00Z'),
+                        )
+                ),
+        );
+
+        $toSend = [
+            'testInt' => 42,
+            'testBool' => null,
+            'testString' => 'bar',
+            'testKeyword' => null,
+            'testKeywordList' => ['red'],
+            'testDatetime' => null,
+        ];
+
+        /** @see TestWorkflow::handle() */
+        $client->start($stub);
+        try {
+            $stub->update('setAttributes', $toSend);
+
+            // Get Search Attributes using Client API
+            $clientSA = \array_intersect_key(
+                $stub->describe()->info->searchAttributes->getValues(),
+                $toSend,
+            );
+
+            // Complete workflow
+            /** @see TestWorkflow::exit */
+            $stub->signal('exit');
+        } catch (\Throwable $e) {
+            $stub->terminate('test failed');
+            throw $e;
+        }
+
+        // Get Search Attributes as a Workflow result
+        $result = \array_intersect_key((array) $stub->getResult(), $toSend);
+
+        $this->assertEquals(\array_filter($toSend), $clientSA);
+        $this->assertEquals(\array_filter($toSend), $result);
     }
 }
 
@@ -135,7 +202,7 @@ class TestWorkflow
             fn(): bool => $this->exit,
         );
 
-        return Workflow::getInfo()->searchAttributes;
+        return Workflow::getInfo()->typedSearchAttributes->toArray();
     }
 
     #[Workflow\UpdateMethod]
@@ -148,7 +215,9 @@ class TestWorkflow
                 continue;
             }
 
-            $updates[] = $key->valueSet($searchAttributes[$key->getName()]);
+            $updates[] = isset($searchAttributes[$key->getName()])
+                ? $key->valueSet($searchAttributes[$key->getName()])
+                : $updates[] = $key->valueUnset();
         }
 
         Workflow::upsertTypedSearchAttributes(...$updates);

@@ -11,7 +11,7 @@ enum ValueType: string
 {
     case Bool = 'bool';
     case Float = 'float64';
-    case Int = 'int';
+    case Int = 'int64';
     case Keyword = 'keyword';
     case KeywordList = 'keyword_list';
     case String = 'string';

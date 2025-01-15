@@ -21,6 +21,24 @@ class TypedSearchAttributesTest extends TestCase
         self::assertCount(2, $collection3);
     }
 
+    public function testWithoutValueImmutability(): void
+    {
+        $collection1 = TypedSearchAttributes::empty();
+        $collection2 = $collection1->withValue(SearchAttributeKey::forBool('name1'), true);
+        $collection3 = $collection2->withoutValue(SearchAttributeKey::forBool('name1'));
+        $collection4 = $collection3->withoutValue(SearchAttributeKey::forBool('name1'));
+
+        self::assertNotSame($collection1, $collection2);
+        self::assertNotSame($collection2, $collection3);
+        self::assertNotSame($collection1, $collection3);
+        self::assertNotSame($collection3, $collection4);
+
+        self::assertFalse($collection1->hasKey(SearchAttributeKey::forBool('name1')));
+        self::assertTrue($collection2->hasKey(SearchAttributeKey::forBool('name1')));
+        self::assertFalse($collection2->hasKey(SearchAttributeKey::forBool('name2')));
+        self::assertFalse($collection3->hasKey(SearchAttributeKey::forBool('name1')));
+    }
+
     public function testWithValueImmutability(): void
     {
         $collection1 = TypedSearchAttributes::empty();
@@ -36,6 +54,16 @@ class TypedSearchAttributesTest extends TestCase
         self::assertFalse($collection2->hasKey(SearchAttributeKey::forBool('name2')));
         self::assertTrue($collection3->hasKey(SearchAttributeKey::forBool('name1')));
         self::assertTrue($collection3->hasKey(SearchAttributeKey::forBool('name2')));
+    }
+
+    public function testWithValueOverride(): void
+    {
+        $collection = TypedSearchAttributes::empty()
+            ->withValue(SearchAttributeKey::forBool('name2'), false)
+            ->withValue(SearchAttributeKey::forBool('name2'), true);
+
+        self::assertCount(1, $collection);
+        self::assertTrue($collection->offsetGet('name2'));
     }
 
     public function testWithUntypedValueImmutability(): void

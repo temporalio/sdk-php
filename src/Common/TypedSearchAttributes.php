@@ -94,11 +94,8 @@ class TypedSearchAttributes implements \IteratorAggregate, \Countable
 
     public function withValue(SearchAttributeKey $key, mixed $value): self
     {
-        $collection = $this->collection === null
-            ? new \SplObjectStorage()
-            : clone $this->collection;
+        $collection = $this->withoutValue($key)->collection ?? new \SplObjectStorage();
         $collection->offsetSet($key, $value);
-
         return new self($collection);
     }
 
@@ -119,6 +116,21 @@ class TypedSearchAttributes implements \IteratorAggregate, \Countable
             $value instanceof \DateTimeInterface => $this->withValue(SearchAttributeKey::forDatetime($name), $value),
             default => throw new \InvalidArgumentException('Unsupported value type.'),
         };
+    }
+
+    /**
+     * @param SearchAttributeKey|non-empty-string $key
+     */
+    public function withoutValue(SearchAttributeKey|string $key): self
+    {
+        $found = $this->getKeyByName(\is_string($key) ? $key : $key->getName());
+        if ($found === null) {
+            return new self($this->collection === null ? null : clone $this->collection);
+        }
+
+        $collection = clone $this->collection;
+        $collection->offsetUnset($found);
+        return new self($collection);
     }
 
     /**
@@ -155,6 +167,20 @@ class TypedSearchAttributes implements \IteratorAggregate, \Countable
         $key = $this->getKeyByName($name);
 
         return $key === null ? null : $this->collection[$key];
+    }
+
+    /**
+     * @return array<non-empty-string, mixed>
+     */
+    public function toArray(): array
+    {
+        $result = [];
+        /** @var SearchAttributeKey $key */
+        foreach ($this as $key => $value) {
+            $result[$key->getName()] = $value;
+        }
+
+        return $result;
     }
 
     /**

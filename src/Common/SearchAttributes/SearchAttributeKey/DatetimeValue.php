@@ -18,11 +18,8 @@ final class DatetimeValue extends SearchAttributeKey
      */
     public function valueSet(string|\DateTimeInterface $value): SearchAttributeUpdate
     {
-        return $this->prepareValueSet(match (true) {
-            \is_string($value) => new \DateTimeImmutable($value),
-            $value instanceof \DateTimeImmutable => $value,
-            default => \DateTimeImmutable::createFromInterface($value),
-        });
+        $datetime = \is_string($value) ? new \DateTimeImmutable($value) : $value;
+        return $this->prepareValueSet($datetime->format(\DateTimeInterface::RFC3339));
     }
 
     public function getType(): ValueType
