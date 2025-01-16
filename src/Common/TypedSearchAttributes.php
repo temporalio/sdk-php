@@ -170,20 +170,6 @@ class TypedSearchAttributes implements \IteratorAggregate, \Countable
     }
 
     /**
-     * @return array<non-empty-string, mixed>
-     */
-    public function toArray(): array
-    {
-        $result = [];
-        /** @var SearchAttributeKey $key */
-        foreach ($this as $key => $value) {
-            $result[$key->getName()] = $value;
-        }
-
-        return $result;
-    }
-
-    /**
      * @param non-empty-string $name
      */
     private function getKeyByName(string $name): ?SearchAttributeKey

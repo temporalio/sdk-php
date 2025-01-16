@@ -37,7 +37,10 @@ final class UpsertTypedSearchAttributes extends Request
                 ? [
                     'type' => $attr->type->value,
                     'operation' => 'set',
-                    'value' => $attr->value,
+                    'value' => match (true) {
+                        $attr->value instanceof \DateTimeInterface => $attr->value->format(\DateTimeInterface::RFC3339),
+                        default => $attr->value,
+                    },
                 ]
                 : [
                     'type' => $attr->type->value,

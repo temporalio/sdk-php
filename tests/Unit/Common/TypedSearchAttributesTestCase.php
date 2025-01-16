@@ -8,7 +8,7 @@ use Temporal\Common\SearchAttributes\SearchAttributeKey;
 use Temporal\Common\TypedSearchAttributes;
 use PHPUnit\Framework\TestCase;
 
-class TypedSearchAttributesTest extends TestCase
+class TypedSearchAttributesTestCase extends TestCase
 {
     public function testCount(): void
     {
@@ -156,7 +156,7 @@ class TypedSearchAttributesTest extends TestCase
                 'value' => false,
             ],
             'name3' => [
-                'type' => 'int',
+                'type' => 'int64',
                 'value' => 42,
             ],
             'name4' => [
@@ -217,5 +217,23 @@ class TypedSearchAttributesTest extends TestCase
         self::assertInstanceOf(\DateTimeImmutable::class, $collection->get(SearchAttributeKey::forDatetime('name7')));
         self::assertSame('2021-01-01T00:00:00+00:00', $collection->get(SearchAttributeKey::forDatetime('name7'))->format(DATE_RFC3339));
         self::assertSame(['foo', 'bar'], $collection->get(SearchAttributeKey::forKeywordList('name8')));
+    }
+
+    public function testValues()
+    {
+        $collection = TypedSearchAttributes::empty()
+            ->withValue(SearchAttributeKey::forFloat('testFloat'), 1.1)
+            ->withValue(SearchAttributeKey::forInteger('testInt'), -2)
+            ->withValue(SearchAttributeKey::forBool('testBool'), false)
+            ->withValue(SearchAttributeKey::forString('testString'), 'foo')
+            ->withValue(SearchAttributeKey::forKeyword('testKeyword'), 'bar')
+            ->withValue(SearchAttributeKey::forKeywordList('testKeywordList'), ['baz'])
+            ->withValue(
+                SearchAttributeKey::forDatetime('testDatetime'),
+                new \DateTimeImmutable('2019-01-01T00:00:00Z'),
+            );
+
+        self::assertSame(1.1, $collection->offsetGet('testFloat'));
+
     }
 }

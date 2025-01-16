@@ -117,6 +117,17 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
     public function upsertSearchAttributes(array $searchAttributes): void
     {
         $this->request(new UpsertSearchAttributes($searchAttributes), waitResponse: false);
+
+        /** @psalm-suppress UnsupportedPropertyReferenceUsage $sa */
+        $sa = &$this->input->info->searchAttributes;
+        foreach ($searchAttributes as $name => $value) {
+            if ($value === null) {
+                unset($sa[$name]);
+                continue;
+            }
+
+            $sa[$name] = $value;
+        }
     }
 
     public function upsertTypedSearchAttributes(SearchAttributeUpdate ...$updates): void

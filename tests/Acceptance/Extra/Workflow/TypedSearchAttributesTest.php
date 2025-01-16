@@ -202,7 +202,15 @@ class TestWorkflow
             fn(): bool => $this->exit,
         );
 
-        return Workflow::getInfo()->typedSearchAttributes->toArray();
+        $result = [];
+        /** @var SearchAttributeKey $key */
+        foreach (Workflow::getInfo()->typedSearchAttributes as $key => $value) {
+            $result[$key->getName()] = $value instanceof \DateTimeInterface
+                ? $value->format(\DateTimeInterface::RFC3339)
+                : $value;
+        }
+
+        return $result;
     }
 
     #[Workflow\UpdateMethod]
