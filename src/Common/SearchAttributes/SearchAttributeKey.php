@@ -98,6 +98,9 @@ abstract class SearchAttributeKey
         };
     }
 
+    /**
+     * @return non-empty-string
+     */
     public function getName(): string
     {
         return $this->name;

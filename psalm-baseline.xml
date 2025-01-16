@@ -181,14 +181,20 @@
   </file>
   <file src="src/Client/WorkflowOptions.php">
     <ImpureMethodCall>
+      <code><![CDATA[$this->typedSearchAttributes]]></code>
       <code><![CDATA[setFields]]></code>
       <code><![CDATA[setIndexedFields]]></code>
+      <code><![CDATA[setIndexedFields]]></code>
+      <code><![CDATA[toPayload]]></code>
       <code><![CDATA[toPayload]]></code>
       <code><![CDATA[toPayload]]></code>
     </ImpureMethodCall>
     <PossiblyNullReference>
       <code><![CDATA[mergeWith]]></code>
     </PossiblyNullReference>
+    <UnnecessaryVarAnnotation>
+      <code><![CDATA[SearchAttributeKey]]></code>
+    </UnnecessaryVarAnnotation>
   </file>
   <file src="src/Common/CronSchedule.php">
     <DeprecatedClass>
@@ -213,6 +219,95 @@
       <code><![CDATA[DateInterval::toDuration($this->initialInterval)]]></code>
       <code><![CDATA[DateInterval::toDuration($this->maximumInterval)]]></code>
     </PossiblyNullArgument>
+  </file>
+  <file src="src/Common/SearchAttributes/SearchAttributeKey.php">
+    <ImpureMethodCall>
+      <code><![CDATA[valueSet]]></code>
+      <code><![CDATA[valueUnset]]></code>
+    </ImpureMethodCall>
+  </file>
+  <file src="src/Common/SearchAttributes/SearchAttributeKey/BoolValue.php">
+    <LessSpecificReturnStatement>
+      <code><![CDATA[$this->prepareValueSet($value)]]></code>
+    </LessSpecificReturnStatement>
+    <MoreSpecificReturnType>
+      <code><![CDATA[SearchAttributeUpdate]]></code>
+    </MoreSpecificReturnType>
+  </file>
+  <file src="src/Common/SearchAttributes/SearchAttributeKey/DatetimeValue.php">
+    <LessSpecificReturnStatement>
+      <code><![CDATA[$this->prepareValueSet(match (true) {
+            \is_string($value) => new \DateTimeImmutable($value),
+            $value instanceof \DateTimeImmutable => $value,
+            default => \DateTimeImmutable::createFromInterface($value),
+        })]]></code>
+    </LessSpecificReturnStatement>
+    <MoreSpecificReturnType>
+      <code><![CDATA[SearchAttributeUpdate]]></code>
+    </MoreSpecificReturnType>
+  </file>
+  <file src="src/Common/SearchAttributes/SearchAttributeKey/FloatValue.php">
+    <LessSpecificReturnStatement>
+      <code><![CDATA[$this->prepareValueSet($value)]]></code>
+    </LessSpecificReturnStatement>
+    <MoreSpecificReturnType>
+      <code><![CDATA[SearchAttributeUpdate]]></code>
+    </MoreSpecificReturnType>
+  </file>
+  <file src="src/Common/SearchAttributes/SearchAttributeKey/IntValue.php">
+    <LessSpecificReturnStatement>
+      <code><![CDATA[$this->prepareValueSet($value)]]></code>
+    </LessSpecificReturnStatement>
+    <MoreSpecificReturnType>
+      <code><![CDATA[SearchAttributeUpdate]]></code>
+    </MoreSpecificReturnType>
+  </file>
+  <file src="src/Common/SearchAttributes/SearchAttributeKey/KeywordListValue.php">
+    <LessSpecificReturnStatement>
+      <code><![CDATA[$this->prepareValueSet($values)]]></code>
+    </LessSpecificReturnStatement>
+    <MismatchingDocblockParamType>
+      <code><![CDATA[iterable<string|\Stringable>]]></code>
+    </MismatchingDocblockParamType>
+    <MoreSpecificReturnType>
+      <code><![CDATA[SearchAttributeUpdate]]></code>
+    </MoreSpecificReturnType>
+  </file>
+  <file src="src/Common/SearchAttributes/SearchAttributeKey/KeywordValue.php">
+    <LessSpecificReturnStatement>
+      <code><![CDATA[$this->prepareValueSet((string) $value)]]></code>
+    </LessSpecificReturnStatement>
+    <MoreSpecificReturnType>
+      <code><![CDATA[SearchAttributeUpdate]]></code>
+    </MoreSpecificReturnType>
+  </file>
+  <file src="src/Common/SearchAttributes/SearchAttributeKey/StringValue.php">
+    <LessSpecificReturnStatement>
+      <code><![CDATA[$this->prepareValueSet((string) $value)]]></code>
+    </LessSpecificReturnStatement>
+    <MoreSpecificReturnType>
+      <code><![CDATA[SearchAttributeUpdate]]></code>
+    </MoreSpecificReturnType>
+  </file>
+  <file src="src/Common/TypedSearchAttributes.php">
+    <InvalidArgument>
+      <code><![CDATA[$key]]></code>
+      <code><![CDATA[$key]]></code>
+    </InvalidArgument>
+    <PossiblyInvalidClone>
+      <code><![CDATA[clone $this->collection]]></code>
+    </PossiblyInvalidClone>
+    <PossiblyNullArrayAccess>
+      <code><![CDATA[$this->collection[$found]]]></code>
+      <code><![CDATA[$this->collection[$key]]]></code>
+    </PossiblyNullArrayAccess>
+    <PossiblyNullReference>
+      <code><![CDATA[$this->collection]]></code>
+      <code><![CDATA[$this->collection]]></code>
+    </PossiblyNullReference>
+    <UndefinedMethod>
+      <code><![CDATA[valueSet]]></code>
+    </UndefinedMethod>
   </file>
   <file src="src/Common/Uuid.php">
     <LessSpecificReturnStatement>
@@ -1017,6 +1112,11 @@
       <code><![CDATA[UpsertSearchAttributes]]></code>
     </MissingImmutableAnnotation>
   </file>
+  <file src="src/Internal/Transport/Request/UpsertTypedSearchAttributes.php">
+    <MissingImmutableAnnotation>
+      <code><![CDATA[UpsertTypedSearchAttributes]]></code>
+    </MissingImmutableAnnotation>
+  </file>
   <file src="src/Internal/Transport/Router/CancelWorkflow.php">
     <DocblockTypeContradiction>
       <code><![CDATA[$process === null]]></code>
@@ -1194,6 +1294,9 @@
     </PossiblyNullReference>
   </file>
   <file src="src/Internal/Workflow/ScopeContext.php">
+    <InaccessibleProperty>
+      <code><![CDATA[$this->input->info->typedSearchAttributes]]></code>
+    </InaccessibleProperty>
     <MissingImmutableAnnotation>
       <code><![CDATA[ScopeContext]]></code>
     </MissingImmutableAnnotation>

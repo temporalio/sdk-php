@@ -90,7 +90,7 @@ class TypedSearchAttributesTest extends TestCase
         $toSend = [
             'testBool' => true,
             'testInt' => 42,
-            'testFloat' => 3.25,
+            'testFloat' => 1.0,
             'testString' => 'foo bar baz',
             'testKeyword' => 'foo-bar-baz',
             'testKeywordList' => ['foo', 'bar', 'baz'],
