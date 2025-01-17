@@ -81,7 +81,7 @@ final class ScheduleClient implements ScheduleClientInterface
         $request = new CreateScheduleRequest();
         $request
             ->setRequestId(Uuid::v4())
-            ->setNamespace($options->namespace)
+            ->setNamespace($options->namespace ?? $this->clientOptions->namespace)
             ->setScheduleId($scheduleId)
             ->setIdentity($this->clientOptions->identity);
 
@@ -123,7 +123,7 @@ final class ScheduleClient implements ScheduleClientInterface
             $this->converter,
             $this->marshaller,
             $this->protoConverter,
-            $options->namespace,
+            $options->namespace ?? $this->clientOptions->namespace,
             $scheduleId,
         );
     }

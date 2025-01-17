@@ -25,7 +25,7 @@ final class ResponseToResultMapper
     public function mapUpdateWorkflowResponse(
         UpdateWorkflowExecutionResponse $result,
         string $updateName,
-        string $workflowType,
+        ?string $workflowType,
         WorkflowExecution $workflowExecution,
     ): StartUpdateOutput {
         $outcome = $result->getOutcome();

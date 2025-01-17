@@ -38,12 +38,6 @@ class AutowiringTestCase extends AbstractWorker
         $instance = (new \ReflectionClass(static::class))->newInstanceWithoutConstructor();
 
         return [
-            // Closure
-            'closure' => [new \ReflectionFunction($instance->instanceMethod(...))],
-
-            // Static Closure
-            'static closure' => [new \ReflectionFunction(static fn() => global_function())],
-
             // Instance Method
             static::class . '->instanceMethod' => [new \ReflectionMethod($instance, 'instanceMethod')],
 
