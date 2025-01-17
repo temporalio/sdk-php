@@ -7,6 +7,7 @@
             argument="0"
         >
             <collection name="temporal/sdk:workflow-type" argument="0" />
+            <stopCompletion />
         </classMethod>
         <classMethod
             class="\Temporal\Client\WorkflowClientInterface"
@@ -14,6 +15,7 @@
             argument="2"
         >
             <collection name="temporal/sdk:workflow-type" argument="0" />
+            <stopCompletion />
         </classMethod>
         <classMethod
             class="\Temporal\Client\WorkflowClientInterface"
@@ -21,17 +23,7 @@
             argument="0"
         >
             <collection name="temporal/sdk:workflow-class" argument="0" />
+            <stopCompletion />
         </classMethod>
     </definitions>
-    <collections>
-        <attributeArgument
-            name="temporal/sdk:workflow-type"
-            class="\Temporal\Workflow\WorkflowMethod"
-            argument="0"
-        />
-        <attributeClass
-            name="temporal/sdk:workflow-class"
-            class="\Temporal\Workflow\WorkflowInterface"
-        />
-    </collections>
 </meta-storm>
