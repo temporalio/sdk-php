@@ -20,7 +20,16 @@ use Temporal\Exception\InvalidArgumentException;
  */
 class AutowiredPayloads extends Dispatcher
 {
-    public function dispatchValues(object $ctx, ValuesInterface $values): mixed
+    public function dispatch(object $ctx, array $arguments): mixed
+    {
+        try {
+            return parent::dispatch($ctx, $arguments);
+        } catch (\TypeError $e) {
+            throw new InvalidArgumentException($e->getMessage(), $e->getCode(), $e);
+        }
+    }
+
+    public function resolveArguments(ValuesInterface $values): array
     {
         $arguments = [];
         try {
@@ -30,11 +39,6 @@ class AutowiredPayloads extends Dispatcher
         } catch (\Throwable $e) {
             throw new InvalidArgumentException($e->getMessage(), $e->getCode(), $e);
         }
-
-        try {
-            return parent::dispatch($ctx, $arguments);
-        } catch (\TypeError $e) {
-            throw new InvalidArgumentException($e->getMessage(), $e->getCode(), $e);
-        }
+        return $arguments;
     }
 }

@@ -12,12 +12,13 @@ declare(strict_types=1);
 namespace Temporal\Workflow;
 
 use Doctrine\Common\Annotations\Annotation\Target;
-use Spiral\Attributes\NamedArgumentConstructor;
 
 /**
+ * Marks a Workflow constructor to be executed with the {@see WorkflowMethod} arguments.
+ * The Init Method is executed before the Workflow Method, Signal, and Update handlers.
+ *
  * @Annotation
- * @NamedArgumentConstructor
- * @Target({ "CLASS" })
+ * @Target({ "METHOD" })
  */
-#[\Attribute(\Attribute::TARGET_CLASS), NamedArgumentConstructor]
-class WorkflowInterface {}
+#[\Attribute(\Attribute::TARGET_METHOD)]
+final class InitMethod {}

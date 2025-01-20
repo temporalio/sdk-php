@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Workflow\Process;
 
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Internal\Declaration\MethodHandler;
 
 /**
  * A wrapper around a generator that doesn't start the wrapped generator ASAP.
@@ -23,15 +24,15 @@ final class DeferredGenerator implements \Iterator
     /** @var array<\Closure(\Throwable): mixed> */
     private array $catchers = [];
 
-    private \Closure $handler;
+    private \Closure|MethodHandler $handler;
     private ValuesInterface $values;
 
     private function __construct() {}
 
     /**
-     * @param \Closure(ValuesInterface): mixed $handler
+     * @param MethodHandler|\Closure(ValuesInterface): mixed $handler
      */
-    public static function fromHandler(\Closure $handler, ValuesInterface $values): self
+    public static function fromHandler(MethodHandler|\Closure $handler, ValuesInterface $values): self
     {
         $self = new self();
         $self->handler = $handler;

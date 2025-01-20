@@ -20,9 +20,9 @@ use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\WorkflowInstance\SignalQueue;
 use Temporal\Internal\Interceptor;
+use Temporal\Workflow\InitMethod;
 
 /**
- * @psalm-import-type DispatchableHandler from InstanceInterface
  * @psalm-type QueryHandler = \Closure(QueryInput): mixed
  * @psalm-type UpdateHandler = \Closure(UpdateInput, Deferred): PromiseInterface
  * @psalm-type ValidateUpdateHandler = \Closure(UpdateInput): void
@@ -30,6 +30,8 @@ use Temporal\Internal\Interceptor;
  * @psalm-type UpdateExecutor = \Closure(UpdateInput, callable(ValuesInterface): mixed, Deferred): PromiseInterface
  * @psalm-type ValidateUpdateExecutor = \Closure(UpdateInput, callable(ValuesInterface): mixed): mixed
  * @psalm-type UpdateValidator = \Closure(UpdateInput, UpdateHandler): void
+ *
+ * @internal
  */
 final class WorkflowInstance extends Instance implements WorkflowInstanceInterface
 {
@@ -39,7 +41,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     private array $queryHandlers = [];
 
     /**
-     * @var array<non-empty-string, DispatchableHandler>
+     * @var array<non-empty-string, MethodHandler>
      */
     private array $signalHandlers = [];
 
@@ -140,11 +142,23 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     /**
      * Trigger constructor in Process context.
      */
-    public function initConstructor(): void
+    public function init(array $arguments = []): void
     {
-        if (\method_exists($this->context, '__construct')) {
-            $this->context->__construct();
+        if (!\method_exists($this->context, '__construct')) {
+            return;
         }
+
+        if ($arguments === []) {
+            $this->context->__construct();
+            return;
+        }
+
+        // Check InitMethod attribute
+        $reflection = new \ReflectionMethod($this->context, '__construct');
+        $attributes = $reflection->getAttributes(InitMethod::class);
+        $attributes === []
+            ? $this->context->__construct()
+            : $this->context->__construct(...$arguments);
     }
 
     public function getSignalQueue(): SignalQueue
@@ -288,12 +302,9 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     /**
      * Make a Closure from a callable.
      *
-     * @return \Closure(ValuesInterface): mixed
      * @throws \ReflectionException
-     *
-     * @psalm-return DispatchableHandler
      */
-    protected function createCallableHandler(callable $handler): \Closure
+    protected function createCallableHandler(callable $handler): MethodHandler
     {
         return $this->createHandler(
             new \ReflectionFunction($handler instanceof \Closure ? $handler : \Closure::fromCallable($handler)),

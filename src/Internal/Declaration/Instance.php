@@ -11,20 +11,12 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration;
 
-use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\InstantiationException;
-use Temporal\Internal\Declaration\Dispatcher\AutowiredPayloads;
 use Temporal\Internal\Declaration\Prototype\Prototype;
 
-/**
- * @psalm-import-type DispatchableHandler from InstanceInterface
- */
 abstract class Instance implements InstanceInterface, Destroyable
 {
-    /**
-     * @var \Closure(ValuesInterface): mixed
-     */
-    private \Closure $handler;
+    private MethodHandler $handler;
 
     public function __construct(
         Prototype $prototype,
@@ -47,7 +39,7 @@ abstract class Instance implements InstanceInterface, Destroyable
         return $this->context;
     }
 
-    public function getHandler(): callable
+    public function getHandler(): MethodHandler
     {
         return $this->handler;
     }
@@ -57,16 +49,8 @@ abstract class Instance implements InstanceInterface, Destroyable
         unset($this->handler, $this->context);
     }
 
-    /**
-     * @return \Closure(ValuesInterface): mixed
-     *
-     * @psalm-return DispatchableHandler
-     */
-    protected function createHandler(\ReflectionFunctionAbstract $func): \Closure
+    protected function createHandler(\ReflectionFunctionAbstract $func): MethodHandler
     {
-        $valueMapper = new AutowiredPayloads($func);
-
-        $context = $this->context;
-        return static fn(ValuesInterface $values): mixed => $valueMapper->dispatchValues($context, $values);
+        return new MethodHandler($this->context, $func);
     }
 }
