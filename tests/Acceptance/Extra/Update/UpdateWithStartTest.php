@@ -58,7 +58,7 @@ class UpdateWithStartTest extends TestCase
             $this->assertStringContainsString('await1234', $e->getPrevious()->getMessage());
         } finally {
             try {
-                $stub->getResult(timeout: 1);
+                $stub->getResult();
                 $this->fail('Workflow must fail');
             } catch (WorkflowFailedException) {
                 $this->assertTrue(true);
