@@ -9,7 +9,7 @@ use React\Promise\PromiseInterface;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Exception\Client\TimeoutException;
-use Temporal\Exception\Client\UntypedStubException;
+use Temporal\Exception\Client\WorkflowUpdateException;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\TestCase;
@@ -37,7 +37,11 @@ class UntypedStubTest extends TestCase
 
         $this->assertSame(['key' => 'resolved'], (array)$result, 'Workflow result contains resolved value');
         $this->assertFalse($handle->hasResult());
-        $this->assertFalse($resolver->hasResult(), 'Resolver should not have result because of wait policy');
+
+        // Since Temporal CLI 1.2.0, the result is available immediately after the operation
+        $this->assertTrue($resolver->hasResult());
+        $this->assertSame('resolved', $resolver->getResult());
+
         // Fetch result
         $this->assertSame('resolved', $handle->getResult());
         $this->assertTrue($handle->hasResult());
@@ -88,7 +92,7 @@ class UntypedStubTest extends TestCase
         try {
             $stub->startUpdate('unknownUpdateMethod', '42');
             $this->fail('Should throw exception');
-        } catch (UntypedStubException $e) {
+        } catch (WorkflowUpdateException $e) {
             $this->assertStringContainsString(
                 'unknown update method unknownUpdateMethod',
                 $e->getPrevious()->getMessage(),

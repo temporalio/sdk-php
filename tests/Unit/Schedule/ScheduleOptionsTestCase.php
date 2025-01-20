@@ -22,7 +22,7 @@ class ScheduleOptionsTestCase extends TestCase
         $new = $init->withNamespace('foo');
 
         $this->assertNotSame($init, $new, 'immutable method clones object');
-        $this->assertSame('default', $init->namespace, 'default value was not changed');
+        $this->assertNull($init->namespace, 'default value was not changed');
         $this->assertSame('foo', $new->namespace);
     }
 

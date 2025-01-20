@@ -18,6 +18,7 @@ use Temporal\Activity\ActivityOptionsInterface;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\OutOfContextException;
 use Temporal\Internal\Support\Facade;
 use Temporal\Internal\Workflow\ScopeContext;
@@ -957,6 +958,9 @@ final class Workflow extends Facade
     /**
      * Run a function when the mutex is released.
      * The mutex is locked for the duration of the function.
+     *
+     * Note that calling the method creates a non-detached asynchronous context {@see Workflow::async()}.
+     * Closing the context using the `cancel()` method will reject the returned promise with a {@see CanceledFailure}.
      *
      * @template T
      * @param Mutex $mutex Mutex name or instance.

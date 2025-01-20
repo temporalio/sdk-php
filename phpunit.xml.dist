@@ -18,6 +18,7 @@
 >
     <testsuites>
         <testsuite name="Acceptance">
+            <directory suffix="Test.php">tests/Acceptance/Extra</directory>
             <directory suffix="Test.php">tests/Acceptance/Harness</directory>
         </testsuite>
         <testsuite name="Arch">

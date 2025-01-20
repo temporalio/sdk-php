@@ -16,20 +16,23 @@ final class ScheduleOptions
 {
     use CloneWith;
 
-    public readonly string $namespace;
-    public readonly bool $triggerImmediately;
+    /**
+     * @deprecated will be removed in the next major version.
+     */
+    public readonly ?string $namespace;
 
     /**
      * @var list<BackfillPeriod>
      */
     public readonly array $backfills;
 
+    public readonly bool $triggerImmediately;
     public readonly EncodedCollection $memo;
     public readonly EncodedCollection $searchAttributes;
 
     private function __construct()
     {
-        $this->namespace = 'default';
+        $this->namespace = null;
         $this->triggerImmediately = false;
         $this->backfills = [];
         $this->memo = EncodedCollection::empty();
@@ -41,6 +44,10 @@ final class ScheduleOptions
         return new self();
     }
 
+    /**
+     * @deprecated Configure the namespace on the {@see \Temporal\Client\ClientOptions} instead
+     *             when creating the {@see \Temporal\Client\ScheduleClient}.
+     */
     public function withNamespace(string $namespace): self
     {
         /** @see self::$namespace */

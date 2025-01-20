@@ -90,7 +90,7 @@ final class DeferredGenerator implements \Iterator
      */
     public function getReturn(): mixed
     {
-        // $this->start();
+        $this->finished or throw new \LogicException('Cannot get return value of a generator that was not finished.');
         try {
             return $this->generator->getReturn();
         } catch (\Throwable $e) {
@@ -150,7 +150,8 @@ final class DeferredGenerator implements \Iterator
     {
         $this->start();
         try {
-            return $this->generator->valid();
+            $result = $this->generator->valid() or $this->finished = true;
+            return $result;
         } catch (\Throwable $e) {
             $this->handleException($e);
         }
@@ -219,9 +220,9 @@ final class DeferredGenerator implements \Iterator
     {
         $this->finished and throw $e;
         $this->finished = true;
-        foreach ($this->catchers as $catch) {
+        foreach ($this->catchers as $catcher) {
             try {
-                $catch($e);
+                $catcher($e);
             } catch (\Throwable) {
                 // Do nothing.
             }
