@@ -14,6 +14,7 @@ namespace Temporal\Internal\Workflow\Process;
 use JetBrains\PhpStorm\Pure;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
+use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Exception\Failure\CanceledFailure;
@@ -176,12 +177,19 @@ class Process extends Scope implements ProcessInterface
     /**
      * @param MethodHandler|\Closure(ValuesInterface): mixed $handler
      */
-    public function start(MethodHandler|\Closure $handler, ?ValuesInterface $values, bool $deferred): void
+    public function start(MethodHandler|\Closure $handler, ValuesInterface $values, bool $deferred): void
     {
         try {
             $this->makeCurrent();
-            $this->context->getWorkflowInstance()->initConstructor();
-            parent::start($handler, $values, $deferred);
+
+            // Prepare typed input
+            \assert($handler instanceof MethodHandler);
+            $arguments = $handler->resolveArguments($values ?? EncodedValues::empty());
+
+            // Manage init method
+            $this->context->getWorkflowInstance()->init($arguments);
+
+            parent::start($handler, EncodedValues::fromValues($arguments), $deferred);
         } catch (\Throwable $e) {
             $this->complete($e);
         } finally {

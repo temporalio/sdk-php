@@ -21,8 +21,17 @@ final class MethodHandler
         $this->dispatcher = new AutowiredPayloads($reflection);
     }
 
+    /**
+     * Resolve arguments for the method.
+     */
+    public function resolveArguments(ValuesInterface $values): array
+    {
+        return $this->dispatcher->resolveArguments($values);
+    }
+
     public function __invoke(ValuesInterface $values): mixed
     {
-        return $this->dispatcher->dispatchValues($this->instance, $values);
+        $arguments = $this->resolveArguments($values);
+        return $this->dispatcher->dispatch($this->instance, $arguments);
     }
 }
