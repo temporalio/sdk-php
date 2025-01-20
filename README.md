@@ -144,7 +144,7 @@ The plugin provides better autocomplete and links Workflow and Activity when wri
 ## Resources
 
 Read the docs  
-[![Temporal Documentation](https://img.shields.io/static/v1?style=flat-square&label=&message=Dcumentation&logo=Temporal&color=7744ee)](https://docs.temporal.io/)
+[![Temporal Documentation](https://img.shields.io/static/v1?style=flat-square&label=&message=Documentation&logo=Temporal&color=7744ee)](https://docs.temporal.io/)
 [![PHP SDK Documentation](https://img.shields.io/static/v1?style=flat-square&label=PHP+SDK&message=Dev+guide&logo=Temporal&color=7766ee)](https://docs.temporal.io/develop/php)
 [![PHP SDK API](https://img.shields.io/static/v1?style=flat-square&label=PHP+SDK&message=API&logo=PHP&color=447723&logoColor=aa88ff)](https://php.temporal.io/)
 

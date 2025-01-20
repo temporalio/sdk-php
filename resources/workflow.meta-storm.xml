@@ -6,7 +6,10 @@
             method="continueAsNew"
             argument="0"
         >
-            <collection name="temporal/sdk:workflow-type" argument="0" />
+            <collection name="temporal/sdk:workflow-type" argument="0">
+                <extractor xpath="" stopIfResolved="true" />
+                <extractor xpath="$containingClass" />
+            </collection>
             <stopCompletion />
         </classMethod>
         <classMethod
@@ -22,7 +25,10 @@
             method="executeChildWorkflow"
             argument="0"
         >
-            <collection name="temporal/sdk:workflow-type" argument="0" />
+            <collection name="temporal/sdk:workflow-type" argument="0">
+                <extractor xpath="" stopIfResolved="true" />
+                <extractor xpath="$containingClass" />
+            </collection>
             <stopCompletion />
         </classMethod>
         <classMethod
@@ -30,7 +36,10 @@
             method="newUntypedChildWorkflowStub"
             argument="0"
         >
-            <collection name="temporal/sdk:workflow-type" argument="0" />
+            <collection name="temporal/sdk:workflow-type" argument="0">
+                <extractor xpath="" stopIfResolved="true" />
+                <extractor xpath="$containingClass" />
+            </collection>
             <stopCompletion />
         </classMethod>
         <classMethod

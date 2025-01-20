@@ -6,7 +6,10 @@
             method="newUntypedWorkflowStub"
             argument="0"
         >
-            <collection name="temporal/sdk:workflow-type" argument="0" />
+            <collection name="temporal/sdk:workflow-type" argument="0">
+                <extractor xpath="" stopIfResolved="true" />
+                <extractor xpath="$containingClass" />
+            </collection>
             <stopCompletion />
         </classMethod>
         <classMethod
@@ -14,7 +17,10 @@
             method="newUntypedRunningWorkflowStub"
             argument="2"
         >
-            <collection name="temporal/sdk:workflow-type" argument="0" />
+            <collection name="temporal/sdk:workflow-type" argument="0">
+                <extractor xpath="" stopIfResolved="true" />
+                <extractor xpath="$containingClass" />
+            </collection>
             <stopCompletion />
         </classMethod>
         <classMethod
