@@ -135,10 +135,15 @@ If you are not using Docker or running PHP code outside a container, you can use
 Now use the `trap()`, `tr()`, or `dump()` functions to output data to Buggregator.
 Web UI will be available at `http://localhost:8000`.
 
+### IDE Plugin
+
+For advanced autocomplete while coding in PHPStorm, use [Meta Storm plugin](https://github.com/xepozz/meta-storm-idea-plugin).
+The plugin provides better autocomplete and links Workflow and Activity when writing and debugging code.
+
 ## Resources
 
 Read the docs  
-[![Temporal Documentation](https://img.shields.io/static/v1?style=flat-square&label=&message=Dcumentation&logo=Temporal&color=7744ee)](https://docs.temporal.io/)
+[![Temporal Documentation](https://img.shields.io/static/v1?style=flat-square&label=&message=Documentation&logo=Temporal&color=7744ee)](https://docs.temporal.io/)
 [![PHP SDK Documentation](https://img.shields.io/static/v1?style=flat-square&label=PHP+SDK&message=Dev+guide&logo=Temporal&color=7766ee)](https://docs.temporal.io/develop/php)
 [![PHP SDK API](https://img.shields.io/static/v1?style=flat-square&label=PHP+SDK&message=API&logo=PHP&color=447723&logoColor=aa88ff)](https://php.temporal.io/)
 
