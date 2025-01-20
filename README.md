@@ -31,7 +31,6 @@ composer require temporal/sdk
 [![Stable Release](https://poser.pugx.org/temporal/sdk/version?style=flat-square)](https://packagist.org/packages/temporal/sdk)
 [![Total DLoads](https://img.shields.io/packagist/dt/temporal/sdk.svg?style=flat-square)](https://packagist.org/packages/temporal/sdk/stats)
 [![License](https://img.shields.io/packagist/l/temporal/sdk.svg?style=flat-square)](LICENSE.md)
-[![Meta Storm Plugin](https://img.shields.io/static/v1?&style=flat-square&label=Powered+by&message=Meta+Storm+Plugin&logo=phpstorm&color=aa55ee)](#IDE-Plugin)
 
 The SDK includes two main components: [Clients](https://docs.temporal.io/develop/php/temporal-clients) and Workers.  
 The Clients component is used to start, schedule, and manage Workflows;
