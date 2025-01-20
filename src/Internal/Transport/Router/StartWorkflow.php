@@ -13,6 +13,7 @@ namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
 use Temporal\Api\Common\V1\SearchAttributes;
+use Temporal\Common\TypedSearchAttributes;
 use Temporal\DataConverter\EncodedCollection;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
@@ -55,9 +56,10 @@ final class StartWorkflow extends Route
             $payloads = EncodedValues::sliceValues($this->services->dataConverter, $payloads, 0, $offset);
         }
 
-        // Search Attributes
+        // Search Attributes and Typed Search Attributes
         $searchAttributes = $this->convertSearchAttributes($options['info']['SearchAttributes'] ?? null);
         $options['info']['SearchAttributes'] = $searchAttributes?->getValues();
+        $options['info']['TypedSearchAttributes'] = $this->prepareTypedSA($options['search_attributes'] ?? null);
 
         /** @var Input $input */
         $input = $this->services->marshaller->unmarshal($options, new Input());
@@ -152,5 +154,12 @@ final class StartWorkflow extends Route
         } catch (\Throwable) {
             return null;
         }
+    }
+
+    private function prepareTypedSA(?array $param): TypedSearchAttributes
+    {
+        return $param === null
+            ? TypedSearchAttributes::empty()
+            : TypedSearchAttributes::fromJsonArray($param);
     }
 }

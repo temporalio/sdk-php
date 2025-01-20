@@ -56,6 +56,7 @@ class JsonConverter extends Converter
             $value = match (true) {
                 $value instanceof \stdClass => $value,
                 $value instanceof UuidInterface => $value->toString(),
+                $value instanceof \DateTimeInterface => $value->format(\DateTimeInterface::RFC3339),
                 default => $this->marshaller->marshal($value),
             };
         }
@@ -133,6 +134,11 @@ class JsonConverter extends Converter
                 }
 
                 return Uuid::fromString($data);
+
+            case \DateTimeImmutable::class:
+            case \DateTimeInterface::class:
+                \is_string($data) or throw $this->errorInvalidType($type, $data);
+                return new \DateTimeImmutable($data);
             case Type::TYPE_OBJECT:
                 if (!\is_object($data)) {
                     throw $this->errorInvalidType($type, $data);

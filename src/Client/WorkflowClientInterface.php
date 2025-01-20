@@ -45,7 +45,7 @@ interface WorkflowClientInterface extends ClientContextInterface
      * @param object|WorkflowStubInterface $workflow
      * @param non-empty-string $signal
      *
-     * @since 2.12.0
+     * @since SDK 2.12.0
      */
     public function signalWithStart(
         $workflow,
@@ -76,7 +76,7 @@ interface WorkflowClientInterface extends ClientContextInterface
      * @return UpdateHandle
      *
      * @note Experimental feature.
-     * @since 2.12.0
+     * @since SDK 2.12.0
      */
     public function updateWithStart(
         $workflow,

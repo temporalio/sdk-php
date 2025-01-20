@@ -29,7 +29,7 @@ class AllHandlersFinishedTest extends TestCase
         $resolver = $stub->startUpdate('resolve', "key", "resolved");
 
         // Should be completed after the previous operation
-        $result = $stub->getResult(timeout: 1);
+        $result = $stub->getResult();
 
         $this->assertSame(['key' => 'resolved'], (array) $result, 'Workflow result contains resolved value');
         $this->assertFalse($handle->hasResult());
@@ -58,7 +58,7 @@ class AllHandlersFinishedTest extends TestCase
         }
 
         // Should be completed after the previous operation
-        $result = $stub->getResult(timeout: 1);
+        $result = $stub->getResult();
 
         $this->assertSame(
             [
@@ -87,7 +87,7 @@ class AllHandlersFinishedTest extends TestCase
         /** @see TestWorkflow::resolveFromSignal() */
         $stub->signal('resolve', "key", "resolved");
 
-        $result = $stub->getResult(timeout: 1);
+        $result = $stub->getResult();
 
         $this->assertSame(['key' => 'resolved'], (array) $result, 'Workflow result contains resolved value');
     }
@@ -106,7 +106,7 @@ class AllHandlersFinishedTest extends TestCase
             $stub->signal('resolve', "key-$i", "resolved-$i");
         }
 
-        $result = $stub->getResult(timeout: 1);
+        $result = $stub->getResult();
 
         $this->assertSame(
             [
@@ -153,7 +153,7 @@ class AllHandlersFinishedTest extends TestCase
 
         // Finish the workflow
         $stub->signal('exit');
-        $stub->getResult(timeout: 1);
+        $stub->getResult();
 
         // todo Check that `await` signal with count was mentioned in the logs
     }
@@ -173,7 +173,7 @@ class AllHandlersFinishedTest extends TestCase
 
         // Finish the workflow
         $stub->signal('exit');
-        $stub->getResult(timeout: 1);
+        $stub->getResult();
 
         // todo Check that `await` updates was mentioned in the logs
     }
@@ -194,7 +194,7 @@ class AllHandlersFinishedTest extends TestCase
         $stub->cancel();
 
         try {
-            $stub->getResult(timeout: 1);
+            $stub->getResult();
             $this->fail('Cancellation exception must be thrown');
         } catch (WorkflowFailedException) {
             // Expected
