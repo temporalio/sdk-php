@@ -22,8 +22,10 @@ final class DateInterval
 {
     /** @deprecated Use days instead */
     public const FORMAT_YEARS = 'years';
+
     /** @deprecated Use days instead */
     public const FORMAT_MONTHS = 'months';
+
     public const FORMAT_WEEKS = 'weeks';
     public const FORMAT_DAYS = 'days';
     public const FORMAT_HOURS = 'hours';
