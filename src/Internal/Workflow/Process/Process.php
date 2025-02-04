@@ -184,7 +184,7 @@ class Process extends Scope implements ProcessInterface
 
             // Prepare typed input
             \assert($handler instanceof MethodHandler);
-            $arguments = $handler->resolveArguments($values ?? EncodedValues::empty());
+            $arguments = $handler->resolveArguments($values);
 
             // Manage init method
             $this->context->getWorkflowInstance()->init($arguments);
