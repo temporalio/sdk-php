@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="5.26.1@d747f6500b38ac4f7dfc5edbcae6e4b637d7add0">
+<files psalm-version="6.2.0@814dfde37b43a1fe6d9b0996e08b19661af53bc5">
   <file src="src/Activity.php">
     <ImplicitToStringCast>
       <code><![CDATA[$type]]></code>
@@ -39,6 +39,11 @@
       <code><![CDATA[recordHeartbeat]]></code>
       <code><![CDATA[recordHeartbeatByToken]]></code>
     </MissingReturnType>
+  </file>
+  <file src="src/Client/Common/Paginator.php">
+    <PossiblyNullPropertyAssignmentValue>
+      <code><![CDATA[$loader->current()]]></code>
+    </PossiblyNullPropertyAssignmentValue>
   </file>
   <file src="src/Client/GRPC/Context.php">
     <ArgumentTypeCoercion>
@@ -226,68 +231,10 @@
       <code><![CDATA[valueUnset]]></code>
     </ImpureMethodCall>
   </file>
-  <file src="src/Common/SearchAttributes/SearchAttributeKey/BoolValue.php">
-    <LessSpecificReturnStatement>
-      <code><![CDATA[$this->prepareValueSet($value)]]></code>
-    </LessSpecificReturnStatement>
-    <MoreSpecificReturnType>
-      <code><![CDATA[SearchAttributeUpdate]]></code>
-    </MoreSpecificReturnType>
-  </file>
-  <file src="src/Common/SearchAttributes/SearchAttributeKey/DatetimeValue.php">
-    <LessSpecificReturnStatement>
-      <code><![CDATA[$this->prepareValueSet(match (true) {
-            \is_string($value) => new \DateTimeImmutable($value),
-            $value instanceof \DateTimeImmutable => $value,
-            default => \DateTimeImmutable::createFromInterface($value),
-        })]]></code>
-    </LessSpecificReturnStatement>
-    <MoreSpecificReturnType>
-      <code><![CDATA[SearchAttributeUpdate]]></code>
-    </MoreSpecificReturnType>
-  </file>
-  <file src="src/Common/SearchAttributes/SearchAttributeKey/FloatValue.php">
-    <LessSpecificReturnStatement>
-      <code><![CDATA[$this->prepareValueSet($value)]]></code>
-    </LessSpecificReturnStatement>
-    <MoreSpecificReturnType>
-      <code><![CDATA[SearchAttributeUpdate]]></code>
-    </MoreSpecificReturnType>
-  </file>
-  <file src="src/Common/SearchAttributes/SearchAttributeKey/IntValue.php">
-    <LessSpecificReturnStatement>
-      <code><![CDATA[$this->prepareValueSet($value)]]></code>
-    </LessSpecificReturnStatement>
-    <MoreSpecificReturnType>
-      <code><![CDATA[SearchAttributeUpdate]]></code>
-    </MoreSpecificReturnType>
-  </file>
   <file src="src/Common/SearchAttributes/SearchAttributeKey/KeywordListValue.php">
-    <LessSpecificReturnStatement>
-      <code><![CDATA[$this->prepareValueSet($values)]]></code>
-    </LessSpecificReturnStatement>
     <MismatchingDocblockParamType>
       <code><![CDATA[iterable<string|\Stringable>]]></code>
     </MismatchingDocblockParamType>
-    <MoreSpecificReturnType>
-      <code><![CDATA[SearchAttributeUpdate]]></code>
-    </MoreSpecificReturnType>
-  </file>
-  <file src="src/Common/SearchAttributes/SearchAttributeKey/KeywordValue.php">
-    <LessSpecificReturnStatement>
-      <code><![CDATA[$this->prepareValueSet((string) $value)]]></code>
-    </LessSpecificReturnStatement>
-    <MoreSpecificReturnType>
-      <code><![CDATA[SearchAttributeUpdate]]></code>
-    </MoreSpecificReturnType>
-  </file>
-  <file src="src/Common/SearchAttributes/SearchAttributeKey/StringValue.php">
-    <LessSpecificReturnStatement>
-      <code><![CDATA[$this->prepareValueSet((string) $value)]]></code>
-    </LessSpecificReturnStatement>
-    <MoreSpecificReturnType>
-      <code><![CDATA[SearchAttributeUpdate]]></code>
-    </MoreSpecificReturnType>
   </file>
   <file src="src/Common/TypedSearchAttributes.php">
     <InvalidArgument>
@@ -517,6 +464,8 @@
     </PossiblyNullArgument>
     <PossiblyNullReference>
       <code><![CDATA[getName]]></code>
+      <code><![CDATA[getStartWorkflow]]></code>
+      <code><![CDATA[getUpdateWorkflow]]></code>
     </PossiblyNullReference>
     <RedundantConditionGivenDocblockType>
       <code><![CDATA[$delay !== null]]></code>
@@ -810,11 +759,6 @@
     <MoreSpecificReturnType>
       <code><![CDATA[null|\Closure(Message): mixed]]></code>
     </MoreSpecificReturnType>
-    <PossiblyFalseArgument>
-      <code><![CDATA[$now->modify(
-                        \sprintf('+%d seconds +%d microseconds', $input->getSeconds(), $input->getNanos() / 1000),
-                    )]]></code>
-    </PossiblyFalseArgument>
   </file>
   <file src="src/Internal/Marshaller/Type/ArrayType.php">
     <MoreSpecificImplementedParamType>
@@ -1175,6 +1119,9 @@
     </ArgumentTypeCoercion>
   </file>
   <file src="src/Internal/Transport/Router/StartWorkflow.php">
+    <PossiblyFalseArgument>
+      <code><![CDATA[\json_encode($param)]]></code>
+    </PossiblyFalseArgument>
     <UnnecessaryVarAnnotation>
       <code><![CDATA[Input]]></code>
     </UnnecessaryVarAnnotation>
@@ -1458,6 +1405,10 @@
     </PossiblyNullReference>
   </file>
   <file src="src/Worker/Transport/Codec/ProtoCodec/Encoder.php">
+    <PossiblyFalseArgument>
+      <code><![CDATA[\json_encode($cmd->getOptions(), JSON_INVALID_UTF8_IGNORE | JSON_UNESCAPED_UNICODE)]]></code>
+      <code><![CDATA[\json_encode($options)]]></code>
+    </PossiblyFalseArgument>
     <PossiblyNullArgument>
       <code><![CDATA[$cmd->getFailure()]]></code>
     </PossiblyNullArgument>
