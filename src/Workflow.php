@@ -922,6 +922,8 @@ final class Workflow extends Facade
      *      SearchAttributeKey::forInt('MyCounter')->valueSet(42),
      *  );
      * ```
+     *
+     * @link https://docs.temporal.io/visibility#search-attribute
      */
     public static function upsertTypedSearchAttributes(SearchAttributeUpdate ...$updates): void
     {

@@ -107,12 +107,17 @@ final class WorkflowInfo
     #[Marshal(name: 'ParentWorkflowExecution', type: NullableType::class, of: WorkflowExecution::class)]
     public ?WorkflowExecution $parentExecution = null;
 
+    /**
+     * @type array<non-empty-string, mixed>
+     * @link https://docs.temporal.io/visibility#search-attribute
+     */
     #[Marshal(name: 'SearchAttributes', type: NullableType::class, of: ArrayType::class)]
     public ?array $searchAttributes = null;
 
     /**
      * @since SDK 2.13.0
      * @since RoadRunner 2024.3.2
+     * @link https://docs.temporal.io/visibility#search-attribute
      */
     #[Marshal(name: 'TypedSearchAttributes')]
     public TypedSearchAttributes $typedSearchAttributes;

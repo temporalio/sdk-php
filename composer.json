@@ -52,10 +52,10 @@
         }
     },
     "require-dev": {
-        "buggregator/trap": "^1.12.0",
+        "buggregator/trap": "^1.13.0",
         "composer/composer": "^2.8.4",
         "dereuromark/composer-prefer-lowest": "^0.1.10",
-        "doctrine/annotations": "^1.14.4|^2.0.2",
+        "doctrine/annotations": "^1.14.4 || ^2.0.2",
         "internal/dload": "^1.0",
         "jetbrains/phpstorm-attributes": "dev-master@dev",
         "laminas/laminas-code": "^4.16",
@@ -63,7 +63,7 @@
         "spiral/code-style": "~2.1.2",
         "spiral/core": "^3.14.9",
         "ta-tikoma/phpunit-architecture-test": "^0.8.4",
-        "vimeo/psalm": "^5.26.1"
+        "vimeo/psalm": "^5.26.1 || ^6.2"
     },
     "autoload-dev": {
         "psr-4": {
