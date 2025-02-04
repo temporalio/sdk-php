@@ -26,8 +26,8 @@ class BasicTest extends TestCase
 {
     #[Test]
     public static function check(
-        ScheduleClientInterface $client,
-        WorkflowClientInterface $wfClient,
+        ScheduleClientInterface $scheduleClient,
+        WorkflowClientInterface $workflowClient,
         Feature $feature,
         State $runtime,
     ): void {
@@ -35,7 +35,7 @@ class BasicTest extends TestCase
         $scheduleId = Uuid::uuid4()->toString();
         $interval = CarbonInterval::seconds(2);
 
-        $handle = $client->createSchedule(
+        $handle = $scheduleClient->createSchedule(
             schedule: Schedule::new()
                 ->withAction(
                     StartWorkflowAction::new('Harness_Schedule_Basic')
@@ -68,7 +68,7 @@ class BasicTest extends TestCase
             $found = false;
             $findDeadline = \microtime(true) + 10;
             find:
-            foreach ($client->listSchedules() as $schedule) {
+            foreach ($scheduleClient->listSchedules() as $schedule) {
                 if ($schedule->scheduleId === $scheduleId) {
                     $found = true;
                     break;
@@ -90,7 +90,7 @@ class BasicTest extends TestCase
             // Check result
             $lastActions = $handle->describe()->info->recentActions;
             $lastAction = $lastActions[\array_key_last($lastActions)];
-            $result = $wfClient->newUntypedRunningWorkflowStub(
+            $result = $workflowClient->newUntypedRunningWorkflowStub(
                 $lastAction->startWorkflowResult->getID(),
                 $lastAction->startWorkflowResult->getRunID(),
                 workflowType: 'Workflow'
@@ -116,7 +116,7 @@ class BasicTest extends TestCase
             // Check result 2
             $lastActions = $handle->describe()->info->recentActions;
             $lastAction = $lastActions[\array_key_last($lastActions)];
-            $result = $wfClient->newUntypedRunningWorkflowStub(
+            $result = $workflowClient->newUntypedRunningWorkflowStub(
                 $lastAction->startWorkflowResult->getID(),
                 $lastAction->startWorkflowResult->getRunID(),
                 workflowType: 'Workflow'

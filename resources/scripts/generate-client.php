@@ -157,24 +157,10 @@ $m->setReturnType('void');
 $interface->addMethodFromGenerator($m);
 
 echo "[OK]\n";
-
-$docBlock = new Generator\DocBlockGenerator(
-    join(
-        "\n",
-        [
-            'This file is part of Temporal package.',
-            '',
-            'For the full copyright and license information, please view the LICENSE',
-            'file that was distributed with this source code.'
-        ]
-    )
-);
-
 echo "writing interface: ";
 
 $file = new Generator\FileGenerator();
 $file->setNamespace('Temporal\\Client\\GRPC');
-$file->setDocBlock($docBlock);
 $file->setClass($interface);
 $file->setUses(
     [
@@ -223,7 +209,6 @@ echo "writing implementation: ";
 
 $file = new Generator\FileGenerator();
 $file->setNamespace('Temporal\\Client\\GRPC');
-$file->setDocBlock($docBlock);
 $file->setClass($impl);
 $file->setUses(
     [

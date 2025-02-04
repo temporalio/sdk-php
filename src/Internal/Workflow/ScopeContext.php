@@ -13,9 +13,13 @@ namespace Temporal\Internal\Workflow;
 
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
+use Temporal\Common\SearchAttributes\SearchAttributeKey;
+use Temporal\Common\SearchAttributes\SearchAttributeUpdate;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Internal\Transport\CompletableResult;
+use Temporal\Internal\Transport\Request\UpsertTypedSearchAttributes;
 use Temporal\Internal\Workflow\Process\Scope;
+use Temporal\Promise;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\ScopedContextInterface;
@@ -65,13 +69,21 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
         return $this->scope->startScope($handler, true);
     }
 
-    public function request(RequestInterface $request, bool $cancellable = true): PromiseInterface
-    {
-        if ($cancellable && $this->scope->isCancelled()) {
-            throw new CanceledFailure('Attempt to send request to cancelled scope');
-        }
+    #[\Override]
+    public function request(
+        RequestInterface $request,
+        bool $cancellable = true,
+        bool $waitResponse = true,
+    ): PromiseInterface {
+        $cancellable && $this->scope->isCancelled() && throw new CanceledFailure(
+            'Attempt to send request to cancelled scope',
+        );
 
         $promise = $this->parent->request($request);
+        if (!$waitResponse) {
+            return Promise::resolve();
+        }
+
         ($this->onRequest)($request, $promise);
 
         return new CompletableResult(
@@ -104,9 +116,40 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
 
     public function upsertSearchAttributes(array $searchAttributes): void
     {
-        $this->request(
-            new UpsertSearchAttributes($searchAttributes),
-        );
+        $this->request(new UpsertSearchAttributes($searchAttributes), waitResponse: false);
+
+        /** @psalm-suppress UnsupportedPropertyReferenceUsage $sa */
+        $sa = &$this->input->info->searchAttributes;
+        foreach ($searchAttributes as $name => $value) {
+            if ($value === null) {
+                unset($sa[$name]);
+                continue;
+            }
+
+            $sa[$name] = $value;
+        }
+    }
+
+    public function upsertTypedSearchAttributes(SearchAttributeUpdate ...$updates): void
+    {
+        $this->request(new UpsertTypedSearchAttributes($updates), waitResponse: false);
+
+        // Merge changes
+        $tsa = $this->input->info->typedSearchAttributes;
+        foreach ($updates as $update) {
+            if ($update instanceof SearchAttributeUpdate\ValueUnset) {
+                $tsa = $tsa->withoutValue($update->name);
+                continue;
+            }
+
+            \assert($update instanceof SearchAttributeUpdate\ValueSet);
+            $tsa = $tsa->withValue(
+                SearchAttributeKey::for($update->type, $update->name),
+                $update->value,
+            );
+        }
+
+        $this->input->info->typedSearchAttributes = $tsa;
     }
 
     #[\Override]
