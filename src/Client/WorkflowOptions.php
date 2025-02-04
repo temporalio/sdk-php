@@ -19,6 +19,8 @@ use Temporal\Common\CronSchedule;
 use Temporal\Common\IdReusePolicy;
 use Temporal\Common\MethodRetry;
 use Temporal\Common\RetryOptions;
+use Temporal\Common\SearchAttributes\SearchAttributeKey;
+use Temporal\Common\TypedSearchAttributes;
 use Temporal\Common\Uuid;
 use Temporal\Common\WorkflowIdConflictPolicy;
 use Temporal\DataConverter\DataConverterInterface;
@@ -143,10 +145,18 @@ final class WorkflowOptions extends Options
      * ElasticSearch). The key and value type must be registered on Temporal
      * server side.
      *
-     * @psalm-var array<string, mixed>|null
+     * @psalm-var array<non-empty-string, mixed>|null
      */
     #[Marshal(name: 'SearchAttributes', type: NullableType::class, of: ArrayType::class)]
     public ?array $searchAttributes = null;
+
+    /**
+     * Optional indexed info that can be used in query of List/Scan/Count
+     * workflow APIs (only supported when Temporal server is using
+     * ElasticSearch). The key and value type must be registered on Temporal
+     * server side.
+     */
+    public ?TypedSearchAttributes $typedSearchAttributes = null;
 
     /**
      * @throws \Exception
@@ -412,15 +422,40 @@ final class WorkflowOptions extends Options
     /**
      * Specifies additional indexed information in result of list workflow.
      *
+     * The search attributes can be used in query of List/Scan/Count workflow APIs.
+     * The key and its value type must be registered on Temporal server side.
+     *
      * @return $this
      */
     #[Pure]
     public function withSearchAttributes(?array $searchAttributes): self
     {
+        if ($this->typedSearchAttributes !== null) {
+            throw new \LogicException('Cannot have typed search attributes and search attributes.');
+        }
+
         $self = clone $this;
-
         $self->searchAttributes = $searchAttributes;
+        return $self;
+    }
 
+    /**
+     * Specifies Search Attributes that will be attached to the Workflow.
+     *
+     * Search Attributes are additional indexed information attributed to workflow and used for search and visibility.
+     *
+     * The search attributes can be used in query of List/Scan/Count workflow APIs.
+     * The key and its value type must be registered on Temporal server side.
+     */
+    #[Pure]
+    public function withTypedSearchAttributes(TypedSearchAttributes $attributes): self
+    {
+        if ($this->searchAttributes !== null) {
+            throw new \LogicException('Cannot have typed search attributes and search attributes.');
+        }
+
+        $self = clone $this;
+        $self->typedSearchAttributes = $attributes;
         return $self;
     }
 
@@ -450,18 +485,28 @@ final class WorkflowOptions extends Options
      */
     public function toSearchAttributes(DataConverterInterface $converter): ?SearchAttributes
     {
-        if ($this->searchAttributes === null) {
+        if ($this->searchAttributes === null && $this->typedSearchAttributes === null) {
             return null;
         }
 
         $fields = [];
-        foreach ($this->searchAttributes as $key => $value) {
-            $fields[$key] = $converter->toPayload($value);
+        $search = new SearchAttributes();
+
+        // Untyped SA
+        if ($this->searchAttributes !== null) {
+            foreach ($this->searchAttributes as $key => $value) {
+                $fields[$key] = $converter->toPayload($value);
+            }
+
+            return $search->setIndexedFields($fields);
         }
 
-        $search = new SearchAttributes();
-        $search->setIndexedFields($fields);
+        // Typed SA
+        /** @var SearchAttributeKey $key For the IDE */
+        foreach ($this->typedSearchAttributes as $key => $value) {
+            $fields[$key->getName()] = $converter->toPayload($value);
+        }
 
-        return $search;
+        return $search->setIndexedFields($fields);
     }
 }

@@ -59,9 +59,11 @@ final class Uuid
     {
         $bytes = \random_bytes(16);
 
+        /** @psalm-suppress PossiblyInvalidArrayAccess */
         $timeHi = (int) \unpack('n*', \substr($bytes, 6, 2))[1];
         $timeHiAndVersion = \pack('n*', self::version($timeHi, 4));
 
+        /** @psalm-suppress PossiblyInvalidArrayAccess */
         $clockSeqHi = (int) \unpack('n*', \substr($bytes, 8, 2))[1];
         $clockSeqHiAndReserved = \pack('n*', self::variant($clockSeqHi));
 

@@ -15,6 +15,7 @@ use Carbon\CarbonInterval;
 use JetBrains\PhpStorm\Immutable;
 use Temporal\Client\ClientOptions;
 use Temporal\Common\CronSchedule;
+use Temporal\Common\TypedSearchAttributes;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\ArrayType;
 use Temporal\Internal\Marshaller\Type\CronType;
@@ -64,7 +65,7 @@ final class WorkflowInfo
      * This value changes during the lifetime of a Workflow Execution.
      *
      * @var int<0, max>
-     * @since 2.6.0
+     * @since SDK 2.6.0
      * @since RoadRunner 2023.2. With lower versions, this field is always 0.
      */
     #[Marshal(name: 'HistoryLength')]
@@ -75,7 +76,7 @@ final class WorkflowInfo
      * This value changes during the lifetime of a Workflow Execution.
      *
      * @var int<0, max>
-     * @since 2.11.0
+     * @since SDK 2.11.0
      * @since RoadRunner 2024.2. With lower versions, this field is always 0.
      */
     #[Marshal(name: 'HistorySize')]
@@ -85,7 +86,7 @@ final class WorkflowInfo
      * Contains true if the server is configured to suggest continue as new and it is suggested.
      * This value changes during the lifetime of a Workflow Execution.
      *
-     * @since 2.11.0
+     * @since SDK 2.11.0
      * @since RoadRunner 2024.2. With lower versions, this field is always false.
      */
     #[Marshal(name: 'ShouldContinueAsNew')]
@@ -106,8 +107,20 @@ final class WorkflowInfo
     #[Marshal(name: 'ParentWorkflowExecution', type: NullableType::class, of: WorkflowExecution::class)]
     public ?WorkflowExecution $parentExecution = null;
 
+    /**
+     * @type array<non-empty-string, mixed>
+     * @link https://docs.temporal.io/visibility#search-attribute
+     */
     #[Marshal(name: 'SearchAttributes', type: NullableType::class, of: ArrayType::class)]
     public ?array $searchAttributes = null;
+
+    /**
+     * @since SDK 2.13.0
+     * @since RoadRunner 2024.3.2
+     * @link https://docs.temporal.io/visibility#search-attribute
+     */
+    #[Marshal(name: 'TypedSearchAttributes')]
+    public TypedSearchAttributes $typedSearchAttributes;
 
     #[Marshal(name: 'Memo', type: NullableType::class, of: ArrayType::class)]
     public ?array $memo = null;
@@ -126,5 +139,6 @@ final class WorkflowInfo
         $this->executionTimeout = CarbonInterval::years(10);
         $this->runTimeout = CarbonInterval::years(10);
         $this->taskTimeout = CarbonInterval::years(10);
+        $this->typedSearchAttributes = TypedSearchAttributes::empty();
     }
 }

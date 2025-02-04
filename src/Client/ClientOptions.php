@@ -41,7 +41,7 @@ class ClientOptions
      */
     public function __construct()
     {
-        $this->identity = \sprintf('%d@%s', \getmypid(), \gethostname());
+        $this->identity = \sprintf('%d@%s', (string) \getmypid(), (string) \gethostname());
     }
 
     /**

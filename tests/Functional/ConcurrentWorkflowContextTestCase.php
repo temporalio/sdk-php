@@ -81,7 +81,6 @@ class ConcurrentWorkflowContextTestCase extends AbstractClient
                     unset($generators[$i]);
                 }
             }
-            // \shuffle($generators); // todo smart events merge
             \array_map(static fn(\Generator $g) => $g->next(), $generators);
 
             $stop or $addWorkflow();
@@ -137,7 +136,7 @@ class ConcurrentWorkflowContextTestCase extends AbstractClient
                 [0m	[{"command":"InvokeQuery","options":{"runId":"$runId","name":"wakeup"},"payloads":"ChkKFwoIZW5jb2RpbmcSC2JpbmFyeS9udWxs"}] {"taskQueue":"default","tickTime":"2021-01-12T15:25:13.3987564Z"}
                 EVENT;
             yield <<<EVENT
-                [0m	[{"payloads":"ChwKFgoIZW5jb2RpbmcSCmpzb24vcGxhaW4SAltd"}]	{"receive": true}
+                [0m	[{"payloads":"CjUKFgoIZW5jb2RpbmcSCmpzb24vcGxhaW4SGyIyMDIxLTAxLTEyVDE1OjI1OjE4KzAwOjAwIg=="}]	{"receive": true}
                 EVENT;
         }
 

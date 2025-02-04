@@ -50,7 +50,9 @@ class Inheritance
             return true;
         }
 
-        foreach (\class_parents($haystack) as $parent) {
+        $parents = \class_parents($haystack);
+        /** @var list<class-string> $parents */
+        foreach ($parents as $parent) {
             if (self::extends($parent, $class)) {
                 return true;
             }

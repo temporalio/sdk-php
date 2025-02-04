@@ -1,12 +1,6 @@
 <?php
 
 declare(strict_types=1);
-/**
- * This file is part of Temporal package.
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
 
 namespace Temporal\Client\GRPC;
 
@@ -115,9 +109,6 @@ class ServiceClient extends BaseClient
      *
      * NOTE: Experimental API.
      *
-     * @param V1\ExecuteMultiOperationRequest $arg
-     * @param ContextInterface|null $ctx
-     * @return V1\ExecuteMultiOperationResponse
      * @throws ServiceClientException
      */
     public function ExecuteMultiOperation(V1\ExecuteMultiOperationRequest $arg, ?ContextInterface $ctx = null): V1\ExecuteMultiOperationResponse
@@ -621,6 +612,28 @@ class ServiceClient extends BaseClient
     }
 
     /**
+     * ShutdownWorker is used to indicate that the given sticky task
+     * queue is no longer being polled by its worker. Following the completion of
+     * ShutdownWorker, newly-added workflow tasks will instead be placed
+     * in the normal task queue, eligible for any worker to pick up.
+     *
+     * ShutdownWorker should be called by workers while shutting down,
+     * after they've shut down their pollers. If another sticky poll
+     * request is issued, the sticky task queue will be revived.
+     *
+     * As of Temporal Server v1.25.0, ShutdownWorker hasn't yet been implemented.
+     *
+     * (-- api-linter: core::0127::http-annotation=disabled
+     * aip.dev/not-precedent: We do not expose worker API to HTTP. --)
+     *
+     * @throws ServiceClientException
+     */
+    public function ShutdownWorker(V1\ShutdownWorkerRequest $arg, ?ContextInterface $ctx = null): V1\ShutdownWorkerResponse
+    {
+        return $this->invoke("ShutdownWorker", $arg, $ctx);
+    }
+
+    /**
      * QueryWorkflow requests a query be executed for a specified workflow execution.
      *
      * @throws ServiceClientException
@@ -889,7 +902,81 @@ class ServiceClient extends BaseClient
     }
 
     /**
-     * Invokes the specified update function on user workflow code.
+     * Describes a worker deployment.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
+     *
+     * @throws ServiceClientException
+     */
+    public function DescribeDeployment(V1\DescribeDeploymentRequest $arg, ?ContextInterface $ctx = null): V1\DescribeDeploymentResponse
+    {
+        return $this->invoke("DescribeDeployment", $arg, $ctx);
+    }
+
+    /**
+     * Lists worker deployments in the namespace. Optionally can filter based on
+     * deployment series
+     * name.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
+     *
+     * @throws ServiceClientException
+     */
+    public function ListDeployments(V1\ListDeploymentsRequest $arg, ?ContextInterface $ctx = null): V1\ListDeploymentsResponse
+    {
+        return $this->invoke("ListDeployments", $arg, $ctx);
+    }
+
+    /**
+     * Returns the reachability level of a worker deployment to help users decide when
+     * it is time
+     * to decommission a deployment. Reachability level is calculated based on the
+     * deployment's
+     * `status` and existing workflows that depend on the given deployment for their
+     * execution.
+     * Calculating reachability is relatively expensive. Therefore, server might return
+     * a recently
+     * cached value. In such a case, the `last_update_time` will inform you about the
+     * actual
+     * reachability calculation time.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
+     *
+     * @throws ServiceClientException
+     */
+    public function GetDeploymentReachability(V1\GetDeploymentReachabilityRequest $arg, ?ContextInterface $ctx = null): V1\GetDeploymentReachabilityResponse
+    {
+        return $this->invoke("GetDeploymentReachability", $arg, $ctx);
+    }
+
+    /**
+     * Returns the current deployment (and its info) for a given deployment series.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
+     *
+     * @throws ServiceClientException
+     */
+    public function GetCurrentDeployment(V1\GetCurrentDeploymentRequest $arg, ?ContextInterface $ctx = null): V1\GetCurrentDeploymentResponse
+    {
+        return $this->invoke("GetCurrentDeployment", $arg, $ctx);
+    }
+
+    /**
+     * Sets a deployment as the current deployment for its deployment series. Can
+     * optionally update
+     * the metadata of the deployment as well.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
+     *
+     * @throws ServiceClientException
+     */
+    public function SetCurrentDeployment(V1\SetCurrentDeploymentRequest $arg, ?ContextInterface $ctx = null): V1\SetCurrentDeploymentResponse
+    {
+        return $this->invoke("SetCurrentDeployment", $arg, $ctx);
+    }
+
+    /**
+     * Invokes the specified Update function on user Workflow code.
      *
      * @throws ServiceClientException
      */
@@ -899,7 +986,7 @@ class ServiceClient extends BaseClient
     }
 
     /**
-     * Polls a workflow execution for the outcome of a workflow execution update
+     * Polls a Workflow Execution for the outcome of a Workflow Update
      * previously issued through the UpdateWorkflowExecution RPC. The effective
      * timeout on this call will be shorter of the the caller-supplied gRPC
      * timeout and the server's configured long-poll timeout.
@@ -991,5 +1078,109 @@ class ServiceClient extends BaseClient
     public function RespondNexusTaskFailed(V1\RespondNexusTaskFailedRequest $arg, ?ContextInterface $ctx = null): V1\RespondNexusTaskFailedResponse
     {
         return $this->invoke("RespondNexusTaskFailed", $arg, $ctx);
+    }
+
+    /**
+     * UpdateActivityOptionsById is called by the client to update the options of an
+     * activity
+     * (-- api-linter: core::0136::prepositions=disabled
+     * aip.dev/not-precedent: "By" is used to indicate request type. --)
+     *
+     * @throws ServiceClientException
+     */
+    public function UpdateActivityOptionsById(V1\UpdateActivityOptionsByIdRequest $arg, ?ContextInterface $ctx = null): V1\UpdateActivityOptionsByIdResponse
+    {
+        return $this->invoke("UpdateActivityOptionsById", $arg, $ctx);
+    }
+
+    /**
+     * UpdateWorkflowExecutionOptions partially updates the WorkflowExecutionOptions of
+     * an existing workflow execution.
+     *
+     * @throws ServiceClientException
+     */
+    public function UpdateWorkflowExecutionOptions(V1\UpdateWorkflowExecutionOptionsRequest $arg, ?ContextInterface $ctx = null): V1\UpdateWorkflowExecutionOptionsResponse
+    {
+        return $this->invoke("UpdateWorkflowExecutionOptions", $arg, $ctx);
+    }
+
+    /**
+     * PauseActivityById pauses the execution of an activity specified by its ID.
+     * Returns a `NotFound` error if there is no pending activity with the provided ID.
+     *
+     * Pausing an activity means:
+     * - If the activity is currently waiting for a retry or is running and
+     * subsequently fails,
+     * it will not be rescheduled until it is unpaused.
+     * - If the activity is already paused, calling this method will have no effect.
+     * - If the activity is running and finishes successfully, the activity will be
+     * completed.
+     * - If the activity is running and finishes with failure:
+     * if there is no retry left - the activity will be completed.
+     * if there are more retries left - the activity will be paused.
+     * For long-running activities:
+     * - activities in paused state will send a cancellation with "activity_paused" set
+     * to 'true' in response to 'RecordActivityTaskHeartbeat'.
+     * - The activity should respond to the cancellation accordingly.
+     * (-- api-linter: core::0136::prepositions=disabled
+     * aip.dev/not-precedent: "By" is used to indicate request type. --)
+     *
+     * @throws ServiceClientException
+     */
+    public function PauseActivityById(V1\PauseActivityByIdRequest $arg, ?ContextInterface $ctx = null): V1\PauseActivityByIdResponse
+    {
+        return $this->invoke("PauseActivityById", $arg, $ctx);
+    }
+
+    /**
+     * UnpauseActivityById unpauses the execution of an activity specified by its ID.
+     * Returns a `NotFound` error if there is no pending activity with the provided ID.
+     * There are two 'modes' of unpausing an activity:
+     * 'resume' - If the activity is paused, it will be resumed and scheduled for
+     * execution.
+     * If the activity is currently running Unpause with 'resume' has no effect.
+     * if 'no_wait' flag is set and the activity is waiting, the activity will be
+     * scheduled immediately.
+     * 'reset' - If the activity is paused, it will be reset to its initial state and
+     * (depending on parameters) scheduled for execution.
+     * If the activity is currently running, Unpause with 'reset' will reset the number
+     * of attempts.
+     * if 'no_wait' flag is set, the activity will be scheduled immediately.
+     * if 'reset_heartbeats' flag is set, the activity heartbeat timer and heartbeats
+     * will be reset.
+     * If the activity is in waiting for retry and past it retry timeout, it will be
+     * scheduled immediately.
+     * Once the activity is unpaused, all timeout timers will be regenerated.
+     * (-- api-linter: core::0136::prepositions=disabled
+     * aip.dev/not-precedent: "By" is used to indicate request type. --)
+     *
+     * @throws ServiceClientException
+     */
+    public function UnpauseActivityById(V1\UnpauseActivityByIdRequest $arg, ?ContextInterface $ctx = null): V1\UnpauseActivityByIdResponse
+    {
+        return $this->invoke("UnpauseActivityById", $arg, $ctx);
+    }
+
+    /**
+     * ResetActivityById unpauses the execution of an activity specified by its ID.
+     * Returns a `NotFound` error if there is no pending activity with the provided ID.
+     * Resetting an activity means:
+     * number of attempts will be reset to 0.
+     * activity timeouts will be resetted.
+     * If the activity currently running:
+     * if 'no_wait' flag is provided, a new instance of the activity will be scheduled
+     * immediately.
+     * if 'no_wait' flag is not provided, a new instance of the  activity will be
+     * scheduled after current instance completes if needed.
+     * If 'reset_heartbeats' flag is set, the activity heartbeat timer and heartbeats
+     * will be reset.
+     * (-- api-linter: core::0136::prepositions=disabled
+     * aip.dev/not-precedent: "By" is used to indicate request type. --)
+     *
+     * @throws ServiceClientException
+     */
+    public function ResetActivityById(V1\ResetActivityByIdRequest $arg, ?ContextInterface $ctx = null): V1\ResetActivityByIdResponse
+    {
+        return $this->invoke("ResetActivityById", $arg, $ctx);
     }
 }
