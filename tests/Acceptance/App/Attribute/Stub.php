@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Acceptance\App\Attribute;
 
+use Temporal\Common\RetryOptions as CommonOptions;
+
 /**
  * An attribute to configure workflow stub.
  *
@@ -12,6 +14,8 @@ namespace Temporal\Tests\Acceptance\App\Attribute;
 #[\Attribute(\Attribute::TARGET_PARAMETER)]
 final class Stub
 {
+    public readonly ?CommonOptions $retryOptions;
+
     /**
      * @param non-empty-string $type Workflow type.
      * @param non-empty-string|null $workflowId
@@ -24,6 +28,8 @@ final class Stub
         public ?string $executionTimeout = null,
         public array $args = [],
         public array $memo = [],
+        ?RetryOptions $retryOptions = null,
     ) {
+        $this->retryOptions = $retryOptions?->toRetryOptions();
     }
 }

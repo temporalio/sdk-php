@@ -11,17 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration;
 
-use Temporal\DataConverter\ValuesInterface;
-
-/**
- * @psalm-type DispatchableHandler = \Closure(ValuesInterface): mixed
- */
 interface InstanceInterface
 {
-    /**
-     * @return DispatchableHandler
-     */
-    public function getHandler(): callable;
+    public function getHandler(): MethodHandler;
 
     public function getContext(): object;
 }

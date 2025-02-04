@@ -21,6 +21,7 @@ use Temporal\Exception\Failure\TemporalFailure;
 use Temporal\Exception\InvalidArgumentException;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Internal\Declaration\Destroyable;
+use Temporal\Internal\Declaration\MethodHandler;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Request\Cancel;
 use Temporal\Internal\Workflow\ScopeContext;
@@ -124,12 +125,12 @@ class Scope implements CancellationScopeInterface, Destroyable
     }
 
     /**
-     * @param \Closure(ValuesInterface): mixed $handler
+     * @param MethodHandler|\Closure(ValuesInterface): mixed $handler
      */
-    public function start(\Closure $handler, ?ValuesInterface $values, bool $deferred): void
+    public function start(MethodHandler|\Closure $handler, ValuesInterface $values, bool $deferred): void
     {
         // Create a coroutine generator
-        $this->coroutine = DeferredGenerator::fromHandler($handler, $values ?? EncodedValues::empty())
+        $this->coroutine = DeferredGenerator::fromHandler($handler, $values)
             ->catch($this->onException(...));
 
         $deferred
@@ -234,7 +235,7 @@ class Scope implements CancellationScopeInterface, Destroyable
     public function startScope(callable $handler, bool $detached, ?string $layer = null): CancellationScopeInterface
     {
         $scope = $this->createScope($detached, $layer);
-        $scope->start($handler, null, false);
+        $scope->start($handler(...), EncodedValues::empty(), false);
 
         return $scope;
     }

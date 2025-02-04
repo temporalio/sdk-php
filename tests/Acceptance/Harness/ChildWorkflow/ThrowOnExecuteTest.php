@@ -19,8 +19,10 @@ use Temporal\Workflow\WorkflowMethod;
 class ThrowOnExecuteTest extends TestCase
 {
     #[Test]
-    public static function throwExceptionOnInit(#[Stub('Harness_ChildWorkflow_ThrowsOnExecute')]WorkflowStubInterface $stub): void
-    {
+    public static function throwExceptionOnInit(
+        #[Stub('Harness_ChildWorkflow_ThrowsOnExecute')]
+        WorkflowStubInterface $stub,
+    ): void {
         try {
             $stub->getResult();
             throw new \Exception('Expected exception');
