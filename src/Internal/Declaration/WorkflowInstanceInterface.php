@@ -18,12 +18,17 @@ use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 
+/**
+ * @internal
+ */
 interface WorkflowInstanceInterface extends InstanceInterface
 {
     /**
      * Trigger constructor in Process context.
+     * If the constructor is tagged with {@see \Temporal\Workflow\InitMethod} attribute,
+     * it will be executed with the {@see \Temporal\Workflow\WorkflowMethod} arguments.
      */
-    public function initConstructor(): void;
+    public function init(array $arguments = []): void;
 
     /**
      * @param non-empty-string $name
