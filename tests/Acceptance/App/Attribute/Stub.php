@@ -14,7 +14,7 @@ use Temporal\Common\RetryOptions as CommonOptions;
 #[\Attribute(\Attribute::TARGET_PARAMETER)]
 final class Stub
 {
-    public CommonOptions $retryOptions;
+    public readonly ?CommonOptions $retryOptions;
 
     /**
      * @param non-empty-string $type Workflow type.
@@ -28,8 +28,8 @@ final class Stub
         public ?string $executionTimeout = null,
         public array $args = [],
         public array $memo = [],
-        RetryOptions $retryOptions = new RetryOptions(),
+        ?RetryOptions $retryOptions = null,
     ) {
-        $this->retryOptions = $retryOptions->toRetryOptions();
+        $this->retryOptions = $retryOptions?->toRetryOptions();
     }
 }

@@ -4,19 +4,16 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Acceptance\Extra\Workflow\InitMethod;
 
-use PHPUnit\Framework\Attributes\CoversFunction;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Failure\TimeoutFailure;
-use Temporal\Tests\Acceptance\App\Attribute\RetryOptions;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow\InitMethod;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
-#[CoversFunction('Temporal\Internal\Workflow\Process\Process::logRunningHandlers')]
 class InitMethodTest extends TestCase
 {
     #[Test]
@@ -45,9 +42,6 @@ class InitMethodTest extends TestCase
             type: 'Extra_Workflow_InitMethod__different_constructor_params',
             executionTimeout: '2 seconds',
             args: [new Input('John Doe', 30)],
-            retryOptions: new RetryOptions(
-                maximumAttempts: 1,
-            ),
         )] WorkflowStubInterface $stub,
     ): void {
         try {
