@@ -874,6 +874,12 @@
       <code><![CDATA[getReader]]></code>
     </UndefinedInterfaceMethod>
   </file>
+  <file src="src/Internal/Support/DateInterval.php">
+    <DeprecatedConstant>
+      <code><![CDATA[self::FORMAT_MONTHS]]></code>
+      <code><![CDATA[self::FORMAT_YEARS]]></code>
+    </DeprecatedConstant>
+  </file>
   <file src="src/Internal/Support/DateTime.php">
     <InvalidReturnStatement>
       <code><![CDATA[$time]]></code>
