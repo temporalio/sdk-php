@@ -9,6 +9,7 @@ use Symfony\Component\Console\Output\Output;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\Process\Process;
+use Temporal\Common\SearchAttributes\ValueType;
 
 final class Environment
 {
@@ -52,10 +53,40 @@ final class Environment
 
     /**
      * @param list<non-empty-string> $parameters
+     * @param array<non-empty-string, ValueType|non-empty-string> $searchAttributes Key is the name of the search
+     *        attribute, value is the type of the search attribute. Expected values from {@see ValueType}.
      */
-    public function startTemporalServer(int $commandTimeout = 10, array $parameters = []): void
-    {
+    public function startTemporalServer(
+        int $commandTimeout = 10,
+        array $parameters = [],
+        array $searchAttributes = [],
+    ): void {
         $temporalPort = \parse_url(\getenv('TEMPORAL_ADDRESS') ?: '127.0.0.1:7233', PHP_URL_PORT);
+
+        // Add search attributes
+        foreach ($searchAttributes as $name => $type) {
+            $type = \is_string($type) ? ValueType::tryFrom($type) : $type;
+            if (!$type instanceof ValueType) {
+                \trigger_error('Invalid search attribute type: ' . \get_debug_type($type), E_USER_WARNING);
+                continue;
+            }
+
+            if (\preg_match('/^[a-zA-Z0-9_-]+$/', $name) !== 1) {
+                \trigger_error('Invalid search attribute name: ' . $name, E_USER_WARNING);
+                continue;
+            }
+
+            $parameters[] = '--search-attribute';
+            $parameters[] = $name . '=' . match ($type) {
+                ValueType::Bool => 'bool',
+                ValueType::Float => 'double',
+                ValueType::Int => 'int',
+                ValueType::Keyword => 'keyword',
+                ValueType::KeywordList => 'keywordList',
+                ValueType::String => 'text',
+                ValueType::Datetime => 'datetime',
+            };
+        }
 
         $this->output->write('Starting Temporal test server... ');
         $this->temporalServerProcess = new Process(
@@ -67,8 +98,6 @@ final class Environment
                 '--dynamic-config-value', 'frontend.enableUpdateWorkflowExecutionAsyncAccepted=true',
                 '--dynamic-config-value', 'frontend.enableExecuteMultiOperation=true',
                 '--dynamic-config-value', 'system.enableEagerWorkflowStart=true',
-                '--search-attribute', 'foo=text',
-                '--search-attribute', 'bar=int',
                 '--log-level', 'error',
                 '--headless',
                 ...$parameters,

@@ -57,5 +57,8 @@ final class DateIntervalTestCase extends TestCase
         yield [1, DateInterval::FORMAT_HOURS, 3_600_000_000, '0/1/0/0'];
         yield [1, DateInterval::FORMAT_DAYS, 86_400_000_000, '1/0/0/0'];
         yield [1, DateInterval::FORMAT_WEEKS, 604_800_000_000, '7/0/0/0'];
+        yield [(0.1 + 0.7) * 10.0, DateInterval::FORMAT_SECONDS, 8_000_000, '0/0/0/8'];
+        yield [(0.1 + 0.7) * 10.0, DateInterval::FORMAT_DAYS, 691200000000, '8/0/0/0'];
+        yield [(0.1 + 0.7) * 10.0, DateInterval::FORMAT_WEEKS, 4838400000000, '56/0/0/0'];
     }
 }

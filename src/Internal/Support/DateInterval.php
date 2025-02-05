@@ -20,8 +20,12 @@ use Google\Protobuf\Duration;
  */
 final class DateInterval
 {
+    /** @deprecated Use days instead */
     public const FORMAT_YEARS = 'years';
+
+    /** @deprecated Use days instead */
     public const FORMAT_MONTHS = 'months';
+
     public const FORMAT_WEEKS = 'weeks';
     public const FORMAT_DAYS = 'days';
     public const FORMAT_HOURS = 'hours';
@@ -73,11 +77,17 @@ final class DateInterval
                     default => $fraction > 0 ? match ($format) {
                         self::FORMAT_SECONDS => $fraction * 1_000_000,
                         self::FORMAT_MINUTES => $fraction * 60_000_000,
+                        self::FORMAT_HOURS => $fraction * 3_600_000_000,
+                        self::FORMAT_DAYS => $fraction * 86_400_000_000,
+                        self::FORMAT_WEEKS => $fraction * 604_800_000_000,
                         default => 0,
                     } : 0,
                 };
+                $micros = (int) \round($micros);
+                $seconds = (int) \floor($micros / 1_000_000);
+                $micros = $micros - ($seconds * 1_000_000);
 
-                $seconds = \floor($micros / 1_000_000) + \floor(match ($format) {
+                $seconds += \floor(match ($format) {
                     self::FORMAT_SECONDS => $int,
                     self::FORMAT_MINUTES => $int * 60,
                     self::FORMAT_HOURS => $int * 3600,
@@ -97,7 +107,7 @@ final class DateInterval
                     hours: $hours % 24,
                     minutes: $minutes % 60,
                     seconds: $seconds % 60,
-                    microseconds: $micros % 1000_000,
+                    microseconds: $micros,
                 );
 
             case $interval instanceof Duration:

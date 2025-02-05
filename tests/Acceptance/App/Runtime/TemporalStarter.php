@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Acceptance\App\Runtime;
 
+use Temporal\Common\SearchAttributes\ValueType;
 use Temporal\Testing\Environment;
 
 final class TemporalStarter
@@ -23,7 +24,17 @@ final class TemporalStarter
             return;
         }
 
-        $this->environment->startTemporalServer();
+        $this->environment->startTemporalServer(searchAttributes: [
+            'foo' => ValueType::String->value,
+            'bar' => ValueType::Int->value,
+            'testBool' => ValueType::Bool,
+            'testInt' => ValueType::Int,
+            'testFloat' => ValueType::Float,
+            'testString' => ValueType::String,
+            'testKeyword' => ValueType::Keyword,
+            'testKeywordList' => ValueType::KeywordList,
+            'testDatetime' => ValueType::Datetime,
+        ]);
         $this->started = true;
     }
 

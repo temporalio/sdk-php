@@ -17,6 +17,7 @@ use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Common\IdReusePolicy;
 use Temporal\Common\RetryOptions;
+use Temporal\Common\TypedSearchAttributes;
 use Temporal\Common\Uuid;
 use Temporal\Common\WorkflowIdConflictPolicy;
 use Temporal\DataConverter\DataConverter;
@@ -29,7 +30,6 @@ class WorkflowOptionsTestCase extends AbstractDTOMarshalling
     public function testMarshalling(): void
     {
         $dto = new WorkflowOptions();
-
         $expected = [
             'WorkflowID'               => $dto->workflowId,
             'TaskQueue'                => 'default',
@@ -49,7 +49,10 @@ class WorkflowOptionsTestCase extends AbstractDTOMarshalling
             'SearchAttributes'         => null,
         ];
 
-        $this->assertSame($expected, $this->marshal($dto));
+        $result = $this->marshal($dto);
+        unset($result['typedSearchAttributes']);
+
+        $this->assertSame($expected, $result);
     }
 
     public function testWorkflowIdChangesNotMutateState(): void
@@ -186,6 +189,24 @@ class WorkflowOptionsTestCase extends AbstractDTOMarshalling
         $this->assertInstanceOf(Memo::class, $dto->toMemo(DataConverter::createDefault()));
     }
 
+    public function testCantSetTypedSAIfUntypedExist(): void
+    {
+        $dto = WorkflowOptions::new()->withSearchAttributes([]);
+
+        $this->expectException(\LogicException::class);
+
+        $dto->withTypedSearchAttributes(TypedSearchAttributes::empty());
+    }
+
+    public function testCantSetUntypedSAIfTypedExist(): void
+    {
+        $dto = WorkflowOptions::new()->withTypedSearchAttributes(TypedSearchAttributes::empty());
+
+        $this->expectException(\LogicException::class);
+
+        $dto->withSearchAttributes([]);
+    }
+
     public function testEmptySearchAttributesCasting(): void
     {
         $dto = new WorkflowOptions();
@@ -194,14 +215,25 @@ class WorkflowOptionsTestCase extends AbstractDTOMarshalling
         ));
     }
 
-    public function testNonEmptySearchAttributesCasting(): void
+    public function testSetUntypedSearchAttributesCasting(): void
     {
         $dto = WorkflowOptions::new()
-            ->withSearchAttributes([])
-        ;
+            ->withSearchAttributes(['foo' => 'bar']);
 
-        $this->assertInstanceOf(SearchAttributes::class, $dto->toSearchAttributes(
-            DataConverter::createDefault()
-        ));
+        $result = $dto->toSearchAttributes(DataConverter::createDefault());
+
+        $this->assertInstanceOf(SearchAttributes::class, $result);
+        $this->assertCount(1, $result->getIndexedFields());
+    }
+
+    public function testSetTypedSearchAttributesCasting(): void
+    {
+        $dto = WorkflowOptions::new()
+            ->withTypedSearchAttributes(TypedSearchAttributes::empty()->withUntypedValue('foo', 'bar'));
+
+        $result = $dto->toSearchAttributes(DataConverter::createDefault());
+
+        $this->assertInstanceOf(SearchAttributes::class, $result);
+        $this->assertCount(1, $result->getIndexedFields());
     }
 }

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="5.26.1@d747f6500b38ac4f7dfc5edbcae6e4b637d7add0">
+<files psalm-version="6.2.0@814dfde37b43a1fe6d9b0996e08b19661af53bc5">
   <file src="src/Activity.php">
     <ImplicitToStringCast>
       <code><![CDATA[$type]]></code>
@@ -39,6 +39,11 @@
       <code><![CDATA[recordHeartbeat]]></code>
       <code><![CDATA[recordHeartbeatByToken]]></code>
     </MissingReturnType>
+  </file>
+  <file src="src/Client/Common/Paginator.php">
+    <PossiblyNullPropertyAssignmentValue>
+      <code><![CDATA[$loader->current()]]></code>
+    </PossiblyNullPropertyAssignmentValue>
   </file>
   <file src="src/Client/GRPC/Context.php">
     <ArgumentTypeCoercion>
@@ -181,14 +186,20 @@
   </file>
   <file src="src/Client/WorkflowOptions.php">
     <ImpureMethodCall>
+      <code><![CDATA[$this->typedSearchAttributes]]></code>
       <code><![CDATA[setFields]]></code>
       <code><![CDATA[setIndexedFields]]></code>
+      <code><![CDATA[setIndexedFields]]></code>
+      <code><![CDATA[toPayload]]></code>
       <code><![CDATA[toPayload]]></code>
       <code><![CDATA[toPayload]]></code>
     </ImpureMethodCall>
     <PossiblyNullReference>
       <code><![CDATA[mergeWith]]></code>
     </PossiblyNullReference>
+    <UnnecessaryVarAnnotation>
+      <code><![CDATA[SearchAttributeKey]]></code>
+    </UnnecessaryVarAnnotation>
   </file>
   <file src="src/Common/CronSchedule.php">
     <DeprecatedClass>
@@ -213,6 +224,37 @@
       <code><![CDATA[DateInterval::toDuration($this->initialInterval)]]></code>
       <code><![CDATA[DateInterval::toDuration($this->maximumInterval)]]></code>
     </PossiblyNullArgument>
+  </file>
+  <file src="src/Common/SearchAttributes/SearchAttributeKey.php">
+    <ImpureMethodCall>
+      <code><![CDATA[valueSet]]></code>
+      <code><![CDATA[valueUnset]]></code>
+    </ImpureMethodCall>
+  </file>
+  <file src="src/Common/SearchAttributes/SearchAttributeKey/KeywordListValue.php">
+    <MismatchingDocblockParamType>
+      <code><![CDATA[iterable<string|\Stringable>]]></code>
+    </MismatchingDocblockParamType>
+  </file>
+  <file src="src/Common/TypedSearchAttributes.php">
+    <InvalidArgument>
+      <code><![CDATA[$key]]></code>
+      <code><![CDATA[$key]]></code>
+    </InvalidArgument>
+    <PossiblyInvalidClone>
+      <code><![CDATA[clone $this->collection]]></code>
+    </PossiblyInvalidClone>
+    <PossiblyNullArrayAccess>
+      <code><![CDATA[$this->collection[$found]]]></code>
+      <code><![CDATA[$this->collection[$key]]]></code>
+    </PossiblyNullArrayAccess>
+    <PossiblyNullReference>
+      <code><![CDATA[$this->collection]]></code>
+      <code><![CDATA[$this->collection]]></code>
+    </PossiblyNullReference>
+    <UndefinedMethod>
+      <code><![CDATA[valueSet]]></code>
+    </UndefinedMethod>
   </file>
   <file src="src/Common/Uuid.php">
     <LessSpecificReturnStatement>
@@ -422,6 +464,8 @@
     </PossiblyNullArgument>
     <PossiblyNullReference>
       <code><![CDATA[getName]]></code>
+      <code><![CDATA[getStartWorkflow]]></code>
+      <code><![CDATA[getUpdateWorkflow]]></code>
     </PossiblyNullReference>
     <RedundantConditionGivenDocblockType>
       <code><![CDATA[$delay !== null]]></code>
@@ -715,11 +759,6 @@
     <MoreSpecificReturnType>
       <code><![CDATA[null|\Closure(Message): mixed]]></code>
     </MoreSpecificReturnType>
-    <PossiblyFalseArgument>
-      <code><![CDATA[$now->modify(
-                        \sprintf('+%d seconds +%d microseconds', $input->getSeconds(), $input->getNanos() / 1000),
-                    )]]></code>
-    </PossiblyFalseArgument>
   </file>
   <file src="src/Internal/Marshaller/Type/ArrayType.php">
     <MoreSpecificImplementedParamType>
@@ -834,6 +873,12 @@
       <code><![CDATA[getQueue]]></code>
       <code><![CDATA[getReader]]></code>
     </UndefinedInterfaceMethod>
+  </file>
+  <file src="src/Internal/Support/DateInterval.php">
+    <DeprecatedConstant>
+      <code><![CDATA[self::FORMAT_MONTHS]]></code>
+      <code><![CDATA[self::FORMAT_YEARS]]></code>
+    </DeprecatedConstant>
   </file>
   <file src="src/Internal/Support/DateTime.php">
     <InvalidReturnStatement>
@@ -1017,6 +1062,11 @@
       <code><![CDATA[UpsertSearchAttributes]]></code>
     </MissingImmutableAnnotation>
   </file>
+  <file src="src/Internal/Transport/Request/UpsertTypedSearchAttributes.php">
+    <MissingImmutableAnnotation>
+      <code><![CDATA[UpsertTypedSearchAttributes]]></code>
+    </MissingImmutableAnnotation>
+  </file>
   <file src="src/Internal/Transport/Router/CancelWorkflow.php">
     <DocblockTypeContradiction>
       <code><![CDATA[$process === null]]></code>
@@ -1075,6 +1125,9 @@
     </ArgumentTypeCoercion>
   </file>
   <file src="src/Internal/Transport/Router/StartWorkflow.php">
+    <PossiblyFalseArgument>
+      <code><![CDATA[\json_encode($param)]]></code>
+    </PossiblyFalseArgument>
     <UnnecessaryVarAnnotation>
       <code><![CDATA[Input]]></code>
     </UnnecessaryVarAnnotation>
@@ -1194,6 +1247,9 @@
     </PossiblyNullReference>
   </file>
   <file src="src/Internal/Workflow/ScopeContext.php">
+    <InaccessibleProperty>
+      <code><![CDATA[$this->input->info->typedSearchAttributes]]></code>
+    </InaccessibleProperty>
     <MissingImmutableAnnotation>
       <code><![CDATA[ScopeContext]]></code>
     </MissingImmutableAnnotation>
@@ -1355,6 +1411,10 @@
     </PossiblyNullReference>
   </file>
   <file src="src/Worker/Transport/Codec/ProtoCodec/Encoder.php">
+    <PossiblyFalseArgument>
+      <code><![CDATA[\json_encode($cmd->getOptions(), JSON_INVALID_UTF8_IGNORE | JSON_UNESCAPED_UNICODE)]]></code>
+      <code><![CDATA[\json_encode($options)]]></code>
+    </PossiblyFalseArgument>
     <PossiblyNullArgument>
       <code><![CDATA[$cmd->getFailure()]]></code>
     </PossiblyNullArgument>

@@ -42,6 +42,7 @@ final class WorkflowStubInjector implements InjectorInterface
         $options = WorkflowOptions::new()
             ->withWorkflowExecutionTimeout($attribute->executionTimeout ?? '1 minute')
             ->withTaskQueue($feature->taskQueue)
+            ->withRetryOptions($attribute->retryOptions)
             ->withEagerStart($attribute->eagerStart);
 
         $attribute->workflowId === null or $options = $options

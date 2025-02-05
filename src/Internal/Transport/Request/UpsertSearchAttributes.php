@@ -6,7 +6,7 @@ namespace Temporal\Internal\Transport\Request;
 
 use Temporal\Worker\Transport\Command\Client\Request;
 
-class UpsertSearchAttributes extends Request
+final class UpsertSearchAttributes extends Request
 {
     public const NAME = 'UpsertWorkflowSearchAttributes';
 
@@ -14,7 +14,7 @@ class UpsertSearchAttributes extends Request
      * @param array<string, mixed> $searchAttributes
      */
     public function __construct(
-        private array $searchAttributes,
+        private readonly array $searchAttributes,
     ) {
         parent::__construct(self::NAME, ['searchAttributes' => $searchAttributes]);
     }
