@@ -1,10 +1,10 @@
 * text=auto
 
 /.*                    export-ignore
-config/                export-ignore
-resources/scripts/     export-ignore
-runtime/               export-ignore
-tests/                 export-ignore
+/config/               export-ignore
+/resources/scripts/    export-ignore
+/runtime/              export-ignore
+/tests/                export-ignore
 
 /*.xml                 export-ignore
 /*.xml.dist            export-ignore

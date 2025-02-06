@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<meta-storm xmlns="meta-storm">
+    <definitions>
+        <classMethod
+            class="\Temporal\Client\WorkflowClientInterface"
+            method="newUntypedWorkflowStub"
+            argument="0"
+        >
+            <collection name="temporal/sdk:workflow-type" argument="0">
+                <extractor xpath="" stopIfResolved="true" />
+                <extractor xpath="$containingClass" />
+            </collection>
+            <stopCompletion />
+        </classMethod>
+        <classMethod
+            class="\Temporal\Client\WorkflowClientInterface"
+            method="newUntypedRunningWorkflowStub"
+            argument="2"
+        >
+            <collection name="temporal/sdk:workflow-type" argument="0">
+                <extractor xpath="" stopIfResolved="true" />
+                <extractor xpath="$containingClass" />
+            </collection>
+            <stopCompletion />
+        </classMethod>
+        <classMethod
+            class="\Temporal\Client\WorkflowClientInterface"
+            method="newWorkflowStub"
+            argument="0"
+        >
+            <collection name="temporal/sdk:workflow-class" argument="0" />
+            <stopCompletion />
+        </classMethod>
+    </definitions>
+</meta-storm>

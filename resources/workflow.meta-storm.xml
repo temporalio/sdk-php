@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<meta-storm xmlns="meta-storm">
+    <definitions>
+        <classMethod
+            class="\Temporal\Workflow"
+            method="continueAsNew"
+            argument="0"
+        >
+            <collection name="temporal/sdk:workflow-type" argument="0">
+                <extractor xpath="" stopIfResolved="true" />
+                <extractor xpath="$containingClass" />
+            </collection>
+            <stopCompletion />
+        </classMethod>
+        <classMethod
+            class="\Temporal\Workflow"
+            method="newContinueAsNewStub"
+            argument="0"
+        >
+            <collection name="temporal/sdk:workflow-class" argument="0" />
+            <stopCompletion />
+        </classMethod>
+        <classMethod
+            class="\Temporal\Workflow"
+            method="executeChildWorkflow"
+            argument="0"
+        >
+            <collection name="temporal/sdk:workflow-type" argument="0">
+                <extractor xpath="" stopIfResolved="true" />
+                <extractor xpath="$containingClass" />
+            </collection>
+            <stopCompletion />
+        </classMethod>
+        <classMethod
+            class="\Temporal\Workflow"
+            method="newUntypedChildWorkflowStub"
+            argument="0"
+        >
+            <collection name="temporal/sdk:workflow-type" argument="0">
+                <extractor xpath="" stopIfResolved="true" />
+                <extractor xpath="$containingClass" />
+            </collection>
+            <stopCompletion />
+        </classMethod>
+        <classMethod
+            class="\Temporal\Workflow"
+            method="newChildWorkflowStub"
+            argument="0"
+        >
+            <collection name="temporal/sdk:workflow-class" argument="0" />
+            <stopCompletion />
+        </classMethod>
+        <classMethod
+            class="\Temporal\Workflow"
+            method="newExternalWorkflowStub"
+            argument="0"
+        >
+            <collection name="temporal/sdk:workflow-class" argument="0" />
+            <stopCompletion />
+        </classMethod>
+        <classMethod
+            class="\Temporal\Workflow"
+            method="executeActivity"
+            argument="0"
+        >
+            <collection name="temporal/sdk:activity-type" argument="0" />
+            <stopCompletion />
+        </classMethod>
+        <classMethod
+            class="\Temporal\Workflow"
+            method="newActivityStub"
+            argument="0"
+        >
+            <collection name="temporal/sdk:activity-class" argument="0" />
+            <stopCompletion />
+        </classMethod>
+    </definitions>
+</meta-storm>
