@@ -26,6 +26,7 @@ use Temporal\Interceptor\WorkflowOutboundCalls\SideEffectInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\SignalExternalWorkflowInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\TimerInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\UpsertSearchAttributesInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\UpsertTypedSearchAttributesInput;
 use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
 
 /**
@@ -154,6 +155,18 @@ trait WorkflowOutboundCallsInterceptorTrait
      */
     public function upsertSearchAttributes(UpsertSearchAttributesInput $input, callable $next): PromiseInterface
     {
+        return $next($input);
+    }
+
+    /**
+     * Default implementation of the `upsertTypedSearchAttributes` method.
+     *
+     * @see WorkflowOutboundCallsInterceptor::upsertTypedSearchAttributes()
+     */
+    public function upsertTypedSearchAttributes(
+        UpsertTypedSearchAttributesInput $input,
+        callable $next,
+    ): PromiseInterface {
         return $next($input);
     }
 

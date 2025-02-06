@@ -15,6 +15,7 @@ use Ramsey\Uuid\UuidInterface;
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Activity\ActivityOptionsInterface;
+use Temporal\Common\SearchAttributes\SearchAttributeUpdate;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Support\DateInterval;
@@ -285,7 +286,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * interruption of in-progress handlers by workflow exit:
      *
      * ```php
-     * yield Workflow.await(static fn() => Workflow::allHandlersFinished());
+     *  yield Workflow.await(static fn() => Workflow::allHandlersFinished());
      * ```
      *
      * @return bool True if all handlers have finished executing.
@@ -293,9 +294,25 @@ interface WorkflowContextInterface extends EnvironmentInterface
     public function allHandlersFinished(): bool;
 
     /**
-     * @param array<string, mixed> $searchAttributes
+     * Upsert search attributes
+     *
+     * @param array<non-empty-string, mixed> $searchAttributes
      */
     public function upsertSearchAttributes(array $searchAttributes): void;
+
+    /**
+     * Upsert typed Search Attributes
+     *
+     * ```php
+     *  Workflow::upsertTypedSearchAttributes(
+     *      SearchAttributeKey::forKeyword('CustomKeyword')->valueSet('CustomValue'),
+     *      SearchAttributeKey::forInt('MyCounter')->valueSet(42),
+     *  );
+     * ```
+     *
+     * @link https://docs.temporal.io/visibility#search-attribute
+     */
+    public function upsertTypedSearchAttributes(SearchAttributeUpdate ...$updates): void;
 
     /**
      * Generate a UUID.
