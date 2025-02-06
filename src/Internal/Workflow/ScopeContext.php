@@ -13,18 +13,13 @@ namespace Temporal\Internal\Workflow;
 
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
-use Temporal\Common\SearchAttributes\SearchAttributeKey;
-use Temporal\Common\SearchAttributes\SearchAttributeUpdate;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Internal\Transport\CompletableResult;
-use Temporal\Internal\Transport\Request\UpsertMemo;
-use Temporal\Internal\Transport\Request\UpsertTypedSearchAttributes;
 use Temporal\Internal\Workflow\Process\Scope;
 use Temporal\Promise;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\ScopedContextInterface;
-use Temporal\Internal\Transport\Request\UpsertSearchAttributes;
 use Temporal\Workflow\UpdateContext;
 
 class ScopeContext extends WorkflowContext implements ScopedContextInterface
