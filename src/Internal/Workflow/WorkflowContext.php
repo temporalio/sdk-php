@@ -35,6 +35,7 @@ use Temporal\Interceptor\WorkflowOutboundCalls\GetVersionInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\PanicInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\SideEffectInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\TimerInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\UpsertMemoInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\UpsertSearchAttributesInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\UpsertTypedSearchAttributesInput;
 use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
@@ -55,6 +56,7 @@ use Temporal\Internal\Transport\Request\GetVersion;
 use Temporal\Internal\Transport\Request\NewTimer;
 use Temporal\Internal\Transport\Request\Panic;
 use Temporal\Internal\Transport\Request\SideEffect;
+use Temporal\Internal\Transport\Request\UpsertMemo;
 use Temporal\Internal\Transport\Request\UpsertSearchAttributes;
 use Temporal\Internal\Transport\Request\UpsertTypedSearchAttributes;
 use Temporal\Internal\Workflow\Process\HandlerState;
@@ -446,6 +448,31 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     public function allHandlersFinished(): bool
     {
         return !$this->handlers->hasRunningHandlers();
+    }
+
+    public function upsertMemo(array $values): void
+    {
+        $this->callsInterceptor->with(
+            function (UpsertMemoInput $input): PromiseInterface {
+                $result = $this->request(new UpsertMemo($input->memo), false);
+
+                /** @psalm-suppress UnsupportedPropertyReferenceUsage $memo */
+                $memo = &$this->input->info->memo;
+                $memo ??= [];
+                foreach ($input->memo as $name => $value) {
+                    if ($value === null) {
+                        unset($memo[$name]);
+                        continue;
+                    }
+
+                    $memo[$name] = $value;
+                }
+
+                return $result;
+            },
+            /** @see WorkflowOutboundCallsInterceptor::upsertMemo() */
+            'upsertMemo',
+        )(new UpsertMemoInput($values));
     }
 
     public function upsertSearchAttributes(array $searchAttributes): void

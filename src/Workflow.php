@@ -904,6 +904,16 @@ final class Workflow extends Facade
     }
 
     /**
+     * Upsert Memo
+     *
+     * @param array<string, mixed> $values
+     */
+    public static function upsertMemo(array $values): void
+    {
+        self::getCurrentContext()->upsertMemo($values);
+    }
+
+    /**
      * Upsert search attributes
      *
      * @param array<non-empty-string, mixed> $searchAttributes
