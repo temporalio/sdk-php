@@ -17,6 +17,7 @@ use Temporal\Common\SearchAttributes\SearchAttributeKey;
 use Temporal\Common\SearchAttributes\SearchAttributeUpdate;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Internal\Transport\CompletableResult;
+use Temporal\Internal\Transport\Request\UpsertMemo;
 use Temporal\Internal\Transport\Request\UpsertTypedSearchAttributes;
 use Temporal\Internal\Workflow\Process\Scope;
 use Temporal\Promise;
@@ -112,44 +113,6 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
     public function rejectConditionGroup(string $conditionGroupId): void
     {
         $this->parent->rejectConditionGroup($conditionGroupId);
-    }
-
-    public function upsertSearchAttributes(array $searchAttributes): void
-    {
-        $this->request(new UpsertSearchAttributes($searchAttributes), waitResponse: false);
-
-        /** @psalm-suppress UnsupportedPropertyReferenceUsage $sa */
-        $sa = &$this->input->info->searchAttributes;
-        foreach ($searchAttributes as $name => $value) {
-            if ($value === null) {
-                unset($sa[$name]);
-                continue;
-            }
-
-            $sa[$name] = $value;
-        }
-    }
-
-    public function upsertTypedSearchAttributes(SearchAttributeUpdate ...$updates): void
-    {
-        $this->request(new UpsertTypedSearchAttributes($updates), waitResponse: false);
-
-        // Merge changes
-        $tsa = $this->input->info->typedSearchAttributes;
-        foreach ($updates as $update) {
-            if ($update instanceof SearchAttributeUpdate\ValueUnset) {
-                $tsa = $tsa->withoutValue($update->name);
-                continue;
-            }
-
-            \assert($update instanceof SearchAttributeUpdate\ValueSet);
-            $tsa = $tsa->withValue(
-                SearchAttributeKey::for($update->type, $update->name),
-                $update->value,
-            );
-        }
-
-        $this->input->info->typedSearchAttributes = $tsa;
     }
 
     #[\Override]

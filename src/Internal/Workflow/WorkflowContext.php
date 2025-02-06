@@ -17,6 +17,8 @@ use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Activity\ActivityOptionsInterface;
 use Temporal\Activity\LocalActivityOptions;
+use Temporal\Common\SearchAttributes\SearchAttributeKey;
+use Temporal\Common\SearchAttributes\SearchAttributeUpdate;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Type;
@@ -34,6 +36,7 @@ use Temporal\Interceptor\WorkflowOutboundCalls\PanicInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\SideEffectInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\TimerInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\UpsertSearchAttributesInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\UpsertTypedSearchAttributesInput;
 use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
 use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
 use Temporal\Internal\Declaration\Destroyable;
@@ -53,6 +56,7 @@ use Temporal\Internal\Transport\Request\NewTimer;
 use Temporal\Internal\Transport\Request\Panic;
 use Temporal\Internal\Transport\Request\SideEffect;
 use Temporal\Internal\Transport\Request\UpsertSearchAttributes;
+use Temporal\Internal\Transport\Request\UpsertTypedSearchAttributes;
 use Temporal\Internal\Workflow\Process\HandlerState;
 use Temporal\Promise;
 use Temporal\Worker\Transport\Command\RequestInterface;
@@ -447,11 +451,55 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     public function upsertSearchAttributes(array $searchAttributes): void
     {
         $this->callsInterceptor->with(
-            fn(UpsertSearchAttributesInput $input): PromiseInterface
-                => $this->request(new UpsertSearchAttributes($input->searchAttributes)),
+            function (UpsertSearchAttributesInput $input): PromiseInterface {
+                $result = $this->request(new UpsertSearchAttributes($input->searchAttributes), false);
+
+                /** @psalm-suppress UnsupportedPropertyReferenceUsage $sa */
+                $sa = &$this->input->info->searchAttributes;
+                foreach ($input->searchAttributes as $name => $value) {
+                    if ($value === null) {
+                        unset($sa[$name]);
+                        continue;
+                    }
+
+                    $sa[$name] = $value;
+                }
+
+                return $result;
+            },
             /** @see WorkflowOutboundCallsInterceptor::upsertSearchAttributes() */
             'upsertSearchAttributes',
         )(new UpsertSearchAttributesInput($searchAttributes));
+    }
+
+    public function upsertTypedSearchAttributes(SearchAttributeUpdate ...$updates): void
+    {
+        $this->callsInterceptor->with(
+            function (UpsertTypedSearchAttributesInput $input): PromiseInterface {
+                $result = $this->request(new UpsertTypedSearchAttributes($input->updates), false);
+
+                // Merge changes
+                $tsa = $this->input->info->typedSearchAttributes;
+                foreach ($input->updates as $update) {
+                    if ($update instanceof SearchAttributeUpdate\ValueUnset) {
+                        $tsa = $tsa->withoutValue($update->name);
+                        continue;
+                    }
+
+                    if ($update instanceof SearchAttributeUpdate\ValueSet) {
+                        $tsa = $tsa->withValue(
+                            SearchAttributeKey::for($update->type, $update->name),
+                            $update->value,
+                        );
+                    }
+                }
+
+                $this->input->info->typedSearchAttributes = $tsa;
+                return $result;
+            },
+            /** @see WorkflowOutboundCallsInterceptor::upsertTypedSearchAttributes() */
+            'upsertSearchAttributes',
+        )(new UpsertTypedSearchAttributesInput($updates));
     }
 
     public function await(callable|Mutex|PromiseInterface ...$conditions): PromiseInterface

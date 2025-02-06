@@ -27,6 +27,7 @@ use Temporal\Interceptor\WorkflowOutboundCalls\SideEffectInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\SignalExternalWorkflowInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\TimerInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\UpsertSearchAttributesInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\UpsertTypedSearchAttributesInput;
 use Temporal\Internal\Interceptor\Interceptor;
 
 /**
@@ -56,10 +57,7 @@ interface WorkflowOutboundCallsInterceptor extends Interceptor
     /**
      * @param callable(ExecuteActivityInput): PromiseInterface $next
      */
-    public function executeActivity(
-        ExecuteActivityInput $input,
-        callable $next,
-    ): PromiseInterface;
+    public function executeActivity(ExecuteActivityInput $input, callable $next): PromiseInterface;
 
     /**
      * @param callable(ExecuteLocalActivityInput): PromiseInterface $next
@@ -119,6 +117,14 @@ interface WorkflowOutboundCallsInterceptor extends Interceptor
      * @param callable(UpsertSearchAttributesInput): PromiseInterface $next
      */
     public function upsertSearchAttributes(UpsertSearchAttributesInput $input, callable $next): PromiseInterface;
+
+    /**
+     * @param callable(UpsertTypedSearchAttributesInput): PromiseInterface $next
+     */
+    public function upsertTypedSearchAttributes(
+        UpsertTypedSearchAttributesInput $input,
+        callable $next,
+    ): PromiseInterface;
 
     /**
      * @param callable(AwaitInput): PromiseInterface $next

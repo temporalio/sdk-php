@@ -11,26 +11,31 @@ declare(strict_types=1);
 
 namespace Temporal\Interceptor\WorkflowOutboundCalls;
 
+use Temporal\Common\SearchAttributes\SearchAttributeUpdate;
+
 /**
  * @psalm-immutable
  */
-final class UpsertSearchAttributesInput
+final class UpsertTypedSearchAttributesInput
 {
     /**
-     * @param array<non-empty-string, mixed> $searchAttributes
+     * @param array<SearchAttributeUpdate> $updates
      *
      * @no-named-arguments
      * @internal Don't use the constructor. Use {@see self::with()} instead.
      */
     public function __construct(
-        public readonly array $searchAttributes,
+        public readonly array $updates,
     ) {}
 
+    /**
+     * @param array<SearchAttributeUpdate>|null $updates
+     */
     public function with(
-        ?array $searchAttributes = null,
+        ?array $updates = null,
     ): self {
         return new self(
-            $searchAttributes ?? $this->searchAttributes,
+            $updates ?? $this->updates,
         );
     }
 }

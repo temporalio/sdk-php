@@ -906,7 +906,7 @@ final class Workflow extends Facade
     /**
      * Upsert search attributes
      *
-     * @param array<string, mixed> $searchAttributes
+     * @param array<non-empty-string, mixed> $searchAttributes
      */
     public static function upsertSearchAttributes(array $searchAttributes): void
     {
