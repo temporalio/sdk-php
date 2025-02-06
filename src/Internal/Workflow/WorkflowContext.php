@@ -498,7 +498,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
                 return $result;
             },
             /** @see WorkflowOutboundCallsInterceptor::upsertTypedSearchAttributes() */
-            'upsertSearchAttributes',
+            'upsertTypedSearchAttributes',
         )(new UpsertTypedSearchAttributesInput($updates));
     }
 

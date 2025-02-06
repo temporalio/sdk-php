@@ -1247,9 +1247,6 @@
     </PossiblyNullReference>
   </file>
   <file src="src/Internal/Workflow/ScopeContext.php">
-    <InaccessibleProperty>
-      <code><![CDATA[$this->input->info->typedSearchAttributes]]></code>
-    </InaccessibleProperty>
     <MissingImmutableAnnotation>
       <code><![CDATA[ScopeContext]]></code>
     </MissingImmutableAnnotation>
@@ -1267,6 +1264,9 @@
       <code><![CDATA[$type]]></code>
       <code><![CDATA[$type]]></code>
     </ArgumentTypeCoercion>
+    <InaccessibleProperty>
+      <code><![CDATA[$this->input->info->typedSearchAttributes]]></code>
+    </InaccessibleProperty>
     <InvalidArgument>
       <code><![CDATA[$options]]></code>
     </InvalidArgument>
