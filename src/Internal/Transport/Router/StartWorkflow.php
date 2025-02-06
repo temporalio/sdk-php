@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
+use Temporal\Api\Common\V1\Memo;
 use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\Common\TypedSearchAttributes;
 use Temporal\DataConverter\EncodedCollection;
@@ -58,8 +59,10 @@ final class StartWorkflow extends Route
 
         // Search Attributes and Typed Search Attributes
         $searchAttributes = $this->convertSearchAttributes($options['info']['SearchAttributes'] ?? null);
+        $memo = $this->convertMemo($options['info']['Memo'] ?? null);
         $options['info']['SearchAttributes'] = $searchAttributes?->getValues();
         $options['info']['TypedSearchAttributes'] = $this->prepareTypedSA($options['search_attributes'] ?? null);
+        $options['info']['Memo'] = $memo?->getValues();
 
         /** @var Input $input */
         $input = $this->services->marshaller->unmarshal($options, new Input());
@@ -149,6 +152,32 @@ final class StartWorkflow extends Route
 
             return EncodedCollection::fromPayloadCollection(
                 $sa->getIndexedFields(),
+                $this->services->dataConverter,
+            );
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    private function convertMemo(?array $param): ?EncodedCollection
+    {
+        if (!\is_array($param)) {
+            return null;
+        }
+
+        if ($param === []) {
+            return EncodedCollection::empty();
+        }
+
+        try {
+            $memo = (new Memo());
+            $memo->mergeFromJsonString(
+                \json_encode($param),
+                true,
+            );
+
+            return EncodedCollection::fromPayloadCollection(
+                $memo->getFields(),
                 $this->services->dataConverter,
             );
         } catch (\Throwable) {

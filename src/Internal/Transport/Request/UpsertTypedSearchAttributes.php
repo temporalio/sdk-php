@@ -18,7 +18,7 @@ final class UpsertTypedSearchAttributes extends Request
     public function __construct(
         private readonly array $searchAttributes,
     ) {
-        parent::__construct(self::NAME, ['search_attributes' => $this->prepareSearchAttributes()]);
+        parent::__construct(self::NAME, ['search_attributes' => (object) $this->prepareSearchAttributes()]);
     }
 
     /**

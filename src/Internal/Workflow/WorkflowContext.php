@@ -454,6 +454,10 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     {
         $this->callsInterceptor->with(
             function (UpsertMemoInput $input): PromiseInterface {
+                if ($input->memo === []) {
+                    return resolve();
+                }
+
                 $result = $this->request(new UpsertMemo($input->memo), false);
 
                 /** @psalm-suppress UnsupportedPropertyReferenceUsage $memo */
@@ -479,6 +483,10 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     {
         $this->callsInterceptor->with(
             function (UpsertSearchAttributesInput $input): PromiseInterface {
+                if ($input->searchAttributes === []) {
+                    return resolve();
+                }
+
                 $result = $this->request(new UpsertSearchAttributes($input->searchAttributes), false);
 
                 /** @psalm-suppress UnsupportedPropertyReferenceUsage $sa */
@@ -503,6 +511,10 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     {
         $this->callsInterceptor->with(
             function (UpsertTypedSearchAttributesInput $input): PromiseInterface {
+                if ($input->updates === []) {
+                    return resolve();
+                }
+
                 $result = $this->request(new UpsertTypedSearchAttributes($input->updates), false);
 
                 // Merge changes

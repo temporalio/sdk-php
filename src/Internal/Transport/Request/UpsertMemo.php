@@ -16,7 +16,7 @@ final class UpsertMemo extends Request
     public function __construct(
         private readonly array $memo,
     ) {
-        parent::__construct(self::NAME, ['memo' => $memo]);
+        parent::__construct(self::NAME, ['memo' => (object) $memo]);
     }
 
     /**

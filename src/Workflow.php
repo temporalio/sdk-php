@@ -937,7 +937,7 @@ final class Workflow extends Facade
      */
     public static function upsertTypedSearchAttributes(SearchAttributeUpdate ...$updates): void
     {
-        $updates === [] or self::getCurrentContext()->upsertTypedSearchAttributes(...$updates);
+        self::getCurrentContext()->upsertTypedSearchAttributes(...$updates);
     }
 
     /**
