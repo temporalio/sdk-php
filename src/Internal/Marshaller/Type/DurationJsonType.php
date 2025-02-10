@@ -76,8 +76,12 @@ class DurationJsonType extends Type implements DetectableTypeInterface, RuleFact
     {
         if (\is_array($value) && isset($value['seconds']) && isset($value['nanos'])) {
             // The highest precision is milliseconds either way.
-            $value = $value['seconds'] * 1_000_000_000 + $value['nanos'];
-            return DateInterval::parse($value, DateInterval::FORMAT_NANOSECONDS);
+            $value = $value['seconds'] * 1_000_000 + (int) \round($value['nanos'] / 1000);
+            return DateInterval::parse($value, DateInterval::FORMAT_MICROSECONDS);
+        }
+
+        if ($value === null) {
+            return CarbonInterval::create();
         }
 
         return DateInterval::parse($value, $this->fallbackFormat);
