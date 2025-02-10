@@ -21,12 +21,25 @@ class DurationJsonTestCase extends AbstractDTOMarshalling
     public function testMarshalAndUnmarshalDuration(): void
     {
         $dto = new DurationJsonDto();
-        $dto->duration = DateInterval::parse(1);
+        $dto->duration = DateInterval::parse(100);
+        $dto->durationProto = DateInterval::parse(12000);
 
         $result = $this->marshal($dto);
         $unmarshal = $this->unmarshal($result, new DurationJsonDto());
 
         self::assertInstanceOf(\DateInterval::class, $unmarshal->duration);
+        self::assertInstanceOf(\DateInterval::class, $unmarshal->durationProto);
+        self::assertSame('0 100000', $unmarshal->duration->format('%s %f'));
+        self::assertSame('12 0', $unmarshal->durationProto->format('%s %f'));
+    }
+
+    public function testUnmarshallEmptyDuration(): void
+    {
+        $result = ['duration' => null, 'duration_proto' => null];
+        $unmarshal = $this->unmarshal($result, new DurationJsonDto());
+
+        self::assertSame('0.0', $unmarshal->duration->format('%s.%f'));
+        self::assertSame('0.0', $unmarshal->durationProto->format('%s.%f'));
     }
 
     protected function getTypeMatchers(): array
