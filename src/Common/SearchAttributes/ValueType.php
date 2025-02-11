@@ -14,6 +14,6 @@ enum ValueType: string
     case Int = 'int64';
     case Keyword = 'keyword';
     case KeywordList = 'keyword_list';
-    case String = 'string';
+    case Text = 'string';
     case Datetime = 'datetime';
 }

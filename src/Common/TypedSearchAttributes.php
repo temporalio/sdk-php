@@ -112,7 +112,7 @@ class TypedSearchAttributes implements \IteratorAggregate, \Countable
             \is_float($value) => $this->withValue(SearchAttributeKey::forFloat($name), $value),
             \is_array($value) => $this->withValue(SearchAttributeKey::forKeywordList($name), $value),
             $value instanceof \Stringable,
-            \is_string($value) => $this->withValue(SearchAttributeKey::forString($name), $value),
+            \is_string($value) => $this->withValue(SearchAttributeKey::forText($name), $value),
             $value instanceof \DateTimeInterface => $this->withValue(SearchAttributeKey::forDatetime($name), $value),
             default => throw new \InvalidArgumentException('Unsupported value type.'),
         };

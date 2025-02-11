@@ -10,7 +10,7 @@ use Temporal\Common\SearchAttributes\SearchAttributeKey\FloatValue;
 use Temporal\Common\SearchAttributes\SearchAttributeKey\IntValue;
 use Temporal\Common\SearchAttributes\SearchAttributeKey\KeywordListValue;
 use Temporal\Common\SearchAttributes\SearchAttributeKey\KeywordValue;
-use Temporal\Common\SearchAttributes\SearchAttributeKey\StringValue;
+use Temporal\Common\SearchAttributes\SearchAttributeKey\TextValue;
 use Temporal\Common\SearchAttributes\SearchAttributeUpdate\ValueSet;
 
 /**
@@ -61,9 +61,9 @@ abstract class SearchAttributeKey
     /**
      * @param non-empty-string $name
      */
-    public static function forString(string $name): StringValue
+    public static function forText(string $name): TextValue
     {
-        return new StringValue($name);
+        return new TextValue($name);
     }
 
     /**
@@ -92,7 +92,7 @@ abstract class SearchAttributeKey
             ValueType::Int => self::forInteger($name),
             ValueType::Float => self::forFloat($name),
             ValueType::Keyword => self::forKeyword($name),
-            ValueType::String => self::forString($name),
+            ValueType::Text => self::forText($name),
             ValueType::Datetime => self::forDatetime($name),
             ValueType::KeywordList => self::forKeywordList($name),
         };

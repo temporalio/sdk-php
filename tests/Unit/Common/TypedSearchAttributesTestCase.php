@@ -187,7 +187,7 @@ class TypedSearchAttributesTestCase extends TestCase
         self::assertSame(42, $collection->get(SearchAttributeKey::forInteger('name3')));
         self::assertSame('bar', $collection->get(SearchAttributeKey::forKeyword('name4')));
         self::assertSame(3.14, $collection->get(SearchAttributeKey::forFloat('name5')));
-        self::assertSame('foo', $collection->get(SearchAttributeKey::forString('name6')));
+        self::assertSame('foo', $collection->get(SearchAttributeKey::forText('name6')));
         self::assertInstanceOf(\DateTimeImmutable::class, $collection->get(SearchAttributeKey::forDatetime('name7')));
         self::assertSame(
             '2021-01-01T00:00:00+00:00',
@@ -212,7 +212,7 @@ class TypedSearchAttributesTestCase extends TestCase
         self::assertTrue($collection->get(SearchAttributeKey::forBool('name1')));
         self::assertFalse($collection->get(SearchAttributeKey::forBool('name2')));
         self::assertSame(42, $collection->get(SearchAttributeKey::forInteger('name3')));
-        self::assertSame('bar', $collection->get(SearchAttributeKey::forString('name4')));
+        self::assertSame('bar', $collection->get(SearchAttributeKey::forText('name4')));
         self::assertSame(3.14, $collection->get(SearchAttributeKey::forFloat('name5')));
         self::assertInstanceOf(\DateTimeImmutable::class, $collection->get(SearchAttributeKey::forDatetime('name7')));
         self::assertSame('2021-01-01T00:00:00+00:00', $collection->get(SearchAttributeKey::forDatetime('name7'))->format(DATE_RFC3339));
@@ -225,7 +225,7 @@ class TypedSearchAttributesTestCase extends TestCase
             ->withValue(SearchAttributeKey::forFloat('testFloat'), 1.1)
             ->withValue(SearchAttributeKey::forInteger('testInt'), -2)
             ->withValue(SearchAttributeKey::forBool('testBool'), false)
-            ->withValue(SearchAttributeKey::forString('testString'), 'foo')
+            ->withValue(SearchAttributeKey::forText('testText'), 'foo')
             ->withValue(SearchAttributeKey::forKeyword('testKeyword'), 'bar')
             ->withValue(SearchAttributeKey::forKeywordList('testKeywordList'), ['baz'])
             ->withValue(

@@ -83,7 +83,7 @@ final class Environment
                 ValueType::Int => 'int',
                 ValueType::Keyword => 'keyword',
                 ValueType::KeywordList => 'keywordList',
-                ValueType::String => 'text',
+                ValueType::Text => 'text',
                 ValueType::Datetime => 'datetime',
             };
         }

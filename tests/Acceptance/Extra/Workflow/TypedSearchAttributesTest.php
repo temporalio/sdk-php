@@ -34,7 +34,7 @@ class TypedSearchAttributesTest extends TestCase
                         ->withValue(SearchAttributeKey::forFloat('testFloat'), 1.1)
                         ->withValue(SearchAttributeKey::forInteger('testInt'), -2)
                         ->withValue(SearchAttributeKey::forBool('testBool'), false)
-                        ->withValue(SearchAttributeKey::forString('testString'), 'foo')
+                        ->withValue(SearchAttributeKey::forText('testText'), 'foo')
                         ->withValue(SearchAttributeKey::forKeyword('testKeyword'), 'bar')
                         ->withValue(SearchAttributeKey::forKeywordList('testKeywordList'), ['baz'])
                         ->withValue(
@@ -56,7 +56,7 @@ class TypedSearchAttributesTest extends TestCase
             'testBool' => false,
             'testInt' => -2,
             'testFloat' => 1.1,
-            'testString' => 'foo',
+            'testText' => 'foo',
             'testKeyword' => 'bar',
             'testKeywordList' => ['baz'],
             'testDatetime' => (new \DateTimeImmutable('2019-01-01T00:00:00Z'))
@@ -78,7 +78,7 @@ class TypedSearchAttributesTest extends TestCase
                         ->withValue(SearchAttributeKey::forFloat('testFloat'), 1.1)
                         ->withValue(SearchAttributeKey::forInteger('testInt'), -2)
                         ->withValue(SearchAttributeKey::forBool('testBool'), false)
-                        ->withValue(SearchAttributeKey::forString('testString'), 'foo')
+                        ->withValue(SearchAttributeKey::forText('testText'), 'foo')
                         ->withValue(SearchAttributeKey::forKeyword('testKeyword'), 'bar')
                         ->withValue(SearchAttributeKey::forKeywordList('testKeywordList'), ['baz'])
                         ->withValue(
@@ -92,7 +92,7 @@ class TypedSearchAttributesTest extends TestCase
             'testBool' => true,
             'testInt' => 42,
             'testFloat' => 1.0,
-            'testString' => 'foo bar baz',
+            'testText' => 'foo bar baz',
             'testKeyword' => 'foo-bar-baz',
             'testKeywordList' => ['foo', 'bar', 'baz'],
             'testDatetime' => '2021-01-01T00:00:00+00:00',
@@ -145,7 +145,7 @@ class TypedSearchAttributesTest extends TestCase
                         ->withValue(SearchAttributeKey::forFloat('testFloat'), 1.1)
                         ->withValue(SearchAttributeKey::forInteger('testInt'), -2)
                         ->withValue(SearchAttributeKey::forBool('testBool'), false)
-                        ->withValue(SearchAttributeKey::forString('testString'), 'foo')
+                        ->withValue(SearchAttributeKey::forText('testText'), 'foo')
                         ->withValue(SearchAttributeKey::forKeyword('testKeyword'), 'bar')
                         ->withValue(SearchAttributeKey::forKeywordList('testKeywordList'), ['baz'])
                         ->withValue(
@@ -158,7 +158,7 @@ class TypedSearchAttributesTest extends TestCase
         $toSend = [
             'testInt' => 42,
             'testBool' => null,
-            'testString' => 'bar',
+            'testText' => 'bar',
             'testKeyword' => null,
             'testKeywordList' => ['red'],
             'testDatetime' => null,

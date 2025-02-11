@@ -11,7 +11,7 @@ use Temporal\Common\SearchAttributes\ValueType;
 /**
  * @psalm-immutable
  */
-final class StringValue extends SearchAttributeKey
+final class TextValue extends SearchAttributeKey
 {
     public function valueSet(string|\Stringable $value): SearchAttributeUpdate
     {
@@ -20,6 +20,6 @@ final class StringValue extends SearchAttributeKey
 
     public function getType(): ValueType
     {
-        return ValueType::String;
+        return ValueType::Text;
     }
 }
