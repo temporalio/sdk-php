@@ -936,7 +936,7 @@ final class Workflow extends Facade
      * ]
      * ```
      *
-     * @param array<string, mixed> $values
+     * @param array<non-empty-string, mixed> $values
      *
      * @since SDK 2.13.0
      * @since RoadRunner 2024.3.3
