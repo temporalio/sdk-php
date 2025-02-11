@@ -25,7 +25,7 @@ interface WorkflowInstanceInterface extends InstanceInterface
 {
     /**
      * Trigger constructor in Process context.
-     * If the constructor is tagged with {@see \Temporal\Workflow\InitMethod} attribute,
+     * If the constructor is tagged with {@see \Temporal\Workflow\WorkflowInit} attribute,
      * it will be executed with the {@see \Temporal\Workflow\WorkflowMethod} arguments.
      */
     public function init(array $arguments = []): void;

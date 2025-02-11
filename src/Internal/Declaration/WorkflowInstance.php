@@ -20,7 +20,7 @@ use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\WorkflowInstance\SignalQueue;
 use Temporal\Internal\Interceptor;
-use Temporal\Workflow\InitMethod;
+use Temporal\Workflow\WorkflowInit;
 
 /**
  * @psalm-type QueryHandler = \Closure(QueryInput): mixed
@@ -155,7 +155,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
 
         // Check InitMethod attribute
         $reflection = new \ReflectionMethod($this->context, '__construct');
-        $attributes = $reflection->getAttributes(InitMethod::class);
+        $attributes = $reflection->getAttributes(WorkflowInit::class);
         $attributes === []
             ? $this->context->__construct()
             : $this->context->__construct(...$arguments);
