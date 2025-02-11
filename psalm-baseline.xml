@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="6.2.0@814dfde37b43a1fe6d9b0996e08b19661af53bc5">
+<files psalm-version="6.4.1@09a200c15910905ddc49e5edd37b73f9c78f7580">
   <file src="src/Activity.php">
     <ImplicitToStringCast>
       <code><![CDATA[$type]]></code>
@@ -984,88 +984,10 @@
       <code><![CDATA[PromiseInterface]]></code>
     </TooManyTemplateParams>
   </file>
-  <file src="src/Internal/Transport/Request/Cancel.php">
-    <MissingImmutableAnnotation>
-      <code><![CDATA[Cancel]]></code>
-    </MissingImmutableAnnotation>
-  </file>
-  <file src="src/Internal/Transport/Request/CancelExternalWorkflow.php">
-    <MissingImmutableAnnotation>
-      <code><![CDATA[CancelExternalWorkflow]]></code>
-    </MissingImmutableAnnotation>
-  </file>
-  <file src="src/Internal/Transport/Request/CompleteWorkflow.php">
-    <MissingImmutableAnnotation>
-      <code><![CDATA[CompleteWorkflow]]></code>
-    </MissingImmutableAnnotation>
-  </file>
-  <file src="src/Internal/Transport/Request/ContinueAsNew.php">
-    <MissingImmutableAnnotation>
-      <code><![CDATA[ContinueAsNew]]></code>
-    </MissingImmutableAnnotation>
-  </file>
-  <file src="src/Internal/Transport/Request/ExecuteActivity.php">
-    <MissingImmutableAnnotation>
-      <code><![CDATA[ExecuteActivity]]></code>
-    </MissingImmutableAnnotation>
-  </file>
-  <file src="src/Internal/Transport/Request/ExecuteChildWorkflow.php">
-    <MissingImmutableAnnotation>
-      <code><![CDATA[ExecuteChildWorkflow]]></code>
-    </MissingImmutableAnnotation>
-  </file>
-  <file src="src/Internal/Transport/Request/ExecuteLocalActivity.php">
-    <MissingImmutableAnnotation>
-      <code><![CDATA[ExecuteLocalActivity]]></code>
-    </MissingImmutableAnnotation>
-  </file>
-  <file src="src/Internal/Transport/Request/GetChildWorkflowExecution.php">
-    <MissingImmutableAnnotation>
-      <code><![CDATA[GetChildWorkflowExecution]]></code>
-    </MissingImmutableAnnotation>
-  </file>
-  <file src="src/Internal/Transport/Request/GetVersion.php">
-    <MissingImmutableAnnotation>
-      <code><![CDATA[GetVersion]]></code>
-    </MissingImmutableAnnotation>
-  </file>
   <file src="src/Internal/Transport/Request/NewTimer.php">
-    <MissingImmutableAnnotation>
-      <code><![CDATA[NewTimer]]></code>
-    </MissingImmutableAnnotation>
     <PossiblyNullPropertyFetch>
       <code><![CDATA[CarbonInterval::make($interval)->totalMilliseconds]]></code>
     </PossiblyNullPropertyFetch>
-  </file>
-  <file src="src/Internal/Transport/Request/Panic.php">
-    <MissingImmutableAnnotation>
-      <code><![CDATA[Panic]]></code>
-    </MissingImmutableAnnotation>
-  </file>
-  <file src="src/Internal/Transport/Request/SideEffect.php">
-    <MissingImmutableAnnotation>
-      <code><![CDATA[SideEffect]]></code>
-    </MissingImmutableAnnotation>
-  </file>
-  <file src="src/Internal/Transport/Request/SignalExternalWorkflow.php">
-    <MissingImmutableAnnotation>
-      <code><![CDATA[SignalExternalWorkflow]]></code>
-    </MissingImmutableAnnotation>
-  </file>
-  <file src="src/Internal/Transport/Request/UndefinedResponse.php">
-    <MissingImmutableAnnotation>
-      <code><![CDATA[UndefinedResponse]]></code>
-    </MissingImmutableAnnotation>
-  </file>
-  <file src="src/Internal/Transport/Request/UpsertSearchAttributes.php">
-    <MissingImmutableAnnotation>
-      <code><![CDATA[UpsertSearchAttributes]]></code>
-    </MissingImmutableAnnotation>
-  </file>
-  <file src="src/Internal/Transport/Request/UpsertTypedSearchAttributes.php">
-    <MissingImmutableAnnotation>
-      <code><![CDATA[UpsertTypedSearchAttributes]]></code>
-    </MissingImmutableAnnotation>
   </file>
   <file src="src/Internal/Transport/Router/CancelWorkflow.php">
     <DocblockTypeContradiction>
@@ -1126,6 +1048,7 @@
   </file>
   <file src="src/Internal/Transport/Router/StartWorkflow.php">
     <PossiblyFalseArgument>
+      <code><![CDATA[\json_encode($param)]]></code>
       <code><![CDATA[\json_encode($param)]]></code>
     </PossiblyFalseArgument>
     <UnnecessaryVarAnnotation>
@@ -1426,11 +1349,6 @@
     <NullableReturnStatement>
       <code><![CDATA[$this->failure]]></code>
     </NullableReturnStatement>
-  </file>
-  <file src="src/Worker/Transport/Command/Client/Request.php">
-    <MissingImmutableAnnotation>
-      <code><![CDATA[Request]]></code>
-    </MissingImmutableAnnotation>
   </file>
   <file src="src/Worker/Transport/Command/Client/SuccessClientResponse.php">
     <InvalidNullableReturnType>

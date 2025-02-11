@@ -26,6 +26,7 @@ use Temporal\Interceptor\WorkflowOutboundCalls\PanicInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\SideEffectInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\SignalExternalWorkflowInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\TimerInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\UpsertMemoInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\UpsertSearchAttributesInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\UpsertTypedSearchAttributesInput;
 use Temporal\Internal\Interceptor\Interceptor;
@@ -112,6 +113,11 @@ interface WorkflowOutboundCallsInterceptor extends Interceptor
      * @param callable(GetVersionInput): PromiseInterface $next
      */
     public function getVersion(GetVersionInput $input, callable $next): PromiseInterface;
+
+    /**
+     * @param callable(UpsertMemoInput): PromiseInterface $next
+     */
+    public function upsertMemo(UpsertMemoInput $input, callable $next): PromiseInterface;
 
     /**
      * @param callable(UpsertSearchAttributesInput): PromiseInterface $next

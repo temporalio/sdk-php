@@ -30,6 +30,9 @@ trait RequestTrait
         return $this->header;
     }
 
+    /**
+     * @psalm-external-mutation-free
+     */
     public function withHeader(HeaderInterface $header): self
     {
         $clone = clone $this;
