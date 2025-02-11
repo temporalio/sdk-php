@@ -327,6 +327,10 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * ```
      *
      * @param array<non-empty-string, mixed> $values
+     *
+     * @since SDK 2.13.0
+     * @since RoadRunner 2024.3.3
+     * @link https://docs.temporal.io/glossary#memo
      */
     public function upsertMemo(array $values): void;
 
@@ -347,6 +351,8 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *  );
      * ```
      *
+     * @since SDK 2.13.0
+     * @since RoadRunner 2024.3.2
      * @link https://docs.temporal.io/visibility#search-attribute
      */
     public function upsertTypedSearchAttributes(SearchAttributeUpdate ...$updates): void;

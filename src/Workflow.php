@@ -904,9 +904,42 @@ final class Workflow extends Facade
     }
 
     /**
-     * Upsert Memo
+     * Updates this Workflow's Memos by merging the provided memo with existing Memos.
+     *
+     * New Memo is merged by replacing properties of the same name at the first level only.
+     * Setting a property to {@see null} clears that key from the Memo.
+     *
+     * For example:
+     *
+     * ```php
+     * Workflow::upsertMemo([
+     * 'key1' => 'value',
+     * 'key3' => ['subkey1' => 'value']
+     * 'key4' => 'value',
+     * });
+     *
+     * Workflow::upsertMemo([
+     * 'key2' => 'value',
+     * 'key3' => ['subkey2' => 'value']
+     * 'key4' => null,
+     * ]);
+     * ```
+     *
+     * would result in the Workflow having these Memo:
+     *
+     * ```php
+     * [
+     * 'key1' => 'value',
+     * 'key2' => 'value',
+     * 'key3' => ['subkey2' => 'value'], // Note this object was completely replaced
+     * // Note that 'key4' was completely removed
+     * ]
+     * ```
      *
      * @param array<string, mixed> $values
+     *
+     * @since SDK 2.13.0
+     * @since RoadRunner 2024.3.3
      */
     public static function upsertMemo(array $values): void
     {
@@ -933,6 +966,8 @@ final class Workflow extends Facade
      *  );
      * ```
      *
+     * @since SDK 2.13.0
+     * @since RoadRunner 2024.3.2
      * @link https://docs.temporal.io/visibility#search-attribute
      */
     public static function upsertTypedSearchAttributes(SearchAttributeUpdate ...$updates): void
