@@ -25,12 +25,12 @@ final class TemporalStarter
         }
 
         $this->environment->startTemporalServer(searchAttributes: [
-            'foo' => ValueType::String->value,
+            'foo' => ValueType::Text->value,
             'bar' => ValueType::Int->value,
             'testBool' => ValueType::Bool,
             'testInt' => ValueType::Int,
             'testFloat' => ValueType::Float,
-            'testString' => ValueType::String,
+            'testText' => ValueType::Text,
             'testKeyword' => ValueType::Keyword,
             'testKeywordList' => ValueType::KeywordList,
             'testDatetime' => ValueType::Datetime,
