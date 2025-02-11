@@ -21,4 +21,4 @@ use Doctrine\Common\Annotations\Annotation\Target;
  * @Target({ "METHOD" })
  */
 #[\Attribute(\Attribute::TARGET_METHOD)]
-final class InitMethod {}
+final class WorkflowInit {}

@@ -10,7 +10,7 @@ use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Failure\TimeoutFailure;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\TestCase;
-use Temporal\Workflow\InitMethod;
+use Temporal\Workflow\WorkflowInit;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
@@ -57,7 +57,7 @@ class TestWorkflow
 {
     private array $initInput;
 
-    #[InitMethod]
+    #[WorkflowInit]
     public function __construct(Input $input)
     {
         $this->initInput = \func_get_args();
@@ -75,7 +75,7 @@ class TestWorkflowEmptyConstructor
 {
     private array $initInput;
 
-    #[InitMethod]
+    #[WorkflowInit]
     public function __construct()
     {
         $this->initInput = \func_get_args();
@@ -93,7 +93,7 @@ class TestWorkflowDifferentConstructorParams
 {
     private array $initInput;
 
-    #[InitMethod]
+    #[WorkflowInit]
     public function __construct(\stdClass $input)
     {
         $this->initInput = \func_get_args();
