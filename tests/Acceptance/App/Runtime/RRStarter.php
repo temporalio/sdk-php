@@ -63,4 +63,9 @@ final class RRStarter
         $this->environment->stop();
         $this->started = false;
     }
+
+    public function __destruct()
+    {
+        $this->stop();
+    }
 }
