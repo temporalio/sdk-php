@@ -109,8 +109,6 @@ class TestWorkflow
             fn(): bool => $this->exit,
         );
 
-        tr(Workflow::getInfo()->memo);
-
         return Workflow::getInfo()->memo;
     }
 
