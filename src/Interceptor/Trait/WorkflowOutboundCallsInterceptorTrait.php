@@ -150,7 +150,9 @@ trait WorkflowOutboundCallsInterceptorTrait
     }
 
     /**
-     * @param callable(UpsertMemoInput): PromiseInterface $next
+     * Default implementation of the `upsertMemo` method.
+     *
+     * @see WorkflowOutboundCallsInterceptor::upsertMemo()
      */
     public function upsertMemo(UpsertMemoInput $input, callable $next): PromiseInterface
     {
