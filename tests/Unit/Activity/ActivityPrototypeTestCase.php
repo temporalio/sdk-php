@@ -9,16 +9,17 @@ use Spiral\Attributes\AttributeReader;
 use Spiral\Attributes\Composite\SelectiveReader;
 use Temporal\Internal\Declaration\Reader\ActivityReader;
 use Temporal\Tests\Unit\AbstractUnit;
-use WeakReference;
 
 final class ActivityPrototypeTestCase extends AbstractUnit
 {
     private ActivityReader $activityReader;
 
-    protected function setUp(): void
+    public function testNoMagicMethods(): void
     {
-        $this->activityReader = new ActivityReader(new SelectiveReader([new AnnotationReader(), new AttributeReader()]));
-        parent::setUp();
+        $protos = $this->activityReader->fromClass(MagicActivity::class);
+
+        self::assertCount(1, $protos);
+        self::assertSame('MagicActivity.Do', $protos[0]->getID());
     }
 
     public function testInstanceLeaks(): void
@@ -27,11 +28,11 @@ final class ActivityPrototypeTestCase extends AbstractUnit
         $proto = $this->activityReader
             ->fromClass(DummyActivity::class)[0];
 
-        $refProto = WeakReference::create($proto);
-        $refInstance = WeakReference::create($proto->getInstance());
-        $refHandler = WeakReference::create($proto->getHandler());
-        $refInstanceHandler = WeakReference::create($proto->getInstance()->getHandler());
-        $refActivity = WeakReference::create($proto->getInstance()->getContext());
+        $refProto = \WeakReference::create($proto);
+        $refInstance = \WeakReference::create($proto->getInstance());
+        $refHandler = \WeakReference::create($proto->getHandler());
+        $refInstanceHandler = \WeakReference::create($proto->getInstance()->getHandler());
+        $refActivity = \WeakReference::create($proto->getInstance()->getContext());
 
         unset($proto, $instance);
 
@@ -49,8 +50,8 @@ final class ActivityPrototypeTestCase extends AbstractUnit
             ->fromClass(DummyActivity::class)[0];
         $newProto = $proto->withInstance($instance);
         // References
-        $refProto = WeakReference::create($proto);
-        $refNewProto = WeakReference::create($newProto);
+        $refProto = \WeakReference::create($proto);
+        $refNewProto = \WeakReference::create($newProto);
 
         // New object is result of clone operation
         $this->assertNotSame($proto, $newProto);
@@ -80,7 +81,7 @@ final class ActivityPrototypeTestCase extends AbstractUnit
     public function testGetInstanceFromFactory(): void
     {
         $proto = $this->activityReader->fromClass(DummyActivity::class)[0];
-        $protoWithFactory = $proto->withFactory(fn () => new DummyActivity());
+        $protoWithFactory = $proto->withFactory(static fn() => new DummyActivity());
 
         $this->assertInstanceOf(DummyActivity::class, $protoWithFactory->getInstance()->getContext());
     }
@@ -97,7 +98,7 @@ final class ActivityPrototypeTestCase extends AbstractUnit
     public function testFactoryCreatesNewInstances(): void
     {
         $proto = $this->activityReader->fromClass(DummyActivity::class)[0];
-        $protoWithFactory = $proto->withFactory(fn () => new DummyActivity());
+        $protoWithFactory = $proto->withFactory(static fn() => new DummyActivity());
 
         $this->assertEquals($protoWithFactory->getInstance()->getContext(), $protoWithFactory->getInstance()->getContext());
         $this->assertNotSame($protoWithFactory->getInstance()->getContext(), $protoWithFactory->getInstance()->getContext());
@@ -106,7 +107,7 @@ final class ActivityPrototypeTestCase extends AbstractUnit
     public function testFactoryAcceptsReflectionClassOfActivity(): void
     {
         $proto = $this->activityReader->fromClass(DummyActivity::class)[0];
-        $protoWithFactory = $proto->withFactory(fn (\ReflectionClass $reflectionClass) => $reflectionClass->newInstance());
+        $protoWithFactory = $proto->withFactory(static fn(\ReflectionClass $reflectionClass) => $reflectionClass->newInstance());
 
         $this->assertEquals($protoWithFactory->getInstance()->getContext(), $protoWithFactory->getInstance()->getContext());
         $this->assertNotSame($protoWithFactory->getInstance()->getContext(), $protoWithFactory->getInstance()->getContext());
@@ -115,9 +116,15 @@ final class ActivityPrototypeTestCase extends AbstractUnit
     public function testGetFactory(): void
     {
         $proto = $this->activityReader->fromClass(DummyActivity::class)[0];
-        $protoWithFactory = $proto->withFactory(fn (\ReflectionClass $reflectionClass) => $reflectionClass->newInstance());
+        $protoWithFactory = $proto->withFactory(static fn(\ReflectionClass $reflectionClass) => $reflectionClass->newInstance());
 
         $this->assertNull($proto->getFactory());
         $this->assertNotNull($protoWithFactory->getFactory());
+    }
+
+    protected function setUp(): void
+    {
+        $this->activityReader = new ActivityReader(new SelectiveReader([new AnnotationReader(), new AttributeReader()]));
+        parent::setUp();
     }
 }

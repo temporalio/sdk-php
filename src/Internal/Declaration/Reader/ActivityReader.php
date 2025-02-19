@@ -139,6 +139,10 @@ class ActivityReader extends Reader
                     continue;
                 }
 
+                if ($attribute === null && $this->isMagic($method)) {
+                    continue;
+                }
+
                 //
                 // The name of the activity must be generated based on the
                 // optional prefix on the #[ActivityInterface] attribute and

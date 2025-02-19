@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Temporal\Tests\Unit\Router;
 
 use React\Promise\Deferred;
-use RuntimeException;
 use Spiral\Attributes\AnnotationReader;
 use Spiral\Attributes\AttributeReader;
 use Spiral\Attributes\Composite\SelectiveReader;
@@ -33,6 +32,38 @@ final class InvokeActivityTestCase extends AbstractUnit
     private ServiceContainer $services;
     private InvokeActivity $router;
     private ActivityContext $activityContext;
+
+    public function testFinalizerIsCalledOnSuccessActivityInvocation(): void
+    {
+        $finalizerWasCalled = false;
+        $this->services->activities->addFinalizer(
+            static function () use (&$finalizerWasCalled): void {
+                $finalizerWasCalled = true;
+            },
+        );
+
+        $this->activityContext->getInfo()->type->name = 'DummyActivityDoNothing';
+        $request = new Request('DummyActivityDoNothing', EncodedValues::fromValues([]));
+        $this->router->handle($request, [], new Deferred());
+        $this->assertTrue($finalizerWasCalled);
+    }
+
+    public function testFinalizerIsCalledOnFailedActivityInvocation(): void
+    {
+        $finalizerWasCalled = false;
+        $this->services->activities->addFinalizer(
+            function (\Throwable $error) use (&$finalizerWasCalled): void {
+                $finalizerWasCalled = true;
+                $this->assertInstanceOf(\RuntimeException::class, $error);
+                $this->assertSame('Failed', $error->getMessage());
+            },
+        );
+
+        $this->activityContext->getInfo()->type->name = 'DummyActivityDoFail';
+        $request = new Request('DummyActivityDoFail', EncodedValues::fromValues([]));
+        $this->router->handle($request, [], new Deferred());
+        $this->assertTrue($finalizerWasCalled);
+    }
 
     protected function setUp(): void
     {
@@ -69,38 +100,5 @@ final class InvokeActivityTestCase extends AbstractUnit
         $this->router = new InvokeActivity($this->services, $rpc, new SimplePipelineProvider());
 
         parent::setUp();
-    }
-
-
-    public function testFinalizerIsCalledOnSuccessActivityInvocation(): void
-    {
-        $finalizerWasCalled = false;
-        $this->services->activities->addFinalizer(
-            function () use (&$finalizerWasCalled) {
-                $finalizerWasCalled = true;
-            }
-        );
-
-        $this->activityContext->getInfo()->type->name = 'DummyActivityDoNothing';
-        $request = new Request('DummyActivityDoNothing', EncodedValues::fromValues([]));
-        $this->router->handle($request, [], new Deferred());
-        $this->assertTrue($finalizerWasCalled);
-    }
-
-    public function testFinalizerIsCalledOnFailedActivityInvocation(): void
-    {
-        $finalizerWasCalled = false;
-        $this->services->activities->addFinalizer(
-            function (\Throwable $error) use (&$finalizerWasCalled) {
-                $finalizerWasCalled = true;
-                $this->assertInstanceOf(RuntimeException::class, $error);
-                $this->assertSame('Failed', $error->getMessage());
-            }
-        );
-
-        $this->activityContext->getInfo()->type->name = 'DummyActivityDoFail';
-        $request = new Request('DummyActivityDoFail', EncodedValues::fromValues([]));
-        $this->router->handle($request, [], new Deferred());
-        $this->assertTrue($finalizerWasCalled);
     }
 }
