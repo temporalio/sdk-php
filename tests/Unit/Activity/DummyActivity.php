@@ -11,7 +11,5 @@ use Temporal\Activity\ActivityMethod;
 final class DummyActivity
 {
     #[ActivityMethod(name: "DoNothing")]
-    public function doNothing(): void
-    {
-    }
+    public function doNothing(): void {}
 }

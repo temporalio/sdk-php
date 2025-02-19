@@ -18,6 +18,11 @@ use Spiral\Attributes\ReaderInterface;
  */
 abstract class Reader
 {
+    private const MAGIC_METHODS = [
+        '__construct', '__destruct', '__call', '__callStatic', '__get', '__set', '__isset', '__unset', '__sleep',
+        '__wakeup', '__serialize', '__unserialize', '__toString', '__invoke', '__set_state', '__clone', '__debugInfo',
+    ];
+
     protected ReaderInterface $reader;
 
     public function __construct(ReaderInterface $reader)
@@ -34,5 +39,10 @@ abstract class Reader
     protected function isValidMethod(\ReflectionMethod $method): bool
     {
         return !$method->isStatic() && $method->isPublic();
+    }
+
+    protected function isMagic(\ReflectionMethod $method): bool
+    {
+        return \in_array($method->getName(), self::MAGIC_METHODS, true);
     }
 }
