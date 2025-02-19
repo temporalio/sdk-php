@@ -81,7 +81,7 @@ class DurationJsonType extends Type implements DetectableTypeInterface, RuleFact
         }
 
         if ($value === null) {
-            return CarbonInterval::create();
+            return CarbonInterval::create(0);
         }
 
         return DateInterval::parse($value, $this->fallbackFormat);
