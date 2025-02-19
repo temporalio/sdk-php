@@ -12,38 +12,6 @@ use Temporal\Internal\Support\DateInterval;
 #[CoversClass(DateInterval::class)]
 final class DateIntervalTestCase extends TestCase
 {
-    #[DataProvider('provideValuesToParse')]
-    public function testParse(mixed $value, string $format, int $microseconds, string $formatted): void
-    {
-        $i = DateInterval::parse($value, $format);
-
-        self::assertSame($microseconds, (int)$i->totalMicroseconds);
-        self::assertSame($formatted, $i->format('%d/%h/%i/%s'));
-        if ($i->totalMicroseconds > 1_000_000) {
-            self::assertGreaterThan(0, $i->totalSeconds);
-        }
-    }
-
-    public function testParseAndFormat(): void
-    {
-        $i = DateInterval::parse(6_200, DateInterval::FORMAT_MILLISECONDS);
-
-        $this->assertSame(6_200_000, (int)$i->totalMicroseconds);
-        self::assertSame('0/0/0/6', $i->format('%y/%h/%i/%s'));
-    }
-
-    public function testParseFromDuration(): void
-    {
-        $duration = (new \Google\Protobuf\Duration())
-            ->setSeconds(5124)
-            ->setNanos(123456000);
-
-        $i = DateInterval::parse($duration);
-
-        self::assertSame(5124, (int)$i->totalSeconds);
-        self::assertSame(123_456, $i->microseconds);
-    }
-
     public static function provideValuesToParse(): iterable
     {
         yield [1, DateInterval::FORMAT_MICROSECONDS, 1, '0/0/0/0'];
@@ -60,5 +28,38 @@ final class DateIntervalTestCase extends TestCase
         yield [(0.1 + 0.7) * 10.0, DateInterval::FORMAT_SECONDS, 8_000_000, '0/0/0/8'];
         yield [(0.1 + 0.7) * 10.0, DateInterval::FORMAT_DAYS, 691200000000, '8/0/0/0'];
         yield [(0.1 + 0.7) * 10.0, DateInterval::FORMAT_WEEKS, 4838400000000, '56/0/0/0'];
+        yield [null, DateInterval::FORMAT_MILLISECONDS, 0, '0/0/0/0'];
+    }
+
+    #[DataProvider('provideValuesToParse')]
+    public function testParse(mixed $value, string $format, int $microseconds, string $formatted): void
+    {
+        $i = DateInterval::parse($value, $format);
+
+        self::assertSame($microseconds, (int) $i->totalMicroseconds);
+        self::assertSame($formatted, $i->format('%d/%h/%i/%s'));
+        if ($i->totalMicroseconds > 1_000_000) {
+            self::assertGreaterThan(0, $i->totalSeconds);
+        }
+    }
+
+    public function testParseAndFormat(): void
+    {
+        $i = DateInterval::parse(6_200, DateInterval::FORMAT_MILLISECONDS);
+
+        $this->assertSame(6_200_000, (int) $i->totalMicroseconds);
+        self::assertSame('0/0/0/6', $i->format('%y/%h/%i/%s'));
+    }
+
+    public function testParseFromDuration(): void
+    {
+        $duration = (new \Google\Protobuf\Duration())
+            ->setSeconds(5124)
+            ->setNanos(123456000);
+
+        $i = DateInterval::parse($duration);
+
+        self::assertSame(5124, (int) $i->totalSeconds);
+        self::assertSame(123_456, $i->microseconds);
     }
 }

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="6.4.1@09a200c15910905ddc49e5edd37b73f9c78f7580">
+<files psalm-version="6.7.1@a2f190972555ea01b0cfcc1913924d6c5fc1a64e">
   <file src="src/Activity.php">
     <ImplicitToStringCast>
       <code><![CDATA[$type]]></code>
@@ -51,19 +51,9 @@
     </ArgumentTypeCoercion>
   </file>
   <file src="src/Client/Schedule/Action/StartWorkflowAction.php">
-    <DocblockTypeContradiction>
-      <code><![CDATA[$timeout === null]]></code>
-      <code><![CDATA[$timeout === null]]></code>
-      <code><![CDATA[$timeout === null]]></code>
-    </DocblockTypeContradiction>
     <InaccessibleProperty>
       <code><![CDATA[$workflowType->name]]></code>
     </InaccessibleProperty>
-    <RedundantConditionGivenDocblockType>
-      <code><![CDATA[DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS)]]></code>
-      <code><![CDATA[DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS)]]></code>
-      <code><![CDATA[DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS)]]></code>
-    </RedundantConditionGivenDocblockType>
   </file>
   <file src="src/Client/Schedule/Info/ScheduleActionResult.php">
     <PropertyNotSetInConstructor>
@@ -219,8 +209,6 @@
   </file>
   <file src="src/Common/RetryOptions.php">
     <PossiblyNullArgument>
-      <code><![CDATA[$interval]]></code>
-      <code><![CDATA[$interval]]></code>
       <code><![CDATA[DateInterval::toDuration($this->initialInterval)]]></code>
       <code><![CDATA[DateInterval::toDuration($this->maximumInterval)]]></code>
     </PossiblyNullArgument>
@@ -1140,6 +1128,11 @@
     <PropertyTypeCoercion>
       <code><![CDATA[$header ?? Header::empty()]]></code>
     </PropertyTypeCoercion>
+  </file>
+  <file src="src/Internal/Workflow/Process/DeferredGenerator.php">
+    <UnevaluatedCode>
+      <code><![CDATA[yield;]]></code>
+    </UnevaluatedCode>
   </file>
   <file src="src/Internal/Workflow/Process/Process.php">
     <MissingClosureParamType>

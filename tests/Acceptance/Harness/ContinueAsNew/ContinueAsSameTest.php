@@ -27,7 +27,7 @@ class ContinueAsSameTest extends TestCase
             args: [INPUT_DATA],
             memo: [MEMO_KEY => MEMO_VALUE],
         )]
-        WorkflowStubInterface $stub
+        WorkflowStubInterface $stub,
     ): void {
         self::assertSame(INPUT_DATA, $stub->getResult());
         # Workflow ID does not change after continue as new

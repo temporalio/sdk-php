@@ -16,7 +16,7 @@ use Google\Protobuf\Duration;
 
 /**
  * @psalm-type DateIntervalFormat = DateInterval::FORMAT_*
- * @psalm-type DateIntervalValue = string | int | float | \DateInterval | Duration
+ * @psalm-type DateIntervalValue = string | int | float | \DateInterval | Duration | null
  */
 final class DateInterval
 {
@@ -115,6 +115,10 @@ final class DateInterval
                     $interval->getSeconds() * 1e6 + $interval->getNanos() / 1e3,
                     self::FORMAT_MICROSECONDS,
                 );
+
+            case $interval === null:
+                return CarbonInterval::create(0);
+
             default:
                 throw new \InvalidArgumentException(self::ERROR_INVALID_DATETIME);
         }
