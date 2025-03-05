@@ -14,6 +14,7 @@ use Temporal\Api\Workflow\V1\WorkflowExecutionInfo;
 use Temporal\Common\WorkerVersionStamp as WorkerVersionStampDto;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedCollection;
+use Temporal\Internal\Support\DateInterval;
 use Temporal\Workflow\ResetPointInfo as ResetPointInfoDto;
 use Temporal\Workflow\WorkflowExecution as WorkflowExecutionDto;
 use Temporal\Workflow\WorkflowExecutionInfo as WorkflowExecutionInfoDto;
@@ -36,6 +37,8 @@ final class WorkflowExecutionInfoMapper
         $wfType = new WorkflowType();
         /** @psalm-suppress InaccessibleProperty */
         $wfType->name = $type->getName();
+        $executionDuration = $message->getExecutionDuration();
+        $executionDuration !== null and $executionDuration = DateInterval::parse($executionDuration);
 
         return new WorkflowExecutionInfoDto(
             execution: $execution,
@@ -54,6 +57,9 @@ final class WorkflowExecutionInfoMapper
             stateTransitionCount: (int) $message->getStateTransitionCount(),
             historySizeBytes: (int) $message->getHistorySizeBytes(),
             mostRecentWorkerVersionStamp: $this->prepareWorkerVersionStamp($message->getMostRecentWorkerVersionStamp()),
+            executionDuration: $executionDuration,
+            rootExecution: $this->prepareWorkflowExecution($message->getRootExecution()),
+            firstRunId: $message->getFirstRunId(),
         );
     }
 
@@ -93,14 +99,12 @@ final class WorkflowExecutionInfoMapper
 
     private function prepareWorkflowExecution(?WorkflowExecution $execution): ?WorkflowExecutionDto
     {
-        if ($execution === null) {
-            return null;
-        }
-
-        return new WorkflowExecutionDto(
-            id: $execution->getWorkflowId(),
-            runId: $execution->getRunId(),
-        );
+        return $execution === null
+            ? null
+            : new WorkflowExecutionDto(
+                id: $execution->getWorkflowId(),
+                runId: $execution->getRunId(),
+            );
     }
 
     /**
