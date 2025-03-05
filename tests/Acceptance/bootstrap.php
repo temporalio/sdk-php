@@ -38,11 +38,11 @@ $runtime = RuntimeBuilder::createEmpty($command, \getcwd(), [
     'Temporal\Tests\Acceptance\Extra' => __DIR__ . '/Extra',
 ]);
 
-$runner = new RRStarter($runtime);
-
 # Run RoadRunner and Temporal
-(new TemporalStarter())->start();
-$runner->start();
+$temporalRunner = new TemporalStarter();
+$rrRunner = new RRStarter($runtime);
+$temporalRunner->start();
+$rrRunner->start();
 
 # Prepare and run checks
 
@@ -84,7 +84,8 @@ $scheduleClient = ScheduleClient::create(
 
 ContainerFacade::$container = $container = new Spiral\Core\Container();
 $container->bindSingleton(State::class, $runtime);
-$container->bindSingleton(RRStarter::class, $runner);
+$container->bindSingleton(RRStarter::class, $rrRunner);
+$container->bindSingleton(TemporalStarter::class, $temporalRunner);
 $container->bindSingleton(ServiceClientInterface::class, $serviceClient);
 $container->bindSingleton(WorkflowClientInterface::class, $workflowClient);
 $container->bindSingleton(ScheduleClientInterface::class, $scheduleClient);
