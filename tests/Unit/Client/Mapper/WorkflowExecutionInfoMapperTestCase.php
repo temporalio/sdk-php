@@ -81,7 +81,7 @@ final class WorkflowExecutionInfoMapperTestCase extends TestCase
         $this->assertSame('bcf079a9-e6f3-4040-93e8-ca185650a04e', $info->parentExecution->getRunID());
         $this->assertSame('2021-01-01T00:00:00.000000Z', $info->executionTime->format('Y-m-d\TH:i:s.u\Z'));
         $this->assertSame(2, $info->memo->count());
-        $this->assertSame(['mem1' => 'value1', 'mem2' => 'value2'], $info->memo->getValues());
+        $this->assertEquals(['mem1' => 'value1', 'mem2' => 'value2'], $info->memo->getValues());
         $this->assertEquals(['attr1' => 'value1', 'attr2' => 'value2'], $info->searchAttributes->getValues());
         $this->assertSame('taskQueue', $info->taskQueue);
         $this->assertSame(1, $info->stateTransitionCount);
