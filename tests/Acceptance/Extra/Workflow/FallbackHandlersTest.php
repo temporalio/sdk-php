@@ -34,13 +34,9 @@ class FallbackHandlersTest extends TestCase
         $result = $stub->getResult('array');
 
         $this->assertSame([
-            'foo' => [
-                ['bar', 'baz'],
-                [42],
-            ],
-            'baz' => [
-                [['foo' => 'bar']],
-            ],
+            ['foo', ['bar', 'baz']],
+            ['foo', [42]],
+            ['baz', [['foo' => 'bar']]],
         ], $result['signals']);
     }
 
@@ -63,13 +59,38 @@ class FallbackHandlersTest extends TestCase
         $result = $stub->getResult('array');
 
         $this->assertSame([
-            'foo' => [
-                ['bar', 'baz'],
-                [42],
-            ],
-            'baz' => [
-                [['foo' => 'bar']],
-            ],
+            ['foo', ['bar', 'baz']],
+            ['foo', [42]],
+            ['baz', [['foo' => 'bar']]],
+        ], $result['signals']);
+    }
+
+    #[Test]
+    public function fallbackSignalOrder(
+        #[Stub('Extra_Workflow_FallbackHandlers')] WorkflowStubInterface $stub,
+    ): void {
+        $stub->signal('foo', 1);
+        $stub->signal('foo', 2);
+        $stub->signal('baz', 3);
+        $stub->signal('foo', 4);
+        $stub->signal('baz', 5);
+
+        /** @see TestWorkflow::ping() */
+        $stub->update('ping');
+        /** @see TestWorkflow::registerSignalFallback() */
+        $stub->signal('register_signals');
+
+        /** @see TestWorkflow::exit() */
+        $stub->signal('exit');
+        // Should be completed after the previous operation
+        $result = $stub->getResult('array');
+
+        $this->assertSame([
+            ['foo', [1]],
+            ['foo', [2]],
+            ['baz', [3]],
+            ['foo', [4]],
+            ['baz', [5]],
         ], $result['signals']);
     }
 }
@@ -95,7 +116,7 @@ class TestWorkflow
     public function registerSignalFallback()
     {
         Workflow::registerFallbackSignal(function (string $name, ValuesInterface $values): void {
-            $this->signals[$name][] = $values->getValues();
+            $this->signals[] = [$name, $values->getValues()];
         });
     }
 
