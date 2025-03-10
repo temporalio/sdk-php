@@ -16,17 +16,17 @@ use Temporal\DataConverter\ValuesInterface;
 /**
  * @psalm-type Consumer = callable(ValuesInterface): mixed
  *
- * @psalm-type OnSignalCallable = \Closure(non-empty-string $name, callable $handler, ValuesInterface $arguments): void
+ * @psalm-type OnSignalCallable = \Closure(non-empty-string $name, Consumer $handler, ValuesInterface $arguments): void
  */
 final class SignalQueue
 {
     /**
-     * @var array<string, list<ValuesInterface>>
+     * @var array<non-empty-string, list<ValuesInterface>>
      */
     private array $queue = [];
 
     /**
-     * @var array<Consumer>
+     * @var array<non-empty-string, Consumer>
      */
     private array $consumers = [];
 
@@ -65,6 +65,7 @@ final class SignalQueue
     }
 
     /**
+     * @param non-empty-string $signal
      * @param Consumer $consumer
      */
     public function attach(string $signal, callable $consumer): void
@@ -79,6 +80,13 @@ final class SignalQueue
     public function setFallback(\Closure $consumer): void
     {
         $this->fallbackConsumer = $consumer;
+
+        // Flush all signals that have no consumer
+        foreach (\array_diff_key($this->queue, $this->consumers) as $signal => $list) {
+            if ($list !== []) {
+                $this->flush($signal);
+            }
+        }
     }
 
     public function clear(): void
@@ -87,18 +95,32 @@ final class SignalQueue
     }
 
     /**
+     * @param non-empty-string $signal
+     *
      * @psalm-suppress UnusedVariable
      */
     private function flush(string $signal): void
     {
-        if (!isset($this->queue[$signal], $this->consumers[$signal])) {
+        if (!isset($this->queue[$signal])) {
             return;
+        }
+
+        $consumer = $this->consumers[$signal] ?? null;
+
+        if ($consumer === null) {
+            if ($this->fallbackConsumer === null) {
+                return;
+            }
+
+            // Wrap the fallback consumer to call interceptors
+            $handler = $this->fallbackConsumer;
+            $consumer = static fn(ValuesInterface $values): mixed => $handler($signal, $values);
         }
 
         while ($this->queue[$signal] !== []) {
             $args = \array_shift($this->queue[$signal]);
 
-            ($this->onSignal)($signal, $this->consumers[$signal], $args);
+            ($this->onSignal)($signal, $consumer, $args);
         }
     }
 }
