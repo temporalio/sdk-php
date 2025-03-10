@@ -21,7 +21,7 @@ use Temporal\DataConverter\ValuesInterface;
 final class SignalQueue
 {
     /**
-     * @var array<non-empty-string, list<ValuesInterface>>
+     * @var array<int, SignalQueueItem>
      */
     private array $queue = [];
 
@@ -48,12 +48,16 @@ final class SignalQueue
     public function push(string $signal, ValuesInterface $values): void
     {
         if (isset($this->consumers[$signal])) {
-            ($this->onSignal)($signal, $this->consumers[$signal], $values);
+            $this->consume($signal, $values, $this->consumers[$signal]);
             return;
         }
 
-        $this->queue[$signal][] = $values;
-        $this->flush($signal);
+        if ($this->fallbackConsumer !== null) {
+            $this->consumeFallback($signal, $values);
+            return;
+        }
+
+        $this->queue[] = new SignalQueueItem($signal, $values);
     }
 
     /**
@@ -71,7 +75,13 @@ final class SignalQueue
     public function attach(string $signal, callable $consumer): void
     {
         $this->consumers[$signal] = $consumer; // overwrite
-        $this->flush($signal);
+
+        foreach ($this->queue as $k => $item) {
+            if ($item->name === $signal) {
+                unset($this->queue[$k]);
+                $this->consume($signal, $item->values, $consumer);
+            }
+        }
     }
 
     /**
@@ -82,10 +92,13 @@ final class SignalQueue
         $this->fallbackConsumer = $consumer;
 
         // Flush all signals that have no consumer
-        foreach (\array_diff_key($this->queue, $this->consumers) as $signal => $list) {
-            if ($list !== []) {
-                $this->flush($signal);
+        foreach ($this->queue as $k => $item) {
+            if (\array_key_exists($item->name, $this->consumers)) {
+                continue;
             }
+
+            unset($this->queue[$k]);
+            $this->consumeFallback($item->name, $item->values);
         }
     }
 
@@ -96,31 +109,23 @@ final class SignalQueue
 
     /**
      * @param non-empty-string $signal
-     *
-     * @psalm-suppress UnusedVariable
+     * @param Consumer $consumer
      */
-    private function flush(string $signal): void
+    private function consume(string $signal, ValuesInterface $values, callable $consumer): void
     {
-        if (!isset($this->queue[$signal])) {
-            return;
-        }
+        ($this->onSignal)($signal, $consumer, $values);
+    }
 
-        $consumer = $this->consumers[$signal] ?? null;
+    /**
+     * @param non-empty-string $signal
+     */
+    private function consumeFallback(string $signal, ValuesInterface $values): void
+    {
+        $handler = $this->fallbackConsumer;
+        \assert($handler !== null);
 
-        if ($consumer === null) {
-            if ($this->fallbackConsumer === null) {
-                return;
-            }
-
-            // Wrap the fallback consumer to call interceptors
-            $handler = $this->fallbackConsumer;
-            $consumer = static fn(ValuesInterface $values): mixed => $handler($signal, $values);
-        }
-
-        while ($this->queue[$signal] !== []) {
-            $args = \array_shift($this->queue[$signal]);
-
-            ($this->onSignal)($signal, $consumer, $args);
-        }
+        // Wrap the fallback consumer to call interceptors
+        $consumer = static fn(ValuesInterface $values): mixed => $handler($signal, $values);
+        ($this->onSignal)($signal, $consumer, $values);
     }
 }
