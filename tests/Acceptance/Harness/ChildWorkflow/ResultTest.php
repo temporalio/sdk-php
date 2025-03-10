@@ -27,11 +27,8 @@ class MainWorkflow
     #[WorkflowMethod('Harness_ChildWorkflow_Result')]
     public function run()
     {
-        return yield Workflow::newChildWorkflowStub(
-            ChildWorkflow::class,
-            // TODO: remove after https://github.com/temporalio/sdk-php/issues/451 is fixed
-            Workflow\ChildWorkflowOptions::new()->withTaskQueue(Workflow::getInfo()->taskQueue),
-        )->run('Test');
+        return yield Workflow::newChildWorkflowStub(ChildWorkflow::class)
+            ->run('Test');
     }
 }
 

@@ -16,7 +16,7 @@ final class RRStarter
         private State $runtime,
     ) {
         $this->environment = Environment::create();
-        // \register_shutdown_function(fn() => $this->stop());
+        \register_shutdown_function(fn() => $this->stop());
     }
 
     public function start(): void
