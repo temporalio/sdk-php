@@ -75,6 +75,9 @@ use Temporal\Workflow\WorkflowInfo;
 use function React\Promise\reject;
 use function React\Promise\resolve;
 
+/**
+ * @internal
+ */
 class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destroyable
 {
     /**
@@ -153,12 +156,6 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         return $this->lastCompletionResult;
     }
 
-    /**
-     * Get value of last completion result, if any.
-     *
-     * @param Type|string|null $type
-     * @return mixed
-     */
     public function getLastCompletionResult($type = null)
     {
         if ($this->lastCompletionResult === null) {
@@ -183,6 +180,13 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     public function registerSignal(string $queryType, callable $handler): WorkflowContextInterface
     {
         $this->getWorkflowInstance()->addSignalHandler($queryType, $handler);
+
+        return $this;
+    }
+
+    public function registerFallbackSignal(callable $handler): WorkflowContextInterface
+    {
+        $this->getWorkflowInstance()->setFallbackSignalHandler($handler);
 
         return $this;
     }

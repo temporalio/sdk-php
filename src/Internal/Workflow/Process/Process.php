@@ -165,7 +165,7 @@ class Process extends Scope implements ProcessInterface
         // unlike other scopes Process will notify the server when complete instead of pushing the result
         // to parent scope (there are no parent scope)
         $this->promise()->then(
-            function ($result): void {
+            function (mixed $result): void {
                 $this->complete([$result]);
             },
             function (\Throwable $e): void {

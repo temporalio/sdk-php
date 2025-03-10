@@ -272,6 +272,11 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
         $this->signalQueue->attach($name, $this->signalHandlers[$name]);
     }
 
+    public function setFallbackSignalHandler(callable $handler): void
+    {
+        $this->signalQueue->setFallback($handler(...));
+    }
+
     public function clearSignalQueue(): void
     {
         $this->signalQueue->clear();

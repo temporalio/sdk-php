@@ -62,6 +62,11 @@ interface WorkflowInstanceInterface extends InstanceInterface
 
     public function addSignalHandler(string $name, callable $handler): void;
 
+    /**
+     * @param callable(non-empty-string, ValuesInterface): mixed $handler
+     */
+    public function setFallbackSignalHandler(callable $handler): void;
+
     public function clearSignalQueue(): void;
 
     public function getPrototype(): WorkflowPrototype;

@@ -365,6 +365,31 @@ final class Workflow extends Facade
     }
 
     /**
+     * Registers a Signal handler in the Workflow.
+     *
+     * ```php
+     *  Workflow::registerFallbackSignal(function(string $name, ValuesInterface $arguments) {
+     *      \error_log(\sprintf(
+     *          'Executed signal `%s` with %d arguments',
+     *          $name,
+     *          $arguments->count(),
+     *      ));
+     *  });
+     * ```
+     *
+     * @param callable(non-empty-string, ValuesInterface): mixed $handler The handler to call when a signal is received.
+     *         The first parameter is the signal name, the second is Signal arguments.
+     *
+     * @since SDK 2.14.0
+     *
+     * @throws OutOfContextException in the absence of the workflow execution context.
+     */
+    public static function registerFallbackSignal(callable $handler): ScopedContextInterface
+    {
+        return self::getCurrentContext()->registerFallbackSignal($handler);
+    }
+
+    /**
      * Registers an Update method in the Workflow.
      *
      * ```php

@@ -16,7 +16,7 @@ use Temporal\DataConverter\ValuesInterface;
 /**
  * @psalm-type Consumer = callable(ValuesInterface): mixed
  *
- * @psalm-type OnSignalCallable = callable(non-empty-string $name, callable $handler, ValuesInterface $arguments): void
+ * @psalm-type OnSignalCallable = \Closure(non-empty-string $name, callable $handler, ValuesInterface $arguments): void
  */
 final class SignalQueue
 {
@@ -33,7 +33,14 @@ final class SignalQueue
     /**
      * @var OnSignalCallable
      */
-    private $onSignal;
+    private \Closure $onSignal;
+
+    /**
+     * A fallback consumer to handle signals when no consumer is attached.
+     *
+     * @var null|\Closure(non-empty-string, ValuesInterface): mixed
+     */
+    private ?\Closure $fallbackConsumer = null;
 
     /**
      * @param non-empty-string $signal
@@ -52,7 +59,7 @@ final class SignalQueue
     /**
      * @param OnSignalCallable $handler
      */
-    public function onSignal(callable $handler): void
+    public function onSignal(\Closure $handler): void
     {
         $this->onSignal = $handler;
     }
@@ -64,6 +71,14 @@ final class SignalQueue
     {
         $this->consumers[$signal] = $consumer; // overwrite
         $this->flush($signal);
+    }
+
+    /**
+     * @param \Closure(non-empty-string, ValuesInterface): mixed $consumer
+     */
+    public function setFallback(\Closure $consumer): void
+    {
+        $this->fallbackConsumer = $consumer;
     }
 
     public function clear(): void
