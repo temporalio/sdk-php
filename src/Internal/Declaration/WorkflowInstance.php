@@ -263,9 +263,6 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
         return fn(ValuesInterface $values) => $this->signalQueue->push($name, $values);
     }
 
-    /**
-     * @throws \ReflectionException
-     */
     public function addSignalHandler(string $name, callable $handler): void
     {
         $this->signalHandlers[$name] = $this->createCallableHandler($handler);

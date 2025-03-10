@@ -65,6 +65,8 @@ interface WorkflowContextInterface extends EnvironmentInterface
     /**
      * Registers a query with an additional signal handler.
      *
+     * @param non-empty-string $queryType
+     *
      * @see Workflow::registerSignal()
      *
      * @return $this

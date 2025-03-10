@@ -610,13 +610,9 @@
     </PropertyNotSetInConstructor>
     <PropertyTypeCoercion>
       <code><![CDATA[$this->queryHandlers]]></code>
-      <code><![CDATA[$this->signalHandlers]]></code>
     </PropertyTypeCoercion>
   </file>
   <file src="src/Internal/Declaration/WorkflowInstance/SignalQueue.php">
-    <ArgumentTypeCoercion>
-      <code><![CDATA[$signal]]></code>
-    </ArgumentTypeCoercion>
     <MissingConstructor>
       <code><![CDATA[$onSignal]]></code>
     </MissingConstructor>
@@ -1139,9 +1135,6 @@
     </UnevaluatedCode>
   </file>
   <file src="src/Internal/Workflow/Process/Process.php">
-    <MissingClosureParamType>
-      <code><![CDATA[$result]]></code>
-    </MissingClosureParamType>
     <PropertyNotSetInConstructor>
       <code><![CDATA[Process]]></code>
     </PropertyNotSetInConstructor>
@@ -1472,10 +1465,12 @@
   <file src="src/Workflow.php">
     <InvalidReturnStatement>
       <code><![CDATA[self::getCurrentContext()->newActivityStub($class, $options)]]></code>
+      <code><![CDATA[self::getCurrentContext()->registerFallbackSignal($handler)]]></code>
       <code><![CDATA[self::getCurrentContext()->registerQuery($queryType, $handler)]]></code>
       <code><![CDATA[self::getCurrentContext()->registerSignal($queryType, $handler)]]></code>
     </InvalidReturnStatement>
     <InvalidReturnType>
+      <code><![CDATA[ScopedContextInterface]]></code>
       <code><![CDATA[ScopedContextInterface]]></code>
       <code><![CDATA[ScopedContextInterface]]></code>
       <code><![CDATA[T]]></code>

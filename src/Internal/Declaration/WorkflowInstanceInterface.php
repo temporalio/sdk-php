@@ -60,6 +60,9 @@ interface WorkflowInstanceInterface extends InstanceInterface
      */
     public function findUpdateHandler(string $name): ?\Closure;
 
+    /**
+     * @param non-empty-string $name
+     */
     public function addSignalHandler(string $name, callable $handler): void;
 
     /**
