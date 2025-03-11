@@ -24,6 +24,7 @@ class QueryInput
      * @internal Don't use the constructor. Use {@see self::with()} instead.
      */
     public function __construct(
+        /** @var non-empty-string */
         public readonly string $queryName,
         public readonly ValuesInterface $arguments,
         public readonly WorkflowInfo $info,
