@@ -56,6 +56,8 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * A method that allows you to dynamically register additional query
      * handler in a workflow during the execution of a workflow.
      *
+     * @param non-empty-string $queryType
+     *
      * @see Workflow::registerQuery()
      *
      * @return $this

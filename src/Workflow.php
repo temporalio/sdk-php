@@ -336,7 +336,7 @@ final class Workflow extends Facade
      * The same method ({@see WorkflowStubInterface::query()}) should be used
      * to call such query handlers as in the case of ordinary query methods.
      *
-     * @param string|class-string $queryType
+     * @param non-empty-string $queryType
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function registerQuery(string $queryType, callable $handler): ScopedContextInterface
@@ -356,12 +356,12 @@ final class Workflow extends Facade
      * The same method ({@see WorkflowStubInterface::signal()}) should be used
      * to call such signal handlers as in the case of ordinary signal methods.
      *
-     * @param non-empty-string $queryType
+     * @param non-empty-string $name
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
-    public static function registerSignal(string $queryType, callable $handler): ScopedContextInterface
+    public static function registerSignal(string $name, callable $handler): ScopedContextInterface
     {
-        return self::getCurrentContext()->registerSignal($queryType, $handler);
+        return self::getCurrentContext()->registerSignal($name, $handler);
     }
 
     /**

@@ -44,7 +44,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     /** @var null|UpdateHandler */
     private ?\Closure $updateFallbackHandler = null;
 
-    /** @var null|UpdateValidator */
+    /** @var null|ValidateUpdateHandler */
     private ?\Closure $updateFallbackValidator = null;
 
     /** @var array<non-empty-string, MethodHandler> */
@@ -53,9 +53,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     /** @var array<non-empty-string, UpdateHandler> */
     private array $updateHandlers = [];
 
-    /**
-     * @var array<non-empty-string, null|ValidateUpdateHandler>
-     */
+    /** @var array<non-empty-string, null|ValidateUpdateHandler> */
     private array $validateUpdateHandlers = [];
 
     private SignalQueue $signalQueue;

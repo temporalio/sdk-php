@@ -600,6 +600,9 @@
     </RedundantConditionGivenDocblockType>
   </file>
   <file src="src/Internal/Declaration/WorkflowInstance.php">
+    <LessSpecificImplementedReturnType>
+      <code><![CDATA[UpdateHandler|null]]></code>
+    </LessSpecificImplementedReturnType>
     <PropertyNotSetInConstructor>
       <code><![CDATA[$queryExecutor]]></code>
       <code><![CDATA[$updateExecutor]]></code>
@@ -1168,7 +1171,6 @@
       <code><![CDATA[$input->maxSupported]]></code>
       <code><![CDATA[$input->minSupported]]></code>
       <code><![CDATA[$input->type]]></code>
-      <code><![CDATA[$queryType]]></code>
       <code><![CDATA[$type]]></code>
       <code><![CDATA[$type]]></code>
     </ArgumentTypeCoercion>
@@ -1462,10 +1464,12 @@
       <code><![CDATA[self::getCurrentContext()->newActivityStub($class, $options)]]></code>
       <code><![CDATA[self::getCurrentContext()->registerQuery($queryType, $handler)]]></code>
       <code><![CDATA[self::getCurrentContext()->registerQueryFallback($handler)]]></code>
-      <code><![CDATA[self::getCurrentContext()->registerSignal($queryType, $handler)]]></code>
+      <code><![CDATA[self::getCurrentContext()->registerSignal($name, $handler)]]></code>
       <code><![CDATA[self::getCurrentContext()->registerSignalFallback($handler)]]></code>
+      <code><![CDATA[self::getCurrentContext()->registerUpdateFallback($handler, $validator)]]></code>
     </InvalidReturnStatement>
     <InvalidReturnType>
+      <code><![CDATA[ScopedContextInterface]]></code>
       <code><![CDATA[ScopedContextInterface]]></code>
       <code><![CDATA[ScopedContextInterface]]></code>
       <code><![CDATA[ScopedContextInterface]]></code>
