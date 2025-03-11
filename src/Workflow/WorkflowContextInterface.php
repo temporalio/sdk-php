@@ -74,19 +74,31 @@ interface WorkflowContextInterface extends EnvironmentInterface
     public function registerSignal(string $queryType, callable $handler): self;
 
     /**
-     * Registers a fallback signal handler.
+     * Registers a Signal fallback handler.
      *
-     * @param callable(non-empty-string, ValuesInterface): mixed $handler The handler to call when a signal is received.
-     *        The first parameter is the signal name, the second is Signal arguments.
+     * @param callable(non-empty-string, ValuesInterface): mixed $handler The handler to call when a Signal is received.
+     *        The first parameter is the Signal name, the second is Signal arguments.
      *
      * @return $this
      *
      * @since SDK 2.14.0
      */
-    public function registerFallbackSignal(callable $handler): self;
+    public function registerSignalFallback(callable $handler): self;
 
     /**
-     * Registers an update method with an optional validator.
+     * Registers a Query fallback handler.
+     *
+     * @param callable(non-empty-string, ValuesInterface): mixed $handler The handler to call when a Query is received.
+     *        The first parameter is the Query name, the second is Query arguments.
+     *
+     * @return $this
+     *
+     * @since SDK 2.14.0
+     */
+    public function registerQueryFallback(callable $handler): self;
+
+    /**
+     * Registers an Update method with an optional validator.
      *
      * @see Workflow::registerUpdate()
      *

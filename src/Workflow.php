@@ -368,7 +368,7 @@ final class Workflow extends Facade
      * Registers a Signal handler in the Workflow.
      *
      * ```php
-     *  Workflow::registerFallbackSignal(function(string $name, ValuesInterface $arguments) {
+     *  Workflow::registerSignalFallback(function (string $name, ValuesInterface $arguments): void {
      *      \error_log(\sprintf(
      *          'Executed signal `%s` with %d arguments',
      *          $name,
@@ -384,9 +384,34 @@ final class Workflow extends Facade
      *
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
-    public static function registerFallbackSignal(callable $handler): ScopedContextInterface
+    public static function registerSignalFallback(callable $handler): ScopedContextInterface
     {
-        return self::getCurrentContext()->registerFallbackSignal($handler);
+        return self::getCurrentContext()->registerSignalFallback($handler);
+    }
+
+    /**
+     * Registers a Query handler in the Workflow.
+     *
+     * ```php
+     *  Workflow::registerQueryFallback(function (string $name, ValuesInterface $arguments): string {
+     *      return \sprintf(
+     *          'Got query `%s` with %d arguments',
+     *          $name,
+     *          $arguments->count(),
+     *      );
+     *  });
+     * ```
+     *
+     * @param callable(non-empty-string, ValuesInterface): mixed $handler The handler to call when a Query is received.
+     *         The first parameter is the Query name, the second is Query arguments.
+     *
+     * @since SDK 2.14.0
+     *
+     * @throws OutOfContextException in the absence of the workflow execution context.
+     */
+    public static function registerQueryFallback(callable $handler): ScopedContextInterface
+    {
+        return self::getCurrentContext()->registerQueryFallback($handler);
     }
 
     /**

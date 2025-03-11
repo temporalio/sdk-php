@@ -184,9 +184,16 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         return $this;
     }
 
-    public function registerFallbackSignal(callable $handler): WorkflowContextInterface
+    public function registerSignalFallback(callable $handler): WorkflowContextInterface
     {
-        $this->getWorkflowInstance()->setFallbackSignalHandler($handler);
+        $this->getWorkflowInstance()->setSignalFallbackHandler($handler);
+
+        return $this;
+    }
+
+    public function registerQueryFallback(callable $handler): WorkflowContextInterface
+    {
+        $this->getWorkflowInstance()->setQueryFallbackHandler($handler);
 
         return $this;
     }

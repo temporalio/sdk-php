@@ -18,11 +18,21 @@ use Temporal\Workflow\WorkflowMethod;
 class FallbackHandlersTest extends TestCase
 {
     #[Test]
+    public function fallbackQuery(
+        #[Stub('Extra_Workflow_FallbackHandlers')] WorkflowStubInterface $stub,
+    ): void {
+        /** @see TestWorkflow::registerQueryFallback() */
+        $stub->update('register_query_fallback');
+
+        self::assertSame('Got query `foo` with 2 arguments', $stub->query('foo', 'bar', 'baz')->getValues()[0]);
+    }
+
+    #[Test]
     public function fallbackSignal(
         #[Stub('Extra_Workflow_FallbackHandlers')] WorkflowStubInterface $stub,
     ): void {
         /** @see TestWorkflow::registerSignalFallback() */
-        $stub->signal('register_signals');
+        $stub->update('register_signals_fallback');
 
         $stub->signal('foo', 'bar', 'baz');
         $stub->signal('foo', 42);
@@ -48,10 +58,8 @@ class FallbackHandlersTest extends TestCase
         $stub->signal('foo', 42);
         $stub->signal('baz', ['foo' => 'bar']);
 
-        /** @see TestWorkflow::ping() */
-        $stub->update('ping');
         /** @see TestWorkflow::registerSignalFallback() */
-        $stub->signal('register_signals');
+        $stub->update('register_signals_fallback');
 
         /** @see TestWorkflow::exit() */
         $stub->signal('exit');
@@ -75,10 +83,8 @@ class FallbackHandlersTest extends TestCase
         $stub->signal('foo', 4);
         $stub->signal('baz', 5);
 
-        /** @see TestWorkflow::ping() */
-        $stub->update('ping');
         /** @see TestWorkflow::registerSignalFallback() */
-        $stub->signal('register_signals');
+        $stub->update('register_signals_fallback');
 
         /** @see TestWorkflow::exit() */
         $stub->signal('exit');
@@ -112,18 +118,22 @@ class TestWorkflow
         ];
     }
 
-    #[Workflow\SignalMethod('register_signals')]
-    public function registerSignalFallback()
+    #[Workflow\UpdateMethod('register_signals_fallback')]
+    public function registerSignalFallback(): void
     {
-        Workflow::registerFallbackSignal(function (string $name, ValuesInterface $values): void {
+        Workflow::registerSignalFallback(function (string $name, ValuesInterface $values): void {
             $this->signals[] = [$name, $values->getValues()];
         });
     }
 
-    #[Workflow\UpdateMethod]
-    public function ping()
+    #[Workflow\UpdateMethod('register_query_fallback')]
+    public function registerQueryFallback(): void
     {
-        return 'pong';
+        Workflow::registerQueryFallback(static fn(string $name, ValuesInterface $values): string => \sprintf(
+            'Got query `%s` with %d arguments',
+            $name,
+            $values->count(),
+        ));
     }
 
     #[Workflow\SignalMethod]

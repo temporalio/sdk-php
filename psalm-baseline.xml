@@ -600,17 +600,11 @@
     </RedundantConditionGivenDocblockType>
   </file>
   <file src="src/Internal/Declaration/WorkflowInstance.php">
-    <MissingClosureReturnType>
-      <code><![CDATA[function (QueryInput $input) use ($fn) {]]></code>
-    </MissingClosureReturnType>
     <PropertyNotSetInConstructor>
       <code><![CDATA[$queryExecutor]]></code>
       <code><![CDATA[$updateExecutor]]></code>
       <code><![CDATA[$updateValidator]]></code>
     </PropertyNotSetInConstructor>
-    <PropertyTypeCoercion>
-      <code><![CDATA[$this->queryHandlers]]></code>
-    </PropertyTypeCoercion>
   </file>
   <file src="src/Internal/Declaration/WorkflowInstance/SignalQueue.php">
     <MissingConstructor>
@@ -1174,6 +1168,7 @@
       <code><![CDATA[$input->maxSupported]]></code>
       <code><![CDATA[$input->minSupported]]></code>
       <code><![CDATA[$input->type]]></code>
+      <code><![CDATA[$queryType]]></code>
       <code><![CDATA[$type]]></code>
       <code><![CDATA[$type]]></code>
     </ArgumentTypeCoercion>
@@ -1465,11 +1460,13 @@
   <file src="src/Workflow.php">
     <InvalidReturnStatement>
       <code><![CDATA[self::getCurrentContext()->newActivityStub($class, $options)]]></code>
-      <code><![CDATA[self::getCurrentContext()->registerFallbackSignal($handler)]]></code>
       <code><![CDATA[self::getCurrentContext()->registerQuery($queryType, $handler)]]></code>
+      <code><![CDATA[self::getCurrentContext()->registerQueryFallback($handler)]]></code>
       <code><![CDATA[self::getCurrentContext()->registerSignal($queryType, $handler)]]></code>
+      <code><![CDATA[self::getCurrentContext()->registerSignalFallback($handler)]]></code>
     </InvalidReturnStatement>
     <InvalidReturnType>
+      <code><![CDATA[ScopedContextInterface]]></code>
       <code><![CDATA[ScopedContextInterface]]></code>
       <code><![CDATA[ScopedContextInterface]]></code>
       <code><![CDATA[ScopedContextInterface]]></code>

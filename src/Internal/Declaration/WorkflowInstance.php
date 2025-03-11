@@ -41,6 +41,11 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     private array $queryHandlers = [];
 
     /**
+     * @var null|QueryHandler
+     */
+    private ?\Closure $queryFallbackHandler = null;
+
+    /**
      * @var array<non-empty-string, MethodHandler>
      */
     private array $signalHandlers = [];
@@ -174,7 +179,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
      */
     public function findQueryHandler(string $name): ?\Closure
     {
-        return $this->queryHandlers[$name] ?? null;
+        return $this->queryHandlers[$name] ?? $this->queryFallbackHandler;
     }
 
     /**
@@ -207,16 +212,13 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
         $fn = $this->createCallableHandler($handler);
 
         $this->queryHandlers[$name] = $this->pipeline->with(
-            function (QueryInput $input) use ($fn) {
-                return ($this->queryExecutor)($input, $fn);
-            },
+            fn(QueryInput $input): mixed => ($this->queryExecutor)($input, $fn),
             /** @see WorkflowInboundCallsInterceptor::handleQuery() */
             'handleQuery',
         )(...);
     }
 
     /**
-     * @param non-empty-string $name
      * @throws \ReflectionException
      */
     public function addUpdateHandler(string $name, callable $handler): void
@@ -233,7 +235,6 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     }
 
     /**
-     * @param non-empty-string $name
      * @throws \ReflectionException
      */
     public function addValidateUpdateHandler(string $name, callable $handler): void
@@ -269,9 +270,24 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
         $this->signalQueue->attach($name, $this->signalHandlers[$name]);
     }
 
-    public function setFallbackSignalHandler(callable $handler): void
+    public function setSignalFallbackHandler(callable $handler): void
     {
         $this->signalQueue->setFallback($handler(...));
+    }
+
+    /**
+     * @param callable(non-empty-string, ValuesInterface): mixed $handler
+     */
+    public function setQueryFallbackHandler(callable $handler): void
+    {
+        $this->queryFallbackHandler = $this->pipeline->with(
+            fn(QueryInput $input): mixed => ($this->queryExecutor)(
+                $input,
+                static fn(ValuesInterface $arguments): mixed => $handler($input->queryName, $arguments),
+            ),
+            /** @see WorkflowInboundCallsInterceptor::handleQuery() */
+            'handleQuery',
+        )(...);
     }
 
     public function clearSignalQueue(): void
@@ -292,6 +308,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
             $this->updateValidator,
             $this->prototype,
             $this->pipeline,
+            $this->queryFallbackHandler,
         );
         parent::destroy();
     }

@@ -36,6 +36,9 @@ interface WorkflowInstanceInterface extends InstanceInterface
      */
     public function findQueryHandler(string $name): ?\Closure;
 
+    /**
+     * @param non-empty-string $name
+     */
     public function addQueryHandler(string $name, callable $handler): void;
 
     /**
@@ -68,7 +71,12 @@ interface WorkflowInstanceInterface extends InstanceInterface
     /**
      * @param callable(non-empty-string, ValuesInterface): mixed $handler
      */
-    public function setFallbackSignalHandler(callable $handler): void;
+    public function setSignalFallbackHandler(callable $handler): void;
+
+    /**
+     * @param callable(non-empty-string, ValuesInterface): mixed $handler
+     */
+    public function setQueryFallbackHandler(callable $handler): void;
 
     public function clearSignalQueue(): void;
 
