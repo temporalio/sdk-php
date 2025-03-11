@@ -198,6 +198,13 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         return $this;
     }
 
+    public function registerUpdateFallback(callable $handler, ?callable $validator = null): WorkflowContextInterface
+    {
+        $this->getWorkflowInstance()->setUpdateFallbackHandler($handler, $validator);
+
+        return $this;
+    }
+
     public function registerUpdate(string $name, callable $handler, ?callable $validator): static
     {
         $this->getWorkflowInstance()->addUpdateHandler($name, $handler);

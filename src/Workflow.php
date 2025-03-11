@@ -365,7 +365,7 @@ final class Workflow extends Facade
     }
 
     /**
-     * Registers a Signal handler in the Workflow.
+     * Registers a Signal fallback handler in the Workflow.
      *
      * ```php
      *  Workflow::registerSignalFallback(function (string $name, ValuesInterface $arguments): void {
@@ -377,8 +377,8 @@ final class Workflow extends Facade
      *  });
      * ```
      *
-     * @param callable(non-empty-string, ValuesInterface): mixed $handler The handler to call when a signal is received.
-     *         The first parameter is the signal name, the second is Signal arguments.
+     * @param callable(non-empty-string, ValuesInterface): mixed $handler The handler to call when a Signal is received.
+     *        The first parameter is the Signal name, the second is Signal arguments.
      *
      * @since SDK 2.14.0
      *
@@ -390,7 +390,7 @@ final class Workflow extends Facade
     }
 
     /**
-     * Registers a Query handler in the Workflow.
+     * Registers a Query fallback handler in the Workflow.
      *
      * ```php
      *  Workflow::registerQueryFallback(function (string $name, ValuesInterface $arguments): string {
@@ -403,7 +403,7 @@ final class Workflow extends Facade
      * ```
      *
      * @param callable(non-empty-string, ValuesInterface): mixed $handler The handler to call when a Query is received.
-     *         The first parameter is the Query name, the second is Query arguments.
+     *        The first parameter is the Query name, the second is Query arguments.
      *
      * @since SDK 2.14.0
      *
@@ -412,6 +412,38 @@ final class Workflow extends Facade
     public static function registerQueryFallback(callable $handler): ScopedContextInterface
     {
         return self::getCurrentContext()->registerQueryFallback($handler);
+    }
+
+    /**
+     * Registers an Update fallback method in the Workflow.
+     *
+     * ```php
+     *  Workflow::registerUpdateFallback(
+     *      static fn(string $name, ValuesInterface $arguments): string => \sprintf(
+     *          'Got update `%s` with %d arguments',
+     *          $name,
+     *          $arguments->count(),
+     *      ),
+     *      static fn(string $name, ValuesInterface $arguments) => \str_starts_with(
+     *          $name,
+     *          'update_',
+     *      ) or throw new \InvalidArgumentException('Invalid update name'),
+     *  );
+     * ```
+     *
+     * @param callable(non-empty-string, ValuesInterface): mixed $handler The Update handler.
+     *        The first parameter is the Update name, the second is Query arguments.
+     * @param null|callable(non-empty-string, ValuesInterface): mixed $validator The Update validator.
+     *        The first parameter is the Update name, the second is Update arguments.
+     *        It should throw an exception if the validation fails.
+     *
+     * @throws OutOfContextException in the absence of the workflow execution context.
+     *
+     * @since SDK 2.14.0
+     */
+    public static function registerUpdateFallback(callable $handler, ?callable $validator = null): ScopedContextInterface
+    {
+        return self::getCurrentContext()->registerUpdateFallback($handler, $validator);
     }
 
     /**

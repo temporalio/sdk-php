@@ -98,6 +98,21 @@ interface WorkflowContextInterface extends EnvironmentInterface
     public function registerQueryFallback(callable $handler): self;
 
     /**
+     * Registers an Update fallback handler.
+     *
+     * @param callable(non-empty-string, ValuesInterface): mixed $handler The Update handler
+     *        The first parameter is the Update name, the second is Update arguments.
+     * @param null|callable(non-empty-string, ValuesInterface): mixed $validator The Update validator
+     *       The first parameter is the Update name, the second is Update arguments.
+     *       It should throw an exception if the validation fails.
+     *
+     * @return $this
+     *
+     * @since SDK 2.14.0
+     */
+    public function registerUpdateFallback(callable $handler, ?callable $validator = null): self;
+
+    /**
      * Registers an Update method with an optional validator.
      *
      * @see Workflow::registerUpdate()

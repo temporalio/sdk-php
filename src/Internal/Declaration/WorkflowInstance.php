@@ -24,35 +24,33 @@ use Temporal\Workflow\WorkflowInit;
 
 /**
  * @psalm-type QueryHandler = \Closure(QueryInput): mixed
- * @psalm-type UpdateHandler = \Closure(UpdateInput, Deferred): PromiseInterface
+ * @psalm-type UpdateHandler = \Closure(UpdateInput, Deferred): mixed
  * @psalm-type ValidateUpdateHandler = \Closure(UpdateInput): void
  * @psalm-type QueryExecutor = \Closure(QueryInput, callable(ValuesInterface): mixed): mixed
  * @psalm-type UpdateExecutor = \Closure(UpdateInput, callable(ValuesInterface): mixed, Deferred): PromiseInterface
- * @psalm-type ValidateUpdateExecutor = \Closure(UpdateInput, callable(ValuesInterface): mixed): mixed
+ * @psalm-type ValidateUpdateExecutor = \Closure(UpdateInput, callable(ValuesInterface): mixed): void
  * @psalm-type UpdateValidator = \Closure(UpdateInput, UpdateHandler): void
  *
  * @internal
  */
 final class WorkflowInstance extends Instance implements WorkflowInstanceInterface
 {
-    /**
-     * @var array<non-empty-string, QueryHandler>
-     */
+    /** @var array<non-empty-string, QueryHandler> */
     private array $queryHandlers = [];
 
-    /**
-     * @var null|QueryHandler
-     */
+    /** @var null|QueryHandler */
     private ?\Closure $queryFallbackHandler = null;
 
-    /**
-     * @var array<non-empty-string, MethodHandler>
-     */
+    /** @var null|UpdateHandler */
+    private ?\Closure $updateFallbackHandler = null;
+
+    /** @var null|UpdateValidator */
+    private ?\Closure $updateFallbackValidator = null;
+
+    /** @var array<non-empty-string, MethodHandler> */
     private array $signalHandlers = [];
 
-    /**
-     * @var array<non-empty-string, UpdateHandler>
-     */
+    /** @var array<non-empty-string, UpdateHandler> */
     private array $updateHandlers = [];
 
     /**
@@ -190,7 +188,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
      */
     public function findUpdateHandler(string $name): ?\Closure
     {
-        return $this->updateHandlers[$name] ?? null;
+        return $this->updateHandlers[$name] ?? $this->updateFallbackHandler;
     }
 
     /**
@@ -201,7 +199,11 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
      */
     public function findValidateUpdateHandler(string $name): ?\Closure
     {
-        return $this->validateUpdateHandlers[$name] ?? null;
+        return $this->validateUpdateHandlers[$name] ?? (
+            \array_key_exists($name, $this->updateHandlers)
+                ? null
+                : $this->updateFallbackValidator
+        );
     }
 
     /**
@@ -275,9 +277,6 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
         $this->signalQueue->setFallback($handler(...));
     }
 
-    /**
-     * @param callable(non-empty-string, ValuesInterface): mixed $handler
-     */
     public function setQueryFallbackHandler(callable $handler): void
     {
         $this->queryFallbackHandler = $this->pipeline->with(
@@ -287,6 +286,26 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
             ),
             /** @see WorkflowInboundCallsInterceptor::handleQuery() */
             'handleQuery',
+        )(...);
+    }
+
+    public function setUpdateFallbackHandler(callable $handler, ?callable $validator = null): void
+    {
+        $this->updateFallbackValidator = $validator === null
+            ? null
+            : fn(UpdateInput $input): mixed => ($this->updateValidator)(
+                $input,
+                static fn(ValuesInterface $arguments): mixed => $validator($input->updateName, $arguments),
+            );
+
+        $this->updateFallbackHandler = $this->pipeline->with(
+            fn(UpdateInput $input, Deferred $deferred): mixed => ($this->updateExecutor)(
+                $input,
+                static fn(ValuesInterface $arguments): mixed => $handler($input->updateName, $arguments),
+                $deferred,
+            ),
+            /** @see WorkflowInboundCallsInterceptor::handleUpdate() */
+            'handleUpdate',
         )(...);
     }
 
