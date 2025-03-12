@@ -237,14 +237,14 @@ abstract class BaseClient implements ServiceClientInterface
      */
     protected function invoke(string $method, object $arg, ?ContextInterface $ctx = null): mixed
     {
-        $ctx ??= $this->context;
+        $ctx ??= $this->getContext();
 
         // Add the API key to the context
         $key = (string) $this->apiKey;
         if ($key !== '') {
             $ctx = $ctx->withMetadata([
                 'Authorization' => ["Bearer $key"],
-            ]);
+            ] + $ctx->getMetadata());
         }
 
         return $this->invokePipeline !== null
@@ -275,6 +275,8 @@ abstract class BaseClient implements ServiceClientInterface
                     $diff = (new \DateTime())->diff($deadline);
                     $options['timeout'] = CarbonInterval::instance($diff)->totalMicroseconds;
                 }
+
+                tr(['method' => $method, 'arg' => $arg, 'metadata' => $ctx->getMetadata(), 'options' => $options]);
 
                 /** @var UnaryCall $call */
                 $call = $this->connection->getWorkflowService()->{$method}($arg, $ctx->getMetadata(), $options);

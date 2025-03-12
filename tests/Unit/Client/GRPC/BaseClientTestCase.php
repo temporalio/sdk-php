@@ -127,11 +127,13 @@ class BaseClientTestCase extends TestCase
         $ctx1 = $client->testCall()->ctx;
         self::assertInstanceOf(ContextInterface::class, $ctx1);
         $this->assertArrayNotHasKey('Authorization', $ctx1->getMetadata());
+        $keysBefore = \count($ctx1->getMetadata());
 
         $ctx2 = $client2->testCall()->ctx;
         self::assertInstanceOf(ContextInterface::class, $ctx2);
         $this->assertArrayHasKey('Authorization', $ctx2->getMetadata());
         $this->assertSame(['Bearer test-key'], $ctx2->getMetadata()['Authorization']);
+        $this->assertSame($keysBefore + 1, \count($ctx2->getMetadata()), 'API Key doesnt affect other metadata');
     }
 
     public function testWithDynamicAuthKey(): void
