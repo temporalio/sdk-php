@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Schedule;
 
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Spiral\Attributes\AttributeReader;
 use Temporal\Api\Workflowservice\V1\CreateScheduleRequest;
@@ -43,9 +42,10 @@ class ScheduleClientTestCase extends TestCase
         };
         // Prepare mocks
         $clientMock = $this->createMock(ServiceClientInterface::class);
+        $clientMock->expects($this->once())->method('withContext')->willReturnSelf();
         $clientMock->expects($this->once())
             ->method('CreateSchedule')
-            ->with($this->callback(fn(CreateScheduleRequest $request) => $testContext->request = $request or true))
+            ->with($this->callback(static fn(CreateScheduleRequest $request) => $testContext->request = $request or true))
             ->willReturn((new CreateScheduleResponse())->setConflictToken('test-conflict-token'));
         $scheduleClient = $this->createScheduleClient(
             client: $clientMock,
@@ -71,9 +71,10 @@ class ScheduleClientTestCase extends TestCase
         };
         // Prepare mocks
         $clientMock = $this->createMock(ServiceClientInterface::class);
+        $clientMock->expects($this->once())->method('withContext')->willReturnSelf();
         $clientMock->expects($this->once())
             ->method('CreateSchedule')
-            ->with($this->callback(fn(CreateScheduleRequest $request) => $testContext->request = $request or true))
+            ->with($this->callback(static fn(CreateScheduleRequest $request) => $testContext->request = $request or true))
             ->willReturn((new CreateScheduleResponse())->setConflictToken('test-conflict-token'));
         $scheduleClient = $this->createScheduleClient(
             client: $clientMock,
@@ -97,9 +98,10 @@ class ScheduleClientTestCase extends TestCase
         };
         // Prepare mocks
         $clientMock = $this->createMock(ServiceClientInterface::class);
+        $clientMock->expects($this->once())->method('withContext')->willReturnSelf();
         $clientMock->expects($this->once())
             ->method('CreateSchedule')
-            ->with($this->callback(fn(CreateScheduleRequest $request) => $testContext->request = $request or true))
+            ->with($this->callback(static fn(CreateScheduleRequest $request) => $testContext->request = $request or true))
             ->willReturn((new CreateScheduleResponse())->setConflictToken('test-conflict-token'));
         $scheduleClient = $this->createScheduleClient(
             client: $clientMock,
@@ -124,16 +126,17 @@ class ScheduleClientTestCase extends TestCase
         };
         // Prepare mocks
         $clientMock = $this->createMock(ServiceClientInterface::class);
+        $clientMock->expects($this->once())->method('withContext')->willReturnSelf();
         $clientMock->expects($this->once())
             ->method('CreateSchedule')
-            ->with($this->callback(fn(CreateScheduleRequest $request) => $testContext->request = $request or true))
+            ->with($this->callback(static fn(CreateScheduleRequest $request) => $testContext->request = $request or true))
             ->willReturn((new CreateScheduleResponse())->setConflictToken('test-conflict-token'));
         $scheduleClient = $this->createScheduleClient(
             client: $clientMock,
         );
         $result = $scheduleClient->createSchedule(
             Schedule::new()->withAction(
-                StartWorkflowAction::new('PingSite')
+                StartWorkflowAction::new('PingSite'),
             ),
             scheduleId: 'test-id',
         );
@@ -149,9 +152,10 @@ class ScheduleClientTestCase extends TestCase
         };
         // Prepare mocks
         $clientMock = $this->createMock(ServiceClientInterface::class);
+        $clientMock->expects($this->once())->method('withContext')->willReturnSelf();
         $clientMock->expects($this->once())
             ->method('ListSchedules')
-            ->with($this->callback(fn(ListSchedulesRequest $request) => $testContext->request = $request or true))
+            ->with($this->callback(static fn(ListSchedulesRequest $request) => $testContext->request = $request or true))
             ->willReturn((new ListSchedulesResponse()));
         $scheduleClient = $this->createScheduleClient(
             client: $clientMock,
@@ -176,9 +180,10 @@ class ScheduleClientTestCase extends TestCase
         };
         // Prepare mocks
         $clientMock = $this->createMock(ServiceClientInterface::class);
+        $clientMock->expects($this->once())->method('withContext')->willReturnSelf();
         $clientMock->expects($this->once())
             ->method('CreateSchedule')
-            ->with($this->callback(fn(CreateScheduleRequest $request) => $testContext->request = $request or true))
+            ->with($this->callback(static fn(CreateScheduleRequest $request) => $testContext->request = $request or true))
             ->willReturn((new CreateScheduleResponse())->setConflictToken('test-conflict-token'));
         $scheduleClient = $this->createScheduleClient(
             client: $clientMock,
@@ -279,35 +284,36 @@ class ScheduleClientTestCase extends TestCase
                 ->withMemo(['foo' => 'memo'])
                 ->withSearchAttributes(['foo' => 'search'])
                 ->withWorkflowId('workflow-id')
-                ->withWorkflowIdReusePolicy(WorkflowIdReusePolicy::AllowDuplicateFailedOnly)
+                ->withWorkflowIdReusePolicy(WorkflowIdReusePolicy::AllowDuplicateFailedOnly),
         )->withSpec(
             ScheduleSpec::new()
                 ->withStructuredCalendarList(
                     StructuredCalendarSpec::new()
                         ->withDaysOfWeek(Range::new(1, 5))
-                        ->withHours(Range::new(9, 9), Range::new(12, 12))
+                        ->withHours(Range::new(9, 9), Range::new(12, 12)),
                 )
                 ->withCalendarList(
                     CalendarSpec::new()
                         ->withSecond(6)
                         ->withMinute('*/6')
-                        ->withComment('test comment')
+                        ->withComment('test comment'),
                 )
                 ->withCronStringList('0 12 * * 5', '0 12 * * 1')
-                ->withStartTime(new DateTimeImmutable('2024-10-01T00:00:00Z'))
-                ->withEndTime(new DateTimeImmutable('2024-10-31T00:00:00Z'))
+                ->withStartTime(new \DateTimeImmutable('2024-10-01T00:00:00Z'))
+                ->withEndTime(new \DateTimeImmutable('2024-10-31T00:00:00Z'))
                 ->withJitter('10m')
-                ->withTimezoneName('UTC')
-        )->withPolicies(SchedulePolicies::new()
-            ->withCatchupWindow('10m')
-            ->withPauseOnFailure(true)
-            ->withOverlapPolicy(ScheduleOverlapPolicy::CancelOther)
+                ->withTimezoneName('UTC'),
+        )->withPolicies(
+            SchedulePolicies::new()
+                ->withCatchupWindow('10m')
+                ->withPauseOnFailure(true)
+                ->withOverlapPolicy(ScheduleOverlapPolicy::CancelOther),
         )->withState(
             ScheduleState::new()
                 ->withLimitedActions(true)
                 ->withRemainingActions(10)
                 ->withPaused(true)
-                ->withNotes('test notes')
+                ->withNotes('test notes'),
         );
     }
 }
