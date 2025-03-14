@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Client\GRPC;
 
-use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
 use Temporal\Api\Workflowservice\V1\GetSystemInfoRequest;
 use Temporal\Api\Workflowservice\V1\GetSystemInfoResponse;
@@ -48,18 +47,14 @@ class BaseClientTestCase extends TestCase
     public function testClose(): void
     {
         $client = $this->createClientMock(static fn() => new class extends WorkflowServiceClient {
-            public function __construct()
-            {
-            }
+            public function __construct() {}
 
             public function getConnectivityState($try_to_connect = false): int
             {
                 return ConnectionState::TransientFailure->value;
             }
 
-            public function close(): void
-            {
-            }
+            public function close(): void {}
         });
         $client->close();
 
@@ -105,7 +100,7 @@ class BaseClientTestCase extends TestCase
     public function testContextGetDeadlineWithStaticDeadline(): void
     {
         $client = $this->createClientMock();
-        $context = $client->getContext()->withDeadline(new DateTimeImmutable('+1 second'));
+        $context = $client->getContext()->withDeadline(new \DateTimeImmutable('+1 second'));
 
         $this->assertSame($context->getDeadline(), $context->getDeadline());
     }
@@ -160,22 +155,21 @@ class BaseClientTestCase extends TestCase
 
     public function testServiceClientCallDeadlineReached(): void
     {
-        $client = $this->createClientMock(fn() => new class() extends WorkflowServiceClient {
+        $client = $this->createClientMock(static fn() => new class extends WorkflowServiceClient {
             public function __construct() {}
-            public function testCall()
+
+            public function testCall(): void
             {
-                throw new class((object)['code' => StatusCode::UNKNOWN, 'metadata' => []])
-                    extends ServiceClientException {
-                };
+                throw new class((object) ['code' => StatusCode::UNKNOWN, 'metadata' => []]) extends ServiceClientException {};
             }
-            public function close(): void
-            {
-            }
+
+            public function close(): void {}
         })->withInterceptorPipeline(null);
 
-        $client = $client->withContext($client->getContext()
-            ->withDeadline(new DateTimeImmutable('-1 second'))
-            ->withRetryOptions(RpcRetryOptions::new()->withMaximumAttempts(2)) // stop if deadline doesn't work
+        $client = $client->withContext(
+            $client->getContext()
+                ->withDeadline(new \DateTimeImmutable('-1 second'))
+                ->withRetryOptions(RpcRetryOptions::new()->withMaximumAttempts(2)), // stop if deadline doesn't work
         );
 
         self::expectException(TimeoutException::class);
@@ -185,20 +179,21 @@ class BaseClientTestCase extends TestCase
 
     public function testServiceClientCallCustomException(): void
     {
-        $client = $this->createClientMock(fn() => new class() extends WorkflowServiceClient {
+        $client = $this->createClientMock(static fn() => new class extends WorkflowServiceClient {
             public function __construct() {}
-            public function testCall()
+
+            public function testCall(): void
             {
                 throw new \RuntimeException('foo');
             }
-            public function close(): void
-            {
-            }
+
+            public function close(): void {}
         })->withInterceptorPipeline(null);
 
-        $client = $client->withContext($client->getContext()
-            ->withDeadline(new DateTimeImmutable('-1 second'))
-            ->withRetryOptions(RpcRetryOptions::new()->withMaximumAttempts(2)) // stop if deadline doesn't work
+        $client = $client->withContext(
+            $client->getContext()
+                ->withDeadline(new \DateTimeImmutable('-1 second'))
+                ->withRetryOptions(RpcRetryOptions::new()->withMaximumAttempts(2)), // stop if deadline doesn't work
         );
 
         self::expectException(\RuntimeException::class);
@@ -212,31 +207,32 @@ class BaseClientTestCase extends TestCase
      */
     public function testServiceClientCallMaximumAttemptsReached(): void
     {
-        $client = $this->createClientMock(fn() => new class() extends WorkflowServiceClient {
+        $client = $this->createClientMock(fn() => new class extends WorkflowServiceClient {
             public function __construct() {}
-            public function testCall()
+
+            public function testCall(): void
             {
                 static $counter = 0;
-                throw new class(++$counter)
-                    extends ServiceClientException {
+                throw new class(++$counter) extends ServiceClientException {
                     public function __construct(public int $attempt)
                     {
-                        parent::__construct((object)['code' => StatusCode::UNKNOWN, 'metadata' => []]);
+                        parent::__construct((object) ['code' => StatusCode::UNKNOWN, 'metadata' => []]);
                     }
+
                     public function isTestError(): bool
                     {
                         return true;
                     }
                 };
             }
-            public function close(): void
-            {
-            }
+
+            public function close(): void {}
         })->withInterceptorPipeline(null);
 
-        $client = $client->withContext($client->getContext()
-            ->withDeadline(new DateTimeImmutable('+2 seconds')) // stop if attempts don't work
-            ->withRetryOptions(RpcRetryOptions::new()->withMaximumAttempts(3)->withBackoffCoefficient(1))
+        $client = $client->withContext(
+            $client->getContext()
+                ->withDeadline(new \DateTimeImmutable('+2 seconds')) // stop if attempts don't work
+                ->withRetryOptions(RpcRetryOptions::new()->withMaximumAttempts(3)->withBackoffCoefficient(1)),
         );
 
         try {
@@ -251,31 +247,28 @@ class BaseClientTestCase extends TestCase
     private function createClientMock(?callable $serviceClientFactory = null): BaseClient
     {
         return (new class($serviceClientFactory ?? static fn() => new class extends WorkflowServiceClient {
-            public function __construct()
-            {
-            }
+            public function __construct() {}
 
             public function getConnectivityState($try_to_connect = false): int
             {
                 return ConnectionState::Ready->value;
             }
 
-            public function close(): void
-            {
-            }
+            public function close(): void {}
         }) extends ServiceClient {
+
             public function getSystemInfo(
                 GetSystemInfoRequest $arg,
-                ContextInterface $ctx = null,
+                ?ContextInterface $ctx = null,
             ): GetSystemInfoResponse {
                 return (new GetSystemInfoResponse())
-                    ->setCapabilities((new Capabilities)->setSupportsSchedules(true))
+                    ->setCapabilities((new Capabilities())->setSupportsSchedules(true))
                     ->setServerVersion('1.2.3');
             }
 
             public function testCall(): mixed
             {
-                return $this->invoke("testCall", (object)[], null);
+                return $this->invoke("testCall", (object) [], null);
             }
         })->withInterceptorPipeline(
             Pipeline::prepare([new class implements \Temporal\Interceptor\GrpcClientInterceptor {
@@ -283,9 +276,9 @@ class BaseClientTestCase extends TestCase
                     string $method,
                     object $arg,
                     ContextInterface $ctx,
-                    callable $next
+                    callable $next,
                 ): object {
-                    return (object)['method' => $method, 'arg' => $arg, 'ctx' => $ctx, 'next' => $next];
+                    return (object) ['method' => $method, 'arg' => $arg, 'ctx' => $ctx, 'next' => $next];
                 }
             }]),
         );

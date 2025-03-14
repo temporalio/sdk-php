@@ -276,8 +276,6 @@ abstract class BaseClient implements ServiceClientInterface
                     $options['timeout'] = CarbonInterval::instance($diff)->totalMicroseconds;
                 }
 
-                tr(['method' => $method, 'arg' => $arg, 'metadata' => $ctx->getMetadata(), 'options' => $options]);
-
                 /** @var UnaryCall $call */
                 $call = $this->connection->getWorkflowService()->{$method}($arg, $ctx->getMetadata(), $options);
                 [$result, $status] = $call->wait();
