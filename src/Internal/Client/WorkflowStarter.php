@@ -15,6 +15,7 @@ use Temporal\Api\Common\V1\WorkflowType;
 use Temporal\Api\Errordetails\V1\MultiOperationExecutionFailure;
 use Temporal\Api\Errordetails\V1\WorkflowExecutionAlreadyStartedFailure;
 use Temporal\Api\Failure\V1\MultiOperationExecutionAborted;
+use Temporal\Api\Sdk\V1\UserMetadata;
 use Temporal\Api\Taskqueue\V1\TaskQueue;
 use Temporal\Api\Update\V1\Request as UpdateRequestMessage;
 use Temporal\Api\Workflowservice\V1\ExecuteMultiOperationRequest;
@@ -320,6 +321,10 @@ final class WorkflowStarter
         \assert($header instanceof Header);
         $header->setDataConverter($this->converter);
 
+        $metadata = (new UserMetadata())
+            ->setSummary($this->converter->toPayload($options->staticSummary))
+            ->setDetails($this->converter->toPayload($options->staticDetails));
+
         $req->setRequestId(Uuid::v4())
             ->setIdentity($this->clientOptions->identity)
             ->setNamespace($this->clientOptions->namespace)
@@ -335,7 +340,8 @@ final class WorkflowStarter
             ->setWorkflowTaskTimeout(DateInterval::toDuration($options->workflowTaskTimeout))
             ->setMemo($options->toMemo($this->converter))
             ->setSearchAttributes($options->toSearchAttributes($this->converter))
-            ->setHeader($header->toHeader());
+            ->setHeader($header->toHeader())
+            ->setUserMetadata($metadata);
 
         $delay = DateInterval::toDuration($options->workflowStartDelay);
         if ($delay !== null && ($delay->getSeconds() > 0 || $delay->getNanos() > 0)) {
