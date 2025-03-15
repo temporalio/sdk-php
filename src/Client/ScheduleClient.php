@@ -51,13 +51,20 @@ final class ScheduleClient implements ScheduleClientInterface
         ?ClientOptions $options = null,
         ?DataConverterInterface $converter = null,
     ) {
-        $this->client = $serviceClient;
         $this->clientOptions = $options ?? new ClientOptions();
         $this->converter = $converter ?? DataConverter::createDefault();
         $this->marshaller = new Marshaller(
             new AttributeMapperFactory(new AttributeReader()),
         );
         $this->protoConverter = new ProtoToArrayConverter($this->converter);
+
+        // Set Temporal-Namespace metadata
+        $context = $serviceClient->getContext();
+        $this->client = $serviceClient->withContext(
+            $context->withMetadata(
+                ['Temporal-Namespace' => [$this->clientOptions->namespace]] + $context->getMetadata(),
+            ),
+        );
     }
 
     public static function create(

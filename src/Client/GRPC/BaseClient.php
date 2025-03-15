@@ -237,14 +237,14 @@ abstract class BaseClient implements ServiceClientInterface
      */
     protected function invoke(string $method, object $arg, ?ContextInterface $ctx = null): mixed
     {
-        $ctx ??= $this->context;
+        $ctx ??= $this->getContext();
 
         // Add the API key to the context
         $key = (string) $this->apiKey;
         if ($key !== '') {
             $ctx = $ctx->withMetadata([
                 'Authorization' => ["Bearer $key"],
-            ]);
+            ] + $ctx->getMetadata());
         }
 
         return $this->invokePipeline !== null
