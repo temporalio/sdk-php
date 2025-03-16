@@ -161,11 +161,13 @@ final class WorkflowOptions extends Options
     /**
      * General fixed details for this workflow execution that will appear in UI/CLI.
      */
+    #[Marshal(name: 'StaticDetails')]
     public string $staticDetails = '';
 
     /**
      * Single-line fixed summary for this workflow execution that will appear in UI/CLI.
      */
+    #[Marshal(name: 'StaticSummary')]
     public string $staticSummary = '';
 
     /**

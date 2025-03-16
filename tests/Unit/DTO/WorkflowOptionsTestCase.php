@@ -47,6 +47,8 @@ class WorkflowOptionsTestCase extends AbstractDTOMarshalling
             'CronSchedule'             => null,
             'Memo'                     => null,
             'SearchAttributes'         => null,
+            'StaticDetails'            => '',
+            'StaticSummary'            => '',
         ];
 
         $result = $this->marshal($dto);
