@@ -5,6 +5,10 @@ declare(strict_types=1);
 namespace Temporal\Tests\Acceptance\Extra\Workflow\UserMetadata;
 
 use PHPUnit\Framework\Attributes\Test;
+use Temporal\Client\Schedule\Action\StartWorkflowAction;
+use Temporal\Client\Schedule\Schedule;
+use Temporal\Client\Schedule\Spec\ScheduleState;
+use Temporal\Client\ScheduleClientInterface;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
@@ -46,7 +50,7 @@ class UserMetadataTest extends TestCase
             self::assertSame('test summary', $description->config->userMetadata->summary);
             self::assertSame('test details', $description->config->userMetadata->details);
         } finally {
-            $stub->terminate('Finalize');
+            $stub->terminate('Cleanup');
         }
     }
 
@@ -73,7 +77,39 @@ class UserMetadataTest extends TestCase
             self::assertSame('child summary', $description->config->userMetadata->summary);
             self::assertSame('child details', $description->config->userMetadata->details);
         } finally {
-            $stub->terminate('Finalize');
+            $stub->terminate('Cleanup');
+        }
+    }
+
+    #[Test]
+    public function scheduleWorkflowMetadata(
+        ScheduleClientInterface $client,
+        Feature $feature,
+    ): void {
+        $schedule = $client->createSchedule(
+            Schedule::new()
+                ->withAction(
+                    StartWorkflowAction::new('Extra_Workflow_UserMetadata')
+                        ->withTaskQueue($feature->taskQueue)
+                        ->withStaticSummary('some-summary')
+                        ->withStaticDetails('some-details'),
+                )
+                ->withState(
+                    ScheduleState::new()
+                        ->withPaused(true),
+                ),
+        );
+
+        try {
+            $description = $schedule->describe();
+
+            $action = $description->schedule->action;
+            self::assertInstanceOf(StartWorkflowAction::class, $action);
+            self::assertSame('some-summary', $action->userMetadata->summary);
+            self::assertSame('some-details', $action->userMetadata->details);
+        } finally {
+            // Cleanup
+            $schedule->delete();
         }
     }
 }

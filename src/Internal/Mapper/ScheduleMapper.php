@@ -13,6 +13,7 @@ use Temporal\Api\Schedule\V1\SchedulePolicies;
 use Temporal\Api\Schedule\V1\ScheduleSpec;
 use Temporal\Api\Schedule\V1\ScheduleState;
 use Temporal\Api\Schedule\V1\StructuredCalendarSpec;
+use Temporal\Api\Sdk\V1\UserMetadata;
 use Temporal\Api\Taskqueue\V1\TaskQueue;
 use Temporal\Client\Schedule\Action\StartWorkflowAction;
 use Temporal\Client\Schedule\Action\ScheduleAction;
@@ -71,6 +72,9 @@ final class ScheduleMapper
                 $values['input'] = $action->input?->toPayloads() ?? new Payloads();
                 $values['workflow_id_reuse_policy'] = $action->workflowIdReusePolicy->value;
                 $values['retry_policy'] = $action->retryPolicy?->toWorkflowRetryPolicy();
+                $values['user_metadata'] = (new UserMetadata())
+                    ->setSummary($this->converter->toPayload($action->userMetadata->summary))
+                    ->setDetails($this->converter->toPayload($action->userMetadata->details));
 
                 $result->setStartWorkflow(
                     new \Temporal\Api\Workflow\V1\NewWorkflowExecutionInfo(self::cleanArray($values)),
