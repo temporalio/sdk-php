@@ -28,22 +28,53 @@ class UserMetadataTest extends TestCase
                 ->withStaticDetails('test details'),
         );
 
-        /** @see TestWorkflow::handle() */
-        $client->start($stub);
-        $stub->update('ping');
+        try {
+            /** @see TestWorkflow::handle() */
+            $client->start($stub);
+            $stub->update('ping');
 
-        $description = $stub->describe();
-        self::assertSame('test summary', $description->config->userMetadata->summary);
-        self::assertSame('test details', $description->config->userMetadata->details);
+            $description = $stub->describe();
+            self::assertSame('test summary', $description->config->userMetadata->summary);
+            self::assertSame('test details', $description->config->userMetadata->details);
 
-        // Complete workflow
-        /** @see TestWorkflow::exit */
-        $stub->signal('exit');
-        $stub->getResult();
+            // Complete workflow
+            /** @see TestWorkflow::exit */
+            $stub->signal('exit');
+            $stub->getResult();
 
-        $description = $stub->describe();
-        self::assertSame('test summary', $description->config->userMetadata->summary);
-        self::assertSame('test details', $description->config->userMetadata->details);
+            $description = $stub->describe();
+            self::assertSame('test summary', $description->config->userMetadata->summary);
+            self::assertSame('test details', $description->config->userMetadata->details);
+        } finally {
+            $stub->terminate('Finalize');
+        }
+    }
+
+    #[Test]
+    public function childWorkflowMetadata(
+        WorkflowClientInterface $client,
+        Feature $feature,
+    ): void {
+        $stub = $client->newUntypedWorkflowStub(
+            'Extra_Workflow_UserMetadata',
+            WorkflowOptions::new()
+                ->withTaskQueue($feature->taskQueue)
+                ->withStaticSummary('test summary')
+                ->withStaticDetails('test details'),
+        );
+
+        try {
+            /** @see TestWorkflow::handle() */
+            $client->start($stub);
+            $childId = (string) $stub->update('start_child', 'child summary', 'child details')->getValue(0);
+
+            $child = $client->newUntypedRunningWorkflowStub($childId);
+            $description = $child->describe();
+            self::assertSame('child summary', $description->config->userMetadata->summary);
+            self::assertSame('child details', $description->config->userMetadata->details);
+        } finally {
+            $stub->terminate('Finalize');
+        }
     }
 }
 
@@ -64,6 +95,18 @@ class TestWorkflow
     public function ping(): string
     {
         return 'pong';
+    }
+
+    #[Workflow\UpdateMethod('start_child')]
+    public function startChild(string $summary, string $details)
+    {
+        $stub = Workflow::newUntypedChildWorkflowStub(
+            'Extra_Workflow_UserMetadata',
+            Workflow\ChildWorkflowOptions::new()->withStaticSummary($summary)->withStaticDetails($details),
+        );
+        $execution = yield $stub->start();
+
+        return $execution->getID();
     }
 
     #[Workflow\SignalMethod]
