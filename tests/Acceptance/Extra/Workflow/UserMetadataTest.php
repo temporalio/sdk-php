@@ -11,6 +11,7 @@ use Temporal\Client\Schedule\Spec\ScheduleState;
 use Temporal\Client\ScheduleClientInterface;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
+use Temporal\Client\WorkflowStubInterface;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
@@ -50,7 +51,7 @@ class UserMetadataTest extends TestCase
             self::assertSame('test summary', $description->config->userMetadata->summary);
             self::assertSame('test details', $description->config->userMetadata->details);
         } finally {
-            $stub->terminate('Cleanup');
+            self::terminate($stub);
         }
     }
 
@@ -77,7 +78,7 @@ class UserMetadataTest extends TestCase
             self::assertSame('child summary', $description->config->userMetadata->summary);
             self::assertSame('child details', $description->config->userMetadata->details);
         } finally {
-            $stub->terminate('Cleanup');
+            self::terminate($stub);
         }
     }
 
@@ -110,6 +111,15 @@ class UserMetadataTest extends TestCase
         } finally {
             // Cleanup
             $schedule->delete();
+        }
+    }
+
+    private static function terminate(WorkflowStubInterface $stub): void
+    {
+        try {
+            $stub->terminate('');
+        } catch (\Throwable) {
+            // Do nothing
         }
     }
 }

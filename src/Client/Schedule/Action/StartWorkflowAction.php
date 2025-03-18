@@ -109,6 +109,10 @@ final class StartWorkflowAction extends ScheduleAction
     #[Marshal(type: EncodedCollectionType::class, of: Header::class)]
     public readonly HeaderInterface $header;
 
+    /**
+     * @internal
+     * @experimental This feature is not stable and may change in the future.
+     */
     #[Marshal(name: 'user_metadata')]
     public readonly UserMetadata $userMetadata;
 
@@ -276,6 +280,8 @@ final class StartWorkflowAction extends ScheduleAction
      * Single-line fixed summary for this workflow execution that will appear in UI/CLI.
      *
      * This can be in single-line Temporal Markdown format.
+     *
+     * @experimental This feature is not stable and may change in the future.
      */
     public function withStaticSummary(string $summary): self
     {
@@ -288,6 +294,8 @@ final class StartWorkflowAction extends ScheduleAction
      *
      * This can be in Temporal Markdown format and can span multiple lines. This is a fixed value on the workflow
      * that cannot be updated.
+     *
+     * @experimental This feature is not stable and may change in the future.
      */
     public function withStaticDetails(string $details): self
     {

@@ -159,12 +159,16 @@ final class ChildWorkflowOptions extends Options
 
     /**
      * General fixed details for this workflow execution that will appear in UI/CLI.
+     *
+     * @experimental This feature is not stable and may change in the future.
      */
     #[Marshal(name: 'StaticDetails')]
     public string $staticDetails = '';
 
     /**
      * Single-line fixed summary for this workflow execution that will appear in UI/CLI.
+     *
+     * @experimental This feature is not stable and may change in the future.
      */
     #[Marshal(name: 'StaticSummary')]
     public string $staticSummary = '';
