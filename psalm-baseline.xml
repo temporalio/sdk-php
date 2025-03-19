@@ -442,19 +442,11 @@
     <MissingTemplateParam>
       <code><![CDATA[$fails]]></code>
     </MissingTemplateParam>
-    <PossiblyNullArgument>
-      <code><![CDATA[$options->retryOptions ? $options->retryOptions->toWorkflowRetryPolicy() : null]]></code>
-      <code><![CDATA[$options->toMemo($this->converter)]]></code>
-      <code><![CDATA[$options->toSearchAttributes($this->converter)]]></code>
-    </PossiblyNullArgument>
     <PossiblyNullReference>
       <code><![CDATA[getName]]></code>
       <code><![CDATA[getStartWorkflow]]></code>
       <code><![CDATA[getUpdateWorkflow]]></code>
     </PossiblyNullReference>
-    <RedundantConditionGivenDocblockType>
-      <code><![CDATA[$delay !== null]]></code>
-    </RedundantConditionGivenDocblockType>
     <UndefinedInterfaceMethod>
       <code><![CDATA[toHeader]]></code>
     </UndefinedInterfaceMethod>
@@ -878,6 +870,9 @@
       <code><![CDATA[self::FORMAT_MONTHS]]></code>
       <code><![CDATA[self::FORMAT_YEARS]]></code>
     </DeprecatedConstant>
+    <RedundantCondition>
+      <code><![CDATA[$nullEmpty && $seconds === 0 && $micros === 0]]></code>
+    </RedundantCondition>
   </file>
   <file src="src/Internal/Support/DateTime.php">
     <InvalidReturnStatement>

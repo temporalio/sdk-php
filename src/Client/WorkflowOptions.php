@@ -517,7 +517,7 @@ final class WorkflowOptions extends Options
      */
     public function toMemo(DataConverterInterface $converter): ?Memo
     {
-        if ($this->memo === null) {
+        if ($this->memo === null || $this->memo === []) {
             return null;
         }
 
