@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Common;
 
+use Google\Protobuf\Duration;
 use JetBrains\PhpStorm\Pure;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Api\Common\V1\RetryPolicy;
@@ -122,11 +123,12 @@ class RetryOptions extends Options
     /**
      * @psalm-suppress ImpureMethodCall
      *
-     * @param DateIntervalValue|null $interval
+     * @param mixed $interval parseable string, null, int|float in seconds, {@see \DateInterval}, or {@see Duration}
      * @return static
+     * @psalm-assert DateIntervalValue|null $interval
      */
     #[Pure]
-    public function withInitialInterval($interval): self
+    public function withInitialInterval(mixed $interval): self
     {
         \assert(DateInterval::assert($interval) || $interval === null);
 
@@ -153,11 +155,12 @@ class RetryOptions extends Options
     /**
      * @psalm-suppress ImpureMethodCall
      *
-     * @param DateIntervalValue|null $interval
+     * @param mixed $interval parseable string, null, int|float in seconds, {@see \DateInterval}, or {@see Duration}
      * @return static
+     * @psalm-assert DateIntervalValue|null $interval
      */
     #[Pure]
-    public function withMaximumInterval($interval): self
+    public function withMaximumInterval(mixed $interval): self
     {
         \assert(DateInterval::assert($interval) || $interval === null);
 
