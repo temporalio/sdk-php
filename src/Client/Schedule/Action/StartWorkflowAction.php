@@ -8,6 +8,7 @@ use Google\Protobuf\Duration;
 use Temporal\Api\Common\V1\Header;
 use Temporal\Api\Common\V1\Memo;
 use Temporal\Api\Common\V1\SearchAttributes;
+use Temporal\Client\Workflow\UserMetadata;
 use Temporal\Common\IdReusePolicy;
 use Temporal\Common\RetryOptions;
 use Temporal\Common\TaskQueue\TaskQueue;
@@ -108,6 +109,13 @@ final class StartWorkflowAction extends ScheduleAction
     #[Marshal(type: EncodedCollectionType::class, of: Header::class)]
     public readonly HeaderInterface $header;
 
+    /**
+     * @internal
+     * @experimental This feature is not stable and may change in the future.
+     */
+    #[Marshal(name: 'user_metadata')]
+    public readonly UserMetadata $userMetadata;
+
     private function __construct(WorkflowType $workflowType)
     {
         $this->workflowId = Uuid::v4();
@@ -122,6 +130,7 @@ final class StartWorkflowAction extends ScheduleAction
         $this->memo = EncodedCollection::empty();
         $this->searchAttributes = EncodedCollection::empty();
         $this->header = \Temporal\Interceptor\Header::empty();
+        $this->userMetadata = new UserMetadata('', '');
     }
 
     public static function new(string|WorkflowType $workflowType): self
@@ -265,6 +274,33 @@ final class StartWorkflowAction extends ScheduleAction
 
         /** @see self::$header */
         return $this->with('header', $values);
+    }
+
+    /**
+     * Single-line fixed summary for this workflow execution that will appear in UI/CLI.
+     *
+     * This can be in single-line Temporal Markdown format.
+     *
+     * @experimental This feature is not stable and may change in the future.
+     */
+    public function withStaticSummary(string $summary): self
+    {
+        /** @see self::$userMetadata */
+        return $this->with('userMetadata', $this->userMetadata->withSummary($summary));
+    }
+
+    /**
+     * General fixed details for this workflow execution that will appear in UI/CLI.
+     *
+     * This can be in Temporal Markdown format and can span multiple lines. This is a fixed value on the workflow
+     * that cannot be updated.
+     *
+     * @experimental This feature is not stable and may change in the future.
+     */
+    public function withStaticDetails(string $details): self
+    {
+        /** @see self::$userMetadata */
+        return $this->with('userMetadata', $this->userMetadata->withDetails($details));
     }
 
     private static function createWorkflowType(string $name): WorkflowType

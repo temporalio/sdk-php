@@ -48,13 +48,16 @@ final class RpcRetryOptions extends RetryOptions
      * Interval of the first retry, on congestion related failures (i.e. RESOURCE_EXHAUSTED errors).
      * If coefficient is 1.0 then it is used for all retries. Defaults to 1000ms.
      *
-     * @param DateIntervalValue|null $interval Interval to wait on first retry, on congestion failures.
+     * @param mixed $interval Interval to wait on first retry, on congestion failures.
      *        Defaults to 1000ms, which is used if set to {@see null}.
+     *        Can be parseable string, int|float in seconds, {@see \DateInterval}, or {@see Duration}
+     * @return static
      *
+     * @psalm-assert DateIntervalValue|null $interval
      * @psalm-suppress ImpureMethodCall
      */
     #[Pure]
-    public function withCongestionInitialInterval($interval): self
+    public function withCongestionInitialInterval(mixed $interval): self
     {
         $interval === null || DateInterval::assert($interval) or throw new \InvalidArgumentException(
             'Invalid interval value.',

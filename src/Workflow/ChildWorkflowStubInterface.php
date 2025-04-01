@@ -36,7 +36,7 @@ interface ChildWorkflowStubInterface
     /**
      * @param array $args
      *
-     * @return CompletableResultInterface
+     * @return CompletableResultInterface<WorkflowExecution>
      */
     public function start(...$args): PromiseInterface;
 

@@ -39,6 +39,8 @@ class ChildWorkflowOptionsTestCase extends AbstractDTOMarshalling
             'ParentClosePolicy'        => 1,
             'Memo'                     => null,
             'SearchAttributes'         => null,
+            'StaticDetails'            => '',
+            'StaticSummary'            => '',
         ];
 
         $this->assertSame($expected, $this->marshal($dto));
