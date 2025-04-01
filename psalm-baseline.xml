@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="6.9.1@81c8a77c0793d450fee40265cfe68891df11d505">
+<files psalm-version="6.10.0@9c0add4eb88d4b169ac04acb7c679918cbb9c252">
   <file src="src/Activity.php">
     <ImplicitToStringCast>
       <code><![CDATA[$type]]></code>
@@ -1511,15 +1511,9 @@
     <InvalidReturnStatement>
       <code><![CDATA[self::getCurrentContext()->newActivityStub($class, $options)]]></code>
       <code><![CDATA[self::getCurrentContext()->registerQuery($queryType, $handler)]]></code>
-      <code><![CDATA[self::getCurrentContext()->registerQueryFallback($handler)]]></code>
       <code><![CDATA[self::getCurrentContext()->registerSignal($name, $handler)]]></code>
-      <code><![CDATA[self::getCurrentContext()->registerSignalFallback($handler)]]></code>
-      <code><![CDATA[self::getCurrentContext()->registerUpdateFallback($handler, $validator)]]></code>
     </InvalidReturnStatement>
     <InvalidReturnType>
-      <code><![CDATA[ScopedContextInterface]]></code>
-      <code><![CDATA[ScopedContextInterface]]></code>
-      <code><![CDATA[ScopedContextInterface]]></code>
       <code><![CDATA[ScopedContextInterface]]></code>
       <code><![CDATA[ScopedContextInterface]]></code>
       <code><![CDATA[T]]></code>
