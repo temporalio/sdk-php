@@ -32,6 +32,7 @@ use Temporal\Workflow\ExternalWorkflowStubInterface;
 use Temporal\Workflow\Mutex;
 use Temporal\Workflow\ScopedContextInterface;
 use Temporal\Workflow\UpdateContext;
+use Temporal\Workflow\WorkflowContextInterface;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowInfo;
 use Temporal\Internal\Support\DateInterval;
@@ -365,10 +366,10 @@ final class Workflow extends Facade
     }
 
     /**
-     * Registers a Signal fallback handler in the Workflow.
+     * Registers a dynamic Signal handler in the Workflow.
      *
      * ```php
-     *  Workflow::registerSignalFallback(function (string $name, ValuesInterface $arguments): void {
+     *  Workflow::registerDynamicSignal(function (string $name, ValuesInterface $arguments): void {
      *      \error_log(\sprintf(
      *          'Executed signal `%s` with %d arguments',
      *          $name,
@@ -384,16 +385,16 @@ final class Workflow extends Facade
      *
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
-    public static function registerSignalFallback(callable $handler): ScopedContextInterface
+    public static function registerDynamicSignal(callable $handler): WorkflowContextInterface
     {
-        return self::getCurrentContext()->registerSignalFallback($handler);
+        return self::getCurrentContext()->registerDynamicSignal($handler);
     }
 
     /**
-     * Registers a Query fallback handler in the Workflow.
+     * Registers a dynamic Query handler in the Workflow.
      *
      * ```php
-     *  Workflow::registerQueryFallback(function (string $name, ValuesInterface $arguments): string {
+     *  Workflow::registerDynamicQuery(function (string $name, ValuesInterface $arguments): string {
      *      return \sprintf(
      *          'Got query `%s` with %d arguments',
      *          $name,
@@ -409,16 +410,16 @@ final class Workflow extends Facade
      *
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
-    public static function registerQueryFallback(callable $handler): ScopedContextInterface
+    public static function registerDynamicQuery(callable $handler): WorkflowContextInterface
     {
-        return self::getCurrentContext()->registerQueryFallback($handler);
+        return self::getCurrentContext()->registerDynamicQuery($handler);
     }
 
     /**
-     * Registers an Update fallback method in the Workflow.
+     * Registers a dynamic Update method in the Workflow.
      *
      * ```php
-     *  Workflow::registerUpdateFallback(
+     *  Workflow::registerDynamicUpdate(
      *      static fn(string $name, ValuesInterface $arguments): string => \sprintf(
      *          'Got update `%s` with %d arguments',
      *          $name,
@@ -441,9 +442,9 @@ final class Workflow extends Facade
      *
      * @since SDK 2.14.0
      */
-    public static function registerUpdateFallback(callable $handler, ?callable $validator = null): ScopedContextInterface
+    public static function registerDynamicUpdate(callable $handler, ?callable $validator = null): WorkflowContextInterface
     {
-        return self::getCurrentContext()->registerUpdateFallback($handler, $validator);
+        return self::getCurrentContext()->registerDynamicUpdate($handler, $validator);
     }
 
     /**

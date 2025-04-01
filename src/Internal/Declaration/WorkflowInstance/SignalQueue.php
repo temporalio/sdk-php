@@ -40,7 +40,7 @@ final class SignalQueue
      *
      * @var null|\Closure(non-empty-string, ValuesInterface): mixed
      */
-    private ?\Closure $fallbackConsumer = null;
+    private ?\Closure $dynamicConsumer = null;
 
     /**
      * @param non-empty-string $signal
@@ -52,7 +52,7 @@ final class SignalQueue
             return;
         }
 
-        if ($this->fallbackConsumer !== null) {
+        if ($this->dynamicConsumer !== null) {
             $this->consumeFallback($signal, $values);
             return;
         }
@@ -89,7 +89,7 @@ final class SignalQueue
      */
     public function setFallback(\Closure $consumer): void
     {
-        $this->fallbackConsumer = $consumer;
+        $this->dynamicConsumer = $consumer;
 
         // Flush all signals that have no consumer
         foreach ($this->queue as $k => $item) {
@@ -121,7 +121,7 @@ final class SignalQueue
      */
     private function consumeFallback(string $signal, ValuesInterface $values): void
     {
-        $handler = $this->fallbackConsumer;
+        $handler = $this->dynamicConsumer;
         \assert($handler !== null);
 
         // Wrap the fallback consumer to call interceptors

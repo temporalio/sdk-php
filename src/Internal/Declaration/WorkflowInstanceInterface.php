@@ -71,18 +71,18 @@ interface WorkflowInstanceInterface extends InstanceInterface
     /**
      * @param callable(non-empty-string, ValuesInterface): mixed $handler
      */
-    public function setSignalFallbackHandler(callable $handler): void;
+    public function setDynamicSignalHandler(callable $handler): void;
 
     /**
      * @param callable(non-empty-string, ValuesInterface): mixed $handler
      */
-    public function setQueryFallbackHandler(callable $handler): void;
+    public function setDynamicQueryHandler(callable $handler): void;
 
     /**
      * @param callable(non-empty-string, ValuesInterface): mixed $handler
      * @param null|callable(non-empty-string, ValuesInterface): mixed $validator
      */
-    public function setUpdateFallbackHandler(callable $handler, ?callable $validator = null): void;
+    public function setDynamicUpdateHandler(callable $handler, ?callable $validator = null): void;
 
     public function clearSignalQueue(): void;
 

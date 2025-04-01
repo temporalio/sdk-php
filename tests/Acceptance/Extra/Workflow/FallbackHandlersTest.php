@@ -177,7 +177,7 @@ class TestWorkflow
     #[Workflow\UpdateMethod('register_query_fallback')]
     public function registerQueryFallback(): void
     {
-        Workflow::registerQueryFallback(static fn(string $name, ValuesInterface $values): string => \sprintf(
+        Workflow::registerDynamicQuery(static fn(string $name, ValuesInterface $values): string => \sprintf(
             'Got query `%s` with %d arguments',
             $name,
             $values->count(),
@@ -187,7 +187,7 @@ class TestWorkflow
     #[Workflow\UpdateMethod('register_signals_fallback')]
     public function registerSignalFallback(): void
     {
-        Workflow::registerSignalFallback(function (string $name, ValuesInterface $values): void {
+        Workflow::registerDynamicSignal(function (string $name, ValuesInterface $values): void {
             $this->signals[] = [$name, $values->getValues()];
         });
     }
@@ -195,7 +195,7 @@ class TestWorkflow
     #[Workflow\UpdateMethod('register_updates_fallback')]
     public function registerUpdateFallback(bool $validator): void
     {
-        Workflow::registerUpdateFallback(
+        Workflow::registerDynamicUpdate(
             fn(string $name, ValuesInterface $values): array => $this->updates[] = [$name, $values->getValues()],
             $validator
                 ? static fn(string $name, ValuesInterface $values): bool => \in_array(
