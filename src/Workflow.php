@@ -32,6 +32,7 @@ use Temporal\Workflow\ExternalWorkflowStubInterface;
 use Temporal\Workflow\Mutex;
 use Temporal\Workflow\ScopedContextInterface;
 use Temporal\Workflow\UpdateContext;
+use Temporal\Workflow\WorkflowContextInterface;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowInfo;
 use Temporal\Internal\Support\DateInterval;
@@ -336,7 +337,7 @@ final class Workflow extends Facade
      * The same method ({@see WorkflowStubInterface::query()}) should be used
      * to call such query handlers as in the case of ordinary query methods.
      *
-     * @param string|class-string $queryType
+     * @param non-empty-string $queryType
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function registerQuery(string $queryType, callable $handler): ScopedContextInterface
@@ -356,12 +357,94 @@ final class Workflow extends Facade
      * The same method ({@see WorkflowStubInterface::signal()}) should be used
      * to call such signal handlers as in the case of ordinary signal methods.
      *
-     * @param non-empty-string $queryType
+     * @param non-empty-string $name
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
-    public static function registerSignal(string $queryType, callable $handler): ScopedContextInterface
+    public static function registerSignal(string $name, callable $handler): ScopedContextInterface
     {
-        return self::getCurrentContext()->registerSignal($queryType, $handler);
+        return self::getCurrentContext()->registerSignal($name, $handler);
+    }
+
+    /**
+     * Registers a dynamic Signal handler in the Workflow.
+     *
+     * ```php
+     *  Workflow::registerDynamicSignal(function (string $name, ValuesInterface $arguments): void {
+     *      \error_log(\sprintf(
+     *          'Executed signal `%s` with %d arguments',
+     *          $name,
+     *          $arguments->count(),
+     *      ));
+     *  });
+     * ```
+     *
+     * @param callable(non-empty-string, ValuesInterface): mixed $handler The handler to call when a Signal is received.
+     *        The first parameter is the Signal name, the second is Signal arguments.
+     *
+     * @since SDK 2.14.0
+     *
+     * @throws OutOfContextException in the absence of the workflow execution context.
+     */
+    public static function registerDynamicSignal(callable $handler): WorkflowContextInterface
+    {
+        return self::getCurrentContext()->registerDynamicSignal($handler);
+    }
+
+    /**
+     * Registers a dynamic Query handler in the Workflow.
+     *
+     * ```php
+     *  Workflow::registerDynamicQuery(function (string $name, ValuesInterface $arguments): string {
+     *      return \sprintf(
+     *          'Got query `%s` with %d arguments',
+     *          $name,
+     *          $arguments->count(),
+     *      );
+     *  });
+     * ```
+     *
+     * @param callable(non-empty-string, ValuesInterface): mixed $handler The handler to call when a Query is received.
+     *        The first parameter is the Query name, the second is Query arguments.
+     *
+     * @since SDK 2.14.0
+     *
+     * @throws OutOfContextException in the absence of the workflow execution context.
+     */
+    public static function registerDynamicQuery(callable $handler): WorkflowContextInterface
+    {
+        return self::getCurrentContext()->registerDynamicQuery($handler);
+    }
+
+    /**
+     * Registers a dynamic Update method in the Workflow.
+     *
+     * ```php
+     *  Workflow::registerDynamicUpdate(
+     *      static fn(string $name, ValuesInterface $arguments): string => \sprintf(
+     *          'Got update `%s` with %d arguments',
+     *          $name,
+     *          $arguments->count(),
+     *      ),
+     *      static fn(string $name, ValuesInterface $arguments) => \str_starts_with(
+     *          $name,
+     *          'update_',
+     *      ) or throw new \InvalidArgumentException('Invalid update name'),
+     *  );
+     * ```
+     *
+     * @param callable(non-empty-string, ValuesInterface): mixed $handler The Update handler.
+     *        The first parameter is the Update name, the second is Query arguments.
+     * @param null|callable(non-empty-string, ValuesInterface): mixed $validator The Update validator.
+     *        The first parameter is the Update name, the second is Update arguments.
+     *        It should throw an exception if the validation fails.
+     *
+     * @throws OutOfContextException in the absence of the workflow execution context.
+     *
+     * @since SDK 2.14.0
+     */
+    public static function registerDynamicUpdate(callable $handler, ?callable $validator = null): WorkflowContextInterface
+    {
+        return self::getCurrentContext()->registerDynamicUpdate($handler, $validator);
     }
 
     /**

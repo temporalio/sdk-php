@@ -16,24 +16,31 @@ use Temporal\DataConverter\ValuesInterface;
 /**
  * @psalm-type Consumer = callable(ValuesInterface): mixed
  *
- * @psalm-type OnSignalCallable = callable(non-empty-string $name, callable $handler, ValuesInterface $arguments): void
+ * @psalm-type OnSignalCallable = \Closure(non-empty-string $name, Consumer $handler, ValuesInterface $arguments): void
  */
 final class SignalQueue
 {
     /**
-     * @var array<string, list<ValuesInterface>>
+     * @var array<int, SignalQueueItem>
      */
     private array $queue = [];
 
     /**
-     * @var array<Consumer>
+     * @var array<non-empty-string, Consumer>
      */
     private array $consumers = [];
 
     /**
      * @var OnSignalCallable
      */
-    private $onSignal;
+    private \Closure $onSignal;
+
+    /**
+     * A fallback consumer to handle signals when no consumer is attached.
+     *
+     * @var null|\Closure(non-empty-string, ValuesInterface): mixed
+     */
+    private ?\Closure $dynamicConsumer = null;
 
     /**
      * @param non-empty-string $signal
@@ -41,29 +48,58 @@ final class SignalQueue
     public function push(string $signal, ValuesInterface $values): void
     {
         if (isset($this->consumers[$signal])) {
-            ($this->onSignal)($signal, $this->consumers[$signal], $values);
+            $this->consume($signal, $values, $this->consumers[$signal]);
             return;
         }
 
-        $this->queue[$signal][] = $values;
-        $this->flush($signal);
+        if ($this->dynamicConsumer !== null) {
+            $this->consumeFallback($signal, $values);
+            return;
+        }
+
+        $this->queue[] = new SignalQueueItem($signal, $values);
     }
 
     /**
      * @param OnSignalCallable $handler
      */
-    public function onSignal(callable $handler): void
+    public function onSignal(\Closure $handler): void
     {
         $this->onSignal = $handler;
     }
 
     /**
+     * @param non-empty-string $signal
      * @param Consumer $consumer
      */
     public function attach(string $signal, callable $consumer): void
     {
         $this->consumers[$signal] = $consumer; // overwrite
-        $this->flush($signal);
+
+        foreach ($this->queue as $k => $item) {
+            if ($item->name === $signal) {
+                unset($this->queue[$k]);
+                $this->consume($signal, $item->values, $consumer);
+            }
+        }
+    }
+
+    /**
+     * @param \Closure(non-empty-string, ValuesInterface): mixed $consumer
+     */
+    public function setFallback(\Closure $consumer): void
+    {
+        $this->dynamicConsumer = $consumer;
+
+        // Flush all signals that have no consumer
+        foreach ($this->queue as $k => $item) {
+            if (\array_key_exists($item->name, $this->consumers)) {
+                continue;
+            }
+
+            unset($this->queue[$k]);
+            $this->consumeFallback($item->name, $item->values);
+        }
     }
 
     public function clear(): void
@@ -72,18 +108,24 @@ final class SignalQueue
     }
 
     /**
-     * @psalm-suppress UnusedVariable
+     * @param non-empty-string $signal
+     * @param Consumer $consumer
      */
-    private function flush(string $signal): void
+    private function consume(string $signal, ValuesInterface $values, callable $consumer): void
     {
-        if (!isset($this->queue[$signal], $this->consumers[$signal])) {
-            return;
-        }
+        ($this->onSignal)($signal, $consumer, $values);
+    }
 
-        while ($this->queue[$signal] !== []) {
-            $args = \array_shift($this->queue[$signal]);
+    /**
+     * @param non-empty-string $signal
+     */
+    private function consumeFallback(string $signal, ValuesInterface $values): void
+    {
+        $handler = $this->dynamicConsumer;
+        \assert($handler !== null);
 
-            ($this->onSignal)($signal, $this->consumers[$signal], $args);
-        }
+        // Wrap the fallback consumer to call interceptors
+        $consumer = static fn(ValuesInterface $values): mixed => $handler($signal, $values);
+        ($this->onSignal)($signal, $consumer, $values);
     }
 }

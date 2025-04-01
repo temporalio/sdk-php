@@ -56,6 +56,8 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * A method that allows you to dynamically register additional query
      * handler in a workflow during the execution of a workflow.
      *
+     * @param non-empty-string $queryType
+     *
      * @see Workflow::registerQuery()
      *
      * @return $this
@@ -65,6 +67,8 @@ interface WorkflowContextInterface extends EnvironmentInterface
     /**
      * Registers a query with an additional signal handler.
      *
+     * @param non-empty-string $queryType
+     *
      * @see Workflow::registerSignal()
      *
      * @return $this
@@ -72,7 +76,46 @@ interface WorkflowContextInterface extends EnvironmentInterface
     public function registerSignal(string $queryType, callable $handler): self;
 
     /**
-     * Registers an update method with an optional validator.
+     * Registers a dynamic Signal handler.
+     *
+     * @param callable(non-empty-string, ValuesInterface): mixed $handler The handler to call when a Signal is received.
+     *        The first parameter is the Signal name, the second is Signal arguments.
+     *
+     * @return $this
+     *
+     * @since SDK 2.14.0
+     */
+    public function registerDynamicSignal(callable $handler): self;
+
+    /**
+     * Registers a dynamic Query handler.
+     *
+     * @param callable(non-empty-string, ValuesInterface): mixed $handler The handler to call when a Query is received.
+     *        The first parameter is the Query name, the second is Query arguments.
+     *
+     * @return $this
+     *
+     * @since SDK 2.14.0
+     */
+    public function registerDynamicQuery(callable $handler): self;
+
+    /**
+     * Registers a dynamic Update handler.
+     *
+     * @param callable(non-empty-string, ValuesInterface): mixed $handler The Update handler
+     *        The first parameter is the Update name, the second is Update arguments.
+     * @param null|callable(non-empty-string, ValuesInterface): mixed $validator The Update validator
+     *       The first parameter is the Update name, the second is Update arguments.
+     *       It should throw an exception if the validation fails.
+     *
+     * @return $this
+     *
+     * @since SDK 2.14.0
+     */
+    public function registerDynamicUpdate(callable $handler, ?callable $validator = null): self;
+
+    /**
+     * Registers an Update method with an optional validator.
      *
      * @see Workflow::registerUpdate()
      *

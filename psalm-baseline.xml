@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="6.9.1@81c8a77c0793d450fee40265cfe68891df11d505">
+<files psalm-version="6.10.0@9c0add4eb88d4b169ac04acb7c679918cbb9c252">
   <file src="src/Activity.php">
     <ImplicitToStringCast>
       <code><![CDATA[$type]]></code>
@@ -606,23 +606,16 @@
     </RedundantConditionGivenDocblockType>
   </file>
   <file src="src/Internal/Declaration/WorkflowInstance.php">
-    <MissingClosureReturnType>
-      <code><![CDATA[function (QueryInput $input) use ($fn) {]]></code>
-    </MissingClosureReturnType>
+    <LessSpecificImplementedReturnType>
+      <code><![CDATA[UpdateHandler|null]]></code>
+    </LessSpecificImplementedReturnType>
     <PropertyNotSetInConstructor>
       <code><![CDATA[$queryExecutor]]></code>
       <code><![CDATA[$updateExecutor]]></code>
       <code><![CDATA[$updateValidator]]></code>
     </PropertyNotSetInConstructor>
-    <PropertyTypeCoercion>
-      <code><![CDATA[$this->queryHandlers]]></code>
-      <code><![CDATA[$this->signalHandlers]]></code>
-    </PropertyTypeCoercion>
   </file>
   <file src="src/Internal/Declaration/WorkflowInstance/SignalQueue.php">
-    <ArgumentTypeCoercion>
-      <code><![CDATA[$signal]]></code>
-    </ArgumentTypeCoercion>
     <MissingConstructor>
       <code><![CDATA[$onSignal]]></code>
     </MissingConstructor>
@@ -1187,9 +1180,6 @@
     </UnevaluatedCode>
   </file>
   <file src="src/Internal/Workflow/Process/Process.php">
-    <MissingClosureParamType>
-      <code><![CDATA[$result]]></code>
-    </MissingClosureParamType>
     <PropertyNotSetInConstructor>
       <code><![CDATA[Process]]></code>
     </PropertyNotSetInConstructor>
@@ -1521,7 +1511,7 @@
     <InvalidReturnStatement>
       <code><![CDATA[self::getCurrentContext()->newActivityStub($class, $options)]]></code>
       <code><![CDATA[self::getCurrentContext()->registerQuery($queryType, $handler)]]></code>
-      <code><![CDATA[self::getCurrentContext()->registerSignal($queryType, $handler)]]></code>
+      <code><![CDATA[self::getCurrentContext()->registerSignal($name, $handler)]]></code>
     </InvalidReturnStatement>
     <InvalidReturnType>
       <code><![CDATA[ScopedContextInterface]]></code>
