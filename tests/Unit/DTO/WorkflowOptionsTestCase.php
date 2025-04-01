@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Tests\Unit\DTO;
 
 use Carbon\CarbonInterval;
-use Temporal\Api\Common\V1\Memo;
 use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Common\IdReusePolicy;
@@ -47,6 +46,8 @@ class WorkflowOptionsTestCase extends AbstractDTOMarshalling
             'CronSchedule'             => null,
             'Memo'                     => null,
             'SearchAttributes'         => null,
+            'StaticDetails'            => '',
+            'StaticSummary'            => '',
         ];
 
         $result = $this->marshal($dto);
@@ -180,13 +181,12 @@ class WorkflowOptionsTestCase extends AbstractDTOMarshalling
         $this->assertNull($dto->toMemo(DataConverter::createDefault()));
     }
 
-    public function testNonEmptyMemoCasting(): void
+    public function testDoNotSetEmptyMemo(): void
     {
         $dto = WorkflowOptions::new()
-            ->withMemo([])
-        ;
+            ->withMemo([]);
 
-        $this->assertInstanceOf(Memo::class, $dto->toMemo(DataConverter::createDefault()));
+        $this->assertNull($dto->toMemo(DataConverter::createDefault()));
     }
 
     public function testCantSetTypedSAIfUntypedExist(): void

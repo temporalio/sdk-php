@@ -158,6 +158,22 @@ final class ChildWorkflowOptions extends Options
     public ?array $searchAttributes = null;
 
     /**
+     * General fixed details for this workflow execution that will appear in UI/CLI.
+     *
+     * @experimental This feature is not stable and may change in the future.
+     */
+    #[Marshal(name: 'StaticDetails')]
+    public string $staticDetails = '';
+
+    /**
+     * Single-line fixed summary for this workflow execution that will appear in UI/CLI.
+     *
+     * @experimental This feature is not stable and may change in the future.
+     */
+    #[Marshal(name: 'StaticSummary')]
+    public string $staticSummary = '';
+
+    /**
      * @throws \Exception
      */
     public function __construct()
@@ -433,6 +449,41 @@ final class ChildWorkflowOptions extends Options
 
         $self->parentClosePolicy = $policy->value;
 
+        return $self;
+    }
+
+    /**
+     * Single-line fixed summary for this workflow execution that will appear in UI/CLI.
+     *
+     * This can be in single-line Temporal Markdown format.
+     *
+     * @return $this
+     * @since SDK 2.14.0
+     * @experimental This API might change in the future.
+     */
+    #[Pure]
+    public function withStaticSummary(string $summary): self
+    {
+        $self = clone $this;
+        $self->staticSummary = $summary;
+        return $self;
+    }
+
+    /**
+     * General fixed details for this workflow execution that will appear in UI/CLI.
+     *
+     * This can be in Temporal Markdown format and can span multiple lines.
+     * This is a fixed value on the workflow that cannot be updated.
+     *
+     * @return $this
+     * @since SDK 2.14.0
+     * @experimental This API might change in the future.
+     */
+    #[Pure]
+    public function withStaticDetails(string $details): self
+    {
+        $self = clone $this;
+        $self->staticDetails = $details;
         return $self;
     }
 }

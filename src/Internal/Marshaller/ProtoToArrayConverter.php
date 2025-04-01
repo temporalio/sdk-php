@@ -15,6 +15,7 @@ use Temporal\Api\Common\V1\Memo;
 use Temporal\Api\Common\V1\Payloads;
 use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\Api\Schedule\V1\ScheduleAction;
+use Temporal\Api\Sdk\V1\UserMetadata;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedCollection;
 use Temporal\DataConverter\EncodedValues;
@@ -37,13 +38,13 @@ final class ProtoToArrayConverter
         }
 
         $mapper = $this->getMapper($message);
-        return $mapper === null ? $message : $mapper($message);
+        return $mapper($message);
     }
 
     /**
-     * @return null|\Closure(Message): mixed
+     * @return \Closure(Message): mixed
      */
-    private function getMapper(Message $message): ?\Closure
+    private function getMapper(Message $message): \Closure
     {
         $mapper = match ($message::class) {
             Timestamp::class => static fn(Timestamp $input): \DateTimeImmutable => \DateTimeImmutable::createFromFormat(
@@ -80,6 +81,11 @@ final class ProtoToArrayConverter
                 'start_workflow' => $this->convert($scheduleAction->getStartWorkflow()),
             ],
 
+            UserMetadata::class => fn(UserMetadata $metadata) => [
+                'summary' => $this->converter->fromPayload($metadata->getSummary(), 'string'),
+                'details' => $this->converter->fromPayload($metadata->getDetails(), 'string'),
+            ],
+
             default => null,
         };
 
@@ -89,41 +95,44 @@ final class ProtoToArrayConverter
         }
 
         // Default mapper
-        return \Closure::bind(function (Message $input): array {
-            $result = [];
-            $reflection = new \ReflectionClass($input::class);
-            foreach ($reflection->getProperties() as $property) {
-                $name = $property->getName();
-                $method = 'get' . \str_replace('_', '', \ucwords($name, '_'));
-                if (!\method_exists($input, $method)) {
-                    continue;
-                }
-                $value = $input->$method();
+        return $this->toArray(...);
+    }
 
-                if ($value instanceof Message) {
-                    $result[$name] = $this->convert($value);
-                    continue;
-                }
+    private function toArray(Message $input): array
+    {
+        $result = [];
+        $reflection = new \ReflectionClass($input::class);
+        foreach ($reflection->getProperties() as $property) {
+            $name = $property->getName();
+            $method = 'get' . \str_replace('_', '', \ucwords($name, '_'));
+            if (!\method_exists($input, $method)) {
+                continue;
+            }
+            $value = $input->$method();
 
-                if ($value instanceof RepeatedField || $value instanceof MapField) {
-                    $result[$name] = [];
-                    foreach ($value as $key => $item) {
-                        $result[$name][$key] = $this->convert($item);
-                    }
-                    continue;
-                }
-
-                if ($value instanceof OneofField) {
-                    $converted = $this->convert($value->getValue());
-                    $result[$value->getFieldName()] = $converted;
-                    $result[$name] = $converted;
-                    continue;
-                }
-
-                $result[$name] = $value;
+            if ($value instanceof Message) {
+                $result[$name] = $this->convert($value);
+                continue;
             }
 
-            return $result;
-        }, $this, $message::class);
+            if ($value instanceof RepeatedField || $value instanceof MapField) {
+                $result[$name] = [];
+                foreach ($value as $key => $item) {
+                    $result[$name][$key] = $this->convert($item);
+                }
+                continue;
+            }
+
+            if ($value instanceof OneofField) {
+                $converted = $this->convert($value->getValue());
+                $result[$value->getFieldName()] = $converted;
+                $result[$name] = $converted;
+                continue;
+            }
+
+            $result[$name] = $value;
+        }
+
+        return $result;
     }
 }

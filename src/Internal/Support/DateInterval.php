@@ -17,6 +17,7 @@ use Google\Protobuf\Duration;
 /**
  * @psalm-type DateIntervalFormat = DateInterval::FORMAT_*
  * @psalm-type DateIntervalValue = string | int | float | \DateInterval | Duration | null
+ * @internal
  */
 final class DateInterval
 {
@@ -50,11 +51,12 @@ final class DateInterval
     ];
 
     /**
-     * @param DateIntervalValue $interval
      * @param DateIntervalFormat $format
+     *
+     * @psalm-assert DateIntervalValue|null $interval
      * @psalm-suppress InvalidOperand
      */
-    public static function parse($interval, string $format = self::FORMAT_MILLISECONDS): CarbonInterval
+    public static function parse(mixed $interval, string $format = self::FORMAT_MILLISECONDS): CarbonInterval
     {
         switch (true) {
             case \is_string($interval):
@@ -125,10 +127,11 @@ final class DateInterval
     }
 
     /**
-     * @param DateIntervalValue|null $interval
      * @param DateIntervalFormat $format
+     *
+     * @psalm-assert DateIntervalValue|null $interval
      */
-    public static function parseOrNull($interval, string $format = self::FORMAT_MILLISECONDS): ?CarbonInterval
+    public static function parseOrNull(mixed $interval, string $format = self::FORMAT_MILLISECONDS): ?CarbonInterval
     {
         if ($interval === null) {
             return null;
@@ -138,9 +141,9 @@ final class DateInterval
     }
 
     /**
-     * @param DateIntervalValue $interval
+     * @return ($interval is DateIntervalValue ? true : false)
      */
-    public static function assert($interval): bool
+    public static function assert(mixed $interval): bool
     {
         $isParsable = \is_string($interval) || \is_int($interval) || \is_float($interval);
 
@@ -148,20 +151,25 @@ final class DateInterval
     }
 
     /**
-     * @return ($i is null ? null : Duration)
+     * @param bool $nullEmpty return null if the interval is empty
+     *
+     * @return ($i is null ? null : ($nullEmpty is true ? Duration|null : Duration))
      */
-    public static function toDuration(?\DateInterval $i = null): ?Duration
+    public static function toDuration(?\DateInterval $i = null, bool $nullEmpty = false): ?Duration
     {
         if ($i === null) {
             return null;
         }
 
-        $d = new Duration();
         $parsed = self::parse($i);
-        $d->setSeconds((int) $parsed->totalSeconds);
-        $d->setNanos($parsed->microseconds * 1000);
+        $seconds = (int) $parsed->totalSeconds;
+        $micros = $parsed->microseconds;
 
-        return $d;
+        return $nullEmpty && $seconds === 0 && $micros === 0
+            ? null
+            : (new Duration())
+                ->setSeconds((int) $parsed->totalSeconds)
+                ->setNanos($parsed->microseconds * 1000);
     }
 
     private static function validateFormat(string $format): void

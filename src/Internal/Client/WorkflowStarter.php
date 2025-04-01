@@ -15,6 +15,7 @@ use Temporal\Api\Common\V1\WorkflowType;
 use Temporal\Api\Errordetails\V1\MultiOperationExecutionFailure;
 use Temporal\Api\Errordetails\V1\WorkflowExecutionAlreadyStartedFailure;
 use Temporal\Api\Failure\V1\MultiOperationExecutionAborted;
+use Temporal\Api\Sdk\V1\UserMetadata;
 use Temporal\Api\Taskqueue\V1\TaskQueue;
 use Temporal\Api\Update\V1\Request as UpdateRequestMessage;
 use Temporal\Api\Workflowservice\V1\ExecuteMultiOperationRequest;
@@ -315,10 +316,6 @@ final class WorkflowStarter
         StartInput $input,
     ): StartWorkflowExecutionRequest|SignalWithStartWorkflowExecutionRequest {
         $options = $input->options;
-        $header = $input->header;
-
-        \assert($header instanceof Header);
-        $header->setDataConverter($this->converter);
 
         $req->setRequestId(Uuid::v4())
             ->setIdentity($this->clientOptions->identity)
@@ -327,20 +324,42 @@ final class WorkflowStarter
             ->setWorkflowType(new WorkflowType(['name' => $input->workflowType]))
             ->setWorkflowId($input->workflowId)
             ->setCronSchedule($options->cronSchedule ?? '')
-            ->setRetryPolicy($options->retryOptions ? $options->retryOptions->toWorkflowRetryPolicy() : null)
             ->setWorkflowIdReusePolicy($options->workflowIdReusePolicy)
             ->setWorkflowIdConflictPolicy($options->workflowIdConflictPolicy->value)
             ->setWorkflowRunTimeout(DateInterval::toDuration($options->workflowRunTimeout))
             ->setWorkflowExecutionTimeout(DateInterval::toDuration($options->workflowExecutionTimeout))
-            ->setWorkflowTaskTimeout(DateInterval::toDuration($options->workflowTaskTimeout))
-            ->setMemo($options->toMemo($this->converter))
-            ->setSearchAttributes($options->toSearchAttributes($this->converter))
-            ->setHeader($header->toHeader());
+            ->setWorkflowTaskTimeout(DateInterval::toDuration($options->workflowTaskTimeout));
 
-        $delay = DateInterval::toDuration($options->workflowStartDelay);
-        if ($delay !== null && ($delay->getSeconds() > 0 || $delay->getNanos() > 0)) {
-            $req->setWorkflowStartDelay($delay);
+        // Retry Policy
+        $options->retryOptions === null or $req->setRetryPolicy($options->retryOptions->toWorkflowRetryPolicy());
+
+        // Memo
+        $memo = $options->toMemo($this->converter);
+        $memo === null or $req->setMemo($memo);
+
+        // Search Attributes
+        $searchAttributes = $options->toSearchAttributes($this->converter);
+        $searchAttributes === null or $req->setSearchAttributes($searchAttributes);
+
+        // Header
+        $header = $input->header;
+        \assert($header instanceof Header);
+        if ($header->count() > 0) {
+            $header->setDataConverter($this->converter);
+            $req->setHeader($header->toHeader());
         }
+
+        // User metadata
+        if ($options->staticSummary !== '' || $options->staticDetails !== '') {
+            $metadata = (new UserMetadata());
+            $options->staticSummary === '' or $metadata->setSummary($this->converter->toPayload($options->staticSummary));
+            $options->staticDetails === '' or $metadata->setDetails($this->converter->toPayload($options->staticDetails));
+            $req->setUserMetadata($metadata);
+        }
+
+        // Start Delay
+        $delay = DateInterval::toDuration($options->workflowStartDelay, true);
+        $delay === null or $req->setWorkflowStartDelay($delay);
 
         if ($req instanceof StartWorkflowExecutionRequest) {
             $req->setRequestEagerExecution($options->eagerStart);

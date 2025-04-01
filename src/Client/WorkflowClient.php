@@ -74,12 +74,19 @@ class WorkflowClient implements WorkflowClientInterface
         ?DataConverterInterface $converter = null,
         ?PipelineProvider $interceptorProvider = null,
     ) {
-        $this->client = $serviceClient;
         $this->interceptorPipeline = ($interceptorProvider ?? new SimplePipelineProvider())
             ->getPipeline(WorkflowClientCallsInterceptor::class);
         $this->clientOptions = $options ?? new ClientOptions();
         $this->converter = $converter ?? DataConverter::createDefault();
         $this->reader = new WorkflowReader($this->createReader());
+
+        // Set Temporal-Namespace metadata
+        $context = $serviceClient->getContext();
+        $this->client = $serviceClient->withContext(
+            $context->withMetadata(
+                ['Temporal-Namespace' => [$this->clientOptions->namespace]] + $context->getMetadata(),
+            ),
+        );
     }
 
     /**

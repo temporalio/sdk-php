@@ -23,14 +23,6 @@ use Temporal\Tests\Fixtures\WorkerMock;
  */
 class WorkflowTestCase extends AbstractFunctional
 {
-    public function setUp(): void
-    {
-        parent::setUp();
-
-        // emulate connection to parent server
-        $_SERVER['RR_RPC'] = 'tcp://127.0.0.1:6001';
-    }
-
     public function testSplitter(): void
     {
         $splitter = Splitter::create('Test_ExecuteSimpleWorkflow_1.log');
@@ -399,5 +391,12 @@ class WorkflowTestCase extends AbstractFunctional
 
         $worker->run($this, Splitter::createFromString($log)->getQueue());
     }
-}
 
+    public function setUp(): void
+    {
+        parent::setUp();
+
+        // emulate connection to parent server
+        $_SERVER['RR_RPC'] = 'tcp://127.0.0.1:6001';
+    }
+}

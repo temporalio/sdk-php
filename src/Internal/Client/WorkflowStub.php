@@ -69,6 +69,7 @@ use Temporal\Interceptor\WorkflowClient\UpdateInput;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Internal\Interceptor\HeaderCarrier;
 use Temporal\Internal\Interceptor\Pipeline;
+use Temporal\Internal\Mapper\WorkflowExecutionConfigMapper;
 use Temporal\Internal\Mapper\WorkflowExecutionInfoMapper;
 use Temporal\Workflow\WorkflowExecution;
 
@@ -454,11 +455,13 @@ final class WorkflowStub implements WorkflowStubInterface, HeaderCarrier
                 $request->setExecution($input->workflowExecution->toProtoWorkflowExecution());
 
                 $response = $this->serviceClient->DescribeWorkflowExecution($request);
-                $mapper = new WorkflowExecutionInfoMapper($this->converter);
 
                 /** @psalm-suppress PossiblyNullArgument */
                 return new WorkflowExecutionDescription(
-                    info: $mapper->fromMessage($response->getWorkflowExecutionInfo()),
+                    config: (new WorkflowExecutionConfigMapper($this->converter))
+                        ->fromMessage($response->getExecutionConfig()),
+                    info: (new WorkflowExecutionInfoMapper($this->converter))
+                        ->fromMessage($response->getWorkflowExecutionInfo()),
                 );
             },
             /** @see WorkflowClientCallsInterceptor::describe() */
