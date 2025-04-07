@@ -371,7 +371,7 @@ final class Workflow extends Facade
      *
      * ```php
      *  Workflow::registerDynamicSignal(function (string $name, ValuesInterface $arguments): void {
-     *      \error_log(\sprintf(
+     *      Workflow::getLogger()->info(\sprintf(
      *          'Executed signal `%s` with %d arguments',
      *          $name,
      *          $arguments->count(),
