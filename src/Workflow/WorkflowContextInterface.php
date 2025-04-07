@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Workflow;
 
+use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\UuidInterface;
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
@@ -430,4 +431,11 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @return PromiseInterface<UuidInterface>
      */
     public function uuid7(?\DateTimeInterface $dateTime = null): PromiseInterface;
+
+    /**
+     * Get logger to use inside the Workflow.
+     *
+     * Logs in replay mode are omitted unless {@see WorkerOptions::$enableLoggingInReplay} is set to true.
+     */
+    public function getLogger(): LoggerInterface;
 }
