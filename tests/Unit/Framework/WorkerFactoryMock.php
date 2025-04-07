@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Unit\Framework;
 
 use Doctrine\Common\Annotations\Reader;
+use Psr\Log\LoggerInterface;
 use React\Promise\PromiseInterface;
 use Spiral\Attributes\AnnotationReader;
 use Spiral\Attributes\AttributeReader;
@@ -30,8 +31,10 @@ use Temporal\Internal\Transport\Router;
 use Temporal\Internal\Transport\RouterInterface;
 use Temporal\Internal\Transport\Server;
 use Temporal\Internal\Transport\ServerInterface;
+use Temporal\Internal\Workflow\Logger;
 use Temporal\Worker\Environment\Environment;
 use Temporal\Worker\Environment\EnvironmentInterface;
+use Temporal\Worker\Logger\StderrLogger;
 use Temporal\Worker\LoopInterface;
 use Temporal\Worker\ServiceCredentials;
 use Temporal\Worker\Transport\Codec\CodecInterface;
@@ -84,19 +87,25 @@ class WorkerFactoryMock implements WorkerFactoryInterface, LoopInterface
      */
     public function newWorker(
         string $taskQueue = self::DEFAULT_TASK_QUEUE,
-        WorkerOptions $options = null,
-        ExceptionInterceptorInterface $exceptionInterceptor = null,
-        PipelineProvider $interceptorProvider = null,
+        ?WorkerOptions $options = null,
+        ?ExceptionInterceptorInterface $exceptionInterceptor = null,
+        ?PipelineProvider $interceptorProvider = null,
+        ?LoggerInterface $logger = null,
     ): WorkerInterface {
+        $options ??= WorkerOptions::new();
         $worker = new WorkerMock(
             $taskQueue,
-            $options ?? WorkerOptions::new(),
+            $options,
             ServiceContainer::fromWorkerFactory(
                 $this,
                 $exceptionInterceptor ?? ExceptionInterceptor::createDefault(),
                 $interceptorProvider ?? new SimplePipelineProvider(),
+                new Logger(
+                    $logger ?? new StderrLogger(),
+                    $options->enableLoggingInReplay,
+                    $taskQueue,
+                ),
             ),
-
         );
         $this->queues->add($worker);
 
@@ -133,7 +142,7 @@ class WorkerFactoryMock implements WorkerFactoryInterface, LoopInterface
         return $this->env;
     }
 
-    public function run(WorkerMock $worker = null): int
+    public function run(?WorkerMock $worker = null): int
     {
         /** @var WorkerMock */
         $worker ??= self::newWorker();
@@ -230,7 +239,7 @@ class WorkerFactoryMock implements WorkerFactoryInterface, LoopInterface
         }
 
         $queue = $this->findTaskQueueOrFail(
-            $this->findTaskQueueNameOrFail($headers)
+            $this->findTaskQueueNameOrFail($headers),
         );
 
         return $queue->dispatch($request, $headers);
@@ -257,7 +266,7 @@ class WorkerFactoryMock implements WorkerFactoryInterface, LoopInterface
                 [
                     self::HEADER_TASK_QUEUE,
                     \get_debug_type($taskQueue),
-                ]
+                ],
             );
 
             throw new \InvalidArgumentException($error);

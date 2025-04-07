@@ -11,6 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Worker;
 
+use Psr\Log\LoggerInterface;
+use Temporal\Exception\ExceptionInterceptorInterface;
+use Temporal\Interceptor\PipelineProvider;
+
 /**
  * The interface is responsible for providing an interface for registering all dependencies and creating a global
  * event loop.
@@ -36,6 +40,9 @@ interface WorkerFactoryInterface
     public function newWorker(
         string $taskQueue = self::DEFAULT_TASK_QUEUE,
         ?WorkerOptions $options = null,
+        ?ExceptionInterceptorInterface $exceptionInterceptor = null,
+        ?PipelineProvider $interceptorProvider = null,
+        ?LoggerInterface $logger = null,
     ): WorkerInterface;
 
     /**
