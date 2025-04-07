@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Acceptance\App;
 
+use Psr\Log\LoggerInterface;
 use Spiral\Core\Container;
 use Spiral\Core\Scope;
 use Temporal\Client\WorkflowStubInterface;
+use Temporal\Tests\Acceptance\App\Logger\ClientLogger;
+use Temporal\Tests\Acceptance\App\Logger\LoggerFactory;
 use Temporal\Tests\Acceptance\App\Runtime\ContainerFacade;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Tests\Acceptance\App\Runtime\RRStarter;
@@ -28,12 +31,19 @@ abstract class TestCase extends \Temporal\Tests\TestCase
         $c = ContainerFacade::$container;
         /** @var State $runtime */
         $runtime = $c->get(State::class);
+        $feature = $runtime->getFeatureByTestCase(static::class);
+
+        // Configure client logger
+        $logger = LoggerFactory::createClientLogger($feature->taskQueue);
+        $logger->clear();
 
         return $c->runScope(
-            new Scope(name: 'feature',bindings: [
-                Feature::class => $runtime->getFeatureByTestCase(static::class),
+            new Scope(name: 'feature', bindings: [
+                Feature::class => $feature,
                 static::class => $this,
                 State::class => $runtime,
+                LoggerInterface::class => ClientLogger::class,
+                ClientLogger::class => $logger,
             ]),
             function (Container $container) {
                 $reflection = new \ReflectionMethod($this, $this->name());

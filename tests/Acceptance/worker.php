@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Temporal\Tests\Acceptance\App\Input\Command;
+use Temporal\Tests\Acceptance\App\Logger\LoggerFactory;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\RuntimeBuilder;
 use Psr\Container\ContainerInterface;
@@ -64,7 +65,8 @@ try {
     $getWorker = static function (string $taskQueue) use (&$workers, $factory): WorkerInterface {
         return $workers[$taskQueue] ??= $factory->newWorker(
             $taskQueue,
-            WorkerOptions::new()->withMaxConcurrentActivityExecutionSize(10)
+            WorkerOptions::new()->withMaxConcurrentActivityExecutionSize(10),
+            logger: LoggerFactory::createServerLogger($taskQueue),
         );
     };
 
