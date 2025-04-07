@@ -7,9 +7,12 @@ namespace Temporal\Tests\Acceptance\Extra\Workflow\AllHandlersFinished;
 use PHPUnit\Framework\Attributes\CoversFunction;
 use PHPUnit\Framework\Attributes\Test;
 use React\Promise\PromiseInterface;
+use Temporal\Client\Update\UpdateHandle;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
+use Temporal\Tests\Acceptance\App\Logger\ClientLogger;
+use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
@@ -139,9 +142,9 @@ class AllHandlersFinishedTest extends TestCase
     #[Test]
     public function warnUnfinishedSignals(
         #[Stub('Extra_Workflow_AllHandlersFinished')] WorkflowStubInterface $stub,
+        ClientLogger $logger,
+        Feature $feature,
     ): void {
-        $this->markTestSkipped("Can't check the log yet");
-
         /** @see TestWorkflow::resolveFromSignal() */
         $stub->signal('resolve', 'foo', 42);
         $stub->signal('resolve', 'bar', 42);
@@ -155,18 +158,34 @@ class AllHandlersFinishedTest extends TestCase
         $stub->signal('exit');
         $stub->getResult();
 
-        // todo Check that `await` signal with count was mentioned in the logs
+        // Check logs
+        $records = $logger->getRecords();
+        self::assertCount(1, $records);
+        $record = $records[0];
+        self::assertStringContainsString(
+            'Workflow `Extra_Workflow_AllHandlersFinished` finished while signal handlers are still running.',
+            $record->message,
+        );
+        self::assertStringContainsString('`await` x8', $record->message);
+        self::assertSame('warning', $record->level);
+        // Compare context
+        self::assertSame($stub->getExecution()->getID(), $record->context['workflow_id']);
+        self::assertSame($stub->getExecution()->getRunID(), $record->context['run_id']);
+        self::assertSame('Extra_Workflow_AllHandlersFinished', $record->context['workflow_type']);
+        self::assertSame($feature->taskQueue, $record->context['task_queue']);
     }
 
     #[Test]
     public function warnUnfinishedUpdates(
         #[Stub('Extra_Workflow_AllHandlersFinished')] WorkflowStubInterface $stub,
+        ClientLogger $logger,
+        Feature $feature,
     ): void {
-        $this->markTestSkipped("Can't check the log yet");
-
+        /** @var list<UpdateHandle> $updates */
+        $updates = [];
         for ($i = 0; $i < 8; $i++) {
             /** @see TestWorkflow::addFromUpdate() */
-            $stub->startUpdate('await', "key-$i");
+            $updates[] = $stub->startUpdate('await', "key-$i");
         }
         /** @see TestWorkflow::resolveFromUpdate() */
         $stub->startUpdate('resolve', 'foo', 42);
@@ -175,20 +194,38 @@ class AllHandlersFinishedTest extends TestCase
         $stub->signal('exit');
         $stub->getResult();
 
-        // todo Check that `await` updates was mentioned in the logs
+        // Check logs
+        $records = $logger->getRecords();
+        self::assertCount(1, $records);
+        $record = $records[0];
+        self::assertStringContainsString(
+            'Workflow `Extra_Workflow_AllHandlersFinished` finished while update handlers are still running.',
+            $record->message,
+        );
+        foreach ($updates as $update) {
+            self::assertStringContainsString('`await` id:' . $update->getId(), $record->message);
+        }
+        self::assertSame('warning', $record->level);
+        // Compare context
+        self::assertSame($stub->getExecution()->getID(), $record->context['workflow_id']);
+        self::assertSame($stub->getExecution()->getRunID(), $record->context['run_id']);
+        self::assertSame('Extra_Workflow_AllHandlersFinished', $record->context['workflow_type']);
+        self::assertSame($feature->taskQueue, $record->context['task_queue']);
     }
 
     #[Test]
     public function warnUnfinishedOnCancel(
         #[Stub('Extra_Workflow_AllHandlersFinished')] WorkflowStubInterface $stub,
+        ClientLogger $logger,
     ): void {
-        $this->markTestSkipped("Can't check the log yet");
-
         /** @see TestWorkflow::addFromSignal() */
         $stub->signal('await', "key-sig");
 
         /** @see TestWorkflow::addFromUpdate() */
         $stub->startUpdate('await', "key-upd");
+
+        // Make sure that the previous update was started before cancellation
+        $stub->update('resolve', "ping", "pong");
 
         // Finish the workflow
         $stub->cancel();
@@ -200,7 +237,17 @@ class AllHandlersFinishedTest extends TestCase
             // Expected
         }
 
-        // todo Check logs
+        // Check logs
+        $records = $logger->getRecords();
+        self::assertCount(2, $records);
+        self::assertStringContainsString(
+            'Workflow `Extra_Workflow_AllHandlersFinished` cancelled while update handlers are still running.',
+            $records[0]->message,
+        );
+        self::assertStringContainsString(
+            'Workflow `Extra_Workflow_AllHandlersFinished` cancelled while signal handlers are still running.',
+            $records[1]->message,
+        );
     }
 }
 
