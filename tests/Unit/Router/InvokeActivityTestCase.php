@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Router;
 
+use Psr\Log\NullLogger;
 use React\Promise\Deferred;
 use Spiral\Attributes\AnnotationReader;
 use Spiral\Attributes\AttributeReader;
@@ -21,6 +22,7 @@ use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Transport\Router\InvokeActivity;
+use Temporal\Internal\Workflow\Logger;
 use Temporal\Tests\Unit\Framework\Requests\InvokeActivity as Request;
 use Temporal\Tests\Unit\AbstractUnit;
 use Temporal\Worker\Environment\EnvironmentInterface;
@@ -91,6 +93,7 @@ final class InvokeActivityTestCase extends AbstractUnit
             $dataConverter,
             $this->createMock(ExceptionInterceptorInterface::class),
             new SimplePipelineProvider(),
+            new NullLogger(),
         );
         $activityReader = new ActivityReader(new SelectiveReader([new AnnotationReader(), new AttributeReader()]));
         foreach ($activityReader->fromClass(DummyActivity::class) as $proto) {
