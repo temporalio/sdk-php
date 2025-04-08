@@ -445,13 +445,21 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         )(new TimerInput($dateInterval));
     }
 
-    public function request(RequestInterface $request, bool $cancellable = true): PromiseInterface
-    {
+    public function request(
+        RequestInterface $request,
+        bool $cancellable = true,
+        bool $waitResponse = true,
+    ): PromiseInterface {
         $this->recordTrace();
 
         // Intercept workflow outbound calls
         return $this->requestInterceptor->with(
-            function (RequestInterface $request): PromiseInterface {
+            function (RequestInterface $request) use ($waitResponse): PromiseInterface {
+                if (!$waitResponse) {
+                    $this->client->send($request);
+                    return Promise::resolve();
+                }
+
                 return $this->client->request($request, $this);
             },
             /** @see WorkflowOutboundRequestInterceptor::handleOutboundRequest() */
@@ -477,7 +485,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
                     return resolve();
                 }
 
-                $result = $this->request(new UpsertMemo($input->memo), false);
+                $result = $this->request(new UpsertMemo($input->memo), false, false);
 
                 /** @psalm-suppress UnsupportedPropertyReferenceUsage $memo */
                 $memo = &$this->input->info->memo;
@@ -506,7 +514,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
                     return resolve();
                 }
 
-                $result = $this->request(new UpsertSearchAttributes($input->searchAttributes), false);
+                $result = $this->request(new UpsertSearchAttributes($input->searchAttributes), false, false);
 
                 /** @psalm-suppress UnsupportedPropertyReferenceUsage $sa */
                 $sa = &$this->input->info->searchAttributes;
@@ -534,7 +542,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
                     return resolve();
                 }
 
-                $result = $this->request(new UpsertTypedSearchAttributes($input->updates), false);
+                $result = $this->request(new UpsertTypedSearchAttributes($input->updates), false, false);
 
                 // Merge changes
                 $tsa = $this->input->info->typedSearchAttributes;

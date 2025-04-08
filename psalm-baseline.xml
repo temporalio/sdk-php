@@ -966,19 +966,6 @@
     </PossiblyInvalidArgument>
   </file>
   <file src="src/Internal/Transport/Client.php">
-    <InternalClass>
-      <code><![CDATA[self::ERROR_REQUEST_ID_DUPLICATION]]></code>
-      <code><![CDATA[self::ERROR_REQUEST_NOT_FOUND]]></code>
-    </InternalClass>
-    <InternalMethod>
-      <code><![CDATA[fetch]]></code>
-      <code><![CDATA[get]]></code>
-      <code><![CDATA[reject]]></code>
-      <code><![CDATA[request]]></code>
-    </InternalMethod>
-    <InternalProperty>
-      <code><![CDATA[$this->requests]]></code>
-    </InternalProperty>
     <PossiblyInvalidArgument>
       <code><![CDATA[$command->getID()]]></code>
       <code><![CDATA[$command->getID()]]></code>
