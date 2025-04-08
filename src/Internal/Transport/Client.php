@@ -89,7 +89,7 @@ final class Client implements ClientInterface
         }
 
         $deferred = new Deferred();
-        $this->requests[$id] = [$deferred, $context];
+        $this->requests[$id] = [$deferred, $context, $request::class];
 
         return $deferred->promise();
     }
