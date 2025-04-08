@@ -25,7 +25,7 @@ use Temporal\Workflow\WorkflowContextInterface;
 
 /**
  * @internal Client is an internal library class, please do not use it in your code.
- * @psalm-internal Temporal\Client\Internal\Transport
+ * @psalm-internal Temporal\Internal\Transport
  */
 final class Client implements ClientInterface
 {
@@ -84,12 +84,12 @@ final class Client implements ClientInterface
 
         $id = $request->getID();
 
-        if (isset($this->requests[$id])) {
-            throw new \OutOfBoundsException(\sprintf(self::ERROR_REQUEST_ID_DUPLICATION, $id));
-        }
+        \array_key_exists($id, $this->requests) and throw new \OutOfBoundsException(
+            \sprintf(self::ERROR_REQUEST_ID_DUPLICATION, $id),
+        );
 
         $deferred = new Deferred();
-        $this->requests[$id] = [$deferred, $context, $request::class];
+        $this->requests[$id] = [$deferred, $context];
 
         return $deferred->promise();
     }
