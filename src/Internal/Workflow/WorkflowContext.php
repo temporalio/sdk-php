@@ -444,13 +444,21 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         )(new TimerInput($dateInterval));
     }
 
-    public function request(RequestInterface $request, bool $cancellable = true): PromiseInterface
-    {
+    public function request(
+        RequestInterface $request,
+        bool $cancellable = true,
+        bool $waitResponse = true,
+    ): PromiseInterface {
         $this->recordTrace();
 
         // Intercept workflow outbound calls
         return $this->requestInterceptor->with(
-            function (RequestInterface $request): PromiseInterface {
+            function (RequestInterface $request) use ($waitResponse): PromiseInterface {
+                if (!$waitResponse) {
+                    $this->client->send($request);
+                    return Promise::resolve();
+                }
+
                 return $this->client->request($request, $this);
             },
             /** @see WorkflowOutboundRequestInterceptor::handleOutboundRequest() */

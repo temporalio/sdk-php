@@ -16,6 +16,5 @@ final class Client
         public float|null $timeout = null,
         public \Closure|array|string|null $pipelineProvider = null,
         public array $payloadConverters = [],
-    ) {
-    }
+    ) {}
 }

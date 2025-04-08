@@ -49,7 +49,7 @@ final class Client implements ClientInterface
     {
         $id = $response->getID();
         if (!isset($this->requests[$id])) {
-            $this->request(new UndefinedResponse(
+            $this->send(new UndefinedResponse(
                 \sprintf('Got the response to undefined request %s', $id),
             ));
             return;
