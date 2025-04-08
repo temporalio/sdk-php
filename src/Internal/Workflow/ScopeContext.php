@@ -16,7 +16,6 @@ use React\Promise\PromiseInterface;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Internal\Transport\CompletableResult;
 use Temporal\Internal\Workflow\Process\Scope;
-use Temporal\Promise;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\ScopedContextInterface;
@@ -75,11 +74,11 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
             'Attempt to send request to cancelled scope',
         );
 
-        $promise = $this->parent->request($request);
         if (!$waitResponse) {
-            return Promise::resolve();
+            return $this->parent->request($request, $cancellable, false);
         }
 
+        $promise = $this->parent->request($request);
         ($this->onRequest)($request, $promise);
 
         return new CompletableResult(
