@@ -45,7 +45,7 @@ final class ClientMock implements ClientInterface
     public function dispatch(ServerResponseInterface $response): void
     {
         if (!isset($this->requests[$response->getID()])) {
-            $this->request(new UndefinedResponse(
+            $this->send(new UndefinedResponse(
                 \sprintf('Got the response to undefined request %s', $response->getID()),
             ));
             return;

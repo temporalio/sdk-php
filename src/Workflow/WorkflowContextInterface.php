@@ -128,7 +128,11 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @internal This is an internal method
      */
-    public function request(RequestInterface $request, bool $cancellable = true): PromiseInterface;
+    public function request(
+        RequestInterface $request,
+        bool $cancellable = true,
+        bool $waitResponse = true,
+    ): PromiseInterface;
 
     /**
      * Updates the behavior of an existing workflow to resolve inconsistency errors during replay.
