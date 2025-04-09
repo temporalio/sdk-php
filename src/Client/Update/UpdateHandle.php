@@ -114,22 +114,38 @@ final class UpdateHandle
                 (new \Temporal\Api\Update\V1\WaitPolicy())->setLifecycleStage(LifecycleStage::StageCompleted->value),
             );
 
-        try {
-            $response = $this->client->PollWorkflowExecutionUpdate(
-                $request,
-                $timeout === null ? null : $this->client->getContext()->withTimeout($timeout),
-            );
-        } catch (TimeoutException|CanceledException $e) {
-            throw WorkflowUpdateRPCTimeoutOrCanceledException::fromTimeoutOrCanceledException($e);
-        }
 
-        // Workflow Uprate accepted
-        $result = $response->getOutcome();
-        \assert($result !== null);
+        $context = $timeout === null
+            ? $this->client->getContext()
+            : $this->client->getContext()->withTimeout($timeout);
+        $deadline = $context->getDeadline();
+
+        // Convert request timeout into deadline
+        $deadline === null or $context = $context->withDeadline($deadline);
+
+        do {
+            try {
+                $response = $this->client->PollWorkflowExecutionUpdate($request, $context);
+            } catch (TimeoutException|CanceledException $e) {
+                throw WorkflowUpdateRPCTimeoutOrCanceledException::fromTimeoutOrCanceledException($e);
+            }
+
+            // Workflow Uprate accepted
+            $result = $response->getOutcome();
+
+            /**
+             * Retry the request.
+             *
+             * TimeoutException will be thrown in {@see \Temporal\Client\GRPC\BaseClient::call()} method
+             * because the deadline is provided in the context.
+             * That's why the deadline condition is not checked here.
+             */
+        } while ($result === null);
 
         // Accepted with result
-        if ($result->getSuccess() !== null) {
-            $this->result = EncodedValues::fromPayloads($result->getSuccess(), $this->converter);
+        $success = $result->getSuccess();
+        if ($success !== null) {
+            $this->result = EncodedValues::fromPayloads($success, $this->converter);
             return;
         }
 

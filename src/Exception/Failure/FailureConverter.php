@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Exception\Failure;
 
-use Psr\Log\LoggerInterface;
 use Temporal\Api\Common\V1\ActivityType;
 use Temporal\Api\Common\V1\WorkflowExecution;
 use Temporal\Api\Common\V1\WorkflowType;
@@ -30,8 +29,6 @@ use Temporal\Internal\Support\DateInterval;
 
 final class FailureConverter
 {
-    private static ?LoggerInterface $logger;
-
     public static function mapFailureToException(Failure $failure, DataConverterInterface $converter): TemporalFailure
     {
         $e = self::createFailureException($failure, $converter);
@@ -158,11 +155,6 @@ final class FailureConverter
         }
 
         return $failure;
-    }
-
-    public function setLogger(LoggerInterface $logger): void
-    {
-        self::$logger = $logger;
     }
 
     private static function createFailureException(Failure $failure, DataConverterInterface $converter): TemporalFailure
