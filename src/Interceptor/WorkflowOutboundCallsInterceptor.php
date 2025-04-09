@@ -46,7 +46,7 @@ use Temporal\Internal\Interceptor\Interceptor;
  *         ExecuteActivityInput $input,
  *         callable $next,
  *     ): PromiseInterface {
- *         error_log('Calling activity: ' . $input->type);
+ *         Workflow::getLogger()->info('Calling activity: ' . $input->type);
  *
  *         return $next($input);
  *     }

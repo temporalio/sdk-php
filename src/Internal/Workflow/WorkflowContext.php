@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Workflow;
 
+use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\UuidInterface;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
@@ -642,6 +643,11 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     public function uuid7(?\DateTimeInterface $dateTime = null): PromiseInterface
     {
         return $this->sideEffect(static fn(): UuidInterface => \Ramsey\Uuid\Uuid::uuid7($dateTime));
+    }
+
+    public function getLogger(): LoggerInterface
+    {
+        return $this->services->logger;
     }
 
     /**

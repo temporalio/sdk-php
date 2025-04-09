@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal;
 
+use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\UuidInterface;
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
@@ -370,7 +371,7 @@ final class Workflow extends Facade
      *
      * ```php
      *  Workflow::registerDynamicSignal(function (string $name, ValuesInterface $arguments): void {
-     *      \error_log(\sprintf(
+     *      Workflow::getLogger()->info(\sprintf(
      *          'Executed signal `%s` with %d arguments',
      *          $name,
      *          $arguments->count(),
@@ -1126,5 +1127,21 @@ final class Workflow extends Facade
                 $mutex->unlock();
             }
         });
+    }
+
+    /**
+     * Get logger to use inside the Workflow.
+     *
+     * Logs in replay mode are omitted unless {@see WorkerOptions::$enableLoggingInReplay} is set to true.
+     *
+     * ```php
+     *  Workflow::getLogger()->notice('Workflow started');
+     * ```
+     *
+     * @since SDK 2.14.0
+     */
+    public static function getLogger(): LoggerInterface
+    {
+        return self::getCurrentContext()->getLogger();
     }
 }

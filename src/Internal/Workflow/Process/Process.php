@@ -281,7 +281,9 @@ class Process extends Scope implements ProcessInterface
             $warnUpdates[] = $tuple;
         }
 
-        $workflowName = $this->getContext()->getInfo()->type->name;
+        $info = $this->getContext()->getInfo();
+        $workflowName = $info->type->name;
+        $logger = $this->services->logger;
 
         // Warn messages
         if ($warnUpdates !== []) {
@@ -297,7 +299,11 @@ class Process extends Scope implements ProcessInterface
                 'The following updates were unfinished (and warnings were not disabled for their handler): ' .
                 \implode(', ', \array_map(static fn(array $v): string => "`$v[name]` id:$v[id]", $warnUpdates));
 
-            \error_log($message);
+            $logger->warning($message, [
+                'workflow_type' => $workflowName,
+                'workflow_id' => $info->execution->getID(),
+                'run_id' => $info->execution->getRunID(),
+            ]);
         }
 
         if ($warnSignals !== []) {
@@ -312,7 +318,11 @@ class Process extends Scope implements ProcessInterface
                 'The following signals were unfinished (and warnings were not disabled for their handler): ' .
                 \implode(', ', \array_map(static fn(array $v): string => "`$v[name]` x$v[count]", $warnSignals));
 
-            \error_log($message);
+            $logger->warning($message, [
+                'workflow_type' => $workflowName,
+                'workflow_id' => $info->execution->getID(),
+                'run_id' => $info->execution->getRunID(),
+            ]);
         }
     }
 }

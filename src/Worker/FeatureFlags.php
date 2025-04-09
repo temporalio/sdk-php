@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Temporal\Worker;
 
+use Temporal\Workflow;
+
 /**
  * Feature flags help to smoothly introduce behavior changes that may affect existing workflows.
  * Also, there may be experimental features that are in the testing phase.
@@ -24,7 +26,7 @@ final class FeatureFlags
 
     /**
      * Warn about running Signal and Update handlers on Workflow finish.
-     * It uses `error_log()` function to output a warning message.
+     * It uses {@see Workflow::getLogger()} to output a warning message.
      *
      * @since SDK 2.11.0
      */

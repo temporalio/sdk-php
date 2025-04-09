@@ -29,7 +29,7 @@ use Temporal\Worker\Transport\Command\RequestInterface;
  *
  *     private function executeActivityRequest(ExecuteActivity $request, callable $next): PromiseInterface
  *     {
- *         error_log('Starting activity: ' . $request->getActivityName());
+ *         Workflow::getLogger()->info('Starting activity: ' . $request->getActivityName());
  *
  *         return $next($request);
  *     }

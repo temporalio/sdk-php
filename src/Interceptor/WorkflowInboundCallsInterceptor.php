@@ -29,7 +29,7 @@ use Temporal\Internal\Interceptor\Interceptor;
  *
  *     public function handleSignal(SignalInput $input, callable $next): void
  *     {
- *         error_log('Workflow received signal: ' . $input->signalName);
+ *         Workflow::getLogger()->info('Workflow received signal: ' . $input->signalName);
  *
  *         $next($input);
  *     }

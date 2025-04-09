@@ -13,6 +13,7 @@ namespace Temporal;
 
 use Doctrine\Common\Annotations\Reader;
 use JetBrains\PhpStorm\Pure;
+use Psr\Log\LoggerInterface;
 use React\Promise\PromiseInterface;
 use Spiral\Attributes\AnnotationReader;
 use Spiral\Attributes\AttributeReader;
@@ -39,8 +40,10 @@ use Temporal\Internal\Transport\Router;
 use Temporal\Internal\Transport\RouterInterface;
 use Temporal\Internal\Transport\Server;
 use Temporal\Internal\Transport\ServerInterface;
+use Temporal\Internal\Workflow\Logger;
 use Temporal\Worker\Environment\Environment;
 use Temporal\Worker\Environment\EnvironmentInterface;
+use Temporal\Worker\Logger\StderrLogger;
 use Temporal\Worker\LoopInterface;
 use Temporal\Worker\ServiceCredentials;
 use Temporal\Worker\Transport\Codec\CodecInterface;
@@ -115,7 +118,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         ?DataConverterInterface $converter = null,
         ?RPCConnectionInterface $rpc = null,
         ?ServiceCredentials $credentials = null,
-    ): WorkerFactoryInterface {
+    ): static {
         return new static(
             $converter ?? DataConverter::createDefault(),
             $rpc ?? Goridge::create(),
@@ -128,14 +131,21 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         ?WorkerOptions $options = null,
         ?ExceptionInterceptorInterface $exceptionInterceptor = null,
         ?PipelineProvider $interceptorProvider = null,
+        ?LoggerInterface $logger = null,
     ): WorkerInterface {
+        $options ??= WorkerOptions::new();
         $worker = new Worker(
             $taskQueue,
-            $options ?? WorkerOptions::new(),
+            $options,
             ServiceContainer::fromWorkerFactory(
                 $this,
                 $exceptionInterceptor ?? ExceptionInterceptor::createDefault(),
                 $interceptorProvider ?? new SimplePipelineProvider(),
+                new Logger(
+                    $logger ?? new StderrLogger(),
+                    $options->enableLoggingInReplay,
+                    $taskQueue,
+                ),
             ),
             $this->rpc,
         );
