@@ -118,6 +118,11 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         return $this->workflowInstance;
     }
 
+    public function getInstance(): object
+    {
+        return $this->workflowInstance->getContext();
+    }
+
     public function now(): \DateTimeInterface
     {
         return $this->services->env->now();

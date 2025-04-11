@@ -296,15 +296,12 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
                 static fn(ValuesInterface $arguments): mixed => $validator($input->updateName, $arguments),
             );
 
-        $this->updateDynamicHandler = $this->pipeline->with(
+        $this->updateDynamicHandler =
             fn(UpdateInput $input, Deferred $deferred): mixed => ($this->updateExecutor)(
                 $input,
                 static fn(ValuesInterface $arguments): mixed => $handler($input->updateName, $arguments),
                 $deferred,
-            ),
-            /** @see WorkflowInboundCallsInterceptor::handleUpdate() */
-            'handleUpdate',
-        )(...);
+            );
     }
 
     public function clearSignalQueue(): void
