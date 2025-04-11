@@ -39,8 +39,6 @@ final class WorkerFactory
             $options = $attr->options;
             $attr->pipelineProvider === null or $interceptorProvider = $this->invoker->invoke($attr->pipelineProvider);
             $attr->logger === null or $logger = $this->invoker->invoke($attr->logger);
-
-            tr($interceptorProvider);
         }
 
         return $this->workerFactory->newWorker(
