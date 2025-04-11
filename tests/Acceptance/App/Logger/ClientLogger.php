@@ -49,14 +49,14 @@ final class ClientLogger
     /**
      * Find log records by matching message content.
      *
-     * @param string $messagePattern Regular expression to match against log messages
+     * @param non-empty-string $messagePattern Regular expression to match against log messages
      * @return list<LogRecord> Matching log records
      */
     public function findByMessage(string $messagePattern): array
     {
         $result = [];
         foreach ($this->readAll() as $record) {
-            if (\preg_match($messagePattern, $record->message)) {
+            if (\preg_match($messagePattern, $record->message) === 1) {
                 $result[] = $record;
             }
         }
