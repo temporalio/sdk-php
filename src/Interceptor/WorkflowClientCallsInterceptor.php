@@ -75,9 +75,9 @@ interface WorkflowClientCallsInterceptor extends Interceptor
      * @param UpdateWithStartInput $input
      * @param callable(UpdateWithStartInput): WorkflowExecution $next
      *
-     * @return UpdateHandle
+     * @return array{WorkflowExecution, UpdateHandle|\Throwable}
      */
-    public function updateWithStart(UpdateWithStartInput $input, callable $next): UpdateHandle;
+    public function updateWithStart(UpdateWithStartInput $input, callable $next): array;
 
     /**
      * @param callable(GetResultInput): ?ValuesInterface $next

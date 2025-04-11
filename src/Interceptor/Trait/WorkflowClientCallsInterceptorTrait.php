@@ -80,7 +80,7 @@ trait WorkflowClientCallsInterceptorTrait
      *
      * @see WorkflowClientCallsInterceptor::updateWithStart()
      */
-    public function updateWithStart(UpdateWithStartInput $input, callable $next): UpdateHandle
+    public function updateWithStart(UpdateWithStartInput $input, callable $next): array
     {
         return $next($input);
     }
