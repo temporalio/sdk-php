@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Internal\Transport;
 
 use React\Promise\PromiseInterface;
-use Temporal\Internal\Declaration\Destroyable;
 use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\ServerResponseInterface;
@@ -22,7 +21,7 @@ use Temporal\Workflow\WorkflowContextInterface;
  * @internal Client is an internal library class, please do not use it in your code.
  * @psalm-internal Temporal\Internal\Transport
  */
-final class DetachedClient implements ClientInterface, Destroyable
+final class DetachedClient implements ClientInterface
 {
     /** @var list<int> */
     private array $requests = [];
