@@ -104,6 +104,13 @@ final class ClientMock implements ClientInterface
         $request->reject($reason);
     }
 
+    public function fork(): self
+    {
+        return new self($this->queue);
+    }
+
+    public function destroy(): void {}
+
     private function fetch(int $id): Deferred
     {
         $request = $this->get($id);

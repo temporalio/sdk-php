@@ -666,7 +666,8 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     {
         $this->awaits = [];
         $this->workflowInstance->destroy();
-        unset($this->workflowInstance);
+        $this->client->destroy();
+        unset($this->workflowInstance, $this->client);
     }
 
     protected function awaitRequest(callable|Mutex|PromiseInterface ...$conditions): PromiseInterface

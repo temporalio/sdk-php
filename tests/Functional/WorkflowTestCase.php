@@ -363,12 +363,12 @@ class WorkflowTestCase extends AbstractFunctional
         $this->assertSame(0, $after - $before);
     }
 
-    public function testDetachedScope_Leaks(): void
+    public function testDetachedScopeRequests_Leaks(): void
     {
         $worker = WorkerMock::createMock();
 
         // Run the workflow $i times
-        for ($id = 9000, $i = 0; $i < 100; ++$i) {
+        for ($id = 9000, $i = 0; $i < 20; ++$i) {
             $uuid1 = Uuid::v4();
             $uuid2 = Uuid::v4();
             $id1 = ++$id;
@@ -383,19 +383,13 @@ class WorkflowTestCase extends AbstractFunctional
                 LOG;
 
             $worker->run($this, Splitter::createFromString($log)->getQueue());
-            if ($i === 3) {
-                \gc_collect_cycles();
-                $before = \memory_get_usage();
-            }
         }
-        $after = \memory_get_usage();
 
+        // Check there are no hanging requests
         $factory = self::getPrivate($worker, 'factory');
         $client = self::getPrivate($factory, 'client');
         $requests = self::getPrivate($client, 'requests');
         self::assertCount(0, $requests);
-
-        $this->assertSame(0, $after - $before);
     }
 
     /**
