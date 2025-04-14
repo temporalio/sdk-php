@@ -106,7 +106,7 @@ final class ClientMock implements ClientInterface
 
     public function fork(): self
     {
-        return new self($this->queue);
+        return $this;
     }
 
     public function destroy(): void {}

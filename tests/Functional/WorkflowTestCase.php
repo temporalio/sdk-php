@@ -436,6 +436,6 @@ class WorkflowTestCase extends AbstractFunctional
      */
     private static function getPrivate(object $object, string $key): mixed
     {
-        return (fn (object $value) => $value->{$key} ?? null)->call($object, $object);
+        return (static fn(object $value) => $value->{$key} ?? null)->call($object, $object);
     }
 }
