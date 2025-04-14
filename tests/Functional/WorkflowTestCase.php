@@ -363,6 +363,41 @@ class WorkflowTestCase extends AbstractFunctional
         $this->assertSame(0, $after - $before);
     }
 
+    public function testDetachedScope_Leaks(): void
+    {
+        $worker = WorkerMock::createMock();
+
+        // Run the workflow $i times
+        for ($id = 9000, $i = 0; $i < 100; ++$i) {
+            $uuid1 = Uuid::v4();
+            $uuid2 = Uuid::v4();
+            $id1 = ++$id;
+            $id2 = ++$id;
+            $log = <<<LOG
+                [0m	[{"command":"StartWorkflow","options":{"info":{"WorkflowExecution":{"ID":"$uuid1","RunID":"$uuid2"},"WorkflowType":{"Name":"DetachedScopeWorkflow"},"TaskQueueName":"default","WorkflowExecutionTimeout":315360000000000000,"WorkflowRunTimeout":315360000000000000,"WorkflowTaskTimeout":0,"Namespace":"default","Attempt":1,"CronSchedule":"","ContinuedExecutionRunID":"","ParentWorkflowNamespace":"","ParentWorkflowExecution":null,"Memo":null,"SearchAttributes":null,"BinaryChecksum":"4301710877bf4b107429ee12de0922be"}},"payloads":"CicKFgoIZW5jb2RpbmcSCmpzb24vcGxhaW4SDSJIZWxsbyBXb3JsZCI="}] {"taskQueue":"default","tickTime":"2021-01-12T15:21:52.2672785Z"}
+                # Run a timer
+                [0m	[{"id":$id1,"command":"NewTimer","options":{"ms":5000000},"payloads":"","header":""},{"payloads":"ChkKFwoIZW5jb2RpbmcSC2JpbmFyeS9udWxs"},{"id":$id2,"command":"CompleteWorkflow","options":{},"payloads":"Ch4KFgoIZW5jb2RpbmcSCmpzb24vcGxhaW4SBCJvayI=","header":""}]	{"receive": true}
+                # Destroy workflow
+                [0m	[{"command":"DestroyWorkflow","options":{"runId":"$uuid2"}}] {"taskQueue":"default","tickTime":"2021-01-12T15:21:53.3838443Z","replay":true}
+                [0m	[{"payloads":"ChkKFwoIZW5jb2RpbmcSC2JpbmFyeS9udWxs"}]	{"receive": true}
+                LOG;
+
+            $worker->run($this, Splitter::createFromString($log)->getQueue());
+            if ($i === 3) {
+                \gc_collect_cycles();
+                $before = \memory_get_usage();
+            }
+        }
+        $after = \memory_get_usage();
+
+        $factory = self::getPrivate($worker, 'factory');
+        $client = self::getPrivate($factory, 'client');
+        $requests = self::getPrivate($client, 'requests');
+        self::assertCount(0, $requests);
+
+        $this->assertSame(0, $after - $before);
+    }
+
     /**
      * Test case when an external Temporal SDK returns empty payload that doesn't contain even NULL value.
      *
@@ -398,5 +433,15 @@ class WorkflowTestCase extends AbstractFunctional
 
         // emulate connection to parent server
         $_SERVER['RR_RPC'] = 'tcp://127.0.0.1:6001';
+    }
+
+    /**
+     * Fetch a private property from an object.
+     *
+     * @param non-empty-string $key Property name
+     */
+    private static function getPrivate(object $object, string $key): mixed
+    {
+        return (fn (object $value) => $value->{$key} ?? null)->call($object, $object);
     }
 }
