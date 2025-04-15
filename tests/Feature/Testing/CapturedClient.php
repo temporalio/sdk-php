@@ -53,33 +53,6 @@ class CapturedClient implements ClientInterface
     }
 
     /**
-     * @param RequestInterface $request
-     * @return \Closure
-     */
-    private function onFulfilled(RequestInterface $request): \Closure
-    {
-        return function ($response) use ($request) {
-            unset($this->requests[$request->getID()]);
-
-            return $response;
-        };
-    }
-
-    /**
-     * @param RequestInterface $request
-     * @return \Closure
-     * @psalm-suppress UnusedClosureParam
-     */
-    private function onRejected(RequestInterface $request): \Closure
-    {
-        return function (\Throwable $error) use ($request) {
-            unset($this->requests[$request->getID()]);
-
-            throw $error;
-        };
-    }
-
-    /**
      * {@inheritDoc}
      */
     public function fetchUnresolvedRequests(): array
@@ -120,5 +93,42 @@ class CapturedClient implements ClientInterface
     public function reject(CommandInterface $command, \Throwable $reason): void
     {
         $this->parent->reject($command, $reason);
+    }
+
+    public function dispatch(CommandInterface $response): void
+    {
+        $this->parent->dispatch($response);
+    }
+
+    public function fork(): ClientInterface
+    {
+        return $this->parent->fork();
+    }
+
+    /**
+     * @param RequestInterface $request
+     * @return \Closure
+     */
+    private function onFulfilled(RequestInterface $request): \Closure
+    {
+        return function ($response) use ($request) {
+            unset($this->requests[$request->getID()]);
+
+            return $response;
+        };
+    }
+
+    /**
+     * @param RequestInterface $request
+     * @return \Closure
+     * @psalm-suppress UnusedClosureParam
+     */
+    private function onRejected(RequestInterface $request): \Closure
+    {
+        return function (\Throwable $error) use ($request): void {
+            unset($this->requests[$request->getID()]);
+
+            throw $error;
+        };
     }
 }

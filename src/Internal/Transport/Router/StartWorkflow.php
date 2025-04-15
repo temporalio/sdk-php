@@ -85,7 +85,7 @@ final class StartWorkflow extends Route
 
         $context = new WorkflowContext(
             $this->services,
-            $this->services->client,
+            $this->services->client->fork(),
             $instance,
             $input,
             $lastCompletionResult,

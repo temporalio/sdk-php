@@ -116,6 +116,21 @@ final class Client implements ClientInterface
         $this->fetch($command->getID())->reject($reason);
     }
 
+    public function fork(): ClientInterface
+    {
+        return new DetachedClient($this, function (array $ids): void {
+            foreach ($ids as $id) {
+                unset($this->requests[$id]);
+            }
+        });
+    }
+
+    public function destroy(): void
+    {
+        $this->requests = [];
+        unset($this->queue);
+    }
+
     private function fetch(int $id): Deferred
     {
         $request = $this->get($id);

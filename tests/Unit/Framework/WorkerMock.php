@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Framework;
 
-use Closure;
 use PHPUnit\Framework\Exception;
 use React\Promise\PromiseInterface;
 use Temporal\Common\Uuid;
@@ -12,7 +11,6 @@ use Temporal\Interceptor\PipelineProvider;
 use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Queue\QueueInterface;
-use Temporal\Internal\Repository\Identifiable;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Router;
 use Temporal\Internal\Transport\RouterInterface;
@@ -28,7 +26,6 @@ use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Temporal\Worker\Transport\Goridge;
 use Temporal\Worker\WorkerInterface;
 use Temporal\Worker\WorkerOptions;
-use Throwable;
 
 /**
  * @internal
@@ -61,17 +58,6 @@ final class WorkerMock implements WorkerInterface, DispatcherInterface
         $this->server = new ServerMock(CommandHandlerFactory::create());
     }
 
-    private function createRouter(): RouterInterface
-    {
-        $router = new Router();
-        $router->add(new Router\StartWorkflow($this->services));
-        $router->add(new Router\InvokeActivity($this->services, Goridge::create(), $this->interceptorProvider));
-        $router->add(new Router\DestroyWorkflow($this->services->running, $this->services->loop));
-        $router->add(new Router\InvokeSignal($this->services->running));
-
-        return $router;
-    }
-
     public function runWorkflow(string $workflowCLass, ...$args): void
     {
         $runId = Uuid::v4();
@@ -79,7 +65,7 @@ final class WorkerMock implements WorkerInterface, DispatcherInterface
         $this->server->addCommand(new StartWorkflow($runId, $workflowCLass, ...$args));
     }
 
-    public function sendSignal(string $workflow, string $name, ...$args): void
+    public function sendSignal(string $workflow, string $name, mixed ...$args): void
     {
         $workflowRunId = $this->execution[$workflow] ?? null;
         if ($workflowRunId === null) {
@@ -109,9 +95,9 @@ final class WorkerMock implements WorkerInterface, DispatcherInterface
     }
 
     /**
-     * @throws Throwable
+     * @throws \Throwable
      */
-    public function error(Throwable $error): void
+    public function error(\Throwable $error): void
     {
         if ($error instanceof Exception) {
             throw $error;
@@ -154,14 +140,13 @@ final class WorkerMock implements WorkerInterface, DispatcherInterface
     public function registerActivityImplementations(object ...$activity): WorkerInterface
     {
         foreach ($activity as $act) {
-            $this->registerActivity(\get_class($act), fn() => $act);
+            $this->registerActivity(\get_class($act), static fn() => $act);
         }
 
         return $this;
     }
 
-
-    public function registerActivity(string $type, callable $factory = null): WorkerInterface
+    public function registerActivity(string $type, ?callable $factory = null): WorkerInterface
     {
         foreach ($this->services->activitiesReader->fromClass($type) as $proto) {
             /** @var ActivityPrototype $proto */
@@ -205,10 +190,21 @@ final class WorkerMock implements WorkerInterface, DispatcherInterface
         $this->execution = [];
     }
 
-    public function registerActivityFinalizer(Closure $finalizer): WorkerInterface
+    public function registerActivityFinalizer(\Closure $finalizer): WorkerInterface
     {
         $this->services->activities->addFinalizer($finalizer);
 
         return $this;
+    }
+
+    private function createRouter(): RouterInterface
+    {
+        $router = new Router();
+        $router->add(new Router\StartWorkflow($this->services));
+        $router->add(new Router\InvokeActivity($this->services, Goridge::create(), $this->interceptorProvider));
+        $router->add(new Router\DestroyWorkflow($this->services->running, $this->services->loop));
+        $router->add(new Router\InvokeSignal($this->services->running));
+
+        return $router;
     }
 }

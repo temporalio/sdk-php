@@ -1,14 +1,17 @@
 <?xml version="1.0"?>
-<dload>
+<dload xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:noNamespaceSchemaLocation="vendor/internal/dload/dload.xsd"
+       temp-dir="./runtime"
+>
     <actions>
-        <download software="rr" version="^2024.2"/>
+        <download software="rr" version="^2024.3.3"/>
         <download software="temporal"/>
         <download software="temporal-tests-server"/>
     </actions>
     <registry>
         <software name="Temporal Tests Server" alias="temporal-tests-server">
             <repository type="github" uri="temporalio/sdk-java" asset-pattern="/^temporal-test-server.*/"/>
-            <file pattern="/^(temporal-test-server)(?:\.exe)?$/" />
+            <binary name="temporal-test-server"/>
         </software>
     </registry>
 </dload>

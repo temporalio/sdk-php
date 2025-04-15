@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Framework\Expectation;
 
-use DateTimeImmutable;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Internal\Transport\Request\CompleteWorkflow;
 use Temporal\Worker\Transport\Command\CommandInterface;
@@ -38,7 +37,7 @@ final class WorkflowResult implements ExpectationInterface
 
     public function run(CommandInterface $command): CommandInterface
     {
-        return new SuccessResponse(EncodedValues::empty(), $command->getID(), new TickInfo(new DateTimeImmutable()));
+        return new SuccessResponse(EncodedValues::empty(), $command->getID(), new TickInfo(new \DateTimeImmutable()));
     }
 
     public function fail(): void

@@ -12,11 +12,13 @@ declare(strict_types=1);
 namespace Temporal\Internal\Transport;
 
 use React\Promise\PromiseInterface;
+use Temporal\Internal\Declaration\Destroyable;
 use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
+use Temporal\Worker\Transport\Command\ServerResponseInterface;
 use Temporal\Workflow\WorkflowContextInterface;
 
-interface ClientInterface
+interface ClientInterface extends Destroyable
 {
     /**
      * Send a request and return a promise.
@@ -39,4 +41,14 @@ interface ClientInterface
      * Reject pending promise.
      */
     public function reject(CommandInterface $command, \Throwable $reason): void;
+
+    /**
+     * Dispatch a response to the request.
+     */
+    public function dispatch(ServerResponseInterface $response): void;
+
+    /**
+     * Create a new client that can work with parent's request queue.
+     */
+    public function fork(): ClientInterface;
 }
