@@ -135,7 +135,7 @@ final class InterceptorsTestCase extends AbstractClient
              * @see \Temporal\Tests\Interceptor\InterceptorCallsCounter::execute()
              */
             'execute' => '1',
-        ], $workflow->headers());
+        ], (array) $workflow->headers());
     }
 
     // todo: rewrite tests because there is no header in query call
