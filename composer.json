@@ -82,8 +82,10 @@
         "buggregator/trap": "For better debugging"
     },
     "scripts": {
-        "post-update-cmd": "Temporal\\Worker\\Transport\\RoadRunnerVersionChecker::postUpdate",
-        "get:binaries": "dload get --no-interaction -vv",
+        "get:binaries": [
+            "dload get --no-interaction -vv",
+            "Temporal\\Worker\\Transport\\RoadRunnerVersionChecker::postUpdate"
+        ],
         "cs:diff": "php-cs-fixer fix --dry-run -v --diff --show-progress dots",
         "cs:fix": "php-cs-fixer fix -v",
         "psalm": "psalm",

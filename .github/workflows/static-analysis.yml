@@ -25,22 +25,11 @@ jobs:
 
       - name: Check Out Code
         uses: actions/checkout@v4
+
+      - name: Install dependencies with composer
+        uses: ramsey/composer-install@v3
         with:
-          fetch-depth: 1
-
-      - name: Get Composer Cache Directory
-        id: composer-cache
-        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
-
-      - name: Cache Dependencies
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: php-${{ matrix.php }}-${{ runner.os }}-composer-
-
-      - name: Install Composer Dependencies
-        run: composer install --prefer-dist --no-interaction
+          dependency-versions: ${{ matrix.dependencies }}
 
       - name: 🔍 Run Tests
         run: vendor/bin/psalm
@@ -66,19 +55,10 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Get Composer Cache Directory
-        id: composer-cache
-        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
-
-      - name: Cache Dependencies
-        uses: actions/cache@v3
+      - name: Install dependencies with composer
+        uses: ramsey/composer-install@v3
         with:
-          path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: php-${{ matrix.php }}-${{ runner.os }}-composer-
-
-      - name: Install Composer Dependencies
-        run: composer install --prefer-dist --no-interaction
+          dependency-versions: ${{ matrix.dependencies }}
 
       - name: 🔍 Run Tests
         run: composer test:arch
