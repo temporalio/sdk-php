@@ -135,11 +135,6 @@
       <code><![CDATA[$options->namespace]]></code>
     </DeprecatedProperty>
   </file>
-  <file src="src/Client/Update/UpdateHandle.php">
-    <PossiblyNullArgument>
-      <code><![CDATA[$result->getSuccess()]]></code>
-    </PossiblyNullArgument>
-  </file>
   <file src="src/Client/WorkflowClient.php">
     <ArgumentTypeCoercion>
       <code><![CDATA[$counter]]></code>
@@ -1481,7 +1476,6 @@
       <code><![CDATA[$codec]]></code>
     </PropertyNotSetInConstructor>
     <UndefinedInterfaceMethod>
-      <code><![CDATA[dispatch]]></code>
       <code><![CDATA[dispatch]]></code>
       <code><![CDATA[dispatch]]></code>
       <code><![CDATA[update]]></code>

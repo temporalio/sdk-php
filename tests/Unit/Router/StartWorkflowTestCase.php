@@ -132,7 +132,7 @@ final class StartWorkflowTestCase extends AbstractUnit
         $this->router = new StartWorkflow($this->services);
         $this->workflowContext = new WorkflowContext(
             $this->services,
-            $this->services->client,
+            $this->services->client->fork(),
             $this->createMockForIntersectionOfInterfaces([WorkflowInstanceInterface::class, Destroyable::class]),
             new Input(),
             EncodedValues::empty(),

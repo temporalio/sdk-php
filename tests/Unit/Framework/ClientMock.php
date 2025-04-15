@@ -9,6 +9,7 @@ use React\Promise\PromiseInterface;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Internal\Transport\ClientInterface;
+use Temporal\Internal\Transport\DetachedClient;
 use Temporal\Internal\Transport\Request\UndefinedResponse;
 use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\FailureResponseInterface;
@@ -25,7 +26,6 @@ final class ClientMock implements ClientInterface
     private const ERROR_REQUEST_ID_DUPLICATION =
         'Unable to create a new request because a ' .
         'request with id %d has already been sent';
-
     private const ERROR_REQUEST_NOT_FOUND =
         'Unable to receive a request with id %d because ' .
         'a request with that identifier was not sent';
@@ -103,6 +103,17 @@ final class ClientMock implements ClientInterface
         $request = $this->fetch($command->getID());
         $request->reject($reason);
     }
+
+    public function fork(): ClientInterface
+    {
+        return new DetachedClient($this, function (array $ids): void {
+            foreach ($ids as $id) {
+                unset($this->requests[$id]);
+            }
+        });
+    }
+
+    public function destroy(): void {}
 
     private function fetch(int $id): Deferred
     {

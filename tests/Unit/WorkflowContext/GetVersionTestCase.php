@@ -15,16 +15,9 @@ use Temporal\Workflow\WorkflowMethod;
 final class GetVersionTestCase extends AbstractUnit
 {
     private WorkerFactoryInterface $factory;
+
     /** @var WorkerMock|WorkerInterface */
     private $worker;
-
-    protected function setUp(): void
-    {
-        $this->factory = WorkerFactoryMock::create();
-        $this->worker = $this->factory->newWorker();
-
-        parent::setUp();
-    }
 
     public function testVersionIsRetrieved(): void
     {
@@ -50,11 +43,19 @@ final class GetVersionTestCase extends AbstractUnit
 
                     return 'ERROR';
                 }
-            }
+            },
         );
 
         $this->worker->runWorkflow('VersionWorkflow');
         $this->worker->assertWorkflowReturns('OK');
         $this->factory->run($this->worker);
+    }
+
+    protected function setUp(): void
+    {
+        $this->factory = WorkerFactoryMock::create();
+        $this->worker = $this->factory->newWorker();
+
+        parent::setUp();
     }
 }
