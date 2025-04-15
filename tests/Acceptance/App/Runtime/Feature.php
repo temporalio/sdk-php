@@ -20,8 +20,10 @@ final class Feature
     /** @var list<class-string<PayloadConverterInterface>> Lazy callables */
     public array $converters = [];
 
+    /**
+     * @param non-empty-string $taskQueue
+     */
     public function __construct(
         public readonly string $taskQueue,
-    ) {
-    }
+    ) {}
 }

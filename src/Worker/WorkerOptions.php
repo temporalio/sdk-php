@@ -18,6 +18,7 @@ use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\EnumValueType;
 use Temporal\Internal\Marshaller\Type\NullableType;
 use Temporal\Internal\Support\DateInterval;
+use Temporal\Workflow;
 
 /**
  * @psalm-import-type DateIntervalValue from DateInterval
@@ -139,8 +140,9 @@ class WorkerOptions
     /**
      * Optional: Enable logging in replay.
      *
-     * In the workflow code you can use workflow.GetLogger(ctx) to write logs. By default, the logger will skip log
-     * entry during replay mode so you won't see duplicate logs. This option will enable the logging in replay mode.
+     * In the workflow code you can use {@see Workflow::getLogger()} to write logs.
+     * By default, the logger will skip log entry during replay mode so you won't see duplicate logs.
+     * This option will enable the logging in replay mode.
      * This is only useful for debugging purpose.
      */
     #[Marshal(name: 'EnableLoggingInReplay')]

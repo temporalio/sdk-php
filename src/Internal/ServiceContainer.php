@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal;
 
+use Psr\Log\LoggerInterface;
 use Spiral\Attributes\ReaderInterface;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\ExceptionInterceptorInterface;
@@ -52,6 +53,7 @@ final class ServiceContainer
         public readonly DataConverterInterface $dataConverter,
         public readonly ExceptionInterceptorInterface $exceptionInterceptor,
         public readonly PipelineProvider $interceptorProvider,
+        public readonly LoggerInterface $logger,
     ) {
         $this->workflows = new WorkflowCollection();
         $this->activities = new ActivityCollection();
@@ -64,6 +66,7 @@ final class ServiceContainer
         WorkerFactory|LoopInterface $worker,
         ExceptionInterceptorInterface $exceptionInterceptor,
         PipelineProvider $interceptorProvider,
+        LoggerInterface $logger,
     ): self {
         return new self(
             $worker,
@@ -75,6 +78,7 @@ final class ServiceContainer
             $worker->getDataConverter(),
             $exceptionInterceptor,
             $interceptorProvider,
+            $logger,
         );
     }
 }

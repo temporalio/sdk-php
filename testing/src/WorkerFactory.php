@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Temporal\Testing;
 
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\ExceptionInterceptor;
@@ -11,6 +13,7 @@ use Temporal\Exception\ExceptionInterceptorInterface;
 use Temporal\Interceptor\PipelineProvider;
 use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Internal\ServiceContainer;
+use Temporal\Internal\Workflow\Logger;
 use Temporal\Worker\ActivityInvocationCache\ActivityInvocationCacheInterface;
 use Temporal\Worker\ActivityInvocationCache\RoadRunnerActivityInvocationCache;
 use Temporal\Worker\ServiceCredentials;
@@ -54,7 +57,9 @@ class WorkerFactory extends \Temporal\WorkerFactory
         ?WorkerOptions $options = null,
         ?ExceptionInterceptorInterface $exceptionInterceptor = null,
         ?PipelineProvider $interceptorProvider = null,
+        ?LoggerInterface $logger = null,
     ): WorkerInterface {
+        $options ??= WorkerOptions::new();
         $worker = new WorkerMock(
             new Worker(
                 $taskQueue,
@@ -63,6 +68,11 @@ class WorkerFactory extends \Temporal\WorkerFactory
                     $this,
                     $exceptionInterceptor ?? ExceptionInterceptor::createDefault(),
                     $interceptorProvider ?? new SimplePipelineProvider(),
+                    new Logger(
+                        $logger ?? new NullLogger(),
+                        $options->enableLoggingInReplay,
+                        $taskQueue,
+                    ),
                 ),
                 $this->rpc,
             ),
