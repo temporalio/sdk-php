@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Tests\Interceptor;
 
 use React\Promise\PromiseInterface;
-use RuntimeException;
 use Temporal\Interceptor\Header;
 use Temporal\Interceptor\Trait\WorkflowClientCallsInterceptorTrait;
 use Temporal\Interceptor\Trait\WorkflowInboundCallsInterceptorTrait;
@@ -41,24 +40,6 @@ final class HeaderChanger implements
     use WorkflowInboundCallsInterceptorTrait;
     use WorkflowClientCallsInterceptorTrait;
 
-    private function processInput(StartInput $input): StartInput
-    {
-        if ($input->workflowType === EmptyHeaderWorkflow::WORKFLOW_NAME) {
-            return $input->with(header: Header::empty());
-        }
-
-        return $input;
-    }
-
-    private function processRequest(RequestInterface $request): object
-    {
-        if (Workflow::getInfo()->type->name === EmptyHeaderWorkflow::WORKFLOW_NAME) {
-            return $request->withHeader(Header::empty());
-        }
-
-        return $request;
-    }
-
     public function handleOutboundRequest(RequestInterface $request, callable $next): PromiseInterface
     {
         return match ($request::class) {
@@ -72,7 +53,7 @@ final class HeaderChanger implements
         if ($input->info->type->name === EmptyHeaderWorkflow::WORKFLOW_NAME) {
             match (false) {
                 /** @see self::start() must clear the Header after {@see InterceptorCallsCounter::start()} */
-                $input->header->getValue('start') === null => throw new RuntimeException('Client Header must be empty'),
+                $input->header->getValue('start') === null => throw new \RuntimeException('Client Header must be empty'),
                 default => $next($input->with(header: Header::empty())),
             };
             return;
@@ -82,8 +63,9 @@ final class HeaderChanger implements
             $values = $input->arguments->getValue(0, null);
             $header = $input->header;
             if ($values !== null) {
-                $header = Header::fromValues((array)$values);
+                $header = Header::fromValues((array) $values);
             }
+
             $next($input->with(header: $header));
 
             return;
@@ -103,10 +85,19 @@ final class HeaderChanger implements
         if (Workflow::getInfo()->type->name === ChildedHeaderWorkflow::WORKFLOW_NAME) {
             $header = Workflow::getInput()->count() >= 3 ? Workflow::getInput()->getValue(2, null) : null;
             if ($header !== null) {
-                $request = $request->withHeader(Header::fromValues((array)$header));
+                $request = $request->withHeader(Header::fromValues((array) $header));
             }
         }
 
         return $next($request);
+    }
+
+    private function processRequest(RequestInterface $request): object
+    {
+        if (Workflow::getInfo()->type->name === EmptyHeaderWorkflow::WORKFLOW_NAME) {
+            return $request->withHeader(Header::empty());
+        }
+
+        return $request;
     }
 }

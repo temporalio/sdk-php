@@ -23,7 +23,6 @@ use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
 use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
-use Temporal\Internal\Declaration\MethodHandler;
 use Temporal\Internal\Declaration\WorkflowInstance;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\ServiceContainer;
@@ -44,17 +43,15 @@ class Process extends Scope implements ProcessInterface
 {
     public function __construct(
         ServiceContainer $services,
-        WorkflowContext $ctx,
         private readonly string $runId,
+        WorkflowInstanceInterface $workflowInstance,
     ) {
-        parent::__construct($services, $ctx);
+        parent::__construct($services);
 
         $inboundPipeline = $services->interceptorProvider->getPipeline(WorkflowInboundCallsInterceptor::class);
-        $wfInstance = $this->getWorkflowInstance();
-        \assert($wfInstance instanceof WorkflowInstance);
 
         // Configure query handler in an immutable scope
-        $wfInstance->setQueryExecutor(function (QueryInput $input, callable $handler): mixed {
+        $workflowInstance->setQueryExecutor(function (QueryInput $input, callable $handler): mixed {
             try {
                 $context = $this->scopeContext->withInput(
                     new Input(
@@ -71,7 +68,7 @@ class Process extends Scope implements ProcessInterface
         });
 
         // Configure update validator in an immutable scope
-        $wfInstance->setUpdateValidator(function (UpdateInput $input, callable $handler) use ($inboundPipeline): void {
+        $workflowInstance->setUpdateValidator(function (UpdateInput $input, callable $handler) use ($inboundPipeline): void {
             try {
                 Workflow::setCurrentContext($this->scopeContext);
                 $inboundPipeline->with(
@@ -94,7 +91,7 @@ class Process extends Scope implements ProcessInterface
         });
 
         // Configure update handler in a mutable scope
-        $wfInstance->setUpdateExecutor(function (UpdateInput $input, callable $handler, Deferred $resolver) use ($inboundPipeline): PromiseInterface {
+        $workflowInstance->setUpdateExecutor(function (UpdateInput $input, callable $handler, Deferred $resolver) use ($inboundPipeline): PromiseInterface {
             try {
                 // Define Context for interceptors Pipeline
                 $scope = $this->createScope(
@@ -125,7 +122,7 @@ class Process extends Scope implements ProcessInterface
         });
 
         // Configure signal handler
-        $wfInstance->getSignalQueue()->onSignal(
+        $workflowInstance->getSignalQueue()->onSignal(
             function (string $name, callable $handler, ValuesInterface $arguments) use ($inboundPipeline): void {
                 // Define Context for interceptors Pipeline
                 Workflow::setCurrentContext($this->scopeContext);
@@ -179,10 +176,10 @@ class Process extends Scope implements ProcessInterface
      * Initialize workflow instance and start execution.
      */
     public function initAndStart(
+        WorkflowContext $context,
         WorkflowInstance $instance,
         bool $deferred,
     ): void {
-        Workflow::setCurrentContext($context = $this->context);
         $handler = $instance->getHandler();
         $instance = $context->getWorkflowInstance();
         $arguments = null;
@@ -195,16 +192,18 @@ class Process extends Scope implements ProcessInterface
                 $values = $handler->resolveArguments($context->getInput());
                 $arguments = EncodedValues::fromValues($values);
                 /** @psalm-suppress InaccessibleProperty */
-                $context->setInput(
+                $context = $context->withInput(
                     new Input(
                         $context->getInfo(),
                         $arguments,
                         $context->getHeader(),
                     ),
                 );
+                Workflow::setCurrentContext($context);
 
                 $instance->init($values);
             } else {
+                Workflow::setCurrentContext($context);
                 $instance->init();
             }
         } catch (\Throwable $e) {
@@ -226,7 +225,8 @@ class Process extends Scope implements ProcessInterface
                             $arguments = EncodedValues::fromValues($handler->resolveArguments($input->arguments));
                         }
 
-                        $context->setInput(new Input($input->info, $input->arguments, $input->header));
+                        $context = $context->withInput(new Input($input->info, $input->arguments, $input->header));
+                        $this->setContext($context);
                         $this->start($handler, $arguments, $deferred);
                     } catch (\Throwable $e) {
                         $this->complete($e);

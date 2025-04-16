@@ -20,7 +20,6 @@ use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\WorkflowInstance\SignalQueue;
 use Temporal\Internal\Interceptor;
-use Temporal\Workflow\WorkflowInit;
 
 /**
  * @psalm-type QueryHandler = \Closure(QueryInput): mixed

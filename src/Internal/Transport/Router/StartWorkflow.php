@@ -17,8 +17,6 @@ use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\Common\TypedSearchAttributes;
 use Temporal\DataConverter\EncodedCollection;
 use Temporal\DataConverter\EncodedValues;
-use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
-use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\Instantiator\WorkflowInstantiator;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\ServiceContainer;
@@ -93,10 +91,10 @@ final class StartWorkflow extends Route
         $runId = $request->getID();
 
         Workflow::setCurrentContext($context);
-        $process = new Process($this->services, $context, $runId);
+        $process = new Process($this->services, $runId, $instance);
         $this->services->running->add($process);
         $resolver->resolve(EncodedValues::fromValues([null]));
-        $process->initAndStart($instance, $this->wfStartDeferred);
+        $process->initAndStart($context, $instance, $this->wfStartDeferred);
     }
 
     private function findWorkflowOrFail(WorkflowInfo $info): WorkflowPrototype
