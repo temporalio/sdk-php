@@ -207,6 +207,7 @@ class Process extends Scope implements ProcessInterface
                 $instance->init();
             }
         } catch (\Throwable $e) {
+            isset($this->context) or $this->setContext($context);
             $this->complete($e);
             Workflow::setCurrentContext(null);
             return;
@@ -229,6 +230,7 @@ class Process extends Scope implements ProcessInterface
                         $this->setContext($context);
                         $this->start($handler, $arguments, $deferred);
                     } catch (\Throwable $e) {
+                        isset($this->context) or $this->setContext($context);
                         $this->complete($e);
                     } finally {
                         Workflow::setCurrentContext(null);
@@ -254,7 +256,7 @@ class Process extends Scope implements ProcessInterface
     #[Pure]
     public function getWorkflowInstance(): WorkflowInstanceInterface
     {
-        return $this->getContext()->getWorkflowInstance();
+        return $this->context->getWorkflowInstance();
     }
 
     protected function complete(mixed $result): void
@@ -296,16 +298,16 @@ class Process extends Scope implements ProcessInterface
         }
 
         // Skip logging if the workflow is replaying or no handlers are running
-        if ($this->getContext()->isReplaying() || !$this->getContext()->getHandlerState()->hasRunningHandlers()) {
+        if ($this->context->isReplaying() || !$this->context->getHandlerState()->hasRunningHandlers()) {
             return;
         }
 
-        $prototype = $this->getContext()->getWorkflowInstance()->getPrototype();
+        $prototype = $this->context->getWorkflowInstance()->getPrototype();
         $warnSignals = $warnUpdates = [];
 
         // Signals
         $definitions = $prototype->getSignalHandlers();
-        $signals = $this->getContext()->getHandlerState()->getRunningSignals();
+        $signals = $this->context->getHandlerState()->getRunningSignals();
         foreach ($signals as $name => $count) {
             // Check statically defined signals
             if (\array_key_exists($name, $definitions) && $definitions[$name]->policy === HandlerPolicy::Abandon) {
@@ -318,7 +320,7 @@ class Process extends Scope implements ProcessInterface
 
         // Updates
         $definitions = $prototype->getUpdateHandlers();
-        $updates = $this->getContext()->getHandlerState()->getRunningUpdates();
+        $updates = $this->context->getHandlerState()->getRunningUpdates();
         foreach ($updates as $tuple) {
             $name = $tuple['name'];
             // Check statically defined updates
@@ -330,7 +332,7 @@ class Process extends Scope implements ProcessInterface
             $warnUpdates[] = $tuple;
         }
 
-        $info = $this->getContext()->getInfo();
+        $info = $this->context->getInfo();
         $workflowName = $info->type->name;
         $logger = $this->services->logger;
 
