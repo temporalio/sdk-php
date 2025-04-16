@@ -21,8 +21,11 @@ use Temporal\Interceptor\Trait\WorkflowInboundCallsInterceptorTrait;
 use Temporal\Interceptor\Trait\WorkflowOutboundRequestInterceptorTrait;
 use Temporal\Interceptor\WorkflowClient\SignalWithStartInput;
 use Temporal\Interceptor\WorkflowClient\StartInput;
+use Temporal\Interceptor\WorkflowClient\UpdateWithStartInput;
+use Temporal\Interceptor\WorkflowClient\UpdateWithStartOutput;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Interceptor\WorkflowInbound\SignalInput;
+use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
 use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
@@ -83,6 +86,17 @@ final class InterceptorCallsCounter implements
     }
 
     public function signalWithStart(SignalWithStartInput $input, callable $next): WorkflowExecution
+    {
+        return $next(
+            $input->with(
+                workflowStartInput: $input->workflowStartInput->with(
+                    header: $this->increment($input->workflowStartInput->header, __FUNCTION__),
+                ),
+            ),
+        );
+    }
+
+    public function updateWithStart(UpdateWithStartInput $input, callable $next): UpdateWithStartOutput
     {
         return $next(
             $input->with(

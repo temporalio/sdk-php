@@ -250,7 +250,7 @@ class WorkflowClient implements WorkflowClientInterface
         );
         $workflowStub->hasExecution() and throw new InvalidArgumentException(self::ERROR_WORKFLOW_START_DUPLICATION);
 
-        [$execution, $handle] = $this->getStarter()->updateWithStart(
+        $output = $this->getStarter()->updateWithStart(
             $workflowType,
             $workflowStub->getOptions() ?? WorkflowOptions::new(),
             $update,
@@ -258,11 +258,9 @@ class WorkflowClient implements WorkflowClientInterface
             $startArgs,
         );
 
-        $workflowStub->setExecution($execution);
+        $workflowStub->setExecution($output->getExecution());
 
-        return $handle instanceof \Throwable
-            ? throw $handle
-            : $handle;
+        return $output->getHandle();
     }
 
     /**

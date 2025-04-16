@@ -41,6 +41,7 @@ use Temporal\Interceptor\WorkflowClient\SignalWithStartInput;
 use Temporal\Interceptor\WorkflowClient\StartInput;
 use Temporal\Interceptor\WorkflowClient\UpdateInput;
 use Temporal\Interceptor\WorkflowClient\UpdateWithStartInput;
+use Temporal\Interceptor\WorkflowClient\UpdateWithStartOutput;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Internal\Support\DateInterval;
@@ -128,8 +129,6 @@ final class WorkflowStarter
 
     /**
      * @param non-empty-string $workflowType
-     *
-     * @return array{WorkflowExecution, UpdateHandle|\Throwable}
      */
     public function updateWithStart(
         string $workflowType,
@@ -137,12 +136,12 @@ final class WorkflowStarter
         UpdateOptions $update,
         array $updateArgs = [],
         array $startArgs = [],
-    ): array {
+    ): UpdateWithStartOutput {
         $arguments = EncodedValues::fromValues($startArgs, $this->converter);
         $updateArguments = EncodedValues::fromValues($updateArgs, $this->converter);
 
         return $this->interceptors->with(
-            function (UpdateWithStartInput $input): array {
+            function (UpdateWithStartInput $input): UpdateWithStartOutput {
                 $startRequest = $this->configureExecutionRequest(
                     new StartWorkflowExecutionRequest(),
                     $input->workflowStartInput,
@@ -234,20 +233,23 @@ final class WorkflowStarter
                             workflowExecution: $execution,
                         );
                 } catch (\RuntimeException $e) {
-                    return [$execution, $e];
+                    return new UpdateWithStartOutput($execution, $e);
                 }
 
-                return [$execution, new UpdateHandle(
-                    client: $this->serviceClient,
-                    clientOptions: $this->clientOptions,
-                    converter: $this->converter,
-                    execution: $updateResult->getReference()->workflowExecution,
-                    workflowType: $input->updateInput->workflowType,
-                    updateName: $input->updateInput->updateName,
-                    resultType: $input->updateInput->resultType,
-                    updateId: $updateResult->getReference()->updateId,
-                    result: $updateResult->getResult(),
-                )];
+                return new UpdateWithStartOutput(
+                    $execution,
+                    new UpdateHandle(
+                        client: $this->serviceClient,
+                        clientOptions: $this->clientOptions,
+                        converter: $this->converter,
+                        execution: $updateResult->getReference()->workflowExecution,
+                        workflowType: $input->updateInput->workflowType,
+                        updateName: $input->updateInput->updateName,
+                        resultType: $input->updateInput->resultType,
+                        updateId: $updateResult->getReference()->updateId,
+                        result: $updateResult->getResult(),
+                    ),
+                );
             },
             /** @see WorkflowClientCallsInterceptor::updateWithStart() */
             'updateWithStart',

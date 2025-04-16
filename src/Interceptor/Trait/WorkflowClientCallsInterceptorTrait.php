@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Interceptor\Trait;
 
-use Temporal\Client\Update\UpdateHandle;
 use Temporal\Client\Workflow\WorkflowExecutionDescription;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Interceptor\WorkflowClient\CancelInput;
@@ -25,6 +24,7 @@ use Temporal\Interceptor\WorkflowClient\StartUpdateOutput;
 use Temporal\Interceptor\WorkflowClient\TerminateInput;
 use Temporal\Interceptor\WorkflowClient\UpdateInput;
 use Temporal\Interceptor\WorkflowClient\UpdateWithStartInput;
+use Temporal\Interceptor\WorkflowClient\UpdateWithStartOutput;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Workflow\WorkflowExecution;
 
@@ -80,7 +80,7 @@ trait WorkflowClientCallsInterceptorTrait
      *
      * @see WorkflowClientCallsInterceptor::updateWithStart()
      */
-    public function updateWithStart(UpdateWithStartInput $input, callable $next): UpdateHandle
+    public function updateWithStart(UpdateWithStartInput $input, callable $next): UpdateWithStartOutput
     {
         return $next($input);
     }
