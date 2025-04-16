@@ -21,6 +21,7 @@ use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
+use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
 use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\MethodHandler;
 use Temporal\Internal\Declaration\WorkflowInstance;
@@ -175,26 +176,74 @@ class Process extends Scope implements ProcessInterface
     }
 
     /**
-     * @param MethodHandler|\Closure(ValuesInterface): mixed $handler
+     * Initialize workflow instance and start execution.
      */
-    public function start(MethodHandler|\Closure $handler, ValuesInterface $values, bool $deferred): void
-    {
+    public function initAndStart(
+        WorkflowInstance $instance,
+        bool $deferred,
+    ): void {
+        Workflow::setCurrentContext($context = $this->context);
+        $handler = $instance->getHandler();
+        $instance = $context->getWorkflowInstance();
+        $arguments = null;
+
+        // Initialize workflow instance
         try {
-            $this->makeCurrent();
+            // Resolve arguments if #[WorkflowInit] is used
+            if ($instance->getPrototype()->hasInitializer()) {
+                // Resolve args
+                $values = $handler->resolveArguments($context->getInput());
+                $arguments = EncodedValues::fromValues($values);
+                /** @psalm-suppress InaccessibleProperty */
+                $context->setInput(
+                    new Input(
+                        $context->getInfo(),
+                        $arguments,
+                        $context->getHeader(),
+                    ),
+                );
 
-            // Prepare typed input
-            \assert($handler instanceof MethodHandler);
-            $arguments = $handler->resolveArguments($values);
-
-            // Manage init method
-            $this->context->getWorkflowInstance()->init($arguments);
-
-            parent::start($handler, EncodedValues::fromValues($arguments), $deferred);
+                $instance->init($values);
+            } else {
+                $instance->init();
+            }
         } catch (\Throwable $e) {
             $this->complete($e);
-        } finally {
             Workflow::setCurrentContext(null);
+            return;
         }
+
+        // Execute
+        //
+        // Run workflow handler in an interceptor pipeline
+        $this->services->interceptorProvider
+            ->getPipeline(WorkflowInboundCallsInterceptor::class)
+            ->with(
+                function (WorkflowInput $input) use ($context, $arguments, $handler, $deferred): void {
+                    try {
+                        // Prepare typed input if values have been changed
+                        if ($arguments === null || $input->arguments !== $context->getInput()) {
+                            $arguments = EncodedValues::fromValues($handler->resolveArguments($input->arguments));
+                        }
+
+                        $context->setInput(new Input($input->info, $input->arguments, $input->header));
+                        $this->start($handler, $arguments, $deferred);
+                    } catch (\Throwable $e) {
+                        $this->complete($e);
+                    } finally {
+                        Workflow::setCurrentContext(null);
+                    }
+                },
+                /** @see WorkflowInboundCallsInterceptor::execute() */
+                'execute',
+            )(
+                new WorkflowInput(
+                    $context->getInfo(),
+                    $context->getInput(),
+                    $context->getHeader(),
+                    $context->isReplaying(),
+                ),
+            );
     }
 
     public function getID(): string

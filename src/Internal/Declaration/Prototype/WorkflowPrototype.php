@@ -40,6 +40,17 @@ final class WorkflowPrototype extends Prototype
     private ?CronSchedule $cronSchedule = null;
     private ?MethodRetry $methodRetry = null;
     private ?ReturnType $returnType = null;
+    private bool $hasInitializer = false;
+
+    public function hasInitializer(): bool
+    {
+        return $this->hasInitializer;
+    }
+
+    public function setHasInitializer(bool $hasInitializer): void
+    {
+        $this->hasInitializer = $hasInitializer;
+    }
 
     public function getCronSchedule(): ?CronSchedule
     {

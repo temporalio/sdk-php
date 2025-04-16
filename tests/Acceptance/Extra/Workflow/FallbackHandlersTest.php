@@ -156,6 +156,8 @@ class FallbackHandlersTest extends TestCase
         // Check interceptors working
         self::assertCount(2, $logger->findByMessage('/Intercepted update: foo/'));
         self::assertCount(1, $logger->findByMessage('/Intercepted update: baz/'));
+        self::assertCount(0, $logger->findByMessage('/Intercepted update validator: foo/'));
+        self::assertCount(0, $logger->findByMessage('/Intercepted update validator: foo/'));
     }
 
     #[Test]
