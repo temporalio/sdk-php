@@ -24,6 +24,7 @@ use Temporal\Workflow\ReturnType;
 use Temporal\Workflow\SignalMethod;
 use Temporal\Workflow\UpdateMethod;
 use Temporal\Workflow\UpdateValidatorMethod;
+use Temporal\Workflow\WorkflowInit;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
@@ -124,6 +125,13 @@ class WorkflowReader extends Reader
 
         foreach ($class->getMethods() as $method) {
             $contextClass = $method->getDeclaringClass();
+
+            // Check WorkflowInit method
+            if ($method->isConstructor()) {
+                $this->getAttributedMethod($graph, $method, WorkflowInit::class);
+                $prototype->setHasInitializer(true);
+                continue;
+            }
 
             /** @var UpdateMethod|null $update */
             $update = $this->getAttributedMethod($graph, $method, UpdateMethod::class);

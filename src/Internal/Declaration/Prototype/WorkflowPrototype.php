@@ -14,6 +14,7 @@ namespace Temporal\Internal\Declaration\Prototype;
 use Temporal\Common\CronSchedule;
 use Temporal\Common\MethodRetry;
 use Temporal\Workflow\ReturnType;
+use Temporal\Workflow\WorkflowInit;
 
 final class WorkflowPrototype extends Prototype
 {
@@ -40,6 +41,20 @@ final class WorkflowPrototype extends Prototype
     private ?CronSchedule $cronSchedule = null;
     private ?MethodRetry $methodRetry = null;
     private ?ReturnType $returnType = null;
+    private bool $hasInitializer = false;
+
+    /**
+     * Indicates if the workflow has a constructor with {@see WorkflowInit} attribute.
+     */
+    public function hasInitializer(): bool
+    {
+        return $this->hasInitializer;
+    }
+
+    public function setHasInitializer(bool $hasInitializer): void
+    {
+        $this->hasInitializer = $hasInitializer;
+    }
 
     public function getCronSchedule(): ?CronSchedule
     {

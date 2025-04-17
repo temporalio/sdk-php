@@ -141,4 +141,15 @@ final class Activity extends Facade
 
         $context->heartbeat($details);
     }
+
+    /**
+     * Get the currently running activity instance.
+     */
+    public static function getInstance(): object
+    {
+        /** @var ActivityContextInterface $context */
+        $context = self::getCurrentContext();
+
+        return $context->getInstance();
+    }
 }

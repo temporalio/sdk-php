@@ -20,7 +20,6 @@ use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\WorkflowInstance\SignalQueue;
 use Temporal\Internal\Interceptor;
-use Temporal\Workflow\WorkflowInit;
 
 /**
  * @psalm-type QueryHandler = \Closure(QueryInput): mixed
@@ -149,17 +148,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
             return;
         }
 
-        if ($arguments === []) {
-            $this->context->__construct();
-            return;
-        }
-
-        // Check InitMethod attribute
-        $reflection = new \ReflectionMethod($this->context, '__construct');
-        $attributes = $reflection->getAttributes(WorkflowInit::class);
-        $attributes === []
-            ? $this->context->__construct()
-            : $this->context->__construct(...$arguments);
+        $this->context->__construct(...$arguments);
     }
 
     public function getSignalQueue(): SignalQueue
@@ -296,15 +285,12 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
                 static fn(ValuesInterface $arguments): mixed => $validator($input->updateName, $arguments),
             );
 
-        $this->updateDynamicHandler = $this->pipeline->with(
+        $this->updateDynamicHandler =
             fn(UpdateInput $input, Deferred $deferred): mixed => ($this->updateExecutor)(
                 $input,
                 static fn(ValuesInterface $arguments): mixed => $handler($input->updateName, $arguments),
                 $deferred,
-            ),
-            /** @see WorkflowInboundCallsInterceptor::handleUpdate() */
-            'handleUpdate',
-        )(...);
+            );
     }
 
     public function clearSignalQueue(): void

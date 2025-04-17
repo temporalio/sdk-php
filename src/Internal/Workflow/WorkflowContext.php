@@ -103,7 +103,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         protected ServiceContainer $services,
         protected ClientInterface $client,
         protected WorkflowInstanceInterface&Destroyable $workflowInstance,
-        protected Input $input,
+        public Input $input,
         protected ?ValuesInterface $lastCompletionResult = null,
         protected HandlerState $handlers = new HandlerState(),
     ) {
@@ -116,6 +116,11 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     public function getWorkflowInstance(): WorkflowInstanceInterface
     {
         return $this->workflowInstance;
+    }
+
+    public function getInstance(): object
+    {
+        return $this->workflowInstance->getContext();
     }
 
     public function now(): \DateTimeInterface
@@ -141,6 +146,11 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     public function getInput(): ValuesInterface
     {
         return $this->input->input;
+    }
+
+    public function setInput(Input $input): void
+    {
+        $this->input = $input;
     }
 
     public function withInput(Input $input): static

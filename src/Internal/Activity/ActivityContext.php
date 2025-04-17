@@ -36,6 +36,7 @@ final class ActivityContext implements ActivityContextInterface, HeaderCarrier
     private ?ValuesInterface $heartbeatDetails;
     private ValuesInterface $input;
     private HeaderInterface $header;
+    private ?\WeakReference $instance = null;
 
     public function __construct(
         RPCConnectionInterface $rpc,
@@ -146,5 +147,27 @@ final class ActivityContext implements ActivityContextInterface, HeaderCarrier
         } catch (ServiceClientException $e) {
             throw ActivityCompletionException::fromActivityInfo($this->info, $e);
         }
+    }
+
+    public function getInstance(): object
+    {
+        \assert($this->instance !== null, 'Activity instance is not available');
+        $activity = $this->instance->get();
+        \assert($activity !== null, 'Activity instance is not available');
+        return $activity;
+    }
+
+    /**
+     * Set activity instance.
+     *
+     * @param object $instance Activity instance.
+     * @return $this
+     * @internal
+     */
+    public function withInstance(object $instance): self
+    {
+        $clone = clone $this;
+        $clone->instance = \WeakReference::create($instance);
+        return $clone;
     }
 }
