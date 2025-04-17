@@ -44,11 +44,15 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     /**
      * Workflow context.
+     *
+     * @psalm-suppress PropertyNotSetInConstructor
      */
     protected WorkflowContext $context;
 
     /**
      * Coroutine scope context.
+     *
+     * @psalm-suppress PropertyNotSetInConstructor
      */
     protected ScopeContext $scopeContext;
 

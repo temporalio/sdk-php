@@ -8,6 +8,8 @@ use PHPUnit\Framework\Attributes\Test;
 use Temporal\Activity;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\Exception\Client\WorkflowFailedException;
+use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Interceptor\ActivityInbound\ActivityInput;
 use Temporal\Interceptor\PipelineProvider;
 use Temporal\Interceptor\SimplePipelineProvider;
@@ -35,6 +37,34 @@ class ContextTest extends TestCase
         self::assertSame(TestWorkflow::class, $result['workflow']);
         self::assertTrue($result['assert'], 'Workflow instance in context is not the same as the one in the test');
     }
+
+    #[Test]
+    public function failInConstructor(
+        #[Stub('Extra_Interceptors_Context_Failing')] WorkflowStubInterface $stub,
+    ): void {
+        try {
+            $stub->getResult('array');
+            $this->fail('An exception should have been thrown.');
+        } catch (WorkflowFailedException $e) {
+            $prev = $e->getPrevious();
+            self::assertInstanceOf(ApplicationFailure::class, $prev);
+            self::assertStringContainsString('constructor', $prev->getOriginalMessage());
+        }
+    }
+
+    #[Test]
+    public function failInInterceptorExecute(
+        #[Stub('Extra_Interceptors_Context_Failing', args: ['exception-in-execute'])] WorkflowStubInterface $stub,
+    ): void {
+        try {
+            $stub->getResult('array');
+            $this->fail('An exception should have been thrown.');
+        } catch (WorkflowFailedException $e) {
+            $prev = $e->getPrevious();
+            self::assertInstanceOf(ApplicationFailure::class, $prev);
+            self::assertStringContainsString('exception-in-execute', $prev->getOriginalMessage());
+        }
+    }
 }
 
 class WorkerServices
@@ -48,12 +78,17 @@ class WorkerServices
     }
 }
 
-
 #[WorkflowInterface]
 class TestWorkflow
 {
-    private array $result = [];
     private bool $exit = false;
+
+    public function __construct()
+    {
+        $this === Workflow::getInstance() or throw new \RuntimeException(
+            'Workflow instance is not the same as the one in the test',
+        );
+    }
 
     #[WorkflowMethod(name: "Extra_Interceptors_Context")]
     public function handle(string $class)
@@ -78,6 +113,24 @@ class TestWorkflow
     }
 }
 
+#[WorkflowInterface]
+class TestFailingWorkflow
+{
+    #[Workflow\WorkflowInit]
+    public function __construct(mixed ...$input)
+    {
+        if ($input === []) {
+            throw new ApplicationFailure('constructor', 'error', true);
+        }
+    }
+
+    #[WorkflowMethod(name: "Extra_Interceptors_Context_Failing")]
+    public function handle(mixed ...$input)
+    {
+        return $input;
+    }
+}
+
 #[Activity\ActivityInterface(prefix: 'Extra_Interceptors_Context.')]
 class TestActivity
 {
@@ -94,6 +147,12 @@ final class WorkflowInboundInterceptor implements WorkflowInboundCallsIntercepto
 
     public function execute(WorkflowInput $input, callable $next): void
     {
+        $input->arguments->getValue(0) === 'exception-in-execute' and throw new ApplicationFailure(
+            'exception-in-execute',
+            'error',
+            true,
+        );
+
         $next($input->with(arguments: EncodedValues::fromValues([Workflow::getInstance()::class])));
     }
 }
@@ -104,9 +163,8 @@ final class ActivityInboundInterceptor implements \Temporal\Interceptor\Activity
 
     public function handleActivityInbound(ActivityInput $input, callable $next): mixed
     {
-        $instance = Activity::getInstance();
         $input = $input->with(
-            arguments: EncodedValues::fromValues([$instance::class]),
+            arguments: EncodedValues::fromValues([Activity::getInstance()::class]),
         );
         return $next($input);
     }

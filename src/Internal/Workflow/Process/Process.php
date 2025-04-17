@@ -44,7 +44,7 @@ class Process extends Scope implements ProcessInterface
     public function __construct(
         ServiceContainer $services,
         private readonly string $runId,
-        WorkflowInstanceInterface $workflowInstance,
+        WorkflowInstance $workflowInstance,
     ) {
         parent::__construct($services);
 
@@ -184,8 +184,9 @@ class Process extends Scope implements ProcessInterface
         $instance = $context->getWorkflowInstance();
         $arguments = null;
 
-        // Initialize workflow instance
         try {
+            // Initialize workflow instance
+            //
             // Resolve arguments if #[WorkflowInit] is used
             if ($instance->getPrototype()->hasInitializer()) {
                 // Resolve args
@@ -206,21 +207,14 @@ class Process extends Scope implements ProcessInterface
                 Workflow::setCurrentContext($context);
                 $instance->init();
             }
-        } catch (\Throwable $e) {
-            isset($this->context) or $this->setContext($context);
-            $this->complete($e);
-            Workflow::setCurrentContext(null);
-            return;
-        }
 
-        // Execute
-        //
-        // Run workflow handler in an interceptor pipeline
-        $this->services->interceptorProvider
-            ->getPipeline(WorkflowInboundCallsInterceptor::class)
-            ->with(
-                function (WorkflowInput $input) use ($context, $arguments, $handler, $deferred): void {
-                    try {
+            // Execute
+            //
+            // Run workflow handler in an interceptor pipeline
+            $this->services->interceptorProvider
+                ->getPipeline(WorkflowInboundCallsInterceptor::class)
+                ->with(
+                    function (WorkflowInput $input) use ($context, $arguments, $handler, $deferred): void {
                         // Prepare typed input if values have been changed
                         if ($arguments === null || $input->arguments !== $context->getInput()) {
                             $arguments = EncodedValues::fromValues($handler->resolveArguments($input->arguments));
@@ -229,23 +223,22 @@ class Process extends Scope implements ProcessInterface
                         $context = $context->withInput(new Input($input->info, $input->arguments, $input->header));
                         $this->setContext($context);
                         $this->start($handler, $arguments, $deferred);
-                    } catch (\Throwable $e) {
-                        isset($this->context) or $this->setContext($context);
-                        $this->complete($e);
-                    } finally {
-                        Workflow::setCurrentContext(null);
-                    }
-                },
-                /** @see WorkflowInboundCallsInterceptor::execute() */
-                'execute',
-            )(
-                new WorkflowInput(
+                    },
+                    /** @see WorkflowInboundCallsInterceptor::execute() */
+                    'execute',
+                )(new WorkflowInput(
                     $context->getInfo(),
                     $context->getInput(),
                     $context->getHeader(),
                     $context->isReplaying(),
-                ),
-            );
+                ));
+        } catch (\Throwable $e) {
+            /** @psalm-suppress RedundantPropertyInitializationCheck */
+            isset($this->context) or $this->setContext($context);
+            $this->complete($e);
+        } finally {
+            Workflow::setCurrentContext(null);
+        }
     }
 
     public function getID(): string
