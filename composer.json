@@ -56,7 +56,7 @@
         "composer/composer": "^2.8.4",
         "dereuromark/composer-prefer-lowest": "^0.1.10",
         "doctrine/annotations": "^1.14.4 || ^2.0.2",
-        "internal/dload": "^1.0",
+        "internal/dload": "^1.0.2",
         "jetbrains/phpstorm-attributes": "dev-master",
         "laminas/laminas-code": "^4.16",
         "phpunit/phpunit": "^10.5.41",
@@ -82,8 +82,10 @@
         "buggregator/trap": "For better debugging"
     },
     "scripts": {
-        "post-update-cmd": "Temporal\\Worker\\Transport\\RoadRunnerVersionChecker::postUpdate",
-        "get:binaries": "dload get --no-interaction -vv",
+        "get:binaries": [
+            "dload get --no-interaction -vv",
+            "Temporal\\Worker\\Transport\\RoadRunnerVersionChecker::postUpdate"
+        ],
         "cs:diff": "php-cs-fixer fix --dry-run -v --diff --show-progress dots",
         "cs:fix": "php-cs-fixer fix -v",
         "psalm": "psalm",

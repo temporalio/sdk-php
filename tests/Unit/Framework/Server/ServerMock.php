@@ -44,7 +44,7 @@ final class ServerMock
 
     public function addCommand(CommandInterface ...$commands): void
     {
-        $this->queue = array_merge($this->queue, $commands);
+        $this->queue = \array_merge($this->queue, $commands);
     }
 
     public function handleCommand(CommandInterface $command): ?CommandInterface

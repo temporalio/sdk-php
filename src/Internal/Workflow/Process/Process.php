@@ -21,8 +21,8 @@ use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
+use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
 use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
-use Temporal\Internal\Declaration\MethodHandler;
 use Temporal\Internal\Declaration\WorkflowInstance;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\ServiceContainer;
@@ -43,17 +43,15 @@ class Process extends Scope implements ProcessInterface
 {
     public function __construct(
         ServiceContainer $services,
-        WorkflowContext $ctx,
         private readonly string $runId,
+        WorkflowInstance $workflowInstance,
     ) {
-        parent::__construct($services, $ctx);
+        parent::__construct($services);
 
         $inboundPipeline = $services->interceptorProvider->getPipeline(WorkflowInboundCallsInterceptor::class);
-        $wfInstance = $this->getWorkflowInstance();
-        \assert($wfInstance instanceof WorkflowInstance);
 
         // Configure query handler in an immutable scope
-        $wfInstance->setQueryExecutor(function (QueryInput $input, callable $handler): mixed {
+        $workflowInstance->setQueryExecutor(function (QueryInput $input, callable $handler): mixed {
             try {
                 $context = $this->scopeContext->withInput(
                     new Input(
@@ -70,7 +68,7 @@ class Process extends Scope implements ProcessInterface
         });
 
         // Configure update validator in an immutable scope
-        $wfInstance->setUpdateValidator(function (UpdateInput $input, callable $handler) use ($inboundPipeline): void {
+        $workflowInstance->setUpdateValidator(function (UpdateInput $input, callable $handler) use ($inboundPipeline): void {
             try {
                 Workflow::setCurrentContext($this->scopeContext);
                 $inboundPipeline->with(
@@ -93,7 +91,7 @@ class Process extends Scope implements ProcessInterface
         });
 
         // Configure update handler in a mutable scope
-        $wfInstance->setUpdateExecutor(function (UpdateInput $input, callable $handler, Deferred $resolver) use ($inboundPipeline): PromiseInterface {
+        $workflowInstance->setUpdateExecutor(function (UpdateInput $input, callable $handler, Deferred $resolver) use ($inboundPipeline): PromiseInterface {
             try {
                 // Define Context for interceptors Pipeline
                 $scope = $this->createScope(
@@ -124,7 +122,7 @@ class Process extends Scope implements ProcessInterface
         });
 
         // Configure signal handler
-        $wfInstance->getSignalQueue()->onSignal(
+        $workflowInstance->getSignalQueue()->onSignal(
             function (string $name, callable $handler, ValuesInterface $arguments) use ($inboundPipeline): void {
                 // Define Context for interceptors Pipeline
                 Workflow::setCurrentContext($this->scopeContext);
@@ -175,22 +173,70 @@ class Process extends Scope implements ProcessInterface
     }
 
     /**
-     * @param MethodHandler|\Closure(ValuesInterface): mixed $handler
+     * Initialize workflow instance and start execution.
      */
-    public function start(MethodHandler|\Closure $handler, ValuesInterface $values, bool $deferred): void
-    {
+    public function initAndStart(
+        WorkflowContext $context,
+        WorkflowInstance $instance,
+        bool $deferred,
+    ): void {
+        $handler = $instance->getHandler();
+        $instance = $context->getWorkflowInstance();
+        $arguments = null;
+
         try {
-            $this->makeCurrent();
+            // Initialize workflow instance
+            //
+            // Resolve arguments if #[WorkflowInit] is used
+            if ($instance->getPrototype()->hasInitializer()) {
+                // Resolve args
+                $values = $handler->resolveArguments($context->getInput());
+                $arguments = EncodedValues::fromValues($values);
+                /** @psalm-suppress InaccessibleProperty */
+                $context = $context->withInput(
+                    new Input(
+                        $context->getInfo(),
+                        $arguments,
+                        $context->getHeader(),
+                    ),
+                );
+                Workflow::setCurrentContext($context);
 
-            // Prepare typed input
-            \assert($handler instanceof MethodHandler);
-            $arguments = $handler->resolveArguments($values);
+                $instance->init($values);
+            } else {
+                Workflow::setCurrentContext($context);
+                $instance->init();
+            }
 
-            // Manage init method
-            $this->context->getWorkflowInstance()->init($arguments);
+            $context->setReadonly(false);
 
-            parent::start($handler, EncodedValues::fromValues($arguments), $deferred);
+            // Execute
+            //
+            // Run workflow handler in an interceptor pipeline
+            $this->services->interceptorProvider
+                ->getPipeline(WorkflowInboundCallsInterceptor::class)
+                ->with(
+                    function (WorkflowInput $input) use ($context, $arguments, $handler, $deferred): void {
+                        // Prepare typed input if values have been changed
+                        if ($arguments === null || $input->arguments !== $context->getInput()) {
+                            $arguments = EncodedValues::fromValues($handler->resolveArguments($input->arguments));
+                        }
+
+                        $context = $context->withInput(new Input($input->info, $input->arguments, $input->header));
+                        $this->setContext($context);
+                        $this->start($handler, $arguments, $deferred);
+                    },
+                    /** @see WorkflowInboundCallsInterceptor::execute() */
+                    'execute',
+                )(new WorkflowInput(
+                    $context->getInfo(),
+                    $context->getInput(),
+                    $context->getHeader(),
+                    $context->isReplaying(),
+                ));
         } catch (\Throwable $e) {
+            /** @psalm-suppress RedundantPropertyInitializationCheck */
+            isset($this->context) or $this->setContext($context->setReadonly(false));
             $this->complete($e);
         } finally {
             Workflow::setCurrentContext(null);
@@ -205,7 +251,7 @@ class Process extends Scope implements ProcessInterface
     #[Pure]
     public function getWorkflowInstance(): WorkflowInstanceInterface
     {
-        return $this->getContext()->getWorkflowInstance();
+        return $this->context->getWorkflowInstance();
     }
 
     protected function complete(mixed $result): void
@@ -247,16 +293,16 @@ class Process extends Scope implements ProcessInterface
         }
 
         // Skip logging if the workflow is replaying or no handlers are running
-        if ($this->getContext()->isReplaying() || !$this->getContext()->getHandlerState()->hasRunningHandlers()) {
+        if ($this->context->isReplaying() || !$this->context->getHandlerState()->hasRunningHandlers()) {
             return;
         }
 
-        $prototype = $this->getContext()->getWorkflowInstance()->getPrototype();
+        $prototype = $this->context->getWorkflowInstance()->getPrototype();
         $warnSignals = $warnUpdates = [];
 
         // Signals
         $definitions = $prototype->getSignalHandlers();
-        $signals = $this->getContext()->getHandlerState()->getRunningSignals();
+        $signals = $this->context->getHandlerState()->getRunningSignals();
         foreach ($signals as $name => $count) {
             // Check statically defined signals
             if (\array_key_exists($name, $definitions) && $definitions[$name]->policy === HandlerPolicy::Abandon) {
@@ -269,7 +315,7 @@ class Process extends Scope implements ProcessInterface
 
         // Updates
         $definitions = $prototype->getUpdateHandlers();
-        $updates = $this->getContext()->getHandlerState()->getRunningUpdates();
+        $updates = $this->context->getHandlerState()->getRunningUpdates();
         foreach ($updates as $tuple) {
             $name = $tuple['name'];
             // Check statically defined updates
@@ -281,7 +327,7 @@ class Process extends Scope implements ProcessInterface
             $warnUpdates[] = $tuple;
         }
 
-        $info = $this->getContext()->getInfo();
+        $info = $this->context->getInfo();
         $workflowName = $info->type->name;
         $logger = $this->services->logger;
 

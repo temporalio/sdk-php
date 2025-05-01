@@ -17,6 +17,9 @@ use Temporal\Common\TaskQueue\TaskQueue;
 #[Immutable]
 final class WorkflowExecutionConfig
 {
+    /**
+     * @internal
+     */
     public function __construct(
         public readonly TaskQueue $taskQueue,
         public readonly ?\DateInterval $workflowExecutionTimeout,

@@ -63,4 +63,11 @@ interface ActivityContextInterface
      * @param mixed $details
      */
     public function heartbeat($details): void;
+
+    /**
+     * Get the currently running activity instance.
+     *
+     * @see Activity::getInstance()
+     */
+    public function getInstance(): object;
 }

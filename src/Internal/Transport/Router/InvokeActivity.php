@@ -77,7 +77,12 @@ class InvokeActivity extends Route
         $prototype = $this->findDeclarationOrFail($context->getInfo());
 
         try {
-            $handler = $prototype->getInstance()->getHandler();
+            // Create ActivityInstance
+            $instance = $prototype->getInstance();
+
+            // Register Activity instance in the context
+            $context = $context->withInstance($instance->getContext());
+            $handler = $instance->getHandler();
 
             // Define Context for interceptors Pipeline
             Activity::setCurrentContext($context);

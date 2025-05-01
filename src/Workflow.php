@@ -1144,4 +1144,12 @@ final class Workflow extends Facade
     {
         return self::getCurrentContext()->getLogger();
     }
+
+    /**
+     * Get the currently running Workflow instance.
+     */
+    public static function getInstance(): object
+    {
+        return self::getCurrentContext()->getInstance();
+    }
 }

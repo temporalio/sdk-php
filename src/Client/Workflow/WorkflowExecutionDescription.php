@@ -11,8 +11,6 @@ use Temporal\Workflow\WorkflowExecutionInfo;
  * DTO that contains detailed information about Workflow Execution.
  *
  * @see \Temporal\Api\Workflowservice\V1\DescribeWorkflowExecutionResponse
- *
- * @internal
  */
 final class WorkflowExecutionDescription
 {

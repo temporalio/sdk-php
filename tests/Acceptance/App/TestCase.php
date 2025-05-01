@@ -45,7 +45,7 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                 LoggerInterface::class => ClientLogger::class,
                 ClientLogger::class => $logger,
             ]),
-            function (Container $container) {
+            function (Container $container): mixed {
                 $reflection = new \ReflectionMethod($this, $this->name());
                 $args = $container->resolveArguments($reflection);
                 $this->setDependencyInput($args);

@@ -17,8 +17,6 @@ use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\Common\TypedSearchAttributes;
 use Temporal\DataConverter\EncodedCollection;
 use Temporal\DataConverter\EncodedValues;
-use Temporal\Interceptor\WorkflowInbound\WorkflowInput;
-use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\Instantiator\WorkflowInstantiator;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\ServiceContainer;
@@ -85,45 +83,18 @@ final class StartWorkflow extends Route
 
         $context = new WorkflowContext(
             $this->services,
-            $this->services->client,
+            $this->services->client->fork(),
             $instance,
             $input,
             $lastCompletionResult,
         );
         $runId = $request->getID();
 
-        $starter = function (WorkflowInput $input) use (
-            $resolver,
-            $instance,
-            $context,
-            $runId,
-        ): void {
-            $context = $context->withInput(new Input($input->info, $input->arguments, $input->header));
-            $process = new Process($this->services, $context, $runId);
-            $this->services->running->add($process);
-            $resolver->resolve(EncodedValues::fromValues([null]));
-
-            $process->start($instance->getHandler(), $context->getInput(), $this->wfStartDeferred);
-        };
-
-        // Define Context for interceptors Pipeline
         Workflow::setCurrentContext($context);
-
-        // Run workflow handler in an interceptor pipeline
-        $this->services->interceptorProvider
-            ->getPipeline(WorkflowInboundCallsInterceptor::class)
-            ->with(
-                $starter,
-                /** @see WorkflowInboundCallsInterceptor::execute() */
-                'execute',
-            )(
-                new WorkflowInput(
-                    $context->getInfo(),
-                    $context->getInput(),
-                    $context->getHeader(),
-                    $context->isReplaying(),
-                ),
-            );
+        $process = new Process($this->services, $runId, $instance);
+        $this->services->running->add($process);
+        $resolver->resolve(EncodedValues::fromValues([null]));
+        $process->initAndStart($context, $instance, $this->wfStartDeferred);
     }
 
     private function findWorkflowOrFail(WorkflowInfo $info): WorkflowPrototype
