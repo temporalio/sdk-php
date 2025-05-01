@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Temporal\Tests\Acceptance\App\Input\Command;
 use Temporal\Tests\Acceptance\App\Logger\LoggerFactory;
+use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\RuntimeBuilder;
 use Psr\Container\ContainerInterface;
@@ -25,6 +26,7 @@ use Temporal\DataConverter\JsonConverter;
 use Temporal\DataConverter\NullConverter;
 use Temporal\DataConverter\ProtoConverter;
 use Temporal\DataConverter\ProtoJsonConverter;
+use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Worker\WorkerInterface;
 use Temporal\Worker\WorkerOptions;
 use Temporal\WorkerFactory;
@@ -60,14 +62,11 @@ try {
     }
     $converter = new DataConverter(...$converters);
     $container->bindSingleton(DataConverter::class, $converter);
+    $container->bindSingleton(WorkerFactoryInterface::class, WorkerFactory::create(converter: $converter));
 
-    $factory = WorkerFactory::create(converter: $converter);
-    $getWorker = static function (string $taskQueue) use (&$workers, $factory): WorkerInterface {
-        return $workers[$taskQueue] ??= $factory->newWorker(
-            $taskQueue,
-            WorkerOptions::new()->withMaxConcurrentActivityExecutionSize(10),
-            logger: LoggerFactory::createServerLogger($taskQueue),
-        );
+    $workerFactory =  $container->get(\Temporal\Tests\Acceptance\App\Feature\WorkerFactory::class);
+    $getWorker = static function (Feature $feature) use (&$workers, $workerFactory): WorkerInterface {
+        return $workers[$feature->taskQueue] ??= $workerFactory->createWorker($feature);
     };
 
     // Create client services
@@ -95,15 +94,15 @@ try {
 
     // Register Workflows
     foreach ($runtime->workflows() as $feature => $workflow) {
-        $getWorker($feature->taskQueue)->registerWorkflowTypes($workflow);
+        $getWorker($feature)->registerWorkflowTypes($workflow);
     }
 
     // Register Activities
     foreach ($runtime->activities() as $feature => $activity) {
-        $getWorker($feature->taskQueue)->registerActivityImplementations($container->make($activity));
+        $getWorker($feature)->registerActivityImplementations($container->make($activity));
     }
 
-    $factory->run();
+    $container->get(WorkerFactoryInterface::class)->run();
 } catch (\Throwable $e) {
     \td($e);
 }

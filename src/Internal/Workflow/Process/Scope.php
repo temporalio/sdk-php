@@ -44,11 +44,15 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     /**
      * Workflow context.
+     *
+     * @psalm-suppress PropertyNotSetInConstructor
      */
     protected WorkflowContext $context;
 
     /**
      * Coroutine scope context.
+     *
+     * @psalm-suppress PropertyNotSetInConstructor
      */
     protected ScopeContext $scopeContext;
 
@@ -86,17 +90,7 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     public function __construct(
         ServiceContainer $services,
-        WorkflowContext $ctx,
-        ?Workflow\UpdateContext $updateContext = null,
     ) {
-        $this->context = $ctx;
-        $this->scopeContext = ScopeContext::fromWorkflowContext(
-            $this->context,
-            $this,
-            $this->onRequest(...),
-            $updateContext,
-        );
-
         $this->services = $services;
         $this->deferred = new Deferred();
     }
@@ -312,7 +306,8 @@ class Scope implements CancellationScopeInterface, Destroyable
         ?WorkflowContext $context = null,
         ?Workflow\UpdateContext $updateContext = null,
     ): self {
-        $scope = new Scope($this->services, $context ?? $this->context, $updateContext);
+        $scope = new Scope($this->services);
+        $scope->setContext($context ?? $this->context, $updateContext);
         $scope->detached = $detached;
 
         if ($layer !== null) {
@@ -329,6 +324,17 @@ class Scope implements CancellationScopeInterface, Destroyable
         );
 
         return $scope;
+    }
+
+    protected function setContext(WorkflowContext $ctx, ?Workflow\UpdateContext $updateContext = null): void
+    {
+        $this->context = $ctx;
+        $this->scopeContext = ScopeContext::fromWorkflowContext(
+            $this->context,
+            $this,
+            $this->onRequest(...),
+            $updateContext,
+        );
     }
 
     /**
