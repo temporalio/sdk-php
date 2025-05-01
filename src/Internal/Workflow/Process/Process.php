@@ -208,6 +208,8 @@ class Process extends Scope implements ProcessInterface
                 $instance->init();
             }
 
+            $context->setReadonly(false);
+
             // Execute
             //
             // Run workflow handler in an interceptor pipeline
@@ -234,7 +236,7 @@ class Process extends Scope implements ProcessInterface
                 ));
         } catch (\Throwable $e) {
             /** @psalm-suppress RedundantPropertyInitializationCheck */
-            isset($this->context) or $this->setContext($context);
+            isset($this->context) or $this->setContext($context->setReadonly(false));
             $this->complete($e);
         } finally {
             Workflow::setCurrentContext(null);

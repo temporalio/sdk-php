@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Temporal\Tests\Acceptance\Extra\Interceptors\Context;
 
 use PHPUnit\Framework\Attributes\Test;
+use React\Promise\PromiseInterface;
 use Temporal\Activity;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\Type;
 use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Interceptor\ActivityInbound\ActivityInput;
@@ -64,6 +66,13 @@ class ContextTest extends TestCase
             self::assertInstanceOf(ApplicationFailure::class, $prev);
             self::assertStringContainsString('exception-in-execute', $prev->getOriginalMessage());
         }
+    }
+
+    #[Test]
+    public function readonlyContextInConstructor(
+        #[Stub('Extra_Interceptors_Context_Readonly')] WorkflowStubInterface $stub,
+    ): void {
+        self::assertTrue($stub->getResult(Type::TYPE_BOOL), 'Workflow instance in context is not readonly');
     }
 }
 
@@ -128,6 +137,28 @@ class TestFailingWorkflow
     public function handle(mixed ...$input)
     {
         return $input;
+    }
+}
+
+#[WorkflowInterface]
+class TestReadonlyConstructorWorkflow
+{
+    private ?PromiseInterface $uuid = null;
+
+    #[Workflow\WorkflowInit]
+    public function __construct(mixed ...$input)
+    {
+        try {
+            $this->uuid = Workflow::uuid7();
+        } catch (\Throwable $e) {
+            $e->getMessage() === 'Workflow is not initialized.' or throw $e;
+        }
+    }
+
+    #[WorkflowMethod(name: "Extra_Interceptors_Context_Readonly")]
+    public function handle()
+    {
+        return $this->uuid === null;
     }
 }
 

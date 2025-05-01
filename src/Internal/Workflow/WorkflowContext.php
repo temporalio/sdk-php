@@ -89,6 +89,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
 
     private array $trace = [];
     private bool $continueAsNew = false;
+    private bool $readonly = true;
 
     /** @var Pipeline<WorkflowOutboundRequestInterceptor, PromiseInterface> */
     private Pipeline $requestInterceptor;
@@ -148,9 +149,10 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         return $this->input->input;
     }
 
-    public function setInput(Input $input): void
+    public function setReadonly(bool $value = true): static
     {
-        $this->input = $input;
+        $this->readonly = $value;
+        return $this;
     }
 
     public function withInput(Input $input): static
@@ -460,6 +462,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         bool $cancellable = true,
         bool $waitResponse = true,
     ): PromiseInterface {
+        $this->readonly and throw new \RuntimeException('Workflow is not initialized.');
         $this->recordTrace();
 
         // Intercept workflow outbound calls
