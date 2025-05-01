@@ -17,21 +17,7 @@ use Temporal\Workflow\WorkflowExecution;
 final class UpdateWithStartOutput
 {
     public function __construct(
-        private readonly WorkflowExecution $execution,
-        private readonly UpdateHandle|\Throwable $handle,
+        public readonly WorkflowExecution $execution,
+        public readonly UpdateHandle|\Throwable $handle,
     ) {}
-
-    public function getExecution(): WorkflowExecution
-    {
-        return $this->execution;
-    }
-
-    public function getHandle(): UpdateHandle
-    {
-        if ($this->handle instanceof \Throwable) {
-            throw $this->handle;
-        }
-
-        return $this->handle;
-    }
 }

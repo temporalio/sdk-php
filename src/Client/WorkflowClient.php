@@ -258,9 +258,11 @@ class WorkflowClient implements WorkflowClientInterface
             $startArgs,
         );
 
-        $workflowStub->setExecution($output->getExecution());
+        $workflowStub->setExecution($output->execution);
 
-        return $output->getHandle();
+        return $output->handle instanceof UpdateHandle
+            ? $output->handle
+            : throw $output->handle;
     }
 
     /**
