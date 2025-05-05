@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Common;
 
+use Temporal\Internal\Marshaller\Meta\Marshal;
+
 /**
  * Priority contains metadata that controls the relative ordering of task processing when tasks are
  * backed up in a queue. The affected queues depend on the server version.
@@ -39,9 +41,11 @@ final class Priority
      *
      * @var int<0, max>
      */
+    #[Marshal(name: 'PriorityKey')]
     public int $priorityKey = 0;
 
-    private function __construct(int $priorityKey = 0) {
+    private function __construct(int $priorityKey = 0)
+    {
         $this->priorityKey = $priorityKey;
     }
 
@@ -63,5 +67,14 @@ final class Priority
         $clone = clone $this;
         $clone->priorityKey = $value;
         return $clone;
+    }
+
+    /**
+     * @internal for internal use only
+     */
+    public function toProto(): \Temporal\Api\Common\V1\Priority
+    {
+        return (new \Temporal\Api\Common\V1\Priority())
+            ->setPriorityKey($this->priorityKey);
     }
 }
