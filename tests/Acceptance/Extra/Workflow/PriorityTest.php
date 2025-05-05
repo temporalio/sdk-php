@@ -9,6 +9,7 @@ use Temporal\Activity;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Common\Priority;
+use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
@@ -30,12 +31,12 @@ class PriorityTest extends TestCase
         );
 
         /** @see TestWorkflow::handle() */
-        $client->start($stub);
+        $client->start($stub, true);
         $result = $stub->getResult('array');
 
 
-        // todo uncomment after release RR >2025.1
-        // self::assertSame([2], $result['activity']);
+        self::assertSame([2], $result['activity']);
+        self::assertSame([1], $result['child']);
         self::assertSame([4], $result['workflow']);
     }
 }
@@ -44,19 +45,31 @@ class PriorityTest extends TestCase
 class TestWorkflow
 {
     #[WorkflowMethod(name: "Extra_Workflow_Priority")]
-    public function handle()
+    public function handle(bool $runChild = false)
     {
         $activity = yield Workflow::executeActivity(
             'Extra_Workflow_Priority.handler',
             options: Activity\ActivityOptions::new()
-                ->withScheduleToCloseTimeout('10 seconds'),
-                // todo uncomment after release RR >2025.1
-                // ->withPriority(Priority::new(2)),
+                ->withScheduleToCloseTimeout('10 seconds')
+                ->withPriority(Priority::new(2)),
         );
+
+        Workflow\ChildWorkflowOptions::new()->priority->priorityKey === Workflow::getInfo()->priority->priorityKey or
+        throw new ApplicationFailure('Child Workflow priority is not the same as the parent by default', 'error', true);
+
+        if ($runChild) {
+            $child = yield Workflow::executeChildWorkflow(
+                'Extra_Workflow_Priority',
+                [false],
+                Workflow\ChildWorkflowOptions::new()->withPriority(Priority::new(1)),
+                'array',
+            );
+        }
 
         return [
             'activity' => $activity,
             'workflow' => [Workflow::getInfo()->priority->priorityKey],
+            'child' => $child['workflow'] ?? null,
         ];
     }
 }
