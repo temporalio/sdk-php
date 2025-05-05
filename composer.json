@@ -59,7 +59,7 @@
         "internal/dload": "^1.1.0",
         "jetbrains/phpstorm-attributes": "dev-master",
         "laminas/laminas-code": "^4.16",
-        "phpunit/phpunit": "^10.5.41",
+        "phpunit/phpunit": "10.5.45",
         "spiral/code-style": "~2.2.2",
         "spiral/core": "^3.14.9",
         "ta-tikoma/phpunit-architecture-test": "^0.8.5",
