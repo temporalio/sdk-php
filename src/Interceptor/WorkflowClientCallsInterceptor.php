@@ -72,7 +72,6 @@ interface WorkflowClientCallsInterceptor extends Interceptor
     public function signalWithStart(SignalWithStartInput $input, callable $next): WorkflowExecution;
 
     /**
-     * @param UpdateWithStartInput $input
      * @param callable(UpdateWithStartInput): WorkflowExecution $next
      */
     public function updateWithStart(UpdateWithStartInput $input, callable $next): UpdateWithStartOutput;
