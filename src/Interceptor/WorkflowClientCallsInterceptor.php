@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Interceptor;
 
-use Temporal\Client\Update\UpdateHandle;
 use Temporal\Client\Workflow\WorkflowExecutionDescription;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\Trait\WorkflowClientCallsInterceptorTrait;
@@ -26,6 +25,7 @@ use Temporal\Interceptor\WorkflowClient\StartUpdateOutput;
 use Temporal\Interceptor\WorkflowClient\TerminateInput;
 use Temporal\Interceptor\WorkflowClient\UpdateInput;
 use Temporal\Interceptor\WorkflowClient\UpdateWithStartInput;
+use Temporal\Interceptor\WorkflowClient\UpdateWithStartOutput;
 use Temporal\Internal\Interceptor\Interceptor;
 use Temporal\Workflow\WorkflowExecution;
 
@@ -74,10 +74,8 @@ interface WorkflowClientCallsInterceptor extends Interceptor
     /**
      * @param UpdateWithStartInput $input
      * @param callable(UpdateWithStartInput): WorkflowExecution $next
-     *
-     * @return UpdateHandle
      */
-    public function updateWithStart(UpdateWithStartInput $input, callable $next): UpdateHandle;
+    public function updateWithStart(UpdateWithStartInput $input, callable $next): UpdateWithStartOutput;
 
     /**
      * @param callable(GetResultInput): ?ValuesInterface $next

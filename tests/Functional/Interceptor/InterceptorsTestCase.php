@@ -12,11 +12,14 @@ declare(strict_types=1);
 namespace Temporal\Tests\Functional\Interceptor;
 
 use Carbon\CarbonInterval;
+use Temporal\Client\Update\LifecycleStage;
+use Temporal\Client\Update\UpdateOptions;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Testing\WithoutTimeSkipping;
 use Temporal\Tests\Workflow\Interceptor\HeadersWorkflow;
 use Temporal\Tests\Workflow\Interceptor\QueryHeadersWorkflow;
 use Temporal\Tests\Workflow\Interceptor\SignalHeadersWorkflow;
+use Temporal\Tests\Workflow\Interceptor\UpdateHeadersWorkflow;
 
 /**
  * @group client
@@ -109,6 +112,30 @@ final class InterceptorsTestCase extends AbstractClient
             /** @see \Temporal\Tests\Interceptor\InterceptorCallsCounter::handleSignal() */
             'handleSignal' => '1',
         ], (array)$run->getResult());
+    }
+
+    public function testUpdateWithStartMethod(): void
+    {
+        $client = $this->createClient();
+        $workflow = $client->newWorkflowStub(
+            UpdateHeadersWorkflow::class,
+            WorkflowOptions::new()
+                ->withWorkflowExecutionTimeout(CarbonInterval::seconds(5)),
+        );
+
+        $run = $client->updateWithStart($workflow, 'update');
+
+        // Workflow header
+        $this->assertEquals([
+            /** @see \Temporal\Tests\Interceptor\InterceptorCallsCounter::updateWithStart() */
+            'updateWithStart' => '1',
+            /**
+             * Inherited from handler run
+             *
+             * @see \Temporal\Tests\Interceptor\InterceptorCallsCounter::execute()
+             */
+            'execute' => '1',
+        ], (array) $workflow->headers());
     }
 
     // todo: rewrite tests because there is no header in query call
