@@ -34,7 +34,7 @@
         "roadrunner-php/roadrunner-api-dto": "^1.10.0",
         "roadrunner-php/version-checker": "^1.0.1",
         "spiral/attributes": "^3.1.8",
-        "spiral/roadrunner": "^2024.3.3",
+        "spiral/roadrunner": "^2024.3.3 || ^2025.1.1",
         "spiral/roadrunner-cli": "^2.6",
         "spiral/roadrunner-kv": "^4.3",
         "spiral/roadrunner-worker": "^3.6.1",
@@ -56,13 +56,13 @@
         "composer/composer": "^2.8.4",
         "dereuromark/composer-prefer-lowest": "^0.1.10",
         "doctrine/annotations": "^1.14.4 || ^2.0.2",
-        "internal/dload": "^1.0.2",
+        "internal/dload": "^1.1.0",
         "jetbrains/phpstorm-attributes": "dev-master",
         "laminas/laminas-code": "^4.16",
         "phpunit/phpunit": "^10.5.41",
-        "spiral/code-style": "~2.1.2",
+        "spiral/code-style": "~2.2.2",
         "spiral/core": "^3.14.9",
-        "ta-tikoma/phpunit-architecture-test": "^0.8.4",
+        "ta-tikoma/phpunit-architecture-test": "^0.8.5",
         "vimeo/psalm": "^5.26.1 || ^6.2"
     },
     "autoload-dev": {
@@ -94,11 +94,6 @@
         "test:func": "phpunit --testsuite=Functional --color=always --testdox",
         "test:arch": "phpunit --testsuite=Arch --color=always --testdox",
         "test:accept": "phpunit --testsuite=Acceptance --color=always --testdox"
-    },
-    "extra": {
-        "branch-alias": {
-            "dev-master": "2.11.x-dev"
-        }
     },
     "config": {
         "sort-packages": true
