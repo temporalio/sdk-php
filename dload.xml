@@ -4,7 +4,7 @@
        temp-dir="./runtime"
 >
     <actions>
-        <download software="rr" version="^2024.3.3"/>
+        <download software="rr" version="^2025.1.0"/>
         <download software="temporal"/>
         <download software="temporal-tests-server"/>
     </actions>
