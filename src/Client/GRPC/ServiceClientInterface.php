@@ -1077,6 +1077,51 @@ interface ServiceClientInterface
     public function ResetActivity(V1\ResetActivityRequest $arg, ?ContextInterface $ctx = null): V1\ResetActivityResponse;
 
     /**
+     * Create a new workflow rule. The rules are used to control the workflow
+     * execution.
+     * The rule will be applied to all running and new workflows in the namespace.
+     * If the rule with such ID already exist this call will fail
+     * Note: the rules are part of namespace configuration and will be stored in the
+     * namespace config.
+     * Namespace config is eventually consistent.
+     *
+     * @throws ServiceClientException
+     */
+    public function CreateWorkflowRule(V1\CreateWorkflowRuleRequest $arg, ?ContextInterface $ctx = null): V1\CreateWorkflowRuleResponse;
+
+    /**
+     * DescribeWorkflowRule return the rule specification for existing rule id.
+     * If there is no rule with such id - NOT FOUND error will be returned.
+     *
+     * @throws ServiceClientException
+     */
+    public function DescribeWorkflowRule(V1\DescribeWorkflowRuleRequest $arg, ?ContextInterface $ctx = null): V1\DescribeWorkflowRuleResponse;
+
+    /**
+     * Delete rule by rule id
+     *
+     * @throws ServiceClientException
+     */
+    public function DeleteWorkflowRule(V1\DeleteWorkflowRuleRequest $arg, ?ContextInterface $ctx = null): V1\DeleteWorkflowRuleResponse;
+
+    /**
+     * Return all namespace workflow rules
+     *
+     * @throws ServiceClientException
+     */
+    public function ListWorkflowRules(V1\ListWorkflowRulesRequest $arg, ?ContextInterface $ctx = null): V1\ListWorkflowRulesResponse;
+
+    /**
+     * TriggerWorkflowRule allows to:
+     * trigger existing rule for a specific workflow execution;
+     * trigger rule for a specific workflow execution without creating a rule;
+     * This is useful for one-off operations.
+     *
+     * @throws ServiceClientException
+     */
+    public function TriggerWorkflowRule(V1\TriggerWorkflowRuleRequest $arg, ?ContextInterface $ctx = null): V1\TriggerWorkflowRuleResponse;
+
+    /**
      * Close the communication channel associated with this stub.
      */
     public function close(): void;
