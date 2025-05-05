@@ -535,6 +535,7 @@ class ServiceClient extends BaseClient
      * ScanWorkflowExecutions is a visibility API to list large amount of workflow
      * executions in a specific namespace without order.
      *
+     * Deprecated: Replaced with `ListWorkflowExecutions`.
      * (-- api-linter: core::0127::http-annotation=disabled
      * aip.dev/not-precedent: HTTP users should use ListWorkflowExecutions instead. --)
      *
@@ -600,6 +601,10 @@ class ServiceClient extends BaseClient
      * Things cleared are:
      * 1. StickyTaskQueue
      * 2. StickyScheduleToStartTimeout
+     *
+     * When possible, ShutdownWorker should be preferred over
+     * ResetStickyTaskQueue (particularly when a worker is shutting down or
+     * cycling).
      *
      * (-- api-linter: core::0127::http-annotation=disabled
      * aip.dev/not-precedent: We do not expose worker API to HTTP. --)
@@ -905,6 +910,7 @@ class ServiceClient extends BaseClient
      * Describes a worker deployment.
      * Experimental. This API might significantly change or be removed in a future
      * release.
+     * Deprecated. Replaced with `DescribeWorkerDeploymentVersion`.
      *
      * @throws ServiceClientException
      */
@@ -914,11 +920,24 @@ class ServiceClient extends BaseClient
     }
 
     /**
+     * Describes a worker deployment version.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
+     *
+     * @throws ServiceClientException
+     */
+    public function DescribeWorkerDeploymentVersion(V1\DescribeWorkerDeploymentVersionRequest $arg, ?ContextInterface $ctx = null): V1\DescribeWorkerDeploymentVersionResponse
+    {
+        return $this->invoke("DescribeWorkerDeploymentVersion", $arg, $ctx);
+    }
+
+    /**
      * Lists worker deployments in the namespace. Optionally can filter based on
      * deployment series
      * name.
      * Experimental. This API might significantly change or be removed in a future
      * release.
+     * Deprecated. Replaced with `ListWorkerDeployments`.
      *
      * @throws ServiceClientException
      */
@@ -941,6 +960,8 @@ class ServiceClient extends BaseClient
      * reachability calculation time.
      * Experimental. This API might significantly change or be removed in a future
      * release.
+     * Deprecated. Replaced with `DrainageInfo` returned by
+     * `DescribeWorkerDeploymentVersion`.
      *
      * @throws ServiceClientException
      */
@@ -953,6 +974,8 @@ class ServiceClient extends BaseClient
      * Returns the current deployment (and its info) for a given deployment series.
      * Experimental. This API might significantly change or be removed in a future
      * release.
+     * Deprecated. Replaced by `current_version` returned by
+     * `DescribeWorkerDeployment`.
      *
      * @throws ServiceClientException
      */
@@ -967,12 +990,109 @@ class ServiceClient extends BaseClient
      * the metadata of the deployment as well.
      * Experimental. This API might significantly change or be removed in a future
      * release.
+     * Deprecated. Replaced by `SetWorkerDeploymentCurrentVersion`.
      *
      * @throws ServiceClientException
      */
     public function SetCurrentDeployment(V1\SetCurrentDeploymentRequest $arg, ?ContextInterface $ctx = null): V1\SetCurrentDeploymentResponse
     {
         return $this->invoke("SetCurrentDeployment", $arg, $ctx);
+    }
+
+    /**
+     * Set/unset the Current Version of a Worker Deployment. Automatically unsets the
+     * Ramping
+     * Version if it is the Version being set as Current.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
+     *
+     * @throws ServiceClientException
+     */
+    public function SetWorkerDeploymentCurrentVersion(V1\SetWorkerDeploymentCurrentVersionRequest $arg, ?ContextInterface $ctx = null): V1\SetWorkerDeploymentCurrentVersionResponse
+    {
+        return $this->invoke("SetWorkerDeploymentCurrentVersion", $arg, $ctx);
+    }
+
+    /**
+     * Describes a Worker Deployment.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
+     *
+     * @throws ServiceClientException
+     */
+    public function DescribeWorkerDeployment(V1\DescribeWorkerDeploymentRequest $arg, ?ContextInterface $ctx = null): V1\DescribeWorkerDeploymentResponse
+    {
+        return $this->invoke("DescribeWorkerDeployment", $arg, $ctx);
+    }
+
+    /**
+     * Deletes records of (an old) Deployment. A deployment can only be deleted if
+     * it has no Version in it.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
+     *
+     * @throws ServiceClientException
+     */
+    public function DeleteWorkerDeployment(V1\DeleteWorkerDeploymentRequest $arg, ?ContextInterface $ctx = null): V1\DeleteWorkerDeploymentResponse
+    {
+        return $this->invoke("DeleteWorkerDeployment", $arg, $ctx);
+    }
+
+    /**
+     * Used for manual deletion of Versions. User can delete a Version only when all
+     * the
+     * following conditions are met:
+     * - It is not the Current or Ramping Version of its Deployment.
+     * - It has no active pollers (none of the task queues in the Version have pollers)
+     * - It is not draining (see WorkerDeploymentVersionInfo.drainage_info). This
+     * condition
+     * can be skipped by passing `skip-drainage=true`.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
+     *
+     * @throws ServiceClientException
+     */
+    public function DeleteWorkerDeploymentVersion(V1\DeleteWorkerDeploymentVersionRequest $arg, ?ContextInterface $ctx = null): V1\DeleteWorkerDeploymentVersionResponse
+    {
+        return $this->invoke("DeleteWorkerDeploymentVersion", $arg, $ctx);
+    }
+
+    /**
+     * Set/unset the Ramping Version of a Worker Deployment and its ramp percentage.
+     * Can be used for
+     * gradual ramp to unversioned workers too.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
+     *
+     * @throws ServiceClientException
+     */
+    public function SetWorkerDeploymentRampingVersion(V1\SetWorkerDeploymentRampingVersionRequest $arg, ?ContextInterface $ctx = null): V1\SetWorkerDeploymentRampingVersionResponse
+    {
+        return $this->invoke("SetWorkerDeploymentRampingVersion", $arg, $ctx);
+    }
+
+    /**
+     * Lists all Worker Deployments that are tracked in the Namespace.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
+     *
+     * @throws ServiceClientException
+     */
+    public function ListWorkerDeployments(V1\ListWorkerDeploymentsRequest $arg, ?ContextInterface $ctx = null): V1\ListWorkerDeploymentsResponse
+    {
+        return $this->invoke("ListWorkerDeployments", $arg, $ctx);
+    }
+
+    /**
+     * Updates the user-given metadata attached to a Worker Deployment Version.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
+     *
+     * @throws ServiceClientException
+     */
+    public function UpdateWorkerDeploymentVersionMetadata(V1\UpdateWorkerDeploymentVersionMetadataRequest $arg, ?ContextInterface $ctx = null): V1\UpdateWorkerDeploymentVersionMetadataResponse
+    {
+        return $this->invoke("UpdateWorkerDeploymentVersionMetadata", $arg, $ctx);
     }
 
     /**
@@ -1081,16 +1201,16 @@ class ServiceClient extends BaseClient
     }
 
     /**
-     * UpdateActivityOptionsById is called by the client to update the options of an
-     * activity
-     * (-- api-linter: core::0136::prepositions=disabled
-     * aip.dev/not-precedent: "By" is used to indicate request type. --)
+     * UpdateActivityOptions is called by the client to update the options of an
+     * activity by its ID or type.
+     * If there are multiple pending activities of the provided type - all of them will
+     * be updated.
      *
      * @throws ServiceClientException
      */
-    public function UpdateActivityOptionsById(V1\UpdateActivityOptionsByIdRequest $arg, ?ContextInterface $ctx = null): V1\UpdateActivityOptionsByIdResponse
+    public function UpdateActivityOptions(V1\UpdateActivityOptionsRequest $arg, ?ContextInterface $ctx = null): V1\UpdateActivityOptionsResponse
     {
-        return $this->invoke("UpdateActivityOptionsById", $arg, $ctx);
+        return $this->invoke("UpdateActivityOptions", $arg, $ctx);
     }
 
     /**
@@ -1105,8 +1225,9 @@ class ServiceClient extends BaseClient
     }
 
     /**
-     * PauseActivityById pauses the execution of an activity specified by its ID.
-     * Returns a `NotFound` error if there is no pending activity with the provided ID.
+     * PauseActivity pauses the execution of an activity specified by its ID or type.
+     * If there are multiple pending activities of the provided type - all of them will
+     * be paused
      *
      * Pausing an activity means:
      * - If the activity is currently waiting for a retry or is running and
@@ -1122,65 +1243,72 @@ class ServiceClient extends BaseClient
      * - activities in paused state will send a cancellation with "activity_paused" set
      * to 'true' in response to 'RecordActivityTaskHeartbeat'.
      * - The activity should respond to the cancellation accordingly.
-     * (-- api-linter: core::0136::prepositions=disabled
-     * aip.dev/not-precedent: "By" is used to indicate request type. --)
+     *
+     * Returns a `NotFound` error if there is no pending activity with the provided ID
+     * or type
      *
      * @throws ServiceClientException
      */
-    public function PauseActivityById(V1\PauseActivityByIdRequest $arg, ?ContextInterface $ctx = null): V1\PauseActivityByIdResponse
+    public function PauseActivity(V1\PauseActivityRequest $arg, ?ContextInterface $ctx = null): V1\PauseActivityResponse
     {
-        return $this->invoke("PauseActivityById", $arg, $ctx);
+        return $this->invoke("PauseActivity", $arg, $ctx);
     }
 
     /**
-     * UnpauseActivityById unpauses the execution of an activity specified by its ID.
-     * Returns a `NotFound` error if there is no pending activity with the provided ID.
-     * There are two 'modes' of unpausing an activity:
-     * 'resume' - If the activity is paused, it will be resumed and scheduled for
-     * execution.
-     * If the activity is currently running Unpause with 'resume' has no effect.
-     * if 'no_wait' flag is set and the activity is waiting, the activity will be
-     * scheduled immediately.
-     * 'reset' - If the activity is paused, it will be reset to its initial state and
-     * (depending on parameters) scheduled for execution.
-     * If the activity is currently running, Unpause with 'reset' will reset the number
-     * of attempts.
-     * if 'no_wait' flag is set, the activity will be scheduled immediately.
-     * if 'reset_heartbeats' flag is set, the activity heartbeat timer and heartbeats
-     * will be reset.
-     * If the activity is in waiting for retry and past it retry timeout, it will be
-     * scheduled immediately.
+     * UnpauseActivity unpauses the execution of an activity specified by its ID or
+     * type.
+     * If there are multiple pending activities of the provided type - all of them will
+     * be unpaused.
+     *
+     * If activity is not paused, this call will have no effect.
+     * If the activity was paused while waiting for retry, it will be scheduled
+     * immediately (* see 'jitter' flag).
      * Once the activity is unpaused, all timeout timers will be regenerated.
-     * (-- api-linter: core::0136::prepositions=disabled
-     * aip.dev/not-precedent: "By" is used to indicate request type. --)
+     *
+     * Flags:
+     * 'jitter': the activity will be scheduled at a random time within the jitter
+     * duration.
+     * 'reset_attempts': the number of attempts will be reset.
+     * 'reset_heartbeat': the activity heartbeat timer and heartbeats will be reset.
+     *
+     * Returns a `NotFound` error if there is no pending activity with the provided ID
+     * or type
      *
      * @throws ServiceClientException
      */
-    public function UnpauseActivityById(V1\UnpauseActivityByIdRequest $arg, ?ContextInterface $ctx = null): V1\UnpauseActivityByIdResponse
+    public function UnpauseActivity(V1\UnpauseActivityRequest $arg, ?ContextInterface $ctx = null): V1\UnpauseActivityResponse
     {
-        return $this->invoke("UnpauseActivityById", $arg, $ctx);
+        return $this->invoke("UnpauseActivity", $arg, $ctx);
     }
 
     /**
-     * ResetActivityById unpauses the execution of an activity specified by its ID.
-     * Returns a `NotFound` error if there is no pending activity with the provided ID.
+     * ResetActivity resets the execution of an activity specified by its ID or type.
+     * If there are multiple pending activities of the provided type - all of them will
+     * be reset.
+     *
      * Resetting an activity means:
      * number of attempts will be reset to 0.
-     * activity timeouts will be resetted.
-     * If the activity currently running:
-     * if 'no_wait' flag is provided, a new instance of the activity will be scheduled
-     * immediately.
-     * if 'no_wait' flag is not provided, a new instance of the  activity will be
-     * scheduled after current instance completes if needed.
-     * If 'reset_heartbeats' flag is set, the activity heartbeat timer and heartbeats
-     * will be reset.
-     * (-- api-linter: core::0136::prepositions=disabled
-     * aip.dev/not-precedent: "By" is used to indicate request type. --)
+     * activity timeouts will be reset.
+     * if the activity is waiting for retry, and it is not paused or 'keep_paused' is
+     * not provided:
+     * it will be scheduled immediately (* see 'jitter' flag),
+     *
+     * Flags:
+     *
+     * 'jitter': the activity will be scheduled at a random time within the jitter
+     * duration.
+     * If the activity currently paused it will be unpaused, unless 'keep_paused' flag
+     * is provided.
+     * 'reset_heartbeats': the activity heartbeat timer and heartbeats will be reset.
+     * 'keep_paused': if the activity is paused, it will remain paused.
+     *
+     * Returns a `NotFound` error if there is no pending activity with the provided ID
+     * or type.
      *
      * @throws ServiceClientException
      */
-    public function ResetActivityById(V1\ResetActivityByIdRequest $arg, ?ContextInterface $ctx = null): V1\ResetActivityByIdResponse
+    public function ResetActivity(V1\ResetActivityRequest $arg, ?ContextInterface $ctx = null): V1\ResetActivityResponse
     {
-        return $this->invoke("ResetActivityById", $arg, $ctx);
+        return $this->invoke("ResetActivity", $arg, $ctx);
     }
 }
