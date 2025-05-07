@@ -15,6 +15,7 @@ use Carbon\CarbonInterval;
 use JetBrains\PhpStorm\Immutable;
 use Temporal\Client\ClientOptions;
 use Temporal\Common\CronSchedule;
+use Temporal\Common\Priority;
 use Temporal\Common\TypedSearchAttributes;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\ArrayType;
@@ -129,6 +130,14 @@ final class WorkflowInfo
     public string $binaryChecksum = '';
 
     /**
+     * The priority of the Workflow task.
+     *
+     * @internal ExperimentalAPI
+     */
+    #[Marshal(name: 'Priority')]
+    public Priority $priority;
+
+    /**
      * WorkflowInfo constructor.
      */
     public function __construct()
@@ -140,5 +149,7 @@ final class WorkflowInfo
         $this->runTimeout = CarbonInterval::years(10);
         $this->taskTimeout = CarbonInterval::years(10);
         $this->typedSearchAttributes = TypedSearchAttributes::empty();
+
+        $this->priority = Priority::new();
     }
 }

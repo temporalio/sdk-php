@@ -330,7 +330,8 @@ final class WorkflowStarter
             ->setWorkflowIdConflictPolicy($options->workflowIdConflictPolicy->value)
             ->setWorkflowRunTimeout(DateInterval::toDuration($options->workflowRunTimeout))
             ->setWorkflowExecutionTimeout(DateInterval::toDuration($options->workflowExecutionTimeout))
-            ->setWorkflowTaskTimeout(DateInterval::toDuration($options->workflowTaskTimeout));
+            ->setWorkflowTaskTimeout(DateInterval::toDuration($options->workflowTaskTimeout))
+            ->setPriority($options->priority->toProto());
 
         // Retry Policy
         $options->retryOptions === null or $req->setRetryPolicy($options->retryOptions->toWorkflowRetryPolicy());
