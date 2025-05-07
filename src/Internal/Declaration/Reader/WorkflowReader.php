@@ -128,8 +128,12 @@ class WorkflowReader extends Reader
 
             // Check WorkflowInit method
             if ($method->isConstructor()) {
-                $this->getAttributedMethod($graph, $method, WorkflowInit::class);
-                $prototype->setHasInitializer(true);
+                $attr = $this->getAttributedMethod($graph, $method, WorkflowInit::class);
+
+                if ($attr !== null) {
+                    $prototype->setHasInitializer(true);
+                }
+
                 continue;
             }
 

@@ -21,6 +21,7 @@ use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
 use Temporal\Tests\Unit\Declaration\Fixture\Inheritance\ExtendingWorkflow;
 use Temporal\Tests\Unit\Declaration\Fixture\SimpleWorkflow;
+use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithConstructor;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithCron;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithCronAndRetry;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithCustomName;
@@ -28,6 +29,7 @@ use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithoutHandler;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithQueries;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithRetry;
 use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithSignals;
+use Temporal\Tests\Unit\Declaration\Fixture\WorkflowWithWorkflowInit;
 use Temporal\Tests\Workflow\AggregatedWorkflowImpl;
 
 /**
@@ -201,6 +203,18 @@ class WorkflowDeclarationTestCase extends AbstractDeclaration
         $prototype = $reader->fromClass(WorkflowWithCustomName::class);
 
         $this->assertSame('ExampleWorkflowName', $prototype->getID());
+    }
+
+    /**
+     * @param WorkflowReader $reader
+     * @throws \ReflectionException
+     */
+    #[TestDox("Reading workflow with WorkflowInit attribute")]
+    #[DataProvider('workflowReaderDataProvider')]
+    public function testWorkflowWithInitConstructor(WorkflowReader $reader): void
+    {
+        $this->assertTrue($reader->fromClass(WorkflowWithWorkflowInit::class)->hasInitializer());
+        $this->assertFalse($reader->fromClass(WorkflowWithConstructor::class)->hasInitializer());
     }
 
     public function testHierarchicalWorkflow(): void
