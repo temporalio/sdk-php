@@ -72,7 +72,7 @@ interface WorkflowClientCallsInterceptor extends Interceptor
     public function signalWithStart(SignalWithStartInput $input, callable $next): WorkflowExecution;
 
     /**
-     * @param callable(UpdateWithStartInput): WorkflowExecution $next
+     * @param callable(UpdateWithStartInput): UpdateWithStartOutput $next
      */
     public function updateWithStart(UpdateWithStartInput $input, callable $next): UpdateWithStartOutput;
 
@@ -97,7 +97,7 @@ interface WorkflowClientCallsInterceptor extends Interceptor
     public function terminate(TerminateInput $input, callable $next): void;
 
     /**
-     * @param callable(DescribeInput): void $next
+     * @param callable(DescribeInput): WorkflowExecutionDescription $next
      */
     public function describe(DescribeInput $input, callable $next): WorkflowExecutionDescription;
 }
