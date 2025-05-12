@@ -134,11 +134,7 @@ class AttributeMapper implements MapperInterface
     private function createGetter(string $name, ?TypeInterface $type): \Closure
     {
         return function () use ($name, $type) {
-            try {
-                $result = $this->$name;
-            } catch (\Error $_) {
-                return null;
-            }
+            $result = $this->$name ?? null;
 
             return $type && $result !== null ? $type->serialize($result) : $result;
         };
@@ -147,11 +143,7 @@ class AttributeMapper implements MapperInterface
     private function createSetter(string $name, ?TypeInterface $type): \Closure
     {
         return function ($value) use ($name, $type): void {
-            try {
-                $source = $this->$name;
-            } catch (\Error $_) {
-                $source = null;
-            }
+            $source = $this->$name ?? null;
 
             $this->$name = $type ? $type->parse($value, $source) : $value;
         };
