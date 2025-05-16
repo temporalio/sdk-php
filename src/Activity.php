@@ -132,6 +132,7 @@ final class Activity extends Facade
      *
      * @param mixed $details In case of activity timeout details are returned
      * as a field of the exception thrown.
+     *
      * @throws OutOfContextException in the absence of the activity execution context.
      */
     public static function heartbeat($details): void
