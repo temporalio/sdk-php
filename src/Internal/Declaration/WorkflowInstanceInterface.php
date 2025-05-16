@@ -17,6 +17,7 @@ use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Internal\Declaration\WorkflowInstance\QueryDispatcher;
 
 /**
  * @internal
@@ -29,17 +30,6 @@ interface WorkflowInstanceInterface extends InstanceInterface
      * it will be executed with the {@see \Temporal\Workflow\WorkflowMethod} arguments.
      */
     public function init(array $arguments = []): void;
-
-    /**
-     * @param non-empty-string $name
-     * @return null|\Closure(QueryInput): mixed
-     */
-    public function findQueryHandler(string $name): ?\Closure;
-
-    /**
-     * @param non-empty-string $name
-     */
-    public function addQueryHandler(string $name, callable $handler): void;
 
     /**
      * @param non-empty-string $name
@@ -75,11 +65,6 @@ interface WorkflowInstanceInterface extends InstanceInterface
 
     /**
      * @param callable(non-empty-string, ValuesInterface): mixed $handler
-     */
-    public function setDynamicQueryHandler(callable $handler): void;
-
-    /**
-     * @param callable(non-empty-string, ValuesInterface): mixed $handler
      * @param null|callable(non-empty-string, ValuesInterface): mixed $validator
      */
     public function setDynamicUpdateHandler(callable $handler, ?callable $validator = null): void;
@@ -87,4 +72,6 @@ interface WorkflowInstanceInterface extends InstanceInterface
     public function clearSignalQueue(): void;
 
     public function getPrototype(): WorkflowPrototype;
+
+    public function getQueryDispatcher(): QueryDispatcher;
 }

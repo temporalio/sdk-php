@@ -15,6 +15,7 @@ use JetBrains\PhpStorm\Pure;
 use React\Promise\Deferred;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
+use Temporal\Internal\Declaration\WorkflowInstance\QueryDispatcher;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Worker\LoopInterface;
@@ -46,8 +47,7 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
         $name = $request->getOptions()['name'];
         $process = $this->findProcessOrFail($request->getID());
         $context = $process->getContext();
-        $instance = $process->getWorkflowInstance();
-        $handler = $this->findQueryHandlerOrFail($instance, $name);
+        $handler = $this->findQueryHandlerOrFail($context->getQueryDispatcher(), $name);
 
         $this->loop->once(
             LoopInterface::ON_QUERY,
@@ -78,13 +78,13 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
      * @param non-empty-string $name
      * @return \Closure(QueryInput): mixed
      */
-    private function findQueryHandlerOrFail(WorkflowInstanceInterface $instance, string $name): \Closure
+    private function findQueryHandlerOrFail(QueryDispatcher $dispatcher, string $name): \Closure
     {
-        return $instance->findQueryHandler($name) ?? throw new \LogicException(
+        return $dispatcher->findQueryHandler($name) ?? throw new \LogicException(
             \sprintf(
                 self::ERROR_QUERY_NOT_FOUND,
                 $name,
-                \implode(' ', $instance->getQueryHandlerNames()),
+                \implode(' ', $dispatcher->getQueryHandlerNames()),
             ),
         );
     }

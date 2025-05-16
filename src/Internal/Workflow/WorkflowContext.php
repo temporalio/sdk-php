@@ -42,6 +42,7 @@ use Temporal\Interceptor\WorkflowOutboundCalls\UpsertTypedSearchAttributesInput;
 use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
 use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
 use Temporal\Internal\Declaration\Destroyable;
+use Temporal\Internal\Declaration\WorkflowInstance\QueryDispatcher;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\Interceptor\HeaderCarrier;
 use Temporal\Internal\Interceptor\Pipeline;
@@ -77,6 +78,9 @@ use function React\Promise\reject;
 use function React\Promise\resolve;
 
 /**
+ * Root, the most top level WorkflowContext that unites all relevant contexts, handlers, options,
+ * states, etc.
+ *
  * @internal
  */
 class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destroyable
@@ -96,6 +100,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
 
     /** @var Pipeline<WorkflowOutboundCallsInterceptor, PromiseInterface> */
     private Pipeline $callsInterceptor;
+    private readonly QueryDispatcher $queryDispatcher;
 
     /**
      * @param HandlerState $handlers Counter of active Update and Signal handlers
@@ -108,6 +113,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         protected ?ValuesInterface $lastCompletionResult = null,
         protected HandlerState $handlers = new HandlerState(),
     ) {
+        $this->queryDispatcher = $this->workflowInstance->getQueryDispatcher();
         $this->requestInterceptor =  $services->interceptorProvider
             ->getPipeline(WorkflowOutboundRequestInterceptor::class);
         $this->callsInterceptor =  $services->interceptorProvider
@@ -183,9 +189,9 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         return $this->client;
     }
 
-    public function registerQuery(string $queryType, callable $handler): WorkflowContextInterface
+    public function registerQuery(string $queryType, callable $handler, string $description): WorkflowContextInterface
     {
-        $this->getWorkflowInstance()->addQueryHandler($queryType, $handler);
+        $this->queryDispatcher->addQueryHandler($queryType, $handler, $description);
 
         return $this;
     }
@@ -206,7 +212,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
 
     public function registerDynamicQuery(callable $handler): WorkflowContextInterface
     {
-        $this->getWorkflowInstance()->setDynamicQueryHandler($handler);
+        $this->queryDispatcher->setDynamicQueryHandler($handler);
 
         return $this;
     }
@@ -680,6 +686,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         $this->awaits = [];
         $this->workflowInstance->destroy();
         $this->client->destroy();
+        $this->queryDispatcher->destroy();
         unset($this->workflowInstance, $this->client);
     }
 
@@ -748,5 +755,10 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     protected function recordTrace(): void
     {
         $this->trace = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
+    }
+
+    public function getQueryDispatcher(): QueryDispatcher
+    {
+        return $this->queryDispatcher;
     }
 }

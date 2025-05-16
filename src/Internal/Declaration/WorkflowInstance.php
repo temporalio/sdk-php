@@ -14,18 +14,16 @@ namespace Temporal\Internal\Declaration;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\ValuesInterface;
-use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Internal\Declaration\WorkflowInstance\QueryDispatcher;
 use Temporal\Internal\Declaration\WorkflowInstance\SignalQueue;
 use Temporal\Internal\Interceptor;
 
 /**
- * @psalm-type QueryHandler = \Closure(QueryInput): mixed
  * @psalm-type UpdateHandler = \Closure(UpdateInput, Deferred): mixed
  * @psalm-type ValidateUpdateHandler = \Closure(UpdateInput): void
- * @psalm-type QueryExecutor = \Closure(QueryInput, callable(ValuesInterface): mixed): mixed
  * @psalm-type UpdateExecutor = \Closure(UpdateInput, callable(ValuesInterface): mixed, Deferred): PromiseInterface
  * @psalm-type ValidateUpdateExecutor = \Closure(UpdateInput, callable(ValuesInterface): mixed): void
  * @psalm-type UpdateValidator = \Closure(UpdateInput, UpdateHandler): void
@@ -34,11 +32,7 @@ use Temporal\Internal\Interceptor;
  */
 final class WorkflowInstance extends Instance implements WorkflowInstanceInterface
 {
-    /** @var array<non-empty-string, QueryHandler> */
-    private array $queryHandlers = [];
-
-    /** @var null|QueryHandler */
-    private ?\Closure $queryDynamicHandler = null;
+    public readonly QueryDispatcher $queryDispatcher;
 
     /** @var null|UpdateHandler */
     private ?\Closure $updateDynamicHandler = null;
@@ -57,9 +51,6 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
 
     private SignalQueue $signalQueue;
 
-    /** @var QueryExecutor */
-    private \Closure $queryExecutor;
-
     /** @var UpdateExecutor */
     private \Closure $updateExecutor;
 
@@ -77,6 +68,7 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     ) {
         parent::__construct($prototype, $context);
 
+        $this->queryDispatcher = new QueryDispatcher($pipeline, $context);
         $this->signalQueue = new SignalQueue();
 
         foreach ($prototype->getSignalHandlers() as $name => $definition) {
@@ -98,27 +90,14 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
                 : null;
         }
 
-        foreach ($prototype->getQueryHandlers() as $name => $definition) {
-            $fn = $this->createHandler($definition->method);
-            $this->queryHandlers[$name] = $this->pipeline->with(
-                function (QueryInput $input) use ($fn): mixed {
-                    return ($this->queryExecutor)($input, $fn);
-                },
-                /** @see WorkflowInboundCallsInterceptor::handleQuery() */
-                'handleQuery',
-            )(...);
+        foreach ($prototype->getQueryHandlers() as $definition) {
+            $this->queryDispatcher->addFromQueryDefinition($definition);
         }
     }
 
-    /**
-     * @param QueryExecutor $executor
-     *
-     * @return $this
-     */
-    public function setQueryExecutor(\Closure $executor): self
+    public function getQueryDispatcher(): QueryDispatcher
     {
-        $this->queryExecutor = $executor;
-        return $this;
+        return $this->queryDispatcher;
     }
 
     /**
@@ -159,17 +138,6 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     /**
      * @param non-empty-string $name
      *
-     * @return null|\Closure(QueryInput): mixed
-     * @psalm-return QueryHandler|null
-     */
-    public function findQueryHandler(string $name): ?\Closure
-    {
-        return $this->queryHandlers[$name] ?? $this->queryDynamicHandler;
-    }
-
-    /**
-     * @param non-empty-string $name
-     *
      * @return null|\Closure(UpdateInput, Deferred): PromiseInterface
      * @psalm-return UpdateHandler|null
      */
@@ -191,20 +159,6 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
                 ? null
                 : $this->updateDynamicValidator
         );
-    }
-
-    /**
-     * @throws \ReflectionException
-     */
-    public function addQueryHandler(string $name, callable $handler): void
-    {
-        $fn = $this->createCallableHandler($handler);
-
-        $this->queryHandlers[$name] = $this->pipeline->with(
-            fn(QueryInput $input): mixed => ($this->queryExecutor)($input, $fn),
-            /** @see WorkflowInboundCallsInterceptor::handleQuery() */
-            'handleQuery',
-        )(...);
     }
 
     /**
@@ -235,14 +189,6 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     /**
      * @return string[]
      */
-    public function getQueryHandlerNames(): array
-    {
-        return \array_keys($this->queryHandlers);
-    }
-
-    /**
-     * @return string[]
-     */
     public function getUpdateHandlerNames(): array
     {
         return \array_keys($this->updateHandlers);
@@ -262,18 +208,6 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     public function setDynamicSignalHandler(callable $handler): void
     {
         $this->signalQueue->setFallback($handler(...));
-    }
-
-    public function setDynamicQueryHandler(callable $handler): void
-    {
-        $this->queryDynamicHandler = $this->pipeline->with(
-            fn(QueryInput $input): mixed => ($this->queryExecutor)(
-                $input,
-                static fn(ValuesInterface $arguments): mixed => $handler($input->queryName, $arguments),
-            ),
-            /** @see WorkflowInboundCallsInterceptor::handleQuery() */
-            'handleQuery',
-        )(...);
     }
 
     public function setDynamicUpdateHandler(callable $handler, ?callable $validator = null): void
@@ -302,16 +236,13 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     {
         $this->signalQueue->clear();
         $this->signalHandlers = [];
-        $this->queryHandlers = [];
         $this->updateHandlers = [];
         $this->validateUpdateHandlers = [];
         unset(
-            $this->queryExecutor,
             $this->updateExecutor,
             $this->updateValidator,
             $this->prototype,
             $this->pipeline,
-            $this->queryDynamicHandler,
         );
         parent::destroy();
     }

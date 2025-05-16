@@ -335,12 +335,16 @@ final class Workflow extends Facade
      * The same method ({@see WorkflowStubInterface::query()}) should be used
      * to call such query handlers as in the case of ordinary query methods.
      *
-     * @param non-empty-string $queryType
+     * @param non-empty-string $queryType Name of the query.
+     * @param string $description Description of the query.
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
-    public static function registerQuery(string $queryType, callable $handler): ScopedContextInterface
-    {
-        return self::getCurrentContext()->registerQuery($queryType, $handler);
+    public static function registerQuery(
+        string $queryType,
+        callable $handler,
+        string $description = '',
+    ): ScopedContextInterface {
+        return self::getCurrentContext()->registerQuery($queryType, $handler, $description);
     }
 
     /**

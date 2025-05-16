@@ -210,6 +210,7 @@ class WorkflowReader extends Reader
                         name: $query->name ?? $method->getName(),
                         returnType: $method->getReturnType(),
                         method: $method,
+                        description: $query->description,
                     ),
                 );
             }

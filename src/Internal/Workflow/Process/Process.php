@@ -51,7 +51,7 @@ class Process extends Scope implements ProcessInterface
         $inboundPipeline = $services->interceptorProvider->getPipeline(WorkflowInboundCallsInterceptor::class);
 
         // Configure query handler in an immutable scope
-        $workflowInstance->setQueryExecutor(function (QueryInput $input, callable $handler): mixed {
+        $workflowInstance->queryDispatcher->setQueryExecutor(function (QueryInput $input, callable $handler): mixed {
             try {
                 $context = $this->scopeContext->withInput(
                     new Input(

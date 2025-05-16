@@ -63,7 +63,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @return $this
      */
-    public function registerQuery(string $queryType, callable $handler): self;
+    public function registerQuery(string $queryType, callable $handler, string $description): self;
 
     /**
      * Registers a query with an additional signal handler.
