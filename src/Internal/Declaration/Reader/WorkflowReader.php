@@ -186,6 +186,7 @@ class WorkflowReader extends Reader
                         name: $signal->name ?? $method->getName(),
                         policy: $signal->unfinishedPolicy,
                         method: $method,
+                        description: $signal->description,
                     ),
                 );
             }

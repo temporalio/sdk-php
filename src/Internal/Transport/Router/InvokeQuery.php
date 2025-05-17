@@ -16,7 +16,6 @@ use React\Promise\Deferred;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Internal\Declaration\WorkflowInstance\QueryDispatcher;
-use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Worker\LoopInterface;
 use Temporal\Workflow;

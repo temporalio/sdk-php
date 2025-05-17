@@ -74,7 +74,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @return $this
      */
-    public function registerSignal(string $queryType, callable $handler): self;
+    public function registerSignal(string $queryType, callable $handler, string $description): self;
 
     /**
      * Registers a dynamic Signal handler.

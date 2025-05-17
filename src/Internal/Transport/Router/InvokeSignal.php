@@ -19,8 +19,11 @@ final class InvokeSignal extends WorkflowProcessAwareRoute
 {
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
-        $instance = $this->findInstanceOrFail($request->getID());
-        $handler = $instance->getSignalHandler($request->getOptions()['name']);
+        $process = $this->findProcessOrFail($request->getID());
+        $handler = $process
+            ->getContext()
+            ->getSignalDispatcher()
+            ->getSignalHandler($request->getOptions()['name']);
 
         // Get Workflow context
         $context = $this->findProcessOrFail($request->getID())->getContext();

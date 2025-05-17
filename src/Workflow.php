@@ -362,9 +362,9 @@ final class Workflow extends Facade
      * @param non-empty-string $name
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
-    public static function registerSignal(string $name, callable $handler): ScopedContextInterface
+    public static function registerSignal(string $name, callable $handler, string $description = ''): ScopedContextInterface
     {
-        return self::getCurrentContext()->registerSignal($name, $handler);
+        return self::getCurrentContext()->registerSignal($name, $handler, $description);
     }
 
     /**

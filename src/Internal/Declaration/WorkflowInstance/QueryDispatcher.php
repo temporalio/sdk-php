@@ -133,7 +133,6 @@ final class QueryDispatcher implements Destroyable
         $this->queryHandlers = [];
         unset(
             $this->queryExecutor,
-            $this->pipeline,
             $this->queryDynamicHandler,
         );
     }

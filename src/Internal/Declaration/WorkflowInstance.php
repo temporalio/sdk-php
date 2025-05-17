@@ -18,7 +18,7 @@ use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\WorkflowInstance\QueryDispatcher;
-use Temporal\Internal\Declaration\WorkflowInstance\SignalQueue;
+use Temporal\Internal\Declaration\WorkflowInstance\SignalDispatcher;
 use Temporal\Internal\Interceptor;
 
 /**
@@ -32,7 +32,8 @@ use Temporal\Internal\Interceptor;
  */
 final class WorkflowInstance extends Instance implements WorkflowInstanceInterface
 {
-    public readonly QueryDispatcher $queryDispatcher;
+    private readonly QueryDispatcher $queryDispatcher;
+    private readonly SignalDispatcher $signalDispatcher;
 
     /** @var null|UpdateHandler */
     private ?\Closure $updateDynamicHandler = null;
@@ -40,16 +41,11 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     /** @var null|ValidateUpdateHandler */
     private ?\Closure $updateDynamicValidator = null;
 
-    /** @var array<non-empty-string, MethodHandler> */
-    private array $signalHandlers = [];
-
     /** @var array<non-empty-string, UpdateHandler> */
     private array $updateHandlers = [];
 
     /** @var array<non-empty-string, null|ValidateUpdateHandler> */
     private array $validateUpdateHandlers = [];
-
-    private SignalQueue $signalQueue;
 
     /** @var UpdateExecutor */
     private \Closure $updateExecutor;
@@ -69,11 +65,10 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
         parent::__construct($prototype, $context);
 
         $this->queryDispatcher = new QueryDispatcher($pipeline, $context);
-        $this->signalQueue = new SignalQueue();
+        $this->signalDispatcher = new SignalDispatcher($pipeline, $context);
 
         foreach ($prototype->getSignalHandlers() as $name => $definition) {
-            $this->signalHandlers[$name] = $this->createHandler($definition->method);
-            $this->signalQueue->attach($name, $this->signalHandlers[$name]);
+            $this->signalDispatcher->addFromSignalDefinition($definition);
         }
 
         $updateValidators = $prototype->getValidateUpdateHandlers();
@@ -98,6 +93,11 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     public function getQueryDispatcher(): QueryDispatcher
     {
         return $this->queryDispatcher;
+    }
+
+    public function getSignalDispatcher(): SignalDispatcher
+    {
+        return $this->signalDispatcher;
     }
 
     /**
@@ -128,11 +128,6 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
         }
 
         $this->context->__construct(...$arguments);
-    }
-
-    public function getSignalQueue(): SignalQueue
-    {
-        return $this->signalQueue;
     }
 
     /**
@@ -194,22 +189,6 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
         return \array_keys($this->updateHandlers);
     }
 
-    public function getSignalHandler(string $name): \Closure
-    {
-        return fn(ValuesInterface $values) => $this->signalQueue->push($name, $values);
-    }
-
-    public function addSignalHandler(string $name, callable $handler): void
-    {
-        $this->signalHandlers[$name] = $this->createCallableHandler($handler);
-        $this->signalQueue->attach($name, $this->signalHandlers[$name]);
-    }
-
-    public function setDynamicSignalHandler(callable $handler): void
-    {
-        $this->signalQueue->setFallback($handler(...));
-    }
-
     public function setDynamicUpdateHandler(callable $handler, ?callable $validator = null): void
     {
         $this->updateDynamicValidator = $validator === null
@@ -227,15 +206,8 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
             );
     }
 
-    public function clearSignalQueue(): void
-    {
-        $this->signalQueue->clear();
-    }
-
     public function destroy(): void
     {
-        $this->signalQueue->clear();
-        $this->signalHandlers = [];
         $this->updateHandlers = [];
         $this->validateUpdateHandlers = [];
         unset(

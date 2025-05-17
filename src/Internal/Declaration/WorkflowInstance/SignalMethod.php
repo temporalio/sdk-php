@@ -11,20 +11,19 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration\WorkflowInstance;
 
-use Temporal\Interceptor\WorkflowInbound\QueryInput;
+use Temporal\Internal\Declaration\MethodHandler;
 
 /**
  * @internal
  */
-final class QueryMethod
+final class SignalMethod
 {
     /**
      * @param non-empty-string $name
-     * @param \Closure(QueryInput): mixed $handler
      */
     public function __construct(
         public readonly string $name,
-        public readonly \Closure $handler,
+        public readonly MethodHandler $handler,
         public readonly string $description = '',
     ) {}
 }

@@ -43,6 +43,7 @@ use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
 use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
 use Temporal\Internal\Declaration\Destroyable;
 use Temporal\Internal\Declaration\WorkflowInstance\QueryDispatcher;
+use Temporal\Internal\Declaration\WorkflowInstance\SignalDispatcher;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\Interceptor\HeaderCarrier;
 use Temporal\Internal\Interceptor\Pipeline;
@@ -100,7 +101,9 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
 
     /** @var Pipeline<WorkflowOutboundCallsInterceptor, PromiseInterface> */
     private Pipeline $callsInterceptor;
+
     private readonly QueryDispatcher $queryDispatcher;
+    private readonly SignalDispatcher $signalDispatcher;
 
     /**
      * @param HandlerState $handlers Counter of active Update and Signal handlers
@@ -114,6 +117,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         protected HandlerState $handlers = new HandlerState(),
     ) {
         $this->queryDispatcher = $this->workflowInstance->getQueryDispatcher();
+        $this->signalDispatcher = $this->workflowInstance->getSignalDispatcher();
         $this->requestInterceptor =  $services->interceptorProvider
             ->getPipeline(WorkflowOutboundRequestInterceptor::class);
         $this->callsInterceptor =  $services->interceptorProvider
@@ -196,16 +200,16 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         return $this;
     }
 
-    public function registerSignal(string $queryType, callable $handler): WorkflowContextInterface
+    public function registerSignal(string $queryType, callable $handler, string $description): WorkflowContextInterface
     {
-        $this->getWorkflowInstance()->addSignalHandler($queryType, $handler);
+        $this->signalDispatcher->addSignalHandler($queryType, $handler, $description);
 
         return $this;
     }
 
     public function registerDynamicSignal(callable $handler): WorkflowContextInterface
     {
-        $this->getWorkflowInstance()->setDynamicSignalHandler($handler);
+        $this->signalDispatcher->setDynamicSignalHandler($handler);
 
         return $this;
     }
@@ -283,7 +287,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     public function complete(?array $result = null, ?\Throwable $failure = null): PromiseInterface
     {
         if ($failure !== null) {
-            $this->workflowInstance->clearSignalQueue();
+            $this->signalDispatcher->clearSignalQueue();
         }
 
         return $this->callsInterceptor->with(
@@ -687,7 +691,18 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         $this->workflowInstance->destroy();
         $this->client->destroy();
         $this->queryDispatcher->destroy();
+        $this->signalDispatcher->destroy();
         unset($this->workflowInstance, $this->client);
+    }
+
+    public function getQueryDispatcher(): QueryDispatcher
+    {
+        return $this->queryDispatcher;
+    }
+
+    public function getSignalDispatcher(): SignalDispatcher
+    {
+        return $this->signalDispatcher;
     }
 
     protected function awaitRequest(callable|Mutex|PromiseInterface ...$conditions): PromiseInterface
@@ -755,10 +770,5 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     protected function recordTrace(): void
     {
         $this->trace = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
-    }
-
-    public function getQueryDispatcher(): QueryDispatcher
-    {
-        return $this->queryDispatcher;
     }
 }

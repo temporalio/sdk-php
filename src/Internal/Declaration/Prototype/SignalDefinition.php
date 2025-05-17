@@ -18,5 +18,6 @@ final class SignalDefinition
         public readonly string $name,
         public readonly HandlerUnfinishedPolicy $policy,
         public readonly \ReflectionMethod $method,
+        public readonly string $description,
     ) {}
 }

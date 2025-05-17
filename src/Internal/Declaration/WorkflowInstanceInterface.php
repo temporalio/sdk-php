@@ -14,10 +14,10 @@ namespace Temporal\Internal\Declaration;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\ValuesInterface;
-use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\WorkflowInstance\QueryDispatcher;
+use Temporal\Internal\Declaration\WorkflowInstance\SignalDispatcher;
 
 /**
  * @internal
@@ -43,25 +43,9 @@ interface WorkflowInstanceInterface extends InstanceInterface
 
     /**
      * @param non-empty-string $name
-     * @return \Closure(ValuesInterface): void
-     */
-    public function getSignalHandler(string $name): \Closure;
-
-    /**
-     * @param non-empty-string $name
      * @return null|\Closure(UpdateInput, Deferred): PromiseInterface
      */
     public function findUpdateHandler(string $name): ?\Closure;
-
-    /**
-     * @param non-empty-string $name
-     */
-    public function addSignalHandler(string $name, callable $handler): void;
-
-    /**
-     * @param callable(non-empty-string, ValuesInterface): mixed $handler
-     */
-    public function setDynamicSignalHandler(callable $handler): void;
 
     /**
      * @param callable(non-empty-string, ValuesInterface): mixed $handler
@@ -69,9 +53,9 @@ interface WorkflowInstanceInterface extends InstanceInterface
      */
     public function setDynamicUpdateHandler(callable $handler, ?callable $validator = null): void;
 
-    public function clearSignalQueue(): void;
-
     public function getPrototype(): WorkflowPrototype;
 
     public function getQueryDispatcher(): QueryDispatcher;
+
+    public function getSignalDispatcher(): SignalDispatcher;
 }

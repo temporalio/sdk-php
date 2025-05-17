@@ -51,7 +51,7 @@ class Process extends Scope implements ProcessInterface
         $inboundPipeline = $services->interceptorProvider->getPipeline(WorkflowInboundCallsInterceptor::class);
 
         // Configure query handler in an immutable scope
-        $workflowInstance->queryDispatcher->setQueryExecutor(function (QueryInput $input, callable $handler): mixed {
+        $workflowInstance->getQueryDispatcher()->setQueryExecutor(function (QueryInput $input, callable $handler): mixed {
             try {
                 $context = $this->scopeContext->withInput(
                     new Input(
@@ -122,7 +122,7 @@ class Process extends Scope implements ProcessInterface
         });
 
         // Configure signal handler
-        $workflowInstance->getSignalQueue()->onSignal(
+        $workflowInstance->getSignalDispatcher()->getSignalQueue()->onSignal(
             function (string $name, callable $handler, ValuesInterface $arguments) use ($inboundPipeline): void {
                 // Define Context for interceptors Pipeline
                 Workflow::setCurrentContext($this->scopeContext);

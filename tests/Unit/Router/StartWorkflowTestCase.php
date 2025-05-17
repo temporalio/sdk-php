@@ -15,8 +15,11 @@ use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\ExceptionInterceptorInterface;
 use Temporal\Interceptor\SimplePipelineProvider;
+use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\Destroyable;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
+use Temporal\Internal\Declaration\WorkflowInstance\QueryDispatcher;
+use Temporal\Internal\Declaration\WorkflowInstance\SignalDispatcher;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Queue\QueueInterface;
@@ -25,7 +28,6 @@ use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Transport\Router\StartWorkflow;
 use Temporal\Internal\Workflow\Input;
-use Temporal\Internal\Workflow\Logger;
 use Temporal\Internal\Workflow\WorkflowContext;
 use Temporal\Tests\Unit\Framework\Requests\StartWorkflow as Request;
 use Temporal\Tests\Unit\AbstractUnit;
@@ -112,8 +114,15 @@ final class StartWorkflowTestCase extends AbstractUnit
 
     protected function setUp(): void
     {
+        $workflow = new \stdClass();
+        $pp = new SimplePipelineProvider();
         $dataConverter = $this->createMock(DataConverterInterface::class);
         $this->marshaller = $this->createMock(MarshallerInterface::class);
+        $wfInstance = $this->createMockForIntersectionOfInterfaces([WorkflowInstanceInterface::class, Destroyable::class]);
+        $wfInstance->method('getQueryDispatcher')
+            ->willReturn(new QueryDispatcher($pp->getPipeline(WorkflowInboundCallsInterceptor::class), $workflow));
+        $wfInstance->method('getSignalDispatcher')
+            ->willReturn(new SignalDispatcher($pp->getPipeline(WorkflowInboundCallsInterceptor::class), $workflow));
 
         $this->services = new ServiceContainer(
             $this->createMock(LoopInterface::class),
@@ -133,7 +142,7 @@ final class StartWorkflowTestCase extends AbstractUnit
         $this->workflowContext = new WorkflowContext(
             $this->services,
             $this->services->client->fork(),
-            $this->createMockForIntersectionOfInterfaces([WorkflowInstanceInterface::class, Destroyable::class]),
+            $wfInstance,
             new Input(),
             EncodedValues::empty(),
         );
