@@ -68,7 +68,6 @@ class WorkflowReader extends Reader
         'The function %s::%s() is specified as a validator for the Update Handler `%s`, ' .
         'but the Update Handler with that name was not found.'
     ;
-
     private const ERROR_VALIDATOR_DUPLICATE =
         'The function %s::%s() is specified as a validator for the Update Handler `%s`, ' .
         'but another validator with was already registered for that handler.'
