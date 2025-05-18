@@ -122,7 +122,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @param non-empty-string $name
      */
-    public function registerUpdate(string $name, callable $handler, ?callable $validator): static;
+    public function registerUpdate(string $name, callable $handler, ?callable $validator, string $description): static;
 
     /**
      * Exchanges data between worker and host process.

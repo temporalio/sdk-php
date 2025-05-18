@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Declaration\WorkflowInstance;
 
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\Destroyable;
 use Temporal\Internal\Declaration\MethodHandler;
 use Temporal\Internal\Declaration\Prototype\SignalDefinition;
@@ -28,7 +29,7 @@ final class SignalDispatcher implements Destroyable
     private readonly SignalQueue $signalQueue;
 
     /**
-     * @param Pipeline $pipeline Interceptor pipeline.
+     * @param Pipeline<WorkflowInboundCallsInterceptor, mixed> $pipeline Interceptor pipeline.
      * @param object $context Workflow instance.
      */
     public function __construct(

@@ -14,6 +14,7 @@ namespace Temporal\Internal\Declaration\WorkflowInstance;
 use Temporal\Api\Sdk\V1\WorkflowInteractionDefinition;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
+use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\Destroyable;
 use Temporal\Internal\Declaration\MethodHandler;
 use Temporal\Internal\Declaration\Prototype\QueryDefinition;
@@ -37,7 +38,7 @@ final class QueryDispatcher implements Destroyable
     private \Closure $queryExecutor;
 
     /**
-     * @param Pipeline $pipeline Interceptor pipeline.
+     * @param Pipeline<WorkflowInboundCallsInterceptor, mixed> $pipeline Interceptor pipeline.
      * @param object $context Workflow instance.
      */
     public function __construct(

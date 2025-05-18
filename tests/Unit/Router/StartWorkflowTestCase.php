@@ -20,6 +20,7 @@ use Temporal\Internal\Declaration\Destroyable;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
 use Temporal\Internal\Declaration\WorkflowInstance\QueryDispatcher;
 use Temporal\Internal\Declaration\WorkflowInstance\SignalDispatcher;
+use Temporal\Internal\Declaration\WorkflowInstance\UpdateDispatcher;
 use Temporal\Internal\Declaration\WorkflowInstanceInterface;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Queue\QueueInterface;
@@ -123,6 +124,8 @@ final class StartWorkflowTestCase extends AbstractUnit
             ->willReturn(new QueryDispatcher($pp->getPipeline(WorkflowInboundCallsInterceptor::class), $workflow));
         $wfInstance->method('getSignalDispatcher')
             ->willReturn(new SignalDispatcher($pp->getPipeline(WorkflowInboundCallsInterceptor::class), $workflow));
+        $wfInstance->method('getUpdateDispatcher')
+            ->willReturn(new UpdateDispatcher($pp->getPipeline(WorkflowInboundCallsInterceptor::class), $workflow));
 
         $this->services = new ServiceContainer(
             $this->createMock(LoopInterface::class),

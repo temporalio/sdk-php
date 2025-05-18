@@ -481,8 +481,9 @@ final class Workflow extends Facade
         string $name,
         callable $handler,
         ?callable $validator = null,
+        string $description = '',
     ): ScopedContextInterface {
-        return self::getCurrentContext()->registerUpdate($name, $handler, $validator);
+        return self::getCurrentContext()->registerUpdate($name, $handler, $validator, $description);
     }
 
     /**
