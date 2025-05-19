@@ -15,7 +15,7 @@ use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
-use Temporal\Internal\Declaration\WorkflowInstanceInterface;
+use Temporal\Internal\Declaration\WorkflowInstance\UpdateDispatcher;
 use Temporal\Worker\Transport\Command\Client\UpdateResponse;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
@@ -32,10 +32,10 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
         $resolver->promise()->cancel();
 
         try {
-            $instance = $process->getWorkflowInstance();
             /** @var non-empty-string $name */
             $name = $request->getOptions()['name'];
-            $handler = $this->getUpdateHandler($instance, $name);
+            $updateDispatcher = $process->getContext()->getUpdateDispatcher();
+            $handler = $this->getUpdateHandler($updateDispatcher, $name);
 
             $info = $context->getInfo();
             $tickInfo = $request->getTickInfo();
@@ -67,12 +67,10 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
                     updateId: $updateId,
                 ));
             } else {
-                $validator = $instance->findValidateUpdateHandler($name);
+                $validator = $updateDispatcher->findValidateUpdateHandler($name);
 
                 // Validation will be passed if no validation handler is found
-                if ($validator !== null) {
-                    $validator($input);
-                }
+                $validator === null or $validator($input);
 
                 $context->getClient()->send(new UpdateResponse(
                     command: UpdateResponse::COMMAND_VALIDATED,
@@ -122,10 +120,10 @@ final class InvokeUpdate extends WorkflowProcessAwareRoute
      * @param non-empty-string $name
      * @return \Closure(UpdateInput, Deferred): PromiseInterface
      */
-    private function getUpdateHandler(WorkflowInstanceInterface $instance, string $name): \Closure
+    private function getUpdateHandler(UpdateDispatcher $dispatcher, string $name): \Closure
     {
-        return $instance->findUpdateHandler($name) ?? throw new \LogicException(
-            \sprintf(self::ERROR_HANDLER_NOT_FOUND, $name, \implode(' ', $instance->getUpdateHandlerNames())),
+        return $dispatcher->findUpdateHandler($name) ?? throw new \LogicException(
+            \sprintf(self::ERROR_HANDLER_NOT_FOUND, $name, \implode(' ', $dispatcher->getUpdateHandlerNames())),
         );
     }
 }

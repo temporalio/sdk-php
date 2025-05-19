@@ -13,10 +13,13 @@ namespace Temporal\Internal\Transport\Router;
 
 use JetBrains\PhpStorm\Pure;
 use React\Promise\Deferred;
+use Temporal\Api\Sdk\V1\WorkflowDefinition;
+use Temporal\Api\Sdk\V1\WorkflowMetadata;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
-use Temporal\Internal\Declaration\WorkflowInstanceInterface;
+use Temporal\Internal\Declaration\WorkflowInstance\QueryDispatcher;
 use Temporal\Internal\Repository\RepositoryInterface;
+use Temporal\Internal\Workflow\WorkflowContext;
 use Temporal\Worker\LoopInterface;
 use Temporal\Workflow;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
@@ -46,8 +49,29 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
         $name = $request->getOptions()['name'];
         $process = $this->findProcessOrFail($request->getID());
         $context = $process->getContext();
-        $instance = $process->getWorkflowInstance();
-        $handler = $this->findQueryHandlerOrFail($instance, $name);
+
+        match ($name) {
+            // todo: refactor
+            '__temporal_workflow_metadata' => $resolver->resolve(
+                EncodedValues::fromValues([(new WorkflowMetadata())->setDefinition(
+                    (new WorkflowDefinition())
+                        ->setQueryDefinitions($context->getQueryDispatcher()->getQueryHandlers())
+                        ->setSignalDefinitions($context->getSignalDispatcher()->getSignalHandlers())
+                        ->setUpdateDefinitions($context->getUpdateDispatcher()->getUpdateHandlers()),
+                )]),
+            ),
+            default => $this->handleQuery($name, $request, $resolver, $context, $headers),
+        };
+    }
+
+    private function handleQuery(
+        string $name,
+        ServerRequestInterface $request,
+        Deferred $resolver,
+        WorkflowContext $context,
+        array $headers,
+    ): void {
+        $handler = $this->findQueryHandlerOrFail($context->getQueryDispatcher(), $name);
 
         $this->loop->once(
             LoopInterface::ON_QUERY,
@@ -78,13 +102,13 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
      * @param non-empty-string $name
      * @return \Closure(QueryInput): mixed
      */
-    private function findQueryHandlerOrFail(WorkflowInstanceInterface $instance, string $name): \Closure
+    private function findQueryHandlerOrFail(QueryDispatcher $dispatcher, string $name): \Closure
     {
-        return $instance->findQueryHandler($name) ?? throw new \LogicException(
+        return $dispatcher->findQueryHandler($name) ?? throw new \LogicException(
             \sprintf(
                 self::ERROR_QUERY_NOT_FOUND,
                 $name,
-                \implode(' ', $instance->getQueryHandlerNames()),
+                \implode(' ', $dispatcher->getQueryHandlerNames()),
             ),
         );
     }

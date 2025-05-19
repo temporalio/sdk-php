@@ -31,9 +31,11 @@ final class UpdateMethod
      *        And systems like prometheus ignore metrics which have tags with unsupported characters.
      * @param HandlerUnfinishedPolicy $unfinishedPolicy Actions taken if a workflow exits with
      *        a running instance of this handler.
+     * @param string $description Short description of the update handler.
      */
     public function __construct(
         public readonly ?string $name = null,
         public readonly HandlerUnfinishedPolicy $unfinishedPolicy = HandlerUnfinishedPolicy::WarnAndAbandon,
+        public readonly string $description = '',
     ) {}
 }
