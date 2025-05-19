@@ -41,6 +41,7 @@ final class Priority
      *
      * @var int<0, max>
      */
+    #[Marshal(name: 'priority_key')]
     #[Marshal(name: 'PriorityKey')]
     public int $priorityKey = 0;
 
