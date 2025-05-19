@@ -19,6 +19,7 @@ use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\Client\ActivityCanceledException;
 use Temporal\Exception\Client\ActivityCompletionException;
+use Temporal\Exception\Client\ActivityPausedException;
 use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Interceptor\HeaderInterface;
 use Temporal\Internal\Interceptor\HeaderCarrier;
@@ -144,6 +145,9 @@ final class ActivityContext implements ActivityContextInterface, HeaderCarrier
             if (!empty($response['canceled'])) {
                 throw ActivityCanceledException::fromActivityInfo($this->info);
             }
+
+            $paused = (bool) ($response['paused'] ?? false);
+            $paused and throw ActivityPausedException::fromActivityInfo($this->info);
         } catch (ServiceClientException $e) {
             throw ActivityCompletionException::fromActivityInfo($this->info, $e);
         }
