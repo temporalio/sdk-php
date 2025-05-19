@@ -114,7 +114,28 @@ final class QueryDispatcher implements Destroyable
      */
     public function getQueryHandlers(): array
     {
-        return []; // todo
+        /** @var list<WorkflowInteractionDefinition> $handlers */
+        $handlers = [];
+        foreach ($this->queryHandlers as $handler) {
+            $handlers[] = (new WorkflowInteractionDefinition())
+                ->setName($handler->name)
+                ->setDescription($handler->description);
+        }
+
+        if ($this->queryDynamicHandler !== null) {
+            $handlers[] = (new WorkflowInteractionDefinition())
+                ->setDescription('Dynamic query handler');
+        }
+
+        \usort(
+            $handlers,
+            static fn(
+                WorkflowInteractionDefinition $a,
+                WorkflowInteractionDefinition $b,
+            ): int => $a->getName() <=> $b->getName(),
+        );
+
+        return $handlers;
     }
 
     public function setDynamicQueryHandler(callable $handler): void

@@ -13,6 +13,7 @@ namespace Temporal\Internal\Declaration\WorkflowInstance;
 
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
+use Temporal\Api\Sdk\V1\WorkflowInteractionDefinition;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
@@ -171,6 +172,35 @@ final class UpdateDispatcher implements Destroyable
             static fn(ValuesInterface $arguments): mixed => $handler($input->updateName, $arguments),
             $deferred,
         );
+    }
+
+    /**
+     * @return list<WorkflowInteractionDefinition>
+     */
+    public function getUpdateHandlers(): array
+    {
+        /** @var list<WorkflowInteractionDefinition> $handlers */
+        $handlers = [];
+        foreach ($this->updateHandlers as $handler) {
+            $handlers[] = (new WorkflowInteractionDefinition())
+                ->setName($handler->name)
+                ->setDescription($handler->description);
+        }
+
+        if ($this->updateDynamicHandler !== null) {
+            $handlers[] = (new WorkflowInteractionDefinition())
+                ->setDescription('Dynamic update handler');
+        }
+
+        \usort(
+            $handlers,
+            static fn(
+                WorkflowInteractionDefinition $a,
+                WorkflowInteractionDefinition $b,
+            ): int => $a->getName() <=> $b->getName(),
+        );
+
+        return $handlers;
     }
 
     public function destroy(): void

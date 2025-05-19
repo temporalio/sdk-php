@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration\WorkflowInstance;
 
+use Temporal\Api\Sdk\V1\WorkflowInteractionDefinition;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\Destroyable;
@@ -90,6 +91,36 @@ final class SignalDispatcher implements Destroyable
     public function clearSignalQueue(): void
     {
         $this->signalQueue->clear();
+    }
+
+    /**
+     * @return list<WorkflowInteractionDefinition>
+     */
+    public function getSignalHandlers(): array
+    {
+        /** @var list<WorkflowInteractionDefinition> $handlers */
+        $handlers = [];
+        foreach ($this->signalHandlers as $handler) {
+            $handlers[] = (new WorkflowInteractionDefinition())
+                ->setName($handler->name)
+                ->setDescription($handler->description);
+        }
+
+        // todo
+        // if ($this->dynamic !== null) {
+        //     $handlers[] = (new WorkflowInteractionDefinition())
+        //         ->setDescription('Dynamic signal handler');
+        // }
+
+        \usort(
+            $handlers,
+            static fn(
+                WorkflowInteractionDefinition $a,
+                WorkflowInteractionDefinition $b,
+            ): int => $a->getName() <=> $b->getName(),
+        );
+
+        return $handlers;
     }
 
     public function destroy(): void
