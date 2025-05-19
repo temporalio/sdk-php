@@ -18,6 +18,7 @@ use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\Common\CronSchedule;
 use Temporal\Common\IdReusePolicy;
 use Temporal\Common\MethodRetry;
+use Temporal\Common\Priority;
 use Temporal\Common\RetryOptions;
 use Temporal\Common\SearchAttributes\SearchAttributeKey;
 use Temporal\Common\TypedSearchAttributes;
@@ -175,6 +176,13 @@ final class WorkflowOptions extends Options
     public string $staticSummary = '';
 
     /**
+     * Optional priority settings that control relative ordering of task processing when tasks are
+     * backed up in a queue.
+     */
+    #[Marshal(name: 'Priority')]
+    public Priority $priority;
+
+    /**
      * @throws \Exception
      */
     public function __construct()
@@ -184,6 +192,7 @@ final class WorkflowOptions extends Options
         $this->workflowRunTimeout = CarbonInterval::seconds(0);
         $this->workflowTaskTimeout = CarbonInterval::seconds(0);
         $this->workflowStartDelay = CarbonInterval::seconds(0);
+        $this->priority = Priority::new();
 
         parent::__construct();
     }
@@ -561,5 +570,21 @@ final class WorkflowOptions extends Options
         }
 
         return $search->setIndexedFields($fields);
+    }
+
+    /**
+     * Optional priority settings that control relative ordering of task processing when tasks are
+     * backed up in a queue.
+     *
+     * @return $this
+     *
+     * @internal Experimental
+     */
+    #[Pure]
+    public function withPriority(Priority $priority): self
+    {
+        $self = clone $this;
+        $self->priority = $priority;
+        return $self;
     }
 }

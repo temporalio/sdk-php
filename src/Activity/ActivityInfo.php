@@ -16,6 +16,7 @@ use Carbon\CarbonInterval;
 use JetBrains\PhpStorm\Immutable;
 use Temporal\Activity;
 use Temporal\Client\ActivityCompletionClientInterface;
+use Temporal\Common\Priority;
 use Temporal\Common\Uuid;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
@@ -100,6 +101,14 @@ final class ActivityInfo
     public int $attempt = 1;
 
     /**
+     * Return the priority of the activity task.
+     *
+     * @internal Experimental API
+     */
+    #[Marshal(name: 'Priority')]
+    public Priority $priority;
+
+    /**
      * ActivityInfo constructor.
      */
     public function __construct()
@@ -112,5 +121,7 @@ final class ActivityInfo
         $this->scheduledTime = CarbonImmutable::now();
         $this->startedTime = CarbonImmutable::now();
         $this->deadline = CarbonImmutable::now();
+
+        $this->priority = Priority::new();
     }
 }

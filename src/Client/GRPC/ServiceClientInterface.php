@@ -452,6 +452,7 @@ interface ServiceClientInterface
      * ScanWorkflowExecutions is a visibility API to list large amount of workflow
      * executions in a specific namespace without order.
      *
+     * Deprecated: Replaced with `ListWorkflowExecutions`.
      * (-- api-linter: core::0127::http-annotation=disabled
      * aip.dev/not-precedent: HTTP users should use ListWorkflowExecutions instead. --)
      *
@@ -754,10 +755,20 @@ interface ServiceClientInterface
      * Describes a worker deployment.
      * Experimental. This API might significantly change or be removed in a future
      * release.
+     * Deprecated. Replaced with `DescribeWorkerDeploymentVersion`.
      *
      * @throws ServiceClientException
      */
     public function DescribeDeployment(V1\DescribeDeploymentRequest $arg, ?ContextInterface $ctx = null): V1\DescribeDeploymentResponse;
+
+    /**
+     * Describes a worker deployment version.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
+     *
+     * @throws ServiceClientException
+     */
+    public function DescribeWorkerDeploymentVersion(V1\DescribeWorkerDeploymentVersionRequest $arg, ?ContextInterface $ctx = null): V1\DescribeWorkerDeploymentVersionResponse;
 
     /**
      * Lists worker deployments in the namespace. Optionally can filter based on
@@ -765,6 +776,7 @@ interface ServiceClientInterface
      * name.
      * Experimental. This API might significantly change or be removed in a future
      * release.
+     * Deprecated. Replaced with `ListWorkerDeployments`.
      *
      * @throws ServiceClientException
      */
@@ -784,6 +796,8 @@ interface ServiceClientInterface
      * reachability calculation time.
      * Experimental. This API might significantly change or be removed in a future
      * release.
+     * Deprecated. Replaced with `DrainageInfo` returned by
+     * `DescribeWorkerDeploymentVersion`.
      *
      * @throws ServiceClientException
      */
@@ -793,6 +807,8 @@ interface ServiceClientInterface
      * Returns the current deployment (and its info) for a given deployment series.
      * Experimental. This API might significantly change or be removed in a future
      * release.
+     * Deprecated. Replaced by `current_version` returned by
+     * `DescribeWorkerDeployment`.
      *
      * @throws ServiceClientException
      */
@@ -804,10 +820,86 @@ interface ServiceClientInterface
      * the metadata of the deployment as well.
      * Experimental. This API might significantly change or be removed in a future
      * release.
+     * Deprecated. Replaced by `SetWorkerDeploymentCurrentVersion`.
      *
      * @throws ServiceClientException
      */
     public function SetCurrentDeployment(V1\SetCurrentDeploymentRequest $arg, ?ContextInterface $ctx = null): V1\SetCurrentDeploymentResponse;
+
+    /**
+     * Set/unset the Current Version of a Worker Deployment. Automatically unsets the
+     * Ramping
+     * Version if it is the Version being set as Current.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
+     *
+     * @throws ServiceClientException
+     */
+    public function SetWorkerDeploymentCurrentVersion(V1\SetWorkerDeploymentCurrentVersionRequest $arg, ?ContextInterface $ctx = null): V1\SetWorkerDeploymentCurrentVersionResponse;
+
+    /**
+     * Describes a Worker Deployment.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
+     *
+     * @throws ServiceClientException
+     */
+    public function DescribeWorkerDeployment(V1\DescribeWorkerDeploymentRequest $arg, ?ContextInterface $ctx = null): V1\DescribeWorkerDeploymentResponse;
+
+    /**
+     * Deletes records of (an old) Deployment. A deployment can only be deleted if
+     * it has no Version in it.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
+     *
+     * @throws ServiceClientException
+     */
+    public function DeleteWorkerDeployment(V1\DeleteWorkerDeploymentRequest $arg, ?ContextInterface $ctx = null): V1\DeleteWorkerDeploymentResponse;
+
+    /**
+     * Used for manual deletion of Versions. User can delete a Version only when all
+     * the
+     * following conditions are met:
+     * - It is not the Current or Ramping Version of its Deployment.
+     * - It has no active pollers (none of the task queues in the Version have pollers)
+     * - It is not draining (see WorkerDeploymentVersionInfo.drainage_info). This
+     * condition
+     * can be skipped by passing `skip-drainage=true`.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
+     *
+     * @throws ServiceClientException
+     */
+    public function DeleteWorkerDeploymentVersion(V1\DeleteWorkerDeploymentVersionRequest $arg, ?ContextInterface $ctx = null): V1\DeleteWorkerDeploymentVersionResponse;
+
+    /**
+     * Set/unset the Ramping Version of a Worker Deployment and its ramp percentage.
+     * Can be used for
+     * gradual ramp to unversioned workers too.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
+     *
+     * @throws ServiceClientException
+     */
+    public function SetWorkerDeploymentRampingVersion(V1\SetWorkerDeploymentRampingVersionRequest $arg, ?ContextInterface $ctx = null): V1\SetWorkerDeploymentRampingVersionResponse;
+
+    /**
+     * Lists all Worker Deployments that are tracked in the Namespace.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
+     *
+     * @throws ServiceClientException
+     */
+    public function ListWorkerDeployments(V1\ListWorkerDeploymentsRequest $arg, ?ContextInterface $ctx = null): V1\ListWorkerDeploymentsResponse;
+
+    /**
+     * Updates the user-given metadata attached to a Worker Deployment Version.
+     * Experimental. This API might significantly change or be removed in a future
+     * release.
+     *
+     * @throws ServiceClientException
+     */
+    public function UpdateWorkerDeploymentVersionMetadata(V1\UpdateWorkerDeploymentVersionMetadataRequest $arg, ?ContextInterface $ctx = null): V1\UpdateWorkerDeploymentVersionMetadataResponse;
 
     /**
      * Invokes the specified Update function on user Workflow code.
@@ -888,14 +980,14 @@ interface ServiceClientInterface
     public function RespondNexusTaskFailed(V1\RespondNexusTaskFailedRequest $arg, ?ContextInterface $ctx = null): V1\RespondNexusTaskFailedResponse;
 
     /**
-     * UpdateActivityOptionsById is called by the client to update the options of an
-     * activity
-     * (-- api-linter: core::0136::prepositions=disabled
-     * aip.dev/not-precedent: "By" is used to indicate request type. --)
+     * UpdateActivityOptions is called by the client to update the options of an
+     * activity by its ID or type.
+     * If there are multiple pending activities of the provided type - all of them will
+     * be updated.
      *
      * @throws ServiceClientException
      */
-    public function UpdateActivityOptionsById(V1\UpdateActivityOptionsByIdRequest $arg, ?ContextInterface $ctx = null): V1\UpdateActivityOptionsByIdResponse;
+    public function UpdateActivityOptions(V1\UpdateActivityOptionsRequest $arg, ?ContextInterface $ctx = null): V1\UpdateActivityOptionsResponse;
 
     /**
      * UpdateWorkflowExecutionOptions partially updates the WorkflowExecutionOptions of
@@ -906,8 +998,9 @@ interface ServiceClientInterface
     public function UpdateWorkflowExecutionOptions(V1\UpdateWorkflowExecutionOptionsRequest $arg, ?ContextInterface $ctx = null): V1\UpdateWorkflowExecutionOptionsResponse;
 
     /**
-     * PauseActivityById pauses the execution of an activity specified by its ID.
-     * Returns a `NotFound` error if there is no pending activity with the provided ID.
+     * PauseActivity pauses the execution of an activity specified by its ID or type.
+     * If there are multiple pending activities of the provided type - all of them will
+     * be paused
      *
      * Pausing an activity means:
      * - If the activity is currently waiting for a retry or is running and
@@ -923,58 +1016,110 @@ interface ServiceClientInterface
      * - activities in paused state will send a cancellation with "activity_paused" set
      * to 'true' in response to 'RecordActivityTaskHeartbeat'.
      * - The activity should respond to the cancellation accordingly.
-     * (-- api-linter: core::0136::prepositions=disabled
-     * aip.dev/not-precedent: "By" is used to indicate request type. --)
+     *
+     * Returns a `NotFound` error if there is no pending activity with the provided ID
+     * or type
      *
      * @throws ServiceClientException
      */
-    public function PauseActivityById(V1\PauseActivityByIdRequest $arg, ?ContextInterface $ctx = null): V1\PauseActivityByIdResponse;
+    public function PauseActivity(V1\PauseActivityRequest $arg, ?ContextInterface $ctx = null): V1\PauseActivityResponse;
 
     /**
-     * UnpauseActivityById unpauses the execution of an activity specified by its ID.
-     * Returns a `NotFound` error if there is no pending activity with the provided ID.
-     * There are two 'modes' of unpausing an activity:
-     * 'resume' - If the activity is paused, it will be resumed and scheduled for
-     * execution.
-     * If the activity is currently running Unpause with 'resume' has no effect.
-     * if 'no_wait' flag is set and the activity is waiting, the activity will be
-     * scheduled immediately.
-     * 'reset' - If the activity is paused, it will be reset to its initial state and
-     * (depending on parameters) scheduled for execution.
-     * If the activity is currently running, Unpause with 'reset' will reset the number
-     * of attempts.
-     * if 'no_wait' flag is set, the activity will be scheduled immediately.
-     * if 'reset_heartbeats' flag is set, the activity heartbeat timer and heartbeats
-     * will be reset.
-     * If the activity is in waiting for retry and past it retry timeout, it will be
-     * scheduled immediately.
+     * UnpauseActivity unpauses the execution of an activity specified by its ID or
+     * type.
+     * If there are multiple pending activities of the provided type - all of them will
+     * be unpaused.
+     *
+     * If activity is not paused, this call will have no effect.
+     * If the activity was paused while waiting for retry, it will be scheduled
+     * immediately (* see 'jitter' flag).
      * Once the activity is unpaused, all timeout timers will be regenerated.
-     * (-- api-linter: core::0136::prepositions=disabled
-     * aip.dev/not-precedent: "By" is used to indicate request type. --)
+     *
+     * Flags:
+     * 'jitter': the activity will be scheduled at a random time within the jitter
+     * duration.
+     * 'reset_attempts': the number of attempts will be reset.
+     * 'reset_heartbeat': the activity heartbeat timer and heartbeats will be reset.
+     *
+     * Returns a `NotFound` error if there is no pending activity with the provided ID
+     * or type
      *
      * @throws ServiceClientException
      */
-    public function UnpauseActivityById(V1\UnpauseActivityByIdRequest $arg, ?ContextInterface $ctx = null): V1\UnpauseActivityByIdResponse;
+    public function UnpauseActivity(V1\UnpauseActivityRequest $arg, ?ContextInterface $ctx = null): V1\UnpauseActivityResponse;
 
     /**
-     * ResetActivityById unpauses the execution of an activity specified by its ID.
-     * Returns a `NotFound` error if there is no pending activity with the provided ID.
+     * ResetActivity resets the execution of an activity specified by its ID or type.
+     * If there are multiple pending activities of the provided type - all of them will
+     * be reset.
+     *
      * Resetting an activity means:
      * number of attempts will be reset to 0.
-     * activity timeouts will be resetted.
-     * If the activity currently running:
-     * if 'no_wait' flag is provided, a new instance of the activity will be scheduled
-     * immediately.
-     * if 'no_wait' flag is not provided, a new instance of the  activity will be
-     * scheduled after current instance completes if needed.
-     * If 'reset_heartbeats' flag is set, the activity heartbeat timer and heartbeats
-     * will be reset.
-     * (-- api-linter: core::0136::prepositions=disabled
-     * aip.dev/not-precedent: "By" is used to indicate request type. --)
+     * activity timeouts will be reset.
+     * if the activity is waiting for retry, and it is not paused or 'keep_paused' is
+     * not provided:
+     * it will be scheduled immediately (* see 'jitter' flag),
+     *
+     * Flags:
+     *
+     * 'jitter': the activity will be scheduled at a random time within the jitter
+     * duration.
+     * If the activity currently paused it will be unpaused, unless 'keep_paused' flag
+     * is provided.
+     * 'reset_heartbeats': the activity heartbeat timer and heartbeats will be reset.
+     * 'keep_paused': if the activity is paused, it will remain paused.
+     *
+     * Returns a `NotFound` error if there is no pending activity with the provided ID
+     * or type.
      *
      * @throws ServiceClientException
      */
-    public function ResetActivityById(V1\ResetActivityByIdRequest $arg, ?ContextInterface $ctx = null): V1\ResetActivityByIdResponse;
+    public function ResetActivity(V1\ResetActivityRequest $arg, ?ContextInterface $ctx = null): V1\ResetActivityResponse;
+
+    /**
+     * Create a new workflow rule. The rules are used to control the workflow
+     * execution.
+     * The rule will be applied to all running and new workflows in the namespace.
+     * If the rule with such ID already exist this call will fail
+     * Note: the rules are part of namespace configuration and will be stored in the
+     * namespace config.
+     * Namespace config is eventually consistent.
+     *
+     * @throws ServiceClientException
+     */
+    public function CreateWorkflowRule(V1\CreateWorkflowRuleRequest $arg, ?ContextInterface $ctx = null): V1\CreateWorkflowRuleResponse;
+
+    /**
+     * DescribeWorkflowRule return the rule specification for existing rule id.
+     * If there is no rule with such id - NOT FOUND error will be returned.
+     *
+     * @throws ServiceClientException
+     */
+    public function DescribeWorkflowRule(V1\DescribeWorkflowRuleRequest $arg, ?ContextInterface $ctx = null): V1\DescribeWorkflowRuleResponse;
+
+    /**
+     * Delete rule by rule id
+     *
+     * @throws ServiceClientException
+     */
+    public function DeleteWorkflowRule(V1\DeleteWorkflowRuleRequest $arg, ?ContextInterface $ctx = null): V1\DeleteWorkflowRuleResponse;
+
+    /**
+     * Return all namespace workflow rules
+     *
+     * @throws ServiceClientException
+     */
+    public function ListWorkflowRules(V1\ListWorkflowRulesRequest $arg, ?ContextInterface $ctx = null): V1\ListWorkflowRulesResponse;
+
+    /**
+     * TriggerWorkflowRule allows to:
+     * trigger existing rule for a specific workflow execution;
+     * trigger rule for a specific workflow execution without creating a rule;
+     * This is useful for one-off operations.
+     *
+     * @throws ServiceClientException
+     */
+    public function TriggerWorkflowRule(V1\TriggerWorkflowRuleRequest $arg, ?ContextInterface $ctx = null): V1\TriggerWorkflowRuleResponse;
 
     /**
      * Close the communication channel associated with this stub.
