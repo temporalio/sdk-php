@@ -3,7 +3,7 @@ name: Generating API documentation
 on:
   push:
     branches:
-      - 'master'
+      - "master"
 
 jobs:
   docs:
@@ -34,4 +34,7 @@ jobs:
         run: docker run --rm --volume "$(pwd):/data" phpdoc/phpdoc:3.4 -vv --template default
 
       - name: Upload documentation
-        run: npx vercel deploy docs/api -t ${{ secrets.VERCEL_TOKEN }} --name php --scope temporal --prod --yes
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: npx vercel deploy docs/api -t ${{ secrets.VERCEL_TOKEN }} --prod --yes
