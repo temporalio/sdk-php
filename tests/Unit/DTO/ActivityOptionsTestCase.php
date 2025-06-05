@@ -35,6 +35,9 @@ class ActivityOptionsTestCase extends AbstractDTOMarshalling
             'WaitForCancellation'    => false,
             'ActivityID'             => '',
             'RetryPolicy'            => null,
+            'Priority' => [
+                'priority_key' => 0,
+            ],
         ];
 
         $this->assertSame($expected, $this->marshal($dto));
