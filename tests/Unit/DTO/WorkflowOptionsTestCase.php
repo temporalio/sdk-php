@@ -48,6 +48,9 @@ class WorkflowOptionsTestCase extends AbstractDTOMarshalling
             'SearchAttributes'         => null,
             'StaticDetails'            => '',
             'StaticSummary'            => '',
+            'Priority' => [
+                'priority_key' => 0,
+            ],
         ];
 
         $result = $this->marshal($dto);

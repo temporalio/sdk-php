@@ -47,6 +47,9 @@ class WorkflowInfoTestCase extends AbstractDTOMarshalling
             'TypedSearchAttributes' => [],
             'Memo' => null,
             'BinaryChecksum' => '',
+            'Priority' => [
+                'priority_key' => 0,
+            ],
         ];
 
         $this->assertSame($expected, $this->marshal($dto));
