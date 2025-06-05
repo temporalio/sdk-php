@@ -22,6 +22,7 @@ use Temporal\Internal\Marshaller\Meta\Marshal;
 class WorkflowExecution
 {
     /**
+     * @var non-empty-string
      * @psalm-readonly
      * @psalm-allow-private-mutation
      */
@@ -30,6 +31,7 @@ class WorkflowExecution
     private string $id;
 
     /**
+     * @var non-empty-string|null
      * @psalm-readonly
      * @psalm-allow-private-mutation
      */
@@ -43,11 +45,17 @@ class WorkflowExecution
         $this->runId = $runId;
     }
 
+    /**
+     * @return non-empty-string
+     */
     public function getID(): string
     {
         return $this->id;
     }
 
+    /**
+     * @return non-empty-string|null
+     */
     public function getRunID(): ?string
     {
         return $this->runId;
