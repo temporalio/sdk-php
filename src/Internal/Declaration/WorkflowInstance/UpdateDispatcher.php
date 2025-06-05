@@ -16,11 +16,10 @@ use React\Promise\PromiseInterface;
 use Temporal\Api\Sdk\V1\WorkflowInteractionDefinition;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
-use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\Destroyable;
 use Temporal\Internal\Declaration\MethodHandler;
 use Temporal\Internal\Declaration\Prototype\UpdateDefinition;
-use Temporal\Internal\Interceptor\Pipeline;
+use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 
 /**
  * @internal
@@ -49,13 +48,16 @@ final class UpdateDispatcher implements Destroyable
     private \Closure $updateValidator;
 
     /**
-     * @param Pipeline<WorkflowInboundCallsInterceptor, mixed> $pipeline Interceptor pipeline.
      * @param object $context Workflow instance.
      */
     public function __construct(
-        private readonly Pipeline $pipeline,
+        WorkflowPrototype $prototype,
         private readonly object $context,
-    ) {}
+    ) {
+        foreach ($prototype->getUpdateHandlers() as $definition) {
+            $this->addFromUpdateDefinition($definition);
+        }
+    }
 
     /**
      * @param \Closure(UpdateInput, callable(ValuesInterface): mixed, Deferred): PromiseInterface $executor

@@ -38,21 +38,9 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
     ) {
         parent::__construct($prototype, $context);
 
-        $this->queryDispatcher = new QueryDispatcher($pipeline, $context);
-        $this->signalDispatcher = new SignalDispatcher($pipeline, $context);
-        $this->updateDispatcher = new UpdateDispatcher($pipeline, $context);
-
-        foreach ($prototype->getQueryHandlers() as $definition) {
-            $this->queryDispatcher->addFromQueryDefinition($definition);
-        }
-
-        foreach ($prototype->getSignalHandlers() as $definition) {
-            $this->signalDispatcher->addFromSignalDefinition($definition);
-        }
-
-        foreach ($prototype->getUpdateHandlers() as $definition) {
-            $this->updateDispatcher->addFromUpdateDefinition($definition);
-        }
+        $this->queryDispatcher = new QueryDispatcher($prototype, $context);
+        $this->signalDispatcher = new SignalDispatcher($prototype, $context);
+        $this->updateDispatcher = new UpdateDispatcher($prototype, $context);
     }
 
     public function getQueryDispatcher(): QueryDispatcher

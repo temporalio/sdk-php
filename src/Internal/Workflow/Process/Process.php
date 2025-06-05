@@ -51,21 +51,23 @@ class Process extends Scope implements ProcessInterface
         $inboundPipeline = $services->interceptorProvider->getPipeline(WorkflowInboundCallsInterceptor::class);
 
         // Configure query handler in an immutable scope
-        $workflowInstance->getQueryDispatcher()->setQueryExecutor(function (QueryInput $input, callable $handler): mixed {
-            try {
-                $context = $this->scopeContext->withInput(
-                    new Input(
-                        $this->scopeContext->getInfo(),
-                        $input->arguments,
-                    ),
-                );
-                Workflow::setCurrentContext($context);
-
-                return $handler($input->arguments);
-            } finally {
-                Workflow::setCurrentContext(null);
-            }
-        });
+        $workflowInstance->getQueryDispatcher()
+            ->setQueryExecutor(function (QueryInput $input, callable $handler) use ($inboundPipeline): mixed {
+                try {
+                    return $inboundPipeline->with(
+                        function (QueryInput $input) use ($handler): mixed {
+                            $context = $this->scopeContext
+                                ->withInput(new Input($this->scopeContext->getInfo(), $input->arguments));
+                            Workflow::setCurrentContext($context);
+                            return $handler($input->arguments);
+                        },
+                        /** @see WorkflowInboundCallsInterceptor::handleQuery() */
+                        'handleQuery',
+                    )($input);
+                } finally {
+                    Workflow::setCurrentContext(null);
+                }
+            });
 
         // Configure update validator in an immutable scope
         $workflowInstance->getUpdateDispatcher()

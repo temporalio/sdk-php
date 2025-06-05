@@ -14,11 +14,10 @@ namespace Temporal\Internal\Declaration\WorkflowInstance;
 use Temporal\Api\Sdk\V1\WorkflowInteractionDefinition;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
-use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\Destroyable;
 use Temporal\Internal\Declaration\MethodHandler;
 use Temporal\Internal\Declaration\Prototype\QueryDefinition;
-use Temporal\Internal\Interceptor\Pipeline;
+use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 
 /**
  * @psalm-type QueryHandler = \Closure(QueryInput): mixed
@@ -38,13 +37,16 @@ final class QueryDispatcher implements Destroyable
     private \Closure $queryExecutor;
 
     /**
-     * @param Pipeline<WorkflowInboundCallsInterceptor, mixed> $pipeline Interceptor pipeline.
      * @param object $context Workflow instance.
      */
     public function __construct(
-        private readonly Pipeline $pipeline,
+        WorkflowPrototype $prototype,
         private readonly object $context,
-    ) {}
+    ) {
+        foreach ($prototype->getQueryHandlers() as $definition) {
+            $this->addFromQueryDefinition($definition);
+        }
+    }
 
     /**
      * @param QueryExecutor $executor
@@ -77,11 +79,7 @@ final class QueryDispatcher implements Destroyable
         $handler = new MethodHandler($this->context, new \ReflectionFunction($handler(...)));
         $this->queryHandlers[$name] = new QueryMethod(
             $name,
-            $this->pipeline->with(
-                fn(QueryInput $input): mixed => ($this->queryExecutor)($input, $handler),
-                /** @see WorkflowInboundCallsInterceptor::handleQuery() */
-                'handleQuery',
-            )(...),
+            fn(QueryInput $input): mixed => ($this->queryExecutor)($input, $handler),
             $description,
         );
     }
@@ -92,11 +90,7 @@ final class QueryDispatcher implements Destroyable
 
         $this->queryHandlers[$definition->name] = new QueryMethod(
             $definition->name,
-            $this->pipeline->with(
-                fn(QueryInput $input): mixed => ($this->queryExecutor)($input, $handler),
-                /** @see WorkflowInboundCallsInterceptor::handleQuery() */
-                'handleQuery',
-            )(...),
+            fn(QueryInput $input): mixed => ($this->queryExecutor)($input, $handler),
             $definition->description,
         );
     }
@@ -138,16 +132,15 @@ final class QueryDispatcher implements Destroyable
         return $handlers;
     }
 
+    /**
+     * @param callable(non-empty-string, ValuesInterface): mixed $handler
+     */
     public function setDynamicQueryHandler(callable $handler): void
     {
-        $this->queryDynamicHandler = $this->pipeline->with(
-            fn(QueryInput $input): mixed => ($this->queryExecutor)(
-                $input,
-                static fn(ValuesInterface $arguments): mixed => $handler($input->queryName, $arguments),
-            ),
-            /** @see WorkflowInboundCallsInterceptor::handleQuery() */
-            'handleQuery',
-        )(...);
+        $this->queryDynamicHandler = fn(QueryInput $input): mixed => ($this->queryExecutor)(
+            $input,
+            static fn(ValuesInterface $arguments): mixed => $handler($input->queryName, $arguments),
+        );
     }
 
     public function destroy(): void

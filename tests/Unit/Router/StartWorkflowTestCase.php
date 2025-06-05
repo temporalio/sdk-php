@@ -17,6 +17,7 @@ use Temporal\Exception\ExceptionInterceptorInterface;
 use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\Destroyable;
+use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
 use Temporal\Internal\Declaration\WorkflowInstance\QueryDispatcher;
 use Temporal\Internal\Declaration\WorkflowInstance\SignalDispatcher;
@@ -116,16 +117,16 @@ final class StartWorkflowTestCase extends AbstractUnit
     protected function setUp(): void
     {
         $workflow = new \stdClass();
-        $pp = new SimplePipelineProvider();
+        $prototype = new WorkflowPrototype('std-class', null, new \ReflectionClass($workflow));
         $dataConverter = $this->createMock(DataConverterInterface::class);
         $this->marshaller = $this->createMock(MarshallerInterface::class);
         $wfInstance = $this->createMockForIntersectionOfInterfaces([WorkflowInstanceInterface::class, Destroyable::class]);
         $wfInstance->method('getQueryDispatcher')
-            ->willReturn(new QueryDispatcher($pp->getPipeline(WorkflowInboundCallsInterceptor::class), $workflow));
+            ->willReturn(new QueryDispatcher($prototype, $workflow));
         $wfInstance->method('getSignalDispatcher')
-            ->willReturn(new SignalDispatcher($pp->getPipeline(WorkflowInboundCallsInterceptor::class), $workflow));
+            ->willReturn(new SignalDispatcher($prototype, $workflow));
         $wfInstance->method('getUpdateDispatcher')
-            ->willReturn(new UpdateDispatcher($pp->getPipeline(WorkflowInboundCallsInterceptor::class), $workflow));
+            ->willReturn(new UpdateDispatcher($prototype, $workflow));
 
         $this->services = new ServiceContainer(
             $this->createMock(LoopInterface::class),

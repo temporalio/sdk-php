@@ -13,11 +13,10 @@ namespace Temporal\Internal\Declaration\WorkflowInstance;
 
 use Temporal\Api\Sdk\V1\WorkflowInteractionDefinition;
 use Temporal\DataConverter\ValuesInterface;
-use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\Destroyable;
 use Temporal\Internal\Declaration\MethodHandler;
 use Temporal\Internal\Declaration\Prototype\SignalDefinition;
-use Temporal\Internal\Interceptor\Pipeline;
+use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 
 /**
  * @internal
@@ -30,14 +29,17 @@ final class SignalDispatcher implements Destroyable
     private readonly SignalQueue $signalQueue;
 
     /**
-     * @param Pipeline<WorkflowInboundCallsInterceptor, mixed> $pipeline Interceptor pipeline.
      * @param object $context Workflow instance.
      */
     public function __construct(
-        private readonly Pipeline $pipeline,
+        WorkflowPrototype $prototype,
         private readonly object $context,
     ) {
         $this->signalQueue = new SignalQueue();
+
+        foreach ($prototype->getSignalHandlers() as $definition) {
+            $this->addFromSignalDefinition($definition);
+        }
     }
 
     public function getSignalQueue(): SignalQueue
