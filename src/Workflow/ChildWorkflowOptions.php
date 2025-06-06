@@ -17,6 +17,7 @@ use Temporal\Client\ClientOptions;
 use Temporal\Common\CronSchedule;
 use Temporal\Common\IdReusePolicy;
 use Temporal\Common\MethodRetry;
+use Temporal\Common\Priority;
 use Temporal\Common\RetryOptions;
 use Temporal\Exception\FailedCancellationException;
 use Temporal\Internal\Marshaller\Meta\Marshal;
@@ -174,6 +175,13 @@ final class ChildWorkflowOptions extends Options
     public string $staticSummary = '';
 
     /**
+     * Optional priority settings that control relative ordering of task processing when tasks are
+     * backed up in a queue.
+     */
+    #[Marshal(name: 'Priority')]
+    public Priority $priority;
+
+    /**
      * @throws \Exception
      */
     public function __construct()
@@ -187,8 +195,9 @@ final class ChildWorkflowOptions extends Options
             $info = Workflow::getInfo();
             $this->namespace = $info->namespace;
             $this->taskQueue = $info->taskQueue;
+            $this->priority = $info->priority;
         } catch (\Throwable) {
-            // Do nothing
+            $this->priority = Priority::new();
         }
 
         parent::__construct();
@@ -484,6 +493,22 @@ final class ChildWorkflowOptions extends Options
     {
         $self = clone $this;
         $self->staticDetails = $details;
+        return $self;
+    }
+
+    /**
+     * Optional priority settings that control relative ordering of task processing when tasks are
+     * backed up in a queue.
+     *
+     * @return $this
+     *
+     * @internal Experimental
+     */
+    #[Pure]
+    public function withPriority(Priority $priority): self
+    {
+        $self = clone $this;
+        $self->priority = $priority;
         return $self;
     }
 }
