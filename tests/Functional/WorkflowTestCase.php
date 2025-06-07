@@ -290,8 +290,8 @@ class WorkflowTestCase extends AbstractFunctional
             $worker->run($this, Splitter::createFromString($log)->getQueue());
             $i === 3 and $before = \memory_get_usage();
         }
-        $after = \memory_get_usage();
 
+        $after = \memory_get_usage();
         $this->assertSame(0, $after - $before);
     }
 

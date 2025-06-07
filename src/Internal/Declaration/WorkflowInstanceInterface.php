@@ -11,12 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration;
 
-use React\Promise\Deferred;
-use React\Promise\PromiseInterface;
-use Temporal\DataConverter\ValuesInterface;
-use Temporal\Interceptor\WorkflowInbound\QueryInput;
-use Temporal\Interceptor\WorkflowInbound\UpdateInput;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Internal\Declaration\WorkflowInstance\QueryDispatcher;
+use Temporal\Internal\Declaration\WorkflowInstance\SignalDispatcher;
+use Temporal\Internal\Declaration\WorkflowInstance\UpdateDispatcher;
 
 /**
  * @internal
@@ -30,61 +28,11 @@ interface WorkflowInstanceInterface extends InstanceInterface
      */
     public function init(array $arguments = []): void;
 
-    /**
-     * @param non-empty-string $name
-     * @return null|\Closure(QueryInput): mixed
-     */
-    public function findQueryHandler(string $name): ?\Closure;
-
-    /**
-     * @param non-empty-string $name
-     */
-    public function addQueryHandler(string $name, callable $handler): void;
-
-    /**
-     * @param non-empty-string $name
-     */
-    public function addUpdateHandler(string $name, callable $handler): void;
-
-    /**
-     * @param non-empty-string $name
-     */
-    public function addValidateUpdateHandler(string $name, callable $handler): void;
-
-    /**
-     * @param non-empty-string $name
-     * @return \Closure(ValuesInterface): void
-     */
-    public function getSignalHandler(string $name): \Closure;
-
-    /**
-     * @param non-empty-string $name
-     * @return null|\Closure(UpdateInput, Deferred): PromiseInterface
-     */
-    public function findUpdateHandler(string $name): ?\Closure;
-
-    /**
-     * @param non-empty-string $name
-     */
-    public function addSignalHandler(string $name, callable $handler): void;
-
-    /**
-     * @param callable(non-empty-string, ValuesInterface): mixed $handler
-     */
-    public function setDynamicSignalHandler(callable $handler): void;
-
-    /**
-     * @param callable(non-empty-string, ValuesInterface): mixed $handler
-     */
-    public function setDynamicQueryHandler(callable $handler): void;
-
-    /**
-     * @param callable(non-empty-string, ValuesInterface): mixed $handler
-     * @param null|callable(non-empty-string, ValuesInterface): mixed $validator
-     */
-    public function setDynamicUpdateHandler(callable $handler, ?callable $validator = null): void;
-
-    public function clearSignalQueue(): void;
-
     public function getPrototype(): WorkflowPrototype;
+
+    public function getQueryDispatcher(): QueryDispatcher;
+
+    public function getSignalDispatcher(): SignalDispatcher;
+
+    public function getUpdateDispatcher(): UpdateDispatcher;
 }
