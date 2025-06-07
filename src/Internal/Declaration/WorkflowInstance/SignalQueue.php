@@ -108,6 +108,14 @@ final class SignalQueue implements Destroyable
         $this->queue = [];
     }
 
+    public function destroy(): void
+    {
+        $this->queue = [];
+        $this->consumers = [];
+        $this->dynamicConsumer = null;
+        unset($this->onSignal);
+    }
+
     /**
      * @param non-empty-string $signal
      * @param Consumer $consumer
@@ -128,13 +136,5 @@ final class SignalQueue implements Destroyable
         // Wrap the fallback consumer to call interceptors
         $consumer = static fn(ValuesInterface $values): mixed => $handler($signal, $values);
         ($this->onSignal)($signal, $consumer, $values);
-    }
-
-    public function destroy(): void
-    {
-        $this->queue = [];
-        $this->consumers = [];
-        $this->dynamicConsumer = null;
-        unset($this->onSignal);
     }
 }
