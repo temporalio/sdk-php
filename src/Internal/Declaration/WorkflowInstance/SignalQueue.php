@@ -12,13 +12,14 @@ declare(strict_types=1);
 namespace Temporal\Internal\Declaration\WorkflowInstance;
 
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Internal\Declaration\Destroyable;
 
 /**
  * @psalm-type Consumer = callable(ValuesInterface): mixed
  *
  * @psalm-type OnSignalCallable = \Closure(non-empty-string $name, Consumer $handler, ValuesInterface $arguments): void
  */
-final class SignalQueue
+final class SignalQueue implements Destroyable
 {
     /**
      * @var array<int, SignalQueueItem>
@@ -127,5 +128,13 @@ final class SignalQueue
         // Wrap the fallback consumer to call interceptors
         $consumer = static fn(ValuesInterface $values): mixed => $handler($signal, $values);
         ($this->onSignal)($signal, $consumer, $values);
+    }
+
+    public function destroy(): void
+    {
+        $this->queue = [];
+        $this->consumers = [];
+        $this->dynamicConsumer = null;
+        unset($this->onSignal);
     }
 }

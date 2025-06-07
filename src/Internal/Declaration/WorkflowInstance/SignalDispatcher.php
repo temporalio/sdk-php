@@ -128,6 +128,7 @@ final class SignalDispatcher implements Destroyable
     public function destroy(): void
     {
         $this->signalQueue->clear();
+        $this->signalQueue->destroy();
         $this->signalHandlers = [];
     }
 }
