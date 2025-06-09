@@ -589,9 +589,6 @@
     <InvalidReturnType>
       <code><![CDATA[\Traversable<ActivityPrototype>]]></code>
     </InvalidReturnType>
-    <PossiblyUndefinedVariable>
-      <code><![CDATA[$contextClass]]></code>
-    </PossiblyUndefinedVariable>
     <RawObjectIteration>
       <code><![CDATA[$group]]></code>
       <code><![CDATA[$group]]></code>
@@ -599,21 +596,6 @@
     <RedundantConditionGivenDocblockType>
       <code><![CDATA[$retry !== null]]></code>
     </RedundantConditionGivenDocblockType>
-  </file>
-  <file src="src/Internal/Declaration/WorkflowInstance.php">
-    <LessSpecificImplementedReturnType>
-      <code><![CDATA[UpdateHandler|null]]></code>
-    </LessSpecificImplementedReturnType>
-    <PropertyNotSetInConstructor>
-      <code><![CDATA[$queryExecutor]]></code>
-      <code><![CDATA[$updateExecutor]]></code>
-      <code><![CDATA[$updateValidator]]></code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="src/Internal/Declaration/WorkflowInstance/SignalQueue.php">
-    <MissingConstructor>
-      <code><![CDATA[$onSignal]]></code>
-    </MissingConstructor>
   </file>
   <file src="src/Internal/Events/EventEmitterInterface.php">
     <InvalidTemplateParam>
@@ -1026,21 +1008,9 @@
     <PossiblyUndefinedStringArrayOffset>
       <code><![CDATA[$request->getOptions()['name']]]></code>
     </PossiblyUndefinedStringArrayOffset>
-    <UndefinedInterfaceMethod>
-      <code><![CDATA[getQueryHandlerNames]]></code>
-    </UndefinedInterfaceMethod>
     <UnusedVariable>
       <code><![CDATA[$headers]]></code>
     </UnusedVariable>
-  </file>
-  <file src="src/Internal/Transport/Router/InvokeSignal.php">
-    <ArgumentTypeCoercion>
-      <code><![CDATA[$request->getID()]]></code>
-      <code><![CDATA[$request->getID()]]></code>
-    </ArgumentTypeCoercion>
-    <PossiblyUndefinedStringArrayOffset>
-      <code><![CDATA[$request->getOptions()['name']]]></code>
-    </PossiblyUndefinedStringArrayOffset>
   </file>
   <file src="src/Internal/Transport/Router/InvokeUpdate.php">
     <ArgumentTypeCoercion>
@@ -1052,8 +1022,6 @@
     </PossiblyUndefinedStringArrayOffset>
     <UndefinedInterfaceMethod>
       <code><![CDATA[cancel]]></code>
-      <code><![CDATA[findValidateUpdateHandler]]></code>
-      <code><![CDATA[getUpdateHandlerNames]]></code>
     </UndefinedInterfaceMethod>
   </file>
   <file src="src/Internal/Transport/Router/StackTrace.php">
@@ -1491,8 +1459,8 @@
   <file src="src/Workflow.php">
     <InvalidReturnStatement>
       <code><![CDATA[self::getCurrentContext()->newActivityStub($class, $options)]]></code>
-      <code><![CDATA[self::getCurrentContext()->registerQuery($queryType, $handler)]]></code>
-      <code><![CDATA[self::getCurrentContext()->registerSignal($name, $handler)]]></code>
+      <code><![CDATA[self::getCurrentContext()->registerQuery($queryType, $handler, $description)]]></code>
+      <code><![CDATA[self::getCurrentContext()->registerSignal($name, $handler, $description)]]></code>
     </InvalidReturnStatement>
     <InvalidReturnType>
       <code><![CDATA[ScopedContextInterface]]></code>

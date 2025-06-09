@@ -23,10 +23,6 @@ use Temporal\Internal\Declaration\WorkflowInstance;
  */
 final class WorkflowInstantiator extends Instantiator
 {
-    public function __construct(
-        private PipelineProvider $interceptorProvider,
-    ) {}
-
     public function instantiate(PrototypeInterface $prototype): WorkflowInstance
     {
         \assert($prototype instanceof WorkflowPrototype, 'Precondition failed');
@@ -34,7 +30,6 @@ final class WorkflowInstantiator extends Instantiator
         return new WorkflowInstance(
             $prototype,
             $this->getInstance($prototype),
-            $this->interceptorProvider->getPipeline(WorkflowInboundCallsInterceptor::class),
         );
     }
 

@@ -29,12 +29,10 @@ final class WorkflowInstance extends Instance implements WorkflowInstanceInterfa
 
     /**
      * @param object $context Workflow object
-     * @param Interceptor\Pipeline<WorkflowInboundCallsInterceptor, mixed> $pipeline
      */
     public function __construct(
         private readonly WorkflowPrototype $prototype,
         object $context,
-        Interceptor\Pipeline $pipeline,
     ) {
         parent::__construct($prototype, $context);
 

@@ -39,7 +39,7 @@ final class StartWorkflow extends Route
         private readonly ServiceContainer $services,
     ) {
         $this->wfStartDeferred = FeatureFlags::$workflowDeferredHandlerStart;
-        $this->instantiator = new WorkflowInstantiator($services->interceptorProvider);
+        $this->instantiator = new WorkflowInstantiator();
     }
 
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void

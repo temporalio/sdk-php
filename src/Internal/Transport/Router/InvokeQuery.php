@@ -51,15 +51,7 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
         $context = $process->getContext();
 
         match ($name) {
-            // todo: refactor
-            '__temporal_workflow_metadata' => $resolver->resolve(
-                EncodedValues::fromValues([(new WorkflowMetadata())->setDefinition(
-                    (new WorkflowDefinition())
-                        ->setQueryDefinitions($context->getQueryDispatcher()->getQueryHandlers())
-                        ->setSignalDefinitions($context->getSignalDispatcher()->getSignalHandlers())
-                        ->setUpdateDefinitions($context->getUpdateDispatcher()->getUpdateHandlers()),
-                )]),
-            ),
+            '__temporal_workflow_metadata' => $this->getWorkflowMetadata($resolver, $context),
             default => $this->handleQuery($name, $request, $resolver, $context, $headers),
         };
     }
@@ -111,5 +103,32 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
                 \implode(' ', $dispatcher->getQueryHandlerNames()),
             ),
         );
+    }
+
+    /**
+     * Returns workflow metadata including query, signal, and update definitions.
+     */
+    private function getWorkflowMetadata(Deferred $resolver, WorkflowContext $context): void
+    {
+        $this->loop->once(
+            LoopInterface::ON_QUERY,
+            static function () use ($resolver, $context): void {
+                try {
+                    $result = EncodedValues::fromValues([
+                        (new WorkflowMetadata())->setDefinition(
+                            (new WorkflowDefinition())
+                                ->setQueryDefinitions($context->getQueryDispatcher()->getQueryHandlers())
+                                ->setSignalDefinitions($context->getSignalDispatcher()->getSignalHandlers())
+                                ->setUpdateDefinitions($context->getUpdateDispatcher()->getUpdateHandlers()),
+                        )
+                    ]);
+
+                    $resolver->resolve($result);
+                } catch (\Throwable $e) {
+                    $resolver->reject($e);
+                }
+            },
+        );
+
     }
 }
