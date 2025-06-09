@@ -11,12 +11,10 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration;
 
-use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\WorkflowInstance\QueryDispatcher;
 use Temporal\Internal\Declaration\WorkflowInstance\SignalDispatcher;
 use Temporal\Internal\Declaration\WorkflowInstance\UpdateDispatcher;
-use Temporal\Internal\Interceptor;
 
 /**
  * @internal

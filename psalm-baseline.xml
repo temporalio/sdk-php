@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="6.10.0@9c0add4eb88d4b169ac04acb7c679918cbb9c252">
+<files psalm-version="6.12.0@cf420941d061a57050b6c468ef2c778faf40aee2">
   <file src="src/Activity.php">
     <ImplicitToStringCast>
       <code><![CDATA[$type]]></code>
@@ -115,6 +115,11 @@
       <code><![CDATA[$workflowType]]></code>
     </PropertyNotSetInConstructor>
   </file>
+  <file src="src/Client/Schedule/ScheduleHandle.php">
+    <RawObjectIteration>
+      <code><![CDATA[$response->getStartTime()]]></code>
+    </RawObjectIteration>
+  </file>
   <file src="src/Client/Schedule/ScheduleOptions.php">
     <DeprecatedProperty>
       <code><![CDATA[$this->namespace]]></code>
@@ -134,13 +139,22 @@
       <code><![CDATA[$options->namespace]]></code>
       <code><![CDATA[$options->namespace]]></code>
     </DeprecatedProperty>
+    <RawObjectIteration>
+      <code><![CDATA[$response->getSchedules()]]></code>
+    </RawObjectIteration>
+  </file>
+  <file src="src/Client/Workflow/WorkflowExecutionHistory.php">
+    <RawObjectIteration>
+      <code><![CDATA[$history->getEvents()]]></code>
+    </RawObjectIteration>
   </file>
   <file src="src/Client/WorkflowClient.php">
     <ArgumentTypeCoercion>
       <code><![CDATA[$counter]]></code>
+      <code><![CDATA[$runID]]></code>
       <code><![CDATA[$signal]]></code>
-      <code><![CDATA[$workflowType]]></code>
-      <code><![CDATA[$workflowType]]></code>
+      <code><![CDATA[$workflow->getID()]]></code>
+      <code><![CDATA[$workflow->getID()]]></code>
     </ArgumentTypeCoercion>
     <DeprecatedClass>
       <code><![CDATA[new AnnotationReader()]]></code>
@@ -170,6 +184,9 @@
     <MoreSpecificReturnType>
       <code><![CDATA[static]]></code>
     </MoreSpecificReturnType>
+    <RawObjectIteration>
+      <code><![CDATA[$response->getExecutions()]]></code>
+    </RawObjectIteration>
     <RedundantFunctionCall>
       <code><![CDATA[\sprintf]]></code>
       <code><![CDATA[\sprintf]]></code>
@@ -215,6 +232,11 @@
     <MissingImmutableAnnotation>
       <code><![CDATA[RetryOptions]]></code>
     </MissingImmutableAnnotation>
+  </file>
+  <file src="src/Common/Priority.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$priorityKey]]></code>
+    </ArgumentTypeCoercion>
   </file>
   <file src="src/Common/RetryOptions.php">
     <PossiblyNullArgument>
@@ -285,6 +307,10 @@
     </MoreSpecificImplementedParamType>
   </file>
   <file src="src/DataConverter/EncodedValues.php">
+    <InvalidArgument>
+      <code><![CDATA[$payloads->getPayloads()]]></code>
+      <code><![CDATA[$payloads->getPayloads()]]></code>
+    </InvalidArgument>
     <PossiblyNullIterator>
       <code><![CDATA[$this->values]]></code>
     </PossiblyNullIterator>
@@ -354,6 +380,39 @@
       <code><![CDATA[new static('', $e->getCode(), $e)]]></code>
     </UnsafeInstantiation>
   </file>
+  <file src="src/Exception/Client/MultyOperation/OperationStatus.php">
+    <InvalidArgument>
+      <code><![CDATA[$message->getDetails()]]></code>
+    </InvalidArgument>
+    <MismatchingDocblockParamType>
+      <code><![CDATA[\ArrayAccess<int, Any>&RepeatedField]]></code>
+    </MismatchingDocblockParamType>
+    <MismatchingDocblockPropertyType>
+      <code><![CDATA[\ArrayAccess<int, Any>&RepeatedField]]></code>
+    </MismatchingDocblockPropertyType>
+    <MismatchingDocblockReturnType>
+      <code><![CDATA[\ArrayAccess<int, Any>&RepeatedField]]></code>
+    </MismatchingDocblockReturnType>
+  </file>
+  <file src="src/Exception/Client/ServiceClientException.php">
+    <ImplementedReturnTypeMismatch>
+      <code><![CDATA[RepeatedField]]></code>
+    </ImplementedReturnTypeMismatch>
+    <InvalidReturnStatement>
+      <code><![CDATA[$this->status->getDetails()]]></code>
+    </InvalidReturnStatement>
+    <InvalidReturnType>
+      <code><![CDATA[RepeatedField]]></code>
+    </InvalidReturnType>
+  </file>
+  <file src="src/Exception/Client/UnpackDetailsTrait.php">
+    <RawObjectIteration>
+      <code><![CDATA[$details]]></code>
+    </RawObjectIteration>
+    <UndefinedInterfaceMethod>
+      <code><![CDATA[count]]></code>
+    </UndefinedInterfaceMethod>
+  </file>
   <file src="src/Exception/Client/WorkflowException.php">
     <UnsafeInstantiation>
       <code><![CDATA[new static(null, $execution, $workflowType, $previous)]]></code>
@@ -373,6 +432,10 @@
     </MoreSpecificReturnType>
   </file>
   <file src="src/Exception/Failure/FailureConverter.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$execution->getRunId()]]></code>
+      <code><![CDATA[$execution->getWorkflowId()]]></code>
+    </ArgumentTypeCoercion>
     <DocblockTypeContradiction>
       <code><![CDATA[\is_array($frame)]]></code>
     </DocblockTypeContradiction>
@@ -442,7 +505,26 @@
       <code><![CDATA[$details]]></code>
     </MissingParamType>
   </file>
+  <file src="src/Internal/Client/ResponseToResultMapper.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$execution->getRunId()]]></code>
+      <code><![CDATA[$execution->getWorkflowId()]]></code>
+      <code><![CDATA[$updateRef->getWorkflowExecution()?->getRunId()]]></code>
+      <code><![CDATA[(string) $updateRef->getWorkflowExecution()?->getWorkflowId()]]></code>
+    </ArgumentTypeCoercion>
+  </file>
   <file src="src/Internal/Client/WorkflowStarter.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$f->getRunId()]]></code>
+      <code><![CDATA[$f->getRunId()]]></code>
+      <code><![CDATA[$input->workflowStartInput->workflowId]]></code>
+      <code><![CDATA[$input->workflowStartInput->workflowId]]></code>
+      <code><![CDATA[$options->workflowId]]></code>
+      <code><![CDATA[$request->getWorkflowId()]]></code>
+      <code><![CDATA[$request->getWorkflowId()]]></code>
+      <code><![CDATA[$response->getRunId()]]></code>
+      <code><![CDATA[$startResponse->getRunId()]]></code>
+    </ArgumentTypeCoercion>
     <InvalidArgument>
       <code><![CDATA[0]]></code>
       <code><![CDATA[1]]></code>
@@ -461,6 +543,11 @@
     </UndefinedInterfaceMethod>
   </file>
   <file src="src/Internal/Client/WorkflowStub.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$closeEvent
+                        ->getWorkflowExecutionContinuedAsNewEventAttributes()
+                        ->getNewExecutionRunId()]]></code>
+    </ArgumentTypeCoercion>
     <PossiblyInvalidArgument>
       <code><![CDATA[$closeEvent->getTaskId()]]></code>
     </PossiblyInvalidArgument>
@@ -597,6 +684,25 @@
       <code><![CDATA[$retry !== null]]></code>
     </RedundantConditionGivenDocblockType>
   </file>
+  <file src="src/Internal/Declaration/WorkflowInstance/QueryDispatcher.php">
+    <PropertyNotSetInConstructor>
+      <code><![CDATA[$queryExecutor]]></code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="src/Internal/Declaration/WorkflowInstance/SignalDispatcher.php">
+    <InvalidReturnStatement>
+      <code><![CDATA[$this->push($name, $values)]]></code>
+    </InvalidReturnStatement>
+    <PropertyNotSetInConstructor>
+      <code><![CDATA[$onSignal]]></code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="src/Internal/Declaration/WorkflowInstance/UpdateDispatcher.php">
+    <PropertyNotSetInConstructor>
+      <code><![CDATA[$updateExecutor]]></code>
+      <code><![CDATA[$updateValidator]]></code>
+    </PropertyNotSetInConstructor>
+  </file>
   <file src="src/Internal/Events/EventEmitterInterface.php">
     <InvalidTemplateParam>
       <code><![CDATA[T]]></code>
@@ -660,6 +766,8 @@
   </file>
   <file src="src/Internal/Mapper/WorkflowExecutionInfoMapper.php">
     <ArgumentTypeCoercion>
+      <code><![CDATA[$execution->getRunId()]]></code>
+      <code><![CDATA[$execution->getWorkflowId()]]></code>
       <code><![CDATA[$message->getTaskQueue()]]></code>
       <code><![CDATA[(int) $message->getHistorySizeBytes()]]></code>
       <code><![CDATA[(int) $message->getStateTransitionCount()]]></code>
@@ -671,6 +779,9 @@
       <code><![CDATA[parse]]></code>
       <code><![CDATA[parse]]></code>
     </DocblockTypeContradiction>
+    <RawObjectIteration>
+      <code><![CDATA[$getAutoResetPoints->getPoints()]]></code>
+    </RawObjectIteration>
     <RedundantConditionGivenDocblockType>
       <code><![CDATA[parse]]></code>
     </RedundantConditionGivenDocblockType>
@@ -740,6 +851,9 @@
                 \sprintf('%d.%d', $input->getSeconds(), $input->getNanos() / 1000),
             )]]></code>
     </FalsableReturnStatement>
+    <InvalidArgument>
+      <code><![CDATA[$input->getPayloads()]]></code>
+    </InvalidArgument>
     <InvalidFalsableReturnType>
       <code><![CDATA[\DateTimeImmutable]]></code>
     </InvalidFalsableReturnType>
@@ -752,6 +866,9 @@
     <NullableReturnStatement>
       <code><![CDATA[$mapper]]></code>
     </NullableReturnStatement>
+    <PossibleRawObjectIteration>
+      <code><![CDATA[$value]]></code>
+    </PossibleRawObjectIteration>
     <PossiblyNullArgument>
       <code><![CDATA[$metadata->getDetails()]]></code>
       <code><![CDATA[$metadata->getSummary()]]></code>
@@ -1005,9 +1122,6 @@
     <ArgumentTypeCoercion>
       <code><![CDATA[$request->getID()]]></code>
     </ArgumentTypeCoercion>
-    <PossiblyUndefinedStringArrayOffset>
-      <code><![CDATA[$request->getOptions()['name']]]></code>
-    </PossiblyUndefinedStringArrayOffset>
     <UnusedVariable>
       <code><![CDATA[$headers]]></code>
     </UnusedVariable>
@@ -1301,6 +1415,9 @@
       <code><![CDATA[$e->getCode()]]></code>
       <code><![CDATA[$e->getCode()]]></code>
     </PossiblyInvalidArgument>
+    <RawObjectIteration>
+      <code><![CDATA[$frame->getMessages()]]></code>
+    </RawObjectIteration>
     <TooManyArguments>
       <code><![CDATA[decode]]></code>
     </TooManyArguments>

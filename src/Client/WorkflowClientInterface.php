@@ -110,6 +110,8 @@ interface WorkflowClientInterface extends ClientContextInterface
      *
      * IMPORTANT! Stub is per workflow instance. So new stub should be created
      * for each new one.
+     *
+     * @param non-empty-string $workflowType
      */
     public function newUntypedWorkflowStub(
         string $workflowType,
@@ -121,6 +123,7 @@ interface WorkflowClientInterface extends ClientContextInterface
      *
      * @psalm-template T of object
      * @param class-string<T> $class
+     * @param non-empty-string $workflowID
      * @return T
      */
     public function newRunningWorkflowStub(
@@ -131,6 +134,10 @@ interface WorkflowClientInterface extends ClientContextInterface
 
     /**
      * Returns untyped workflow stub associated with running workflow.
+     *
+     * @param non-empty-string $workflowID
+     * @param non-empty-string|null $runID
+     * @param non-empty-string|null $workflowType
      */
     public function newUntypedRunningWorkflowStub(
         string $workflowID,

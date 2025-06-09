@@ -45,10 +45,11 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
 
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
-        /** @var non-empty-string $name */
-        $name = $request->getOptions()['name'];
+        $name = $request->getOptions()['name'] ?? '';
         $process = $this->findProcessOrFail($request->getID());
         $context = $process->getContext();
+
+        \assert(\is_string($name) && $name !== '');
 
         match ($name) {
             '__temporal_workflow_metadata' => $this->getWorkflowMetadata($resolver, $context),
@@ -56,6 +57,11 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
         };
     }
 
+    /**
+     * Handles the query request by finding the appropriate query handler and executing it.
+     *
+     * @param non-empty-string $name
+     */
     private function handleQuery(
         string $name,
         ServerRequestInterface $request,
@@ -120,7 +126,7 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
                                 ->setQueryDefinitions($context->getQueryDispatcher()->getQueryHandlers())
                                 ->setSignalDefinitions($context->getSignalDispatcher()->getSignalHandlers())
                                 ->setUpdateDefinitions($context->getUpdateDispatcher()->getUpdateHandlers()),
-                        )
+                        ),
                     ]);
 
                     $resolver->resolve($result);
