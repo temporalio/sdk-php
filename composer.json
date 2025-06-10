@@ -34,7 +34,7 @@
         "roadrunner-php/roadrunner-api-dto": "^1.12.0",
         "roadrunner-php/version-checker": "^1.0.1",
         "spiral/attributes": "^3.1.8",
-        "spiral/roadrunner": "^2025.1.0",
+        "spiral/roadrunner": "^2025.2.0",
         "spiral/roadrunner-cli": "^2.6",
         "spiral/roadrunner-kv": "^4.3.1",
         "spiral/roadrunner-worker": "^3.6.2",

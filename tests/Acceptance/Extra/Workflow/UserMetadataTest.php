@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Acceptance\Extra\Workflow\UserMetadata;
 
 use PHPUnit\Framework\Attributes\Test;
+use Temporal\Api\Common\V1\Payload;
 use Temporal\Client\Schedule\Action\StartWorkflowAction;
 use Temporal\Client\Schedule\Schedule;
 use Temporal\Client\Schedule\Spec\ScheduleState;
@@ -12,6 +13,9 @@ use Temporal\Client\ScheduleClientInterface;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Client\WorkflowStubInterface;
+use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\EncodedValues;
+use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
@@ -114,6 +118,38 @@ class UserMetadataTest extends TestCase
         }
     }
 
+    /**
+     * Test that timer metadata is correctly set and can be retrieved.
+     */
+    #[Test]
+    public function timerMetadata(
+        #[Stub('Extra_Workflow_UserMetadata')]
+        WorkflowStubInterface $stub,
+        WorkflowClientInterface $client,
+        DataConverterInterface $dataConverter,
+    ): void {
+        try {
+            $stub->signal('exit');
+            $stub->getResult();
+
+            $found = false;
+            foreach ($client->getWorkflowHistory($stub->getExecution()) as $event) {
+                if ($event->hasTimerStartedEventAttributes()) {
+                    $payload = $event->getUserMetadata()?->getSummary();
+                    self::assertInstanceOf(Payload::class, $payload);
+                    $data = $dataConverter->fromPayload($payload, 'string');
+                    self::assertSame('test timer summary', $data);
+                    $found = true;
+                    break;
+                }
+            }
+
+            self::assertTrue($found, 'Timer metadata not found in workflow history');
+        } finally {
+            self::terminate($stub);
+        }
+    }
+
     private static function terminate(WorkflowStubInterface $stub): void
     {
         try {
@@ -133,7 +169,8 @@ class TestWorkflow
     #[WorkflowMethod(name: "Extra_Workflow_UserMetadata")]
     public function handle()
     {
-        yield Workflow::await(fn() => $this->exit);
+        $timer = Workflow::timer(30, Workflow\TimerOptions::new()->withSummary('test timer summary'));
+        yield Workflow::await($timer, fn() => $this->exit);
         return $this->result;
     }
 
