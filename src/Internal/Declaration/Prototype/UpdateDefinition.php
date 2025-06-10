@@ -16,8 +16,10 @@ final class UpdateDefinition
      */
     public function __construct(
         public readonly string $name,
+        public readonly string $description,
         public readonly HandlerUnfinishedPolicy $policy,
         public readonly mixed $returnType,
         public readonly \ReflectionMethod $method,
+        public readonly ?\ReflectionMethod $validator,
     ) {}
 }

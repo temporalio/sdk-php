@@ -45,11 +45,17 @@ final class Priority
     #[Marshal(name: 'PriorityKey')]
     public int $priorityKey = 0;
 
+    /**
+     * @param int<0, max> $priorityKey
+     */
     private function __construct(int $priorityKey = 0)
     {
         $this->priorityKey = $priorityKey;
     }
 
+    /**
+     * Create a new Priority instance.
+     */
     public static function new(int $priorityKey = 0): self
     {
         return new self($priorityKey);

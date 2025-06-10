@@ -63,7 +63,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @return $this
      */
-    public function registerQuery(string $queryType, callable $handler): self;
+    public function registerQuery(string $queryType, callable $handler, string $description): self;
 
     /**
      * Registers a query with an additional signal handler.
@@ -74,7 +74,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @return $this
      */
-    public function registerSignal(string $queryType, callable $handler): self;
+    public function registerSignal(string $queryType, callable $handler, string $description): self;
 
     /**
      * Registers a dynamic Signal handler.
@@ -122,7 +122,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @param non-empty-string $name
      */
-    public function registerUpdate(string $name, callable $handler, ?callable $validator): static;
+    public function registerUpdate(string $name, callable $handler, ?callable $validator, string $description): static;
 
     /**
      * Exchanges data between worker and host process.
