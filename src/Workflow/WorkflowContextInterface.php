@@ -171,7 +171,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @param DateIntervalValue $interval
      * @see DateInterval
      */
-    public function timer($interval): PromiseInterface;
+    public function timer($interval, ?TimerOptions $options = null): PromiseInterface;
 
     /**
      * Completes the current workflow execution atomically and starts a new execution with the same Workflow Id.
