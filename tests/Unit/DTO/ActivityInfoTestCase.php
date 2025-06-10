@@ -37,6 +37,9 @@ class ActivityInfoTestCase extends AbstractDTOMarshalling
             'StartedTime'       => $dto->startedTime->toRfc3339String(),
             'Deadline'          => $dto->deadline->toRfc3339String(),
             'Attempt'           => 1,
+            'Priority' => [
+                'priority_key' => 0,
+            ],
         ];
 
         $this->assertSame($expected, $this->marshal($dto));
