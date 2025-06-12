@@ -41,6 +41,9 @@ class ChildWorkflowOptionsTestCase extends AbstractDTOMarshalling
             'SearchAttributes'         => null,
             'StaticDetails'            => '',
             'StaticSummary'            => '',
+            'Priority' => [
+                'priority_key' => 0,
+            ],
         ];
 
         $this->assertSame($expected, $this->marshal($dto));

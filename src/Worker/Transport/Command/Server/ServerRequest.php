@@ -39,9 +39,9 @@ class ServerRequest implements ServerRequestInterface
      * @param RequestOptions $options
      */
     public function __construct(
-        private string $name,
-        private TickInfo $info,
-        private array $options = [],
+        private readonly string $name,
+        private readonly TickInfo $info,
+        private readonly array $options = [],
         ?ValuesInterface $payloads = null,
         ?string $id = null,
         ?HeaderInterface $header = null,

@@ -31,8 +31,10 @@ final class QueryMethod
 {
     /**
      * @param non-empty-string|null $name
+     * @param string $description Short description of the query type.
      */
     public function __construct(
         public readonly ?string $name = null,
+        public readonly string $description = '',
     ) {}
 }

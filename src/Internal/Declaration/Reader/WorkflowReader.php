@@ -68,6 +68,10 @@ class WorkflowReader extends Reader
         'The function %s::%s() is specified as a validator for the Update Handler `%s`, ' .
         'but the Update Handler with that name was not found.'
     ;
+    private const ERROR_VALIDATOR_DUPLICATE =
+        'The function %s::%s() is specified as a validator for the Update Handler `%s`, ' .
+        'but another validator with was already registered for that handler.'
+    ;
 
     /**
      * @throws \ReflectionException
@@ -123,6 +127,36 @@ class WorkflowReader extends Reader
     {
         $class = $graph->getReflection();
 
+        // Harvest Update Validator methods
+        /** @var array<non-empty-string, \ReflectionMethod> $validators */
+        $validators = [];
+        foreach ($class->getMethods() as $method) {
+            /** @var UpdateValidatorMethod|null $validate */
+            $validate = $this->getAttributedMethod($graph, $method, UpdateValidatorMethod::class);
+
+            if ($validate === null) {
+                continue;
+            }
+
+            // Validation
+            $this->isValidMethod($method) or throw new \LogicException(\sprintf(
+                self::ERROR_COMMON_METHOD_VISIBILITY,
+                'validate update',
+                $method->getDeclaringClass()->getName(),
+                $method->getName(),
+            ));
+
+            // Deduplication
+            \array_key_exists($validate->forUpdate, $validators) and throw new \LogicException(\sprintf(
+                self::ERROR_VALIDATOR_DUPLICATE,
+                $method->getDeclaringClass()->getName(),
+                $method->getName(),
+                $validate->forUpdate,
+            ));
+
+            $validators[$validate->forUpdate] = $method;
+        }
+
         foreach ($class->getMethods() as $method) {
             $contextClass = $method->getDeclaringClass();
 
@@ -139,7 +173,6 @@ class WorkflowReader extends Reader
 
             /** @var UpdateMethod|null $update */
             $update = $this->getAttributedMethod($graph, $method, UpdateMethod::class);
-
             if ($update !== null) {
                 // Validation
                 $this->isValidMethod($method) or throw new \LogicException(
@@ -156,12 +189,15 @@ class WorkflowReader extends Reader
                     ? $attrs[0]->newInstance()
                     : $method->getReturnType();
 
+                $name = $update->name ?? $method->getName();
                 $prototype->addUpdateHandler(
                     new UpdateDefinition(
-                        name: $update->name ?? $method->getName(),
+                        name: $name,
+                        description: $update->description,
                         policy: $update->unfinishedPolicy,
                         returnType: $returnType,
                         method: $method,
+                        validator: $validators[$name] ?? null,
                     ),
                 );
             }
@@ -186,6 +222,7 @@ class WorkflowReader extends Reader
                         name: $signal->name ?? $method->getName(),
                         policy: $signal->unfinishedPolicy,
                         method: $method,
+                        description: $signal->description,
                     ),
                 );
             }
@@ -210,44 +247,10 @@ class WorkflowReader extends Reader
                         name: $query->name ?? $method->getName(),
                         returnType: $method->getReturnType(),
                         method: $method,
+                        description: $query->description,
                     ),
                 );
             }
-        }
-
-        // Find Validate Update methods and check related handlers
-        $updateHandlers = $prototype->getUpdateHandlers();
-        foreach ($class->getMethods() as $method) {
-            /** @var UpdateValidatorMethod|null $validate */
-            $validate = $this->getAttributedMethod($graph, $method, UpdateValidatorMethod::class);
-
-            if ($validate === null) {
-                continue;
-            }
-
-            if (!\array_key_exists($validate->forUpdate, $updateHandlers)) {
-                throw new \LogicException(
-                    \vsprintf(self::ERROR_VALIDATOR_WITHOUT_UPDATE_HANDLER, [
-                        $method->getDeclaringClass()->getName(),
-                        $method->getName(),
-                        $validate->forUpdate,
-                    ]),
-                );
-            }
-
-            // Validation
-            if (!$this->isValidMethod($method)) {
-                throw new \LogicException(
-                    \vsprintf(self::ERROR_COMMON_METHOD_VISIBILITY, [
-                        'validate update',
-                        $contextClass->getName(),
-                        $method->getName(),
-                    ]),
-                );
-            }
-
-
-            $prototype->addValidateUpdateHandler($validate->forUpdate, $method);
         }
 
         return $prototype;

@@ -16,5 +16,6 @@ final class QueryDefinition
         public readonly string $name,
         public readonly mixed $returnType,
         public readonly \ReflectionMethod $method,
+        public readonly string $description,
     ) {}
 }
