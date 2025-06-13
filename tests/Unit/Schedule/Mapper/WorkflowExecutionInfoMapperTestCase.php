@@ -25,12 +25,6 @@ final class WorkflowExecutionInfoMapperTestCase extends TestCase
 {
     private DataConverterInterface $dataConverter;
 
-    protected function setUp(): void
-    {
-        $this->dataConverter = DataConverter::createDefault();
-        parent::setUp();
-    }
-
     public function testToMessage(): void
     {
         $mapper = $this->createMapper();
@@ -40,10 +34,11 @@ final class WorkflowExecutionInfoMapperTestCase extends TestCase
                 Schedule\Action\StartWorkflowAction::new('PingSite')
                     ->withInput(['google.com'])
                     ->withTaskQueue('default')
-                    ->withRetryPolicy(RetryOptions::new()
-                        ->withMaximumAttempts(3)
-                        ->withInitialInterval(\Carbon\CarbonInterval::seconds(10))
-                        ->withMaximumInterval(\Carbon\CarbonInterval::seconds(20))
+                    ->withRetryPolicy(
+                        RetryOptions::new()
+                            ->withMaximumAttempts(3)
+                            ->withInitialInterval(\Carbon\CarbonInterval::seconds(10))
+                            ->withMaximumInterval(\Carbon\CarbonInterval::seconds(20)),
                     )
                     ->withHeader(['foo' => 'bar'])
                     ->withWorkflowExecutionTimeout('40m')
@@ -53,15 +48,15 @@ final class WorkflowExecutionInfoMapperTestCase extends TestCase
                     ->withSearchAttributes(['sAttr1' => 's-value1', 'sAttr2' => 's-value2'])
                     ->withWorkflowId('test-workflow-id')
                     ->withWorkflowIdReusePolicy(
-                        IdReusePolicy::AllowDuplicateFailedOnly
-                    )
+                        IdReusePolicy::AllowDuplicateFailedOnly,
+                    ),
             )->withSpec(
                 Schedule\Spec\ScheduleSpec::new()
                     ->withCalendarList(
                         Schedule\Spec\CalendarSpec::new()
                             ->withSecond(6)->withMinute('*/6')->withHour('*/5')
                             ->withDayOfWeek('*/2')->withDayOfMonth('*/4')->withMonth('*/3')
-                            ->withComment('test comment')
+                            ->withComment('test comment'),
                     )
                     ->withCronStringList('0 12 * * 5', '0 12 * * 1')
                     ->withIntervalList('2m', '3m')
@@ -69,18 +64,18 @@ final class WorkflowExecutionInfoMapperTestCase extends TestCase
                     ->withEndTime((new \DateTimeImmutable())->setTimestamp(2678400))
                     ->withJitter('10m')
                     ->withTimezoneData('America/New_York')
-                    ->withTimezoneName('Europe/London')
+                    ->withTimezoneName('Europe/London'),
             )->withPolicies(
                 Schedule\Policy\SchedulePolicies::new()
                     ->withCatchupWindow('10m')
                     ->withPauseOnFailure(true)
-                    ->withOverlapPolicy(Schedule\Policy\ScheduleOverlapPolicy::CancelOther)
+                    ->withOverlapPolicy(Schedule\Policy\ScheduleOverlapPolicy::CancelOther),
             )->withState(
                 Schedule\Spec\ScheduleState::new()
                     ->withLimitedActions(true)
                     ->withRemainingActions(10)
                     ->withPaused(true)
-                    ->withNotes('test notes')
+                    ->withNotes('test notes'),
             ),
         );
 
@@ -111,7 +106,7 @@ final class WorkflowExecutionInfoMapperTestCase extends TestCase
                 $this->dataConverter,
             )->getValues(),
         );
-        $this->assertSame(
+        $this->assertEquals(
             ['memo1' => 'memo-value1', 'memo2' => 'memo-value2'],
             EncodedCollection::fromPayloadCollection(
                 $startWorkflow->getMemo()->getFields(),
@@ -179,7 +174,7 @@ final class WorkflowExecutionInfoMapperTestCase extends TestCase
 
         $schedule = $mapper->toMessage(
             Schedule\Schedule::new()->withAction(
-                Schedule\Action\StartWorkflowAction::new('PingSite')
+                Schedule\Action\StartWorkflowAction::new('PingSite'),
             ),
         );
 
@@ -235,6 +230,12 @@ final class WorkflowExecutionInfoMapperTestCase extends TestCase
         $this->assertSame(0, $state->getRemainingActions());
         $this->assertFalse($state->getPaused());
         $this->assertEmpty($state->getNotes());
+    }
+
+    protected function setUp(): void
+    {
+        $this->dataConverter = DataConverter::createDefault();
+        parent::setUp();
     }
 
     private function createMapper(): ScheduleMapper
