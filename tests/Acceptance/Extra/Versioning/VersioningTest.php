@@ -44,7 +44,7 @@ class TestWorkflow
         $version = yield Workflow::getVersion('test', Workflow::DEFAULT_VERSION, 2);
 
         if ($version === 1) {
-            yield Workflow::sideEffect(static fn() => 'test');
+            yield Workflow::sideEffect(static fn(): string => 'test');
             return 'v1';
         }
 
