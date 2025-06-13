@@ -49,7 +49,6 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @see Workflow::getLastCompletionResult()
      *
      * @param Type|string|null $type
-     * @return mixed
      */
     public function getLastCompletionResult(mixed $type = null): mixed;
 

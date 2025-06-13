@@ -323,7 +323,6 @@ final class Workflow extends Facade
      * Returns value of last completion result, if any.
      *
      * @param Type|TypeEnum|mixed $type
-     * @return mixed
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function getLastCompletionResult($type = null): mixed

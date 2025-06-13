@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Workflow;
 
-use React\Promise\PromiseInterface;
 use Temporal\Workflow;
 
 /**
