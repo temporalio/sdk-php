@@ -1406,6 +1406,12 @@
     </PossiblyNullArgument>
   </file>
   <file src="src/Worker/Transport/Codec/ProtoCodec.php">
+    <LessSpecificReturnStatement>
+      <code><![CDATA[$frame->serializeToString()]]></code>
+    </LessSpecificReturnStatement>
+    <MoreSpecificReturnType>
+      <code><![CDATA[string]]></code>
+    </MoreSpecificReturnType>
     <PossiblyInvalidArgument>
       <code><![CDATA[$e->getCode()]]></code>
       <code><![CDATA[$e->getCode()]]></code>
