@@ -14,7 +14,7 @@ namespace Temporal\Workflow;
 use React\Promise\PromiseInterface;
 
 /**
- * @template T
+ * @template-covariant T
  * @yield T
  * @extends PromiseInterface<T>
  */

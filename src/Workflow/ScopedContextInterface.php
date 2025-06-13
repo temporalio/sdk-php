@@ -21,6 +21,10 @@ interface ScopedContextInterface extends WorkflowContextInterface
     /**
      * The method calls an asynchronous task and returns a promise.
      *
+     * @template TReturn
+     * @param callable(): (TReturn|\Generator<mixed, mixed, mixed, TReturn>) $handler
+     * @return CancellationScopeInterface<TReturn>
+     *
      * @see Workflow::async()
      */
     public function async(callable $handler): CancellationScopeInterface;
@@ -28,6 +32,10 @@ interface ScopedContextInterface extends WorkflowContextInterface
     /**
      * Cancellation scope which does not react to parent cancel and completes
      * in background.
+     *
+     * @template TReturn
+     * @param callable(): (TReturn|\Generator<mixed, mixed, mixed, TReturn>) $handler
+     * @return CancellationScopeInterface<TReturn>
      *
      * @see Workflow::asyncDetached()
      */
