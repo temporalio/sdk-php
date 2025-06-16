@@ -24,17 +24,23 @@ final class TemporalStarter
             return;
         }
 
-        $this->environment->startTemporalServer(searchAttributes: [
-            'foo' => ValueType::Text->value,
-            'bar' => ValueType::Int->value,
-            'testBool' => ValueType::Bool,
-            'testInt' => ValueType::Int,
-            'testFloat' => ValueType::Float,
-            'testText' => ValueType::Text,
-            'testKeyword' => ValueType::Keyword,
-            'testKeywordList' => ValueType::KeywordList,
-            'testDatetime' => ValueType::Datetime,
-        ]);
+        $this->environment->startTemporalServer(
+            parameters: [
+                '--dynamic-config-value', 'system.enableEagerWorkflowStart=true',
+                '--dynamic-config-value', 'frontend.activityAPIsEnabled=true',
+            ],
+            searchAttributes: [
+                'foo' => ValueType::Text->value,
+                'bar' => ValueType::Int->value,
+                'testBool' => ValueType::Bool,
+                'testInt' => ValueType::Int,
+                'testFloat' => ValueType::Float,
+                'testText' => ValueType::Text,
+                'testKeyword' => ValueType::Keyword,
+                'testKeywordList' => ValueType::KeywordList,
+                'testDatetime' => ValueType::Datetime,
+            ],
+        );
         $this->started = true;
     }
 
