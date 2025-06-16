@@ -38,6 +38,7 @@ class ActivityOptionsTestCase extends AbstractDTOMarshalling
             'Priority' => [
                 'priority_key' => 0,
             ],
+            'Summary' => '',
         ];
 
         $this->assertSame($expected, $this->marshal($dto));
