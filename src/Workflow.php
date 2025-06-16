@@ -32,6 +32,7 @@ use Temporal\Workflow\ContinueAsNewOptions;
 use Temporal\Workflow\ExternalWorkflowStubInterface;
 use Temporal\Workflow\Mutex;
 use Temporal\Workflow\ScopedContextInterface;
+use Temporal\Workflow\TimerOptions;
 use Temporal\Workflow\UpdateContext;
 use Temporal\Workflow\WorkflowContextInterface;
 use Temporal\Workflow\WorkflowExecution;
@@ -578,9 +579,9 @@ final class Workflow extends Facade
      * @return PromiseInterface<null>
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
-    public static function timer($interval): PromiseInterface
+    public static function timer($interval, ?TimerOptions $options = null): PromiseInterface
     {
-        return self::getCurrentContext()->timer($interval);
+        return self::getCurrentContext()->timer($interval, $options);
     }
 
     /**
