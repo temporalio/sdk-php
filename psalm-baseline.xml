@@ -1592,6 +1592,7 @@
       <code><![CDATA[PromiseInterface<bool>]]></code>
       <code><![CDATA[PromiseInterface<int>]]></code>
       <code><![CDATA[PromiseInterface<mixed>]]></code>
+      <code><![CDATA[PromiseInterface<mixed>]]></code>
       <code><![CDATA[PromiseInterface<null>]]></code>
     </TooManyTemplateParams>
   </file>

@@ -184,13 +184,9 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         return $this->lastCompletionResult;
     }
 
-    public function getLastCompletionResult($type = null)
+    public function getLastCompletionResult(mixed $type = null): mixed
     {
-        if ($this->lastCompletionResult === null) {
-            return null;
-        }
-
-        return $this->lastCompletionResult->getValue(0, $type);
+        return $this->lastCompletionResult?->getValue(0, $type);
     }
 
     public function getClient(): ClientInterface

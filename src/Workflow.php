@@ -184,6 +184,10 @@ final class Workflow extends Facade
      * You can see more information about the capabilities of the child
      * asynchronous task in {@see CancellationScopeInterface} interface.
      *
+     * @template TReturn
+     * @param callable(): (TReturn|\Generator<mixed, mixed, mixed, TReturn>) $task
+     * @return CancellationScopeInterface<TReturn>
+     *
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function async(callable $task): CancellationScopeInterface
@@ -231,6 +235,10 @@ final class Workflow extends Facade
      * ```
      *
      * Use asyncDetached to handle cleanup and compensation logic.
+     *
+     * @template TReturn
+     * @param callable(): (TReturn|\Generator<mixed, mixed, mixed, TReturn>) $task
+     * @return CancellationScopeInterface<TReturn>
      *
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
@@ -316,10 +324,9 @@ final class Workflow extends Facade
      * Returns value of last completion result, if any.
      *
      * @param Type|TypeEnum|mixed $type
-     * @return mixed
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
-    public static function getLastCompletionResult($type = null)
+    public static function getLastCompletionResult($type = null): mixed
     {
         return self::getCurrentContext()->getLastCompletionResult($type);
     }
@@ -686,7 +693,10 @@ final class Workflow extends Facade
      *  }
      * ```
      *
+     * @param non-empty-string $type
+     * @param list<mixed> $args
      * @param Type|string|\ReflectionType|\ReflectionClass|null $returnType
+     * @return PromiseInterface<mixed>
      *
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
@@ -880,6 +890,7 @@ final class Workflow extends Facade
      *  }
      * ```
      *
+     * @param non-empty-string $type
      * @param ActivityOptions|null $options
      * @return PromiseInterface<mixed>
      * @throws OutOfContextException in the absence of the workflow execution context.
