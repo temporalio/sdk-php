@@ -1098,11 +1098,6 @@
       <code><![CDATA[PromiseInterface]]></code>
     </TooManyTemplateParams>
   </file>
-  <file src="src/Internal/Transport/Request/NewTimer.php">
-    <PossiblyNullPropertyFetch>
-      <code><![CDATA[CarbonInterval::make($interval)->totalMilliseconds]]></code>
-    </PossiblyNullPropertyFetch>
-  </file>
   <file src="src/Internal/Transport/Router/CancelWorkflow.php">
     <DocblockTypeContradiction>
       <code><![CDATA[$process === null]]></code>
