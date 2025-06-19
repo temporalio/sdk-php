@@ -31,7 +31,7 @@ final class Downloader
 
     public function download(SystemInfo $systemInfo): void
     {
-        $asset = $this->getAsset($systemInfo->platform, $systemInfo->arch);
+        $asset = $this->getAsset($systemInfo);
         $assetUrl = $asset['browser_download_url'];
         $pathToExtractedAsset = $this->downloadAsset($assetUrl);
 
@@ -46,19 +46,33 @@ final class Downloader
         return $this->filesystem->exists($filename);
     }
 
-    private function findAsset(array $assets, string $systemPlatform, string $systemArch): array
+    private function findAsset(array $assets, SystemInfo $systemInfo): array
     {
+        $assetsMacOs = null;
+
         foreach ($assets as $asset) {
             \preg_match('/^temporal-test-server_[^_]+_([^_]+)_([^.]+)\.(?:zip|tar.gz)$/', $asset['name'], $match);
             [, $assetPlatform, $assetArch] = $match;
 
-            if ($assetPlatform === $systemPlatform) {
-                // TODO: assetArch === systemArch (no arm builds for test server yet)
+
+            // save compatibility
+            if ($assetPlatform == 'macOS') {
+                $assetsMacOs = $asset;
+            }
+
+
+            if ($assetPlatform == $systemInfo->platform && $systemInfo->os == $assetArch) {
                 return $asset;
             }
         }
 
-        throw new \RuntimeException("Asset for $systemPlatform not found");
+        // save compatibility
+        if ($systemInfo->platform == 'macOS' && $assetsMacOs != null) {
+            return $assetsMacOs;
+        }
+
+
+        throw new \RuntimeException("Asset for $systemInfo->platform not found");
     }
 
     private function downloadAsset(string $assetUrl): string
@@ -82,11 +96,11 @@ final class Downloader
         return $extractedPath;
     }
 
-    private function getAsset(string $systemPlatform, string $systemArch): array
+    private function getAsset(SystemInfo $systemInfo): array
     {
         $response = $this->httpClient->request('GET', $this->javaSdkUrl);
         $assets = $response->toArray()['assets'];
 
-        return $this->findAsset($assets, $systemPlatform, $systemArch);
+        return $this->findAsset($assets, $systemInfo);
     }
 }
