@@ -67,7 +67,7 @@ final class Downloader
         }
 
         // save compatibility
-        if ($systemInfo->platform == 'macOS' && $assetsMacOs != null){
+        if ($systemInfo->platform == 'macOS' && $assetsMacOs != null) {
             return $assetsMacOs;
         }
 
