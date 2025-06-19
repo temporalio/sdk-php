@@ -48,7 +48,7 @@ final class Downloader
 
     private function findAsset(array $assets, SystemInfo $systemInfo): array
     {
-        $assetsMacos = null;
+        $assetsMacOs = null;
 
         foreach ($assets as $asset) {
             \preg_match('/^temporal-test-server_[^_]+_([^_]+)_([^.]+)\.(?:zip|tar.gz)$/', $asset['name'], $match);
@@ -57,7 +57,7 @@ final class Downloader
 
             // save compatibility
             if ($assetPlatform == 'macOS') {
-                $assetsMacos = $asset;
+                $assetsMacOs = $asset;
             }
 
 
@@ -67,8 +67,8 @@ final class Downloader
         }
 
         // save compatibility
-        if ($systemInfo->platform == 'macOS' && $assetsMacos != null){
-            return $assetsMacos;
+        if ($systemInfo->platform == 'macOS' && $assetsMacOs != null){
+            return $assetsMacOs;
         }
 
 
