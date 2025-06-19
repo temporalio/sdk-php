@@ -49,9 +49,8 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @see Workflow::getLastCompletionResult()
      *
      * @param Type|string|null $type
-     * @return mixed
      */
-    public function getLastCompletionResult($type = null);
+    public function getLastCompletionResult(mixed $type = null): mixed;
 
     /**
      * A method that allows you to dynamically register additional query
@@ -63,7 +62,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @return $this
      */
-    public function registerQuery(string $queryType, callable $handler): self;
+    public function registerQuery(string $queryType, callable $handler, string $description): self;
 
     /**
      * Registers a query with an additional signal handler.
@@ -74,7 +73,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @return $this
      */
-    public function registerSignal(string $queryType, callable $handler): self;
+    public function registerSignal(string $queryType, callable $handler, string $description): self;
 
     /**
      * Registers a dynamic Signal handler.
@@ -122,7 +121,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @param non-empty-string $name
      */
-    public function registerUpdate(string $name, callable $handler, ?callable $validator): static;
+    public function registerUpdate(string $name, callable $handler, ?callable $validator, string $description): static;
 
     /**
      * Exchanges data between worker and host process.
@@ -171,7 +170,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @param DateIntervalValue $interval
      * @see DateInterval
      */
-    public function timer($interval): PromiseInterface;
+    public function timer($interval, ?TimerOptions $options = null): PromiseInterface;
 
     /**
      * Completes the current workflow execution atomically and starts a new execution with the same Workflow Id.

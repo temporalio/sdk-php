@@ -76,6 +76,6 @@ class WorkflowNegativeDeclarationTestCase extends AbstractDeclaration
 
         $protorype = $reader->fromClass(WorkflowWithoutHandler::class);
 
-        (new WorkflowInstantiator(new PipelineProvider([])))->instantiate($protorype);
+        (new WorkflowInstantiator())->instantiate($protorype);
     }
 }

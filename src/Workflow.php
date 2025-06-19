@@ -32,6 +32,7 @@ use Temporal\Workflow\ContinueAsNewOptions;
 use Temporal\Workflow\ExternalWorkflowStubInterface;
 use Temporal\Workflow\Mutex;
 use Temporal\Workflow\ScopedContextInterface;
+use Temporal\Workflow\TimerOptions;
 use Temporal\Workflow\UpdateContext;
 use Temporal\Workflow\WorkflowContextInterface;
 use Temporal\Workflow\WorkflowExecution;
@@ -183,6 +184,10 @@ final class Workflow extends Facade
      * You can see more information about the capabilities of the child
      * asynchronous task in {@see CancellationScopeInterface} interface.
      *
+     * @template TReturn
+     * @param callable(): (TReturn|\Generator<mixed, mixed, mixed, TReturn>) $task
+     * @return CancellationScopeInterface<TReturn>
+     *
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function async(callable $task): CancellationScopeInterface
@@ -230,6 +235,10 @@ final class Workflow extends Facade
      * ```
      *
      * Use asyncDetached to handle cleanup and compensation logic.
+     *
+     * @template TReturn
+     * @param callable(): (TReturn|\Generator<mixed, mixed, mixed, TReturn>) $task
+     * @return CancellationScopeInterface<TReturn>
      *
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
@@ -315,10 +324,9 @@ final class Workflow extends Facade
      * Returns value of last completion result, if any.
      *
      * @param Type|TypeEnum|mixed $type
-     * @return mixed
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
-    public static function getLastCompletionResult($type = null)
+    public static function getLastCompletionResult($type = null): mixed
     {
         return self::getCurrentContext()->getLastCompletionResult($type);
     }
@@ -335,12 +343,16 @@ final class Workflow extends Facade
      * The same method ({@see WorkflowStubInterface::query()}) should be used
      * to call such query handlers as in the case of ordinary query methods.
      *
-     * @param non-empty-string $queryType
+     * @param non-empty-string $queryType Name of the query.
+     * @param string $description Description of the query.
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
-    public static function registerQuery(string $queryType, callable $handler): ScopedContextInterface
-    {
-        return self::getCurrentContext()->registerQuery($queryType, $handler);
+    public static function registerQuery(
+        string $queryType,
+        callable $handler,
+        string $description = '',
+    ): ScopedContextInterface {
+        return self::getCurrentContext()->registerQuery($queryType, $handler, $description);
     }
 
     /**
@@ -358,9 +370,9 @@ final class Workflow extends Facade
      * @param non-empty-string $name
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
-    public static function registerSignal(string $name, callable $handler): ScopedContextInterface
+    public static function registerSignal(string $name, callable $handler, string $description = ''): ScopedContextInterface
     {
-        return self::getCurrentContext()->registerSignal($name, $handler);
+        return self::getCurrentContext()->registerSignal($name, $handler, $description);
     }
 
     /**
@@ -477,8 +489,9 @@ final class Workflow extends Facade
         string $name,
         callable $handler,
         ?callable $validator = null,
+        string $description = '',
     ): ScopedContextInterface {
-        return self::getCurrentContext()->registerUpdate($name, $handler, $validator);
+        return self::getCurrentContext()->registerUpdate($name, $handler, $validator, $description);
     }
 
     /**
@@ -566,9 +579,9 @@ final class Workflow extends Facade
      * @return PromiseInterface<null>
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
-    public static function timer($interval): PromiseInterface
+    public static function timer($interval, ?TimerOptions $options = null): PromiseInterface
     {
-        return self::getCurrentContext()->timer($interval);
+        return self::getCurrentContext()->timer($interval, $options);
     }
 
     /**
@@ -680,7 +693,10 @@ final class Workflow extends Facade
      *  }
      * ```
      *
+     * @param non-empty-string $type
+     * @param list<mixed> $args
      * @param Type|string|\ReflectionType|\ReflectionClass|null $returnType
+     * @return PromiseInterface<mixed>
      *
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
@@ -874,6 +890,7 @@ final class Workflow extends Facade
      *  }
      * ```
      *
+     * @param non-empty-string $type
      * @param ActivityOptions|null $options
      * @return PromiseInterface<mixed>
      * @throws OutOfContextException in the absence of the workflow execution context.

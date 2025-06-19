@@ -25,6 +25,9 @@ final class Uuid
      */
     public const NIL = '00000000-0000-0000-0000-000000000000';
 
+    /**
+     * @return non-empty-string
+     */
     public static function nil(): string
     {
         return self::NIL;

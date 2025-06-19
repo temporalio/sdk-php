@@ -11,8 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Exception\Client;
 
-use Google\Protobuf\Any;
-use Google\Protobuf\Internal\RepeatedField;
+use Google\Protobuf\RepeatedField;
 use Google\Rpc\Status;
 
 class ServiceClientException extends \RuntimeException
@@ -45,9 +44,9 @@ class ServiceClientException extends \RuntimeException
     }
 
     /**
-     * @return \ArrayAccess<int, Any>&RepeatedField
+     * @return RepeatedField
      */
-    public function getDetails(): RepeatedField
+    public function getDetails(): \ArrayAccess&\Countable&\IteratorAggregate
     {
         return $this->status->getDetails();
     }

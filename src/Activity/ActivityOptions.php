@@ -14,6 +14,7 @@ namespace Temporal\Activity;
 use Carbon\CarbonInterval;
 use JetBrains\PhpStorm\Pure;
 use Temporal\Common\MethodRetry;
+use Temporal\Common\Priority;
 use Temporal\Common\RetryOptions;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\ActivityCancellationType as ActivityCancellationMarshallerType;
@@ -110,6 +111,28 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
     public ?RetryOptions $retryOptions = null;
 
     /**
+     * Optional priority settings that control relative ordering of task processing when tasks are
+     * backed up in a queue.
+     *
+     * Defaults to inheriting priority from the workflow that scheduled the activity.
+     */
+    #[Marshal(name: 'Priority')]
+    public Priority $priority;
+
+    /**
+     * Optional summary of the activity.
+     *
+     * Single-line fixed summary for this activity that will appear in UI/CLI.
+     * This can be in single-line Temporal Markdown format.
+     *
+     * @experimental This API is experimental and may change in the future.
+     *
+     * @since RoadRunner 2025.1.2
+     */
+    #[Marshal(name: 'Summary')]
+    public string $summary = '';
+
+    /**
      * ActivityOptions constructor.
      */
     public function __construct()
@@ -118,6 +141,7 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
         $this->scheduleToCloseTimeout = CarbonInterval::seconds(0);
         $this->startToCloseTimeout = CarbonInterval::seconds(0);
         $this->heartbeatTimeout = CarbonInterval::seconds(0);
+        $this->priority = Priority::new();
 
         parent::__construct();
     }
@@ -289,6 +313,42 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
 
         $self->retryOptions = $options;
 
+        return $self;
+    }
+
+    /**
+     * Optional priority settings that control relative ordering of task processing when tasks are
+     * backed up in a queue.
+     *
+     * Defaults to inheriting priority from the workflow that scheduled the activity.
+     *
+     * @return $this
+     *
+     * @internal Experimental
+     */
+    #[Pure]
+    public function withPriority(Priority $priority): self
+    {
+        $self = clone $this;
+        $self->priority = $priority;
+        return $self;
+    }
+
+    /**
+     * Optional summary of the activity.
+     *
+     * Single-line fixed summary for this activity that will appear in UI/CLI.
+     * This can be in single-line Temporal Markdown format.
+     *
+     * @experimental This API is experimental and may change in the future.
+     *
+     * @return $this
+     */
+    #[Pure]
+    public function withSummary(string $summary): self
+    {
+        $self = clone $this;
+        $self->summary = $summary;
         return $self;
     }
 }

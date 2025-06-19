@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Interceptor\WorkflowOutboundCalls;
 
+use Temporal\Workflow\TimerOptions;
+
 /**
  * @psalm-immutable
  */
@@ -22,6 +24,11 @@ final class TimerInput
      */
     public function __construct(
         public readonly \DateInterval $interval,
+
+        /**
+         * @experimental This API is experimental and may change in the future.
+         */
+        public readonly ?TimerOptions $timerOptions,
     ) {}
 
     public function with(
@@ -29,6 +36,7 @@ final class TimerInput
     ): self {
         return new self(
             $interval ?? $this->interval,
+            $this->timerOptions,
         );
     }
 }

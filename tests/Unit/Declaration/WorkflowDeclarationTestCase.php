@@ -219,7 +219,7 @@ class WorkflowDeclarationTestCase extends AbstractDeclaration
 
     public function testHierarchicalWorkflow(): void
     {
-        $instantiator = new WorkflowInstantiator(new \Temporal\Interceptor\SimplePipelineProvider());
+        $instantiator = new WorkflowInstantiator();
 
         $instance = $instantiator->instantiate(
             new WorkflowPrototype(
@@ -243,7 +243,7 @@ class WorkflowDeclarationTestCase extends AbstractDeclaration
 
     public function testInstantiateWorkflowWithInterface(): void
     {
-        $instantiator = new WorkflowInstantiator(new \Temporal\Interceptor\SimplePipelineProvider());
+        $instantiator = new WorkflowInstantiator();
         $reader = new WorkflowReader(new AttributeReader());
         $prototype = $reader->fromClass(AggregatedWorkflowImpl::class);
 

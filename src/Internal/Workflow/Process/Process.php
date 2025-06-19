@@ -51,78 +51,82 @@ class Process extends Scope implements ProcessInterface
         $inboundPipeline = $services->interceptorProvider->getPipeline(WorkflowInboundCallsInterceptor::class);
 
         // Configure query handler in an immutable scope
-        $workflowInstance->setQueryExecutor(function (QueryInput $input, callable $handler): mixed {
-            try {
-                $context = $this->scopeContext->withInput(
-                    new Input(
-                        $this->scopeContext->getInfo(),
-                        $input->arguments,
-                    ),
-                );
-                Workflow::setCurrentContext($context);
-
-                return $handler($input->arguments);
-            } finally {
-                Workflow::setCurrentContext(null);
-            }
-        });
+        $workflowInstance->getQueryDispatcher()
+            ->setQueryExecutor(function (QueryInput $input, callable $handler) use ($inboundPipeline): mixed {
+                try {
+                    return $inboundPipeline->with(
+                        function (QueryInput $input) use ($handler): mixed {
+                            $context = $this->scopeContext
+                                ->withInput(new Input($this->scopeContext->getInfo(), $input->arguments));
+                            Workflow::setCurrentContext($context);
+                            return $handler($input->arguments);
+                        },
+                        /** @see WorkflowInboundCallsInterceptor::handleQuery() */
+                        'handleQuery',
+                    )($input);
+                } finally {
+                    Workflow::setCurrentContext(null);
+                }
+            });
 
         // Configure update validator in an immutable scope
-        $workflowInstance->setUpdateValidator(function (UpdateInput $input, callable $handler) use ($inboundPipeline): void {
-            try {
-                Workflow::setCurrentContext($this->scopeContext);
-                $inboundPipeline->with(
-                    function (UpdateInput $input) use ($handler): void {
-                        Workflow::setCurrentContext($this->scopeContext->withInput(
-                            new Input(
-                                $this->scopeContext->getInfo(),
-                                $input->arguments,
-                                $input->header,
-                            ),
-                        ));
-                        $handler($input->arguments);
-                    },
-                    /** @see WorkflowInboundCallsInterceptor::validateUpdate() */
-                    'validateUpdate',
-                )($input);
-            } finally {
-                Workflow::setCurrentContext(null);
-            }
-        });
+        $workflowInstance->getUpdateDispatcher()
+            ->setUpdateValidator(function (UpdateInput $input, callable $handler) use ($inboundPipeline): void {
+                try {
+                    Workflow::setCurrentContext($this->scopeContext);
+                    $inboundPipeline->with(
+                        function (UpdateInput $input) use ($handler): void {
+                            Workflow::setCurrentContext($this->scopeContext->withInput(
+                                new Input(
+                                    $this->scopeContext->getInfo(),
+                                    $input->arguments,
+                                    $input->header,
+                                ),
+                            ));
+                            $handler($input->arguments);
+                        },
+                        /** @see WorkflowInboundCallsInterceptor::validateUpdate() */
+                        'validateUpdate',
+                    )($input);
+                } finally {
+                    Workflow::setCurrentContext(null);
+                }
+            });
 
         // Configure update handler in a mutable scope
-        $workflowInstance->setUpdateExecutor(function (UpdateInput $input, callable $handler, Deferred $resolver) use ($inboundPipeline): PromiseInterface {
-            try {
-                // Define Context for interceptors Pipeline
-                $scope = $this->createScope(
-                    detached: true,
-                    layer: LoopInterface::ON_TICK,
-                    context: $this->context->withInput(
-                        new Input($input->info, $input->arguments, $input->header),
-                    ),
-                    updateContext: Workflow\UpdateContext::fromInput($input),
-                );
+        $workflowInstance->getUpdateDispatcher()
+            ->setUpdateExecutor(function (UpdateInput $input, callable $handler, Deferred $resolver) use ($inboundPipeline): PromiseInterface {
+                try {
+                    // Define Context for interceptors Pipeline
+                    $scope = $this->createScope(
+                        detached: true,
+                        layer: LoopInterface::ON_TICK,
+                        context: $this->context->withInput(
+                            new Input($input->info, $input->arguments, $input->header),
+                        ),
+                        updateContext: Workflow\UpdateContext::fromInput($input),
+                    );
 
-                $scope->startUpdate(
-                    static function () use ($handler, $inboundPipeline, $input): mixed {
-                        return $inboundPipeline->with(
-                            static fn(UpdateInput $input): mixed => $handler($input->arguments),
-                            /** @see WorkflowInboundCallsInterceptor::handleUpdate() */
-                            'handleUpdate',
-                        )($input);
-                    },
-                    $input,
-                    $resolver,
-                );
+                    $scope->startUpdate(
+                        static function () use ($handler, $inboundPipeline, $input): mixed {
+                            return $inboundPipeline->with(
+                                static fn(UpdateInput $input): mixed => $handler($input->arguments),
+                                /** @see WorkflowInboundCallsInterceptor::handleUpdate() */
+                                'handleUpdate',
+                            )($input);
+                        },
+                        $input,
+                        $resolver,
+                    );
 
-                return $scope->promise();
-            } finally {
-                Workflow::setCurrentContext(null);
-            }
-        });
+                    return $scope->promise();
+                } finally {
+                    Workflow::setCurrentContext(null);
+                }
+            });
 
         // Configure signal handler
-        $workflowInstance->getSignalQueue()->onSignal(
+        $workflowInstance->getSignalDispatcher()->onSignal(
             function (string $name, callable $handler, ValuesInterface $arguments) use ($inboundPipeline): void {
                 // Define Context for interceptors Pipeline
                 Workflow::setCurrentContext($this->scopeContext);

@@ -30,9 +30,11 @@ final class SignalMethod
      * @param non-empty-string|null $name Signal name.
      * @param HandlerUnfinishedPolicy $unfinishedPolicy Actions taken if a workflow exits with
      *         a running instance of this handler.
+     * @param string $description Short description of the signal type.
      */
     public function __construct(
         public readonly ?string $name = null,
         public readonly HandlerUnfinishedPolicy $unfinishedPolicy = HandlerUnfinishedPolicy::WarnAndAbandon,
+        public readonly string $description = '',
     ) {}
 }

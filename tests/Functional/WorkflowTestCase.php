@@ -290,8 +290,8 @@ class WorkflowTestCase extends AbstractFunctional
             $worker->run($this, Splitter::createFromString($log)->getQueue());
             $i === 3 and $before = \memory_get_usage();
         }
-        $after = \memory_get_usage();
 
+        $after = \memory_get_usage();
         $this->assertSame(0, $after - $before);
     }
 
@@ -411,7 +411,7 @@ class WorkflowTestCase extends AbstractFunctional
 
         $log = <<<LOG
             2021/01/12 15:25:13	[97mDEBUG[0m	[{"command":"StartWorkflow","options":{"info":{"WorkflowExecution":{"ID":"$uuid1","RunID":"$uuid2"},"WorkflowType":{"Name":"VoidActivityStubWorkflow"},"TaskQueueName":"default","WorkflowExecutionTimeout":315360000000000000,"WorkflowRunTimeout":315360000000000000,"WorkflowTaskTimeout":0,"Namespace":"default","Attempt":1,"CronSchedule":"","ContinuedExecutionRunID":"","ParentWorkflowNamespace":"","ParentWorkflowExecution":null,"Memo":null,"SearchAttributes":null,"BinaryChecksum":"8646d54f9f6b22f407d6d22254eea9f5"}},"payloads":"$emptyPayloadStr"}] {"taskQueue":"default","tickTime":"2021-01-12T15:25:13.3983204Z"}
-            2021/01/12 15:25:13	[97mDEBUG[0m	[{"id":$id1,"command":"ExecuteActivity","options":{"name":"SimpleActivity.empty","options":{"TaskQueueName":null,"ScheduleToCloseTimeout":0,"ScheduleToStartTimeout":0,"StartToCloseTimeout":5000000000,"HeartbeatTimeout":0,"WaitForCancellation":false,"ActivityID":"","RetryPolicy":null}},"payloads":"$emptyPayloadStr","header":""},{"payloads":"ChkKFwoIZW5jb2RpbmcSC2JpbmFyeS9udWxs"}]	{"receive": true}
+            2021/01/12 15:25:13	[97mDEBUG[0m	[{"id":$id1,"command":"ExecuteActivity","options":{"name":"SimpleActivity.empty","options":{"TaskQueueName":null,"ScheduleToCloseTimeout":0,"ScheduleToStartTimeout":0,"StartToCloseTimeout":5000000000,"HeartbeatTimeout":0,"WaitForCancellation":false,"ActivityID":"","RetryPolicy":null,"Priority":{"priority_key":0},"Summary":""}},"payloads":"$emptyPayloadStr","header":""},{"payloads":"ChkKFwoIZW5jb2RpbmcSC2JpbmFyeS9udWxs"}]	{"receive": true}
             2021/01/12 15:25:13	[97mDEBUG[0m	[{"id":$id1,"payloads":"$emptyPayloadStr"}] {"taskQueue":"default","tickTime":"2021-01-12T15:25:13.4849445Z"}
             2021/01/12 15:25:13	[97mDEBUG[0m	[{"id":$id2,"command":"CompleteWorkflow","options":{},"payloads":"ChkKFwoIZW5jb2RpbmcSC2JpbmFyeS9udWxs","header":""}]	{"receive": true}
             2021/01/12 15:25:13	[97mDEBUG[0m	[{"id":$id2,"payloads":"CiUKFgoIZW5jb2RpbmcSCmpzb24vcGxhaW4SCyJjb21wbGV0ZWQi"},{"command":"DestroyWorkflow","options":{"runId":"$uuid2"}}] {"taskQueue":"default","tickTime":"2021-01-12T15:25:13.5143426Z","replay":true}
