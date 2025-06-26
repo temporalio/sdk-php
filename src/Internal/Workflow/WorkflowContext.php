@@ -72,6 +72,7 @@ use Temporal\Workflow\ChildWorkflowStubInterface;
 use Temporal\Workflow\ContinueAsNewOptions;
 use Temporal\Workflow\ExternalWorkflowStubInterface;
 use Temporal\Workflow\Mutex;
+use Temporal\Workflow\TimerOptions;
 use Temporal\Workflow\WorkflowContextInterface;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowInfo;
@@ -183,13 +184,9 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         return $this->lastCompletionResult;
     }
 
-    public function getLastCompletionResult($type = null)
+    public function getLastCompletionResult(mixed $type = null): mixed
     {
-        if ($this->lastCompletionResult === null) {
-            return null;
-        }
-
-        return $this->lastCompletionResult->getValue(0, $type);
+        return $this->lastCompletionResult?->getValue(0, $type);
     }
 
     public function getClient(): ClientInterface
@@ -459,15 +456,17 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         );
     }
 
-    public function timer($interval): PromiseInterface
+    public function timer($interval, ?TimerOptions $options = null): PromiseInterface
     {
         $dateInterval = DateInterval::parse($interval, DateInterval::FORMAT_SECONDS);
 
         return $this->callsInterceptor->with(
-            fn(TimerInput $input): PromiseInterface => $this->request(new NewTimer($input->interval)),
+            fn(TimerInput $input): PromiseInterface => $this->request(
+                new NewTimer(new AwaitOptions($input->interval, $options)),
+            ),
             /** @see WorkflowOutboundCallsInterceptor::timer() */
             'timer',
-        )(new TimerInput($dateInterval));
+        )(new TimerInput($dateInterval, $options));
     }
 
     public function request(
@@ -610,7 +609,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         return $this->callsInterceptor->with(
             function (AwaitWithTimeoutInput $input): PromiseInterface {
                 /** Bypassing {@see timer()} to acquire a timer request ID */
-                $request = new NewTimer($input->interval);
+                $request = new NewTimer(new AwaitOptions($input->interval, null));
                 $requestId = $request->getID();
                 $timer = $this->request($request);
                 \assert($timer instanceof CompletableResultInterface);

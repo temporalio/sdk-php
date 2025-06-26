@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Tests\Workflow;
 
 use Temporal\Activity\ActivityOptions;
-use Temporal\Common\Uuid;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 use Temporal\Tests\Activity\SimpleActivity;
@@ -25,13 +24,13 @@ class SideEffectWorkflow
     {
         $simple = Workflow::newActivityStub(
             SimpleActivity::class,
-            ActivityOptions::new()->withStartToCloseTimeout(5)
+            ActivityOptions::new()->withStartToCloseTimeout(5),
         );
 
         $result = yield Workflow::sideEffect(
-            function () use ($input) {
+            static function () use ($input): string {
                 return $input . '-42';
-            }
+            },
         );
 
         return yield $simple->lower($result);

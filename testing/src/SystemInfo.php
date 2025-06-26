@@ -17,7 +17,7 @@ final class SystemInfo
     private const ARCHITECTURE_MAPPINGS = [
         'x64' => 'amd64',
         'amd64' => 'amd64',
-        'arm64' => 'aarch64',
+        'arm64' => 'arm64',
     ];
     private const TEMPORAL_EXECUTABLE_MAP = [
         'darwin' => './temporal-test-server',

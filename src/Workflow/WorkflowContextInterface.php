@@ -49,9 +49,8 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @see Workflow::getLastCompletionResult()
      *
      * @param Type|string|null $type
-     * @return mixed
      */
-    public function getLastCompletionResult($type = null);
+    public function getLastCompletionResult(mixed $type = null): mixed;
 
     /**
      * A method that allows you to dynamically register additional query
@@ -171,7 +170,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @param DateIntervalValue $interval
      * @see DateInterval
      */
-    public function timer($interval): PromiseInterface;
+    public function timer($interval, ?TimerOptions $options = null): PromiseInterface;
 
     /**
      * Completes the current workflow execution atomically and starts a new execution with the same Workflow Id.
