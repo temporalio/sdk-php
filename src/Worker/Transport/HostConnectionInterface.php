@@ -24,6 +24,7 @@ interface HostConnectionInterface
     public function waitBatch(): ?CommandBatch;
 
     /**
+     * @param non-empty-string $frame
      * @throws TransportException
      */
     public function send(string $frame): void;

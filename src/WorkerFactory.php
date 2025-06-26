@@ -284,6 +284,9 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         }
     }
 
+    /**
+     * @return non-empty-string The encoded responses to be sent back to the parent process.
+     */
     private function dispatch(string $messages, array $headers): string
     {
         $commands = $this->codec->decode($messages, $headers);
