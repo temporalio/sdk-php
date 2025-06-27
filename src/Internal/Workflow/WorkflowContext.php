@@ -42,6 +42,7 @@ use Temporal\Interceptor\WorkflowOutboundCalls\UpsertTypedSearchAttributesInput;
 use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
 use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
 use Temporal\Internal\Declaration\Destroyable;
+use Temporal\Internal\Declaration\EntityNameValidator;
 use Temporal\Internal\Declaration\WorkflowInstance\QueryDispatcher;
 use Temporal\Internal\Declaration\WorkflowInstance\SignalDispatcher;
 use Temporal\Internal\Declaration\WorkflowInstance\UpdateDispatcher;
@@ -196,6 +197,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
 
     public function registerQuery(string $queryType, callable $handler, string $description): WorkflowContextInterface
     {
+        EntityNameValidator::validateQueryMethod($queryType);
         $this->queryDispatcher->addQueryHandler($queryType, $handler, $description);
 
         return $this;
@@ -203,6 +205,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
 
     public function registerSignal(string $queryType, callable $handler, string $description): WorkflowContextInterface
     {
+        EntityNameValidator::validateSignalMethod($queryType);
         $this->signalDispatcher->addSignalHandler($queryType, $handler, $description);
 
         return $this;
@@ -231,6 +234,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
 
     public function registerUpdate(string $name, callable $handler, ?callable $validator, string $description): static
     {
+        EntityNameValidator::validateUpdateMethod($name);
         $this->updateDispatcher->addUpdateHandler($name, $handler, $validator, $description);
 
         return $this;
