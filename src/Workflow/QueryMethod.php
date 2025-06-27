@@ -30,7 +30,9 @@ use Spiral\Attributes\NamedArgumentConstructor;
 final class QueryMethod
 {
     /**
-     * @param non-empty-string|null $name
+     * @param non-empty-string|null $name Query method name. Default is method name.
+     *        Name cannot start with `__temporal` as it is reserved for internal use. The name also cannot
+     *        be `__stack_trace` or `__enhanced_stack_trace` as they are reserved for internal use.
      * @param string $description Short description of the query type.
      */
     public function __construct(

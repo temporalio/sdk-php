@@ -15,6 +15,7 @@ use Temporal\Activity\ActivityInterface;
 use Temporal\Activity\LocalActivityInterface;
 use Temporal\Common\MethodRetry;
 use Temporal\Internal\Declaration\ActivityInstance;
+use Temporal\Internal\Declaration\EntityNameValidator;
 
 final class ActivityPrototype extends Prototype
 {
@@ -32,6 +33,7 @@ final class ActivityPrototype extends Prototype
         \ReflectionMethod $handler,
         \ReflectionClass $class,
     ) {
+        EntityNameValidator::validateActivity($name);
         $this->isLocalActivity = $interface instanceof LocalActivityInterface;
 
         parent::__construct($name, $handler, $class);

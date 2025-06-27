@@ -15,16 +15,11 @@ use Temporal\Internal\Repository\RepositoryInterface;
 
 abstract class Prototype implements PrototypeInterface
 {
-    protected string $name;
-    protected ?\ReflectionMethod $handler;
-    private \ReflectionClass $class;
-
-    public function __construct(string $name, ?\ReflectionMethod $handler, \ReflectionClass $class)
-    {
-        $this->handler = $handler;
-        $this->name = $name;
-        $this->class = $class;
-    }
+    public function __construct(
+        protected string $name,
+        protected ?\ReflectionMethod $handler,
+        private readonly \ReflectionClass $class,
+    ) {}
 
     /**
      * @template T of PrototypeInterface

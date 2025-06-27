@@ -13,6 +13,7 @@ namespace Temporal\Internal\Declaration\Prototype;
 
 use Temporal\Common\CronSchedule;
 use Temporal\Common\MethodRetry;
+use Temporal\Internal\Declaration\EntityNameValidator;
 use Temporal\Workflow\ReturnType;
 use Temporal\Workflow\WorkflowInit;
 
@@ -42,6 +43,15 @@ final class WorkflowPrototype extends Prototype
     private ?MethodRetry $methodRetry = null;
     private ?ReturnType $returnType = null;
     private bool $hasInitializer = false;
+
+    public function __construct(
+        string $name,
+        ?\ReflectionMethod $handler,
+        \ReflectionClass $class,
+    ) {
+        EntityNameValidator::validateWorkflow($name);
+        parent::__construct($name, $handler, $class);
+    }
 
     /**
      * Indicates if the workflow has a constructor with {@see WorkflowInit} attribute.
@@ -88,6 +98,8 @@ final class WorkflowPrototype extends Prototype
 
     public function addQueryHandler(QueryDefinition $definition): void
     {
+        EntityNameValidator::validateQueryMethod($definition->name);
+
         $this->queryHandlers[$definition->name] = $definition;
     }
 
@@ -101,6 +113,8 @@ final class WorkflowPrototype extends Prototype
 
     public function addSignalHandler(SignalDefinition $definition): void
     {
+        EntityNameValidator::validateSignalMethod($definition->name);
+
         $this->signalHandlers[$definition->name] = $definition;
     }
 
@@ -114,6 +128,8 @@ final class WorkflowPrototype extends Prototype
 
     public function addUpdateHandler(UpdateDefinition $definition): void
     {
+        EntityNameValidator::validateUpdateMethod($definition->name);
+
         $this->updateHandlers[$definition->name] = $definition;
     }
 

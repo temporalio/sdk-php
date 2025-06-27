@@ -27,9 +27,10 @@ use Spiral\Attributes\NamedArgumentConstructor;
 final class SignalMethod
 {
     /**
-     * @param non-empty-string|null $name Signal name.
+     * @param non-empty-string|null $name Signal name. Default is method name.
+     *        Name cannot start with `__temporal_` as it is reserved for internal use.
      * @param HandlerUnfinishedPolicy $unfinishedPolicy Actions taken if a workflow exits with
-     *         a running instance of this handler.
+     *        a running instance of this handler.
      * @param string $description Short description of the signal type.
      */
     public function __construct(

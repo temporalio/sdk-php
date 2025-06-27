@@ -29,6 +29,7 @@ final class UpdateMethod
      * @param non-empty-string|null $name Name of the update handler. Default is method name.
      *        Be careful about names that contain special characters. These names can be used as metric tags.
      *        And systems like prometheus ignore metrics which have tags with unsupported characters.
+     *        Name cannot start with `__temporal` as it is reserved for internal use.
      * @param HandlerUnfinishedPolicy $unfinishedPolicy Actions taken if a workflow exits with
      *        a running instance of this handler.
      * @param string $description Short description of the update handler.
