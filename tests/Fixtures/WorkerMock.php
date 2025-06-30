@@ -24,19 +24,14 @@ class WorkerMock implements HostConnectionInterface
 {
     private WorkerFactoryInterface $factory;
 
-    /** @var array */
     private array $in;
 
-    /** @var array */
     private array $out;
 
-    /** @var int */
     private int $indexIn;
 
-    /** @var int */
     private int $indexOut;
 
-    /** @var bool */
     private bool $debug;
 
     private TestCase $testCase;
@@ -55,29 +50,27 @@ class WorkerMock implements HostConnectionInterface
         return $mock;
     }
 
-    public function registerWorkflowAndActivities()
+    public function registerWorkflowAndActivities(): void
     {
         $taskQueue = $this->factory->newWorker('default');
 
         foreach ($this->getClasses(__DIR__ . '/src/Workflow') as $name) {
-            $taskQueue->registerWorkflowTypes('Temporal\\Tests\\Workflow\\' . $name);
+            $class = 'Temporal\\Tests\\Workflow\\' . $name;
+            if (\class_exists($class)) {
+                $taskQueue->registerWorkflowTypes($class);
+            }
         }
 
         // register all activity
         foreach ($this->getClasses(__DIR__ . '/src/Activity') as $name) {
             $class = '\\Temporal\\Tests\\Activity\\' . $name;
             if (\class_exists($class)) {
-                $taskQueue->registerActivityImplementations(new $class);
+                $taskQueue->registerActivityImplementations(new $class());
             }
         }
     }
 
-    /**
-     * @param TestCase $testCase
-     * @param array $queue
-     * @param bool $debug
-     */
-    public function run(TestCase $testCase, array $queue, bool $debug = false)
+    public function run(TestCase $testCase, array $queue, bool $debug = false): void
     {
         $this->debug = $debug;
 
@@ -92,9 +85,6 @@ class WorkerMock implements HostConnectionInterface
         $this->factory->run($this);
     }
 
-    /**
-     * @return CommandBatch|null
-     */
     public function waitBatch(): ?CommandBatch
     {
         if (!isset($this->out[$this->indexOut])) {
@@ -110,13 +100,10 @@ class WorkerMock implements HostConnectionInterface
 
         return new CommandBatch(
             $pair[0],
-            json_decode($pair[1], true),
+            \json_decode($pair[1], true),
         );
     }
 
-    /**
-     * @param string $frame
-     */
     public function send(string $frame): void
     {
         $pair = $this->in[$this->indexIn];
@@ -149,7 +136,6 @@ class WorkerMock implements HostConnectionInterface
     }
 
     /**
-     * @param \Throwable $error
      * @throws \Throwable
      */
     public function error(\Throwable $error): void

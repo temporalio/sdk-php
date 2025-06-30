@@ -15,7 +15,6 @@ use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\ExceptionInterceptorInterface;
 use Temporal\Interceptor\SimplePipelineProvider;
-use Temporal\Interceptor\WorkflowInboundCallsInterceptor;
 use Temporal\Internal\Declaration\Destroyable;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
@@ -76,42 +75,15 @@ final class StartWorkflowTestCase extends AbstractUnit
         $workflowInfo = new WorkflowInfo();
         $workflowInfo->type->name = 'DummyWorkflow';
         $workflowInfo->execution = new WorkflowExecution('123', (string) $request->getID());
+        $this->services->running->add($this->createIdentifiable($request->getID()));
 
         $this->marshaller->expects($this->once())
             ->method('unmarshal')
             ->willReturn(new Input($workflowInfo));
 
-        $identify = $this->createIdentifiable($request->getID());
+        $this->expectException(\OutOfBoundsException::class);
 
-        $this->services->running->add($identify);
-
-        try {
-            $this->router->handle($request, [], new Deferred());
-        } catch (\LogicException $exception) {
-            $this->fail($exception->getMessage());
-        }
-    }
-
-    public function testAlreadyRunningWorkflowIsReturned(): void
-    {
-        $request = new Request(Uuid::v4(), DummyWorkflow::class, EncodedValues::fromValues([]));
-
-        $workflowInfo = new WorkflowInfo();
-        $workflowInfo->type->name = 'DummyWorkflow';
-        $workflowInfo->execution = new WorkflowExecution('123', (string) $request->getID());
-
-        $this->marshaller->expects($this->once())
-            ->method('unmarshal')
-            ->willReturn(new Input($workflowInfo));
-
-        $identify = $this->createIdentifiable($request->getID());
-        $this->services->running->add($identify);
-
-        try {
-            $this->router->handle($request, [], new Deferred());
-        } catch (\LogicException $exception) {
-            $this->fail($exception->getMessage());
-        }
+        $this->router->handle($request, [], new Deferred());
     }
 
     protected function setUp(): void
