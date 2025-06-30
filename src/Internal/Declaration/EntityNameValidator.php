@@ -12,13 +12,15 @@ namespace Temporal\Internal\Declaration;
 final class EntityNameValidator
 {
     public const COMMON_BUILTIN_PREFIX = '__temporal_';
+    public const QUERY_TYPE_STACK_TRACE = "__stack_trace";
+    public const ENHANCED_QUERY_TYPE_STACK_TRACE = "__enhanced_stack_trace";
 
     /**
      * @throws \InvalidArgumentException
      */
     public static function validateWorkflow(string $name): void
     {
-        self::validateCommonPrefix($name, 'A Workflow type');
+        self::validateCommonPrefix($name, 'Workflow name');
     }
 
     /**
@@ -26,11 +28,13 @@ final class EntityNameValidator
      */
     public static function validateQueryMethod(string $name): void
     {
-        $name === '__stack_trace' || $name === '__enhanced_stack_trace' and throw new \InvalidArgumentException(
-            "The Query method name `$name` is reserved for built-in functionality and cannot be used.",
-        );
+        if ($name === self::QUERY_TYPE_STACK_TRACE || $name === self::ENHANCED_QUERY_TYPE_STACK_TRACE) {
+            throw new \InvalidArgumentException(
+                "The Query method name `$name` is reserved for built-in functionality and cannot be used.",
+            );
+        }
 
-        self::validateCommonPrefix($name, 'A Query method');
+        self::validateCommonPrefix($name, 'Query method');
     }
 
     /**
@@ -38,7 +42,7 @@ final class EntityNameValidator
      */
     public static function validateSignalMethod(string $name): void
     {
-        self::validateCommonPrefix($name, 'A Signal method');
+        self::validateCommonPrefix($name, 'Signal method');
     }
 
     /**
@@ -46,7 +50,7 @@ final class EntityNameValidator
      */
     public static function validateUpdateMethod(string $name): void
     {
-        self::validateCommonPrefix($name, 'An Update method');
+        self::validateCommonPrefix($name, 'Update method');
     }
 
     /**
@@ -54,7 +58,7 @@ final class EntityNameValidator
      */
     public static function validateActivity(string $name): void
     {
-        self::validateCommonPrefix($name, 'An Activity type');
+        self::validateCommonPrefix($name, 'Activity type');
     }
 
     /**
@@ -62,7 +66,7 @@ final class EntityNameValidator
      */
     public static function validateTaskQueue(string $name): void
     {
-        self::validateCommonPrefix($name, 'A Task Queue name');
+        self::validateCommonPrefix($name, 'Task Queue name');
     }
 
     /**
@@ -74,7 +78,7 @@ final class EntityNameValidator
     {
         \str_starts_with($name, self::COMMON_BUILTIN_PREFIX) and throw new \InvalidArgumentException(
             \sprintf(
-                "%s cannot start with the internal prefix `%s`.",
+                "%s must not start with the internal prefix `%s`.",
                 $target,
                 self::COMMON_BUILTIN_PREFIX,
             ),
