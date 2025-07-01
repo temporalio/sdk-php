@@ -16,44 +16,67 @@ class StackRenderer
     /**
      * Sets files and prefixes to be ignored from the stack trace.
      */
-    private static array $ignorePaths = [
-        'temporal/sdk/src/Internal/',
-    ];
+    private static array $ignorePaths = [];
 
     /**
-     * @internal please consult Temporal SDK prior to use of this function.
+     * @param non-empty-string $path Absolute path to the file or directory to ignore in the stack trace.
+     *        Must contain a trailing slash if it's a directory.
+     *        Use system {@see DIRECTORY_SEPARATOR} to ensure compatibility across different systems.
      */
-    public static function setIgnoredPaths(array $files): void
+    public static function addIgnoredPath(string $path): void
     {
-        self::$ignorePaths = $files;
+        self::init();
+        self::$ignorePaths[] = $path;
     }
 
     /**
      * Renders trace in easy to digest form, removes references to internal functionality.
+     *
+     * @param array<array{file?: string, line?: int}> $stackTrace
+     * @return array<non-empty-string>
      */
-    public static function renderTrace(array $stackTrace): string
+    public static function renderTrace(array $stackTrace): array
     {
+        self::init();
         $result = [];
+        $internals = 0;
 
         foreach ($stackTrace as $line) {
-            if (empty($line['file'])) {
+            $file = $line['file'] ?? null;
+            if ($file === null) {
                 continue;
             }
 
-            $path = \str_replace('\\', '/', $line['file']);
             foreach (self::$ignorePaths as $str) {
-                if (\str_contains($path, $str)) {
+                if (\str_starts_with($file, $str)) {
+                    ++$internals;
                     continue 2;
                 }
             }
 
+            if ($internals > 0) {
+                $result === [] or $result[] = "  ... skipped $internals internal frames";
+                $internals = 0;
+            }
+
             $result[] = \sprintf(
                 '%s:%s',
-                $line['file'] ?? '-',
+                $file,
                 $line['line'] ?? '-',
             );
         }
 
-        return \implode("\n", $result);
+        return $result;
+    }
+
+    private static function init(): void
+    {
+        static $run = false;
+        if ($run) {
+            return;
+        }
+
+        $run = true;
+        self::$ignorePaths[] = \dirname(__DIR__, 2) . DIRECTORY_SEPARATOR;
     }
 }

@@ -46,9 +46,9 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
         \assert(\is_string($name) && $name !== '');
 
         match ($name) {
-            '__temporal_workflow_metadata' => $this->getWorkflowMetadata($resolver, $context),
-            // EntityNameValidator::QUERY_TYPE_STACK_TRACE => $this->stackTrace(),
-            // EntityNameValidator::ENHANCED_QUERY_TYPE_STACK_TRACE => $this->enhancedStackTrace($request, $resolver, $context, $headers),
+            '__temporal_workflow_metadata' => $this->workflowMetadata($resolver, $context),
+            EntityNameValidator::QUERY_TYPE_STACK_TRACE => $this->stackTrace($resolver, $context),
+            // EntityNameValidator::ENHANCED_QUERY_TYPE_STACK_TRACE => $this->enhancedStackTrace($resolver, $context),
             default => $this->handleQuery($name, $request, $resolver, $context, $headers),
         };
     }
@@ -115,7 +115,7 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
     /**
      * Returns workflow metadata including query, signal, and update definitions.
      */
-    private function getWorkflowMetadata(Deferred $resolver, WorkflowContext $context): void
+    private function workflowMetadata(Deferred $resolver, WorkflowContext $context): void
     {
         $this->loop->once(
             LoopInterface::ON_QUERY,
@@ -136,6 +136,21 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
                 }
             },
         );
+    }
 
+    private function stackTrace(Deferred $resolver, WorkflowContext $context): void
+    {
+        $this->loop->once(
+            LoopInterface::ON_QUERY,
+            static function () use ($resolver, $context): void {
+                try {
+                    $result = EncodedValues::fromValues([$context->getStackTrace()]);
+
+                    $resolver->resolve($result);
+                } catch (\Throwable $e) {
+                    $resolver->reject($e);
+                }
+            },
+        );
     }
 }

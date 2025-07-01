@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Acceptance\Extra\Workflow\BuiltInPrefixedHandlers;
 
 use PHPUnit\Framework\Attributes\Test;
+use Temporal\Api\Sdk\V1\EnhancedStackTrace;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Internal\Declaration\EntityNameValidator;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
@@ -32,6 +33,9 @@ class BuiltInPrefixedHandlersTest extends TestCase
             $stub->update('register_updates_with_prefix')->getValue(0),
         );
 
+        $stackTrace = $stub->query(EntityNameValidator::QUERY_TYPE_STACK_TRACE)->getValue(0);
+        self::assertNotEmpty($stackTrace);
+
         $stub->signal('exit');
         $stub->getResult();
     }
@@ -46,9 +50,7 @@ class TestWorkflow
     #[WorkflowMethod(name: "Extra_Workflow_BuiltInPrefixedHandlers")]
     public function handle()
     {
-        yield Workflow::await(
-            fn(): bool => $this->exit,
-        );
+        yield $this->onExit();
     }
 
     #[Workflow\UpdateMethod('register_query_with_prefix')]
@@ -88,5 +90,12 @@ class TestWorkflow
     public function exit(): void
     {
         $this->exit = true;
+    }
+
+    private function onExit(): \Generator
+    {
+        yield Workflow::await(              // We are here <==========
+            fn(): bool => $this->exit,
+        );
     }
 }

@@ -124,9 +124,9 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         $this->signalDispatcher = $this->workflowInstance->getSignalDispatcher();
         $this->updateDispatcher = $this->workflowInstance->getUpdateDispatcher();
 
-        $this->requestInterceptor =  $services->interceptorProvider
+        $this->requestInterceptor = $services->interceptorProvider
             ->getPipeline(WorkflowOutboundRequestInterceptor::class);
-        $this->callsInterceptor =  $services->interceptorProvider
+        $this->callsInterceptor = $services->interceptorProvider
             ->getPipeline(WorkflowOutboundCallsInterceptor::class);
     }
 
@@ -498,7 +498,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
 
     public function getStackTrace(): string
     {
-        return StackRenderer::renderTrace($this->trace);
+        return \implode("\n", StackRenderer::renderTrace($this->trace));
     }
 
     public function allHandlersFinished(): bool
