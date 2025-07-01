@@ -20,7 +20,7 @@ use Temporal\Workflow\WorkflowMethod;
 class BuiltInPrefixedHandlersTest extends TestCase
 {
     #[Test]
-    public function fallbackQuery(
+    public function denyBuiltInPrefixes(
         #[Stub('Extra_Workflow_BuiltInPrefixedHandlers')] WorkflowStubInterface $stub,
     ): void {
         self::assertSame(
@@ -36,10 +36,25 @@ class BuiltInPrefixedHandlersTest extends TestCase
             $stub->update('register_updates_with_prefix')->getValue(0),
         );
 
-        $stackTrace = $stub->query(EntityNameValidator::QUERY_TYPE_STACK_TRACE)->getValue(0);
-        self::assertNotEmpty($stackTrace);
+        $stub->signal('exit');
+        $stub->getResult();
+    }
 
-        // Verify EnhancedStackTrace
+    #[Test]
+    public function stackTrace(
+        #[Stub('Extra_Workflow_BuiltInPrefixedHandlers')] WorkflowStubInterface $stub,
+    ): void {
+        $stackTrace = $stub->query(EntityNameValidator::QUERY_TYPE_STACK_TRACE)->getValue(0);
+        self::assertStringContainsString(__FILE__, $stackTrace);
+
+        $stub->signal('exit');
+        $stub->getResult();
+    }
+
+    #[Test]
+    public function enhancedStackTrace(
+        #[Stub('Extra_Workflow_BuiltInPrefixedHandlers')] WorkflowStubInterface $stub,
+    ): void {
         $enhancedStackTrace = $stub->query(EntityNameValidator::ENHANCED_QUERY_TYPE_STACK_TRACE)
             ->getValue(0, EnhancedStackTrace::class);
         self::assertInstanceOf(EnhancedStackTrace::class, $enhancedStackTrace);
