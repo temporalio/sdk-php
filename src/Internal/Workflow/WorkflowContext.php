@@ -19,6 +19,7 @@ use Temporal\Activity\ActivityOptions;
 use Temporal\Activity\ActivityOptionsInterface;
 use Temporal\Activity\LocalActivityOptions;
 use Temporal\Api\Sdk\V1\EnhancedStackTrace;
+use Temporal\Api\Sdk\V1\StackTrace;
 use Temporal\Common\SearchAttributes\SearchAttributeKey;
 use Temporal\Common\SearchAttributes\SearchAttributeUpdate;
 use Temporal\Common\Uuid;
@@ -499,7 +500,12 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
 
     public function getStackTrace(): string
     {
-        return \implode("\n", StackRenderer::renderTrace($this->trace));
+        return StackRenderer::renderString($this->trace);
+    }
+
+    public function getEnhancedStackTrace(): EnhancedStackTrace
+    {
+        return StackRenderer::renderProto($this->trace);
     }
 
     public function allHandlersFinished(): bool

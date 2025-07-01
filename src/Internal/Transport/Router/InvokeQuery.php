@@ -13,6 +13,7 @@ namespace Temporal\Internal\Transport\Router;
 
 use JetBrains\PhpStorm\Pure;
 use React\Promise\Deferred;
+use Temporal\Api\Sdk\V1\EnhancedStackTrace;
 use Temporal\Api\Sdk\V1\WorkflowDefinition;
 use Temporal\Api\Sdk\V1\WorkflowMetadata;
 use Temporal\DataConverter\EncodedValues;
@@ -48,7 +49,7 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
         match ($name) {
             '__temporal_workflow_metadata' => $this->workflowMetadata($resolver, $context),
             EntityNameValidator::QUERY_TYPE_STACK_TRACE => $this->stackTrace($resolver, $context),
-            // EntityNameValidator::ENHANCED_QUERY_TYPE_STACK_TRACE => $this->enhancedStackTrace($resolver, $context),
+            EntityNameValidator::ENHANCED_QUERY_TYPE_STACK_TRACE => $this->enhancedStackTrace($resolver, $context),
             default => $this->handleQuery($name, $request, $resolver, $context, $headers),
         };
     }
@@ -145,6 +146,24 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
             static function () use ($resolver, $context): void {
                 try {
                     $result = EncodedValues::fromValues([$context->getStackTrace()]);
+
+                    $resolver->resolve($result);
+                } catch (\Throwable $e) {
+                    $resolver->reject($e);
+                }
+            },
+        );
+    }
+
+    private function enhancedStackTrace(Deferred $resolver, WorkflowContext $context): void
+    {
+        $this->loop->once(
+            LoopInterface::ON_QUERY,
+            static function () use ($resolver, $context): void {
+                try {
+                    $result = EncodedValues::fromValues([
+                        $context->getEnhancedStackTrace(),
+                    ]);
 
                     $resolver->resolve($result);
                 } catch (\Throwable $e) {

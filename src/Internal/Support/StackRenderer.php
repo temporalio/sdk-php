@@ -11,6 +11,15 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Support;
 
+use Temporal\Api\Sdk\V1\EnhancedStackTrace;
+use Temporal\Api\Sdk\V1\StackTrace;
+use Temporal\Api\Sdk\V1\StackTraceFileLocation;
+use Temporal\Api\Sdk\V1\StackTraceFileSlice;
+use Temporal\Api\Sdk\V1\StackTraceSDKInfo;
+
+/**
+ * @internal
+ */
 class StackRenderer
 {
     /**
@@ -32,10 +41,15 @@ class StackRenderer
     /**
      * Renders trace in easy to digest form, removes references to internal functionality.
      *
-     * @param array<array{file?: string, line?: int}> $stackTrace
-     * @return array<non-empty-string>
+     * @param array<array{
+     *      file?: string,
+     *      line?: int<0, max>,
+     *      function?: non-empty-string,
+     *      class?: class-string,
+     *      type?: non-empty-string
+     *  }> $stackTrace
      */
-    public static function renderTrace(array $stackTrace): array
+    public static function renderString(array $stackTrace): string
     {
         self::init();
         $result = [];
@@ -66,7 +80,82 @@ class StackRenderer
             );
         }
 
-        return $result;
+        return \implode("\n", $result);
+    }
+
+    /**
+     * @param array<array{
+     *     file?: string,
+     *     line?: int<0, max>,
+     *     function?: non-empty-string,
+     *     class?: class-string,
+     *     type?: non-empty-string
+     * }> $stackTrace
+     */
+    public static function renderProto(array $stackTrace): EnhancedStackTrace
+    {
+        self::init();
+        $sdk = (new StackTraceSDKInfo())
+            // ->setName()
+            // ->setVersion()
+        ;
+
+        /** @var array<non-empty-string, StackTraceFileSlice> $sources */
+        $sources = [];
+        /** @var list<StackTrace> $stacks */
+        $stacks = [];
+
+        /** @var list<StackTraceFileLocation> $locations */
+        $locations = [];
+
+        foreach ($stackTrace as $line) {
+            $location = (new StackTraceFileLocation());
+
+            $isInternal = false;
+            $file = $line['file'] ?? null;
+            if ($file !== null) {
+                $location->setFilePath($file);
+                foreach (self::$ignorePaths as $str) {
+                    if (\str_starts_with($file, $str)) {
+                        $isInternal = true;
+                        break;
+                    }
+                }
+            }
+
+            isset($line['line']) and $location->setLine($line['line']);
+
+            if (isset($line['function'])) {
+                $location->setFunctionName(\sprintf(
+                    '%s%s%s',
+                    ($line['class'] ?? ''),
+                    ($line['type'] ?? ''),
+                    $line['function'],
+                ));
+            }
+
+            $locations[] = $location->setInternalCode($isInternal);
+
+            // Store source code for non-internal files
+            if (!$isInternal && $file !== null && !\array_key_exists($file, $sources)) {
+                try {
+                    $code = @\file_get_contents($file);
+                } catch (\Throwable $e) {
+                    $code = \sprintf("Cannot access code.\n---\n%s", $e->getMessage());
+                }
+
+                $sources[$file] = (new StackTraceFileSlice())
+                    ->setLineOffset(0)
+                    ->setContent($code === false ? "Failed to read file." : $code);
+            }
+        }
+        $stacks[] = (new StackTrace())
+            ->setLocations($locations);
+
+        return (new EnhancedStackTrace())
+            ->setSdk($sdk)
+            ->setSources($sources)
+            ->setStacks($stacks);
     }
 
     private static function init(): void

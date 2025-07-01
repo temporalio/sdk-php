@@ -6,6 +6,9 @@ namespace Temporal\Tests\Acceptance\Extra\Workflow\BuiltInPrefixedHandlers;
 
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Api\Sdk\V1\EnhancedStackTrace;
+use Temporal\Api\Sdk\V1\StackTrace;
+use Temporal\Api\Sdk\V1\StackTraceFileLocation;
+use Temporal\Api\Sdk\V1\StackTraceFileSlice;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Internal\Declaration\EntityNameValidator;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
@@ -35,6 +38,33 @@ class BuiltInPrefixedHandlersTest extends TestCase
 
         $stackTrace = $stub->query(EntityNameValidator::QUERY_TYPE_STACK_TRACE)->getValue(0);
         self::assertNotEmpty($stackTrace);
+
+        // Verify EnhancedStackTrace
+        $enhancedStackTrace = $stub->query(EntityNameValidator::ENHANCED_QUERY_TYPE_STACK_TRACE)
+            ->getValue(0, EnhancedStackTrace::class);
+        self::assertInstanceOf(EnhancedStackTrace::class, $enhancedStackTrace);
+        // Source for this file
+        self::assertTrue($enhancedStackTrace->getSources()->offsetExists(__FILE__));
+        $slice = $enhancedStackTrace->getSources()[__FILE__];
+        self::assertInstanceOf(StackTraceFileSlice::class, $slice);
+        self::assertSame(
+            \file_get_contents(__FILE__),
+            $slice->getContent(),
+        );
+        // The first stack trace frame should be the current file
+        $stack = $enhancedStackTrace->getStacks()[0];
+        self::assertInstanceOf(StackTrace::class, $stack);
+
+        $found = false;
+        foreach ($stack->getLocations() as $location) {
+            self::assertInstanceOf(StackTraceFileLocation::class, $location);
+            if ($location->getFilePath() === __FILE__) {
+                $found = true;
+                self::assertSame(Workflow::class . '::await', $location->getFunctionName());
+            }
+        }
+
+        self::assertTrue($found, 'Expected to find a stack trace location for the current file.');
 
         $stub->signal('exit');
         $stub->getResult();
