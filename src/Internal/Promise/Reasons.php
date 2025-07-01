@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Promise;
 
-use ArrayAccess;
-use Iterator;
 use Traversable;
 
 /**
@@ -13,8 +11,8 @@ use Traversable;
  * @psalm-internal Temporal
  * @template TKey of array-key
  * @template TValue of Traversable
- * @implements Iterator<TKey, TValue>
- * @implements ArrayAccess<TKey, TValue>
+ * @implements \Iterator<TKey, TValue>
+ * @implements \ArrayAccess<TKey, TValue>
  */
 final class Reasons extends \RuntimeException implements \Iterator, \ArrayAccess, \Countable
 {

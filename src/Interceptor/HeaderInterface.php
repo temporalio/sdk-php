@@ -19,7 +19,7 @@ use Temporal\DataConverter\Type;
  * @psalm-type TValue=mixed
  * @psalm-import-type TypeEnum from Type
  *
- * @extends IteratorAggregate<TKey, TValue>
+ * @extends \IteratorAggregate<TKey, TValue>
  */
 interface HeaderInterface extends \Countable, IteratorAggregate
 {
