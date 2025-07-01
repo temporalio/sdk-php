@@ -94,7 +94,7 @@ class TestWorkflow
 
     private function onExit(): \Generator
     {
-        yield Workflow::await(              // We are here <==========
+        yield Workflow::await(
             fn(): bool => $this->exit,
         );
     }

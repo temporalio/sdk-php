@@ -58,6 +58,7 @@ class Process extends Scope implements ProcessInterface
                         function (QueryInput $input) use ($handler): mixed {
                             $context = $this->scopeContext
                                 ->withInput(new Input($this->scopeContext->getInfo(), $input->arguments));
+                            $context->setReadonly(true);
                             Workflow::setCurrentContext($context);
                             return $handler($input->arguments);
                         },

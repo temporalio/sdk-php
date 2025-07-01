@@ -18,6 +18,7 @@ use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Activity\ActivityOptionsInterface;
 use Temporal\Activity\LocalActivityOptions;
+use Temporal\Api\Sdk\V1\EnhancedStackTrace;
 use Temporal\Common\SearchAttributes\SearchAttributeKey;
 use Temporal\Common\SearchAttributes\SearchAttributeUpdate;
 use Temporal\Common\Uuid;
@@ -95,9 +96,9 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
      */
     protected array $awaits = [];
 
-    private array $trace = [];
-    private bool $continueAsNew = false;
-    private bool $readonly = true;
+    protected array $trace = [];
+    protected bool $continueAsNew = false;
+    protected bool $readonly = true;
 
     /** @var Pipeline<WorkflowOutboundRequestInterceptor, PromiseInterface> */
     private Pipeline $requestInterceptor;
@@ -721,6 +722,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     {
         $result = [];
         $conditionGroupId = Uuid::v4();
+        $this->recordTrace();
 
         foreach ($conditions as $condition) {
             // Wrap Mutex into callable
@@ -781,6 +783,6 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
      */
     protected function recordTrace(): void
     {
-        $this->trace = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
+        $this->readonly or $this->trace = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
     }
 }
