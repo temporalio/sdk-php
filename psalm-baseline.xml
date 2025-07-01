@@ -1054,11 +1054,6 @@
       <code><![CDATA[new static()]]></code>
     </UnsafeInstantiation>
   </file>
-  <file src="src/Internal/Support/StackRenderer.php">
-    <PossiblyInvalidArgument>
-      <code><![CDATA[$path]]></code>
-    </PossiblyInvalidArgument>
-  </file>
   <file src="src/Internal/Transport/Client.php">
     <PossiblyInvalidArgument>
       <code><![CDATA[$command->getID()]]></code>
@@ -1272,6 +1267,9 @@
       <code><![CDATA[$parent]]></code>
       <code><![CDATA[$scope]]></code>
     </PropertyNotSetInConstructor>
+    <UnsupportedPropertyReferenceUsage>
+      <code><![CDATA[$ctx->trace = &$context->trace]]></code>
+    </UnsupportedPropertyReferenceUsage>
   </file>
   <file src="src/Internal/Workflow/WorkflowContext.php">
     <ArgumentTypeCoercion>

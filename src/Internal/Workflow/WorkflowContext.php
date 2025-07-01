@@ -19,7 +19,6 @@ use Temporal\Activity\ActivityOptions;
 use Temporal\Activity\ActivityOptionsInterface;
 use Temporal\Activity\LocalActivityOptions;
 use Temporal\Api\Sdk\V1\EnhancedStackTrace;
-use Temporal\Api\Sdk\V1\StackTrace;
 use Temporal\Common\SearchAttributes\SearchAttributeKey;
 use Temporal\Common\SearchAttributes\SearchAttributeUpdate;
 use Temporal\Common\Uuid;

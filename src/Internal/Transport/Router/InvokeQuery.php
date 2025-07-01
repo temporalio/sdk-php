@@ -13,7 +13,6 @@ namespace Temporal\Internal\Transport\Router;
 
 use JetBrains\PhpStorm\Pure;
 use React\Promise\Deferred;
-use Temporal\Api\Sdk\V1\EnhancedStackTrace;
 use Temporal\Api\Sdk\V1\WorkflowDefinition;
 use Temporal\Api\Sdk\V1\WorkflowMetadata;
 use Temporal\DataConverter\EncodedValues;
