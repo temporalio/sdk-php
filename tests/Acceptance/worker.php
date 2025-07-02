@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
+use Temporal\Internal\Support\StackRenderer;
 use Temporal\Tests\Acceptance\App\Input\Command;
-use Temporal\Tests\Acceptance\App\Logger\LoggerFactory;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\RuntimeBuilder;
@@ -28,12 +28,12 @@ use Temporal\DataConverter\ProtoConverter;
 use Temporal\DataConverter\ProtoJsonConverter;
 use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Worker\WorkerInterface;
-use Temporal\Worker\WorkerOptions;
 use Temporal\WorkerFactory;
 
-chdir(__DIR__ . '/../..');
+\chdir(__DIR__ . '/../..');
 require './vendor/autoload.php';
 RuntimeBuilder::init();
+StackRenderer::addIgnoredPath(__FILE__);
 
 /** @var array<non-empty-string, WorkerInterface> $run */
 $workers = [];
@@ -89,7 +89,7 @@ try {
     $container->bindSingleton(RPCInterface::class, RPC::create('tcp://127.0.0.1:6001'));
     $container->bind(
         StorageInterface::class,
-        fn (#[Proxy] ContainerInterface $c): StorageInterface => $c->get(Factory::class)->select('harness'),
+        static fn(#[Proxy] ContainerInterface $c): StorageInterface => $c->get(Factory::class)->select('harness'),
     );
 
     // Register Workflows
@@ -104,5 +104,5 @@ try {
 
     $container->get(WorkerFactoryInterface::class)->run();
 } catch (\Throwable $e) {
-    \td($e);
+    td($e);
 }

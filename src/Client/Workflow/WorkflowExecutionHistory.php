@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Workflow;
 
-use IteratorAggregate;
 use Temporal\Api\History\V1\History;
 use Temporal\Api\History\V1\HistoryEvent;
 use Temporal\Api\Workflowservice\V1\GetWorkflowExecutionHistoryResponse;
@@ -17,7 +16,7 @@ use Temporal\Testing\Replay\WorkflowReplayer;
  *
  * @see History
  *
- * @implements IteratorAggregate<int, HistoryEvent>
+ * @implements \IteratorAggregate<int, HistoryEvent>
  * @internal
  */
 final class WorkflowExecutionHistory implements \IteratorAggregate
