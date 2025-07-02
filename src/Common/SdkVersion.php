@@ -12,6 +12,7 @@ final class SdkVersion
      * The name of the SDK in Temporal nomenclature.
      */
     public const SDK_NAME = 'temporal-php-2';
+
     public const VERSION_REGX = '/^(\d++\.\d++\.\d++(?:-[\\w\\-.]+)?)/';
     public const PACKAGE_NAME = 'temporal/sdk';
 
