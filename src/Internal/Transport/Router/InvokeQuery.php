@@ -17,6 +17,7 @@ use Temporal\Api\Sdk\V1\WorkflowDefinition;
 use Temporal\Api\Sdk\V1\WorkflowMetadata;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
+use Temporal\Internal\Declaration\EntityNameValidator;
 use Temporal\Internal\Declaration\WorkflowInstance\QueryDispatcher;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Internal\Workflow\WorkflowContext;
@@ -26,20 +27,13 @@ use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 final class InvokeQuery extends WorkflowProcessAwareRoute
 {
-    /**
-     * @var string
-     */
     private const ERROR_QUERY_NOT_FOUND = 'unknown queryType %s. KnownQueryTypes=[%s]';
-
-    private LoopInterface $loop;
 
     #[Pure]
     public function __construct(
         RepositoryInterface $running,
-        LoopInterface $loop,
+        private readonly LoopInterface $loop,
     ) {
-        $this->loop = $loop;
-
         parent::__construct($running);
     }
 
@@ -52,7 +46,9 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
         \assert(\is_string($name) && $name !== '');
 
         match ($name) {
-            '__temporal_workflow_metadata' => $this->getWorkflowMetadata($resolver, $context),
+            '__temporal_workflow_metadata' => $this->workflowMetadata($resolver, $context),
+            EntityNameValidator::QUERY_TYPE_STACK_TRACE => $this->stackTrace($resolver, $context),
+            EntityNameValidator::ENHANCED_QUERY_TYPE_STACK_TRACE => $this->enhancedStackTrace($resolver, $context),
             default => $this->handleQuery($name, $request, $resolver, $context, $headers),
         };
     }
@@ -69,6 +65,11 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
         WorkflowContext $context,
         array $headers,
     ): void {
+        if (\str_starts_with($name, EntityNameValidator::COMMON_BUILTIN_PREFIX)) {
+            $resolver->reject(new \LogicException("The Query method `{$name}` is not supported by the SDK."));
+            return;
+        }
+
         $handler = $this->findQueryHandlerOrFail($context->getQueryDispatcher(), $name);
 
         $this->loop->once(
@@ -114,7 +115,7 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
     /**
      * Returns workflow metadata including query, signal, and update definitions.
      */
-    private function getWorkflowMetadata(Deferred $resolver, WorkflowContext $context): void
+    private function workflowMetadata(Deferred $resolver, WorkflowContext $context): void
     {
         $this->loop->once(
             LoopInterface::ON_QUERY,
@@ -135,6 +136,39 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
                 }
             },
         );
+    }
 
+    private function stackTrace(Deferred $resolver, WorkflowContext $context): void
+    {
+        $this->loop->once(
+            LoopInterface::ON_QUERY,
+            static function () use ($resolver, $context): void {
+                try {
+                    $result = EncodedValues::fromValues([$context->getStackTrace()]);
+
+                    $resolver->resolve($result);
+                } catch (\Throwable $e) {
+                    $resolver->reject($e);
+                }
+            },
+        );
+    }
+
+    private function enhancedStackTrace(Deferred $resolver, WorkflowContext $context): void
+    {
+        $this->loop->once(
+            LoopInterface::ON_QUERY,
+            static function () use ($resolver, $context): void {
+                try {
+                    $result = EncodedValues::fromValues([
+                        $context->getEnhancedStackTrace(),
+                    ]);
+
+                    $resolver->resolve($result);
+                } catch (\Throwable $e) {
+                    $resolver->reject($e);
+                }
+            },
+        );
     }
 }

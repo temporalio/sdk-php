@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace Temporal\Client\Common;
 
-use IteratorAggregate;
-
 /**
  * Paginator that allows to iterate over all pages.
  *
  * @template TItem
- * @implements IteratorAggregate<TItem>
+ * @implements \IteratorAggregate<TItem>
  */
 final class Paginator implements \IteratorAggregate, \Countable
 {

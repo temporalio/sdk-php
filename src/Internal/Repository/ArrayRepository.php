@@ -58,7 +58,7 @@ class ArrayRepository implements RepositoryInterface
     {
         $name = $entry->getID();
 
-        if ($overwrite === false && isset($this->prototypes[$name])) {
+        if ($overwrite === false && isset($this->entries[$name])) {
             throw new \OutOfBoundsException(\sprintf(self::ERROR_ALREADY_EXISTS, $name));
         }
 

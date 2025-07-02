@@ -18,6 +18,7 @@ use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Activity\ActivityOptionsInterface;
 use Temporal\Activity\LocalActivityOptions;
+use Temporal\Api\Sdk\V1\EnhancedStackTrace;
 use Temporal\Common\SearchAttributes\SearchAttributeKey;
 use Temporal\Common\SearchAttributes\SearchAttributeUpdate;
 use Temporal\Common\Uuid;
@@ -42,6 +43,7 @@ use Temporal\Interceptor\WorkflowOutboundCalls\UpsertTypedSearchAttributesInput;
 use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
 use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
 use Temporal\Internal\Declaration\Destroyable;
+use Temporal\Internal\Declaration\EntityNameValidator;
 use Temporal\Internal\Declaration\WorkflowInstance\QueryDispatcher;
 use Temporal\Internal\Declaration\WorkflowInstance\SignalDispatcher;
 use Temporal\Internal\Declaration\WorkflowInstance\UpdateDispatcher;
@@ -94,9 +96,9 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
      */
     protected array $awaits = [];
 
-    private array $trace = [];
-    private bool $continueAsNew = false;
-    private bool $readonly = true;
+    protected array $trace = [];
+    protected bool $continueAsNew = false;
+    protected bool $readonly = true;
 
     /** @var Pipeline<WorkflowOutboundRequestInterceptor, PromiseInterface> */
     private Pipeline $requestInterceptor;
@@ -123,9 +125,9 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         $this->signalDispatcher = $this->workflowInstance->getSignalDispatcher();
         $this->updateDispatcher = $this->workflowInstance->getUpdateDispatcher();
 
-        $this->requestInterceptor =  $services->interceptorProvider
+        $this->requestInterceptor = $services->interceptorProvider
             ->getPipeline(WorkflowOutboundRequestInterceptor::class);
-        $this->callsInterceptor =  $services->interceptorProvider
+        $this->callsInterceptor = $services->interceptorProvider
             ->getPipeline(WorkflowOutboundCallsInterceptor::class);
     }
 
@@ -196,6 +198,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
 
     public function registerQuery(string $queryType, callable $handler, string $description): WorkflowContextInterface
     {
+        EntityNameValidator::validateQueryMethod($queryType);
         $this->queryDispatcher->addQueryHandler($queryType, $handler, $description);
 
         return $this;
@@ -203,6 +206,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
 
     public function registerSignal(string $queryType, callable $handler, string $description): WorkflowContextInterface
     {
+        EntityNameValidator::validateSignalMethod($queryType);
         $this->signalDispatcher->addSignalHandler($queryType, $handler, $description);
 
         return $this;
@@ -231,6 +235,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
 
     public function registerUpdate(string $name, callable $handler, ?callable $validator, string $description): static
     {
+        EntityNameValidator::validateUpdateMethod($name);
         $this->updateDispatcher->addUpdateHandler($name, $handler, $validator, $description);
 
         return $this;
@@ -494,7 +499,12 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
 
     public function getStackTrace(): string
     {
-        return StackRenderer::renderTrace($this->trace);
+        return StackRenderer::renderString($this->trace);
+    }
+
+    public function getEnhancedStackTrace(): EnhancedStackTrace
+    {
+        return StackRenderer::renderProto($this->trace);
     }
 
     public function allHandlersFinished(): bool
@@ -717,6 +727,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     {
         $result = [];
         $conditionGroupId = Uuid::v4();
+        $this->recordTrace();
 
         foreach ($conditions as $condition) {
             // Wrap Mutex into callable
@@ -777,6 +788,6 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
      */
     protected function recordTrace(): void
     {
-        $this->trace = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
+        $this->readonly or $this->trace = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
     }
 }

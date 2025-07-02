@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Worker;
 
 use React\Promise\PromiseInterface;
+use Temporal\Internal\Declaration\EntityNameValidator;
 use Temporal\Internal\Events\EventEmitterTrait;
 use Temporal\Internal\Events\EventListenerInterface;
 use Temporal\Internal\Repository\RepositoryInterface;
@@ -41,6 +42,8 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
         ServiceContainer $serviceContainer,
         RPCConnectionInterface $rpc,
     ) {
+        EntityNameValidator::validateTaskQueue($taskQueue);
+
         $this->rpc = $rpc;
         $this->name = $taskQueue;
         $this->options = $options;
