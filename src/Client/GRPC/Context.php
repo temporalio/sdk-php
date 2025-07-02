@@ -32,7 +32,7 @@ final class Context implements ContextInterface
             ->withInitialInterval(CarbonInterval::millisecond(500));
 
         $this->metadata = [
-            'client-name' => ['temporal-php-2'],
+            'client-name' => [SdkVersion::SDK_NAME],
             'client-version' => [SdkVersion::getSdkVersion()],
         ];
     }

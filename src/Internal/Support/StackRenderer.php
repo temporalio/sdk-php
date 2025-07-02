@@ -16,6 +16,7 @@ use Temporal\Api\Sdk\V1\StackTrace;
 use Temporal\Api\Sdk\V1\StackTraceFileLocation;
 use Temporal\Api\Sdk\V1\StackTraceFileSlice;
 use Temporal\Api\Sdk\V1\StackTraceSDKInfo;
+use Temporal\Common\SdkVersion;
 
 /**
  * @internal
@@ -84,6 +85,8 @@ class StackRenderer
     }
 
     /**
+     * Renders trace in easy to digest form, removes references to internal functionality.
+     *
      * @param array<array{
      *     file?: string,
      *     line?: int<0, max>,
@@ -96,8 +99,8 @@ class StackRenderer
     {
         self::init();
         $sdk = (new StackTraceSDKInfo())
-            // ->setName()
-            // ->setVersion()
+            ->setName(SdkVersion::SDK_NAME)
+            ->setVersion(SdkVersion::getSdkVersion())
         ;
 
         /** @var array<non-empty-string, StackTraceFileSlice> $sources */
