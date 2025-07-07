@@ -367,10 +367,10 @@ class Scope implements CancellationScopeInterface, Destroyable
 
             if ($client->isQueued($request)) {
                 $client->cancel($request);
-                // return;
+                return;
             }
 
-            // $client->request(new Cancel($request->getID()), $this->scopeContext);
+            $client->request(new Cancel($request->getID()), $this->scopeContext);
         };
 
         $cancelID = $this->cancelID;
