@@ -88,9 +88,9 @@ class Dispatcher implements DispatcherInterface
     }
 
     /**
-     * @psalm-return FunctionExecutor
      *
      * @return \Closure(object, array): mixed
+     * @psalm-return FunctionExecutor
      */
     private function createExecutorFromMethod(\ReflectionMethod $fun): \Closure
     {
@@ -104,9 +104,9 @@ class Dispatcher implements DispatcherInterface
     }
 
     /**
-     * @psalm-return FunctionExecutor
      *
      * @return \Closure(object, array): mixed
+     * @psalm-return FunctionExecutor
      */
     private function createExecutorFromFunction(\ReflectionFunction $fun): \Closure
     {
