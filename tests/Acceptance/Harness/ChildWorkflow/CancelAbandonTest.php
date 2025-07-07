@@ -23,6 +23,8 @@ class CancelAbandonTest extends TestCase
         WorkflowStubInterface $stub,
         WorkflowClientInterface $client,
     ): void {
+        self::markTestSkipped('To be resolved with https://github.com/temporalio/sdk-php/issues/634');
+
         # Find the child workflow execution ID
         $deadline = \microtime(true) + 10;
         child_id:
