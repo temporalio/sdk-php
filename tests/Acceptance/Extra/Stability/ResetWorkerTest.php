@@ -28,7 +28,7 @@ class ResetWorkerTest extends TestCase
         # Create a Workflow stub with an execution timeout 12 seconds
         $stub = $client->withTimeout(1)
             ->newUntypedWorkflowStub(
-                'ResetWorkerWorkflow',
+                'Extra_Stability_ResetWorker',
                 WorkflowOptions::new()
                     ->withTaskQueue($feature->taskQueue)
                     ->withWorkflowExecutionTimeout(12),
