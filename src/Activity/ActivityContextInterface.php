@@ -14,6 +14,9 @@ namespace Temporal\Activity;
 use Temporal\Activity;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Exception\Client\ActivityCanceledException;
+use Temporal\Exception\Client\ActivityCompletionException;
+use Temporal\Exception\Client\ActivityPausedException;
 
 interface ActivityContextInterface
 {
@@ -46,7 +49,7 @@ interface ActivityContextInterface
      * @param Type|string $type
      * @return mixed
      */
-    public function getHeartbeatDetails($type = null);
+    public function getLastHeartbeatDetails($type = null): mixed;
 
     /**
      * Marks the activity as incomplete for asynchronous completion.
@@ -58,11 +61,25 @@ interface ActivityContextInterface
     /**
      * Use to notify workflow that activity execution is alive.
      *
+     * @param mixed $details
+     *
+     * @throws ActivityCompletionException
+     * @throws ActivityCanceledException
+     * @throws ActivityPausedException
+     *
      * @see Activity::heartbeat()
      *
-     * @param mixed $details
      */
-    public function heartbeat($details): void;
+    public function heartbeat(mixed $details): void;
+
+    /**
+     * Cancellation details of the current activity, if any.
+     *
+     * Once set, cancellation details do not change.
+     *
+     * @see Activity::getCancellationDetails()
+     */
+    public function getCancellationDetails(): ?ActivityCancellationDetails;
 
     /**
      * Get the currently running activity instance.

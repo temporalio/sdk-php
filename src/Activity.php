@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal;
 
+use Temporal\Activity\ActivityCancellationDetails;
 use Temporal\Activity\ActivityContextInterface;
 use Temporal\Activity\ActivityInfo;
 use Temporal\DataConverter\Type;
@@ -86,12 +87,25 @@ final class Activity extends Facade
      * @return mixed
      * @throws OutOfContextException in the absence of the activity execution context.
      */
-    public static function getHeartbeatDetails($type = null)
+    public static function getHeartbeatDetails($type = null): mixed
     {
         /** @var ActivityContextInterface $context */
         $context = self::getCurrentContext();
 
-        return $context->getHeartbeatDetails($type);
+        return $context->getLastHeartbeatDetails($type);
+    }
+
+    /**
+     * Cancellation details of the current activity, if any.
+     *
+     * Once set, cancellation details do not change.
+     */
+    public static function getCancellationDetails(): ?ActivityCancellationDetails
+    {
+        /** @var ActivityContextInterface $context */
+        $context = self::getCurrentContext();
+
+        return $context->getCancellationDetails();
     }
 
     /**
@@ -131,7 +145,7 @@ final class Activity extends Facade
      * ```
      *
      * @param mixed $details In case of activity timeout details are returned
-     * as a field of the exception thrown.
+     *        as a field of the exception thrown.
      *
      * @throws OutOfContextException in the absence of the activity execution context.
      */

@@ -21,10 +21,15 @@ class ActivityCompletionException extends TemporalException
     private ?string $activityType = null;
     private ?string $activityId = null;
 
+    final public function __construct(string $message = "", string|int $code = 0, ?\Throwable $previous = null)
+    {
+        parent::__construct($message, $code, $previous);
+    }
+
     /**
-     * @return static
+     * @internal
      */
-    public static function fromPrevious(\Throwable $e): self
+    public static function fromPrevious(\Throwable $e): static
     {
         return new static(
             $e->getMessage(),
@@ -34,9 +39,9 @@ class ActivityCompletionException extends TemporalException
     }
 
     /**
-     * @return static
+     * @internal
      */
-    public static function fromPreviousWithActivityId(string $activityId, \Throwable $e): self
+    public static function fromPreviousWithActivityId(string $activityId, \Throwable $e): static
     {
         $e = new static('', $e->getCode(), $e);
         $e->activityId = $activityId;
@@ -45,9 +50,9 @@ class ActivityCompletionException extends TemporalException
     }
 
     /**
-     * @return static
+     * @internal
      */
-    public static function fromActivityInfo(ActivityInfo $info, ?\Throwable $e = null): self
+    public static function fromActivityInfo(ActivityInfo $info, ?\Throwable $e = null): static
     {
         $e = new static(
             self::buildMessage(

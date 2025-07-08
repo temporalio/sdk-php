@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Activity;
 
+use Temporal\Activity\ActivityCancellationDetails;
 use Temporal\Activity\ActivityContextInterface;
 use Temporal\Activity\ActivityInfo;
 use Temporal\DataConverter\DataConverterInterface;
@@ -32,26 +33,17 @@ final class ActivityContext implements ActivityContextInterface, HeaderCarrier
     private ActivityInfo $info;
 
     private bool $doNotCompleteOnReturn = false;
-    private RPCConnectionInterface $rpc;
-    private DataConverterInterface $converter;
-    private ?ValuesInterface $heartbeatDetails;
-    private ValuesInterface $input;
-    private HeaderInterface $header;
     private ?\WeakReference $instance = null;
+    private ?ActivityCancellationDetails $cancellationDetails = null;
 
     public function __construct(
-        RPCConnectionInterface $rpc,
-        DataConverterInterface $converter,
-        ValuesInterface $input,
-        HeaderInterface $header,
-        ?ValuesInterface $lastHeartbeatDetails = null,
+        private readonly RPCConnectionInterface $rpc,
+        private readonly DataConverterInterface $converter,
+        private ValuesInterface $input,
+        private HeaderInterface $header,
+        private readonly ?ValuesInterface $lastHeartbeatDetails = null,
     ) {
         $this->info = new ActivityInfo();
-        $this->rpc = $rpc;
-        $this->converter = $converter;
-        $this->heartbeatDetails = $lastHeartbeatDetails;
-        $this->input = $input;
-        $this->header = $header;
     }
 
     public function getInfo(): ActivityInfo
@@ -92,20 +84,20 @@ final class ActivityContext implements ActivityContextInterface, HeaderCarrier
 
     public function hasHeartbeatDetails(): bool
     {
-        return $this->heartbeatDetails !== null;
+        return $this->lastHeartbeatDetails !== null;
     }
 
     /**
      * @param Type|string $type
      * @return mixed
      */
-    public function getHeartbeatDetails($type = null)
+    public function getLastHeartbeatDetails($type = null): mixed
     {
         if (!$this->hasHeartbeatDetails()) {
             return null;
         }
 
-        return $this->heartbeatDetails->getValue(0, $type);
+        return $this->lastHeartbeatDetails->getValue(0, $type);
     }
 
     public function doNotCompleteOnReturn(): void
@@ -118,13 +110,7 @@ final class ActivityContext implements ActivityContextInterface, HeaderCarrier
         return $this->doNotCompleteOnReturn;
     }
 
-    /**
-     * @param mixed $details
-     *
-     * @throws ActivityCompletionException
-     * @throws ActivityCanceledException
-     */
-    public function heartbeat($details): void
+    public function heartbeat(mixed $details): void
     {
         // we use native host process RPC here to avoid excessive GRPC connections and to handle throttling
         // on Golang end
@@ -142,15 +128,27 @@ final class ActivityContext implements ActivityContextInterface, HeaderCarrier
                 ],
             );
 
-            if (!empty($response['canceled'])) {
-                throw ActivityCanceledException::fromActivityInfo($this->info);
-            }
-
+            $cancelled = (bool) ($response['canceled'] ?? false);
             $paused = (bool) ($response['paused'] ?? false);
-            $paused and throw ActivityPausedException::fromActivityInfo($this->info);
+
+            if ($cancelled || $paused) {
+                $this->cancellationDetails ??= new ActivityCancellationDetails(
+                    cancelRequested: $cancelled,
+                    paused: $paused,
+                );
+
+                throw $cancelled
+                    ? ActivityCanceledException::fromActivityInfo($this->info)
+                    : ActivityPausedException::fromActivityInfo($this->info);
+            }
         } catch (ServiceClientException $e) {
             throw ActivityCompletionException::fromActivityInfo($this->info, $e);
         }
+    }
+
+    public function getCancellationDetails(): ?ActivityCancellationDetails
+    {
+        return $this->cancellationDetails;
     }
 
     public function getInstance(): object
