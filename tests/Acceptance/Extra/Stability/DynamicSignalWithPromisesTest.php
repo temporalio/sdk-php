@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Acceptance\Extra\Signal\DynamicSignalWithPromises;
+namespace Temporal\Tests\Acceptance\Extra\Stability\DynamicSignalWithPromises;
 
 use PHPUnit\Framework\Attributes\Test;
 use React\Promise\Deferred;
@@ -17,7 +17,7 @@ class DynamicSignalWithPromisesTest extends TestCase
 {
     #[Test]
     public function steps(
-        #[Stub('Extra_Signal_DynamicSignalWithPromises')] WorkflowStubInterface $stub,
+        #[Stub('Extra_Stability_DynamicSignalWithPromises')] WorkflowStubInterface $stub,
     ): void {
         # Send signals to the workflow to trigger steps
         $stub->signal('begin', 'foo');
@@ -40,7 +40,7 @@ class DynamicSignalWithPromisesTest extends TestCase
 #[Workflow\WorkflowInterface]
 class TestWorkflow
 {
-    #[WorkflowMethod(name: 'Extra_Signal_DynamicSignalWithPromises')]
+    #[WorkflowMethod(name: 'Extra_Stability_DynamicSignalWithPromises')]
     public function handler()
     {
         $value = 0;
