@@ -89,7 +89,6 @@ final class ActivityContext implements ActivityContextInterface, HeaderCarrier
 
     /**
      * @param Type|string $type
-     * @return mixed
      */
     public function getLastHeartbeatDetails($type = null): mixed
     {

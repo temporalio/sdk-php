@@ -47,7 +47,6 @@ interface ActivityContextInterface
      * @see Activity::getHeartbeatDetails()
      *
      * @param Type|string $type
-     * @return mixed
      */
     public function getLastHeartbeatDetails($type = null): mixed;
 
@@ -60,8 +59,6 @@ interface ActivityContextInterface
 
     /**
      * Use to notify workflow that activity execution is alive.
-     *
-     * @param mixed $details
      *
      * @throws ActivityCompletionException
      * @throws ActivityCanceledException
