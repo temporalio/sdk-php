@@ -153,8 +153,8 @@ final class Promise
      * The `$callback` function receives each item as an argument, where the item is
      * a fully resolved value of a promise or a value in `$promises`.
      *
-     * @psalm-param PromiseMapCallback $map
      * @param iterable<int, PromiseInterface|mixed> $promises
+     * @psalm-param PromiseMapCallback $map
      */
     public static function map(iterable $promises, callable $map): PromiseInterface
     {
@@ -203,10 +203,10 @@ final class Promise
      * promises and/or values. The `$reduce` callback may return either a value or a promise,
      * and `$initial` may be a promise or a value for the starting value.
      *
-     * @psalm-param PromiseReduceCallback $reduce
      * @param iterable<int, PromiseInterface|mixed> $promises
      * @param callable(mixed $current, mixed $carry, int $current, positive-int $items): mixed $reduce
      * @param mixed $initial
+     * @psalm-param PromiseReduceCallback $reduce
      */
     public static function reduce(iterable $promises, callable $reduce, $initial = null): PromiseInterface
     {
