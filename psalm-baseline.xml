@@ -250,11 +250,6 @@
       <code><![CDATA[valueUnset]]></code>
     </ImpureMethodCall>
   </file>
-  <file src="src/Common/SearchAttributes/SearchAttributeKey/KeywordListValue.php">
-    <MismatchingDocblockParamType>
-      <code><![CDATA[iterable<string|\Stringable>]]></code>
-    </MismatchingDocblockParamType>
-  </file>
   <file src="src/Common/TypedSearchAttributes.php">
     <InvalidArgument>
       <code><![CDATA[$key]]></code>
