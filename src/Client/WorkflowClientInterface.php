@@ -71,7 +71,6 @@ interface WorkflowClientInterface extends ClientContextInterface
      * @param object|WorkflowStubInterface $workflow
      * @param non-empty-string|UpdateOptions $update Name of the update handler or update options.
      *
-     * @note Experimental feature.
      * @since SDK 2.12.0
      */
     public function updateWithStart(
