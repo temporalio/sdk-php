@@ -20,12 +20,12 @@ use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 class CancelWorkflow extends WorkflowProcessAwareRoute
 {
+    private const ERROR_PROCESS_NOT_DEFINED = 'Unable to cancel workflow because workflow process #%s was not found';
+
     public function __construct(
         private readonly ClientInterface $client,
         protected RepositoryInterface $running,
     ) {}
-
-    private const ERROR_PROCESS_NOT_DEFINED = 'Unable to cancel workflow because workflow process #%s was not found';
 
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
     {
