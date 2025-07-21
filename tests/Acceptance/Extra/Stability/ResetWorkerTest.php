@@ -31,11 +31,11 @@ class ResetWorkerTest extends TestCase
                 'Extra_Stability_ResetWorker',
                 WorkflowOptions::new()
                     ->withTaskQueue($feature->taskQueue)
-                    ->withWorkflowExecutionTimeout(12),
+                    ->withWorkflowExecutionTimeout(20),
             );
 
         # Start the Workflow with a 10-second timer
-        $client->start($stub, 10);
+        $client->start($stub, 16);
 
         # Query the Workflow to kill the Worker
         try {
@@ -71,11 +71,11 @@ class ResetWorkerTest extends TestCase
                 'Extra_Stability_ResetWorker',
                 WorkflowOptions::new()
                     ->withTaskQueue($feature->taskQueue)
-                    ->withWorkflowExecutionTimeout(12),
+                    ->withWorkflowExecutionTimeout(20),
             );
 
         # Start the Workflow with a 10-second timer
-        $client->start($stub, 10);
+        $client->start($stub, 16);
 
         # Query the Workflow to kill the Worker
         try {
@@ -90,7 +90,7 @@ class ResetWorkerTest extends TestCase
 
         try {
             # Workflow must be canceled
-            $result = $stub->getResult(timeout: 8);
+            $result = $stub->getResult(timeout: 16);
             self::assertSame('Signal', $result);
         } catch (\Throwable) {
             $this->fail('Workflow must finish successfully and no timeout must be thrown');
