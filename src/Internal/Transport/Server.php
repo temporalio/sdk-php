@@ -12,7 +12,9 @@ declare(strict_types=1);
 namespace Temporal\Internal\Transport;
 
 use React\Promise\PromiseInterface;
+use Temporal\Internal\Exception\UndefinedRequestException;
 use Temporal\Internal\Queue\QueueInterface;
+use Temporal\Internal\Transport\Request\UndefinedResponse;
 use Temporal\Worker\Transport\Command\Client\FailedClientResponse;
 use Temporal\Worker\Transport\Command\Client\SuccessClientResponse;
 use Temporal\Worker\Transport\Command\FailureResponseInterface;
@@ -84,12 +86,19 @@ final class Server implements ServerInterface
     }
 
     /**
-     * @return \Closure(\Throwable): FailureResponseInterface
+     * @return \Closure(\Throwable): (FailureResponseInterface|never)
      */
     private function onRejected(ServerRequestInterface $request): \Closure
     {
-        return function (\Throwable $result) use ($request) {
-            $response = new FailedClientResponse($request->getID(), $result);
+        return function (\Throwable $e) use ($request) {
+            if ($e::class === UndefinedRequestException::class) {
+                // This is not a FailureResponseInterface, but it's a better place to handle it.
+                $response = new UndefinedResponse($e->getMessage());
+                $this->queue->push($response);
+                throw $e;
+            }
+
+            $response = new FailedClientResponse($request->getID(), $e);
             $this->queue->push($response);
 
             return $response;
