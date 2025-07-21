@@ -13,14 +13,11 @@ namespace Temporal\Internal\Transport\Router;
 
 use React\Promise\Deferred;
 use Temporal\DataConverter\EncodedValues;
-use Temporal\Internal\Workflow\Process\Process;
+use Temporal\Internal\Exception\UndefinedRequestException;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 class CancelWorkflow extends WorkflowProcessAwareRoute
 {
-    /**
-     * @var string
-     */
     private const ERROR_PROCESS_NOT_DEFINED = 'Unable to cancel workflow because workflow process #%s was not found';
 
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
@@ -30,17 +27,15 @@ class CancelWorkflow extends WorkflowProcessAwareRoute
         $resolver->resolve(EncodedValues::fromValues([null]));
     }
 
-    public function cancel(string $runId): array
+    /**
+     * @throws UndefinedRequestException
+     */
+    private function cancel(string $runId): void
     {
-        /** @var Process $process */
-        $process = $this->running->find($runId);
-
-        if ($process === null) {
-            throw new \InvalidArgumentException(\sprintf(self::ERROR_PROCESS_NOT_DEFINED, $runId));
-        }
+        $process = $this->running->find($runId) ?? throw new UndefinedRequestException(
+            \sprintf(self::ERROR_PROCESS_NOT_DEFINED, $runId),
+        );
 
         $process->cancel();
-
-        return [];
     }
 }

@@ -13,9 +13,6 @@ namespace Temporal\Internal\Declaration\Dispatcher;
 
 use JetBrains\PhpStorm\Pure;
 
-/**
- * @psalm-type FunctionExecutor = \Closure(object, array): mixed
- */
 class Dispatcher implements DispatcherInterface
 {
     /**
@@ -30,7 +27,6 @@ class Dispatcher implements DispatcherInterface
 
     /**
      * @var \Closure(object, array): mixed
-     * @psalm-var FunctionExecutor
      */
     private \Closure $executor;
 
@@ -88,9 +84,7 @@ class Dispatcher implements DispatcherInterface
     }
 
     /**
-     *
      * @return \Closure(object, array): mixed
-     * @psalm-return FunctionExecutor
      */
     private function createExecutorFromMethod(\ReflectionMethod $fun): \Closure
     {
@@ -104,9 +98,7 @@ class Dispatcher implements DispatcherInterface
     }
 
     /**
-     *
      * @return \Closure(object, array): mixed
-     * @psalm-return FunctionExecutor
      */
     private function createExecutorFromFunction(\ReflectionFunction $fun): \Closure
     {
@@ -131,7 +123,7 @@ class Dispatcher implements DispatcherInterface
     }
 
     /**
-     * @psalm-return FunctionExecutor
+     * @return \Closure(object, array): mixed
      */
     private function boot(\ReflectionFunctionAbstract $fun): void
     {

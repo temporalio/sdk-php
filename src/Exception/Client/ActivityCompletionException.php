@@ -23,7 +23,7 @@ class ActivityCompletionException extends TemporalException
 
     final public function __construct(string $message = "", string|int $code = 0, ?\Throwable $previous = null)
     {
-        parent::__construct($message, $code, $previous);
+        parent::__construct($message, (int) $code, $previous);
     }
 
     /**
