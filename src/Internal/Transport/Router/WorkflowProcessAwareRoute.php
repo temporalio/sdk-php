@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport\Router;
 
-use Temporal\Internal\Declaration\WorkflowInstanceInterface;
+use Temporal\Internal\Exception\UndefinedRequestException;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Internal\Workflow\Process\Process;
 
@@ -29,17 +29,9 @@ abstract class WorkflowProcessAwareRoute extends Route
     /**
      * @param non-empty-string $runId
      */
-    protected function findInstanceOrFail(string $runId): WorkflowInstanceInterface
-    {
-        return $this->findProcessOrFail($runId)->getWorkflowInstance();
-    }
-
-    /**
-     * @param non-empty-string $runId
-     */
     protected function findProcessOrFail(string $runId): Process
     {
-        return $this->running->find($runId) ?? throw new \LogicException(
+        return $this->running->find($runId) ?? throw new UndefinedRequestException(
             \sprintf(self::ERROR_PROCESS_NOT_FOUND, $runId),
         );
     }
