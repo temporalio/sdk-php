@@ -1,1184 +1,1159 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <files psalm-version="6.13.0@70cdf647255a1362b426bb0f522a85817b8c791c">
-    <file src="src/Activity.php">
-        <ImplicitToStringCast>
-            <code><![CDATA[$type]]></code>
-        </ImplicitToStringCast>
-    </file>
-    <file src="src/Activity/ActivityInterface.php">
-        <DeprecatedClass>
-            <code><![CDATA[NamedArgumentConstructor]]></code>
-        </DeprecatedClass>
-    </file>
-    <file src="src/Activity/ActivityMethod.php">
-        <DeprecatedClass>
-            <code><![CDATA[NamedArgumentConstructor]]></code>
-        </DeprecatedClass>
-    </file>
-    <file src="src/Activity/ActivityOptions.php">
-        <PossiblyNullReference>
-            <code><![CDATA[mergeWith]]></code>
-        </PossiblyNullReference>
-    </file>
-    <file src="src/Activity/LocalActivityInterface.php">
-        <DeprecatedClass>
-            <code><![CDATA[NamedArgumentConstructor]]></code>
-        </DeprecatedClass>
-    </file>
-    <file src="src/Activity/LocalActivityOptions.php">
-        <PossiblyNullReference>
-            <code><![CDATA[mergeWith]]></code>
-        </PossiblyNullReference>
-    </file>
-    <file src="src/Client/ActivityCompletionClientInterface.php">
-        <MissingParamType>
-            <code><![CDATA[$details]]></code>
-            <code><![CDATA[$details]]></code>
-        </MissingParamType>
-        <MissingReturnType>
-            <code><![CDATA[recordHeartbeat]]></code>
-            <code><![CDATA[recordHeartbeatByToken]]></code>
-        </MissingReturnType>
-    </file>
-    <file src="src/Client/Common/Paginator.php">
-        <PossiblyNullPropertyAssignmentValue>
-            <code><![CDATA[$loader->current()]]></code>
-        </PossiblyNullPropertyAssignmentValue>
-    </file>
-    <file src="src/Client/Common/RpcRetryOptions.php">
-        <TypeDoesNotContainType>
-            <code><![CDATA[withInitialInterval]]></code>
-            <code><![CDATA[withMaximumInterval]]></code>
-        </TypeDoesNotContainType>
-    </file>
-    <file src="src/Client/GRPC/Context.php">
-        <ArgumentTypeCoercion>
-            <code><![CDATA[$format]]></code>
-        </ArgumentTypeCoercion>
-    </file>
-    <file src="src/Client/Schedule/Action/StartWorkflowAction.php">
-        <DocblockTypeContradiction>
-            <code><![CDATA[parse]]></code>
-            <code><![CDATA[parse]]></code>
-            <code><![CDATA[parse]]></code>
-        </DocblockTypeContradiction>
-        <InaccessibleProperty>
-            <code><![CDATA[$workflowType->name]]></code>
-        </InaccessibleProperty>
-    </file>
-    <file src="src/Client/Schedule/Info/ScheduleActionResult.php">
-        <PropertyNotSetInConstructor>
-            <code><![CDATA[$actualTime]]></code>
-            <code><![CDATA[$scheduleTime]]></code>
-            <code><![CDATA[$startWorkflowResult]]></code>
-        </PropertyNotSetInConstructor>
-    </file>
-    <file src="src/Client/Schedule/Info/ScheduleDescription.php">
-        <PropertyNotSetInConstructor>
-            <code><![CDATA[$conflictToken]]></code>
-            <code><![CDATA[$info]]></code>
-            <code><![CDATA[$memo]]></code>
-            <code><![CDATA[$schedule]]></code>
-            <code><![CDATA[$searchAttributes]]></code>
-        </PropertyNotSetInConstructor>
-    </file>
-    <file src="src/Client/Schedule/Info/ScheduleInfo.php">
-        <MismatchingDocblockPropertyType>
-            <code><![CDATA[array]]></code>
-        </MismatchingDocblockPropertyType>
-        <PropertyNotSetInConstructor>
-            <code><![CDATA[$createdAt]]></code>
-            <code><![CDATA[$lastUpdateAt]]></code>
-            <code><![CDATA[$nextActionTimes]]></code>
-            <code><![CDATA[$numActions]]></code>
-            <code><![CDATA[$numActionsMissedCatchupWindow]]></code>
-            <code><![CDATA[$numActionsSkippedOverlap]]></code>
-            <code><![CDATA[$recentActions]]></code>
-            <code><![CDATA[$runningWorkflows]]></code>
-        </PropertyNotSetInConstructor>
-    </file>
-    <file src="src/Client/Schedule/Info/ScheduleListEntry.php">
-        <PropertyNotSetInConstructor>
-            <code><![CDATA[$info]]></code>
-            <code><![CDATA[$memo]]></code>
-            <code><![CDATA[$scheduleId]]></code>
-            <code><![CDATA[$searchAttributes]]></code>
-        </PropertyNotSetInConstructor>
-    </file>
-    <file src="src/Client/Schedule/Info/ScheduleListInfo.php">
-        <PropertyNotSetInConstructor>
-            <code><![CDATA[$futureActionTimes]]></code>
-            <code><![CDATA[$notes]]></code>
-            <code><![CDATA[$paused]]></code>
-            <code><![CDATA[$recentActions]]></code>
-            <code><![CDATA[$spec]]></code>
-            <code><![CDATA[$workflowType]]></code>
-        </PropertyNotSetInConstructor>
-    </file>
-    <file src="src/Client/Schedule/ScheduleHandle.php">
-        <RawObjectIteration>
-            <code><![CDATA[$response->getStartTime()]]></code>
-        </RawObjectIteration>
-    </file>
-    <file src="src/Client/Schedule/ScheduleOptions.php">
-        <DeprecatedProperty>
-            <code><![CDATA[$this->namespace]]></code>
-        </DeprecatedProperty>
-    </file>
-    <file src="src/Client/Schedule/Spec/ScheduleSpec.php">
-        <DeprecatedProperty>
-            <code><![CDATA[$this->excludeCalendarList]]></code>
-            <code><![CDATA[$this->excludeCalendarList]]></code>
-        </DeprecatedProperty>
-        <DocblockTypeContradiction>
-            <code><![CDATA[parse]]></code>
-        </DocblockTypeContradiction>
-    </file>
-    <file src="src/Client/ScheduleClient.php">
-        <DeprecatedProperty>
-            <code><![CDATA[$options->namespace]]></code>
-            <code><![CDATA[$options->namespace]]></code>
-        </DeprecatedProperty>
-        <RawObjectIteration>
-            <code><![CDATA[$response->getSchedules()]]></code>
-        </RawObjectIteration>
-    </file>
-    <file src="src/Client/Workflow/WorkflowExecutionHistory.php">
-        <RawObjectIteration>
-            <code><![CDATA[$history->getEvents()]]></code>
-        </RawObjectIteration>
-    </file>
-    <file src="src/Client/WorkflowClient.php">
-        <ArgumentTypeCoercion>
-            <code><![CDATA[$counter]]></code>
-            <code><![CDATA[$runID]]></code>
-            <code><![CDATA[$signal]]></code>
-            <code><![CDATA[$workflow->getID()]]></code>
-            <code><![CDATA[$workflow->getID()]]></code>
-        </ArgumentTypeCoercion>
-        <DeprecatedClass>
-            <code><![CDATA[new AnnotationReader()]]></code>
-        </DeprecatedClass>
-        <InvalidReturnStatement>
-            <code><![CDATA[new WorkflowProxy(
+  <file src="src/Activity.php">
+    <ImplicitToStringCast>
+      <code><![CDATA[$type]]></code>
+    </ImplicitToStringCast>
+  </file>
+  <file src="src/Activity/ActivityInterface.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Activity/ActivityMethod.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Activity/ActivityOptions.php">
+    <PossiblyNullReference>
+      <code><![CDATA[mergeWith]]></code>
+    </PossiblyNullReference>
+  </file>
+  <file src="src/Activity/LocalActivityInterface.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Activity/LocalActivityOptions.php">
+    <PossiblyNullReference>
+      <code><![CDATA[mergeWith]]></code>
+    </PossiblyNullReference>
+  </file>
+  <file src="src/Client/ActivityCompletionClientInterface.php">
+    <MissingParamType>
+      <code><![CDATA[$details]]></code>
+      <code><![CDATA[$details]]></code>
+    </MissingParamType>
+    <MissingReturnType>
+      <code><![CDATA[recordHeartbeat]]></code>
+      <code><![CDATA[recordHeartbeatByToken]]></code>
+    </MissingReturnType>
+  </file>
+  <file src="src/Client/Common/Paginator.php">
+    <PossiblyNullPropertyAssignmentValue>
+      <code><![CDATA[$loader->current()]]></code>
+    </PossiblyNullPropertyAssignmentValue>
+  </file>
+  <file src="src/Client/Common/RpcRetryOptions.php">
+    <TypeDoesNotContainType>
+      <code><![CDATA[withInitialInterval]]></code>
+      <code><![CDATA[withMaximumInterval]]></code>
+    </TypeDoesNotContainType>
+  </file>
+  <file src="src/Client/GRPC/Context.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$format]]></code>
+    </ArgumentTypeCoercion>
+  </file>
+  <file src="src/Client/Schedule/Action/StartWorkflowAction.php">
+    <DocblockTypeContradiction>
+      <code><![CDATA[parse]]></code>
+      <code><![CDATA[parse]]></code>
+      <code><![CDATA[parse]]></code>
+    </DocblockTypeContradiction>
+    <InaccessibleProperty>
+      <code><![CDATA[$workflowType->name]]></code>
+    </InaccessibleProperty>
+  </file>
+  <file src="src/Client/Schedule/Info/ScheduleActionResult.php">
+    <PropertyNotSetInConstructor>
+      <code><![CDATA[$actualTime]]></code>
+      <code><![CDATA[$scheduleTime]]></code>
+      <code><![CDATA[$startWorkflowResult]]></code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="src/Client/Schedule/Info/ScheduleDescription.php">
+    <PropertyNotSetInConstructor>
+      <code><![CDATA[$conflictToken]]></code>
+      <code><![CDATA[$info]]></code>
+      <code><![CDATA[$memo]]></code>
+      <code><![CDATA[$schedule]]></code>
+      <code><![CDATA[$searchAttributes]]></code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="src/Client/Schedule/Info/ScheduleInfo.php">
+    <MismatchingDocblockPropertyType>
+      <code><![CDATA[array]]></code>
+    </MismatchingDocblockPropertyType>
+    <PropertyNotSetInConstructor>
+      <code><![CDATA[$createdAt]]></code>
+      <code><![CDATA[$lastUpdateAt]]></code>
+      <code><![CDATA[$nextActionTimes]]></code>
+      <code><![CDATA[$numActions]]></code>
+      <code><![CDATA[$numActionsMissedCatchupWindow]]></code>
+      <code><![CDATA[$numActionsSkippedOverlap]]></code>
+      <code><![CDATA[$recentActions]]></code>
+      <code><![CDATA[$runningWorkflows]]></code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="src/Client/Schedule/Info/ScheduleListEntry.php">
+    <PropertyNotSetInConstructor>
+      <code><![CDATA[$info]]></code>
+      <code><![CDATA[$memo]]></code>
+      <code><![CDATA[$scheduleId]]></code>
+      <code><![CDATA[$searchAttributes]]></code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="src/Client/Schedule/Info/ScheduleListInfo.php">
+    <PropertyNotSetInConstructor>
+      <code><![CDATA[$futureActionTimes]]></code>
+      <code><![CDATA[$notes]]></code>
+      <code><![CDATA[$paused]]></code>
+      <code><![CDATA[$recentActions]]></code>
+      <code><![CDATA[$spec]]></code>
+      <code><![CDATA[$workflowType]]></code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="src/Client/Schedule/ScheduleHandle.php">
+    <RawObjectIteration>
+      <code><![CDATA[$response->getStartTime()]]></code>
+    </RawObjectIteration>
+  </file>
+  <file src="src/Client/Schedule/ScheduleOptions.php">
+    <DeprecatedProperty>
+      <code><![CDATA[$this->namespace]]></code>
+    </DeprecatedProperty>
+  </file>
+  <file src="src/Client/Schedule/Spec/ScheduleSpec.php">
+    <DeprecatedProperty>
+      <code><![CDATA[$this->excludeCalendarList]]></code>
+      <code><![CDATA[$this->excludeCalendarList]]></code>
+    </DeprecatedProperty>
+    <DocblockTypeContradiction>
+      <code><![CDATA[parse]]></code>
+    </DocblockTypeContradiction>
+  </file>
+  <file src="src/Client/ScheduleClient.php">
+    <DeprecatedProperty>
+      <code><![CDATA[$options->namespace]]></code>
+      <code><![CDATA[$options->namespace]]></code>
+    </DeprecatedProperty>
+    <RawObjectIteration>
+      <code><![CDATA[$response->getSchedules()]]></code>
+    </RawObjectIteration>
+  </file>
+  <file src="src/Client/Workflow/WorkflowExecutionHistory.php">
+    <RawObjectIteration>
+      <code><![CDATA[$history->getEvents()]]></code>
+    </RawObjectIteration>
+  </file>
+  <file src="src/Client/WorkflowClient.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$counter]]></code>
+      <code><![CDATA[$runID]]></code>
+      <code><![CDATA[$signal]]></code>
+      <code><![CDATA[$workflow->getID()]]></code>
+      <code><![CDATA[$workflow->getID()]]></code>
+    </ArgumentTypeCoercion>
+    <DeprecatedClass>
+      <code><![CDATA[new AnnotationReader()]]></code>
+    </DeprecatedClass>
+    <InvalidReturnStatement>
+      <code><![CDATA[new WorkflowProxy(
             $this,
             $this->newUntypedRunningWorkflowStub($workflowID, $runID, $workflow->getID()),
             $workflow,
         )]]></code>
-            <code><![CDATA[new WorkflowProxy(
+      <code><![CDATA[new WorkflowProxy(
             $this,
             $this->newUntypedWorkflowStub($workflow->getID(), $options),
             $workflow,
         )]]></code>
-        </InvalidReturnStatement>
-        <InvalidReturnType>
-            <code><![CDATA[object]]></code>
-            <code><![CDATA[object]]></code>
-        </InvalidReturnType>
-        <LessSpecificReturnStatement>
-            <code><![CDATA[new self($serviceClient, $options, $converter, $interceptorProvider)]]></code>
-        </LessSpecificReturnStatement>
-        <MissingParamType>
-            <code><![CDATA[$workflow]]></code>
-        </MissingParamType>
-        <MoreSpecificReturnType>
-            <code><![CDATA[static]]></code>
-        </MoreSpecificReturnType>
-        <RawObjectIteration>
-            <code><![CDATA[$response->getExecutions()]]></code>
-        </RawObjectIteration>
-        <RedundantFunctionCall>
-            <code><![CDATA[\sprintf]]></code>
-            <code><![CDATA[\sprintf]]></code>
-        </RedundantFunctionCall>
-        <TypeDoesNotContainType>
-            <code><![CDATA[$signal === '']]></code>
-        </TypeDoesNotContainType>
-    </file>
-    <file src="src/Client/WorkflowClientInterface.php">
-        <MissingParamType>
-            <code><![CDATA[$workflow]]></code>
-        </MissingParamType>
-    </file>
-    <file src="src/Client/WorkflowOptions.php">
-        <ImpureMethodCall>
-            <code><![CDATA[$this->typedSearchAttributes]]></code>
-            <code><![CDATA[setFields]]></code>
-            <code><![CDATA[setIndexedFields]]></code>
-            <code><![CDATA[setIndexedFields]]></code>
-            <code><![CDATA[toPayload]]></code>
-            <code><![CDATA[toPayload]]></code>
-            <code><![CDATA[toPayload]]></code>
-        </ImpureMethodCall>
-        <PossiblyNullReference>
-            <code><![CDATA[mergeWith]]></code>
-        </PossiblyNullReference>
-        <UnnecessaryVarAnnotation>
-            <code><![CDATA[SearchAttributeKey]]></code>
-        </UnnecessaryVarAnnotation>
-    </file>
-    <file src="src/Common/CronSchedule.php">
-        <DeprecatedClass>
-            <code><![CDATA[NamedArgumentConstructor]]></code>
-        </DeprecatedClass>
-        <RedundantCast>
-            <code><![CDATA[(string) $this->interval]]></code>
-        </RedundantCast>
-    </file>
-    <file src="src/Common/MethodRetry.php">
-        <DeprecatedClass>
-            <code><![CDATA[NamedArgumentConstructor]]></code>
-        </DeprecatedClass>
-        <MissingImmutableAnnotation>
-            <code><![CDATA[RetryOptions]]></code>
-        </MissingImmutableAnnotation>
-    </file>
-    <file src="src/Common/Priority.php">
-        <ArgumentTypeCoercion>
-            <code><![CDATA[$priorityKey]]></code>
-        </ArgumentTypeCoercion>
-    </file>
-    <file src="src/Common/RetryOptions.php">
-        <PossiblyNullArgument>
-            <code><![CDATA[DateInterval::toDuration($this->initialInterval)]]></code>
-            <code><![CDATA[DateInterval::toDuration($this->maximumInterval)]]></code>
-        </PossiblyNullArgument>
-    </file>
-    <file src="src/Common/SearchAttributes/SearchAttributeKey.php">
-        <ImpureMethodCall>
-            <code><![CDATA[valueSet]]></code>
-            <code><![CDATA[valueUnset]]></code>
-        </ImpureMethodCall>
-    </file>
-    <file src="src/Common/TypedSearchAttributes.php">
-        <InvalidArgument>
-            <code><![CDATA[$key]]></code>
-            <code><![CDATA[$key]]></code>
-        </InvalidArgument>
-        <PossiblyInvalidClone>
-            <code><![CDATA[clone $this->collection]]></code>
-        </PossiblyInvalidClone>
-        <PossiblyNullArrayAccess>
-            <code><![CDATA[$this->collection[$found]]]></code>
-            <code><![CDATA[$this->collection[$key]]]></code>
-        </PossiblyNullArrayAccess>
-        <PossiblyNullReference>
-            <code><![CDATA[$this->collection]]></code>
-            <code><![CDATA[$this->collection]]></code>
-        </PossiblyNullReference>
-        <UndefinedMethod>
-            <code><![CDATA[valueSet]]></code>
-        </UndefinedMethod>
-    </file>
-    <file src="src/Common/Uuid.php">
-        <LessSpecificReturnStatement>
-            <code><![CDATA[\vsprintf('%s-%s-%s-%s-%s', [
+    </InvalidReturnStatement>
+    <InvalidReturnType>
+      <code><![CDATA[object]]></code>
+      <code><![CDATA[object]]></code>
+    </InvalidReturnType>
+    <LessSpecificReturnStatement>
+      <code><![CDATA[new self($serviceClient, $options, $converter, $interceptorProvider)]]></code>
+    </LessSpecificReturnStatement>
+    <MissingParamType>
+      <code><![CDATA[$workflow]]></code>
+    </MissingParamType>
+    <MoreSpecificReturnType>
+      <code><![CDATA[static]]></code>
+    </MoreSpecificReturnType>
+    <RawObjectIteration>
+      <code><![CDATA[$response->getExecutions()]]></code>
+    </RawObjectIteration>
+    <RedundantFunctionCall>
+      <code><![CDATA[\sprintf]]></code>
+      <code><![CDATA[\sprintf]]></code>
+    </RedundantFunctionCall>
+    <TypeDoesNotContainType>
+      <code><![CDATA[$signal === '']]></code>
+    </TypeDoesNotContainType>
+  </file>
+  <file src="src/Client/WorkflowClientInterface.php">
+    <MissingParamType>
+      <code><![CDATA[$workflow]]></code>
+    </MissingParamType>
+  </file>
+  <file src="src/Client/WorkflowOptions.php">
+    <ImpureMethodCall>
+      <code><![CDATA[$this->typedSearchAttributes]]></code>
+      <code><![CDATA[setFields]]></code>
+      <code><![CDATA[setIndexedFields]]></code>
+      <code><![CDATA[setIndexedFields]]></code>
+      <code><![CDATA[toPayload]]></code>
+      <code><![CDATA[toPayload]]></code>
+      <code><![CDATA[toPayload]]></code>
+    </ImpureMethodCall>
+    <PossiblyNullReference>
+      <code><![CDATA[mergeWith]]></code>
+    </PossiblyNullReference>
+    <UnnecessaryVarAnnotation>
+      <code><![CDATA[SearchAttributeKey]]></code>
+    </UnnecessaryVarAnnotation>
+  </file>
+  <file src="src/Common/CronSchedule.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+    <RedundantCast>
+      <code><![CDATA[(string) $this->interval]]></code>
+    </RedundantCast>
+  </file>
+  <file src="src/Common/MethodRetry.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+    <MissingImmutableAnnotation>
+      <code><![CDATA[RetryOptions]]></code>
+    </MissingImmutableAnnotation>
+  </file>
+  <file src="src/Common/Priority.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$priorityKey]]></code>
+    </ArgumentTypeCoercion>
+  </file>
+  <file src="src/Common/RetryOptions.php">
+    <PossiblyNullArgument>
+      <code><![CDATA[DateInterval::toDuration($this->initialInterval)]]></code>
+      <code><![CDATA[DateInterval::toDuration($this->maximumInterval)]]></code>
+    </PossiblyNullArgument>
+  </file>
+  <file src="src/Common/SearchAttributes/SearchAttributeKey.php">
+    <ImpureMethodCall>
+      <code><![CDATA[valueSet]]></code>
+      <code><![CDATA[valueUnset]]></code>
+    </ImpureMethodCall>
+  </file>
+  <file src="src/Common/TypedSearchAttributes.php">
+    <InvalidArgument>
+      <code><![CDATA[$key]]></code>
+      <code><![CDATA[$key]]></code>
+    </InvalidArgument>
+    <PossiblyInvalidClone>
+      <code><![CDATA[clone $this->collection]]></code>
+    </PossiblyInvalidClone>
+    <PossiblyNullArrayAccess>
+      <code><![CDATA[$this->collection[$found]]]></code>
+      <code><![CDATA[$this->collection[$key]]]></code>
+    </PossiblyNullArrayAccess>
+    <PossiblyNullReference>
+      <code><![CDATA[$this->collection]]></code>
+      <code><![CDATA[$this->collection]]></code>
+    </PossiblyNullReference>
+    <UndefinedMethod>
+      <code><![CDATA[valueSet]]></code>
+    </UndefinedMethod>
+  </file>
+  <file src="src/Common/Uuid.php">
+    <LessSpecificReturnStatement>
+      <code><![CDATA[\vsprintf('%s-%s-%s-%s-%s', [
             \substr($uuid, 0, 8),
             \substr($uuid, 8, 4),
             \substr($uuid, 12, 4),
             \substr($uuid, 16, 4),
             \substr($uuid, 20, 12),
         ])]]></code>
-        </LessSpecificReturnStatement>
-        <MoreSpecificReturnType>
-            <code><![CDATA[non-empty-string]]></code>
-        </MoreSpecificReturnType>
-    </file>
-    <file src="src/DataConverter/DataConverter.php">
-        <MissingImmutableAnnotation>
-            <code><![CDATA[DataConverter]]></code>
-        </MissingImmutableAnnotation>
-        <PossiblyNullArgument>
-            <code><![CDATA[$type]]></code>
-        </PossiblyNullArgument>
-    </file>
-    <file src="src/DataConverter/EncodedCollection.php">
-        <InvalidArgument>
-            <code><![CDATA[$name]]></code>
-            <code><![CDATA[$value]]></code>
-        </InvalidArgument>
-        <MoreSpecificImplementedParamType>
-            <code><![CDATA[$type]]></code>
-        </MoreSpecificImplementedParamType>
-    </file>
-    <file src="src/DataConverter/EncodedValues.php">
-        <InvalidArgument>
-            <code><![CDATA[$payloads->getPayloads()]]></code>
-            <code><![CDATA[$payloads->getPayloads()]]></code>
-        </InvalidArgument>
-        <PossiblyNullIterator>
-            <code><![CDATA[$this->values]]></code>
-        </PossiblyNullIterator>
-        <UnsafeInstantiation>
-            <code><![CDATA[new static()]]></code>
-            <code><![CDATA[new static()]]></code>
-            <code><![CDATA[new static()]]></code>
-        </UnsafeInstantiation>
-    </file>
-    <file src="src/DataConverter/JsonConverter.php">
-        <ArgumentTypeCoercion>
-            <code><![CDATA[$type->getName()]]></code>
-        </ArgumentTypeCoercion>
-        <DeprecatedClass>
-            <code><![CDATA[new AnnotationReader()]]></code>
-        </DeprecatedClass>
-        <PossiblyInvalidArgument>
-            <code><![CDATA[$e->getCode()]]></code>
-            <code><![CDATA[$e->getCode()]]></code>
-        </PossiblyInvalidArgument>
-        <PossiblyInvalidPropertyFetch>
-            <code><![CDATA[$data->name]]></code>
-        </PossiblyInvalidPropertyFetch>
-    </file>
-    <file src="src/DataConverter/ProtoConverter.php">
-        <ArgumentTypeCoercion>
-            <code><![CDATA[$type->getName()]]></code>
-        </ArgumentTypeCoercion>
-    </file>
-    <file src="src/DataConverter/ProtoJsonConverter.php">
-        <ArgumentTypeCoercion>
-            <code><![CDATA[$type->getName()]]></code>
-        </ArgumentTypeCoercion>
-    </file>
-    <file src="src/DataConverter/ValuesInterface.php">
-        <MissingReturnType>
-            <code><![CDATA[setDataConverter]]></code>
-        </MissingReturnType>
-    </file>
-    <file src="src/Exception/Client/ActivityCompletionException.php">
-        <PossiblyInvalidArgument>
-            <code><![CDATA[$e === null ? 0 : $e->getCode()]]></code>
-            <code><![CDATA[$e->getCode()]]></code>
-            <code><![CDATA[$e->getCode()]]></code>
-        </PossiblyInvalidArgument>
-        <PossiblyNullReference>
-            <code><![CDATA[getID]]></code>
-        </PossiblyNullReference>
-        <UnsafeInstantiation>
-            <code><![CDATA[new static(
-            $e->getMessage(),
-            $e->getCode(),
-            $e,
-        )]]></code>
-            <code><![CDATA[new static(
-            self::buildMessage(
-                [
-                    'workflowId' => $info->workflowExecution->getID(),
-                    'runId' => $info->workflowExecution->getRunID(),
-                    'activityId' => $info->id,
-                    'activityType' => $info->type->name,
-                ],
-            ),
-            $e === null ? 0 : $e->getCode(),
-            $e,
-        )]]></code>
-            <code><![CDATA[new static('', $e->getCode(), $e)]]></code>
-        </UnsafeInstantiation>
-    </file>
-    <file src="src/Exception/Client/MultyOperation/OperationStatus.php">
-        <InvalidArgument>
-            <code><![CDATA[$message->getDetails()]]></code>
-        </InvalidArgument>
-        <MismatchingDocblockParamType>
-            <code><![CDATA[\ArrayAccess<int, Any>&RepeatedField]]></code>
-        </MismatchingDocblockParamType>
-        <MismatchingDocblockPropertyType>
-            <code><![CDATA[\ArrayAccess<int, Any>&RepeatedField]]></code>
-        </MismatchingDocblockPropertyType>
-        <MismatchingDocblockReturnType>
-            <code><![CDATA[\ArrayAccess<int, Any>&RepeatedField]]></code>
-        </MismatchingDocblockReturnType>
-    </file>
-    <file src="src/Exception/Client/ServiceClientException.php">
-        <ImplementedReturnTypeMismatch>
-            <code><![CDATA[RepeatedField]]></code>
-        </ImplementedReturnTypeMismatch>
-        <InvalidReturnStatement>
-            <code><![CDATA[$this->status->getDetails()]]></code>
-        </InvalidReturnStatement>
-        <InvalidReturnType>
-            <code><![CDATA[RepeatedField]]></code>
-        </InvalidReturnType>
-    </file>
-    <file src="src/Exception/Client/UnpackDetailsTrait.php">
-        <RawObjectIteration>
-            <code><![CDATA[$details]]></code>
-        </RawObjectIteration>
-        <UndefinedInterfaceMethod>
-            <code><![CDATA[count]]></code>
-        </UndefinedInterfaceMethod>
-    </file>
-    <file src="src/Exception/Client/WorkflowException.php">
-        <UnsafeInstantiation>
-            <code><![CDATA[new static(null, $execution, $workflowType, $previous)]]></code>
-        </UnsafeInstantiation>
-    </file>
-    <file src="src/Exception/DoNotCompleteOnResultException.php">
-        <UnsafeInstantiation>
-            <code><![CDATA[new static(static::DEFAULT_ERROR_MESSAGE)]]></code>
-        </UnsafeInstantiation>
-    </file>
-    <file src="src/Exception/ExceptionInterceptor.php">
-        <LessSpecificReturnStatement>
-            <code><![CDATA[new self([\Error::class])]]></code>
-        </LessSpecificReturnStatement>
-        <MoreSpecificReturnType>
-            <code><![CDATA[static]]></code>
-        </MoreSpecificReturnType>
-    </file>
-    <file src="src/Exception/Failure/FailureConverter.php">
-        <ArgumentTypeCoercion>
-            <code><![CDATA[$execution->getRunId()]]></code>
-            <code><![CDATA[$execution->getWorkflowId()]]></code>
-        </ArgumentTypeCoercion>
-        <DocblockTypeContradiction>
-            <code><![CDATA[\is_array($frame)]]></code>
-        </DocblockTypeContradiction>
-        <InvalidNullableReturnType>
-            <code><![CDATA[Failure]]></code>
-        </InvalidNullableReturnType>
-        <NullableReturnStatement>
-            <code><![CDATA[$e->getFailure()]]></code>
-        </NullableReturnStatement>
-        <PossiblyInvalidArgument>
-            <code><![CDATA[$info->getInitiatedEventId()]]></code>
-            <code><![CDATA[$info->getScheduledEventId()]]></code>
-            <code><![CDATA[$info->getStartedEventId()]]></code>
-            <code><![CDATA[$info->getStartedEventId()]]></code>
-        </PossiblyInvalidArgument>
-        <PossiblyNullArgument>
-            <code><![CDATA[$e->getOriginalStackTrace()]]></code>
-            <code><![CDATA[$failure->getCause()]]></code>
-            <code><![CDATA[$info->getDetails()]]></code>
-            <code><![CDATA[$info->getDetails()]]></code>
-            <code><![CDATA[$info->getLastHeartbeatDetails()]]></code>
-            <code><![CDATA[$info->getLastHeartbeatDetails()]]></code>
-        </PossiblyNullArgument>
-        <PossiblyNullReference>
-            <code><![CDATA[getName]]></code>
-            <code><![CDATA[getName]]></code>
-            <code><![CDATA[getStackTrace]]></code>
-            <code><![CDATA[getWorkflowExecution]]></code>
-            <code><![CDATA[hasLastHeartbeatDetails]]></code>
-            <code><![CDATA[setStackTrace]]></code>
-        </PossiblyNullReference>
-    </file>
-    <file src="src/Exception/Failure/TemporalFailure.php">
-        <MissingClosureParamType>
-            <code><![CDATA[$value]]></code>
-            <code><![CDATA[$value]]></code>
-            <code><![CDATA[$value]]></code>
-        </MissingClosureParamType>
-        <MissingClosureReturnType>
-            <code><![CDATA[static fn($value) => RetryState::name($value)]]></code>
-            <code><![CDATA[static fn($value) => TimeoutType::name($value)]]></code>
-            <code><![CDATA[static fn($value) => TimeoutType::name($value)]]></code>
-        </MissingClosureReturnType>
-    </file>
-    <file src="src/Interceptor/Header.php">
-        <MethodSignatureMismatch>
-            <code><![CDATA[Header]]></code>
-        </MethodSignatureMismatch>
-        <MissingImmutableAnnotation>
-            <code><![CDATA[Header]]></code>
-        </MissingImmutableAnnotation>
-    </file>
-    <file src="src/Internal/Activity/ActivityContext.php">
-        <PossiblyNullReference>
-            <code><![CDATA[getValue]]></code>
-        </PossiblyNullReference>
-    </file>
-    <file src="src/Internal/Assert.php">
-        <MissingClosureParamType>
-            <code><![CDATA[$v]]></code>
-            <code><![CDATA[$v]]></code>
-        </MissingClosureParamType>
-    </file>
-    <file src="src/Internal/Client/ActivityCompletionClient.php">
-        <MissingParamType>
-            <code><![CDATA[$details]]></code>
-            <code><![CDATA[$details]]></code>
-        </MissingParamType>
-    </file>
-    <file src="src/Internal/Client/ResponseToResultMapper.php">
-        <ArgumentTypeCoercion>
-            <code><![CDATA[$execution->getRunId()]]></code>
-            <code><![CDATA[$execution->getWorkflowId()]]></code>
-            <code><![CDATA[$updateRef->getWorkflowExecution()?->getRunId()]]></code>
-            <code><![CDATA[(string) $updateRef->getWorkflowExecution()?->getWorkflowId()]]></code>
-        </ArgumentTypeCoercion>
-    </file>
-    <file src="src/Internal/Client/WorkflowStarter.php">
-        <ArgumentTypeCoercion>
-            <code><![CDATA[$f->getRunId()]]></code>
-            <code><![CDATA[$f->getRunId()]]></code>
-            <code><![CDATA[$input->workflowStartInput->workflowId]]></code>
-            <code><![CDATA[$input->workflowStartInput->workflowId]]></code>
-            <code><![CDATA[$options->workflowId]]></code>
-            <code><![CDATA[$request->getWorkflowId()]]></code>
-            <code><![CDATA[$request->getWorkflowId()]]></code>
-            <code><![CDATA[$response->getRunId()]]></code>
-            <code><![CDATA[$startResponse->getRunId()]]></code>
-        </ArgumentTypeCoercion>
-        <InvalidArgument>
-            <code><![CDATA[0]]></code>
-            <code><![CDATA[1]]></code>
-            <code><![CDATA[1]]></code>
-        </InvalidArgument>
-        <MissingTemplateParam>
-            <code><![CDATA[$fails]]></code>
-        </MissingTemplateParam>
-        <PossiblyNullReference>
-            <code><![CDATA[getName]]></code>
-            <code><![CDATA[getStartWorkflow]]></code>
-            <code><![CDATA[getUpdateWorkflow]]></code>
-        </PossiblyNullReference>
-        <UndefinedInterfaceMethod>
-            <code><![CDATA[toHeader]]></code>
-        </UndefinedInterfaceMethod>
-    </file>
-    <file src="src/Internal/Client/WorkflowStub.php">
-        <ArgumentTypeCoercion>
-            <code><![CDATA[$closeEvent
+    </LessSpecificReturnStatement>
+    <MoreSpecificReturnType>
+      <code><![CDATA[non-empty-string]]></code>
+    </MoreSpecificReturnType>
+  </file>
+  <file src="src/DataConverter/DataConverter.php">
+    <MissingImmutableAnnotation>
+      <code><![CDATA[DataConverter]]></code>
+    </MissingImmutableAnnotation>
+    <PossiblyNullArgument>
+      <code><![CDATA[$type]]></code>
+    </PossiblyNullArgument>
+  </file>
+  <file src="src/DataConverter/EncodedCollection.php">
+    <InvalidArgument>
+      <code><![CDATA[$name]]></code>
+      <code><![CDATA[$value]]></code>
+    </InvalidArgument>
+    <MoreSpecificImplementedParamType>
+      <code><![CDATA[$type]]></code>
+    </MoreSpecificImplementedParamType>
+  </file>
+  <file src="src/DataConverter/EncodedValues.php">
+    <InvalidArgument>
+      <code><![CDATA[$payloads->getPayloads()]]></code>
+      <code><![CDATA[$payloads->getPayloads()]]></code>
+    </InvalidArgument>
+    <PossiblyNullIterator>
+      <code><![CDATA[$this->values]]></code>
+    </PossiblyNullIterator>
+    <UnsafeInstantiation>
+      <code><![CDATA[new static()]]></code>
+      <code><![CDATA[new static()]]></code>
+      <code><![CDATA[new static()]]></code>
+    </UnsafeInstantiation>
+  </file>
+  <file src="src/DataConverter/JsonConverter.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$type->getName()]]></code>
+    </ArgumentTypeCoercion>
+    <DeprecatedClass>
+      <code><![CDATA[new AnnotationReader()]]></code>
+    </DeprecatedClass>
+    <PossiblyInvalidArgument>
+      <code><![CDATA[$e->getCode()]]></code>
+      <code><![CDATA[$e->getCode()]]></code>
+    </PossiblyInvalidArgument>
+    <PossiblyInvalidPropertyFetch>
+      <code><![CDATA[$data->name]]></code>
+    </PossiblyInvalidPropertyFetch>
+  </file>
+  <file src="src/DataConverter/ProtoConverter.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$type->getName()]]></code>
+    </ArgumentTypeCoercion>
+  </file>
+  <file src="src/DataConverter/ProtoJsonConverter.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$type->getName()]]></code>
+    </ArgumentTypeCoercion>
+  </file>
+  <file src="src/DataConverter/ValuesInterface.php">
+    <MissingReturnType>
+      <code><![CDATA[setDataConverter]]></code>
+    </MissingReturnType>
+  </file>
+  <file src="src/Exception/Client/ActivityCompletionException.php">
+    <PossiblyNullReference>
+      <code><![CDATA[getID]]></code>
+    </PossiblyNullReference>
+  </file>
+  <file src="src/Exception/Client/MultyOperation/OperationStatus.php">
+    <InvalidArgument>
+      <code><![CDATA[$message->getDetails()]]></code>
+    </InvalidArgument>
+    <MismatchingDocblockParamType>
+      <code><![CDATA[\ArrayAccess<int, Any>&RepeatedField]]></code>
+    </MismatchingDocblockParamType>
+    <MismatchingDocblockPropertyType>
+      <code><![CDATA[\ArrayAccess<int, Any>&RepeatedField]]></code>
+    </MismatchingDocblockPropertyType>
+    <MismatchingDocblockReturnType>
+      <code><![CDATA[\ArrayAccess<int, Any>&RepeatedField]]></code>
+    </MismatchingDocblockReturnType>
+  </file>
+  <file src="src/Exception/Client/ServiceClientException.php">
+    <ImplementedReturnTypeMismatch>
+      <code><![CDATA[RepeatedField]]></code>
+    </ImplementedReturnTypeMismatch>
+    <InvalidReturnStatement>
+      <code><![CDATA[$this->status->getDetails()]]></code>
+    </InvalidReturnStatement>
+    <InvalidReturnType>
+      <code><![CDATA[RepeatedField]]></code>
+    </InvalidReturnType>
+  </file>
+  <file src="src/Exception/Client/UnpackDetailsTrait.php">
+    <RawObjectIteration>
+      <code><![CDATA[$details]]></code>
+    </RawObjectIteration>
+    <UndefinedInterfaceMethod>
+      <code><![CDATA[count]]></code>
+    </UndefinedInterfaceMethod>
+  </file>
+  <file src="src/Exception/Client/WorkflowException.php">
+    <UnsafeInstantiation>
+      <code><![CDATA[new static(null, $execution, $workflowType, $previous)]]></code>
+    </UnsafeInstantiation>
+  </file>
+  <file src="src/Exception/DoNotCompleteOnResultException.php">
+    <UnsafeInstantiation>
+      <code><![CDATA[new static(static::DEFAULT_ERROR_MESSAGE)]]></code>
+    </UnsafeInstantiation>
+  </file>
+  <file src="src/Exception/ExceptionInterceptor.php">
+    <LessSpecificReturnStatement>
+      <code><![CDATA[new self([\Error::class])]]></code>
+    </LessSpecificReturnStatement>
+    <MoreSpecificReturnType>
+      <code><![CDATA[static]]></code>
+    </MoreSpecificReturnType>
+  </file>
+  <file src="src/Exception/Failure/FailureConverter.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$execution->getRunId()]]></code>
+      <code><![CDATA[$execution->getWorkflowId()]]></code>
+    </ArgumentTypeCoercion>
+    <DocblockTypeContradiction>
+      <code><![CDATA[\is_array($frame)]]></code>
+    </DocblockTypeContradiction>
+    <InvalidNullableReturnType>
+      <code><![CDATA[Failure]]></code>
+    </InvalidNullableReturnType>
+    <NullableReturnStatement>
+      <code><![CDATA[$e->getFailure()]]></code>
+    </NullableReturnStatement>
+    <PossiblyInvalidArgument>
+      <code><![CDATA[$info->getInitiatedEventId()]]></code>
+      <code><![CDATA[$info->getScheduledEventId()]]></code>
+      <code><![CDATA[$info->getStartedEventId()]]></code>
+      <code><![CDATA[$info->getStartedEventId()]]></code>
+    </PossiblyInvalidArgument>
+    <PossiblyNullArgument>
+      <code><![CDATA[$e->getOriginalStackTrace()]]></code>
+      <code><![CDATA[$failure->getCause()]]></code>
+      <code><![CDATA[$info->getDetails()]]></code>
+      <code><![CDATA[$info->getDetails()]]></code>
+      <code><![CDATA[$info->getLastHeartbeatDetails()]]></code>
+      <code><![CDATA[$info->getLastHeartbeatDetails()]]></code>
+    </PossiblyNullArgument>
+    <PossiblyNullReference>
+      <code><![CDATA[getName]]></code>
+      <code><![CDATA[getName]]></code>
+      <code><![CDATA[getStackTrace]]></code>
+      <code><![CDATA[getWorkflowExecution]]></code>
+      <code><![CDATA[hasLastHeartbeatDetails]]></code>
+      <code><![CDATA[setStackTrace]]></code>
+    </PossiblyNullReference>
+  </file>
+  <file src="src/Exception/Failure/TemporalFailure.php">
+    <MissingClosureParamType>
+      <code><![CDATA[$value]]></code>
+      <code><![CDATA[$value]]></code>
+      <code><![CDATA[$value]]></code>
+    </MissingClosureParamType>
+    <MissingClosureReturnType>
+      <code><![CDATA[static fn($value) => RetryState::name($value)]]></code>
+      <code><![CDATA[static fn($value) => TimeoutType::name($value)]]></code>
+      <code><![CDATA[static fn($value) => TimeoutType::name($value)]]></code>
+    </MissingClosureReturnType>
+  </file>
+  <file src="src/Interceptor/Header.php">
+    <MethodSignatureMismatch>
+      <code><![CDATA[Header]]></code>
+    </MethodSignatureMismatch>
+    <MissingImmutableAnnotation>
+      <code><![CDATA[Header]]></code>
+    </MissingImmutableAnnotation>
+  </file>
+  <file src="src/Internal/Activity/ActivityContext.php">
+    <PossiblyNullReference>
+      <code><![CDATA[getValue]]></code>
+    </PossiblyNullReference>
+  </file>
+  <file src="src/Internal/Assert.php">
+    <MissingClosureParamType>
+      <code><![CDATA[$v]]></code>
+      <code><![CDATA[$v]]></code>
+    </MissingClosureParamType>
+  </file>
+  <file src="src/Internal/Client/ActivityCompletionClient.php">
+    <MissingParamType>
+      <code><![CDATA[$details]]></code>
+      <code><![CDATA[$details]]></code>
+    </MissingParamType>
+  </file>
+  <file src="src/Internal/Client/ResponseToResultMapper.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$execution->getRunId()]]></code>
+      <code><![CDATA[$execution->getWorkflowId()]]></code>
+      <code><![CDATA[$updateRef->getWorkflowExecution()?->getRunId()]]></code>
+      <code><![CDATA[(string) $updateRef->getWorkflowExecution()?->getWorkflowId()]]></code>
+    </ArgumentTypeCoercion>
+  </file>
+  <file src="src/Internal/Client/WorkflowStarter.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$f->getRunId()]]></code>
+      <code><![CDATA[$f->getRunId()]]></code>
+      <code><![CDATA[$input->workflowStartInput->workflowId]]></code>
+      <code><![CDATA[$input->workflowStartInput->workflowId]]></code>
+      <code><![CDATA[$options->workflowId]]></code>
+      <code><![CDATA[$request->getWorkflowId()]]></code>
+      <code><![CDATA[$request->getWorkflowId()]]></code>
+      <code><![CDATA[$response->getRunId()]]></code>
+      <code><![CDATA[$startResponse->getRunId()]]></code>
+    </ArgumentTypeCoercion>
+    <InvalidArgument>
+      <code><![CDATA[0]]></code>
+      <code><![CDATA[1]]></code>
+      <code><![CDATA[1]]></code>
+    </InvalidArgument>
+    <MissingTemplateParam>
+      <code><![CDATA[$fails]]></code>
+    </MissingTemplateParam>
+    <PossiblyNullReference>
+      <code><![CDATA[getName]]></code>
+      <code><![CDATA[getStartWorkflow]]></code>
+      <code><![CDATA[getUpdateWorkflow]]></code>
+    </PossiblyNullReference>
+    <UndefinedInterfaceMethod>
+      <code><![CDATA[toHeader]]></code>
+    </UndefinedInterfaceMethod>
+  </file>
+  <file src="src/Internal/Client/WorkflowStub.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$closeEvent
                         ->getWorkflowExecutionContinuedAsNewEventAttributes()
                         ->getNewExecutionRunId()]]></code>
-        </ArgumentTypeCoercion>
-        <PossiblyInvalidArgument>
-            <code><![CDATA[$closeEvent->getTaskId()]]></code>
-        </PossiblyInvalidArgument>
-        <PossiblyNullArgument>
-            <code><![CDATA[$attr->getDetails()]]></code>
-            <code><![CDATA[$attr->getFailure()]]></code>
-            <code><![CDATA[$attr->getResult()]]></code>
-            <code><![CDATA[$input->workflowType]]></code>
-            <code><![CDATA[$result->getQueryResult()]]></code>
-            <code><![CDATA[$this->execution]]></code>
-            <code><![CDATA[$this->execution]]></code>
-            <code><![CDATA[$this->execution]]></code>
-            <code><![CDATA[$this->execution]]></code>
-            <code><![CDATA[$this->execution]]></code>
-            <code><![CDATA[$this->execution]]></code>
-            <code><![CDATA[$this->execution]]></code>
-        </PossiblyNullArgument>
-        <PossiblyNullReference>
-            <code><![CDATA[getFailure]]></code>
-            <code><![CDATA[getNewExecutionRunId]]></code>
-            <code><![CDATA[getReason]]></code>
-            <code><![CDATA[getRetryState]]></code>
-            <code><![CDATA[getStatus]]></code>
-            <code><![CDATA[hasDetails]]></code>
-            <code><![CDATA[hasResult]]></code>
-            <code><![CDATA[toProtoWorkflowExecution]]></code>
-        </PossiblyNullReference>
-        <UndefinedInterfaceMethod>
-            <code><![CDATA[toHeader]]></code>
-        </UndefinedInterfaceMethod>
-    </file>
-    <file src="src/Internal/Declaration/Dispatcher/AutowiredPayloads.php">
-        <PossiblyInvalidArgument>
-            <code><![CDATA[$e->getCode()]]></code>
-        </PossiblyInvalidArgument>
-    </file>
-    <file src="src/Internal/Declaration/Dispatcher/Dispatcher.php">
-        <InvalidReturnType>
-            <code><![CDATA[\Closure(object, array): mixed]]></code>
-        </InvalidReturnType>
-        <MismatchingDocblockReturnType>
-            <code><![CDATA[\Closure(object, array): mixed]]></code>
-        </MismatchingDocblockReturnType>
-        <PropertyNotSetInConstructor>
-            <code><![CDATA[$executor]]></code>
-            <code><![CDATA[$types]]></code>
-        </PropertyNotSetInConstructor>
-    </file>
-    <file src="src/Internal/Declaration/Graph/ClassNode.php">
-        <InvalidReturnType>
-            <code><![CDATA[\Traversable<ClassNode, \ReflectionMethod>]]></code>
-            <code><![CDATA[\Traversable<ClassNode>]]></code>
-        </InvalidReturnType>
-        <MissingClosureReturnType>
-            <code><![CDATA[static function () use ($boxed) {]]></code>
-        </MissingClosureReturnType>
-        <RedundantCondition>
-            <code><![CDATA[$this->class->getTraits()]]></code>
-        </RedundantCondition>
-        <TypeDoesNotContainNull>
-            <code><![CDATA[[]]]></code>
-        </TypeDoesNotContainNull>
-    </file>
-    <file src="src/Internal/Declaration/Graph/NodeInterface.php">
-        <InvalidDocblock>
-            <code><![CDATA[interface NodeInterface extends \Stringable, \IteratorAggregate, \Countable {}]]></code>
-        </InvalidDocblock>
-        <MissingTemplateParam>
-            <code><![CDATA[\IteratorAggregate]]></code>
-        </MissingTemplateParam>
-    </file>
-    <file src="src/Internal/Declaration/Instantiator/ActivityInstantiator.php">
-        <InvalidDocblock>
-            <code><![CDATA[final class ActivityInstantiator extends Instantiator]]></code>
-        </InvalidDocblock>
-    </file>
-    <file src="src/Internal/Declaration/Instantiator/Instantiator.php">
-        <MissingTemplateParam>
-            <code><![CDATA[InstantiatorInterface]]></code>
-        </MissingTemplateParam>
-    </file>
-    <file src="src/Internal/Declaration/Instantiator/InstantiatorInterface.php">
-        <InvalidTemplateParam>
-            <code><![CDATA[TPrototype]]></code>
-        </InvalidTemplateParam>
-    </file>
-    <file src="src/Internal/Declaration/Instantiator/WorkflowInstantiator.php">
-        <InvalidDocblock>
-            <code><![CDATA[final class WorkflowInstantiator extends Instantiator]]></code>
-        </InvalidDocblock>
-    </file>
-    <file src="src/Internal/Declaration/Prototype/Prototype.php">
-        <InvalidReturnStatement>
-            <code><![CDATA[$prototype]]></code>
-        </InvalidReturnStatement>
-        <InvalidReturnType>
-            <code><![CDATA[T|null]]></code>
-        </InvalidReturnType>
-        <RedundantCondition>
-            <code><![CDATA[$reflection]]></code>
-        </RedundantCondition>
-    </file>
-    <file src="src/Internal/Declaration/Reader/ActivityReader.php">
-        <ArgumentTypeCoercion>
-            <code><![CDATA[$contextualRetry]]></code>
-            <code><![CDATA[$name]]></code>
-            <code><![CDATA[$retry]]></code>
-        </ArgumentTypeCoercion>
-        <RawObjectIteration>
-            <code><![CDATA[$group]]></code>
-        </RawObjectIteration>
-        <RedundantConditionGivenDocblockType>
-            <code><![CDATA[$retry !== null]]></code>
-        </RedundantConditionGivenDocblockType>
-    </file>
-    <file src="src/Internal/Declaration/Reader/WorkflowReader.php">
-        <ArgumentTypeCoercion>
-            <code><![CDATA[$contextualRetry]]></code>
-            <code><![CDATA[$method]]></code>
-            <code><![CDATA[$name]]></code>
-            <code><![CDATA[$retry]]></code>
-        </ArgumentTypeCoercion>
-        <InvalidArgument>
-            <code><![CDATA[\reset($prototypes)]]></code>
-        </InvalidArgument>
-        <InvalidReturnType>
-            <code><![CDATA[\Traversable<ActivityPrototype>]]></code>
-        </InvalidReturnType>
-        <RawObjectIteration>
-            <code><![CDATA[$group]]></code>
-            <code><![CDATA[$group]]></code>
-        </RawObjectIteration>
-        <RedundantConditionGivenDocblockType>
-            <code><![CDATA[$retry !== null]]></code>
-        </RedundantConditionGivenDocblockType>
-    </file>
-    <file src="src/Internal/Declaration/WorkflowInstance/QueryDispatcher.php">
-        <PropertyNotSetInConstructor>
-            <code><![CDATA[$queryExecutor]]></code>
-        </PropertyNotSetInConstructor>
-    </file>
-    <file src="src/Internal/Declaration/WorkflowInstance/SignalDispatcher.php">
-        <InvalidReturnStatement>
-            <code><![CDATA[$this->push($name, $values)]]></code>
-        </InvalidReturnStatement>
-        <PropertyNotSetInConstructor>
-            <code><![CDATA[$onSignal]]></code>
-        </PropertyNotSetInConstructor>
-    </file>
-    <file src="src/Internal/Declaration/WorkflowInstance/UpdateDispatcher.php">
-        <PropertyNotSetInConstructor>
-            <code><![CDATA[$updateExecutor]]></code>
-            <code><![CDATA[$updateValidator]]></code>
-        </PropertyNotSetInConstructor>
-    </file>
-    <file src="src/Internal/Events/EventEmitterInterface.php">
-        <InvalidTemplateParam>
-            <code><![CDATA[T]]></code>
-        </InvalidTemplateParam>
-    </file>
-    <file src="src/Internal/Events/EventEmitterTrait.php">
-        <LessSpecificImplementedReturnType>
-            <code><![CDATA[self]]></code>
-            <code><![CDATA[self]]></code>
-        </LessSpecificImplementedReturnType>
-        <PossiblyNullFunctionCall>
-            <code><![CDATA[$callback(...$arguments)]]></code>
-        </PossiblyNullFunctionCall>
-    </file>
-    <file src="src/Internal/Events/EventListenerInterface.php">
-        <InvalidTemplateParam>
-            <code><![CDATA[T]]></code>
-        </InvalidTemplateParam>
-    </file>
-    <file src="src/Internal/Interceptor/Pipeline.php">
-        <ImpureFunctionCall>
-            <code><![CDATA[$this->last]]></code>
-            <code><![CDATA[($this->last)(...$arguments)]]></code>
-        </ImpureFunctionCall>
-        <PropertyNotSetInConstructor>
-            <code><![CDATA[$last]]></code>
-            <code><![CDATA[$method]]></code>
-        </PropertyNotSetInConstructor>
-    </file>
-    <file src="src/Internal/Mapper/ScheduleMapper.php">
-        <PossiblyNullArgument>
-            <code><![CDATA[$dto->action]]></code>
-        </PossiblyNullArgument>
-        <RedundantCondition>
-            <code><![CDATA[$action->header?->setDataConverter($this->converter)]]></code>
-            <code><![CDATA[$action->input?->setDataConverter($this->converter)]]></code>
-            <code><![CDATA[$action->memo?->setDataConverter($this->converter)]]></code>
-            <code><![CDATA[$action->searchAttributes?->setDataConverter($this->converter)]]></code>
-        </RedundantCondition>
-        <TypeDoesNotContainNull>
-            <code><![CDATA[$action->header]]></code>
-            <code><![CDATA[$action->input]]></code>
-            <code><![CDATA[$action->memo]]></code>
-            <code><![CDATA[$action->searchAttributes]]></code>
-        </TypeDoesNotContainNull>
-        <UndefinedInterfaceMethod>
-            <code><![CDATA[setDataConverter]]></code>
-        </UndefinedInterfaceMethod>
-    </file>
-    <file src="src/Internal/Mapper/WorkflowExecutionConfigMapper.php">
-        <DocblockTypeContradiction>
-            <code><![CDATA[parse]]></code>
-            <code><![CDATA[parse]]></code>
-            <code><![CDATA[parse]]></code>
-            <code><![CDATA[parse]]></code>
-            <code><![CDATA[parse]]></code>
-        </DocblockTypeContradiction>
-        <RedundantConditionGivenDocblockType>
-            <code><![CDATA[parse]]></code>
-        </RedundantConditionGivenDocblockType>
-    </file>
-    <file src="src/Internal/Mapper/WorkflowExecutionInfoMapper.php">
-        <ArgumentTypeCoercion>
-            <code><![CDATA[$execution->getRunId()]]></code>
-            <code><![CDATA[$execution->getWorkflowId()]]></code>
-            <code><![CDATA[$message->getTaskQueue()]]></code>
-            <code><![CDATA[(int) $message->getHistorySizeBytes()]]></code>
-            <code><![CDATA[(int) $message->getStateTransitionCount()]]></code>
-        </ArgumentTypeCoercion>
-        <DocblockTypeContradiction>
-            <code><![CDATA[parse]]></code>
-            <code><![CDATA[parse]]></code>
-            <code><![CDATA[parse]]></code>
-            <code><![CDATA[parse]]></code>
-            <code><![CDATA[parse]]></code>
-        </DocblockTypeContradiction>
-        <RawObjectIteration>
-            <code><![CDATA[$getAutoResetPoints->getPoints()]]></code>
-        </RawObjectIteration>
-        <RedundantConditionGivenDocblockType>
-            <code><![CDATA[parse]]></code>
-        </RedundantConditionGivenDocblockType>
-    </file>
-    <file src="src/Internal/Marshaller/Mapper/AttributeMapper.php">
-        <MissingClosureParamType>
-            <code><![CDATA[$value]]></code>
-        </MissingClosureParamType>
-        <PossiblyNullArrayOffset>
-            <code><![CDATA[$this->getters]]></code>
-            <code><![CDATA[$this->setters]]></code>
-        </PossiblyNullArrayOffset>
-        <PossiblyNullPropertyFetch>
-            <code><![CDATA[$marshal->name]]></code>
-            <code><![CDATA[$marshal->name]]></code>
-        </PossiblyNullPropertyFetch>
-        <UnnecessaryVarAnnotation>
-            <code><![CDATA[Marshal]]></code>
-        </UnnecessaryVarAnnotation>
-    </file>
-    <file src="src/Internal/Marshaller/Meta/Marshal.php">
-        <ArgumentTypeCoercion>
-            <code><![CDATA[$this->name]]></code>
-            <code><![CDATA[$type]]></code>
-        </ArgumentTypeCoercion>
-        <DeprecatedClass>
-            <code><![CDATA[NamedArgumentConstructor]]></code>
-        </DeprecatedClass>
-    </file>
-    <file src="src/Internal/Marshaller/Meta/MarshalArray.php">
-        <DeprecatedClass>
-            <code><![CDATA[NamedArgumentConstructor]]></code>
-        </DeprecatedClass>
-    </file>
-    <file src="src/Internal/Marshaller/Meta/MarshalAssocArray.php">
-        <DeprecatedClass>
-            <code><![CDATA[NamedArgumentConstructor]]></code>
-        </DeprecatedClass>
-    </file>
-    <file src="src/Internal/Marshaller/Meta/MarshalDateTime.php">
-        <DeprecatedClass>
-            <code><![CDATA[NamedArgumentConstructor]]></code>
-        </DeprecatedClass>
-    </file>
-    <file src="src/Internal/Marshaller/Meta/MarshalNullable.php">
-        <ArgumentTypeCoercion>
-            <code><![CDATA[$rule]]></code>
-        </ArgumentTypeCoercion>
-        <DeprecatedClass>
-            <code><![CDATA[NamedArgumentConstructor]]></code>
-        </DeprecatedClass>
-    </file>
-    <file src="src/Internal/Marshaller/Meta/MarshalOneOf.php">
-        <DeprecatedClass>
-            <code><![CDATA[NamedArgumentConstructor]]></code>
-        </DeprecatedClass>
-    </file>
-    <file src="src/Internal/Marshaller/Meta/Scope.php">
-        <DeprecatedClass>
-            <code><![CDATA[NamedArgumentConstructor]]></code>
-        </DeprecatedClass>
-    </file>
-    <file src="src/Internal/Marshaller/ProtoToArrayConverter.php">
-        <FalsableReturnStatement>
-            <code><![CDATA[\DateTimeImmutable::createFromFormat(
+    </ArgumentTypeCoercion>
+    <PossiblyInvalidArgument>
+      <code><![CDATA[$closeEvent->getTaskId()]]></code>
+    </PossiblyInvalidArgument>
+    <PossiblyNullArgument>
+      <code><![CDATA[$attr->getDetails()]]></code>
+      <code><![CDATA[$attr->getFailure()]]></code>
+      <code><![CDATA[$attr->getResult()]]></code>
+      <code><![CDATA[$input->workflowType]]></code>
+      <code><![CDATA[$result->getQueryResult()]]></code>
+      <code><![CDATA[$this->execution]]></code>
+      <code><![CDATA[$this->execution]]></code>
+      <code><![CDATA[$this->execution]]></code>
+      <code><![CDATA[$this->execution]]></code>
+      <code><![CDATA[$this->execution]]></code>
+      <code><![CDATA[$this->execution]]></code>
+      <code><![CDATA[$this->execution]]></code>
+    </PossiblyNullArgument>
+    <PossiblyNullReference>
+      <code><![CDATA[getFailure]]></code>
+      <code><![CDATA[getNewExecutionRunId]]></code>
+      <code><![CDATA[getReason]]></code>
+      <code><![CDATA[getRetryState]]></code>
+      <code><![CDATA[getStatus]]></code>
+      <code><![CDATA[hasDetails]]></code>
+      <code><![CDATA[hasResult]]></code>
+      <code><![CDATA[toProtoWorkflowExecution]]></code>
+    </PossiblyNullReference>
+    <UndefinedInterfaceMethod>
+      <code><![CDATA[toHeader]]></code>
+    </UndefinedInterfaceMethod>
+  </file>
+  <file src="src/Internal/Declaration/Dispatcher/AutowiredPayloads.php">
+    <PossiblyInvalidArgument>
+      <code><![CDATA[$e->getCode()]]></code>
+    </PossiblyInvalidArgument>
+  </file>
+  <file src="src/Internal/Declaration/Dispatcher/Dispatcher.php">
+    <InvalidReturnType>
+      <code><![CDATA[\Closure(object, array): mixed]]></code>
+    </InvalidReturnType>
+    <MismatchingDocblockReturnType>
+      <code><![CDATA[\Closure(object, array): mixed]]></code>
+    </MismatchingDocblockReturnType>
+    <PropertyNotSetInConstructor>
+      <code><![CDATA[$executor]]></code>
+      <code><![CDATA[$types]]></code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="src/Internal/Declaration/Graph/ClassNode.php">
+    <InvalidReturnType>
+      <code><![CDATA[\Traversable<ClassNode, \ReflectionMethod>]]></code>
+      <code><![CDATA[\Traversable<ClassNode>]]></code>
+    </InvalidReturnType>
+    <MissingClosureReturnType>
+      <code><![CDATA[static function () use ($boxed) {]]></code>
+    </MissingClosureReturnType>
+    <RedundantCondition>
+      <code><![CDATA[$this->class->getTraits()]]></code>
+    </RedundantCondition>
+    <TypeDoesNotContainNull>
+      <code><![CDATA[[]]]></code>
+    </TypeDoesNotContainNull>
+  </file>
+  <file src="src/Internal/Declaration/Graph/NodeInterface.php">
+    <InvalidDocblock>
+      <code><![CDATA[interface NodeInterface extends \Stringable, \IteratorAggregate, \Countable {}]]></code>
+    </InvalidDocblock>
+    <MissingTemplateParam>
+      <code><![CDATA[\IteratorAggregate]]></code>
+    </MissingTemplateParam>
+  </file>
+  <file src="src/Internal/Declaration/Instantiator/ActivityInstantiator.php">
+    <InvalidDocblock>
+      <code><![CDATA[final class ActivityInstantiator extends Instantiator]]></code>
+    </InvalidDocblock>
+  </file>
+  <file src="src/Internal/Declaration/Instantiator/Instantiator.php">
+    <MissingTemplateParam>
+      <code><![CDATA[InstantiatorInterface]]></code>
+    </MissingTemplateParam>
+  </file>
+  <file src="src/Internal/Declaration/Instantiator/InstantiatorInterface.php">
+    <InvalidTemplateParam>
+      <code><![CDATA[TPrototype]]></code>
+    </InvalidTemplateParam>
+  </file>
+  <file src="src/Internal/Declaration/Instantiator/WorkflowInstantiator.php">
+    <InvalidDocblock>
+      <code><![CDATA[final class WorkflowInstantiator extends Instantiator]]></code>
+    </InvalidDocblock>
+  </file>
+  <file src="src/Internal/Declaration/Prototype/Prototype.php">
+    <InvalidReturnStatement>
+      <code><![CDATA[$prototype]]></code>
+    </InvalidReturnStatement>
+    <InvalidReturnType>
+      <code><![CDATA[T|null]]></code>
+    </InvalidReturnType>
+    <RedundantCondition>
+      <code><![CDATA[$reflection]]></code>
+    </RedundantCondition>
+  </file>
+  <file src="src/Internal/Declaration/Reader/ActivityReader.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$contextualRetry]]></code>
+      <code><![CDATA[$name]]></code>
+      <code><![CDATA[$retry]]></code>
+    </ArgumentTypeCoercion>
+    <RawObjectIteration>
+      <code><![CDATA[$group]]></code>
+    </RawObjectIteration>
+    <RedundantConditionGivenDocblockType>
+      <code><![CDATA[$retry !== null]]></code>
+    </RedundantConditionGivenDocblockType>
+  </file>
+  <file src="src/Internal/Declaration/Reader/WorkflowReader.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$contextualRetry]]></code>
+      <code><![CDATA[$method]]></code>
+      <code><![CDATA[$name]]></code>
+      <code><![CDATA[$retry]]></code>
+    </ArgumentTypeCoercion>
+    <InvalidArgument>
+      <code><![CDATA[\reset($prototypes)]]></code>
+    </InvalidArgument>
+    <InvalidReturnType>
+      <code><![CDATA[\Traversable<ActivityPrototype>]]></code>
+    </InvalidReturnType>
+    <RawObjectIteration>
+      <code><![CDATA[$group]]></code>
+      <code><![CDATA[$group]]></code>
+    </RawObjectIteration>
+    <RedundantConditionGivenDocblockType>
+      <code><![CDATA[$retry !== null]]></code>
+    </RedundantConditionGivenDocblockType>
+  </file>
+  <file src="src/Internal/Declaration/WorkflowInstance/QueryDispatcher.php">
+    <PropertyNotSetInConstructor>
+      <code><![CDATA[$queryExecutor]]></code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="src/Internal/Declaration/WorkflowInstance/SignalDispatcher.php">
+    <InvalidReturnStatement>
+      <code><![CDATA[$this->push($name, $values)]]></code>
+    </InvalidReturnStatement>
+    <PropertyNotSetInConstructor>
+      <code><![CDATA[$onSignal]]></code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="src/Internal/Declaration/WorkflowInstance/UpdateDispatcher.php">
+    <PropertyNotSetInConstructor>
+      <code><![CDATA[$updateExecutor]]></code>
+      <code><![CDATA[$updateValidator]]></code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="src/Internal/Events/EventEmitterInterface.php">
+    <InvalidTemplateParam>
+      <code><![CDATA[T]]></code>
+    </InvalidTemplateParam>
+  </file>
+  <file src="src/Internal/Events/EventEmitterTrait.php">
+    <LessSpecificImplementedReturnType>
+      <code><![CDATA[self]]></code>
+      <code><![CDATA[self]]></code>
+    </LessSpecificImplementedReturnType>
+    <PossiblyNullFunctionCall>
+      <code><![CDATA[$callback(...$arguments)]]></code>
+    </PossiblyNullFunctionCall>
+  </file>
+  <file src="src/Internal/Events/EventListenerInterface.php">
+    <InvalidTemplateParam>
+      <code><![CDATA[T]]></code>
+    </InvalidTemplateParam>
+  </file>
+  <file src="src/Internal/Interceptor/Pipeline.php">
+    <ImpureFunctionCall>
+      <code><![CDATA[$this->last]]></code>
+      <code><![CDATA[($this->last)(...$arguments)]]></code>
+    </ImpureFunctionCall>
+    <PropertyNotSetInConstructor>
+      <code><![CDATA[$last]]></code>
+      <code><![CDATA[$method]]></code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="src/Internal/Mapper/ScheduleMapper.php">
+    <PossiblyNullArgument>
+      <code><![CDATA[$dto->action]]></code>
+    </PossiblyNullArgument>
+    <RedundantCondition>
+      <code><![CDATA[$action->header?->setDataConverter($this->converter)]]></code>
+      <code><![CDATA[$action->input?->setDataConverter($this->converter)]]></code>
+      <code><![CDATA[$action->memo?->setDataConverter($this->converter)]]></code>
+      <code><![CDATA[$action->searchAttributes?->setDataConverter($this->converter)]]></code>
+    </RedundantCondition>
+    <TypeDoesNotContainNull>
+      <code><![CDATA[$action->header]]></code>
+      <code><![CDATA[$action->input]]></code>
+      <code><![CDATA[$action->memo]]></code>
+      <code><![CDATA[$action->searchAttributes]]></code>
+    </TypeDoesNotContainNull>
+    <UndefinedInterfaceMethod>
+      <code><![CDATA[setDataConverter]]></code>
+    </UndefinedInterfaceMethod>
+  </file>
+  <file src="src/Internal/Mapper/WorkflowExecutionConfigMapper.php">
+    <DocblockTypeContradiction>
+      <code><![CDATA[parse]]></code>
+      <code><![CDATA[parse]]></code>
+      <code><![CDATA[parse]]></code>
+      <code><![CDATA[parse]]></code>
+      <code><![CDATA[parse]]></code>
+    </DocblockTypeContradiction>
+    <RedundantConditionGivenDocblockType>
+      <code><![CDATA[parse]]></code>
+    </RedundantConditionGivenDocblockType>
+  </file>
+  <file src="src/Internal/Mapper/WorkflowExecutionInfoMapper.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$execution->getRunId()]]></code>
+      <code><![CDATA[$execution->getWorkflowId()]]></code>
+      <code><![CDATA[$message->getTaskQueue()]]></code>
+      <code><![CDATA[(int) $message->getHistorySizeBytes()]]></code>
+      <code><![CDATA[(int) $message->getStateTransitionCount()]]></code>
+    </ArgumentTypeCoercion>
+    <DocblockTypeContradiction>
+      <code><![CDATA[parse]]></code>
+      <code><![CDATA[parse]]></code>
+      <code><![CDATA[parse]]></code>
+      <code><![CDATA[parse]]></code>
+      <code><![CDATA[parse]]></code>
+    </DocblockTypeContradiction>
+    <RawObjectIteration>
+      <code><![CDATA[$getAutoResetPoints->getPoints()]]></code>
+    </RawObjectIteration>
+    <RedundantConditionGivenDocblockType>
+      <code><![CDATA[parse]]></code>
+    </RedundantConditionGivenDocblockType>
+  </file>
+  <file src="src/Internal/Marshaller/Mapper/AttributeMapper.php">
+    <MissingClosureParamType>
+      <code><![CDATA[$value]]></code>
+    </MissingClosureParamType>
+    <PossiblyNullArrayOffset>
+      <code><![CDATA[$this->getters]]></code>
+      <code><![CDATA[$this->setters]]></code>
+    </PossiblyNullArrayOffset>
+    <PossiblyNullPropertyFetch>
+      <code><![CDATA[$marshal->name]]></code>
+      <code><![CDATA[$marshal->name]]></code>
+    </PossiblyNullPropertyFetch>
+    <UnnecessaryVarAnnotation>
+      <code><![CDATA[Marshal]]></code>
+    </UnnecessaryVarAnnotation>
+  </file>
+  <file src="src/Internal/Marshaller/Meta/Marshal.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$this->name]]></code>
+      <code><![CDATA[$type]]></code>
+    </ArgumentTypeCoercion>
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Internal/Marshaller/Meta/MarshalArray.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Internal/Marshaller/Meta/MarshalAssocArray.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Internal/Marshaller/Meta/MarshalDateTime.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Internal/Marshaller/Meta/MarshalNullable.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$rule]]></code>
+    </ArgumentTypeCoercion>
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Internal/Marshaller/Meta/MarshalOneOf.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Internal/Marshaller/Meta/Scope.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Internal/Marshaller/ProtoToArrayConverter.php">
+    <FalsableReturnStatement>
+      <code><![CDATA[\DateTimeImmutable::createFromFormat(
                 'U.u',
                 \sprintf('%d.%d', $input->getSeconds(), $input->getNanos() / 1000),
             )]]></code>
-        </FalsableReturnStatement>
-        <InvalidArgument>
-            <code><![CDATA[$input->getPayloads()]]></code>
-        </InvalidArgument>
-        <InvalidFalsableReturnType>
-            <code><![CDATA[\DateTimeImmutable]]></code>
-        </InvalidFalsableReturnType>
-        <LessSpecificReturnStatement>
-            <code><![CDATA[$mapper]]></code>
-        </LessSpecificReturnStatement>
-        <MoreSpecificReturnType>
-            <code><![CDATA[\Closure(Message): mixed]]></code>
-        </MoreSpecificReturnType>
-        <NullableReturnStatement>
-            <code><![CDATA[$mapper]]></code>
-        </NullableReturnStatement>
-        <PossibleRawObjectIteration>
-            <code><![CDATA[$value]]></code>
-        </PossibleRawObjectIteration>
-        <PossiblyNullArgument>
-            <code><![CDATA[$metadata->getDetails()]]></code>
-            <code><![CDATA[$metadata->getSummary()]]></code>
-        </PossiblyNullArgument>
-    </file>
-    <file src="src/Internal/Marshaller/Type/ArrayType.php">
-        <MoreSpecificImplementedParamType>
-            <code><![CDATA[$current]]></code>
-            <code><![CDATA[$value]]></code>
-        </MoreSpecificImplementedParamType>
-    </file>
-    <file src="src/Internal/Marshaller/Type/DateIntervalType.php">
-        <ArgumentTypeCoercion>
-            <code><![CDATA[$this->format]]></code>
-            <code><![CDATA[$this->format]]></code>
-        </ArgumentTypeCoercion>
-        <InvalidOperand>
-            <code><![CDATA[$value * 1000000000]]></code>
-            <code><![CDATA[($value * 1000000000) % 1000000000]]></code>
-            <code><![CDATA[DateInterval::parse($value, $this->format)->totalMicroseconds * 1000]]></code>
-        </InvalidOperand>
-    </file>
-    <file src="src/Internal/Marshaller/Type/DurationJsonType.php">
-        <InvalidOperand>
-            <code><![CDATA[$value * 1000000000]]></code>
-            <code><![CDATA[($value * 1000000000) % 1000000000]]></code>
-        </InvalidOperand>
-    </file>
-    <file src="src/Internal/Marshaller/Type/EnumType.php">
-        <PropertyTypeCoercion>
-            <code><![CDATA[$class]]></code>
-        </PropertyTypeCoercion>
-        <UndefinedMethod>
-            <code><![CDATA[$this->classFQCN::from($value)]]></code>
-            <code><![CDATA[$this->classFQCN::from($value['value'])]]></code>
-        </UndefinedMethod>
-    </file>
-    <file src="src/Internal/Marshaller/Type/ObjectType.php">
-        <InvalidPropertyAssignmentValue>
-            <code><![CDATA[new \ReflectionClass($class ?? \stdClass::class)]]></code>
-        </InvalidPropertyAssignmentValue>
-        <InvalidReturnStatement>
-            <code><![CDATA[$this->reflection->getName() === \stdClass::class
+    </FalsableReturnStatement>
+    <InvalidArgument>
+      <code><![CDATA[$input->getPayloads()]]></code>
+    </InvalidArgument>
+    <InvalidFalsableReturnType>
+      <code><![CDATA[\DateTimeImmutable]]></code>
+    </InvalidFalsableReturnType>
+    <LessSpecificReturnStatement>
+      <code><![CDATA[$mapper]]></code>
+    </LessSpecificReturnStatement>
+    <MoreSpecificReturnType>
+      <code><![CDATA[\Closure(Message): mixed]]></code>
+    </MoreSpecificReturnType>
+    <NullableReturnStatement>
+      <code><![CDATA[$mapper]]></code>
+    </NullableReturnStatement>
+    <PossibleRawObjectIteration>
+      <code><![CDATA[$value]]></code>
+    </PossibleRawObjectIteration>
+    <PossiblyNullArgument>
+      <code><![CDATA[$metadata->getDetails()]]></code>
+      <code><![CDATA[$metadata->getSummary()]]></code>
+    </PossiblyNullArgument>
+  </file>
+  <file src="src/Internal/Marshaller/Type/ArrayType.php">
+    <MoreSpecificImplementedParamType>
+      <code><![CDATA[$current]]></code>
+      <code><![CDATA[$value]]></code>
+    </MoreSpecificImplementedParamType>
+  </file>
+  <file src="src/Internal/Marshaller/Type/DateIntervalType.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$this->format]]></code>
+      <code><![CDATA[$this->format]]></code>
+    </ArgumentTypeCoercion>
+    <InvalidOperand>
+      <code><![CDATA[$value * 1000000000]]></code>
+      <code><![CDATA[($value * 1000000000) % 1000000000]]></code>
+      <code><![CDATA[DateInterval::parse($value, $this->format)->totalMicroseconds * 1000]]></code>
+    </InvalidOperand>
+  </file>
+  <file src="src/Internal/Marshaller/Type/DurationJsonType.php">
+    <InvalidOperand>
+      <code><![CDATA[$value * 1000000000]]></code>
+      <code><![CDATA[($value * 1000000000) % 1000000000]]></code>
+    </InvalidOperand>
+  </file>
+  <file src="src/Internal/Marshaller/Type/EnumType.php">
+    <PropertyTypeCoercion>
+      <code><![CDATA[$class]]></code>
+    </PropertyTypeCoercion>
+    <UndefinedMethod>
+      <code><![CDATA[$this->classFQCN::from($value)]]></code>
+      <code><![CDATA[$this->classFQCN::from($value['value'])]]></code>
+    </UndefinedMethod>
+  </file>
+  <file src="src/Internal/Marshaller/Type/ObjectType.php">
+    <InvalidPropertyAssignmentValue>
+      <code><![CDATA[new \ReflectionClass($class ?? \stdClass::class)]]></code>
+    </InvalidPropertyAssignmentValue>
+    <InvalidReturnStatement>
+      <code><![CDATA[$this->reflection->getName() === \stdClass::class
             ? (object) $data
             : $this->marshaller->unmarshal($data, $this->reflection->newInstanceWithoutConstructor())]]></code>
-        </InvalidReturnStatement>
-        <InvalidReturnType>
-            <code><![CDATA[TClass]]></code>
-        </InvalidReturnType>
-    </file>
-    <file src="src/Internal/Marshaller/Type/OneOfType.php">
-        <InvalidReturnType>
-            <code><![CDATA[array]]></code>
-        </InvalidReturnType>
-    </file>
-    <file src="src/Internal/Marshaller/Type/Type.php">
-        <ArgumentTypeCoercion>
-            <code><![CDATA[$typeClass]]></code>
-            <code><![CDATA[$typeClass]]></code>
-        </ArgumentTypeCoercion>
-    </file>
-    <file src="src/Internal/Marshaller/TypeFactory.php">
-        <InvalidArgument>
-            <code><![CDATA[$this->getDefaultMatchers()]]></code>
-        </InvalidArgument>
-        <InvalidReturnStatement>
-            <code><![CDATA[$matcher::match($type)
+    </InvalidReturnStatement>
+    <InvalidReturnType>
+      <code><![CDATA[TClass]]></code>
+    </InvalidReturnType>
+  </file>
+  <file src="src/Internal/Marshaller/Type/OneOfType.php">
+    <InvalidReturnType>
+      <code><![CDATA[array]]></code>
+    </InvalidReturnType>
+  </file>
+  <file src="src/Internal/Marshaller/Type/Type.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$typeClass]]></code>
+      <code><![CDATA[$typeClass]]></code>
+    </ArgumentTypeCoercion>
+  </file>
+  <file src="src/Internal/Marshaller/TypeFactory.php">
+    <InvalidArgument>
+      <code><![CDATA[$this->getDefaultMatchers()]]></code>
+    </InvalidArgument>
+    <InvalidReturnStatement>
+      <code><![CDATA[$matcher::match($type)
                     ? $matcher
                     : null]]></code>
-        </InvalidReturnStatement>
-        <InvalidReturnType>
-            <code><![CDATA[?string]]></code>
-        </InvalidReturnType>
-        <LessSpecificReturnStatement>
-            <code><![CDATA[$result]]></code>
-        </LessSpecificReturnStatement>
-        <MoreSpecificReturnType>
-            <code><![CDATA[?string]]></code>
-        </MoreSpecificReturnType>
-    </file>
-    <file src="src/Internal/Queue/ArrayQueue.php">
-        <InvalidDocblock>
-            <code><![CDATA[protected array $commands = [];]]></code>
-        </InvalidDocblock>
-    </file>
-    <file src="src/Internal/Queue/QueueInterface.php">
-        <InvalidDocblock>
-            <code><![CDATA[interface QueueInterface extends \IteratorAggregate, \Countable]]></code>
-        </InvalidDocblock>
-        <MissingTemplateParam>
-            <code><![CDATA[\IteratorAggregate]]></code>
-        </MissingTemplateParam>
-    </file>
-    <file src="src/Internal/Repository/ArrayRepository.php">
-        <InvalidReturnStatement>
-            <code><![CDATA[$this->entries[$id] ?? null]]></code>
-        </InvalidReturnStatement>
-        <UnsafeInstantiation>
-            <code><![CDATA[new static(\array_filter($this->entries, $filter))]]></code>
-        </UnsafeInstantiation>
-    </file>
-    <file src="src/Internal/Repository/RepositoryInterface.php">
-        <InvalidDocblock>
-            <code><![CDATA[interface RepositoryInterface extends \IteratorAggregate, \Countable]]></code>
-        </InvalidDocblock>
-        <MissingTemplateParam>
-            <code><![CDATA[\IteratorAggregate]]></code>
-        </MissingTemplateParam>
-    </file>
-    <file src="src/Internal/ServiceContainer.php">
-        <UndefinedInterfaceMethod>
-            <code><![CDATA[getClient]]></code>
-            <code><![CDATA[getDataConverter]]></code>
-            <code><![CDATA[getEnvironment]]></code>
-            <code><![CDATA[getMarshaller]]></code>
-            <code><![CDATA[getQueue]]></code>
-            <code><![CDATA[getReader]]></code>
-        </UndefinedInterfaceMethod>
-    </file>
-    <file src="src/Internal/Support/DateInterval.php">
-        <DeprecatedConstant>
-            <code><![CDATA[self::FORMAT_MONTHS]]></code>
-            <code><![CDATA[self::FORMAT_YEARS]]></code>
-        </DeprecatedConstant>
-        <RedundantCondition>
-            <code><![CDATA[$nullEmpty && $seconds === 0 && $micros === 0]]></code>
-            <code><![CDATA[parse]]></code>
-        </RedundantCondition>
-        <TypeDoesNotContainNull>
-            <code><![CDATA[parse]]></code>
-        </TypeDoesNotContainNull>
-        <TypeDoesNotContainType>
-            <code><![CDATA[parse]]></code>
-            <code><![CDATA[parse]]></code>
-            <code><![CDATA[parse]]></code>
-            <code><![CDATA[parse]]></code>
-        </TypeDoesNotContainType>
-    </file>
-    <file src="src/Internal/Support/DateTime.php">
-        <InvalidReturnStatement>
-            <code><![CDATA[$time]]></code>
-            <code><![CDATA[match ($class) {
+    </InvalidReturnStatement>
+    <InvalidReturnType>
+      <code><![CDATA[?string]]></code>
+    </InvalidReturnType>
+    <LessSpecificReturnStatement>
+      <code><![CDATA[$result]]></code>
+    </LessSpecificReturnStatement>
+    <MoreSpecificReturnType>
+      <code><![CDATA[?string]]></code>
+    </MoreSpecificReturnType>
+  </file>
+  <file src="src/Internal/Queue/ArrayQueue.php">
+    <InvalidDocblock>
+      <code><![CDATA[protected array $commands = [];]]></code>
+    </InvalidDocblock>
+  </file>
+  <file src="src/Internal/Queue/QueueInterface.php">
+    <InvalidDocblock>
+      <code><![CDATA[interface QueueInterface extends \IteratorAggregate, \Countable]]></code>
+    </InvalidDocblock>
+    <MissingTemplateParam>
+      <code><![CDATA[\IteratorAggregate]]></code>
+    </MissingTemplateParam>
+  </file>
+  <file src="src/Internal/Repository/ArrayRepository.php">
+    <InvalidReturnStatement>
+      <code><![CDATA[$this->entries[$id] ?? null]]></code>
+    </InvalidReturnStatement>
+    <UnsafeInstantiation>
+      <code><![CDATA[new static(\array_filter($this->entries, $filter))]]></code>
+    </UnsafeInstantiation>
+  </file>
+  <file src="src/Internal/Repository/RepositoryInterface.php">
+    <InvalidDocblock>
+      <code><![CDATA[interface RepositoryInterface extends \IteratorAggregate, \Countable]]></code>
+    </InvalidDocblock>
+    <MissingTemplateParam>
+      <code><![CDATA[\IteratorAggregate]]></code>
+    </MissingTemplateParam>
+  </file>
+  <file src="src/Internal/ServiceContainer.php">
+    <UndefinedInterfaceMethod>
+      <code><![CDATA[getClient]]></code>
+      <code><![CDATA[getDataConverter]]></code>
+      <code><![CDATA[getEnvironment]]></code>
+      <code><![CDATA[getMarshaller]]></code>
+      <code><![CDATA[getQueue]]></code>
+      <code><![CDATA[getReader]]></code>
+    </UndefinedInterfaceMethod>
+  </file>
+  <file src="src/Internal/Support/DateInterval.php">
+    <DeprecatedConstant>
+      <code><![CDATA[self::FORMAT_MONTHS]]></code>
+      <code><![CDATA[self::FORMAT_YEARS]]></code>
+    </DeprecatedConstant>
+    <RedundantCondition>
+      <code><![CDATA[$nullEmpty && $seconds === 0 && $micros === 0]]></code>
+      <code><![CDATA[parse]]></code>
+    </RedundantCondition>
+    <TypeDoesNotContainNull>
+      <code><![CDATA[parse]]></code>
+    </TypeDoesNotContainNull>
+    <TypeDoesNotContainType>
+      <code><![CDATA[parse]]></code>
+      <code><![CDATA[parse]]></code>
+      <code><![CDATA[parse]]></code>
+      <code><![CDATA[parse]]></code>
+    </TypeDoesNotContainType>
+  </file>
+  <file src="src/Internal/Support/DateTime.php">
+    <InvalidReturnStatement>
+      <code><![CDATA[$time]]></code>
+      <code><![CDATA[match ($class) {
             \DateTimeImmutable::class => new \DateTimeImmutable($time, $tz),
             \DateTime::class => new \DateTime($time, $tz),
             CarbonImmutable::class => CarbonImmutable::parse($time, $tz),
             default => Carbon::parse($time, $tz),
         }]]></code>
-        </InvalidReturnStatement>
-        <InvalidReturnType>
-            <code><![CDATA[TReturn]]></code>
-        </InvalidReturnType>
-        <PossiblyInvalidArgument>
-            <code><![CDATA[$tz]]></code>
-            <code><![CDATA[$tz]]></code>
-        </PossiblyInvalidArgument>
-        <PossiblyNullArgument>
-            <code><![CDATA[$time]]></code>
-        </PossiblyNullArgument>
-    </file>
-    <file src="src/Internal/Support/Diff.php">
-        <MissingClosureParamType>
-            <code><![CDATA[$_]]></code>
-        </MissingClosureParamType>
-        <PropertyTypeCoercion>
-            <code><![CDATA[$reflection->getName()]]></code>
-        </PropertyTypeCoercion>
-    </file>
-    <file src="src/Internal/Support/Facade.php">
-        <InvalidDocblock>
-            <code><![CDATA[object<T>|null]]></code>
-            <code><![CDATA[private static ?object $ctx = null;]]></code>
-            <code><![CDATA[public static function getCurrentContext(): object]]></code>
-        </InvalidDocblock>
-    </file>
-    <file src="src/Internal/Support/Inheritance.php">
-        <PossiblyFalseArgument>
-            <code><![CDATA[$implements]]></code>
-            <code><![CDATA[$used]]></code>
-        </PossiblyFalseArgument>
-    </file>
-    <file src="src/Internal/Support/Options.php">
-        <UnsafeInstantiation>
-            <code><![CDATA[new static()]]></code>
-        </UnsafeInstantiation>
-    </file>
-    <file src="src/Internal/Transport/Client.php">
-        <PossiblyInvalidArgument>
-            <code><![CDATA[$command->getID()]]></code>
-            <code><![CDATA[$command->getID()]]></code>
-            <code><![CDATA[$command->getID()]]></code>
-        </PossiblyInvalidArgument>
-        <PossiblyNullReference>
-            <code><![CDATA[getInfo]]></code>
-        </PossiblyNullReference>
-        <RedundantCondition>
-            <code><![CDATA[$info !== null]]></code>
-        </RedundantCondition>
-        <UndefinedInterfaceMethod>
-            <code><![CDATA[getPayloads]]></code>
-        </UndefinedInterfaceMethod>
-    </file>
-    <file src="src/Internal/Transport/CompletableResult.php">
-        <MoreSpecificImplementedParamType>
-            <code><![CDATA[$onFulfilled]]></code>
-            <code><![CDATA[$onRejected]]></code>
-        </MoreSpecificImplementedParamType>
-        <PossiblyNullArgument>
-            <code><![CDATA[$this->wrapContext($onFulfilledOrRejected)]]></code>
-            <code><![CDATA[$this->wrapContext($onRejected)]]></code>
-        </PossiblyNullArgument>
-        <TooManyTemplateParams>
-            <code><![CDATA[PromiseInterface<T>]]></code>
-        </TooManyTemplateParams>
-        <UndefinedInterfaceMethod>
-            <code><![CDATA[cancel]]></code>
-            <code><![CDATA[catch]]></code>
-            <code><![CDATA[finally]]></code>
-        </UndefinedInterfaceMethod>
-    </file>
-    <file src="src/Internal/Transport/CompletableResultInterface.php">
-        <TooManyTemplateParams>
-            <code><![CDATA[PromiseInterface]]></code>
-        </TooManyTemplateParams>
-    </file>
-    <file src="src/Internal/Transport/Router/DestroyWorkflow.php">
-        <UndefinedInterfaceMethod>
-            <code><![CDATA[pull]]></code>
-        </UndefinedInterfaceMethod>
-    </file>
-    <file src="src/Internal/Transport/Router/InvokeActivity.php">
-        <UnnecessaryVarAnnotation>
-            <code><![CDATA[ActivityContext]]></code>
-        </UnnecessaryVarAnnotation>
-    </file>
-    <file src="src/Internal/Transport/Router/InvokeQuery.php">
-        <ArgumentTypeCoercion>
-            <code><![CDATA[$request->getID()]]></code>
-            <code><![CDATA[$running]]></code>
-        </ArgumentTypeCoercion>
-        <UnusedVariable>
-            <code><![CDATA[$headers]]></code>
-        </UnusedVariable>
-    </file>
-    <file src="src/Internal/Transport/Router/InvokeUpdate.php">
-        <ArgumentTypeCoercion>
-            <code><![CDATA[$request->getID()]]></code>
-        </ArgumentTypeCoercion>
-        <PossiblyUndefinedStringArrayOffset>
-            <code><![CDATA[$request->getOptions()['name']]]></code>
-            <code><![CDATA[$request->getOptions()['updateId']]]></code>
-        </PossiblyUndefinedStringArrayOffset>
-        <UndefinedInterfaceMethod>
-            <code><![CDATA[cancel]]></code>
-        </UndefinedInterfaceMethod>
-    </file>
-    <file src="src/Internal/Transport/Router/StackTrace.php">
-        <ArgumentTypeCoercion>
-            <code><![CDATA[$request->getID()]]></code>
-        </ArgumentTypeCoercion>
-    </file>
-    <file src="src/Internal/Transport/Router/StartWorkflow.php">
-        <PossiblyFalseArgument>
-            <code><![CDATA[\json_encode($param)]]></code>
-            <code><![CDATA[\json_encode($param)]]></code>
-        </PossiblyFalseArgument>
-        <UnnecessaryVarAnnotation>
-            <code><![CDATA[Input]]></code>
-        </UnnecessaryVarAnnotation>
-    </file>
-    <file src="src/Internal/Transport/Server.php">
-        <ArgumentTypeCoercion>
-            <code><![CDATA[$e->getMessage()]]></code>
-        </ArgumentTypeCoercion>
-        <InvalidArgument>
-            <code><![CDATA[$request]]></code>
-            <code><![CDATA[$request]]></code>
-        </InvalidArgument>
-        <MismatchingDocblockParamType>
-            <code><![CDATA[RequestInterface]]></code>
-        </MismatchingDocblockParamType>
-    </file>
-    <file src="src/Internal/Workflow/ActivityProxy.php">
-        <ArgumentTypeCoercion>
-            <code><![CDATA[$handler->getID()]]></code>
-            <code><![CDATA[$handler->getID()]]></code>
-            <code><![CDATA[$options]]></code>
-            <code><![CDATA[$options]]></code>
-        </ArgumentTypeCoercion>
-    </file>
-    <file src="src/Internal/Workflow/ActivityStub.php">
-        <ArgumentTypeCoercion>
-            <code><![CDATA[$name]]></code>
-            <code><![CDATA[$name]]></code>
-        </ArgumentTypeCoercion>
-        <LessSpecificReturnStatement>
-            <code><![CDATA[EncodedValues::decodePromise($this->request($request), $returnType)]]></code>
-        </LessSpecificReturnStatement>
-        <MoreSpecificReturnType>
-            <code><![CDATA[PromiseInterface]]></code>
-        </MoreSpecificReturnType>
-    </file>
-    <file src="src/Internal/Workflow/ChildWorkflowProxy.php">
-        <MoreSpecificImplementedParamType>
-            <code><![CDATA[$method]]></code>
-        </MoreSpecificImplementedParamType>
-        <PossiblyNullArgument>
-            <code><![CDATA[$handler?->getReturnType()]]></code>
-        </PossiblyNullArgument>
-    </file>
-    <file src="src/Internal/Workflow/ChildWorkflowStub.php">
-        <ArgumentTypeCoercion>
-            <code><![CDATA[$this->workflow]]></code>
-        </ArgumentTypeCoercion>
-        <LessSpecificReturnStatement>
-            <code><![CDATA[$this->execution->promise()->then(
+    </InvalidReturnStatement>
+    <InvalidReturnType>
+      <code><![CDATA[TReturn]]></code>
+    </InvalidReturnType>
+    <PossiblyInvalidArgument>
+      <code><![CDATA[$tz]]></code>
+      <code><![CDATA[$tz]]></code>
+    </PossiblyInvalidArgument>
+    <PossiblyNullArgument>
+      <code><![CDATA[$time]]></code>
+    </PossiblyNullArgument>
+  </file>
+  <file src="src/Internal/Support/Diff.php">
+    <MissingClosureParamType>
+      <code><![CDATA[$_]]></code>
+    </MissingClosureParamType>
+    <PropertyTypeCoercion>
+      <code><![CDATA[$reflection->getName()]]></code>
+    </PropertyTypeCoercion>
+  </file>
+  <file src="src/Internal/Support/Facade.php">
+    <InvalidDocblock>
+      <code><![CDATA[object<T>|null]]></code>
+      <code><![CDATA[private static ?object $ctx = null;]]></code>
+      <code><![CDATA[public static function getCurrentContext(): object]]></code>
+    </InvalidDocblock>
+  </file>
+  <file src="src/Internal/Support/Inheritance.php">
+    <PossiblyFalseArgument>
+      <code><![CDATA[$implements]]></code>
+      <code><![CDATA[$used]]></code>
+    </PossiblyFalseArgument>
+  </file>
+  <file src="src/Internal/Support/Options.php">
+    <UnsafeInstantiation>
+      <code><![CDATA[new static()]]></code>
+    </UnsafeInstantiation>
+  </file>
+  <file src="src/Internal/Transport/Client.php">
+    <PossiblyInvalidArgument>
+      <code><![CDATA[$command->getID()]]></code>
+      <code><![CDATA[$command->getID()]]></code>
+      <code><![CDATA[$command->getID()]]></code>
+    </PossiblyInvalidArgument>
+    <PossiblyNullReference>
+      <code><![CDATA[getInfo]]></code>
+    </PossiblyNullReference>
+    <RedundantCondition>
+      <code><![CDATA[$info !== null]]></code>
+    </RedundantCondition>
+    <UndefinedInterfaceMethod>
+      <code><![CDATA[getPayloads]]></code>
+    </UndefinedInterfaceMethod>
+  </file>
+  <file src="src/Internal/Transport/CompletableResult.php">
+    <MoreSpecificImplementedParamType>
+      <code><![CDATA[$onFulfilled]]></code>
+      <code><![CDATA[$onRejected]]></code>
+    </MoreSpecificImplementedParamType>
+    <PossiblyNullArgument>
+      <code><![CDATA[$this->wrapContext($onFulfilledOrRejected)]]></code>
+      <code><![CDATA[$this->wrapContext($onRejected)]]></code>
+    </PossiblyNullArgument>
+    <TooManyTemplateParams>
+      <code><![CDATA[PromiseInterface<T>]]></code>
+    </TooManyTemplateParams>
+    <UndefinedInterfaceMethod>
+      <code><![CDATA[cancel]]></code>
+      <code><![CDATA[catch]]></code>
+      <code><![CDATA[finally]]></code>
+    </UndefinedInterfaceMethod>
+  </file>
+  <file src="src/Internal/Transport/CompletableResultInterface.php">
+    <TooManyTemplateParams>
+      <code><![CDATA[PromiseInterface]]></code>
+    </TooManyTemplateParams>
+  </file>
+  <file src="src/Internal/Transport/Router/DestroyWorkflow.php">
+    <UndefinedInterfaceMethod>
+      <code><![CDATA[pull]]></code>
+    </UndefinedInterfaceMethod>
+  </file>
+  <file src="src/Internal/Transport/Router/InvokeActivity.php">
+    <UnnecessaryVarAnnotation>
+      <code><![CDATA[ActivityContext]]></code>
+    </UnnecessaryVarAnnotation>
+  </file>
+  <file src="src/Internal/Transport/Router/InvokeQuery.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$request->getID()]]></code>
+      <code><![CDATA[$running]]></code>
+    </ArgumentTypeCoercion>
+    <UnusedVariable>
+      <code><![CDATA[$headers]]></code>
+    </UnusedVariable>
+  </file>
+  <file src="src/Internal/Transport/Router/InvokeUpdate.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$request->getID()]]></code>
+    </ArgumentTypeCoercion>
+    <PossiblyUndefinedStringArrayOffset>
+      <code><![CDATA[$request->getOptions()['name']]]></code>
+      <code><![CDATA[$request->getOptions()['updateId']]]></code>
+    </PossiblyUndefinedStringArrayOffset>
+    <UndefinedInterfaceMethod>
+      <code><![CDATA[cancel]]></code>
+    </UndefinedInterfaceMethod>
+  </file>
+  <file src="src/Internal/Transport/Router/StackTrace.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$request->getID()]]></code>
+    </ArgumentTypeCoercion>
+  </file>
+  <file src="src/Internal/Transport/Router/StartWorkflow.php">
+    <PossiblyFalseArgument>
+      <code><![CDATA[\json_encode($param)]]></code>
+      <code><![CDATA[\json_encode($param)]]></code>
+    </PossiblyFalseArgument>
+    <UnnecessaryVarAnnotation>
+      <code><![CDATA[Input]]></code>
+    </UnnecessaryVarAnnotation>
+  </file>
+  <file src="src/Internal/Transport/Server.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$e->getMessage()]]></code>
+    </ArgumentTypeCoercion>
+    <InvalidArgument>
+      <code><![CDATA[$request]]></code>
+      <code><![CDATA[$request]]></code>
+    </InvalidArgument>
+    <MismatchingDocblockParamType>
+      <code><![CDATA[RequestInterface]]></code>
+    </MismatchingDocblockParamType>
+  </file>
+  <file src="src/Internal/Workflow/ActivityProxy.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$handler->getID()]]></code>
+      <code><![CDATA[$handler->getID()]]></code>
+      <code><![CDATA[$options]]></code>
+      <code><![CDATA[$options]]></code>
+    </ArgumentTypeCoercion>
+  </file>
+  <file src="src/Internal/Workflow/ActivityStub.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$name]]></code>
+      <code><![CDATA[$name]]></code>
+    </ArgumentTypeCoercion>
+    <LessSpecificReturnStatement>
+      <code><![CDATA[EncodedValues::decodePromise($this->request($request), $returnType)]]></code>
+    </LessSpecificReturnStatement>
+    <MoreSpecificReturnType>
+      <code><![CDATA[PromiseInterface]]></code>
+    </MoreSpecificReturnType>
+  </file>
+  <file src="src/Internal/Workflow/ChildWorkflowProxy.php">
+    <MoreSpecificImplementedParamType>
+      <code><![CDATA[$method]]></code>
+    </MoreSpecificImplementedParamType>
+    <PossiblyNullArgument>
+      <code><![CDATA[$handler?->getReturnType()]]></code>
+    </PossiblyNullArgument>
+  </file>
+  <file src="src/Internal/Workflow/ChildWorkflowStub.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$this->workflow]]></code>
+    </ArgumentTypeCoercion>
+    <LessSpecificReturnStatement>
+      <code><![CDATA[$this->execution->promise()->then(
             function (WorkflowExecution $execution) use ($name, $args) {
                 $request = new SignalExternalWorkflow(
                     $this->getOptions()->namespace,
@@ -1192,461 +1167,461 @@
                 return $this->request($request);
             },
         )]]></code>
-            <code><![CDATA[$this->start(...$args)->then(fn() => $this->getResult($returnType))]]></code>
-            <code><![CDATA[EncodedValues::decodePromise($started)]]></code>
-        </LessSpecificReturnStatement>
-        <MissingParamType>
-            <code><![CDATA[$returnType]]></code>
-        </MissingParamType>
-        <MoreSpecificReturnType>
-            <code><![CDATA[PromiseInterface]]></code>
-            <code><![CDATA[PromiseInterface]]></code>
-            <code><![CDATA[PromiseInterface]]></code>
-        </MoreSpecificReturnType>
-        <PossiblyNullArgument>
-            <code><![CDATA[$this->result]]></code>
-        </PossiblyNullArgument>
-    </file>
-    <file src="src/Internal/Workflow/Input.php">
-        <PropertyTypeCoercion>
-            <code><![CDATA[$header ?? Header::empty()]]></code>
-        </PropertyTypeCoercion>
-    </file>
-    <file src="src/Internal/Workflow/Process/DeferredGenerator.php">
-        <UnevaluatedCode>
-            <code><![CDATA[yield;]]></code>
-        </UnevaluatedCode>
-    </file>
-    <file src="src/Internal/Workflow/Process/Process.php">
-        <PropertyNotSetInConstructor>
-            <code><![CDATA[Process]]></code>
-        </PropertyNotSetInConstructor>
-    </file>
-    <file src="src/Internal/Workflow/Process/Scope.php">
-        <PropertyNotSetInConstructor>
-            <code><![CDATA[$coroutine]]></code>
-        </PropertyNotSetInConstructor>
-        <UndefinedInterfaceMethod>
-            <code><![CDATA[catch]]></code>
-            <code><![CDATA[finally]]></code>
-        </UndefinedInterfaceMethod>
-        <UnusedClosureParam>
-            <code><![CDATA[$e]]></code>
-        </UnusedClosureParam>
-    </file>
-    <file src="src/Internal/Workflow/Proxy.php">
-        <MissingReturnType>
-            <code><![CDATA[__call]]></code>
-        </MissingReturnType>
-        <PossiblyNullReference>
-            <code><![CDATA[getName]]></code>
-        </PossiblyNullReference>
-    </file>
-    <file src="src/Internal/Workflow/ScopeContext.php">
-        <MissingImmutableAnnotation>
-            <code><![CDATA[ScopeContext]]></code>
-        </MissingImmutableAnnotation>
-        <PropertyNotSetInConstructor>
-            <code><![CDATA[$onRequest]]></code>
-            <code><![CDATA[$parent]]></code>
-            <code><![CDATA[$scope]]></code>
-        </PropertyNotSetInConstructor>
-        <UnsupportedPropertyReferenceUsage>
-            <code><![CDATA[$ctx->trace = &$context->trace]]></code>
-        </UnsupportedPropertyReferenceUsage>
-    </file>
-    <file src="src/Internal/Workflow/WorkflowContext.php">
-        <ArgumentTypeCoercion>
-            <code><![CDATA[$input->maxSupported]]></code>
-            <code><![CDATA[$input->minSupported]]></code>
-            <code><![CDATA[$input->type]]></code>
-            <code><![CDATA[$type]]></code>
-            <code><![CDATA[$type]]></code>
-        </ArgumentTypeCoercion>
-        <InaccessibleProperty>
-            <code><![CDATA[$this->input->info->typedSearchAttributes]]></code>
-        </InaccessibleProperty>
-        <InvalidArgument>
-            <code><![CDATA[$options]]></code>
-        </InvalidArgument>
-        <InvalidNullableReturnType>
-            <code><![CDATA[string]]></code>
-        </InvalidNullableReturnType>
-        <InvalidReturnStatement>
-            <code><![CDATA[new ChildWorkflowProxy(
+      <code><![CDATA[$this->start(...$args)->then(fn() => $this->getResult($returnType))]]></code>
+      <code><![CDATA[EncodedValues::decodePromise($started)]]></code>
+    </LessSpecificReturnStatement>
+    <MissingParamType>
+      <code><![CDATA[$returnType]]></code>
+    </MissingParamType>
+    <MoreSpecificReturnType>
+      <code><![CDATA[PromiseInterface]]></code>
+      <code><![CDATA[PromiseInterface]]></code>
+      <code><![CDATA[PromiseInterface]]></code>
+    </MoreSpecificReturnType>
+    <PossiblyNullArgument>
+      <code><![CDATA[$this->result]]></code>
+    </PossiblyNullArgument>
+  </file>
+  <file src="src/Internal/Workflow/Input.php">
+    <PropertyTypeCoercion>
+      <code><![CDATA[$header ?? Header::empty()]]></code>
+    </PropertyTypeCoercion>
+  </file>
+  <file src="src/Internal/Workflow/Process/DeferredGenerator.php">
+    <UnevaluatedCode>
+      <code><![CDATA[yield;]]></code>
+    </UnevaluatedCode>
+  </file>
+  <file src="src/Internal/Workflow/Process/Process.php">
+    <PropertyNotSetInConstructor>
+      <code><![CDATA[Process]]></code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="src/Internal/Workflow/Process/Scope.php">
+    <PropertyNotSetInConstructor>
+      <code><![CDATA[$coroutine]]></code>
+    </PropertyNotSetInConstructor>
+    <UndefinedInterfaceMethod>
+      <code><![CDATA[catch]]></code>
+      <code><![CDATA[finally]]></code>
+    </UndefinedInterfaceMethod>
+    <UnusedClosureParam>
+      <code><![CDATA[$e]]></code>
+    </UnusedClosureParam>
+  </file>
+  <file src="src/Internal/Workflow/Proxy.php">
+    <MissingReturnType>
+      <code><![CDATA[__call]]></code>
+    </MissingReturnType>
+    <PossiblyNullReference>
+      <code><![CDATA[getName]]></code>
+    </PossiblyNullReference>
+  </file>
+  <file src="src/Internal/Workflow/ScopeContext.php">
+    <MissingImmutableAnnotation>
+      <code><![CDATA[ScopeContext]]></code>
+    </MissingImmutableAnnotation>
+    <PropertyNotSetInConstructor>
+      <code><![CDATA[$onRequest]]></code>
+      <code><![CDATA[$parent]]></code>
+      <code><![CDATA[$scope]]></code>
+    </PropertyNotSetInConstructor>
+    <UnsupportedPropertyReferenceUsage>
+      <code><![CDATA[$ctx->trace = &$context->trace]]></code>
+    </UnsupportedPropertyReferenceUsage>
+  </file>
+  <file src="src/Internal/Workflow/WorkflowContext.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$input->maxSupported]]></code>
+      <code><![CDATA[$input->minSupported]]></code>
+      <code><![CDATA[$input->type]]></code>
+      <code><![CDATA[$type]]></code>
+      <code><![CDATA[$type]]></code>
+    </ArgumentTypeCoercion>
+    <InaccessibleProperty>
+      <code><![CDATA[$this->input->info->typedSearchAttributes]]></code>
+    </InaccessibleProperty>
+    <InvalidArgument>
+      <code><![CDATA[$options]]></code>
+    </InvalidArgument>
+    <InvalidNullableReturnType>
+      <code><![CDATA[string]]></code>
+    </InvalidNullableReturnType>
+    <InvalidReturnStatement>
+      <code><![CDATA[new ChildWorkflowProxy(
             $class,
             $workflow,
             $options,
             $this,
         )]]></code>
-            <code><![CDATA[new ContinueAsNewProxy($class, $workflow, $options, $this)]]></code>
-            <code><![CDATA[new ExternalWorkflowProxy($class, $workflow, $stub)]]></code>
-        </InvalidReturnStatement>
-        <InvalidReturnType>
-            <code><![CDATA[object]]></code>
-            <code><![CDATA[object]]></code>
-            <code><![CDATA[object]]></code>
-        </InvalidReturnType>
-        <MissingClosureParamType>
-            <code><![CDATA[$reason]]></code>
-            <code><![CDATA[$result]]></code>
-        </MissingClosureParamType>
-        <MissingClosureReturnType>
-            <code><![CDATA[function ($result) use ($conditionGroupId) {]]></code>
-        </MissingClosureReturnType>
-        <MissingImmutableAnnotation>
-            <code><![CDATA[WorkflowContext]]></code>
-        </MissingImmutableAnnotation>
-        <NullableReturnStatement>
-            <code><![CDATA[$this->input->info->execution->getRunID()]]></code>
-        </NullableReturnStatement>
-        <UnsupportedPropertyReferenceUsage>
-            <code><![CDATA[$clone->awaits = &$this->awaits]]></code>
-            <code><![CDATA[$clone->trace = &$this->trace]]></code>
-        </UnsupportedPropertyReferenceUsage>
-    </file>
-    <file src="src/Promise.php">
-        <InvalidArgument>
-            <code><![CDATA[$reasons]]></code>
-        </InvalidArgument>
-        <InvalidOperand>
-            <code><![CDATA[$promisesOrValues]]></code>
-        </InvalidOperand>
-        <TooManyArguments>
-            <code><![CDATA[$reduce($c, $value, $i++, $total)]]></code>
-        </TooManyArguments>
-        <TooManyTemplateParams>
-            <code><![CDATA[PromiseInterface<T>]]></code>
-            <code><![CDATA[PromiseInterface<never>]]></code>
-            <code><![CDATA[iterable<PromiseInterface<T>|T>]]></code>
-        </TooManyTemplateParams>
-    </file>
-    <file src="src/Worker/ActivityInvocationCache/ActivityInvocationResult.php">
-        <MissingReturnType>
-            <code><![CDATA[toValue]]></code>
-        </MissingReturnType>
-        <PossiblyNullArgument>
-            <code><![CDATA[$dataConverter]]></code>
-        </PossiblyNullArgument>
-        <PossiblyUndefinedStringArrayOffset>
-            <code><![CDATA[$data['payloads']]]></code>
-        </PossiblyUndefinedStringArrayOffset>
-    </file>
-    <file src="src/Worker/ActivityInvocationCache/InMemoryActivityInvocationCache.php">
-        <PossiblyUndefinedStringArrayOffset>
-            <code><![CDATA[$request->getOptions()['name']]]></code>
-        </PossiblyUndefinedStringArrayOffset>
-    </file>
-    <file src="src/Worker/ActivityInvocationCache/RoadRunnerActivityInvocationCache.php">
-        <ArgumentTypeCoercion>
-            <code><![CDATA[$cacheName]]></code>
-            <code><![CDATA[$host]]></code>
-        </ArgumentTypeCoercion>
-        <MissingParamType>
-            <code><![CDATA[$value]]></code>
-        </MissingParamType>
-        <PossiblyUndefinedStringArrayOffset>
-            <code><![CDATA[$request->getOptions()['name']]]></code>
-        </PossiblyUndefinedStringArrayOffset>
-    </file>
-    <file src="src/Worker/LoopInterface.php">
-        <MissingTemplateParam>
-            <code><![CDATA[EventListenerInterface]]></code>
-        </MissingTemplateParam>
-    </file>
-    <file src="src/Worker/Transport/Codec/JsonCodec.php">
-        <ArgumentTypeCoercion>
-            <code><![CDATA[$this->maxDepth]]></code>
-            <code><![CDATA[$this->maxDepth]]></code>
-        </ArgumentTypeCoercion>
-        <PossiblyInvalidArgument>
-            <code><![CDATA[$e->getCode()]]></code>
-            <code><![CDATA[$e->getCode()]]></code>
-        </PossiblyInvalidArgument>
-    </file>
-    <file src="src/Worker/Transport/Codec/JsonCodec/Decoder.php">
-        <InvalidReturnStatement>
-            <code><![CDATA[match (true) {
+      <code><![CDATA[new ContinueAsNewProxy($class, $workflow, $options, $this)]]></code>
+      <code><![CDATA[new ExternalWorkflowProxy($class, $workflow, $stub)]]></code>
+    </InvalidReturnStatement>
+    <InvalidReturnType>
+      <code><![CDATA[object]]></code>
+      <code><![CDATA[object]]></code>
+      <code><![CDATA[object]]></code>
+    </InvalidReturnType>
+    <MissingClosureParamType>
+      <code><![CDATA[$reason]]></code>
+      <code><![CDATA[$result]]></code>
+    </MissingClosureParamType>
+    <MissingClosureReturnType>
+      <code><![CDATA[function ($result) use ($conditionGroupId) {]]></code>
+    </MissingClosureReturnType>
+    <MissingImmutableAnnotation>
+      <code><![CDATA[WorkflowContext]]></code>
+    </MissingImmutableAnnotation>
+    <NullableReturnStatement>
+      <code><![CDATA[$this->input->info->execution->getRunID()]]></code>
+    </NullableReturnStatement>
+    <UnsupportedPropertyReferenceUsage>
+      <code><![CDATA[$clone->awaits = &$this->awaits]]></code>
+      <code><![CDATA[$clone->trace = &$this->trace]]></code>
+    </UnsupportedPropertyReferenceUsage>
+  </file>
+  <file src="src/Promise.php">
+    <InvalidArgument>
+      <code><![CDATA[$reasons]]></code>
+    </InvalidArgument>
+    <InvalidOperand>
+      <code><![CDATA[$promisesOrValues]]></code>
+    </InvalidOperand>
+    <TooManyArguments>
+      <code><![CDATA[$reduce($c, $value, $i++, $total)]]></code>
+    </TooManyArguments>
+    <TooManyTemplateParams>
+      <code><![CDATA[PromiseInterface<T>]]></code>
+      <code><![CDATA[PromiseInterface<never>]]></code>
+      <code><![CDATA[iterable<PromiseInterface<T>|T>]]></code>
+    </TooManyTemplateParams>
+  </file>
+  <file src="src/Worker/ActivityInvocationCache/ActivityInvocationResult.php">
+    <MissingReturnType>
+      <code><![CDATA[toValue]]></code>
+    </MissingReturnType>
+    <PossiblyNullArgument>
+      <code><![CDATA[$dataConverter]]></code>
+    </PossiblyNullArgument>
+    <PossiblyUndefinedStringArrayOffset>
+      <code><![CDATA[$data['payloads']]]></code>
+    </PossiblyUndefinedStringArrayOffset>
+  </file>
+  <file src="src/Worker/ActivityInvocationCache/InMemoryActivityInvocationCache.php">
+    <PossiblyUndefinedStringArrayOffset>
+      <code><![CDATA[$request->getOptions()['name']]]></code>
+    </PossiblyUndefinedStringArrayOffset>
+  </file>
+  <file src="src/Worker/ActivityInvocationCache/RoadRunnerActivityInvocationCache.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$cacheName]]></code>
+      <code><![CDATA[$host]]></code>
+    </ArgumentTypeCoercion>
+    <MissingParamType>
+      <code><![CDATA[$value]]></code>
+    </MissingParamType>
+    <PossiblyUndefinedStringArrayOffset>
+      <code><![CDATA[$request->getOptions()['name']]]></code>
+    </PossiblyUndefinedStringArrayOffset>
+  </file>
+  <file src="src/Worker/LoopInterface.php">
+    <MissingTemplateParam>
+      <code><![CDATA[EventListenerInterface]]></code>
+    </MissingTemplateParam>
+  </file>
+  <file src="src/Worker/Transport/Codec/JsonCodec.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$this->maxDepth]]></code>
+      <code><![CDATA[$this->maxDepth]]></code>
+    </ArgumentTypeCoercion>
+    <PossiblyInvalidArgument>
+      <code><![CDATA[$e->getCode()]]></code>
+      <code><![CDATA[$e->getCode()]]></code>
+    </PossiblyInvalidArgument>
+  </file>
+  <file src="src/Worker/Transport/Codec/JsonCodec/Decoder.php">
+    <InvalidReturnStatement>
+      <code><![CDATA[match (true) {
             isset($command['command']) => $this->parseRequest($command, $info),
             isset($command['failure']) => $this->parseFailureResponse($command, $info),
             default => $this->parseResponse($command, $info),
         }]]></code>
-        </InvalidReturnStatement>
-        <InvalidReturnType>
-            <code><![CDATA[ServerRequestInterface|ServerResponse]]></code>
-        </InvalidReturnType>
-        <PossiblyUndefinedStringArrayOffset>
-            <code><![CDATA[$data['command']]]></code>
-            <code><![CDATA[$data['failure']]]></code>
-            <code><![CDATA[$data['id']]]></code>
-            <code><![CDATA[$data['id']]]></code>
-        </PossiblyUndefinedStringArrayOffset>
-    </file>
-    <file src="src/Worker/Transport/Codec/JsonCodec/Encoder.php">
-        <PossiblyNullArgument>
-            <code><![CDATA[$cmd->getFailure()]]></code>
-        </PossiblyNullArgument>
-    </file>
-    <file src="src/Worker/Transport/Codec/ProtoCodec.php">
-        <LessSpecificReturnStatement>
-            <code><![CDATA[$frame->serializeToString()]]></code>
-        </LessSpecificReturnStatement>
-        <MoreSpecificReturnType>
-            <code><![CDATA[string]]></code>
-        </MoreSpecificReturnType>
-        <PossiblyInvalidArgument>
-            <code><![CDATA[$e->getCode()]]></code>
-            <code><![CDATA[$e->getCode()]]></code>
-        </PossiblyInvalidArgument>
-        <RawObjectIteration>
-            <code><![CDATA[$frame->getMessages()]]></code>
-        </RawObjectIteration>
-        <TooManyArguments>
-            <code><![CDATA[decode]]></code>
-        </TooManyArguments>
-    </file>
-    <file src="src/Worker/Transport/Codec/ProtoCodec/Decoder.php">
-        <ArgumentTypeCoercion>
-            <code><![CDATA[$msg->getCommand()]]></code>
-        </ArgumentTypeCoercion>
-        <PossiblyNullArgument>
-            <code><![CDATA[$msg->getFailure()]]></code>
-            <code><![CDATA[$msg->getPayloads()]]></code>
-            <code><![CDATA[$msg->getPayloads()]]></code>
-        </PossiblyNullArgument>
-        <PossiblyNullReference>
-            <code><![CDATA[getFields]]></code>
-        </PossiblyNullReference>
-    </file>
-    <file src="src/Worker/Transport/Codec/ProtoCodec/Encoder.php">
-        <PossiblyFalseArgument>
-            <code><![CDATA[\json_encode($cmd->getOptions(), JSON_INVALID_UTF8_IGNORE | JSON_UNESCAPED_UNICODE)]]></code>
-            <code><![CDATA[\json_encode($options)]]></code>
-        </PossiblyFalseArgument>
-        <PossiblyNullArgument>
-            <code><![CDATA[$cmd->getFailure()]]></code>
-        </PossiblyNullArgument>
-    </file>
-    <file src="src/Worker/Transport/Command/Client/FailedClientResponse.php">
-        <InvalidNullableReturnType>
-            <code><![CDATA[\Throwable]]></code>
-        </InvalidNullableReturnType>
-        <NullableReturnStatement>
-            <code><![CDATA[$this->failure]]></code>
-        </NullableReturnStatement>
-    </file>
-    <file src="src/Worker/Transport/Command/Client/SuccessClientResponse.php">
-        <InvalidNullableReturnType>
-            <code><![CDATA[ValuesInterface]]></code>
-        </InvalidNullableReturnType>
-        <NullableReturnStatement>
-            <code><![CDATA[$this->values]]></code>
-        </NullableReturnStatement>
-    </file>
-    <file src="src/Worker/Transport/Command/Common/RequestTrait.php">
-        <LessSpecificImplementedReturnType>
-            <code><![CDATA[array]]></code>
-            <code><![CDATA[array]]></code>
-            <code><![CDATA[string]]></code>
-            <code><![CDATA[string]]></code>
-        </LessSpecificImplementedReturnType>
-        <MoreSpecificReturnType>
-            <code><![CDATA[Header]]></code>
-        </MoreSpecificReturnType>
-    </file>
-    <file src="src/Worker/Transport/Command/Server/ServerRequest.php">
-        <ImpureMethodCall>
-            <code><![CDATA[$options['info']]]></code>
-        </ImpureMethodCall>
-    </file>
-    <file src="src/Worker/Transport/Goridge.php">
-        <ArgumentTypeCoercion>
-            <code><![CDATA[$env->getRPCAddress()]]></code>
-            <code><![CDATA[$method]]></code>
-        </ArgumentTypeCoercion>
-    </file>
-    <file src="src/Worker/Transport/RoadRunner.php">
-        <ArgumentTypeCoercion>
-            <code><![CDATA[$env->getRelayAddress()]]></code>
-        </ArgumentTypeCoercion>
-        <DocblockTypeContradiction>
-            <code><![CDATA[$payload === null]]></code>
-        </DocblockTypeContradiction>
-        <InternalClass>
-            <code><![CDATA[new Payload($frame, $json)]]></code>
-        </InternalClass>
-        <InternalMethod>
-            <code><![CDATA[new Payload($frame, $json)]]></code>
-        </InternalMethod>
-        <InternalProperty>
-            <code><![CDATA[$payload->body]]></code>
-            <code><![CDATA[$payload->header]]></code>
-        </InternalProperty>
-        <PossiblyInvalidArgument>
-            <code><![CDATA[$e->getCode()]]></code>
-            <code><![CDATA[$e->getCode()]]></code>
-            <code><![CDATA[$e->getCode()]]></code>
-            <code><![CDATA[$e->getCode()]]></code>
-        </PossiblyInvalidArgument>
-        <RedundantCondition>
-            <code><![CDATA[$result]]></code>
-        </RedundantCondition>
-        <TooManyArguments>
-            <code><![CDATA[encode]]></code>
-        </TooManyArguments>
-        <TypeDoesNotContainNull>
-            <code><![CDATA[[]]]></code>
-        </TypeDoesNotContainNull>
-    </file>
-    <file src="src/Worker/Worker.php">
-        <ArgumentTypeCoercion>
-            <code><![CDATA[$type]]></code>
-        </ArgumentTypeCoercion>
-        <MissingTemplateParam>
-            <code><![CDATA[EventEmitterTrait]]></code>
-            <code><![CDATA[EventListenerInterface]]></code>
-        </MissingTemplateParam>
-    </file>
-    <file src="src/Worker/WorkerFactoryInterface.php">
-        <MissingReturnType>
-            <code><![CDATA[run]]></code>
-        </MissingReturnType>
-    </file>
-    <file src="src/WorkerFactory.php">
-        <DeprecatedClass>
-            <code><![CDATA[new AnnotationReader()]]></code>
-        </DeprecatedClass>
-        <ImpureMethodCall>
-            <code><![CDATA[create]]></code>
-        </ImpureMethodCall>
-        <InternalClass>
-            <code><![CDATA[new Client($this->responses)]]></code>
-        </InternalClass>
-        <InternalMethod>
-            <code><![CDATA[new Client($this->responses)]]></code>
-        </InternalMethod>
-        <InvalidArgument>
-            <code><![CDATA[$this->onRequest(...)]]></code>
-        </InvalidArgument>
-        <LessSpecificReturnStatement>
-            <code><![CDATA[new ArrayRepository()]]></code>
-        </LessSpecificReturnStatement>
-        <MissingTemplateParam>
-            <code><![CDATA[EventEmitterTrait]]></code>
-        </MissingTemplateParam>
-        <MoreSpecificReturnType>
-            <code><![CDATA[RepositoryInterface<WorkerInterface>]]></code>
-        </MoreSpecificReturnType>
-        <PossiblyUndefinedStringArrayOffset>
-            <code><![CDATA[$headers[self::HEADER_TASK_QUEUE]]]></code>
-        </PossiblyUndefinedStringArrayOffset>
-        <PropertyNotSetInConstructor>
-            <code><![CDATA[$codec]]></code>
-        </PropertyNotSetInConstructor>
-        <UndefinedInterfaceMethod>
-            <code><![CDATA[dispatch]]></code>
-            <code><![CDATA[dispatch]]></code>
-            <code><![CDATA[update]]></code>
-        </UndefinedInterfaceMethod>
-        <UnsafeInstantiation>
-            <code><![CDATA[new static(
+    </InvalidReturnStatement>
+    <InvalidReturnType>
+      <code><![CDATA[ServerRequestInterface|ServerResponse]]></code>
+    </InvalidReturnType>
+    <PossiblyUndefinedStringArrayOffset>
+      <code><![CDATA[$data['command']]]></code>
+      <code><![CDATA[$data['failure']]]></code>
+      <code><![CDATA[$data['id']]]></code>
+      <code><![CDATA[$data['id']]]></code>
+    </PossiblyUndefinedStringArrayOffset>
+  </file>
+  <file src="src/Worker/Transport/Codec/JsonCodec/Encoder.php">
+    <PossiblyNullArgument>
+      <code><![CDATA[$cmd->getFailure()]]></code>
+    </PossiblyNullArgument>
+  </file>
+  <file src="src/Worker/Transport/Codec/ProtoCodec.php">
+    <LessSpecificReturnStatement>
+      <code><![CDATA[$frame->serializeToString()]]></code>
+    </LessSpecificReturnStatement>
+    <MoreSpecificReturnType>
+      <code><![CDATA[string]]></code>
+    </MoreSpecificReturnType>
+    <PossiblyInvalidArgument>
+      <code><![CDATA[$e->getCode()]]></code>
+      <code><![CDATA[$e->getCode()]]></code>
+    </PossiblyInvalidArgument>
+    <RawObjectIteration>
+      <code><![CDATA[$frame->getMessages()]]></code>
+    </RawObjectIteration>
+    <TooManyArguments>
+      <code><![CDATA[decode]]></code>
+    </TooManyArguments>
+  </file>
+  <file src="src/Worker/Transport/Codec/ProtoCodec/Decoder.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$msg->getCommand()]]></code>
+    </ArgumentTypeCoercion>
+    <PossiblyNullArgument>
+      <code><![CDATA[$msg->getFailure()]]></code>
+      <code><![CDATA[$msg->getPayloads()]]></code>
+      <code><![CDATA[$msg->getPayloads()]]></code>
+    </PossiblyNullArgument>
+    <PossiblyNullReference>
+      <code><![CDATA[getFields]]></code>
+    </PossiblyNullReference>
+  </file>
+  <file src="src/Worker/Transport/Codec/ProtoCodec/Encoder.php">
+    <PossiblyFalseArgument>
+      <code><![CDATA[\json_encode($cmd->getOptions(), JSON_INVALID_UTF8_IGNORE | JSON_UNESCAPED_UNICODE)]]></code>
+      <code><![CDATA[\json_encode($options)]]></code>
+    </PossiblyFalseArgument>
+    <PossiblyNullArgument>
+      <code><![CDATA[$cmd->getFailure()]]></code>
+    </PossiblyNullArgument>
+  </file>
+  <file src="src/Worker/Transport/Command/Client/FailedClientResponse.php">
+    <InvalidNullableReturnType>
+      <code><![CDATA[\Throwable]]></code>
+    </InvalidNullableReturnType>
+    <NullableReturnStatement>
+      <code><![CDATA[$this->failure]]></code>
+    </NullableReturnStatement>
+  </file>
+  <file src="src/Worker/Transport/Command/Client/SuccessClientResponse.php">
+    <InvalidNullableReturnType>
+      <code><![CDATA[ValuesInterface]]></code>
+    </InvalidNullableReturnType>
+    <NullableReturnStatement>
+      <code><![CDATA[$this->values]]></code>
+    </NullableReturnStatement>
+  </file>
+  <file src="src/Worker/Transport/Command/Common/RequestTrait.php">
+    <LessSpecificImplementedReturnType>
+      <code><![CDATA[array]]></code>
+      <code><![CDATA[array]]></code>
+      <code><![CDATA[string]]></code>
+      <code><![CDATA[string]]></code>
+    </LessSpecificImplementedReturnType>
+    <MoreSpecificReturnType>
+      <code><![CDATA[Header]]></code>
+    </MoreSpecificReturnType>
+  </file>
+  <file src="src/Worker/Transport/Command/Server/ServerRequest.php">
+    <ImpureMethodCall>
+      <code><![CDATA[$options['info']]]></code>
+    </ImpureMethodCall>
+  </file>
+  <file src="src/Worker/Transport/Goridge.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$env->getRPCAddress()]]></code>
+      <code><![CDATA[$method]]></code>
+    </ArgumentTypeCoercion>
+  </file>
+  <file src="src/Worker/Transport/RoadRunner.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$env->getRelayAddress()]]></code>
+    </ArgumentTypeCoercion>
+    <DocblockTypeContradiction>
+      <code><![CDATA[$payload === null]]></code>
+    </DocblockTypeContradiction>
+    <InternalClass>
+      <code><![CDATA[new Payload($frame, $json)]]></code>
+    </InternalClass>
+    <InternalMethod>
+      <code><![CDATA[new Payload($frame, $json)]]></code>
+    </InternalMethod>
+    <InternalProperty>
+      <code><![CDATA[$payload->body]]></code>
+      <code><![CDATA[$payload->header]]></code>
+    </InternalProperty>
+    <PossiblyInvalidArgument>
+      <code><![CDATA[$e->getCode()]]></code>
+      <code><![CDATA[$e->getCode()]]></code>
+      <code><![CDATA[$e->getCode()]]></code>
+      <code><![CDATA[$e->getCode()]]></code>
+    </PossiblyInvalidArgument>
+    <RedundantCondition>
+      <code><![CDATA[$result]]></code>
+    </RedundantCondition>
+    <TooManyArguments>
+      <code><![CDATA[encode]]></code>
+    </TooManyArguments>
+    <TypeDoesNotContainNull>
+      <code><![CDATA[[]]]></code>
+    </TypeDoesNotContainNull>
+  </file>
+  <file src="src/Worker/Worker.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$type]]></code>
+    </ArgumentTypeCoercion>
+    <MissingTemplateParam>
+      <code><![CDATA[EventEmitterTrait]]></code>
+      <code><![CDATA[EventListenerInterface]]></code>
+    </MissingTemplateParam>
+  </file>
+  <file src="src/Worker/WorkerFactoryInterface.php">
+    <MissingReturnType>
+      <code><![CDATA[run]]></code>
+    </MissingReturnType>
+  </file>
+  <file src="src/WorkerFactory.php">
+    <DeprecatedClass>
+      <code><![CDATA[new AnnotationReader()]]></code>
+    </DeprecatedClass>
+    <ImpureMethodCall>
+      <code><![CDATA[create]]></code>
+    </ImpureMethodCall>
+    <InternalClass>
+      <code><![CDATA[new Client($this->responses)]]></code>
+    </InternalClass>
+    <InternalMethod>
+      <code><![CDATA[new Client($this->responses)]]></code>
+    </InternalMethod>
+    <InvalidArgument>
+      <code><![CDATA[$this->onRequest(...)]]></code>
+    </InvalidArgument>
+    <LessSpecificReturnStatement>
+      <code><![CDATA[new ArrayRepository()]]></code>
+    </LessSpecificReturnStatement>
+    <MissingTemplateParam>
+      <code><![CDATA[EventEmitterTrait]]></code>
+    </MissingTemplateParam>
+    <MoreSpecificReturnType>
+      <code><![CDATA[RepositoryInterface<WorkerInterface>]]></code>
+    </MoreSpecificReturnType>
+    <PossiblyUndefinedStringArrayOffset>
+      <code><![CDATA[$headers[self::HEADER_TASK_QUEUE]]]></code>
+    </PossiblyUndefinedStringArrayOffset>
+    <PropertyNotSetInConstructor>
+      <code><![CDATA[$codec]]></code>
+    </PropertyNotSetInConstructor>
+    <UndefinedInterfaceMethod>
+      <code><![CDATA[dispatch]]></code>
+      <code><![CDATA[dispatch]]></code>
+      <code><![CDATA[update]]></code>
+    </UndefinedInterfaceMethod>
+    <UnsafeInstantiation>
+      <code><![CDATA[new static(
             $converter ?? DataConverter::createDefault(),
             $rpc ?? Goridge::create(),
             $credentials,
         )]]></code>
-        </UnsafeInstantiation>
-    </file>
-    <file src="src/Workflow.php">
-        <InvalidReturnStatement>
-            <code><![CDATA[self::getCurrentContext()->newActivityStub($class, $options)]]></code>
-            <code><![CDATA[self::getCurrentContext()->registerQuery($queryType, $handler, $description)]]></code>
-            <code><![CDATA[self::getCurrentContext()->registerSignal($name, $handler, $description)]]></code>
-        </InvalidReturnStatement>
-        <InvalidReturnType>
-            <code><![CDATA[ScopedContextInterface]]></code>
-            <code><![CDATA[ScopedContextInterface]]></code>
-            <code><![CDATA[T]]></code>
-        </InvalidReturnType>
-        <TooManyTemplateParams>
-            <code><![CDATA[PromiseInterface<TReturn>]]></code>
-            <code><![CDATA[PromiseInterface<UuidInterface>]]></code>
-            <code><![CDATA[PromiseInterface<UuidInterface>]]></code>
-            <code><![CDATA[PromiseInterface<UuidInterface>]]></code>
-            <code><![CDATA[PromiseInterface<bool>]]></code>
-            <code><![CDATA[PromiseInterface<int>]]></code>
-            <code><![CDATA[PromiseInterface<mixed>]]></code>
-            <code><![CDATA[PromiseInterface<mixed>]]></code>
-            <code><![CDATA[PromiseInterface<null>]]></code>
-        </TooManyTemplateParams>
-    </file>
-    <file src="src/Workflow/CancellationScopeInterface.php">
-        <TooManyTemplateParams>
-            <code><![CDATA[PromiseInterface]]></code>
-        </TooManyTemplateParams>
-    </file>
-    <file src="src/Workflow/ChildWorkflowOptions.php">
-        <PossiblyNullReference>
-            <code><![CDATA[mergeWith]]></code>
-        </PossiblyNullReference>
-    </file>
-    <file src="src/Workflow/ChildWorkflowStubInterface.php">
-        <MissingParamType>
-            <code><![CDATA[$returnType]]></code>
-        </MissingParamType>
-    </file>
-    <file src="src/Workflow/Mutex.php">
-        <TooManyTemplateParams>
-            <code><![CDATA[PromiseInterface<self>]]></code>
-        </TooManyTemplateParams>
-    </file>
-    <file src="src/Workflow/QueryMethod.php">
-        <DeprecatedClass>
-            <code><![CDATA[NamedArgumentConstructor]]></code>
-        </DeprecatedClass>
-    </file>
-    <file src="src/Workflow/ReturnType.php">
-        <DeprecatedClass>
-            <code><![CDATA[NamedArgumentConstructor]]></code>
-        </DeprecatedClass>
-    </file>
-    <file src="src/Workflow/Saga.php">
-        <PossiblyInvalidArgument>
-            <code><![CDATA[$e->getCode()]]></code>
-        </PossiblyInvalidArgument>
-    </file>
-    <file src="src/Workflow/SignalMethod.php">
-        <DeprecatedClass>
-            <code><![CDATA[NamedArgumentConstructor]]></code>
-        </DeprecatedClass>
-    </file>
-    <file src="src/Workflow/UpdateMethod.php">
-        <DeprecatedClass>
-            <code><![CDATA[NamedArgumentConstructor]]></code>
-        </DeprecatedClass>
-    </file>
-    <file src="src/Workflow/UpdateValidatorMethod.php">
-        <DeprecatedClass>
-            <code><![CDATA[NamedArgumentConstructor]]></code>
-        </DeprecatedClass>
-    </file>
-    <file src="src/Workflow/WorkflowContextInterface.php">
-        <TooManyTemplateParams>
-            <code><![CDATA[PromiseInterface<TReturn>]]></code>
-            <code><![CDATA[PromiseInterface<UuidInterface>]]></code>
-            <code><![CDATA[PromiseInterface<UuidInterface>]]></code>
-            <code><![CDATA[PromiseInterface<UuidInterface>]]></code>
-            <code><![CDATA[PromiseInterface<bool>]]></code>
-            <code><![CDATA[PromiseInterface<mixed>]]></code>
-        </TooManyTemplateParams>
-    </file>
-    <file src="src/Workflow/WorkflowInterface.php">
-        <DeprecatedClass>
-            <code><![CDATA[NamedArgumentConstructor]]></code>
-        </DeprecatedClass>
-    </file>
-    <file src="src/Workflow/WorkflowMethod.php">
-        <DeprecatedClass>
-            <code><![CDATA[NamedArgumentConstructor]]></code>
-        </DeprecatedClass>
-    </file>
+    </UnsafeInstantiation>
+  </file>
+  <file src="src/Workflow.php">
+    <InvalidReturnStatement>
+      <code><![CDATA[self::getCurrentContext()->newActivityStub($class, $options)]]></code>
+      <code><![CDATA[self::getCurrentContext()->registerQuery($queryType, $handler, $description)]]></code>
+      <code><![CDATA[self::getCurrentContext()->registerSignal($name, $handler, $description)]]></code>
+    </InvalidReturnStatement>
+    <InvalidReturnType>
+      <code><![CDATA[ScopedContextInterface]]></code>
+      <code><![CDATA[ScopedContextInterface]]></code>
+      <code><![CDATA[T]]></code>
+    </InvalidReturnType>
+    <TooManyTemplateParams>
+      <code><![CDATA[PromiseInterface<TReturn>]]></code>
+      <code><![CDATA[PromiseInterface<UuidInterface>]]></code>
+      <code><![CDATA[PromiseInterface<UuidInterface>]]></code>
+      <code><![CDATA[PromiseInterface<UuidInterface>]]></code>
+      <code><![CDATA[PromiseInterface<bool>]]></code>
+      <code><![CDATA[PromiseInterface<int>]]></code>
+      <code><![CDATA[PromiseInterface<mixed>]]></code>
+      <code><![CDATA[PromiseInterface<mixed>]]></code>
+      <code><![CDATA[PromiseInterface<null>]]></code>
+    </TooManyTemplateParams>
+  </file>
+  <file src="src/Workflow/CancellationScopeInterface.php">
+    <TooManyTemplateParams>
+      <code><![CDATA[PromiseInterface]]></code>
+    </TooManyTemplateParams>
+  </file>
+  <file src="src/Workflow/ChildWorkflowOptions.php">
+    <PossiblyNullReference>
+      <code><![CDATA[mergeWith]]></code>
+    </PossiblyNullReference>
+  </file>
+  <file src="src/Workflow/ChildWorkflowStubInterface.php">
+    <MissingParamType>
+      <code><![CDATA[$returnType]]></code>
+    </MissingParamType>
+  </file>
+  <file src="src/Workflow/Mutex.php">
+    <TooManyTemplateParams>
+      <code><![CDATA[PromiseInterface<self>]]></code>
+    </TooManyTemplateParams>
+  </file>
+  <file src="src/Workflow/QueryMethod.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Workflow/ReturnType.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Workflow/Saga.php">
+    <PossiblyInvalidArgument>
+      <code><![CDATA[$e->getCode()]]></code>
+    </PossiblyInvalidArgument>
+  </file>
+  <file src="src/Workflow/SignalMethod.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Workflow/UpdateMethod.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Workflow/UpdateValidatorMethod.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Workflow/WorkflowContextInterface.php">
+    <TooManyTemplateParams>
+      <code><![CDATA[PromiseInterface<TReturn>]]></code>
+      <code><![CDATA[PromiseInterface<UuidInterface>]]></code>
+      <code><![CDATA[PromiseInterface<UuidInterface>]]></code>
+      <code><![CDATA[PromiseInterface<UuidInterface>]]></code>
+      <code><![CDATA[PromiseInterface<bool>]]></code>
+      <code><![CDATA[PromiseInterface<mixed>]]></code>
+    </TooManyTemplateParams>
+  </file>
+  <file src="src/Workflow/WorkflowInterface.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Workflow/WorkflowMethod.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
 </files>

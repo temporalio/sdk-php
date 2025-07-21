@@ -11,4 +11,12 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Exception;
 
-class UndefinedRequestException extends \LogicException {}
+use Temporal\Internal\Transport\Request\UndefinedResponse;
+
+/**
+ * The exception is converted into {@see UndefinedResponse} and sent to the client.
+ * This kind of failure raises panic in the Temporal Worker on the RoadRunner side.
+ *
+ * @internal
+ */
+final class UndefinedRequestException extends \LogicException {}
