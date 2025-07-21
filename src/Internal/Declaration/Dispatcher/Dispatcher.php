@@ -84,7 +84,6 @@ class Dispatcher implements DispatcherInterface
     }
 
     /**
-     *
      * @return \Closure(object, array): mixed
      */
     private function createExecutorFromMethod(\ReflectionMethod $fun): \Closure
