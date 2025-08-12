@@ -8,7 +8,6 @@ use Temporal\Api\Common\V1\Memo;
 use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\Api\Common\V1\WorkerVersionStamp;
 use Temporal\Api\Common\V1\WorkflowExecution;
-use Temporal\Api\Workflow\V1\ResetPointInfo;
 use Temporal\Api\Workflow\V1\ResetPoints;
 use Temporal\Api\Workflow\V1\WorkflowExecutionInfo;
 use Temporal\Common\WorkerVersionStamp as WorkerVersionStampDto;
