@@ -722,6 +722,10 @@
       <code><![CDATA[(int) $message->getHistorySizeBytes()]]></code>
       <code><![CDATA[(int) $message->getStateTransitionCount()]]></code>
     </ArgumentTypeCoercion>
+    <DeprecatedMethod>
+      <code><![CDATA[getBinaryChecksum]]></code>
+      <code><![CDATA[getMostRecentWorkerVersionStamp]]></code>
+    </DeprecatedMethod>
     <DocblockTypeContradiction>
       <code><![CDATA[parse]]></code>
       <code><![CDATA[parse]]></code>
