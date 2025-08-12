@@ -118,7 +118,6 @@ final class WorkflowExecutionInfoMapper
 
         $resetPoints = [];
         foreach ($getAutoResetPoints->getPoints() as $point) {
-            \assert($point instanceof ResetPointInfo);
             $resetPoints[] = new ResetPointInfoDto(
                 binaryChecksum: $point->getBinaryChecksum(),
                 runId: $point->getRunId(),

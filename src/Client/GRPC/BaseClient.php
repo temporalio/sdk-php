@@ -284,6 +284,8 @@ abstract class BaseClient implements ServiceClientInterface
                     throw new ServiceClientException($status);
                 }
 
+                \assert($result !== null);
+
                 return $result;
             } catch (ServiceClientException $e) {
                 if (!\in_array($e->getCode(), self::RETRYABLE_ERRORS, true)) {

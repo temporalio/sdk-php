@@ -61,7 +61,6 @@ final class ProtoCodec implements CodecInterface
             $frame = new Frame();
             $frame->mergeFromString($batch);
 
-            /** @var Message $msg */
             foreach ($frame->getMessages() as $msg) {
                 /** @psalm-suppress ArgumentTypeCoercion */
                 $info = new TickInfo(

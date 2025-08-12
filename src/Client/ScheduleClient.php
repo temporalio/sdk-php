@@ -166,7 +166,6 @@ final class ScheduleClient implements ScheduleClientInterface
 
                 $page = [];
                 foreach ($response->getSchedules() as $message) {
-                    \assert($message instanceof \Temporal\Api\Schedule\V1\ScheduleListEntry);
                     $values = $this->protoConverter->convert($message);
                     $dto = new ScheduleListEntry();
 

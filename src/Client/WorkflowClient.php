@@ -335,7 +335,6 @@ class WorkflowClient implements WorkflowClientInterface
 
                 $page = [];
                 foreach ($response->getExecutions() as $message) {
-                    \assert($message instanceof WorkflowExecutionInfo);
                     $page[] = $mapper->fromMessage($message);
                 }
                 yield $page;
