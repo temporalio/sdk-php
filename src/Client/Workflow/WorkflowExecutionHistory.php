@@ -40,7 +40,6 @@ final class WorkflowExecutionHistory implements \IteratorAggregate
             if ($history === null) {
                 return;
             }
-            /** @var HistoryEvent $event */
             foreach ($history->getEvents() as $event) {
                 yield $event;
             }

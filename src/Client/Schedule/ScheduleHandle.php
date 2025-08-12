@@ -161,8 +161,6 @@ final class ScheduleHandle
         /** @var list<\DateTimeInterface> $list */
         $list = [];
         foreach ($response->getStartTime() as $timestamp) {
-            \assert($timestamp instanceof Timestamp);
-
             $list[] = new \DateTimeImmutable("@{$timestamp->getSeconds()}");
         }
 
