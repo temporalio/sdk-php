@@ -19,11 +19,12 @@ use Temporal\Worker\WorkerOptions;
 final class Worker
 {
     /**
+     * @param array|null $options Callable that returns {@see WorkerOptions}
      * @param array|null $pipelineProvider Callable that returns {@see PipelineProvider}
      * @param array|null $logger Callable that returns {@see LoggerInterface}
      */
     public function __construct(
-        public readonly ?WorkerOptions $options = null,
+        public readonly ?array $options = null,
         public readonly ?array $pipelineProvider = null,
         public readonly ?array $logger = null,
     ) {}

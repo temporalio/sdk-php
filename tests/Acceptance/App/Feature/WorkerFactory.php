@@ -36,7 +36,7 @@ final class WorkerFactory
             ...$feature->activities,
         );
         if ($attr !== null) {
-            $options = $attr->options;
+            $attr->options === null or $options = $this->invoker->invoke($attr->options);
             $attr->pipelineProvider === null or $interceptorProvider = $this->invoker->invoke($attr->pipelineProvider);
             $attr->logger === null or $logger = $this->invoker->invoke($attr->logger);
         }
