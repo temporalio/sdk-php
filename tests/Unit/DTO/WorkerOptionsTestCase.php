@@ -11,6 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\DTO;
 
+use Temporal\Worker\Versioning\VersioningBehavior;
+use Temporal\Worker\Versioning\WorkerDeploymentOptions;
+use Temporal\Worker\Versioning\WorkerDeploymentVersion;
 use Temporal\Worker\WorkerOptions;
 use Temporal\Worker\WorkflowPanicPolicy;
 
@@ -50,10 +53,45 @@ class WorkerOptionsTestCase extends AbstractDTOMarshalling
             'MaxConcurrentEagerActivityExecutionSize' => 0,
             'DisableRegistrationAliasing' => false,
             'BuildID' => "",
+            'DeploymentOptions' => null,
             'UseBuildIDForVersioning' => false,
         ];
 
-        $this->assertSame($expected, $this->marshal($dto));
+        $this->assertEquals($expected, $this->marshal($dto));
+    }
+
+    public function testDeploymentOptionsNoUse(): void
+    {
+        $dto = new WorkerOptions();
+        $result = $dto->withDeploymentOptions(
+            WorkerDeploymentOptions::new()
+                ->withUseVersioning(false),
+        );
+
+        self::assertNotSame($dto, $result);
+        $options = $this->marshal($result)['DeploymentOptions'];
+
+        self::assertFalse($options['UseVersioning']);
+        self::assertSame(VersioningBehavior::Unspecified->value, $options['DefaultVersioningBehavior']);
+        self::assertNull($options['Version']);
+    }
+
+    public function testDeploymentOptionsUseVersion(): void
+    {
+        $dto = new WorkerOptions();
+        $result = $dto->withDeploymentOptions(
+            WorkerDeploymentOptions::new()
+                ->withUseVersioning(true)
+                ->withVersion(WorkerDeploymentVersion::new('foo', 'bar'))
+                ->withDefaultVersioningBehavior(VersioningBehavior::AutoUpgrade),
+        );
+
+        self::assertNotSame($dto, $result);
+        $options = $this->marshal($result)['DeploymentOptions'];
+
+        self::assertTrue($options['UseVersioning']);
+        self::assertSame(VersioningBehavior::AutoUpgrade->value, $options['DefaultVersioningBehavior']);
+        self::assertSame('foo.bar', $options['Version']);
     }
 
     public function testMaxConcurrentActivityExecutionSize(): void

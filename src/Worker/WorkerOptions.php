@@ -18,10 +18,21 @@ use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\EnumValueType;
 use Temporal\Internal\Marshaller\Type\NullableType;
 use Temporal\Internal\Support\DateInterval;
+use Temporal\Worker\Versioning\WorkerDeploymentOptions;
 use Temporal\Workflow;
 
 /**
  * @psalm-import-type DateIntervalValue from DateInterval
+ *
+ * todo: see {@see AutoscalingPollerBehavior}
+ * todo: see {@see SimplePollerBehavior}
+ * todo: see {@see \Temporal\Api\Sdk\V1\WorkerConfig}
+ * todo: see {@see \Temporal\Api\Taskqueue\V1\TaskQueueConfig}
+ * todo: see {@see \Temporal\Api\Worker\V1\PluginInfo}
+ * todo: see {@see \Temporal\Api\Worker\V1\WorkerInfo}
+ * todo: see {@see \Temporal\Api\Worker\V1\WorkerPollerInfo}
+ *
+ * @see WorkerOptions
  */
 class WorkerOptions
 {
@@ -295,7 +306,7 @@ class WorkerOptions
      * and is used to provide a unique identifier for a set of worker code, and is necessary
      * to opt in to the Worker Versioning feature. See {@see self::$useBuildIDForVersioning}.
      *
-     * @internal Experimental
+     * @deprecated
      */
     #[Marshal(name: 'BuildID')]
     public string $buildID = '';
@@ -305,11 +316,19 @@ class WorkerOptions
      * It will only operate on workflows it claims to be compatible with.
      * You must set {@see self::$buildID} if this flag is true.
      *
-     * @internal Experimental
      * @note Cannot be enabled at the same time as {@see self::$enableSessionWorker}
+     * @deprecated
      */
     #[Marshal(name: 'UseBuildIDForVersioning')]
     public bool $useBuildIDForVersioning = false;
+
+    /**
+     * Optional: If set it configures Worker Versioning for this worker.
+     *
+     * @internal Experimental.
+     */
+    #[Marshal(name: 'DeploymentOptions')]
+    public WorkerDeploymentOptions $deploymentOptions;
 
     #[Pure]
     public static function new(): self
@@ -802,7 +821,7 @@ class WorkerOptions
      *
      * @param non-empty-string $buildID
      *
-     * @internal Experimental
+     * @deprecated
      */
     #[Pure]
     public function withBuildID(string $buildID): self
@@ -817,14 +836,27 @@ class WorkerOptions
      * It will only operate on workflows it claims to be compatible with.
      * You must set {@see self::$buildID} if this flag is true.
      *
-     * @internal Experimental
      * @note Cannot be enabled at the same time as {@see self::$enableSessionWorker}
+     * @deprecated
      */
     #[Pure]
     public function withUseBuildIDForVersioning(bool $useBuildIDForVersioning = true): self
     {
         $self = clone $this;
         $self->useBuildIDForVersioning = $useBuildIDForVersioning;
+        return $self;
+    }
+
+    /**
+     * Optional: If set it configures Worker Versioning for this worker.
+     *
+     * @internal Experimental.
+     */
+    #[Pure]
+    public function withDeploymentOptions(WorkerDeploymentOptions $deploymentOptions): self
+    {
+        $self = clone $this;
+        $self->deploymentOptions = $deploymentOptions;
         return $self;
     }
 }
