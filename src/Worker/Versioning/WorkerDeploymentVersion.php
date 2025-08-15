@@ -56,7 +56,7 @@ class WorkerDeploymentVersion implements \Stringable
     {
         $parts = \explode('.', $canonicalString, 2);
         \count($parts) === 2 or throw new InvalidArgumentException(
-            "Invalid canonical string format. Expected 'deploymentName.buildId'"
+            "Invalid canonical string format. Expected 'deploymentName.buildId'",
         );
 
         return new self($parts[0], $parts[1]);
