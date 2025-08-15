@@ -5,7 +5,7 @@
 >
     <actions>
         <download software="rr" version="^2025.1.2"/>
-        <download software="temporal" version="^1.3-priority"/>
+        <download software="temporal" version="^1.4.1"/>
         <download software="temporal-tests-server"/>
     </actions>
     <registry>

@@ -26,8 +26,13 @@ final class TemporalStarter
 
         $this->environment->startTemporalServer(
             parameters: [
+                '--dynamic-config-value', 'frontend.enableUpdateWorkflowExecution=true',
+                '--dynamic-config-value', 'frontend.enableUpdateWorkflowExecutionAsyncAccepted=true',
+                '--dynamic-config-value', 'frontend.enableExecuteMultiOperation=true',
                 '--dynamic-config-value', 'system.enableEagerWorkflowStart=true',
                 '--dynamic-config-value', 'frontend.activityAPIsEnabled=true',
+                '--dynamic-config-value', 'frontend.workerVersioningWorkflowAPIs=true',
+                '--dynamic-config-value', 'system.enableDeploymentVersions=true',
             ],
             searchAttributes: [
                 'foo' => ValueType::Text->value,
