@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Acceptance\App\Runtime;
 
+use Symfony\Component\Process\Process;
 use Temporal\Common\SearchAttributes\ValueType;
 use Temporal\Testing\Environment;
 
@@ -49,13 +50,25 @@ final class TemporalStarter
         $this->started = true;
     }
 
-    public function stop(): void
+    public function executeTemporalCommand(array|string $command, int $timeout = 10): void
+    {
+        $this->environment->executeTemporalCommand(
+            command: $command,
+            timeout: $timeout,
+        );
+    }
+
+    /**
+     * @return bool Returns true if the server was stopped successfully, false if it was not started.
+     */
+    public function stop(): bool
     {
         if (!$this->started) {
-            return;
+            return false;
         }
 
         $this->environment->stop();
         $this->started = false;
+        return true;
     }
 }
