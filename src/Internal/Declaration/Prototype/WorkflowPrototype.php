@@ -14,6 +14,7 @@ namespace Temporal\Internal\Declaration\Prototype;
 use Temporal\Common\CronSchedule;
 use Temporal\Common\MethodRetry;
 use Temporal\Internal\Declaration\EntityNameValidator;
+use Temporal\Worker\Versioning\VersioningBehavior;
 use Temporal\Workflow\ReturnType;
 use Temporal\Workflow\WorkflowInit;
 
@@ -43,12 +44,14 @@ final class WorkflowPrototype extends Prototype
     private ?MethodRetry $methodRetry = null;
     private ?ReturnType $returnType = null;
     private bool $hasInitializer = false;
+    private VersioningBehavior $versioningBehavior;
 
     public function __construct(
         string $name,
         ?\ReflectionMethod $handler,
         \ReflectionClass $class,
     ) {
+        $this->versioningBehavior = VersioningBehavior::Unspecified;
         EntityNameValidator::validateWorkflow($name);
         parent::__construct($name, $handler, $class);
     }
@@ -94,6 +97,11 @@ final class WorkflowPrototype extends Prototype
     public function setReturnType(?ReturnType $attribute): void
     {
         $this->returnType = $attribute;
+    }
+
+    public function setVersioningBehavior(VersioningBehavior $behavior): void
+    {
+        $this->versioningBehavior = $behavior;
     }
 
     public function addQueryHandler(QueryDefinition $definition): void
@@ -155,5 +163,10 @@ final class WorkflowPrototype extends Prototype
     public function getValidateUpdateHandlers(): array
     {
         return $this->updateValidators;
+    }
+
+    public function getVersioningBehavior(): VersioningBehavior
+    {
+        return $this->versioningBehavior;
     }
 }

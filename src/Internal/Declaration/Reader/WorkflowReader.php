@@ -27,6 +27,7 @@ use Temporal\Workflow\UpdateValidatorMethod;
 use Temporal\Workflow\WorkflowInit;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\WorkflowVersioningBehavior;
 
 /**
  * @template-extends Reader<WorkflowPrototype>
@@ -292,14 +293,16 @@ class WorkflowReader extends Reader
     }
 
     /**
+     * Walk through the method hierarchy and build the prototype for the workflow method.
+     *
      * @throws \ReflectionException
      */
     private function getPrototype(ClassNode $graph, \ReflectionMethod $handler): ?WorkflowPrototype
     {
-        $cronSchedule = $previousRetry = $prototype = $returnType = null;
+        $cronSchedule = $previousRetry = $prototype = $returnType = $versionBehavior = null;
 
+        /** @var \Traversable<class-string, \ReflectionMethod> $group */
         foreach ($graph->getMethods($handler->getName()) as $group) {
-            //
             $contextualRetry = $previousRetry;
 
             foreach ($group as $method) {
@@ -326,6 +329,11 @@ class WorkflowReader extends Reader
                     ?? $returnType
                 ;
 
+                // Version Behavior
+                $versionBehavior = $this->reader->firstFunctionMetadata($method, WorkflowVersioningBehavior::class)
+                    ?? $versionBehavior
+                ;
+
                 //
                 // In the future, workflow methods are available only in
                 // those classes that contain the attribute:
@@ -347,27 +355,18 @@ class WorkflowReader extends Reader
                     }
                 }
 
-                // In case
+                // Skip if no interface found
                 if ($interface === null) {
                     continue;
                 }
 
                 \assert($context !== null);
-                if ($prototype === null) {
-                    $prototype = $this->findProto($handler, $method, $context, $graph->getReflection());
-                }
+                $prototype ??= $this->findProto($handler, $method, $context, $graph->getReflection());
 
-                if ($prototype !== null && $retry !== null) {
-                    $prototype->setMethodRetry($retry);
-                }
-
-                if ($prototype !== null && $cronSchedule !== null) {
-                    $prototype->setCronSchedule($cronSchedule);
-                }
-
-                if ($prototype !== null && $returnType !== null) {
-                    $prototype->setReturnType($returnType);
-                }
+                $retry === null or $prototype?->setMethodRetry($retry);
+                $cronSchedule === null or $prototype?->setCronSchedule($cronSchedule);
+                $returnType === null or $prototype?->setReturnType($returnType);
+                $versionBehavior === null or $prototype?->setVersioningBehavior($versionBehavior->value);
             }
 
             $previousRetry = $contextualRetry;
