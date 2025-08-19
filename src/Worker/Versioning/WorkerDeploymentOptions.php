@@ -25,7 +25,7 @@ class WorkerDeploymentOptions
     private readonly bool $useVersioning;
 
     #[Marshal(name: 'Version', nullable: true)]
-    private readonly ?string $version;
+    private readonly ?WorkerDeploymentVersion $version;
 
     #[Marshal(name: 'DefaultVersioningBehavior', type: EnumValueType::class)]
     private readonly VersioningBehavior $defaultVersioningBehavior;
@@ -62,7 +62,7 @@ class WorkerDeploymentOptions
     public function withVersion(string|WorkerDeploymentVersion $version): self
     {
         /** @see self::$version */
-        return $this->with('version', (string) $version);
+        return $this->with('version', \is_string($version) ? WorkerDeploymentVersion::fromString($version) : $version);
     }
 
     /**

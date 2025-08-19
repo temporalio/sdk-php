@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Worker\Versioning;
 
 use Temporal\Exception\InvalidArgumentException;
+use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Traits\CloneWith;
 
 /**
@@ -23,11 +24,13 @@ class WorkerDeploymentVersion implements \Stringable
          * The combination of {@see $deployment_name} and {@see $buildId} uniquely identifies this
          * Version within the namespace, because Deployment names are unique within a namespace.
          */
+        #[Marshal('DeploymentName')]
         public readonly string $deploymentName,
 
         /**
          * Identifies the Worker Deployment this Version is part of.
          */
+        #[Marshal('BuildId')]
         public readonly string $buildId,
     ) {}
 
