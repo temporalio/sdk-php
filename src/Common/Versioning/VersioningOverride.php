@@ -14,7 +14,9 @@ namespace Temporal\Common\Versioning;
 /**
  * Represents the override of a worker's versioning behavior for a workflow execution.
  *
- * @internal Experimental.
+ * @since SDK 2.16.0
+ * @since RoadRunner 2025.2.0
+ * @internal Experimental
  */
 final class VersioningOverride
 {

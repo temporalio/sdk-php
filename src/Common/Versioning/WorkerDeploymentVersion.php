@@ -9,9 +9,13 @@ use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Traits\CloneWith;
 
 /**
- * @internal Experimental.
+ * Represents the version of a specific worker deployment.
  *
  * @see \Temporal\Api\Deployment\V1\WorkerDeploymentVersion
+ *
+ * @since SDK 2.16.0
+ * @since RoadRunner 2025.2.0
+ * @internal Experimental
  */
 class WorkerDeploymentVersion implements \Stringable
 {

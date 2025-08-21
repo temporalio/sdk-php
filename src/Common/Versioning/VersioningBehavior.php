@@ -14,6 +14,10 @@ namespace Temporal\Common\Versioning;
  * Experimental. Worker Deployments are experimental and might significantly change in the future.
  *
  * @see \Temporal\Api\Enums\V1\VersioningBehavior
+ *
+ * @since SDK 2.16.0
+ * @since RoadRunner 2025.2.0
+ * @internal Experimental
  */
 enum VersioningBehavior: int
 {
