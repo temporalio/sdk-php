@@ -13,7 +13,7 @@ namespace Temporal\Internal\Declaration\Prototype;
 
 use Temporal\Common\CronSchedule;
 use Temporal\Common\MethodRetry;
-use Temporal\Common\VersioningBehavior;
+use Temporal\Common\Versioning\VersioningBehavior;
 use Temporal\Internal\Declaration\EntityNameValidator;
 use Temporal\Workflow\ReturnType;
 use Temporal\Workflow\WorkflowInit;

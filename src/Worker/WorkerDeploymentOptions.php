@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Worker\Versioning;
+namespace Temporal\Worker;
 
-use Temporal\Common\VersioningBehavior;
+use Temporal\Common\Versioning\VersioningBehavior;
+use Temporal\Common\Versioning\WorkerDeploymentVersion;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\EnumValueType;
 use Temporal\Internal\Traits\CloneWith;

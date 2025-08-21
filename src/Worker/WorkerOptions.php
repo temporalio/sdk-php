@@ -18,7 +18,6 @@ use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\EnumValueType;
 use Temporal\Internal\Marshaller\Type\NullableType;
 use Temporal\Internal\Support\DateInterval;
-use Temporal\Worker\Versioning\WorkerDeploymentOptions;
 use Temporal\Workflow;
 
 /**

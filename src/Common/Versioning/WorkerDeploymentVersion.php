@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Worker\Versioning;
+namespace Temporal\Common\Versioning;
 
 use Temporal\Exception\InvalidArgumentException;
 use Temporal\Internal\Marshaller\Meta\Marshal;
@@ -37,14 +37,14 @@ class WorkerDeploymentVersion implements \Stringable
     /**
      * Create a new worker deployment version with the given deployment name and build ID.
      *
-     * @param non-empty-string $deployName The name of the worker deployment. Must not contain a ".".
+     * @param non-empty-string $deploymentName The name of the worker deployment. Must not contain a ".".
      * @param non-empty-string $buildId The build ID of the worker deployment.
      *
      * @throws InvalidArgumentException if the deployment name or build ID is empty or invalid.
      */
-    public static function new(string $deployName, string $buildId): self
+    public static function new(string $deploymentName, string $buildId): self
     {
-        return new self($deployName, $buildId);
+        return new self($deploymentName, $buildId);
     }
 
     /**

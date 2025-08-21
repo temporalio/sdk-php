@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Common;
+namespace Temporal\Common\Versioning;
 
 /**
  * Specifies when a workflow might move from a worker of one Build Id to another.

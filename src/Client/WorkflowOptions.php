@@ -23,6 +23,7 @@ use Temporal\Common\RetryOptions;
 use Temporal\Common\SearchAttributes\SearchAttributeKey;
 use Temporal\Common\TypedSearchAttributes;
 use Temporal\Common\Uuid;
+use Temporal\Common\Versioning\VersioningOverride;
 use Temporal\Common\WorkflowIdConflictPolicy;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Internal\Marshaller\Meta\Marshal;
@@ -32,8 +33,8 @@ use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\NullableType;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\Options;
-use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Worker\Worker;
+use Temporal\Worker\WorkerFactoryInterface;
 
 /**
  * WorkflowOptions configuration parameters for starting a workflow execution.
@@ -181,6 +182,12 @@ final class WorkflowOptions extends Options
      */
     #[Marshal(name: 'Priority')]
     public Priority $priority;
+
+    /**
+     * Override the version of the workflow.
+     */
+    #[Marshal(name: 'VersioningOverride')]
+    public ?VersioningOverride $versioningOverride = null;
 
     /**
      * @throws \Exception
@@ -518,6 +525,16 @@ final class WorkflowOptions extends Options
     {
         $self = clone $this;
         $self->staticDetails = $details;
+        return $self;
+    }
+
+    /**
+     * Sets the versioning override to use when starting this workflow.
+     */
+    public function withVersioningOverride(?VersioningOverride $override): self
+    {
+        $self = clone $this;
+        $self->versioningOverride = $override;
         return $self;
     }
 
