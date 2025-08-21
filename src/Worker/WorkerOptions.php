@@ -848,7 +848,7 @@ class WorkerOptions
     }
 
     /**
-     * Optional: If set it configures Worker Versioning for this worker.
+     * Set deployment options for the worker.
      *
      * @internal Experimental.
      */

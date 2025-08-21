@@ -13,7 +13,7 @@ namespace Temporal\Workflow;
 
 use Doctrine\Common\Annotations\Annotation\Target;
 use Spiral\Attributes\NamedArgumentConstructor;
-use Temporal\Worker\Versioning\VersioningBehavior;
+use Temporal\Common\VersioningBehavior;
 
 /**
  * Indicates the versioning behavior of the Workflow.

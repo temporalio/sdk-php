@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\DTO;
 
-use Temporal\Worker\Versioning\VersioningBehavior;
+use Temporal\Common\VersioningBehavior;
 use Temporal\Worker\Versioning\WorkerDeploymentOptions;
 use Temporal\Worker\Versioning\WorkerDeploymentVersion;
 use Temporal\Worker\WorkerOptions;

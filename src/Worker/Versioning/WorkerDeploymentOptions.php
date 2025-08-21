@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Worker\Versioning;
 
+use Temporal\Common\VersioningBehavior;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\EnumValueType;
 use Temporal\Internal\Traits\CloneWith;
