@@ -7,6 +7,7 @@ namespace Temporal\Tests\Acceptance\Extra\Versioning\Deployment;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
+use Temporal\Common\Uuid;
 use Temporal\Common\Versioning\VersioningBehavior;
 use Temporal\Common\Versioning\VersioningOverride;
 use Temporal\Common\Versioning\WorkerDeploymentVersion;
@@ -23,7 +24,106 @@ use Temporal\Workflow\WorkflowVersioningBehavior;
 #[Worker(options: [WorkerFactory::class, 'options'])]
 class DeploymentTest extends TestCase
 {
-    public static function executeWorkflow(
+    #[Test]
+    public function defaultBehaviorAuto(
+        TemporalStarter $starter,
+        WorkflowClientInterface $client,
+        Feature $feature,
+    ): void {
+        $behavior = self::executeWorkflow(
+            $starter,
+            $client,
+            $feature,
+            /** @see DefaultWorkflow */
+            'Extra_Versioning_Deployment_Default',
+            WorkflowOptions::new(),
+        );
+        self::assertSame(VersioningBehavior::AutoUpgrade, $behavior);
+    }
+
+    #[Test]
+    public function customBehaviorPinned(
+        TemporalStarter $starter,
+        WorkflowClientInterface $client,
+        Feature $feature,
+    ): void {
+        $id = Uuid::v4();
+        $behavior = self::executeWorkflow(
+            $starter,
+            $client,
+            $feature,
+            /** @see PinnedWorkflow */
+            'Extra_Versioning_Deployment_Pinned',
+            WorkflowOptions::new()
+                ->withWorkflowId($id),
+        );
+        # Check worker registration
+        self::assertSame(VersioningBehavior::Pinned, $behavior);
+
+        # Check Override from Search Attributes
+        $sa = $client->newUntypedRunningWorkflowStub(
+            workflowID: $id,
+            workflowType: 'Extra_Versioning_Deployment_Pinned',
+        )->describe()->info->searchAttributes->getValues();
+        self::assertSame('Pinned', $sa['TemporalWorkflowVersioningBehavior']);
+        self::assertSame('foo:baz', $sa['TemporalWorkerDeploymentVersion']);
+    }
+
+    #[Test]
+    public function versionBehaviorOverrideAutoUpgrade(
+        TemporalStarter $starter,
+        WorkflowClientInterface $client,
+        Feature $feature,
+    ): void {
+        $id = Uuid::v4();
+        $behavior = self::executeWorkflow(
+            $starter,
+            $client,
+            $feature,
+            /** @see PinnedWorkflow */
+            'Extra_Versioning_Deployment_Pinned',
+            WorkflowOptions::new()
+                ->withWorkflowId($id)
+                ->withVersioningOverride(VersioningOverride::autoUpgrade()),
+        );
+
+        # Check worker registration
+        self::assertSame(VersioningBehavior::Pinned, $behavior);
+
+        # Check Override from Search Attributes
+        $sa = $client->newUntypedRunningWorkflowStub(
+            workflowID: $id,
+            workflowType: 'Extra_Versioning_Deployment_Pinned',
+        )->describe()->info->searchAttributes->getValues();
+        self::assertSame('AutoUpgrade', $sa['TemporalWorkflowVersioningBehavior']);
+        self::assertSame('foo:baz', $sa['TemporalWorkerDeploymentVersion']);
+    }
+
+    #[Test]
+    public function versionBehaviorOverridePinned(
+        TemporalStarter $starter,
+        WorkflowClientInterface $client,
+        Feature $feature,
+    ): void {
+        $behavior = self::executeWorkflow(
+            $starter,
+            $client,
+            $feature,
+            /** @see PinnedWorkflow */
+            'Extra_Versioning_Deployment_Default',
+            WorkflowOptions::new()->withVersioningOverride(VersioningOverride::pinned(
+                version: WorkerDeploymentVersion::new(
+                    deploymentName: WorkerFactory::DEPLOYMENT_NAME,
+                    buildId: WorkerFactory::BUILD_ID,
+                ),
+            )),
+        );
+
+        # Check worker registration
+        self::assertSame(VersioningBehavior::AutoUpgrade, $behavior);
+    }
+
+    private static function executeWorkflow(
         TemporalStarter $starter,
         WorkflowClientInterface $client,
         Feature $feature,
@@ -68,79 +168,6 @@ class DeploymentTest extends TestCase
         } finally {
             $starter->stop() and $starter->start();
         }
-    }
-
-    #[Test]
-    public function defaultBehaviorAuto(
-        TemporalStarter $starter,
-        WorkflowClientInterface $client,
-        Feature $feature,
-    ): void {
-        $behavior = self::executeWorkflow(
-            $starter,
-            $client,
-            $feature,
-            /** @see DefaultWorkflow */
-            'Extra_Versioning_Deployment_Default',
-            WorkflowOptions::new(),
-        );
-        self::assertSame(VersioningBehavior::AutoUpgrade, $behavior);
-    }
-
-    #[Test]
-    public function customBehaviorPinned(
-        TemporalStarter $starter,
-        WorkflowClientInterface $client,
-        Feature $feature,
-    ): void {
-        $behavior = self::executeWorkflow(
-            $starter,
-            $client,
-            $feature,
-            /** @see PinnedWorkflow */
-            'Extra_Versioning_Deployment_Pinned',
-            WorkflowOptions::new(),
-        );
-        self::assertSame(VersioningBehavior::Pinned, $behavior);
-    }
-
-    #[Test]
-    public function versionBehaviorOverrideAutoUpgrade(
-        TemporalStarter $starter,
-        WorkflowClientInterface $client,
-        Feature $feature,
-    ): void {
-        $behavior = self::executeWorkflow(
-            $starter,
-            $client,
-            $feature,
-            /** @see PinnedWorkflow */
-            'Extra_Versioning_Deployment_Pinned',
-            WorkflowOptions::new()->withVersioningOverride(VersioningOverride::autoUpgrade()),
-        );
-        self::assertSame(VersioningBehavior::AutoUpgrade, $behavior);
-    }
-
-    #[Test]
-    public function versionBehaviorOverridePinned(
-        TemporalStarter $starter,
-        WorkflowClientInterface $client,
-        Feature $feature,
-    ): void {
-        $behavior = self::executeWorkflow(
-            $starter,
-            $client,
-            $feature,
-            /** @see PinnedWorkflow */
-            'Extra_Versioning_Deployment_Default',
-            WorkflowOptions::new()->withVersioningOverride(VersioningOverride::pinned(
-                version: WorkerDeploymentVersion::new(
-                    deploymentName: WorkerFactory::DEPLOYMENT_NAME,
-                    buildId: WorkerFactory::BUILD_ID,
-                ),
-            )),
-        );
-        self::assertSame(VersioningBehavior::Pinned, $behavior);
     }
 }
 

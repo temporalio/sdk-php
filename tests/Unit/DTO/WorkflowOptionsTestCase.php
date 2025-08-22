@@ -51,6 +51,7 @@ class WorkflowOptionsTestCase extends AbstractDTOMarshalling
             'Priority' => [
                 'priority_key' => 0,
             ],
+            'VersioningOverride' => null,
         ];
 
         $result = $this->marshal($dto);

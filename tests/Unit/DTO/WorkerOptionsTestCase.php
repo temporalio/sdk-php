@@ -91,7 +91,7 @@ class WorkerOptionsTestCase extends AbstractDTOMarshalling
 
         self::assertTrue($options['UseVersioning']);
         self::assertSame(VersioningBehavior::AutoUpgrade->value, $options['DefaultVersioningBehavior']);
-        self::assertSame('foo.bar', $options['Version']);
+        self::assertSame(['DeploymentName' => 'foo', 'BuildId' => 'bar'], $options['Version']);
     }
 
     public function testMaxConcurrentActivityExecutionSize(): void
