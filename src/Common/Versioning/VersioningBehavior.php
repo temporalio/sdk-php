@@ -16,7 +16,7 @@ namespace Temporal\Common\Versioning;
  * @see \Temporal\Api\Enums\V1\VersioningBehavior
  *
  * @since SDK 2.16.0
- * @since RoadRunner 2025.2.0
+ * @since RoadRunner 2025.1.3
  * @internal Experimental
  */
 enum VersioningBehavior: int
@@ -64,4 +64,14 @@ enum VersioningBehavior: int
      * complete on the old Version.
      */
     case AutoUpgrade = 2;
+
+    public static function tryFromName(?string $name): ?self
+    {
+        return match ($name) {
+            'Unspecified', null => self::Unspecified,
+            'Pinned' => self::Pinned,
+            'AutoUpgrade' => self::AutoUpgrade,
+            default => null,
+        };
+    }
 }

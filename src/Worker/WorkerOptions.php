@@ -325,7 +325,7 @@ class WorkerOptions
      * Optional: If set it configures Worker Versioning for this worker.
      *
      * @since SDK 2.16.0
-     * @since RoadRunner 2025.2.0
+     * @since RoadRunner 2025.1.3
      * @internal Experimental.
      */
     #[Marshal(name: 'DeploymentOptions')]
@@ -852,7 +852,7 @@ class WorkerOptions
      * Set deployment options for the worker.
      *
      * @since SDK 2.16.0
-     * @since RoadRunner 2025.2.0
+     * @since RoadRunner 2025.1.3
      * @internal Experimental.
      */
     #[Pure]

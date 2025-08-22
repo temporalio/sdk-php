@@ -26,7 +26,7 @@ class WorkerDeploymentOptions
     #[Marshal(name: 'UseVersioning')]
     private readonly bool $useVersioning;
 
-    #[Marshal(name: 'Version', nullable: true)]
+    #[Marshal(name: 'Version')]
     private readonly ?WorkerDeploymentVersion $version;
 
     #[Marshal(name: 'DefaultVersioningBehavior', type: EnumValueType::class)]
