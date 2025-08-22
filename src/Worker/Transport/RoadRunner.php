@@ -39,7 +39,7 @@ final class RoadRunner implements HostConnectionInterface
     private RoadRunnerWorker $worker;
     private CodecInterface $codec;
 
-    public function __construct(RoadRunnerWorker $worker)
+    private function __construct(RoadRunnerWorker $worker)
     {
         $this->worker = $worker;
         $this->codec = new JsonCodec();

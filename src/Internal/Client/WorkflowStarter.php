@@ -12,12 +12,15 @@ declare(strict_types=1);
 namespace Temporal\Internal\Client;
 
 use Temporal\Api\Common\V1\WorkflowType;
+use Temporal\Api\Deployment\V1\WorkerDeploymentVersion;
 use Temporal\Api\Errordetails\V1\MultiOperationExecutionFailure;
 use Temporal\Api\Errordetails\V1\WorkflowExecutionAlreadyStartedFailure;
 use Temporal\Api\Failure\V1\MultiOperationExecutionAborted;
 use Temporal\Api\Sdk\V1\UserMetadata;
 use Temporal\Api\Taskqueue\V1\TaskQueue;
 use Temporal\Api\Update\V1\Request as UpdateRequestMessage;
+use Temporal\Api\Workflow\V1\VersioningOverride;
+use Temporal\Api\Workflow\V1\VersioningOverride\PinnedOverride;
 use Temporal\Api\Workflowservice\V1\ExecuteMultiOperationRequest;
 use Temporal\Api\Workflowservice\V1\ExecuteMultiOperationRequest\Operation;
 use Temporal\Api\Workflowservice\V1\ExecuteMultiOperationResponse\Response;
@@ -30,6 +33,7 @@ use Temporal\Client\Update\UpdateHandle;
 use Temporal\Client\Update\UpdateOptions;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Common\Uuid;
+use Temporal\Common\Versioning\VersioningBehavior;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\Client\MultyOperation\OperationStatus;
@@ -332,6 +336,30 @@ final class WorkflowStarter
             ->setWorkflowExecutionTimeout(DateInterval::toDuration($options->workflowExecutionTimeout))
             ->setWorkflowTaskTimeout(DateInterval::toDuration($options->workflowTaskTimeout))
             ->setPriority($options->priority->toProto());
+
+        // Versioning override
+        if ($options->versioningOverride !== null) {
+            $value = new VersioningOverride();
+
+            if ($options->versioningOverride->behavior === VersioningBehavior::Pinned) {
+                $version = $options->versioningOverride->version;
+                \assert($version !== null);
+
+                $value->setPinned(
+                    (new PinnedOverride())
+                        ->setBehavior(VersioningBehavior::Pinned->value)
+                        ->setVersion(
+                            (new WorkerDeploymentVersion())
+                                ->setBuildId($version->buildId)
+                                ->setDeploymentName($version->deploymentName),
+                        ),
+                );
+            } elseif ($options->versioningOverride->behavior === VersioningBehavior::AutoUpgrade) {
+                $value->setAutoUpgrade(true);
+            }
+
+            $req->setVersioningOverride($value);
+        }
 
         // Retry Policy
         $options->retryOptions === null or $req->setRetryPolicy($options->retryOptions->toWorkflowRetryPolicy());
