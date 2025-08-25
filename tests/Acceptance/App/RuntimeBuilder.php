@@ -71,6 +71,7 @@ final class RuntimeBuilder
         \ini_set('display_errors', 'stderr');
         // Feature flags
         FeatureFlags::$workflowDeferredHandlerStart = true;
+        FeatureFlags::$cancelAbandonedChildWorkflows = false;
     }
 
     /**

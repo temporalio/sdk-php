@@ -34,8 +34,14 @@ final class FeatureFlags
 
     /**
      * When a parent workflow is canceled, it will also cancel all its Child Workflows, including abandoned ones.
-     * To fix the behavior of the previous SDK versions and not cancel abandoned Child Workflows,
-     * set this flag to FALSE.
+     * This behavior is not correct and will be improved by default in the next major SDK version.
+     *
+     * To fix the behavior now, set this flag to TRUE. In this case, be aware of the following:
+     * - If you start an abandoned Child Workflow in the main Workflow scope, it may miss
+     *   the cancellation signal if you await only on the Child Workflow.
+     * - If you start an abandoned Child Workflow in an async scope {@see Workflow::async()},
+     *   that is later canceled, the Child Workflow will not be affected.
+     * - You still can cancel abandoned Child Workflows manually by calling {@see WorkflowStubInterface::cancel()}.
      *
      * @see Workflow\ParentClosePolicy::Abandon
      *
