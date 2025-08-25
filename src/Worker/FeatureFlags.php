@@ -31,4 +31,15 @@ final class FeatureFlags
      * @since SDK 2.11.0
      */
     public static bool $warnOnWorkflowUnfinishedHandlers = true;
+
+    /**
+     * When a parent workflow is canceled, it will also cancel all its Child Workflows, including abandoned ones.
+     * To fix the behavior of the previous SDK versions and not cancel abandoned Child Workflows,
+     * set this flag to FALSE.
+     *
+     * @see Workflow\ParentClosePolicy::Abandon
+     *
+     * @since SDK 2.16.0
+     */
+    public static bool $cancelAbandonedChildWorkflows = true;
 }

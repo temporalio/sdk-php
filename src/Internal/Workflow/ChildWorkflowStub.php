@@ -21,6 +21,7 @@ use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Transport\Request\ExecuteChildWorkflow;
 use Temporal\Internal\Transport\Request\GetChildWorkflowExecution;
 use Temporal\Internal\Transport\Request\SignalExternalWorkflow;
+use Temporal\Worker\FeatureFlags;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\ChildWorkflowOptions;
@@ -71,7 +72,8 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
             $this->header,
         );
 
-        $cancellable = $this->options->parentClosePolicy !== ParentClosePolicy::Abandon->value;
+        $cancellable = FeatureFlags::$cancelAbandonedChildWorkflows
+            || $this->options->parentClosePolicy !== ParentClosePolicy::Abandon->value;
 
         $this->result = $this->request($this->request, cancellable: $cancellable);
 

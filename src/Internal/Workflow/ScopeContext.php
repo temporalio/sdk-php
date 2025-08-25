@@ -25,6 +25,7 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
 {
     /** @var \Closure(RequestInterface, PromiseInterface, bool $cancellable): void */
     private \Closure $onRequest;
+
     private WorkflowContext $parent;
     private Scope $scope;
     private ?UpdateContext $updateContext = null;
