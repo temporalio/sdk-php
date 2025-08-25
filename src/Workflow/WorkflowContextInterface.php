@@ -126,6 +126,8 @@ interface WorkflowContextInterface extends EnvironmentInterface
     /**
      * Exchanges data between worker and host process.
      *
+     * @param bool $waitResponse Determine if the Request requires a Response from RoadRunner.
+     *
      * @internal This is an internal method
      */
     public function request(

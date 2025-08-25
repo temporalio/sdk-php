@@ -25,6 +25,7 @@ use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\ChildWorkflowOptions;
 use Temporal\Workflow\ChildWorkflowStubInterface;
+use Temporal\Workflow\ParentClosePolicy;
 use Temporal\Workflow\WorkflowExecution;
 
 final class ChildWorkflowStub implements ChildWorkflowStubInterface
@@ -70,7 +71,9 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
             $this->header,
         );
 
-        $this->result = $this->request($this->request);
+        $cancellable = $this->options->parentClosePolicy !== ParentClosePolicy::Abandon->value;
+
+        $this->result = $this->request($this->request, cancellable: $cancellable);
 
         $started = $this->request(new GetChildWorkflowExecution($this->request))
             ->then(
@@ -118,12 +121,12 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
         );
     }
 
-    protected function request(RequestInterface $request): PromiseInterface
+    protected function request(RequestInterface $request, bool $cancellable = true): PromiseInterface
     {
         /** @var Workflow\WorkflowContextInterface $context */
         $context = Workflow::getCurrentContext();
 
-        return $context->request($request);
+        return $context->request($request, cancellable: $cancellable);
     }
 
     private function getOptionArray(): array
