@@ -355,9 +355,9 @@ class Scope implements CancellationScopeInterface, Destroyable
         }, $values)->catch($this->onException(...));
     }
 
-    protected function onRequest(RequestInterface $request, PromiseInterface $promise): void
+    protected function onRequest(RequestInterface $request, PromiseInterface $promise, bool $cancellable = true): void
     {
-        $this->onCancel[++$this->cancelID] = function (?\Throwable $reason = null) use ($request): void {
+        $this->onCancel[++$this->cancelID] = function (?\Throwable $reason = null) use ($request, $cancellable): void {
             $client = $this->context->getClient();
             if ($reason instanceof DestructMemorizedInstanceException) {
                 // memory flush
@@ -367,6 +367,11 @@ class Scope implements CancellationScopeInterface, Destroyable
 
             if ($client->isQueued($request)) {
                 $client->cancel($request);
+                return;
+            }
+
+            if (!$cancellable) {
+                // non-cancellable request
                 return;
             }
 
