@@ -33,7 +33,7 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
     /**
      * Creates scope specific context.
      *
-     * @var \Closure(RequestInterface, PromiseInterface, bool $cancellable): void $onRequest
+     * @param \Closure(RequestInterface, PromiseInterface, bool $cancellable): void $onRequest
      */
     public static function fromWorkflowContext(
         WorkflowContext $context,
