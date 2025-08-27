@@ -27,7 +27,7 @@
         "google/common-protos": "^4.9",
         "google/protobuf": "^4.31.1",
         "grpc/grpc": "^1.57",
-        "internal/promise": "^2.12",
+        "internal/promise": "^2.12 || ^3.4",
         "nesbot/carbon": "^2.72.6 || ^3.8.4",
         "psr/log": "^2.0 || ^3.0.2",
         "ramsey/uuid": "^4.7.6",
@@ -49,7 +49,10 @@
             "GPBMetadata\\Temporal\\Api\\Testservice\\": "testing/api/testservice/GPBMetadata/Temporal/Api/Testservice",
             "Temporal\\Testing\\": "testing/src",
             "Temporal\\": "src"
-        }
+        },
+        "files": [
+            "src/include.php"
+        ]
     },
     "require-dev": {
         "buggregator/trap": "^1.13.0",
