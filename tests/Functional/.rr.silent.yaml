@@ -16,6 +16,11 @@ temporal:
 
 logs:
     mode: none
+    # file_logger_options:
+    #   log_output: "test-feature.log"
+    # channels:
+    #   activities:
+    #     mode: none
 
 kv:
     test:
