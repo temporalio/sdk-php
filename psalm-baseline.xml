@@ -1019,27 +1019,15 @@
     </UndefinedInterfaceMethod>
   </file>
   <file src="src/Internal/Transport/CompletableResult.php">
-    <MoreSpecificImplementedParamType>
-      <code><![CDATA[$onFulfilled]]></code>
-      <code><![CDATA[$onRejected]]></code>
-    </MoreSpecificImplementedParamType>
     <PossiblyNullArgument>
       <code><![CDATA[$this->wrapContext($onFulfilledOrRejected)]]></code>
       <code><![CDATA[$this->wrapContext($onRejected)]]></code>
     </PossiblyNullArgument>
-    <TooManyTemplateParams>
-      <code><![CDATA[PromiseInterface<T>]]></code>
-    </TooManyTemplateParams>
     <UndefinedInterfaceMethod>
       <code><![CDATA[cancel]]></code>
       <code><![CDATA[catch]]></code>
       <code><![CDATA[finally]]></code>
     </UndefinedInterfaceMethod>
-  </file>
-  <file src="src/Internal/Transport/CompletableResultInterface.php">
-    <TooManyTemplateParams>
-      <code><![CDATA[PromiseInterface]]></code>
-    </TooManyTemplateParams>
   </file>
   <file src="src/Internal/Transport/Router/DestroyWorkflow.php">
     <UndefinedInterfaceMethod>
@@ -1176,6 +1164,10 @@
     </PropertyNotSetInConstructor>
   </file>
   <file src="src/Internal/Workflow/Process/Scope.php">
+    <InvalidArgument>
+      <code><![CDATA[$onFulfilled]]></code>
+      <code><![CDATA[$onRejected]]></code>
+    </InvalidArgument>
     <PropertyNotSetInConstructor>
       <code><![CDATA[$coroutine]]></code>
     </PropertyNotSetInConstructor>
@@ -1216,6 +1208,9 @@
       <code><![CDATA[$type]]></code>
       <code><![CDATA[$type]]></code>
     </ArgumentTypeCoercion>
+    <DocblockTypeContradiction>
+      <code><![CDATA[\is_iterable($reason)]]></code>
+    </DocblockTypeContradiction>
     <InaccessibleProperty>
       <code><![CDATA[$this->input->info->typedSearchAttributes]]></code>
     </InaccessibleProperty>
@@ -1240,13 +1235,6 @@
       <code><![CDATA[object]]></code>
       <code><![CDATA[object]]></code>
     </InvalidReturnType>
-    <MissingClosureParamType>
-      <code><![CDATA[$reason]]></code>
-      <code><![CDATA[$result]]></code>
-    </MissingClosureParamType>
-    <MissingClosureReturnType>
-      <code><![CDATA[function ($result) use ($conditionGroupId) {]]></code>
-    </MissingClosureReturnType>
     <MissingImmutableAnnotation>
       <code><![CDATA[WorkflowContext]]></code>
     </MissingImmutableAnnotation>
@@ -1268,11 +1256,6 @@
     <TooManyArguments>
       <code><![CDATA[$reduce($c, $value, $i++, $total)]]></code>
     </TooManyArguments>
-    <TooManyTemplateParams>
-      <code><![CDATA[PromiseInterface<T>]]></code>
-      <code><![CDATA[PromiseInterface<never>]]></code>
-      <code><![CDATA[iterable<PromiseInterface<T>|T>]]></code>
-    </TooManyTemplateParams>
   </file>
   <file src="src/Worker/ActivityInvocationCache/ActivityInvocationResult.php">
     <MissingReturnType>
@@ -1517,22 +1500,6 @@
       <code><![CDATA[ScopedContextInterface]]></code>
       <code><![CDATA[T]]></code>
     </InvalidReturnType>
-    <TooManyTemplateParams>
-      <code><![CDATA[PromiseInterface<TReturn>]]></code>
-      <code><![CDATA[PromiseInterface<UuidInterface>]]></code>
-      <code><![CDATA[PromiseInterface<UuidInterface>]]></code>
-      <code><![CDATA[PromiseInterface<UuidInterface>]]></code>
-      <code><![CDATA[PromiseInterface<bool>]]></code>
-      <code><![CDATA[PromiseInterface<int>]]></code>
-      <code><![CDATA[PromiseInterface<mixed>]]></code>
-      <code><![CDATA[PromiseInterface<mixed>]]></code>
-      <code><![CDATA[PromiseInterface<null>]]></code>
-    </TooManyTemplateParams>
-  </file>
-  <file src="src/Workflow/CancellationScopeInterface.php">
-    <TooManyTemplateParams>
-      <code><![CDATA[PromiseInterface]]></code>
-    </TooManyTemplateParams>
   </file>
   <file src="src/Workflow/ChildWorkflowOptions.php">
     <PossiblyNullReference>
@@ -1543,11 +1510,6 @@
     <MissingParamType>
       <code><![CDATA[$returnType]]></code>
     </MissingParamType>
-  </file>
-  <file src="src/Workflow/Mutex.php">
-    <TooManyTemplateParams>
-      <code><![CDATA[PromiseInterface<self>]]></code>
-    </TooManyTemplateParams>
   </file>
   <file src="src/Workflow/QueryMethod.php">
     <DeprecatedClass>
@@ -1578,16 +1540,6 @@
     <DeprecatedClass>
       <code><![CDATA[NamedArgumentConstructor]]></code>
     </DeprecatedClass>
-  </file>
-  <file src="src/Workflow/WorkflowContextInterface.php">
-    <TooManyTemplateParams>
-      <code><![CDATA[PromiseInterface<TReturn>]]></code>
-      <code><![CDATA[PromiseInterface<UuidInterface>]]></code>
-      <code><![CDATA[PromiseInterface<UuidInterface>]]></code>
-      <code><![CDATA[PromiseInterface<UuidInterface>]]></code>
-      <code><![CDATA[PromiseInterface<bool>]]></code>
-      <code><![CDATA[PromiseInterface<mixed>]]></code>
-    </TooManyTemplateParams>
   </file>
   <file src="src/Workflow/WorkflowInterface.php">
     <DeprecatedClass>
