@@ -517,7 +517,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         $this->callsInterceptor->with(
             function (UpsertMemoInput $input): PromiseInterface {
                 if ($input->memo === []) {
-                    return resolve();
+                    return resolve(null);
                 }
 
                 $result = $this->request(new UpsertMemo($input->memo), false, false);
@@ -546,7 +546,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         $this->callsInterceptor->with(
             function (UpsertSearchAttributesInput $input): PromiseInterface {
                 if ($input->searchAttributes === []) {
-                    return resolve();
+                    return resolve(null);
                 }
 
                 $result = $this->request(new UpsertSearchAttributes($input->searchAttributes), false, false);
@@ -574,7 +574,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         $this->callsInterceptor->with(
             function (UpsertTypedSearchAttributesInput $input): PromiseInterface {
                 if ($input->updates === []) {
-                    return resolve();
+                    return resolve(null);
                 }
 
                 $result = $this->request(new UpsertTypedSearchAttributes($input->updates), false, false);
@@ -648,7 +648,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
             foreach ($awaitsGroup as $i => [$condition, $deferred]) {
                 if ($condition()) {
                     unset($this->awaits[$awaitsGroupId][$i]);
-                    $deferred->resolve();
+                    $deferred->resolve(null);
                     $this->resolveConditionGroup($awaitsGroupId);
                 }
             }
