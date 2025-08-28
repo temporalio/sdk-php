@@ -753,11 +753,11 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         }
 
         return Promise::any($result)->then(
-            function ($result) use ($conditionGroupId) {
+            function (mixed $result) use ($conditionGroupId): mixed {
                 $this->resolveConditionGroup($conditionGroupId);
                 return $result;
             },
-            function ($reason) use ($conditionGroupId): void {
+            function (\Throwable $reason) use ($conditionGroupId): void {
                 $this->rejectConditionGroup($conditionGroupId);
                 // Throw the first reason
                 // It need to avoid memory leak when the related workflow is destroyed
