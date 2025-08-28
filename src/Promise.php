@@ -206,7 +206,6 @@ final class Promise
      *
      * @param iterable<int, PromiseInterface|mixed> $promises
      * @param callable(mixed $current, mixed $carry, int $current, positive-int $items): mixed $reduce
-     * @param mixed $initial
      * @psalm-param PromiseReduceCallback $reduce
      */
     public static function reduce(iterable $promises, callable $reduce, mixed $initial = null): PromiseInterface
