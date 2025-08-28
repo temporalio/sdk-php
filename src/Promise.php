@@ -15,6 +15,7 @@ use React\Promise\Exception\LengthException;
 use React\Promise\PromiseInterface;
 use Temporal\Internal\Promise\CancellationQueue;
 use Temporal\Internal\Promise\Reasons;
+use Temporal\Internal\Promise\RejectedValue;
 
 use function React\Promise\race;
 use function React\Promise\reject;
@@ -36,7 +37,7 @@ final class Promise
      */
     public static function all(iterable $promises): PromiseInterface
     {
-        return self::map($promises, static fn($val): mixed => $val);
+        return self::map($promises, static fn(mixed $val): mixed => $val);
     }
 
     /**
@@ -208,7 +209,7 @@ final class Promise
      * @param mixed $initial
      * @psalm-param PromiseReduceCallback $reduce
      */
-    public static function reduce(iterable $promises, callable $reduce, $initial = null): PromiseInterface
+    public static function reduce(iterable $promises, callable $reduce, mixed $initial = null): PromiseInterface
     {
         $cancellationQueue = new CancellationQueue();
         $cancellationQueue->enqueue($promises);
@@ -273,9 +274,11 @@ final class Promise
      *
      * If `$promiseOrValue` is a promise, it will be returned as is.
      *
-     * @param null|mixed $promiseOrValue
+     * @template T
+     * @param PromiseInterface<T>|T $promiseOrValue
+     * @return PromiseInterface<T>
      */
-    public static function resolve($promiseOrValue = null): PromiseInterface
+    public static function resolve(mixed $promiseOrValue = null): PromiseInterface
     {
         return resolve($promiseOrValue);
     }
@@ -283,22 +286,15 @@ final class Promise
     /**
      * Creates a rejected promise for the supplied `$promiseOrValue`.
      *
-     * If `$promiseOrValue` is a value, it will be the rejection value of the
-     * returned promise.
+     * If `$reason` is not a `\Throwable`, the returned promise will be
+     * fulfilled with that value instead.
      *
-     * If `$promiseOrValue` is a promise, its completion value will be the rejected
-     * value of the returned promise.
-     *
-     * This can be useful in situations where you need to reject a promise without
-     * throwing an exception. For example, it allows you to propagate a rejection with
-     * the value of another promise.
-     *
-     * @param null|mixed $promiseOrValue
+     * @param \Throwable $reason
      * @return PromiseInterface<never>
      */
-    public static function reject($promiseOrValue = null): PromiseInterface
+    public static function reject(mixed $reason): PromiseInterface
     {
-        return reject($promiseOrValue);
+        return reject($reason instanceof \Throwable ? $reason : new RejectedValue($reason));
     }
 
     /**
