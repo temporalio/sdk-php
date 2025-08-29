@@ -21,22 +21,6 @@ final class SimpleWorkflowTestCase extends TestCase
     private WorkflowClient $workflowClient;
     private ActivityMocker $activityMocks;
 
-    protected function setUp(): void
-    {
-        $this->workflowClient = new WorkflowClient(
-            ServiceClient::create('localhost:7233')
-        );
-        $this->activityMocks = new ActivityMocker();
-
-        parent::setUp();
-    }
-
-    protected function tearDown(): void
-    {
-        $this->activityMocks->clear();
-        parent::tearDown();
-    }
-
     public function testWorkflowReturnsUpperCasedInput(): void
     {
         $this->activityMocks->expectCompletion('SimpleActivity.echo', 'world');
@@ -81,7 +65,7 @@ final class SimpleWorkflowTestCase extends TestCase
         $workflow = $this->workflowClient
             ->newWorkflowStub(
                 \Temporal\Tests\Workflow\LocalActivityWorkflow::class,
-                WorkflowOptions::new()->withWorkflowRunTimeout('10 seconds')
+                WorkflowOptions::new()->withWorkflowRunTimeout('10 seconds'),
             );
         $run = $this->workflowClient->start($workflow);
 
@@ -125,6 +109,22 @@ final class SimpleWorkflowTestCase extends TestCase
         $workflow = $this->workflowClient->newWorkflowStub(ExtendingWorkflow::class);
         $run = $this->workflowClient->start($workflow);
         $this->assertNull($run->getResult(timeout: 5));
+    }
+
+    protected function setUp(): void
+    {
+        $this->workflowClient = new WorkflowClient(
+            ServiceClient::create('localhost:7233'),
+        );
+        $this->activityMocks = new ActivityMocker();
+
+        parent::setUp();
+    }
+
+    protected function tearDown(): void
+    {
+        $this->activityMocks->clear();
+        parent::tearDown();
     }
 
     private function assertContainsEvent(WorkflowExecution $execution, int $event): void
