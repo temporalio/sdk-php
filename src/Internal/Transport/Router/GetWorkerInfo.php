@@ -44,10 +44,10 @@ final class GetWorkerInfo extends Route
     private function workerToArray(WorkerInterface $worker): array
     {
         $workflowMap = static fn(WorkflowPrototype $workflow): array => [
-            'Name'    => $workflow->getID(),
-            'Queries' => \array_keys($workflow->getQueryHandlers()),
-            'Signals' => \array_keys($workflow->getSignalHandlers()),
-            // 'Updates' => $this->keys($workflow->getUpdateHandlers()),
+            'name' => $workflow->getID(),
+            'queries' => \array_keys($workflow->getQueryHandlers()),
+            'signals' => \array_keys($workflow->getSignalHandlers()),
+            'versioning_behavior' => $workflow->getVersioningBehavior()->value,
         ];
 
         $activityMap = static fn(ActivityPrototype $activity): array => [

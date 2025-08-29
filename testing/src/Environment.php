@@ -94,9 +94,6 @@ final class Environment
                 $this->systemInfo->temporalCliExecutable,
                 "server", "start-dev",
                 "--port", $temporalPort,
-                '--dynamic-config-value', 'frontend.enableUpdateWorkflowExecution=true',
-                '--dynamic-config-value', 'frontend.enableUpdateWorkflowExecutionAsyncAccepted=true',
-                '--dynamic-config-value', 'frontend.enableExecuteMultiOperation=true',
                 '--log-level', 'error',
                 '--headless',
                 ...$parameters,
@@ -201,5 +198,20 @@ final class Environment
             $this->roadRunnerProcess->stop();
             $this->output->writeln('<info>done.</info>');
         }
+    }
+
+    /**
+     * @internal
+     */
+    public function executeTemporalCommand(array|string $command, int $timeout = 10): void
+    {
+        $command = \array_merge(
+            [$this->systemInfo->temporalCliExecutable],
+            (array) $command,
+        );
+
+        $process = new Process($command);
+        $process->setTimeout($timeout);
+        $process->run();
     }
 }
