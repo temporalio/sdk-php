@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration;
 
+use Internal\Destroy\Destroyable;
 use Temporal\Exception\InstantiationException;
 use Temporal\Internal\Declaration\Prototype\Prototype;
 
