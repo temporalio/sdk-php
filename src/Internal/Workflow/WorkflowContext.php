@@ -701,10 +701,10 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     {
         $this->awaits = [];
         $this->client->destroy();
-        $this->workflowInstance->destroy();
         $this->queryDispatcher->destroy();
         $this->signalDispatcher->destroy();
         $this->updateDispatcher->destroy();
+        $this->workflowInstance->destroy();
         unset($this->workflowInstance, $this->client);
     }
 

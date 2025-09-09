@@ -293,8 +293,8 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     public function destroy(): void
     {
-        $this->scopeContext->destroy();
         $this->context->destroy();
+        $this->scopeContext->destroy();
         unset($this->coroutine);
     }
 

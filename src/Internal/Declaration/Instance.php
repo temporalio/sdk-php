@@ -47,6 +47,7 @@ abstract class Instance implements InstanceInterface, Destroyable
 
     public function destroy(): void
     {
+        $this->context instanceof Destroyable and $this->context->destroy();
         unset($this->handler, $this->context);
     }
 
