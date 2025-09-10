@@ -17,6 +17,7 @@ use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Internal\Support\GarbageCollector;
 use Temporal\Internal\Workflow\Process\Process;
 use Temporal\Internal\Workflow\ProcessCollection;
+use Temporal\Worker\FeatureFlags;
 use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
@@ -29,12 +30,14 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
     private const GC_TIMEOUT_SECONDS = 30;
 
     private GarbageCollector $gc;
+    private bool $throwDestructException;
 
     public function __construct(
         ProcessCollection $running,
         protected LoopInterface $loop,
     ) {
         $this->gc = new GarbageCollector(self::GC_THRESHOLD, self::GC_TIMEOUT_SECONDS);
+        $this->throwDestructException = FeatureFlags::$throwDestructMemorizedInstanceException;
         parent::__construct($running);
     }
 
@@ -51,7 +54,7 @@ class DestroyWorkflow extends WorkflowProcessAwareRoute
         $process = $this->running
             ->pull($runId, "Unable to kill workflow because workflow process #$runId was not found");
 
-        $process->cancel(new DestructMemorizedInstanceException());
+        $this->throwDestructException and $process->cancel(new DestructMemorizedInstanceException());
         $this->loop->once(
             LoopInterface::ON_FINALLY,
             function () use ($process): void {
