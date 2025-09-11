@@ -105,6 +105,12 @@ final class WorkflowInfo
     #[Marshal(name: 'ParentWorkflowNamespace')]
     public ?string $parentNamespace = null;
 
+    /**
+     * @since SDK 2.16.0
+     */
+    #[Marshal(name: 'RootWorkflowExecution', type: NullableType::class, of: WorkflowExecution::class)]
+    public ?WorkflowExecution $rootExecution = null;
+
     #[Marshal(name: 'ParentWorkflowExecution', type: NullableType::class, of: WorkflowExecution::class)]
     public ?WorkflowExecution $parentExecution = null;
 
