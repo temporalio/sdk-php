@@ -16,6 +16,7 @@ use JetBrains\PhpStorm\Immutable;
 use Temporal\Client\ClientOptions;
 use Temporal\Common\CronSchedule;
 use Temporal\Common\Priority;
+use Temporal\Common\RetryOptions;
 use Temporal\Common\TypedSearchAttributes;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\ArrayType;
@@ -142,6 +143,12 @@ final class WorkflowInfo
      */
     #[Marshal(name: 'Priority')]
     public Priority $priority;
+
+    /**
+     * @since SDK 2.16.0
+     */
+    #[Marshal(name: 'RetryPolicy')]
+    public ?RetryOptions $retryPolicy = null;
 
     /**
      * WorkflowInfo constructor.

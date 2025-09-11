@@ -13,9 +13,6 @@ namespace Temporal\Internal\Marshaller;
 
 use Temporal\Internal\Marshaller\Type\TypeInterface;
 
-/**
- * @internal
- */
 class MarshallingRule
 {
     /**

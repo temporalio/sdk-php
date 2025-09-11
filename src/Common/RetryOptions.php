@@ -17,6 +17,7 @@ use Temporal\Activity\ActivityOptions;
 use Temporal\Api\Common\V1\RetryPolicy;
 use Temporal\Internal\Assert;
 use Temporal\Internal\Marshaller\Meta\Marshal;
+use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\DurationJsonType;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\Options;
@@ -68,6 +69,7 @@ class RetryOptions extends Options
      * is 1.0 then it is used for all retries.
      */
     #[Marshal(name: 'initial_interval', type: DurationJsonType::class, nullable: true)]
+    #[Marshal(name: 'InitialInterval', type: DurationJsonType::class, nullable: true)]
     public ?\DateInterval $initialInterval = self::DEFAULT_INITIAL_INTERVAL;
 
     /**
@@ -77,6 +79,7 @@ class RetryOptions extends Options
      * Note: Must be greater than 1.0
      */
     #[Marshal(name: 'backoff_coefficient')]
+    #[Marshal(name: 'BackoffCoefficient')]
     public float $backoffCoefficient = self::DEFAULT_BACKOFF_COEFFICIENT;
 
     /**
@@ -86,6 +89,7 @@ class RetryOptions extends Options
      * Default is 100x of {@see $initialInterval}.
      */
     #[Marshal(name: 'maximum_interval', type: DurationJsonType::class, nullable: true)]
+    #[Marshal(name: 'MaximumInterval', type: DurationJsonType::class, nullable: true)]
     public ?\DateInterval $maximumInterval = self::DEFAULT_MAXIMUM_INTERVAL;
 
     /**
@@ -96,6 +100,7 @@ class RetryOptions extends Options
      * @var int<0, max>
      */
     #[Marshal(name: 'maximum_attempts')]
+    #[Marshal(name: 'MaximumAttempts')]
     public int $maximumAttempts = self::DEFAULT_MAXIMUM_ATTEMPTS;
 
     /**
@@ -105,6 +110,7 @@ class RetryOptions extends Options
      * @var ExceptionsList
      */
     #[Marshal(name: 'non_retryable_error_types')]
+    #[Marshal(name: 'NonRetryableErrorTypes')]
     public array $nonRetryableExceptions = self::DEFAULT_NON_RETRYABLE_EXCEPTIONS;
 
     public function mergeWith(?MethodRetry $retry = null): self
