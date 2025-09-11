@@ -42,6 +42,7 @@ class WorkflowInfoTestCase extends AbstractDTOMarshalling
             'CronSchedule' => null,
             'ContinuedExecutionRunID' => null,
             'ParentWorkflowNamespace' => null,
+            'RootWorkflowExecution' => null,
             'ParentWorkflowExecution' => null,
             'SearchAttributes' => null,
             'TypedSearchAttributes' => [],
