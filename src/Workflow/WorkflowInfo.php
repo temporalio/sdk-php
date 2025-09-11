@@ -148,7 +148,7 @@ final class WorkflowInfo
      * @since SDK 2.16.0
      */
     #[Marshal(name: 'RetryPolicy')]
-    public ?RetryOptions $retryPolicy = null;
+    public ?RetryOptions $retryOptions = null;
 
     /**
      * WorkflowInfo constructor.

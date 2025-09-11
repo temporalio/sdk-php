@@ -28,8 +28,8 @@ class WorkflowInfoTest extends TestCase
     }
 
     #[Test]
-    public static function retryPolicy(
-        #[Stub('Extra_Workflow_WorkflowInfo', args: [MainWorkflow::ARG_RETRY_POLICY], retryOptions: new RetryOptions(
+    public static function retryOptions(
+        #[Stub('Extra_Workflow_WorkflowInfo', args: [MainWorkflow::ARG_RETRY_OPTIONS], retryOptions: new RetryOptions(
             backoffCoefficient: 3.0,
             maximumInterval: '2 minutes',
             maximumAttempts: 10,
@@ -50,7 +50,7 @@ class WorkflowInfoTest extends TestCase
 #[WorkflowInterface]
 class MainWorkflow
 {
-    public const ARG_RETRY_POLICY = 'retryPolicy';
+    public const ARG_RETRY_OPTIONS = 'retryPolicy';
     public const ARG_ROOT_EXECUTION = 'rootExecution';
 
     #[WorkflowMethod('Extra_Workflow_WorkflowInfo')]
@@ -58,7 +58,7 @@ class MainWorkflow
     {
         return yield match ($arg) {
             self::ARG_ROOT_EXECUTION => Workflow::newChildWorkflowStub(ChildWorkflow::class)->run(),
-            self::ARG_RETRY_POLICY => Workflow::getCurrentContext()->getInfo()->retryPolicy,
+            self::ARG_RETRY_OPTIONS => Workflow::getCurrentContext()->getInfo()->retryOptions,
         };
     }
 }

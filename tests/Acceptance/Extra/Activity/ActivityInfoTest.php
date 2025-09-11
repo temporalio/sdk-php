@@ -19,7 +19,7 @@ class ActivityInfoTest extends TestCase
 {
     #[Test]
     public static function retryPolicy(
-        #[Stub('Extra_Activity_ActivityInfo', args: [TestWorkflow::ARG_RETRY_POLICY])]
+        #[Stub('Extra_Activity_ActivityInfo', args: [TestWorkflow::ARG_RETRY_OPTIONS])]
         WorkflowStubInterface $stub,
     ): void {
         self::markTestSkipped('See https://github.com/temporalio/sdk-php/issues/602');
@@ -39,17 +39,17 @@ class ActivityInfoTest extends TestCase
 #[WorkflowInterface]
 class TestWorkflow
 {
-    public const ARG_RETRY_POLICY = 'retryPolicy';
+    public const ARG_RETRY_OPTIONS = 'retryPolicy';
 
     #[WorkflowMethod(name: "Extra_Activity_ActivityInfo")]
     public function handle(string $arg)
     {
         return yield match ($arg) {
-            self::ARG_RETRY_POLICY => $this->getRetryPolicy(),
+            self::ARG_RETRY_OPTIONS => $this->getRetryOptions(),
         };
     }
 
-    private function getRetryPolicy(): PromiseInterface
+    private function getRetryOptions(): PromiseInterface
     {
         return Workflow::newActivityStub(
             TestActivity::class,
@@ -63,7 +63,7 @@ class TestWorkflow
                 )
                 ->withScheduleToCloseTimeout(10),
         )
-            ->retryPolicy();
+            ->retryOptions();
     }
 }
 
@@ -71,8 +71,8 @@ class TestWorkflow
 class TestActivity
 {
     #[Activity\ActivityMethod]
-    public function retryPolicy()
+    public function retryOptions()
     {
-        return Activity::getInfo()->retryPolicy;
+        return Activity::getInfo()->retryOptions;
     }
 }
