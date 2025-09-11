@@ -76,23 +76,11 @@ class ArrayTestCase extends AbstractDTOMarshalling
 
     public function testSetNullToNotNullable(): void
     {
-        try {
-            $this->unmarshal([
-                'foo' => null,
-            ], new ArrayDto());
+        $dto = $this->unmarshal([
+            'foo' => null,
+        ], new ArrayDto());
 
-            $this->fail('Null value should not be allowed.');
-        } catch (\Throwable $e) {
-            $this->assertStringContainsString(
-                '`foo`',
-                $e->getMessage(),
-            );
-            $this->assertInstanceOf(\InvalidArgumentException::class, $e->getPrevious());
-            $this->assertStringContainsString(
-                'Passed value must be a type of array, but null given',
-                $e->getPrevious()->getMessage(),
-            );
-        }
+        self::assertSame([], $dto->foo);
     }
 
     protected function getTypeMatchers(): array
