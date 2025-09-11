@@ -17,8 +17,11 @@ class RootWorkflowExecutionTest extends TestCase
     #[Test]
     public static function check(#[Stub('Extra_Workflow_RootWorkflowExecution')]WorkflowStubInterface $stub): void
     {
-        self::markTestSkipped('Waiting https://github.com/temporalio/sdk-go/issues/1848');
-        self::assertSame('Test', $stub->getResult());
+        $result = $stub->getResult(type: 'array');
+        self::assertSame([
+            'ID' => $stub->getExecution()->getID(),
+            'RunID' => $stub->getExecution()->getRunID(),
+        ], $result);
     }
 }
 
@@ -37,10 +40,10 @@ class MainWorkflow
 class ChildWorkflow
 {
     #[WorkflowMethod('Extra_Workflow_RootWorkflowExecution_Child')]
-    public function run(string $input)
+    public function run()
     {
         return yield Workflow::newChildWorkflowStub(ChildWorkflow2::class)
-            ->run($input);
+            ->run();
     }
 }
 
@@ -48,8 +51,8 @@ class ChildWorkflow
 class ChildWorkflow2
 {
     #[WorkflowMethod('Extra_Workflow_RootWorkflowExecution_Child2')]
-    public function run(string $input)
+    public function run()
     {
-        return $input;
+        return Workflow::getCurrentContext()->getInfo()->rootExecution;
     }
 }
