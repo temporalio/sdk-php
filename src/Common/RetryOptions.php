@@ -17,7 +17,6 @@ use Temporal\Activity\ActivityOptions;
 use Temporal\Api\Common\V1\RetryPolicy;
 use Temporal\Internal\Assert;
 use Temporal\Internal\Marshaller\Meta\Marshal;
-use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\DurationJsonType;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\Options;
