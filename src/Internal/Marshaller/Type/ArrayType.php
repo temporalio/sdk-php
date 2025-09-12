@@ -63,6 +63,10 @@ class ArrayType extends Type implements DetectableTypeInterface, RuleFactoryInte
      */
     public function parse($value, $current): array
     {
+        if ($value === null) {
+            return [];
+        }
+
         if (!\is_array($value)) {
             throw new \InvalidArgumentException(\sprintf(self::ERROR_INVALID_TYPE, \get_debug_type($value)));
         }

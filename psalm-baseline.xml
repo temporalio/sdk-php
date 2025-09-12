@@ -1176,6 +1176,14 @@
     <PropertyNotSetInConstructor>
       <code><![CDATA[$coroutine]]></code>
     </PropertyNotSetInConstructor>
+    <RedundantCondition>
+      <code><![CDATA[$this->context?->destroy()]]></code>
+      <code><![CDATA[$this->scopeContext?->destroy()]]></code>
+    </RedundantCondition>
+    <TypeDoesNotContainNull>
+      <code><![CDATA[$this->context]]></code>
+      <code><![CDATA[$this->scopeContext]]></code>
+    </TypeDoesNotContainNull>
     <UndefinedInterfaceMethod>
       <code><![CDATA[catch]]></code>
       <code><![CDATA[finally]]></code>
