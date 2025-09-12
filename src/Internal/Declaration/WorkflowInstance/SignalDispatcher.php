@@ -11,9 +11,9 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration\WorkflowInstance;
 
+use Internal\Destroy\Destroyable;
 use Temporal\Api\Sdk\V1\WorkflowInteractionDefinition;
 use Temporal\DataConverter\ValuesInterface;
-use Temporal\Internal\Declaration\Destroyable;
 use Temporal\Internal\Declaration\MethodHandler;
 use Temporal\Internal\Declaration\Prototype\SignalDefinition;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;

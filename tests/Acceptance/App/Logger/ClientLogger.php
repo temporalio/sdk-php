@@ -116,7 +116,7 @@ final class ClientLogger
     /**
      * Check if a specific log message exists.
      *
-     * @param string $messagePattern Regular expression to match against log messages
+     * @param non-empty-string $messagePattern Regular expression to match against log messages
      * @return bool True if at least one matching message is found
      */
     public function hasMessage(string $messagePattern): bool

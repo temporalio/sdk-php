@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Workflow\Process;
 
+use Internal\Destroy\Destroyable;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\EncodedValues;
@@ -20,7 +21,6 @@ use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\TemporalFailure;
 use Temporal\Exception\InvalidArgumentException;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
-use Temporal\Internal\Declaration\Destroyable;
 use Temporal\Internal\Declaration\MethodHandler;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Request\Cancel;
@@ -296,6 +296,7 @@ class Scope implements CancellationScopeInterface, Destroyable
         $this->context?->destroy();
         $this->scopeContext?->destroy();
         unset(
+            $this->coroutine,
             $this->context,
             $this->scopeContext,
             $this->deferred,

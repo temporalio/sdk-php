@@ -569,6 +569,11 @@
       <code><![CDATA[\IteratorAggregate]]></code>
     </MissingTemplateParam>
   </file>
+  <file src="src/Internal/Declaration/Instance.php">
+    <RedundantCondition>
+      <code><![CDATA[isset($this->context)]]></code>
+    </RedundantCondition>
+  </file>
   <file src="src/Internal/Declaration/Instantiator/ActivityInstantiator.php">
     <InvalidDocblock>
       <code><![CDATA[final class ActivityInstantiator extends Instantiator]]></code>
