@@ -48,25 +48,26 @@ class DeploymentTest extends TestCase
         Feature $feature,
     ): void {
         $id = Uuid::v4();
-        $behavior = self::executeWorkflow(
+        self::executeWorkflow(
             $starter,
             $client,
             $feature,
             /** @see PinnedWorkflow */
             'Extra_Versioning_Deployment_Pinned',
-            WorkflowOptions::new()
-                ->withWorkflowId($id),
-        );
-        # Check worker registration
-        self::assertSame(VersioningBehavior::Pinned, $behavior);
+            WorkflowOptions::new()->withWorkflowId($id),
+            postAction: static function (VersioningBehavior $behavior) use ($client, $id): void {
+                # Check worker registration
+                self::assertSame(VersioningBehavior::Pinned, $behavior);
 
-        # Check Override from Search Attributes
-        $sa = $client->newUntypedRunningWorkflowStub(
-            workflowID: $id,
-            workflowType: 'Extra_Versioning_Deployment_Pinned',
-        )->describe()->info->searchAttributes->getValues();
-        self::assertSame('Pinned', $sa['TemporalWorkflowVersioningBehavior']);
-        self::assertSame('foo:baz', $sa['TemporalWorkerDeploymentVersion']);
+                # Check Override from Search Attributes
+                $sa = $client->newUntypedRunningWorkflowStub(
+                    workflowID: $id,
+                    workflowType: 'Extra_Versioning_Deployment_Pinned',
+                )->describe()->info->searchAttributes->getValues();
+                self::assertSame('Pinned', $sa['TemporalWorkflowVersioningBehavior']);
+                self::assertSame('foo:baz', $sa['TemporalWorkerDeploymentVersion']);
+            }
+        );
     }
 
     #[Test]
@@ -76,27 +77,26 @@ class DeploymentTest extends TestCase
         Feature $feature,
     ): void {
         $id = Uuid::v4();
-        $behavior = self::executeWorkflow(
+        self::executeWorkflow(
             $starter,
             $client,
             $feature,
             /** @see PinnedWorkflow */
             'Extra_Versioning_Deployment_Pinned',
-            WorkflowOptions::new()
-                ->withWorkflowId($id)
-                ->withVersioningOverride(VersioningOverride::autoUpgrade()),
+            WorkflowOptions::new()->withWorkflowId($id)->withVersioningOverride(VersioningOverride::autoUpgrade()),
+            postAction: static function (VersioningBehavior $behavior) use ($client, $id): void {
+                # Check worker registration
+                self::assertSame(VersioningBehavior::Pinned, $behavior);
+
+                # Check Override from Search Attributes
+                $sa = $client->newUntypedRunningWorkflowStub(
+                    workflowID: $id,
+                    workflowType: 'Extra_Versioning_Deployment_Pinned',
+                )->describe()->info->searchAttributes->getValues();
+                self::assertSame('AutoUpgrade', $sa['TemporalWorkflowVersioningBehavior']);
+                self::assertSame('foo:baz', $sa['TemporalWorkerDeploymentVersion']);
+            },
         );
-
-        # Check worker registration
-        self::assertSame(VersioningBehavior::Pinned, $behavior);
-
-        # Check Override from Search Attributes
-        $sa = $client->newUntypedRunningWorkflowStub(
-            workflowID: $id,
-            workflowType: 'Extra_Versioning_Deployment_Pinned',
-        )->describe()->info->searchAttributes->getValues();
-        self::assertSame('AutoUpgrade', $sa['TemporalWorkflowVersioningBehavior']);
-        self::assertSame('foo:baz', $sa['TemporalWorkerDeploymentVersion']);
     }
 
     #[Test]
@@ -123,12 +123,16 @@ class DeploymentTest extends TestCase
         self::assertSame(VersioningBehavior::AutoUpgrade, $behavior);
     }
 
+    /**
+     * @param null|callable(VersioningBehavior): void $postAction
+     */
     private static function executeWorkflow(
         TemporalStarter $starter,
         WorkflowClientInterface $client,
         Feature $feature,
         string $workflowType,
         WorkflowOptions $options,
+        ?callable $postAction = null,
     ): ?VersioningBehavior {
         WorkerFactory::setCurrentDeployment($starter);
 
@@ -151,6 +155,7 @@ class DeploymentTest extends TestCase
             $stub->getResult(timeout: 5);
 
             # Check the Workflow History
+            $behavior = null;
             foreach ($client->getWorkflowHistory($stub->getExecution()) as $event) {
                 if ($event->hasWorkflowTaskCompletedEventAttributes()) {
                     $version = $event->getWorkflowTaskCompletedEventAttributes()?->getDeploymentVersion();
@@ -158,13 +163,18 @@ class DeploymentTest extends TestCase
                     self::assertSame(WorkerFactory::DEPLOYMENT_NAME, $version->getDeploymentName());
                     self::assertSame(WorkerFactory::BUILD_ID, $version->getBuildId());
 
-                    return VersioningBehavior::tryFrom(
+                    $behavior = VersioningBehavior::tryFrom(
                         $event->getWorkflowTaskCompletedEventAttributes()?->getVersioningBehavior(),
                     );
+                    break;
                 }
             }
+            $behavior ?? throw new \RuntimeException(
+                'The WorkflowTaskCompletedEventAttributes not found in the Workflow history.',
+            );
 
-            throw new \RuntimeException('The WorkflowTaskCompletedEventAttributes not found in the Workflow history.');
+            $postAction === null or $postAction($behavior);
+            return $behavior;
         } finally {
             $starter->stop() and $starter->start();
         }
