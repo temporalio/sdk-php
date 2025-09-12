@@ -1024,15 +1024,9 @@
     </UndefinedInterfaceMethod>
   </file>
   <file src="src/Internal/Transport/CompletableResult.php">
-    <PossiblyNullArgument>
+    <InvalidArgument>
       <code><![CDATA[$this->wrapContext($onFulfilledOrRejected)]]></code>
-      <code><![CDATA[$this->wrapContext($onRejected)]]></code>
-    </PossiblyNullArgument>
-    <UndefinedInterfaceMethod>
-      <code><![CDATA[cancel]]></code>
-      <code><![CDATA[catch]]></code>
-      <code><![CDATA[finally]]></code>
-    </UndefinedInterfaceMethod>
+    </InvalidArgument>
   </file>
   <file src="src/Internal/Transport/Router/DestroyWorkflow.php">
     <UndefinedInterfaceMethod>
@@ -1061,9 +1055,6 @@
       <code><![CDATA[$request->getOptions()['name']]]></code>
       <code><![CDATA[$request->getOptions()['updateId']]]></code>
     </PossiblyUndefinedStringArrayOffset>
-    <UndefinedInterfaceMethod>
-      <code><![CDATA[cancel]]></code>
-    </UndefinedInterfaceMethod>
   </file>
   <file src="src/Internal/Transport/Router/StackTrace.php">
     <ArgumentTypeCoercion>
@@ -1172,6 +1163,7 @@
     <InvalidArgument>
       <code><![CDATA[$onFulfilled]]></code>
       <code><![CDATA[$onRejected]]></code>
+      <code><![CDATA[$resolver->resolve(...)]]></code>
     </InvalidArgument>
     <PropertyNotSetInConstructor>
       <code><![CDATA[$coroutine]]></code>
@@ -1184,10 +1176,6 @@
       <code><![CDATA[$this->context]]></code>
       <code><![CDATA[$this->scopeContext]]></code>
     </TypeDoesNotContainNull>
-    <UndefinedInterfaceMethod>
-      <code><![CDATA[catch]]></code>
-      <code><![CDATA[finally]]></code>
-    </UndefinedInterfaceMethod>
     <UnusedClosureParam>
       <code><![CDATA[$e]]></code>
     </UnusedClosureParam>
@@ -1262,6 +1250,11 @@
   <file src="src/Promise.php">
     <InvalidArgument>
       <code><![CDATA[$reasons]]></code>
+      <code><![CDATA[$resolve]]></code>
+      <code><![CDATA[$values]]></code>
+      <code><![CDATA[$values]]></code>
+      <code><![CDATA[[]]]></code>
+      <code><![CDATA[[]]]></code>
     </InvalidArgument>
     <InvalidOperand>
       <code><![CDATA[$promisesOrValues]]></code>

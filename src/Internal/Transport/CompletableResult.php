@@ -114,7 +114,7 @@ class CompletableResult implements CompletableResultInterface
      */
     public function otherwise(callable $onRejected): PromiseInterface
     {
-        return $this->catch($this->wrapContext($onRejected));
+        return $this->catch($onRejected);
     }
 
     /**
@@ -122,7 +122,7 @@ class CompletableResult implements CompletableResultInterface
      */
     public function always(callable $onFulfilledOrRejected): PromiseInterface
     {
-        return $this->finally($this->wrapContext($onFulfilledOrRejected));
+        return $this->finally($onFulfilledOrRejected);
     }
 
     private function onFulfilled(mixed $result): void
