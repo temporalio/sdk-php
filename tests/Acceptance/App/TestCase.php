@@ -58,12 +58,6 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                 try {
                     return parent::runTest();
                 } catch (\Throwable $e) {
-                    // Restart RR if a Error occurs
-                    /** @var RRStarter $runner */
-                    $runner = $container->get(RRStarter::class);
-                    $runner->stop();
-                    $runner->start();
-
                     if ($e instanceof TemporalException) {
                         echo "\n=== Workflow history for failed test {$this->name()} ===\n";
                         $this->printWorkflowHistory($container->get(WorkflowClientInterface::class), $args);
@@ -83,6 +77,12 @@ abstract class TestCase extends \Temporal\Tests\TestCase
 
                         echo "\n\n";
                     }
+
+                    // Restart RR if a Error occurs
+                    /** @var RRStarter $runner */
+                    $runner = $container->get(RRStarter::class);
+                    $runner->stop();
+                    $runner->start();
 
                     throw $e;
                 } finally {
