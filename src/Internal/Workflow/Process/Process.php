@@ -208,7 +208,6 @@ class Process extends Scope implements ProcessInterface
                 );
             }
 
-            // Workflow::setCurrentContext($context);
             $this->setContext($context);
             $this->makeCurrent();
             $instance->init($values);

@@ -268,6 +268,14 @@
       <code><![CDATA[non-empty-string]]></code>
     </MoreSpecificReturnType>
   </file>
+  <file src="src/Common/Versioning/WorkerDeploymentVersion.php">
+    <PossiblyNullArgument>
+      <code><![CDATA[$parts[1]]]></code>
+    </PossiblyNullArgument>
+    <PossiblyUndefinedArrayOffset>
+      <code><![CDATA[$parts[1]]]></code>
+    </PossiblyUndefinedArrayOffset>
+  </file>
   <file src="src/DataConverter/DataConverter.php">
     <MissingImmutableAnnotation>
       <code><![CDATA[DataConverter]]></code>
@@ -547,8 +555,10 @@
     </PropertyNotSetInConstructor>
   </file>
   <file src="src/Internal/Declaration/Graph/ClassNode.php">
+    <ImplicitToStringCast>
+      <code><![CDATA[list<array{class-string, \ReflectionMethod}>]]></code>
+    </ImplicitToStringCast>
     <InvalidReturnType>
-      <code><![CDATA[\Traversable<ClassNode, \ReflectionMethod>]]></code>
       <code><![CDATA[\Traversable<ClassNode>]]></code>
     </InvalidReturnType>
     <MissingClosureReturnType>
@@ -611,17 +621,16 @@
       <code><![CDATA[$name]]></code>
       <code><![CDATA[$retry]]></code>
     </ArgumentTypeCoercion>
-    <RawObjectIteration>
-      <code><![CDATA[$group]]></code>
-    </RawObjectIteration>
     <RedundantConditionGivenDocblockType>
       <code><![CDATA[$retry !== null]]></code>
     </RedundantConditionGivenDocblockType>
+    <UnnecessaryVarAnnotation>
+      <code><![CDATA[\ReflectionMethod]]></code>
+    </UnnecessaryVarAnnotation>
   </file>
   <file src="src/Internal/Declaration/Reader/WorkflowReader.php">
     <ArgumentTypeCoercion>
       <code><![CDATA[$contextualRetry]]></code>
-      <code><![CDATA[$method]]></code>
       <code><![CDATA[$name]]></code>
       <code><![CDATA[$retry]]></code>
     </ArgumentTypeCoercion>
@@ -631,13 +640,12 @@
     <InvalidReturnType>
       <code><![CDATA[\Traversable<ActivityPrototype>]]></code>
     </InvalidReturnType>
-    <RawObjectIteration>
-      <code><![CDATA[$group]]></code>
-      <code><![CDATA[$group]]></code>
-    </RawObjectIteration>
     <RedundantConditionGivenDocblockType>
       <code><![CDATA[$retry !== null]]></code>
     </RedundantConditionGivenDocblockType>
+    <UnnecessaryVarAnnotation>
+      <code><![CDATA[\Traversable<class-string, \ReflectionMethod>]]></code>
+    </UnnecessaryVarAnnotation>
   </file>
   <file src="src/Internal/Declaration/WorkflowInstance/QueryDispatcher.php">
     <PropertyNotSetInConstructor>
@@ -1451,6 +1459,15 @@
       <code><![CDATA[run]]></code>
     </MissingReturnType>
   </file>
+  <file src="src/Worker/WorkerOptions.php">
+    <DeprecatedProperty>
+      <code><![CDATA[$self->buildID]]></code>
+      <code><![CDATA[$self->useBuildIDForVersioning]]></code>
+    </DeprecatedProperty>
+    <MissingConstructor>
+      <code><![CDATA[$deploymentOptions]]></code>
+    </MissingConstructor>
+  </file>
   <file src="src/WorkerFactory.php">
     <DeprecatedClass>
       <code><![CDATA[new AnnotationReader()]]></code>
@@ -1553,6 +1570,11 @@
     </DeprecatedClass>
   </file>
   <file src="src/Workflow/WorkflowMethod.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Workflow/WorkflowVersioningBehavior.php">
     <DeprecatedClass>
       <code><![CDATA[NamedArgumentConstructor]]></code>
     </DeprecatedClass>
