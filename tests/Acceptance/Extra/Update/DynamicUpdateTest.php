@@ -11,6 +11,7 @@ use Temporal\Client\Update\UpdateOptions;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Exception\Client\WorkflowUpdateException;
 use Temporal\Exception\Failure\ApplicationFailure;
+use Temporal\Tests\Acceptance\App\Attribute\Client;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
@@ -21,7 +22,9 @@ class DynamicUpdateTest extends TestCase
 {
     #[Test]
     public function addUpdateMethodWithoutValidation(
-        #[Stub('Extra_Update_DynamicUpdate')] WorkflowStubInterface $stub,
+        #[Client(timeout: 10.0)]
+        #[Stub('Extra_Update_DynamicUpdate')]
+        WorkflowStubInterface $stub,
     ): void {
         $idResult = $stub->update(TestWorkflow::UPDATE_METHOD)->getValue(0);
         self::assertNotNull($idResult);
