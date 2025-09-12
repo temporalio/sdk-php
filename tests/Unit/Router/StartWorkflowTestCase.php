@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Router;
 
+use Internal\Destroy\Destroyable;
 use Psr\Log\NullLogger;
 use React\Promise\Deferred;
 use Spiral\Attributes\AnnotationReader;
@@ -15,7 +16,6 @@ use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\ExceptionInterceptorInterface;
 use Temporal\Interceptor\SimplePipelineProvider;
-use Temporal\Internal\Declaration\Destroyable;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
 use Temporal\Internal\Declaration\WorkflowInstance\QueryDispatcher;

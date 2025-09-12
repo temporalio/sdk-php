@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Workflow;
 
+use Internal\Destroy\Destroyable;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\UuidInterface;
 use React\Promise\Deferred;
@@ -42,7 +43,6 @@ use Temporal\Interceptor\WorkflowOutboundCalls\UpsertSearchAttributesInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\UpsertTypedSearchAttributesInput;
 use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
 use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
-use Temporal\Internal\Declaration\Destroyable;
 use Temporal\Internal\Declaration\EntityNameValidator;
 use Temporal\Internal\Declaration\WorkflowInstance\QueryDispatcher;
 use Temporal\Internal\Declaration\WorkflowInstance\SignalDispatcher;
@@ -701,10 +701,10 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     {
         $this->awaits = [];
         $this->client->destroy();
-        $this->workflowInstance->destroy();
         $this->queryDispatcher->destroy();
         $this->signalDispatcher->destroy();
         $this->updateDispatcher->destroy();
+        $this->workflowInstance->destroy();
         unset($this->workflowInstance, $this->client);
     }
 

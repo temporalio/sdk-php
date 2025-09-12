@@ -11,8 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport;
 
+use Internal\Destroy\Destroyable;
 use React\Promise\PromiseInterface;
-use Temporal\Internal\Declaration\Destroyable;
 use Temporal\Worker\Transport\Command\CommandInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\ServerResponseInterface;
