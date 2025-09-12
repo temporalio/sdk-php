@@ -4,10 +4,15 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Acceptance\App;
 
+use Google\Protobuf\Timestamp;
 use Psr\Log\LoggerInterface;
 use Spiral\Core\Container;
 use Spiral\Core\Scope;
+use Temporal\Api\Enums\V1\EventType;
+use Temporal\Api\Failure\V1\Failure;
+use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowStubInterface;
+use Temporal\Exception\TemporalException;
 use Temporal\Tests\Acceptance\App\Logger\ClientLogger;
 use Temporal\Tests\Acceptance\App\Logger\LoggerFactory;
 use Temporal\Tests\Acceptance\App\Runtime\ContainerFacade;
@@ -59,6 +64,26 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                     $runner->stop();
                     $runner->start();
 
+                    if ($e instanceof TemporalException) {
+                        echo "\n=== Workflow history for failed test {$this->name()} ===\n";
+                        $this->printWorkflowHistory($container->get(WorkflowClientInterface::class), $args);
+
+                        $logRecords = $container->get(ClientLogger::class)->getRecords();
+                        if ($logRecords !== []) {
+                            echo "\n=== Client log records ===\n";
+                            foreach ($logRecords as $record) {
+                                echo \sprintf(
+                                    "[%s] %s%s\n",
+                                    $record->level,
+                                    $record->message,
+                                    \json_encode($record->context, JSON_UNESCAPED_UNICODE),
+                                );
+                            }
+                        }
+
+                        echo "\n\n";
+                    }
+
                     throw $e;
                 } finally {
                     // Cleanup: terminate injected workflow if any
@@ -74,5 +99,73 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                 }
             },
         );
+    }
+
+    private function printWorkflowHistory(WorkflowClientInterface $workflowClient, array $args): void
+    {
+        foreach ($args as $arg) {
+            if (!$arg instanceof WorkflowStubInterface) {
+                continue;
+            }
+
+            $fnTime = static fn(?Timestamp $ts): float => $ts === null
+                ? 0
+                : $ts->getSeconds() + \round($ts->getNanos() / 1_000_000_000, 6);
+
+            foreach ($workflowClient->getWorkflowHistory(
+                $arg->getExecution(),
+            ) as $event) {
+                $start ??= $fnTime($event->getEventTime());
+                echo "\n" . \str_pad((string) $event->getEventId(), 3, ' ', STR_PAD_LEFT) . ' ';
+                # Calculate delta time
+                $deltaMs = \round(1_000 * ($fnTime($event->getEventTime()) - $start));
+                echo \str_pad(\number_format($deltaMs, 0, '.', "'"), 6, ' ', STR_PAD_LEFT) . 'ms  ';
+                echo \str_pad(EventType::name($event->getEventType()), 40, ' ', STR_PAD_RIGHT) . ' ';
+
+                $cause = $event->getStartChildWorkflowExecutionFailedEventAttributes()?->getCause()
+                    ?? $event->getSignalExternalWorkflowExecutionFailedEventAttributes()?->getCause()
+                    ?? $event->getRequestCancelExternalWorkflowExecutionFailedEventAttributes()?->getCause();
+                if ($cause !== null) {
+                    echo "Cause: $cause";
+                    continue;
+                }
+
+                $failure = $event->getActivityTaskFailedEventAttributes()?->getFailure()
+                    ?? $event->getWorkflowTaskFailedEventAttributes()?->getFailure()
+                    ?? $event->getNexusOperationFailedEventAttributes()?->getFailure()
+                    ?? $event->getWorkflowExecutionFailedEventAttributes()?->getFailure()
+                    ?? $event->getChildWorkflowExecutionFailedEventAttributes()?->getFailure()
+                    ?? $event->getNexusOperationCancelRequestFailedEventAttributes()?->getFailure();
+
+                if ($failure === null) {
+                    continue;
+                }
+
+                # Render failure
+                echo "Failure:\n";
+                echo "    ========== BEGIN ===========\n";
+                $this->renderFailure($failure, 1);
+                echo "    =========== END ============";
+            }
+        }
+    }
+
+    private function renderFailure(Failure $failure, int $level): void
+    {
+        $fnPad = static function (string $str) use ($level): string {
+            $pad = \str_repeat('    ', $level);
+            return $pad . \str_replace("\n", "\n$pad", $str);
+        };
+        echo $fnPad('Source: ' . $failure->getSource()) . "\n";
+        echo $fnPad('Info: ' . $failure->getFailureInfo()) . "\n";
+        echo $fnPad('Message: ' . $failure->getMessage()) . "\n";
+        echo $fnPad("Stack trace:") . "\n";
+        echo $fnPad($failure->getStackTrace()) . "\n";
+        $previous = $failure->getCause();
+        if ($previous !== null) {
+            echo $fnPad('————————————————————————————') . "\n";
+            echo $fnPad('Caused by:') . "\n";
+            $this->renderFailure($previous, $level + 1);
+        }
     }
 }

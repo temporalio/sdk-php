@@ -11,6 +11,7 @@ use Temporal\Client\Update\UpdateOptions;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Exception\Client\WorkflowUpdateException;
 use Temporal\Exception\Failure\ApplicationFailure;
+use Temporal\Tests\Acceptance\App\Attribute\Client;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
@@ -21,7 +22,9 @@ class DynamicUpdateTest extends TestCase
 {
     #[Test]
     public function addUpdateMethodWithoutValidation(
-        #[Stub('Extra_Update_DynamicUpdate')] WorkflowStubInterface $stub,
+        #[Client(timeout: 15.0)]
+        #[Stub('Extra_Update_DynamicUpdate')]
+        WorkflowStubInterface $stub,
     ): void {
         $idResult = $stub->update(TestWorkflow::UPDATE_METHOD)->getValue(0);
         self::assertNotNull($idResult);
@@ -63,22 +66,24 @@ class TestWorkflow
     private array $result = [];
     private bool $exit = false;
 
-    #[WorkflowMethod(name: "Extra_Update_DynamicUpdate")]
-    public function handle()
-    {
-        // Register update methods
+    public function __construct() {
+        // Register update methods in constructor
         Workflow::registerUpdate(self::UPDATE_METHOD, function () {
             // Also Update context is tested
             $id = Workflow::getUpdateContext()->getUpdateId();
             return $this->result[self::UPDATE_METHOD] = $id;
         });
+    }
+
+    #[WorkflowMethod(name: "Extra_Update_DynamicUpdate")]
+    public function handle()
+    {
         // Update method with validation
         Workflow::registerUpdate(
             self::UPDATE_METHOD_WV,
             fn(int $value): int => $value,
             fn(int $value) => $value > 0 or throw new \InvalidArgumentException('Value must be positive'),
         );
-
         yield Workflow::await(fn() => $this->exit);
         return $this->result;
     }

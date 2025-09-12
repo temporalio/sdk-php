@@ -44,7 +44,7 @@ class CancelSignaledChildWorkflow
 
                 yield $simple->add(8);
                 $this->status[] = 'child signaled';
-                $waitSignaled->resolve();
+                $waitSignaled->resolve(null);
 
                 return yield $call;
             }

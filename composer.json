@@ -27,8 +27,8 @@
         "google/common-protos": "^4.9",
         "google/protobuf": "^4.31.1",
         "grpc/grpc": "^1.57",
+        "internal/promise": "^2.12 || ^3.4",
         "internal/destroy": "^1.0",
-        "internal/promise": "^2.12",
         "nesbot/carbon": "^2.72.6 || ^3.8.4",
         "psr/log": "^2.0 || ^3.0.2",
         "ramsey/uuid": "^4.7.6",
@@ -50,7 +50,10 @@
             "GPBMetadata\\Temporal\\Api\\Testservice\\": "testing/api/testservice/GPBMetadata/Temporal/Api/Testservice",
             "Temporal\\Testing\\": "testing/src",
             "Temporal\\": "src"
-        }
+        },
+        "files": [
+            "src/include.php"
+        ]
     },
     "require-dev": {
         "buggregator/trap": "^1.13.0",
@@ -61,7 +64,7 @@
         "jetbrains/phpstorm-attributes": "dev-master",
         "laminas/laminas-code": "^4.16",
         "phpunit/phpunit": "10.5.45",
-        "spiral/code-style": "~2.2.2",
+        "spiral/code-style": "~2.3.0",
         "spiral/core": "^3.14.9",
         "ta-tikoma/phpunit-architecture-test": "^0.8.5",
         "vimeo/psalm": "^5.26.1 || ^6.2"

@@ -188,6 +188,7 @@ class Process extends Scope implements ProcessInterface
         $handler = $instance->getHandler();
         $instance = $context->getWorkflowInstance();
         $arguments = null;
+        $values = [];
 
         try {
             // Initialize workflow instance
@@ -205,13 +206,12 @@ class Process extends Scope implements ProcessInterface
                         $context->getHeader(),
                     ),
                 );
-                Workflow::setCurrentContext($context);
-
-                $instance->init($values);
-            } else {
-                Workflow::setCurrentContext($context);
-                $instance->init();
             }
+
+            // Workflow::setCurrentContext($context);
+            $this->setContext($context);
+            $this->makeCurrent();
+            $instance->init($values);
 
             $context->setReadonly(false);
 
@@ -240,8 +240,8 @@ class Process extends Scope implements ProcessInterface
                     $context->isReplaying(),
                 ));
         } catch (\Throwable $e) {
-            /** @psalm-suppress RedundantPropertyInitializationCheck */
-            isset($this->context) or $this->setContext($context->setReadonly(false));
+            isset($this->context) or $this->setContext($context);
+            $context->setReadonly(false);
             $this->complete($e);
         } finally {
             Workflow::setCurrentContext(null);
