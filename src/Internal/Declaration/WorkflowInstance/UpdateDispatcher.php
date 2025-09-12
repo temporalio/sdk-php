@@ -11,12 +11,12 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration\WorkflowInstance;
 
+use Internal\Destroy\Destroyable;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\Api\Sdk\V1\WorkflowInteractionDefinition;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
-use Temporal\Internal\Declaration\Destroyable;
 use Temporal\Internal\Declaration\MethodHandler;
 use Temporal\Internal\Declaration\Prototype\UpdateDefinition;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;

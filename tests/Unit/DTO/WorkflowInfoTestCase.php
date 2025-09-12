@@ -42,6 +42,7 @@ class WorkflowInfoTestCase extends AbstractDTOMarshalling
             'CronSchedule' => null,
             'ContinuedExecutionRunID' => null,
             'ParentWorkflowNamespace' => null,
+            'RootWorkflowExecution' => null,
             'ParentWorkflowExecution' => null,
             'SearchAttributes' => null,
             'TypedSearchAttributes' => [],
@@ -50,6 +51,7 @@ class WorkflowInfoTestCase extends AbstractDTOMarshalling
             'Priority' => [
                 'priority_key' => 0,
             ],
+            'RetryPolicy' => null,
         ];
 
         $this->assertSame($expected, $this->marshal($dto));

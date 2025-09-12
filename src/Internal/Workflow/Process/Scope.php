@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Workflow\Process;
 
+use Internal\Destroy\Destroyable;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\EncodedValues;
@@ -20,7 +21,6 @@ use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\TemporalFailure;
 use Temporal\Exception\InvalidArgumentException;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
-use Temporal\Internal\Declaration\Destroyable;
 use Temporal\Internal\Declaration\MethodHandler;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Request\Cancel;
@@ -293,9 +293,17 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     public function destroy(): void
     {
-        $this->scopeContext->destroy();
-        $this->context->destroy();
-        unset($this->coroutine);
+        $this->context?->destroy();
+        $this->scopeContext?->destroy();
+        unset(
+            $this->coroutine,
+            $this->context,
+            $this->scopeContext,
+            $this->deferred,
+            $this->services,
+            $this->onCancel,
+            $this->onClose,
+        );
     }
 
     /**
@@ -355,9 +363,9 @@ class Scope implements CancellationScopeInterface, Destroyable
         }, $values)->catch($this->onException(...));
     }
 
-    protected function onRequest(RequestInterface $request, PromiseInterface $promise): void
+    protected function onRequest(RequestInterface $request, PromiseInterface $promise, bool $cancellable = true): void
     {
-        $this->onCancel[++$this->cancelID] = function (?\Throwable $reason = null) use ($request): void {
+        $this->onCancel[++$this->cancelID] = function (?\Throwable $reason = null) use ($request, $cancellable): void {
             $client = $this->context->getClient();
             if ($reason instanceof DestructMemorizedInstanceException) {
                 // memory flush
@@ -367,6 +375,11 @@ class Scope implements CancellationScopeInterface, Destroyable
 
             if ($client->isQueued($request)) {
                 $client->cancel($request);
+                return;
+            }
+
+            if (!$cancellable) {
+                // non-cancellable request
                 return;
             }
 

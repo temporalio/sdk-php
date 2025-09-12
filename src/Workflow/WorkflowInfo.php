@@ -16,6 +16,7 @@ use JetBrains\PhpStorm\Immutable;
 use Temporal\Client\ClientOptions;
 use Temporal\Common\CronSchedule;
 use Temporal\Common\Priority;
+use Temporal\Common\RetryOptions;
 use Temporal\Common\TypedSearchAttributes;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\ArrayType;
@@ -105,6 +106,12 @@ final class WorkflowInfo
     #[Marshal(name: 'ParentWorkflowNamespace')]
     public ?string $parentNamespace = null;
 
+    /**
+     * @since SDK 2.16.0
+     */
+    #[Marshal(name: 'RootWorkflowExecution', type: NullableType::class, of: WorkflowExecution::class)]
+    public ?WorkflowExecution $rootExecution = null;
+
     #[Marshal(name: 'ParentWorkflowExecution', type: NullableType::class, of: WorkflowExecution::class)]
     public ?WorkflowExecution $parentExecution = null;
 
@@ -136,6 +143,12 @@ final class WorkflowInfo
      */
     #[Marshal(name: 'Priority')]
     public Priority $priority;
+
+    /**
+     * @since SDK 2.16.0
+     */
+    #[Marshal(name: 'RetryPolicy')]
+    public ?RetryOptions $retryOptions = null;
 
     /**
      * WorkflowInfo constructor.

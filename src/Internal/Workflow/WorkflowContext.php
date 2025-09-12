@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Workflow;
 
+use Internal\Destroy\Destroyable;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\UuidInterface;
 use React\Promise\Deferred;
@@ -42,7 +43,6 @@ use Temporal\Interceptor\WorkflowOutboundCalls\UpsertSearchAttributesInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\UpsertTypedSearchAttributesInput;
 use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
 use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
-use Temporal\Internal\Declaration\Destroyable;
 use Temporal\Internal\Declaration\EntityNameValidator;
 use Temporal\Internal\Declaration\WorkflowInstance\QueryDispatcher;
 use Temporal\Internal\Declaration\WorkflowInstance\SignalDispatcher;
@@ -517,7 +517,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         $this->callsInterceptor->with(
             function (UpsertMemoInput $input): PromiseInterface {
                 if ($input->memo === []) {
-                    return resolve();
+                    return resolve(null);
                 }
 
                 $result = $this->request(new UpsertMemo($input->memo), false, false);
@@ -546,7 +546,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         $this->callsInterceptor->with(
             function (UpsertSearchAttributesInput $input): PromiseInterface {
                 if ($input->searchAttributes === []) {
-                    return resolve();
+                    return resolve(null);
                 }
 
                 $result = $this->request(new UpsertSearchAttributes($input->searchAttributes), false, false);
@@ -574,7 +574,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         $this->callsInterceptor->with(
             function (UpsertTypedSearchAttributesInput $input): PromiseInterface {
                 if ($input->updates === []) {
-                    return resolve();
+                    return resolve(null);
                 }
 
                 $result = $this->request(new UpsertTypedSearchAttributes($input->updates), false, false);
@@ -648,7 +648,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
             foreach ($awaitsGroup as $i => [$condition, $deferred]) {
                 if ($condition()) {
                     unset($this->awaits[$awaitsGroupId][$i]);
-                    $deferred->resolve();
+                    $deferred->resolve(null);
                     $this->resolveConditionGroup($awaitsGroupId);
                 }
             }
@@ -701,10 +701,10 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     {
         $this->awaits = [];
         $this->client->destroy();
-        $this->workflowInstance->destroy();
         $this->queryDispatcher->destroy();
         $this->signalDispatcher->destroy();
         $this->updateDispatcher->destroy();
+        $this->workflowInstance->destroy();
         unset($this->workflowInstance, $this->client);
     }
 
@@ -753,11 +753,11 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         }
 
         return Promise::any($result)->then(
-            function ($result) use ($conditionGroupId) {
+            function (mixed $result) use ($conditionGroupId): mixed {
                 $this->resolveConditionGroup($conditionGroupId);
                 return $result;
             },
-            function ($reason) use ($conditionGroupId): void {
+            function (\Throwable $reason) use ($conditionGroupId): void {
                 $this->rejectConditionGroup($conditionGroupId);
                 // Throw the first reason
                 // It need to avoid memory leak when the related workflow is destroyed

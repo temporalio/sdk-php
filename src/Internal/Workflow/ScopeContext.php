@@ -23,13 +23,17 @@ use Temporal\Workflow\UpdateContext;
 
 class ScopeContext extends WorkflowContext implements ScopedContextInterface
 {
+    /** @var \Closure(RequestInterface, PromiseInterface, bool $cancellable): void */
+    private \Closure $onRequest;
+
     private WorkflowContext $parent;
     private Scope $scope;
-    private \Closure $onRequest;
     private ?UpdateContext $updateContext = null;
 
     /**
      * Creates scope specific context.
+     *
+     * @param \Closure(RequestInterface, PromiseInterface, bool $cancellable): void $onRequest
      */
     public static function fromWorkflowContext(
         WorkflowContext $context,
@@ -78,11 +82,11 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
         );
 
         if (!$waitResponse) {
-            return $this->parent->request($request, $cancellable, false);
+            return $this->parent->request($request, cancellable: $cancellable, waitResponse: false);
         }
 
-        $promise = $this->parent->request($request);
-        ($this->onRequest)($request, $promise);
+        $promise = $this->parent->request($request, cancellable: $cancellable);
+        ($this->onRequest)($request, $promise, $cancellable);
 
         return new CompletableResult(
             $this,

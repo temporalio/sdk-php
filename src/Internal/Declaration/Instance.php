@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration;
 
+use Internal\Destroy\Destroyable;
 use Temporal\Exception\InstantiationException;
 use Temporal\Internal\Declaration\Prototype\Prototype;
 
@@ -46,6 +47,7 @@ abstract class Instance implements InstanceInterface, Destroyable
 
     public function destroy(): void
     {
+        isset($this->context) and $this->context instanceof Destroyable and $this->context->destroy();
         unset($this->handler, $this->context);
     }
 
