@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Temporal\Tests\Acceptance\App;
 
 use Google\Protobuf\Timestamp;
+use PHPUnit\Framework\SkippedTest;
+use PHPUnit\Framework\SkippedWithMessageException;
+use PHPUnit\Framework\TestStatus\Skipped;
 use Psr\Log\LoggerInterface;
 use Spiral\Core\Container;
 use Spiral\Core\Scope;
@@ -78,11 +81,13 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                         echo "\n\n";
                     }
 
-                    // Restart RR if a Error occurs
-                    /** @var RRStarter $runner */
-                    $runner = $container->get(RRStarter::class);
-                    $runner->stop();
-                    $runner->start();
+                    if (!$e instanceof SkippedTest) {
+                        // Restart RR if a Error occurs
+                        /** @var RRStarter $runner */
+                        $runner = $container->get(RRStarter::class);
+                        $runner->stop();
+                        $runner->start();
+                    }
 
                     throw $e;
                 } finally {

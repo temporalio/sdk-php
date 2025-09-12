@@ -66,7 +66,7 @@ class DeploymentTest extends TestCase
                 )->describe()->info->searchAttributes->getValues();
                 self::assertSame('Pinned', $sa['TemporalWorkflowVersioningBehavior']);
                 self::assertSame('foo:baz', $sa['TemporalWorkerDeploymentVersion']);
-            }
+            },
         );
     }
 
@@ -177,6 +177,7 @@ class DeploymentTest extends TestCase
             return $behavior;
         } finally {
             $starter->stop() and $starter->start();
+            sleep(5);
         }
     }
 }
