@@ -66,22 +66,24 @@ class TestWorkflow
     private array $result = [];
     private bool $exit = false;
 
-    #[WorkflowMethod(name: "Extra_Update_DynamicUpdate")]
-    public function handle()
-    {
-        // Register update methods
+    public function __construct() {
+        // Register update methods in constructor
         Workflow::registerUpdate(self::UPDATE_METHOD, function () {
             // Also Update context is tested
             $id = Workflow::getUpdateContext()->getUpdateId();
             return $this->result[self::UPDATE_METHOD] = $id;
         });
+    }
+
+    #[WorkflowMethod(name: "Extra_Update_DynamicUpdate")]
+    public function handle()
+    {
         // Update method with validation
         Workflow::registerUpdate(
             self::UPDATE_METHOD_WV,
             fn(int $value): int => $value,
             fn(int $value) => $value > 0 or throw new \InvalidArgumentException('Value must be positive'),
         );
-
         yield Workflow::await(fn() => $this->exit);
         return $this->result;
     }
