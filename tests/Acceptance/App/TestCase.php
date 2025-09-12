@@ -67,6 +67,21 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                     if ($e instanceof TemporalException) {
                         echo "\n=== Workflow history for failed test {$this->name()} ===\n";
                         $this->printWorkflowHistory($container->get(WorkflowClientInterface::class), $args);
+
+                        $logRecords = $container->get(ClientLogger::class)->getRecords();
+                        if ($logRecords !== []) {
+                            echo "\n=== Client log records ===\n";
+                            foreach ($logRecords as $record) {
+                                echo \sprintf(
+                                    "[%s] %s%s\n",
+                                    $record->level,
+                                    $record->message,
+                                    \json_encode($record->context, JSON_UNESCAPED_UNICODE),
+                                );
+                            }
+                        }
+
+                        echo "\n\n";
                     }
 
                     throw $e;

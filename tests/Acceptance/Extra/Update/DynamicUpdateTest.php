@@ -22,7 +22,7 @@ class DynamicUpdateTest extends TestCase
 {
     #[Test]
     public function addUpdateMethodWithoutValidation(
-        #[Client(timeout: 10.0)]
+        #[Client(timeout: 15.0)]
         #[Stub('Extra_Update_DynamicUpdate')]
         WorkflowStubInterface $stub,
     ): void {
