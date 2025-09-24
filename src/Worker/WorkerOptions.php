@@ -23,14 +23,6 @@ use Temporal\Workflow;
 /**
  * @psalm-import-type DateIntervalValue from DateInterval
  *
- * todo: see {@see AutoscalingPollerBehavior}
- * todo: see {@see SimplePollerBehavior}
- * todo: see {@see \Temporal\Api\Sdk\V1\WorkerConfig}
- * todo: see {@see \Temporal\Api\Taskqueue\V1\TaskQueueConfig}
- * todo: see {@see \Temporal\Api\Worker\V1\PluginInfo}
- * todo: see {@see \Temporal\Api\Worker\V1\WorkerInfo}
- * todo: see {@see \Temporal\Api\Worker\V1\WorkerPollerInfo}
- *
  * @see WorkerOptions
  */
 class WorkerOptions

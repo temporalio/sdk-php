@@ -184,7 +184,7 @@ final class WorkflowOptions extends Options
     public Priority $priority;
 
     /**
-     * Override the version of the workflow.
+     * Override the version the Workflow will start on.
      *
      * @since SDK 2.16.0
      * @since RoadRunner 2025.1.3
