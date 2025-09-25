@@ -22,6 +22,8 @@ use Temporal\Workflow;
 
 /**
  * @psalm-import-type DateIntervalValue from DateInterval
+ *
+ * @see WorkerOptions
  */
 class WorkerOptions
 {
@@ -295,7 +297,7 @@ class WorkerOptions
      * and is used to provide a unique identifier for a set of worker code, and is necessary
      * to opt in to the Worker Versioning feature. See {@see self::$useBuildIDForVersioning}.
      *
-     * @internal Experimental
+     * @deprecated
      */
     #[Marshal(name: 'BuildID')]
     public string $buildID = '';
@@ -305,11 +307,21 @@ class WorkerOptions
      * It will only operate on workflows it claims to be compatible with.
      * You must set {@see self::$buildID} if this flag is true.
      *
-     * @internal Experimental
      * @note Cannot be enabled at the same time as {@see self::$enableSessionWorker}
+     * @deprecated
      */
     #[Marshal(name: 'UseBuildIDForVersioning')]
     public bool $useBuildIDForVersioning = false;
+
+    /**
+     * Optional: If set it configures Worker Versioning for this worker.
+     *
+     * @since SDK 2.16.0
+     * @since RoadRunner 2025.1.3
+     * @internal Experimental.
+     */
+    #[Marshal(name: 'DeploymentOptions')]
+    public WorkerDeploymentOptions $deploymentOptions;
 
     #[Pure]
     public static function new(): self
@@ -802,7 +814,7 @@ class WorkerOptions
      *
      * @param non-empty-string $buildID
      *
-     * @internal Experimental
+     * @deprecated
      */
     #[Pure]
     public function withBuildID(string $buildID): self
@@ -817,14 +829,29 @@ class WorkerOptions
      * It will only operate on workflows it claims to be compatible with.
      * You must set {@see self::$buildID} if this flag is true.
      *
-     * @internal Experimental
      * @note Cannot be enabled at the same time as {@see self::$enableSessionWorker}
+     * @deprecated
      */
     #[Pure]
     public function withUseBuildIDForVersioning(bool $useBuildIDForVersioning = true): self
     {
         $self = clone $this;
         $self->useBuildIDForVersioning = $useBuildIDForVersioning;
+        return $self;
+    }
+
+    /**
+     * Set deployment options for the worker.
+     *
+     * @since SDK 2.16.0
+     * @since RoadRunner 2025.1.3
+     * @internal Experimental.
+     */
+    #[Pure]
+    public function withDeploymentOptions(WorkerDeploymentOptions $deploymentOptions): self
+    {
+        $self = clone $this;
+        $self->deploymentOptions = $deploymentOptions;
         return $self;
     }
 }

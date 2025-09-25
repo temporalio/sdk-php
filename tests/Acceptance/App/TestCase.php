@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Temporal\Tests\Acceptance\App;
 
 use Google\Protobuf\Timestamp;
+use PHPUnit\Framework\SkippedTest;
+use PHPUnit\Framework\SkippedWithMessageException;
+use PHPUnit\Framework\TestStatus\Skipped;
 use Psr\Log\LoggerInterface;
 use Spiral\Core\Container;
 use Spiral\Core\Scope;
@@ -58,12 +61,6 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                 try {
                     return parent::runTest();
                 } catch (\Throwable $e) {
-                    // Restart RR if a Error occurs
-                    /** @var RRStarter $runner */
-                    $runner = $container->get(RRStarter::class);
-                    $runner->stop();
-                    $runner->start();
-
                     if ($e instanceof TemporalException) {
                         echo "\n=== Workflow history for failed test {$this->name()} ===\n";
                         $this->printWorkflowHistory($container->get(WorkflowClientInterface::class), $args);
@@ -82,6 +79,14 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                         }
 
                         echo "\n\n";
+                    }
+
+                    if (!$e instanceof SkippedTest) {
+                        // Restart RR if a Error occurs
+                        /** @var RRStarter $runner */
+                        $runner = $container->get(RRStarter::class);
+                        $runner->stop();
+                        $runner->start();
                     }
 
                     throw $e;

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Acceptance\Extra\Workflow\Versioning;
+namespace Temporal\Tests\Acceptance\Extra\Versioning\Classic;
 
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Activity\ActivityInterface;
@@ -16,20 +16,20 @@ use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
-class VersioningTest extends TestCase
+class ClassicTest extends TestCase
 {
     #[Test]
-    public function sendEmpty(
+    public function replayDifferentVersions(
         #[Stub(
-            type: 'Extra_Versioning_Versioning',
+            type: 'Extra_Versioning_Classic',
         )] WorkflowStubInterface $stub,
     ): void {
         $result = $stub->getResult();
         self::assertSame('v2', $result);
 
         $replayer = new WorkflowReplayer();
-        $replayer->replayFromJSON('Extra_Versioning_Versioning', __DIR__ . '/Versioning-default.json');
-        $replayer->replayFromJSON('Extra_Versioning_Versioning', __DIR__ . '/Versioning-v1.json');
+        $replayer->replayFromJSON('Extra_Versioning_Classic', __DIR__ . '/Classic/Versioning-default.json');
+        $replayer->replayFromJSON('Extra_Versioning_Classic', __DIR__ . '/Classic/Versioning-v1.json');
 
         $replayer->replayFromServer($stub->getWorkflowType(), $stub->getExecution());
     }
@@ -38,7 +38,7 @@ class VersioningTest extends TestCase
 #[WorkflowInterface]
 class TestWorkflow
 {
-    #[WorkflowMethod(name: "Extra_Versioning_Versioning")]
+    #[WorkflowMethod(name: "Extra_Versioning_Classic")]
     public function handle()
     {
         $version = yield Workflow::getVersion('test', Workflow::DEFAULT_VERSION, 2);
@@ -50,7 +50,8 @@ class TestWorkflow
 
         if ($version === 2) {
             return yield Workflow::executeActivity(
-                'Extra_Versioning_Versioning.handler',
+                /** @see TestActivity::handler() */
+                'Extra_Versioning_Classic.handler',
                 args: ['v2'],
                 options: ActivityOptions::new()->withScheduleToCloseTimeout(5),
             );
@@ -60,7 +61,7 @@ class TestWorkflow
     }
 }
 
-#[ActivityInterface(prefix: 'Extra_Versioning_Versioning.')]
+#[ActivityInterface(prefix: 'Extra_Versioning_Classic.')]
 class TestActivity
 {
     #[ActivityMethod]
