@@ -22,8 +22,6 @@ class ActivityInfoTest extends TestCase
         #[Stub('Extra_Activity_ActivityInfo', args: [TestWorkflow::ARG_RETRY_OPTIONS])]
         WorkflowStubInterface $stub,
     ): void {
-        self::markTestSkipped('See https://github.com/temporalio/sdk-php/issues/602');
-
         $result = $stub->getResult(type: 'array');
         self::assertSame([
             "initial_interval" => ['seconds' => 1, 'nanos' => 0],
