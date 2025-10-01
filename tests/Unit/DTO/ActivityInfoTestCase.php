@@ -40,6 +40,7 @@ class ActivityInfoTestCase extends AbstractDTOMarshalling
             'Priority' => [
                 'priority_key' => 0,
             ],
+            'RetryPolicy' => null,
         ];
 
         $this->assertSame($expected, $this->marshal($dto));
