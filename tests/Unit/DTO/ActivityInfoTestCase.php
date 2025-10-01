@@ -39,6 +39,8 @@ class ActivityInfoTestCase extends AbstractDTOMarshalling
             'Attempt'           => 1,
             'Priority' => [
                 'priority_key' => 0,
+                'fairness_key' => '',
+                'fairness_weight' => 0.0,
             ],
         ];
 
