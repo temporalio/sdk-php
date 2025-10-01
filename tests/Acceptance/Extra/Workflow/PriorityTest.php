@@ -19,7 +19,7 @@ use Temporal\Workflow\WorkflowMethod;
 class PriorityTest extends TestCase
 {
     #[Test]
-    public function instanceInPriority(
+    public function priorityKey(
         WorkflowClientInterface $client,
         Feature $feature,
     ): void {
@@ -34,10 +34,38 @@ class PriorityTest extends TestCase
         $client->start($stub, true);
         $result = $stub->getResult('array');
 
+        self::assertSame(2, $result['activity']['priority_key']);
+        self::assertSame(1, $result['child']['priority_key']);
+        self::assertSame(4, $result['workflow']['priority_key']);
+    }
 
-        self::assertSame([2], $result['activity']);
-        self::assertSame([1], $result['child']);
-        self::assertSame([4], $result['workflow']);
+    #[Test]
+    public function fairness(
+        WorkflowClientInterface $client,
+        Feature $feature,
+    ): void {
+        $stub = $client->newUntypedWorkflowStub(
+            'Extra_Workflow_Priority',
+            WorkflowOptions::new()
+                ->withTaskQueue($feature->taskQueue)
+                ->withPriority(
+                    Priority::new()
+                        ->withFairnessKey('parent-key')
+                        ->withFairnessWeight(2.2),
+                ),
+        );
+
+        /** @see TestWorkflow::handle() */
+        $client->start($stub, true);
+        $result = $stub->getResult('array');
+
+
+        self::assertSame('activity-key', $result['activity']['fairness_key']);
+        self::assertSame(5.4, $result['activity']['fairness_weight']);
+        self::assertSame('parent-key', $result['workflow']['fairness_key']);
+        self::assertSame(2.2, $result['workflow']['fairness_weight']);
+        self::assertSame('child-key', $result['child']['fairness_key']);
+        self::assertSame(3.3, $result['child']['fairness_weight']);
     }
 }
 
@@ -51,7 +79,11 @@ class TestWorkflow
             'Extra_Workflow_Priority.handler',
             options: Activity\ActivityOptions::new()
                 ->withScheduleToCloseTimeout('10 seconds')
-                ->withPriority(Priority::new(2)),
+                ->withPriority(
+                    Priority::new(2)
+                        ->withFairnessKey('activity-key')
+                        ->withFairnessWeight(5.4),
+                ),
         );
 
         Workflow\ChildWorkflowOptions::new()->priority->priorityKey === Workflow::getInfo()->priority->priorityKey or
@@ -61,14 +93,22 @@ class TestWorkflow
             $child = yield Workflow::executeChildWorkflow(
                 'Extra_Workflow_Priority',
                 [false],
-                Workflow\ChildWorkflowOptions::new()->withPriority(Priority::new(1)),
+                Workflow\ChildWorkflowOptions::new()->withPriority(
+                    Priority::new(1)
+                        ->withFairnessKey('child-key')
+                        ->withFairnessWeight(3.3),
+                ),
                 'array',
             );
         }
 
         return [
             'activity' => $activity,
-            'workflow' => [Workflow::getInfo()->priority->priorityKey],
+            'workflow' => [
+                'priority_key' => Workflow::getInfo()->priority->priorityKey,
+                'fairness_key' => Workflow::getInfo()->priority->fairnessKey,
+                'fairness_weight' => Workflow::getInfo()->priority->fairnessWeight,
+            ],
             'child' => $child['workflow'] ?? null,
         ];
     }
@@ -80,6 +120,10 @@ class TestActivity
     #[Activity\ActivityMethod]
     public function handler(): array
     {
-        return [Activity::getInfo()->priority->priorityKey];
+        return [
+            'priority_key' => Activity::getInfo()->priority->priorityKey,
+            'fairness_key' => Activity::getInfo()->priority->fairnessKey,
+            'fairness_weight' => Activity::getInfo()->priority->fairnessWeight,
+        ];
     }
 }
