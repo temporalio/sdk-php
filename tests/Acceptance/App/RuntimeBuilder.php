@@ -92,7 +92,7 @@ final class RuntimeBuilder
 
             yield $feature => \array_filter(
                 \get_declared_classes(),
-                static fn(string $class): bool => \str_starts_with($class, $namespace),
+                static fn(string $class): bool => \str_starts_with($class, "$namespace\\"),
             );
         }
     }
