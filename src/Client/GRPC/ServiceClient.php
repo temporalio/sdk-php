@@ -1371,4 +1371,62 @@ class ServiceClient extends BaseClient
     {
         return $this->invoke("TriggerWorkflowRule", $arg, $ctx);
     }
+
+    /**
+     * WorkerHeartbeat receive heartbeat request from the worker.
+     *
+     * @throws ServiceClientException
+     */
+    public function RecordWorkerHeartbeat(V1\RecordWorkerHeartbeatRequest $arg, ?ContextInterface $ctx = null): V1\RecordWorkerHeartbeatResponse
+    {
+        return $this->invoke("RecordWorkerHeartbeat", $arg, $ctx);
+    }
+
+    /**
+     * ListWorkers is a visibility API to list worker status information in a specific
+     * namespace.
+     *
+     * @throws ServiceClientException
+     */
+    public function ListWorkers(V1\ListWorkersRequest $arg, ?ContextInterface $ctx = null): V1\ListWorkersResponse
+    {
+        return $this->invoke("ListWorkers", $arg, $ctx);
+    }
+
+    /**
+     * Updates task queue configuration.
+     * For the overall queue rate limit: the rate limit set by this api overrides the
+     * worker-set rate limit,
+     * which uncouples the rate limit from the worker lifecycle.
+     * If the overall queue rate limit is unset, the worker-set rate limit takes
+     * effect.
+     *
+     * @throws ServiceClientException
+     */
+    public function UpdateTaskQueueConfig(V1\UpdateTaskQueueConfigRequest $arg, ?ContextInterface $ctx = null): V1\UpdateTaskQueueConfigResponse
+    {
+        return $this->invoke("UpdateTaskQueueConfig", $arg, $ctx);
+    }
+
+    /**
+     * FetchWorkerConfig returns the worker configuration for a specific worker.
+     *
+     * @throws ServiceClientException
+     */
+    public function FetchWorkerConfig(V1\FetchWorkerConfigRequest $arg, ?ContextInterface $ctx = null): V1\FetchWorkerConfigResponse
+    {
+        return $this->invoke("FetchWorkerConfig", $arg, $ctx);
+    }
+
+    /**
+     * UpdateWorkerConfig updates the worker configuration of one or more workers.
+     * Can be used to partially update the worker configuration.
+     * Can be used to update the configuration of multiple workers.
+     *
+     * @throws ServiceClientException
+     */
+    public function UpdateWorkerConfig(V1\UpdateWorkerConfigRequest $arg, ?ContextInterface $ctx = null): V1\UpdateWorkerConfigResponse
+    {
+        return $this->invoke("UpdateWorkerConfig", $arg, $ctx);
+    }
 }
