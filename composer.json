@@ -83,7 +83,8 @@
     "suggest": {
         "ext-grpc": "For Client calls",
         "ext-protobuf": "For better performance",
-        "buggregator/trap": "For better debugging"
+        "buggregator/trap": "For better debugging",
+        "roadrunner/psr-logger": "RoadRunner PSR-3 logger integration"
     },
     "scripts": {
         "get:binaries": [
