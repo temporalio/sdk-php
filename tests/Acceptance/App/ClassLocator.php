@@ -4,11 +4,6 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Acceptance\App;
 
-use FilesystemIterator;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
-use SplFileInfo;
-
 final class ClassLocator
 {
     /**
@@ -19,9 +14,9 @@ final class ClassLocator
     public static function loadTestCases(string $dir, string $namespace): iterable
     {
         $dir = \realpath($dir);
-        $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS));
+        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS));
 
-        /** @var SplFileInfo $_ */
+        /** @var \SplFileInfo $_ */
         foreach ($files as $path => $_) {
             if (!\is_file($path) || !\str_ends_with($path, '.php')) {
                 continue;
@@ -43,11 +38,11 @@ final class ClassLocator
     {
         yield from \array_filter(
             \get_declared_classes(),
-            static fn(string $class): bool => \str_starts_with($class, $namespace) && \is_a(
-                    $class,
-                    $baseClass,
-                    true
-                ),
+            static fn(string $class): bool => \str_starts_with($class, "$namespace\\") && \is_a(
+                $class,
+                $baseClass,
+                true,
+            ),
         );
     }
 }

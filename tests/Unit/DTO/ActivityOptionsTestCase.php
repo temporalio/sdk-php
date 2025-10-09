@@ -37,6 +37,8 @@ class ActivityOptionsTestCase extends AbstractDTOMarshalling
             'RetryPolicy'            => null,
             'Priority' => [
                 'priority_key' => 0,
+                'fairness_key' => '',
+                'fairness_weight' => 0.0,
             ],
             'Summary' => '',
         ];
