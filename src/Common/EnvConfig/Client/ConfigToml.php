@@ -7,7 +7,16 @@ namespace Temporal\Common\EnvConfig\Client;
 use Internal\Toml\Toml;
 
 /**
- * gRPC TLS configuration.
+ * TOML configuration parser for Temporal client profiles.
+ *
+ * Parses TOML configuration files containing multiple named profiles,
+ * each with connection settings, TLS configuration, API keys, and gRPC metadata.
+ *
+ * TLS Behavior:
+ * - By default, TLS is disabled for profiles without `api_key` or explicit `tls` section
+ * - TLS is automatically enabled when `api_key` is present or `tls = true`
+ * - In strict mode, specifying both `*_path` and `*_data` options throws an exception
+ * - In non-strict mode, `*_path` takes precedence over `*_data` if both are specified
  *
  * Example TOML:
  *
@@ -70,7 +79,7 @@ final class ConfigToml
      * @param non-empty-string $message The exception message if the assertion fails.
      * @return bool Returns true if the condition is false.
      */
-    private function assertNot(bool $condition, string $message): bool
+    private function notAssert(bool $condition, string $message): bool
     {
         $this->strict and !$condition and throw new \InvalidArgumentException($message);
         return !$condition;
@@ -84,57 +93,69 @@ final class ConfigToml
      */
     private function parseProfiles(mixed $profile): array
     {
-        if ($this->assertNot(\is_array($profile), 'The `profile` section must be an array.')) {
+        if ($this->notAssert(\is_array($profile), 'The `profile` section must be an array.')) {
             return [];
         }
 
         $result = [];
         foreach ($profile as $name => $config) {
             if (
-                $this->assertNot(\is_array($config), 'Each profile configuration must be an array.')
-                || $this->assertNot(\strlen($name) > 0, 'Profile name must be a non-empty string.')
+                $this->notAssert(\is_array($config), 'Each profile configuration must be an array.')
+                || $this->notAssert(\strlen($name) > 0, 'Profile name must be a non-empty string.')
             ) {
                 continue;
             }
 
-            // cert_data and cert_path must not be used together
-            $rootCert = $config['tls']['server_ca_cert_path'] ?? $config['tls']['server_ca_cert_data'] ?? null;
-            $rootCert === null or $this->assertNot(
-                isset($config['tls']['server_ca_cert_path'], $config['tls']['server_ca_cert_data']),
-                'Cannot specify both `server_ca_cert_path` and `server_ca_cert_data`.',
-            );
-            $privateKey = $config['tls']['client_key_path'] ?? $config['tls']['client_key_data'] ?? null;
-            $privateKey === null or $this->assertNot(
-                isset($config['tls']['client_key_path'], $config['tls']['client_key_data']),
-                'Cannot specify both `client_key_path` and `client_key_data`.',
-            );
-            $certChain = $config['tls']['client_cert_path'] ?? $config['tls']['client_cert_data'] ?? null;
-            $certChain === null or $this->assertNot(
-                isset($config['tls']['client_cert_path'], $config['tls']['client_cert_data']),
-                'Cannot specify both `client_cert_path` and `client_cert_data`.',
-            );
-
-            $this->assertNot(
-                $privateKey === null xor $certChain === null,
-                'Both `client_key_*` and `client_cert_*` must be specified for mTLS.',
-            );
+            $apiKey = $config['api_key'] ?? null;
+            $tls = $config['tls'] ?? null;
+            $tlsConfig = match (true) {
+                \is_array($config['tls']) => $this->parseTls($config['tls']),
+                $apiKey !== null || $tls === true => new ConfigTls(),
+                default => new ConfigTls(disabled: true),
+            };
 
             $result[$name] = new ConfigProfile(
                 address: $config['address'] ?? null,
                 namespace: $config['namespace'] ?? null,
-                apiKey: $config['api_key'] ?? null,
-                tlsConfig: ($config['tls']['disabled'] ?? false)
-                    ? null
-                    : new ConfigTls(
-                        rootCerts: $rootCert,
-                        privateKey: $privateKey,
-                        certChain: $certChain,
-                        serverName: $config['tls']['server_name'] ?? null,
-                    ),
+                apiKey: $apiKey,
+                tlsConfig: $tlsConfig,
                 grpcMeta: $config['grpc_meta'] ?? [],
             );
         }
 
         return $result;
+    }
+
+    private function parseTls(array $tls): ?ConfigTls
+    {
+        // cert_data and cert_path must not be used together
+        $rootCert = $tls['server_ca_cert_path'] ?? $tls['server_ca_cert_data'] ?? null;
+        $privateKey = $tls['client_key_path'] ?? $tls['client_key_data'] ?? null;
+        $certChain = $tls['client_cert_path'] ?? $tls['client_cert_data'] ?? null;
+
+        $rootCert === null or $this->notAssert(
+            isset($tls['server_ca_cert_path']) xor isset($tls['server_ca_cert_data']),
+            'Cannot specify both `server_ca_cert_path` and `server_ca_cert_data`.',
+        );
+        $privateKey === null or $this->notAssert(
+            isset($tls['client_key_path']) xor isset($tls['client_key_data']),
+            'Cannot specify both `client_key_path` and `client_key_data`.',
+        );
+        $certChain === null or $this->notAssert(
+            isset($tls['client_cert_path']) xor isset($tls['client_cert_data']),
+            'Cannot specify both `client_cert_path` and `client_cert_data`.',
+        );
+        $this->notAssert(
+            ($privateKey === null) === ($certChain === null),
+            'Both `client_key_*` and `client_cert_*` must be specified for mTLS.',
+        );
+
+        return new ConfigTls(
+            disabled: $tls['disabled'] ?? false,
+            rootCerts: $rootCert,
+            privateKey: $privateKey,
+            certChain: $certChain,
+            serverName: $tls['server_name'] ?? null,
+        );
     }
 }

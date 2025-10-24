@@ -1,5 +1,0 @@
-[profile.default]
-address = "my-ns.a1b2c.tmprl.cloud:7233"
-namespace = "my-ns.a1b2c"
-tls.client_cert_path = "path/to/my/client.pem"
-tls.client_key_path = "path/to/my/client.pem"
