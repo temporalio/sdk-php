@@ -20,8 +20,6 @@ interface EnvProvider
      * Get environment variable by name
      *
      * @param non-empty-string $name
-     * @param string|null $default
-     * @return string|null
      */
     public function get(string $name, ?string $default = null): ?string;
 }
