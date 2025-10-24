@@ -11,6 +11,7 @@ namespace Temporal\Common\EnvConfig\Client;
 final class ConfigTls
 {
     /**
+     * @param bool $disabled Whether to disable TLS.
      * @param non-empty-string|null $rootCerts Root certificates string or file in PEM format.
      *        If null provided, default gRPC root certificates are used.
      * @param non-empty-string|null $privateKey Client private key string or file in PEM format.
@@ -18,6 +19,7 @@ final class ConfigTls
      * @param non-empty-string|null $serverName Server name override for TLS verification.
      */
     public function __construct(
+        public readonly bool $disabled = false,
         public readonly ?string $rootCerts = null,
         public readonly ?string $privateKey = null,
         public readonly ?string $certChain = null,
