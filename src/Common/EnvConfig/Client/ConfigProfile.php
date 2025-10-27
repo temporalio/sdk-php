@@ -14,13 +14,23 @@ namespace Temporal\Common\EnvConfig\Client;
  */
 final class ConfigProfile
 {
+    /** @var array<non-empty-lowercase-string, string> */
+    public readonly array $grpcMeta;
+
     public function __construct(
         public readonly ?string $address,
         public readonly ?string $namespace,
         public readonly null|string|\Stringable $apiKey,
         public readonly ?ConfigTls $tlsConfig = null,
-        public readonly array $grpcMeta = [],
-    ) {}
+        array $grpcMeta = [],
+    ) {
+        // Keys to strtolower
+        $meta = [];
+        foreach ($grpcMeta as $key => $value) {
+            $meta[\strtolower($key)] = $value;
+        }
+        $this->grpcMeta = $meta;
+    }
 
     public function mergeWith(self $config): self
     {

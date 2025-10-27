@@ -39,7 +39,7 @@ use Internal\Toml\Toml;
  *  custom-header = "custom-value"
  * ```
  *
- * @link https://github.com/temporalio/proposals/blob/master/all-sdk/external-client-configuration.md
+ * @link https://github.com/temporalio/proposals/blob/master/all-sdk/external-client-configuration.md#values-and-file-format
  * @internal
  */
 final class ConfigToml
