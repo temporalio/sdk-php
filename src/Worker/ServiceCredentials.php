@@ -44,6 +44,6 @@ final class ServiceCredentials
     public function withApiKey(string $key): static
     {
         /** @see self::$apiKey */
-        return $this->with('apiKey', $key);
+        return $this->cloneWith('apiKey', $key);
     }
 }

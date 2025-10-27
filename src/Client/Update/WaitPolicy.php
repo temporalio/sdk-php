@@ -39,6 +39,6 @@ final class WaitPolicy
     public function withLifecycleStage(LifecycleStage $value): self
     {
         /** @see self::$lifecycleStage */
-        return $this->with('lifecycleStage', $value);
+        return $this->cloneWith('lifecycleStage', $value);
     }
 }

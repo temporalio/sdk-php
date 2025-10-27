@@ -51,7 +51,7 @@ final class BackfillPeriod
     public function withStartTime(\DateTimeInterface|string $dateTime): self
     {
         /** @see self::$startTime */
-        return $this->with('startTime', DateTime::parse($dateTime, class: \DateTimeImmutable::class));
+        return $this->cloneWith('startTime', DateTime::parse($dateTime, class: \DateTimeImmutable::class));
     }
 
     /**
@@ -60,7 +60,7 @@ final class BackfillPeriod
     public function withEndTime(\DateTimeInterface|string $dateTime): self
     {
         /** @see self::$endTime */
-        return $this->with('endTime', DateTime::parse($dateTime, class: \DateTimeImmutable::class));
+        return $this->cloneWith('endTime', DateTime::parse($dateTime, class: \DateTimeImmutable::class));
     }
 
     /**
@@ -69,6 +69,6 @@ final class BackfillPeriod
     public function withOverlapPolicy(ScheduleOverlapPolicy $overlapPolicy): self
     {
         /** @see self::$overlapPolicy */
-        return $this->with('overlapPolicy', $overlapPolicy);
+        return $this->cloneWith('overlapPolicy', $overlapPolicy);
     }
 }

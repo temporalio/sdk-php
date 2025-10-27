@@ -50,7 +50,7 @@ final class IntervalSpec
         \assert(DateInterval::assert($interval));
         $interval = DateInterval::parse($interval, DateInterval::FORMAT_SECONDS);
 
-        return $this->with('interval', $interval);
+        return $this->cloneWith('interval', $interval);
     }
 
     public function withPhase(mixed $phase): self
@@ -58,6 +58,6 @@ final class IntervalSpec
         \assert(DateInterval::assert($phase));
         $phase = DateInterval::parse($phase, DateInterval::FORMAT_SECONDS);
 
-        return $this->with('phase', $phase);
+        return $this->cloneWith('phase', $phase);
     }
 }

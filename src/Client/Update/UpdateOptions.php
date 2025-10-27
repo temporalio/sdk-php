@@ -46,7 +46,7 @@ final class UpdateOptions
     public function withUpdateName(string $name): self
     {
         /** @see self::$updateName */
-        return $this->with('updateName', $name);
+        return $this->cloneWith('updateName', $name);
     }
 
     /**
@@ -55,7 +55,7 @@ final class UpdateOptions
     public function withWaitPolicy(WaitPolicy $policy): self
     {
         /** @see self::$waitPolicy */
-        return $this->with('waitPolicy', $policy);
+        return $this->cloneWith('waitPolicy', $policy);
     }
 
     /**
@@ -65,7 +65,7 @@ final class UpdateOptions
     public function withUpdateId(?string $id): self
     {
         /** @see self::$updateId */
-        return $this->with('updateId', $id);
+        return $this->cloneWith('updateId', $id);
     }
 
     /**
@@ -75,7 +75,7 @@ final class UpdateOptions
     public function withFirstExecutionRunId(?string $runId): self
     {
         /** @see self::$firstExecutionRunId */
-        return $this->with('firstExecutionRunId', $runId);
+        return $this->cloneWith('firstExecutionRunId', $runId);
     }
 
     /**
@@ -84,6 +84,6 @@ final class UpdateOptions
     public function withResultType(mixed $type): self
     {
         /** @see self::$resultType */
-        return $this->with('resultType', $type);
+        return $this->cloneWith('resultType', $type);
     }
 }
