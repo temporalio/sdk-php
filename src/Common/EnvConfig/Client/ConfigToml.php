@@ -11,6 +11,7 @@ use Internal\Toml\Toml;
  *
  * Parses TOML configuration files containing multiple named profiles,
  * each with connection settings, TLS configuration, API keys, and gRPC metadata.
+ * All configuration keys are optional.
  *
  * TLS Behavior:
  * - By default, TLS is disabled for profiles without `api_key` or explicit `tls` section
@@ -22,8 +23,8 @@ use Internal\Toml\Toml;
  *
  * ```toml
  *  [profile.default]
- *  address = "default-address"
- *  namespace = "default-namespace"
+ *  address = "127.0.0.1:7233"
+ *  namespace = "default"
  *
  *  [profile.custom]
  *  address = "custom-address"
@@ -31,26 +32,14 @@ use Internal\Toml\Toml;
  *  api_key = "custom-api-key"
  *  [profile.custom.tls]
  *  server_name = "custom-server-name"
+ *  server_ca_cert_path = "ca-pem-data"
+ *  client_cert_data = "client-crt-data"
+ *  client_key_data = "client-key-data"
  *  [profile.custom.grpc_meta]
  *  custom-header = "custom-value"
  * ```
  *
- * ```toml
- *  [profile.tls_disabled]
- *  address = "localhost:1234"
- *  [profile.tls_disabled.tls]
- *  disabled = true
- *  server_name = "should-be-ignored"
- *
- *  [profile.tls_with_certs]
- *  address = "localhost:5678"
- *  [profile.tls_with_certs.tls]
- *  server_name = "custom-server"
- *  server_ca_cert_data = "ca-pem-data"
- *  client_cert_data = "client-crt-data"
- *  client_key_data = "client-key-data"
- * ```
- *
+ * @link https://github.com/temporalio/proposals/blob/master/all-sdk/external-client-configuration.md
  * @internal
  */
 final class ConfigToml
