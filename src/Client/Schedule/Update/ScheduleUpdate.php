@@ -44,7 +44,7 @@ final class ScheduleUpdate
     public function withSchedule(Schedule $schedule): self
     {
         /** @see self::$schedule */
-        return $this->with('schedule', $schedule);
+        return $this->cloneWith('schedule', $schedule);
     }
 
     /**
@@ -54,6 +54,6 @@ final class ScheduleUpdate
     public function withSearchAttributes(?EncodedCollection $searchAttributes = null): self
     {
         /** @see self::$searchAttributes */
-        return $this->with('searchAttributes', $searchAttributes);
+        return $this->cloneWith('searchAttributes', $searchAttributes);
     }
 }

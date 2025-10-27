@@ -31,7 +31,7 @@ final class TaskQueue implements \Stringable
     public function withName(string $name): self
     {
         /** @see self::$name */
-        return $this->with('name', $name);
+        return $this->cloneWith('name', $name);
     }
 
     public function __toString(): string
