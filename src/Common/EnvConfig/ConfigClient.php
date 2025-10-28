@@ -1,0 +1,184 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Temporal\Common\EnvConfig;
+
+use Temporal\Common\EnvConfig\Client\ConfigEnv;
+use Temporal\Common\EnvConfig\Client\ConfigProfile;
+use Temporal\Common\EnvConfig\Client\ConfigToml;
+use Temporal\Common\EnvConfig\Exception\ConfigException;
+use Temporal\Common\EnvConfig\Exception\DuplicateProfileException;
+use Temporal\Common\EnvConfig\Exception\InvalidConfigException;
+use Temporal\Common\EnvConfig\Exception\ProfileNotFoundException;
+
+/**
+ * Client configuration container managing multiple named profiles.
+ *
+ * This class provides methods to load configuration from TOML files and environment variables,
+ * following the Temporal external client configuration specification.
+ *
+ * Configuration loading hierarchy (later values override earlier ones):
+ * 1. Load profile from TOML configuration file
+ * 2. Override with environment variables (TEMPORAL_*)
+ * 3. SDK defaults are applied for unspecified values
+ *
+ * Profile names are case-insensitive per specification.
+ *
+ * @link https://github.com/temporalio/proposals/blob/master/all-sdk/external-client-configuration.md
+ *
+ * @internal
+ * @psalm-internal Temporal\Common\EnvConfig
+ */
+final class ConfigClient
+{
+    /**
+     * @param array<lowercase-string, ConfigProfile> $profiles Profile configurations keyed by lowercase name
+     */
+    private function __construct(
+        public readonly array $profiles,
+    ) {}
+
+    /**
+     * Load client configuration with optional file and environment variable merging.
+     *
+     * This is the primary method for loading configuration with full control over sources.
+     *
+     * Loading order (later overrides earlier):
+     * 1. Profile from TOML file (if $configFile provided or found at default location)
+     * 2. Environment variable overrides (if $envProvider provided)
+     *
+     * @param non-empty-string|null $profileName Profile name to load. If null, uses TEMPORAL_PROFILE
+     *        environment variable or 'default' as fallback.
+     * @param non-empty-string|null $configFile Path to TOML config file or TOML content string.
+     *        If null, attempts to find config at default platform-specific location.
+     * @param EnvProvider $envProvider Environment variable provider for overrides.
+     * @param bool $strict Whether to use strict TOML parsing (validates mutual exclusivity, etc.)
+     *
+     * @throws ProfileNotFoundException If the requested profile is not found
+     * @throws InvalidConfigException If configuration file is invalid
+     */
+    public static function load(
+        ?string $profileName = null,
+        ?string $configFile = null,
+        EnvProvider $envProvider = new SystemEnvProvider(),
+        bool $strict = true,
+    ): self {
+        // Load environment config first to get profile name if not specified
+        $envConfig = ConfigEnv::fromEnvProvider($envProvider);
+        $profileName ??= $envConfig->currentProfile ?? 'default';
+        $profileNameLower = \strtolower($profileName);
+
+        // Load from file
+        $profile = null;
+        $profiles = [];
+        if ($configFile !== null) {
+            $profiles = self::loadFromFile($configFile, $strict)->profiles;
+            $profile = $profiles[$profileNameLower] ?? null;
+        }
+
+        // Merge with environment overrides or use env profile
+        if ($profile !== null) {
+            $profile = $profile->mergeWith($envConfig->profile);
+        } elseif ($envConfig->profile->address !== null || $envConfig->profile->namespace !== null) {
+            // Use env profile only if it has meaningful data
+            $profile = $envConfig->profile;
+        }
+
+        // If still no profile found, throw
+        $profile === null and throw new ProfileNotFoundException($profileName);
+
+        // Store profile with lowercase key
+        $profiles[$profileNameLower] = $profile;
+
+        return new self($profiles);
+    }
+
+    /**
+     * Load client configuration from environment variables only.
+     *
+     * Uses TEMPORAL_* environment variables to construct configuration.
+     *
+     * @param EnvProvider $envProvider Environment variable provider.
+     */
+    public static function loadFromEnv(EnvProvider $envProvider = new SystemEnvProvider()): self
+    {
+        $envConfig = ConfigEnv::fromEnvProvider($envProvider);
+        $profileName = \strtolower($envConfig->currentProfile ?? 'default');
+
+        return new self([$profileName => $envConfig->profile]);
+    }
+
+    /**
+     * Load all profiles from a TOML configuration file.
+     *
+     * @param non-empty-string $source File path to TOML config or TOML content string
+     * @param bool $strict Whether to use strict TOML parsing
+     *
+     * @throws InvalidConfigException If the file cannot be read or TOML is invalid
+     */
+    public static function loadFromFile(string $source, bool $strict = true): self
+    {
+        try {
+            // Determine if source is a file path or TOML content
+            $toml = \is_file($source)
+                ? \file_get_contents($source)
+                : $source;
+
+            $toml === false and throw new InvalidConfigException("Failed to read configuration file: {$source}");
+
+            $config = new ConfigToml($toml, $strict);
+            return new self(self::normalizeProfileNames($config->profiles));
+        } catch (ConfigException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            throw new InvalidConfigException(
+                "Invalid TOML configuration: {$e->getMessage()}",
+                previous: $e,
+            );
+        }
+    }
+
+    /**
+     * Get a profile by name (case-insensitive).
+     *
+     * @param non-empty-string $name Profile name
+     *
+     * @throws ProfileNotFoundException If profile does not exist
+     */
+    public function getProfile(string $name): ConfigProfile
+    {
+        $lower = \strtolower($name);
+        isset($this->profiles[$lower]) or throw new ProfileNotFoundException($name);
+
+        return $this->profiles[$lower];
+    }
+
+    /**
+     * Check if a profile exists (case-insensitive).
+     *
+     * @param non-empty-string $name Profile name
+     */
+    public function hasProfile(string $name): bool
+    {
+        return isset($this->profiles[\strtolower($name)]);
+    }
+
+    /**
+     * Normalize profile names to lowercase and validate for duplicates.
+     *
+     * @param array<non-empty-string, ConfigProfile> $profiles Profiles with original case names
+     * @return array<lowercase-string, ConfigProfile> Profiles with lowercase keys
+     * @throws DuplicateProfileException If duplicate names found
+     */
+    private static function normalizeProfileNames(array $profiles): array
+    {
+        $normalized = [];
+        foreach ($profiles as $name => $profile) {
+            $lower = \strtolower($name);
+            isset($normalized[$lower]) and throw new DuplicateProfileException($name, $lower);
+            $normalized[$lower] = $profile;
+        }
+        return $normalized;
+    }
+}

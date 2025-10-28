@@ -98,7 +98,7 @@ final class ConfigToml
             $apiKey = $config['api_key'] ?? null;
             $tls = $config['tls'] ?? null;
             $tlsConfig = match (true) {
-                \is_array($config['tls']) => $this->parseTls($config['tls']),
+                \is_array($tls) => $this->parseTls($tls),
                 $apiKey !== null || $tls === true => new ConfigTls(),
                 default => new ConfigTls(disabled: true),
             };
