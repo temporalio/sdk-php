@@ -109,6 +109,7 @@ final class ConfigToml
                 apiKey: $apiKey,
                 tlsConfig: $tlsConfig,
                 grpcMeta: $config['grpc_meta'] ?? [],
+                codecConfig: isset($config['codec']) && \is_array($config['codec']) ? $this->parseCodec($config['codec']) : null,
             );
         }
 
@@ -145,6 +146,28 @@ final class ConfigToml
             privateKey: $privateKey,
             certChain: $certChain,
             serverName: $tls['server_name'] ?? null,
+        );
+    }
+
+    /**
+     * Parse codec configuration from TOML array.
+     *
+     * @param array $codec Codec configuration array
+     * @return ConfigCodec|null Parsed codec configuration or null if empty
+     */
+    private function parseCodec(array $codec): ?ConfigCodec
+    {
+        $endpoint = $codec['endpoint'] ?? null;
+        $auth = $codec['auth'] ?? null;
+
+        // Return null if both fields are empty
+        if ($endpoint === null && $auth === null) {
+            return null;
+        }
+
+        return new ConfigCodec(
+            endpoint: $endpoint,
+            auth: $auth,
         );
     }
 }

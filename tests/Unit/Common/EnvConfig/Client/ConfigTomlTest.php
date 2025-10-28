@@ -7,9 +7,11 @@ namespace Temporal\Tests\Unit\Common\EnvConfig\Client;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Temporal\Common\EnvConfig\Client\ConfigCodec;
 use Temporal\Common\EnvConfig\Client\ConfigProfile;
 use Temporal\Common\EnvConfig\Client\ConfigTls;
 use Temporal\Common\EnvConfig\Client\ConfigToml;
+use Temporal\Common\EnvConfig\Exception\CodecNotSupportedException;
 
 #[CoversClass(ConfigToml::class)]
 final class ConfigTomlTest extends TestCase
@@ -669,5 +671,78 @@ final class ConfigTomlTest extends TestCase
         self::assertInstanceOf(ConfigTls::class, $profile->tlsConfig);
         self::assertFalse($profile->tlsConfig->disabled);
         self::assertSame('enabled-server', $profile->tlsConfig->serverName);
+    }
+
+    public function testConstructorThrowsExceptionWhenCodecEndpointIsConfigured(): void
+    {
+        // Arrange
+        $toml = <<<'TOML'
+            [profile.with_codec]
+            address = "codec.example.com:7233"
+            [profile.with_codec.codec]
+            endpoint = "https://codec.example.com"
+            TOML;
+
+        // Assert
+        $this->expectException(CodecNotSupportedException::class);
+        $this->expectExceptionMessage('Remote codec configuration is not supported in the PHP SDK');
+
+        // Act
+        new ConfigToml($toml);
+    }
+
+    public function testConstructorThrowsExceptionWhenCodecAuthIsConfigured(): void
+    {
+        // Arrange
+        $toml = <<<'TOML'
+            [profile.with_codec_auth]
+            address = "codec.example.com:7233"
+            [profile.with_codec_auth.codec]
+            auth = "Bearer token123"
+            TOML;
+
+        // Assert
+        $this->expectException(CodecNotSupportedException::class);
+        $this->expectExceptionMessage('Remote codec configuration is not supported in the PHP SDK');
+
+        // Act
+        new ConfigToml($toml);
+    }
+
+    public function testConstructorThrowsExceptionWhenBothCodecFieldsAreConfigured(): void
+    {
+        // Arrange
+        $toml = <<<'TOML'
+            [profile.with_full_codec]
+            address = "codec.example.com:7233"
+            [profile.with_full_codec.codec]
+            endpoint = "https://codec.example.com"
+            auth = "Bearer token123"
+            TOML;
+
+        // Assert
+        $this->expectException(CodecNotSupportedException::class);
+        $this->expectExceptionMessage('Remote codec configuration is not supported in the PHP SDK');
+
+        // Act
+        new ConfigToml($toml);
+    }
+
+    public function testConstructorDoesNotThrowExceptionForEmptyCodecSection(): void
+    {
+        // Arrange
+        $toml = <<<'TOML'
+            [profile.empty_codec]
+            address = "example.com:7233"
+            [profile.empty_codec.codec]
+            TOML;
+
+        // Act
+        $config = new ConfigToml($toml);
+
+        // Assert
+        self::assertCount(1, $config->profiles);
+        $profile = $config->profiles['empty_codec'];
+        self::assertNull($profile->codecConfig);
     }
 }

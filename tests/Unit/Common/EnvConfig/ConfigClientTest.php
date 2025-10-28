@@ -12,6 +12,7 @@ use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Common\EnvConfig\Client\ConfigProfile;
 use Temporal\Common\EnvConfig\Client\ConfigTls;
 use Temporal\Common\EnvConfig\ConfigClient;
+use Temporal\Common\EnvConfig\Exception\CodecNotSupportedException;
 use Temporal\Common\EnvConfig\Exception\DuplicateProfileException;
 use Temporal\Common\EnvConfig\Exception\InvalidConfigException;
 use Temporal\Common\EnvConfig\Exception\ProfileNotFoundException;
@@ -35,14 +36,14 @@ final class ConfigClientTest extends TestCase
     {
         // Arrange
         $toml = <<<'TOML'
-[profile.default]
-address = "127.0.0.1:7233"
-namespace = "default"
+            [profile.default]
+            address = "127.0.0.1:7233"
+            namespace = "default"
 
-[profile.production]
-address = "prod.temporal.io:7233"
-namespace = "production"
-TOML;
+            [profile.production]
+            address = "prod.temporal.io:7233"
+            namespace = "production"
+            TOML;
 
         // Act
         $config = ConfigClient::loadFromFile($toml);
@@ -63,8 +64,10 @@ TOML;
     public function testLoadFromFileThrowsExceptionForInvalidToml(): void
     {
         // Arrange
-        $invalidToml = '[profile.invalid
-address = missing_quote';
+        $invalidToml = <<<'TOML'
+            [profile.invalid
+            address = missing_quote
+            TOML;
 
         // Assert (before Act for exceptions)
         $this->expectException(InvalidConfigException::class);
@@ -109,10 +112,10 @@ address = missing_quote';
     {
         // Arrange
         $toml = <<<'TOML'
-[profile.default]
-address = "127.0.0.1:7233"
-namespace = "default"
-TOML;
+            [profile.default]
+            address = "127.0.0.1:7233"
+            namespace = "default"
+            TOML;
 
         // Act
         $config = ConfigClient::load(
@@ -130,10 +133,10 @@ TOML;
     {
         // Arrange
         $toml = <<<'TOML'
-[profile.default]
-address = "127.0.0.1:7233"
-namespace = "default"
-TOML;
+            [profile.default]
+            address = "127.0.0.1:7233"
+            namespace = "default"
+            TOML;
 
         $this->envProvider->set('TEMPORAL_ADDRESS', 'override.temporal.io:7233');
         $this->envProvider->set('TEMPORAL_NAMESPACE', 'override-namespace');
@@ -155,12 +158,12 @@ TOML;
     {
         // Arrange
         $toml = <<<'TOML'
-[profile.default]
-address = "127.0.0.1:7233"
+            [profile.default]
+            address = "127.0.0.1:7233"
 
-[profile.production]
-address = "prod.temporal.io:7233"
-TOML;
+            [profile.production]
+            address = "prod.temporal.io:7233"
+            TOML;
 
         $this->envProvider->set('TEMPORAL_PROFILE', 'production');
 
@@ -180,9 +183,9 @@ TOML;
     {
         // Arrange
         $toml = <<<'TOML'
-[profile.default]
-address = "127.0.0.1:7233"
-TOML;
+            [profile.default]
+            address = "127.0.0.1:7233"
+            TOML;
 
         // Act
         $config = ConfigClient::load(
@@ -200,9 +203,9 @@ TOML;
     {
         // Arrange
         $toml = <<<'TOML'
-[profile.default]
-address = "127.0.0.1:7233"
-TOML;
+            [profile.default]
+            address = "127.0.0.1:7233"
+            TOML;
 
         // Assert (before Act for exceptions)
         $this->expectException(ProfileNotFoundException::class);
@@ -263,9 +266,9 @@ TOML;
     {
         // Arrange
         $toml = <<<'TOML'
-[profile.default]
-address = "127.0.0.1:7233"
-TOML;
+            [profile.default]
+            address = "127.0.0.1:7233"
+            TOML;
         $config = ConfigClient::loadFromFile($toml);
 
         // Assert (before Act for exceptions)
@@ -280,9 +283,9 @@ TOML;
     {
         // Arrange
         $toml = <<<'TOML'
-[profile.default]
-address = "127.0.0.1:7233"
-TOML;
+            [profile.default]
+            address = "127.0.0.1:7233"
+            TOML;
         $config = ConfigClient::loadFromFile($toml);
 
         // Act & Assert
@@ -293,12 +296,12 @@ TOML;
     {
         // Arrange
         $toml = <<<'TOML'
-[profile.default]
-address = "127.0.0.1:7233"
+            [profile.default]
+            address = "127.0.0.1:7233"
 
-[profile.Default]
-address = "other.temporal.io:7233"
-TOML;
+            [profile.Default]
+            address = "other.temporal.io:7233"
+            TOML;
 
         // Assert (before Act for exceptions)
         $this->expectException(DuplicateProfileException::class);
@@ -450,9 +453,9 @@ TOML;
     {
         // Arrange
         $toml = <<<'TOML'
-[profile.default]
-address = "127.0.0.1:7233"
-TOML;
+            [profile.default]
+            address = "127.0.0.1:7233"
+            TOML;
         $config = ConfigClient::loadFromFile($toml);
 
         // Assert
@@ -588,6 +591,60 @@ TOML;
         $metadata = $context->getMetadata();
         self::assertArrayHasKey('custom-header', $metadata);
         self::assertSame(['custom-value'], $metadata['custom-header']);
+    }
+
+    public function testLoadThrowsExceptionWhenCodecIsConfiguredInToml(): void
+    {
+        // Arrange
+        $toml = <<<'TOML'
+            [profile.default]
+            address = "127.0.0.1:7233"
+            [profile.default.codec]
+            endpoint = "https://codec.example.com"
+            TOML;
+
+        // Assert
+        $this->expectException(CodecNotSupportedException::class);
+        $this->expectExceptionMessage('Remote codec configuration is not supported in the PHP SDK');
+
+        // Act
+        ConfigClient::load(
+            profileName: 'default',
+            configFile: $toml,
+            envProvider: $this->envProvider,
+        );
+    }
+
+    public function testLoadThrowsExceptionWhenCodecIsConfiguredInEnv(): void
+    {
+        // Arrange
+        $this->envProvider->set('TEMPORAL_ADDRESS', '127.0.0.1:7233');
+        $this->envProvider->set('TEMPORAL_CODEC_ENDPOINT', 'https://codec.example.com');
+
+        // Assert
+        $this->expectException(CodecNotSupportedException::class);
+        $this->expectExceptionMessage('Remote codec configuration is not supported in the PHP SDK');
+
+        // Act
+        ConfigClient::load(
+            profileName: 'default',
+            configFile: null,
+            envProvider: $this->envProvider,
+        );
+    }
+
+    public function testLoadFromEnvThrowsExceptionWhenCodecIsConfigured(): void
+    {
+        // Arrange
+        $this->envProvider->set('TEMPORAL_ADDRESS', '127.0.0.1:7233');
+        $this->envProvider->set('TEMPORAL_CODEC_AUTH', 'Bearer token123');
+
+        // Assert
+        $this->expectException(CodecNotSupportedException::class);
+        $this->expectExceptionMessage('Remote codec configuration is not supported in the PHP SDK');
+
+        // Act
+        ConfigClient::loadFromEnv($this->envProvider);
     }
 
     protected function setUp(): void

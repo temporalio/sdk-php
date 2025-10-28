@@ -26,11 +26,17 @@ use Temporal\Common\EnvConfig\EnvProvider;
  * - TEMPORAL_TLS_SERVER_CA_CERT_PATH - Path to server CA certificate file
  * - TEMPORAL_TLS_SERVER_CA_CERT_DATA - Server CA certificate data (PEM format)
  * - TEMPORAL_TLS_SERVER_NAME - Server name for TLS verification (SNI override)
+ * - TEMPORAL_CODEC_ENDPOINT - Remote codec endpoint URL (NOT SUPPORTED - throws exception)
+ * - TEMPORAL_CODEC_AUTH - Authorization header for remote codec (NOT SUPPORTED - throws exception)
  * - TEMPORAL_GRPC_META_* - gRPC metadata headers (e.g., TEMPORAL_GRPC_META_X_CUSTOM_HEADER)
  *
  * TLS Configuration Rules:
  * - Cannot specify both *_PATH and *_DATA variants for the same certificate (throws exception)
  * - *_PATH takes precedence over *_DATA if both are set (with strict validation)
+ *
+ * Codec Configuration:
+ * - Remote codec configuration is NOT SUPPORTED in PHP SDK
+ * - If TEMPORAL_CODEC_ENDPOINT or TEMPORAL_CODEC_AUTH is set, an exception will be thrown
  *
  * @link https://github.com/temporalio/proposals/blob/master/all-sdk/external-client-configuration.md#environment-variables
  * @internal
@@ -66,6 +72,7 @@ final class ConfigEnv
                 apiKey: $env->get('TEMPORAL_API_KEY'),
                 tlsConfig: self::fetchTlsConfig($env),
                 grpcMeta: self::fetchGrpcMeta($env),
+                codecConfig: self::fetchCodecConfig($env),
             ),
             $profile,
             $env->get('TEMPORAL_CONFIG_FILE'),
@@ -137,5 +144,28 @@ final class ConfigEnv
         }
 
         return $result;
+    }
+
+    /**
+     * Fetch codec configuration from environment variables.
+     *
+     * Reads TEMPORAL_CODEC_ENDPOINT and TEMPORAL_CODEC_AUTH environment variables.
+     *
+     * @return ConfigCodec|null Codec configuration or null if no codec env vars are set
+     */
+    private static function fetchCodecConfig(EnvProvider $env): ?ConfigCodec
+    {
+        $endpoint = $env->get('TEMPORAL_CODEC_ENDPOINT');
+        $auth = $env->get('TEMPORAL_CODEC_AUTH');
+
+        // Return null if both are not set
+        if ($endpoint === null && $auth === null) {
+            return null;
+        }
+
+        return new ConfigCodec(
+            endpoint: $endpoint,
+            auth: $auth,
+        );
     }
 }

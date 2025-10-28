@@ -7,8 +7,10 @@ namespace Temporal\Tests\Unit\Common\EnvConfig\Client;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Temporal\Common\EnvConfig\Client\ConfigCodec;
 use Temporal\Common\EnvConfig\Client\ConfigEnv;
 use Temporal\Common\EnvConfig\Client\ConfigProfile;
+use Temporal\Common\EnvConfig\Exception\CodecNotSupportedException;
 use Temporal\Tests\Unit\Common\EnvConfig\Client\Stub\ArrayEnvProvider;
 
 #[CoversClass(ConfigEnv::class)]
@@ -368,6 +370,58 @@ final class ConfigEnvTest extends TestCase
         $config = ConfigEnv::fromEnvProvider($this->envProvider);
 
         self::assertSame(['x-custom' => ['value']], $config->profile->grpcMeta);
+    }
+
+    public function testThrowsExceptionWhenCodecEndpointIsSet(): void
+    {
+        // Arrange
+        $this->envProvider->set('TEMPORAL_CODEC_ENDPOINT', 'https://codec.example.com');
+
+        // Assert
+        $this->expectException(CodecNotSupportedException::class);
+        $this->expectExceptionMessage('Remote codec configuration is not supported in the PHP SDK');
+
+        // Act
+        ConfigEnv::fromEnvProvider($this->envProvider);
+    }
+
+    public function testThrowsExceptionWhenCodecAuthIsSet(): void
+    {
+        // Arrange
+        $this->envProvider->set('TEMPORAL_CODEC_AUTH', 'Bearer token123');
+
+        // Assert
+        $this->expectException(CodecNotSupportedException::class);
+        $this->expectExceptionMessage('Remote codec configuration is not supported in the PHP SDK');
+
+        // Act
+        ConfigEnv::fromEnvProvider($this->envProvider);
+    }
+
+    public function testThrowsExceptionWhenBothCodecVarsAreSet(): void
+    {
+        // Arrange
+        $this->envProvider->set('TEMPORAL_CODEC_ENDPOINT', 'https://codec.example.com');
+        $this->envProvider->set('TEMPORAL_CODEC_AUTH', 'Bearer token123');
+
+        // Assert
+        $this->expectException(CodecNotSupportedException::class);
+        $this->expectExceptionMessage('Remote codec configuration is not supported in the PHP SDK');
+
+        // Act
+        ConfigEnv::fromEnvProvider($this->envProvider);
+    }
+
+    public function testDoesNotThrowExceptionWhenNoCodecVarsAreSet(): void
+    {
+        // Arrange
+        $this->envProvider->set('TEMPORAL_ADDRESS', 'localhost:7233');
+
+        // Act
+        $config = ConfigEnv::fromEnvProvider($this->envProvider);
+
+        // Assert
+        self::assertNull($config->profile->codecConfig);
     }
 
     protected function setUp(): void
