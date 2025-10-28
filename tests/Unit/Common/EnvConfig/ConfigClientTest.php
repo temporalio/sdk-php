@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Common\EnvConfig;
 
-use Generator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -24,10 +23,12 @@ final class ConfigClientTest extends TestCase
 {
     private ArrayEnvProvider $envProvider;
 
-    protected function setUp(): void
+    public static function provideCaseInsensitiveProfileNames(): \Generator
     {
-        // Arrange (common setup)
-        $this->envProvider = new ArrayEnvProvider();
+        yield 'exact match' => ['default', 'default'];
+        yield 'uppercase access' => ['default', 'DEFAULT'];
+        yield 'mixed case access' => ['production', 'PrOdUcTiOn'];
+        yield 'lowercase access' => ['Production', 'production'];
     }
 
     public function testLoadFromFileWithValidTomlContent(): void
@@ -247,14 +248,6 @@ TOML;
         self::assertSame('127.0.0.1:7233', $profile->address);
     }
 
-    public static function provideCaseInsensitiveProfileNames(): Generator
-    {
-        yield 'exact match' => ['default', 'default'];
-        yield 'uppercase access' => ['default', 'DEFAULT'];
-        yield 'mixed case access' => ['production', 'PrOdUcTiOn'];
-        yield 'lowercase access' => ['Production', 'production'];
-    }
-
     #[DataProvider('provideCaseInsensitiveProfileNames')]
     public function testHasProfileIsCaseInsensitive(string $storeName, string $accessName): void
     {
@@ -466,5 +459,140 @@ TOML;
         self::assertIsArray($config->profiles);
         self::assertCount(1, $config->profiles);
         self::assertArrayHasKey('default', $config->profiles);
+    }
+
+    public function testGrpcMetadataKeysNormalizedToLowercase(): void
+    {
+        // Arrange & Act
+        $profile = new ConfigProfile(
+            address: '127.0.0.1:7233',
+            namespace: 'test',
+            apiKey: null,
+            grpcMeta: [
+                'temporal-namespace' => 'value1',
+                'TEMPORAL_CLIENT' => 'value2',
+                'Custom_Header' => 'value3',
+            ],
+        );
+
+        // Assert
+        self::assertArrayHasKey('temporal-namespace', $profile->grpcMeta);
+        self::assertArrayHasKey('temporal_client', $profile->grpcMeta);
+        self::assertArrayHasKey('custom_header', $profile->grpcMeta);
+        self::assertSame(['value1'], $profile->grpcMeta['temporal-namespace']);
+        self::assertSame(['value2'], $profile->grpcMeta['temporal_client']);
+        self::assertSame(['value3'], $profile->grpcMeta['custom_header']);
+    }
+
+    public function testGrpcMetadataStringValuesConvertedToArrays(): void
+    {
+        // Arrange & Act
+        $profile = new ConfigProfile(
+            address: '127.0.0.1:7233',
+            namespace: 'test',
+            apiKey: null,
+            grpcMeta: [
+                'String-Value' => 'single',
+                'Array-Value' => ['multiple', 'values'],
+            ],
+        );
+
+        // Assert
+        self::assertSame(['single'], $profile->grpcMeta['string-value']);
+        self::assertSame(['multiple', 'values'], $profile->grpcMeta['array-value']);
+    }
+
+    public function testGrpcMetadataMergeWithNormalization(): void
+    {
+        // Arrange
+        $profile1 = new ConfigProfile(
+            address: '127.0.0.1:7233',
+            namespace: 'test',
+            apiKey: null,
+            grpcMeta: [
+                'temporal-namespace' => 'value1',
+                'custom-header' => 'base',
+            ],
+        );
+
+        $profile2 = new ConfigProfile(
+            address: null,
+            namespace: null,
+            apiKey: null,
+            grpcMeta: [
+                'TEMPORAL_NAMESPACE' => 'value2',  // Same key, different case - should replace
+                'New-Header' => 'new',
+            ],
+        );
+
+        // Act
+        $merged = $profile1->mergeWith($profile2);
+
+        // Assert
+        self::assertArrayHasKey('temporal_namespace', $merged->grpcMeta);
+        self::assertArrayHasKey('custom-header', $merged->grpcMeta);
+        self::assertArrayHasKey('new-header', $merged->grpcMeta);
+        // Values should be replaced for same key (case-insensitive)
+        self::assertSame(['value2'], $merged->grpcMeta['temporal_namespace']);
+        self::assertSame(['base'], $merged->grpcMeta['custom-header']);
+        self::assertSame(['new'], $merged->grpcMeta['new-header']);
+    }
+
+    public function testGrpcMetadataMergeReplacesValues(): void
+    {
+        // Arrange
+        $profile1 = new ConfigProfile(
+            address: '127.0.0.1:7233',
+            namespace: 'test',
+            apiKey: null,
+            grpcMeta: [
+                'Header-One' => ['base1', 'base2'],
+            ],
+        );
+
+        $profile2 = new ConfigProfile(
+            address: null,
+            namespace: null,
+            apiKey: null,
+            grpcMeta: [
+                'header-one' => ['override1'],  // Same key, lowercase - should replace completely
+            ],
+        );
+
+        // Act
+        $merged = $profile1->mergeWith($profile2);
+
+        // Assert
+        self::assertArrayHasKey('header-one', $merged->grpcMeta);
+        self::assertSame(['override1'], $merged->grpcMeta['header-one']);
+    }
+
+    public function testToServiceClientWithGrpcMetadata(): void
+    {
+        // Arrange
+        $profile = new ConfigProfile(
+            address: '127.0.0.1:7233',
+            namespace: 'test',
+            apiKey: null,
+            grpcMeta: [
+                'custom-header' => 'custom-value',
+            ],
+        );
+
+        // Act
+        $client = $profile->toServiceClient();
+
+        // Assert
+        self::assertInstanceOf(ServiceClient::class, $client);
+        $context = $client->getContext();
+        $metadata = $context->getMetadata();
+        self::assertArrayHasKey('custom-header', $metadata);
+        self::assertSame(['custom-value'], $metadata['custom-header']);
+    }
+
+    protected function setUp(): void
+    {
+        // Arrange (common setup)
+        $this->envProvider = new ArrayEnvProvider();
     }
 }

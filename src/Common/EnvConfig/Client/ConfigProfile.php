@@ -45,7 +45,7 @@ final class ConfigProfile
      * gRPC metadata headers to send with requests.
      * Keys are normalized to lowercase.
      *
-     * @var array<non-empty-lowercase-string, string>
+     * @var array<non-empty-lowercase-string, list<string>>
      */
     public readonly array $grpcMeta;
 
@@ -59,7 +59,7 @@ final class ConfigProfile
      * @param string|null $namespace Namespace name (empty string converted to null)
      * @param string|\Stringable|null $apiKey API key (empty string converted to null)
      * @param ConfigTls|null $tlsConfig TLS/mTLS configuration
-     * @param array<non-empty-string, string> $grpcMeta gRPC metadata headers
+     * @param array<non-empty-string, string|list<string>> $grpcMeta gRPC metadata headers
      */
     public function __construct(
         ?string $address,
@@ -76,7 +76,7 @@ final class ConfigProfile
         // Normalize gRPC metadata keys to lowercase per gRPC spec
         $meta = [];
         foreach ($grpcMeta as $key => $value) {
-            $meta[\strtolower($key)] = $value;
+            $meta[\strtolower($key)] = \is_array($value) ? $value : [$value];
         }
         $this->grpcMeta = $meta;
     }
@@ -86,8 +86,8 @@ final class ConfigProfile
      *
      * Creates a new profile by combining settings from both profiles. Non-null values from the
      * provided config override values from this profile. TLS configurations are deeply merged.
-     * gRPC metadata arrays are merged with the other profile's metadata taking precedence for
-     * duplicate keys.
+     * gRPC metadata arrays are merged with keys normalized to lowercase (per gRPC spec), with
+     * the other profile's values replacing this profile's values for duplicate keys.
      *
      * @param self $config Profile to merge with (values from this take precedence)
      * @return self New merged profile
@@ -99,7 +99,7 @@ final class ConfigProfile
             namespace: $config->namespace ?? $this->namespace,
             apiKey: $config->apiKey ?? $this->apiKey,
             tlsConfig: self::mergeTlsConfigs($this->tlsConfig, $config->tlsConfig),
-            grpcMeta: \array_merge($this->grpcMeta, $config->grpcMeta),
+            grpcMeta: self::mergeGrpcMeta($this->grpcMeta, $config->grpcMeta),
         );
     }
 
@@ -150,8 +150,12 @@ final class ConfigProfile
         // Add API key if present
         $this->apiKey === null or $client = $client->withAuthKey($this->apiKey);
 
-        // TODO: Add gRPC metadata support when Context API is available
-        // Currently, gRPC metadata would need to be added via Context
+        // Add gRPC metadata support when Context API is available
+        if ($this->grpcMeta !== []) {
+            $context = $client->getContext();
+            $context = $context->withMetadata(self::mergeGrpcMeta($context->getMetadata(), $this->grpcMeta));
+            $client = $client->withContext($context);
+        }
 
         return $client;
     }
@@ -170,5 +174,25 @@ final class ConfigProfile
             $from === null => $to,
             default => $to->mergeWith($from),
         };
+    }
+
+    /**
+     * Merge two gRPC metadata arrays with lowercase key normalization.
+     *
+     * Keys are normalized to lowercase per gRPC specification. Values from the second array
+     * replace values from the first array for duplicate keys (case-insensitive).
+     *
+     * @param array<non-empty-lowercase-string, list<string>> $to Base metadata
+     * @param array<non-empty-lowercase-string, list<string>> $from Metadata to merge (overrides base)
+     * @return array<non-empty-lowercase-string, list<string>> Merged metadata
+     */
+    private static function mergeGrpcMeta(array $to, array $from): array
+    {
+        $merged = $to;
+        foreach ($from as $key => $values) {
+            $lowerKey = \strtolower($key);
+            $merged[$lowerKey] = $values;
+        }
+        return $merged;
     }
 }

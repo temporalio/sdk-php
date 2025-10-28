@@ -328,7 +328,7 @@ final class ConfigEnvTest extends TestCase
 
         $config = ConfigEnv::fromEnvProvider($this->envProvider);
 
-        self::assertSame(['x-custom-header' => 'custom-value'], $config->profile->grpcMeta);
+        self::assertSame(['x-custom-header' => ['custom-value']], $config->profile->grpcMeta);
     }
 
     public function testGrpcMetaMultipleHeaders(): void
@@ -340,9 +340,9 @@ final class ConfigEnvTest extends TestCase
         $config = ConfigEnv::fromEnvProvider($this->envProvider);
 
         self::assertSame([
-            'x-api-key' => 'secret-key',
-            'x-client-id' => 'client-123',
-            'x-request-id' => 'req-456',
+            'x-api-key' => ['secret-key'],
+            'x-client-id' => ['client-123'],
+            'x-request-id' => ['req-456'],
         ], $config->profile->grpcMeta);
     }
 
@@ -354,8 +354,8 @@ final class ConfigEnvTest extends TestCase
         $config = ConfigEnv::fromEnvProvider($this->envProvider);
 
         self::assertSame([
-            'authorization' => 'Bearer token123',
-            'content-type' => 'application/json',
+            'authorization' => ['Bearer token123'],
+            'content-type' => ['application/json'],
         ], $config->profile->grpcMeta);
     }
 
@@ -367,7 +367,7 @@ final class ConfigEnvTest extends TestCase
 
         $config = ConfigEnv::fromEnvProvider($this->envProvider);
 
-        self::assertSame(['x-custom' => 'value'], $config->profile->grpcMeta);
+        self::assertSame(['x-custom' => ['value']], $config->profile->grpcMeta);
     }
 
     protected function setUp(): void
