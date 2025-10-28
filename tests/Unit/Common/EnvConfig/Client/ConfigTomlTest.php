@@ -104,7 +104,7 @@ final class ConfigTomlTest extends TestCase
                     'address' => 'all.example.com:7233',
                     'namespace' => 'all-namespace',
                     'apiKey' => 'all-secret-key',
-                    'grpcMeta' => ['header1' => 'value1', 'header2' => 'value2'],
+                    'grpcMeta' => ['header1' => ['value1'], 'header2' => ['value2']],
                     'tlsConfig' => [
                         'disabled' => false,
                         'serverName' => 'all-server',
@@ -273,7 +273,7 @@ final class ConfigTomlTest extends TestCase
         self::assertSame('custom-address', $customProfile->address);
         self::assertSame('custom-namespace', $customProfile->namespace);
         self::assertSame('custom-api-key', $customProfile->apiKey);
-        self::assertSame(['custom-header' => 'custom-value'], $customProfile->grpcMeta);
+        self::assertSame(['custom-header' => ['custom-value']], $customProfile->grpcMeta);
 
         self::assertInstanceOf(ConfigTls::class, $customProfile->tlsConfig);
         self::assertSame('custom-server-name', $customProfile->tlsConfig->serverName);
