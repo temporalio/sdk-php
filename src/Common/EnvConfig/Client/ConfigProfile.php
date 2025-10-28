@@ -6,6 +6,7 @@ namespace Temporal\Common\EnvConfig\Client;
 
 use Temporal\Client\ClientOptions;
 use Temporal\Client\GRPC\ServiceClient;
+use Temporal\Common\EnvConfig\Exception\CodecNotSupportedException;
 
 /**
  * Profile-level configuration for a Temporal client.
@@ -60,6 +61,9 @@ final class ConfigProfile
      * @param string|\Stringable|null $apiKey API key (empty string converted to null)
      * @param ConfigTls|null $tlsConfig TLS/mTLS configuration
      * @param array<non-empty-string, string|list<string>> $grpcMeta gRPC metadata headers
+     * @param ConfigCodec|null $codecConfig Remote codec configuration (NOT SUPPORTED - will throw exception if used)
+     *
+     * @throws CodecNotSupportedException If codec configuration is provided (not supported in PHP SDK)
      */
     public function __construct(
         ?string $address,
@@ -67,6 +71,7 @@ final class ConfigProfile
         null|string|\Stringable $apiKey,
         public readonly ?ConfigTls $tlsConfig = null,
         array $grpcMeta = [],
+        public readonly ?ConfigCodec $codecConfig = null,
     ) {
         // Normalize empty strings to null
         $this->address = $address === '' ? null : $address;
@@ -79,13 +84,16 @@ final class ConfigProfile
             $meta[\strtolower($key)] = \is_array($value) ? $value : [$value];
         }
         $this->grpcMeta = $meta;
+
+        // Validate codec is not configured (not supported in PHP SDK)
+        $codecConfig?->endpoint === null && $codecConfig?->auth === null or throw new CodecNotSupportedException();
     }
 
     /**
      * Merge this profile with another profile, with the other profile's values taking precedence.
      *
      * Creates a new profile by combining settings from both profiles. Non-null values from the
-     * provided config override values from this profile. TLS configurations are deeply merged.
+     * provided config override values from this profile. TLS and codec configurations are deeply merged.
      * gRPC metadata arrays are merged with keys normalized to lowercase (per gRPC spec), with
      * the other profile's values replacing this profile's values for duplicate keys.
      *
@@ -100,6 +108,7 @@ final class ConfigProfile
             apiKey: $config->apiKey ?? $this->apiKey,
             tlsConfig: self::mergeTlsConfigs($this->tlsConfig, $config->tlsConfig),
             grpcMeta: self::mergeGrpcMeta($this->grpcMeta, $config->grpcMeta),
+            codecConfig: self::mergeCodecConfigs($this->codecConfig, $config->codecConfig),
         );
     }
 
@@ -194,5 +203,21 @@ final class ConfigProfile
             $merged[$lowerKey] = $values;
         }
         return $merged;
+    }
+
+    /**
+     * Merge two codec configurations with the second taking precedence.
+     *
+     * @param ConfigCodec|null $to Base codec configuration
+     * @param ConfigCodec|null $from Codec configuration to merge (takes precedence)
+     * @return ConfigCodec|null Merged codec configuration or null if both are null
+     */
+    private static function mergeCodecConfigs(?ConfigCodec $to, ?ConfigCodec $from): ?ConfigCodec
+    {
+        return match (true) {
+            $to === null => $from,
+            $from === null => $to,
+            default => $to->mergeWith($from),
+        };
     }
 }
