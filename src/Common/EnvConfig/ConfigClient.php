@@ -113,7 +113,7 @@ final class ConfigClient
     public static function loadFromEnv(EnvProvider $envProvider = new SystemEnvProvider()): self
     {
         $envConfig = ConfigEnv::fromEnvProvider($envProvider);
-        $profileName = \strtolower($envConfig->currentProfile ?? 'default');
+        $profileName = $envConfig->currentProfile ?? 'default';
 
         return new self([$profileName => $envConfig->profile]);
     }

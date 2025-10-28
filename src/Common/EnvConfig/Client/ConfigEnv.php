@@ -43,28 +43,39 @@ use Temporal\Common\EnvConfig\EnvProvider;
  */
 final class ConfigEnv
 {
-    public function __construct(
+    /**
+     * Current active profile name from TEMPORAL_PROFILE
+     * @var non-empty-lowercase-string|null
+     */
+    public readonly ?string $currentProfile;
+
+    /**
+     * Path to TOML configuration file from TEMPORAL_CONFIG_FILE
+     * @var non-empty-string|null
+     */
+    public readonly ?string $configFile;
+
+    /**
+     * @param ConfigProfile $profile Profile constructed from environment variables
+     * @param string|null $currentProfile Current active profile name
+     * @param string|null $configFile Path to TOML configuration file
+     */
+    private function __construct(
         /**
          * Profile constructed from environment variables
          */
         public readonly ConfigProfile $profile,
-        /**
-         * Current active profile name from TEMPORAL_PROFILE
-         * @var non-empty-lowercase-string|null
-         */
-        public readonly ?string $currentProfile = null,
-        /**
-         * Path to TOML configuration file from TEMPORAL_CONFIG_FILE
-         * @var non-empty-string|null
-         */
-        public readonly ?string $configFile = null,
-    ) {}
+        ?string $currentProfile = null,
+        ?string $configFile = null,
+    ) {
+        $this->currentProfile = $currentProfile === '' || $currentProfile === null
+            ? null
+            : \strtolower($currentProfile);
+        $this->configFile = $configFile === '' ? null : $configFile;
+    }
 
     public static function fromEnvProvider(EnvProvider $env): self
     {
-        $profile = \strtolower($env->get('TEMPORAL_PROFILE', '')) ?? '';
-        $profile === '' and $profile = null;
-
         return new self(
             new ConfigProfile(
                 address: $env->get('TEMPORAL_ADDRESS'),
@@ -74,7 +85,7 @@ final class ConfigEnv
                 grpcMeta: self::fetchGrpcMeta($env),
                 codecConfig: self::fetchCodecConfig($env),
             ),
-            $profile,
+            $env->get('TEMPORAL_PROFILE'),
             $env->get('TEMPORAL_CONFIG_FILE'),
         );
     }
@@ -139,6 +150,7 @@ final class ConfigEnv
 
         foreach ($meta as $key => $value) {
             // Transform header name: lowercase and replace _ with -
+            /** @var non-empty-string $headerName */
             $headerName = \str_replace('_', '-', $key);
             $result[$headerName] = $value;
         }

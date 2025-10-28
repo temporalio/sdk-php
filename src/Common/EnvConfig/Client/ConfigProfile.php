@@ -191,17 +191,21 @@ final class ConfigProfile
      * Keys are normalized to lowercase per gRPC specification. Values from the second array
      * replace values from the first array for duplicate keys (case-insensitive).
      *
-     * @param array<non-empty-lowercase-string, list<string>> $to Base metadata
-     * @param array<non-empty-lowercase-string, list<string>> $from Metadata to merge (overrides base)
+     * @param array<non-empty-string, list<string>> $to Base metadata
+     * @param array<non-empty-string, list<string>> $from Metadata to merge (overrides base)
      * @return array<non-empty-lowercase-string, list<string>> Merged metadata
      */
     private static function mergeGrpcMeta(array $to, array $from): array
     {
-        $merged = $to;
-        foreach ($from as $key => $values) {
-            $lowerKey = \strtolower($key);
-            $merged[$lowerKey] = $values;
+        $merged = [];
+        foreach ($to as $key => $values) {
+            $merged[\strtolower($key)] = $values;
         }
+
+        foreach ($from as $key => $values) {
+            $merged[\strtolower($key)] = $values;
+        }
+
         return $merged;
     }
 

@@ -15,21 +15,38 @@ use Temporal\Client\GRPC\BaseClient;
  */
 final class ConfigTls
 {
+    /** @var non-empty-string|null Root certificates string or file in PEM format */
+    public readonly ?string $rootCerts;
+
+    /** @var non-empty-string|null Client private key string or file in PEM format */
+    public readonly ?string $privateKey;
+
+    /** @var non-empty-string|null Client certificate chain string or file in PEM format */
+    public readonly ?string $certChain;
+
+    /** @var non-empty-string|null Server name override for TLS verification */
+    public readonly ?string $serverName;
+
     /**
      * @param bool $disabled Whether to disable TLS.
-     * @param non-empty-string|null $rootCerts Root certificates string or file in PEM format.
+     * @param string|null $rootCerts Root certificates string or file in PEM format.
      *        If null provided, default gRPC root certificates are used.
-     * @param non-empty-string|null $privateKey Client private key string or file in PEM format.
-     * @param non-empty-string|null $certChain Client certificate chain string or file in PEM format.
-     * @param non-empty-string|null $serverName Server name override for TLS verification.
+     * @param string|null $privateKey Client private key string or file in PEM format.
+     * @param string|null $certChain Client certificate chain string or file in PEM format.
+     * @param string|null $serverName Server name override for TLS verification.
      */
     public function __construct(
         public readonly ?bool $disabled = false,
-        public readonly ?string $rootCerts = null,
-        public readonly ?string $privateKey = null,
-        public readonly ?string $certChain = null,
-        public readonly ?string $serverName = null,
-    ) {}
+        ?string $rootCerts = null,
+        ?string $privateKey = null,
+        ?string $certChain = null,
+        ?string $serverName = null,
+    ) {
+        $this->rootCerts = $rootCerts === '' ? null : $rootCerts;
+        $this->privateKey = $privateKey === '' ? null : $privateKey;
+        $this->certChain = $certChain === '' ? null : $certChain;
+        $this->serverName = $serverName === '' ? null : $serverName;
+    }
 
     public function mergeWith(ConfigTls $from): self
     {
