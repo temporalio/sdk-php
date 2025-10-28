@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Common\EnvConfig\Client;
 
 use Internal\Toml\Toml;
+use Temporal\Common\EnvConfig\Exception\TomlParserNotFoundException;
 
 /**
  * TOML configuration parser for Temporal client profiles.
@@ -57,6 +58,7 @@ final class ConfigToml
         string $toml,
         private readonly bool $strict = true,
     ) {
+        \class_exists(Toml::class) or throw new TomlParserNotFoundException();
         $data = Toml::parseToArray($toml);
         $this->profiles = $this->parseProfiles($data['profile'] ?? []);
     }
