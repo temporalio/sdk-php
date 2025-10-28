@@ -23,7 +23,7 @@ final class SystemEnvProvider implements EnvProvider
     {
         // Try $_ENV first for better performance
         if (isset($_ENV[$name])) {
-            return $_ENV[$name];
+            return (string) $_ENV[$name];
         }
 
         // Fallback to getenv() for environment variables not in $_ENV
@@ -45,7 +45,7 @@ final class SystemEnvProvider implements EnvProvider
             if (\str_starts_with($key, $prefix)) {
                 $resultKey = $stripPrefix ? \substr($key, $prefixLength) : $key;
                 if ($resultKey !== '') {
-                    $result[$resultKey] = $value;
+                    $result[$resultKey] = (string) $value;
                 }
             }
         }
@@ -53,13 +53,11 @@ final class SystemEnvProvider implements EnvProvider
         // Search in getenv() for variables not in $_ENV
         // Note: getenv() without arguments returns all environment variables
         $envVars = \getenv();
-        if (\is_array($envVars)) {
-            foreach ($envVars as $key => $value) {
-                if (\str_starts_with($key, $prefix) && !isset($_ENV[$key])) {
-                    $resultKey = $stripPrefix ? \substr($key, $prefixLength) : $key;
-                    if ($resultKey !== '' && !\array_key_exists($resultKey, $result)) {
-                        $result[$resultKey] = $value;
-                    }
+        foreach ($envVars as $key => $value) {
+            if (\str_starts_with($key, $prefix) && !isset($_ENV[$key])) {
+                $resultKey = $stripPrefix ? \substr($key, $prefixLength) : $key;
+                if ($resultKey !== '' && !\array_key_exists($resultKey, $result)) {
+                    $result[$resultKey] = $value;
                 }
             }
         }

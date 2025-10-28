@@ -14,14 +14,23 @@ namespace Temporal\Common\EnvConfig\Client;
  */
 final class ConfigCodec
 {
+    /** @var non-empty-string|null $endpoint Endpoint URL for the remote codec service */
+    public readonly ?string $endpoint;
+
+    /** @var non-empty-string|null $auth Authorization header value for codec authentication */
+    public readonly ?string $auth;
+
     /**
-     * @param non-empty-string|null $endpoint Endpoint URL for the remote codec service
-     * @param non-empty-string|null $auth Authorization header value for codec authentication
+     * @param string|null $endpoint Endpoint URL for the remote codec service
+     * @param string|null $auth Authorization header value for codec authentication
      */
     public function __construct(
-        public readonly ?string $endpoint = null,
-        public readonly ?string $auth = null,
-    ) {}
+        ?string $endpoint = null,
+        ?string $auth = null,
+    ) {
+        $this->auth = $auth === '' ? null : $auth;
+        $this->endpoint = $endpoint === '' ? null : $endpoint;
+    }
 
     /**
      * Merge this codec config with another, with the other config's values taking precedence.
