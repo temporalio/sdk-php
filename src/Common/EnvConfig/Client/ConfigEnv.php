@@ -47,6 +47,10 @@ final class ConfigEnv
          * @var non-empty-lowercase-string|null
          */
         public readonly ?string $currentProfile = null,
+        /**
+         * Path to TOML configuration file from TEMPORAL_CONFIG_FILE
+         * @var non-empty-string|null
+         */
         public readonly ?string $configFile = null,
     ) {}
 
