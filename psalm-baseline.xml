@@ -342,34 +342,11 @@
     <InvalidArgument>
       <code><![CDATA[$message->getDetails()]]></code>
     </InvalidArgument>
-    <MismatchingDocblockParamType>
-      <code><![CDATA[\ArrayAccess<int, Any>&RepeatedField]]></code>
-    </MismatchingDocblockParamType>
-    <MismatchingDocblockPropertyType>
-      <code><![CDATA[\ArrayAccess<int, Any>&RepeatedField]]></code>
-    </MismatchingDocblockPropertyType>
-    <MismatchingDocblockReturnType>
-      <code><![CDATA[\ArrayAccess<int, Any>&RepeatedField]]></code>
-    </MismatchingDocblockReturnType>
   </file>
   <file src="src/Exception/Client/ServiceClientException.php">
     <ImplementedReturnTypeMismatch>
       <code><![CDATA[RepeatedField]]></code>
     </ImplementedReturnTypeMismatch>
-    <InvalidReturnStatement>
-      <code><![CDATA[$this->status->getDetails()]]></code>
-    </InvalidReturnStatement>
-    <InvalidReturnType>
-      <code><![CDATA[RepeatedField]]></code>
-    </InvalidReturnType>
-  </file>
-  <file src="src/Exception/Client/UnpackDetailsTrait.php">
-    <RawObjectIteration>
-      <code><![CDATA[$details]]></code>
-    </RawObjectIteration>
-    <UndefinedInterfaceMethod>
-      <code><![CDATA[count]]></code>
-    </UndefinedInterfaceMethod>
   </file>
   <file src="src/Exception/Client/WorkflowException.php">
     <UnsafeInstantiation>
@@ -827,9 +804,6 @@
     <NullableReturnStatement>
       <code><![CDATA[$mapper]]></code>
     </NullableReturnStatement>
-    <PossibleRawObjectIteration>
-      <code><![CDATA[$value]]></code>
-    </PossibleRawObjectIteration>
     <PossiblyNullArgument>
       <code><![CDATA[$metadata->getDetails()]]></code>
       <code><![CDATA[$metadata->getSummary()]]></code>
