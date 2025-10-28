@@ -42,12 +42,19 @@ final class ConfigEnv
          * Profile constructed from environment variables
          */
         public readonly ConfigProfile $profile,
+        /**
+         * Current active profile name from TEMPORAL_PROFILE
+         * @var non-empty-lowercase-string|null
+         */
         public readonly ?string $currentProfile = null,
         public readonly ?string $configFile = null,
     ) {}
 
     public static function fromEnvProvider(EnvProvider $env): self
     {
+        $profile = \strtolower($env->get('TEMPORAL_PROFILE', '')) ?? '';
+        $profile === '' and $profile = null;
+
         return new self(
             new ConfigProfile(
                 address: $env->get('TEMPORAL_ADDRESS'),
@@ -56,7 +63,7 @@ final class ConfigEnv
                 tlsConfig: self::fetchTlsConfig($env),
                 grpcMeta: self::fetchGrpcMeta($env),
             ),
-            $env->get('TEMPORAL_PROFILE'),
+            $profile,
             $env->get('TEMPORAL_CONFIG_FILE'),
         );
     }
