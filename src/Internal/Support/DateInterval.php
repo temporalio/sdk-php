@@ -60,7 +60,21 @@ final class DateInterval
     {
         switch (true) {
             case \is_string($interval):
-                return CarbonInterval::fromString($interval);
+                $carbon = CarbonInterval::fromString($interval);
+                if (self::isIso8601DurationFormat($interval)) {
+                    $builtin = new \DateInterval($interval);
+                    $carbon->compare($builtin) === 0 or \trigger_error(
+                        \sprintf(
+                            'Ambiguous duration "%s": Carbon and DateInterval parse it differently. ' .
+                            'Use new \DateInterval("%s") for ISO 8601 standard parsing or PT/P prefix to clarify intent.',
+                            $interval,
+                            $interval,
+                        ),
+                        \E_USER_WARNING,
+                    );
+                }
+
+                return $carbon;
 
             case $interval instanceof \DateInterval:
                 return CarbonInterval::instance($interval);
@@ -179,5 +193,28 @@ final class DateInterval
 
             throw new \InvalidArgumentException($message);
         }
+    }
+
+    /**
+     * Checks if a string matches the ISO 8601 duration format that PHP's DateInterval constructor accepts.
+     *
+     * Valid format: P[n]Y[n]M[n]W[n]D[T[n]H[n]M[n]S]
+     * - Must start with P (period)
+     * - Date elements (Y, M, W, D) come before T
+     * - Time elements (H, M, S) come after T
+     * - At least one date or time element must be present
+     * - Alternative datetime format P<date>T<time> is also supported
+     *
+     * Examples: P2D, PT5M, P1Y2M3DT4H5M6S, P0001-00-00T00:00:00
+     */
+    private static function isIso8601DurationFormat(string $interval): bool
+    {
+        // ISO 8601 duration format: P[n]Y[n]M[n]W[n]D[T[n]H[n]M[n]S]
+        // At least one element (Y, M, W, D, H, M, or S) must be present
+        // Alternative format: P<date>T<time> like P0001-00-00T00:00:00
+        return \preg_match(
+            '/^P(?=.)(?:\d+Y)?(?:\d+M)?(?:\d+W)?(?:\d+D)?(?:T(?=.)(?:\d+H)?(?:\d+M)?(?:\d+(?:\.\d+)?S)?)?$|^P\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/',
+            $interval
+        ) === 1 && $interval !== 'P' && $interval !== 'PT';
     }
 }
