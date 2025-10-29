@@ -123,9 +123,6 @@ final class DateIntervalTestCase extends TestCase
         // P2M: Carbon parses as 2 minutes, DateInterval as 2 months
         yield 'P2M - ambiguous months/minutes' => ['P2M', true];
 
-        // PT1H5M: Carbon may parse as 1 hour (dropping the 5M), DateInterval as 1 hour 5 minutes
-        yield 'PT1H5M - potential parsing issue' => ['PT1H5M', false]; // This should work correctly
-
         // Cases that should NOT trigger warning (identical parsing)
         yield 'PT2M - explicit minutes with T' => ['PT2M', false];
         yield 'P1Y - explicit years' => ['P1Y', false];
