@@ -77,7 +77,6 @@ final class ExternalWorkflowStub implements ExternalWorkflowStubInterface
     private function request(RequestInterface $request): PromiseInterface
     {
         // todo intercept
-        /** @var Workflow\WorkflowContextInterface $context */
         $context = Workflow::getCurrentContext();
 
         return $context->request($request);

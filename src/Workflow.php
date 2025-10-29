@@ -23,7 +23,6 @@ use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\OutOfContextException;
 use Temporal\Internal\Support\Facade;
-use Temporal\Internal\Workflow\ScopeContext;
 use Temporal\Workflow\ActivityStubInterface;
 use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\ChildWorkflowOptions;
@@ -57,11 +56,10 @@ final class Workflow extends Facade
      * Get the current Workflow context.
      * @throws OutOfContextException
      */
-    public static function getCurrentContext(): ScopedContextInterface
+    public static function getCurrentContext(): WorkflowContextInterface
     {
         $ctx = parent::getCurrentContext();
-        /** @var ScopeContext $ctx */
-        $ctx::class === ScopeContext::class or throw new OutOfContextException(
+        $ctx instanceof WorkflowContextInterface or throw new OutOfContextException(
             'The Workflow facade can be used only inside workflow code.',
         );
         return $ctx;
@@ -202,7 +200,9 @@ final class Workflow extends Facade
      */
     public static function async(callable $task): CancellationScopeInterface
     {
-        return self::getCurrentContext()->async($task);
+        $ctx = self::getCurrentContext();
+        \assert($ctx instanceof ScopedContextInterface);
+        return $ctx->async($task);
     }
 
     /**
@@ -254,7 +254,9 @@ final class Workflow extends Facade
      */
     public static function asyncDetached(callable $task): CancellationScopeInterface
     {
-        return self::getCurrentContext()->asyncDetached($task);
+        $ctx = self::getCurrentContext();
+        \assert($ctx instanceof ScopedContextInterface);
+        return $ctx->asyncDetached($task);
     }
 
     /**
@@ -362,7 +364,9 @@ final class Workflow extends Facade
         callable $handler,
         string $description = '',
     ): ScopedContextInterface {
-        return self::getCurrentContext()->registerQuery($queryType, $handler, $description);
+        $ctx = self::getCurrentContext();
+        \assert($ctx instanceof ScopedContextInterface);
+        return $ctx->registerQuery($queryType, $handler, $description);
     }
 
     /**
@@ -382,7 +386,9 @@ final class Workflow extends Facade
      */
     public static function registerSignal(string $name, callable $handler, string $description = ''): ScopedContextInterface
     {
-        return self::getCurrentContext()->registerSignal($name, $handler, $description);
+        $ctx = self::getCurrentContext();
+        \assert($ctx instanceof ScopedContextInterface);
+        return $ctx->registerSignal($name, $handler, $description);
     }
 
     /**
@@ -501,7 +507,9 @@ final class Workflow extends Facade
         ?callable $validator = null,
         string $description = '',
     ): ScopedContextInterface {
-        return self::getCurrentContext()->registerUpdate($name, $handler, $validator, $description);
+        $ctx = self::getCurrentContext();
+        \assert($ctx instanceof ScopedContextInterface);
+        return $ctx->registerUpdate($name, $handler, $validator, $description);
     }
 
     /**

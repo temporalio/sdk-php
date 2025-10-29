@@ -19,7 +19,6 @@ use Temporal\Activity\ActivityOptionsInterface;
 use Temporal\Common\SearchAttributes\SearchAttributeUpdate;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
-use Temporal\Exception\OutOfContextException;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Environment\EnvironmentInterface;
