@@ -214,7 +214,7 @@ final class DateInterval
         // Alternative format: P<date>T<time> like P0001-00-00T00:00:00
         return \preg_match(
             '/^P(?=.)(?:\d+Y)?(?:\d+M)?(?:\d+W)?(?:\d+D)?(?:T(?=.)(?:\d+H)?(?:\d+M)?(?:\d+(?:\.\d+)?S)?)?$|^P\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/',
-            $interval
+            $interval,
         ) === 1 && $interval !== 'P' && $interval !== 'PT';
     }
 }
