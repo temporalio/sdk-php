@@ -45,17 +45,27 @@ use Temporal\Internal\Support\DateInterval;
  *
  * This is main class you can use in your workflow code.
  *
- * @method static ScopeContext getCurrentContext() Get current workflow context.
- *
  * @psalm-import-type TypeEnum from Type
  * @psalm-import-type DateIntervalValue from DateInterval
  * @see DateInterval
- *
- * @template-extends Facade<ScopedContextInterface>
  */
 final class Workflow extends Facade
 {
     public const DEFAULT_VERSION = -1;
+
+    /**
+     * Get the current Workflow context.
+     * @throws OutOfContextException
+     */
+    public static function getCurrentContext(): ScopedContextInterface
+    {
+        $ctx = parent::getCurrentContext();
+        /** @var ScopeContext $ctx */
+        $ctx::class === ScopeContext::class or throw new OutOfContextException(
+            'The Workflow facade can be used only inside workflow code.',
+        );
+        return $ctx;
+    }
 
     /**
      * Returns current datetime.
@@ -995,7 +1005,6 @@ final class Workflow extends Facade
      */
     public static function allHandlersFinished(): bool
     {
-        /** @var ScopedContextInterface $context */
         $context = self::getCurrentContext();
 
         return $context->allHandlersFinished();
@@ -1081,7 +1090,6 @@ final class Workflow extends Facade
      */
     public static function uuid(): PromiseInterface
     {
-        /** @var ScopedContextInterface $context */
         $context = self::getCurrentContext();
 
         return $context->uuid();
@@ -1094,7 +1102,6 @@ final class Workflow extends Facade
      */
     public static function uuid4(): PromiseInterface
     {
-        /** @var ScopedContextInterface $context */
         $context = self::getCurrentContext();
 
         return $context->uuid4();
@@ -1111,7 +1118,6 @@ final class Workflow extends Facade
      */
     public static function uuid7(?\DateTimeInterface $dateTime = null): PromiseInterface
     {
-        /** @var ScopedContextInterface $context */
         $context = self::getCurrentContext();
 
         return $context->uuid7($dateTime);

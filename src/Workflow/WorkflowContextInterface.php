@@ -19,6 +19,7 @@ use Temporal\Activity\ActivityOptionsInterface;
 use Temporal\Common\SearchAttributes\SearchAttributeUpdate;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Exception\OutOfContextException;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Environment\EnvironmentInterface;
@@ -440,4 +441,9 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * Logs in replay mode are omitted unless {@see WorkerOptions::$enableLoggingInReplay} is set to true.
      */
     public function getLogger(): LoggerInterface;
+
+    /**
+     * Get the currently running Workflow instance.
+     */
+    public function getInstance(): object;
 }
