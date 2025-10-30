@@ -13,9 +13,6 @@ namespace Temporal\Internal\Support;
 
 use Temporal\Exception\OutOfContextException;
 
-/**
- * @template T of object
- */
 abstract class Facade
 {
     /**
@@ -26,9 +23,6 @@ abstract class Facade
         'from the currently running process'
     ;
 
-    /**
-     * @var object<T>|null
-     */
     private static ?object $ctx = null;
 
     /**
@@ -40,7 +34,6 @@ abstract class Facade
     }
 
     /**
-     * @param object<T>|null $ctx
      * @internal
      */
     public static function setCurrentContext(?object $ctx): void
@@ -49,7 +42,6 @@ abstract class Facade
     }
 
     /**
-     * @return object<T>
      * @throws OutOfContextException
      */
     public static function getCurrentContext(): object
