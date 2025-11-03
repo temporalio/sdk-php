@@ -18,5 +18,6 @@ final class ActivityCancellationDetails
         public readonly bool $paused = false,
         public readonly bool $timedOut = false,
         public readonly bool $workerShutdown = false,
+        public readonly bool $reset = false,
     ) {}
 }
