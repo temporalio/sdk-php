@@ -31,6 +31,35 @@ final class DateIntervalTestCase extends TestCase
         yield [null, DateInterval::FORMAT_MILLISECONDS, 0, '0/0/0/0'];
     }
 
+    public static function provideIso8601DurationFormats(): \Generator
+    {
+        // Valid ISO 8601 duration formats
+        yield 'two days' => ['P2D', true];
+        yield 'two seconds' => ['PT2S', true];
+        yield 'six years five minutes' => ['P6YT5M', true];
+        yield 'three months' => ['P3M', true];
+        yield 'three minutes' => ['PT3M', true];
+        yield 'full format' => ['P1Y2M3DT4H5M6S', true];
+        yield 'weeks only' => ['P2W', true];
+        yield 'hours and minutes' => ['PT1H30M', true];
+        yield 'days and hours' => ['P1DT12H', true];
+        yield 'alternative datetime format' => ['P0001-00-00T00:00:00', true];
+        yield 'decimal seconds' => ['PT1.5S', true];
+
+        // Invalid formats (Carbon-specific or non-ISO 8601)
+        yield 'only period marker' => ['P', false];
+        yield 'only period and time marker' => ['PT', false];
+        yield 'natural language' => ['2 days', false];
+        yield 'human readable' => ['1 hour 30 minutes', false];
+        yield 'no period marker' => ['2D', false];
+        yield 'wrong order' => ['P4D1Y', false];
+        yield 'time without T' => ['P1H30M', false];
+        yield 'negative value' => ['P-2D', false];
+        yield 'negative prefix' => ['-P2D', false];
+        yield 'spaces' => ['P 2 D', false];
+        yield 'lowercase' => ['p2d', false];
+    }
+
     #[DataProvider('provideValuesToParse')]
     public function testParse(mixed $value, string $format, int $microseconds, string $formatted): void
     {
@@ -61,5 +90,144 @@ final class DateIntervalTestCase extends TestCase
 
         self::assertSame(5124, (int) $i->totalSeconds);
         self::assertSame(123_456, $i->microseconds);
+    }
+
+    #[DataProvider('provideIso8601DurationFormats')]
+    public function testParseDetectsIso8601FormatCorrectly(string $interval, bool $shouldBeIso8601): void
+    {
+        // Arrange
+        $reflection = new \ReflectionClass(DateInterval::class);
+        $method = $reflection->getMethod('isIso8601DurationFormat');
+        $method->setAccessible(true);
+
+        // Act
+        $result = $method->invoke(null, $interval);
+
+        // Assert
+        self::assertSame(
+            $shouldBeIso8601,
+            $result,
+            \sprintf(
+                'String "%s" should %s recognized as ISO 8601 duration format',
+                $interval,
+                $shouldBeIso8601 ? 'be' : 'NOT be',
+            ),
+        );
+    }
+
+    public static function provideCarbonDateIntervalDifferences(): \Generator
+    {
+        // Cases where Carbon and DateInterval parse the same string differently
+        // Format: [interval string, expected warning]
+
+        // P2M: Carbon parses as 2 minutes, DateInterval as 2 months
+        yield 'P2M - ambiguous months/minutes' => ['P2M', true];
+
+        // Cases that should NOT trigger warning (identical parsing)
+        yield 'PT2M - explicit minutes with T' => ['PT2M', false];
+        yield 'P1Y - explicit years' => ['P1Y', false];
+        yield 'P2D - explicit days' => ['P2D', false];
+        yield 'PT5S - explicit seconds' => ['PT5S', false];
+    }
+
+    #[DataProvider('provideCarbonDateIntervalDifferences')]
+    public function testParseTriggersWarningWhenCarbonAndDateIntervalDiffer(
+        string $interval,
+        bool $shouldTriggerWarning,
+    ): void {
+        // Arrange
+        $warningTriggered = false;
+        $warningMessage = '';
+
+        \set_error_handler(static function (int $errno, string $errstr) use (&$warningTriggered, &$warningMessage): bool {
+            if ($errno === \E_USER_WARNING && \str_contains($errstr, 'Ambiguous duration')) {
+                $warningTriggered = true;
+                $warningMessage = $errstr;
+                return true;
+            }
+            return false;
+        });
+
+        // Act
+        try {
+            $result = DateInterval::parse($interval);
+        } finally {
+            \restore_error_handler();
+        }
+
+        // Assert
+        self::assertInstanceOf(\Carbon\CarbonInterval::class, $result);
+
+        if ($shouldTriggerWarning) {
+            self::assertTrue(
+                $warningTriggered,
+                \sprintf('Expected warning for interval "%s" but none was triggered', $interval),
+            );
+            self::assertStringContainsString(
+                'Ambiguous duration',
+                $warningMessage,
+                'Warning message should mention ambiguous duration',
+            );
+            self::assertStringContainsString(
+                \sprintf('"%s"', $interval),
+                $warningMessage,
+                'Warning message should contain the interval value',
+            );
+            self::assertStringContainsString(
+                'Carbon and DateInterval parse it differently',
+                $warningMessage,
+                'Warning message should explain the issue',
+            );
+        } else {
+            self::assertFalse(
+                $warningTriggered,
+                \sprintf(
+                    'Did not expect warning for interval "%s" but one was triggered: %s',
+                    $interval,
+                    $warningMessage,
+                ),
+            );
+        }
+    }
+
+    public static function provideNonIso8601FormatsNoWarning(): \Generator
+    {
+        // Natural language formats that Carbon accepts but aren't ISO 8601
+        // These should NOT trigger warnings because they don't match ISO 8601 format
+        yield 'natural language - 2 days' => ['2 days'];
+        yield 'natural language - 1 hour' => ['1 hour'];
+        yield 'natural language - 30 minutes' => ['30 minutes'];
+    }
+
+    #[DataProvider('provideNonIso8601FormatsNoWarning')]
+    public function testParseDoesNotTriggerWarningForNonIso8601Formats(string $interval): void
+    {
+        // Arrange
+        $warningTriggered = false;
+
+        \set_error_handler(static function (int $errno, string $errstr) use (&$warningTriggered): bool {
+            if ($errno === \E_USER_WARNING && \str_contains($errstr, 'Ambiguous duration')) {
+                $warningTriggered = true;
+                return true;
+            }
+            return false;
+        });
+
+        // Act
+        try {
+            $result = DateInterval::parse($interval);
+        } finally {
+            \restore_error_handler();
+        }
+
+        // Assert
+        self::assertInstanceOf(\Carbon\CarbonInterval::class, $result);
+        self::assertFalse(
+            $warningTriggered,
+            \sprintf(
+                'Non-ISO 8601 format "%s" should not trigger DateInterval comparison warning',
+                $interval,
+            ),
+        );
     }
 }

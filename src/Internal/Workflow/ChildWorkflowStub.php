@@ -125,10 +125,7 @@ final class ChildWorkflowStub implements ChildWorkflowStubInterface
 
     protected function request(RequestInterface $request, bool $cancellable = true): PromiseInterface
     {
-        /** @var Workflow\WorkflowContextInterface $context */
-        $context = Workflow::getCurrentContext();
-
-        return $context->request($request, cancellable: $cancellable);
+        return Workflow::getCurrentContext()->request($request, cancellable: $cancellable);
     }
 
     private function getOptionArray(): array

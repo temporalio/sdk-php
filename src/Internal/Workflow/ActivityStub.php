@@ -70,9 +70,6 @@ final class ActivityStub implements ActivityStubInterface
 
     protected function request(RequestInterface $request): PromiseInterface
     {
-        /** @var Workflow\WorkflowContextInterface $context */
-        $context = Workflow::getCurrentContext();
-
-        return $context->request($request);
+        return Workflow::getCurrentContext()->request($request);
     }
 }

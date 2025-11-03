@@ -25,7 +25,6 @@ use Temporal\Internal\Workflow\Process\Process;
 use Temporal\Internal\Workflow\WorkflowContext;
 use Temporal\Worker\FeatureFlags;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
-use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInfo;
 
 final class StartWorkflow extends Route
@@ -90,7 +89,6 @@ final class StartWorkflow extends Route
         );
         $runId = $request->getID();
 
-        Workflow::setCurrentContext($context);
         $process = new Process($this->services, $runId, $instance);
         $this->services->running->add($process);
         $resolver->resolve(EncodedValues::fromValues([null]));
