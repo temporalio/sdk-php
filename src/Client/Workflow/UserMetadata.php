@@ -38,12 +38,12 @@ final class UserMetadata
     public function withSummary(string $summary): self
     {
         /** @see self::$summary */
-        return $this->with('summary', $summary);
+        return $this->cloneWith('summary', $summary);
     }
 
     public function withDetails(string $details): self
     {
         /** @see self::$details */
-        return $this->with('details', $details);
+        return $this->cloneWith('details', $details);
     }
 }

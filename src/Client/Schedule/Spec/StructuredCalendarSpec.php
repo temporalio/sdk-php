@@ -90,90 +90,90 @@ final class StructuredCalendarSpec
 
     public function withSeconds(Range ...$seconds): self
     {
-        return $this->with('seconds', $seconds);
+        return $this->cloneWith('seconds', $seconds);
     }
 
     public function withAddedSecond(Range $second): self
     {
         $value = $this->seconds;
         $value[] = $second;
-        return $this->with('seconds', $value);
+        return $this->cloneWith('seconds', $value);
     }
 
     public function withMinutes(Range ...$minutes): self
     {
-        return $this->with('minutes', $minutes);
+        return $this->cloneWith('minutes', $minutes);
     }
 
     public function withAddedMinute(Range $minute): self
     {
         $value = $this->minutes;
         $value[] = $minute;
-        return $this->with('minutes', $value);
+        return $this->cloneWith('minutes', $value);
     }
 
     public function withHours(Range ...$hours): self
     {
-        return $this->with('hours', $hours);
+        return $this->cloneWith('hours', $hours);
     }
 
     public function withAddedHour(Range $hour): self
     {
         $value = $this->hours;
         $value[] = $hour;
-        return $this->with('hours', $value);
+        return $this->cloneWith('hours', $value);
     }
 
     public function withDaysOfMonth(Range ...$daysOfMonth): self
     {
-        return $this->with('daysOfMonth', $daysOfMonth);
+        return $this->cloneWith('daysOfMonth', $daysOfMonth);
     }
 
     public function withAddedDayOfMonth(Range $dayOfMonth): self
     {
         $value = $this->daysOfMonth;
         $value[] = $dayOfMonth;
-        return $this->with('daysOfMonth', $value);
+        return $this->cloneWith('daysOfMonth', $value);
     }
 
     public function withMonths(Range ...$months): self
     {
-        return $this->with('months', $months);
+        return $this->cloneWith('months', $months);
     }
 
     public function withAddedMonth(Range $month): self
     {
         $value = $this->months;
         $value[] = $month;
-        return $this->with('months', $value);
+        return $this->cloneWith('months', $value);
     }
 
     public function withYears(Range ...$years): self
     {
-        return $this->with('years', $years);
+        return $this->cloneWith('years', $years);
     }
 
     public function withAddedYear(Range $year): self
     {
         $value = $this->years;
         $value[] = $year;
-        return $this->with('years', $value);
+        return $this->cloneWith('years', $value);
     }
 
     public function withDaysOfWeek(Range ...$daysOfWeek): self
     {
-        return $this->with('daysOfWeek', $daysOfWeek);
+        return $this->cloneWith('daysOfWeek', $daysOfWeek);
     }
 
     public function withAddedDayOfWeek(Range $dayOfWeek): self
     {
         $value = $this->daysOfWeek;
         $value[] = $dayOfWeek;
-        return $this->with('daysOfWeek', $value);
+        return $this->cloneWith('daysOfWeek', $value);
     }
 
     public function withComment(string $comment): self
     {
-        return $this->with('comment', $comment);
+        return $this->cloneWith('comment', $comment);
     }
 }
