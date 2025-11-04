@@ -49,6 +49,7 @@ class ApplicationFailure extends TemporalFailure
     /**
      * @param ValuesInterface|null $details Optional details about the failure.
      * @param \DateInterval|null $nextRetryDelay Delay before the next retry attempt.
+     * @param ApplicationErrorCategory $category The category of the application failure.
      */
     public function __construct(
         string $message,
@@ -57,6 +58,7 @@ class ApplicationFailure extends TemporalFailure
         ?ValuesInterface $details = null,
         ?\Throwable $previous = null,
         private ?\DateInterval $nextRetryDelay = null,
+        private readonly ApplicationErrorCategory $category = ApplicationErrorCategory::Unspecified,
     ) {
         parent::__construct(
             self::buildMessage(\compact('message', 'type', 'nonRetryable')),
@@ -102,5 +104,10 @@ class ApplicationFailure extends TemporalFailure
     public function setNextRetryDelay(?\DateInterval $nextRetryDelay): void
     {
         $this->nextRetryDelay = $nextRetryDelay;
+    }
+
+    public function getApplicationErrorCategory(): ApplicationErrorCategory
+    {
+        return $this->category;
     }
 }
