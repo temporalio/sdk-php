@@ -11,8 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Exception\Failure;
 
-use Temporal\Api\Enums\V1\ApplicationErrorCategory as ProtoCategory;
-
 /**
  * Used to categorize application failures, for example, to distinguish benign errors from others.
  *
@@ -20,10 +18,10 @@ use Temporal\Api\Enums\V1\ApplicationErrorCategory as ProtoCategory;
  */
 enum ApplicationErrorCategory: int
 {
-    case Unspecified = ProtoCategory::APPLICATION_ERROR_CATEGORY_UNSPECIFIED;
+    case Unspecified = 0;
 
     /**
      * Expected application error with little/no severity.
      */
-    case Benign = ProtoCategory::APPLICATION_ERROR_CATEGORY_BENIGN;
+    case Benign = 1;
 }
