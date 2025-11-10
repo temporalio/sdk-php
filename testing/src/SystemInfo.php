@@ -67,7 +67,7 @@ final class SystemInfo
             self::PLATFORM_MAPPINGS[$os],
             self::ARCHITECTURE_MAPPINGS[Architecture::createFromGlobals()],
             self::TEMPORAL_EXECUTABLE_MAP[$os],
-            self::RR_EXECUTABLE_MAP[$os],
+            \getenv('ROADRUNNER_BINARY') ?: self::RR_EXECUTABLE_MAP[$os],
             self::TEMPORAL_CLI_EXECUTABLE_MAP[$os],
         );
     }
