@@ -62,8 +62,11 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                     return parent::runTest();
                 } catch (\Throwable $e) {
                     if ($e instanceof TemporalException) {
-                        echo "\n=== Workflow history for failed test {$this->name()} ===\n";
-                        $this->printWorkflowHistory($container->get(WorkflowClientInterface::class), $args);
+                        $h = $this->fetchWorkflowHistory($container->get(WorkflowClientInterface::class), $args);
+                        if ($h !== '') {
+                            echo "\n=== Workflow history for failed test {$this->name()} ===\n";
+                            echo $h;
+                        }
 
                         $logRecords = $container->get(ClientLogger::class)->getRecords();
                         if ($logRecords !== []) {
@@ -106,8 +109,12 @@ abstract class TestCase extends \Temporal\Tests\TestCase
         );
     }
 
-    private function printWorkflowHistory(WorkflowClientInterface $workflowClient, array $args): void
+    /**
+     * Fetch workflow history
+     */
+    private function fetchWorkflowHistory(WorkflowClientInterface $workflowClient, array $args): string
     {
+        $result = '';
         foreach ($args as $arg) {
             if (!$arg instanceof WorkflowStubInterface) {
                 continue;
@@ -121,17 +128,17 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                 $arg->getExecution(),
             ) as $event) {
                 $start ??= $fnTime($event->getEventTime());
-                echo "\n" . \str_pad((string) $event->getEventId(), 3, ' ', STR_PAD_LEFT) . ' ';
+                $result .= "\n" . \str_pad((string) $event->getEventId(), 3, ' ', STR_PAD_LEFT) . ' ';
                 # Calculate delta time
                 $deltaMs = \round(1_000 * ($fnTime($event->getEventTime()) - $start));
-                echo \str_pad(\number_format($deltaMs, 0, '.', "'"), 6, ' ', STR_PAD_LEFT) . 'ms  ';
-                echo \str_pad(EventType::name($event->getEventType()), 40, ' ', STR_PAD_RIGHT) . ' ';
+                $result .= \str_pad(\number_format($deltaMs, 0, '.', "'"), 6, ' ', STR_PAD_LEFT) . 'ms  ';
+                $result .= \str_pad(EventType::name($event->getEventType()), 40, ' ', STR_PAD_RIGHT) . ' ';
 
                 $cause = $event->getStartChildWorkflowExecutionFailedEventAttributes()?->getCause()
                     ?? $event->getSignalExternalWorkflowExecutionFailedEventAttributes()?->getCause()
                     ?? $event->getRequestCancelExternalWorkflowExecutionFailedEventAttributes()?->getCause();
                 if ($cause !== null) {
-                    echo "Cause: $cause";
+                    $result .= "Cause: $cause";
                     continue;
                 }
 
@@ -147,12 +154,14 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                 }
 
                 # Render failure
-                echo "Failure:\n";
-                echo "    ========== BEGIN ===========\n";
+                $result .= "Failure:\n";
+                $result .= "    ========== BEGIN ===========\n";
                 $this->renderFailure($failure, 1);
-                echo "    =========== END ============";
+                $result .= "    =========== END ============";
             }
         }
+
+        return $result;
     }
 
     private function renderFailure(Failure $failure, int $level): void
