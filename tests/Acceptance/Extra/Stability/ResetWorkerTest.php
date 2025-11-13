@@ -21,17 +21,17 @@ use Temporal\Workflow\WorkflowMethod;
 class ResetWorkerTest extends TestCase
 {
     #[Test]
-    public function resetWorker(
+    public function resetWithCancel(
         WorkflowClientInterface $client,
         Feature $feature,
     ): void {
-        # Create a Workflow stub with an execution timeout 12 seconds
+        # Create a Workflow stub with an execution timeout 20 seconds
         $stub = $client->withTimeout(1)
             ->newUntypedWorkflowStub(
                 'Extra_Stability_ResetWorker',
                 WorkflowOptions::new()
                     ->withTaskQueue($feature->taskQueue)
-                    ->withWorkflowExecutionTimeout(12),
+                    ->withWorkflowExecutionTimeout(20),
             );
 
         # Start the Workflow with a 10-second timer
@@ -39,11 +39,12 @@ class ResetWorkerTest extends TestCase
 
         # Query the Workflow to kill the Worker
         try {
-            $stub->query('die');
+            /** @see TestWorkflow::die() */
+            $stub->query('die', 2);
             self::fail('Query must fail with a timeout');
         } catch (WorkflowServiceException $e) {
             # Should fail with a timeout
-            self::assertInstanceOf(TimeoutException::class, $e->getPrevious());
+            $e->getPrevious() instanceof CanceledFailure or tr(clientException: $e);
         }
 
         # Cancel Workflow
@@ -51,26 +52,79 @@ class ResetWorkerTest extends TestCase
 
         try {
             # Workflow must be canceled
-            $stub->getResult(timeout: 12);
+            $stub->getResult(timeout: 20);
         } catch (WorkflowFailedException $e) {
-            self::assertInstanceOf(CanceledFailure::class, $e->getPrevious());
+            $e->getPrevious() instanceof CanceledFailure or tr(clientException: $e);
             return;
         }
 
         self::fail('Workflow must fail with a canceled failure');
+    }
+
+    #[Test]
+    public function resetWithSignal(
+        WorkflowClientInterface $client,
+        Feature $feature,
+    ): void {
+        # Create a Workflow stub with an execution timeout 20 seconds
+        $stub = $client->withTimeout(1)
+            ->newUntypedWorkflowStub(
+                'Extra_Stability_ResetWorker',
+                WorkflowOptions::new()
+                    ->withTaskQueue($feature->taskQueue)
+                    ->withWorkflowExecutionTimeout(20),
+            );
+
+        # Start the Workflow with a 10-second timer
+        $client->start($stub, 10);
+
+        # Query the Workflow to kill the Worker
+        try {
+            /** @see TestWorkflow::die() */
+            $stub->query('die', 2);
+            self::fail('Query must fail with a timeout');
+        } catch (WorkflowServiceException $e) {
+            # Should fail with a timeout
+            $e->getPrevious() instanceof TimeoutException or tr(clientException: $e);
+        }
+
+        $stub->signal('exit');
+
+        try {
+            # Workflow must be canceled
+            $result = $stub->getResult(timeout: 8);
+            self::assertSame('Signal', $result);
+        } catch (\Throwable) {
+            $this->fail('Workflow must finish successfully and no timeout must be thrown');
+        }
+
+        # Check that Side Effect was not lost
+        $found = false;
+        foreach ($client->getWorkflowHistory($stub->getExecution()) as $event) {
+            if ($event->hasMarkerRecordedEventAttributes()) {
+                $record = $event->getMarkerRecordedEventAttributes();
+                self::assertSame('SideEffect', $record->getMarkerName());
+                $found = true;
+                break;
+            }
+        }
+
+        self::assertTrue($found, 'Side Effect must be found in the Workflow history');
     }
 }
 
 #[Workflow\WorkflowInterface]
 class TestWorkflow
 {
+    private bool $exit = false;
+
     #[WorkflowMethod('Extra_Stability_ResetWorker')]
     #[ReturnType(Type::TYPE_STRING)]
     public function expire(int $seconds = 10): \Generator
     {
-        yield Workflow::timer($seconds);
+        $isTimer = ! yield Workflow::awaitWithTimeout($seconds, fn(): bool => $this->exit);
 
-        return yield 'Timer';
+        return yield $isTimer ? 'Timer' : 'Signal';
     }
 
     #[Workflow\QueryMethod('die')]
@@ -78,5 +132,12 @@ class TestWorkflow
     {
         \sleep($sleep);
         exit(1);
+    }
+
+    #[Workflow\SignalMethod('exit')]
+    public function signal()
+    {
+        yield Workflow::uuid7();
+        $this->exit = true;
     }
 }
