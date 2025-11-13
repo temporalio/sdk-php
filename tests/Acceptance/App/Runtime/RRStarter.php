@@ -39,7 +39,7 @@ final class RRStarter
             "temporal.address={$this->runtime->address}",
             '-o',
             'server.command=' . \implode(',', [
-                'php',
+                PHP_BINARY,
                 $this->runtime->rrConfigDir . DIRECTORY_SEPARATOR . 'worker.php',
                 ...$run->toCommandLineArguments(),
             ]),
