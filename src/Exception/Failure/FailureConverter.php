@@ -70,6 +70,7 @@ final class FailureConverter
                 $info = new ApplicationFailureInfo();
                 $info->setType($e->getType());
                 $info->setNonRetryable($e->isNonRetryable());
+                $info->setCategory($e->getApplicationErrorCategory()->value);
 
                 // Set Next Retry Delay
                 $nextRetry = DateInterval::toDuration($e->getNextRetryDelay());
@@ -181,6 +182,7 @@ final class FailureConverter
                     $details,
                     $previous,
                     DateInterval::parseOrNull($info->getNextRetryDelay()),
+                    ApplicationErrorCategory::tryFrom($info->getCategory()) ?? ApplicationErrorCategory::Unspecified,
                 );
 
             case $failure->hasTimeoutFailureInfo():

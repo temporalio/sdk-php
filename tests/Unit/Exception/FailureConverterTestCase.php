@@ -10,6 +10,7 @@ use Google\Protobuf\Duration;
 use Temporal\Api\Failure\V1\Failure;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\Exception\Failure\ApplicationErrorCategory;
 use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Exception\Failure\FailureConverter;
 use Temporal\Tests\Unit\AbstractUnit;
@@ -178,5 +179,23 @@ final class FailureConverterTestCase extends AbstractUnit
         $this->assertTrue($failure->getApplicationFailureInfo()->getNonRetryable());
         $this->assertEmpty($failure->getApplicationFailureInfo()->getDetails());
         $this->assertNull($failure->getApplicationFailureInfo()->getNextRetryDelay());
+        $this->assertSame(0, $failure->getApplicationFailureInfo()->getCategory());
+    }
+
+    public function testMapAppFailureWithCategory(): void
+    {
+        $converter = DataConverter::createDefault();
+        $exception = new ApplicationFailure(
+            'message',
+            'type',
+            true,
+            category: ApplicationErrorCategory::Benign,
+        );
+
+        $failure = FailureConverter::mapExceptionToFailure($exception, $converter);
+        $newException = FailureConverter::mapFailureToException($failure, $converter);
+
+        self::assertInstanceOf(ApplicationFailure::class, $newException);
+        $this->assertSame(ApplicationErrorCategory::Benign, $newException->getApplicationErrorCategory());
     }
 }

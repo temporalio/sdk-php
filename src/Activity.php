@@ -17,13 +17,25 @@ use Temporal\Activity\ActivityInfo;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\OutOfContextException;
+use Temporal\Internal\Activity\ActivityContext;
 use Temporal\Internal\Support\Facade;
 
-/**
- * @template-extends Facade<ActivityContextInterface>
- */
 final class Activity extends Facade
 {
+    /**
+     * Get the current Activity context.
+     * @throws OutOfContextException
+     */
+    public static function getCurrentContext(): ActivityContextInterface
+    {
+        $ctx = parent::getCurrentContext();
+        /** @var ActivityContext $ctx */
+        $ctx::class === ActivityContext::class or throw new OutOfContextException(
+            'The Activity facade can only be used in the context of an activity execution.',
+        );
+        return $ctx;
+    }
+
     /**
      * Returns information about current activity execution.
      *
@@ -31,7 +43,6 @@ final class Activity extends Facade
      */
     public static function getInfo(): ActivityInfo
     {
-        /** @var ActivityContextInterface $context */
         $context = self::getCurrentContext();
 
         return $context->getInfo();
@@ -57,7 +68,6 @@ final class Activity extends Facade
      */
     public static function getInput(): ValuesInterface
     {
-        /** @var ActivityContextInterface $context */
         $context = self::getCurrentContext();
 
         return $context->getInput();
@@ -72,7 +82,6 @@ final class Activity extends Facade
      */
     public static function hasHeartbeatDetails(): bool
     {
-        /** @var ActivityContextInterface $context */
         $context = self::getCurrentContext();
 
         return $context->hasHeartbeatDetails();
@@ -88,7 +97,6 @@ final class Activity extends Facade
      */
     public static function getHeartbeatDetails($type = null): mixed
     {
-        /** @var ActivityContextInterface $context */
         $context = self::getCurrentContext();
 
         return $context->getLastHeartbeatDetails($type);
@@ -101,7 +109,6 @@ final class Activity extends Facade
      */
     public static function getCancellationDetails(): ?ActivityCancellationDetails
     {
-        /** @var ActivityContextInterface $context */
         $context = self::getCurrentContext();
 
         return $context->getCancellationDetails();
@@ -118,7 +125,6 @@ final class Activity extends Facade
      */
     public static function doNotCompleteOnReturn(): void
     {
-        /** @var ActivityContextInterface $context */
         $context = self::getCurrentContext();
 
         $context->doNotCompleteOnReturn();
@@ -150,7 +156,6 @@ final class Activity extends Facade
      */
     public static function heartbeat($details): void
     {
-        /** @var ActivityContextInterface $context */
         $context = self::getCurrentContext();
 
         $context->heartbeat($details);
@@ -161,7 +166,6 @@ final class Activity extends Facade
      */
     public static function getInstance(): object
     {
-        /** @var ActivityContextInterface $context */
         $context = self::getCurrentContext();
 
         return $context->getInstance();

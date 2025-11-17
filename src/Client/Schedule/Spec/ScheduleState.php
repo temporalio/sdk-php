@@ -68,7 +68,7 @@ final class ScheduleState
      */
     public function withNotes(string $notes): self
     {
-        return $this->with('notes', $notes);
+        return $this->cloneWith('notes', $notes);
     }
 
     /**
@@ -76,7 +76,7 @@ final class ScheduleState
      */
     public function withPaused(bool $paused): self
     {
-        return $this->with('paused', $paused);
+        return $this->cloneWith('paused', $paused);
     }
 
     /**
@@ -90,7 +90,7 @@ final class ScheduleState
      */
     public function withLimitedActions(bool $limitedActions): self
     {
-        return $this->with('limitedActions', $limitedActions);
+        return $this->cloneWith('limitedActions', $limitedActions);
     }
 
     /**
@@ -98,6 +98,6 @@ final class ScheduleState
      */
     public function withRemainingActions(int $remainingActions): self
     {
-        return $this->with('remainingActions', $remainingActions);
+        return $this->cloneWith('remainingActions', $remainingActions);
     }
 }

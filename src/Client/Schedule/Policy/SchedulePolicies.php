@@ -67,7 +67,7 @@ final class SchedulePolicies
      */
     public function withOverlapPolicy(ScheduleOverlapPolicy $overlapPolicy): self
     {
-        return $this->with('overlapPolicy', $overlapPolicy);
+        return $this->cloneWith('overlapPolicy', $overlapPolicy);
     }
 
     /**
@@ -86,7 +86,7 @@ final class SchedulePolicies
         // Can't be less than 10 seconds.
         \assert($interval->totalSeconds >= 10);
 
-        return $this->with('catchupWindow', $interval);
+        return $this->cloneWith('catchupWindow', $interval);
     }
 
     /**
@@ -96,6 +96,6 @@ final class SchedulePolicies
      */
     public function withPauseOnFailure(bool $pauseOnFailure = true): self
     {
-        return $this->with('pauseOnFailure', $pauseOnFailure);
+        return $this->cloneWith('pauseOnFailure', $pauseOnFailure);
     }
 }
