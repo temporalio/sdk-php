@@ -46,7 +46,7 @@ final class ConfigClientTest extends TestCase
             TOML;
 
         // Act
-        $config = ConfigClient::loadFromFile($toml);
+        $config = ConfigClient::loadFromToml($toml);
 
         // Assert
         self::assertTrue($config->hasProfile('default'));
@@ -74,7 +74,7 @@ final class ConfigClientTest extends TestCase
         $this->expectExceptionMessage('Invalid TOML configuration');
 
         // Act
-        ConfigClient::loadFromFile($invalidToml);
+        ConfigClient::loadFromToml($invalidToml);
     }
 
     public function testLoadFromEnvWithSystemEnvProvider(): void
@@ -242,7 +242,7 @@ final class ConfigClientTest extends TestCase
     {
         // Arrange
         $toml = "[profile.{$storeName}]\naddress = \"127.0.0.1:7233\"";
-        $config = ConfigClient::loadFromFile($toml);
+        $config = ConfigClient::loadFromToml($toml);
 
         // Act
         $profile = $config->getProfile($accessName);
@@ -256,7 +256,7 @@ final class ConfigClientTest extends TestCase
     {
         // Arrange
         $toml = "[profile.{$storeName}]\naddress = \"127.0.0.1:7233\"";
-        $config = ConfigClient::loadFromFile($toml);
+        $config = ConfigClient::loadFromToml($toml);
 
         // Act & Assert
         self::assertTrue($config->hasProfile($accessName));
@@ -269,7 +269,7 @@ final class ConfigClientTest extends TestCase
             [profile.default]
             address = "127.0.0.1:7233"
             TOML;
-        $config = ConfigClient::loadFromFile($toml);
+        $config = ConfigClient::loadFromToml($toml);
 
         // Assert (before Act for exceptions)
         $this->expectException(ProfileNotFoundException::class);
@@ -286,7 +286,7 @@ final class ConfigClientTest extends TestCase
             [profile.default]
             address = "127.0.0.1:7233"
             TOML;
-        $config = ConfigClient::loadFromFile($toml);
+        $config = ConfigClient::loadFromToml($toml);
 
         // Act & Assert
         self::assertFalse($config->hasProfile('nonexistent'));
@@ -308,7 +308,7 @@ final class ConfigClientTest extends TestCase
         $this->expectExceptionMessage("Duplicate profile name (case-insensitive): 'Default' conflicts with existing 'default'");
 
         // Act
-        ConfigClient::loadFromFile($toml);
+        ConfigClient::loadFromToml($toml);
     }
 
     public function testToServiceClientWithoutTls(): void
@@ -456,7 +456,7 @@ final class ConfigClientTest extends TestCase
             [profile.default]
             address = "127.0.0.1:7233"
             TOML;
-        $config = ConfigClient::loadFromFile($toml);
+        $config = ConfigClient::loadFromToml($toml);
 
         // Assert
         self::assertIsArray($config->profiles);
