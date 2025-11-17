@@ -135,7 +135,7 @@ final class ConfigClient
 
             $toml === false and throw new InvalidConfigException("Failed to read configuration file: {$source}");
 
-            $config = new ConfigToml($toml);
+            $config = ConfigToml::fromString($toml);
             return new self(self::normalizeProfileNames($config->profiles));
         } catch (ConfigException $e) {
             throw $e;
