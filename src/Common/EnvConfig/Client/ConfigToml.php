@@ -45,21 +45,21 @@ use Temporal\Common\EnvConfig\Exception\TomlParserNotFoundException;
  */
 final class ConfigToml
 {
-    /**
-     * @var array<non-empty-string, ConfigProfile>
-     */
-    public readonly array $profiles;
+    public function __construct(
+        /**
+         * @var array<non-empty-string, ConfigProfile>
+         */
+        public readonly array $profiles,
+    ) {}
 
     /**
      * @param string $toml TOML content
-     * @param bool $strict Whether to use strict parsing
      */
-    public function __construct(
-        string $toml,
-    ) {
+    public static function fromString(string $toml): self
+    {
         \class_exists(Toml::class) or throw new TomlParserNotFoundException();
         $data = Toml::parseToArray($toml);
-        $this->profiles = $this->parseProfiles($data['profile'] ?? []);
+        return new self(self::parseProfiles($data['profile'] ?? []));
     }
 
     /**
@@ -70,7 +70,7 @@ final class ConfigToml
      * @return false Returns false if the assertion passes
      * @throws \InvalidArgumentException If the assertion fails.
      */
-    private function notAssert(bool $condition, string $message): bool
+    private static function notAssert(bool $condition, string $message): bool
     {
         $condition or throw new \InvalidArgumentException($message);
         return false;
@@ -83,17 +83,17 @@ final class ConfigToml
      * @return array<non-empty-string, ConfigProfile>
      * @throws \InvalidArgumentException If the configuration is invalid.
      */
-    private function parseProfiles(mixed $profile): array
+    private static function parseProfiles(mixed $profile): array
     {
-        if ($this->notAssert(\is_array($profile), 'The `profile` section must be an array.')) {
+        if (self::notAssert(\is_array($profile), 'The `profile` section must be an array.')) {
             return [];
         }
 
         $result = [];
         foreach ($profile as $name => $config) {
             if (
-                $this->notAssert(\is_array($config), 'Each profile configuration must be an array.')
-                || $this->notAssert(\strlen($name) > 0, 'Profile name must be a non-empty string.')
+                self::notAssert(\is_array($config), 'Each profile configuration must be an array.')
+                || self::notAssert(\strlen($name) > 0, 'Profile name must be a non-empty string.')
             ) {
                 continue;
             }
@@ -101,7 +101,7 @@ final class ConfigToml
             $apiKey = $config['api_key'] ?? null;
             $tls = $config['tls'] ?? null;
             $tlsConfig = match (true) {
-                \is_array($tls) => $this->parseTls($tls),
+                \is_array($tls) => self::parseTls($tls),
                 $apiKey !== null || $tls === true => new ConfigTls(),
                 default => new ConfigTls(disabled: true),
             };
@@ -112,33 +112,33 @@ final class ConfigToml
                 apiKey: $apiKey,
                 tlsConfig: $tlsConfig,
                 grpcMeta: $config['grpc_meta'] ?? [],
-                codecConfig: isset($config['codec']) && \is_array($config['codec']) ? $this->parseCodec($config['codec']) : null,
+                codecConfig: isset($config['codec']) && \is_array($config['codec']) ? self::parseCodec($config['codec']) : null,
             );
         }
 
         return $result;
     }
 
-    private function parseTls(array $tls): ?ConfigTls
+    private static function parseTls(array $tls): ?ConfigTls
     {
         // cert_data and cert_path must not be used together
         $rootCert = $tls['server_ca_cert_path'] ?? $tls['server_ca_cert_data'] ?? null;
         $privateKey = $tls['client_key_path'] ?? $tls['client_key_data'] ?? null;
         $certChain = $tls['client_cert_path'] ?? $tls['client_cert_data'] ?? null;
 
-        $rootCert === null or $this->notAssert(
+        $rootCert === null or self::notAssert(
             isset($tls['server_ca_cert_path']) xor isset($tls['server_ca_cert_data']),
             'Cannot specify both `server_ca_cert_path` and `server_ca_cert_data`.',
         );
-        $privateKey === null or $this->notAssert(
+        $privateKey === null or self::notAssert(
             isset($tls['client_key_path']) xor isset($tls['client_key_data']),
             'Cannot specify both `client_key_path` and `client_key_data`.',
         );
-        $certChain === null or $this->notAssert(
+        $certChain === null or self::notAssert(
             isset($tls['client_cert_path']) xor isset($tls['client_cert_data']),
             'Cannot specify both `client_cert_path` and `client_cert_data`.',
         );
-        $this->notAssert(
+        self::notAssert(
             ($privateKey === null) === ($certChain === null),
             'Both `client_key_*` and `client_cert_*` must be specified for mTLS.',
         );
@@ -158,7 +158,7 @@ final class ConfigToml
      * @param array $codec Codec configuration array
      * @return ConfigCodec|null Parsed codec configuration or null if empty
      */
-    private function parseCodec(array $codec): ?ConfigCodec
+    private static function parseCodec(array $codec): ?ConfigCodec
     {
         $endpoint = $codec['endpoint'] ?? null;
         $auth = $codec['auth'] ?? null;

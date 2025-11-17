@@ -182,7 +182,7 @@ final class ConfigTomlTest extends TestCase
             TOML;
 
         // Act
-        $config = new ConfigToml($toml);
+        $config = ConfigToml::fromString($toml);
 
         // Assert
         self::assertCount(1, $config->profiles);
@@ -220,7 +220,7 @@ final class ConfigTomlTest extends TestCase
             TOML;
 
         // Act
-        $config = new ConfigToml($toml);
+        $config = ConfigToml::fromString($toml);
 
         // Assert
         self::assertCount(2, $config->profiles);
@@ -257,7 +257,7 @@ final class ConfigTomlTest extends TestCase
             TOML;
 
         // Act
-        $config = new ConfigToml($toml);
+        $config = ConfigToml::fromString($toml);
 
         // Assert
         self::assertCount(2, $config->profiles);
@@ -295,7 +295,7 @@ final class ConfigTomlTest extends TestCase
             TOML;
 
         // Act
-        $config = new ConfigToml($toml);
+        $config = ConfigToml::fromString($toml);
 
         // Assert
         self::assertCount(1, $config->profiles);
@@ -323,7 +323,7 @@ final class ConfigTomlTest extends TestCase
             TOML;
 
         // Act
-        $config = new ConfigToml($toml);
+        $config = ConfigToml::fromString($toml);
 
         // Assert
         self::assertCount(1, $config->profiles);
@@ -345,7 +345,7 @@ final class ConfigTomlTest extends TestCase
         $toml = '';
 
         // Act
-        $config = new ConfigToml($toml);
+        $config = ConfigToml::fromString($toml);
 
         // Assert
         self::assertEmpty($config->profiles);
@@ -360,7 +360,7 @@ final class ConfigTomlTest extends TestCase
             TOML;
 
         // Act
-        $config = new ConfigToml($toml);
+        $config = ConfigToml::fromString($toml);
 
         // Assert
         self::assertEmpty($config->profiles);
@@ -382,7 +382,7 @@ final class ConfigTomlTest extends TestCase
         $this->expectExceptionMessage('Cannot specify both `server_ca_cert_path` and `server_ca_cert_data`.');
 
         // Act
-        new ConfigToml($toml);
+        ConfigToml::fromString($toml);
     }
 
     public function testConstructorInStrictModeThrowsExceptionForDuplicateClientKeyPath(): void
@@ -401,7 +401,7 @@ final class ConfigTomlTest extends TestCase
         $this->expectExceptionMessage('Cannot specify both `client_key_path` and `client_key_data`.');
 
         // Act
-        new ConfigToml($toml);
+        ConfigToml::fromString($toml);
     }
 
     public function testConstructorInStrictModeThrowsExceptionForDuplicateClientCertPath(): void
@@ -420,7 +420,7 @@ final class ConfigTomlTest extends TestCase
         $this->expectExceptionMessage('Cannot specify both `client_cert_path` and `client_cert_data`.');
 
         // Act
-        new ConfigToml($toml);
+        ConfigToml::fromString($toml);
     }
 
     public function testConstructorInStrictModeThrowsExceptionForMissingClientKey(): void
@@ -438,7 +438,7 @@ final class ConfigTomlTest extends TestCase
         $this->expectExceptionMessage('Both `client_key_*` and `client_cert_*` must be specified for mTLS.');
 
         // Act
-        new ConfigToml($toml);
+        ConfigToml::fromString($toml);
     }
 
     public function testConstructorInStrictModeThrowsExceptionForMissingClientCert(): void
@@ -456,7 +456,7 @@ final class ConfigTomlTest extends TestCase
         $this->expectExceptionMessage('Both `client_key_*` and `client_cert_*` must be specified for mTLS.');
 
         // Act
-        new ConfigToml($toml);
+        ConfigToml::fromString($toml);
     }
 
     #[DataProvider('provideInvalidProfileStructures')]
@@ -469,7 +469,7 @@ final class ConfigTomlTest extends TestCase
         $this->expectExceptionMessage($expectedMessage);
 
         // Act
-        new ConfigToml($toml);
+        ConfigToml::fromString($toml);
     }
 
     #[DataProvider('provideComplexConfigurations')]
@@ -479,7 +479,7 @@ final class ConfigTomlTest extends TestCase
         array $profileChecks,
     ): void {
         // Act
-        $config = new ConfigToml($toml);
+        $config = ConfigToml::fromString($toml);
 
         // Assert
         self::assertCount($expectedProfileCount, $config->profiles);
@@ -516,7 +516,7 @@ final class ConfigTomlTest extends TestCase
             TOML;
 
         // Act
-        $config = new ConfigToml($toml);
+        $config = ConfigToml::fromString($toml);
 
         // Assert
         self::assertCount(1, $config->profiles);
@@ -539,7 +539,7 @@ final class ConfigTomlTest extends TestCase
             TOML;
 
         // Act
-        $config = new ConfigToml($toml);
+        $config = ConfigToml::fromString($toml);
 
         // Assert
         self::assertCount(1, $config->profiles);
@@ -558,7 +558,7 @@ final class ConfigTomlTest extends TestCase
             TOML;
 
         // Act
-        $config = new ConfigToml($toml);
+        $config = ConfigToml::fromString($toml);
 
         // Assert
         self::assertCount(1, $config->profiles);
@@ -586,7 +586,7 @@ final class ConfigTomlTest extends TestCase
             TOML;
 
         // Act
-        $config = new ConfigToml($toml);
+        $config = ConfigToml::fromString($toml);
 
         // Assert
         self::assertCount(1, $config->profiles);
@@ -610,7 +610,7 @@ final class ConfigTomlTest extends TestCase
             TOML;
 
         // Act
-        $config = new ConfigToml($toml);
+        $config = ConfigToml::fromString($toml);
 
         // Assert
         self::assertCount(1, $config->profiles);
@@ -633,7 +633,7 @@ final class ConfigTomlTest extends TestCase
             TOML;
 
         // Act
-        $config = new ConfigToml($toml);
+        $config = ConfigToml::fromString($toml);
 
         // Assert
         self::assertCount(1, $config->profiles);
@@ -659,7 +659,7 @@ final class ConfigTomlTest extends TestCase
         $this->expectExceptionMessage('Remote codec configuration is not supported in the PHP SDK');
 
         // Act
-        new ConfigToml($toml);
+        ConfigToml::fromString($toml);
     }
 
     public function testConstructorThrowsExceptionWhenCodecAuthIsConfigured(): void
@@ -677,7 +677,7 @@ final class ConfigTomlTest extends TestCase
         $this->expectExceptionMessage('Remote codec configuration is not supported in the PHP SDK');
 
         // Act
-        new ConfigToml($toml);
+        ConfigToml::fromString($toml);
     }
 
     public function testConstructorThrowsExceptionWhenBothCodecFieldsAreConfigured(): void
@@ -696,7 +696,7 @@ final class ConfigTomlTest extends TestCase
         $this->expectExceptionMessage('Remote codec configuration is not supported in the PHP SDK');
 
         // Act
-        new ConfigToml($toml);
+        ConfigToml::fromString($toml);
     }
 
     public function testConstructorDoesNotThrowExceptionForEmptyCodecSection(): void
@@ -709,7 +709,7 @@ final class ConfigTomlTest extends TestCase
             TOML;
 
         // Act
-        $config = new ConfigToml($toml);
+        $config = ConfigToml::fromString($toml);
 
         // Assert
         self::assertCount(1, $config->profiles);
