@@ -61,7 +61,7 @@
         "dereuromark/composer-prefer-lowest": "^0.1.10",
         "doctrine/annotations": "^1.14.4 || ^2.0.2",
         "internal/dload": "^1.2.0",
-        "internal/toml": "^1.0",
+        "internal/toml": "^1.0.3",
         "jetbrains/phpstorm-attributes": "dev-master",
         "laminas/laminas-code": "^4.16",
         "phpunit/phpunit": "10.5.45",

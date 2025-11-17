@@ -716,4 +716,289 @@ final class ConfigTomlTest extends TestCase
         $profile = $config->profiles['empty_codec'];
         self::assertNull($profile->codecConfig);
     }
+
+    public function testToTomlRoundTripWithMinimalProfile(): void
+    {
+        // Arrange: Create a minimal profile
+        $original = new ConfigToml([
+            'minimal' => new ConfigProfile(
+                address: 'localhost:7233',
+                namespace: null,
+                apiKey: null,
+                tlsConfig: new ConfigTls(disabled: true),
+                grpcMeta: [],
+            ),
+        ]);
+
+        // Act: Convert to TOML and back
+        $tomlString = $original->toToml();
+        $roundTrip = ConfigToml::fromString($tomlString);
+
+        // Assert: Verify profiles match
+        self::assertCount(1, $roundTrip->profiles);
+        self::assertArrayHasKey('minimal', $roundTrip->profiles);
+
+        $profile = $roundTrip->profiles['minimal'];
+        self::assertSame('localhost:7233', $profile->address);
+        self::assertNull($profile->namespace);
+        self::assertNull($profile->apiKey);
+        self::assertTrue($profile->tlsConfig->disabled);
+        self::assertSame([], $profile->grpcMeta);
+    }
+
+    public function testToTomlRoundTripWithFullProfile(): void
+    {
+        // Arrange: Create a profile with all fields
+        $original = new ConfigToml([
+            'full' => new ConfigProfile(
+                address: 'full.example.com:7233',
+                namespace: 'full-namespace',
+                apiKey: 'full-api-key',
+                tlsConfig: new ConfigTls(
+                    disabled: false,
+                    rootCerts: 'ca-cert-data',
+                    privateKey: 'private-key-data',
+                    certChain: 'cert-chain-data',
+                    serverName: 'custom-server',
+                ),
+                grpcMeta: [
+                    'header1' => ['value1'],
+                    'header2' => ['value2'],
+                ],
+            ),
+        ]);
+
+        // Act: Convert to TOML and back
+        $tomlString = $original->toToml();
+        $roundTrip = ConfigToml::fromString($tomlString);
+
+        // Assert: Verify all fields match
+        self::assertCount(1, $roundTrip->profiles);
+        $profile = $roundTrip->profiles['full'];
+
+        self::assertSame('full.example.com:7233', $profile->address);
+        self::assertSame('full-namespace', $profile->namespace);
+        self::assertSame('full-api-key', $profile->apiKey);
+        self::assertSame(['header1' => ['value1'], 'header2' => ['value2']], $profile->grpcMeta);
+
+        self::assertFalse($profile->tlsConfig->disabled);
+        self::assertSame('ca-cert-data', $profile->tlsConfig->rootCerts);
+        self::assertSame('private-key-data', $profile->tlsConfig->privateKey);
+        self::assertSame('cert-chain-data', $profile->tlsConfig->certChain);
+        self::assertSame('custom-server', $profile->tlsConfig->serverName);
+    }
+
+    public function testToTomlRoundTripWithMultipleProfiles(): void
+    {
+        // Arrange: Create multiple profiles with different configurations
+        $original = new ConfigToml([
+            'dev' => new ConfigProfile(
+                address: 'dev.example.com:7233',
+                namespace: 'dev-ns',
+                apiKey: null,
+                tlsConfig: new ConfigTls(disabled: true),
+            ),
+            'staging' => new ConfigProfile(
+                address: 'staging.example.com:7233',
+                namespace: 'staging-ns',
+                apiKey: 'staging-key',
+                tlsConfig: new ConfigTls(disabled: false),
+            ),
+            'prod' => new ConfigProfile(
+                address: 'prod.example.com:7233',
+                namespace: 'prod-ns',
+                apiKey: 'prod-key',
+                tlsConfig: new ConfigTls(
+                    disabled: false,
+                    rootCerts: 'prod-ca',
+                    privateKey: 'prod-key',
+                    certChain: 'prod-cert',
+                    serverName: 'prod-server',
+                ),
+                grpcMeta: ['authorization' => ['Bearer token']],
+            ),
+        ]);
+
+        // Act: Convert to TOML and back
+        $tomlString = $original->toToml();
+        $roundTrip = ConfigToml::fromString($tomlString);
+
+        // Assert: Verify all profiles match
+        self::assertCount(3, $roundTrip->profiles);
+
+        // Dev profile
+        $dev = $roundTrip->profiles['dev'];
+        self::assertSame('dev.example.com:7233', $dev->address);
+        self::assertSame('dev-ns', $dev->namespace);
+        self::assertNull($dev->apiKey);
+        self::assertTrue($dev->tlsConfig->disabled);
+
+        // Staging profile
+        $staging = $roundTrip->profiles['staging'];
+        self::assertSame('staging.example.com:7233', $staging->address);
+        self::assertSame('staging-ns', $staging->namespace);
+        self::assertSame('staging-key', $staging->apiKey);
+        self::assertFalse($staging->tlsConfig->disabled);
+
+        // Prod profile
+        $prod = $roundTrip->profiles['prod'];
+        self::assertSame('prod.example.com:7233', $prod->address);
+        self::assertSame('prod-ns', $prod->namespace);
+        self::assertSame('prod-key', $prod->apiKey);
+        self::assertFalse($prod->tlsConfig->disabled);
+        self::assertSame('prod-ca', $prod->tlsConfig->rootCerts);
+        self::assertSame('prod-key', $prod->tlsConfig->privateKey);
+        self::assertSame('prod-cert', $prod->tlsConfig->certChain);
+        self::assertSame('prod-server', $prod->tlsConfig->serverName);
+        self::assertSame(['authorization' => ['Bearer token']], $prod->grpcMeta);
+    }
+
+    public function testToTomlRoundTripWithTlsEnabledByApiKey(): void
+    {
+        // Arrange: Profile with API key (should auto-enable TLS)
+        $original = new ConfigToml([
+            'cloud' => new ConfigProfile(
+                address: 'cloud.example.com:7233',
+                namespace: 'cloud-ns',
+                apiKey: 'cloud-api-key',
+                tlsConfig: new ConfigTls(disabled: false),
+            ),
+        ]);
+
+        // Act: Convert to TOML and back
+        $tomlString = $original->toToml();
+        $roundTrip = ConfigToml::fromString($tomlString);
+
+        // Assert: TLS should remain enabled
+        self::assertCount(1, $roundTrip->profiles);
+        $profile = $roundTrip->profiles['cloud'];
+        self::assertSame('cloud-api-key', $profile->apiKey);
+        self::assertFalse($profile->tlsConfig->disabled);
+    }
+
+    public function testToTomlRoundTripWithMixedTlsConfigurations(): void
+    {
+        // Arrange: Different TLS configurations
+        $original = new ConfigToml([
+            'tls_disabled' => new ConfigProfile(
+                address: 'a.example.com:7233',
+                namespace: 'a',
+                apiKey: null,
+                tlsConfig: new ConfigTls(disabled: true),
+            ),
+            'tls_enabled' => new ConfigProfile(
+                address: 'b.example.com:7233',
+                namespace: 'b',
+                apiKey: null,
+                tlsConfig: new ConfigTls(disabled: false),
+            ),
+            'tls_with_server_name' => new ConfigProfile(
+                address: 'c.example.com:7233',
+                namespace: 'c',
+                apiKey: null,
+                tlsConfig: new ConfigTls(
+                    disabled: false,
+                    serverName: 'custom-server',
+                ),
+            ),
+            'tls_with_certs' => new ConfigProfile(
+                address: 'd.example.com:7233',
+                namespace: 'd',
+                apiKey: null,
+                tlsConfig: new ConfigTls(
+                    disabled: false,
+                    rootCerts: 'ca-data',
+                    privateKey: 'key-data',
+                    certChain: 'cert-data',
+                ),
+            ),
+        ]);
+
+        // Act: Convert to TOML and back
+        $tomlString = $original->toToml();
+        $roundTrip = ConfigToml::fromString($tomlString);
+
+        // Assert: Verify all TLS configurations match
+        self::assertCount(4, $roundTrip->profiles);
+
+        self::assertTrue($roundTrip->profiles['tls_disabled']->tlsConfig->disabled);
+
+        self::assertFalse($roundTrip->profiles['tls_enabled']->tlsConfig->disabled);
+
+        $withServerName = $roundTrip->profiles['tls_with_server_name'];
+        self::assertFalse($withServerName->tlsConfig->disabled);
+        self::assertSame('custom-server', $withServerName->tlsConfig->serverName);
+
+        $withCerts = $roundTrip->profiles['tls_with_certs'];
+        self::assertFalse($withCerts->tlsConfig->disabled);
+        self::assertSame('ca-data', $withCerts->tlsConfig->rootCerts);
+        self::assertSame('key-data', $withCerts->tlsConfig->privateKey);
+        self::assertSame('cert-data', $withCerts->tlsConfig->certChain);
+    }
+
+    public function testToTomlRoundTripWithGrpcMetadata(): void
+    {
+        // Arrange: Profile with various gRPC metadata
+        $original = new ConfigToml([
+            'with_meta' => new ConfigProfile(
+                address: 'meta.example.com:7233',
+                namespace: 'meta-ns',
+                apiKey: null,
+                tlsConfig: new ConfigTls(disabled: true),
+                grpcMeta: [
+                    'authorization' => ['Bearer token123'],
+                    'x-custom-header' => ['custom-value'],
+                    'x-multi-header' => ['value1', 'value2'],
+                ],
+            ),
+        ]);
+
+        // Act: Convert to TOML and back
+        $tomlString = $original->toToml();
+        $roundTrip = ConfigToml::fromString($tomlString);
+
+        // Assert: Verify gRPC metadata is preserved
+        self::assertCount(1, $roundTrip->profiles);
+        $profile = $roundTrip->profiles['with_meta'];
+
+        self::assertArrayHasKey('authorization', $profile->grpcMeta);
+        self::assertSame(['Bearer token123'], $profile->grpcMeta['authorization']);
+        self::assertArrayHasKey('x-custom-header', $profile->grpcMeta);
+        self::assertSame(['custom-value'], $profile->grpcMeta['x-custom-header']);
+        self::assertArrayHasKey('x-multi-header', $profile->grpcMeta);
+        self::assertSame(['value1', 'value2'], $profile->grpcMeta['x-multi-header']);
+    }
+
+    public function testToTomlRoundTripWithEmptyProfiles(): void
+    {
+        // Arrange: Empty configuration
+        $original = new ConfigToml([]);
+
+        // Act: Convert to TOML and back
+        $tomlString = $original->toToml();
+        $roundTrip = ConfigToml::fromString($tomlString);
+
+        // Assert: Should remain empty
+        self::assertEmpty($roundTrip->profiles);
+    }
+
+    public function testToTomlRoundTripPreservesProfileOrder(): void
+    {
+        // Arrange: Multiple profiles in specific order
+        $original = new ConfigToml([
+            'zebra' => new ConfigProfile('z.example.com:7233', 'z', null, new ConfigTls(disabled: true)),
+            'alpha' => new ConfigProfile('a.example.com:7233', 'a', null, new ConfigTls(disabled: true)),
+            'beta' => new ConfigProfile('b.example.com:7233', 'b', null, new ConfigTls(disabled: true)),
+        ]);
+
+        // Act: Convert to TOML and back
+        $tomlString = $original->toToml();
+        $roundTrip = ConfigToml::fromString($tomlString);
+
+        // Assert: All profiles should be present (order may vary due to TOML encoding)
+        self::assertCount(3, $roundTrip->profiles);
+        self::assertArrayHasKey('zebra', $roundTrip->profiles);
+        self::assertArrayHasKey('alpha', $roundTrip->profiles);
+        self::assertArrayHasKey('beta', $roundTrip->profiles);
+    }
 }
