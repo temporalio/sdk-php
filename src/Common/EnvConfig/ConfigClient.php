@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Common\EnvConfig;
 
+use Internal\Toml\Toml;
 use Temporal\Common\EnvConfig\Client\ConfigEnv;
 use Temporal\Common\EnvConfig\Client\ConfigProfile;
 use Temporal\Common\EnvConfig\Client\ConfigToml;
@@ -33,7 +34,7 @@ use Temporal\Common\EnvConfig\Exception\ProfileNotFoundException;
 final class ConfigClient
 {
     /**
-     * @param array<lowercase-string, ConfigProfile> $profiles Profile configurations keyed by lowercase name
+     * @param array<non-empty-lowercase-string, ConfigProfile> $profiles Profile configurations keyed by lowercase name
      */
     private function __construct(
         public readonly array $profiles,
@@ -145,6 +146,18 @@ final class ConfigClient
                 previous: $e,
             );
         }
+    }
+
+    /**
+     * Serialize the client configuration back to TOML format.
+     *
+     * @return non-empty-string TOML representation of the configuration
+     */
+    public function toToml(): string
+    {
+        return (new ConfigToml(
+            profiles: $this->profiles,
+        ))->toToml();
     }
 
     /**

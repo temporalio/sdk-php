@@ -63,6 +63,18 @@ final class ConfigToml
     }
 
     /**
+     * Convert the configuration back to TOML string.
+     *
+     * @return string TOML representation of the configuration
+     */
+    public function toToml(): string
+    {
+        return (string) Toml::encode([
+            'profile' => \array_map(self::encodeProfile(...), $this->profiles),
+        ]);
+    }
+
+    /**
      * Assert a condition and throw an exception if it fails.
      *
      * @param bool $condition The condition to assert.
@@ -172,5 +184,49 @@ final class ConfigToml
             endpoint: $endpoint,
             auth: $auth,
         );
+    }
+
+    private static function encodeProfile(ConfigProfile $profile): array
+    {
+        $result = [];
+        $profile->address === null or $result['address'] = $profile->address;
+        $profile->namespace === null or $result['namespace'] = $profile->namespace;
+        $profile->apiKey === null or $result['api_key'] = (string) $profile->apiKey;
+        $profile->tlsConfig === null or $result['tls'] = self::encodeTls($profile->tlsConfig);
+        $profile->grpcMeta === [] or $result['grpc_meta'] = $profile->grpcMeta;
+        $profile->codecConfig === null or $result['codec'] = self::encodeCodec($profile->codecConfig);
+        return $result;
+    }
+
+    private static function encodeTls(ConfigTls $config): array
+    {
+        $result = [];
+        $config->disabled === null or $result['disabled'] = $config->disabled;
+        $config->rootCerts === null or self::isCertFile($config->rootCerts)
+            ? $result['server_ca_cert_path'] = $config->rootCerts
+            : $result['server_ca_cert_data'] = $config->rootCerts;
+        $config->privateKey === null or self::isCertFile($config->privateKey)
+            ? $result['client_key_path'] = $config->privateKey
+            : $result['client_key_data'] = $config->privateKey;
+        $config->certChain === null or self::isCertFile($config->certChain)
+            ? $result['client_cert_path'] = $config->certChain
+            : $result['client_cert_data'] = $config->certChain;
+        $config->serverName === null or $result['server_name'] = $config->serverName;
+        return $result;
+    }
+
+    private static function isCertFile(string $certOrPath): bool
+    {
+        return \str_starts_with($certOrPath, '/')
+            || \str_starts_with($certOrPath, './')
+            || \str_starts_with($certOrPath, '../');
+    }
+
+    private static function encodeCodec(ConfigCodec $config): array
+    {
+        $result = [];
+        $config->endpoint === null or $result['endpoint'] = $config->endpoint;
+        $config->auth === null or $result['auth'] = $config->auth;
+        return $result;
     }
 }
