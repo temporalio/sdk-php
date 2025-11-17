@@ -7,7 +7,6 @@ namespace Temporal\Tests\Unit\Common\EnvConfig\Client;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Temporal\Common\EnvConfig\Client\ConfigCodec;
 use Temporal\Common\EnvConfig\Client\ConfigProfile;
 use Temporal\Common\EnvConfig\Client\ConfigTls;
 use Temporal\Common\EnvConfig\Client\ConfigToml;
@@ -383,7 +382,7 @@ final class ConfigTomlTest extends TestCase
         $this->expectExceptionMessage('Cannot specify both `server_ca_cert_path` and `server_ca_cert_data`.');
 
         // Act
-        new ConfigToml($toml, strict: true);
+        new ConfigToml($toml);
     }
 
     public function testConstructorInStrictModeThrowsExceptionForDuplicateClientKeyPath(): void
@@ -402,7 +401,7 @@ final class ConfigTomlTest extends TestCase
         $this->expectExceptionMessage('Cannot specify both `client_key_path` and `client_key_data`.');
 
         // Act
-        new ConfigToml($toml, strict: true);
+        new ConfigToml($toml);
     }
 
     public function testConstructorInStrictModeThrowsExceptionForDuplicateClientCertPath(): void
@@ -421,7 +420,7 @@ final class ConfigTomlTest extends TestCase
         $this->expectExceptionMessage('Cannot specify both `client_cert_path` and `client_cert_data`.');
 
         // Act
-        new ConfigToml($toml, strict: true);
+        new ConfigToml($toml);
     }
 
     public function testConstructorInStrictModeThrowsExceptionForMissingClientKey(): void
@@ -439,7 +438,7 @@ final class ConfigTomlTest extends TestCase
         $this->expectExceptionMessage('Both `client_key_*` and `client_cert_*` must be specified for mTLS.');
 
         // Act
-        new ConfigToml($toml, strict: true);
+        new ConfigToml($toml);
     }
 
     public function testConstructorInStrictModeThrowsExceptionForMissingClientCert(): void
@@ -457,35 +456,7 @@ final class ConfigTomlTest extends TestCase
         $this->expectExceptionMessage('Both `client_key_*` and `client_cert_*` must be specified for mTLS.');
 
         // Act
-        new ConfigToml($toml, strict: true);
-    }
-
-    public function testConstructorInNonStrictModeDoesNotThrowExceptionForDuplicates(): void
-    {
-        // Arrange
-        $toml = <<<'TOML'
-            [profile.valid]
-            address = "localhost:1234"
-
-            [profile.with_duplicates]
-            address = "localhost:5678"
-            [profile.with_duplicates.tls]
-            server_ca_cert_path = "path/to/ca.pem"
-            server_ca_cert_data = "ca-pem-data"
-            TOML;
-
-        // Act
-        $config = new ConfigToml($toml, strict: false);
-
-        // Assert - in non-strict mode, both profiles are created despite validation issues
-        self::assertCount(2, $config->profiles);
-        self::assertArrayHasKey('valid', $config->profiles);
-        self::assertArrayHasKey('with_duplicates', $config->profiles);
-
-        // The profile with duplicates uses the first value (cert_path takes precedence over cert_data)
-        $invalidProfile = $config->profiles['with_duplicates'];
-        self::assertInstanceOf(ConfigTls::class, $invalidProfile->tlsConfig);
-        self::assertSame('path/to/ca.pem', $invalidProfile->tlsConfig->rootCerts);
+        new ConfigToml($toml);
     }
 
     #[DataProvider('provideInvalidProfileStructures')]
@@ -498,7 +469,7 @@ final class ConfigTomlTest extends TestCase
         $this->expectExceptionMessage($expectedMessage);
 
         // Act
-        new ConfigToml($toml, strict: true);
+        new ConfigToml($toml);
     }
 
     #[DataProvider('provideComplexConfigurations')]

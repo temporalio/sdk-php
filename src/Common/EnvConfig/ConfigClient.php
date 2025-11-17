@@ -27,7 +27,7 @@ use Temporal\Common\EnvConfig\Exception\ProfileNotFoundException;
  *
  * @link https://github.com/temporalio/proposals/blob/master/all-sdk/external-client-configuration.md
  *
- * @internal
+ * @internal Experimental
  * @psalm-internal Temporal\Common\EnvConfig
  */
 final class ConfigClient
@@ -82,7 +82,7 @@ final class ConfigClient
         $profile = null;
         $profiles = [];
         if ($configFile !== null) {
-            $profiles = self::loadFromFile($configFile, $strict)->profiles;
+            $profiles = self::loadFromToml($configFile, $strict)->profiles;
             $profile = $profiles[$profileNameLower] ?? null;
         }
 
@@ -122,11 +122,10 @@ final class ConfigClient
      * Load all profiles from a TOML configuration file.
      *
      * @param non-empty-string $source File path to TOML config or TOML content string
-     * @param bool $strict Whether to use strict TOML parsing
      *
      * @throws InvalidConfigException If the file cannot be read or TOML is invalid
      */
-    public static function loadFromFile(string $source, bool $strict = true): self
+    public static function loadFromToml(string $source): self
     {
         try {
             // Determine if source is a file path or TOML content
@@ -136,7 +135,7 @@ final class ConfigClient
 
             $toml === false and throw new InvalidConfigException("Failed to read configuration file: {$source}");
 
-            $config = new ConfigToml($toml, $strict);
+            $config = new ConfigToml($toml);
             return new self(self::normalizeProfileNames($config->profiles));
         } catch (ConfigException $e) {
             throw $e;

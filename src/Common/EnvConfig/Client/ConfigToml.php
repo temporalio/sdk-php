@@ -56,7 +56,6 @@ final class ConfigToml
      */
     public function __construct(
         string $toml,
-        private readonly bool $strict = true,
     ) {
         \class_exists(Toml::class) or throw new TomlParserNotFoundException();
         $data = Toml::parseToArray($toml);
@@ -68,12 +67,13 @@ final class ConfigToml
      *
      * @param bool $condition The condition to assert.
      * @param non-empty-string $message The exception message if the assertion fails.
-     * @return bool Returns true if the condition is false.
+     * @return false Returns false if the assertion passes
+     * @throws \InvalidArgumentException If the assertion fails.
      */
     private function notAssert(bool $condition, string $message): bool
     {
-        $this->strict and !$condition and throw new \InvalidArgumentException($message);
-        return !$condition;
+        $condition or throw new \InvalidArgumentException($message);
+        return false;
     }
 
     /**
@@ -81,6 +81,7 @@ final class ConfigToml
      *
      * @param mixed $profile The profile configuration data.
      * @return array<non-empty-string, ConfigProfile>
+     * @throws \InvalidArgumentException If the configuration is invalid.
      */
     private function parseProfiles(mixed $profile): array
     {
