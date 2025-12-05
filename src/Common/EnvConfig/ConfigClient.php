@@ -221,16 +221,21 @@ final class ConfigClient
      */
     private static function getDefaultConfigPath(array $env): ?string
     {
-        $home = $env['HOME'] ?? $env['USERPROFILE'] ?? null;
-        if ($home === null) {
-            return null;
-        }
+        // Check APPDATA for Windows first
+        $configDir = $env['APPDATA'] ?? null;
 
-        $configDir = match (\PHP_OS_FAMILY) {
-            'Windows' => $env['APPDATA'] ?? ($home . '\\AppData\\Roaming'),
-            'Darwin' => $home . '/Library/Application Support',
-            default => $env['XDG_CONFIG_HOME'] ?? ($home . '/.config'),
-        };
+        if ($configDir === null) {
+            $home = $env['HOME'] ?? $env['USERPROFILE'] ?? null;
+            if ($home === null) {
+                return null;
+            }
+
+            $configDir = match (\PHP_OS_FAMILY) {
+                'Windows' => $home . '\\AppData\\Roaming',
+                'Darwin' => $home . '/Library/Application Support',
+                default => $env['XDG_CONFIG_HOME'] ?? ($home . '/.config'),
+            };
+        }
 
         return $configDir . \DIRECTORY_SEPARATOR . 'temporalio' . \DIRECTORY_SEPARATOR . 'temporal.toml';
     }
