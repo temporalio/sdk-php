@@ -84,11 +84,10 @@ final class ConfigClientTest extends TestCase
         $this->env['TEMPORAL_API_KEY'] = 'test-key';
 
         // Act
-        $config = ConfigClient::loadFromEnv($this->env);
+        $profile = ConfigClient::loadFromEnv($this->env);
 
         // Assert
-        self::assertInstanceOf(ConfigClient::class, $config);
-        $profile = $config->getProfile('default');
+        self::assertInstanceOf(ConfigProfile::class, $profile);
         self::assertSame('localhost:7233', $profile->address);
         self::assertSame('test-namespace', $profile->namespace);
         self::assertSame('test-key', $profile->apiKey);
@@ -97,11 +96,10 @@ final class ConfigClientTest extends TestCase
     public function testLoadFromEnvWithEmptyEnvironment(): void
     {
         // Act
-        $config = ConfigClient::loadFromEnv($this->env);
+        $profile = ConfigClient::loadFromEnv($this->env);
 
         // Assert
-        self::assertInstanceOf(ConfigClient::class, $config);
-        $profile = $config->getProfile('default');
+        self::assertInstanceOf(ConfigProfile::class, $profile);
         self::assertNull($profile->address);
         self::assertNull($profile->namespace);
         self::assertNull($profile->apiKey);
@@ -117,13 +115,13 @@ final class ConfigClientTest extends TestCase
             TOML;
 
         // Act
-        $config = ConfigClient::load(
+        $profile = ConfigClient::load(
             profileName: 'default',
             configFile: $toml,
         );
 
         // Assert
-        $profile = $config->getProfile('default');
+        self::assertInstanceOf(ConfigProfile::class, $profile);
         self::assertSame('127.0.0.1:7233', $profile->address);
         self::assertSame('default', $profile->namespace);
     }
@@ -141,14 +139,14 @@ final class ConfigClientTest extends TestCase
         $this->env['TEMPORAL_NAMESPACE'] = 'override-namespace';
 
         // Act
-        $config = ConfigClient::load(
+        $profile = ConfigClient::load(
             profileName: 'default',
             configFile: $toml,
             env: $this->env,
         );
 
         // Assert
-        $profile = $config->getProfile('default');
+        self::assertInstanceOf(ConfigProfile::class, $profile);
         self::assertSame('override.temporal.io:7233', $profile->address);
         self::assertSame('override-namespace', $profile->namespace);
     }
@@ -167,14 +165,14 @@ final class ConfigClientTest extends TestCase
         $this->env['TEMPORAL_PROFILE'] = 'production';
 
         // Act
-        $config = ConfigClient::load(
+        $profile = ConfigClient::load(
             profileName: null,
             configFile: $toml,
             env: $this->env,
         );
 
         // Assert
-        $profile = $config->getProfile('production');
+        self::assertInstanceOf(ConfigProfile::class, $profile);
         self::assertSame('prod.temporal.io:7233', $profile->address);
     }
 
@@ -187,14 +185,14 @@ final class ConfigClientTest extends TestCase
             TOML;
 
         // Act
-        $config = ConfigClient::load(
+        $profile = ConfigClient::load(
             profileName: null,
             configFile: $toml,
             env: $this->env,
         );
 
         // Assert
-        $profile = $config->getProfile('default');
+        self::assertInstanceOf(ConfigProfile::class, $profile);
         self::assertSame('127.0.0.1:7233', $profile->address);
     }
 
@@ -217,6 +215,70 @@ final class ConfigClientTest extends TestCase
         );
     }
 
+    public function testLoadReturnsEmptyProfileWhenDefaultNotFoundAndNotExplicitlyRequested(): void
+    {
+        // Arrange
+        $toml = <<<'TOML'
+            [profile.production]
+            address = "prod.temporal.io:7233"
+            TOML;
+
+        // Act - No profile name specified, no TEMPORAL_PROFILE env var, and no 'default' profile in TOML
+        $profile = ConfigClient::load(
+            profileName: null,
+            configFile: $toml,
+            env: $this->env,
+        );
+
+        // Assert - Returns empty profile instead of throwing exception (matches Rust behavior)
+        self::assertInstanceOf(ConfigProfile::class, $profile);
+        self::assertNull($profile->address);
+        self::assertNull($profile->namespace);
+        self::assertNull($profile->apiKey);
+    }
+
+    public function testLoadThrowsExceptionWhenDefaultProfileExplicitlyRequestedButNotFound(): void
+    {
+        // Arrange
+        $toml = <<<'TOML'
+            [profile.production]
+            address = "prod.temporal.io:7233"
+            TOML;
+
+        // Assert (before Act for exceptions)
+        $this->expectException(ProfileNotFoundException::class);
+        $this->expectExceptionMessage("Profile 'default' not found");
+
+        // Act - Explicitly requesting 'default' profile that doesn't exist
+        ConfigClient::load(
+            profileName: 'default',
+            configFile: $toml,
+            env: $this->env,
+        );
+    }
+
+    public function testLoadThrowsExceptionWhenProfileRequestedViaEnvVarButNotFound(): void
+    {
+        // Arrange
+        $toml = <<<'TOML'
+            [profile.default]
+            address = "127.0.0.1:7233"
+            TOML;
+
+        $this->env['TEMPORAL_PROFILE'] = 'staging';
+
+        // Assert (before Act for exceptions)
+        $this->expectException(ProfileNotFoundException::class);
+        $this->expectExceptionMessage("Profile 'staging' not found");
+
+        // Act - Profile requested via TEMPORAL_PROFILE env var but doesn't exist
+        ConfigClient::load(
+            profileName: null,
+            configFile: $toml,
+            env: $this->env,
+        );
+    }
+
     public function testLoadFromEnvOnlyWhenNoFileProvided(): void
     {
         // Arrange
@@ -224,14 +286,14 @@ final class ConfigClientTest extends TestCase
         $this->env['TEMPORAL_NAMESPACE'] = 'env-namespace';
 
         // Act
-        $config = ConfigClient::load(
+        $profile = ConfigClient::load(
             profileName: 'default',
             configFile: null,
             env: $this->env,
         );
 
         // Assert
-        $profile = $config->getProfile('default');
+        self::assertInstanceOf(ConfigProfile::class, $profile);
         self::assertSame('env.temporal.io:7233', $profile->address);
         self::assertSame('env-namespace', $profile->namespace);
     }

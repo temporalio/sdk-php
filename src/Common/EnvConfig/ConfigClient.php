@@ -14,7 +14,7 @@ use Temporal\Common\EnvConfig\Exception\InvalidConfigException;
 use Temporal\Common\EnvConfig\Exception\ProfileNotFoundException;
 
 /**
- * Client configuration container managing multiple named profiles.
+ * Client configuration loaded from TOML and environment variables.
  *
  * This class provides methods to load configuration from TOML files and environment variables,
  * following the Temporal external client configuration specification.
@@ -41,7 +41,7 @@ final class ConfigClient
     ) {}
 
     /**
-     * Load client configuration with optional file and environment variable merging.
+     * Load a single client profile from given sources, applying env overrides.
      *
      * This is the primary method for loading configuration with full control over sources.
      *
@@ -64,11 +64,12 @@ final class ConfigClient
         ?string $profileName = null,
         ?string $configFile = null,
         array $env = [],
-    ): self {
+    ): ConfigProfile {
         $env = $env ?: \getenv();
 
         // Load environment config first to get profile name if not specified
         $envConfig = ConfigEnv::fromEnv($env);
+        $profileExpected = $profileName !== null || $envConfig->currentProfile !== null;
         $profileName ??= $envConfig->currentProfile ?? 'default';
         $profileNameLower = \strtolower($profileName);
 
@@ -80,12 +81,9 @@ final class ConfigClient
         }
 
         // Load from file if it exists
-        $profile = null;
-        $profiles = [];
-        if ($configFile !== null) {
-            $profiles = self::loadFromToml($configFile)->profiles;
-            $profile = $profiles[$profileNameLower] ?? null;
-        }
+        $profile = $configFile === null
+            ? null
+            : self::loadFromToml($configFile)->profiles[$profileNameLower] ?? null;
 
         // Merge with environment overrides or use env profile
         if ($profile !== null) {
@@ -95,30 +93,26 @@ final class ConfigClient
             $profile = $envConfig->profile;
         }
 
-        // If still no profile found, throw
-        $profile === null and throw new ProfileNotFoundException($profileName);
+        if ($profile !== null) {
+            return $profile;
+        }
 
-        // Store profile with lowercase key
-        $profiles[$profileNameLower] = $profile;
+        $profileExpected and throw new ProfileNotFoundException($profileName);
 
-        return new self($profiles);
+        // Returns empty profile if default doesn't exist and wasn't explicitly requested
+        return new ConfigProfile(null, null, null);
     }
 
     /**
-     * Load client configuration from environment variables only.
+     * Load a single profile directly from environment variables.
      *
      * Uses TEMPORAL_* environment variables to construct configuration.
      *
      * @param array $env Environment variables array.
      */
-    public static function loadFromEnv(array $env = []): self
+    public static function loadFromEnv(array $env = []): ConfigProfile
     {
-        $env = $env ?: \getenv();
-
-        $envConfig = ConfigEnv::fromEnv($env);
-        $profileName = $envConfig->currentProfile ?? 'default';
-
-        return new self([$profileName => $envConfig->profile]);
+        return ConfigEnv::fromEnv($env ?: \getenv())->profile;
     }
 
     /**
