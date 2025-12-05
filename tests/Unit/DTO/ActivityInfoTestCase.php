@@ -42,6 +42,7 @@ class ActivityInfoTestCase extends AbstractDTOMarshalling
                 'fairness_key' => '',
                 'fairness_weight' => 0.0,
             ],
+            'RetryPolicy' => null,
         ];
 
         $this->assertSame($expected, $this->marshal($dto));
