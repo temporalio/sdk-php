@@ -79,13 +79,11 @@ final class ConfigToml
      *
      * @param bool $condition The condition to assert.
      * @param non-empty-string $message The exception message if the assertion fails.
-     * @return false Returns false if the assertion passes
      * @throws \InvalidArgumentException If the assertion fails.
      */
-    private static function notAssert(bool $condition, string $message): bool
+    private static function assert(bool $condition, string $message): void
     {
         $condition or throw new \InvalidArgumentException($message);
-        return false;
     }
 
     /**
@@ -97,18 +95,12 @@ final class ConfigToml
      */
     private static function parseProfiles(mixed $profile): array
     {
-        if (self::notAssert(\is_array($profile), 'The `profile` section must be an array.')) {
-            return [];
-        }
+        self::assert(\is_array($profile), 'The `profile` section must be an array.');
 
         $result = [];
         foreach ($profile as $name => $config) {
-            if (
-                self::notAssert(\is_array($config), 'Each profile configuration must be an array.')
-                || self::notAssert(\strlen($name) > 0, 'Profile name must be a non-empty string.')
-            ) {
-                continue;
-            }
+            self::assert(\is_array($config), 'Each profile configuration must be an array.');
+            self::assert(\strlen($name) > 0, 'Profile name must be a non-empty string.');
 
             $apiKey = $config['api_key'] ?? null;
             $tls = $config['tls'] ?? null;
@@ -118,6 +110,7 @@ final class ConfigToml
                 default => new ConfigTls(disabled: true),
             };
 
+            /** @var non-empty-string $name */
             $result[$name] = new ConfigProfile(
                 address: $config['address'] ?? null,
                 namespace: $config['namespace'] ?? null,
@@ -138,19 +131,19 @@ final class ConfigToml
         $privateKey = $tls['client_key_path'] ?? $tls['client_key_data'] ?? null;
         $certChain = $tls['client_cert_path'] ?? $tls['client_cert_data'] ?? null;
 
-        $rootCert === null or self::notAssert(
+        $rootCert === null or self::assert(
             isset($tls['server_ca_cert_path']) xor isset($tls['server_ca_cert_data']),
             'Cannot specify both `server_ca_cert_path` and `server_ca_cert_data`.',
         );
-        $privateKey === null or self::notAssert(
+        $privateKey === null or self::assert(
             isset($tls['client_key_path']) xor isset($tls['client_key_data']),
             'Cannot specify both `client_key_path` and `client_key_data`.',
         );
-        $certChain === null or self::notAssert(
+        $certChain === null or self::assert(
             isset($tls['client_cert_path']) xor isset($tls['client_cert_data']),
             'Cannot specify both `client_cert_path` and `client_cert_data`.',
         );
-        self::notAssert(
+        self::assert(
             ($privateKey === null) === ($certChain === null),
             'Both `client_key_*` and `client_cert_*` must be specified for mTLS.',
         );

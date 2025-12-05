@@ -146,8 +146,6 @@ final class ConfigClient
 
     /**
      * Serialize the client configuration back to TOML format.
-     *
-     * @return non-empty-string TOML representation of the configuration
      */
     public function toToml(): string
     {
@@ -185,7 +183,7 @@ final class ConfigClient
      * Normalize profile names to lowercase and validate for duplicates.
      *
      * @param array<non-empty-string, ConfigProfile> $profiles Profiles with original case names
-     * @return array<lowercase-string, ConfigProfile> Profiles with lowercase keys
+     * @return array<non-empty-lowercase-string, ConfigProfile> Profiles with lowercase keys
      * @throws DuplicateProfileException If duplicate names found
      */
     private static function normalizeProfileNames(array $profiles): array
