@@ -16,13 +16,12 @@ use Temporal\Common\EnvConfig\Exception\CodecNotSupportedException;
 use Temporal\Common\EnvConfig\Exception\DuplicateProfileException;
 use Temporal\Common\EnvConfig\Exception\InvalidConfigException;
 use Temporal\Common\EnvConfig\Exception\ProfileNotFoundException;
-use Temporal\Tests\Unit\Common\EnvConfig\Client\Stub\ArrayEnvProvider;
 
 #[CoversClass(ConfigClient::class)]
 #[CoversClass(ConfigProfile::class)]
 final class ConfigClientTest extends TestCase
 {
-    private ArrayEnvProvider $envProvider;
+    private array $env;
 
     public static function provideCaseInsensitiveProfileNames(): \Generator
     {
@@ -80,12 +79,12 @@ final class ConfigClientTest extends TestCase
     public function testLoadFromEnvWithSystemEnvProvider(): void
     {
         // Arrange
-        $this->envProvider->set('TEMPORAL_ADDRESS', 'localhost:7233');
-        $this->envProvider->set('TEMPORAL_NAMESPACE', 'test-namespace');
-        $this->envProvider->set('TEMPORAL_API_KEY', 'test-key');
+        $this->env['TEMPORAL_ADDRESS'] = 'localhost:7233';
+        $this->env['TEMPORAL_NAMESPACE'] = 'test-namespace';
+        $this->env['TEMPORAL_API_KEY'] = 'test-key';
 
         // Act
-        $config = ConfigClient::loadFromEnv($this->envProvider);
+        $config = ConfigClient::loadFromEnv($this->env);
 
         // Assert
         self::assertInstanceOf(ConfigClient::class, $config);
@@ -98,7 +97,7 @@ final class ConfigClientTest extends TestCase
     public function testLoadFromEnvWithEmptyEnvironment(): void
     {
         // Act
-        $config = ConfigClient::loadFromEnv($this->envProvider);
+        $config = ConfigClient::loadFromEnv($this->env);
 
         // Assert
         self::assertInstanceOf(ConfigClient::class, $config);
@@ -138,14 +137,14 @@ final class ConfigClientTest extends TestCase
             namespace = "default"
             TOML;
 
-        $this->envProvider->set('TEMPORAL_ADDRESS', 'override.temporal.io:7233');
-        $this->envProvider->set('TEMPORAL_NAMESPACE', 'override-namespace');
+        $this->env['TEMPORAL_ADDRESS'] = 'override.temporal.io:7233';
+        $this->env['TEMPORAL_NAMESPACE'] = 'override-namespace';
 
         // Act
         $config = ConfigClient::load(
             profileName: 'default',
             configFile: $toml,
-            envProvider: $this->envProvider,
+            env: $this->env,
         );
 
         // Assert
@@ -165,13 +164,13 @@ final class ConfigClientTest extends TestCase
             address = "prod.temporal.io:7233"
             TOML;
 
-        $this->envProvider->set('TEMPORAL_PROFILE', 'production');
+        $this->env['TEMPORAL_PROFILE'] = 'production';
 
         // Act
         $config = ConfigClient::load(
             profileName: null,
             configFile: $toml,
-            envProvider: $this->envProvider,
+            env: $this->env,
         );
 
         // Assert
@@ -191,7 +190,7 @@ final class ConfigClientTest extends TestCase
         $config = ConfigClient::load(
             profileName: null,
             configFile: $toml,
-            envProvider: $this->envProvider,
+            env: $this->env,
         );
 
         // Assert
@@ -221,14 +220,14 @@ final class ConfigClientTest extends TestCase
     public function testLoadFromEnvOnlyWhenNoFileProvided(): void
     {
         // Arrange
-        $this->envProvider->set('TEMPORAL_ADDRESS', 'env.temporal.io:7233');
-        $this->envProvider->set('TEMPORAL_NAMESPACE', 'env-namespace');
+        $this->env['TEMPORAL_ADDRESS'] = 'env.temporal.io:7233';
+        $this->env['TEMPORAL_NAMESPACE'] = 'env-namespace';
 
         // Act
         $config = ConfigClient::load(
             profileName: 'default',
             configFile: null,
-            envProvider: $this->envProvider,
+            env: $this->env,
         );
 
         // Assert
@@ -611,15 +610,15 @@ final class ConfigClientTest extends TestCase
         ConfigClient::load(
             profileName: 'default',
             configFile: $toml,
-            envProvider: $this->envProvider,
+            env: $this->env,
         );
     }
 
     public function testLoadThrowsExceptionWhenCodecIsConfiguredInEnv(): void
     {
         // Arrange
-        $this->envProvider->set('TEMPORAL_ADDRESS', '127.0.0.1:7233');
-        $this->envProvider->set('TEMPORAL_CODEC_ENDPOINT', 'https://codec.example.com');
+        $this->env['TEMPORAL_ADDRESS'] = '127.0.0.1:7233';
+        $this->env['TEMPORAL_CODEC_ENDPOINT'] = 'https://codec.example.com';
 
         // Assert
         $this->expectException(CodecNotSupportedException::class);
@@ -629,22 +628,22 @@ final class ConfigClientTest extends TestCase
         ConfigClient::load(
             profileName: 'default',
             configFile: null,
-            envProvider: $this->envProvider,
+            env: $this->env,
         );
     }
 
     public function testLoadFromEnvThrowsExceptionWhenCodecIsConfigured(): void
     {
         // Arrange
-        $this->envProvider->set('TEMPORAL_ADDRESS', '127.0.0.1:7233');
-        $this->envProvider->set('TEMPORAL_CODEC_AUTH', 'Bearer token123');
+        $this->env['TEMPORAL_ADDRESS'] = '127.0.0.1:7233';
+        $this->env['TEMPORAL_CODEC_AUTH'] = 'Bearer token123';
 
         // Assert
         $this->expectException(CodecNotSupportedException::class);
         $this->expectExceptionMessage('Remote codec configuration is not supported in the PHP SDK');
 
         // Act
-        ConfigClient::loadFromEnv($this->envProvider);
+        ConfigClient::loadFromEnv($this->env);
     }
 
     public function testToTomlRoundTripWithSingleProfile(): void
@@ -935,6 +934,6 @@ final class ConfigClientTest extends TestCase
     protected function setUp(): void
     {
         // Arrange (common setup)
-        $this->envProvider = new ArrayEnvProvider();
+        $this->env = [];
     }
 }
