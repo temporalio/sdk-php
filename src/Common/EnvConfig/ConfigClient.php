@@ -48,15 +48,14 @@ final class ConfigClient
      * Loading order (later overrides earlier):
      * 1. Profile from TOML file (if $configFile provided, or TEMPORAL_CONFIG_FILE is set,
      *    or file exists at default platform-specific location)
-     * 2. Environment variable overrides (if $envProvider provided)
+     * 2. Environment variable overrides (if $env provided)
      *
      * @param non-empty-string|null $profileName Profile name to load. If null, uses TEMPORAL_PROFILE
      *        environment variable or 'default' as fallback.
      * @param non-empty-string|null $configFile Path to TOML config file or TOML content string.
      *        If null, checks TEMPORAL_CONFIG_FILE env var, then checks if file exists at
      *        default platform-specific location.
-     * @param EnvProvider $envProvider Environment variable provider for overrides.
-     * @param bool $strict Whether to use strict TOML parsing (validates mutual exclusivity, etc.)
+     * @param array $env Environment variables array for overrides.
      *
      * @throws ProfileNotFoundException If the requested profile is not found
      * @throws InvalidConfigException If configuration file is invalid
@@ -64,18 +63,19 @@ final class ConfigClient
     public static function load(
         ?string $profileName = null,
         ?string $configFile = null,
-        EnvProvider $envProvider = new SystemEnvProvider(),
-        bool $strict = true,
+        array $env = [],
     ): self {
+        $env = $env ?: \getenv();
+
         // Load environment config first to get profile name if not specified
-        $envConfig = ConfigEnv::fromEnvProvider($envProvider);
+        $envConfig = ConfigEnv::fromEnv($env);
         $profileName ??= $envConfig->currentProfile ?? 'default';
         $profileNameLower = \strtolower($profileName);
 
         // Determine config file path: explicit > env var > default location
         $configFile ??= $envConfig->configFile;
         if ($configFile === null) {
-            $configFile = self::getDefaultConfigPath($envProvider);
+            $configFile = self::getDefaultConfigPath($env);
             $configFile === null or \file_exists($configFile) or $configFile = null;
         }
 
@@ -83,7 +83,7 @@ final class ConfigClient
         $profile = null;
         $profiles = [];
         if ($configFile !== null) {
-            $profiles = self::loadFromToml($configFile, $strict)->profiles;
+            $profiles = self::loadFromToml($configFile)->profiles;
             $profile = $profiles[$profileNameLower] ?? null;
         }
 
@@ -109,11 +109,13 @@ final class ConfigClient
      *
      * Uses TEMPORAL_* environment variables to construct configuration.
      *
-     * @param EnvProvider $envProvider Environment variable provider.
+     * @param array $env Environment variables array.
      */
-    public static function loadFromEnv(EnvProvider $envProvider = new SystemEnvProvider()): self
+    public static function loadFromEnv(array $env = []): self
     {
-        $envConfig = ConfigEnv::fromEnvProvider($envProvider);
+        $env = $env ?: \getenv();
+
+        $envConfig = ConfigEnv::fromEnv($env);
         $profileName = $envConfig->currentProfile ?? 'default';
 
         return new self([$profileName => $envConfig->profile]);
@@ -214,20 +216,20 @@ final class ConfigClient
      * Note: This method returns the expected path regardless of whether the file exists.
      * The caller is responsible for checking file existence.
      *
-     * @param EnvProvider $envProvider Environment variable provider
+     * @param array $env Environment variables array
      * @return non-empty-string|null Path to default config file, or null if home directory cannot be determined
      */
-    private static function getDefaultConfigPath(EnvProvider $envProvider): ?string
+    private static function getDefaultConfigPath(array $env): ?string
     {
-        $home = $envProvider->get('HOME') ?? $envProvider->get('USERPROFILE');
+        $home = $env['HOME'] ?? $env['USERPROFILE'] ?? null;
         if ($home === null) {
             return null;
         }
 
         $configDir = match (\PHP_OS_FAMILY) {
-            'Windows' => $envProvider->get('APPDATA') ?? ($home . '\\AppData\\Roaming'),
+            'Windows' => $env['APPDATA'] ?? ($home . '\\AppData\\Roaming'),
             'Darwin' => $home . '/Library/Application Support',
-            default => $envProvider->get('XDG_CONFIG_HOME') ?? ($home . '/.config'),
+            default => $env['XDG_CONFIG_HOME'] ?? ($home . '/.config'),
         };
 
         return $configDir . \DIRECTORY_SEPARATOR . 'temporalio' . \DIRECTORY_SEPARATOR . 'temporal.toml';

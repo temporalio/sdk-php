@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Temporal\Common\EnvConfig\Client;
 
-use Temporal\Common\EnvConfig\EnvProvider;
-
 /**
  * Environment variable configuration parser for Temporal client.
  *
@@ -74,26 +72,26 @@ final class ConfigEnv
         $this->configFile = $configFile === '' ? null : $configFile;
     }
 
-    public static function fromEnvProvider(EnvProvider $env): self
+    public static function fromEnv(array $env): self
     {
         return new self(
             new ConfigProfile(
-                address: $env->get('TEMPORAL_ADDRESS'),
-                namespace: $env->get('TEMPORAL_NAMESPACE'),
-                apiKey: $env->get('TEMPORAL_API_KEY'),
+                address: $env['TEMPORAL_ADDRESS'] ?? null,
+                namespace: $env['TEMPORAL_NAMESPACE'] ?? null,
+                apiKey: $env['TEMPORAL_API_KEY'] ?? null,
                 tlsConfig: self::fetchTlsConfig($env),
                 grpcMeta: self::fetchGrpcMeta($env),
                 codecConfig: self::fetchCodecConfig($env),
             ),
-            $env->get('TEMPORAL_PROFILE'),
-            $env->get('TEMPORAL_CONFIG_FILE'),
+            $env['TEMPORAL_PROFILE'] ?? null,
+            $env['TEMPORAL_CONFIG_FILE'] ?? null,
         );
     }
 
-    private static function fetchTlsConfig(EnvProvider $env): ?ConfigTls
+    private static function fetchTlsConfig(array $env): ?ConfigTls
     {
-        $tls = $env->get('TEMPORAL_TLS');
-        $tlsVars = $env->getByPrefix('TEMPORAL_TLS_', stripPrefix: true);
+        $tls = $env['TEMPORAL_TLS'] ?? null;
+        $tlsVars = self::getByPrefix($env, 'TEMPORAL_TLS_', stripPrefix: true);
 
         // If no TLS-related variables are set, return null
         if ($tls === null && $tlsVars === []) {
@@ -143,9 +141,9 @@ final class ConfigEnv
      *
      * @return array<non-empty-string, string>
      */
-    private static function fetchGrpcMeta(EnvProvider $env): array
+    private static function fetchGrpcMeta(array $env): array
     {
-        $meta = $env->getByPrefix('TEMPORAL_GRPC_META_', stripPrefix: true);
+        $meta = self::getByPrefix($env, 'TEMPORAL_GRPC_META_', stripPrefix: true);
         $result = [];
 
         foreach ($meta as $key => $value) {
@@ -165,10 +163,10 @@ final class ConfigEnv
      *
      * @return ConfigCodec|null Codec configuration or null if no codec env vars are set
      */
-    private static function fetchCodecConfig(EnvProvider $env): ?ConfigCodec
+    private static function fetchCodecConfig(array $env): ?ConfigCodec
     {
-        $endpoint = $env->get('TEMPORAL_CODEC_ENDPOINT');
-        $auth = $env->get('TEMPORAL_CODEC_AUTH');
+        $endpoint = $env['TEMPORAL_CODEC_ENDPOINT'] ?? null;
+        $auth = $env['TEMPORAL_CODEC_AUTH'] ?? null;
 
         // Return null if both are not set
         if ($endpoint === null && $auth === null) {
@@ -179,5 +177,28 @@ final class ConfigEnv
             endpoint: $endpoint,
             auth: $auth,
         );
+    }
+
+    /**
+     * Get environment variables by prefix.
+     *
+     * @param array $env Environment variables array
+     * @param string $prefix Prefix to filter by
+     * @param bool $stripPrefix Whether to strip the prefix from result keys
+     * @return array<string, string>
+     */
+    private static function getByPrefix(array $env, string $prefix, bool $stripPrefix = false): array
+    {
+        $result = [];
+        $prefixLen = \strlen($prefix);
+
+        foreach ($env as $key => $value) {
+            if (\str_starts_with($key, $prefix)) {
+                $resultKey = $stripPrefix ? \substr($key, $prefixLen) : $key;
+                $result[$resultKey] = $value;
+            }
+        }
+
+        return $result;
     }
 }
