@@ -17,6 +17,7 @@ use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\Client\ActivityCanceledException;
 use Temporal\Exception\Client\ActivityCompletionException;
 use Temporal\Exception\Client\ActivityPausedException;
+use Temporal\Exception\Client\ActivityResetException;
 
 interface ActivityContextInterface
 {
@@ -63,6 +64,7 @@ interface ActivityContextInterface
      * @throws ActivityCompletionException
      * @throws ActivityCanceledException
      * @throws ActivityPausedException
+     * @throws ActivityResetException
      *
      * @see Activity::heartbeat()
      *
