@@ -50,6 +50,8 @@ final class ConfigProfile
      */
     public readonly array $grpcMeta;
 
+    public readonly ?ConfigTls $tlsConfig;
+
     /**
      * Construct a new configuration profile.
      *
@@ -69,7 +71,7 @@ final class ConfigProfile
         ?string $address,
         ?string $namespace,
         null|string|\Stringable $apiKey,
-        public readonly ?ConfigTls $tlsConfig = null,
+        ?ConfigTls $tlsConfig = null,
         array $grpcMeta = [],
         public readonly ?ConfigCodec $codecConfig = null,
     ) {
@@ -77,6 +79,8 @@ final class ConfigProfile
         $this->address = $address === '' ? null : $address;
         $this->namespace = $namespace === '' ? null : $namespace;
         $this->apiKey = $apiKey === '' ? null : $apiKey;
+        // If TLS config not provided, create default if API key is set
+        $this->tlsConfig = $tlsConfig ?? ($this->apiKey === null ? null : new ConfigTls());
 
         // Normalize gRPC metadata keys to lowercase per gRPC spec
         $meta = [];
