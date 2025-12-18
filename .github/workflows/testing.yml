@@ -14,14 +14,6 @@ jobs:
       fail-fast: false
       test-command: composer test:unit
 
-#  feature:
-#    name: Feature Testing
-#    uses: ./.github/workflows/run-test-suite.yml
-#    with:
-#      fail-fast: true
-#      test-command: composer test:feat
-#      test-timeout: 20
-
   functional:
     name: Functional Testing
     uses: ./.github/workflows/run-test-suite.yml
