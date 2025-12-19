@@ -27,7 +27,7 @@ use Temporal\Tests\Acceptance\App\Runtime\TemporalStarter;
 use Temporal\Tests\Acceptance\App\RuntimeBuilder;
 use Temporal\Tests\Acceptance\App\Support;
 
-chdir(__DIR__ . '/../..');
+\chdir(__DIR__ . '/../..');
 require './vendor/autoload.php';
 
 RuntimeBuilder::init();
@@ -91,8 +91,8 @@ $container->bindSingleton(WorkflowClientInterface::class, $workflowClient);
 $container->bindSingleton(ScheduleClientInterface::class, $scheduleClient);
 $container->bindInjector(WorkflowStubInterface::class, WorkflowStubInjector::class);
 $container->bindSingleton(DataConverterInterface::class, $converter);
-$container->bind(RPCInterface::class, static fn() => RPC::create(getenv('RR_RPC_ADDRESS') ?: 'tcp://127.0.0.1:6001'));
+$container->bind(RPCInterface::class, static fn() => RPC::create(\getenv('RR_RPC_ADDRESS') ?: 'tcp://127.0.0.1:6001'));
 $container->bind(
     StorageInterface::class,
-    fn(#[Proxy] ContainerInterface $c): StorageInterface => $c->get(Factory::class)->select('harness'),
+    static fn(#[Proxy] ContainerInterface $c): StorageInterface => $c->get(Factory::class)->select('harness'),
 );
