@@ -58,7 +58,7 @@ abstract class Prototype implements PrototypeInterface
     {
         $reflection = $prototype->getClass();
 
-        return $reflection && $reflection->getName() === \trim($class, '\\');
+        return $reflection->getName() === \trim($class, '\\');
     }
 
     private static function matchMethod(PrototypeInterface $prototype, string $method): bool

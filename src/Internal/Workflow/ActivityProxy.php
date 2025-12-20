@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Workflow;
 
 use React\Promise\PromiseInterface;
+use Temporal\Activity\ActivityMethod;
 use Temporal\Activity\ActivityOptionsInterface;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteActivityInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteLocalActivityInput;
@@ -61,13 +62,24 @@ final class ActivityProxy extends Proxy
      */
     public function __call(string $method, array $args = []): PromiseInterface
     {
-        $handler = $this->findPrototypeByHandlerNameOrFail($method);
-        $type = $handler->getHandler()->getReturnType();
-        $options = $this->options->mergeWith($handler->getMethodRetry());
+        $prototype = $this->findPrototypeByHandlerNameOrFail($method);
+        $type = $prototype->getHandler()->getReturnType();
+        $options = $this->options->mergeWith($prototype->getMethodRetry());
 
-        $args = Reflection::orderArguments($handler->getHandler(), $args);
+        $args = Reflection::orderArguments($prototype->getHandler(), $args);
 
-        return $handler->isLocalActivity()
+        if (!$prototype->getHandler()->getAttributes(ActivityMethod::class, \ReflectionAttribute::IS_INSTANCEOF)) {
+            \trigger_error(
+                \sprintf(
+                    'Using implicit activity methods is deprecated. Explicitly mark activity method %s with #[%s] attribute instead.',
+                    $prototype->getHandler()->getDeclaringClass()->getName() . '::' . $method,
+                    ActivityMethod::class,
+                ),
+                \E_USER_DEPRECATED,
+            );
+        }
+
+        return $prototype->isLocalActivity()
             // Run local activity through an interceptor pipeline
             ? $this->callsInterceptor->with(
                 fn(ExecuteLocalActivityInput $input): PromiseInterface => $this->ctx
@@ -77,11 +89,11 @@ final class ActivityProxy extends Proxy
                 'executeLocalActivity',
             )(
                 new ExecuteLocalActivityInput(
-                    $handler->getID(),
+                    $prototype->getID(),
                     $args,
                     $options,
                     $type,
-                    $handler->getHandler(),
+                    $prototype->getHandler(),
                 )
             )
 
@@ -94,11 +106,11 @@ final class ActivityProxy extends Proxy
                 'executeActivity',
             )(
                 new ExecuteActivityInput(
-                    $handler->getID(),
+                    $prototype->getID(),
                     $args,
                     $options,
                     $type,
-                    $handler->getHandler(),
+                    $prototype->getHandler(),
                 )
             );
     }
