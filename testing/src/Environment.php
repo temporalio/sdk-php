@@ -101,14 +101,18 @@ final class Environment
         );
         $this->temporalServerProcess->setTimeout($commandTimeout);
         $this->temporalServerProcess->start();
-        $this->output->writeln('<info>done.</info>');
-        \sleep(1);
+
+        $limit = 1_000_000;
+        while (!$this->temporalServerProcess->isRunning() && $limit > 0) {
+            \usleep($limit -= 1000);
+        }
 
         if (!$this->temporalServerProcess->isRunning()) {
             $this->output->writeln('<error>error</error>');
             $this->output->writeln('Error starting Temporal server: ' . $this->temporalServerProcess->getErrorOutput());
             exit(1);
         }
+        $this->output->writeln('<info>done.</info>');
     }
 
     public function startTemporalTestServer(int $commandTimeout = 10): void
@@ -127,14 +131,18 @@ final class Environment
         );
         $this->temporalTestServerProcess->setTimeout($commandTimeout);
         $this->temporalTestServerProcess->start();
-        $this->output->writeln('<info>done.</info>');
-        \sleep(1);
+
+        $limit = 1_000_000;
+        while (!$this->temporalTestServerProcess->isRunning() && $limit > 0) {
+            \usleep($limit -= 1000);
+        }
 
         if (!$this->temporalTestServerProcess->isRunning()) {
             $this->output->writeln('<error>error</error>');
             $this->output->writeln('Error starting Temporal Test server: ' . $this->temporalTestServerProcess->getErrorOutput());
             exit(1);
         }
+        $this->output->writeln('<info>done.</info>');
     }
 
     /**
