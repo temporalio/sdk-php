@@ -2,11 +2,6 @@
 
 declare(strict_types=1);
 
-use Temporal\Internal\Support\StackRenderer;
-use Temporal\Tests\Acceptance\App\Input\Command;
-use Temporal\Tests\Acceptance\App\Runtime\Feature;
-use Temporal\Tests\Acceptance\App\Runtime\State;
-use Temporal\Tests\Acceptance\App\RuntimeBuilder;
 use Psr\Container\ContainerInterface;
 use Spiral\Core\Attribute\Proxy;
 use Spiral\Goridge\RPC\RPC;
@@ -26,6 +21,11 @@ use Temporal\DataConverter\JsonConverter;
 use Temporal\DataConverter\NullConverter;
 use Temporal\DataConverter\ProtoConverter;
 use Temporal\DataConverter\ProtoJsonConverter;
+use Temporal\Internal\Support\StackRenderer;
+use Temporal\Testing\Command;
+use Temporal\Tests\Acceptance\App\Runtime\Feature;
+use Temporal\Tests\Acceptance\App\Runtime\State;
+use Temporal\Tests\Acceptance\App\RuntimeBuilder;
 use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Worker\WorkerInterface;
 use Temporal\WorkerFactory;

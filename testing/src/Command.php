@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Acceptance\App\Input;
+namespace Temporal\Testing;
 
 final class Command
 {
