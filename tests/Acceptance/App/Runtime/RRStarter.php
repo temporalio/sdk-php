@@ -39,9 +39,10 @@ final class RRStarter
             "temporal.address={$this->runtime->address}",
             '-o',
             'server.command=' . \implode(',', [
-                'php',
+                PHP_BINARY,
+                ...$run->getPhpBinaryArguments(),
                 $this->runtime->rrConfigDir . DIRECTORY_SEPARATOR . 'worker.php',
-                ...$run->toCommandLineArguments(),
+                ...$run->getCommandLineArguments(),
             ]),
         ];
         $run->tlsKey === null or $rrCommand = [...$rrCommand, '-o', "tls.key={$run->tlsKey}"];

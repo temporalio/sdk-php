@@ -102,9 +102,9 @@ final class Environment
         $this->temporalServerProcess->setTimeout($commandTimeout);
         $this->temporalServerProcess->start();
 
-        $limit = 1_000_000;
-        while (!$this->temporalServerProcess->isRunning() && $limit > 0) {
-            \usleep($limit -= 1000);
+        $deadline = \microtime(true) + 1.2;
+        while (!$this->temporalServerProcess->isRunning() && \microtime(true) < $deadline) {
+            \usleep(10_000);
         }
 
         if (!$this->temporalServerProcess->isRunning()) {
@@ -132,10 +132,7 @@ final class Environment
         $this->temporalTestServerProcess->setTimeout($commandTimeout);
         $this->temporalTestServerProcess->start();
 
-        $limit = 1_000_000;
-        while (!$this->temporalTestServerProcess->isRunning() && $limit > 0) {
-            \usleep($limit -= 1000);
-        }
+        \sleep(1);
 
         if (!$this->temporalTestServerProcess->isRunning()) {
             $this->output->writeln('<error>error</error>');
