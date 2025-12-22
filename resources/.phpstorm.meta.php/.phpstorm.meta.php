@@ -62,4 +62,8 @@ namespace PHPSTORM_META {
     override(\Temporal\Client\WorkflowClient::newRunningWorkflowStub(), map([
         '' => type(0),
     ]));
+
+    override(\Temporal\Client\WorkflowStubInterface::getResult(), map([
+        '' => '@',
+    ]));
 }
