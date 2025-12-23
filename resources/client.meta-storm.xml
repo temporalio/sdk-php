@@ -31,5 +31,56 @@
             <collection name="temporal/sdk:workflow-class" argument="0" />
             <stopCompletion />
         </classMethod>
+
+        <classMethod
+            class="\Temporal\Activity\ActivityOptions"
+            method="withScheduleToCloseTimeout"
+            argument="0"
+        >
+            <languageInjection language="InjectablePHP" prefix="strtotime('" suffix="')" />
+        </classMethod>
+        <classMethod
+            class="\Temporal\Activity\ActivityOptions"
+            method="withHeartbeatTimeout"
+            argument="0"
+        >
+            <languageInjection language="InjectablePHP" prefix="strtotime('" suffix="')" />
+        </classMethod>
+        <classMethod
+            class="\Temporal\Activity\ActivityOptions"
+            method="withScheduleToStartTimeout"
+            argument="0"
+        >
+            <languageInjection language="InjectablePHP" prefix="strtotime('" suffix="')" />
+        </classMethod>
+        <classMethod
+            class="\Temporal\Activity\ActivityOptions"
+            method="withStartToCloseTimeout"
+            argument="0"
+        >
+            <languageInjection language="InjectablePHP" prefix="strtotime('" suffix="')" />
+        </classMethod>
+        <classMethod
+            class="\Temporal\Workflow"
+            method="awaitWithTimeout"
+            argument="0"
+        >
+            <languageInjection language="InjectablePHP" prefix="strtotime('" suffix="')" />
+        </classMethod>
+        <classMethod
+            class="\Temporal\Workflow"
+            method="await"
+            argument="0"
+        >
+            <languageInjection language="InjectablePHP" prefix="strtotime('" suffix="')" />
+        </classMethod>
+        <classMethod
+            class="\Temporal\Workflow"
+            method="timer"
+            argument="0"
+        >
+            <languageInjection language="InjectablePHP" prefix="strtotime('" suffix="')" />
+        </classMethod>
+
     </definitions>
 </meta-storm>
