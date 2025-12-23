@@ -5,11 +5,11 @@
 >
     <actions>
         <download software="rr" version="^2025.1.5"/>
-        <download software="temporal" version="^1.4-fairness@dev"/>
-        <download software="temporal-tests-server"/>
+        <download software="temporal" version="^1.5@dev"/>
+        <download software="temporal-test-server"/>
     </actions>
     <registry>
-        <software name="Temporal Tests Server" alias="temporal-tests-server">
+        <software name="Temporal Tests Server" alias="temporal-test-server">
             <repository type="github" uri="temporalio/sdk-java" asset-pattern="/^temporal-test-server.*/"/>
             <binary name="temporal-test-server"/>
         </software>
