@@ -39,13 +39,13 @@ class BackfillTest extends TestCase
                     StartWorkflowAction::new('Harness_Schedule_Backfill')
                         ->withWorkflowId($workflowId)
                         ->withTaskQueue($feature->taskQueue)
-                        ->withInput(['arg1'])
+                        ->withInput(['arg1']),
                 )->withSpec(
                     ScheduleSpec::new()
-                        ->withIntervalList(CarbonInterval::minute(1))
+                        ->withIntervalList(CarbonInterval::minute(1)),
                 )->withState(
                     ScheduleState::new()
-                        ->withPaused(true)
+                        ->withPaused(true),
                 ),
             options: ScheduleOptions::new()
                 // todo: should namespace be inherited from Service Client options by default?

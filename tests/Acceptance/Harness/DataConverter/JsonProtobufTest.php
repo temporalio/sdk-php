@@ -19,18 +19,16 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
-const EXPECTED_RESULT = 0xDEADBEEF;
-\define(__NAMESPACE__ . '\INPUT', (new DataBlob())->setData(EXPECTED_RESULT));
-
+/**
+ * # JSON Protobuf Payload Encoding
+ *
+ * Test that JSON contains encoded protobuf payload which contains serialized `DataBlob` object.
+ */
 class JsonProtobufTest extends TestCase
 {
-    private ResultInterceptor $interceptor;
+    private const EXPECTED_RESULT = 0xDEADBEEF;
 
-    protected function setUp(): void
-    {
-        $this->interceptor = new ResultInterceptor();
-        parent::setUp();
-    }
+    private ResultInterceptor $interceptor;
 
     public function pipelineProvider(): PipelineProvider
     {
@@ -39,14 +37,14 @@ class JsonProtobufTest extends TestCase
 
     #[Test]
     public function check(
-        #[Stub('Harness_DataConverter_JsonProtobuf', args: [INPUT])]
+        #[Stub('Harness_DataConverter_JsonProtobuf', args: [new DataBlob(['data' => self::EXPECTED_RESULT])])]
         #[Client(pipelineProvider: [self::class, 'pipelineProvider'])]
         WorkflowStubInterface $stub,
     ): void {
         /** @var DataBlob $result */
         $result = $stub->getResult(DataBlob::class);
 
-        self::assertEquals(EXPECTED_RESULT, $result->getData());
+        self::assertEquals(self::EXPECTED_RESULT, $result->getData());
 
         $result = $this->interceptor->result;
         self::assertNotNull($result);
@@ -58,6 +56,12 @@ class JsonProtobufTest extends TestCase
         self::assertSame('json/protobuf', $payload->getMetadata()['encoding']);
         self::assertSame('temporal.api.common.v1.DataBlob', $payload->getMetadata()['messageType']);
         self::assertSame('{"data":"MzczNTkyODU1OQ=="}', $payload->getData());
+    }
+
+    protected function setUp(): void
+    {
+        $this->interceptor = new ResultInterceptor();
+        parent::setUp();
     }
 }
 

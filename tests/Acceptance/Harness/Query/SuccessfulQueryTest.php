@@ -17,8 +17,10 @@ use Temporal\Workflow\WorkflowMethod;
 class SuccessfulQueryTest extends TestCase
 {
     #[Test]
-    public static function check(#[Stub('Harness_Query_SuccessfulQuery')]WorkflowStubInterface $stub): void
-    {
+    public static function check(
+        #[Stub('Harness_Query_SuccessfulQuery')]
+        WorkflowStubInterface $stub,
+    ): void {
         self::assertSame(0, $stub->query('get_counter')?->getValue(0));
 
         $stub->signal('inc_counter');

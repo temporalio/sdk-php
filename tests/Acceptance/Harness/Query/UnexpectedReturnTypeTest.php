@@ -19,7 +19,8 @@ class UnexpectedReturnTypeTest extends TestCase
 {
     #[Test]
     public static function check(
-        #[Stub('Harness_Query_UnexpectedReturnType')]WorkflowStubInterface $stub,
+        #[Stub('Harness_Query_UnexpectedReturnType')]
+        WorkflowStubInterface $stub,
     ): void {
         try {
             $stub->query('the_query')?->getValue(0, 'int');

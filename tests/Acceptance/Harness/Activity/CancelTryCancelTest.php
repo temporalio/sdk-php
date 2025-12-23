@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Temporal\Tests\Acceptance\Harness\Activity\CancelTryCancel;
 
 use PHPUnit\Framework\Attributes\Test;
-use React\Promise\PromiseInterface;
 use Temporal\Activity;
 use Temporal\Activity\ActivityInterface;
 use Temporal\Activity\ActivityMethod;
@@ -21,41 +20,41 @@ use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
-/*
-
-# Activity cancellation - Try Cancel mode
-Activities may be cancelled in three different ways, this feature spec covers the
-Try Cancel mode.
-
-Each feature workflow in this folder should start an activity and cancel it
-using the Try Cancel mode. The implementation should demonstrate that the activity
-keeps receives a cancel request after the workflow has issued it, but the workflow
-immediately should proceed with the activity result being cancelled.
-
-## Detailed spec
-
-* When the SDK issues the activity cancel request command, server will write an
-  activity cancel requested event to history
-* The workflow immediately resolves the activity with its result being cancelled
-* Server will notify the activity cancellation has been requested via a response
-  to activity heartbeating
-* The activity may ignore the cancellation request if it explicitly chooses to
-
-## Feature implementation
-
-* Execute activity that heartbeats and checks cancellation
-  * If a minute passes without cancellation, send workflow a signal that it timed out
-  * If cancellation is received, send workflow a signal that it was cancelled
-* Cancel activity and confirm cancellation error is returned
-* Check in the workflow that the signal sent from the activity is showing it was cancelled
-
-*/
-
+/**
+ * # Activity cancellation - Try Cancel mode
+ *
+ * Activities may be cancelled in three different ways, this feature spec covers the
+ * Try Cancel mode.
+ *
+ * Each feature workflow in this folder should start an activity and cancel it
+ * using the Try Cancel mode. The implementation should demonstrate that the activity
+ * keeps receives a cancel request after the workflow has issued it, but the workflow
+ * immediately should proceed with the activity result being cancelled.
+ *
+ * ## Detailed spec
+ *
+ *  When the SDK issues the activity cancel request command, server will write an
+ * activity cancel requested event to history
+ *  The workflow immediately resolves the activity with its result being cancelled
+ *  Server will notify the activity cancellation has been requested via a response
+ * to activity heartbeating
+ *  The activity may ignore the cancellation request if it explicitly chooses to
+ *
+ * ## Feature implementation
+ *
+ *  Execute activity that heartbeats and checks cancellation
+ *  If a minute passes without cancellation, send workflow a signal that it timed out
+ *  If cancellation is received, send workflow a signal that it was cancelled
+ *  Cancel activity and confirm cancellation error is returned
+ *  Check in the workflow that the signal sent from the activity is showing it was cancelled
+ */
 class CancelTryCancelTest extends TestCase
 {
     #[Test]
-    public static function check(#[Stub('Harness_Activity_CancelTryCancel')]WorkflowStubInterface $stub): void
-    {
+    public static function check(
+        #[Stub('Harness_Activity_CancelTryCancel')]
+        WorkflowStubInterface $stub,
+    ): void {
         self::assertSame('cancelled', $stub->getResult(timeout: 10));
     }
 }
@@ -76,7 +75,7 @@ class FeatureWorkflow
                 ->withHeartbeatTimeout('5 seconds')
                 # Disable retry
                 ->withRetryOptions(RetryOptions::new()->withMaximumAttempts(1))
-                ->withCancellationType(Activity\ActivityCancellationType::TryCancel)
+                ->withCancellationType(Activity\ActivityCancellationType::TryCancel),
         );
 
         $scope = Workflow::async(static fn() => $activity->cancellableActivity());
@@ -98,7 +97,7 @@ class FeatureWorkflow
     }
 
     #[Workflow\SignalMethod('activity_result')]
-    public function activityResult(string $result)
+    public function activityResult(string $result): void
     {
         $this->result = $result;
     }
@@ -109,14 +108,10 @@ class FeatureActivity
 {
     public function __construct(
         private readonly WorkflowClientInterface $client,
-    ) {
-    }
+    ) {}
 
-    /**
-     * @return PromiseInterface<null>
-     */
     #[ActivityMethod('cancellable_activity')]
-    public function cancellableActivity()
+    public function cancellableActivity(): void
     {
         # Heartbeat every second for a minute
         $result = 'timeout';
