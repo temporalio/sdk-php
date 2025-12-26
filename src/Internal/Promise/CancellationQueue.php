@@ -41,6 +41,7 @@ class CancellationQueue
 
     private function drain(): void
     {
+        /** @psalm-suppress PossiblyNullArrayOffset */
         for ($i = \key($this->queue); isset($this->queue[$i]); $i++) {
             $cancellable = $this->queue[$i];
 
