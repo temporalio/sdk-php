@@ -26,11 +26,13 @@ final class ProtoCodec implements CodecInterface
 {
     private Decoder $parser;
     private Encoder $encoder;
+    private \DateTimeZone $hostTimeZone;
 
     public function __construct(DataConverterInterface $dataConverter)
     {
         $this->parser = new Decoder($dataConverter);
         $this->encoder = new Encoder($dataConverter);
+        $this->hostTimeZone = new \DateTimeZone(\date_default_timezone_get());
     }
 
     public function encode(iterable $commands): string
@@ -54,8 +56,6 @@ final class ProtoCodec implements CodecInterface
 
     public function decode(string $batch, array $headers = []): iterable
     {
-        static $tz = new \DateTimeZone('UTC');
-
         try {
             $frame = new Frame();
             $frame->mergeFromString($batch);
@@ -63,7 +63,7 @@ final class ProtoCodec implements CodecInterface
             foreach ($frame->getMessages() as $msg) {
                 /** @psalm-suppress ArgumentTypeCoercion */
                 $info = new TickInfo(
-                    time: new \DateTimeImmutable($headers['tickTime'] ?? $msg->getTickTime(), $tz),
+                    time: (new \DateTimeImmutable($headers['tickTime'] ?? $msg->getTickTime()))->setTimezone($this->hostTimeZone),
                     historyLength: (int) ($headers['history_length'] ?? $msg->getHistoryLength()),
                     historySize: (int) ($headers['history_size'] ?? $msg->getHistorySize()),
                     continueAsNewSuggested: (bool) ($headers['continue_as_new_suggested'] ?? $msg->getContinueAsNewSuggested()),

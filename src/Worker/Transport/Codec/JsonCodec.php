@@ -23,6 +23,7 @@ final class JsonCodec implements CodecInterface
     private int $maxDepth;
     private Decoder $parser;
     private Encoder $serializer;
+    private \DateTimeZone $hostTimeZone;
 
     public function __construct(DataConverterInterface $dataConverter, int $maxDepth = 64)
     {
@@ -30,6 +31,7 @@ final class JsonCodec implements CodecInterface
 
         $this->parser = new Decoder($dataConverter);
         $this->serializer = new Encoder($dataConverter);
+        $this->hostTimeZone = new \DateTimeZone(\date_default_timezone_get());
     }
 
     public function encode(iterable $commands): string
@@ -50,15 +52,13 @@ final class JsonCodec implements CodecInterface
 
     public function decode(string $batch, array $headers = []): iterable
     {
-        static $tz = new \DateTimeZone('UTC');
-
         try {
             $commands = \json_decode($batch, true, $this->maxDepth, \JSON_THROW_ON_ERROR);
 
             foreach ($commands as $command) {
                 /** @psalm-suppress ArgumentTypeCoercion */
                 $info = new TickInfo(
-                    time: new \DateTimeImmutable($headers['tickTime'] ?? 'now', $tz),
+                    time: (new \DateTimeImmutable($headers['tickTime'] ?? 'now'))->setTimezone($this->hostTimeZone),
                     historyLength: (int) ($headers['history_length'] ?? 0),
                     historySize: (int) ($headers['history_size'] ?? 0),
                     continueAsNewSuggested: (bool) ($headers['continue_as_new_suggested'] ?? false),

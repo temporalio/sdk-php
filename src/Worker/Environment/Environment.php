@@ -20,7 +20,7 @@ class Environment implements EnvironmentInterface
 
     public function __construct()
     {
-        $this->tickTime = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+        $this->tickTime = new \DateTimeImmutable('now');
     }
 
     public function now(): \DateTimeInterface
