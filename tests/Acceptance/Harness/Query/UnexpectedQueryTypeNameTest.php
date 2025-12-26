@@ -18,7 +18,8 @@ class UnexpectedQueryTypeNameTest extends TestCase
 {
     #[Test]
     public static function check(
-        #[Stub('Harness_Query_UnexpectedQueryTypeName')]WorkflowStubInterface $stub,
+        #[Stub('Harness_Query_UnexpectedQueryTypeName')]
+        WorkflowStubInterface $stub,
     ): void {
         try {
             $stub->query('nonexistent');

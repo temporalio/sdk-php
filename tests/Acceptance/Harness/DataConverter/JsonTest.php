@@ -18,17 +18,16 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
-\define(__NAMESPACE__ . '\EXPECTED_RESULT', (object)['spec' => true]);
+\define(__NAMESPACE__ . '\EXPECTED_RESULT', (object) ['spec' => true]);
 
+/**
+ * # JSON Payload Encoding
+ *
+ * Test that regular PHP structures like plain objects are encoded as JSON payloads.
+ */
 class JsonTest extends TestCase
 {
     private ResultInterceptor $interceptor;
-
-    protected function setUp(): void
-    {
-        $this->interceptor = new ResultInterceptor();
-        parent::setUp();
-    }
 
     public function pipelineProvider(): PipelineProvider
     {
@@ -54,6 +53,12 @@ class JsonTest extends TestCase
 
         self::assertSame('json/plain', $payload->getMetadata()['encoding']);
         self::assertSame('{"spec":true}', $payload->getData());
+    }
+
+    protected function setUp(): void
+    {
+        $this->interceptor = new ResultInterceptor();
+        parent::setUp();
     }
 }
 
