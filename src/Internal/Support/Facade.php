@@ -41,15 +41,8 @@ abstract class Facade
         self::$ctx = $ctx;
     }
 
-    /**
-     * @throws OutOfContextException
-     */
-    public static function getCurrentContext(): object
+    public static function getCurrentContext(): ?object
     {
-        if (self::$ctx === null) {
-            throw new \RuntimeException(self::ERROR_NO_CONTEXT);
-        }
-
         return self::$ctx;
     }
 
@@ -58,11 +51,7 @@ abstract class Facade
      */
     public static function getContextId(): int
     {
-        if (self::$ctx === null) {
-            throw new \RuntimeException(self::ERROR_NO_CONTEXT);
-        }
-
-        return \spl_object_id(self::$ctx);
+        return \spl_object_id(static::getCurrentContext());
     }
 
     /**
