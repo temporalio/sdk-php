@@ -68,10 +68,6 @@ abstract class BaseClient implements ServiceClientInterface
      */
     public static function create(string $address): static
     {
-        if (!\extension_loaded('grpc')) {
-            throw new \RuntimeException('The gRPC extension is required to use Temporal Client.');
-        }
-
         return new static(static fn(): WorkflowServiceClient => new WorkflowServiceClient(
             $address,
             ['credentials' => \Grpc\ChannelCredentials::createInsecure()],
@@ -96,10 +92,6 @@ abstract class BaseClient implements ServiceClientInterface
         ?string $clientPem = null,
         ?string $overrideServerName = null,
     ): static {
-        if (!\extension_loaded('grpc')) {
-            throw new \RuntimeException('The gRPC extension is required to use Temporal Client.');
-        }
-
         $loadCert = static function (?string $cert): ?string {
             return match (true) {
                 $cert === null, $cert === '' => null,
