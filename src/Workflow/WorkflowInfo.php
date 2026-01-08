@@ -103,6 +103,12 @@ final class WorkflowInfo
     #[Marshal(name: 'ContinuedExecutionRunID')]
     public ?string $continuedExecutionRunId = null;
 
+    #[Marshal(name: 'FirstRunID')]
+    public ?string $firstExecutionRunId = null;
+
+    #[Marshal(name: 'OriginalRunID')]
+    public ?string $originalExecutionRunId = null;
+
     #[Marshal(name: 'ParentWorkflowNamespace')]
     public ?string $parentNamespace = null;
 
