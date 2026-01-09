@@ -40,14 +40,13 @@ class FeatureWorkflow
     {
         $rawValue = new RawValue(new Payload(['data' => 'hello world']));
 
-        yield Workflow::newActivityStub(
+        $activity = Workflow::newActivityStub(
             RawValueActivity::class,
             ActivityOptions::new()
-                ->withStartToCloseTimeout(10),
-        )
-            ->bypass($rawValue);
+                ->withStartToCloseTimeout(3),
+        );
 
-        return yield $rawValue;
+        return yield $activity->bypass($rawValue);
     }
 }
 
