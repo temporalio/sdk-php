@@ -21,6 +21,7 @@ use Temporal\DataConverter\JsonConverter;
 use Temporal\DataConverter\NullConverter;
 use Temporal\DataConverter\ProtoConverter;
 use Temporal\DataConverter\ProtoJsonConverter;
+use Temporal\DataConverter\RawValueConverter;
 use Temporal\Internal\Support\StackRenderer;
 use Temporal\Testing\Command;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
@@ -52,6 +53,7 @@ try {
     $converters = [
         new NullConverter(),
         new BinaryConverter(),
+        new RawValueConverter(),
         new ProtoJsonConverter(),
         new ProtoConverter(),
         new JsonConverter(),
