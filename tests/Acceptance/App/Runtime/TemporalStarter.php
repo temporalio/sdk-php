@@ -16,7 +16,6 @@ final class TemporalStarter
     public function __construct()
     {
         $this->environment = Environment::create();
-        \register_shutdown_function(fn() => $this->stop());
     }
 
     public function start(): void
