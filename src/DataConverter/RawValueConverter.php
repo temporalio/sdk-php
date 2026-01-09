@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\DataConverter;
 
 use Temporal\Api\Common\V1\Payload;
-use Temporal\Exception\DataConverterException;
 
 class RawValueConverter extends Converter
 {
