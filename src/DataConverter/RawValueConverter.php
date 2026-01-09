@@ -21,7 +21,7 @@ class RawValueConverter extends Converter
         return EncodingKeys::METADATA_ENCODING_RAW_VALUE;
     }
 
-    public function toPayload($value): ?Payload
+    public function toPayload(mixed $value): ?Payload
     {
         if (!$value instanceof RawValue) {
             return null;
@@ -35,10 +35,6 @@ class RawValueConverter extends Converter
 
     public function fromPayload(Payload $payload, Type $type): RawValue
     {
-        if (!$type->isClass() || $type->getName() !== RawValue::class) {
-            throw new DataConverterException(\sprintf('Unable to convert raw data to non %s type', RawValue::class));
-        }
-
-        return new RawValue($payload);
+        return new RawValue(clone $payload);
     }
 }

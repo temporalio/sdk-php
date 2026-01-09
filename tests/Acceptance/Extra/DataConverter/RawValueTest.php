@@ -24,7 +24,7 @@ class RawValueTest extends TestCase
         #[Stub('Extra_DataConverter_RawValue')]
         WorkflowStubInterface $stub,
     ): void {
-        $result = $stub->getResult(RawValue::class);
+        $result = $stub->getResult();
 
         self::assertInstanceOf(RawValue::class, $result);
         self::assertInstanceOf(Payload::class, $result->getPayload());
@@ -43,7 +43,7 @@ class FeatureWorkflow
         $activity = Workflow::newActivityStub(
             RawValueActivity::class,
             ActivityOptions::new()
-                ->withStartToCloseTimeout(3),
+                ->withScheduleToCloseTimeout('1 minute'),
         );
 
         return yield $activity->bypass($rawValue);
@@ -53,9 +53,9 @@ class FeatureWorkflow
 #[ActivityInterface(prefix: 'RawValueActivity.')]
 class RawValueActivity
 {
-    #[ActivityMethod('Bypass')]
-    public function bypass(RawValue $arg): iterable
+    #[ActivityMethod]
+    public function bypass(RawValue $arg)
     {
-        yield $arg;
+        return $arg;
     }
 }
