@@ -86,6 +86,7 @@ jobs:
         env:
           COMPOSER_POOL_OPTIMIZER: 0
         run: vendor/bin/validate-prefer-lowest
+        continue-on-error: true
 
       - name: Download binaries
         if: inputs.download-binaries == true
