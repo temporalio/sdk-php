@@ -82,6 +82,7 @@ jobs:
           dependency-versions: ${{ matrix.dependencies }}
 
       - name: Validate lowest dependencies
+        id: validate
         if: matrix.dependencies == 'lowest' && matrix.php == '8.1'
         env:
           COMPOSER_POOL_OPTIMIZER: 0
@@ -94,3 +95,7 @@ jobs:
 
       - name: Run tests
         run: ${{ inputs.test-command }}
+
+      - name: Check for failures
+        if: steps.validate.outcome == 'failure'
+        run: exit 1
