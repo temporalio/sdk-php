@@ -87,7 +87,11 @@ class ResetWorkerTest extends TestCase
             self::fail('Query must fail with a timeout');
         } catch (WorkflowServiceException $e) {
             # Should fail with a timeout
-            self::assertInstanceOf(TimeoutException::class, $e->getPrevious());
+            self::assertInstanceOf(
+                TimeoutException::class,
+                $e->getPrevious(),
+                $e->__toString(),
+            );
         }
 
         $stub->signal('exit');
