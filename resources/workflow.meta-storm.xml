@@ -74,5 +74,11 @@
             <collection name="temporal/sdk:activity-class" argument="0" />
             <stopCompletion />
         </classMethod>
+        <classMethod
+            class="\Temporal\Workflow\WorkflowRunInterface"
+            method="getResult"
+            argument="0">
+            <languageInjection language="InjectablePHP" prefix="/** @var " suffix="$_ **/" />
+        </classMethod>
     </definitions>
 </meta-storm>

@@ -31,6 +31,9 @@ final class Environment
     {
         $token = \getenv('GITHUB_TOKEN');
 
+        $info = SystemInfo::detect();
+        \is_string(\getenv('ROADRUNNER_BINARY')) and $info->rrExecutable = \getenv('ROADRUNNER_BINARY');
+
         return new self(
             new ConsoleOutput(),
             new Downloader(new Filesystem(), HttpClient::create([
@@ -38,7 +41,7 @@ final class Environment
                     'authorization' => $token ? 'token ' . $token : null,
                 ],
             ])),
-            SystemInfo::detect(),
+            $info,
         );
     }
 
@@ -101,14 +104,18 @@ final class Environment
         );
         $this->temporalServerProcess->setTimeout($commandTimeout);
         $this->temporalServerProcess->start();
-        $this->output->writeln('<info>done.</info>');
-        \sleep(1);
+
+        $deadline = \microtime(true) + 1.2;
+        while (!$this->temporalServerProcess->isRunning() && \microtime(true) < $deadline) {
+            \usleep(10_000);
+        }
 
         if (!$this->temporalServerProcess->isRunning()) {
             $this->output->writeln('<error>error</error>');
             $this->output->writeln('Error starting Temporal server: ' . $this->temporalServerProcess->getErrorOutput());
             exit(1);
         }
+        $this->output->writeln('<info>done.</info>');
     }
 
     public function startTemporalTestServer(int $commandTimeout = 10): void
@@ -127,7 +134,7 @@ final class Environment
         );
         $this->temporalTestServerProcess->setTimeout($commandTimeout);
         $this->temporalTestServerProcess->start();
-        $this->output->writeln('<info>done.</info>');
+
         \sleep(1);
 
         if (!$this->temporalTestServerProcess->isRunning()) {
@@ -135,6 +142,7 @@ final class Environment
             $this->output->writeln('Error starting Temporal Test server: ' . $this->temporalTestServerProcess->getErrorOutput());
             exit(1);
         }
+        $this->output->writeln('<info>done.</info>');
     }
 
     /**

@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Temporal\Activity\ActivityInterface;
 use Temporal\DataConverter\PayloadConverterInterface;
 use Temporal\Testing\DeprecationCollector;
-use Temporal\Tests\Acceptance\App\Input\Command;
+use Temporal\Testing\Command;
 use Temporal\Tests\Acceptance\App\Input\Feature;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Worker\FeatureFlags;
