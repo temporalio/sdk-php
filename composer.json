@@ -27,22 +27,22 @@
         "google/common-protos": "^4.9",
         "google/protobuf": "^4.31.1",
         "grpc/grpc": "^1.57",
-        "internal/promise": "^2.12 || ^3.4",
         "internal/destroy": "^1.0",
+        "internal/promise": "^2.12 || ^3.4",
         "nesbot/carbon": "^2.72.6 || ^3.8.4",
         "psr/log": "^2.0 || ^3.0.2",
         "ramsey/uuid": "^4.7.6",
-        "roadrunner-php/roadrunner-api-dto": "^1.13.0",
-        "roadrunner-php/version-checker": "^1.0.1",
+        "roadrunner-php/roadrunner-api-dto": "^1.14.0",
+        "roadrunner-php/version-checker": "^1.0.2",
         "spiral/attributes": "^3.1.8",
-        "spiral/roadrunner": "^2025.1.3",
+        "spiral/roadrunner": "^2025.1.5",
         "spiral/roadrunner-cli": "^2.6",
         "spiral/roadrunner-kv": "^4.3.1",
         "spiral/roadrunner-worker": "^3.6.2",
-        "symfony/filesystem": "^5.4.45 || ^6.4.13 || ^7.0",
-        "symfony/http-client": "^5.4.49 || ^6.4.17 || ^7.0",
+        "symfony/filesystem": "^5.4.45 || ^6.4.13 || ^7.0 || ^8.0",
+        "symfony/http-client": "^5.4.49 || ^6.4.17 || ^7.0 || ^8.0",
         "symfony/polyfill-php83": "^1.31.0",
-        "symfony/process": "^5.4.47 || ^6.4.15 || ^7.0"
+        "symfony/process": "^5.4.47 || ^6.4.15 || ^7.0 || ^8.0"
     },
     "autoload": {
         "psr-4": {
@@ -61,6 +61,7 @@
         "dereuromark/composer-prefer-lowest": "^0.1.10",
         "doctrine/annotations": "^1.14.4 || ^2.0.2",
         "internal/dload": "^1.2.0",
+        "internal/toml": "^1.0.3",
         "jetbrains/phpstorm-attributes": "dev-master",
         "laminas/laminas-code": "^4.16",
         "phpunit/phpunit": "10.5.45",
@@ -83,7 +84,9 @@
     "suggest": {
         "ext-grpc": "For Client calls",
         "ext-protobuf": "For better performance",
-        "buggregator/trap": "For better debugging"
+        "buggregator/trap": "For better debugging",
+        "roadrunner/psr-logger": "RoadRunner PSR-3 logger integration",
+        "internal/toml": "To load TOML config files"
     },
     "scripts": {
         "get:binaries": [

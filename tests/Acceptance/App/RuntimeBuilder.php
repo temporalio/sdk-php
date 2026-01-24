@@ -7,7 +7,7 @@ namespace Temporal\Tests\Acceptance\App;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Activity\ActivityInterface;
 use Temporal\DataConverter\PayloadConverterInterface;
-use Temporal\Tests\Acceptance\App\Input\Command;
+use Temporal\Testing\Command;
 use Temporal\Tests\Acceptance\App\Input\Feature;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Worker\FeatureFlags;
@@ -92,7 +92,7 @@ final class RuntimeBuilder
 
             yield $feature => \array_filter(
                 \get_declared_classes(),
-                static fn(string $class): bool => \str_starts_with($class, $namespace),
+                static fn(string $class): bool => \str_starts_with($class, "$namespace\\"),
             );
         }
     }

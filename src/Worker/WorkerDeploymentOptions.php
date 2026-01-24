@@ -53,7 +53,7 @@ class WorkerDeploymentOptions
     public function withUseVersioning(bool $value): self
     {
         /** @see self::$useVersioning */
-        return $this->with('useVersioning', $value);
+        return $this->cloneWith('useVersioning', $value);
     }
 
     /**
@@ -64,7 +64,7 @@ class WorkerDeploymentOptions
     public function withVersion(string|WorkerDeploymentVersion $version): self
     {
         /** @see self::$version */
-        return $this->with('version', \is_string($version) ? WorkerDeploymentVersion::fromString($version) : $version);
+        return $this->cloneWith('version', \is_string($version) ? WorkerDeploymentVersion::fromString($version) : $version);
     }
 
     /**
@@ -74,6 +74,6 @@ class WorkerDeploymentOptions
     public function withDefaultVersioningBehavior(VersioningBehavior $behavior): self
     {
         /** @see self::$defaultVersioningBehavior */
-        return $this->with('defaultVersioningBehavior', $behavior);
+        return $this->cloneWith('defaultVersioningBehavior', $behavior);
     }
 }

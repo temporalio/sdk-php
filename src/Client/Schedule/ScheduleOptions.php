@@ -51,7 +51,7 @@ final class ScheduleOptions
     public function withNamespace(string $namespace): self
     {
         /** @see self::$namespace */
-        return $this->with('namespace', $namespace);
+        return $this->cloneWith('namespace', $namespace);
     }
 
     /**
@@ -60,7 +60,7 @@ final class ScheduleOptions
     public function withTriggerImmediately(bool $value): self
     {
         /** @see self::$triggerImmediately */
-        return $this->with('triggerImmediately', $value);
+        return $this->cloneWith('triggerImmediately', $value);
     }
 
     /**
@@ -72,7 +72,7 @@ final class ScheduleOptions
     public function withBackfills(BackfillPeriod ...$values): self
     {
         /** @see self::$backfills */
-        return $this->with('backfills', $values);
+        return $this->cloneWith('backfills', $values);
     }
 
     /**
@@ -84,7 +84,7 @@ final class ScheduleOptions
     public function withAddedBackfill(BackfillPeriod $value): self
     {
         /** @see self::$backfills */
-        return $this->with('backfills', [...$this->backfills, $value]);
+        return $this->cloneWith('backfills', [...$this->backfills, $value]);
     }
 
     /**
@@ -97,7 +97,7 @@ final class ScheduleOptions
         $values instanceof EncodedCollection or $values = EncodedCollection::fromValues($values);
 
         /** @see self::$memo */
-        return $this->with('memo', $values);
+        return $this->cloneWith('memo', $values);
     }
 
     /**
@@ -113,6 +113,6 @@ final class ScheduleOptions
         $values instanceof EncodedCollection or $values = EncodedCollection::fromValues($values);
 
         /** @see self::$searchAttributes */
-        return $this->with('searchAttributes', $values);
+        return $this->cloneWith('searchAttributes', $values);
     }
 }

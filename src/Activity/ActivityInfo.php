@@ -17,6 +17,7 @@ use JetBrains\PhpStorm\Immutable;
 use Temporal\Activity;
 use Temporal\Client\ActivityCompletionClientInterface;
 use Temporal\Common\Priority;
+use Temporal\Common\RetryOptions;
 use Temporal\Common\Uuid;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 use Temporal\Internal\Marshaller\Type\DateIntervalType;
@@ -107,6 +108,9 @@ final class ActivityInfo
      */
     #[Marshal(name: 'Priority')]
     public Priority $priority;
+
+    #[Marshal(name: 'RetryPolicy')]
+    public ?RetryOptions $retryOptions = null;
 
     /**
      * ActivityInfo constructor.

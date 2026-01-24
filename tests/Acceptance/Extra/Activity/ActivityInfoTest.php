@@ -22,12 +22,10 @@ class ActivityInfoTest extends TestCase
         #[Stub('Extra_Activity_ActivityInfo', args: [TestWorkflow::ARG_RETRY_OPTIONS])]
         WorkflowStubInterface $stub,
     ): void {
-        self::markTestSkipped('See https://github.com/temporalio/sdk-php/issues/602');
-
         $result = $stub->getResult(type: 'array');
         self::assertSame([
             "initial_interval" => ['seconds' => 1, 'nanos' => 0],
-            "backoff_coefficient" => 3,
+            "backoff_coefficient" => 3.0,
             "maximum_interval" => ['seconds' => 120, 'nanos' => 0],
             "maximum_attempts" => 20,
             "non_retryable_error_types" => [],

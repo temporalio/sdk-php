@@ -145,7 +145,7 @@ final class ScheduleSpec
     public function withStructuredCalendarList(StructuredCalendarSpec ...$structuredCalendar): self
     {
         /** @see self::$structuredCalendarList */
-        return $this->with('structuredCalendarList', $structuredCalendar);
+        return $this->cloneWith('structuredCalendarList', $structuredCalendar);
     }
 
     /**
@@ -157,7 +157,7 @@ final class ScheduleSpec
         $value[] = $structuredCalendar;
 
         /** @see self::$structuredCalendarList */
-        return $this->with('structuredCalendarList', $value);
+        return $this->cloneWith('structuredCalendarList', $value);
     }
 
     /**
@@ -166,7 +166,7 @@ final class ScheduleSpec
     public function withCronStringList(\Stringable|string ...$cron): self
     {
         /** @see self::$cronStringList */
-        return $this->with('cronStringList', \array_map(static fn($item) => (string) $item, $cron));
+        return $this->cloneWith('cronStringList', \array_map(static fn($item) => (string) $item, $cron));
     }
 
     /**
@@ -182,7 +182,7 @@ final class ScheduleSpec
         $value[] = (string) $cron;
 
         /** @see self::$cronStringList */
-        return $this->with('cronStringList', $value);
+        return $this->cloneWith('cronStringList', $value);
     }
 
     /**
@@ -191,7 +191,7 @@ final class ScheduleSpec
     public function withCalendarList(CalendarSpec ...$calendar): self
     {
         /** @see self::$calendarList */
-        return $this->with('calendarList', \array_values($calendar));
+        return $this->cloneWith('calendarList', \array_values($calendar));
     }
 
     /**
@@ -203,7 +203,7 @@ final class ScheduleSpec
         $value[] = $calendar;
 
         /** @see self::$calendarList */
-        return $this->with('calendarList', $value);
+        return $this->cloneWith('calendarList', $value);
     }
 
     /**
@@ -223,7 +223,7 @@ final class ScheduleSpec
         }
 
         /** @see self::$intervalList */
-        return $this->with('intervalList', $interval);
+        return $this->cloneWith('intervalList', $interval);
     }
 
     /**
@@ -242,7 +242,7 @@ final class ScheduleSpec
         }
 
         /** @see self::$intervalList */
-        return $this->with('intervalList', $value);
+        return $this->cloneWith('intervalList', $value);
     }
 
     /**
@@ -255,7 +255,7 @@ final class ScheduleSpec
         @\trigger_error('ScheduleSpec::withExcludeCalendarList() is deprecated', E_USER_DEPRECATED);
 
         /** @see self::$excludeCalendarList */
-        return $this->with('excludeCalendarList', $calendar);
+        return $this->cloneWith('excludeCalendarList', $calendar);
     }
 
     /**
@@ -270,7 +270,7 @@ final class ScheduleSpec
         $value[] = $calendar;
 
         /** @see self::$excludeCalendarList */
-        return $this->with('excludeCalendarList', $value);
+        return $this->cloneWith('excludeCalendarList', $value);
     }
 
     /**
@@ -279,7 +279,7 @@ final class ScheduleSpec
     public function withExcludeStructuredCalendarList(StructuredCalendarSpec ...$structuredCalendar): self
     {
         /** @see self::$excludeStructuredCalendarList */
-        return $this->with('excludeStructuredCalendarList', $structuredCalendar);
+        return $this->cloneWith('excludeStructuredCalendarList', $structuredCalendar);
     }
 
     /**
@@ -291,7 +291,7 @@ final class ScheduleSpec
         $value[] = $structuredCalendar;
 
         /** @see self::$excludeStructuredCalendarList */
-        return $this->with('excludeStructuredCalendarList', $value);
+        return $this->cloneWith('excludeStructuredCalendarList', $value);
     }
 
     /**
@@ -301,7 +301,7 @@ final class ScheduleSpec
     public function withStartTime(\DateTimeInterface|string|null $dateTime): self
     {
         /** @see self::$startTime */
-        return $this->with('startTime', $dateTime === null ? null : DateTime::parse($dateTime));
+        return $this->cloneWith('startTime', $dateTime === null ? null : DateTime::parse($dateTime));
     }
 
     /**
@@ -310,7 +310,7 @@ final class ScheduleSpec
     public function withEndTime(\DateTimeInterface|string|null $dateTime): self
     {
         /** @see self::$endTime */
-        return $this->with('endTime', $dateTime === null ? null : DateTime::parse($dateTime));
+        return $this->cloneWith('endTime', $dateTime === null ? null : DateTime::parse($dateTime));
     }
 
     /**
@@ -324,14 +324,14 @@ final class ScheduleSpec
         /** @psalm-suppress RiskyTruthyFalsyComparison */
         if (empty($interval)) {
             /** @see self::$jitter */
-            return $this->with('jitter', new \DateInterval('PT0S'));
+            return $this->cloneWith('jitter', new \DateInterval('PT0S'));
         }
 
         \assert(DateInterval::assert($interval));
         $interval = DateInterval::parse($interval, DateInterval::FORMAT_SECONDS);
 
         /** @see self::$jitter */
-        return $this->with('jitter', $interval);
+        return $this->cloneWith('jitter', $interval);
     }
 
     /**
@@ -356,12 +356,12 @@ final class ScheduleSpec
     public function withTimezoneName(string $timezoneName): self
     {
         /** @see self::$timezoneName */
-        return $this->with('timezoneName', $timezoneName);
+        return $this->cloneWith('timezoneName', $timezoneName);
     }
 
     public function withTimezoneData(string $timezoneData): self
     {
         /** @see self::$timezoneData */
-        return $this->with('timezoneData', $timezoneData);
+        return $this->cloneWith('timezoneData', $timezoneData);
     }
 }

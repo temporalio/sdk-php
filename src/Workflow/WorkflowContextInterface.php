@@ -440,4 +440,9 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * Logs in replay mode are omitted unless {@see WorkerOptions::$enableLoggingInReplay} is set to true.
      */
     public function getLogger(): LoggerInterface;
+
+    /**
+     * Get the currently running Workflow instance.
+     */
+    public function getInstance(): object;
 }
