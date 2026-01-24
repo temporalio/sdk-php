@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Acceptance\App\Runtime;
 
-use Temporal\Tests\Acceptance\App\Input\Command;
 use Temporal\DataConverter\PayloadConverterInterface;
+use Temporal\Testing\Command;
 
 final class State
 {

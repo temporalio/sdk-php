@@ -76,7 +76,7 @@ If you are using the SDK without integrations, the following sections of the doc
 ## Testing
 
 The PHP SDK includes a toolkit for testing Workflows.
-There is [documentation](https://docs.temporal.io/develop/php/testing-suite) and [dev guide](testing/Readme.md) on how to test a Workflow using Activity mocking.
+There is [documentation](https://docs.temporal.io/develop/php/testing-suite) and [dev guide](testing/README.md) on how to test a Workflow using Activity mocking.
 
 To ensure the determinism of a Workflow,
 you can also use the [Replay API in tests](https://docs.temporal.io/develop/php/testing-suite#replay).

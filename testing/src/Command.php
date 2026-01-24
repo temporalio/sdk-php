@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Acceptance\App\Input;
+namespace Temporal\Testing;
 
 final class Command
 {
@@ -18,12 +18,19 @@ final class Command
     /** @var non-empty-string|null */
     public ?string $tlsCert = null;
 
+    private array $xdebug;
+
     public static function fromEnv(): self
     {
         $self = new self();
 
         $self->namespace = \getenv('TEMPORAL_NAMESPACE') ?: 'default';
         $self->address = \getenv('TEMPORAL_ADDRESS') ?: 'localhost:7233';
+        $self->xdebug = [
+            'xdebug.mode' => \ini_get('xdebug.mode'),
+            'xdebug.start_with_request' => \ini_get('xdebug.start_with_request'),
+            'xdebug.start_upon_error' => \ini_get('xdebug.start_upon_error'),
+        ];
         // $self->tlsCert =
         // $self->tlsKey =
 
@@ -66,7 +73,7 @@ final class Command
     /**
      * @return list<non-empty-string> CLI arguments that can be parsed by `fromCommandLine`
      */
-    public function toCommandLineArguments(): array
+    public function getCommandLineArguments(): array
     {
         $result = [];
         $this->namespace === null or $result[] = "namespace=$this->namespace";
@@ -74,6 +81,15 @@ final class Command
         $this->tlsCert === null or $result[] = "tls.cert=$this->tlsCert";
         $this->tlsKey === null or $result[] = "tls.key=$this->tlsKey";
 
+        return $result;
+    }
+
+    public function getPhpBinaryArguments(): array
+    {
+        $result = [];
+        foreach ($this->xdebug as $key => $value) {
+            $result[] = "-d$key=$value";
+        }
         return $result;
     }
 }

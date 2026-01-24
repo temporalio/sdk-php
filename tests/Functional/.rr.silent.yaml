@@ -5,8 +5,6 @@ rpc:
 
 server:
     command: "php worker.php"
-    env:
-        XDEBUG_SESSION: 1
 
 # Workflow and activity mesh service
 temporal:
