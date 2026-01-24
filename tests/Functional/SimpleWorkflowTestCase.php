@@ -9,8 +9,11 @@ use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Testing\ActivityMocker;
+use Temporal\Tests\DTO\Message;
+use Temporal\Tests\DTO\User;
 use Temporal\Tests\TestCase;
 use Temporal\Tests\Workflow\Inheritance\ExtendingWorkflow;
+use Temporal\Tests\Workflow\SimpleDTOWorkflow;
 use Temporal\Tests\Workflow\SimpleWorkflow;
 use Temporal\Tests\Workflow\YieldGeneratorWorkflow;
 use Temporal\Tests\Workflow\YieldScalarsWorkflow;
@@ -27,6 +30,19 @@ final class SimpleWorkflowTestCase extends TestCase
         $workflow = $this->workflowClient->newWorkflowStub(SimpleWorkflow::class);
         $run = $this->workflowClient->start($workflow, 'hello');
         $this->assertSame('world', $run->getResult('string'));
+    }
+
+    public function testWorkflowReturnsObject(): void
+    {
+        $user = User::new('Dmitrii', 'my@mail');
+        $message = new Message('Hola, Dmitrii');
+        $this->activityMocks->expectCompletion('SimpleActivity.greet', $message);
+        $workflow = $this->workflowClient->newWorkflowStub(SimpleDTOWorkflow::class);
+        $run = $this->workflowClient->start($workflow, $user);
+        $result = $run->getResult();
+
+        $this->assertInstanceOf(Message::class, $result);
+        $this->assertEquals('Hola, Dmitrii', $result->message);
     }
 
     public function testEagerStartDoesntFail(): void
