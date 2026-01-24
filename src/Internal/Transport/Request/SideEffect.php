@@ -18,8 +18,8 @@ final class SideEffect extends Request
 {
     public const NAME = 'SideEffect';
 
-    public function __construct(ValuesInterface $values)
+    public function __construct(ValuesInterface $values, array $options)
     {
-        parent::__construct(self::NAME, [], $values);
+        parent::__construct(self::NAME, ['options' => $options], $values);
     }
 }

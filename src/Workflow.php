@@ -18,6 +18,7 @@ use Temporal\Activity\ActivityOptions;
 use Temporal\Activity\ActivityOptionsInterface;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Common\SearchAttributes\SearchAttributeUpdate;
+use Temporal\Common\SideEffectOptions;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\Failure\CanceledFailure;
@@ -565,9 +566,9 @@ final class Workflow extends Facade
      * @return PromiseInterface<TReturn>
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
-    public static function sideEffect(callable $value): PromiseInterface
+    public static function sideEffect(callable $value, ?SideEffectOptions $options = null): PromiseInterface
     {
-        return self::getCurrentContext()->sideEffect($value);
+        return self::getCurrentContext()->sideEffect($value, $options);
     }
 
     /**
