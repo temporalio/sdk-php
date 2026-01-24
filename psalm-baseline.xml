@@ -884,6 +884,11 @@
       <code><![CDATA[?string]]></code>
     </MoreSpecificReturnType>
   </file>
+  <file src="src/Internal/Promise/CancellationQueue.php">
+    <PossiblyNullArrayOffset>
+      <code><![CDATA[$this->queue]]></code>
+    </PossiblyNullArrayOffset>
+  </file>
   <file src="src/Internal/Queue/ArrayQueue.php">
     <InvalidDocblock>
       <code><![CDATA[protected array $commands = [];]]></code>
