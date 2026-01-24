@@ -23,32 +23,39 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
-/**
- * # Binary payload converter
- *
- * Binary values can be converted to and from `binary/plain` Payloads.
- *
- * Steps:
- *
- * - run a echo workflow that accepts and returns binary value `0xdeadbeef`
- * - verify client result is binary `0xdeadbeef`
- * - get result payload of WorkflowExecutionCompleted event from workflow history
- * - load JSON payload from `./payload.json` and compare it to result payload
- * - get argument payload of WorkflowExecutionStarted event from workflow history
- * - verify that argument and result payloads are the same
- *
- *
- * # Detailed spec
- *
- * `metadata.encoding = toBinary("binary/plain")`
- */
+/*
+# Binary payload converter
+
+Binary values can be converted to and from `binary/plain` Payloads.
+
+Steps:
+
+- run a echo workflow that accepts and returns binary value `0xdeadbeef`
+- verify client result is binary `0xdeadbeef`
+- get result payload of WorkflowExecutionCompleted event from workflow history
+- load JSON payload from `./payload.json` and compare it to result payload
+- get argument payload of WorkflowExecutionStarted event from workflow history
+- verify that argument and result payloads are the same
+
+
+# Detailed spec
+
+`metadata.encoding = toBinary("binary/plain")`
+*/
+
+const CODEC_ENCODING = 'binary/plain';
+\define(__NAMESPACE__ . '\EXPECTED_RESULT', (string)0xDEADBEEF);
+\define(__NAMESPACE__ . '\INPUT', new Bytes(EXPECTED_RESULT));
 
 class BinaryTest extends TestCase
 {
-    private const EXPECTED_RESULT = "" . 0xDEADBEEF;
-    private const CODEC_ENCODING = 'binary/plain';
-
     private Interceptor $interceptor;
+
+    protected function setUp(): void
+    {
+        $this->interceptor = new Interceptor();
+        parent::setUp();
+    }
 
     public function pipelineProvider(): PipelineProvider
     {
@@ -57,14 +64,14 @@ class BinaryTest extends TestCase
 
     #[Test]
     public function check(
-        #[Stub('Harness_DataConverter_Binary', args: [new Bytes(self::EXPECTED_RESULT)])]
+        #[Stub('Harness_DataConverter_Binary', args: [INPUT])]
         #[Client(pipelineProvider: [self::class, 'pipelineProvider'])]
         WorkflowStubInterface $stub,
     ): void {
         /** @var Bytes $result */
         $result = $stub->getResult(Bytes::class);
 
-        self::assertEquals(self::EXPECTED_RESULT, $result->getData());
+        self::assertEquals(EXPECTED_RESULT, $result->getData());
 
         # Check arguments
         self::assertNotNull($this->interceptor->startRequest);
@@ -74,18 +81,12 @@ class BinaryTest extends TestCase
         $payload = $this->interceptor->startRequest->getInput()?->getPayloads()[0] ?? null;
         self::assertNotNull($payload);
 
-        self::assertSame(self::CODEC_ENCODING, $payload->getMetadata()['encoding']);
+        self::assertSame(CODEC_ENCODING, $payload->getMetadata()['encoding']);
 
         // Check result value from interceptor
         /** @var Payload $resultPayload */
         $resultPayload = $this->interceptor->result->toPayloads()->getPayloads()[0];
-        self::assertSame(self::CODEC_ENCODING, $resultPayload->getMetadata()['encoding']);
-    }
-
-    protected function setUp(): void
-    {
-        $this->interceptor = new Interceptor();
-        parent::setUp();
+        self::assertSame(CODEC_ENCODING, $resultPayload->getMetadata()['encoding']);
     }
 }
 
@@ -93,7 +94,7 @@ class BinaryTest extends TestCase
 class FeatureWorkflow
 {
     #[WorkflowMethod('Harness_DataConverter_Binary')]
-    public function run(Bytes $data): Bytes
+    public function run(Bytes $data)
     {
         return $data;
     }

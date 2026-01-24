@@ -23,16 +23,18 @@ use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
+const CODEC_ENCODING = 'my-encoding';
 const EXPECTED_RESULT = new DTO(spec: true);
 
-/**
- * # Codec Payload Encoding
- *
- * Test custom codec payload encoding.
- */
 class CodecTest extends TestCase
 {
     private ResultInterceptor $interceptor;
+
+    protected function setUp(): void
+    {
+        $this->interceptor = new ResultInterceptor();
+        parent::setUp();
+    }
 
     public function pipelineProvider(): PipelineProvider
     {
@@ -44,36 +46,30 @@ class CodecTest extends TestCase
         #[Stub('Harness_DataConverter_Codec', args: [EXPECTED_RESULT])]
         #[Client(
             pipelineProvider: [self::class, 'pipelineProvider'],
-            payloadConverters: [Base64PayloadCodec::class],
-        )]
+            payloadConverters: [Base64PayloadCodec::class]),
+        ]
         WorkflowStubInterface $stub,
     ): void {
         $result = $stub->getResult();
 
         self::assertEquals(EXPECTED_RESULT, $result);
 
-        // Check arguments from interceptor
+        $result = $this->interceptor->result;
         $input = $this->interceptor->start;
+        self::assertNotNull($result);
         self::assertNotNull($input);
-        /** @var Payload $inputPayload */
-        $inputPayload = $input->toPayloads()->getPayloads()[0];
-        self::assertSame(Base64PayloadCodec::CODEC_ENCODING, $inputPayload->getMetadata()['encoding']);
-        self::assertSame(\base64_encode('{"spec":true}'), $inputPayload->getData());
 
         // Check result value from interceptor
-        $result = $this->interceptor->result;
-        self::assertNotNull($result);
         /** @var Payload $resultPayload */
         $resultPayload = $result->toPayloads()->getPayloads()[0];
-        self::assertSame(Base64PayloadCodec::CODEC_ENCODING, $resultPayload->getMetadata()['encoding']);
+        self::assertSame(CODEC_ENCODING, $resultPayload->getMetadata()['encoding']);
         self::assertSame(\base64_encode('{"spec":true}'), $resultPayload->getData());
 
-    }
-
-    protected function setUp(): void
-    {
-        $this->interceptor = new ResultInterceptor();
-        parent::setUp();
+        // Check arguments from interceptor
+        /** @var Payload $inputPayload */
+        $inputPayload = $input->toPayloads()->getPayloads()[0];
+        self::assertSame(CODEC_ENCODING, $inputPayload->getMetadata()['encoding']);
+        self::assertSame(\base64_encode('{"spec":true}'), $inputPayload->getData());
     }
 }
 
@@ -93,10 +89,8 @@ class FeatureWorkflow
 class ResultInterceptor implements WorkflowClientCallsInterceptor
 {
     use WorkflowClientCallsInterceptorTrait;
-
     public ?EncodedValues $result = null;
     public ?EncodedValues $start = null;
-
     public function getResult(GetResultInput $input, callable $next): ?EncodedValues
     {
         return $this->result = $next($input);
@@ -122,11 +116,9 @@ class DTO
 
 class Base64PayloadCodec implements PayloadConverterInterface
 {
-    public const CODEC_ENCODING = 'my-encoding';
-
     public function getEncodingType(): string
     {
-        return self::CODEC_ENCODING;
+        return CODEC_ENCODING;
     }
 
     public function toPayload($value): ?Payload
@@ -134,7 +126,7 @@ class Base64PayloadCodec implements PayloadConverterInterface
         return $value instanceof DTO
             ? (new Payload())
                 ->setData(\base64_encode(\json_encode($value, flags: \JSON_THROW_ON_ERROR)))
-                ->setMetadata(['encoding' => self::CODEC_ENCODING])
+                ->setMetadata(['encoding' => CODEC_ENCODING])
             : null;
     }
 

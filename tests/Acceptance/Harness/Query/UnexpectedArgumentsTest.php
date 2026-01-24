@@ -19,13 +19,12 @@ class UnexpectedArgumentsTest extends TestCase
 {
     #[Test]
     public static function check(
-        #[Stub('Harness_Query_UnexpectedArguments')]
-        WorkflowStubInterface $stub,
+        #[Stub('Harness_Query_UnexpectedArguments')]WorkflowStubInterface $stub,
     ): void {
         self::assertSame($stub->query('the_query', 42)?->getValue(0), 'got 42');
 
         try {
-            $stub->query('the_query', true);
+            $stub->query('the_query', true)?->getValue(0);
             throw new \Exception('Query must fail due to unexpected argument type');
         } catch (WorkflowQueryException $e) {
             self::assertStringContainsString(
@@ -39,7 +38,7 @@ class UnexpectedArgumentsTest extends TestCase
 
         # Not enough arg
         try {
-            $stub->query('the_query');
+            $stub->query('the_query')?->getValue(0);
             throw new \Exception('Query must fail due to missing argument');
         } catch (WorkflowQueryException $e) {
             self::assertStringContainsString('0 passed and exactly 1 expected', $e->getPrevious()->getMessage());

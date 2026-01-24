@@ -15,25 +15,26 @@ use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
-/**
- * # Basic activity
- *
- * The most basic workflow which just runs an activity and returns its result.
- * Importantly, without setting a workflow execution timeout.
- *
- * # Detailed spec
- *
- * It's important that the workflow execution timeout is not set here, because server will propagate that to all un-set
- * activity timeouts. We had a bug where TS would crash (after proto changes from gogo to google) because it was expecting
- * timeouts to be set to zero rather than null.
- */
+/*
+
+# Basic activity
+
+The most basic workflow which just runs an activity and returns its result.
+Importantly, without setting a workflow execution timeout.
+
+# Detailed spec
+
+It's important that the workflow execution timeout is not set here, because server will propagate that to all un-set
+activity timeouts. We had a bug where TS would crash (after proto changes from gogo to google) because it was expecting
+timeouts to be set to zero rather than null.
+
+*/
+
 class BasicTest extends TestCase
 {
     #[Test]
-    public static function check(
-        #[Stub('Harness_Activity_Basic')]
-        WorkflowStubInterface $stub,
-    ): void {
+    public static function check(#[Stub('Harness_Activity_Basic')]WorkflowStubInterface $stub): void
+    {
         self::assertSame('echo', $stub->getResult());
     }
 }

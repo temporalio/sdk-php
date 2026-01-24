@@ -17,9 +17,17 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
+\define('EXPECTED_RESULT', 'Hello World');
+
 class SuccessfulStartTest extends TestCase
 {
-    private CatchStartWorkflowExecutionResponseInterceptor $interceptor;
+    private grpcCallInterceptor $interceptor;
+
+    protected function setUp(): void
+    {
+        $this->interceptor = new grpcCallInterceptor();
+        parent::setUp();
+    }
 
     public function pipelineProvider(): PipelineProvider
     {
@@ -28,20 +36,14 @@ class SuccessfulStartTest extends TestCase
 
     #[Test]
     public function start(
-        #[Stub('Harness_EagerWorkflow_SuccessfulStart', eagerStart: true)]
+        #[Stub('Harness_EagerWorkflow_SuccessfulStart', eagerStart: true,)]
         #[Client(timeout: 30, pipelineProvider: [self::class, 'pipelineProvider'])]
         WorkflowStubInterface $stub,
     ): void {
         // Check the result and the eager workflow proof
-        self::assertSame('ok', $stub->getResult());
+        self::assertSame(EXPECTED_RESULT, $stub->getResult());
         self::assertNotNull($this->interceptor->lastResponse);
         self::assertNotNull($this->interceptor->lastResponse->getEagerWorkflowTask());
-    }
-
-    protected function setUp(): void
-    {
-        $this->interceptor = new CatchStartWorkflowExecutionResponseInterceptor();
-        parent::setUp();
     }
 }
 
@@ -49,16 +51,16 @@ class SuccessfulStartTest extends TestCase
 class FeatureWorkflow
 {
     #[WorkflowMethod('Harness_EagerWorkflow_SuccessfulStart')]
-    public function run(): string
+    public function run()
     {
-        return 'ok';
+        return EXPECTED_RESULT;
     }
 }
 
 /**
  * Catches {@see StartWorkflowExecutionResponse} from the gRPC calls.
  */
-class CatchStartWorkflowExecutionResponseInterceptor implements GrpcClientInterceptor
+class grpcCallInterceptor implements GrpcClientInterceptor
 {
     public ?StartWorkflowExecutionResponse $lastResponse = null;
 

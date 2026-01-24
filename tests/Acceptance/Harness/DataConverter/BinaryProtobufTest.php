@@ -20,33 +20,41 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
-/**
- * # Binary Protobuf Payload Encoding
- *
- * Test that binary protobuf payload encoding works well.
- */
+const EXPECTED_RESULT = 0xDEADBEEF;
+\define(__NAMESPACE__ . '\INPUT', (new DataBlob())->setData(EXPECTED_RESULT));
+
 class BinaryProtobufTest extends TestCase
 {
-    private const EXPECTED_RESULT = 0xDEADBEEF;
-
     private GrpcCallInterceptor $interceptor;
+
+    protected function setUp(): void
+    {
+        $this->interceptor = new GrpcCallInterceptor();
+        parent::setUp();
+    }
+
+    public function pipelineProvider(): PipelineProvider
+    {
+        return new SimplePipelineProvider([$this->interceptor]);
+    }
 
     #[Test]
     public function check(
-        #[Stub('Harness_DataConverter_BinaryProtobuf', args: [new DataBlob(['data' => self::EXPECTED_RESULT])])]
+        #[Stub('Harness_DataConverter_BinaryProtobuf', args: [INPUT])]
         #[Client(
             pipelineProvider: [self::class, 'pipelineProvider'],
             payloadConverters: [ProtoConverter::class],
         )]
         WorkflowStubInterface $stub,
     ): void {
+        /** @var DataBlob $result */
         $result = $stub->getResult(DataBlob::class);
 
         # Check that binary protobuf message was decoded in the Workflow and sent back.
         # But we don't check the result Payload encoding, because we can't configure different Payload encoders
         # on the server side for different Harness features.
         # There `json/protobuf` converter is used for protobuf messages by default on the server side.
-        self::assertEquals(self::EXPECTED_RESULT, $result->getData());
+        self::assertEquals(EXPECTED_RESULT, $result->getData());
 
         # Check arguments
         self::assertNotNull($this->interceptor->startRequest);
@@ -57,24 +65,13 @@ class BinaryProtobufTest extends TestCase
         self::assertSame('binary/protobuf', $payload->getMetadata()['encoding']);
         self::assertSame('temporal.api.common.v1.DataBlob', $payload->getMetadata()['messageType']);
     }
-
-    public function pipelineProvider(): PipelineProvider
-    {
-        return new SimplePipelineProvider([$this->interceptor]);
-    }
-
-    protected function setUp(): void
-    {
-        $this->interceptor = new GrpcCallInterceptor();
-        parent::setUp();
-    }
 }
 
 #[WorkflowInterface]
 class FeatureWorkflow
 {
     #[WorkflowMethod('Harness_DataConverter_BinaryProtobuf')]
-    public function run(DataBlob $data): DataBlob
+    public function run(DataBlob $data)
     {
         return $data;
     }

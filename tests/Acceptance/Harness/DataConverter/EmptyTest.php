@@ -21,13 +21,7 @@ use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
-/**
- * # Null Payload Encoding
- *
- * Activities with `void` return type actually returns `null` as a result.
- * Workflow check that acitivity's returning value is `null` and the history event contains `null` payload.
- */
-class NullTest extends TestCase
+class EmptyTest extends TestCase
 {
     #[Test]
     public function check(
@@ -55,11 +49,8 @@ class NullTest extends TestCase
         self::assertInstanceOf(Payload::class, $payload);
         \assert($payload instanceof Payload);
 
-        self::assertEquals([
-            'metadata' => [
-                'encoding' => 'YmluYXJ5L251bGw=', // \base64_encode('binary/null'),
-            ],
-        ], \json_decode($payload->serializeToJsonString(), true, 512, JSON_THROW_ON_ERROR));
+        $decoded = \json_decode('{ "metadata": { "encoding": "YmluYXJ5L251bGw=" } }', true, 512, JSON_THROW_ON_ERROR);
+        self::assertEquals($decoded, \json_decode($payload->serializeToJsonString(), true, 512, JSON_THROW_ON_ERROR));
     }
 }
 
@@ -67,7 +58,7 @@ class NullTest extends TestCase
 class FeatureWorkflow
 {
     #[WorkflowMethod('Harness_DataConverter_Empty')]
-    public function run(): iterable
+    public function run()
     {
         yield Workflow::newActivityStub(
             EmptyActivity::class,
