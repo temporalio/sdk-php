@@ -903,7 +903,7 @@ final class Workflow extends Facade
      *          ->then(function ($result) {
      *              // Execution result
      *          })
-     *          ->otherwise(function (\Throwable $error) {
+     *          ->catch(function (\Throwable $error) {
      *              // Execution error
      *          })
      *      ;
