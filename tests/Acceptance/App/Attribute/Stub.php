@@ -23,11 +23,26 @@ final class Stub
      */
     public function __construct(
         public string $type,
+        /**
+         * @see WorkflowOptions::withEagerStart()
+         */
         public bool $eagerStart = false,
+        /**
+         * @see WorkflowOptions::withWorkflowId()
+         */
         public ?string $workflowId = null,
+        /**
+         * @see WorkflowOptions::withWorkflowExecutionTimeout()
+         */
         public ?string $executionTimeout = null,
         public array $args = [],
+        /**
+         * @see WorkflowOptions::withMemo()
+         */
         public array $memo = [],
+        /**
+         * @see WorkflowOptions::withRetryOptions()
+         */
         ?RetryOptions $retryOptions = null,
     ) {
         $this->retryOptions = $retryOptions?->toRetryOptions();
