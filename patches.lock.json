@@ -1,0 +1,17 @@
+{
+    "_hash": "a019c9b721919a9a16ed12424d63d5316cb7d0baf6749363b7aabfa962758213",
+    "patches": {
+        "phpunit/phpunit": [
+            {
+                "package": "phpunit/phpunit",
+                "description": "Improve assertInstanceOf error message",
+                "url": "patches/phpunit-instance-of.patch",
+                "sha256": "4c42249225a057ca528837c8d2642a9fdb7f483991459c9422437b68f0597a70",
+                "depth": 1,
+                "extra": {
+                    "provenance": "root"
+                }
+            }
+        ]
+    }
+}

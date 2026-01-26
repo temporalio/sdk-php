@@ -58,6 +58,7 @@
     "require-dev": {
         "buggregator/trap": "^1.13.0",
         "composer/composer": "^2.8.4",
+        "cweagans/composer-patches": "^2.0",
         "dereuromark/composer-prefer-lowest": "^0.1.10",
         "doctrine/annotations": "^1.14.4 || ^2.0.2",
         "internal/dload": "^1.2.0",
@@ -103,7 +104,17 @@
         "test:accept": "phpunit --testsuite=Acceptance --color=always --testdox"
     },
     "config": {
-        "sort-packages": true
+        "sort-packages": true,
+        "allow-plugins": {
+            "cweagans/composer-patches": true
+        }
+    },
+    "extra": {
+        "patches": {
+            "phpunit/phpunit": {
+                "Improve assertInstanceOf error message": "patches/phpunit-instance-of.patch"
+            }
+        }
     },
     "minimum-stability": "dev",
     "prefer-stable": true
