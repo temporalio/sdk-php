@@ -99,7 +99,7 @@
         "psalm": "psalm",
         "psalm:baseline": "psalm --set-baseline=psalm-baseline.xml",
         "test:unit": "phpunit --testsuite=Unit --color=always --testdox",
-        "test:func": "phpunit --testsuite=Functional --color=always --testdox 2>&1 | tee ./runtime/phpunit.log; grep -q '^OK (' ./runtime/phpunit.log && exit 0 || exit 1",
+        "test:func": "phpunit --testsuite=Functional --color=always --testdox 2>&1 | tee ./runtime/phpunit.log; code=$?; sed 's/\\x1b\\[[0-9;]*m//g' ./runtime/phpunit.log | grep -q '^OK' && exit 0 || exit $code",
         "test:arch": "phpunit --testsuite=Arch --color=always --testdox",
         "test:accept": "phpunit --testsuite=Acceptance --color=always --testdox"
     },
