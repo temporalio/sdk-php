@@ -45,10 +45,14 @@ final class WorkflowStubInjector implements InjectorInterface
             ->withRetryOptions($attribute->retryOptions)
             ->withEagerStart($attribute->eagerStart);
 
-        $attribute->workflowId === null or $options = $options
-            ->withWorkflowId($attribute->workflowId)
-            ->withWorkflowIdReusePolicy(IdReusePolicy::AllowDuplicate);
-        $attribute->memo === [] or $options = $options->withMemo($attribute->memo);
+        if ($attribute->workflowId !== null) {
+            $options = $options
+                ->withWorkflowId($attribute->workflowId)
+                ->withWorkflowIdReusePolicy(IdReusePolicy::AllowDuplicate);
+        }
+        if (!empty($attribute->memo)) {
+            $options = $options->withMemo($attribute->memo);
+        }
 
         $stub = $client->newUntypedWorkflowStub($attribute->type, $options);
         $run = $client->start($stub, ...$attribute->args);
