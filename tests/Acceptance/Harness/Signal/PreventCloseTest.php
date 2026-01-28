@@ -36,8 +36,6 @@ class PreventCloseTest extends TestCase
     public static function checkPreventClose(
         #[Stub('Harness_Signal_PreventClose')]WorkflowStubInterface $stub,
     ): void {
-        self::markTestSkipped('research a better way');
-
         $stub->signal('add', 1);
 
         // Wait that the first signal is processed

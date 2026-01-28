@@ -21,8 +21,6 @@ class TaskFailureTest extends TestCase
     public static function retryableException(
         #[Stub('Harness_Update_TaskFailure')] WorkflowStubInterface $stub,
     ): void {
-        self::markTestSkipped('Todo: doesnt pass in some cases');
-
         try {
             $stub->update('do_update');
             throw new \RuntimeException('Expected validation exception');

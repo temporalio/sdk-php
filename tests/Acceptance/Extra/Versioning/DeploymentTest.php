@@ -207,7 +207,7 @@ class WorkerFactory
             '--deployment-name', WorkerFactory::DEPLOYMENT_NAME,
             '--build-id', WorkerFactory::BUILD_ID,
             '--yes',
-        ], timeout: 5);
+        ], timeout: 6);
     }
 }
 
