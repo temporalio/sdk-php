@@ -28,7 +28,7 @@
         "google/protobuf": "^4.31.1",
         "grpc/grpc": "^1.57",
         "internal/destroy": "^1.0",
-        "internal/promise": "^2.12 || ^3.4",
+        "internal/promise": "^3.4",
         "nesbot/carbon": "^2.72.6 || ^3.8.4",
         "psr/log": "^2.0 || ^3.0.2",
         "ramsey/uuid": "^4.7.6",
@@ -58,13 +58,14 @@
     "require-dev": {
         "buggregator/trap": "^1.13.0",
         "composer/composer": "^2.8.4",
+        "cweagans/composer-patches": "^2.0",
         "dereuromark/composer-prefer-lowest": "^0.1.10",
         "doctrine/annotations": "^1.14.4 || ^2.0.2",
         "internal/dload": "^1.2.0",
         "internal/toml": "^1.0.3",
         "jetbrains/phpstorm-attributes": "dev-master",
         "laminas/laminas-code": "^4.16",
-        "phpunit/phpunit": "10.5.45",
+        "phpunit/phpunit": "10.5.63",
         "spiral/code-style": "~2.3.0",
         "spiral/core": "^3.14.9",
         "ta-tikoma/phpunit-architecture-test": "^0.8.5",
@@ -103,7 +104,18 @@
         "test:accept": "phpunit --testsuite=Acceptance --color=always --testdox"
     },
     "config": {
-        "sort-packages": true
+        "sort-packages": true,
+        "allow-plugins": {
+            "cweagans/composer-patches": true
+        }
+    },
+    "extra": {
+        "patches": {
+            "phpunit/phpunit": {
+                "Improve assertInstanceOf error message": "patches/phpunit-instance-of.patch",
+                "Make runTest protected": "patches/phpunit-run-test-protected.patch"
+            }
+        }
     },
     "minimum-stability": "dev",
     "prefer-stable": true
