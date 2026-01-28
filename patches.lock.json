@@ -1,0 +1,27 @@
+{
+    "_hash": "da68bd7776a5708e13135d4c6f9490024d2a505734406b526af4282fd3457aa4",
+    "patches": {
+        "phpunit/phpunit": [
+            {
+                "package": "phpunit/phpunit",
+                "description": "Improve assertInstanceOf error message",
+                "url": "patches/phpunit-instance-of.patch",
+                "sha256": "4c42249225a057ca528837c8d2642a9fdb7f483991459c9422437b68f0597a70",
+                "depth": 1,
+                "extra": {
+                    "provenance": "root"
+                }
+            },
+            {
+                "package": "phpunit/phpunit",
+                "description": "Make runTest protected",
+                "url": "patches/phpunit-run-test-protected.patch",
+                "sha256": "06ad716bf065da38779b1215361cfdfc647c7b6e360aaf5c8dbe569b454239e0",
+                "depth": 1,
+                "extra": {
+                    "provenance": "root"
+                }
+            }
+        ]
+    }
+}
