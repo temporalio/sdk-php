@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Acceptance\App\Runtime;
 
-use Symfony\Component\Process\Process;
 use Temporal\Common\SearchAttributes\ValueType;
 use Temporal\Testing\Environment;
 
@@ -16,7 +15,14 @@ final class TemporalStarter
     public function __construct()
     {
         $this->environment = Environment::create();
-        \register_shutdown_function(fn() => $this->stop());
+        $starter = $this;
+        \register_shutdown_function(static function () use ($starter): void {
+            try {
+                $starter->stop();
+            } catch (\Throwable $e) {
+                echo $e;
+            }
+        });
     }
 
     public function start(): void
