@@ -59,20 +59,22 @@ final class WorkflowStubInjector implements InjectorInterface
 
         // Wait 5 seconds for the workflow to start
         $deadline = \microtime(true) + 5;
-        checkStart:
-        $description = $run->describe();
-        if ($description->info->historyLength <= 2) {
-            if (\microtime(true) < $deadline) {
-                goto checkStart;
+        while (true) {
+            $description = $run->describe();
+            if ($description->info->historyLength > 2) {
+                break;
             }
 
-            throw new \RuntimeException(
-                \sprintf(
-                    'Workflow %s did not start. TaskQueue: %s',
-                    $attribute->type,
-                    $feature->taskQueue,
-                ),
-            );
+            if (\microtime(true) >= $deadline) {
+                throw new \RuntimeException(
+                    \sprintf(
+                        'Workflow %s did not start. WorkflowOptions: %s. WorkflowInfo: %s',
+                        $attribute->type,
+                        \json_encode($options, JSON_PRETTY_PRINT),
+                        \print_r($description->info, true),
+                    ),
+                );
+            }
         }
 
         return $stub;
