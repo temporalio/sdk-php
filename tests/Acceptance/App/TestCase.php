@@ -32,6 +32,7 @@ abstract class TestCase extends \Temporal\Tests\TestCase
         $state->countFeatures() === 0 and RuntimeBuilder::hydrateClasses($state);
     }
 
+    #[\Override]
     protected function runTest(): mixed
     {
         $container = ContainerFacade::$container;
