@@ -1,0 +1,7 @@
+--- a/src/Framework/TestCase.php
++++ b/src/Framework/TestCase.php
+@@ -1540,3 +1540,3 @@
+      */
+-    private function runTest(): mixed
++    protected function runTest(): mixed
+     {
