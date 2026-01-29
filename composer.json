@@ -56,6 +56,7 @@
         ]
     },
     "require-dev": {
+        "ext-simplexml": "*",
         "buggregator/trap": "^1.13.0",
         "composer/composer": "^2.8.4",
         "cweagans/composer-patches": "^2.0",
@@ -98,10 +99,10 @@
         "cs:fix": "php-cs-fixer fix -v",
         "psalm": "psalm",
         "psalm:baseline": "psalm --set-baseline=psalm-baseline.xml",
-        "test:unit": "phpunit --testsuite=Unit --color=always --testdox",
-        "test:func": "phpunit --testsuite=Functional --color=always --testdox",
+        "test:unit": "tests/runner.php vendor/bin/phpunit --testsuite=Unit --color=always --testdox",
+        "test:func": "tests/runner.php vendor/bin/phpunit --testsuite=Functional --color=always --testdox",
         "test:arch": "phpunit --testsuite=Arch --color=always --testdox",
-        "test:accept": "phpunit --testsuite=Acceptance --color=always --testdox"
+        "test:accept": "tests/runner.php vendor/bin/phpunit --testsuite=Acceptance --color=always --testdox"
     },
     "config": {
         "sort-packages": true,
