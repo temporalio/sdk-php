@@ -153,7 +153,7 @@ final class Environment
                 !$temporalStarted ? "Health check failed" : $this->temporalServerProcess->getErrorOutput(),
                 $this->temporalServerProcess->getCommandLine(),
             ));
-            throw new \RuntimeException('Temporal server failed to start.');
+            exit(1);
         }
         $this->output->writeln('<info>done.</info>');
     }
@@ -184,7 +184,7 @@ final class Environment
                 $this->temporalTestServerProcess->getErrorOutput(),
                 $this->temporalTestServerProcess->getCommandLine(),
             ));
-            throw new \RuntimeException('Temporal Test server failed to start.');
+            exit(1);
         }
         $this->output->writeln('<info>done.</info>');
     }
@@ -216,7 +216,7 @@ final class Environment
                 $this->roadRunnerProcess->getErrorOutput(),
                 $this->roadRunnerProcess->getCommandLine(),
             ));
-            throw new \RuntimeException('RoadRunner failed to start.');
+            exit(1);
         }
 
         // wait for roadrunner to start
@@ -234,7 +234,7 @@ final class Environment
                 $this->roadRunnerProcess->getErrorOutput(),
                 $this->roadRunnerProcess->getCommandLine(),
             ));
-            throw new \RuntimeException('RoadRunner failed to start.');
+            exit(1);
         }
 
         $this->output->writeln('<info>done.</info>');
