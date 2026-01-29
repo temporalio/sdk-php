@@ -75,6 +75,7 @@ final class Environment
         array $parameters = [],
         array $searchAttributes = [],
     ): void {
+        $temporalHost = \parse_url($this->command->address, PHP_URL_HOST);
         $temporalPort = \parse_url($this->command->address, PHP_URL_PORT);
 
         // Add search attributes
@@ -109,23 +110,50 @@ final class Environment
                 "server", "start-dev",
                 "--port", $temporalPort,
                 '--log-level', 'error',
-                '--ip', $this->command->address,
+                '--ip', $temporalHost,
                 '--headless',
                 ...$parameters,
             ],
         );
         $this->temporalServerProcess->setTimeout($commandTimeout);
-        $this->temporalServerProcess->start();
+        $temporalStarted = false;
+        //        $this->output->writeln('Running command: ' . $this->temporalServerProcess->getCommandLine());
+        $this->temporalServerProcess->start(function ($type, $output) use (&$temporalStarted): void {
+            if ($type === Process::OUT && \str_contains($output, 'Server: ')) {
+                $check = new Process([
+                    $this->systemInfo->temporalCliExecutable,
+                    'operator',
+                    'cluster',
+                    'health',
+                    '--address', $this->command->address,
+                ]);
+                $check->run();
+                if (\str_contains($check->getOutput(), 'SERVING')) {
+                    $temporalStarted = true;
+                }
+            }
+        });
 
-        $deadline = \microtime(true) + 1.2;
-        while (!$this->temporalServerProcess->isRunning() && \microtime(true) < $deadline) {
-            \usleep(10_000);
+        $deadline = \microtime(true) + $commandTimeout;
+        while (!$temporalStarted && \microtime(true) < $deadline) {
+            \usleep(50_000);
+            if (!$temporalStarted) {
+                $check = new Process([$this->systemInfo->temporalCliExecutable, 'operator', 'cluster', 'health']);
+                $check->run();
+                if (\str_contains($check->getOutput(), 'SERVING')) {
+                    $temporalStarted = true;
+                }
+            }
         }
 
-        if (!$this->temporalServerProcess->isRunning()) {
+        if (!$temporalStarted || !$this->temporalServerProcess->isRunning()) {
             $this->output->writeln('<error>error</error>');
-            $this->output->writeln('Error starting Temporal server: ' . $this->temporalServerProcess->getErrorOutput());
-            exit(1);
+            $this->output->writeln(\sprintf(
+                "Error starting Temporal server: %s.\r\nCommand: `%s`.",
+                !$temporalStarted ? "Health check failed" : $this->temporalServerProcess->getErrorOutput(),
+                $this->temporalServerProcess->getCommandLine(),
+            ));
+            throw new \RuntimeException('Temporal server failed to start.');
         }
         $this->output->writeln('<info>done.</info>');
     }
@@ -151,8 +179,12 @@ final class Environment
 
         if (!$this->temporalTestServerProcess->isRunning()) {
             $this->output->writeln('<error>error</error>');
-            $this->output->writeln('Error starting Temporal Test server: ' . $this->temporalTestServerProcess->getErrorOutput());
-            exit(1);
+            $this->output->writeln(\sprintf(
+                "Error starting Temporal Test server: %s.\r\nCommand: `%s`.",
+                $this->temporalTestServerProcess->getErrorOutput(),
+                $this->temporalTestServerProcess->getCommandLine(),
+            ));
+            throw new \RuntimeException('Temporal Test server failed to start.');
         }
         $this->output->writeln('<info>done.</info>');
     }
@@ -170,6 +202,7 @@ final class Environment
 
         $this->output->write('Starting RoadRunner... ');
         $roadRunnerStarted = false;
+        //        $this->output->writeln('Running command: ' . $this->roadRunnerProcess->getCommandLine());
         $this->roadRunnerProcess->start(static function ($type, $output) use (&$roadRunnerStarted): void {
             if ($type === Process::OUT && \str_contains($output, 'RoadRunner server started')) {
                 $roadRunnerStarted = true;
@@ -178,8 +211,12 @@ final class Environment
 
         if (!$this->roadRunnerProcess->isRunning()) {
             $this->output->writeln('<error>error</error>');
-            $this->output->writeln('Error starting RoadRunner: ' . $this->roadRunnerProcess->getErrorOutput());
-            exit(1);
+            $this->output->writeln(\sprintf(
+                "Error starting RoadRunner: %s.\r\nCommand: `%s`.",
+                $this->roadRunnerProcess->getErrorOutput(),
+                $this->roadRunnerProcess->getCommandLine(),
+            ));
+            throw new \RuntimeException('RoadRunner failed to start.');
         }
 
         // wait for roadrunner to start
@@ -192,8 +229,12 @@ final class Environment
 
         if (!$roadRunnerStarted) {
             $this->output->writeln('<error>error</error>');
-            $this->output->writeln('Error starting RoadRunner: ' . $this->roadRunnerProcess->getErrorOutput());
-            exit(1);
+            $this->output->writeln(\sprintf(
+                "Error starting RoadRunner: %s.\r\nCommand: `%s`.",
+                $this->roadRunnerProcess->getErrorOutput(),
+                $this->roadRunnerProcess->getCommandLine(),
+            ));
+            throw new \RuntimeException('RoadRunner failed to start.');
         }
 
         $this->output->writeln('<info>done.</info>');
