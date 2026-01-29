@@ -200,23 +200,9 @@ final class Environment
 
     public function stop(): void
     {
-        if ($this->temporalServerProcess !== null && $this->temporalServerProcess->isRunning()) {
-            $this->output->write('Stopping Temporal server... ');
-            $this->temporalServerProcess->stop();
-            $this->output->writeln('<info>done.</info>');
-        }
-
-        if ($this->temporalTestServerProcess !== null && $this->temporalTestServerProcess->isRunning()) {
-            $this->output->write('Stopping Temporal Test server... ');
-            $this->temporalTestServerProcess->stop();
-            $this->output->writeln('<info>done.</info>');
-        }
-
-        if ($this->roadRunnerProcess !== null && $this->roadRunnerProcess->isRunning()) {
-            $this->output->write('Stopping RoadRunner... ');
-            $this->roadRunnerProcess->stop();
-            $this->output->writeln('<info>done.</info>');
-        }
+        $this->stopRoadRunner();
+        $this->stopTemporalTestServer();
+        $this->stopTemporalServer();
     }
 
     public function executeTemporalCommand(array|string $command, int $timeout = 10): void
@@ -229,5 +215,47 @@ final class Environment
         $process = new Process($command);
         $process->setTimeout($timeout);
         $process->run();
+    }
+
+    public function stopTemporalServer(): void
+    {
+        if ($this->isTemporalRunning()) {
+            $this->output->write('Stopping Temporal server... ');
+            $this->temporalServerProcess->stop();
+            $this->output->writeln('<info>done.</info>');
+        }
+    }
+
+    public function stopTemporalTestServer(): void
+    {
+        if ($this->isTemporalTestRunning()) {
+            $this->output->write('Stopping Temporal Test server... ');
+            $this->temporalTestServerProcess->stop();
+            $this->output->writeln('<info>done.</info>');
+        }
+    }
+
+    public function stopRoadRunner(): void
+    {
+        if ($this->isRoadRunnerRunning()) {
+            $this->output->write('Stopping RoadRunner... ');
+            $this->roadRunnerProcess->stop();
+            $this->output->writeln('<info>done.</info>');
+        }
+    }
+
+    public function isTemporalRunning(): bool
+    {
+        return $this->temporalServerProcess?->isRunning() === true;
+    }
+
+    public function isRoadRunnerRunning(): bool
+    {
+        return $this->roadRunnerProcess?->isRunning() === true;
+    }
+
+    public function isTemporalTestRunning(): bool
+    {
+        return $this->temporalTestServerProcess?->isRunning() === true;
     }
 }
