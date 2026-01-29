@@ -10,7 +10,7 @@ declare(strict_types=1);
 $command = \implode(' ', \array_slice($argv, 1));
 $logFile = 'runtime/phpunit.xml';
 
-\passthru("php $command --log-junit=$logFile 2>&1", $code);
+\passthru(\sprintf("%s %s --log-junit=%s 2>&1", PHP_BINARY, $command, $logFile), $code);
 
 if (\file_exists($logFile)) {
     $xml = \simplexml_load_file($logFile);
