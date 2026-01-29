@@ -111,7 +111,7 @@ final class Environment
                 "--port", $temporalPort,
                 '--log-level', 'error',
                 '--ip', $temporalHost,
-                '--headless',
+                //                '--headless',
                 ...$parameters,
             ],
         );
@@ -149,9 +149,13 @@ final class Environment
         if (!$temporalStarted || !$this->temporalServerProcess->isRunning()) {
             $this->output->writeln('<error>error</error>');
             $this->output->writeln(\sprintf(
-                "Error starting Temporal server: %s.\r\nCommand: `%s`.",
+                "Error starting Temporal server: %s.",
                 !$temporalStarted ? "Health check failed" : $this->temporalServerProcess->getErrorOutput(),
-                $this->temporalServerProcess->getCommandLine(),
+            ));
+            $temporalServerProcess = $this->temporalServerProcess;
+            $this->output->writeln(\sprintf(
+                'Command: `%s`.',
+                $this->serializeProcess($temporalServerProcess),
             ));
             exit(1);
         }
@@ -180,9 +184,12 @@ final class Environment
         if (!$this->temporalTestServerProcess->isRunning()) {
             $this->output->writeln('<error>error</error>');
             $this->output->writeln(\sprintf(
-                "Error starting Temporal Test server: %s.\r\nCommand: `%s`.",
+                'Error starting Temporal Test server: %s.',
                 $this->temporalTestServerProcess->getErrorOutput(),
-                $this->temporalTestServerProcess->getCommandLine(),
+            ));
+            $this->output->writeln(\sprintf(
+                'Command: `%s`.',
+                $this->serializeProcess($this->temporalTestServerProcess),
             ));
             exit(1);
         }
@@ -202,7 +209,7 @@ final class Environment
 
         $this->output->write('Starting RoadRunner... ');
         $roadRunnerStarted = false;
-        //        $this->output->writeln('Running command: ' . $this->roadRunnerProcess->getCommandLine());
+        $this->output->writeln('Running command: ' . $this->serializeProcess($this->roadRunnerProcess));
         $this->roadRunnerProcess->start(static function ($type, $output) use (&$roadRunnerStarted): void {
             if ($type === Process::OUT && \str_contains($output, 'RoadRunner server started')) {
                 $roadRunnerStarted = true;
@@ -212,31 +219,35 @@ final class Environment
         if (!$this->roadRunnerProcess->isRunning()) {
             $this->output->writeln('<error>error</error>');
             $this->output->writeln(\sprintf(
-                "Error starting RoadRunner: %s.\r\nCommand: `%s`.",
+                'Error starting RoadRunner: %s.',
                 $this->roadRunnerProcess->getErrorOutput(),
-                $this->roadRunnerProcess->getCommandLine(),
+            ));
+            $this->output->writeln(\sprintf(
+                'Command: `%s`.',
+                $this->serializeProcess($this->roadRunnerProcess),
             ));
             exit(1);
         }
 
         // wait for roadrunner to start
-        $ticks = $commandTimeout * 10;
+        $ticks = $commandTimeout * 100;
         while (!$roadRunnerStarted && $ticks > 0) {
             $this->roadRunnerProcess->getStatus();
-            \usleep(100000);
+            \usleep(10_000);
             --$ticks;
         }
 
         if (!$roadRunnerStarted) {
             $this->output->writeln('<error>error</error>');
             $this->output->writeln(\sprintf(
-                'Failed to start until RoadRunner is ready. Status: "%s". Stderr: "%s".',
+                'Failed to start until RoadRunner is ready. Status: "%s". Stderr: "%s". Stdout: "%s".',
                 $this->roadRunnerProcess->getStatus(),
                 $this->roadRunnerProcess->getErrorOutput(),
+                $this->roadRunnerProcess->getOutput(),
             ));
             $this->output->writeln(\sprintf(
                 "Command: `%s`.",
-                $this->roadRunnerProcess->getCommandLine(),
+                $this->serializeProcess($this->roadRunnerProcess),
             ));
             exit(1);
         }
@@ -303,5 +314,13 @@ final class Environment
     public function isTemporalTestRunning(): bool
     {
         return $this->temporalTestServerProcess?->isRunning() === true;
+    }
+
+    private function serializeProcess(?Process $temporalServerProcess): string|array
+    {
+        $reflection = new \ReflectionClass($temporalServerProcess);
+        $reflectionProperty = $reflection->getProperty('commandline');
+        $commandLine = $reflectionProperty->getValue($temporalServerProcess);
+        return \implode(' ', $commandLine);
     }
 }
