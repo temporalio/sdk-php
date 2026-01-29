@@ -230,8 +230,12 @@ final class Environment
         if (!$roadRunnerStarted) {
             $this->output->writeln('<error>error</error>');
             $this->output->writeln(\sprintf(
-                "Error starting RoadRunner: %s.\r\nCommand: `%s`.",
+                'Failed to start until RoadRunner is ready. Status: "%s". Stderr: "%s".',
+                $this->roadRunnerProcess->getStatus(),
                 $this->roadRunnerProcess->getErrorOutput(),
+            ));
+            $this->output->writeln(\sprintf(
+                "Command: `%s`.",
                 $this->roadRunnerProcess->getCommandLine(),
             ));
             exit(1);
