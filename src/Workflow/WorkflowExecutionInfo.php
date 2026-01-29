@@ -110,7 +110,7 @@ final class WorkflowExecutionInfo
             'parentExecution' => $this->parentExecution,
             'executionTime' => $this->executionTime,
 //            'memo' => $this->memo,
-            'searchAttributes' => $this->searchAttributes,
+//            'searchAttributes' => $this->searchAttributes,
             'autoResetPoints' => $this->autoResetPoints,
             'taskQueue' => $this->taskQueue,
             'stateTransitionCount' => $this->stateTransitionCount,
