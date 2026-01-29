@@ -109,6 +109,7 @@ final class Environment
                 "server", "start-dev",
                 "--port", $temporalPort,
                 '--log-level', 'error',
+                '--ip', $this->command->address,
                 '--headless',
                 ...$parameters,
             ],
