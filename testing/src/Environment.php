@@ -279,6 +279,7 @@ final class Environment
         if ($this->isTemporalRunning()) {
             $this->output->write('Stopping Temporal server... ');
             $this->temporalServerProcess->stop();
+            $this->temporalServerProcess = null;
             $this->output->writeln('<info>done.</info>');
         }
     }
@@ -288,6 +289,7 @@ final class Environment
         if ($this->isTemporalTestRunning()) {
             $this->output->write('Stopping Temporal Test server... ');
             $this->temporalTestServerProcess->stop();
+            $this->temporalTestServerProcess = null;
             $this->output->writeln('<info>done.</info>');
         }
     }
@@ -297,6 +299,7 @@ final class Environment
         if ($this->isRoadRunnerRunning()) {
             $this->output->write('Stopping RoadRunner... ');
             $this->roadRunnerProcess->stop();
+            $this->roadRunnerProcess = null;
             $this->output->writeln('<info>done.</info>');
         }
     }
