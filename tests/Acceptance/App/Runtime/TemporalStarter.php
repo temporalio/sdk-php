@@ -10,8 +10,6 @@ use Temporal\Testing\Environment;
 
 final class TemporalStarter
 {
-    private bool $started = false;
-
     public function __construct(
         private Environment $environment,
     )
@@ -21,7 +19,7 @@ final class TemporalStarter
 
     public function start(): void
     {
-        if ($this->started) {
+        if ($this->environment->isTemporalRunning()) {
             return;
         }
 
@@ -47,20 +45,15 @@ final class TemporalStarter
                 'testDatetime' => ValueType::Datetime,
             ],
         );
-        $this->started = true;
     }
 
     /**
      * @return bool Returns true if the server was stopped successfully, false if it was not started.
      */
-    public function stop(): bool
+    public function stop(): void
     {
-        if (!$this->started) {
-            return false;
+        if ($this->environment->isTemporalRunning()) {
+            $this->environment->stop();
         }
-
-        $this->environment->stop();
-        $this->started = false;
-        return true;
     }
 }

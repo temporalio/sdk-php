@@ -9,8 +9,6 @@ use Temporal\Testing\SystemInfo;
 
 final class RRStarter
 {
-    private bool $started = false;
-
     public function __construct(
         private State $runtime,
         private Environment $environment,
@@ -20,7 +18,7 @@ final class RRStarter
 
     public function start(): void
     {
-        if ($this->started) {
+        if ($this->environment->isRoadRunnerRunning()) {
             return;
         }
 
@@ -50,18 +48,14 @@ final class RRStarter
 
         // echo "\e[1;36mStart RoadRunner with command:\e[0m {$command}\n";
         $this->environment->startRoadRunner($command);
-        $this->started = true;
     }
 
     public function stop(): void
     {
-        if (!$this->started) {
-            return;
+        if ($this->environment->isRoadRunnerRunning()) {
+            // echo "\e[1;36mStop RoadRunner\e[0m\n";
+            $this->environment->stop();
         }
-
-        // echo "\e[1;36mStop RoadRunner\e[0m\n";
-        $this->environment->stop();
-        $this->started = false;
     }
 
     public function __destruct()

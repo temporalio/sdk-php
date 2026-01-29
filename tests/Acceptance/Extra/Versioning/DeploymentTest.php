@@ -14,6 +14,7 @@ use Temporal\Common\Versioning\WorkerDeploymentVersion;
 use Temporal\Testing\Environment;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
+use Temporal\Tests\Acceptance\App\Runtime\RRStarter;
 use Temporal\Tests\Acceptance\App\Runtime\TemporalStarter;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Worker\WorkerDeploymentOptions;
@@ -28,12 +29,14 @@ class DeploymentTest extends TestCase
     #[Test]
     public function defaultBehaviorAuto(
         Environment $environment,
+        RRStarter $roadRunnerStarter,
         TemporalStarter $starter,
         WorkflowClientInterface $client,
         Feature $feature,
     ): void {
         $behavior = self::executeWorkflow(
             $environment,
+            $roadRunnerStarter,
             $starter,
             $client,
             $feature,
@@ -47,6 +50,7 @@ class DeploymentTest extends TestCase
     #[Test]
     public function customBehaviorPinned(
         Environment $environment,
+        RRStarter $roadRunnerStarter,
         TemporalStarter $starter,
         WorkflowClientInterface $client,
         Feature $feature,
@@ -54,6 +58,7 @@ class DeploymentTest extends TestCase
         $id = Uuid::v4();
         self::executeWorkflow(
             $environment,
+            $roadRunnerStarter,
             $starter,
             $client,
             $feature,
@@ -78,6 +83,7 @@ class DeploymentTest extends TestCase
     #[Test]
     public function versionBehaviorOverrideAutoUpgrade(
         Environment $environment,
+        RRStarter $roadRunnerStarter,
         TemporalStarter $starter,
         WorkflowClientInterface $client,
         Feature $feature,
@@ -85,6 +91,7 @@ class DeploymentTest extends TestCase
         $id = Uuid::v4();
         self::executeWorkflow(
             $environment,
+            $roadRunnerStarter,
             $starter,
             $client,
             $feature,
@@ -109,12 +116,14 @@ class DeploymentTest extends TestCase
     #[Test]
     public function versionBehaviorOverridePinned(
         Environment $environment,
+        RRStarter $roadRunnerStarter,
         TemporalStarter $starter,
         WorkflowClientInterface $client,
         Feature $feature,
     ): void {
         $behavior = self::executeWorkflow(
             $environment,
+            $roadRunnerStarter,
             $starter,
             $client,
             $feature,
@@ -137,7 +146,8 @@ class DeploymentTest extends TestCase
      */
     private static function executeWorkflow(
         Environment $environment,
-        TemporalStarter $starter,
+        RRStarter $roadRunnerStarter,
+        TemporalStarter $temporalStarter,
         WorkflowClientInterface $client,
         Feature $feature,
         string $workflowType,
@@ -186,8 +196,9 @@ class DeploymentTest extends TestCase
             $postAction === null or $postAction($behavior);
             return $behavior;
         } finally {
-            $starter->stop() and $starter->start();
-            sleep(5);
+            $temporalStarter->stop();
+            $temporalStarter->start();
+            $roadRunnerStarter->start();
         }
     }
 }

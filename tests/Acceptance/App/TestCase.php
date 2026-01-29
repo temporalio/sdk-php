@@ -20,6 +20,7 @@ use Temporal\Tests\Acceptance\App\Runtime\ContainerFacade;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Tests\Acceptance\App\Runtime\RRStarter;
 use Temporal\Tests\Acceptance\App\Runtime\State;
+use Temporal\Tests\Acceptance\App\Runtime\TemporalStarter;
 
 abstract class TestCase extends \Temporal\Tests\TestCase
 {
@@ -90,10 +91,10 @@ abstract class TestCase extends \Temporal\Tests\TestCase
 
                     if (!$e instanceof SkippedTest) {
                         // Restart RR if a Error occurs
-                        /** @var RRStarter $runner */
-                        $runner = $container->get(RRStarter::class);
-                        $runner->stop();
-                        $runner->start();
+                        /** @var RRStarter $roadRunnerStarter */
+                        $roadRunnerStarter = $container->get(RRStarter::class);
+                        $roadRunnerStarter->stop();
+                        $roadRunnerStarter->start();
                     }
 
                     throw $e;
