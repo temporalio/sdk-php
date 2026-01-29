@@ -99,10 +99,10 @@
         "cs:fix": "php-cs-fixer fix -v",
         "psalm": "psalm",
         "psalm:baseline": "psalm --set-baseline=psalm-baseline.xml",
-        "test:unit": "php tests/ci-runner.php ./vendor/bin/phpunit --testsuite=Unit --color=always --testdox",
-        "test:func": "php tests/ci-runner.php ./vendor/bin/phpunit --testsuite=Functional --color=always --testdox",
+        "test:unit": "php tests/ci-runner.php vendor/bin/phpunit --testsuite=Unit --color=always --testdox",
+        "test:func": "php tests/ci-runner.php vendor/bin/phpunit --testsuite=Functional --color=always --testdox",
         "test:arch": "phpunit --testsuite=Arch --color=always --testdox",
-        "test:accept": "php tests/ci-runner.php ./vendor/bin/phpunit --testsuite=Acceptance --color=always --testdox"
+        "test:accept": "php tests/ci-runner.php vendor/bin/phpunit --testsuite=Acceptance --color=always --testdox"
     },
     "config": {
         "sort-packages": true,

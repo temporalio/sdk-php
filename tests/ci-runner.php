@@ -8,7 +8,7 @@ declare(strict_types=1);
  */
 
 $command = \implode(' ', \array_slice($argv, 1));
-$logFile = './runtime/phpunit.xml';
+$logFile = 'runtime/phpunit.xml';
 
 \passthru("$command --log-junit=$logFile 2>&1", $code);
 
