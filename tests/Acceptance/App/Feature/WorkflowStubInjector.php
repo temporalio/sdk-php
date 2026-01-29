@@ -45,30 +45,36 @@ final class WorkflowStubInjector implements InjectorInterface
             ->withRetryOptions($attribute->retryOptions)
             ->withEagerStart($attribute->eagerStart);
 
-        $attribute->workflowId === null or $options = $options
-            ->withWorkflowId($attribute->workflowId)
-            ->withWorkflowIdReusePolicy(IdReusePolicy::AllowDuplicate);
-        $attribute->memo === [] or $options = $options->withMemo($attribute->memo);
+        if ($attribute->workflowId !== null) {
+            $options = $options
+                ->withWorkflowId($attribute->workflowId)
+                ->withWorkflowIdReusePolicy(IdReusePolicy::AllowDuplicate);
+        }
+        if (!empty($attribute->memo)) {
+            $options = $options->withMemo($attribute->memo);
+        }
 
         $stub = $client->newUntypedWorkflowStub($attribute->type, $options);
         $run = $client->start($stub, ...$attribute->args);
 
         // Wait 5 seconds for the workflow to start
         $deadline = \microtime(true) + 5;
-        checkStart:
-        $description = $run->describe();
-        if ($description->info->historyLength <= 2) {
-            if (\microtime(true) < $deadline) {
-                goto checkStart;
+        while (true) {
+            $description = $run->describe();
+            if ($description->info->historyLength > 2) {
+                break;
             }
 
-            throw new \RuntimeException(
-                \sprintf(
-                    'Workflow %s did not start. TaskQueue: %s',
-                    $attribute->type,
-                    $feature->taskQueue,
-                ),
-            );
+            if (\microtime(true) >= $deadline) {
+                throw new \RuntimeException(
+                    \sprintf(
+                        'Workflow %s did not start. WorkflowOptions: %s. WorkflowInfo: %s',
+                        $attribute->type,
+                        \json_encode($options, JSON_PRETTY_PRINT),
+                        \print_r($description->info, true),
+                    ),
+                );
+            }
         }
 
         return $stub;
