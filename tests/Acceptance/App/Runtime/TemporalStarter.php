@@ -10,12 +10,12 @@ use Temporal\Testing\Environment;
 
 final class TemporalStarter
 {
-    private Environment $environment;
     private bool $started = false;
 
-    public function __construct()
+    public function __construct(
+        private Environment $environment,
+    )
     {
-        $this->environment = Environment::create();
         \register_shutdown_function(fn() => $this->stop());
     }
 
@@ -48,14 +48,6 @@ final class TemporalStarter
             ],
         );
         $this->started = true;
-    }
-
-    public function executeTemporalCommand(array|string $command, int $timeout = 10): void
-    {
-        $this->environment->executeTemporalCommand(
-            command: $command,
-            timeout: $timeout,
-        );
     }
 
     /**

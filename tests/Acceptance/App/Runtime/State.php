@@ -30,7 +30,7 @@ final class State
         public readonly iterable $testCasesDir,
     ) {
         $this->namespace = $command->namespace ?? 'default';
-        $this->address = $command->address ?? '127.0.0.1:7233';
+        $this->address = $command->address;
     }
 
     /**

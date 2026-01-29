@@ -9,13 +9,12 @@ use Temporal\Testing\SystemInfo;
 
 final class RRStarter
 {
-    private Environment $environment;
     private bool $started = false;
 
     public function __construct(
         private State $runtime,
+        private Environment $environment,
     ) {
-        $this->environment = Environment::create();
         \register_shutdown_function(fn() => $this->stop());
     }
 

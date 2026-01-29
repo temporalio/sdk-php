@@ -13,6 +13,11 @@ use Temporal\Common\SearchAttributes\ValueType;
 
 final class Environment
 {
+    /**
+     * @readonly
+     */
+    public Command $command;
+
     private Downloader $downloader;
     private Output $output;
     private SystemInfo $systemInfo;
@@ -20,14 +25,19 @@ final class Environment
     private ?Process $temporalServerProcess = null;
     private ?Process $roadRunnerProcess = null;
 
-    public function __construct(Output $output, Downloader $downloader, SystemInfo $systemInfo)
-    {
+    public function __construct(
+        Output $output,
+        Downloader $downloader,
+        SystemInfo $systemInfo,
+        Command $command,
+    ) {
         $this->downloader = $downloader;
         $this->systemInfo = $systemInfo;
         $this->output = $output;
+        $this->command = $command;
     }
 
-    public static function create(): self
+    public static function create(?Command $command = null): self
     {
         $token = \getenv('GITHUB_TOKEN');
 
@@ -42,6 +52,7 @@ final class Environment
                 ],
             ])),
             $info,
+            $command ?? Command::fromEnv(),
         );
     }
 
@@ -64,7 +75,7 @@ final class Environment
         array $parameters = [],
         array $searchAttributes = [],
     ): void {
-        $temporalPort = \parse_url(\getenv('TEMPORAL_ADDRESS') ?: '127.0.0.1:7233', PHP_URL_PORT);
+        $temporalPort = \parse_url($this->command->address, PHP_URL_PORT);
 
         // Add search attributes
         foreach ($searchAttributes as $name => $type) {
@@ -91,7 +102,7 @@ final class Environment
             };
         }
 
-        $this->output->write('Starting Temporal test server... ');
+        $this->output->write('Starting Temporal server... ');
         $this->temporalServerProcess = new Process(
             [
                 $this->systemInfo->temporalCliExecutable,
@@ -126,7 +137,7 @@ final class Environment
             $this->output->writeln('<info>done.</info>');
         }
 
-        $temporalPort = \parse_url(\getenv('TEMPORAL_ADDRESS') ?: '127.0.0.1:7233', PHP_URL_PORT);
+        $temporalPort = \parse_url($this->command->address, PHP_URL_PORT);
 
         $this->output->write('Starting Temporal test server... ');
         $this->temporalTestServerProcess = new Process(
@@ -208,9 +219,6 @@ final class Environment
         }
     }
 
-    /**
-     * @internal
-     */
     public function executeTemporalCommand(array|string $command, int $timeout = 10): void
     {
         $command = \array_merge(

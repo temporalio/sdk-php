@@ -11,6 +11,7 @@ use Temporal\Common\Uuid;
 use Temporal\Common\Versioning\VersioningBehavior;
 use Temporal\Common\Versioning\VersioningOverride;
 use Temporal\Common\Versioning\WorkerDeploymentVersion;
+use Temporal\Testing\Environment;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Tests\Acceptance\App\Runtime\TemporalStarter;
@@ -26,11 +27,13 @@ class DeploymentTest extends TestCase
 {
     #[Test]
     public function defaultBehaviorAuto(
+        Environment $environment,
         TemporalStarter $starter,
         WorkflowClientInterface $client,
         Feature $feature,
     ): void {
         $behavior = self::executeWorkflow(
+            $environment,
             $starter,
             $client,
             $feature,
@@ -43,12 +46,14 @@ class DeploymentTest extends TestCase
 
     #[Test]
     public function customBehaviorPinned(
+        Environment $environment,
         TemporalStarter $starter,
         WorkflowClientInterface $client,
         Feature $feature,
     ): void {
         $id = Uuid::v4();
         self::executeWorkflow(
+            $environment,
             $starter,
             $client,
             $feature,
@@ -72,12 +77,14 @@ class DeploymentTest extends TestCase
 
     #[Test]
     public function versionBehaviorOverrideAutoUpgrade(
+        Environment $environment,
         TemporalStarter $starter,
         WorkflowClientInterface $client,
         Feature $feature,
     ): void {
         $id = Uuid::v4();
         self::executeWorkflow(
+            $environment,
             $starter,
             $client,
             $feature,
@@ -101,11 +108,13 @@ class DeploymentTest extends TestCase
 
     #[Test]
     public function versionBehaviorOverridePinned(
+        Environment $environment,
         TemporalStarter $starter,
         WorkflowClientInterface $client,
         Feature $feature,
     ): void {
         $behavior = self::executeWorkflow(
+            $environment,
             $starter,
             $client,
             $feature,
@@ -127,6 +136,7 @@ class DeploymentTest extends TestCase
      * @param null|callable(VersioningBehavior): void $postAction
      */
     private static function executeWorkflow(
+        Environment $environment,
         TemporalStarter $starter,
         WorkflowClientInterface $client,
         Feature $feature,
@@ -134,7 +144,7 @@ class DeploymentTest extends TestCase
         WorkflowOptions $options,
         ?callable $postAction = null,
     ): ?VersioningBehavior {
-        WorkerFactory::setCurrentDeployment($starter);
+        WorkerFactory::setCurrentDeployment($environment);
 
         try {
             # Create a Workflow stub with an execution timeout 12 seconds
@@ -198,15 +208,15 @@ class WorkerFactory
             );
     }
 
-    public static function setCurrentDeployment(TemporalStarter $starter): void
+    public static function setCurrentDeployment(Environment $environment): void
     {
-        $starter->executeTemporalCommand([
+        $environment->executeTemporalCommand([
             'worker',
             'deployment',
             'set-current-version',
             '--deployment-name', WorkerFactory::DEPLOYMENT_NAME,
             '--build-id', WorkerFactory::BUILD_ID,
-            '--address', '127.0.0.1:7233',
+            '--address', $environment->command->address,
             '--yes',
         ], timeout: 5);
     }
