@@ -25,7 +25,7 @@ final class Command
         $self = new self();
 
         $self->namespace = \getenv('TEMPORAL_NAMESPACE') ?: 'default';
-        $self->address = \getenv('TEMPORAL_ADDRESS') ?: 'localhost:7233';
+        $self->address = \getenv('TEMPORAL_ADDRESS') ?: '127.0.0.1:7233';
         $self->xdebug = [
             'xdebug.mode' => \ini_get('xdebug.mode'),
             'xdebug.start_with_request' => \ini_get('xdebug.start_with_request'),

@@ -24,7 +24,7 @@ final class NamedArgumentsTestCase extends TestCase
     protected function setUp(): void
     {
         $this->workflowClient = new WorkflowClient(
-            ServiceClient::create('localhost:7233')
+            ServiceClient::create('127.0.0.1:7233')
         );
 
         parent::setUp();
