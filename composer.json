@@ -56,6 +56,7 @@
         ]
     },
     "require-dev": {
+        "ext-simplexml": "*",
         "buggregator/trap": "^1.13.0",
         "composer/composer": "^2.8.4",
         "cweagans/composer-patches": "^2.0",
@@ -98,10 +99,10 @@
         "cs:fix": "php-cs-fixer fix -v",
         "psalm": "psalm",
         "psalm:baseline": "psalm --set-baseline=psalm-baseline.xml",
-        "test:unit": "phpunit --testsuite=Unit --color=always --testdox 2>&1 | tee ./runtime/phpunit-unit.log; code=$?; sed 's/\\x1b\\[[0-9;]*m//g' ./runtime/phpunit-unit.log | grep -qE '^OK \\([0-9]+ tests?, [0-9]+ assertions?\\)|^OK, but some tests were skipped!' && exit 0 || exit $code",
-        "test:func": "phpunit --testsuite=Functional --color=always --testdox 2>&1 | tee ./runtime/phpunit-functional.log; code=$?; sed 's/\\x1b\\[[0-9;]*m//g' ./runtime/phpunit-functional.log | grep -qE '^OK \\([0-9]+ tests?, [0-9]+ assertions?\\)|^OK, but some tests were skipped!' && exit 0 || exit $code",
+        "test:unit": "php tests/ci-runner.php ./vendor/bin/phpunit --testsuite=Unit --color=always --testdox",
+        "test:func": "php tests/ci-runner.php ./vendor/bin/phpunit --testsuite=Functional --color=always --testdox",
         "test:arch": "phpunit --testsuite=Arch --color=always --testdox",
-        "test:accept": "phpunit --testsuite=Acceptance --color=always --testdox 2>&1 | tee ./runtime/phpunit-acceptance.log; code=$?; sed 's/\\x1b\\[[0-9;]*m//g' ./runtime/phpunit-acceptance.log | grep -qE '^OK \\([0-9]+ tests?, [0-9]+ assertions?\\)|^OK, but some tests were skipped!' && exit 0 || exit $code"
+        "test:accept": "php tests/ci-runner.php ./vendor/bin/phpunit --testsuite=Acceptance --color=always --testdox"
     },
     "config": {
         "sort-packages": true,
