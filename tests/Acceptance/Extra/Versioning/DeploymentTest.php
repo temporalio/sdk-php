@@ -206,6 +206,7 @@ class WorkerFactory
             'set-current-version',
             '--deployment-name', WorkerFactory::DEPLOYMENT_NAME,
             '--build-id', WorkerFactory::BUILD_ID,
+            '--address', '127.0.0.1:7233',
             '--yes',
         ], timeout: 5);
     }
