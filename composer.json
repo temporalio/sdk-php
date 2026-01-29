@@ -98,10 +98,10 @@
         "cs:fix": "php-cs-fixer fix -v",
         "psalm": "psalm",
         "psalm:baseline": "psalm --set-baseline=psalm-baseline.xml",
-        "test:unit": "phpunit --testsuite=Unit --color=always --testdox",
-        "test:func": "phpunit --testsuite=Functional --color=always --testdox 2>&1 | tee ./runtime/phpunit.log; code=$?; sed 's/\\x1b\\[[0-9;]*m//g' ./runtime/phpunit.log | grep -q '^OK' && exit 0 || exit $code",
+        "test:unit": "phpunit --testsuite=Unit --color=always --testdox 2>&1 | tee ./runtime/phpunit-unit.log; code=$?; sed 's/\\x1b\\[[0-9;]*m//g' ./runtime/phpunit-unit.log | grep -q '^OK' && exit 0 || exit $code",
+        "test:func": "phpunit --testsuite=Functional --color=always --testdox 2>&1 | tee ./runtime/phpunit-functional.log; code=$?; sed 's/\\x1b\\[[0-9;]*m//g' ./runtime/phpunit-functional.log | grep -q '^OK' && exit 0 || exit $code",
         "test:arch": "phpunit --testsuite=Arch --color=always --testdox",
-        "test:accept": "phpunit --testsuite=Acceptance --color=always --testdox"
+        "test:accept": "phpunit --testsuite=Acceptance --color=always --testdox 2>&1 | tee ./runtime/phpunit-acceptance.log; code=$?; sed 's/\\x1b\\[[0-9;]*m//g' ./runtime/phpunit-acceptance.log | grep -q '^OK' && exit 0 || exit $code"
     },
     "config": {
         "sort-packages": true,
