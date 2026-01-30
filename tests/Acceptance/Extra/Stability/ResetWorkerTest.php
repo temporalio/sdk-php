@@ -31,19 +31,20 @@ class ResetWorkerTest extends TestCase
                 'Extra_Stability_ResetWorker',
                 WorkflowOptions::new()
                     ->withTaskQueue($feature->taskQueue)
-                    ->withWorkflowExecutionTimeout(20),
+                    ->withWorkflowExecutionTimeout(10),
             );
 
-        # Start the Workflow with a 10-second timer
-        $client->start($stub, 16);
+        # Start the Workflow with a 5-second timer
+        $client->start($stub, 5);
 
         # Query the Workflow to kill the Worker
         try {
-            $stub->query('die');
+            $stub->query('sleepAndDie', 1);
             self::fail('Query must fail with a timeout');
         } catch (WorkflowServiceException $e) {
             # Should fail with a timeout
-            self::assertInstanceOf(TimeoutException::class, $e->getPrevious());
+            $previous = $e->getPrevious();
+            self::assertInstanceOf(TimeoutException::class, $previous);
         }
 
         # Cancel Workflow
@@ -51,13 +52,18 @@ class ResetWorkerTest extends TestCase
 
         try {
             # Workflow must be canceled
-            $stub->getResult(timeout: 12);
+            $result = $stub->getResult(timeout: 5);
+            self::fail(
+                \sprintf(
+                    "Workflow must fail with a canceled failure, got: %s",
+                    $result,
+                ),
+            );
         } catch (WorkflowFailedException $e) {
-            self::assertInstanceOf(CanceledFailure::class, $e->getPrevious());
+            $previous = $e->getPrevious();
+            self::assertInstanceOf(CanceledFailure::class, $previous);
             return;
         }
-
-        self::fail('Workflow must fail with a canceled failure');
     }
 
     #[Test]
@@ -71,29 +77,33 @@ class ResetWorkerTest extends TestCase
                 'Extra_Stability_ResetWorker',
                 WorkflowOptions::new()
                     ->withTaskQueue($feature->taskQueue)
-                    ->withWorkflowExecutionTimeout(20),
+                    ->withWorkflowExecutionTimeout(10),
             );
 
-        # Start the Workflow with a 10-second timer
-        $client->start($stub, 16);
+        # Start the Workflow with a 5-second timer
+        $client->start($stub, 5);
 
         # Query the Workflow to kill the Worker
         try {
-            $stub->query('die');
+            $stub->query('sleepAndDie', 1);
             self::fail('Query must fail with a timeout');
         } catch (WorkflowServiceException $e) {
             # Should fail with a timeout
-            self::assertInstanceOf(TimeoutException::class, $e->getPrevious());
+            $previous = $e->getPrevious();
+            self::assertInstanceOf(TimeoutException::class, $previous);
         }
 
         $stub->signal('exit');
 
         try {
             # Workflow must be canceled
-            $result = $stub->getResult(timeout: 16);
+            $result = $stub->getResult(timeout: 5);
             self::assertSame('Signal', $result);
         } catch (\Throwable) {
-            $this->fail('Workflow must finish successfully and no timeout must be thrown');
+            $this->fail(\sprintf(
+                'Workflow must finish successfully and no timeout must be thrown, got: %s.',
+                $e,
+            ));
         }
 
         # Check that Side Effect was not lost
@@ -118,15 +128,15 @@ class TestWorkflow
 
     #[WorkflowMethod('Extra_Stability_ResetWorker')]
     #[ReturnType(Type::TYPE_STRING)]
-    public function expire(int $seconds = 10): \Generator
+    public function expire(int $seconds): \Generator
     {
         $isTimer = ! yield Workflow::awaitWithTimeout($seconds, fn(): bool => $this->exit);
 
         return yield $isTimer ? 'Timer' : 'Signal';
     }
 
-    #[Workflow\QueryMethod('die')]
-    public function die(int $sleep = 2): void
+    #[Workflow\QueryMethod('sleepAndDie')]
+    public function sleepAndDie(int $sleep): void
     {
         \sleep($sleep);
         exit(1);
