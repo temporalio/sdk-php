@@ -112,7 +112,13 @@ final class Environment
         $deadline = \microtime(true) + $commandTimeout;
         while (!$temporalStarted && \microtime(true) < $deadline) {
             \usleep(10_000);
-            $check = new Process([$this->systemInfo->temporalCliExecutable, 'operator', 'cluster', 'health']);
+            $check = new Process([
+                $this->systemInfo->temporalCliExecutable,
+                'operator',
+                'cluster',
+                'health',
+                '--address', $this->command->address,
+            ]);
             $check->run();
             if (\str_contains($check->getOutput(), 'SERVING')) {
                 $temporalStarted = true;
