@@ -25,9 +25,9 @@ final class RRStarter
         $sysInfo = SystemInfo::detect();
         $run = $this->runtime->command;
 
-        $rrCommand = [
-            $this->runtime->workDir . DIRECTORY_SEPARATOR . $sysInfo->rrExecutable,
-            'serve',
+        $configFile = $this->runtime->rrConfigDir . DIRECTORY_SEPARATOR . '.rr.yaml';
+
+        $parameters = [
             '-w',
             $this->runtime->rrConfigDir,
             '-o',
@@ -44,12 +44,10 @@ final class RRStarter
                 ...$run->getCommandLineArguments(),
             ]),
         ];
-        $run->tlsKey === null or $rrCommand = [...$rrCommand, '-o', "tls.key={$run->tlsKey}"];
-        $run->tlsCert === null or $rrCommand = [...$rrCommand, '-o', "tls.cert={$run->tlsCert}"];
-        $command = \implode(' ', $rrCommand);
+        $run->tlsKey === null or $parameters = [...$parameters, '-o', "tls.key={$run->tlsKey}"];
+        $run->tlsCert === null or $parameters = [...$parameters, '-o', "tls.cert={$run->tlsCert}"];
 
-        // echo "\e[1;36mStart RoadRunner with command:\e[0m {$command}\n";
-        $this->environment->startRoadRunner($command);
+        $this->environment->startRoadRunner($configFile, $parameters);
     }
 
     public function stop(): void

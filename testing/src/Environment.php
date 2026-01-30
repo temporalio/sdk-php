@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Temporal\Testing;
 
+use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Output\ConsoleOutput;
-use Symfony\Component\Console\Output\Output;
+use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\Process\Process;
@@ -13,45 +14,32 @@ use Temporal\Common\SearchAttributes\ValueType;
 
 final class Environment
 {
-    /**
-     * @readonly
-     */
-    public Command $command;
-
-    private Downloader $downloader;
-    private Output $output;
-    private SystemInfo $systemInfo;
     private ?Process $temporalTestServerProcess = null;
     private ?Process $temporalServerProcess = null;
     private ?Process $roadRunnerProcess = null;
 
     public function __construct(
-        Output $output,
-        Downloader $downloader,
-        SystemInfo $systemInfo,
-        Command $command,
-    ) {
-        $this->downloader = $downloader;
-        $this->systemInfo = $systemInfo;
-        $this->output = $output;
-        $this->command = $command;
-    }
+        private SymfonyStyle $io,
+        private Downloader $downloader,
+        private SystemInfo $systemInfo,
+        public readonly Command $command,
+    ) {}
 
     public static function create(?Command $command = null): self
     {
         $token = \getenv('GITHUB_TOKEN');
 
-        $info = SystemInfo::detect();
-        \is_string(\getenv('ROADRUNNER_BINARY')) and $info->rrExecutable = \getenv('ROADRUNNER_BINARY');
+        $systemInfo = SystemInfo::detect();
+        \is_string(\getenv('ROADRUNNER_BINARY')) and $systemInfo->rrExecutable = \getenv('ROADRUNNER_BINARY');
 
         return new self(
-            new ConsoleOutput(),
+            new SymfonyStyle(new ArgvInput(), new ConsoleOutput()),
             new Downloader(new Filesystem(), HttpClient::create([
                 'headers' => [
                     'authorization' => $token ? 'token ' . $token : null,
                 ],
             ])),
-            $info,
+            $systemInfo,
             $command ?? Command::fromEnv(),
         );
     }
@@ -62,7 +50,7 @@ final class Environment
     public function start(?string $rrCommand = null, int $commandTimeout = 10, array $envs = []): void
     {
         $this->startTemporalTestServer($commandTimeout);
-        $this->startRoadRunner($rrCommand, $commandTimeout, $envs);
+        $this->startRoadRunner($roadRunnerConfigFile, $rrCommand, $commandTimeout, $envs);
     }
 
     /**
@@ -103,7 +91,7 @@ final class Environment
             };
         }
 
-        $this->output->write('Starting Temporal server... ');
+        $this->io->info('Starting Temporal server... ');
         $this->temporalServerProcess = new Process(
             [
                 $this->systemInfo->temporalCliExecutable,
@@ -117,62 +105,46 @@ final class Environment
         );
         $this->temporalServerProcess->setTimeout($commandTimeout);
         $temporalStarted = false;
-        //        $this->output->writeln('Running command: ' . $this->temporalServerProcess->getCommandLine());
-        $this->temporalServerProcess->start(function ($type, $output) use (&$temporalStarted): void {
-            if ($type === Process::OUT && \str_contains($output, 'Server: ')) {
-                $check = new Process([
-                    $this->systemInfo->temporalCliExecutable,
-                    'operator',
-                    'cluster',
-                    'health',
-                    '--address', $this->command->address,
-                ]);
-                $check->run();
-                if (\str_contains($check->getOutput(), 'SERVING')) {
-                    $temporalStarted = true;
-                }
-            }
-        });
+        $this->io->info('Running command: ' . $this->serializeProcess($this->temporalServerProcess));
+        $this->temporalServerProcess->start();
 
         $deadline = \microtime(true) + $commandTimeout;
         while (!$temporalStarted && \microtime(true) < $deadline) {
-            \usleep(50_000);
-            if (!$temporalStarted) {
-                $check = new Process([$this->systemInfo->temporalCliExecutable, 'operator', 'cluster', 'health']);
-                $check->run();
-                if (\str_contains($check->getOutput(), 'SERVING')) {
-                    $temporalStarted = true;
-                }
+            \usleep(10_000);
+            $check = new Process([$this->systemInfo->temporalCliExecutable, 'operator', 'cluster', 'health']);
+            $check->run();
+            if (\str_contains($check->getOutput(), 'SERVING')) {
+                $temporalStarted = true;
             }
         }
 
         if (!$temporalStarted || !$this->temporalServerProcess->isRunning()) {
-            $this->output->writeln('<error>error</error>');
-            $this->output->writeln(\sprintf(
-                "Error starting Temporal server: %s.",
-                !$temporalStarted ? "Health check failed" : $this->temporalServerProcess->getErrorOutput(),
-            ));
-            $temporalServerProcess = $this->temporalServerProcess;
-            $this->output->writeln(\sprintf(
-                'Command: `%s`.',
-                $this->serializeProcess($temporalServerProcess),
-            ));
+            $this->io->error([
+                \sprintf(
+                    'Error starting Temporal server: %s.',
+                    !$temporalStarted ? "Health check failed" : $this->temporalServerProcess->getErrorOutput(),
+                ),
+                \sprintf(
+                    'Command: `%s`.',
+                    $this->serializeProcess($this->temporalServerProcess),
+                ),
+            ]);
             exit(1);
         }
-        $this->output->writeln('<info>done.</info>');
+        $this->io->info('Temporal server started.');
     }
 
     public function startTemporalTestServer(int $commandTimeout = 10): void
     {
         if (!$this->downloader->check($this->systemInfo->temporalServerExecutable)) {
-            $this->output->write('Download temporal test server... ');
+            $this->io->info('Download Temporal test server... ');
             $this->downloader->download($this->systemInfo);
-            $this->output->writeln('<info>done.</info>');
+            $this->io->info('Temporal test server downloaded.');
         }
 
         $temporalPort = \parse_url($this->command->address, PHP_URL_PORT);
 
-        $this->output->write('Starting Temporal test server... ');
+        $this->io->info('Starting Temporal test server... ');
         $this->temporalTestServerProcess = new Process(
             [$this->systemInfo->temporalServerExecutable, $temporalPort, '--enable-time-skipping'],
         );
@@ -182,77 +154,68 @@ final class Environment
         \sleep(1);
 
         if (!$this->temporalTestServerProcess->isRunning()) {
-            $this->output->writeln('<error>error</error>');
-            $this->output->writeln(\sprintf(
-                'Error starting Temporal Test server: %s.',
-                $this->temporalTestServerProcess->getErrorOutput(),
-            ));
-            $this->output->writeln(\sprintf(
-                'Command: `%s`.',
-                $this->serializeProcess($this->temporalTestServerProcess),
-            ));
+            $this->io->error([
+                \sprintf(
+                    'Error starting Temporal Test server: %s.',
+                    $this->temporalTestServerProcess->getErrorOutput(),
+                ),
+                \sprintf(
+                    'Command: `%s`.',
+                    $this->serializeProcess($this->temporalTestServerProcess),
+                ),
+            ]);
             exit(1);
         }
-        $this->output->writeln('<info>done.</info>');
+        $this->io->info('Temporal Test server started.');
     }
 
     /**
      * @param array<string, mixed> $envs
      */
-    public function startRoadRunner(?string $rrCommand = null, int $commandTimeout = 10, array $envs = []): void
+    public function startRoadRunner(string $configFile, ?array $parameters = null, int $commandTimeout = 10, array $envs = []): void
     {
         $this->roadRunnerProcess = new Process(
-            command: $rrCommand ? \explode(' ', $rrCommand) : [$this->systemInfo->rrExecutable, 'serve'],
+            command: [
+                $this->systemInfo->rrExecutable,
+                "serve",
+                '-c', $configFile,
+                ...$parameters,
+            ],
             env: $envs,
         );
         $this->roadRunnerProcess->setTimeout($commandTimeout);
 
-        $this->output->write('Starting RoadRunner... ');
+        $this->io->info('Starting RoadRunner... ');
         $roadRunnerStarted = false;
-        $this->output->writeln('Running command: ' . $this->serializeProcess($this->roadRunnerProcess));
-        $this->roadRunnerProcess->start(static function ($type, $output) use (&$roadRunnerStarted): void {
-            if ($type === Process::OUT && \str_contains($output, 'RoadRunner server started')) {
-                $roadRunnerStarted = true;
-            }
-        });
-
-        if (!$this->roadRunnerProcess->isRunning()) {
-            $this->output->writeln('<error>error</error>');
-            $this->output->writeln(\sprintf(
-                'Error starting RoadRunner: %s.',
-                $this->roadRunnerProcess->getErrorOutput(),
-            ));
-            $this->output->writeln(\sprintf(
-                'Command: `%s`.',
-                $this->serializeProcess($this->roadRunnerProcess),
-            ));
-            exit(1);
-        }
+        $this->io->info('Running command: ' . $this->serializeProcess($this->roadRunnerProcess));
+        $this->roadRunnerProcess->start();
 
         // wait for roadrunner to start
-        $ticks = $commandTimeout * 100;
-        while (!$roadRunnerStarted && $ticks > 0) {
-            $this->roadRunnerProcess->getStatus();
+        $deadline = \microtime(true) + $commandTimeout;
+        while (!$roadRunnerStarted && \microtime(true) < $deadline) {
             \usleep(10_000);
-            --$ticks;
+            $check = new Process([$this->systemInfo->rrExecutable, 'workers', '-c', $configFile]);
+            $check->run();
+            if (\str_contains($check->getOutput(), 'Workers of')) {
+                $roadRunnerStarted = true;
+            }
         }
 
         if (!$roadRunnerStarted) {
-            $this->output->writeln('<error>error</error>');
-            $this->output->writeln(\sprintf(
+            $this->io->error(\sprintf(
                 'Failed to start until RoadRunner is ready. Status: "%s". Stderr: "%s". Stdout: "%s".',
                 $this->roadRunnerProcess->getStatus(),
                 $this->roadRunnerProcess->getErrorOutput(),
                 $this->roadRunnerProcess->getOutput(),
             ));
-            $this->output->writeln(\sprintf(
+            $this->io->writeln(\sprintf(
                 "Command: `%s`.",
                 $this->serializeProcess($this->roadRunnerProcess),
             ));
             exit(1);
         }
 
-        $this->output->writeln('<info>done.</info>');
+        $this->io->info('RoadRunner server started.');
     }
 
     public function stop(): void
@@ -277,30 +240,30 @@ final class Environment
     public function stopTemporalServer(): void
     {
         if ($this->isTemporalRunning()) {
-            $this->output->write('Stopping Temporal server... ');
+            $this->io->info('Stopping Temporal server... ');
             $this->temporalServerProcess->stop();
             $this->temporalServerProcess = null;
-            $this->output->writeln('<info>done.</info>');
+            $this->io->info('Temporal server stopped.');
         }
     }
 
     public function stopTemporalTestServer(): void
     {
         if ($this->isTemporalTestRunning()) {
-            $this->output->write('Stopping Temporal Test server... ');
+            $this->io->info('Stopping Temporal Test server... ');
             $this->temporalTestServerProcess->stop();
             $this->temporalTestServerProcess = null;
-            $this->output->writeln('<info>done.</info>');
+            $this->io->info('Temporal Test server stopped.');
         }
     }
 
     public function stopRoadRunner(): void
     {
         if ($this->isRoadRunnerRunning()) {
-            $this->output->write('Stopping RoadRunner... ');
+            $this->io->info('Stopping RoadRunner... ');
             $this->roadRunnerProcess->stop();
             $this->roadRunnerProcess = null;
-            $this->output->writeln('<info>done.</info>');
+            $this->io->info('RoadRunner server stopped.');
         }
     }
 
