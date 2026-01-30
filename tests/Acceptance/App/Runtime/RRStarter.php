@@ -35,6 +35,8 @@ final class RRStarter
             '-o',
             "temporal.address={$this->runtime->address}",
             '-o',
+            "temporal.activities.num_workers={$this->runtime->activityWorkers}",
+            '-o',
             'server.command=' . \implode(',', [
                 PHP_BINARY,
                 ...$run->getPhpBinaryArguments(),
