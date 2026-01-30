@@ -11,6 +11,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\Process\Process;
 use Temporal\Common\SearchAttributes\ValueType;
+use Temporal\Testing\Support\TestOutputStyle;
 
 final class Environment
 {
@@ -33,7 +34,7 @@ final class Environment
         \is_string(\getenv('ROADRUNNER_BINARY')) and $systemInfo->rrExecutable = \getenv('ROADRUNNER_BINARY');
 
         return new self(
-            new SymfonyStyle(new ArgvInput(), new ConsoleOutput()),
+            new TestOutputStyle(new ArgvInput(), new ConsoleOutput()),
             new Downloader(new Filesystem(), HttpClient::create([
                 'headers' => [
                     'authorization' => $token ? 'token ' . $token : null,
