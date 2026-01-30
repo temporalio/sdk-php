@@ -22,7 +22,6 @@ final class RRStarter
             return;
         }
 
-        $sysInfo = SystemInfo::detect();
         $run = $this->runtime->command;
 
         $configFile = $this->runtime->rrConfigDir . DIRECTORY_SEPARATOR . '.rr.yaml';
@@ -51,10 +50,7 @@ final class RRStarter
 
     public function stop(): void
     {
-        if ($this->environment->isRoadRunnerRunning()) {
-            // echo "\e[1;36mStop RoadRunner\e[0m\n";
-            $this->environment->stop();
-        }
+        $this->environment->stop();
     }
 
     public function __destruct()

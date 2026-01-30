@@ -52,8 +52,6 @@ final class TemporalStarter
      */
     public function stop(): void
     {
-        if ($this->environment->isTemporalRunning()) {
-            $this->environment->stop();
-        }
+        $this->environment->stop();
     }
 }
