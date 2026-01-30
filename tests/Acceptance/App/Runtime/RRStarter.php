@@ -41,7 +41,6 @@ final class RRStarter
                 PHP_BINARY,
                 ...$run->getPhpBinaryArguments(),
                 $this->runtime->rrConfigDir . DIRECTORY_SEPARATOR . 'worker.php',
-                ...$run->getCommandLineArguments(),
             ]),
         ];
         $run->tlsKey === null or $parameters = [...$parameters, '-o', "tls.key={$run->tlsKey}"];
