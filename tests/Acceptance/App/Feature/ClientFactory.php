@@ -82,9 +82,7 @@ final class ClientFactory
             options: (new ClientOptions())->withNamespace($runtime->namespace),
             converter: $converter,
             interceptorProvider: $pipelineProvider,
-        )->withTimeout(5);
-
-        $attribute->timeout === null or $client = $client->withTimeout($attribute->timeout);
+        )->withTimeout($attribute->timeout ?? 5);
 
         return $client;
     }

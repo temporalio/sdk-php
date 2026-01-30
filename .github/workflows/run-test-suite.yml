@@ -95,6 +95,8 @@ jobs:
 
       - name: Run tests
         run: ${{ inputs.test-command }}
+        env:
+          XDEBUG_MODE: off
 
       - name: Check for failures
         if: steps.validate.outcome == 'failure'

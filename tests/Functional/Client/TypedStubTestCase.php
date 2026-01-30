@@ -130,8 +130,8 @@ class TypedStubTestCase extends AbstractClient
 
     public function testVoidReturnType()
     {
-        $w = $this->createClient();
-        $dto = $w->newWorkflowStub(ActivityReturnTypeWorkflow::class);
+        $client = $this->createClient();
+        $dto = $client->newWorkflowStub(ActivityReturnTypeWorkflow::class);
 
         $this->assertEquals(
             100,
