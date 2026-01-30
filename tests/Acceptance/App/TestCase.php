@@ -91,7 +91,6 @@ abstract class TestCase extends \Temporal\Tests\TestCase
 
                     if (!$e instanceof SkippedTest) {
                         // Restart RR if a Error occurs
-                        /** @var RRStarter $roadRunnerStarter */
                         $temporalStarter = $container->get(TemporalStarter::class);
                         $roadRunnerStarter = $container->get(RRStarter::class);
                         $roadRunnerStarter->stop();
