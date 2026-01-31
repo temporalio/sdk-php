@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Interceptor\WorkflowOutboundCalls;
 
+use Temporal\Common\SideEffectOptions;
+
 /**
  * @psalm-immutable
  */
@@ -22,13 +24,16 @@ final class SideEffectInput
      */
     public function __construct(
         public readonly \Closure $callable,
+        public readonly ?SideEffectOptions $options = null,
     ) {}
 
     public function with(
         ?\Closure $callable = null,
+        ?SideEffectOptions $options = null,
     ): self {
         return new self(
             $callable ?? $this->callable,
+            $options ?? $this->options,
         );
     }
 }
