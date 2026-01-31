@@ -12,9 +12,9 @@ declare(strict_types=1);
 namespace Temporal\Exception\Client;
 
 /**
- * Indicates that the activity was paused by the user.
+ * Indicates that the activity attempt was reset by the user.
  *
  * Catching this exception directly is discouraged and catching
  * the parent class {@see ActivityCompletionException} is recommended instead.
  */
-final class ActivityPausedException extends ActivityCompletionException {}
+final class ActivityResetException extends ActivityCompletionException {}
