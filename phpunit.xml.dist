@@ -19,7 +19,9 @@
         <testsuite name="Acceptance-Fast">
             <directory suffix="Test.php">tests/Acceptance/Extra</directory>
             <directory suffix="Test.php">tests/Acceptance/Harness</directory>
+            <exclude>tests/Acceptance/Harness/Update/SelfTest.php</exclude>
             <exclude>tests/Acceptance/Harness/Query/TimeoutDueToNoActiveWorkersTest.php</exclude>
+            <exclude>tests/Acceptance/Extra/Activity/ActivityPausedTest.php</exclude>
             <exclude>tests/Acceptance/Extra/Versioning/DeploymentTest.php</exclude>
             <exclude>tests/Acceptance/Harness/EagerWorkflow/SuccessfulStartTest.php</exclude>
             <exclude>tests/Acceptance/Harness/Activity/CancelTryCancelTest.php</exclude>
@@ -40,7 +42,9 @@
             <exclude>tests/Acceptance/Harness/ContinueAsNew/ContinueAsSameTest.php</exclude>
         </testsuite>
         <testsuite name="Acceptance-Slow">
+            <file>tests/Acceptance/Harness/Update/SelfTest.php</file>
             <file>tests/Acceptance/Harness/Query/TimeoutDueToNoActiveWorkersTest.php</file>
+            <file>tests/Acceptance/Extra/Activity/ActivityPausedTest.php</file>
             <file>tests/Acceptance/Extra/Versioning/DeploymentTest.php</file>
             <file>tests/Acceptance/Harness/EagerWorkflow/SuccessfulStartTest.php</file>
             <file>tests/Acceptance/Harness/Activity/CancelTryCancelTest.php</file>
