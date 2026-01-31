@@ -51,8 +51,8 @@ final class Command
     {
         $address = '';
         $namespace = '';
-        $tlsCert = '';
-        $tlsKey = '';
+        $tlsCert = null;
+        $tlsKey = null;
 
         // remove the script name (worker.php or runner.php)
         $chunks = \array_slice($argv, 1);
