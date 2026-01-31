@@ -181,6 +181,12 @@ final class Environment
      */
     public function startRoadRunner(string $configFile, ?array $parameters = null, int $commandTimeout = 10, array $envs = []): void
     {
+        if (!$this->isTemporalRunning() && !$this->isTemporalTestRunning()) {
+            $this->io->error([
+                'Temporal server is not running. Please start it before starting RoadRunner.',
+            ]);
+            exit(1);
+        }
         $this->roadRunnerProcess = new Process(
             command: [
                 $this->systemInfo->rrExecutable,
