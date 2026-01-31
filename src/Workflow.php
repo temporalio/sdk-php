@@ -59,9 +59,11 @@ final class Workflow extends Facade
     public static function getCurrentContext(): WorkflowContextInterface
     {
         $ctx = parent::getCurrentContext();
-        $ctx instanceof WorkflowContextInterface or throw new OutOfContextException(
-            'The Workflow facade can be used only inside workflow code.',
-        );
+        if (!$ctx instanceof WorkflowContextInterface) {
+            throw new OutOfContextException(
+                'The Workflow facade can be used only inside workflow code.',
+            );
+        }
         return $ctx;
     }
 

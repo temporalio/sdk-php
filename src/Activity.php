@@ -17,7 +17,6 @@ use Temporal\Activity\ActivityInfo;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\OutOfContextException;
-use Temporal\Internal\Activity\ActivityContext;
 use Temporal\Internal\Support\Facade;
 
 final class Activity extends Facade
@@ -29,10 +28,11 @@ final class Activity extends Facade
     public static function getCurrentContext(): ActivityContextInterface
     {
         $ctx = parent::getCurrentContext();
-        /** @var ActivityContext $ctx */
-        $ctx::class === ActivityContext::class or throw new OutOfContextException(
-            'The Activity facade can only be used in the context of an activity execution.',
-        );
+        if (!$ctx instanceof ActivityContextInterface) {
+            throw new OutOfContextException(
+                'The Activity facade can only be used in the context of an activity execution.',
+            );
+        }
         return $ctx;
     }
 
