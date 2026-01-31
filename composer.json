@@ -102,7 +102,9 @@
         "test:unit": "tests/runner.php vendor/bin/phpunit --testsuite=Unit --color=always --testdox",
         "test:func": "tests/runner.php vendor/bin/phpunit --testsuite=Functional --color=always --testdox",
         "test:arch": "phpunit --testsuite=Arch --color=always --testdox",
-        "test:accept": "tests/runner.php vendor/bin/phpunit --testsuite=Acceptance --color=always --testdox"
+        "test:accept": "tests/runner.php vendor/bin/phpunit --testsuite=Acceptance --color=always --testdox",
+        "test:accept-slow": "tests/runner.php vendor/bin/phpunit --testsuite=\"Acceptance-Slow\" --color=always --testdox",
+        "test:accept-fast": "tests/runner.php vendor/bin/phpunit --testsuite=\"Acceptance-Fast\" --color=always --testdox"
     },
     "config": {
         "sort-packages": true,

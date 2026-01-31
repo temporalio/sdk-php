@@ -22,10 +22,18 @@ jobs:
       test-command: composer test:func
       download-binaries: true
 
-  acceptance:
+  acceptance-slow:
     name: Acceptance Testing
     uses: ./.github/workflows/run-test-suite.yml
     with:
       fail-fast: false
-      test-command: composer test:accept
+      test-command: composer test:accept-slow
+      download-binaries: true
+
+  acceptance-fast:
+    name: Acceptance Testing
+    uses: ./.github/workflows/run-test-suite.yml
+    with:
+      fail-fast: false
+      test-command: composer test:accept-fast
       download-binaries: true
