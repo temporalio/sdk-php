@@ -82,6 +82,20 @@ final class Command
         return $self;
     }
 
+    /**
+     * @return list<non-empty-string> CLI arguments that can be parsed by `fromCommandLine`
+     */
+    public function getCommandLineArguments(): array
+    {
+        $result = [];
+        $this->namespace === null or $result[] = "namespace=$this->namespace";
+        $this->address === null or $result[] = "address=$this->address";
+        $this->tlsCert === null or $result[] = "tls.cert=$this->tlsCert";
+        $this->tlsKey === null or $result[] = "tls.key=$this->tlsKey";
+
+        return $result;
+    }
+
     public function getPhpBinaryArguments(): array
     {
         $result = [];

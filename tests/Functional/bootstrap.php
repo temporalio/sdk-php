@@ -21,6 +21,7 @@ $environment->startRoadRunner(__DIR__ . DIRECTORY_SEPARATOR . '.rr.silent.yaml',
         PHP_BINARY,
         ...$command->getPhpBinaryArguments(),
         'worker.php',
+        ...$command->getCommandLineArguments(),
     ]),
 ]);
 
