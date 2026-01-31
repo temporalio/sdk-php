@@ -27,6 +27,9 @@ $tests = [];
 
 foreach ($junitFiles as $junitFile) {
     $xml = \simplexml_load_file($junitFile);
+    if ($xml === false) {
+        continue;
+    }
     foreach ($xml->xpath('//testcase') as $testcase) {
         $file = (string) $testcase['file'];
         $time = (float) $testcase['time'];
