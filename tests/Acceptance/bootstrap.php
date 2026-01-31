@@ -37,7 +37,7 @@ $command = Command::fromEnv();
 $runtime = RuntimeBuilder::createEmpty($command, \getcwd(), [
     'Temporal\Tests\Acceptance\Harness' => __DIR__ . '/Harness',
     'Temporal\Tests\Acceptance\Extra' => __DIR__ . '/Extra',
-]);
+], workers: (int) (\getenv('ACTIVITY_WORKERS') ?: 2));
 
 # Run RoadRunner and Temporal
 $environment = Environment::create($command);
