@@ -103,14 +103,30 @@ final class Environment
             ],
         );
         $this->temporalServerProcess->setTimeout($commandTimeout);
-        $this->temporalServerProcess->start();
+        $temporalStarted = false;
+        $this->temporalServerProcess->start(function ($type, $output) use (&$temporalStarted): void {
+            if ($type === Process::OUT && \str_contains($output, 'Server: ')) {
+                $check = new Process([$this->systemInfo->temporalCliExecutable, 'operator', 'cluster', 'health']);
+                $check->run();
+                if (\str_contains($check->getOutput(), 'SERVING')) {
+                    $temporalStarted = true;
+                }
+            }
+        });
 
-        $deadline = \microtime(true) + 1.2;
-        while (!$this->temporalServerProcess->isRunning() && \microtime(true) < $deadline) {
-            \usleep(10_000);
+        $deadline = \microtime(true) + $commandTimeout;
+        while (!$temporalStarted && \microtime(true) < $deadline) {
+            \usleep(50_000);
+            if (!$temporalStarted) {
+                $check = new Process([$this->systemInfo->temporalCliExecutable, 'operator', 'cluster', 'health']);
+                $check->run();
+                if (\str_contains($check->getOutput(), 'SERVING')) {
+                    $temporalStarted = true;
+                }
+            }
         }
 
-        if (!$this->temporalServerProcess->isRunning()) {
+        if (!$temporalStarted || !$this->temporalServerProcess->isRunning()) {
             $this->output->writeln('<error>error</error>');
             $this->output->writeln('Error starting Temporal server: ' . $this->temporalServerProcess->getErrorOutput());
             exit(1);
