@@ -23,7 +23,7 @@ jobs:
       download-binaries: true
 
   acceptance-slow:
-    name: Acceptance Testing
+    name: Acceptance Testing (Slow)
     uses: ./.github/workflows/run-test-suite.yml
     with:
       fail-fast: false
@@ -31,7 +31,7 @@ jobs:
       download-binaries: true
 
   acceptance-fast:
-    name: Acceptance Testing
+    name: Acceptance Testing (Fast)
     uses: ./.github/workflows/run-test-suite.yml
     with:
       fail-fast: false
