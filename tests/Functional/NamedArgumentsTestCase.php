@@ -7,7 +7,6 @@ namespace Temporal\Tests\Functional;
 use Temporal\Client\GRPC\ServiceClient;
 use Temporal\Client\WorkflowClient;
 use Temporal\Client\WorkflowOptions;
-use Temporal\Tests\Workflow\ContinuableWorkflow;
 use Temporal\Tests\Workflow\ContinuaWithTaskQueueWorkflow;
 use Temporal\Tests\Workflow\NamedArguments\ContinueAsNewNamedArgumentsWorkflow;
 use Temporal\Tests\Workflow\NamedArguments\ExecuteChildNamedArgumentsWorkflow;
