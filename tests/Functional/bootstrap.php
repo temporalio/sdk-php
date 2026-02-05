@@ -30,7 +30,13 @@ $environment->startRoadRunner(\implode(' ', [
     ]),
 ]));
 
-\register_shutdown_function(static fn() => $environment->stop());
+\register_shutdown_function(static function () use ($environment): void {
+    try {
+        $environment->stop();
+    } catch (\Throwable $e) {
+        echo $e;
+    }
+});
 
 // Default feature flags
 FeatureFlags::$warnOnWorkflowUnfinishedHandlers = false;
