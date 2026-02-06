@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Temporal\Activity;
 
-use Attribute;
 use Spiral\Attributes\NamedArgumentConstructor;
 use Temporal\Common\Priority;
 
@@ -16,14 +15,11 @@ use Temporal\Common\Priority;
  *
  * @internal Experimental
  */
-#[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_METHOD), NamedArgumentConstructor]
+#[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD), NamedArgumentConstructor]
 final class ActivityPriority
 {
     public Priority $priority;
 
-    /**
-     * @param Priority|array $priority
-     */
     public function __construct(Priority|array $priority)
     {
         if (\is_array($priority)) {

@@ -45,9 +45,9 @@ abstract class Reader
     {
         return \in_array($method->getName(), self::MAGIC_METHODS, true);
     }
+
     /**
      * @template T of object
-     * @param \ReflectionMethod|\ReflectionClass $reflection
      * @param class-string<T> $class
      * @return T|null
      */

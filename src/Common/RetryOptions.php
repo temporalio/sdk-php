@@ -120,7 +120,6 @@ class RetryOptions extends Options
 
     /**
      * @param DateIntervalValue|null $initialInterval
-     * @param float $backoffCoefficient
      * @param DateIntervalValue|null $maximumInterval
      * @param int<0, max> $maximumAttempts
      * @param ExceptionsList $nonRetryableExceptions

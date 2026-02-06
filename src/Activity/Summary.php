@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Temporal\Activity;
 
-use Attribute;
-
 /**
  * Optional summary of the activity.
  *
@@ -16,18 +14,15 @@ use Attribute;
  *
  * @since RoadRunner 2025.1.2
  */
-#[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_METHOD)]
+#[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD)]
 final class Summary
 {
     public string $text;
 
-    /**
-     * @param string|array $text
-     */
     public function __construct(string|array $text)
     {
         if (\is_array($text)) {
-            $text = $text['value'] ?? $text['text'] ?? (array_values($text)[0] ?? '');
+            $text = $text['value'] ?? $text['text'] ?? (\array_values($text)[0] ?? '');
         }
         $this->text = (string) $text;
     }

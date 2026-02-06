@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Activity;
 
-use Carbon\CarbonInterval;
 use JetBrains\PhpStorm\Pure;
 use Spiral\Attributes\NamedArgumentConstructor;
 use Temporal\Common\MethodRetry;
@@ -139,16 +138,10 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
     public string $summary = '';
 
     /**
-     * @param ?string $taskQueue
      * @param DateIntervalValue|null $scheduleToCloseTimeout
      * @param DateIntervalValue|null $scheduleToStartTimeout
      * @param DateIntervalValue|null $startToCloseTimeout
      * @param DateIntervalValue|null $heartbeatTimeout
-     * @param ActivityCancellationType|int $cancellationType
-     * @param string $activityId
-     * @param ?RetryOptions $retryOptions
-     * @param ?Priority $priority
-     * @param string $summary
      */
     public function __construct(
         ?string $taskQueue = null,

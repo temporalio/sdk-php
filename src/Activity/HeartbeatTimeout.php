@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Temporal\Activity;
 
-use Attribute;
 use Spiral\Attributes\NamedArgumentConstructor;
 use Temporal\Internal\Support\DateInterval;
 
@@ -13,14 +12,11 @@ use Temporal\Internal\Support\DateInterval;
  *
  * This is the max interval the server needs to hear at least one ping from the activity.
  */
-#[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_METHOD), NamedArgumentConstructor]
+#[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD), NamedArgumentConstructor]
 final class HeartbeatTimeout
 {
     public readonly ?\DateInterval $interval;
 
-    /**
-     * @param \DateInterval|string|int|null $timeout
-     */
     public function __construct(
         \DateInterval|string|int|null $timeout,
     ) {

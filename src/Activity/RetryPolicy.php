@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Temporal\Activity;
 
-use Attribute;
 use Spiral\Attributes\NamedArgumentConstructor;
 use Temporal\Common\RetryOptions;
 
@@ -22,14 +21,11 @@ use Temporal\Common\RetryOptions;
  *
  * To disable retries set MaximumAttempts to 1.
  */
-#[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_METHOD), NamedArgumentConstructor]
+#[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD), NamedArgumentConstructor]
 final class RetryPolicy
 {
     public RetryOptions $options;
 
-    /**
-     * @param RetryOptions|array $options
-     */
     public function __construct(RetryOptions|array $options)
     {
         if (\is_array($options)) {
@@ -61,7 +57,7 @@ final class RetryPolicy
                 maximumInterval: $maximumInterval,
                 maximumAttempts: $maximumAttempts,
                 nonRetryableExceptions: $nonRetryableExceptions,
-            )
+            ),
         );
     }
 }
