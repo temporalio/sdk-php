@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Declaration\Prototype;
 
 use Temporal\Activity\ActivityInterface;
+use Temporal\Activity\ActivityOptionsInterface;
 use Temporal\Activity\LocalActivityInterface;
 use Temporal\Common\MethodRetry;
 use Temporal\Internal\Declaration\ActivityInstance;
@@ -20,6 +21,7 @@ use Temporal\Internal\Declaration\EntityNameValidator;
 final class ActivityPrototype extends Prototype
 {
     private ?MethodRetry $methodRetry = null;
+    private ?ActivityOptionsInterface $methodOptions = null;
     private ?ActivityInstance $instance = null;
     private ?\Closure $factory = null;
     private bool $isLocalActivity;
@@ -55,6 +57,16 @@ final class ActivityPrototype extends Prototype
     public function setMethodRetry(?MethodRetry $attribute): void
     {
         $this->methodRetry = $attribute;
+    }
+
+    public function getMethodOptions(): ?ActivityOptionsInterface
+    {
+        return $this->methodOptions;
+    }
+
+    public function setMethodOptions(?ActivityOptionsInterface $options): void
+    {
+        $this->methodOptions = $options;
     }
 
     public function getInstance(): ActivityInstance

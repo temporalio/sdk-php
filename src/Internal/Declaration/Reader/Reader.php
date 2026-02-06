@@ -45,4 +45,18 @@ abstract class Reader
     {
         return \in_array($method->getName(), self::MAGIC_METHODS, true);
     }
+    /**
+     * @template T of object
+     * @param \ReflectionMethod|\ReflectionClass $reflection
+     * @param class-string<T> $class
+     * @return T|null
+     */
+    protected function firstMetadata(\ReflectionMethod|\ReflectionClass $reflection, string $class): ?object
+    {
+        if ($reflection instanceof \ReflectionMethod) {
+            return $this->reader->firstFunctionMetadata($reflection, $class);
+        }
+
+        return $this->reader->firstClassMetadata($reflection, $class);
+    }
 }

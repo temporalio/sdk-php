@@ -13,6 +13,7 @@ namespace Temporal\Activity;
 
 use Carbon\CarbonInterval;
 use JetBrains\PhpStorm\Pure;
+use Spiral\Attributes\NamedArgumentConstructor;
 use Temporal\Common\MethodRetry;
 use Temporal\Common\Priority;
 use Temporal\Common\RetryOptions;
@@ -31,7 +32,12 @@ use Temporal\Internal\Support\Options;
  * But is subjected to change in the future.
  *
  * @psalm-import-type DateIntervalValue from DateInterval
+ *
+ * @Annotation
+ * @NamedArgumentConstructor
+ * @Target({ "METHOD", "CLASS" })
  */
+#[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD), NamedArgumentConstructor]
 class ActivityOptions extends Options implements ActivityOptionsInterface
 {
     /**
@@ -50,27 +56,27 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
      * Optional: The default value is the sum of {@see $scheduleToStartTimeout}
      * and {@see $startToCloseTimeout}.
      */
-    #[Marshal(name: 'ScheduleToCloseTimeout', type: DateIntervalType::class)]
-    public \DateInterval $scheduleToCloseTimeout;
+    #[Marshal(name: 'ScheduleToCloseTimeout', type: DateIntervalType::class, nullable: true)]
+    public ?\DateInterval $scheduleToCloseTimeout = null;
 
     /**
      * The queue timeout before the activity starts executed.
      */
-    #[Marshal(name: 'ScheduleToStartTimeout', type: DateIntervalType::class)]
-    public \DateInterval $scheduleToStartTimeout;
+    #[Marshal(name: 'ScheduleToStartTimeout', type: DateIntervalType::class, nullable: true)]
+    public ?\DateInterval $scheduleToStartTimeout = null;
 
     /**
      * The timeout from the start of execution to end of it.
      */
-    #[Marshal(name: 'StartToCloseTimeout', type: DateIntervalType::class)]
-    public \DateInterval $startToCloseTimeout;
+    #[Marshal(name: 'StartToCloseTimeout', type: DateIntervalType::class, nullable: true)]
+    public ?\DateInterval $startToCloseTimeout = null;
 
     /**
      * The periodic timeout while the activity is in execution.
      * This is the max interval the server needs to hear at-least one ping from the activity.
      */
-    #[Marshal(name: 'HeartbeatTimeout', type: DateIntervalType::class)]
-    public \DateInterval $heartbeatTimeout;
+    #[Marshal(name: 'HeartbeatTimeout', type: DateIntervalType::class, nullable: true)]
+    public ?\DateInterval $heartbeatTimeout = null;
 
     /**
      * Whether to wait for canceled activity to be completed(activity can be
@@ -117,7 +123,7 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
      * Defaults to inheriting priority from the workflow that scheduled the activity.
      */
     #[Marshal(name: 'Priority')]
-    public Priority $priority;
+    public ?Priority $priority = null;
 
     /**
      * Optional summary of the activity.
@@ -133,17 +139,43 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
     public string $summary = '';
 
     /**
-     * ActivityOptions constructor.
+     * @param ?string $taskQueue
+     * @param DateIntervalValue|null $scheduleToCloseTimeout
+     * @param DateIntervalValue|null $scheduleToStartTimeout
+     * @param DateIntervalValue|null $startToCloseTimeout
+     * @param DateIntervalValue|null $heartbeatTimeout
+     * @param ActivityCancellationType|int $cancellationType
+     * @param string $activityId
+     * @param ?RetryOptions $retryOptions
+     * @param ?Priority $priority
+     * @param string $summary
      */
-    public function __construct()
-    {
-        $this->scheduleToStartTimeout = CarbonInterval::seconds(0);
-        $this->scheduleToCloseTimeout = CarbonInterval::seconds(0);
-        $this->startToCloseTimeout = CarbonInterval::seconds(0);
-        $this->heartbeatTimeout = CarbonInterval::seconds(0);
-        $this->priority = Priority::new();
-
+    public function __construct(
+        ?string $taskQueue = null,
+        $scheduleToCloseTimeout = null,
+        $scheduleToStartTimeout = null,
+        $startToCloseTimeout = null,
+        $heartbeatTimeout = null,
+        ActivityCancellationType|int $cancellationType = ActivityCancellationType::TRY_CANCEL,
+        string $activityId = '',
+        ?RetryOptions $retryOptions = null,
+        ?Priority $priority = null,
+        string $summary = '',
+    ) {
         parent::__construct();
+
+        $this->taskQueue = $taskQueue;
+        $this->scheduleToCloseTimeout = DateInterval::parseOrNull($scheduleToCloseTimeout, DateInterval::FORMAT_SECONDS);
+        $this->scheduleToStartTimeout = DateInterval::parseOrNull($scheduleToStartTimeout, DateInterval::FORMAT_SECONDS);
+        $this->startToCloseTimeout = DateInterval::parseOrNull($startToCloseTimeout, DateInterval::FORMAT_SECONDS);
+        $this->heartbeatTimeout = DateInterval::parseOrNull($heartbeatTimeout, DateInterval::FORMAT_SECONDS);
+        $this->cancellationType = $cancellationType instanceof ActivityCancellationType
+            ? $cancellationType->value
+            : (\is_int($cancellationType) ? $cancellationType : ActivityCancellationType::TRY_CANCEL);
+        $this->activityId = $activityId;
+        $this->retryOptions = $retryOptions;
+        $this->priority = $priority ?? Priority::new();
+        $this->summary = $summary;
     }
 
     /**
@@ -153,8 +185,31 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
     {
         $self = clone $this;
 
-        if ($retry !== null && $this->diff->isPresent($self, 'retryOptions')) {
-            $self->retryOptions = $this->retryOptions->mergeWith($retry);
+        if ($retry !== null) {
+            $self->retryOptions = ($self->retryOptions ?? RetryOptions::new())->mergeWith($retry);
+        }
+
+        return $self;
+    }
+
+    /**
+     * @return $this
+     */
+    public function mergeWithOptions(?ActivityOptionsInterface $options = null): self
+    {
+        if ($options === null) {
+            return $this;
+        }
+
+        $self = clone $this;
+
+        foreach ($options->diff->getChangedPropertyNames($options) as $name) {
+            if ($name === 'retryOptions') {
+                $self->retryOptions = ($self->retryOptions ?? RetryOptions::new())->mergeWith($options->retryOptions);
+                continue;
+            }
+
+            $self->$name = $options->$name;
         }
 
         return $self;

@@ -28,10 +28,10 @@ class ActivityOptionsTestCase extends AbstractDTOMarshalling
 
         $expected = [
             'TaskQueueName'          => null,
-            'ScheduleToCloseTimeout' => 0,
-            'ScheduleToStartTimeout' => 0,
-            'StartToCloseTimeout'    => 0,
-            'HeartbeatTimeout'       => 0,
+            'ScheduleToCloseTimeout' => null,
+            'ScheduleToStartTimeout' => null,
+            'StartToCloseTimeout'    => null,
+            'HeartbeatTimeout'       => null,
             'WaitForCancellation'    => false,
             'ActivityID'             => '',
             'RetryPolicy'            => null,

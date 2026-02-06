@@ -9,6 +9,7 @@ use React\Promise\PromiseInterface;
 use Temporal\Activity;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Common\RetryOptions;
+use Temporal\Internal\Activity\ActivityContext;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
@@ -51,20 +52,29 @@ class TestWorkflow
     {
         return Workflow::newActivityStub(
             TestActivity::class,
-            Activity\ActivityOptions::new()
-                ->withRetryOptions(
-                    RetryOptions::new()
-                        ->withMaximumAttempts(20)
-                        ->withBackoffCoefficient(3.0)
-                        ->withInitialInterval('1 second')
-                        ->withMaximumInterval('2 minutes'),
-                )
-                ->withScheduleToCloseTimeout(10),
+Activity\ActivityOptions::new()
+    ->withRetryOptions(
+        RetryOptions::new()
+            ->withMaximumAttempts(20)
+            ->withBackoffCoefficient(3.0)
+            ->withInitialInterval('1 second')
+            ->withMaximumInterval('2 minutes'),
+    )
+    ->withScheduleToCloseTimeout(10),
         )
             ->retryOptions();
     }
 }
-
+//
+//Activity\ActivityOptions::new()
+//    ->withRetryOptions(
+//        RetryOptions::new()
+//            ->withMaximumAttempts(20)
+//            ->withBackoffCoefficient(3.0)
+//            ->withInitialInterval('1 second')
+//            ->withMaximumInterval('2 minutes'),
+//    )
+//    ->withScheduleToCloseTimeout(10),
 #[Activity\ActivityInterface(prefix: 'Extra_Activity_ActivityInfo.')]
 class TestActivity
 {

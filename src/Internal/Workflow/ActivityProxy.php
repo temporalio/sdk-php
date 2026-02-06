@@ -63,7 +63,10 @@ final class ActivityProxy extends Proxy
     {
         $handler = $this->findPrototypeByHandlerNameOrFail($method);
         $type = $handler->getHandler()->getReturnType();
-        $options = $this->options->mergeWith($handler->getMethodRetry());
+
+        $options = $handler->getMethodOptions() ?? \Temporal\Activity\ActivityOptions::new();
+        $options = $options->mergeWith($handler->getMethodRetry());
+        $options = $options->mergeWithOptions($this->options);
 
         $args = Reflection::orderArguments($handler->getHandler(), $args);
 

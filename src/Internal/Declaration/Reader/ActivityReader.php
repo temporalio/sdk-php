@@ -11,8 +11,20 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration\Reader;
 
+use Temporal\Activity\ActivityId;
 use Temporal\Activity\ActivityInterface;
 use Temporal\Activity\ActivityMethod;
+use Temporal\Activity\ActivityOptions;
+use Temporal\Activity\ActivityOptionsInterface;
+use Temporal\Activity\ActivityPriority;
+use Temporal\Activity\CancellationType;
+use Temporal\Activity\HeartbeatTimeout;
+use Temporal\Activity\RetryPolicy;
+use Temporal\Activity\ScheduleToCloseTimeout;
+use Temporal\Activity\ScheduleToStartTimeout;
+use Temporal\Activity\StartToCloseTimeout;
+use Temporal\Activity\Summary;
+use Temporal\Activity\TaskQueue;
 use Temporal\Common\MethodRetry;
 use Temporal\Internal\Declaration\Graph\ClassNode;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
@@ -73,6 +85,7 @@ class ActivityReader extends Reader
     private function getMethodGroups(ClassNode $graph, \ReflectionMethod $root): array
     {
         $previousRetry = null;
+        $previousOptions = null;
 
         // Activity prototypes
         $prototypes = [];
@@ -91,6 +104,7 @@ class ActivityReader extends Reader
         foreach ($graph->getMethods($root->getName()) as $group) {
             //
             $contextualRetry = $previousRetry;
+            $contextualOptions = $previousOptions;
 
             //
             // Each group of methods means one level of hierarchy in the
@@ -109,6 +123,25 @@ class ActivityReader extends Reader
 
                     // Update current context
                     $contextualRetry = $contextualRetry ? $retry->mergeWith($contextualRetry) : $retry;
+                }
+
+                $options = $this->reader->firstFunctionMetadata($method, ActivityOptions::class);
+                $options = $this->mergeGranularAttributes($method, $options);
+                $classOptions = $this->reader->firstClassMetadata($ctx->getReflection(), ActivityOptions::class);
+                $classOptions = $this->mergeGranularAttributes($ctx->getReflection(), $classOptions);
+
+                if ($classOptions !== null) {
+                    $options = $classOptions->mergeWithOptions($options);
+                }
+
+                if ($previousOptions instanceof ActivityOptionsInterface) {
+                    $options = $options === null
+                        ? $previousOptions
+                        : $previousOptions->mergeWithOptions($options);
+                }
+
+                if ($options !== null) {
+                    $contextualOptions = $contextualOptions ? $options->mergeWithOptions($contextualOptions) : $options;
                 }
 
                 //
@@ -157,10 +190,15 @@ class ActivityReader extends Reader
                     $prototype->setMethodRetry($retry);
                 }
 
+                if ($options !== null) {
+                    $prototype->setMethodOptions($options);
+                }
+
                 $prototypes[$name] = $prototype;
             }
 
             $previousRetry = $contextualRetry;
+            $previousOptions = $contextualOptions;
         }
 
         return $prototypes;
@@ -199,5 +237,62 @@ class ActivityReader extends Reader
         ]);
 
         throw new \LogicException($error);
+    }
+
+    private function mergeGranularAttributes(
+        \ReflectionMethod|\ReflectionClass $reflection,
+        ?ActivityOptions $options,
+    ): ?ActivityOptions {
+        $taskQueue = $this->firstMetadata($reflection, TaskQueue::class);
+        if ($taskQueue !== null) {
+            $options = ($options ?? ActivityOptions::new())->withTaskQueue($taskQueue->name);
+        }
+
+        $scheduleToClose = $this->firstMetadata($reflection, ScheduleToCloseTimeout::class);
+        if ($scheduleToClose !== null) {
+            $options = ($options ?? ActivityOptions::new())->withScheduleToCloseTimeout($scheduleToClose->interval);
+        }
+
+        $scheduleToStart = $this->firstMetadata($reflection, ScheduleToStartTimeout::class);
+        if ($scheduleToStart !== null) {
+            $options = ($options ?? ActivityOptions::new())->withScheduleToStartTimeout($scheduleToStart->interval);
+        }
+
+        $startToClose = $this->firstMetadata($reflection, StartToCloseTimeout::class);
+        if ($startToClose !== null) {
+            $options = ($options ?? ActivityOptions::new())->withStartToCloseTimeout($startToClose->interval);
+        }
+
+        $heartbeat = $this->firstMetadata($reflection, HeartbeatTimeout::class);
+        if ($heartbeat !== null) {
+            $options = ($options ?? ActivityOptions::new())->withHeartbeatTimeout($heartbeat->interval);
+        }
+
+        $cancellationType = $this->firstMetadata($reflection, CancellationType::class);
+        if ($cancellationType !== null) {
+            $options = ($options ?? ActivityOptions::new())->withCancellationType($cancellationType->value);
+        }
+
+        $activityId = $this->firstMetadata($reflection, ActivityId::class);
+        if ($activityId !== null) {
+            $options = ($options ?? ActivityOptions::new())->withActivityId($activityId->id);
+        }
+
+        $retryPolicy = $this->firstMetadata($reflection, RetryPolicy::class);
+        if ($retryPolicy !== null) {
+            $options = ($options ?? ActivityOptions::new())->withRetryOptions($retryPolicy->options);
+        }
+
+        $priority = $this->firstMetadata($reflection, ActivityPriority::class);
+        if ($priority !== null) {
+            $options = ($options ?? ActivityOptions::new())->withPriority($priority->priority);
+        }
+
+        $summary = $this->firstMetadata($reflection, Summary::class);
+        if ($summary !== null) {
+            $options = ($options ?? ActivityOptions::new())->withSummary($summary->text);
+        }
+
+        return $options;
     }
 }
