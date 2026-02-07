@@ -9,34 +9,32 @@ use Temporal\Testing\SystemInfo;
 
 final class RRStarter
 {
-    private Environment $environment;
-    private bool $started = false;
-
     public function __construct(
         private State $runtime,
+        private Environment $environment,
     ) {
-        $this->environment = Environment::create();
         \register_shutdown_function(fn() => $this->stop());
     }
 
     public function start(): void
     {
-        if ($this->started) {
+        if ($this->environment->isRoadRunnerRunning()) {
             return;
         }
 
-        $sysInfo = SystemInfo::detect();
         $run = $this->runtime->command;
 
-        $rrCommand = [
-            $this->runtime->workDir . DIRECTORY_SEPARATOR . $sysInfo->rrExecutable,
-            'serve',
+        $configFile = $this->runtime->rrConfigDir . DIRECTORY_SEPARATOR . '.rr.yaml';
+
+        $parameters = [
             '-w',
             $this->runtime->rrConfigDir,
             '-o',
             "temporal.namespace={$this->runtime->namespace}",
             '-o',
             "temporal.address={$this->runtime->address}",
+            '-o',
+            "temporal.activities.num_workers={$this->runtime->activityWorkers}",
             '-o',
             'server.command=' . \implode(',', [
                 PHP_BINARY,
@@ -45,24 +43,15 @@ final class RRStarter
                 ...$run->getCommandLineArguments(),
             ]),
         ];
-        $run->tlsKey === null or $rrCommand = [...$rrCommand, '-o', "tls.key={$run->tlsKey}"];
-        $run->tlsCert === null or $rrCommand = [...$rrCommand, '-o', "tls.cert={$run->tlsCert}"];
-        $command = \implode(' ', $rrCommand);
+        $run->tlsKey === null or $parameters = [...$parameters, '-o', "tls.key={$run->tlsKey}"];
+        $run->tlsCert === null or $parameters = [...$parameters, '-o', "tls.cert={$run->tlsCert}"];
 
-        // echo "\e[1;36mStart RoadRunner with command:\e[0m {$command}\n";
-        $this->environment->startRoadRunner($command);
-        $this->started = true;
+        $this->environment->startRoadRunner($configFile, $parameters);
     }
 
     public function stop(): void
     {
-        if (!$this->started) {
-            return;
-        }
-
-        // echo "\e[1;36mStop RoadRunner\e[0m\n";
-        $this->environment->stop();
-        $this->started = false;
+        $this->environment->stopRoadRunner();
     }
 
     public function __destruct()

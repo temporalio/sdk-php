@@ -10,16 +10,11 @@ use Temporal\Worker\FeatureFlags;
 \chdir(__DIR__ . '/../..');
 require_once __DIR__ . '/../../vendor/autoload.php';
 
-$sysInfo = \Temporal\Testing\SystemInfo::detect();
-
 $command = Command::fromEnv();
 $environment = Environment::create();
 $environment->startTemporalTestServer();
 (new SearchAttributeTestInvoker())();
-$environment->startRoadRunner(\implode(' ', [
-    $sysInfo->rrExecutable,
-    'serve',
-    '-c', '.rr.silent.yaml',
+$environment->startRoadRunner(__DIR__ . DIRECTORY_SEPARATOR . '.rr.silent.yaml', [
     '-w', 'tests/Functional',
     '-o',
     'server.command=' . \implode(',', [
@@ -28,7 +23,7 @@ $environment->startRoadRunner(\implode(' ', [
         'worker.php',
         ...$command->getCommandLineArguments(),
     ]),
-]));
+]);
 
 \register_shutdown_function(static fn() => $environment->stop());
 

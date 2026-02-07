@@ -14,6 +14,7 @@ use Temporal\Activity\ActivityOptions;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\Runtime\RRStarter;
+use Temporal\Tests\Acceptance\App\Runtime\TemporalStarter;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
@@ -29,7 +30,8 @@ class WorkerRestartTest extends TestCase
     public static function check(
         #[Stub('Harness_Update_WorkerRestart')]WorkflowStubInterface $stub,
         ContainerInterface $c,
-        RRStarter $runner,
+        TemporalStarter $temporalStarter,
+        RRStarter $roadRunnerStarter,
     ): void {
         $handle = $stub->startUpdate('do_activities');
 
@@ -45,8 +47,9 @@ class WorkerRestartTest extends TestCase
         } while (true);
 
         # Restart the worker.
-        $runner->stop();
-        $runner->start();
+        $roadRunnerStarter->stop();
+        $temporalStarter->start();
+        $roadRunnerStarter->start();
         # Unblocks the activity.
         $c->get(StorageInterface::class)->set(KV_ACTIVITY_BLOCKED, false);
 

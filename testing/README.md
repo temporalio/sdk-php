@@ -139,7 +139,7 @@ workflow has a timer, the server doesn't wait for it and continues immediately. 
 this behaviour you can use `TestService` class:
 
 ```php
-$testService = TestService::create('localhost:7233');
+$testService = TestService::create('127.0.0.1:7233');
 $testService->lockTimeSkipping();
 
 // ...
@@ -217,7 +217,7 @@ final class SimpleWorkflowTestCase extends TestCase
 
     protected function setUp(): void
     {
-        $this->workflowClient = new WorkflowClient(ServiceClient::create('localhost:7233'));
+        $this->workflowClient = new WorkflowClient(ServiceClient::create('127.0.0.1:7233'));
         $this->activityMocks = new ActivityMocker();
 
         parent::setUp();

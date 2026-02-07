@@ -44,7 +44,7 @@ try {
     $runtime = RuntimeBuilder::createState($command, \getcwd(), [
         'Temporal\Tests\Acceptance\Harness' => __DIR__ . '/Harness',
         'Temporal\Tests\Acceptance\Extra' => __DIR__ . '/Extra',
-    ]);
+    ], workers: (int) (\getenv('ACTIVITY_WORKERS') ?: 2));
     $run = $runtime->command;
     // Init container
     $container = new Spiral\Core\Container();
