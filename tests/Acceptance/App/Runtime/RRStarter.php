@@ -51,7 +51,7 @@ final class RRStarter
 
     public function stop(): void
     {
-        $this->environment->stop();
+        $this->environment->stopRoadRunner();
     }
 
     public function __destruct()
