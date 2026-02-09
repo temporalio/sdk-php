@@ -30,7 +30,6 @@ class WorkerRestartTest extends TestCase
     public static function check(
         #[Stub('Harness_Update_WorkerRestart')]WorkflowStubInterface $stub,
         ContainerInterface $c,
-        TemporalStarter $temporalStarter,
         RRStarter $roadRunnerStarter,
     ): void {
         $handle = $stub->startUpdate('do_activities');
@@ -48,7 +47,6 @@ class WorkerRestartTest extends TestCase
 
         # Restart the worker.
         $roadRunnerStarter->stop();
-        $temporalStarter->start();
         $roadRunnerStarter->start();
         # Unblocks the activity.
         $c->get(StorageInterface::class)->set(KV_ACTIVITY_BLOCKED, false);
