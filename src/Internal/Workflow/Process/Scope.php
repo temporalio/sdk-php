@@ -259,11 +259,17 @@ class Scope implements CancellationScopeInterface, Destroyable
         return $this->deferred->promise()->finally($onFulfilledOrRejected);
     }
 
+    /**
+     * @deprecated use {@see catch()} instead
+     */
     public function otherwise(callable $onRejected): PromiseInterface
     {
         return $this->catch($onRejected);
     }
 
+    /**
+     * @deprecated use {@see finally()} instead
+     */
     public function always(callable $onFulfilledOrRejected): PromiseInterface
     {
         return $this->finally($onFulfilledOrRejected);
