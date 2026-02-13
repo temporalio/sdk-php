@@ -31,6 +31,9 @@ final class Environment
     {
         $token = \getenv('GITHUB_TOKEN');
 
+        $info = SystemInfo::detect();
+        \is_string(\getenv('ROADRUNNER_BINARY')) and $info->rrExecutable = \getenv('ROADRUNNER_BINARY');
+
         return new self(
             new ConsoleOutput(),
             new Downloader(new Filesystem(), HttpClient::create([
@@ -38,7 +41,7 @@ final class Environment
                     'authorization' => $token ? 'token ' . $token : null,
                 ],
             ])),
-            SystemInfo::detect(),
+            $info,
         );
     }
 
