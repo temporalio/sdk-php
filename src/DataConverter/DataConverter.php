@@ -41,7 +41,6 @@ final class DataConverter implements DataConverterInterface
 
     /**
      * @param string|\ReflectionClass|\ReflectionType|Type|null $type
-     * @return mixed
      */
     public function fromPayload(Payload $payload, $type): mixed
     {
