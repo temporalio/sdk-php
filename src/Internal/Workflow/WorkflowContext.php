@@ -724,6 +724,22 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         return $this->updateDispatcher;
     }
 
+    /**
+     * Get the current details of the workflow execution.
+     */
+    public function getCurrentDetails(): ?string
+    {
+        return $this->currentDetails;
+    }
+
+    /**
+     * Set the current details of the workflow execution.
+     */
+    public function setCurrentDetails(?string $details): void
+    {
+        $this->currentDetails = $details;
+    }
+
     protected function awaitRequest(callable|Mutex|PromiseInterface ...$conditions): PromiseInterface
     {
         $result = [];
@@ -790,21 +806,5 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     protected function recordTrace(): void
     {
         $this->readonly or $this->trace = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
-    }
-
-    /**
-     * Get the current details of the workflow execution.
-     */
-    public function getCurrentDetails(): ?string
-    {
-        return $this->currentDetails;
-    }
-
-    /**
-     * Set the current details of the workflow execution.
-     */
-    public function setCurrentDetails(?string $details): void
-    {
-        $this->currentDetails = $details;
     }
 }
