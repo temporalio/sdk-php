@@ -24,7 +24,7 @@ class RawValueTest extends TestCase
         #[Stub('Extra_DataConverter_RawValue')]
         WorkflowStubInterface $stub,
     ): void {
-        $result = $stub->getResult();
+        $result = $stub->getResult(RawValue::class);
 
         self::assertInstanceOf(RawValue::class, $result);
         self::assertInstanceOf(Payload::class, $result->getPayload());
@@ -54,7 +54,7 @@ class FeatureWorkflow
 class RawValueActivity
 {
     #[ActivityMethod]
-    public function bypass(RawValue $arg)
+    public function bypass(RawValue $arg): RawValue
     {
         return $arg;
     }

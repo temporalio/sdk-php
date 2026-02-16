@@ -33,15 +33,24 @@ final class DataConverter implements DataConverterInterface
         return new DataConverter(
             new NullConverter(),
             new BinaryConverter(),
-            new RawValueConverter(),
             new ProtoJsonConverter(),
             new ProtoConverter(),
             new JsonConverter(),
         );
     }
 
-    public function fromPayload(Payload $payload, $type)
+    /**
+     * @param string|\ReflectionClass|\ReflectionType|Type|null $type
+     * @return mixed
+     */
+    public function fromPayload(Payload $payload, $type): mixed
     {
+        $type = Type::create($type);
+
+        if ($type->isClass() && $type->getName() === RawValue::class) {
+            return new RawValue($payload);
+        }
+
         /** @var \ArrayAccess $meta */
         $meta = $payload->getMetadata();
 
@@ -50,8 +59,6 @@ final class DataConverter implements DataConverterInterface
         if (!isset($this->converters[$encoding])) {
             throw new DataConverterException(\sprintf('Undefined payload encoding "%s"', $encoding));
         }
-
-        $type = Type::create($type);
 
         return match ($type->getName()) {
             Type::TYPE_VOID,
@@ -69,6 +76,9 @@ final class DataConverter implements DataConverterInterface
      */
     public function toPayload($value): Payload
     {
+        if ($value instanceof RawValue) {
+            return $value->getPayload();
+        }
         foreach ($this->converters as $converter) {
             $payload = $converter->toPayload($value);
 

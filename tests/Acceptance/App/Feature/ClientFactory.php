@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Acceptance\App\Feature;
 
-use Temporal\DataConverter\RawValueConverter;
 use Temporal\Tests\Acceptance\App\Attribute\Client;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Psr\Container\ContainerInterface;
@@ -53,7 +52,6 @@ final class ClientFactory
         if ($attribute->payloadConverters !== []) {
             $converters = [
                 new NullConverter(),
-                new RawValueConverter(),
                 new BinaryConverter(),
                 new ProtoConverter(),
                 new ProtoJsonConverter(),
