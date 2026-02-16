@@ -129,7 +129,7 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
                                     ->setSignalDefinitions($context->getSignalDispatcher()->getSignalHandlers())
                                     ->setUpdateDefinitions($context->getUpdateDispatcher()->getUpdateHandlers()),
                             )
-                            ->setCurrentDetails($context->getCurrentDetails()),
+                            ->setCurrentDetails((string) $context->getCurrentDetails()),
                     ]);
 
                     $resolver->resolve($result);

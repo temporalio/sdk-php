@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Acceptance\Extra\Workflow\WorkflowMetadata;
 
 use PHPUnit\Framework\Attributes\Test;
-use Temporal\Client\WorkflowClientInterface;
+use Temporal\Api\Sdk\V1\WorkflowMetadata;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\TestCase;
@@ -16,19 +16,17 @@ use Temporal\Workflow\WorkflowMethod;
 class WorkflowMetadataTest extends TestCase
 {
     #[Test]
-    public function updateHandlersWithOneCall(
+    public function metadataQuery(
         #[Stub('Extra_Workflow_WorkflowMetadata', args: ["from test"])] WorkflowStubInterface $stub,
     ): void {
-        $deadline = \microtime(true) + 5.0; // 5-second timeout
-        do {
-            $currentDetails = $stub->query('getCurrentDetails')->getValue(0);
-            if ($currentDetails !== null) {
-                break;
-            }
-        } while (\microtime(true) < $deadline);
+        $values = $stub->query('__temporal_workflow_metadata');
+        /**
+         * @var WorkflowMetadata|null $metadata
+         */
+        $metadata = $values->getValue(0, WorkflowMetadata::class);
 
         $stub->signal('exit');
-        $this->assertSame("Cooking workflow from test", $currentDetails);
+        $this->assertSame("Cooking workflow from test", $metadata->getCurrentDetails());
     }
 }
 
