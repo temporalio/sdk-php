@@ -99,6 +99,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     protected array $trace = [];
     protected bool $continueAsNew = false;
     protected bool $readonly = true;
+    protected ?string $currentDetails = null;
 
     /** @var Pipeline<WorkflowOutboundRequestInterceptor, PromiseInterface> */
     private Pipeline $requestInterceptor;
@@ -789,5 +790,21 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     protected function recordTrace(): void
     {
         $this->readonly or $this->trace = \debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS);
+    }
+
+    /**
+     * Get the current details of the workflow execution.
+     */
+    public function getCurrentDetails(): ?string
+    {
+        return $this->currentDetails;
+    }
+
+    /**
+     * Set the current details of the workflow execution.
+     */
+    public function setCurrentDetails(?string $details): void
+    {
+        $this->currentDetails = $details;
     }
 }
