@@ -20,4 +20,13 @@ class User
 
     #[Marshal(name: "Email")]
     public string $email;
+
+    public static function new(string $name, string $email): User
+    {
+        $new = new self();
+        $new->name = $name;
+        $new->email = $email;
+
+        return $new;
+    }
 }

@@ -18,9 +18,56 @@
          displayDetailsOnTestsThatTriggerDeprecations="true"
          displayDetailsOnTestsThatTriggerErrors="true"
          displayDetailsOnTestsThatTriggerNotices="true"
-         displayDetailsOnTestsThatTriggerWarnings="true"
->
+         displayDetailsOnTestsThatTriggerWarnings="true">
     <testsuites>
+        <testsuite name="Acceptance-Fast">
+            <directory suffix="Test.php">tests/Acceptance/Extra</directory>
+            <directory suffix="Test.php">tests/Acceptance/Harness</directory>
+            <exclude>tests/Acceptance/Harness/Update/SelfTest.php</exclude>
+            <exclude>tests/Acceptance/Harness/Query/TimeoutDueToNoActiveWorkersTest.php</exclude>
+            <exclude>tests/Acceptance/Extra/Activity/ActivityPausedTest.php</exclude>
+            <exclude>tests/Acceptance/Extra/Versioning/DeploymentTest.php</exclude>
+            <exclude>tests/Acceptance/Harness/EagerWorkflow/SuccessfulStartTest.php</exclude>
+            <exclude>tests/Acceptance/Harness/Activity/CancelTryCancelTest.php</exclude>
+            <exclude>tests/Acceptance/Extra/Stability/ResetWorkerTest.php</exclude>
+            <exclude>tests/Acceptance/Harness/Activity/RetryOnErrorTest.php</exclude>
+            <exclude>tests/Acceptance/Harness/Update/WorkerRestartTest.php</exclude>
+            <exclude>tests/Acceptance/Harness/Schedule/BasicTest.php</exclude>
+            <exclude>tests/Acceptance/Harness/Update/AsyncAcceptTest.php</exclude>
+            <exclude>tests/Acceptance/Extra/Workflow/BuiltInPrefixedHandlersTest.php</exclude>
+            <exclude>tests/Acceptance/Harness/Schedule/TriggerTest.php</exclude>
+            <exclude>tests/Acceptance/Extra/Workflow/InitMethodTest.php</exclude>
+            <exclude>tests/Acceptance/Harness/Signal/PreventCloseTest.php</exclude>
+            <exclude>tests/Acceptance/Extra/Update/UntypedStubTest.php</exclude>
+            <exclude>tests/Acceptance/Extra/Update/TimeoutTest.php</exclude>
+            <exclude>tests/Acceptance/Extra/Workflow/DateTimeZoneWorkflowTest.php</exclude>
+            <exclude>tests/Acceptance/Extra/Schedule/ScheduleUpdateTest.php</exclude>
+            <exclude>tests/Acceptance/Harness/ChildWorkflow/CancelAbandonTest.php</exclude>
+            <exclude>tests/Acceptance/Harness/ContinueAsNew/ContinueAsSameTest.php</exclude>
+        </testsuite>
+        <testsuite name="Acceptance-Slow">
+            <file>tests/Acceptance/Harness/Update/SelfTest.php</file>
+            <file>tests/Acceptance/Harness/Query/TimeoutDueToNoActiveWorkersTest.php</file>
+            <file>tests/Acceptance/Extra/Activity/ActivityPausedTest.php</file>
+            <file>tests/Acceptance/Extra/Versioning/DeploymentTest.php</file>
+            <file>tests/Acceptance/Harness/EagerWorkflow/SuccessfulStartTest.php</file>
+            <file>tests/Acceptance/Harness/Activity/CancelTryCancelTest.php</file>
+            <file>tests/Acceptance/Extra/Stability/ResetWorkerTest.php</file>
+            <file>tests/Acceptance/Harness/Activity/RetryOnErrorTest.php</file>
+            <file>tests/Acceptance/Harness/Update/WorkerRestartTest.php</file>
+            <file>tests/Acceptance/Harness/Schedule/BasicTest.php</file>
+            <file>tests/Acceptance/Harness/Update/AsyncAcceptTest.php</file>
+            <file>tests/Acceptance/Extra/Workflow/BuiltInPrefixedHandlersTest.php</file>
+            <file>tests/Acceptance/Harness/Schedule/TriggerTest.php</file>
+            <file>tests/Acceptance/Extra/Workflow/InitMethodTest.php</file>
+            <file>tests/Acceptance/Harness/Signal/PreventCloseTest.php</file>
+            <file>tests/Acceptance/Extra/Update/UntypedStubTest.php</file>
+            <file>tests/Acceptance/Extra/Update/TimeoutTest.php</file>
+            <file>tests/Acceptance/Extra/Workflow/DateTimeZoneWorkflowTest.php</file>
+            <file>tests/Acceptance/Extra/Schedule/ScheduleUpdateTest.php</file>
+            <file>tests/Acceptance/Harness/ChildWorkflow/CancelAbandonTest.php</file>
+            <file>tests/Acceptance/Harness/ContinueAsNew/ContinueAsSameTest.php</file>
+        </testsuite>
         <testsuite name="Acceptance">
             <directory suffix="Test.php">tests/Acceptance/Extra</directory>
             <directory suffix="Test.php">tests/Acceptance/Harness</directory>

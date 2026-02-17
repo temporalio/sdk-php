@@ -1,0 +1,7 @@
+<meta-storm>
+    <definitions>
+        <classConstructor class="\Temporal\Tests\Acceptance\App\Attribute\Stub" argument="0">
+            <collection name="temporal/sdk:workflow-type" />
+        </classConstructor>
+    </definitions>
+</meta-storm>
