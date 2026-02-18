@@ -20,6 +20,6 @@ final class SideEffect extends Request
 
     public function __construct(ValuesInterface $values, array $options)
     {
-        parent::__construct(self::NAME, ['options' => $options], $values);
+        parent::__construct(self::NAME, $options, $values);
     }
 }

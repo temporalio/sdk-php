@@ -281,7 +281,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         $last = fn(): PromiseInterface => EncodedValues::decodePromise(
             $this->request(new SideEffect(
                 EncodedValues::fromValues([$value]),
-                $this->services->marshaller->marshal($options ?? new SideEffectOptions()),
+                $options === null ? [] : $this->services->marshaller->marshal($options),
             )),
             $returnType,
         );
