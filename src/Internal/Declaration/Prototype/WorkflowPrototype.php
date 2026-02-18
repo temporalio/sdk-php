@@ -46,6 +46,9 @@ final class WorkflowPrototype extends Prototype
     private bool $hasInitializer = false;
     private VersioningBehavior $versioningBehavior;
 
+    /**
+     * @param non-empty-string $name
+     */
     public function __construct(
         string $name,
         ?\ReflectionMethod $handler,

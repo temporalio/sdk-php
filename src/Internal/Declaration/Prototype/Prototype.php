@@ -15,6 +15,9 @@ use Temporal\Internal\Repository\RepositoryInterface;
 
 abstract class Prototype implements PrototypeInterface
 {
+    /**
+     * @param non-empty-string $name
+     */
     public function __construct(
         protected string $name,
         protected ?\ReflectionMethod $handler,
@@ -39,6 +42,9 @@ abstract class Prototype implements PrototypeInterface
         return null;
     }
 
+    /**
+     * @return non-empty-string
+     */
     public function getID(): string
     {
         return $this->name;
