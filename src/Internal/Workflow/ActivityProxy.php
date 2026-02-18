@@ -14,6 +14,7 @@ namespace Temporal\Internal\Workflow;
 use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityMethod;
 use Temporal\Activity\ActivityOptionsInterface;
+use Temporal\Worker\FeatureFlags;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteActivityInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteLocalActivityInput;
 use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
@@ -68,7 +69,7 @@ final class ActivityProxy extends Proxy
 
         $args = Reflection::orderArguments($prototype->getHandler(), $args);
 
-        if (!$prototype->getHandler()->getAttributes(ActivityMethod::class, \ReflectionAttribute::IS_INSTANCEOF)) {
+        if (FeatureFlags::$warnOnActivityMethodWithoutAttribute && !$prototype->getHandler()->getAttributes(ActivityMethod::class, \ReflectionAttribute::IS_INSTANCEOF)) {
             \trigger_error(
                 \sprintf(
                     'Using implicit activity methods is deprecated. Explicitly mark activity method %s with #[%s] attribute instead.',
