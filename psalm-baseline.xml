@@ -140,8 +140,6 @@
       <code><![CDATA[$counter]]></code>
       <code><![CDATA[$runID]]></code>
       <code><![CDATA[$signal]]></code>
-      <code><![CDATA[$workflow->getID()]]></code>
-      <code><![CDATA[$workflow->getID()]]></code>
     </ArgumentTypeCoercion>
     <DeprecatedClass>
       <code><![CDATA[new AnnotationReader()]]></code>
@@ -588,9 +586,6 @@
     <InvalidReturnType>
       <code><![CDATA[T|null]]></code>
     </InvalidReturnType>
-    <RedundantCondition>
-      <code><![CDATA[$reflection]]></code>
-    </RedundantCondition>
   </file>
   <file src="src/Internal/Declaration/Reader/ActivityReader.php">
     <ArgumentTypeCoercion>
@@ -1064,8 +1059,6 @@
   </file>
   <file src="src/Internal/Workflow/ActivityProxy.php">
     <ArgumentTypeCoercion>
-      <code><![CDATA[$handler->getID()]]></code>
-      <code><![CDATA[$handler->getID()]]></code>
       <code><![CDATA[$options]]></code>
       <code><![CDATA[$options]]></code>
     </ArgumentTypeCoercion>
