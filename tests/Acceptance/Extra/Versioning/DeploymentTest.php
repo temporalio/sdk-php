@@ -11,8 +11,10 @@ use Temporal\Common\Uuid;
 use Temporal\Common\Versioning\VersioningBehavior;
 use Temporal\Common\Versioning\VersioningOverride;
 use Temporal\Common\Versioning\WorkerDeploymentVersion;
+use Temporal\Testing\Environment;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
+use Temporal\Tests\Acceptance\App\Runtime\RRStarter;
 use Temporal\Tests\Acceptance\App\Runtime\TemporalStarter;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Worker\WorkerDeploymentOptions;
@@ -26,11 +28,15 @@ class DeploymentTest extends TestCase
 {
     #[Test]
     public function defaultBehaviorAuto(
+        Environment $environment,
+        RRStarter $roadRunnerStarter,
         TemporalStarter $starter,
         WorkflowClientInterface $client,
         Feature $feature,
     ): void {
         $behavior = self::executeWorkflow(
+            $environment,
+            $roadRunnerStarter,
             $starter,
             $client,
             $feature,
@@ -43,12 +49,16 @@ class DeploymentTest extends TestCase
 
     #[Test]
     public function customBehaviorPinned(
+        Environment $environment,
+        RRStarter $roadRunnerStarter,
         TemporalStarter $starter,
         WorkflowClientInterface $client,
         Feature $feature,
     ): void {
         $id = Uuid::v4();
         self::executeWorkflow(
+            $environment,
+            $roadRunnerStarter,
             $starter,
             $client,
             $feature,
@@ -60,24 +70,30 @@ class DeploymentTest extends TestCase
                 self::assertSame(VersioningBehavior::Pinned, $behavior);
 
                 # Check Override from Search Attributes
-                $sa = $client->newUntypedRunningWorkflowStub(
-                    workflowID: $id,
-                    workflowType: 'Extra_Versioning_Deployment_Pinned',
-                )->describe()->info->searchAttributes->getValues();
-                self::assertSame('Pinned', $sa['TemporalWorkflowVersioningBehavior']);
-                self::assertSame('foo:baz', $sa['TemporalWorkerDeploymentVersion']);
+                $attributes = $client->newUntypedRunningWorkflowStub($id, workflowType: 'Extra_Versioning_Deployment_Pinned')
+                    ->describe()
+                    ->info
+                    ->searchAttributes
+                    ->getValues();
+
+                self::assertSame('Pinned', $attributes['TemporalWorkflowVersioningBehavior']);
+                self::assertSame('foo:baz', $attributes['TemporalWorkerDeploymentVersion']);
             },
         );
     }
 
     #[Test]
     public function versionBehaviorOverrideAutoUpgrade(
+        Environment $environment,
+        RRStarter $roadRunnerStarter,
         TemporalStarter $starter,
         WorkflowClientInterface $client,
         Feature $feature,
     ): void {
         $id = Uuid::v4();
         self::executeWorkflow(
+            $environment,
+            $roadRunnerStarter,
             $starter,
             $client,
             $feature,
@@ -89,23 +105,29 @@ class DeploymentTest extends TestCase
                 self::assertSame(VersioningBehavior::Pinned, $behavior);
 
                 # Check Override from Search Attributes
-                $sa = $client->newUntypedRunningWorkflowStub(
-                    workflowID: $id,
-                    workflowType: 'Extra_Versioning_Deployment_Pinned',
-                )->describe()->info->searchAttributes->getValues();
-                self::assertSame('AutoUpgrade', $sa['TemporalWorkflowVersioningBehavior']);
-                self::assertSame('foo:baz', $sa['TemporalWorkerDeploymentVersion']);
+                $attributes = $client->newUntypedRunningWorkflowStub($id, workflowType: 'Extra_Versioning_Deployment_Pinned')
+                    ->describe()
+                    ->info
+                    ->searchAttributes
+                    ->getValues();
+
+                self::assertSame('AutoUpgrade', $attributes['TemporalWorkflowVersioningBehavior']);
+                self::assertSame('foo:baz', $attributes['TemporalWorkerDeploymentVersion']);
             },
         );
     }
 
     #[Test]
     public function versionBehaviorOverridePinned(
+        Environment $environment,
+        RRStarter $roadRunnerStarter,
         TemporalStarter $starter,
         WorkflowClientInterface $client,
         Feature $feature,
     ): void {
         $behavior = self::executeWorkflow(
+            $environment,
+            $roadRunnerStarter,
             $starter,
             $client,
             $feature,
@@ -127,14 +149,16 @@ class DeploymentTest extends TestCase
      * @param null|callable(VersioningBehavior): void $postAction
      */
     private static function executeWorkflow(
-        TemporalStarter $starter,
+        Environment $environment,
+        RRStarter $roadRunnerStarter,
+        TemporalStarter $temporalStarter,
         WorkflowClientInterface $client,
         Feature $feature,
         string $workflowType,
         WorkflowOptions $options,
         ?callable $postAction = null,
     ): ?VersioningBehavior {
-        WorkerFactory::setCurrentDeployment($starter);
+        WorkerFactory::setCurrentDeployment($environment);
 
         try {
             # Create a Workflow stub with an execution timeout 12 seconds
@@ -176,8 +200,9 @@ class DeploymentTest extends TestCase
             $postAction === null or $postAction($behavior);
             return $behavior;
         } finally {
-            $starter->stop() and $starter->start();
-            sleep(5);
+            $temporalStarter->stop();
+            $temporalStarter->start();
+            $roadRunnerStarter->start();
         }
     }
 }
@@ -198,14 +223,15 @@ class WorkerFactory
             );
     }
 
-    public static function setCurrentDeployment(TemporalStarter $starter): void
+    public static function setCurrentDeployment(Environment $environment): void
     {
-        $starter->executeTemporalCommand([
+        $environment->executeTemporalCommand([
             'worker',
             'deployment',
             'set-current-version',
             '--deployment-name', WorkerFactory::DEPLOYMENT_NAME,
             '--build-id', WorkerFactory::BUILD_ID,
+            '--address', $environment->command->address,
             '--yes',
         ], timeout: 5);
     }
