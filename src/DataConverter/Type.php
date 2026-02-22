@@ -79,25 +79,14 @@ final class Type
      */
     public static function create($type): Type
     {
-        switch (true) {
-            case $type instanceof ReturnType:
-                return new self($type->name, $type->nullable);
-
-            case $type instanceof self:
-                return $type;
-
-            case \is_string($type):
-                return new self($type);
-
-            case $type instanceof \ReflectionClass:
-                return self::fromReflectionClass($type);
-
-            case $type instanceof \ReflectionType:
-                return self::fromReflectionType($type);
-
-            default:
-                return new self();
-        }
+        return match (true) {
+            $type instanceof ReturnType => new self($type->name, $type->nullable),
+            $type instanceof self => $type,
+            \is_string($type) => new self($type),
+            $type instanceof \ReflectionClass => self::fromReflectionClass($type),
+            $type instanceof \ReflectionType => self::fromReflectionType($type),
+            default => new self(),
+        };
     }
 
     public function getName(): string

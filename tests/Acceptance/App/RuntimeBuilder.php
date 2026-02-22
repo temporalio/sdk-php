@@ -48,18 +48,18 @@ final class RuntimeBuilder
      * @param non-empty-string $workDir
      * @param iterable<non-empty-string, non-empty-string> $testCasesDir
      */
-    public static function createEmpty(Command $command, string $workDir, iterable $testCasesDir): State
+    public static function createEmpty(Command $command, string $workDir, iterable $testCasesDir, int $workers = 1): State
     {
-        return new State($command, \dirname(__DIR__), $workDir, $testCasesDir);
+        return new State($command, \dirname(__DIR__), $workDir, $testCasesDir, $workers);
     }
 
     /**
      * @param non-empty-string $workDir
      * @param iterable<non-empty-string, non-empty-string> $testCasesDir
      */
-    public static function createState(Command $command, string $workDir, iterable $testCasesDir): State
+    public static function createState(Command $command, string $workDir, iterable $testCasesDir, int $workers = 1): State
     {
-        $runtime = new State($command, \dirname(__DIR__), $workDir, $testCasesDir);
+        $runtime = new State($command, \dirname(__DIR__), $workDir, $testCasesDir, $workers);
 
         self::hydrateClasses($runtime);
 

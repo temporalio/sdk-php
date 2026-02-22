@@ -445,4 +445,14 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * Get the currently running Workflow instance.
      */
     public function getInstance(): object;
+
+    /**
+     * Get the current details of the workflow execution.
+     */
+    public function getCurrentDetails(): ?string;
+
+    /**
+     * Set the current details of the workflow execution.
+     */
+    public function setCurrentDetails(?string $details): void;
 }
