@@ -32,6 +32,9 @@ use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Internal\Mapper\ScheduleMapper;
+use Temporal\Plugin\PluginRegistry;
+use Temporal\Plugin\ScheduleClientPluginContext;
+use Temporal\Plugin\ScheduleClientPluginInterface;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Marshaller\MarshallerInterface;
@@ -46,13 +49,33 @@ final class ScheduleClient implements ScheduleClientInterface
     private MarshallerInterface $marshaller;
     private ProtoToArrayConverter $protoConverter;
 
+    /**
+     * @param list<ScheduleClientPluginInterface> $plugins
+     */
     public function __construct(
         ServiceClientInterface $serviceClient,
         ?ClientOptions $options = null,
         ?DataConverterInterface $converter = null,
+        array $plugins = [],
     ) {
         $this->clientOptions = $options ?? new ClientOptions();
         $this->converter = $converter ?? DataConverter::createDefault();
+
+        // Apply schedule client plugins
+        if ($plugins !== []) {
+            $pluginRegistry = new PluginRegistry($plugins);
+            $pluginContext = new ScheduleClientPluginContext(
+                clientOptions: $this->clientOptions,
+                dataConverter: $this->converter,
+            );
+            foreach ($pluginRegistry->getPlugins(ScheduleClientPluginInterface::class) as $plugin) {
+                $plugin->configureScheduleClient($pluginContext);
+            }
+            $this->clientOptions = $pluginContext->getClientOptions();
+            if ($pluginContext->getDataConverter() !== null) {
+                $this->converter = $pluginContext->getDataConverter();
+            }
+        }
         $this->marshaller = new Marshaller(
             new AttributeMapperFactory(new AttributeReader()),
         );
@@ -67,12 +90,16 @@ final class ScheduleClient implements ScheduleClientInterface
         );
     }
 
+    /**
+     * @param list<ScheduleClientPluginInterface> $plugins
+     */
     public static function create(
         ServiceClientInterface $serviceClient,
         ?ClientOptions $options = null,
         ?DataConverterInterface $converter = null,
+        array $plugins = [],
     ): ScheduleClientInterface {
-        return new self($serviceClient, $options, $converter);
+        return new self($serviceClient, $options, $converter, $plugins);
     }
 
     public function createSchedule(

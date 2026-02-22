@@ -112,6 +112,11 @@ class WorkerFactoryMock implements WorkerFactoryInterface, LoopInterface
         return $worker;
     }
 
+    public function getWorkerPlugins(): array
+    {
+        return [];
+    }
+
     public function getReader(): ReaderInterface
     {
         return $this->reader;

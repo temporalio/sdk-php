@@ -14,6 +14,7 @@ namespace Temporal\Worker;
 use Psr\Log\LoggerInterface;
 use Temporal\Exception\ExceptionInterceptorInterface;
 use Temporal\Interceptor\PipelineProvider;
+use Temporal\Plugin\WorkerPluginInterface;
 
 /**
  * The interface is responsible for providing an interface for registering all dependencies and creating a global
@@ -44,6 +45,13 @@ interface WorkerFactoryInterface
         ?PipelineProvider $interceptorProvider = null,
         ?LoggerInterface $logger = null,
     ): WorkerInterface;
+
+    /**
+     * Get worker plugins registered with this factory.
+     *
+     * @return list<WorkerPluginInterface>
+     */
+    public function getWorkerPlugins(): array;
 
     /**
      * Start processing workflows and activities processing.

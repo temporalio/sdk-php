@@ -6,6 +6,7 @@ namespace Temporal\Testing;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Temporal\Client\WorkflowClient;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\ExceptionInterceptor;
@@ -14,6 +15,9 @@ use Temporal\Interceptor\PipelineProvider;
 use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Workflow\Logger;
+use Temporal\Plugin\CompositePipelineProvider;
+use Temporal\Plugin\WorkerPluginContext;
+use Temporal\Plugin\WorkerPluginInterface;
 use Temporal\Worker\ActivityInvocationCache\ActivityInvocationCacheInterface;
 use Temporal\Worker\ActivityInvocationCache\RoadRunnerActivityInvocationCache;
 use Temporal\Worker\ServiceCredentials;
@@ -32,16 +36,20 @@ class WorkerFactory extends \Temporal\WorkerFactory
         RPCConnectionInterface $rpc,
         ActivityInvocationCacheInterface $activityCache,
         ?ServiceCredentials $credentials = null,
+        array $plugins = [],
+        ?WorkflowClient $client = null,
     ) {
         $this->activityCache = $activityCache;
 
-        parent::__construct($dataConverter, $rpc, $credentials ?? ServiceCredentials::create());
+        parent::__construct($dataConverter, $rpc, $credentials ?? ServiceCredentials::create(), $plugins, $client);
     }
 
     public static function create(
         ?DataConverterInterface $converter = null,
         ?RPCConnectionInterface $rpc = null,
         ?ServiceCredentials $credentials = null,
+        array $plugins = [],
+        ?WorkflowClient $client = null,
         ?ActivityInvocationCacheInterface $activityCache = null,
     ): static {
         return new static(
@@ -49,6 +57,8 @@ class WorkerFactory extends \Temporal\WorkerFactory
             $rpc ?? Goridge::create(),
             $activityCache ?? RoadRunnerActivityInvocationCache::create($converter),
             $credentials,
+            $plugins,
+            $client,
         );
     }
 
@@ -60,14 +70,32 @@ class WorkerFactory extends \Temporal\WorkerFactory
         ?LoggerInterface $logger = null,
     ): WorkerInterface {
         $options ??= WorkerOptions::new();
+
+        $workerContext = new WorkerPluginContext(
+            taskQueue: $taskQueue,
+            workerOptions: $options,
+            exceptionInterceptor: $exceptionInterceptor,
+        );
+        foreach ($this->pluginRegistry->getPlugins(WorkerPluginInterface::class) as $plugin) {
+            $plugin->configureWorker($workerContext);
+        }
+
+        $options = $workerContext->getWorkerOptions();
+
+        // Merge plugin-contributed interceptors with user-provided ones
+        $provider = new CompositePipelineProvider(
+            $workerContext->getInterceptors(),
+            $interceptorProvider ?? new SimplePipelineProvider(),
+        );
+
         $worker = new WorkerMock(
             new Worker(
                 $taskQueue,
-                $options ?? WorkerOptions::new(),
+                $options,
                 ServiceContainer::fromWorkerFactory(
                     $this,
-                    $exceptionInterceptor ?? ExceptionInterceptor::createDefault(),
-                    $interceptorProvider ?? new SimplePipelineProvider(),
+                    $workerContext->getExceptionInterceptor() ?? ExceptionInterceptor::createDefault(),
+                    $provider,
                     new Logger(
                         $logger ?? new NullLogger(),
                         $options->enableLoggingInReplay,
@@ -78,6 +106,12 @@ class WorkerFactory extends \Temporal\WorkerFactory
             ),
             $this->activityCache,
         );
+
+        // Call initializeWorker hooks (forward order)
+        foreach ($this->pluginRegistry->getPlugins(WorkerPluginInterface::class) as $plugin) {
+            $plugin->initializeWorker($worker);
+        }
+
         $this->queues->add($worker);
 
         return $worker;
