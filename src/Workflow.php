@@ -605,6 +605,22 @@ final class Workflow extends Facade
     }
 
     /**
+     * Get the current details of the workflow execution.
+     */
+    public static function getCurrentDetails(): ?string
+    {
+        return self::getCurrentContext()->getCurrentDetails();
+    }
+
+    /**
+     * Set the current details of the workflow execution.
+     */
+    public static function setCurrentDetails(?string $details): void
+    {
+        self::getCurrentContext()->setCurrentDetails($details);
+    }
+
+    /**
      * Completes the current workflow execution atomically and starts a new execution with the same Workflow Id.
      *
      * Method atomically completes the current workflow execution and starts a
