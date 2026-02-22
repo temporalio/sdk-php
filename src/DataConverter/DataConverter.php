@@ -39,27 +39,33 @@ final class DataConverter implements DataConverterInterface
         );
     }
 
-    public function fromPayload(Payload $payload, $type)
+    /**
+     * @param string|\ReflectionClass|\ReflectionType|Type|null $type
+     */
+    public function fromPayload(Payload $payload, $type): mixed
     {
+        $type = Type::create($type);
+
+        if ($type->isClass() && $type->getName() === RawValue::class) {
+            return new RawValue($payload);
+        }
+
         /** @var \ArrayAccess $meta */
         $meta = $payload->getMetadata();
 
         $encoding = $meta[EncodingKeys::METADATA_ENCODING_KEY];
 
         if (!isset($this->converters[$encoding])) {
-            throw new DataConverterException(\sprintf('Undefined payload encoding %s', $encoding));
+            throw new DataConverterException(\sprintf('Undefined payload encoding "%s"', $encoding));
         }
 
-        $type = Type::create($type);
-        if (\in_array($type->getName(), [Type::TYPE_VOID, Type::TYPE_NULL, Type::TYPE_FALSE, Type::TYPE_TRUE], true)) {
-            return match ($type->getName()) {
-                Type::TYPE_VOID, Type::TYPE_NULL => null,
-                Type::TYPE_TRUE => true,
-                Type::TYPE_FALSE => false,
-            };
-        }
-
-        return $this->converters[$encoding]->fromPayload($payload, $type);
+        return match ($type->getName()) {
+            Type::TYPE_VOID,
+            Type::TYPE_NULL => null,
+            Type::TYPE_TRUE => true,
+            Type::TYPE_FALSE => false,
+            default => $this->converters[$encoding]->fromPayload($payload, $type),
+        };
     }
 
     /**
@@ -69,6 +75,9 @@ final class DataConverter implements DataConverterInterface
      */
     public function toPayload($value): Payload
     {
+        if ($value instanceof RawValue) {
+            return $value->getPayload();
+        }
         foreach ($this->converters as $converter) {
             $payload = $converter->toPayload($value);
 
