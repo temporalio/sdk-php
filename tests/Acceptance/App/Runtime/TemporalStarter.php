@@ -10,18 +10,16 @@ use Temporal\Testing\Environment;
 
 final class TemporalStarter
 {
-    private Environment $environment;
-    private bool $started = false;
-
-    public function __construct()
+    public function __construct(
+        private Environment $environment,
+    )
     {
-        $this->environment = Environment::create();
         \register_shutdown_function(fn() => $this->stop());
     }
 
     public function start(): void
     {
-        if ($this->started) {
+        if ($this->environment->isTemporalRunning()) {
             return;
         }
 
@@ -47,28 +45,13 @@ final class TemporalStarter
                 'testDatetime' => ValueType::Datetime,
             ],
         );
-        $this->started = true;
-    }
-
-    public function executeTemporalCommand(array|string $command, int $timeout = 10): void
-    {
-        $this->environment->executeTemporalCommand(
-            command: $command,
-            timeout: $timeout,
-        );
     }
 
     /**
      * @return bool Returns true if the server was stopped successfully, false if it was not started.
      */
-    public function stop(): bool
+    public function stop(): void
     {
-        if (!$this->started) {
-            return false;
-        }
-
         $this->environment->stop();
-        $this->started = false;
-        return true;
     }
 }

@@ -1171,6 +1171,7 @@
       <code><![CDATA[$scope]]></code>
     </PropertyNotSetInConstructor>
     <UnsupportedPropertyReferenceUsage>
+      <code><![CDATA[$ctx->currentDetails = &$context->currentDetails]]></code>
       <code><![CDATA[$ctx->trace = &$context->trace]]></code>
     </UnsupportedPropertyReferenceUsage>
   </file>
