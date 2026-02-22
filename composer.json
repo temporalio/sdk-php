@@ -42,7 +42,7 @@
         "symfony/filesystem": "^5.4.45 || ^6.4.13 || ^7.0 || ^8.0",
         "symfony/http-client": "^5.4.49 || ^6.4.17 || ^7.0 || ^8.0",
         "symfony/polyfill-php83": "^1.31.0",
-        "symfony/process": "^5.4.47 || ^6.4.15 || ^7.0 || ^8.0"
+        "symfony/process": "^5.4.51 || ^6.4.15 || ^7.0 || ^8.0"
     },
     "autoload": {
         "psr-4": {
@@ -56,6 +56,7 @@
         ]
     },
     "require-dev": {
+        "ext-simplexml": "*",
         "buggregator/trap": "^1.13.0",
         "composer/composer": "^2.8.4",
         "cweagans/composer-patches": "^2.0",
@@ -98,10 +99,12 @@
         "cs:fix": "php-cs-fixer fix -v",
         "psalm": "psalm",
         "psalm:baseline": "psalm --set-baseline=psalm-baseline.xml",
-        "test:unit": "phpunit --testsuite=Unit --color=always --testdox",
-        "test:func": "phpunit --testsuite=Functional --color=always --testdox",
+        "test:unit": "tests/runner.php vendor/bin/phpunit --testsuite=Unit --color=always --testdox",
+        "test:func": "tests/runner.php vendor/bin/phpunit --testsuite=Functional --color=always --testdox",
         "test:arch": "phpunit --testsuite=Arch --color=always --testdox",
-        "test:accept": "phpunit --testsuite=Acceptance --color=always --testdox"
+        "test:accept": "tests/runner.php vendor/bin/phpunit --testsuite=Acceptance --color=always --testdox",
+        "test:accept-slow": "tests/runner.php vendor/bin/phpunit --testsuite=\"Acceptance-Slow\" --color=always --testdox",
+        "test:accept-fast": "tests/runner.php vendor/bin/phpunit --testsuite=\"Acceptance-Fast\" --color=always --testdox"
     },
     "config": {
         "sort-packages": true,
