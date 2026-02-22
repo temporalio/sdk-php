@@ -10,26 +10,25 @@ use Temporal\Testing\SystemInfo;
 final class RRStarter
 {
     private Environment $environment;
-    private bool $started = false;
-
     public function __construct(
         private State $runtime,
+        ?Environment $environment = null,
     ) {
-        $this->environment = Environment::create();
+        $this->environment = $environment ?? Environment::create();
         \register_shutdown_function(fn() => $this->stop());
     }
 
     public function start(): void
     {
-        if ($this->started) {
+        if ($this->environment->isRoadRunnerRunning()) {
             return;
         }
 
-        $sysInfo = SystemInfo::detect();
+        $systemInfo = SystemInfo::detect();
         $run = $this->runtime->command;
 
         $rrCommand = [
-            $this->runtime->workDir . DIRECTORY_SEPARATOR . $sysInfo->rrExecutable,
+            $this->runtime->workDir . DIRECTORY_SEPARATOR . $systemInfo->rrExecutable,
             'serve',
             '-w',
             $this->runtime->rrConfigDir,
@@ -50,19 +49,15 @@ final class RRStarter
         $command = \implode(' ', $rrCommand);
 
         // echo "\e[1;36mStart RoadRunner with command:\e[0m {$command}\n";
-        $this->environment->startRoadRunner($command);
-        $this->started = true;
+        $this->environment->startRoadRunner(
+            rrCommand: $command,
+            configFile: $this->runtime->rrConfigDir . DIRECTORY_SEPARATOR . '.rr.yaml',
+        );
     }
 
     public function stop(): void
     {
-        if (!$this->started) {
-            return;
-        }
-
-        // echo "\e[1;36mStop RoadRunner\e[0m\n";
-        $this->environment->stop();
-        $this->started = false;
+        $this->environment->stopRoadRunner();
     }
 
     public function __destruct()
