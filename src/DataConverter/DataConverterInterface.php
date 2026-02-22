@@ -23,12 +23,10 @@ interface DataConverterInterface
      * @psalm-mutation-free
      * @throws DataConverterException
      */
-    public function fromPayload(Payload $payload, $type);
+    public function fromPayload(Payload $payload, mixed $type);
 
     /**
-     * @param mixed $value
-     *
      * @throws DataConverterException
      */
-    public function toPayload($value): Payload;
+    public function toPayload(mixed $value): Payload;
 }
