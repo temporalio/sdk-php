@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Acceptance\Extra\Client\WorkflowClient;
+namespace Temporal\Tests\Acceptance\Extra\Client\Fibers\WorkflowClient;
 
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowOptions;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Tests\Acceptance\App\TestCase;
-use Temporal\Workflow;
+use Temporal\Experiments\Fibers\Workflow;
 use Temporal\Workflow\SignalMethod;
 use Temporal\Workflow\WorkflowExecutionStatus;
 use Temporal\Workflow\WorkflowInterface;
@@ -23,7 +23,7 @@ class WorkflowClientTest extends TestCase
         Feature $feature,
     ): void {
         $stub = $client->newUntypedWorkflowStub(
-            'Extra_Client_WorkflowClient',
+            'Extra_Client_Fibers_WorkflowClient',
             WorkflowOptions::new()
                 ->withTaskQueue($feature->taskQueue)
                 ->withSearchAttributes([
@@ -73,10 +73,10 @@ class FeatureWorkflow
 {
     private string $value = '';
 
-    #[WorkflowMethod('Extra_Client_WorkflowClient')]
+    #[WorkflowMethod('Extra_Client_Fibers_WorkflowClient')]
     public function run()
     {
-        yield Workflow::await(fn(): bool => $this->value !== '');
+        Workflow::await(fn(): bool => $this->value !== '');
         return $this->value;
     }
 
