@@ -29,6 +29,7 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
     private WorkflowContext $parent;
     private Scope $scope;
     private ?UpdateContext $updateContext = null;
+    private bool $fiberMode = false;
 
     /**
      * Creates scope specific context.
@@ -100,6 +101,16 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
     public function getUpdateContext(): ?UpdateContext
     {
         return $this->updateContext;
+    }
+
+    public function setFiberMode(bool $mode): void
+    {
+        $this->fiberMode = $mode;
+    }
+
+    public function isFiberMode(): bool
+    {
+        return $this->fiberMode;
     }
 
     public function resolveConditions(): void

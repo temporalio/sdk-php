@@ -15,7 +15,7 @@ use Temporal\Internal\Declaration\MethodHandler;
  * @internal
  * @psalm-suppress PropertyNotSetInConstructor
  */
-final class DeferredGenerator implements \Iterator
+final class DeferredGenerator implements \Iterator, CoroutineInterface
 {
     private bool $started = false;
     private bool $finished = false;
@@ -162,12 +162,17 @@ final class DeferredGenerator implements \Iterator
         $this->generator->rewind();
     }
 
+    public function isRunning(): bool
+    {
+        return $this->valid();
+    }
+
     /**
      * Add an exception handler.
      *
-     * @param \Closure(\Throwable): mixed $handler
+     * @param callable(\Throwable): mixed $handler
      */
-    public function catch(callable $handler): self
+    public function catch(callable $handler): static
     {
         $this->catchers[] = $handler;
         return $this;

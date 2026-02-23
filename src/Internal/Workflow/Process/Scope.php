@@ -16,6 +16,7 @@ use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
+use Temporal\Experiments\Fibers\DeferredFiber;
 use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\TemporalFailure;
@@ -59,9 +60,10 @@ class Scope implements CancellationScopeInterface, Destroyable
     protected Deferred $deferred;
 
     /**
-     * Worker handler generator that yields promises and requests that are processed in the {@see self::next()} method.
+     * Worker handler coroutine (Generator or Fiber) that yields/suspends with promises
+     * and requests that are processed in the {@see self::next()} method.
      */
-    protected DeferredGenerator $coroutine;
+    protected CoroutineInterface $coroutine;
 
     /**
      * Every coroutine runs on its own loop layer.
@@ -123,9 +125,10 @@ class Scope implements CancellationScopeInterface, Destroyable
      */
     public function start(MethodHandler|\Closure $handler, ValuesInterface $values, bool $deferred): void
     {
-        // Create a coroutine generator
-        $this->coroutine = DeferredGenerator::fromHandler($handler, $values)
-            ->catch($this->onException(...));
+        $this->coroutine = $this->createCoroutine(
+            static fn(ValuesInterface $v): mixed => ($handler)($v),
+            $values,
+        );
 
         $deferred
             ? $this->services->loop->once($this->layer, $this->next(...))
@@ -357,16 +360,68 @@ class Scope implements CancellationScopeInterface, Destroyable
      *
      * @param callable(ValuesInterface): mixed $handler
      */
-    protected function callSignalOrUpdateHandler(callable $handler, ValuesInterface $values): DeferredGenerator
+    protected function callSignalOrUpdateHandler(callable $handler, ValuesInterface $values): CoroutineInterface
     {
-        return DeferredGenerator::fromHandler(static function (ValuesInterface $values) use ($handler): mixed {
+        return $this->createCoroutine(static function (ValuesInterface $values) use ($handler): mixed {
             try {
                 return $handler($values);
             } catch (InvalidArgumentException) {
                 // Skip deserialization errors
                 return null;
             }
-        }, $values)->catch($this->onException(...));
+        }, $values);
+    }
+
+    /**
+     * Creates a coroutine from a handler, automatically detecting whether to use
+     * Generator mode or Fiber mode.
+     *
+     * 1. Handler is wrapped in a Fiber and started.
+     * 2. If handler returns a Generator (generator function), use DeferredGenerator.
+     * 3. If handler suspends via Fiber::suspend(), use DeferredFiber.
+     * 4. If handler completes synchronously, wrap in DeferredGenerator.
+     */
+    private function createCoroutine(callable $handler, ValuesInterface $values): CoroutineInterface
+    {
+        $scopeContext = $this->scopeContext;
+        $fiber = new \Fiber(static function () use ($handler, $values, $scopeContext): mixed {
+            $scopeContext->setFiberMode(true);
+            \Temporal\Workflow::setCurrentContext($scopeContext);
+            return $handler($values);
+        });
+
+        try {
+            $suspendedValue = $fiber->start();
+        } catch (\Throwable $e) {
+            // Handler threw immediately — wrap in a DeferredGenerator that re-throws
+            $coroutine = DeferredGenerator::fromHandler(
+                static fn() => throw $e,
+                EncodedValues::empty(),
+            );
+            return $coroutine->catch($this->onException(...));
+        }
+
+        if ($fiber->isTerminated()) {
+            $result = $fiber->getReturn();
+
+            if ($result instanceof \Generator) {
+                // Generator-based handler: use existing Generator coroutine path
+                $scopeContext->setFiberMode(false);
+                return DeferredGenerator::fromGenerator($result)
+                    ->catch($this->onException(...));
+            }
+
+            // Handler completed synchronously (no async ops, no Generator)
+            $scopeContext->setFiberMode(false);
+            return DeferredGenerator::fromHandler(
+                static fn() => $result,
+                EncodedValues::empty(),
+            )->catch($this->onException(...));
+        }
+
+        // Fiber suspended — Fiber mode
+        return (new DeferredFiber($fiber, $suspendedValue))
+            ->catch($this->onException(...));
     }
 
     protected function onRequest(RequestInterface $request, PromiseInterface $promise, bool $cancellable = true): void
@@ -416,7 +471,7 @@ class Scope implements CancellationScopeInterface, Destroyable
         $this->context->resolveConditions();
 
         try {
-            if (!$this->coroutine->valid()) {
+            if (!$this->coroutine->isRunning()) {
                 $this->onResult($this->coroutine->getReturn());
                 return;
             }
