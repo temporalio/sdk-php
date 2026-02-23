@@ -68,6 +68,14 @@ class LocalActivityOptions extends Options implements ActivityOptionsInterface
     public ?RetryOptions $retryOptions = null;
 
     /**
+     * Optional summary of the activity.
+     *
+     * @experimental This API is experimental and may change in the future.
+     */
+    #[Marshal(name: 'Summary')]
+    public string $summary = '';
+
+    /**
      * ActivityOptions constructor.
      */
     public function __construct()
@@ -150,6 +158,24 @@ class LocalActivityOptions extends Options implements ActivityOptionsInterface
 
         $self->retryOptions = $options;
 
+        return $self;
+    }
+
+    /**
+     * Optional summary of the activity.
+     *
+     * Single-line fixed summary for this activity that will appear in UI/CLI.
+     * This can be in single-line Temporal Markdown format.
+     *
+     * @experimental This API is experimental and may change in the future.
+     *
+     * @return $this
+     */
+    #[Pure]
+    public function withSummary(string $summary): self
+    {
+        $self = clone $this;
+        $self->summary = $summary;
         return $self;
     }
 }
