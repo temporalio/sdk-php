@@ -15,16 +15,20 @@ use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Marshaller\MarshallingRule;
 
 /**
- * @extends Type<array>
+ * @template TClass of \UnitEnum
+ * @extends Type<array, TClass>
  */
 class EnumType extends Type implements RuleFactoryInterface
 {
     private const ERROR_INVALID_TYPE = 'Invalid Enum value. Expected: int or string scalar value for BackedEnum; '
         . 'array with `name` or `value` keys; a case of the Enum. %s given.';
 
-    /** @var class-string<\UnitEnum> */
+    /** @var class-string<TClass> */
     private string $classFQCN;
 
+    /**
+     * @param class-string<TClass>|null $class
+     */
     public function __construct(MarshallerInterface $marshaller, ?string $class = null)
     {
         if ($class === null) {
@@ -54,7 +58,7 @@ class EnumType extends Type implements RuleFactoryInterface
 
     public function parse($value, $current)
     {
-        if (\is_object($value)) {
+        if ($value instanceof $this->classFQCN) {
             return $value;
         }
 

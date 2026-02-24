@@ -20,7 +20,8 @@ use Temporal\Internal\Support\Inheritance;
 
 /**
  * @psalm-import-type DateIntervalFormat from DateInterval
- * @extends Type<int|Duration>
+ * @psalm-import-type DateIntervalValue from DateInterval
+ * @extends Type<int|Duration, DateIntervalValue>
  */
 class DateIntervalType extends Type implements DetectableTypeInterface, RuleFactoryInterface
 {
@@ -53,10 +54,6 @@ class DateIntervalType extends Type implements DetectableTypeInterface, RuleFact
 
     public function serialize($value): int|Duration
     {
-        if ($this->format === DateInterval::FORMAT_NANOSECONDS) {
-            return (int) (DateInterval::parse($value, $this->format)->totalMicroseconds * 1000);
-        }
-
         if ($this->format === Duration::class) {
             return match (true) {
                 $value instanceof \DateInterval => DateInterval::toDuration($value),
@@ -69,8 +66,30 @@ class DateIntervalType extends Type implements DetectableTypeInterface, RuleFact
             };
         }
 
-        $method = 'total' . \ucfirst($this->format);
-        return (int) (DateInterval::parse($value, $this->format)->$method);
+        $carbonInterval = DateInterval::parse($value, $this->format);
+
+        if ($this->format === DateInterval::FORMAT_NANOSECONDS) {
+            return (int) \round($carbonInterval->totalMicroseconds * 1000);
+        }
+
+        return (int) match ($this->format) {
+            DateInterval::FORMAT_YEARS => $carbonInterval->totalYears,
+            DateInterval::FORMAT_MONTHS => $carbonInterval->totalMonths,
+            DateInterval::FORMAT_WEEKS => $carbonInterval->totalWeeks,
+            DateInterval::FORMAT_DAYS => $carbonInterval->totalDays,
+            DateInterval::FORMAT_HOURS => $carbonInterval->totalHours,
+            DateInterval::FORMAT_MINUTES => $carbonInterval->totalMinutes,
+            DateInterval::FORMAT_SECONDS => $carbonInterval->totalSeconds,
+            DateInterval::FORMAT_MILLISECONDS => $carbonInterval->totalMilliseconds,
+            DateInterval::FORMAT_MICROSECONDS => $carbonInterval->totalMicroseconds,
+            default => throw new \InvalidArgumentException(
+                \sprintf(
+                    'Unsupported format: "%s". See %s for available formats.',
+                    $this->format,
+                    DateInterval::class,
+                ),
+            ),
+        };
     }
 
     public function parse($value, $current): CarbonInterval

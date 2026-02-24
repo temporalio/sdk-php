@@ -16,7 +16,7 @@ use Temporal\Internal\Marshaller\MarshallingRule;
 
 /**
  * @template TClass of object
- * @extends Type<array>
+ * @extends Type<array, mixed>
  */
 class ObjectType extends Type implements DetectableTypeInterface, RuleFactoryInterface
 {
@@ -60,7 +60,7 @@ class ObjectType extends Type implements DetectableTypeInterface, RuleFactoryInt
 
     public function parse($value, $current): object
     {
-        if (\is_object($value)) {
+        if (\is_object($value) && $this->reflection->isInstance($value)) {
             return $value;
         }
 
@@ -68,7 +68,7 @@ class ObjectType extends Type implements DetectableTypeInterface, RuleFactoryInt
             $current = $this->emptyInstance();
         }
 
-        if ($current::class === \stdClass::class && $this->reflection->getName() === \stdClass::class) {
+        if ($current instanceof \stdClass && $this->reflection->getName() === \stdClass::class) {
             foreach ($value as $key => $val) {
                 $current->$key = $val;
             }

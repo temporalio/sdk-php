@@ -15,7 +15,7 @@ use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Marshaller\MarshallingRule;
 
 /**
- * @extends Type<mixed>
+ * @extends Type<mixed, mixed>
  */
 class NullableType extends Type
 {

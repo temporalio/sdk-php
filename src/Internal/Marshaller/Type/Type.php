@@ -17,7 +17,8 @@ use Temporal\Internal\Support\Inheritance;
 
 /**
  * @template-covariant TSerializeType of mixed
- * @implements TypeInterface<TSerializeType>
+ * @template TParseType of mixed
+ * @implements TypeInterface<TSerializeType, TParseType>
  */
 abstract class Type implements TypeInterface
 {

@@ -15,7 +15,7 @@ use Temporal\Internal\Marshaller\MarshallerInterface;
 
 /**
  * @template TClass of object
- * @extends Type<array>
+ * @extends Type<array, mixed>
  */
 class OneOfType extends Type
 {
@@ -34,7 +34,7 @@ class OneOfType extends Type
 
     public function parse(mixed $value, mixed $current): ?object
     {
-        if (\is_object($value)) {
+        if (\is_object($value) && $value instanceof $this->parentClass) {
             return $value;
         }
 
