@@ -34,7 +34,7 @@ class OneOfType extends Type
 
     public function parse(mixed $value, mixed $current): ?object
     {
-        if (\is_object($value) && $value instanceof $this->parentClass) {
+        if ($value instanceof $this->parentClass) {
             return $value;
         }
 
@@ -58,10 +58,12 @@ class OneOfType extends Type
         }
 
         if ($dtoClass === null) {
-            $this->nullable or throw new \InvalidArgumentException(\sprintf(
-                'Unable to detect OneOf case for non-nullable type%s.',
-                $this->parentClass ? " `{$this->parentClass}`" : '',
-            ));
+            if (!$this->nullable) {
+                throw new \InvalidArgumentException(\sprintf(
+                    'Unable to detect OneOf case for non-nullable type%s.',
+                    $this->parentClass ? " `{$this->parentClass}`" : '',
+                ));
+            }
 
             return null;
         }
@@ -87,16 +89,23 @@ class OneOfType extends Type
             return [];
         }
 
-        \is_object($value) or throw new \InvalidArgumentException(\sprintf(
-            'Passed value must be a type of object, but %s given.',
-            \get_debug_type($value),
-        ));
+        if (!\is_object($value)) {
+            throw new \InvalidArgumentException(\sprintf(
+                'Passed value must be a type of object, but %s given.',
+                \get_debug_type($value),
+            ));
+        }
 
         foreach ($this->cases as $field => $class) {
             if ($value::class === $class) {
                 return [$field => $this->marshaller->marshal($value)];
             }
         }
+
+        throw new \InvalidArgumentException(\sprintf(
+            'Passed value must be a type of one of the allowed classes, but %s given.',
+            \get_debug_type($value),
+        ));
     }
 
     /**

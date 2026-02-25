@@ -819,7 +819,7 @@
       <code><![CDATA[DateInterval::FORMAT_YEARS]]></code>
     </DeprecatedConstant>
     <InvalidOperand>
-      <code><![CDATA[$carbonInterval->totalMicroseconds * 1000]]></code>
+      <code><![CDATA[$interval->totalMicroseconds * 1000]]></code>
       <code><![CDATA[$value * 1000000000]]></code>
       <code><![CDATA[($value * 1000000000) % 1000000000]]></code>
     </InvalidOperand>
@@ -847,11 +847,6 @@
     </InvalidReturnStatement>
     <InvalidReturnType>
       <code><![CDATA[TClass]]></code>
-    </InvalidReturnType>
-  </file>
-  <file src="src/Internal/Marshaller/Type/OneOfType.php">
-    <InvalidReturnType>
-      <code><![CDATA[array]]></code>
     </InvalidReturnType>
   </file>
   <file src="src/Internal/Marshaller/Type/Type.php">

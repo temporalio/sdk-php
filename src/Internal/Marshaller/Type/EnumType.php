@@ -82,10 +82,6 @@ class EnumType extends Type implements RuleFactoryInterface
         throw new \InvalidArgumentException(\sprintf(self::ERROR_INVALID_TYPE, \ucfirst(\get_debug_type($value))));
     }
 
-    /**
-     * @psalm-suppress UndefinedDocblockClass
-     * @param mixed $value
-     */
     public function serialize($value): array
     {
         return $value instanceof \BackedEnum

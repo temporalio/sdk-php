@@ -66,22 +66,19 @@ class DateIntervalType extends Type implements DetectableTypeInterface, RuleFact
             };
         }
 
-        $carbonInterval = DateInterval::parse($value, $this->format);
-
-        if ($this->format === DateInterval::FORMAT_NANOSECONDS) {
-            return (int) \round($carbonInterval->totalMicroseconds * 1000);
-        }
+        $interval = DateInterval::parse($value, $this->format);
 
         return (int) match ($this->format) {
-            DateInterval::FORMAT_YEARS => $carbonInterval->totalYears,
-            DateInterval::FORMAT_MONTHS => $carbonInterval->totalMonths,
-            DateInterval::FORMAT_WEEKS => $carbonInterval->totalWeeks,
-            DateInterval::FORMAT_DAYS => $carbonInterval->totalDays,
-            DateInterval::FORMAT_HOURS => $carbonInterval->totalHours,
-            DateInterval::FORMAT_MINUTES => $carbonInterval->totalMinutes,
-            DateInterval::FORMAT_SECONDS => $carbonInterval->totalSeconds,
-            DateInterval::FORMAT_MILLISECONDS => $carbonInterval->totalMilliseconds,
-            DateInterval::FORMAT_MICROSECONDS => $carbonInterval->totalMicroseconds,
+            DateInterval::FORMAT_YEARS => $interval->totalYears,
+            DateInterval::FORMAT_MONTHS => $interval->totalMonths,
+            DateInterval::FORMAT_WEEKS => $interval->totalWeeks,
+            DateInterval::FORMAT_DAYS => $interval->totalDays,
+            DateInterval::FORMAT_HOURS => $interval->totalHours,
+            DateInterval::FORMAT_MINUTES => $interval->totalMinutes,
+            DateInterval::FORMAT_SECONDS => $interval->totalSeconds,
+            DateInterval::FORMAT_MILLISECONDS => $interval->totalMilliseconds,
+            DateInterval::FORMAT_MICROSECONDS => $interval->totalMicroseconds,
+            DateInterval::FORMAT_NANOSECONDS => (int) \round($interval->totalMicroseconds * 1000),
             default => throw new \InvalidArgumentException(
                 \sprintf(
                     'Unsupported format: "%s". See %s for available formats.',

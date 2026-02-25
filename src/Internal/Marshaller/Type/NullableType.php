@@ -33,11 +33,6 @@ class NullableType extends Type
         parent::__construct($marshaller);
     }
 
-    /**
-     * @param mixed $value
-     * @param mixed $current
-     * @return mixed
-     */
     public function parse($value, $current)
     {
         if ($value === null) {

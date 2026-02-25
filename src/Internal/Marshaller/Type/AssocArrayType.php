@@ -40,10 +40,6 @@ class AssocArrayType extends Type
         parent::__construct($marshaller);
     }
 
-    /**
-     * @param mixed $value
-     * @param mixed $current
-     */
     public function parse($value, $current): array
     {
         if (!\is_array($value)) {

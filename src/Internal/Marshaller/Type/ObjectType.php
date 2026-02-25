@@ -64,11 +64,9 @@ class ObjectType extends Type implements DetectableTypeInterface, RuleFactoryInt
             return $value;
         }
 
-        if ($current === null) {
-            $current = $this->emptyInstance();
-        }
+        $current ??= $this->emptyInstance();
 
-        if ($current instanceof \stdClass && $this->reflection->getName() === \stdClass::class) {
+        if ($current::class === \stdClass::class && $this->reflection->getName() === \stdClass::class) {
             foreach ($value as $key => $val) {
                 $current->$key = $val;
             }
