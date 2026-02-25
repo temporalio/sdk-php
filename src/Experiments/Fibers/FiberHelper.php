@@ -29,9 +29,9 @@ final class FiberHelper
     {
         // Use Facade::getCurrentContext() which returns null outside workflow
         // (unlike Workflow::getCurrentContext() which throws)
-        $ctx = Facade::getCurrentContext();
+        $context = Facade::getCurrentContext();
 
-        if ($ctx instanceof ScopeContext && $ctx->isFiberMode()) {
+        if ($context instanceof ScopeContext && $context->isFiberMode()) {
             return \Fiber::suspend($promise);
         }
 

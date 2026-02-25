@@ -10,12 +10,9 @@ use Temporal\Activity\ActivityOptionsInterface;
 use Temporal\Common\SearchAttributes\SearchAttributeUpdate;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
-use Temporal\Workflow\ActivityStubInterface;
 use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\ChildWorkflowOptions;
-use Temporal\Workflow\ChildWorkflowStubInterface;
 use Temporal\Workflow\ContinueAsNewOptions;
-use Temporal\Workflow\ExternalWorkflowStubInterface;
 use Temporal\Workflow\Mutex as BaseMutex;
 use Temporal\Workflow\ScopedContextInterface;
 use Temporal\Workflow\TimerOptions;
@@ -209,7 +206,7 @@ final class Workflow
     // Async operations (auto-suspend via FiberHelper)
     // =========================================================================
 
-    public static function await(callable|BaseMutex|PromiseInterface ...$conditions): mixed
+    public static function await(callable|BaseMutex|Mutex|PromiseInterface ...$conditions): mixed
     {
         return FiberHelper::await(\Temporal\Workflow::await(...$conditions));
     }
@@ -242,6 +239,14 @@ final class Workflow
     public static function timer($interval, ?TimerOptions $options = null): mixed
     {
         return FiberHelper::await(\Temporal\Workflow::timer($interval, $options));
+    }
+    /**
+     * @param \DateInterval|string|int $interval
+     * @return PromiseInterface<void>
+     */
+    public static function createTimer($interval, ?TimerOptions $options = null): PromiseInterface
+    {
+        return \Temporal\Workflow::timer($interval, $options);
     }
 
     public static function continueAsNew(
@@ -303,8 +308,10 @@ final class Workflow
 
     public static function newUntypedActivityStub(
         ?ActivityOptionsInterface $options = null,
-    ): ActivityStubInterface {
-        return \Temporal\Workflow::newUntypedActivityStub($options);
+    ): FiberActivityStub {
+        return new FiberActivityStub(
+            \Temporal\Workflow::newUntypedActivityStub($options),
+        );
     }
 
     /**
@@ -322,8 +329,10 @@ final class Workflow
     public static function newUntypedChildWorkflowStub(
         string $name,
         ?ChildWorkflowOptions $options = null,
-    ): ChildWorkflowStubInterface {
-        return \Temporal\Workflow::newUntypedChildWorkflowStub($name, $options);
+    ): FiberChildWorkflowStub {
+        return new FiberChildWorkflowStub(
+            \Temporal\Workflow::newUntypedChildWorkflowStub($name, $options),
+        );
     }
 
     /**
@@ -346,9 +355,11 @@ final class Workflow
         return new FiberProxy(\Temporal\Workflow::newExternalWorkflowStub($class, $execution));
     }
 
-    public static function newUntypedExternalWorkflowStub(WorkflowExecution $execution): ExternalWorkflowStubInterface
+    public static function newUntypedExternalWorkflowStub(WorkflowExecution $execution): FiberExternalWorkflowStub
     {
-        return \Temporal\Workflow::newUntypedExternalWorkflowStub($execution);
+        return new FiberExternalWorkflowStub(
+            \Temporal\Workflow::newUntypedExternalWorkflowStub($execution),
+        );
     }
 
     // =========================================================================

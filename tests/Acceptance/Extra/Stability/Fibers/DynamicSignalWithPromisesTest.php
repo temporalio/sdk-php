@@ -11,6 +11,7 @@ use Temporal\Client\WorkflowStubInterface;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Experiments\Fibers\Workflow;
+use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
 class DynamicSignalWithPromisesTest extends TestCase
@@ -37,7 +38,7 @@ class DynamicSignalWithPromisesTest extends TestCase
     }
 }
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class TestWorkflow
 {
     #[WorkflowMethod(name: 'Extra_Stability_Fibers_DynamicSignalWithPromises')]
@@ -48,13 +49,13 @@ class TestWorkflow
             return $value;
         });
 
-        yield $this->promiseSignal('begin');
+        $this->promiseSignal('begin');
         $value++;
 
-        yield $this->promiseSignal('next1');
+        $this->promiseSignal('next1');
         $value++;
 
-        yield $this->promiseSignal('next2');
+        $this->promiseSignal('next2');
         $value++;
 
         return $value;

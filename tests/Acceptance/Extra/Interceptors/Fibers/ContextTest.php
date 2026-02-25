@@ -23,6 +23,8 @@ use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Experiments\Fibers\Workflow;
+use Temporal\Workflow\SignalMethod;
+use Temporal\Workflow\WorkflowInit;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
@@ -115,7 +117,7 @@ class TestWorkflow
         ];
     }
 
-    #[Workflow\SignalMethod]
+    #[SignalMethod]
     public function exit(): void
     {
         $this->exit = true;
@@ -125,7 +127,7 @@ class TestWorkflow
 #[WorkflowInterface]
 class TestFailingWorkflow
 {
-    #[Workflow\WorkflowInit]
+    #[WorkflowInit]
     public function __construct(mixed ...$input)
     {
         if ($input === []) {
@@ -145,7 +147,7 @@ class TestReadonlyConstructorWorkflow
 {
     private ?PromiseInterface $uuid = null;
 
-    #[Workflow\WorkflowInit]
+    #[WorkflowInit]
     public function __construct(mixed ...$input)
     {
         try {

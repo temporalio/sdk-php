@@ -580,6 +580,7 @@ class Scope implements CancellationScopeInterface, Destroyable
 
     private function onException(\Throwable $e): void
     {
+        trap($e);
         $this->deferred->reject($e);
 
         $this->makeCurrent();

@@ -102,7 +102,10 @@ try {
         $getWorker($feature)->registerActivityImplementations($container->make($activity));
     }
 
-    $container->get(WorkerFactoryInterface::class)->run();
+    $factory = $container->get(WorkerFactoryInterface::class);
+    $factory->run();
 } catch (\Throwable $e) {
     td($e);
 }
+
+$a=1;

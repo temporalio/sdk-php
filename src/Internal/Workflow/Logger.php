@@ -49,6 +49,7 @@ class Logger implements LoggerInterface
 
     public function error(string|\Stringable $message, array $context = []): void
     {
+        trap($message);
         $this->shouldBeSkipped() or $this->logger->error($message, $this->context($context));
     }
 

@@ -15,7 +15,10 @@ use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Experiments\Fibers\Workflow;
+use Temporal\Workflow\QueryMethod;
 use Temporal\Workflow\ReturnType;
+use Temporal\Workflow\SignalMethod;
+use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
 class ResetWorkerTest extends TestCase
@@ -111,7 +114,7 @@ class ResetWorkerTest extends TestCase
     }
 }
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class TestWorkflow
 {
     private bool $exit = false;
@@ -120,22 +123,22 @@ class TestWorkflow
     #[ReturnType(Type::TYPE_STRING)]
     public function expire(int $seconds = 10): \Generator
     {
-        $isTimer = ! yield Workflow::awaitWithTimeout($seconds, fn(): bool => $this->exit);
+        $isTimer = ! Workflow::awaitWithTimeout($seconds, fn(): bool => $this->exit);
 
         return yield $isTimer ? 'Timer' : 'Signal';
     }
 
-    #[Workflow\QueryMethod('die')]
+    #[QueryMethod('die')]
     public function die(int $sleep = 2): void
     {
         \sleep($sleep);
         exit(1);
     }
 
-    #[Workflow\SignalMethod('exit')]
+    #[SignalMethod('exit')]
     public function signal()
     {
-        yield Workflow::uuid7();
+        Workflow::uuid7();
         $this->exit = true;
     }
 }

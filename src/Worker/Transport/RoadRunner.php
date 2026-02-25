@@ -86,6 +86,7 @@ final class RoadRunner implements HostConnectionInterface
     public function error(\Throwable $error): void
     {
         try {
+            trap($error);
             $this->worker->error((string) $error);
         } catch (\Throwable $e) {
             throw new TransportException($e->getMessage(), $e->getCode(), $e);

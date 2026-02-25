@@ -41,15 +41,15 @@ class TestWorkflow
     #[WorkflowMethod(name: "Extra_Versioning_Fibers_Classic")]
     public function handle()
     {
-        $version = yield Workflow::getVersion('test', Workflow::DEFAULT_VERSION, 2);
+        $version = Workflow::getVersion('test', \Temporal\Workflow::DEFAULT_VERSION, 2);
 
         if ($version === 1) {
-            yield Workflow::sideEffect(static fn(): string => 'test');
+            Workflow::sideEffect(static fn(): string => 'test');
             return 'v1';
         }
 
         if ($version === 2) {
-            return yield Workflow::executeActivity(
+            return Workflow::executeActivity(
                 /** @see TestActivity::handler() */
                 'Extra_Versioning_Fibers_Classic.handler',
                 args: ['v2'],

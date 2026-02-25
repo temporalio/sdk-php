@@ -116,6 +116,7 @@ trait WorkflowOutboundCallsInterceptorTrait
      */
     public function panic(PanicInput $input, callable $next): PromiseInterface
     {
+        trap($input->failure);
         return $next($input);
     }
 

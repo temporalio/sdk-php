@@ -13,6 +13,7 @@ use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Experiments\Fibers\Workflow;
+use Temporal\Workflow\ChildWorkflowOptions;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
@@ -86,14 +87,14 @@ class TestWorkflow
                 ),
         );
 
-        Workflow\ChildWorkflowOptions::new()->priority->priorityKey === Workflow::getInfo()->priority->priorityKey or
+        ChildWorkflowOptions::new()->priority->priorityKey === Workflow::getInfo()->priority->priorityKey or
         throw new ApplicationFailure('Child Workflow priority is not the same as the parent by default', 'error', true);
 
         if ($runChild) {
             $child = Workflow::executeChildWorkflow(
                 'Extra_Workflow_Fibers_Priority',
                 [false],
-                Workflow\ChildWorkflowOptions::new()->withPriority(
+                ChildWorkflowOptions::new()->withPriority(
                     Priority::new(1)
                         ->withFairnessKey('child-key')
                         ->withFairnessWeight(3.3),
