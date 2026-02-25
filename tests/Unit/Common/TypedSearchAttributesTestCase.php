@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Tests\Unit\Common;
 
 use Temporal\Common\SearchAttributes\SearchAttributeKey;
+use Temporal\Common\SearchAttributes\ValueType;
 use Temporal\Common\TypedSearchAttributes;
 use PHPUnit\Framework\TestCase;
 
@@ -196,6 +197,92 @@ class TypedSearchAttributesTestCase extends TestCase
         self::assertSame(['foo', 'bar'], $collection->get(SearchAttributeKey::forKeywordList('name8')));
     }
 
+    public function testFromJsonArrayWithPascalCaseType(): void
+    {
+        $collection = TypedSearchAttributes::fromJsonArray([
+            'name1' => [
+                'type' => 'Bool',
+                'value' => true,
+            ],
+            'name2' => [
+                'type' => 'Int',
+                'value' => 42,
+            ],
+            'name3' => [
+                'type' => 'Double',
+                'value' => 3.14,
+            ],
+            'name4' => [
+                'type' => 'Keyword',
+                'value' => 'bar',
+            ],
+            'name5' => [
+                'type' => 'Text',
+                'value' => 'foo',
+            ],
+            'name6' => [
+                'type' => 'Datetime',
+                'value' => '2021-01-01T00:00:00+00:00',
+            ],
+            'name7' => [
+                'type' => 'KeywordList',
+                'value' => ['foo', 'bar'],
+            ],
+        ]);
+
+        self::assertCount(7, $collection);
+        self::assertTrue($collection->get(SearchAttributeKey::forBool('name1')));
+        self::assertSame(42, $collection->get(SearchAttributeKey::forInteger('name2')));
+        self::assertSame(3.14, $collection->get(SearchAttributeKey::forFloat('name3')));
+        self::assertSame('bar', $collection->get(SearchAttributeKey::forKeyword('name4')));
+        self::assertSame('foo', $collection->get(SearchAttributeKey::forText('name5')));
+        self::assertInstanceOf(\DateTimeImmutable::class, $collection->get(SearchAttributeKey::forDatetime('name6')));
+        self::assertSame(['foo', 'bar'], $collection->get(SearchAttributeKey::forKeywordList('name7')));
+    }
+
+    public function testFromJsonArrayWithScreamingSnakeCaseType(): void
+    {
+        $collection = TypedSearchAttributes::fromJsonArray([
+            'name1' => [
+                'type' => 'INDEXED_VALUE_TYPE_BOOL',
+                'value' => true,
+            ],
+            'name2' => [
+                'type' => 'INDEXED_VALUE_TYPE_INT',
+                'value' => 42,
+            ],
+            'name3' => [
+                'type' => 'INDEXED_VALUE_TYPE_DOUBLE',
+                'value' => 3.14,
+            ],
+            'name4' => [
+                'type' => 'INDEXED_VALUE_TYPE_KEYWORD',
+                'value' => 'bar',
+            ],
+            'name5' => [
+                'type' => 'INDEXED_VALUE_TYPE_TEXT',
+                'value' => 'foo',
+            ],
+            'name6' => [
+                'type' => 'INDEXED_VALUE_TYPE_DATETIME',
+                'value' => '2021-01-01T00:00:00+00:00',
+            ],
+            'name7' => [
+                'type' => 'INDEXED_VALUE_TYPE_KEYWORD_LIST',
+                'value' => ['foo', 'bar'],
+            ],
+        ]);
+
+        self::assertCount(7, $collection);
+        self::assertTrue($collection->get(SearchAttributeKey::forBool('name1')));
+        self::assertSame(42, $collection->get(SearchAttributeKey::forInteger('name2')));
+        self::assertSame(3.14, $collection->get(SearchAttributeKey::forFloat('name3')));
+        self::assertSame('bar', $collection->get(SearchAttributeKey::forKeyword('name4')));
+        self::assertSame('foo', $collection->get(SearchAttributeKey::forText('name5')));
+        self::assertInstanceOf(\DateTimeImmutable::class, $collection->get(SearchAttributeKey::forDatetime('name6')));
+        self::assertSame(['foo', 'bar'], $collection->get(SearchAttributeKey::forKeywordList('name7')));
+    }
+
     public function testFromUntypedCollection(): void
     {
         $collection = TypedSearchAttributes::fromCollection([
@@ -217,6 +304,46 @@ class TypedSearchAttributesTestCase extends TestCase
         self::assertInstanceOf(\DateTimeImmutable::class, $collection->get(SearchAttributeKey::forDatetime('name7')));
         self::assertSame('2021-01-01T00:00:00+00:00', $collection->get(SearchAttributeKey::forDatetime('name7'))->format(DATE_RFC3339));
         self::assertSame(['foo', 'bar'], $collection->get(SearchAttributeKey::forKeywordList('name8')));
+    }
+
+    public function testValueTypeFromMetadataCanonical(): void
+    {
+        self::assertSame(ValueType::Bool, ValueType::fromMetadata('bool'));
+        self::assertSame(ValueType::Float, ValueType::fromMetadata('float64'));
+        self::assertSame(ValueType::Int, ValueType::fromMetadata('int64'));
+        self::assertSame(ValueType::Keyword, ValueType::fromMetadata('keyword'));
+        self::assertSame(ValueType::KeywordList, ValueType::fromMetadata('keyword_list'));
+        self::assertSame(ValueType::Text, ValueType::fromMetadata('string'));
+        self::assertSame(ValueType::Datetime, ValueType::fromMetadata('datetime'));
+    }
+
+    public function testValueTypeFromMetadataPascalCase(): void
+    {
+        self::assertSame(ValueType::Bool, ValueType::fromMetadata('Bool'));
+        self::assertSame(ValueType::Float, ValueType::fromMetadata('Double'));
+        self::assertSame(ValueType::Int, ValueType::fromMetadata('Int'));
+        self::assertSame(ValueType::Keyword, ValueType::fromMetadata('Keyword'));
+        self::assertSame(ValueType::KeywordList, ValueType::fromMetadata('KeywordList'));
+        self::assertSame(ValueType::Text, ValueType::fromMetadata('Text'));
+        self::assertSame(ValueType::Datetime, ValueType::fromMetadata('Datetime'));
+    }
+
+    public function testValueTypeFromMetadataScreamingSnakeCase(): void
+    {
+        self::assertSame(ValueType::Bool, ValueType::fromMetadata('INDEXED_VALUE_TYPE_BOOL'));
+        self::assertSame(ValueType::Float, ValueType::fromMetadata('INDEXED_VALUE_TYPE_DOUBLE'));
+        self::assertSame(ValueType::Int, ValueType::fromMetadata('INDEXED_VALUE_TYPE_INT'));
+        self::assertSame(ValueType::Keyword, ValueType::fromMetadata('INDEXED_VALUE_TYPE_KEYWORD'));
+        self::assertSame(ValueType::KeywordList, ValueType::fromMetadata('INDEXED_VALUE_TYPE_KEYWORD_LIST'));
+        self::assertSame(ValueType::Text, ValueType::fromMetadata('INDEXED_VALUE_TYPE_TEXT'));
+        self::assertSame(ValueType::Datetime, ValueType::fromMetadata('INDEXED_VALUE_TYPE_DATETIME'));
+    }
+
+    public function testValueTypeFromMetadataUnknown(): void
+    {
+        self::assertNull(ValueType::fromMetadata('unknown'));
+        self::assertNull(ValueType::fromMetadata(''));
+        self::assertNull(ValueType::fromMetadata('INDEXED_VALUE_TYPE_UNKNOWN'));
     }
 
     public function testValues()
