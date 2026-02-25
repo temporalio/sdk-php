@@ -62,7 +62,11 @@ class TypedSearchAttributes implements \IteratorAggregate, \Countable
         $collection = new \SplObjectStorage();
         foreach ($array as $name => ['type' => $type, 'value' => $value]) {
             try {
-                $valueType = ValueType::from($type);
+                $valueType = ValueType::fromMetadata($type);
+                if ($valueType === null) {
+                    continue;
+                }
+
                 $key = SearchAttributeKey::for($valueType, $name);
                 $collection->offsetSet($key, $key->valueSet($value)->value);
             } catch (\Throwable) {
