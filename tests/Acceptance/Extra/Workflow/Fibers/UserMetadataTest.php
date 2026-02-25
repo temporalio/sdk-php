@@ -20,8 +20,12 @@ use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Experiments\Fibers\Workflow;
+use Temporal\Workflow\SignalMethod;
+use Temporal\Workflow\TimerOptions;
+use Temporal\Workflow\UpdateMethod;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Throwable;
 
 class UserMetadataTest extends TestCase
 {
@@ -189,7 +193,7 @@ class UserMetadataTest extends TestCase
     {
         try {
             $stub->terminate('');
-        } catch (\Throwable) {
+        } catch (Throwable) {
             // Do nothing
         }
     }
@@ -204,18 +208,18 @@ class TestWorkflow
     #[WorkflowMethod(name: "Extra_Workflow_Fibers_UserMetadata")]
     public function handle()
     {
-        $timer = Workflow::timer(30, \Temporal\Workflow\TimerOptions::new()->withSummary('test timer summary'));
+        $timer = Workflow::timer(30, TimerOptions::new()->withSummary('test timer summary'));
         Workflow::await($timer, fn() => $this->exit);
         return $this->result;
     }
 
-    #[\Temporal\Workflow\UpdateMethod]
+    #[UpdateMethod]
     public function ping(): string
     {
         return 'pong';
     }
 
-    #[\Temporal\Workflow\UpdateMethod('start_child')]
+    #[UpdateMethod('start_child')]
     public function startChild(string $summary, string $details)
     {
         $stub = Workflow::newUntypedChildWorkflowStub(
@@ -227,7 +231,7 @@ class TestWorkflow
         return $execution->getID();
     }
 
-    #[\Temporal\Workflow\UpdateMethod('execute_activity')]
+    #[UpdateMethod('execute_activity')]
     public function executeActivity(string $summary)
     {
         /** @see TestActivity::execute() */
@@ -239,7 +243,7 @@ class TestWorkflow
         );
     }
 
-    #[\Temporal\Workflow\SignalMethod]
+    #[SignalMethod]
     public function exit(): void
     {
         $this->exit = true;

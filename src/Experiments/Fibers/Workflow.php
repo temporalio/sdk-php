@@ -211,7 +211,7 @@ final class Workflow
 
     public static function await(callable|BaseMutex|PromiseInterface ...$conditions): mixed
     {
-        return FiberHelper::await(self::getCurrentContext()->await(...$conditions));
+        return FiberHelper::await(\Temporal\Workflow::await(...$conditions));
     }
 
     /**
@@ -219,12 +219,12 @@ final class Workflow
      */
     public static function awaitWithTimeout($interval, callable|BaseMutex|PromiseInterface ...$conditions): mixed
     {
-        return FiberHelper::await(self::getCurrentContext()->awaitWithTimeout($interval, ...$conditions));
+        return FiberHelper::await(\Temporal\Workflow::awaitWithTimeout($interval, ...$conditions));
     }
 
     public static function getVersion(string $changeId, int $minSupported, int $maxSupported): mixed
     {
-        return FiberHelper::await(self::getCurrentContext()->getVersion($changeId, $minSupported, $maxSupported));
+        return FiberHelper::await(\Temporal\Workflow::getVersion($changeId, $minSupported, $maxSupported));
     }
 
     /**
@@ -233,7 +233,7 @@ final class Workflow
      */
     public static function sideEffect(callable $value): mixed
     {
-        return FiberHelper::await(self::getCurrentContext()->sideEffect($value));
+        return FiberHelper::await(\Temporal\Workflow::sideEffect($value));
     }
 
     /**
@@ -241,7 +241,7 @@ final class Workflow
      */
     public static function timer($interval, ?TimerOptions $options = null): mixed
     {
-        return FiberHelper::await(self::getCurrentContext()->timer($interval, $options));
+        return FiberHelper::await(\Temporal\Workflow::timer($interval, $options));
     }
 
     public static function continueAsNew(
@@ -249,7 +249,7 @@ final class Workflow
         array $args = [],
         ?ContinueAsNewOptions $options = null,
     ): mixed {
-        return FiberHelper::await(self::getCurrentContext()->continueAsNew($type, $args, $options));
+        return FiberHelper::await(\Temporal\Workflow::continueAsNew($type, $args, $options));
     }
 
     public static function executeChildWorkflow(
@@ -258,7 +258,7 @@ final class Workflow
         ?ChildWorkflowOptions $options = null,
         mixed $returnType = null,
     ): mixed {
-        return FiberHelper::await(self::getCurrentContext()->executeChildWorkflow($type, $args, $options, $returnType));
+        return FiberHelper::await(\Temporal\Workflow::executeChildWorkflow($type, $args, $options, $returnType));
     }
 
     public static function executeActivity(
@@ -267,22 +267,22 @@ final class Workflow
         ?ActivityOptionsInterface $options = null,
         Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
     ): mixed {
-        return FiberHelper::await(self::getCurrentContext()->executeActivity($type, $args, $options, $returnType));
+        return FiberHelper::await(\Temporal\Workflow::executeActivity($type, $args, $options, $returnType));
     }
 
     public static function uuid(): mixed
     {
-        return FiberHelper::await(self::getCurrentContext()->uuid());
+        return FiberHelper::await(\Temporal\Workflow::uuid());
     }
 
     public static function uuid4(): mixed
     {
-        return FiberHelper::await(self::getCurrentContext()->uuid4());
+        return FiberHelper::await(\Temporal\Workflow::uuid4());
     }
 
     public static function uuid7(?\DateTimeInterface $dateTime = null): mixed
     {
-        return FiberHelper::await(self::getCurrentContext()->uuid7($dateTime));
+        return FiberHelper::await(\Temporal\Workflow::uuid7($dateTime));
     }
 
     // =========================================================================
@@ -298,13 +298,13 @@ final class Workflow
         string $class,
         ?ActivityOptionsInterface $options = null,
     ): object {
-        return new FiberProxy(self::getCurrentContext()->newActivityStub($class, $options));
+        return new FiberProxy(\Temporal\Workflow::newActivityStub($class, $options));
     }
 
     public static function newUntypedActivityStub(
         ?ActivityOptionsInterface $options = null,
     ): ActivityStubInterface {
-        return self::getCurrentContext()->newUntypedActivityStub($options);
+        return \Temporal\Workflow::newUntypedActivityStub($options);
     }
 
     /**
@@ -316,14 +316,14 @@ final class Workflow
         string $class,
         ?ChildWorkflowOptions $options = null,
     ): object {
-        return new FiberProxy(self::getCurrentContext()->newChildWorkflowStub($class, $options));
+        return new FiberProxy(\Temporal\Workflow::newChildWorkflowStub($class, $options));
     }
 
     public static function newUntypedChildWorkflowStub(
         string $name,
         ?ChildWorkflowOptions $options = null,
     ): ChildWorkflowStubInterface {
-        return self::getCurrentContext()->newUntypedChildWorkflowStub($name, $options);
+        return \Temporal\Workflow::newUntypedChildWorkflowStub($name, $options);
     }
 
     /**
@@ -333,7 +333,7 @@ final class Workflow
      */
     public static function newContinueAsNewStub(string $class, ?ContinueAsNewOptions $options = null): object
     {
-        return new FiberProxy(self::getCurrentContext()->newContinueAsNewStub($class, $options));
+        return new FiberProxy(\Temporal\Workflow::newContinueAsNewStub($class, $options));
     }
 
     /**
@@ -343,12 +343,12 @@ final class Workflow
      */
     public static function newExternalWorkflowStub(string $class, WorkflowExecution $execution): object
     {
-        return new FiberProxy(self::getCurrentContext()->newExternalWorkflowStub($class, $execution));
+        return new FiberProxy(\Temporal\Workflow::newExternalWorkflowStub($class, $execution));
     }
 
     public static function newUntypedExternalWorkflowStub(WorkflowExecution $execution): ExternalWorkflowStubInterface
     {
-        return self::getCurrentContext()->newUntypedExternalWorkflowStub($execution);
+        return \Temporal\Workflow::newUntypedExternalWorkflowStub($execution);
     }
 
     // =========================================================================
