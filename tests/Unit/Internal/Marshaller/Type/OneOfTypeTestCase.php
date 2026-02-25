@@ -185,7 +185,8 @@ final class OneOfTypeTestCase extends TestCase
         $unregistered = new class {};
 
         // serialize method doesn't return when no case matches, causing TypeError
-        $this->expectException(\TypeError::class);
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Passed value must be a type of one of the allowed classes, but class@anonymous given.');
 
         $type->serialize($unregistered);
     }

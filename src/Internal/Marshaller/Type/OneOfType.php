@@ -34,7 +34,7 @@ class OneOfType extends Type
 
     public function parse(mixed $value, mixed $current): ?object
     {
-        if ($value instanceof $this->parentClass) {
+        if ($this->parentClass !== null && $value instanceof $this->parentClass) {
             return $value;
         }
 
