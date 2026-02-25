@@ -17,7 +17,7 @@ use Temporal\Internal\Marshaller\MarshallingRule;
 /**
  * Force the value to be an associative array (object) on serialization.
  *
- * @extends Type<object>
+ * @extends Type<object, mixed>
  */
 class AssocArrayType extends Type
 {
@@ -40,17 +40,13 @@ class AssocArrayType extends Type
         parent::__construct($marshaller);
     }
 
-    /**
-     * @psalm-assert array $value
-     * @psalm-assert array $current
-     * @param mixed $value
-     * @param mixed $current
-     */
     public function parse($value, $current): array
     {
-        \is_array($value) or throw new \InvalidArgumentException(
-            \sprintf(self::ERROR_INVALID_TYPE, \get_debug_type($value)),
-        );
+        if (!\is_array($value)) {
+            throw new \InvalidArgumentException(
+                \sprintf(self::ERROR_INVALID_TYPE, \get_debug_type($value)),
+            );
+        }
 
         if ($this->type) {
             $result = [];
