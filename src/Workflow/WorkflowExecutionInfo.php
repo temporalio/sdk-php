@@ -7,7 +7,6 @@ namespace Temporal\Workflow;
 use JetBrains\PhpStorm\Immutable;
 use Temporal\Common\WorkerVersionStamp;
 use Temporal\DataConverter\EncodedCollection;
-use Temporal\Workflow\ResetPointInfo as ResetPointInfoDto;
 
 /**
  * DTO that contains basic information about Workflow Execution.
@@ -32,7 +31,7 @@ final class WorkflowExecutionInfo
         public readonly EncodedCollection $searchAttributes,
 
         /**
-         * @var array<ResetPointInfoDto>
+         * @var array<ResetPointInfo>
          */
         public readonly array $autoResetPoints,
 
@@ -96,4 +95,27 @@ final class WorkflowExecutionInfo
          */
         public readonly string $firstRunId,
     ) {}
+
+    public function __debugInfo(): ?array
+    {
+        return [
+            'execution' => $this->execution,
+            'type' => $this->type,
+            'startTime' => $this->startTime,
+            'closeTime' => $this->closeTime,
+            'status' => $this->status,
+            'historyLength' => $this->historyLength,
+            'parentNamespaceId' => $this->parentNamespaceId,
+            'parentExecution' => $this->parentExecution,
+            'executionTime' => $this->executionTime,
+            'autoResetPoints' => $this->autoResetPoints,
+            'taskQueue' => $this->taskQueue,
+            'stateTransitionCount' => $this->stateTransitionCount,
+            'historySizeBytes' => $this->historySizeBytes,
+            'mostRecentWorkerVersionStamp' => $this->mostRecentWorkerVersionStamp,
+            'executionDuration' => $this->executionDuration,
+            'rootExecution' => $this->rootExecution,
+            'firstRunId' => $this->firstRunId,
+        ];
+    }
 }
