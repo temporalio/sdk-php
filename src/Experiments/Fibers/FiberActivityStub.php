@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Experiments\Fibers;
 
+use React\Promise\PromiseInterface;
 use Temporal\Activity\ActivityOptionsInterface;
 use Temporal\DataConverter\Type;
 use Temporal\Workflow\ActivityStubInterface;
@@ -35,5 +36,14 @@ final class FiberActivityStub
         bool $isLocalActivity = false,
     ): mixed {
         return FiberHelper::await($this->inner->execute($name, $args, $returnType, $isLocalActivity));
+    }
+
+    public function createExecution(
+        string $name,
+        array $args = [],
+        Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
+        bool $isLocalActivity = false,
+    ): PromiseInterface {
+        return $this->inner->execute($name, $args, $returnType, $isLocalActivity);
     }
 }

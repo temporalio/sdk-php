@@ -9,6 +9,11 @@ class DeprecationCollector
     /** @var DeprecationMessage[] */
     private static array $deprecations = [];
 
+    public static function reset(): void
+    {
+        static::$deprecations = [];
+    }
+
     public static function register(): void
     {
         \set_error_handler([self::class, 'handle'], E_USER_DEPRECATED);
