@@ -121,11 +121,11 @@ class TestWorkflow
 
     #[WorkflowMethod('Extra_Stability_Fibers_ResetWorker')]
     #[ReturnType(Type::TYPE_STRING)]
-    public function expire(int $seconds = 10): \Generator
+    public function expire(int $seconds = 10): string
     {
         $isTimer = ! Workflow::awaitWithTimeout($seconds, fn(): bool => $this->exit);
 
-        return yield $isTimer ? 'Timer' : 'Signal';
+        return $isTimer ? 'Timer' : 'Signal';
     }
 
     #[QueryMethod('die')]

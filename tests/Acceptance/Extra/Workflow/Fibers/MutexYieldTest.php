@@ -72,6 +72,7 @@ class TestWorkflow
     #[\Temporal\Workflow\ReturnType(Type::TYPE_ARRAY)]
     public function handle(): array
     {
+        Workflow::await($this->mutex);
         $yieldLocked = $this->mutex->isLocked();
 
         $this->mutex->lock();
