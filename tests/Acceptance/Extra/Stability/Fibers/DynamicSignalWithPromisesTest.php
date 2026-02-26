@@ -6,8 +6,8 @@ namespace Temporal\Tests\Acceptance\Extra\Stability\Fibers\DynamicSignalWithProm
 
 use PHPUnit\Framework\Attributes\Test;
 use React\Promise\Deferred;
-use React\Promise\PromiseInterface;
 use Temporal\Client\WorkflowStubInterface;
+use Temporal\Experiments\Fibers\FiberHelper;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Experiments\Fibers\Workflow;
@@ -61,13 +61,13 @@ class TestWorkflow
         return $value;
     }
 
-    private function promiseSignal(string $name): PromiseInterface
+    private function promiseSignal(string $name): void
     {
         $signal = new Deferred();
         Workflow::registerSignal($name, static function (mixed $value) use ($signal): void {
             $signal->resolve($value);
         });
 
-        return $signal->promise();
+        FiberHelper::await($signal->promise());
     }
 }

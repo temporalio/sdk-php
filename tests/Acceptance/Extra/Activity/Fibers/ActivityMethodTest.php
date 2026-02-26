@@ -6,6 +6,7 @@ namespace Temporal\Tests\Acceptance\Extra\Activity\Fibers\ActivityMethod;
 
 use Temporal\Activity;
 use Temporal\Activity\ActivityMethod;
+use Temporal\Activity\ActivityOptions;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Exception\Client\WorkflowFailedException;
 use Temporal\Testing\DeprecationCollector;
@@ -59,9 +60,11 @@ class TestWorkflow
     #[WorkflowMethod(name: "Extra_Activity_Fibers_ActivityMethod")]
     public function handle(string $method): array
     {
+        DeprecationCollector::reset();
+
         $activityStub = Workflow::newActivityStub(
             TestActivity::class,
-            Activity\ActivityOptions::new()->withScheduleToCloseTimeout(10),
+            ActivityOptions::new()->withScheduleToCloseTimeout(10),
         );
         $result = $activityStub->{$method}();
 

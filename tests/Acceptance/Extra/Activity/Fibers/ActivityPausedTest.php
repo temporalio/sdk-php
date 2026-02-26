@@ -6,6 +6,7 @@ namespace Temporal\Tests\Acceptance\Extra\Activity\Fibers\ActivityPaused;
 
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Activity;
+use Temporal\Activity\ActivityOptions;
 use Temporal\Api\Common\V1\WorkflowExecution;
 use Temporal\Api\Workflowservice\V1\PauseActivityRequest;
 use Temporal\Client\GRPC\ServiceClientInterface;
@@ -67,11 +68,11 @@ class TestWorkflow
     public function handle()
     {
         $stub = Workflow::newUntypedActivityStub(
-            Activity\ActivityOptions::new()->withScheduleToCloseTimeout('101 seconds'),
+            ActivityOptions::new()->withScheduleToCloseTimeout('101 seconds'),
         );
 
         /** @see TestActivity::sleep() */
-        $run = $stub->execute('Extra_Activity_Fibers_ActivityPaused.sleep', args: [100]);
+        $run = $stub->createExecution('Extra_Activity_Fibers_ActivityPaused.sleep', args: [100]);
 
         $timerFired = ! Workflow::awaitWithTimeout(
             '20 seconds',

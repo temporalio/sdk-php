@@ -77,14 +77,16 @@ class TestWorkflow
         $trailed = false;
         Workflow::await(
             fn() => $this->exit,
-            Workflow::runLocked($this->mutex, static function () use (&$trailed) {
+            Workflow::runLocked($this->mutex, static function () use (&$trailed): void {
                 $trailed = true;
             }),
         );
 
         // The last runLocked must not be executed because there a permanent lock
         // that was created inside the first runLocked
-        $trailed and throw new \Exception('The trailed runLocked must not be executed.');
+        if ($trailed) {
+            throw new \Exception('The trailed runLocked must not be executed.');
+        }
 
         return [$this->unlocked, $this->unblock, $result, $exception];
     }
@@ -110,9 +112,9 @@ class TestWorkflow
     private function runLocked(): bool
     {
         // Permanently lock mutex
-        Workflow::runLocked($this->mutex, function () {
+        Workflow::runLocked($this->mutex, function (): void {
             $this->unlocked = true;
-            Workflow::await(fn() => false);
+            Workflow::await(static fn() => false);
         });
 
         Workflow::await(fn() => $this->unblock);

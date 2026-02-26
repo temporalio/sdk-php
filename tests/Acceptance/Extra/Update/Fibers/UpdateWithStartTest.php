@@ -28,7 +28,7 @@ class UpdateWithStartTest extends TestCase
         Feature $feature,
     ): void {
         $stub = $client->newUntypedWorkflowStub(
-            'Extra_Update_UpdateWithStart',
+            'Extra_Update_Fibers_UpdateWithStart',
             WorkflowOptions::new()->withTaskQueue($feature->taskQueue),
         );
 
@@ -40,7 +40,7 @@ class UpdateWithStartTest extends TestCase
         $stub->signal('exit');
         $result = $stub->getResult();
 
-        $this->assertSame(['key' => null], (array)$result);
+        $this->assertSame(['key' => null], (array) $result);
         $this->assertFalse($handle->hasResult());
     }
 
@@ -50,7 +50,7 @@ class UpdateWithStartTest extends TestCase
         Feature $feature,
     ): void {
         $stub = $client->newUntypedWorkflowStub(
-            'Extra_Update_UpdateWithStart',
+            'Extra_Update_Fibers_UpdateWithStart',
             WorkflowOptions::new()->withTaskQueue($feature->taskQueue),
         );
 
@@ -76,11 +76,11 @@ class UpdateWithStartTest extends TestCase
     ): void {
         $id = Uuid::uuid7()->__toString();
         $stub1 = $client->newUntypedWorkflowStub(
-            'Extra_Update_UpdateWithStart',
+            'Extra_Update_Fibers_UpdateWithStart',
             WorkflowOptions::new()->withTaskQueue($feature->taskQueue)->withWorkflowId($id),
         );
         $stub2 = $client->newUntypedWorkflowStub(
-            'Extra_Update_UpdateWithStart',
+            'Extra_Update_Fibers_UpdateWithStart',
             WorkflowOptions::new()->withTaskQueue($feature->taskQueue)->withWorkflowId($id),
         );
 
@@ -104,7 +104,7 @@ class TestWorkflow
     private bool $updateStarted = false;
     private bool $exit = false;
 
-    #[WorkflowMethod(name: "Extra_Update_UpdateWithStart")]
+    #[WorkflowMethod(name: "Extra_Update_Fibers_UpdateWithStart")]
     public function handle()
     {
         $this->updateStarted or throw new \RuntimeException('Not started with update');
@@ -114,7 +114,6 @@ class TestWorkflow
 
     /**
      * @param non-empty-string $name
-     * @return mixed
      */
     #[UpdateMethod(name: 'await')]
     public function add(string $name): mixed
