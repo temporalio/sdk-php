@@ -13,13 +13,15 @@ namespace Temporal\Tests\Workflow;
 
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\SignalMethod;
+use Temporal\Workflow\WorkflowInterface;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class SimpleSignalledWorkflowWithSleep
 {
     private $counter = 0;
 
-    #[Workflow\SignalMethod(name: "add")]
+    #[SignalMethod(name: "add")]
     public function add(
         int $value
     ) {

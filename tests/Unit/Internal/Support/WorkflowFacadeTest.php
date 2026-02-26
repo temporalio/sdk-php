@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Temporal\Exception\OutOfContextException;
 use Temporal\Workflow;
+use Temporal\Workflow\WorkflowExecution;
 
 class WorkflowFacadeTest extends TestCase
 {
@@ -62,7 +63,7 @@ class WorkflowFacadeTest extends TestCase
         ];
 
         yield 'newExternalWorkflowStub' => [
-            static fn() => Workflow::newExternalWorkflowStub('test', new Workflow\WorkflowExecution()),
+            static fn() => Workflow::newExternalWorkflowStub('test', new WorkflowExecution()),
         ];
 
         yield 'continueAsNew' => [
@@ -173,7 +174,7 @@ class WorkflowFacadeTest extends TestCase
         ];
 
         yield 'newUntypedExternalWorkflowStub' => [
-            static fn() => Workflow::newUntypedExternalWorkflowStub(new Workflow\WorkflowExecution()),
+            static fn() => Workflow::newUntypedExternalWorkflowStub(new WorkflowExecution()),
         ];
 
         yield 'upsertTypedSearchAttributes' => [

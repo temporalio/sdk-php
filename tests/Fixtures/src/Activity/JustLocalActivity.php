@@ -11,15 +11,15 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Activity;
 
-use Temporal\Activity;
+use Temporal\Activity\ActivityMethod;
+use Temporal\Activity\LocalActivityInterface;
 
-#[Activity\LocalActivityInterface(prefix: "JustLocalActivity.")]
+#[LocalActivityInterface(prefix: "JustLocalActivity.")]
 class JustLocalActivity
 {
-    #[Activity\ActivityMethod]
-    public function echo(
-        string $input
-    ): string {
-        return strtoupper($input);
+    #[ActivityMethod]
+    public function echo(string $input): string
+    {
+        return \strtoupper($input);
     }
 }

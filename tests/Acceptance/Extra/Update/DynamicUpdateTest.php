@@ -17,6 +17,7 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\SignalMethod;
 
 class DynamicUpdateTest extends TestCase
 {
@@ -88,7 +89,7 @@ class TestWorkflow
         return $this->result;
     }
 
-    #[Workflow\SignalMethod]
+    #[SignalMethod]
     public function exit(): void
     {
         $this->exit = true;

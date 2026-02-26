@@ -12,6 +12,7 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\UpdateMethod;
 
 class ContextTest extends TestCase
 {
@@ -45,7 +46,7 @@ class FeatureWorkflow
         return Workflow::getUpdateContext()?->getUpdateId();
     }
 
-    #[Workflow\UpdateMethod('my_update')]
+    #[UpdateMethod('my_update')]
     public function myUpdate()
     {
         Workflow::getUpdateContext() === null and throw new \RuntimeException('Update context should not be null.');
@@ -62,7 +63,7 @@ class FeatureWorkflow
         return $updateId;
     }
 
-    #[Workflow\UpdateMethod('my_update2')]
+    #[UpdateMethod('my_update2')]
     public function myUpdate2()
     {
         Workflow::getUpdateContext() === null and throw new \RuntimeException('Update context should not be null.');

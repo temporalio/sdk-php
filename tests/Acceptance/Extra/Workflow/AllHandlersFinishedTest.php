@@ -17,6 +17,9 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\HandlerUnfinishedPolicy;
+use Temporal\Workflow\SignalMethod;
+use Temporal\Workflow\UpdateMethod;
 
 #[CoversFunction('Temporal\Internal\Workflow\Process\Process::logRunningHandlers')]
 class AllHandlersFinishedTest extends TestCase
@@ -270,7 +273,7 @@ class TestWorkflow
     /**
      * @param non-empty-string $name
      */
-    #[Workflow\UpdateMethod(name: 'await')]
+    #[UpdateMethod(name: 'await')]
     public function addFromUpdate(string $name): mixed
     {
         $this->awaits[$name] ??= null;
@@ -282,7 +285,7 @@ class TestWorkflow
      * @param non-empty-string $name
      * @return PromiseInterface<mixed>
      */
-    #[Workflow\UpdateMethod(name: 'resolve', unfinishedPolicy: Workflow\HandlerUnfinishedPolicy::Abandon)]
+    #[UpdateMethod(name: 'resolve', unfinishedPolicy: HandlerUnfinishedPolicy::Abandon)]
     public function resolveFromUpdate(string $name, mixed $value): mixed
     {
         return $this->awaits[$name] = $value;
@@ -291,7 +294,7 @@ class TestWorkflow
     /**
      * @param non-empty-string $name
      */
-    #[Workflow\SignalMethod(name: 'await')]
+    #[SignalMethod(name: 'await')]
     public function addFromSignal(string $name)
     {
         $this->awaits[$name] ??= null;
@@ -301,14 +304,14 @@ class TestWorkflow
     /**
      * @param non-empty-string $name
      */
-    #[Workflow\SignalMethod(name: 'resolve', unfinishedPolicy: Workflow\HandlerUnfinishedPolicy::Abandon)]
+    #[SignalMethod(name: 'resolve', unfinishedPolicy: HandlerUnfinishedPolicy::Abandon)]
     public function resolveFromSignal(string $name, mixed $value)
     {
         yield Workflow::await(fn(): bool => \array_key_exists($name, $this->awaits));
         $this->awaits[$name] = $value;
     }
 
-    #[Workflow\SignalMethod()]
+    #[SignalMethod()]
     public function exit(): void
     {
         $this->exit = true;

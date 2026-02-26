@@ -13,8 +13,11 @@ namespace Temporal\Tests\Workflow\Interceptor;
 
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\QueryMethod;
+use Temporal\Workflow\SignalMethod;
+use Temporal\Workflow\WorkflowInterface;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class QueryHeadersWorkflow
 {
     private bool $signalled = false;
@@ -25,19 +28,19 @@ class QueryHeadersWorkflow
         yield Workflow::await(fn() => $this->signalled);
     }
 
-    #[Workflow\SignalMethod]
+    #[SignalMethod]
     public function signal(): void
     {
         $this->signalled = true;
     }
 
-    #[Workflow\QueryMethod]
+    #[QueryMethod]
     public function getHeaders(): array
     {
         return \iterator_to_array(Workflow::getCurrentContext()->getHeader()->getIterator());
     }
 
-    #[Workflow\QueryMethod]
+    #[QueryMethod]
     public function getContext(): array
     {
         return [

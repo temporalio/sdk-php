@@ -15,11 +15,14 @@ use Temporal\Activity\ActivityOptions;
 use Temporal\Common\RetryOptions;
 use Temporal\Tests\Activity\SimpleActivity;
 use Temporal\Workflow;
+use Temporal\Workflow\Saga;
+use Temporal\Workflow\WorkflowInterface;
+use Temporal\Workflow\WorkflowMethod;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class SagaWorkflow
 {
-    #[Workflow\WorkflowMethod(name: 'SagaWorkflow')]
+    #[WorkflowMethod(name: 'SagaWorkflow')]
     public function run()
     {
         $simple = Workflow::newActivityStub(
@@ -29,7 +32,7 @@ class SagaWorkflow
                 ->withRetryOptions(RetryOptions::new()->withMaximumAttempts(1))
         );
 
-        $saga = new Workflow\Saga();
+        $saga = new Saga();
         $saga->setParallelCompensation(true);
 
         try {

@@ -14,8 +14,9 @@ namespace Temporal\Tests\Workflow;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\WorkflowInterface;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class AsyncClosureWorkflow
 {
     private array $result = [];

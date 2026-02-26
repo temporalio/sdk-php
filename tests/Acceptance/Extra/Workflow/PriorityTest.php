@@ -15,6 +15,10 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\ChildWorkflowOptions;
+use Temporal\Activity\ActivityInterface;
+use Temporal\Activity\ActivityMethod;
+use Temporal\Activity\ActivityOptions;
 
 class PriorityTest extends TestCase
 {
@@ -77,7 +81,7 @@ class TestWorkflow
     {
         $activity = yield Workflow::executeActivity(
             'Extra_Workflow_Priority.handler',
-            options: Activity\ActivityOptions::new()
+            options: ActivityOptions::new()
                 ->withScheduleToCloseTimeout('10 seconds')
                 ->withPriority(
                     Priority::new(2)
@@ -86,14 +90,14 @@ class TestWorkflow
                 ),
         );
 
-        Workflow\ChildWorkflowOptions::new()->priority->priorityKey === Workflow::getInfo()->priority->priorityKey or
+        ChildWorkflowOptions::new()->priority->priorityKey === Workflow::getInfo()->priority->priorityKey or
         throw new ApplicationFailure('Child Workflow priority is not the same as the parent by default', 'error', true);
 
         if ($runChild) {
             $child = yield Workflow::executeChildWorkflow(
                 'Extra_Workflow_Priority',
                 [false],
-                Workflow\ChildWorkflowOptions::new()->withPriority(
+                ChildWorkflowOptions::new()->withPriority(
                     Priority::new(1)
                         ->withFairnessKey('child-key')
                         ->withFairnessWeight(3.3),
@@ -114,10 +118,10 @@ class TestWorkflow
     }
 }
 
-#[Activity\ActivityInterface(prefix: 'Extra_Workflow_Priority.')]
+#[ActivityInterface(prefix: 'Extra_Workflow_Priority.')]
 class TestActivity
 {
-    #[Activity\ActivityMethod]
+    #[ActivityMethod]
     public function handler(): array
     {
         return [

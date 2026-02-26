@@ -16,8 +16,9 @@ use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Tests\Activity\SimpleActivity;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\WorkflowInterface;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class CancelledWorkflow
 {
     #[WorkflowMethod(name: 'CancelledWorkflow')]

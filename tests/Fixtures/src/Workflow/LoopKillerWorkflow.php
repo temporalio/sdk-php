@@ -15,17 +15,20 @@ use Temporal\Activity\ActivityOptions;
 use Temporal\Common\RetryOptions;
 use Temporal\Tests\Activity\SimpleActivity;
 use Temporal\Workflow;
+use Temporal\Workflow\WorkflowExecution;
+use Temporal\Workflow\WorkflowInterface;
+use Temporal\Workflow\WorkflowMethod;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class LoopKillerWorkflow
 {
-    #[Workflow\WorkflowMethod]
+    #[WorkflowMethod]
     public function run(
-        Workflow\WorkflowExecution $execution,
+        WorkflowExecution $execution,
         bool $truncateRunID = false
     ) {
         if ($truncateRunID) {
-            $execution = new Workflow\WorkflowExecution($execution->getID());
+            $execution = new WorkflowExecution($execution->getID());
         }
 
         $loop = Workflow::newUntypedExternalWorkflowStub( $execution);

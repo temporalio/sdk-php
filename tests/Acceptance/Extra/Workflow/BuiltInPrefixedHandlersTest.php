@@ -16,6 +16,8 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\SignalMethod;
+use Temporal\Workflow\UpdateMethod;
 
 class BuiltInPrefixedHandlersTest extends TestCase
 {
@@ -98,7 +100,7 @@ class TestWorkflow
         yield $this->onExit();
     }
 
-    #[Workflow\UpdateMethod('register_query_with_prefix')]
+    #[UpdateMethod('register_query_with_prefix')]
     public function registerQueryWithPrefix(): string
     {
         try {
@@ -109,7 +111,7 @@ class TestWorkflow
         }
     }
 
-    #[Workflow\UpdateMethod('register_signals_with_prefix')]
+    #[UpdateMethod('register_signals_with_prefix')]
     public function registerSignalWithPrefix(): string
     {
         try {
@@ -120,7 +122,7 @@ class TestWorkflow
         }
     }
 
-    #[Workflow\UpdateMethod('register_updates_with_prefix')]
+    #[UpdateMethod('register_updates_with_prefix')]
     public function registerUpdateWithPrefix(): string
     {
         try {
@@ -131,7 +133,7 @@ class TestWorkflow
         }
     }
 
-    #[Workflow\SignalMethod]
+    #[SignalMethod]
     public function exit(): void
     {
         $this->exit = true;

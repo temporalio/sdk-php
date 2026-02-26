@@ -17,8 +17,9 @@ use Temporal\Internal\Workflow\ActivityProxy;
 use Temporal\Tests\Activity\SimpleActivity;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\WorkflowInterface;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class GeneratorWorkflow
 {
     #[WorkflowMethod(name: 'GeneratorWorkflow')]

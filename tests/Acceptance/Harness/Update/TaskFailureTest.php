@@ -14,6 +14,8 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\UpdateMethod;
+use Temporal\Workflow\UpdateValidatorMethod;
 
 class TaskFailureTest extends TestCase
 {
@@ -67,7 +69,7 @@ class FeatureWorkflow
         return static::$fails;
     }
 
-    #[Workflow\UpdateMethod('do_update')]
+    #[UpdateMethod('do_update')]
     public function doUpdate(): string
     {
         # Don't use static variables like this. We do here because we need to fail the task a
@@ -85,13 +87,13 @@ class FeatureWorkflow
         throw new ApplicationFailure("I'll fail update", 'task-failure', true);
     }
 
-    #[Workflow\UpdateMethod('throw_or_done')]
+    #[UpdateMethod('throw_or_done')]
     public function throwOrDone(bool $doThrow): void
     {
         $this->done = true;
     }
 
-    #[Workflow\UpdateValidatorMethod('throw_or_done')]
+    #[UpdateValidatorMethod('throw_or_done')]
     public function validateThrowOrDone(bool $doThrow): void
     {
         $doThrow and throw new \RuntimeException('This will fail validation, not task');

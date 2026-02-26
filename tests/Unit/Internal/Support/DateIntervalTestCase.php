@@ -7,6 +7,7 @@ namespace Temporal\Tests\Unit\Internal\Support;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Carbon\CarbonInterval;
 use Temporal\Internal\Support\DateInterval;
 
 #[CoversClass(DateInterval::class)]
@@ -156,7 +157,7 @@ final class DateIntervalTestCase extends TestCase
         }
 
         // Assert
-        self::assertInstanceOf(\Carbon\CarbonInterval::class, $result);
+        self::assertInstanceOf(CarbonInterval::class, $result);
 
         if ($shouldTriggerWarning) {
             self::assertTrue(
@@ -221,7 +222,7 @@ final class DateIntervalTestCase extends TestCase
         }
 
         // Assert
-        self::assertInstanceOf(\Carbon\CarbonInterval::class, $result);
+        self::assertInstanceOf(CarbonInterval::class, $result);
         self::assertFalse(
             $warningTriggered,
             \sprintf(

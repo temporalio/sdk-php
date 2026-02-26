@@ -15,6 +15,8 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\SignalMethod;
+use Temporal\Workflow\UpdateMethod;
 
 #[CoversFunction('Temporal\Client\WorkflowOptions::withTypedSearchAttributes')]
 #[CoversFunction('Temporal\Workflow::upsertTypedSearchAttributes')]
@@ -214,7 +216,7 @@ class TestWorkflow
         return $result;
     }
 
-    #[Workflow\UpdateMethod]
+    #[UpdateMethod]
     public function setAttributes(array $searchAttributes): void
     {
         $updates = [];
@@ -232,7 +234,7 @@ class TestWorkflow
         Workflow::upsertTypedSearchAttributes(...$updates);
     }
 
-    #[Workflow\SignalMethod]
+    #[SignalMethod]
     public function exit(): void
     {
         $this->exit = true;

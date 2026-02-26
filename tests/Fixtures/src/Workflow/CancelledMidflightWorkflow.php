@@ -15,13 +15,15 @@ use Temporal\Activity\ActivityOptions;
 use Temporal\Tests\Activity\SimpleActivity;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\QueryMethod;
+use Temporal\Workflow\WorkflowInterface;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class CancelledMidflightWorkflow
 {
     private array $status = [];
 
-    #[Workflow\QueryMethod(name: 'getStatus')]
+    #[QueryMethod(name: 'getStatus')]
     public function getStatus(): array
     {
         return $this->status;
