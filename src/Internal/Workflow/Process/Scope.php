@@ -125,14 +125,26 @@ class Scope implements CancellationScopeInterface, Destroyable
      */
     public function start(MethodHandler|\Closure $handler, ValuesInterface $values, bool $deferred): void
     {
-        $this->coroutine = $this->createCoroutine(
-            static fn(ValuesInterface $v): mixed => ($handler)($v),
-            $values,
-        );
-
-        $deferred
-            ? $this->services->loop->once($this->layer, $this->next(...))
-            : $this->next();
+        if ($deferred) {
+            // Defer both coroutine creation AND first execution.
+            // This is critical for fiber mode: $fiber->start() executes handler code
+            // immediately, but for updateWithStart the update handler must run first.
+            // By deferring createCoroutine, the fiber won't start until the next tick,
+            // giving signal/update handlers a chance to execute first.
+            $this->services->loop->once($this->layer, function () use ($handler, $values): void {
+                $this->coroutine = $this->createCoroutine(
+                    static fn(ValuesInterface $v): mixed => ($handler)($v),
+                    $values,
+                );
+                $this->next();
+            });
+        } else {
+            $this->coroutine = $this->createCoroutine(
+                static fn(ValuesInterface $v): mixed => ($handler)($v),
+                $values,
+            );
+            $this->next();
+        }
     }
 
     /**
