@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\Router;
 
-use Temporal\Workflow;
+use Temporal\Workflow\WorkflowInterface;
+use Temporal\Workflow\WorkflowMethod;
 
-#[Workflow\WorkflowInterface()]
+#[WorkflowInterface()]
 final class DummyWorkflow
 {
-    #[Workflow\WorkflowMethod]
+    #[WorkflowMethod]
     public function doNothing(): void
     {
     }

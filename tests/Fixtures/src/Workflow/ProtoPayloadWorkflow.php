@@ -16,8 +16,9 @@ use Temporal\Api\Common\V1\WorkflowExecution;
 use Temporal\Tests\Activity\SimpleActivity;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\WorkflowInterface;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class ProtoPayloadWorkflow
 {
     #[WorkflowMethod(name: 'ProtoPayloadWorkflow')]

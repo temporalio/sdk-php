@@ -17,8 +17,9 @@ use Temporal\Activity\ActivityOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 use Temporal\Tests\Activity\SimpleActivity;
+use Temporal\Workflow\WorkflowInterface;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class WorkflowWithSignalledSteps
 {
     #[WorkflowMethod(name: 'WorkflowWithSignalledSteps')]

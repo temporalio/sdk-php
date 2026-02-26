@@ -16,8 +16,9 @@ use Temporal\Common\RetryOptions;
 use Temporal\Tests\Activity\Php82TypesActivity;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\WorkflowInterface;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class Php82TypesWorkflow
 {
     #[WorkflowMethod(name: 'Php82TypesWorkflow')]

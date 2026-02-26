@@ -16,8 +16,10 @@ use Temporal\Common\RetryOptions;
 use Temporal\Tests\Activity\SimpleActivity;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\ChildWorkflowOptions;
+use Temporal\Workflow\WorkflowInterface;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class ComplexExceptionalWorkflow
 {
     #[WorkflowMethod(name: 'ComplexExceptionalWorkflow')]
@@ -25,7 +27,7 @@ class ComplexExceptionalWorkflow
     {
         $child = Workflow::newChildWorkflowStub(
             ExceptionalActivityWorkflow::class,
-            Workflow\ChildWorkflowOptions::new()->withRetryOptions(
+            ChildWorkflowOptions::new()->withRetryOptions(
                 (new RetryOptions())->withMaximumAttempts(1)
             )
         );

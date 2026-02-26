@@ -13,8 +13,10 @@ namespace Temporal\Tests\Workflow\NamedArguments;
 
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\SignalMethod;
+use Temporal\Workflow\WorkflowInterface;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class SignalNamedArgumentsWorkflow
 {
     private int $int = 0;
@@ -37,7 +39,7 @@ class SignalNamedArgumentsWorkflow
         ];
     }
 
-    #[Workflow\SignalMethod]
+    #[SignalMethod]
     public function setValues(
         int $int,
         string $string = '',

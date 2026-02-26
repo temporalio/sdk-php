@@ -19,6 +19,7 @@ use Temporal\Workflow;
 use Temporal\Workflow\SignalMethod;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\UpdateMethod;
 
 #[WorkflowInterface]
 class UpdateExceptionsWorkflow
@@ -41,21 +42,21 @@ class UpdateExceptionsWorkflow
         }
     }
 
-    #[Workflow\UpdateMethod]
+    #[UpdateMethod]
     public function failWithName(string $name): void
     {
         $this->greetings[] = $name;
         throw new \RuntimeException("Signal exception $name");
     }
 
-    #[Workflow\UpdateMethod]
+    #[UpdateMethod]
     public function failInvalidArgument($name = 'foo'): void
     {
         $this->greetings[] = "invalidArgument $name";
         throw new InvalidArgumentException("Invalid argument $name");
     }
 
-    #[Workflow\UpdateMethod]
+    #[UpdateMethod]
     public function failActivity($name = 'foo')
     {
         yield Workflow::newUntypedActivityStub(
@@ -68,7 +69,7 @@ class UpdateExceptionsWorkflow
         )->execute('nonExistingActivityName', [$name]);
     }
 
-    #[Workflow\UpdateMethod]
+    #[UpdateMethod]
     public function error()
     {
         yield Workflow::timer(CarbonInterval::millisecond(10));

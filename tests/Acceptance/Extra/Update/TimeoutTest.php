@@ -15,6 +15,7 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\UpdateMethod;
 
 class TimeoutTest extends TestCase
 {
@@ -67,7 +68,7 @@ class TestWorkflow
         yield Workflow::await(static fn() => false);
     }
 
-    #[Workflow\UpdateMethod(name: 'sleep')]
+    #[UpdateMethod(name: 'sleep')]
     public function sleep(string $sleep): mixed
     {
         yield Workflow::timer(\DateInterval::createFromDateString($sleep));

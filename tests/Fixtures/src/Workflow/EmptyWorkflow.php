@@ -12,9 +12,9 @@ declare(strict_types=1);
 namespace Temporal\Tests\Workflow;
 
 use Temporal\Workflow\WorkflowMethod;
-use Temporal\Workflow;
+use Temporal\Workflow\WorkflowInterface;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class EmptyWorkflow
 {
     #[WorkflowMethod]

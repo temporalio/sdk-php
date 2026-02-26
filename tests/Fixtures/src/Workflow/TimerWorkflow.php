@@ -15,11 +15,12 @@ use Temporal\Activity\ActivityOptions;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 use Temporal\Tests\Activity\SimpleActivity;
+use Temporal\Workflow\WorkflowInterface;
 
 /**
  * @see \Temporal\Tests\Functional\WorkflowTestCase::testTimer()
  */
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class TimerWorkflow
 {
     #[WorkflowMethod(name: 'TimerWorkflow')]

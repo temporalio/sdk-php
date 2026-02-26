@@ -15,6 +15,7 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\UpdateMethod;
 
 const ACTIVITY_COUNT = 5;
 const ACTIVITY_RESULT = 6;
@@ -43,7 +44,7 @@ class FeatureWorkflow
         return $this->total;
     }
 
-    #[Workflow\UpdateMethod('my_update')]
+    #[UpdateMethod('my_update')]
     public function myUpdate()
     {
         $promises = [];

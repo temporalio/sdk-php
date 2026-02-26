@@ -25,6 +25,11 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\SignalMethod;
+use Temporal\Workflow\WorkflowInit;
+use Temporal\Activity\ActivityInterface;
+use Temporal\Activity\ActivityMethod;
+use Temporal\Activity\ActivityOptions;
 
 #[Worker(pipelineProvider: [WorkerServices::class, 'interceptors'])]
 class ContextTest extends TestCase
@@ -105,7 +110,7 @@ class TestWorkflow
         $activityClass = yield Workflow::executeActivity(
             'Extra_Interceptors_Context.handler',
             ['foo'],
-            Activity\ActivityOptions::new()->withScheduleToCloseTimeout('10 seconds'),
+            ActivityOptions::new()->withScheduleToCloseTimeout('10 seconds'),
         );
         yield Workflow::await(fn() => $this->exit);
         return [
@@ -115,7 +120,7 @@ class TestWorkflow
         ];
     }
 
-    #[Workflow\SignalMethod]
+    #[SignalMethod]
     public function exit(): void
     {
         $this->exit = true;
@@ -125,7 +130,7 @@ class TestWorkflow
 #[WorkflowInterface]
 class TestFailingWorkflow
 {
-    #[Workflow\WorkflowInit]
+    #[WorkflowInit]
     public function __construct(mixed ...$input)
     {
         if ($input === []) {
@@ -145,7 +150,7 @@ class TestReadonlyConstructorWorkflow
 {
     private ?PromiseInterface $uuid = null;
 
-    #[Workflow\WorkflowInit]
+    #[WorkflowInit]
     public function __construct(mixed ...$input)
     {
         try {
@@ -162,10 +167,10 @@ class TestReadonlyConstructorWorkflow
     }
 }
 
-#[Activity\ActivityInterface(prefix: 'Extra_Interceptors_Context.')]
+#[ActivityInterface(prefix: 'Extra_Interceptors_Context.')]
 class TestActivity
 {
-    #[Activity\ActivityMethod]
+    #[ActivityMethod]
     public function handler(string $result): string
     {
         return $result;

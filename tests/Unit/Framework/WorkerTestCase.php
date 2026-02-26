@@ -9,6 +9,7 @@ use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Worker\WorkerInterface;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\WorkflowInterface;
 
 use function PHPUnit\Framework\assertFalse;
 
@@ -33,7 +34,7 @@ final class WorkerTestCase extends AbstractUnit
     {
         $this->worker->registerWorkflowObject(
             new
-            #[Workflow\WorkflowInterface]
+            #[WorkflowInterface]
             class {
                 #[WorkflowMethod(name: 'SimpleWorkflow')]
                 public function handler(): iterable
