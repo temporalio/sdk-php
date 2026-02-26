@@ -7,10 +7,10 @@
             "taskId": "1048849",
             "workflowExecutionStartedEventAttributes": {
                 "workflowType": {
-                    "name": "Extra_Versioning_Fibers_Classic"
+                    "name": "Extra_Versioning_Classic"
                 },
                 "taskQueue": {
-                    "name": "Temporal\\Tests\\Acceptance\\Extra\\Versioning\\Fibers\\Classic",
+                    "name": "Temporal\\Tests\\Acceptance\\Extra\\Versioning\\Classic",
                     "kind": "TASK_QUEUE_KIND_NORMAL"
                 },
                 "workflowExecutionTimeout": "60s",
@@ -33,7 +33,7 @@
             "taskId": "1048850",
             "workflowTaskScheduledEventAttributes": {
                 "taskQueue": {
-                    "name": "Temporal\\Tests\\Acceptance\\Extra\\Versioning\\Fibers\\Classic",
+                    "name": "Temporal\\Tests\\Acceptance\\Extra\\Versioning\\Classic",
                     "kind": "TASK_QUEUE_KIND_NORMAL"
                 },
                 "startToCloseTimeout": "10s",
@@ -47,7 +47,7 @@
             "taskId": "1048856",
             "workflowTaskStartedEventAttributes": {
                 "scheduledEventId": "2",
-                "identity": "Temporal\\Tests\\Acceptance\\Extra\\Versioning\\Fibers\\Classic:26718a3a-4a45-4758-8e30-bdd1396b3316",
+                "identity": "Temporal\\Tests\\Acceptance\\Extra\\Versioning\\Classic:26718a3a-4a45-4758-8e30-bdd1396b3316",
                 "requestId": "ccb9955b-3ec0-4d4a-be57-6bee2810f268",
                 "historySizeBytes": "373",
                 "workerVersion": {
@@ -63,7 +63,7 @@
             "workflowTaskCompletedEventAttributes": {
                 "scheduledEventId": "2",
                 "startedEventId": "3",
-                "identity": "Temporal\\Tests\\Acceptance\\Extra\\Versioning\\Fibers\\Classic:26718a3a-4a45-4758-8e30-bdd1396b3316",
+                "identity": "Temporal\\Tests\\Acceptance\\Extra\\Versioning\\Classic:26718a3a-4a45-4758-8e30-bdd1396b3316",
                 "workerVersion": {
                     "buildId": "9518ff0cb6b50ae08577a6c5fc24c4d7"
                 },

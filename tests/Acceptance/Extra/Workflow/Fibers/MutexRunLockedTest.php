@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace Temporal\Tests\Acceptance\Extra\Workflow\Fibers\MutexRunLocked;
 
 use PHPUnit\Framework\Attributes\Test;
-use React\Promise\PromiseInterface;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\DataConverter\Type;
 use Temporal\Exception\Failure\CanceledFailure;
+use Temporal\Experiments\Fibers\FiberHelper;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Experiments\Fibers\Workflow;
+use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
@@ -51,7 +52,7 @@ class MutexRunLockedTest extends TestCase
 class TestWorkflow
 {
     private \Temporal\Experiments\Fibers\Mutex $mutex;
-    private PromiseInterface $promise;
+    private CancellationScopeInterface $promise;
     private bool $unblock = false;
     private bool $exit = false;
 
@@ -69,7 +70,8 @@ class TestWorkflow
     {
         $exception = null;
         try {
-            $result = $this->promise = Workflow::runLocked($this->mutex, $this->runLocked(...));
+            $this->promise = Workflow::runLocked($this->mutex, $this->runLocked(...));
+            $result = FiberHelper::await($this->promise);
         } catch (\Throwable $e) {
             $exception = $e::class;
         }
