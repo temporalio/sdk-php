@@ -65,8 +65,8 @@ try {
     $container->bindSingleton(WorkerFactoryInterface::class, WorkerFactory::create(converter: $converter));
 
     $workerFactory =  $container->get(\Temporal\Tests\Acceptance\App\Feature\WorkerFactory::class);
-    $getWorker = static function (Feature $feature) use (&$workers, $workerFactory): WorkerInterface {
-        return $workers[$feature->taskQueue] ??= $workerFactory->createWorker($feature);
+    $getWorker = static function (Feature $feature, string $taskQueue) use (&$workers, $workerFactory): WorkerInterface {
+        return $workers[$taskQueue] ??= $workerFactory->createWorker($feature, $taskQueue);
     };
 
     // Create client services
@@ -93,16 +93,31 @@ try {
     );
 
     // Register Workflows
+    $workerFactory = $container->get(WorkerFactoryInterface::class);
     foreach ($runtime->workflows() as $feature => $workflow) {
-        $getWorker($feature)->registerWorkflowTypes($workflow);
+        $getWorker($feature, $feature->taskQueue)->registerWorkflowTypes($workflow);
+
+        // Also register workflows on custom task queues declared via #[TaskQueue] attribute
+        $reflection = new \ReflectionClass($workflow);
+        foreach ($reflection->getAttributes(\Temporal\Workflow\Attribute\TaskQueue::class) as $attr) {
+            $queue = $attr->newInstance()->name;
+            $getWorker($feature, $queue)->registerWorkflowTypes($workflow);
+        }
     }
 
     // Register Activities
     foreach ($runtime->activities() as $feature => $activity) {
-        $getWorker($feature)->registerActivityImplementations($container->make($activity));
+        $getWorker($feature, $feature->taskQueue)->registerActivityImplementations($container->make($activity));
+
+        // Also register activities on custom task queues declared via #[TaskQueue] attribute
+        $reflection = new \ReflectionClass($activity);
+        foreach ($reflection->getAttributes(\Temporal\Activity\Attribute\TaskQueue::class) as $attr) {
+            $queue = $attr->newInstance()->name;
+            $getWorker($feature, $queue)->registerActivityImplementations($container->make($activity));
+        }
     }
 
-    $container->get(WorkerFactoryInterface::class)->run();
+    $workerFactory->run();
 } catch (\Throwable $e) {
     td($e);
 }

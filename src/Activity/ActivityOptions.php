@@ -13,6 +13,13 @@ namespace Temporal\Activity;
 
 use Carbon\CarbonInterval;
 use JetBrains\PhpStorm\Pure;
+use Temporal\Activity\Attribute\CancellationType;
+use Temporal\Activity\Attribute\HeartbeatTimeout;
+use Temporal\Activity\Attribute\ScheduleToCloseTimeout;
+use Temporal\Activity\Attribute\ScheduleToStartTimeout;
+use Temporal\Activity\Attribute\StartToCloseTimeout;
+use Temporal\Activity\Attribute\Summary;
+use Temporal\Activity\Attribute\TaskQueue;
 use Temporal\Common\MethodRetry;
 use Temporal\Common\Priority;
 use Temporal\Common\RetryOptions;
@@ -22,6 +29,7 @@ use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\NullableType;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\Options;
+use Temporal\Internal\Support\OptionsMerger;
 
 /**
  * ActivityOptions stores all activity-specific parameters that will be stored
@@ -137,13 +145,31 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
      */
     public function __construct()
     {
-        $this->scheduleToStartTimeout = CarbonInterval::seconds(0);
         $this->scheduleToCloseTimeout = CarbonInterval::seconds(0);
+        $this->scheduleToStartTimeout = CarbonInterval::seconds(0);
         $this->startToCloseTimeout = CarbonInterval::seconds(0);
         $this->heartbeatTimeout = CarbonInterval::seconds(0);
         $this->priority = Priority::new();
 
         parent::__construct();
+    }
+
+    /**
+     * Create ActivityOptions from granular PHP attributes on a class or method.
+     */
+    public static function fromReflection(\ReflectionMethod|\ReflectionClass $reflection): self
+    {
+        return OptionsMerger::applyAttributes(self::new(), $reflection, [
+            TaskQueue::class => static fn(self $o, TaskQueue $a) => $o->withTaskQueue($a->name),
+            ScheduleToCloseTimeout::class => static fn(self $o, ScheduleToCloseTimeout $a) => $o->withScheduleToCloseTimeout($a->interval),
+            ScheduleToStartTimeout::class => static fn(self $o, ScheduleToStartTimeout $a) => $o->withScheduleToStartTimeout($a->interval),
+            StartToCloseTimeout::class => static fn(self $o, StartToCloseTimeout $a) => $o->withStartToCloseTimeout($a->interval),
+            HeartbeatTimeout::class => static fn(self $o, HeartbeatTimeout $a) => $o->withHeartbeatTimeout($a->interval),
+            CancellationType::class => static fn(self $o, CancellationType $a) => $o->withCancellationType($a->type),
+            RetryOptions::class => static fn(self $o, RetryOptions $a) => $o->withRetryOptions($a),
+            Priority::class => static fn(self $o, Priority $a) => $o->withPriority($a),
+            Summary::class => static fn(self $o, Summary $a) => $o->withSummary($a->text),
+        ]);
     }
 
     /**
@@ -154,7 +180,7 @@ class ActivityOptions extends Options implements ActivityOptionsInterface
         $self = clone $this;
 
         if ($retry !== null && $this->diff->isPresent($self, 'retryOptions')) {
-            $self->retryOptions = $this->retryOptions->mergeWith($retry);
+            $self->retryOptions = ($self->retryOptions ?? RetryOptions::new())->mergeWith($retry);
         }
 
         return $self;

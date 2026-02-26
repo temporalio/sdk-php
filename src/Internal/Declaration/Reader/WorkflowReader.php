@@ -11,10 +11,12 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration\Reader;
 
+use Temporal\Client\WorkflowOptions;
 use Temporal\Common\CronSchedule;
 use Temporal\Common\MethodRetry;
 use Temporal\Internal\Declaration\Graph\ClassNode;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
+use Temporal\Internal\Support\OptionsMerger;
 use Temporal\Internal\Declaration\Prototype\QueryDefinition;
 use Temporal\Internal\Declaration\Prototype\SignalDefinition;
 use Temporal\Internal\Declaration\Prototype\UpdateDefinition;
@@ -299,13 +301,14 @@ class WorkflowReader extends Reader
      */
     private function getPrototype(ClassNode $graph, \ReflectionMethod $handler): ?WorkflowPrototype
     {
-        $cronSchedule = $previousRetry = $prototype = $returnType = $versionBehavior = null;
+        $cronSchedule = $previousRetry = $prototype = $returnType = $versionBehavior = $previousOptions = null;
 
-        /** @var \Traversable<class-string, \ReflectionMethod> $group */
-        foreach ($graph->getMethods($handler->getName()) as $group) {
+        foreach ($graph->getMethods($handler->getName(), true) as $group) {
             $contextualRetry = $previousRetry;
+            $contextualOptions = $previousOptions;
 
-            foreach ($group as $method) {
+            /** @var \Traversable<ClassNode, \ReflectionMethod> $group */
+            foreach ($group as $classNode => $method) {
                 /** @var MethodRetry $retry */
                 $retry = $this->reader->firstFunctionMetadata($method, MethodRetry::class);
 
@@ -333,6 +336,17 @@ class WorkflowReader extends Reader
                 $versionBehavior = $this->reader->firstFunctionMetadata($method, WorkflowVersioningBehavior::class)
                     ?? $versionBehavior
                 ;
+
+                // Collect granular options: previous → class attributes → method attributes
+                $options = OptionsMerger::mergeHierarchy(
+                    WorkflowOptions::fromReflection($classNode->getReflection()),
+                    WorkflowOptions::fromReflection($method),
+                    $previousOptions,
+                );
+
+                $contextualOptions = $contextualOptions
+                    ? OptionsMerger::merge($options, $contextualOptions)
+                    : $options;
 
                 //
                 // In the future, workflow methods are available only in
@@ -363,6 +377,7 @@ class WorkflowReader extends Reader
                 \assert($context !== null);
                 $prototype ??= $this->findProto($handler, $method, $context, $graph->getReflection());
 
+                $prototype?->setMethodOptions($options);
                 $retry === null or $prototype?->setMethodRetry($retry);
                 $cronSchedule === null or $prototype?->setCronSchedule($cronSchedule);
                 $returnType === null or $prototype?->setReturnType($returnType);
@@ -370,6 +385,7 @@ class WorkflowReader extends Reader
             }
 
             $previousRetry = $contextualRetry;
+            $previousOptions = $contextualOptions;
         }
 
         return $prototype;
@@ -434,4 +450,5 @@ class WorkflowReader extends Reader
 
         return new WorkflowPrototype($name, $handler, $class);
     }
+
 }

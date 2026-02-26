@@ -33,8 +33,19 @@ use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\NullableType;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\Options;
+use Temporal\Internal\Support\OptionsMerger;
 use Temporal\Worker\Worker;
 use Temporal\Worker\WorkerFactoryInterface;
+use Temporal\Workflow\Attribute\Memo as MemoAttr;
+use Temporal\Workflow\Attribute\SearchAttributes as SearchAttributesAttr;
+use Temporal\Workflow\Attribute\Summary;
+use Temporal\Workflow\Attribute\TaskQueue;
+use Temporal\Workflow\Attribute\WorkflowExecutionTimeout;
+use Temporal\Workflow\Attribute\WorkflowIdConflictPolicy as WorkflowIdConflictPolicyAttr;
+use Temporal\Workflow\Attribute\WorkflowIdReusePolicy;
+use Temporal\Workflow\Attribute\WorkflowRunTimeout;
+use Temporal\Workflow\Attribute\WorkflowStartDelay;
+use Temporal\Workflow\Attribute\WorkflowTaskTimeout;
 
 /**
  * WorkflowOptions configuration parameters for starting a workflow execution.
@@ -209,6 +220,28 @@ final class WorkflowOptions extends Options
     }
 
     /**
+     * Create WorkflowOptions from granular PHP attributes on a class or method.
+     */
+    public static function fromReflection(\ReflectionMethod|\ReflectionClass $reflection): self
+    {
+        return OptionsMerger::applyAttributes(self::new(), $reflection, [
+            TaskQueue::class => static fn(self $o, TaskQueue $a) => $o->withTaskQueue($a->name),
+            WorkflowExecutionTimeout::class => static fn(self $o, WorkflowExecutionTimeout $a) => $o->withWorkflowExecutionTimeout($a->interval),
+            WorkflowRunTimeout::class => static fn(self $o, WorkflowRunTimeout $a) => $o->withWorkflowRunTimeout($a->interval),
+            WorkflowTaskTimeout::class => static fn(self $o, WorkflowTaskTimeout $a) => $o->withWorkflowTaskTimeout($a->interval),
+            WorkflowStartDelay::class => static fn(self $o, WorkflowStartDelay $a) => $o->withWorkflowStartDelay($a->interval),
+            WorkflowIdReusePolicy::class => static fn(self $o, WorkflowIdReusePolicy $a) => $o->withWorkflowIdReusePolicy($a->policy),
+            WorkflowIdConflictPolicyAttr::class => static fn(self $o, WorkflowIdConflictPolicyAttr $a) => $o->withWorkflowIdConflictPolicy($a->policy),
+            RetryOptions::class => static fn(self $o, RetryOptions $a) => $o->withRetryOptions($a),
+            CronSchedule::class => static fn(self $o, CronSchedule $a) => $o->withCronSchedule($a->interval),
+            MemoAttr::class => static fn(self $o, MemoAttr $a) => $o->withMemo($a->values),
+            SearchAttributesAttr::class => static fn(self $o, SearchAttributesAttr $a) => $o->withSearchAttributes($a->values),
+            Summary::class => static fn(self $o, Summary $a) => $o->withStaticSummary($a->text),
+            Priority::class => static fn(self $o, Priority $a) => $o->withPriority($a),
+        ]);
+    }
+
+    /**
      * @return self return a new {@see self} instance with merged options
      */
     public function mergeWith(?MethodRetry $retry = null, ?CronSchedule $cron = null): self
@@ -216,6 +249,9 @@ final class WorkflowOptions extends Options
         $self = clone $this;
 
         if ($retry !== null && $self->diff->isPresent($self, 'retryOptions')) {
+            if ($self->retryOptions === null) {
+                $self->retryOptions = RetryOptions::new();
+            }
             $self->retryOptions = $self->retryOptions->mergeWith($retry);
         }
 
@@ -612,4 +648,5 @@ final class WorkflowOptions extends Options
         $self->priority = $priority;
         return $self;
     }
+
 }

@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Common;
 
+use Spiral\Attributes\NamedArgumentConstructor;
 use Temporal\Internal\Marshaller\Meta\Marshal;
 
 /**
@@ -28,6 +29,7 @@ use Temporal\Internal\Marshaller\Meta\Marshal;
  *
  * @internal The feature is experimental and may change in the future.
  */
+#[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD), NamedArgumentConstructor]
 final class Priority
 {
     /**
@@ -80,9 +82,14 @@ final class Priority
     /**
      * @param int<0, max> $priorityKey
      */
-    private function __construct(int $priorityKey = 0)
-    {
+    public function __construct(
+        int $priorityKey = 0,
+        string $fairnessKey = '',
+        float $fairnessWeight = 0.0,
+    ) {
         $this->priorityKey = $priorityKey;
+        $this->fairnessKey = $fairnessKey;
+        $this->fairnessWeight = $fairnessWeight;
     }
 
     /**

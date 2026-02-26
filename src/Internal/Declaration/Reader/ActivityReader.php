@@ -13,9 +13,13 @@ namespace Temporal\Internal\Declaration\Reader;
 
 use Temporal\Activity\ActivityInterface;
 use Temporal\Activity\ActivityMethod;
+use Temporal\Activity\ActivityOptions;
+use Temporal\Activity\LocalActivityInterface;
+use Temporal\Activity\LocalActivityOptions;
 use Temporal\Common\MethodRetry;
 use Temporal\Internal\Declaration\Graph\ClassNode;
 use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
+use Temporal\Internal\Support\OptionsMerger;
 
 /**
  * @template-extends Reader<ActivityPrototype>
@@ -73,6 +77,7 @@ class ActivityReader extends Reader
     private function getMethodGroups(ClassNode $graph, \ReflectionMethod $root): array
     {
         $previousRetry = null;
+        $previousOptions = null;
 
         // Activity prototypes
         $prototypes = [];
@@ -91,12 +96,13 @@ class ActivityReader extends Reader
         foreach ($graph->getMethods($root->getName()) as $group) {
             //
             $contextualRetry = $previousRetry;
+            $contextualOptions = $previousOptions;
 
             //
             // Each group of methods means one level of hierarchy in the
             // inheritance graph.
             //
-            /** @var ClassNode $ctx */
+            /** @psalm-var \Traversable<ClassNode, \ReflectionMethod> $group */
             foreach ($group as $ctx => $method) {
                 /** @var MethodRetry $retry */
                 $retry = $this->reader->firstFunctionMetadata($method, MethodRetry::class);
@@ -111,6 +117,17 @@ class ActivityReader extends Reader
                     $contextualRetry = $contextualRetry ? $retry->mergeWith($contextualRetry) : $retry;
                 }
 
+                // Collect granular options: previous → class attributes → method attributes
+                $options = OptionsMerger::mergeHierarchy(
+                    ActivityOptions::fromReflection($ctx->getReflection()),
+                    ActivityOptions::fromReflection($method),
+                    $previousOptions,
+                );
+
+                $contextualOptions = $contextualOptions
+                    ? OptionsMerger::merge($options, $contextualOptions)
+                    : $options;
+
                 $interface = $this->reader->firstClassMetadata($ctx->getReflection(), ActivityInterface::class);
 
                 if ($interface === null) {
@@ -119,7 +136,6 @@ class ActivityReader extends Reader
 
                 $attribute = $this->reader->firstFunctionMetadata($method, ActivityMethod::class);
 
-                /** @var \ReflectionMethod $method */
                 if (!$this->isValidMethod($method)) {
                     if ($attribute !== null) {
                         $reflection = $method->getDeclaringClass();
@@ -150,10 +166,19 @@ class ActivityReader extends Reader
                     $prototype->setMethodRetry($retry);
                 }
 
+                // For local activities, convert ActivityOptions → LocalActivityOptions
+                // (only shared properties like timeouts and retryOptions are transferred)
+                $prototype->setMethodOptions(
+                    $interface instanceof LocalActivityInterface
+                        ? LocalActivityOptions::fromOptions($options)
+                        : $options,
+                );
+
                 $prototypes[$name] = $prototype;
             }
 
             $previousRetry = $contextualRetry;
+            $previousOptions = $contextualOptions;
         }
 
         return $prototypes;
@@ -193,4 +218,5 @@ class ActivityReader extends Reader
 
         throw new \LogicException($error);
     }
+
 }

@@ -11,5 +11,8 @@ use Temporal\Common\MethodRetry;
  */
 interface ActivityOptionsInterface
 {
+    /**
+     * @return $this
+     */
     public function mergeWith(?MethodRetry $retry = null): self;
 }

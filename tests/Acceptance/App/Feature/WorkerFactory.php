@@ -28,6 +28,7 @@ final class WorkerFactory
 
     public function createWorker(
         Feature $feature,
+        string $taskQueue,
     ): WorkerInterface {
         // Find Worker attribute
         $attr = self::findAttribute(
@@ -42,10 +43,10 @@ final class WorkerFactory
         }
 
         return $this->workerFactory->newWorker(
-            $feature->taskQueue,
+            $taskQueue,
             $options ?? WorkerOptions::new()->withMaxConcurrentActivityExecutionSize(10),
             interceptorProvider: $interceptorProvider ?? null,
-            logger: $logger ?? LoggerFactory::createServerLogger($feature->taskQueue),
+            logger: $logger ?? LoggerFactory::createServerLogger($taskQueue),
         );
     }
 

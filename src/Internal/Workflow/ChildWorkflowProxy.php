@@ -14,6 +14,7 @@ namespace Temporal\Internal\Workflow;
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\Type;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
+use Temporal\Internal\Support\OptionsMerger;
 use Temporal\Internal\Support\Reflection;
 use Temporal\Internal\Transport\CompletableResultInterface;
 use Temporal\Workflow\ChildWorkflowOptions;
@@ -63,10 +64,18 @@ final class ChildWorkflowProxy extends Proxy
             // Merge options with defaults defined using attributes:
             //  - #[MethodRetry]
             //  - #[CronSchedule]
-            $options = $this->options->mergeWith(
-                $this->workflow->getMethodRetry(),
-                $this->workflow->getCronSchedule(),
-            );
+            //  - Granular attributes
+            $methodOptions = $this->workflow->getMethodOptions();
+            $options = ($methodOptions !== null
+                    ? ChildWorkflowOptions::fromOptions($methodOptions)
+                    : ChildWorkflowOptions::new()
+                )
+                ->mergeWith(
+                    $this->workflow->getMethodRetry(),
+                    $this->workflow->getCronSchedule(),
+                );
+
+            $options = OptionsMerger::merge($options, $this->options);
 
             $this->stub = $this->context->newUntypedChildWorkflowStub(
                 $this->workflow->getID(),

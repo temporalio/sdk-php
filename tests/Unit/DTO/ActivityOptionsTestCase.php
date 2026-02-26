@@ -40,7 +40,7 @@ class ActivityOptionsTestCase extends AbstractDTOMarshalling
                 'fairness_key' => '',
                 'fairness_weight' => 0.0,
             ],
-            'Summary' => '',
+            'Summary'                => '',
         ];
 
         $this->assertSame($expected, $this->marshal($dto));
@@ -58,7 +58,7 @@ class ActivityOptionsTestCase extends AbstractDTOMarshalling
         $dto = new ActivityOptions();
 
         $this->assertNotSame($dto, $dto->withScheduleToCloseTimeout(
-            CarbonInterval::days(42)
+            CarbonInterval::days(42),
         ));
     }
 
@@ -67,7 +67,7 @@ class ActivityOptionsTestCase extends AbstractDTOMarshalling
         $dto = new ActivityOptions();
 
         $this->assertNotSame($dto, $dto->withScheduleToStartTimeout(
-            CarbonInterval::days(42)
+            CarbonInterval::days(42),
         ));
     }
 
@@ -76,7 +76,7 @@ class ActivityOptionsTestCase extends AbstractDTOMarshalling
         $dto = new ActivityOptions();
 
         $this->assertNotSame($dto, $dto->withStartToCloseTimeout(
-            CarbonInterval::days(42)
+            CarbonInterval::days(42),
         ));
     }
 
@@ -85,7 +85,7 @@ class ActivityOptionsTestCase extends AbstractDTOMarshalling
         $dto = new ActivityOptions();
 
         $this->assertNotSame($dto, $dto->withHeartbeatTimeout(
-            CarbonInterval::days(42)
+            CarbonInterval::days(42),
         ));
     }
 
@@ -94,7 +94,7 @@ class ActivityOptionsTestCase extends AbstractDTOMarshalling
         $dto = new ActivityOptions();
 
         $this->assertNotSame($dto, $dto->withCancellationType(
-            ActivityCancellationType::ABANDON
+            ActivityCancellationType::ABANDON,
         ));
     }
 
@@ -112,7 +112,7 @@ class ActivityOptionsTestCase extends AbstractDTOMarshalling
         $dto = new ActivityOptions();
 
         $this->assertNotSame($dto, $dto->withActivityId(
-            Uuid::v4()
+            Uuid::v4(),
         ));
     }
 
@@ -121,7 +121,7 @@ class ActivityOptionsTestCase extends AbstractDTOMarshalling
         $dto = new ActivityOptions();
 
         $this->assertNotSame($dto, $dto->withRetryOptions(
-            RetryOptions::new()
+            RetryOptions::new(),
         ));
     }
 }

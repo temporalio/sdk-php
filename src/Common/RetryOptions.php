@@ -13,6 +13,7 @@ namespace Temporal\Common;
 
 use Google\Protobuf\Duration;
 use JetBrains\PhpStorm\Pure;
+use Spiral\Attributes\NamedArgumentConstructor;
 use Temporal\Activity\ActivityOptions;
 use Temporal\Api\Common\V1\RetryPolicy;
 use Temporal\Internal\Assert;
@@ -36,6 +37,7 @@ use Temporal\Internal\Support\Options;
  * @psalm-immutable
  * @see RetryPolicy
  */
+#[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD), NamedArgumentConstructor]
 class RetryOptions extends Options
 {
     /**
@@ -112,12 +114,34 @@ class RetryOptions extends Options
     #[Marshal(name: 'NonRetryableErrorTypes')]
     public array $nonRetryableExceptions = self::DEFAULT_NON_RETRYABLE_EXCEPTIONS;
 
+    /**
+     * @param DateIntervalValue|null $initialInterval
+     * @param DateIntervalValue|null $maximumInterval
+     * @param int<0, max> $maximumAttempts
+     * @param ExceptionsList $nonRetryableExceptions
+     */
+    public function __construct(
+        $initialInterval = self::DEFAULT_INITIAL_INTERVAL,
+        float $backoffCoefficient = self::DEFAULT_BACKOFF_COEFFICIENT,
+        $maximumInterval = self::DEFAULT_MAXIMUM_INTERVAL,
+        int $maximumAttempts = self::DEFAULT_MAXIMUM_ATTEMPTS,
+        array $nonRetryableExceptions = self::DEFAULT_NON_RETRYABLE_EXCEPTIONS,
+    ) {
+        parent::__construct();
+
+        $this->initialInterval = DateInterval::parseOrNull($initialInterval);
+        $this->backoffCoefficient = $backoffCoefficient;
+        $this->maximumInterval = DateInterval::parseOrNull($maximumInterval);
+        $this->maximumAttempts = $maximumAttempts;
+        $this->nonRetryableExceptions = $nonRetryableExceptions;
+    }
+
     public function mergeWith(?MethodRetry $retry = null): self
     {
         $self = clone $this;
 
         if ($retry !== null) {
-            foreach ($self->diff->getPresentPropertyNames($self) as $name) {
+            foreach ($retry->diff->getChangedPropertyNames($retry) as $name) {
                 $self->$name = $retry->$name;
             }
         }

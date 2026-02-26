@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Declaration\Prototype;
 
+use Temporal\Client\WorkflowOptions;
 use Temporal\Common\CronSchedule;
 use Temporal\Common\MethodRetry;
 use Temporal\Common\Versioning\VersioningBehavior;
@@ -43,6 +44,7 @@ final class WorkflowPrototype extends Prototype
     private ?CronSchedule $cronSchedule = null;
     private ?MethodRetry $methodRetry = null;
     private ?ReturnType $returnType = null;
+    private ?WorkflowOptions $methodOptions = null;
     private bool $hasInitializer = false;
     private VersioningBehavior $versioningBehavior;
 
@@ -100,6 +102,16 @@ final class WorkflowPrototype extends Prototype
     public function setReturnType(?ReturnType $attribute): void
     {
         $this->returnType = $attribute;
+    }
+
+    public function getMethodOptions(): ?WorkflowOptions
+    {
+        return $this->methodOptions;
+    }
+
+    public function setMethodOptions(?WorkflowOptions $options): void
+    {
+        $this->methodOptions = $options;
     }
 
     public function setVersioningBehavior(VersioningBehavior $behavior): void

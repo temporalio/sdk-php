@@ -29,6 +29,13 @@ use Temporal\Internal\Marshaller\Type\DateIntervalType;
 use Temporal\Internal\Marshaller\Type\NullableType;
 use Temporal\Internal\Support\DateInterval;
 use Temporal\Internal\Support\Options;
+use Temporal\Internal\Support\OptionsMerger;
+use Temporal\Workflow\Attribute\Summary;
+use Temporal\Workflow\Attribute\TaskQueue;
+use Temporal\Workflow\Attribute\WorkflowExecutionTimeout;
+use Temporal\Workflow\Attribute\WorkflowIdReusePolicy as WorkflowIdReusePolicyAttr;
+use Temporal\Workflow\Attribute\WorkflowRunTimeout;
+use Temporal\Workflow\Attribute\WorkflowTaskTimeout;
 use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Workflow;
 
@@ -204,6 +211,24 @@ final class ChildWorkflowOptions extends Options
     }
 
     /**
+     * Create ChildWorkflowOptions from granular PHP attributes on a class or method.
+     */
+    public static function fromReflection(\ReflectionMethod|\ReflectionClass $reflection): self
+    {
+        return OptionsMerger::applyAttributes(self::new(), $reflection, [
+            TaskQueue::class => static fn(self $o, TaskQueue $a) => $o->withTaskQueue($a->name),
+            WorkflowExecutionTimeout::class => static fn(self $o, WorkflowExecutionTimeout $a) => $o->withWorkflowExecutionTimeout($a->interval),
+            WorkflowRunTimeout::class => static fn(self $o, WorkflowRunTimeout $a) => $o->withWorkflowRunTimeout($a->interval),
+            WorkflowTaskTimeout::class => static fn(self $o, WorkflowTaskTimeout $a) => $o->withWorkflowTaskTimeout($a->interval),
+            WorkflowIdReusePolicyAttr::class => static fn(self $o, WorkflowIdReusePolicyAttr $a) => $o->withWorkflowIdReusePolicy($a->policy),
+            RetryOptions::class => static fn(self $o, RetryOptions $a) => $o->withRetryOptions($a),
+            CronSchedule::class => static fn(self $o, CronSchedule $a) => $o->withCronSchedule($a->interval),
+            Summary::class => static fn(self $o, Summary $a) => $o->withStaticSummary($a->text),
+            Priority::class => static fn(self $o, Priority $a) => $o->withPriority($a),
+        ]);
+    }
+
+    /**
      * @return $this
      */
     public function mergeWith(?MethodRetry $retry = null, ?CronSchedule $cron = null): self
@@ -211,7 +236,7 @@ final class ChildWorkflowOptions extends Options
         $self = clone $this;
 
         if ($retry !== null && $self->diff->isPresent($self, 'retryOptions')) {
-            $self->retryOptions = $self->retryOptions->mergeWith($retry);
+            $self->retryOptions = ($self->retryOptions ?? RetryOptions::new())->mergeWith($retry);
         }
 
         if ($cron !== null && $self->diff->isPresent($self, 'cronSchedule')) {

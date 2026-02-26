@@ -15,20 +15,45 @@
       <code><![CDATA[NamedArgumentConstructor]]></code>
     </DeprecatedClass>
   </file>
-  <file src="src/Activity/ActivityOptions.php">
-    <PossiblyNullReference>
-      <code><![CDATA[mergeWith]]></code>
-    </PossiblyNullReference>
+  <file src="src/Activity/Attribute/CancellationType.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Activity/Attribute/HeartbeatTimeout.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Activity/Attribute/ScheduleToCloseTimeout.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Activity/Attribute/ScheduleToStartTimeout.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Activity/Attribute/StartToCloseTimeout.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Activity/Attribute/Summary.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Activity/Attribute/TaskQueue.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
   </file>
   <file src="src/Activity/LocalActivityInterface.php">
     <DeprecatedClass>
       <code><![CDATA[NamedArgumentConstructor]]></code>
     </DeprecatedClass>
-  </file>
-  <file src="src/Activity/LocalActivityOptions.php">
-    <PossiblyNullReference>
-      <code><![CDATA[mergeWith]]></code>
-    </PossiblyNullReference>
   </file>
   <file src="src/Client/ActivityCompletionClientInterface.php">
     <MissingParamType>
@@ -219,8 +244,14 @@
     <ArgumentTypeCoercion>
       <code><![CDATA[$priorityKey]]></code>
     </ArgumentTypeCoercion>
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
   </file>
   <file src="src/Common/RetryOptions.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
     <PossiblyNullArgument>
       <code><![CDATA[DateInterval::toDuration($this->initialInterval)]]></code>
       <code><![CDATA[DateInterval::toDuration($this->maximumInterval)]]></code>
@@ -530,9 +561,6 @@
     </PropertyNotSetInConstructor>
   </file>
   <file src="src/Internal/Declaration/Graph/ClassNode.php">
-    <ImplicitToStringCast>
-      <code><![CDATA[list<array{class-string, \ReflectionMethod}>]]></code>
-    </ImplicitToStringCast>
     <InvalidReturnType>
       <code><![CDATA[\Traversable<ClassNode>]]></code>
     </InvalidReturnType>
@@ -597,7 +625,7 @@
       <code><![CDATA[$retry !== null]]></code>
     </RedundantConditionGivenDocblockType>
     <UnnecessaryVarAnnotation>
-      <code><![CDATA[\ReflectionMethod]]></code>
+      <code><![CDATA[\Traversable<ClassNode, \ReflectionMethod>]]></code>
     </UnnecessaryVarAnnotation>
   </file>
   <file src="src/Internal/Declaration/Reader/WorkflowReader.php">
@@ -616,7 +644,7 @@
       <code><![CDATA[$retry !== null]]></code>
     </RedundantConditionGivenDocblockType>
     <UnnecessaryVarAnnotation>
-      <code><![CDATA[\Traversable<class-string, \ReflectionMethod>]]></code>
+      <code><![CDATA[\Traversable<ClassNode, \ReflectionMethod>]]></code>
     </UnnecessaryVarAnnotation>
   </file>
   <file src="src/Internal/Declaration/WorkflowInstance/QueryDispatcher.php">
@@ -978,6 +1006,9 @@
     </PossiblyFalseArgument>
   </file>
   <file src="src/Internal/Support/Options.php">
+    <ImpureMethodCall>
+      <code><![CDATA[new static()]]></code>
+    </ImpureMethodCall>
     <UnsafeInstantiation>
       <code><![CDATA[new static()]]></code>
     </UnsafeInstantiation>
@@ -1056,12 +1087,6 @@
     <MismatchingDocblockParamType>
       <code><![CDATA[RequestInterface]]></code>
     </MismatchingDocblockParamType>
-  </file>
-  <file src="src/Internal/Workflow/ActivityProxy.php">
-    <ArgumentTypeCoercion>
-      <code><![CDATA[$options]]></code>
-      <code><![CDATA[$options]]></code>
-    </ArgumentTypeCoercion>
   </file>
   <file src="src/Internal/Workflow/ActivityStub.php">
     <ArgumentTypeCoercion>
@@ -1186,6 +1211,9 @@
     <DocblockTypeContradiction>
       <code><![CDATA[\is_iterable($reason)]]></code>
     </DocblockTypeContradiction>
+    <ImplementedReturnTypeMismatch>
+      <code><![CDATA[ActivityProxy]]></code>
+    </ImplementedReturnTypeMismatch>
     <InaccessibleProperty>
       <code><![CDATA[$this->input->info->typedSearchAttributes]]></code>
     </InaccessibleProperty>
@@ -1479,14 +1507,65 @@
     </UnsafeInstantiation>
   </file>
   <file src="src/Workflow.php">
+    <DeprecatedMethod>
+      <code><![CDATA[newActivityStub]]></code>
+    </DeprecatedMethod>
+    <InvalidArgument>
+      <code><![CDATA[$options]]></code>
+    </InvalidArgument>
     <UndefinedInterfaceMethod>
       <code><![CDATA[getUpdateContext]]></code>
     </UndefinedInterfaceMethod>
   </file>
-  <file src="src/Workflow/ChildWorkflowOptions.php">
-    <PossiblyNullReference>
-      <code><![CDATA[mergeWith]]></code>
-    </PossiblyNullReference>
+  <file src="src/Workflow/Attribute/Memo.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Workflow/Attribute/SearchAttributes.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Workflow/Attribute/Summary.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Workflow/Attribute/TaskQueue.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Workflow/Attribute/WorkflowExecutionTimeout.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Workflow/Attribute/WorkflowIdConflictPolicy.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Workflow/Attribute/WorkflowIdReusePolicy.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Workflow/Attribute/WorkflowRunTimeout.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Workflow/Attribute/WorkflowStartDelay.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Workflow/Attribute/WorkflowTaskTimeout.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
   </file>
   <file src="src/Workflow/ChildWorkflowStubInterface.php">
     <MissingParamType>

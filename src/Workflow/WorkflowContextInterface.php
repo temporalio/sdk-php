@@ -20,6 +20,7 @@ use Temporal\Common\SearchAttributes\SearchAttributeUpdate;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Support\DateInterval;
+use Temporal\Internal\Support\Options;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Workflow;
@@ -272,6 +273,8 @@ interface WorkflowContextInterface extends EnvironmentInterface
     ): PromiseInterface;
 
     /**
+     * @deprecated Passing options other than {@see Options} is deprecated and will be changed in the future.
+     *
      * The method returns a proxy over the class containing the activity, which
      * allows you to conveniently and beautifully call all methods within the
      * passed class.
@@ -280,6 +283,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @psalm-template T of object
      * @param class-string<T> $class
+     * @param (ActivityOptionsInterface&Options)|null $options
      *
      * @return T
      */

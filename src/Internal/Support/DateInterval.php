@@ -51,7 +51,7 @@ final class DateInterval
     ];
 
     /**
-     * @param DateIntervalFormat $format
+     * @psalm-param DateIntervalFormat $format
      *
      * @psalm-assert DateIntervalValue|null $interval
      * @psalm-suppress InvalidOperand
@@ -141,7 +141,7 @@ final class DateInterval
     }
 
     /**
-     * @param DateIntervalFormat $format
+     * @psalm-param DateIntervalFormat $format
      *
      * @psalm-assert DateIntervalValue|null $interval
      */
@@ -152,6 +152,16 @@ final class DateInterval
         }
 
         return self::parse($interval, $format);
+    }
+
+    /**
+     * @psalm-param DateIntervalFormat $format
+     *
+     * @psalm-assert DateIntervalValue|null $interval
+     */
+    public static function parseOrZero(mixed $interval, string $format = self::FORMAT_MILLISECONDS): CarbonInterval
+    {
+        return self::parseOrNull($interval, $format) ?? CarbonInterval::create(0);
     }
 
     /**

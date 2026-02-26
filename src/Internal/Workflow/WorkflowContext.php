@@ -52,6 +52,7 @@ use Temporal\Internal\Interceptor\HeaderCarrier;
 use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Support\DateInterval;
+use Temporal\Internal\Support\Options;
 use Temporal\Internal\Support\StackRenderer;
 use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Transport\CompletableResultInterface;
@@ -443,6 +444,13 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         return new ActivityStub($this->services->marshaller, $options, $this->getHeader());
     }
 
+    /**
+     * @deprecated Passing options other than {@see Options} is deprecated and will be changed in the future.
+     *
+     * @param class-string $class
+     * @param (ActivityOptionsInterface&Options)|null $options
+     * @throws \ReflectionException
+     */
     public function newActivityStub(
         string $class,
         ?ActivityOptionsInterface $options = null,
@@ -453,10 +461,14 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
             throw new \RuntimeException("Local activity can be used only with LocalActivityOptions");
         }
 
+        /**
+         * @var ActivityOptions|LocalActivityOptions $options
+         */
+        $options = $options ?? ActivityOptions::new();
         return new ActivityProxy(
             $class,
             $activities,
-            $options ?? ActivityOptions::new(),
+            $options,
             $this,
             $this->callsInterceptor,
         );

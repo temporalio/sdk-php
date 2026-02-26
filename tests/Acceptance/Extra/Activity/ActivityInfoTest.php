@@ -60,8 +60,7 @@ class TestWorkflow
                         ->withMaximumInterval('2 minutes'),
                 )
                 ->withScheduleToCloseTimeout(10),
-        )
-            ->retryOptions();
+        )->retryOptions();
     }
 }
 

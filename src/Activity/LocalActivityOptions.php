@@ -67,9 +67,6 @@ class LocalActivityOptions extends Options implements ActivityOptionsInterface
     #[Marshal(name: 'RetryPolicy', type: NullableType::class, of: RetryOptions::class)]
     public ?RetryOptions $retryOptions = null;
 
-    /**
-     * ActivityOptions constructor.
-     */
     public function __construct()
     {
         $this->scheduleToCloseTimeout = CarbonInterval::seconds(0);
@@ -86,7 +83,7 @@ class LocalActivityOptions extends Options implements ActivityOptionsInterface
         $self = clone $this;
 
         if ($retry !== null && $this->diff->isPresent($self, 'retryOptions')) {
-            $self->retryOptions = $this->retryOptions->mergeWith($retry);
+            $self->retryOptions = ($self->retryOptions ?? RetryOptions::new())->mergeWith($retry);
         }
 
         return $self;

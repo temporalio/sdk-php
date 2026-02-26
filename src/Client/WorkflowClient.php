@@ -44,6 +44,7 @@ use Temporal\Internal\Client\WorkflowStub;
 use Temporal\Internal\Declaration\Reader\WorkflowReader;
 use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Internal\Mapper\WorkflowExecutionInfoMapper;
+use Temporal\Internal\Support\OptionsMerger;
 use Temporal\Internal\Support\Reflection;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowRunInterface;
@@ -254,6 +255,9 @@ class WorkflowClient implements WorkflowClientInterface
         ?WorkflowOptions $options = null,
     ): object {
         $workflow = $this->reader->fromClass($class);
+
+        $target = $workflow->getMethodOptions() ?? WorkflowOptions::new();
+        $options = OptionsMerger::merge($target, $options);
 
         return new WorkflowProxy(
             $this,
