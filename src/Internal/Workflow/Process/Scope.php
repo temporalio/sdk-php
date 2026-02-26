@@ -16,7 +16,6 @@ use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
-use Temporal\Experiments\Fibers\DeferredFiber;
 use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\Failure\TemporalFailure;
@@ -125,26 +124,11 @@ class Scope implements CancellationScopeInterface, Destroyable
      */
     public function start(MethodHandler|\Closure $handler, ValuesInterface $values, bool $deferred): void
     {
-        if ($deferred) {
-            // Defer both coroutine creation AND first execution.
-            // This is critical for fiber mode: $fiber->start() executes handler code
-            // immediately, but for updateWithStart the update handler must run first.
-            // By deferring createCoroutine, the fiber won't start until the next tick,
-            // giving signal/update handlers a chance to execute first.
-            $this->services->loop->once($this->layer, function () use ($handler, $values): void {
-                $this->coroutine = $this->createCoroutine(
-                    static fn(ValuesInterface $v): mixed => ($handler)($v),
-                    $values,
-                );
-                $this->next();
-            });
-        } else {
-            $this->coroutine = $this->createCoroutine(
-                static fn(ValuesInterface $v): mixed => ($handler)($v),
-                $values,
-            );
-            $this->next();
-        }
+        $this->coroutine = $this->createCoroutine($handler, $values);
+
+        $deferred
+            ? $this->services->loop->once($this->layer, $this->next(...))
+            : $this->next();
     }
 
     /**
@@ -384,58 +368,6 @@ class Scope implements CancellationScopeInterface, Destroyable
         }, $values);
     }
 
-    /**
-     * Creates a coroutine from a handler, automatically detecting whether to use
-     * Generator mode or Fiber mode.
-     *
-     * 1. Handler is wrapped in a Fiber and started.
-     * 2. If handler returns a Generator (generator function), use DeferredGenerator.
-     * 3. If handler suspends via Fiber::suspend(), use DeferredFiber.
-     * 4. If handler completes synchronously, wrap in DeferredGenerator.
-     */
-    private function createCoroutine(callable $handler, ValuesInterface $values): CoroutineInterface
-    {
-        $scopeContext = $this->scopeContext;
-        $fiber = new \Fiber(static function () use ($handler, $values, $scopeContext): mixed {
-            $scopeContext->setFiberMode(true);
-            \Temporal\Workflow::setCurrentContext($scopeContext);
-            return $handler($values);
-        });
-
-        try {
-            $suspendedValue = $fiber->start();
-        } catch (\Throwable $e) {
-            // Handler threw immediately — wrap in a DeferredGenerator that re-throws
-            $coroutine = DeferredGenerator::fromHandler(
-                static fn() => throw $e,
-                EncodedValues::empty(),
-            );
-            return $coroutine->catch($this->onException(...));
-        }
-
-        if ($fiber->isTerminated()) {
-            $result = $fiber->getReturn();
-
-            if ($result instanceof \Generator) {
-                // Generator-based handler: use existing Generator coroutine path
-                $scopeContext->setFiberMode(false);
-                return DeferredGenerator::fromGenerator($result)
-                    ->catch($this->onException(...));
-            }
-
-            // Handler completed synchronously (no async ops, no Generator)
-            $scopeContext->setFiberMode(false);
-            return DeferredGenerator::fromHandler(
-                static fn() => $result,
-                EncodedValues::empty(),
-            )->catch($this->onException(...));
-        }
-
-        // Fiber suspended — Fiber mode
-        return (new DeferredFiber($fiber, $suspendedValue))
-            ->catch($this->onException(...));
-    }
-
     protected function onRequest(RequestInterface $request, PromiseInterface $promise, bool $cancellable = true): void
     {
         $this->onCancel[++$this->cancelID] = function (?\Throwable $reason = null) use ($request, $cancellable): void {
@@ -525,6 +457,55 @@ class Scope implements CancellationScopeInterface, Destroyable
                 }
                 goto begin;
         }
+    }
+
+    /**
+     * Creates a coroutine from a handler by wrapping it in a Fiber.
+     *
+     * When $deferred is true, the Fiber start is deferred until first access
+     * (via {@see DeferredGenerator::fromHandler()} lazy semantics).
+     * When $deferred is false, the Fiber is started immediately but still
+     * wrapped in the same DeferredGenerator for uniform handling.
+     */
+    private function createCoroutine(callable $handler, ValuesInterface $values): CoroutineInterface
+    {
+        $scopeContext = $this->scopeContext;
+        $fiberHandler = $this->createFiberHandler($handler, $scopeContext);
+
+        return DeferredGenerator::fromHandler($fiberHandler, $values)
+            ->catch($this->onException(...));
+    }
+
+    private function createFiberHandler(callable $handler, ScopeContext $scopeContext): \Closure
+    {
+        return static function (ValuesInterface $values) use ($handler, $scopeContext): mixed {
+            $fiber = new \Fiber(static function () use ($handler, $values, $scopeContext): mixed {
+                $scopeContext->setFiberMode(true);
+                \Temporal\Workflow::setCurrentContext($scopeContext);
+                return $handler($values);
+            });
+
+            $suspendedValue = $fiber->start();
+
+            if ($fiber->isTerminated()) {
+                $scopeContext->setFiberMode(false);
+                return $fiber->getReturn();
+            }
+
+            // Fiber suspended — bridge it through a Generator
+            return (static function (\Fiber $fiber, mixed $suspendedValue): \Generator {
+                $value = $suspendedValue;
+                while (!$fiber->isTerminated()) {
+                    try {
+                        $sent = yield $value;
+                        $value = $fiber->resume($sent);
+                    } catch (\Throwable $e) {
+                        $value = $fiber->throw($e);
+                    }
+                }
+                return $fiber->getReturn();
+            })($fiber, $suspendedValue);
+        };
     }
 
     private function nextPromise(PromiseInterface $promise): void
