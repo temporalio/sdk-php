@@ -450,5 +450,4 @@ class WorkflowReader extends Reader
 
         return new WorkflowPrototype($name, $handler, $class);
     }
-
 }

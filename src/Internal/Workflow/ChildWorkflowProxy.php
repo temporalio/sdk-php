@@ -66,10 +66,11 @@ final class ChildWorkflowProxy extends Proxy
             //  - #[CronSchedule]
             //  - Granular attributes
             $methodOptions = $this->workflow->getMethodOptions();
-            $options = ($methodOptions !== null
+            $options = (
+                $methodOptions !== null
                     ? ChildWorkflowOptions::fromOptions($methodOptions)
                     : ChildWorkflowOptions::new()
-                )
+            )
                 ->mergeWith(
                     $this->workflow->getMethodRetry(),
                     $this->workflow->getCronSchedule(),

@@ -18,7 +18,6 @@ use Temporal\Activity\LocalActivityOptions;
 use Temporal\Common\MethodRetry;
 use Temporal\Internal\Declaration\ActivityInstance;
 use Temporal\Internal\Declaration\EntityNameValidator;
-use Temporal\Internal\Support\Options;
 
 final class ActivityPrototype extends Prototype
 {

@@ -218,5 +218,4 @@ class ActivityReader extends Reader
 
         throw new \LogicException($error);
     }
-
 }

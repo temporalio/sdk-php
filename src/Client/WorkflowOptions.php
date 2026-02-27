@@ -648,5 +648,4 @@ final class WorkflowOptions extends Options
         $self->priority = $priority;
         return $self;
     }
-
 }
