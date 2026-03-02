@@ -27,6 +27,7 @@ use Temporal\Exception\ExceptionInterceptorInterface;
 use Temporal\Interceptor\PipelineProvider;
 use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Internal\Events\EventEmitterTrait;
+use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Plugin\CompositePipelineProvider;
 use Temporal\Plugin\PluginRegistry;
 use Temporal\Plugin\WorkerFactoryPluginContext;
@@ -257,15 +258,22 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         $host ??= RoadRunner::create();
         $this->codec = $this->createCodec();
 
-        while ($msg = $host->waitBatch()) {
-            try {
-                $host->send($this->dispatch($msg->messages, $msg->context));
-            } catch (\Throwable $e) {
-                $host->error($e);
-            }
-        }
+        $pipeline = Pipeline::prepare(
+            $this->pluginRegistry->getPlugins(WorkerPluginInterface::class),
+        );
 
-        return 0;
+        return $pipeline->with(function () use ($host): int {
+            while ($msg = $host->waitBatch()) {
+                try {
+                    $host->send($this->dispatch($msg->messages, $msg->context));
+                } catch (\Throwable $e) {
+                    $host->error($e);
+                }
+            }
+
+            return 0;
+            /** @see WorkerPluginInterface::run() */
+        }, 'run')($this);
     }
 
     public function tick(): void

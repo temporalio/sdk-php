@@ -35,4 +35,9 @@ trait WorkerPluginTrait
     {
         // No-op by default
     }
+
+    public function run(WorkerFactoryInterface $factory, callable $next): int
+    {
+        return $next($factory);
+    }
 }

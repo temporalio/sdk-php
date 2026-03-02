@@ -12,8 +12,10 @@ use Temporal\Plugin\WorkerFactoryPluginContext;
 use Temporal\Plugin\WorkerPluginContext;
 use Temporal\Plugin\WorkerPluginInterface;
 use Temporal\Plugin\WorkerPluginTrait;
+use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Worker\WorkerInterface;
 use Temporal\Worker\WorkerOptions;
+use Temporal\Worker\Transport\HostConnectionInterface;
 use Temporal\Worker\Transport\RPCConnectionInterface;
 use Temporal\WorkerFactory;
 
@@ -364,8 +366,312 @@ class WorkerFactoryPluginTestCase extends TestCase
         );
     }
 
+    public function testRunHookIsCalled(): void
+    {
+        $called = false;
+        $plugin = new class($called) implements WorkerPluginInterface {
+            use WorkerPluginTrait;
+
+            public function __construct(private bool &$called) {}
+
+            public function getName(): string
+            {
+                return 'test.run';
+            }
+
+            public function run(WorkerFactoryInterface $factory, callable $next): int
+            {
+                $this->called = true;
+                return $next($factory);
+            }
+        };
+
+        $factory = new WorkerFactory(
+            DataConverter::createDefault(),
+            $this->mockRpc(),
+            plugins: [$plugin],
+        );
+
+        $factory->run($this->mockHost());
+
+        self::assertTrue($called);
+    }
+
+    public function testRunHookReceivesFactoryInstance(): void
+    {
+        $receivedFactory = null;
+
+        $plugin = new class($receivedFactory) implements WorkerPluginInterface {
+            use WorkerPluginTrait;
+
+            public function __construct(private ?WorkerFactoryInterface &$receivedFactory) {}
+
+            public function getName(): string
+            {
+                return 'test.factory-ref';
+            }
+
+            public function run(WorkerFactoryInterface $factory, callable $next): int
+            {
+                $this->receivedFactory = $factory;
+                return $next($factory);
+            }
+        };
+
+        $factory = new WorkerFactory(
+            DataConverter::createDefault(),
+            $this->mockRpc(),
+            plugins: [$plugin],
+        );
+
+        $factory->run($this->mockHost());
+
+        self::assertSame($factory, $receivedFactory);
+    }
+
+    public function testRunHookChainOrder(): void
+    {
+        $order = [];
+
+        $plugin1 = new class($order) implements WorkerPluginInterface {
+            use WorkerPluginTrait;
+
+            public function __construct(private array &$order) {}
+
+            public function getName(): string
+            {
+                return 'test.first';
+            }
+
+            public function run(WorkerFactoryInterface $factory, callable $next): int
+            {
+                $this->order[] = 'first:before';
+                try {
+                    return $next($factory);
+                } finally {
+                    $this->order[] = 'first:after';
+                }
+            }
+        };
+
+        $plugin2 = new class($order) implements WorkerPluginInterface {
+            use WorkerPluginTrait;
+
+            public function __construct(private array &$order) {}
+
+            public function getName(): string
+            {
+                return 'test.second';
+            }
+
+            public function run(WorkerFactoryInterface $factory, callable $next): int
+            {
+                $this->order[] = 'second:before';
+                try {
+                    return $next($factory);
+                } finally {
+                    $this->order[] = 'second:after';
+                }
+            }
+        };
+
+        $factory = new WorkerFactory(
+            DataConverter::createDefault(),
+            $this->mockRpc(),
+            plugins: [$plugin1, $plugin2],
+        );
+
+        $factory->run($this->mockHost());
+
+        // First plugin is outermost: before in forward order, after in reverse (LIFO)
+        self::assertSame([
+            'first:before',
+            'second:before',
+            'second:after',
+            'first:after',
+        ], $order);
+    }
+
+    public function testRunHookCanWrapWithTryFinally(): void
+    {
+        $cleanupCalled = false;
+
+        $plugin = new class($cleanupCalled) implements WorkerPluginInterface {
+            use WorkerPluginTrait;
+
+            public function __construct(private bool &$cleanupCalled) {}
+
+            public function getName(): string
+            {
+                return 'test.cleanup';
+            }
+
+            public function run(WorkerFactoryInterface $factory, callable $next): int
+            {
+                try {
+                    return $next($factory);
+                } finally {
+                    $this->cleanupCalled = true;
+                }
+            }
+        };
+
+        $factory = new WorkerFactory(
+            DataConverter::createDefault(),
+            $this->mockRpc(),
+            plugins: [$plugin],
+        );
+
+        $factory->run($this->mockHost());
+
+        self::assertTrue($cleanupCalled);
+    }
+
+    public function testRunHookCanSkipNext(): void
+    {
+        $innerCalled = false;
+
+        $outerPlugin = new class() implements WorkerPluginInterface {
+            use WorkerPluginTrait;
+
+            public function getName(): string
+            {
+                return 'test.outer';
+            }
+
+            public function run(WorkerFactoryInterface $factory, callable $next): int
+            {
+                // Intentionally skip $next()
+                return 42;
+            }
+        };
+
+        $innerPlugin = new class($innerCalled) implements WorkerPluginInterface {
+            use WorkerPluginTrait;
+
+            public function __construct(private bool &$innerCalled) {}
+
+            public function getName(): string
+            {
+                return 'test.inner';
+            }
+
+            public function run(WorkerFactoryInterface $factory, callable $next): int
+            {
+                $this->innerCalled = true;
+                return $next($factory);
+            }
+        };
+
+        $factory = new WorkerFactory(
+            DataConverter::createDefault(),
+            $this->mockRpc(),
+            plugins: [$outerPlugin, $innerPlugin],
+        );
+
+        $result = $factory->run($this->mockHost());
+
+        self::assertSame(42, $result);
+        self::assertFalse($innerCalled);
+    }
+
+    public function testRunHookFullLifecycleOrder(): void
+    {
+        $order = [];
+
+        $plugin = new class($order) implements WorkerPluginInterface {
+            use WorkerPluginTrait;
+
+            public function __construct(private array &$order) {}
+
+            public function getName(): string
+            {
+                return 'test.lifecycle';
+            }
+
+            public function configureWorkerFactory(WorkerFactoryPluginContext $context): void
+            {
+                $this->order[] = 'configureWorkerFactory';
+            }
+
+            public function configureWorker(WorkerPluginContext $context): void
+            {
+                $this->order[] = 'configureWorker';
+            }
+
+            public function initializeWorker(WorkerInterface $worker): void
+            {
+                $this->order[] = 'initializeWorker';
+            }
+
+            public function run(WorkerFactoryInterface $factory, callable $next): int
+            {
+                $this->order[] = 'run:before';
+                try {
+                    return $next($factory);
+                } finally {
+                    $this->order[] = 'run:after';
+                }
+            }
+        };
+
+        $factory = new WorkerFactory(
+            DataConverter::createDefault(),
+            $this->mockRpc(),
+            plugins: [$plugin],
+        );
+        $factory->newWorker();
+        $factory->run($this->mockHost());
+
+        self::assertSame([
+            'configureWorkerFactory',
+            'configureWorker',
+            'initializeWorker',
+            'run:before',
+            'run:after',
+        ], $order);
+    }
+
+    public function testRunHookReturnsValueFromRunLoop(): void
+    {
+        $factory = new WorkerFactory(
+            DataConverter::createDefault(),
+            $this->mockRpc(),
+        );
+
+        $result = $factory->run($this->mockHost());
+
+        self::assertSame(0, $result);
+    }
+
+    public function testDefaultTraitRunPassesThrough(): void
+    {
+        $plugin = new class('test.noop') extends AbstractPlugin {};
+
+        $factory = new WorkerFactory(
+            DataConverter::createDefault(),
+            $this->mockRpc(),
+            plugins: [$plugin],
+        );
+
+        $result = $factory->run($this->mockHost());
+
+        self::assertSame(0, $result);
+    }
+
     private function mockRpc(): RPCConnectionInterface
     {
         return $this->createMock(RPCConnectionInterface::class);
+    }
+
+    /**
+     * Create a mock host that immediately returns null (empty run loop).
+     */
+    private function mockHost(): HostConnectionInterface
+    {
+        $host = $this->createMock(HostConnectionInterface::class);
+        $host->method('waitBatch')->willReturn(null);
+
+        return $host;
     }
 }
