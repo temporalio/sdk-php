@@ -18,6 +18,7 @@ namespace Temporal\Plugin;
  */
 abstract class AbstractPlugin implements TemporalPluginInterface
 {
+    use ConnectionPluginTrait;
     use ClientPluginTrait;
     use ScheduleClientPluginTrait;
     use WorkerPluginTrait;

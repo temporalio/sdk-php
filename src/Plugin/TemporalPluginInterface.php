@@ -12,12 +12,12 @@ declare(strict_types=1);
 namespace Temporal\Plugin;
 
 /**
- * Combined plugin interface for bundles that configure client, schedule client, and worker.
+ * Combined plugin interface for bundles that configure connection, client, schedule client, and worker.
  *
  * Implementing this interface is optional — plugins may implement only
- * {@see ClientPluginInterface}, {@see ScheduleClientPluginInterface},
- * or {@see WorkerPluginInterface} as needed.
+ * {@see ConnectionPluginInterface}, {@see ClientPluginInterface},
+ * {@see ScheduleClientPluginInterface}, or {@see WorkerPluginInterface} as needed.
  */
-interface TemporalPluginInterface extends ClientPluginInterface, ScheduleClientPluginInterface, WorkerPluginInterface
+interface TemporalPluginInterface extends ConnectionPluginInterface, ClientPluginInterface, ScheduleClientPluginInterface, WorkerPluginInterface
 {
 }

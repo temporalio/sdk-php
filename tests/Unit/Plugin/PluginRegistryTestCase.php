@@ -10,10 +10,8 @@ use Temporal\Plugin\ClientPluginContext;
 use Temporal\Plugin\ClientPluginInterface;
 use Temporal\Plugin\PluginRegistry;
 use Temporal\Plugin\ScheduleClientPluginInterface;
-use Temporal\Plugin\WorkerFactoryPluginContext;
-use Temporal\Plugin\WorkerPluginContext;
 use Temporal\Plugin\WorkerPluginInterface;
-use Temporal\Worker\WorkerInterface;
+use Temporal\Plugin\WorkerPluginTrait;
 
 /**
  * @group unit
@@ -84,16 +82,12 @@ class PluginRegistryTestCase extends TestCase
         };
 
         $workerPlugin = new class implements WorkerPluginInterface {
+            use WorkerPluginTrait;
+
             public function getName(): string
             {
                 return 'worker-only';
             }
-
-            public function configureWorkerFactory(WorkerFactoryPluginContext $context): void {}
-
-            public function configureWorker(WorkerPluginContext $context): void {}
-
-            public function initializeWorker(WorkerInterface $worker): void {}
         };
 
         $bothPlugin = $this->createPlugin('both');

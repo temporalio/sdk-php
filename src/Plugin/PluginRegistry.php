@@ -18,7 +18,7 @@ namespace Temporal\Plugin;
  * {@see WorkerPluginInterface::getName()} value. When a duplicate is detected,
  * an exception is thrown.
  *
- * @psalm-type TPlugin = (ClientPluginInterface|ScheduleClientPluginInterface|WorkerPluginInterface)
+ * @psalm-type TPlugin = (ConnectionPluginInterface|ClientPluginInterface|ScheduleClientPluginInterface|WorkerPluginInterface)
  * @internal
  */
 final class PluginRegistry
@@ -36,7 +36,7 @@ final class PluginRegistry
         }
     }
 
-    public function add(ClientPluginInterface|ScheduleClientPluginInterface|WorkerPluginInterface $plugin): void
+    public function add(ConnectionPluginInterface|ClientPluginInterface|ScheduleClientPluginInterface|WorkerPluginInterface $plugin): void
     {
         $name = $plugin->getName();
         if (isset($this->plugins[$name])) {

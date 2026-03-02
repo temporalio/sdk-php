@@ -41,6 +41,8 @@ use Temporal\Internal\Client\WorkflowProxy;
 use Temporal\Plugin\ClientPluginContext;
 use Temporal\Plugin\ClientPluginInterface;
 use Temporal\Plugin\CompositePipelineProvider;
+use Temporal\Plugin\ConnectionPluginContext;
+use Temporal\Plugin\ConnectionPluginInterface;
 use Temporal\Plugin\PluginRegistry;
 use Temporal\Plugin\ScheduleClientPluginInterface;
 use Temporal\Plugin\WorkerPluginInterface;
@@ -87,6 +89,13 @@ class WorkflowClient implements WorkflowClientInterface
         $this->pluginRegistry = new PluginRegistry($plugins);
         $this->clientOptions = $options ?? new ClientOptions();
         $this->converter = $converter ?? DataConverter::createDefault();
+
+        // Apply connection plugins (before client-level configuration)
+        $connectionContext = new ConnectionPluginContext($serviceClient);
+        foreach ($this->pluginRegistry->getPlugins(ConnectionPluginInterface::class) as $plugin) {
+            $plugin->configureServiceClient($connectionContext);
+        }
+        $serviceClient = $connectionContext->getServiceClient();
 
         $pluginContext = new ClientPluginContext(
             clientOptions: $this->clientOptions,

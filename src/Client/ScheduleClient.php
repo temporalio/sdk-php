@@ -32,6 +32,8 @@ use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Internal\Mapper\ScheduleMapper;
+use Temporal\Plugin\ConnectionPluginContext;
+use Temporal\Plugin\ConnectionPluginInterface;
 use Temporal\Plugin\PluginRegistry;
 use Temporal\Plugin\ScheduleClientPluginContext;
 use Temporal\Plugin\ScheduleClientPluginInterface;
@@ -61,9 +63,17 @@ final class ScheduleClient implements ScheduleClientInterface
         $this->clientOptions = $options ?? new ClientOptions();
         $this->converter = $converter ?? DataConverter::createDefault();
 
-        // Apply schedule client plugins
+        // Apply plugins
         if ($plugins !== []) {
             $pluginRegistry = new PluginRegistry($plugins);
+
+            // Apply connection plugins (before client-level configuration)
+            $connectionContext = new ConnectionPluginContext($serviceClient);
+            foreach ($pluginRegistry->getPlugins(ConnectionPluginInterface::class) as $plugin) {
+                $plugin->configureServiceClient($connectionContext);
+            }
+            $serviceClient = $connectionContext->getServiceClient();
+
             $pluginContext = new ScheduleClientPluginContext(
                 clientOptions: $this->clientOptions,
                 dataConverter: $this->converter,
