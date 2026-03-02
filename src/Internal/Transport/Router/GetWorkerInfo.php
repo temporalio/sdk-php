@@ -24,10 +24,14 @@ use Temporal\Worker\WorkerInterface;
 
 final class GetWorkerInfo extends Route
 {
+    /**
+     * @param list<string> $pluginNames Names of registered plugins for observability.
+     */
     public function __construct(
         private readonly RepositoryInterface $queues,
         private readonly MarshallerInterface $marshaller,
         private readonly ServiceCredentials $credentials,
+        private readonly array $pluginNames = [],
     ) {}
 
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
@@ -62,6 +66,7 @@ final class GetWorkerInfo extends Route
             // ActivityInfo[]
             'Activities' => $this->map($worker->getActivities(), $activityMap),
             'PhpSdkVersion' => SdkVersion::getSdkVersion(),
+            'Plugins' => $this->pluginNames,
             'Flags' => (object) $this->prepareFlags(),
         ];
     }

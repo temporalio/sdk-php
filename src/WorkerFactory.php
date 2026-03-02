@@ -304,8 +304,13 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
 
     protected function createRouter(ServiceCredentials $credentials): RouterInterface
     {
+        $pluginNames = \array_map(
+            static fn(WorkerPluginInterface $p): string => $p->getName(),
+            $this->pluginRegistry->getPlugins(WorkerPluginInterface::class),
+        );
+
         $router = new Router();
-        $router->add(new Router\GetWorkerInfo($this->queues, $this->marshaller, $credentials));
+        $router->add(new Router\GetWorkerInfo($this->queues, $this->marshaller, $credentials, $pluginNames));
 
         return $router;
     }
