@@ -17,7 +17,7 @@ use Temporal\Internal\Marshaller\MarshallingRule;
 use Temporal\Internal\Support\Inheritance;
 
 /**
- * @extends Type<string>
+ * @extends Type<string, UuidInterface>
  */
 final class UuidType extends Type implements DetectableTypeInterface, RuleFactoryInterface
 {
@@ -44,17 +44,11 @@ final class UuidType extends Type implements DetectableTypeInterface, RuleFactor
             : new MarshallingRule($property->getName(), self::class, $type->getName());
     }
 
-    /**
-     * @psalm-assert string $value
-     */
     public function parse(mixed $value, mixed $current): UuidInterface
     {
         return Uuid::fromString($value);
     }
 
-    /**
-     * @psalm-assert UuidInterface $value
-     */
     public function serialize(mixed $value): string
     {
         return $value->toString();

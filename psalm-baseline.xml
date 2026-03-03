@@ -807,7 +807,6 @@
   <file src="src/Internal/Marshaller/Type/ArrayType.php">
     <MoreSpecificImplementedParamType>
       <code><![CDATA[$current]]></code>
-      <code><![CDATA[$value]]></code>
     </MoreSpecificImplementedParamType>
   </file>
   <file src="src/Internal/Marshaller/Type/DateIntervalType.php">
@@ -815,10 +814,14 @@
       <code><![CDATA[$this->format]]></code>
       <code><![CDATA[$this->format]]></code>
     </ArgumentTypeCoercion>
+    <DeprecatedConstant>
+      <code><![CDATA[DateInterval::FORMAT_MONTHS]]></code>
+      <code><![CDATA[DateInterval::FORMAT_YEARS]]></code>
+    </DeprecatedConstant>
     <InvalidOperand>
+      <code><![CDATA[$interval->totalMicroseconds * 1000]]></code>
       <code><![CDATA[$value * 1000000000]]></code>
       <code><![CDATA[($value * 1000000000) % 1000000000]]></code>
-      <code><![CDATA[DateInterval::parse($value, $this->format)->totalMicroseconds * 1000]]></code>
     </InvalidOperand>
   </file>
   <file src="src/Internal/Marshaller/Type/DurationJsonType.php">
@@ -828,9 +831,6 @@
     </InvalidOperand>
   </file>
   <file src="src/Internal/Marshaller/Type/EnumType.php">
-    <PropertyTypeCoercion>
-      <code><![CDATA[$class]]></code>
-    </PropertyTypeCoercion>
     <UndefinedMethod>
       <code><![CDATA[$this->classFQCN::from($value)]]></code>
       <code><![CDATA[$this->classFQCN::from($value['value'])]]></code>
@@ -847,11 +847,6 @@
     </InvalidReturnStatement>
     <InvalidReturnType>
       <code><![CDATA[TClass]]></code>
-    </InvalidReturnType>
-  </file>
-  <file src="src/Internal/Marshaller/Type/OneOfType.php">
-    <InvalidReturnType>
-      <code><![CDATA[array]]></code>
     </InvalidReturnType>
   </file>
   <file src="src/Internal/Marshaller/Type/Type.php">
