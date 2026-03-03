@@ -13,6 +13,8 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\QueryMethod;
+use Temporal\Workflow\SignalMethod;
 
 #[CoversFunction('Temporal\Internal\Workflow\Process\Process::logRunningHandlers')]
 class ChildWorkflowIdTest extends TestCase
@@ -65,7 +67,7 @@ class TestWorkflow
     /**
      * @return null|non-empty-string
      */
-    #[Workflow\QueryMethod]
+    #[QueryMethod]
     public function getChildId(): ?string
     {
         return $this->childId;
@@ -74,13 +76,13 @@ class TestWorkflow
     /**
      * @return null|non-empty-string
      */
-    #[Workflow\QueryMethod]
+    #[QueryMethod]
     public function getParentId(): ?string
     {
         return Workflow::getInfo()->parentExecution?->getID();
     }
 
-    #[Workflow\SignalMethod]
+    #[SignalMethod]
     public function exit(): void
     {
         $this->exit = true;

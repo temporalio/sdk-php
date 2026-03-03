@@ -19,10 +19,13 @@ use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\QueryMethod;
+use Temporal\Workflow\SignalMethod;
+use Temporal\Workflow\WorkflowInterface;
 
 use function React\Promise\resolve;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class TestContextLeakWorkflow
 {
     private string $workflowId = '';
@@ -46,7 +49,7 @@ class TestContextLeakWorkflow
         return $timer;
     }
 
-    #[Workflow\SignalMethod]
+    #[SignalMethod]
     public function cancel(): void
     {
         $this->checkContext();
@@ -54,7 +57,7 @@ class TestContextLeakWorkflow
         $this->checkContext();
     }
 
-    #[Workflow\QueryMethod()]
+    #[QueryMethod()]
     public function wakeup(): DateTimeInterface
     {
         $this->checkContext();

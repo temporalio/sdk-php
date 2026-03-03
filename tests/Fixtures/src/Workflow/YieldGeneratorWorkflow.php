@@ -15,10 +15,11 @@ use Temporal\Activity\ActivityOptions;
 use Temporal\Tests\Activity\SimpleActivity;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\WorkflowInterface;
 
 use function React\Promise\resolve;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class YieldGeneratorWorkflow
 {
     #[WorkflowMethod(name: 'YieldGeneratorWorkflow')]

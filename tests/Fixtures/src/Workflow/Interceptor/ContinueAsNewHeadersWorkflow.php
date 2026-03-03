@@ -13,8 +13,9 @@ namespace Temporal\Tests\Workflow\Interceptor;
 
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\WorkflowInterface;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class ContinueAsNewHeadersWorkflow
 {
     #[WorkflowMethod(name: 'InterceptorContinueAsNewHeaderWorkflow')]
