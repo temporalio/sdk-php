@@ -76,9 +76,6 @@ class WorkflowClient implements WorkflowClientInterface
     /** @var Pipeline<WorkflowClientCallsInterceptor, mixed> */
     private Pipeline $interceptorPipeline;
 
-    /**
-     * @param list<ClientPluginInterface> $plugins
-     */
     public function __construct(
         ServiceClientInterface $serviceClient,
         ?ClientOptions $options = null,

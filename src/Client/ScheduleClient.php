@@ -52,9 +52,6 @@ final class ScheduleClient implements ScheduleClientInterface
     private ProtoToArrayConverter $protoConverter;
     private PluginRegistry $pluginRegistry;
 
-    /**
-     * @param list<ScheduleClientPluginInterface> $plugins
-     */
     public function __construct(
         ServiceClientInterface $serviceClient,
         ?ClientOptions $options = null,

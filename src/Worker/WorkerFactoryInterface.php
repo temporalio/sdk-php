@@ -15,7 +15,6 @@ use Psr\Log\LoggerInterface;
 use Temporal\Exception\ExceptionInterceptorInterface;
 use Temporal\Interceptor\PipelineProvider;
 use Temporal\Plugin\PluginRegistry;
-use Temporal\Plugin\WorkerPluginInterface;
 
 /**
  * The interface is responsible for providing an interface for registering all dependencies and creating a global

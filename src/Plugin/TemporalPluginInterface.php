@@ -18,6 +18,4 @@ namespace Temporal\Plugin;
  * {@see ConnectionPluginInterface}, {@see ClientPluginInterface},
  * {@see ScheduleClientPluginInterface}, or {@see WorkerPluginInterface} as needed.
  */
-interface TemporalPluginInterface extends ConnectionPluginInterface, ClientPluginInterface, ScheduleClientPluginInterface, WorkerPluginInterface
-{
-}
+interface TemporalPluginInterface extends ConnectionPluginInterface, ClientPluginInterface, ScheduleClientPluginInterface, WorkerPluginInterface {}
