@@ -38,6 +38,14 @@ use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Internal\Client\ActivityCompletionClient;
 use Temporal\Internal\Client\WorkflowProxy;
+use Temporal\Plugin\ClientPluginContext;
+use Temporal\Plugin\ClientPluginInterface;
+use Temporal\Plugin\CompositePipelineProvider;
+use Temporal\Plugin\ConnectionPluginContext;
+use Temporal\Plugin\ConnectionPluginInterface;
+use Temporal\Plugin\PluginRegistry;
+use Temporal\Plugin\ScheduleClientPluginInterface;
+use Temporal\Plugin\WorkerPluginInterface;
 use Temporal\Internal\Client\WorkflowRun;
 use Temporal\Internal\Client\WorkflowStarter;
 use Temporal\Internal\Client\WorkflowStub;
@@ -63,6 +71,7 @@ class WorkflowClient implements WorkflowClientInterface
     private DataConverterInterface $converter;
     private ?WorkflowStarter $starter = null;
     private WorkflowReader $reader;
+    private PluginRegistry $pluginRegistry;
 
     /** @var Pipeline<WorkflowClientCallsInterceptor, mixed> */
     private Pipeline $interceptorPipeline;
@@ -72,11 +81,39 @@ class WorkflowClient implements WorkflowClientInterface
         ?ClientOptions $options = null,
         ?DataConverterInterface $converter = null,
         ?PipelineProvider $interceptorProvider = null,
+        ?PluginRegistry $pluginRegistry = null,
     ) {
-        $this->interceptorPipeline = ($interceptorProvider ?? new SimplePipelineProvider())
-            ->getPipeline(WorkflowClientCallsInterceptor::class);
+        $this->pluginRegistry = $pluginRegistry ?? new PluginRegistry();
         $this->clientOptions = $options ?? new ClientOptions();
         $this->converter = $converter ?? DataConverter::createDefault();
+
+        // Apply connection plugins (before client-level configuration)
+        $connectionContext = new ConnectionPluginContext($serviceClient);
+        foreach ($this->pluginRegistry->getPlugins(ConnectionPluginInterface::class) as $plugin) {
+            $plugin->configureServiceClient($connectionContext);
+        }
+        $serviceClient = $connectionContext->getServiceClient();
+
+        $pluginContext = new ClientPluginContext(
+            clientOptions: $this->clientOptions,
+            dataConverter: $this->converter,
+        );
+        foreach ($this->pluginRegistry->getPlugins(ClientPluginInterface::class) as $plugin) {
+            $plugin->configureClient($pluginContext);
+        }
+
+        $this->clientOptions = $pluginContext->getClientOptions();
+        if ($pluginContext->getDataConverter() !== null) {
+            $this->converter = $pluginContext->getDataConverter();
+        }
+
+        // Build interceptor pipeline: merge plugin-contributed interceptors with user-provided ones
+        $provider = new CompositePipelineProvider(
+            $pluginContext->getInterceptors(),
+            $interceptorProvider ?? new SimplePipelineProvider(),
+        );
+
+        $this->interceptorPipeline = $provider->getPipeline(WorkflowClientCallsInterceptor::class);
         $this->reader = new WorkflowReader($this->createReader());
 
         // Set Temporal-Namespace metadata
@@ -96,8 +133,29 @@ class WorkflowClient implements WorkflowClientInterface
         ?ClientOptions $options = null,
         ?DataConverterInterface $converter = null,
         ?PipelineProvider $interceptorProvider = null,
+        ?PluginRegistry $pluginRegistry = null,
     ): self {
-        return new self($serviceClient, $options, $converter, $interceptorProvider);
+        return new self($serviceClient, $options, $converter, $interceptorProvider, $pluginRegistry);
+    }
+
+    /**
+     * Get plugins that also implement WorkerPluginInterface for propagation to workers.
+     *
+     * @return list<WorkerPluginInterface>
+     */
+    public function getWorkerPlugins(): array
+    {
+        return $this->pluginRegistry->getPlugins(WorkerPluginInterface::class);
+    }
+
+    /**
+     * Get plugins that also implement ScheduleClientPluginInterface for propagation to schedule clients.
+     *
+     * @return list<ScheduleClientPluginInterface>
+     */
+    public function getScheduleClientPlugins(): array
+    {
+        return $this->pluginRegistry->getPlugins(ScheduleClientPluginInterface::class);
     }
 
     public function getServiceClient(): ServiceClientInterface

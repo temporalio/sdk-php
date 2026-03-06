@@ -21,12 +21,14 @@ final class Environment
     private ?Process $temporalTestServerProcess = null;
     private ?Process $temporalServerProcess = null;
     private ?Process $roadRunnerProcess = null;
+    private bool $externalTemporalProcessActive = false;
 
     public function __construct(
         OutputInterface $output,
         private Downloader $downloader,
         private SystemInfo $systemInfo,
         ?Command $command = null,
+        private bool $allowExternalTemporalProcess = false,
     ) {
         $this->io = $output instanceof SymfonyStyle
             ? $output
@@ -37,6 +39,7 @@ final class Environment
     public static function create(?Command $command = null): self
     {
         $token = \getenv('GITHUB_TOKEN');
+        $allowExternalTemporalProcess = \getenv('ALLOW_EXTERNAL_TEMPORAL_PROCESS') === 'true';
 
         $systemInfo = SystemInfo::detect();
         \is_string(\getenv('ROADRUNNER_BINARY')) and $systemInfo->rrExecutable = \getenv('ROADRUNNER_BINARY');
@@ -50,6 +53,7 @@ final class Environment
             ])),
             $systemInfo,
             $command,
+            $allowExternalTemporalProcess,
         );
     }
 
@@ -139,17 +143,23 @@ final class Environment
         }
 
         if (!$temporalStarted || !$this->temporalServerProcess->isRunning()) {
-            $this->io->error([
-                \sprintf(
-                    'Error starting Temporal server: %s.',
-                    !$temporalStarted ? "Health check failed" : $this->temporalServerProcess->getErrorOutput(),
-                ),
-                \sprintf(
-                    'Command: `%s`.',
-                    $this->serializeProcess($this->temporalServerProcess),
-                ),
-            ]);
-            exit(1);
+            $errorOutput = $this->temporalServerProcess->getErrorOutput();
+            if (!$this->allowExternalTemporalProcess || !\str_contains($errorOutput, 'address already in use')) {
+                $this->io->error([
+                    \sprintf(
+                        'Error starting Temporal server: %s.',
+                        !$temporalStarted ? "Health check failed" : $errorOutput,
+                    ),
+                    \sprintf(
+                        'Command: `%s`.',
+                        $this->serializeProcess($this->temporalServerProcess),
+                    ),
+                ]);
+                exit(1);
+            }
+            $this->io->warning('Using external Temporal Server');
+
+            $this->externalTemporalProcessActive = true;
         }
         $this->io->info('Temporal server started.');
     }
@@ -174,17 +184,21 @@ final class Environment
         \sleep(1);
 
         if (!$this->temporalTestServerProcess->isRunning()) {
-            $this->io->error([
-                \sprintf(
-                    'Error starting Temporal Test server: %s.',
-                    $this->temporalTestServerProcess->getErrorOutput(),
-                ),
-                \sprintf(
-                    'Command: `%s`.',
-                    $this->serializeProcess($this->temporalTestServerProcess),
-                ),
-            ]);
-            exit(1);
+            $errorOutput = $this->temporalTestServerProcess->getErrorOutput();
+            if (!$this->allowExternalTemporalProcess || !\str_contains($errorOutput, 'address already in use')) {
+                $this->io->error([
+                    \sprintf(
+                        'Error starting Temporal Test server: %s.',
+                        $errorOutput,
+                    ),
+                    \sprintf(
+                        'Command: `%s`.',
+                        $this->serializeProcess($this->temporalTestServerProcess),
+                    ),
+                ]);
+                exit(1);
+            }
+            $this->io->warning('Using external Temporal Test Server');
         }
         $this->io->info('Temporal Test server started.');
     }
@@ -263,8 +277,7 @@ final class Environment
     {
         if ($this->isTemporalRunning()) {
             $this->io->info('Stopping Temporal server... ');
-            $this->temporalServerProcess->stop();
-            $this->temporalServerProcess = null;
+            $this->stopTemporalServerProcess();
             $this->io->info('Temporal server stopped.');
         }
     }
@@ -273,8 +286,7 @@ final class Environment
     {
         if ($this->isTemporalTestRunning()) {
             $this->io->info('Stopping Temporal Test server... ');
-            $this->temporalTestServerProcess->stop();
-            $this->temporalTestServerProcess = null;
+            $this->stopTemporalTestServerProcess();
             $this->io->info('Temporal Test server stopped.');
         }
     }
@@ -291,7 +303,8 @@ final class Environment
 
     public function isTemporalRunning(): bool
     {
-        return $this->temporalServerProcess?->isRunning() === true;
+        return ($this->allowExternalTemporalProcess && $this->externalTemporalProcessActive) ||
+            $this->temporalServerProcess?->isRunning() === true;
     }
 
     public function isRoadRunnerRunning(): bool
@@ -301,7 +314,28 @@ final class Environment
 
     public function isTemporalTestRunning(): bool
     {
-        return $this->temporalTestServerProcess?->isRunning() === true;
+        return ($this->allowExternalTemporalProcess && $this->externalTemporalProcessActive) ||
+            $this->temporalTestServerProcess?->isRunning() === true;
+    }
+
+    private function stopTemporalTestServerProcess(): void
+    {
+        if ($this->externalTemporalProcessActive) {
+            $this->externalTemporalProcessActive = false;
+            return;
+        }
+        $this->temporalTestServerProcess->stop();
+        $this->temporalTestServerProcess = null;
+    }
+
+    private function stopTemporalServerProcess(): void
+    {
+        if ($this->externalTemporalProcessActive) {
+            $this->externalTemporalProcessActive = false;
+            return;
+        }
+        $this->temporalServerProcess->stop();
+        $this->temporalServerProcess = null;
     }
 
     private function serializeProcess(?Process $temporalServerProcess): string|array

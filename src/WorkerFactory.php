@@ -19,6 +19,7 @@ use Spiral\Attributes\AnnotationReader;
 use Spiral\Attributes\AttributeReader;
 use Spiral\Attributes\Composite\SelectiveReader;
 use Spiral\Attributes\ReaderInterface;
+use Temporal\Client\WorkflowClient;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\ExceptionInterceptor;
@@ -26,6 +27,12 @@ use Temporal\Exception\ExceptionInterceptorInterface;
 use Temporal\Interceptor\PipelineProvider;
 use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Internal\Events\EventEmitterTrait;
+use Temporal\Internal\Interceptor\Pipeline;
+use Temporal\Plugin\CompositePipelineProvider;
+use Temporal\Plugin\PluginRegistry;
+use Temporal\Plugin\WorkerFactoryPluginContext;
+use Temporal\Plugin\WorkerPluginContext;
+use Temporal\Plugin\WorkerPluginInterface;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Marshaller\MarshallerInterface;
@@ -104,13 +111,30 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     protected MarshallerInterface $marshaller;
 
     protected EnvironmentInterface $env;
+    protected PluginRegistry $pluginRegistry;
 
     public function __construct(
         DataConverterInterface $dataConverter,
         protected RPCConnectionInterface $rpc,
         ?ServiceCredentials $credentials = null,
+        ?PluginRegistry $pluginRegistry = null,
+        ?WorkflowClient $client = null,
     ) {
-        $this->converter = $dataConverter;
+        $this->pluginRegistry = $pluginRegistry ?? new PluginRegistry();
+        // Propagate worker plugins from the client
+        if ($client !== null) {
+            $this->pluginRegistry->merge($client->getWorkerPlugins());
+        }
+
+        // Apply worker factory plugins
+        $factoryContext = new WorkerFactoryPluginContext(
+            dataConverter: $dataConverter,
+        );
+        foreach ($this->pluginRegistry->getPlugins(WorkerPluginInterface::class) as $plugin) {
+            $plugin->configureWorkerFactory($factoryContext);
+        }
+
+        $this->converter = $factoryContext->getDataConverter() ?? $dataConverter;
         $this->boot($credentials ?? ServiceCredentials::create());
     }
 
@@ -118,11 +142,15 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         ?DataConverterInterface $converter = null,
         ?RPCConnectionInterface $rpc = null,
         ?ServiceCredentials $credentials = null,
+        ?PluginRegistry $pluginRegistry = null,
+        ?WorkflowClient $client = null,
     ): static {
         return new static(
             $converter ?? DataConverter::createDefault(),
             $rpc ?? Goridge::create(),
             $credentials,
+            $pluginRegistry ?? new PluginRegistry(),
+            $client,
         );
     }
 
@@ -134,13 +162,32 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         ?LoggerInterface $logger = null,
     ): WorkerInterface {
         $options ??= WorkerOptions::new();
+
+        // Apply worker plugins
+        $workerContext = new WorkerPluginContext(
+            taskQueue: $taskQueue,
+            workerOptions: $options,
+            exceptionInterceptor: $exceptionInterceptor,
+        );
+        foreach ($this->pluginRegistry->getPlugins(WorkerPluginInterface::class) as $plugin) {
+            $plugin->configureWorker($workerContext);
+        }
+
+        $options = $workerContext->getWorkerOptions();
+
+        // Merge plugin-contributed interceptors with user-provided ones
+        $provider = new CompositePipelineProvider(
+            $workerContext->getInterceptors(),
+            $interceptorProvider ?? new SimplePipelineProvider(),
+        );
+
         $worker = new Worker(
             $taskQueue,
             $options,
             ServiceContainer::fromWorkerFactory(
                 $this,
-                $exceptionInterceptor ?? ExceptionInterceptor::createDefault(),
-                $interceptorProvider ?? new SimplePipelineProvider(),
+                $workerContext->getExceptionInterceptor() ?? ExceptionInterceptor::createDefault(),
+                $provider,
                 new Logger(
                     $logger ?? new StderrLogger(),
                     $options->enableLoggingInReplay,
@@ -149,9 +196,20 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
             ),
             $this->rpc,
         );
+
+        // Call initializeWorker hooks (forward order)
+        foreach ($this->pluginRegistry->getPlugins(WorkerPluginInterface::class) as $plugin) {
+            $plugin->initializeWorker($worker);
+        }
+
         $this->queues->add($worker);
 
         return $worker;
+    }
+
+    public function getPluginRegistry(): PluginRegistry
+    {
+        return $this->pluginRegistry;
     }
 
     public function getReader(): ReaderInterface
@@ -192,15 +250,22 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         $host ??= RoadRunner::create();
         $this->codec = $this->createCodec();
 
-        while ($msg = $host->waitBatch()) {
-            try {
-                $host->send($this->dispatch($msg->messages, $msg->context));
-            } catch (\Throwable $e) {
-                $host->error($e);
-            }
-        }
+        $pipeline = Pipeline::prepare(
+            $this->pluginRegistry->getPlugins(WorkerPluginInterface::class),
+        );
 
-        return 0;
+        return $pipeline->with(function () use ($host): int {
+            while ($msg = $host->waitBatch()) {
+                try {
+                    $host->send($this->dispatch($msg->messages, $msg->context));
+                } catch (\Throwable $e) {
+                    $host->error($e);
+                }
+            }
+
+            return 0;
+            /** @see WorkerPluginInterface::run() */
+        }, 'run')($this);
     }
 
     public function tick(): void
@@ -232,7 +297,12 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     protected function createRouter(ServiceCredentials $credentials): RouterInterface
     {
         $router = new Router();
-        $router->add(new Router\GetWorkerInfo($this->queues, $this->marshaller, $credentials));
+        $router->add(new Router\GetWorkerInfo(
+            $this->queues,
+            $this->marshaller,
+            $credentials,
+            $this->pluginRegistry,
+        ));
 
         return $router;
     }

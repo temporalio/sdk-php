@@ -32,6 +32,11 @@ use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Internal\Mapper\ScheduleMapper;
+use Temporal\Plugin\ConnectionPluginContext;
+use Temporal\Plugin\ConnectionPluginInterface;
+use Temporal\Plugin\PluginRegistry;
+use Temporal\Plugin\ScheduleClientPluginContext;
+use Temporal\Plugin\ScheduleClientPluginInterface;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Marshaller\MarshallerInterface;
@@ -45,14 +50,37 @@ final class ScheduleClient implements ScheduleClientInterface
     private DataConverterInterface $converter;
     private MarshallerInterface $marshaller;
     private ProtoToArrayConverter $protoConverter;
+    private PluginRegistry $pluginRegistry;
 
     public function __construct(
         ServiceClientInterface $serviceClient,
         ?ClientOptions $options = null,
         ?DataConverterInterface $converter = null,
+        ?PluginRegistry $pluginRegistry = null,
     ) {
         $this->clientOptions = $options ?? new ClientOptions();
         $this->converter = $converter ?? DataConverter::createDefault();
+        $this->pluginRegistry = $pluginRegistry ?? new PluginRegistry();
+
+        // Apply connection plugins (before client-level configuration)
+        $connectionContext = new ConnectionPluginContext($serviceClient);
+        foreach ($this->pluginRegistry->getPlugins(ConnectionPluginInterface::class) as $plugin) {
+            $plugin->configureServiceClient($connectionContext);
+        }
+        $serviceClient = $connectionContext->getServiceClient();
+
+        $pluginContext = new ScheduleClientPluginContext(
+            clientOptions: $this->clientOptions,
+            dataConverter: $this->converter,
+        );
+        foreach ($this->pluginRegistry->getPlugins(ScheduleClientPluginInterface::class) as $plugin) {
+            $plugin->configureScheduleClient($pluginContext);
+        }
+        $this->clientOptions = $pluginContext->getClientOptions();
+        if ($pluginContext->getDataConverter() !== null) {
+            $this->converter = $pluginContext->getDataConverter();
+        }
+
         $this->marshaller = new Marshaller(
             new AttributeMapperFactory(new AttributeReader()),
         );
@@ -71,8 +99,9 @@ final class ScheduleClient implements ScheduleClientInterface
         ServiceClientInterface $serviceClient,
         ?ClientOptions $options = null,
         ?DataConverterInterface $converter = null,
+        ?PluginRegistry $pluginRegistry = null,
     ): ScheduleClientInterface {
-        return new self($serviceClient, $options, $converter);
+        return new self($serviceClient, $options, $converter, $pluginRegistry);
     }
 
     public function createSchedule(
