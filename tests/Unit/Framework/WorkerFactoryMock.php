@@ -31,6 +31,7 @@ use Temporal\Internal\Transport\Router;
 use Temporal\Internal\Transport\RouterInterface;
 use Temporal\Internal\Transport\Server;
 use Temporal\Internal\Transport\ServerInterface;
+use Temporal\Plugin\PluginRegistry;
 use Temporal\Internal\Workflow\Logger;
 use Temporal\Worker\Environment\Environment;
 use Temporal\Worker\Environment\EnvironmentInterface;
@@ -69,6 +70,7 @@ class WorkerFactoryMock implements WorkerFactoryInterface, LoopInterface
     private QueueInterface $responses;
     private MarshallerInterface $marshaller;
     private EnvironmentInterface $env;
+    private PluginRegistry $pluginRegistry;
 
     public function __construct(DataConverterInterface $dataConverter)
     {
@@ -112,9 +114,9 @@ class WorkerFactoryMock implements WorkerFactoryInterface, LoopInterface
         return $worker;
     }
 
-    public function getWorkerPlugins(): array
+    public function getPluginRegistry(): PluginRegistry
     {
-        return [];
+        return $this->pluginRegistry;
     }
 
     public function getReader(): ReaderInterface
@@ -173,6 +175,7 @@ class WorkerFactoryMock implements WorkerFactoryInterface, LoopInterface
 
     private function boot(): void
     {
+        $this->pluginRegistry = new PluginRegistry();
         $this->reader = $this->createReader();
         $this->marshaller = $this->createMarshaller($this->reader);
         $this->queues = new ArrayRepository();
@@ -192,29 +195,24 @@ class WorkerFactoryMock implements WorkerFactoryInterface, LoopInterface
         return new AttributeReader();
     }
 
-    /**
-     * @return RouterInterface
-     */
     private function createRouter(): RouterInterface
     {
         $router = new Router();
-        $router->add(new Router\GetWorkerInfo($this->queues, $this->marshaller, ServiceCredentials::create()));
+        $router->add(new Router\GetWorkerInfo(
+            $this->queues,
+            $this->marshaller,
+            ServiceCredentials::create(),
+            new PluginRegistry(),
+        ));
 
         return $router;
     }
 
-    /**
-     * @return ServerInterface
-     */
     private function createServer(): ServerInterface
     {
         return new Server($this->responses, \Closure::fromCallable([$this, 'onRequest']));
     }
 
-    /**
-     * @param ReaderInterface $reader
-     * @return MarshallerInterface
-     */
     private function createMarshaller(ReaderInterface $reader): MarshallerInterface
     {
         return new Marshaller(new AttributeMapperFactory($reader));

@@ -17,7 +17,9 @@ use Temporal\Interceptor\WorkflowClient\StartInput;
 use Temporal\Interceptor\WorkflowClientCallsInterceptor;
 use Temporal\Plugin\ClientPluginContext;
 use Temporal\Plugin\ClientPluginInterface;
+use Temporal\Plugin\PluginRegistry;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
+use Temporal\Tests\Acceptance\App\Attribute\Worker;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Tests\Acceptance\App\Runtime\State;
 use Temporal\Tests\Acceptance\App\TestCase;
@@ -25,10 +27,13 @@ use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
 
+#[Worker(
+    plugins: [new PrefixPlugin()],
+)]
 class ClientPluginTest extends TestCase
 {
     /**
-     * Plugin adds interceptor that modifies workflow arguments.
+     * Plugin from #[Worker(plugins: [...])] is auto-injected into the client.
      */
     #[Test]
     public function pluginInterceptorModifiesArguments(
@@ -39,7 +44,7 @@ class ClientPluginTest extends TestCase
         $pluginClient = WorkflowClient::create(
             serviceClient: $client->getServiceClient(),
             options: (new ClientOptions())->withNamespace($runtime->namespace),
-            plugins: [new PrefixPlugin()],
+            pluginRegistry: new PluginRegistry([new PrefixPlugin()]),
         )->withTimeout(5);
 
         $stub = $pluginClient->newUntypedWorkflowStub(
@@ -64,7 +69,7 @@ class ClientPluginTest extends TestCase
         $pluginClient = WorkflowClient::create(
             serviceClient: $client->getServiceClient(),
             options: (new ClientOptions())->withNamespace($runtime->namespace),
-            plugins: [new PrefixPlugin('A:'), new PrefixPlugin2('B:')],
+            pluginRegistry: new PluginRegistry([new PrefixPlugin('A:'), new PrefixPlugin2('B:')]),
         )->withTimeout(5);
 
         $stub = $pluginClient->newUntypedWorkflowStub(
@@ -92,19 +97,19 @@ class ClientPluginTest extends TestCase
         WorkflowClient::create(
             serviceClient: $client->getServiceClient(),
             options: (new ClientOptions())->withNamespace($runtime->namespace),
-            plugins: [new PrefixPlugin(), new PrefixPlugin()],
+            pluginRegistry: new PluginRegistry([new PrefixPlugin(), new PrefixPlugin()]),
         );
     }
 
     /**
-     * Client without plugins works normally.
+     * Plugin from #[Worker(plugins: [...])] is also applied via #[Stub] attribute.
      */
     #[Test]
-    public function noPluginsWorkflow(
+    public function pluginAppliedViaWorkerAttribute(
         #[Stub('Extra_Plugin_ClientPlugin', args: ['world'])]
         WorkflowStubInterface $stub,
     ): void {
-        self::assertSame('world', $stub->getResult('string'));
+        self::assertSame('plugin:world', $stub->getResult('string'));
     }
 }
 

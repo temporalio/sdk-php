@@ -84,9 +84,9 @@ class WorkflowClient implements WorkflowClientInterface
         ?ClientOptions $options = null,
         ?DataConverterInterface $converter = null,
         ?PipelineProvider $interceptorProvider = null,
-        array $plugins = [],
+        ?PluginRegistry $pluginRegistry = null,
     ) {
-        $this->pluginRegistry = new PluginRegistry($plugins);
+        $this->pluginRegistry = $pluginRegistry ?? new PluginRegistry();
         $this->clientOptions = $options ?? new ClientOptions();
         $this->converter = $converter ?? DataConverter::createDefault();
 
@@ -129,7 +129,6 @@ class WorkflowClient implements WorkflowClientInterface
     }
 
     /**
-     * @param list<ClientPluginInterface> $plugins
      * @return static
      */
     public static function create(
@@ -137,9 +136,9 @@ class WorkflowClient implements WorkflowClientInterface
         ?ClientOptions $options = null,
         ?DataConverterInterface $converter = null,
         ?PipelineProvider $interceptorProvider = null,
-        array $plugins = [],
+        ?PluginRegistry $pluginRegistry = null,
     ): self {
-        return new self($serviceClient, $options, $converter, $interceptorProvider, $plugins);
+        return new self($serviceClient, $options, $converter, $interceptorProvider, $pluginRegistry);
     }
 
     /**

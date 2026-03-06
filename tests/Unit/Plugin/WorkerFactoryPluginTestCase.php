@@ -8,6 +8,8 @@ use PHPUnit\Framework\TestCase;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Plugin\AbstractPlugin;
+use Temporal\Plugin\PluginInterface;
+use Temporal\Plugin\PluginRegistry;
 use Temporal\Plugin\WorkerFactoryPluginContext;
 use Temporal\Plugin\WorkerPluginContext;
 use Temporal\Plugin\WorkerPluginInterface;
@@ -49,7 +51,7 @@ class WorkerFactoryPluginTestCase extends TestCase
         new WorkerFactory(
             DataConverter::createDefault(),
             $this->mockRpc(),
-            plugins: [$plugin],
+            pluginRegistry: new PluginRegistry([$plugin]),
         );
 
         self::assertTrue($called);
@@ -78,7 +80,7 @@ class WorkerFactoryPluginTestCase extends TestCase
         $factory = new WorkerFactory(
             DataConverter::createDefault(),
             $this->mockRpc(),
-            plugins: [$plugin],
+            pluginRegistry: new PluginRegistry([$plugin]),
         );
 
         self::assertSame($customConverter, $factory->getDataConverter());
@@ -112,7 +114,7 @@ class WorkerFactoryPluginTestCase extends TestCase
         $factory = new WorkerFactory(
             DataConverter::createDefault(),
             $this->mockRpc(),
-            plugins: [$plugin],
+            pluginRegistry: new PluginRegistry([$plugin]),
         );
         $factory->newWorker('my-queue');
 
@@ -143,7 +145,7 @@ class WorkerFactoryPluginTestCase extends TestCase
         $factory = new WorkerFactory(
             DataConverter::createDefault(),
             $this->mockRpc(),
-            plugins: [$plugin],
+            pluginRegistry: new PluginRegistry([$plugin]),
         );
         $worker = $factory->newWorker('test-queue');
 
@@ -173,7 +175,7 @@ class WorkerFactoryPluginTestCase extends TestCase
         $factory = new WorkerFactory(
             DataConverter::createDefault(),
             $this->mockRpc(),
-            plugins: [$plugin],
+            pluginRegistry: new PluginRegistry([$plugin]),
         );
         $worker = $factory->newWorker('test-queue');
 
@@ -203,7 +205,7 @@ class WorkerFactoryPluginTestCase extends TestCase
         $factory = new WorkerFactory(
             DataConverter::createDefault(),
             $this->mockRpc(),
-            plugins: [$plugin],
+            pluginRegistry: new PluginRegistry([$plugin]),
         );
         $factory->newWorker('my-task-queue');
 
@@ -243,7 +245,7 @@ class WorkerFactoryPluginTestCase extends TestCase
         $factory = new WorkerFactory(
             DataConverter::createDefault(),
             $this->mockRpc(),
-            plugins: [$plugin],
+            pluginRegistry: new PluginRegistry([$plugin]),
         );
 
         self::assertSame(['configureWorkerFactory'], $order);
@@ -296,7 +298,7 @@ class WorkerFactoryPluginTestCase extends TestCase
         $factory = new WorkerFactory(
             DataConverter::createDefault(),
             $this->mockRpc(),
-            plugins: [$plugin1, $plugin2],
+            pluginRegistry: new PluginRegistry([$plugin1, $plugin2]),
         );
         $factory->newWorker();
 
@@ -326,7 +328,7 @@ class WorkerFactoryPluginTestCase extends TestCase
         $factory = new WorkerFactory(
             DataConverter::createDefault(),
             $this->mockRpc(),
-            plugins: [$plugin],
+            pluginRegistry: new PluginRegistry([$plugin]),
         );
         $factory->newWorker('queue-a');
         $factory->newWorker('queue-b');
@@ -342,10 +344,10 @@ class WorkerFactoryPluginTestCase extends TestCase
         $factory = new WorkerFactory(
             DataConverter::createDefault(),
             $this->mockRpc(),
-            plugins: [$plugin1, $plugin2],
+            pluginRegistry: new PluginRegistry([$plugin1, $plugin2]),
         );
 
-        $plugins = $factory->getWorkerPlugins();
+        $plugins = $factory->getPluginRegistry()->getPlugins(PluginInterface::class);
         self::assertCount(2, $plugins);
         self::assertSame($plugin1, $plugins[0]);
         self::assertSame($plugin2, $plugins[1]);
@@ -362,7 +364,7 @@ class WorkerFactoryPluginTestCase extends TestCase
         new WorkerFactory(
             DataConverter::createDefault(),
             $this->mockRpc(),
-            plugins: [$plugin1, $plugin2],
+            pluginRegistry: new PluginRegistry([$plugin1, $plugin2]),
         );
     }
 
@@ -389,7 +391,7 @@ class WorkerFactoryPluginTestCase extends TestCase
         $factory = new WorkerFactory(
             DataConverter::createDefault(),
             $this->mockRpc(),
-            plugins: [$plugin],
+            pluginRegistry: new PluginRegistry([$plugin]),
         );
 
         $factory->run($this->mockHost());
@@ -421,7 +423,7 @@ class WorkerFactoryPluginTestCase extends TestCase
         $factory = new WorkerFactory(
             DataConverter::createDefault(),
             $this->mockRpc(),
-            plugins: [$plugin],
+            pluginRegistry: new PluginRegistry([$plugin]),
         );
 
         $factory->run($this->mockHost());
@@ -478,7 +480,7 @@ class WorkerFactoryPluginTestCase extends TestCase
         $factory = new WorkerFactory(
             DataConverter::createDefault(),
             $this->mockRpc(),
-            plugins: [$plugin1, $plugin2],
+            pluginRegistry: new PluginRegistry([$plugin1, $plugin2]),
         );
 
         $factory->run($this->mockHost());
@@ -519,7 +521,7 @@ class WorkerFactoryPluginTestCase extends TestCase
         $factory = new WorkerFactory(
             DataConverter::createDefault(),
             $this->mockRpc(),
-            plugins: [$plugin],
+            pluginRegistry: new PluginRegistry([$plugin]),
         );
 
         $factory->run($this->mockHost());
@@ -566,7 +568,7 @@ class WorkerFactoryPluginTestCase extends TestCase
         $factory = new WorkerFactory(
             DataConverter::createDefault(),
             $this->mockRpc(),
-            plugins: [$outerPlugin, $innerPlugin],
+            pluginRegistry: new PluginRegistry([$outerPlugin, $innerPlugin]),
         );
 
         $result = $factory->run($this->mockHost());
@@ -618,7 +620,7 @@ class WorkerFactoryPluginTestCase extends TestCase
         $factory = new WorkerFactory(
             DataConverter::createDefault(),
             $this->mockRpc(),
-            plugins: [$plugin],
+            pluginRegistry: new PluginRegistry([$plugin]),
         );
         $factory->newWorker();
         $factory->run($this->mockHost());
@@ -651,7 +653,7 @@ class WorkerFactoryPluginTestCase extends TestCase
         $factory = new WorkerFactory(
             DataConverter::createDefault(),
             $this->mockRpc(),
-            plugins: [$plugin],
+            pluginRegistry: new PluginRegistry([$plugin]),
         );
 
         $result = $factory->run($this->mockHost());

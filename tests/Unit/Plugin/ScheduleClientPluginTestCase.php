@@ -10,6 +10,7 @@ use Temporal\Client\GRPC\ContextInterface;
 use Temporal\Client\GRPC\ServiceClientInterface;
 use Temporal\Client\ScheduleClient;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\Plugin\PluginRegistry;
 use Temporal\Plugin\ScheduleClientPluginContext;
 use Temporal\Plugin\ScheduleClientPluginInterface;
 use Temporal\Plugin\ScheduleClientPluginTrait;
@@ -41,7 +42,7 @@ class ScheduleClientPluginTestCase extends TestCase
             }
         };
 
-        new ScheduleClient($this->mockServiceClient(), plugins: [$plugin]);
+        new ScheduleClient($this->mockServiceClient(), pluginRegistry: new PluginRegistry([$plugin]));
 
         self::assertTrue($called);
     }
@@ -64,7 +65,7 @@ class ScheduleClientPluginTestCase extends TestCase
             }
         };
 
-        $client = new ScheduleClient($this->mockServiceClient(), plugins: [$plugin]);
+        $client = new ScheduleClient($this->mockServiceClient(), pluginRegistry: new PluginRegistry([$plugin]));
         self::assertNotNull($client);
     }
 
@@ -88,7 +89,7 @@ class ScheduleClientPluginTestCase extends TestCase
             }
         };
 
-        $client = new ScheduleClient($this->mockServiceClient(), plugins: [$plugin]);
+        $client = new ScheduleClient($this->mockServiceClient(), pluginRegistry: new PluginRegistry([$plugin]));
         self::assertNotNull($client);
     }
 
@@ -128,7 +129,7 @@ class ScheduleClientPluginTestCase extends TestCase
             }
         };
 
-        new ScheduleClient($this->mockServiceClient(), plugins: [$plugin1, $plugin2]);
+        new ScheduleClient($this->mockServiceClient(), pluginRegistry: new PluginRegistry([$plugin1, $plugin2]));
 
         self::assertSame(['first', 'second'], $order);
     }
@@ -171,7 +172,7 @@ class ScheduleClientPluginTestCase extends TestCase
             $this->mockServiceClient(),
             options: $initialOptions,
             converter: $initialConverter,
-            plugins: [$plugin],
+            pluginRegistry: new PluginRegistry([$plugin]),
         );
 
         self::assertSame($initialOptions, $receivedOptions);

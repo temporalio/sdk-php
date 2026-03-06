@@ -16,6 +16,7 @@ use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Workflow\Logger;
 use Temporal\Plugin\CompositePipelineProvider;
+use Temporal\Plugin\PluginRegistry;
 use Temporal\Plugin\WorkerPluginContext;
 use Temporal\Plugin\WorkerPluginInterface;
 use Temporal\Worker\ActivityInvocationCache\ActivityInvocationCacheInterface;
@@ -36,19 +37,19 @@ class WorkerFactory extends \Temporal\WorkerFactory
         RPCConnectionInterface $rpc,
         ActivityInvocationCacheInterface $activityCache,
         ?ServiceCredentials $credentials = null,
-        array $plugins = [],
+        ?PluginRegistry $pluginRegistry = null,
         ?WorkflowClient $client = null,
     ) {
         $this->activityCache = $activityCache;
 
-        parent::__construct($dataConverter, $rpc, $credentials ?? ServiceCredentials::create(), $plugins, $client);
+        parent::__construct($dataConverter, $rpc, $credentials ?? ServiceCredentials::create(), $pluginRegistry, $client);
     }
 
     public static function create(
         ?DataConverterInterface $converter = null,
         ?RPCConnectionInterface $rpc = null,
         ?ServiceCredentials $credentials = null,
-        array $plugins = [],
+        ?PluginRegistry $pluginRegistry = null,
         ?WorkflowClient $client = null,
         ?ActivityInvocationCacheInterface $activityCache = null,
     ): static {
@@ -57,7 +58,7 @@ class WorkerFactory extends \Temporal\WorkerFactory
             $rpc ?? Goridge::create(),
             $activityCache ?? RoadRunnerActivityInvocationCache::create($converter),
             $credentials,
-            $plugins,
+            $pluginRegistry ?? new PluginRegistry(),
             $client,
         );
     }

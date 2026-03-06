@@ -14,6 +14,7 @@ namespace Temporal\Worker;
 use Psr\Log\LoggerInterface;
 use Temporal\Exception\ExceptionInterceptorInterface;
 use Temporal\Interceptor\PipelineProvider;
+use Temporal\Plugin\PluginRegistry;
 use Temporal\Plugin\WorkerPluginInterface;
 
 /**
@@ -47,11 +48,9 @@ interface WorkerFactoryInterface
     ): WorkerInterface;
 
     /**
-     * Get worker plugins registered with this factory.
-     *
-     * @return list<WorkerPluginInterface>
+     * Get the plugin registry for this factory.
      */
-    public function getWorkerPlugins(): array;
+    public function getPluginRegistry(): PluginRegistry;
 
     /**
      * Start processing workflows and activities processing.

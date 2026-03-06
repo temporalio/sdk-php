@@ -13,6 +13,8 @@ use Temporal\Plugin\AbstractPlugin;
 use Temporal\Plugin\ClientPluginContext;
 use Temporal\Plugin\ClientPluginInterface;
 use Temporal\Plugin\ClientPluginTrait;
+use Temporal\Plugin\PluginInterface;
+use Temporal\Plugin\PluginRegistry;
 use Temporal\Plugin\ScheduleClientPluginContext;
 use Temporal\Plugin\ScheduleClientPluginInterface;
 use Temporal\Plugin\ScheduleClientPluginTrait;
@@ -65,7 +67,7 @@ class PluginPropagationTestCase extends TestCase
             }
         };
 
-        $client = new WorkflowClient($this->mockServiceClient(), plugins: [$plugin]);
+        $client = new WorkflowClient($this->mockServiceClient(), pluginRegistry: new PluginRegistry([$plugin]));
 
         self::assertSame(['configureClient'], $order);
 
@@ -119,12 +121,12 @@ class PluginPropagationTestCase extends TestCase
             }
         };
 
-        $client = new WorkflowClient($this->mockServiceClient(), plugins: [$clientPlugin]);
+        $client = new WorkflowClient($this->mockServiceClient(), pluginRegistry: new PluginRegistry([$clientPlugin]));
 
         $factory = new WorkerFactory(
             DataConverter::createDefault(),
             $this->mockRpc(),
-            plugins: [$factoryPlugin],
+            pluginRegistry: new PluginRegistry([$factoryPlugin]),
             client: $client,
         );
         $factory->newWorker();
@@ -145,7 +147,7 @@ class PluginPropagationTestCase extends TestCase
             }
         };
 
-        $client = new WorkflowClient($this->mockServiceClient(), plugins: [$clientPlugin]);
+        $client = new WorkflowClient($this->mockServiceClient(), pluginRegistry: new PluginRegistry([$clientPlugin]));
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Duplicate plugin "shared-name"');
@@ -153,7 +155,7 @@ class PluginPropagationTestCase extends TestCase
         new WorkerFactory(
             DataConverter::createDefault(),
             $this->mockRpc(),
-            plugins: [$factoryPlugin],
+            pluginRegistry: new PluginRegistry([$factoryPlugin]),
             client: $client,
         );
     }
@@ -173,7 +175,7 @@ class PluginPropagationTestCase extends TestCase
             }
         };
 
-        $client = new WorkflowClient($this->mockServiceClient(), plugins: [$plugin]);
+        $client = new WorkflowClient($this->mockServiceClient(), pluginRegistry: new PluginRegistry([$plugin]));
 
         // Client-only plugin should NOT appear in getWorkerPlugins
         self::assertCount(0, $client->getWorkerPlugins());
@@ -186,7 +188,7 @@ class PluginPropagationTestCase extends TestCase
         );
         $factory->newWorker();
 
-        self::assertCount(0, $factory->getWorkerPlugins());
+        self::assertCount(0, $factory->getPluginRegistry()->getPlugins(PluginInterface::class));
     }
 
     public function testScheduleClientPluginPropagation(): void
@@ -210,7 +212,7 @@ class PluginPropagationTestCase extends TestCase
             }
         };
 
-        $client = new WorkflowClient($this->mockServiceClient(), plugins: [$plugin]);
+        $client = new WorkflowClient($this->mockServiceClient(), pluginRegistry: new PluginRegistry([$plugin]));
 
         $schedulePlugins = $client->getScheduleClientPlugins();
         self::assertCount(1, $schedulePlugins);

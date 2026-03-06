@@ -16,6 +16,7 @@ use Temporal\Plugin\AbstractPlugin;
 use Temporal\Plugin\ClientPluginContext;
 use Temporal\Plugin\ClientPluginInterface;
 use Temporal\Plugin\ClientPluginTrait;
+use Temporal\Plugin\PluginRegistry;
 use Temporal\Plugin\WorkerPluginInterface;
 use Temporal\Plugin\WorkerPluginTrait;
 
@@ -46,7 +47,7 @@ class ClientPluginTestCase extends TestCase
             }
         };
 
-        new WorkflowClient($this->mockServiceClient(), plugins: [$plugin]);
+        new WorkflowClient($this->mockServiceClient(), pluginRegistry: new PluginRegistry([$plugin]));
 
         self::assertTrue($called);
     }
@@ -69,7 +70,7 @@ class ClientPluginTestCase extends TestCase
             }
         };
 
-        $client = new WorkflowClient($this->mockServiceClient(), plugins: [$plugin]);
+        $client = new WorkflowClient($this->mockServiceClient(), pluginRegistry: new PluginRegistry([$plugin]));
 
         // The namespace metadata is set from plugin-modified options
         self::assertNotNull($client->getServiceClient());
@@ -96,7 +97,7 @@ class ClientPluginTestCase extends TestCase
         };
 
         // Should not throw — converter is applied
-        $client = new WorkflowClient($this->mockServiceClient(), plugins: [$plugin]);
+        $client = new WorkflowClient($this->mockServiceClient(), pluginRegistry: new PluginRegistry([$plugin]));
         self::assertNotNull($client);
     }
 
@@ -123,7 +124,7 @@ class ClientPluginTestCase extends TestCase
         };
 
         // Should not throw — interceptor pipeline is built with plugin interceptor
-        $client = new WorkflowClient($this->mockServiceClient(), plugins: [$plugin]);
+        $client = new WorkflowClient($this->mockServiceClient(), pluginRegistry: new PluginRegistry([$plugin]));
         self::assertNotNull($client);
     }
 
@@ -163,7 +164,7 @@ class ClientPluginTestCase extends TestCase
             }
         };
 
-        new WorkflowClient($this->mockServiceClient(), plugins: [$plugin1, $plugin2]);
+        new WorkflowClient($this->mockServiceClient(), pluginRegistry: new PluginRegistry([$plugin1, $plugin2]));
 
         self::assertSame(['first', 'second'], $order);
     }
@@ -176,14 +177,14 @@ class ClientPluginTestCase extends TestCase
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Duplicate plugin "dup"');
 
-        new WorkflowClient($this->mockServiceClient(), plugins: [$plugin1, $plugin2]);
+        new WorkflowClient($this->mockServiceClient(), pluginRegistry: new PluginRegistry([$plugin1, $plugin2]));
     }
 
     public function testGetWorkerPluginsPropagation(): void
     {
         $plugin = new class('combo') extends AbstractPlugin {};
 
-        $client = new WorkflowClient($this->mockServiceClient(), plugins: [$plugin]);
+        $client = new WorkflowClient($this->mockServiceClient(), pluginRegistry: new PluginRegistry([$plugin]));
 
         $workerPlugins = $client->getWorkerPlugins();
         self::assertCount(1, $workerPlugins);
@@ -194,7 +195,7 @@ class ClientPluginTestCase extends TestCase
     {
         $plugin = new class('combo') extends AbstractPlugin {};
 
-        $client = new WorkflowClient($this->mockServiceClient(), plugins: [$plugin]);
+        $client = new WorkflowClient($this->mockServiceClient(), pluginRegistry: new PluginRegistry([$plugin]));
 
         $schedulePlugins = $client->getScheduleClientPlugins();
         self::assertCount(1, $schedulePlugins);
@@ -212,7 +213,7 @@ class ClientPluginTestCase extends TestCase
             }
         };
 
-        $client = new WorkflowClient($this->mockServiceClient(), plugins: [$plugin]);
+        $client = new WorkflowClient($this->mockServiceClient(), pluginRegistry: new PluginRegistry([$plugin]));
 
         self::assertCount(0, $client->getWorkerPlugins());
         self::assertCount(0, $client->getScheduleClientPlugins());
@@ -230,7 +231,7 @@ class ClientPluginTestCase extends TestCase
             }
         };
 
-        $client = new WorkflowClient($this->mockServiceClient(), plugins: [$plugin]);
+        $client = new WorkflowClient($this->mockServiceClient(), pluginRegistry: new PluginRegistry([$plugin]));
 
         self::assertCount(1, $client->getWorkerPlugins());
         self::assertCount(0, $client->getScheduleClientPlugins());

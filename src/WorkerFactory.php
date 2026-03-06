@@ -111,21 +111,16 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     protected MarshallerInterface $marshaller;
 
     protected EnvironmentInterface $env;
-
     protected PluginRegistry $pluginRegistry;
 
-    /**
-     * @param list<WorkerPluginInterface> $plugins Worker plugins to register.
-     */
     public function __construct(
         DataConverterInterface $dataConverter,
         protected RPCConnectionInterface $rpc,
         ?ServiceCredentials $credentials = null,
-        array $plugins = [],
+        ?PluginRegistry $pluginRegistry = null,
         ?WorkflowClient $client = null,
     ) {
-        $this->pluginRegistry = new PluginRegistry($plugins);
-
+        $this->pluginRegistry = $pluginRegistry ?? new PluginRegistry();
         // Propagate worker plugins from the client
         if ($client !== null) {
             $this->pluginRegistry->merge($client->getWorkerPlugins());
@@ -143,21 +138,18 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         $this->boot($credentials ?? ServiceCredentials::create());
     }
 
-    /**
-     * @param list<WorkerPluginInterface> $plugins Worker plugins to register.
-     */
     public static function create(
         ?DataConverterInterface $converter = null,
         ?RPCConnectionInterface $rpc = null,
         ?ServiceCredentials $credentials = null,
-        array $plugins = [],
+        ?PluginRegistry $pluginRegistry = null,
         ?WorkflowClient $client = null,
     ): static {
         return new static(
             $converter ?? DataConverter::createDefault(),
             $rpc ?? Goridge::create(),
             $credentials,
-            $plugins,
+            $pluginRegistry ?? new PluginRegistry(),
             $client,
         );
     }
@@ -215,9 +207,9 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         return $worker;
     }
 
-    public function getWorkerPlugins(): array
+    public function getPluginRegistry(): PluginRegistry
     {
-        return $this->pluginRegistry->getPlugins(WorkerPluginInterface::class);
+        return $this->pluginRegistry;
     }
 
     public function getReader(): ReaderInterface
@@ -304,13 +296,13 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
 
     protected function createRouter(ServiceCredentials $credentials): RouterInterface
     {
-        $pluginNames = \array_map(
-            static fn(WorkerPluginInterface $p): string => $p->getName(),
-            $this->pluginRegistry->getPlugins(WorkerPluginInterface::class),
-        );
-
         $router = new Router();
-        $router->add(new Router\GetWorkerInfo($this->queues, $this->marshaller, $credentials, $pluginNames));
+        $router->add(new Router\GetWorkerInfo(
+            $this->queues,
+            $this->marshaller,
+            $credentials,
+            $this->pluginRegistry,
+        ));
 
         return $router;
     }

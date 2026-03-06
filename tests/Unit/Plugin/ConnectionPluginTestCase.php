@@ -16,6 +16,7 @@ use Temporal\Plugin\ClientPluginTrait;
 use Temporal\Plugin\ConnectionPluginContext;
 use Temporal\Plugin\ConnectionPluginInterface;
 use Temporal\Plugin\ConnectionPluginTrait;
+use Temporal\Plugin\PluginRegistry;
 use Temporal\Plugin\ScheduleClientPluginInterface;
 use Temporal\Plugin\ScheduleClientPluginTrait;
 
@@ -47,7 +48,7 @@ class ConnectionPluginTestCase extends TestCase
             }
         };
 
-        new WorkflowClient($this->mockServiceClient(), plugins: [$plugin]);
+        new WorkflowClient($this->mockServiceClient(), pluginRegistry: new PluginRegistry([$plugin]));
 
         self::assertTrue($called);
     }
@@ -72,7 +73,7 @@ class ConnectionPluginTestCase extends TestCase
             }
         };
 
-        new ScheduleClient($this->mockServiceClient(), plugins: [$plugin]);
+        new ScheduleClient($this->mockServiceClient(), pluginRegistry: new PluginRegistry([$plugin]));
 
         self::assertTrue($called);
     }
@@ -107,7 +108,7 @@ class ConnectionPluginTestCase extends TestCase
             }
         };
 
-        $client = new WorkflowClient($originalClient, plugins: [$plugin]);
+        $client = new WorkflowClient($originalClient, pluginRegistry: new PluginRegistry([$plugin]));
 
         // The service client should be the authed version
         self::assertSame($authedClient, $client->getServiceClient());
@@ -151,7 +152,7 @@ class ConnectionPluginTestCase extends TestCase
             }
         };
 
-        new WorkflowClient($serviceClient, plugins: [$plugin]);
+        new WorkflowClient($serviceClient, pluginRegistry: new PluginRegistry([$plugin]));
 
         // Metadata should have been set (by plugin and then by WorkflowClient for namespace)
         self::assertNotNull($metadataSet);
@@ -195,7 +196,7 @@ class ConnectionPluginTestCase extends TestCase
             }
         };
 
-        new WorkflowClient($this->mockServiceClient(), plugins: [$plugin1, $plugin2]);
+        new WorkflowClient($this->mockServiceClient(), pluginRegistry: new PluginRegistry([$plugin1, $plugin2]));
 
         self::assertSame(['first', 'second'], $order);
     }
@@ -226,7 +227,7 @@ class ConnectionPluginTestCase extends TestCase
             }
         };
 
-        new WorkflowClient($this->mockServiceClient(), plugins: [$plugin]);
+        new WorkflowClient($this->mockServiceClient(), pluginRegistry: new PluginRegistry([$plugin]));
 
         self::assertSame(['connection', 'client'], $order);
     }
@@ -236,7 +237,7 @@ class ConnectionPluginTestCase extends TestCase
         $plugin = new class('test.noop') extends AbstractPlugin {};
 
         // Should not throw — all trait methods are no-ops
-        $client = new WorkflowClient($this->mockServiceClient(), plugins: [$plugin]);
+        $client = new WorkflowClient($this->mockServiceClient(), pluginRegistry: new PluginRegistry([$plugin]));
         self::assertNotNull($client);
     }
 
@@ -259,7 +260,7 @@ class ConnectionPluginTestCase extends TestCase
             }
         };
 
-        new WorkflowClient($this->mockServiceClient(), plugins: [$plugin]);
+        new WorkflowClient($this->mockServiceClient(), pluginRegistry: new PluginRegistry([$plugin]));
 
         self::assertTrue($called);
     }
@@ -285,7 +286,7 @@ class ConnectionPluginTestCase extends TestCase
             }
         };
 
-        new WorkflowClient($this->mockServiceClient(), plugins: [$plugin]);
+        new WorkflowClient($this->mockServiceClient(), pluginRegistry: new PluginRegistry([$plugin]));
 
         self::assertTrue($called);
     }
