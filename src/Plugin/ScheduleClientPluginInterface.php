@@ -19,14 +19,8 @@ namespace Temporal\Plugin;
  *
  * Configuration methods are called in registration order (first registered = first called).
  */
-interface ScheduleClientPluginInterface
+interface ScheduleClientPluginInterface extends PluginInterface
 {
-    /**
-     * Unique name identifying this plugin (e.g., "my-org.tracing").
-     * Used for deduplication and diagnostics.
-     */
-    public function getName(): string;
-
     /**
      * Modify schedule client configuration before the client is created.
      *

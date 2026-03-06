@@ -21,14 +21,8 @@ use Temporal\Worker\WorkerInterface;
  *
  * Task queue name is available via {@see WorkerInterface::getID()}.
  */
-interface WorkerPluginInterface
+interface WorkerPluginInterface extends PluginInterface
 {
-    /**
-     * Unique name identifying this plugin (e.g., "my-org.tracing").
-     * Used for deduplication and diagnostics.
-     */
-    public function getName(): string;
-
     /**
      * Modify worker factory configuration before it is fully initialized.
      */
