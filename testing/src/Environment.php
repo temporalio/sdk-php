@@ -56,7 +56,7 @@ final class Environment
     /**
      * @param array<string, mixed> $envs
      */
-    public function start(?array $rrCommand = null, int $commandTimeout = 10, array $envs = [], string $roadRunnerConfigFile = '.rr.yaml'): void
+    public function start(?string $rrCommand = null, int $commandTimeout = 10, array $envs = [], string $roadRunnerConfigFile = '.rr.yaml'): void
     {
         $this->startTemporalTestServer($commandTimeout);
         $this->startRoadRunner($rrCommand, $commandTimeout, $envs, $roadRunnerConfigFile);
