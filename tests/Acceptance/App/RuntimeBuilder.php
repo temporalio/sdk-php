@@ -7,6 +7,7 @@ namespace Temporal\Tests\Acceptance\App;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Activity\ActivityInterface;
 use Temporal\DataConverter\PayloadConverterInterface;
+use Temporal\Testing\DeprecationCollector;
 use Temporal\Testing\Command;
 use Temporal\Tests\Acceptance\App\Input\Feature;
 use Temporal\Tests\Acceptance\App\Runtime\State;
@@ -69,9 +70,12 @@ final class RuntimeBuilder
     public static function init(): void
     {
         \ini_set('display_errors', 'stderr');
+        error_reporting(-1);
+        DeprecationCollector::register();
         // Feature flags
         FeatureFlags::$workflowDeferredHandlerStart = true;
         FeatureFlags::$cancelAbandonedChildWorkflows = false;
+        FeatureFlags::$warnOnActivityMethodWithoutAttribute = true;
     }
 
     /**
