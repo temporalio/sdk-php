@@ -28,7 +28,7 @@ interface ValuesInterface extends \Countable
     /**
      * @return void
      */
-    public function setDataConverter(DataConverterInterface $converter);
+    public function setDataConverter(DataConverterInterface $converter): void;
 
     /**
      * Get value by it's index.

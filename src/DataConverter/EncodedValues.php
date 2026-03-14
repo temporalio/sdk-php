@@ -76,6 +76,7 @@ class EncodedValues implements ValuesInterface
     /**
      * Decode promise response upon returning it to the domain layer.
      *
+     * @param null|mixed $type
      * @psalm-param TType $type
      */
     public static function decodePromise(PromiseInterface $promise, $type = null): PromiseInterface

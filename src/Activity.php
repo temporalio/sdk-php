@@ -95,6 +95,7 @@ final class Activity extends Facade
      *
      * This method retrieves the payload that was passed into the last call of the {@see Activity::heartbeat()} method.
      *
+     * @param null|mixed $type
      * @psalm-param TType $type
      * @throws OutOfContextException in the absence of the activity execution context.
      */

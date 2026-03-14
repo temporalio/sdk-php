@@ -49,6 +49,7 @@ interface ActivityContextInterface
      *
      * @see Activity::getHeartbeatDetails()
      *
+     * @param null|mixed $type
      * @psalm-param TType $type
      */
     public function getLastHeartbeatDetails($type = null): mixed;
