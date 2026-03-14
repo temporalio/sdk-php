@@ -25,6 +25,9 @@ interface ValuesInterface extends \Countable
      */
     public function isEmpty(): bool;
 
+    /**
+     * @return void
+     */
     public function setDataConverter(DataConverterInterface $converter);
 
     /**

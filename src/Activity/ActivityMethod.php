@@ -20,7 +20,7 @@ use Spiral\Attributes\NamedArgumentConstructor;
  * @NamedArgumentConstructor
  * @Target({ "METHOD" })
  */
-#[\Attribute(\Attribute::TARGET_METHOD), NamedArgumentConstructor]
+#[\Attribute(\Attribute::TARGET_METHOD)]
 final class ActivityMethod
 {
     /**

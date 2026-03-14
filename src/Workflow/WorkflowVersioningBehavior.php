@@ -25,7 +25,7 @@ use Temporal\Common\Versioning\VersioningBehavior;
  *
  * @see \Temporal\Api\Enums\V1\VersioningBehavior
  */
-#[\Attribute(\Attribute::TARGET_METHOD), NamedArgumentConstructor]
+#[\Attribute(\Attribute::TARGET_METHOD)]
 final class WorkflowVersioningBehavior
 {
     public function __construct(

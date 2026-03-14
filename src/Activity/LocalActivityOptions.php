@@ -86,7 +86,7 @@ class LocalActivityOptions extends Options implements ActivityOptionsInterface
         $self = clone $this;
 
         if ($retry !== null && $this->diff->isPresent($self, 'retryOptions')) {
-            $self->retryOptions = $this->retryOptions->mergeWith($retry);
+            $self->retryOptions = $this->retryOptions?->mergeWith($retry);
         }
 
         return $self;

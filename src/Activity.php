@@ -19,6 +19,9 @@ use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\OutOfContextException;
 use Temporal\Internal\Support\Facade;
 
+/**
+ * @psalm-import-type TType from Type
+ */
 final class Activity extends Facade
 {
     /**
@@ -92,7 +95,7 @@ final class Activity extends Facade
      *
      * This method retrieves the payload that was passed into the last call of the {@see Activity::heartbeat()} method.
      *
-     * @param Type|string|\ReflectionType|\ReflectionClass|null $type
+     * @psalm-param TType $type
      * @throws OutOfContextException in the absence of the activity execution context.
      */
     public static function getHeartbeatDetails($type = null): mixed

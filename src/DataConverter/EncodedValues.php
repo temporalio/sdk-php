@@ -25,6 +25,8 @@ use Traversable;
  * @psalm-type TPayloadsCollection = Traversable&ArrayAccess&Countable
  * @psalm-type TKey = int
  * @psalm-type TValue = string
+ * @psalm-import-type TType from Type
+ * @final
  */
 class EncodedValues implements ValuesInterface
 {
@@ -47,7 +49,7 @@ class EncodedValues implements ValuesInterface
 
     public static function empty(): static
     {
-        $ev = new static();
+        $ev = new self();
         $ev->values = [];
 
         return $ev;
@@ -74,7 +76,7 @@ class EncodedValues implements ValuesInterface
     /**
      * Decode promise response upon returning it to the domain layer.
      *
-     * @param string|\ReflectionClass|\ReflectionType|Type|null $type
+     * @psalm-param TType $type
      */
     public static function decodePromise(PromiseInterface $promise, $type = null): PromiseInterface
     {
@@ -91,7 +93,7 @@ class EncodedValues implements ValuesInterface
 
     public static function fromValues(array $values, ?DataConverterInterface $dataConverter = null): static
     {
-        $ev = new static();
+        $ev = new self();
         $ev->values = \array_values($values);
         $ev->converter = $dataConverter;
 
@@ -105,7 +107,7 @@ class EncodedValues implements ValuesInterface
         \Traversable $payloads,
         ?DataConverterInterface $dataConverter = null,
     ): static {
-        $ev = new static();
+        $ev = new self();
         $ev->payloads = $payloads;
         $ev->converter = $dataConverter;
 
@@ -208,8 +210,10 @@ class EncodedValues implements ValuesInterface
             return $data;
         }
 
-        foreach ($this->values as $key => $value) {
-            $data[$key] = $this->valueToPayload($value);
+        if ($this->values !== null) {
+            foreach ($this->values as $key => $value) {
+                $data[$key] = $this->valueToPayload($value);
+            }
         }
 
         return $data;

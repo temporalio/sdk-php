@@ -43,7 +43,7 @@ final class WorkerMock implements WorkerInterface, EventListenerInterface, Dispa
         return $this->wrapped->dispatch($request, $headers);
     }
 
-    public function getID(): string
+    public function getID(): int|string
     {
         return $this->wrapped->getID();
     }
