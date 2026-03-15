@@ -34,7 +34,8 @@ final class WorkflowReplayer
 
     public function __construct()
     {
-        $this->rpc = new RPC(Relay::create(Environment::fromGlobals()->getRPCAddress()), new ProtobufCodec());
+        $rpcAddress = Environment::fromGlobals()->getRPCAddress();
+        $this->rpc = new RPC(Relay::create(!empty($rpcAddress) ? $rpcAddress : 'tcp://127.0.0.1:6001'), new ProtobufCodec());
     }
 
     /**
@@ -44,7 +45,6 @@ final class WorkflowReplayer
      */
     public function replayHistory(History $history): void
     {
-        /** @var HistoryEvent|null $firstEvent */
         $firstEvent = $history->getEvents()[0] ?? null;
         $workflowType = $firstEvent?->getWorkflowExecutionStartedEventAttributes()?->getWorkflowType()?->getName()
             ?? throw new \LogicException('History is empty or broken.');
@@ -110,7 +110,10 @@ final class WorkflowReplayer
         $this->sendRequest('temporal.ReplayFromJSON', $request);
     }
 
-    private function sendRequest(string $command, Message $request): ReplayResponse
+    /**
+     * @param non-empty-string $command
+     */
+    private function sendRequest(string $command, Message $request): void
     {
         $wfType = (string) $request->getWorkflowType()?->getName();
         try {
@@ -132,7 +135,7 @@ final class WorkflowReplayer
         \assert($status !== null);
 
         if ($status->getCode() === 0) {
-            return $message;
+            return;
         }
 
         throw match ($status->getCode()) {

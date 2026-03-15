@@ -10,9 +10,9 @@ use Spiral\RoadRunner\Console\Environment\OperatingSystem;
 final class SystemInfo
 {
     private const PLATFORM_MAPPINGS = [
-        'darwin' => 'macOS',
-        'linux' => 'linux',
-        'windows' => 'windows',
+        OperatingSystem::OS_DARWIN => 'macOS',
+        OperatingSystem::OS_LINUX => 'linux',
+        OperatingSystem::OS_WINDOWS => 'windows',
     ];
     private const ARCHITECTURE_MAPPINGS = [
         'x64' => 'amd64',
@@ -20,19 +20,19 @@ final class SystemInfo
         'arm64' => 'arm64',
     ];
     private const TEMPORAL_EXECUTABLE_MAP = [
-        'darwin' => './temporal-test-server',
-        'linux' => './temporal-test-server',
-        'windows' => 'temporal-test-server.exe',
+        OperatingSystem::OS_DARWIN => './temporal-test-server',
+        OperatingSystem::OS_LINUX => './temporal-test-server',
+        OperatingSystem::OS_WINDOWS => 'temporal-test-server.exe',
     ];
     private const TEMPORAL_CLI_EXECUTABLE_MAP = [
-        'darwin' => './temporal',
-        'linux' => './temporal',
-        'windows' => 'temporal.exe',
+        OperatingSystem::OS_DARWIN => './temporal',
+        OperatingSystem::OS_LINUX => './temporal',
+        OperatingSystem::OS_WINDOWS => 'temporal.exe',
     ];
     private const RR_EXECUTABLE_MAP = [
-        'darwin' => './rr',
-        'linux' => './rr',
-        'windows' => 'rr.exe',
+        OperatingSystem::OS_DARWIN => './rr',
+        OperatingSystem::OS_LINUX => './rr',
+        OperatingSystem::OS_WINDOWS => 'rr.exe',
     ];
 
     public string $arch;
@@ -61,14 +61,16 @@ final class SystemInfo
     public static function detect(): self
     {
         $os = OperatingSystem::createFromGlobals();
+        $architecture = Architecture::createFromGlobals();
+        $rrBinary = \getenv('ROADRUNNER_BINARY');
 
         return new self(
             $os,
-            self::PLATFORM_MAPPINGS[$os],
-            self::ARCHITECTURE_MAPPINGS[Architecture::createFromGlobals()],
-            self::TEMPORAL_EXECUTABLE_MAP[$os],
-            \getenv('ROADRUNNER_BINARY') ?: self::RR_EXECUTABLE_MAP[$os],
-            self::TEMPORAL_CLI_EXECUTABLE_MAP[$os],
+            self::PLATFORM_MAPPINGS[$os] ?? self::PLATFORM_MAPPINGS[OperatingSystem::OS_LINUX],
+            self::ARCHITECTURE_MAPPINGS[$architecture] ?? self::ARCHITECTURE_MAPPINGS['amd64'],
+            self::TEMPORAL_EXECUTABLE_MAP[$os] ?? self::TEMPORAL_EXECUTABLE_MAP[OperatingSystem::OS_LINUX],
+            (is_string($rrBinary) && $rrBinary !== '') ? $rrBinary : (self::RR_EXECUTABLE_MAP[$os] ?? self::RR_EXECUTABLE_MAP[OperatingSystem::OS_LINUX]),
+            self::TEMPORAL_CLI_EXECUTABLE_MAP[$os] ?? self::TEMPORAL_CLI_EXECUTABLE_MAP[OperatingSystem::OS_LINUX],
         );
     }
 }

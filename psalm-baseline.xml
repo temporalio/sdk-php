@@ -1146,9 +1146,6 @@
       <code><![CDATA[$cacheName]]></code>
       <code><![CDATA[$host]]></code>
     </ArgumentTypeCoercion>
-    <MissingParamType>
-      <code><![CDATA[$value]]></code>
-    </MissingParamType>
     <PossiblyUndefinedStringArrayOffset>
       <code><![CDATA[$request->getOptions()['name']]]></code>
     </PossiblyUndefinedStringArrayOffset>
@@ -1350,9 +1347,6 @@
     <PossiblyUndefinedStringArrayOffset>
       <code><![CDATA[$headers[self::HEADER_TASK_QUEUE]]]></code>
     </PossiblyUndefinedStringArrayOffset>
-    <PropertyNotSetInConstructor>
-      <code><![CDATA[$codec]]></code>
-    </PropertyNotSetInConstructor>
     <UndefinedInterfaceMethod>
       <code><![CDATA[dispatch]]></code>
       <code><![CDATA[dispatch]]></code>
@@ -1370,5 +1364,26 @@
     <UndefinedInterfaceMethod>
       <code><![CDATA[getUpdateContext]]></code>
     </UndefinedInterfaceMethod>
+  </file>
+  <file src="testing/src/Downloader.php">
+    <PossiblyUndefinedStringArrayOffset>
+      <code><![CDATA[$asset['browser_download_url']]]></code>
+      <code><![CDATA[$response->toArray()['assets']]]></code>
+    </PossiblyUndefinedStringArrayOffset>
+  </file>
+  <file src="testing/src/Replay/WorkflowReplayer.php">
+    <UndefinedMethod>
+      <code><![CDATA[getWorkflowType]]></code>
+    </UndefinedMethod>
+  </file>
+  <file src="testing/src/TestService.php">
+    <UndefinedClass>
+      <code><![CDATA[ChannelCredentials]]></code>
+    </UndefinedClass>
+  </file>
+  <file src="testing/src/WorkerMock.php">
+    <DeprecatedMethod>
+      <code><![CDATA[registerActivityImplementations]]></code>
+    </DeprecatedMethod>
   </file>
 </files>
