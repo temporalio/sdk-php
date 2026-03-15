@@ -69,7 +69,7 @@ final class SystemInfo
             self::PLATFORM_MAPPINGS[$os] ?? self::PLATFORM_MAPPINGS[OperatingSystem::OS_LINUX],
             self::ARCHITECTURE_MAPPINGS[$architecture] ?? self::ARCHITECTURE_MAPPINGS['amd64'],
             self::TEMPORAL_EXECUTABLE_MAP[$os] ?? self::TEMPORAL_EXECUTABLE_MAP[OperatingSystem::OS_LINUX],
-            (is_string($rrBinary) && $rrBinary !== '') ? $rrBinary : (self::RR_EXECUTABLE_MAP[$os] ?? self::RR_EXECUTABLE_MAP[OperatingSystem::OS_LINUX]),
+            (\is_string($rrBinary) && $rrBinary !== '') ? $rrBinary : (self::RR_EXECUTABLE_MAP[$os] ?? self::RR_EXECUTABLE_MAP[OperatingSystem::OS_LINUX]),
             self::TEMPORAL_CLI_EXECUTABLE_MAP[$os] ?? self::TEMPORAL_CLI_EXECUTABLE_MAP[OperatingSystem::OS_LINUX],
         );
     }

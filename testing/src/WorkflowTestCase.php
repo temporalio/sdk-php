@@ -19,7 +19,7 @@ class WorkflowTestCase extends TestCase
     protected function setUp(): void
     {
         $temporalAddress = \getenv('TEMPORAL_ADDRESS');
-        $temporalAddress = is_string($temporalAddress) && !empty($temporalAddress) ? $temporalAddress : '127.0.0.1:7233';
+        $temporalAddress = \is_string($temporalAddress) && !empty($temporalAddress) ? $temporalAddress : '127.0.0.1:7233';
         $this->workflowClient = new WorkflowClient(ServiceClient::create($temporalAddress));
         $this->testingService = TestService::create($temporalAddress);
 

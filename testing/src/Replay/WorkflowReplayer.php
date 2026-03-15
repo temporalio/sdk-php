@@ -14,7 +14,6 @@ use Spiral\RoadRunner\Environment;
 use Temporal\Api\Common\V1\WorkflowExecution;
 use Temporal\Api\Common\V1\WorkflowType;
 use Temporal\Api\History\V1\History;
-use Temporal\Api\History\V1\HistoryEvent;
 use Temporal\Client\GRPC\StatusCode;
 use Temporal\Testing\Replay\Exception\InternalServerException;
 use Temporal\Testing\Replay\Exception\InvalidArgumentException;
