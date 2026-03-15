@@ -108,7 +108,7 @@ final class TestService
     {
         /** @var GetCurrentTimeResponse $result */
         $result = $this->invoke('GetCurrentTime', new GPBEmpty());
-        return Carbon::createFromTimestamp($result->getTime()->getSeconds());
+        return Carbon::createFromTimestamp($result->getTime()?->getSeconds() ?? 0);
     }
 
     private function invoke(string $method, object $request): object
