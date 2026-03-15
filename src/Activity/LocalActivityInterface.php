@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace Temporal\Activity;
 
 use Doctrine\Common\Annotations\Annotation\Target;
-use JetBrains\PhpStorm\Immutable;
 use Spiral\Attributes\NamedArgumentConstructor;
 
 /**
@@ -32,25 +31,5 @@ use Spiral\Attributes\NamedArgumentConstructor;
  * @NamedArgumentConstructor
  * @Target({ "CLASS" })
  */
-#[\Attribute(\Attribute::TARGET_CLASS)]
-final class LocalActivityInterface extends ActivityInterface
-{
-    /**
-     * Prefix to prepend to method names to generate activity types. Default is
-     * empty string which means that method names are used as activity types.
-     *
-     * Note that this value is ignored if a name of an activity is specified
-     * explicitly through {@see ActivityMethod::$name}.
-     *
-     * Be careful about names that contain special characters. These names can
-     * be used as metric tags. And systems like prometheus ignore metrics which
-     * have tags with unsupported characters.
-     */
-    #[Immutable]
-    public string $prefix = '';
-
-    public function __construct(string $prefix = '')
-    {
-        $this->prefix = $prefix;
-    }
-}
+#[\Attribute(\Attribute::TARGET_CLASS), NamedArgumentConstructor]
+final class LocalActivityInterface extends ActivityInterface {}

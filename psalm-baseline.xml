@@ -1,5 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <files psalm-version="6.14.3@d0b040a91f280f071c1abcb1b77ce3822058725a">
+  <file src="src/Activity/ActivityInterface.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Activity/ActivityMethod.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Activity/LocalActivityInterface.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
   <file src="src/Client/ActivityCompletionClientInterface.php">
     <MissingParamType>
       <code><![CDATA[$details]]></code>
@@ -1364,6 +1379,46 @@
     <UndefinedInterfaceMethod>
       <code><![CDATA[getUpdateContext]]></code>
     </UndefinedInterfaceMethod>
+  </file>
+  <file src="src/Workflow/QueryMethod.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Workflow/ReturnType.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Workflow/SignalMethod.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Workflow/UpdateMethod.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Workflow/UpdateValidatorMethod.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Workflow/WorkflowInterface.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Workflow/WorkflowMethod.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
+  </file>
+  <file src="src/Workflow/WorkflowVersioningBehavior.php">
+    <DeprecatedClass>
+      <code><![CDATA[NamedArgumentConstructor]]></code>
+    </DeprecatedClass>
   </file>
   <file src="testing/src/Downloader.php">
     <PossiblyUndefinedStringArrayOffset>

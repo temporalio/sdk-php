@@ -26,7 +26,7 @@ use Spiral\Attributes\NamedArgumentConstructor;
  * @NamedArgumentConstructor
  * @Target({ "METHOD" })
  */
-#[\Attribute(\Attribute::TARGET_METHOD)]
+#[\Attribute(\Attribute::TARGET_METHOD), NamedArgumentConstructor]
 final class QueryMethod
 {
     /**

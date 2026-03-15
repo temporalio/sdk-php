@@ -20,7 +20,7 @@ use Temporal\DataConverter\Type;
  * @NamedArgumentConstructor
  * @Target({ "METHOD" })
  */
-#[\Attribute(\Attribute::TARGET_METHOD)]
+#[\Attribute(\Attribute::TARGET_METHOD), NamedArgumentConstructor]
 final class ReturnType
 {
     public const TYPE_ANY = Type::TYPE_ANY;

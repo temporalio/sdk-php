@@ -32,7 +32,7 @@ use Spiral\Attributes\NamedArgumentConstructor;
  * @NamedArgumentConstructor
  * @Target({ "CLASS" })
  */
-#[\Attribute(\Attribute::TARGET_CLASS)]
+#[\Attribute(\Attribute::TARGET_CLASS), NamedArgumentConstructor]
 class ActivityInterface
 {
     /**

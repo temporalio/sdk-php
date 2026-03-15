@@ -28,5 +28,5 @@ use Internal\Destroy\Destroyable;
  * You can use this method to help with memory management by breaking circular references.
  * Note: the Workflow logger may not emit logs from within the destroy method.
  */
-#[\Attribute(\Attribute::TARGET_CLASS)]
+#[\Attribute(\Attribute::TARGET_CLASS), NamedArgumentConstructor]
 class WorkflowInterface {}
