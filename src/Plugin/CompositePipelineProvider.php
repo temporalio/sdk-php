@@ -27,7 +27,6 @@ use Temporal\Internal\Interceptor\Pipeline;
 final class CompositePipelineProvider implements PipelineProvider
 {
     private readonly PipelineProvider $delegate;
-
     private array $cache = [];
 
     /**
