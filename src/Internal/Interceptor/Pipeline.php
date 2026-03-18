@@ -53,7 +53,7 @@ final class Pipeline
     /**
      * Make sure that interceptors implement the same interface.
      *
-     * @template T of Interceptor
+     * @template T of object
      *
      * @param iterable<T> $interceptors
      *

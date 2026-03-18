@@ -77,8 +77,9 @@ final class ScheduleClient implements ScheduleClientInterface
             $plugin->configureScheduleClient($pluginContext);
         }
         $this->clientOptions = $pluginContext->getClientOptions();
-        if ($pluginContext->getDataConverter() !== null) {
-            $this->converter = $pluginContext->getDataConverter();
+        $pluginConverter = $pluginContext->getDataConverter();
+        if ($pluginConverter !== null) {
+            $this->converter = $pluginConverter;
         }
 
         $this->marshaller = new Marshaller(

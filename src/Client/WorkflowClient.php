@@ -103,8 +103,9 @@ class WorkflowClient implements WorkflowClientInterface
         }
 
         $this->clientOptions = $pluginContext->getClientOptions();
-        if ($pluginContext->getDataConverter() !== null) {
-            $this->converter = $pluginContext->getDataConverter();
+        $pluginConverter = $pluginContext->getDataConverter();
+        if ($pluginConverter !== null) {
+            $this->converter = $pluginConverter;
         }
 
         // Build interceptor pipeline: merge plugin-contributed interceptors with user-provided ones
@@ -125,9 +126,6 @@ class WorkflowClient implements WorkflowClientInterface
         );
     }
 
-    /**
-     * @return static
-     */
     public static function create(
         ServiceClientInterface $serviceClient,
         ?ClientOptions $options = null,

@@ -250,9 +250,8 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         $host ??= RoadRunner::create();
         $this->codec = $this->createCodec();
 
-        $pipeline = Pipeline::prepare(
-            $this->pluginRegistry->getPlugins(WorkerPluginInterface::class),
-        );
+        $plugins = $this->pluginRegistry->getPlugins(WorkerPluginInterface::class);
+        $pipeline = Pipeline::prepare($plugins);
 
         return $pipeline->with(function () use ($host): int {
             while ($msg = $host->waitBatch()) {
