@@ -17,7 +17,6 @@ use Temporal\DataConverter\DataConverterInterface;
  * Builder-style configuration context for worker factory plugins.
  *
  * Plugins modify this builder in {@see WorkerPluginInterface::configureWorkerFactory()}.
- * Uses a fluent API similar to Java SDK's Options.Builder pattern.
  */
 final class WorkerFactoryPluginContext
 {

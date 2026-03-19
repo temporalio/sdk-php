@@ -19,7 +19,6 @@ use Temporal\Worker\WorkerOptions;
  * Builder-style configuration context for worker plugins.
  *
  * Plugins modify this builder in {@see WorkerPluginInterface::configureWorker()}.
- * Uses a fluent API similar to Java SDK's Options.Builder pattern.
  */
 final class WorkerPluginContext
 {

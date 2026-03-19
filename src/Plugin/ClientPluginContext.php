@@ -19,7 +19,6 @@ use Temporal\Internal\Interceptor\Interceptor;
  * Builder-style configuration context for workflow client plugins.
  *
  * Plugins modify this builder in {@see ClientPluginInterface::configureClient()}.
- * Uses a fluent API similar to Java SDK's Options.Builder pattern.
  */
 final class ClientPluginContext
 {
