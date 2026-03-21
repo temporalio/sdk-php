@@ -485,7 +485,12 @@ class Scope implements CancellationScopeInterface, Destroyable
                 return $handler($values);
             });
 
-            $suspendedValue = $fiber->start();
+            try {
+                $suspendedValue = $fiber->start();
+            } catch (\Throwable $e) {
+                $scopeContext->setFiberMode(false);
+                throw $e;
+            }
 
             if ($fiber->isTerminated()) {
                 $scopeContext->setFiberMode(false);
@@ -493,18 +498,22 @@ class Scope implements CancellationScopeInterface, Destroyable
             }
 
             // Fiber suspended — bridge it through a Generator
-            return (static function (\Fiber $fiber, mixed $suspendedValue): \Generator {
+            return (static function (\Fiber $fiber, mixed $suspendedValue, ScopeContext $scopeContext): \Generator {
                 $value = $suspendedValue;
-                while (!$fiber->isTerminated()) {
-                    try {
-                        $sent = yield $value;
-                        $value = $fiber->resume($sent);
-                    } catch (\Throwable $e) {
-                        $value = $fiber->throw($e);
+                try {
+                    while (!$fiber->isTerminated()) {
+                        try {
+                            $sent = yield $value;
+                            $value = $fiber->resume($sent);
+                        } catch (\Throwable $e) {
+                            $value = $fiber->throw($e);
+                        }
                     }
+                    return $fiber->getReturn();
+                } finally {
+                    $scopeContext->setFiberMode(false);
                 }
-                return $fiber->getReturn();
-            })($fiber, $suspendedValue);
+            })($fiber, $suspendedValue, $scopeContext);
         };
     }
 
