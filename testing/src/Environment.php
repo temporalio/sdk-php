@@ -256,6 +256,9 @@ final class Environment
 
         $process = new Process($command);
         $process->setTimeout($timeout);
+
+        $this->io->info('Executing Temporal Command: ' . $this->serializeProcess($process));
+
         $process->run();
     }
 
@@ -304,7 +307,7 @@ final class Environment
         return $this->temporalTestServerProcess?->isRunning() === true;
     }
 
-    private function serializeProcess(?Process $temporalServerProcess): string|array
+    private function serializeProcess(?Process $temporalServerProcess): string
     {
         $reflection = new \ReflectionClass($temporalServerProcess);
         $reflectionProperty = $reflection->getProperty('commandline');
