@@ -259,6 +259,9 @@ final class Environment
 
         $process = new Process($command);
         $process->setTimeout($timeout);
+
+        $this->io->info('Executing Temporal Command: ' . $this->serializeProcess($process));
+
         $process->run();
     }
 

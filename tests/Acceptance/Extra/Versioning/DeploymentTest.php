@@ -30,14 +30,12 @@ class DeploymentTest extends TestCase
     public function defaultBehaviorAuto(
         Environment $environment,
         RRStarter $roadRunnerStarter,
-        TemporalStarter $starter,
         WorkflowClientInterface $client,
         Feature $feature,
     ): void {
         $behavior = self::executeWorkflow(
             $environment,
             $roadRunnerStarter,
-            $starter,
             $client,
             $feature,
             /** @see DefaultWorkflow */
@@ -51,7 +49,6 @@ class DeploymentTest extends TestCase
     public function customBehaviorPinned(
         Environment $environment,
         RRStarter $roadRunnerStarter,
-        TemporalStarter $starter,
         WorkflowClientInterface $client,
         Feature $feature,
     ): void {
@@ -59,7 +56,6 @@ class DeploymentTest extends TestCase
         self::executeWorkflow(
             $environment,
             $roadRunnerStarter,
-            $starter,
             $client,
             $feature,
             /** @see PinnedWorkflow */
@@ -86,7 +82,6 @@ class DeploymentTest extends TestCase
     public function versionBehaviorOverrideAutoUpgrade(
         Environment $environment,
         RRStarter $roadRunnerStarter,
-        TemporalStarter $starter,
         WorkflowClientInterface $client,
         Feature $feature,
     ): void {
@@ -94,7 +89,6 @@ class DeploymentTest extends TestCase
         self::executeWorkflow(
             $environment,
             $roadRunnerStarter,
-            $starter,
             $client,
             $feature,
             /** @see PinnedWorkflow */
@@ -121,14 +115,12 @@ class DeploymentTest extends TestCase
     public function versionBehaviorOverridePinned(
         Environment $environment,
         RRStarter $roadRunnerStarter,
-        TemporalStarter $starter,
         WorkflowClientInterface $client,
         Feature $feature,
     ): void {
         $behavior = self::executeWorkflow(
             $environment,
             $roadRunnerStarter,
-            $starter,
             $client,
             $feature,
             /** @see PinnedWorkflow */
@@ -151,7 +143,6 @@ class DeploymentTest extends TestCase
     private static function executeWorkflow(
         Environment $environment,
         RRStarter $roadRunnerStarter,
-        TemporalStarter $temporalStarter,
         WorkflowClientInterface $client,
         Feature $feature,
         string $workflowType,
@@ -200,8 +191,7 @@ class DeploymentTest extends TestCase
             $postAction === null or $postAction($behavior);
             return $behavior;
         } finally {
-            $temporalStarter->stop();
-            $temporalStarter->start();
+            $roadRunnerStarter->stop();
             $roadRunnerStarter->start();
         }
     }
