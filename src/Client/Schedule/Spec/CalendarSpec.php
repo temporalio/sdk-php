@@ -88,42 +88,42 @@ final class CalendarSpec
 
     public function withSecond(string|int $second): self
     {
-        return $this->with('second', (string) $second);
+        return $this->cloneWith('second', (string) $second);
     }
 
     public function withMinute(string|int $minute): self
     {
-        return $this->with('minute', (string) $minute);
+        return $this->cloneWith('minute', (string) $minute);
     }
 
     public function withHour(string|int $hour): self
     {
-        return $this->with('hour', (string) $hour);
+        return $this->cloneWith('hour', (string) $hour);
     }
 
     public function withDayOfMonth(string|int $dayOfMonth): self
     {
-        return $this->with('dayOfMonth', (string) $dayOfMonth);
+        return $this->cloneWith('dayOfMonth', (string) $dayOfMonth);
     }
 
     public function withMonth(string|int $month): self
     {
-        return $this->with('month', (string) $month);
+        return $this->cloneWith('month', (string) $month);
     }
 
     public function withYear(string|int $year): self
     {
-        return $this->with('year', (string) $year);
+        return $this->cloneWith('year', (string) $year);
     }
 
     public function withDayOfWeek(string|int $dayOfWeek): self
     {
-        return $this->with('dayOfWeek', (string) $dayOfWeek);
+        return $this->cloneWith('dayOfWeek', (string) $dayOfWeek);
     }
 
     public function withComment(string $comment): self
     {
         /** @see self::$comment */
-        return $this->with('comment', $comment);
+        return $this->cloneWith('comment', $comment);
     }
 }

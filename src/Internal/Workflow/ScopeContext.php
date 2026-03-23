@@ -57,6 +57,7 @@ class ScopeContext extends WorkflowContext implements ScopedContextInterface
         $ctx->readonly = $context->readonly;
         $ctx->continueAsNew = $context->continueAsNew;
         $ctx->trace = &$context->trace;
+        $ctx->currentDetails = &$context->currentDetails;
 
         return $ctx;
     }

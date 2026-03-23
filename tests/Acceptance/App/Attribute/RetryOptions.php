@@ -25,10 +25,25 @@ class RetryOptions
      * @param int<0, max> $maximumAttempts
      */
     public function __construct(
+        /**
+         * @see CommonOptions::withInitialInterval()
+         */
         public ?string $initialInterval = CommonOptions::DEFAULT_INITIAL_INTERVAL,
+        /**
+         * @see CommonOptions::withBackoffCoefficient()
+         */
         public float $backoffCoefficient = CommonOptions::DEFAULT_BACKOFF_COEFFICIENT,
+        /**
+         * @see CommonOptions::withMaximumInterval()
+         */
         public ?string $maximumInterval = CommonOptions::DEFAULT_MAXIMUM_INTERVAL,
+        /**
+         * @see CommonOptions::withMaximumAttempts()
+         */
         public int $maximumAttempts = CommonOptions::DEFAULT_MAXIMUM_ATTEMPTS,
+        /**
+         * @see CommonOptions::withNonRetryableExceptions()
+         */
         public array $nonRetryableExceptions = CommonOptions::DEFAULT_NON_RETRYABLE_EXCEPTIONS,
     ) {}
 

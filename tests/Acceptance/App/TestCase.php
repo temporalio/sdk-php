@@ -6,8 +6,6 @@ namespace Temporal\Tests\Acceptance\App;
 
 use Google\Protobuf\Timestamp;
 use PHPUnit\Framework\SkippedTest;
-use PHPUnit\Framework\SkippedWithMessageException;
-use PHPUnit\Framework\TestStatus\Skipped;
 use Psr\Log\LoggerInterface;
 use Spiral\Core\Container;
 use Spiral\Core\Scope;
@@ -22,6 +20,7 @@ use Temporal\Tests\Acceptance\App\Runtime\ContainerFacade;
 use Temporal\Tests\Acceptance\App\Runtime\Feature;
 use Temporal\Tests\Acceptance\App\Runtime\RRStarter;
 use Temporal\Tests\Acceptance\App\Runtime\State;
+use Temporal\Tests\Acceptance\App\Runtime\TemporalStarter;
 
 abstract class TestCase extends \Temporal\Tests\TestCase
 {
@@ -34,18 +33,19 @@ abstract class TestCase extends \Temporal\Tests\TestCase
         $state->countFeatures() === 0 and RuntimeBuilder::hydrateClasses($state);
     }
 
+    #[\Override]
     protected function runTest(): mixed
     {
-        $c = ContainerFacade::$container;
+        $container = ContainerFacade::$container;
         /** @var State $runtime */
-        $runtime = $c->get(State::class);
+        $runtime = $container->get(State::class);
         $feature = $runtime->getFeatureByTestCase(static::class);
 
         // Configure client logger
         $logger = LoggerFactory::createClientLogger($feature->taskQueue);
         $logger->clear();
 
-        return $c->runScope(
+        return $container->runScope(
             new Scope(name: 'feature', bindings: [
                 Feature::class => $feature,
                 static::class => $this,
@@ -62,7 +62,15 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                     return parent::runTest();
                 } catch (\Throwable $e) {
                     if ($e instanceof TemporalException) {
-                        echo "\n=== Workflow history for failed test {$this->name()} ===\n";
+                        echo \sprintf(
+                            "\n=== En error occurred while testing %s: %s (%s) ===\n",
+                            static::class . '::' . $this->name(),
+                            $e->getMessage(),
+                            $e::class,
+                        );
+                        echo "\n=== Stack trace ===\n";
+                        echo $e->getTraceAsString();
+                        echo "\n=== Workflow history ===\n";
                         $this->printWorkflowHistory($container->get(WorkflowClientInterface::class), $args);
 
                         $logRecords = $container->get(ClientLogger::class)->getRecords();
@@ -83,10 +91,9 @@ abstract class TestCase extends \Temporal\Tests\TestCase
 
                     if (!$e instanceof SkippedTest) {
                         // Restart RR if a Error occurs
-                        /** @var RRStarter $runner */
-                        $runner = $container->get(RRStarter::class);
-                        $runner->stop();
-                        $runner->start();
+                        $roadRunnerStarter = $container->get(RRStarter::class);
+                        $roadRunnerStarter->stop();
+                        $roadRunnerStarter->start();
                     }
 
                     throw $e;
@@ -117,9 +124,7 @@ abstract class TestCase extends \Temporal\Tests\TestCase
                 ? 0
                 : $ts->getSeconds() + \round($ts->getNanos() / 1_000_000_000, 6);
 
-            foreach ($workflowClient->getWorkflowHistory(
-                $arg->getExecution(),
-            ) as $event) {
+            foreach ($workflowClient->getWorkflowHistory($arg->getExecution()) as $event) {
                 $start ??= $fnTime($event->getEventTime());
                 echo "\n" . \str_pad((string) $event->getEventId(), 3, ' ', STR_PAD_LEFT) . ' ';
                 # Calculate delta time

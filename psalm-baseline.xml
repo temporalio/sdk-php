@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="6.13.1@1e3b7f0a8ab32b23197b91107adc0a7ed8a05b51">
+<files psalm-version="6.14.3@d0b040a91f280f071c1abcb1b77ce3822058725a">
   <file src="src/Activity.php">
     <ImplicitToStringCast>
       <code><![CDATA[$type]]></code>
@@ -140,8 +140,6 @@
       <code><![CDATA[$counter]]></code>
       <code><![CDATA[$runID]]></code>
       <code><![CDATA[$signal]]></code>
-      <code><![CDATA[$workflow->getID()]]></code>
-      <code><![CDATA[$workflow->getID()]]></code>
     </ArgumentTypeCoercion>
     <DeprecatedClass>
       <code><![CDATA[new AnnotationReader()]]></code>
@@ -588,9 +586,6 @@
     <InvalidReturnType>
       <code><![CDATA[T|null]]></code>
     </InvalidReturnType>
-    <RedundantCondition>
-      <code><![CDATA[$reflection]]></code>
-    </RedundantCondition>
   </file>
   <file src="src/Internal/Declaration/Reader/ActivityReader.php">
     <ArgumentTypeCoercion>
@@ -884,6 +879,11 @@
       <code><![CDATA[?string]]></code>
     </MoreSpecificReturnType>
   </file>
+  <file src="src/Internal/Promise/CancellationQueue.php">
+    <PossiblyNullArrayOffset>
+      <code><![CDATA[$this->queue]]></code>
+    </PossiblyNullArrayOffset>
+  </file>
   <file src="src/Internal/Queue/ArrayQueue.php">
     <InvalidDocblock>
       <code><![CDATA[protected array $commands = [];]]></code>
@@ -1059,8 +1059,6 @@
   </file>
   <file src="src/Internal/Workflow/ActivityProxy.php">
     <ArgumentTypeCoercion>
-      <code><![CDATA[$handler->getID()]]></code>
-      <code><![CDATA[$handler->getID()]]></code>
       <code><![CDATA[$options]]></code>
       <code><![CDATA[$options]]></code>
     </ArgumentTypeCoercion>
@@ -1173,6 +1171,7 @@
       <code><![CDATA[$scope]]></code>
     </PropertyNotSetInConstructor>
     <UnsupportedPropertyReferenceUsage>
+      <code><![CDATA[$ctx->currentDetails = &$context->currentDetails]]></code>
       <code><![CDATA[$ctx->trace = &$context->trace]]></code>
     </UnsupportedPropertyReferenceUsage>
   </file>

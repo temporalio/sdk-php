@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Acceptance\App\Runtime;
 
-use Temporal\Tests\Acceptance\App\Input\Command;
 use Temporal\DataConverter\PayloadConverterInterface;
+use Temporal\Testing\Command;
 
 final class State
 {
@@ -28,9 +28,10 @@ final class State
         public readonly string $rrConfigDir,
         public readonly string $workDir,
         public readonly iterable $testCasesDir,
+        public readonly int $activityWorkers,
     ) {
         $this->namespace = $command->namespace ?? 'default';
-        $this->address = $command->address ?? 'localhost:7233';
+        $this->address = $command->address;
     }
 
     /**

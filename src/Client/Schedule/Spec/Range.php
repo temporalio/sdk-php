@@ -50,7 +50,7 @@ final class Range
      */
     public function withStart(int $start): self
     {
-        return $this->with('start', $start);
+        return $this->cloneWith('start', $start);
     }
 
     /**
@@ -59,7 +59,7 @@ final class Range
     public function withEnd(int $end): self
     {
         \assert($end >= $this->start, 'End must be greater than or equal to start.');
-        return $this->with('end', $end);
+        return $this->cloneWith('end', $end);
     }
 
     /**
@@ -68,6 +68,6 @@ final class Range
     public function withStep(int $step): self
     {
         \assert($step > 0, 'Step must be greater than 0.');
-        return $this->with('step', $step);
+        return $this->cloneWith('step', $step);
     }
 }

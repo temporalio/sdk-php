@@ -110,7 +110,7 @@ class CompletableResult implements CompletableResultInterface
     }
 
     /**
-     * @deprecated
+     * @deprecated use {@see catch()} instead
      */
     public function otherwise(callable $onRejected): PromiseInterface
     {
@@ -118,7 +118,7 @@ class CompletableResult implements CompletableResultInterface
     }
 
     /**
-     * @deprecated
+     * @deprecated use {@see finally()} instead
      */
     public function always(callable $onFulfilledOrRejected): PromiseInterface
     {

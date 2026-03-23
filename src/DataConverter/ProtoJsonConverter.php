@@ -50,7 +50,13 @@ class ProtoJsonConverter extends Converter
     public function fromPayload(Payload $payload, Type $type)
     {
         if (!$type->isClass()) {
-            throw new DataConverterException('Unable to decode value using protobuf converter - ');
+            throw new DataConverterException(
+                \sprintf(
+                    'Unable to decode value using "%s" encoding converter: resulting type must be a class, "%s" given',
+                    $this->getEncodingType(),
+                    $type->getName(),
+                ),
+            );
         }
 
         try {

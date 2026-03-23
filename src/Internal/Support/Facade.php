@@ -20,8 +20,7 @@ abstract class Facade
      */
     private const ERROR_NO_CONTEXT =
         'Calling facade methods can only be made ' .
-        'from the currently running process'
-    ;
+        'from the currently running process';
 
     private static ?object $ctx = null;
 
@@ -41,15 +40,8 @@ abstract class Facade
         self::$ctx = $ctx;
     }
 
-    /**
-     * @throws OutOfContextException
-     */
-    public static function getCurrentContext(): object
+    public static function getCurrentContext(): ?object
     {
-        if (self::$ctx === null) {
-            throw new \RuntimeException(self::ERROR_NO_CONTEXT);
-        }
-
         return self::$ctx;
     }
 
@@ -58,11 +50,12 @@ abstract class Facade
      */
     public static function getContextId(): int
     {
-        if (self::$ctx === null) {
+        $context = static::getCurrentContext();
+        if ($context === null) {
             throw new \RuntimeException(self::ERROR_NO_CONTEXT);
         }
 
-        return \spl_object_id(self::$ctx);
+        return \spl_object_id($context);
     }
 
     /**

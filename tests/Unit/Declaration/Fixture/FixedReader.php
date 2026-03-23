@@ -18,7 +18,7 @@ use Temporal\Activity\LocalActivityInterface;
 
 class FixedReader implements ReaderInterface
 {
-    public function getClassMetadata(\ReflectionClass $class, string $name = null): iterable
+    public function getClassMetadata(\ReflectionClass $class, ?string $name = null): iterable
     {
         return [];
     }
@@ -36,7 +36,7 @@ class FixedReader implements ReaderInterface
         return null;
     }
 
-    public function getFunctionMetadata(\ReflectionFunctionAbstract $function, string $name = null): iterable
+    public function getFunctionMetadata(\ReflectionFunctionAbstract $function, ?string $name = null): iterable
     {
         return [];
     }
@@ -50,7 +50,7 @@ class FixedReader implements ReaderInterface
         return null;
     }
 
-    public function getPropertyMetadata(\ReflectionProperty $property, string $name = null): iterable
+    public function getPropertyMetadata(\ReflectionProperty $property, ?string $name = null): iterable
     {
         return [];
     }
@@ -60,7 +60,7 @@ class FixedReader implements ReaderInterface
         return null;
     }
 
-    public function getConstantMetadata(\ReflectionClassConstant $constant, string $name = null): iterable
+    public function getConstantMetadata(\ReflectionClassConstant $constant, ?string $name = null): iterable
     {
         return [];
     }
@@ -70,7 +70,7 @@ class FixedReader implements ReaderInterface
         return null;
     }
 
-    public function getParameterMetadata(\ReflectionParameter $parameter, string $name = null): iterable
+    public function getParameterMetadata(\ReflectionParameter $parameter, ?string $name = null): iterable
     {
         return [];
     }

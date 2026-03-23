@@ -59,9 +59,11 @@ final class Workflow extends Facade
     public static function getCurrentContext(): WorkflowContextInterface
     {
         $ctx = parent::getCurrentContext();
-        $ctx instanceof WorkflowContextInterface or throw new OutOfContextException(
-            'The Workflow facade can be used only inside workflow code.',
-        );
+        if (!$ctx instanceof WorkflowContextInterface) {
+            throw new OutOfContextException(
+                'The Workflow facade can be used only inside workflow code.',
+            );
+        }
         return $ctx;
     }
 
@@ -603,6 +605,22 @@ final class Workflow extends Facade
     }
 
     /**
+     * Get the current details of the workflow execution.
+     */
+    public static function getCurrentDetails(): ?string
+    {
+        return self::getCurrentContext()->getCurrentDetails();
+    }
+
+    /**
+     * Set the current details of the workflow execution.
+     */
+    public static function setCurrentDetails(?string $details): void
+    {
+        self::getCurrentContext()->setCurrentDetails($details);
+    }
+
+    /**
      * Completes the current workflow execution atomically and starts a new execution with the same Workflow Id.
      *
      * Method atomically completes the current workflow execution and starts a
@@ -901,7 +919,7 @@ final class Workflow extends Facade
      *          ->then(function ($result) {
      *              // Execution result
      *          })
-     *          ->otherwise(function (\Throwable $error) {
+     *          ->catch(function (\Throwable $error) {
      *              // Execution error
      *          })
      *      ;

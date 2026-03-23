@@ -60,24 +60,24 @@ final class Schedule
     public function withAction(?ScheduleAction $action): self
     {
         /** @see self::$action */
-        return $this->with('action', $action);
+        return $this->cloneWith('action', $action);
     }
 
     public function withSpec(ScheduleSpec $spec): self
     {
         /** @see self::$spec */
-        return $this->with('spec', $spec);
+        return $this->cloneWith('spec', $spec);
     }
 
     public function withPolicies(SchedulePolicies $policies): self
     {
         /** @see self::$policies */
-        return $this->with('policies', $policies);
+        return $this->cloneWith('policies', $policies);
     }
 
     public function withState(ScheduleState $state): self
     {
         /** @see self::$state */
-        return $this->with('state', $state);
+        return $this->cloneWith('state', $state);
     }
 }

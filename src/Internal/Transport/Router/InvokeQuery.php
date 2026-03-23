@@ -122,12 +122,14 @@ final class InvokeQuery extends WorkflowProcessAwareRoute
             static function () use ($resolver, $context): void {
                 try {
                     $result = EncodedValues::fromValues([
-                        (new WorkflowMetadata())->setDefinition(
-                            (new WorkflowDefinition())
-                                ->setQueryDefinitions($context->getQueryDispatcher()->getQueryHandlers())
-                                ->setSignalDefinitions($context->getSignalDispatcher()->getSignalHandlers())
-                                ->setUpdateDefinitions($context->getUpdateDispatcher()->getUpdateHandlers()),
-                        ),
+                        (new WorkflowMetadata())
+                            ->setDefinition(
+                                (new WorkflowDefinition())
+                                    ->setQueryDefinitions($context->getQueryDispatcher()->getQueryHandlers())
+                                    ->setSignalDefinitions($context->getSignalDispatcher()->getSignalHandlers())
+                                    ->setUpdateDefinitions($context->getUpdateDispatcher()->getUpdateHandlers()),
+                            )
+                            ->setCurrentDetails((string) $context->getCurrentDetails()),
                     ]);
 
                     $resolver->resolve($result);

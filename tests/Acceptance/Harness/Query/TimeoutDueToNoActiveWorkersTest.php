@@ -22,13 +22,13 @@ class TimeoutDueToNoActiveWorkersTest extends TestCase
 {
     #[Test]
     public static function check(
-        #[Client(timeout: 30)]
+        #[Client(timeout: 10)]
         #[Stub('Harness_Query_TimeoutDueToNoActiveWorkers')]
         WorkflowStubInterface $stub,
-        RRStarter $runner,
+        RRStarter $roadRunnerStarter,
     ): void {
         # Stop worker
-        $runner->stop();
+        $roadRunnerStarter->stop();
 
         try {
             $stub->query('simple_query')?->getValue(0);
@@ -44,7 +44,7 @@ class TimeoutDueToNoActiveWorkersTest extends TestCase
             ], 'Error code must be DEADLINE_EXCEEDED or CANCELLED. Got ' . \print_r($status, true));
         } finally {
             # Restart the worker and finish the wf
-            $runner->start();
+            $roadRunnerStarter->start();
             $stub->signal('finish');
             $stub->getResult();
         }

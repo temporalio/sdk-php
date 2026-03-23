@@ -42,7 +42,7 @@ class AutowiringTestCase extends AbstractWorker
             static::class . '->instanceMethod' => [new \ReflectionMethod($instance, 'instanceMethod')],
 
             // Static Method
-            static::class . '::staticMethod' => [new \ReflectionMethod(static::class . '::staticMethod')],
+            static::class . '::staticMethod' => [new \ReflectionMethod(static::class, 'staticMethod')],
 
             // Function
             __NAMESPACE__ . '\\global_function' => [new \ReflectionFunction(__NAMESPACE__ . '\\global_function')],

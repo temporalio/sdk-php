@@ -35,7 +35,10 @@ $suite = (static function (array $argv): ?string {
     return null;
 })($GLOBALS['argv'] ?? []);
 
+$suite = \substr($suite, 0, \strpos($suite, '-') ?: \strlen($suite));
+
 # Include related bootstrap
-$suite === null or (static fn(string $file) => \is_file($file) and include $file)(
-    __DIR__ . DIRECTORY_SEPARATOR . $suite . DIRECTORY_SEPARATOR . 'bootstrap.php',
-);
+$file = __DIR__ . DIRECTORY_SEPARATOR . $suite . DIRECTORY_SEPARATOR . 'bootstrap.php';
+if (\is_file($file)) {
+    include $file;
+}

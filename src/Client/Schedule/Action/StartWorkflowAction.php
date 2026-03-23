@@ -145,7 +145,7 @@ final class StartWorkflowAction extends ScheduleAction
         $workflowId !== '' or throw new \InvalidArgumentException('Workflow ID cannot be empty.');
 
         /** @see self::$workflowId */
-        return $this->with('workflowId', $workflowId);
+        return $this->cloneWith('workflowId', $workflowId);
     }
 
     public function withWorkflowType(string|WorkflowType $workflowType): self
@@ -153,7 +153,7 @@ final class StartWorkflowAction extends ScheduleAction
         \is_string($workflowType) and $workflowType = self::createWorkflowType($workflowType);
 
         /** @see self::$workflowType */
-        return $this->with('workflowType', $workflowType);
+        return $this->cloneWith('workflowType', $workflowType);
     }
 
     public function withTaskQueue(string|TaskQueue $taskQueue): self
@@ -161,7 +161,7 @@ final class StartWorkflowAction extends ScheduleAction
         \is_string($taskQueue) and $taskQueue = TaskQueue::new($taskQueue);
 
         /** @see self::$taskQueue */
-        return $this->with('taskQueue', $taskQueue);
+        return $this->cloneWith('taskQueue', $taskQueue);
     }
 
     /**
@@ -174,7 +174,7 @@ final class StartWorkflowAction extends ScheduleAction
         $values instanceof ValuesInterface or $values = EncodedValues::fromValues($values);
 
         /** @see self::$input */
-        return $this->with('input', $values);
+        return $this->cloneWith('input', $values);
     }
 
     /**
@@ -189,7 +189,7 @@ final class StartWorkflowAction extends ScheduleAction
             : DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
 
         /** @see self::$workflowExecutionTimeout */
-        return $this->with('workflowExecutionTimeout', $timeout);
+        return $this->cloneWith('workflowExecutionTimeout', $timeout);
     }
 
     /**
@@ -204,7 +204,7 @@ final class StartWorkflowAction extends ScheduleAction
             : DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
 
         /** @see self::$workflowRunTimeout */
-        return $this->with('workflowRunTimeout', $timeout);
+        return $this->cloneWith('workflowRunTimeout', $timeout);
     }
 
     /**
@@ -219,13 +219,13 @@ final class StartWorkflowAction extends ScheduleAction
             : DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
 
         /** @see self::$workflowTaskTimeout */
-        return $this->with('workflowTaskTimeout', $timeout);
+        return $this->cloneWith('workflowTaskTimeout', $timeout);
     }
 
     public function withWorkflowIdReusePolicy(IdReusePolicy $policy): self
     {
         /** @see self::$workflowIdReusePolicy */
-        return $this->with('workflowIdReusePolicy', $policy);
+        return $this->cloneWith('workflowIdReusePolicy', $policy);
     }
 
     /**
@@ -234,7 +234,7 @@ final class StartWorkflowAction extends ScheduleAction
     public function withRetryPolicy(RetryOptions $retryPolicy): self
     {
         /** @see self::$retryPolicy */
-        return $this->with('retryPolicy', $retryPolicy);
+        return $this->cloneWith('retryPolicy', $retryPolicy);
     }
 
     /**
@@ -247,7 +247,7 @@ final class StartWorkflowAction extends ScheduleAction
         $values instanceof EncodedCollection or $values = EncodedCollection::fromValues($values);
 
         /** @see self::$memo */
-        return $this->with('memo', $values);
+        return $this->cloneWith('memo', $values);
     }
 
     /**
@@ -260,7 +260,7 @@ final class StartWorkflowAction extends ScheduleAction
         $values instanceof EncodedCollection or $values = EncodedCollection::fromValues($values);
 
         /** @see self::$searchAttributes */
-        return $this->with('searchAttributes', $values);
+        return $this->cloneWith('searchAttributes', $values);
     }
 
     /**
@@ -273,7 +273,7 @@ final class StartWorkflowAction extends ScheduleAction
         $values instanceof HeaderInterface or $values = \Temporal\Interceptor\Header::fromValues($values);
 
         /** @see self::$header */
-        return $this->with('header', $values);
+        return $this->cloneWith('header', $values);
     }
 
     /**
@@ -286,7 +286,7 @@ final class StartWorkflowAction extends ScheduleAction
     public function withStaticSummary(string $summary): self
     {
         /** @see self::$userMetadata */
-        return $this->with('userMetadata', $this->userMetadata->withSummary($summary));
+        return $this->cloneWith('userMetadata', $this->userMetadata->withSummary($summary));
     }
 
     /**
@@ -300,7 +300,7 @@ final class StartWorkflowAction extends ScheduleAction
     public function withStaticDetails(string $details): self
     {
         /** @see self::$userMetadata */
-        return $this->with('userMetadata', $this->userMetadata->withDetails($details));
+        return $this->cloneWith('userMetadata', $this->userMetadata->withDetails($details));
     }
 
     private static function createWorkflowType(string $name): WorkflowType

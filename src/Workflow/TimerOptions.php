@@ -42,6 +42,6 @@ final class TimerOptions
     public function withSummary(string $summary): self
     {
         /** @see self::$summary */
-        return $this->with('summary', $summary);
+        return $this->cloneWith('summary', $summary);
     }
 }
