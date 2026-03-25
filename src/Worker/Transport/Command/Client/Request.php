@@ -63,14 +63,9 @@ class Request implements RequestInterface
         return $this->failure;
     }
 
-    private function getNextID(): int
+    protected function getNextID(): int
     {
-        $next = ++static::$lastID;
-
-        if ($next >= \PHP_INT_MAX) {
-            $next = static::$lastID = 1;
-        }
-
-        return $next;
+        static::$lastID = (static::$lastID + 1) % 1_000_000;
+        return \time() * 1_000_000 + static::$lastID;
     }
 }

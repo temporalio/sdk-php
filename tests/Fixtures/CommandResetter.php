@@ -15,8 +15,19 @@ use Temporal\Worker\Transport\Command\Client\Request;
 
 class CommandResetter extends Request
 {
-    public static function reset()
+    public static function reset(): void
     {
         self::$lastID = 9000;
+    }
+
+    protected function getNextID(): int
+    {
+        $next = ++static::$lastID;
+
+        if ($next >= \PHP_INT_MAX) {
+            $next = static::$lastID = 1;
+        }
+
+        return $next;
     }
 }
