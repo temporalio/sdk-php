@@ -137,7 +137,7 @@ class PluginPropagationTestCase extends TestCase
         );
         $factory->newWorker();
 
-        self::assertSame(['from-factory', 'from-client'], $order);
+        self::assertSame(['from-client', 'from-factory'], $order);
     }
 
     public function testDuplicateAcrossClientAndFactoryThrows(): void

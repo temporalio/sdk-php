@@ -121,10 +121,15 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         ?PluginRegistry $pluginRegistry = null,
         ?WorkflowClient $client = null,
     ) {
-        $this->pluginRegistry = $pluginRegistry ?? new PluginRegistry();
-        // Propagate worker plugins from the client
+        $this->pluginRegistry = new PluginRegistry();
+        // Propagate worker plugins from the client first
         if ($client !== null) {
             $this->pluginRegistry->merge($client->getWorkerPlugins());
+        }
+
+        // Add factory plugins after client plugins
+        if ($pluginRegistry !== null) {
+            $this->pluginRegistry->merge($pluginRegistry->getPlugins(PluginInterface::class));
         }
 
         // Apply worker factory plugins
@@ -152,7 +157,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
             $converter ?? DataConverter::createDefault(),
             $rpc ?? Goridge::create(),
             $credentials,
-            $pluginRegistry ?? new PluginRegistry(),
+            $pluginRegistry,
             $client,
         );
     }
