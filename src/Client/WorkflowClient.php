@@ -41,7 +41,6 @@ use Temporal\Internal\Client\WorkflowProxy;
 use Temporal\Plugin\ClientPluginContext;
 use Temporal\Plugin\ClientPluginInterface;
 use Temporal\Plugin\CompositePipelineProvider;
-use Temporal\Plugin\ConnectionPluginContext;
 use Temporal\Plugin\ConnectionPluginInterface;
 use Temporal\Plugin\PluginRegistry;
 use Temporal\Plugin\ScheduleClientPluginInterface;
