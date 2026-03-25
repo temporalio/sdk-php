@@ -42,13 +42,16 @@ final class Environment
         $allowExternalTemporalProcess = \getenv('ALLOW_EXTERNAL_TEMPORAL_PROCESS') === 'true';
 
         $systemInfo = SystemInfo::detect();
-        \is_string(\getenv('ROADRUNNER_BINARY')) and $systemInfo->rrExecutable = \getenv('ROADRUNNER_BINARY');
+        $roadRunnerBinary = \getenv('ROADRUNNER_BINARY');
+        if (\is_string($roadRunnerBinary)) {
+            $systemInfo->rrExecutable = $roadRunnerBinary;
+        }
 
         return new self(
             new TestOutputStyle(new ArgvInput(), new ConsoleOutput()),
             new Downloader(new Filesystem(), HttpClient::create([
                 'headers' => [
-                    'authorization' => $token ? 'token ' . $token : null,
+                    'authorization' => \is_string($token) ? 'token ' . $token : null,
                 ],
             ])),
             $systemInfo,
@@ -126,7 +129,7 @@ final class Environment
         $this->io->info('Running command: ' . $this->serializeProcess($this->temporalServerProcess));
         $this->temporalServerProcess->start();
 
-        $deadline = \microtime(true) + $commandTimeout;
+        $deadline = \microtime(true) + (float) $commandTimeout;
         while (!$temporalStarted && \microtime(true) < $deadline) {
             \usleep(10_000);
             $check = new Process([
@@ -172,7 +175,7 @@ final class Environment
             $this->io->info('Temporal test server downloaded.');
         }
 
-        $temporalPort = \parse_url($this->command->address, PHP_URL_PORT);
+        $temporalPort = \parse_url((string) $this->command->address, PHP_URL_PORT);
 
         $this->io->info('Starting Temporal test server... ');
         $this->temporalTestServerProcess = new Process(
@@ -206,7 +209,7 @@ final class Environment
     /**
      * @param array<string, mixed> $envs
      */
-    public function startRoadRunner(?string $rrCommand = null, int $commandTimeout = 10, array $envs = [], string $configFile = '.rr.yaml'): void
+    public function startRoadRunner(?array $rrCommand = null, int $commandTimeout = 10, array $envs = [], string $configFile = '.rr.yaml'): void
     {
         if (!$this->isTemporalRunning() && !$this->isTemporalTestRunning()) {
             $this->io->error([
@@ -216,7 +219,7 @@ final class Environment
         }
 
         $this->roadRunnerProcess = new Process(
-            command: $rrCommand ? \explode(' ', $rrCommand) : [$this->systemInfo->rrExecutable, 'serve'],
+            command: $rrCommand ?? [$this->systemInfo->rrExecutable, 'serve'],
             env: $envs,
         );
         $this->roadRunnerProcess->setTimeout($commandTimeout);
@@ -227,7 +230,7 @@ final class Environment
         $this->roadRunnerProcess->start();
 
         // wait for roadrunner to start
-        $deadline = \microtime(true) + $commandTimeout;
+        $deadline = \microtime(true) + (float) $commandTimeout;
         while (!$roadRunnerStarted && \microtime(true) < $deadline) {
             \usleep(10_000);
             $check = new Process([$this->systemInfo->rrExecutable, 'workers', '-c', $configFile]);
@@ -304,17 +307,26 @@ final class Environment
         }
     }
 
+    /**
+     * @psalm-assert Process $this->temporalServerProcess
+     */
     public function isTemporalRunning(): bool
     {
         return ($this->allowExternalTemporalProcess && $this->externalTemporalProcessActive) ||
             $this->temporalServerProcess?->isRunning() === true;
     }
 
+    /**
+     * @psalm-assert Process $this->roadRunnerProcess
+     */
     public function isRoadRunnerRunning(): bool
     {
         return $this->roadRunnerProcess?->isRunning() === true;
     }
 
+    /**
+     * @psalm-assert Process $this->temporalTestServerProcess
+     */
     public function isTemporalTestRunning(): bool
     {
         return ($this->allowExternalTemporalProcess && $this->externalTemporalProcessActive) ||
@@ -341,11 +353,14 @@ final class Environment
         $this->temporalServerProcess = null;
     }
 
-    private function serializeProcess(?Process $temporalServerProcess): string
+    private function serializeProcess(?Process $process): string
     {
-        $reflection = new \ReflectionClass($temporalServerProcess);
+        if ($process === null) {
+            return 'process is not started';
+        }
+        $reflection = new \ReflectionClass($process);
         $reflectionProperty = $reflection->getProperty('commandline');
-        $commandLine = $reflectionProperty->getValue($temporalServerProcess);
+        $commandLine = $reflectionProperty->getValue($process);
         return \implode(' ', $commandLine);
     }
 }

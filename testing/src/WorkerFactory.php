@@ -45,6 +45,9 @@ class WorkerFactory extends \Temporal\WorkerFactory
         parent::__construct($dataConverter, $rpc, $credentials ?? ServiceCredentials::create(), $pluginRegistry, $client);
     }
 
+    /**
+     * @psalm-suppress UnsafeInstantiation
+     */
     public static function create(
         ?DataConverterInterface $converter = null,
         ?RPCConnectionInterface $rpc = null,

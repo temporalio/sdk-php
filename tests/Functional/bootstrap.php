@@ -15,7 +15,7 @@ $environment = Environment::create();
 $environment->startTemporalTestServer();
 (new SearchAttributeTestInvoker())();
 $environment->startRoadRunner(
-    rrCommand: \implode(' ', [
+    rrCommand: [
         $systemInfo->rrExecutable,
         'serve',
         '-c', '.rr.silent.yaml',
@@ -27,7 +27,7 @@ $environment->startRoadRunner(
             'worker.php',
             ...$environment->command->getCommandLineArguments(),
         ]),
-    ]),
+    ],
     configFile: 'tests/Functional/.rr.silent.yaml',
 );
 
