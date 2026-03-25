@@ -13,6 +13,7 @@ use Temporal\Exception\ExceptionInterceptor;
 use Temporal\Exception\ExceptionInterceptorInterface;
 use Temporal\Interceptor\PipelineProvider;
 use Temporal\Interceptor\SimplePipelineProvider;
+use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Workflow\Logger;
 use Temporal\Plugin\CompositePipelineProvider;
@@ -35,12 +36,12 @@ class WorkerFactory extends \Temporal\WorkerFactory
     public function __construct(
         DataConverterInterface $dataConverter,
         RPCConnectionInterface $rpc,
-        ActivityInvocationCacheInterface $activityCache,
         ?ServiceCredentials $credentials = null,
         ?PluginRegistry $pluginRegistry = null,
         ?WorkflowClient $client = null,
+        ?ActivityInvocationCacheInterface $activityCache = null,
     ) {
-        $this->activityCache = $activityCache;
+        $this->activityCache = $activityCache ?? RoadRunnerActivityInvocationCache::create($dataConverter);
 
         parent::__construct($dataConverter, $rpc, $credentials ?? ServiceCredentials::create(), $pluginRegistry, $client);
     }
@@ -59,10 +60,10 @@ class WorkerFactory extends \Temporal\WorkerFactory
         return new static(
             $converter ?? DataConverter::createDefault(),
             $rpc ?? Goridge::create(),
-            $activityCache ?? RoadRunnerActivityInvocationCache::create($converter),
             $credentials,
             $pluginRegistry ?? new PluginRegistry(),
             $client,
+            $activityCache,
         );
     }
 
@@ -80,9 +81,10 @@ class WorkerFactory extends \Temporal\WorkerFactory
             workerOptions: $options,
             exceptionInterceptor: $exceptionInterceptor,
         );
-        foreach ($this->pluginRegistry->getPlugins(WorkerPluginInterface::class) as $plugin) {
-            $plugin->configureWorker($workerContext);
-        }
+        $workerPlugins = $this->pluginRegistry->getPlugins(WorkerPluginInterface::class);
+        /** @see WorkerPluginInterface::configureWorker() */
+        Pipeline::prepare($workerPlugins)
+            ->with(static fn() => null, 'configureWorker')($workerContext);
 
         $options = $workerContext->getWorkerOptions();
 
@@ -112,9 +114,9 @@ class WorkerFactory extends \Temporal\WorkerFactory
         );
 
         // Call initializeWorker hooks (forward order)
-        foreach ($this->pluginRegistry->getPlugins(WorkerPluginInterface::class) as $plugin) {
-            $plugin->initializeWorker($worker);
-        }
+        /** @see WorkerPluginInterface::initializeWorker() */
+        Pipeline::prepare($workerPlugins)
+            ->with(static fn() => null, 'initializeWorker')($worker);
 
         $this->queues->add($worker);
 
