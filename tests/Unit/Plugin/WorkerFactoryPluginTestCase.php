@@ -42,9 +42,10 @@ class WorkerFactoryPluginTestCase extends TestCase
                 return 'test.spy';
             }
 
-            public function configureWorkerFactory(WorkerFactoryPluginContext $context): void
+            public function configureWorkerFactory(WorkerFactoryPluginContext $context, callable $next): void
             {
                 $this->called = true;
+                $next($context);
             }
         };
 
@@ -71,9 +72,10 @@ class WorkerFactoryPluginTestCase extends TestCase
                 return 'test.converter';
             }
 
-            public function configureWorkerFactory(WorkerFactoryPluginContext $context): void
+            public function configureWorkerFactory(WorkerFactoryPluginContext $context, callable $next): void
             {
                 $context->setDataConverter($this->converter);
+                $next($context);
             }
         };
 
@@ -104,10 +106,11 @@ class WorkerFactoryPluginTestCase extends TestCase
                 return 'test.spy';
             }
 
-            public function configureWorker(WorkerPluginContext $context): void
+            public function configureWorker(WorkerPluginContext $context, callable $next): void
             {
                 $this->called = true;
                 $this->receivedTaskQueue = $context->getTaskQueue();
+                $next($context);
             }
         };
 
@@ -136,9 +139,10 @@ class WorkerFactoryPluginTestCase extends TestCase
                 return 'test.options';
             }
 
-            public function configureWorker(WorkerPluginContext $context): void
+            public function configureWorker(WorkerPluginContext $context, callable $next): void
             {
                 $context->setWorkerOptions($this->opts);
+                $next($context);
             }
         };
 
@@ -166,9 +170,10 @@ class WorkerFactoryPluginTestCase extends TestCase
                 return 'test.init';
             }
 
-            public function initializeWorker(WorkerInterface $worker): void
+            public function initializeWorker(WorkerInterface $worker, callable $next): void
             {
                 $this->receivedWorker = $worker;
+                $next($worker);
             }
         };
 
@@ -196,9 +201,10 @@ class WorkerFactoryPluginTestCase extends TestCase
                 return 'test.tq';
             }
 
-            public function initializeWorker(WorkerInterface $worker): void
+            public function initializeWorker(WorkerInterface $worker, callable $next): void
             {
                 $this->receivedTaskQueue = $worker->getID();
+                $next($worker);
             }
         };
 
@@ -226,19 +232,22 @@ class WorkerFactoryPluginTestCase extends TestCase
                 return 'test.order';
             }
 
-            public function configureWorkerFactory(WorkerFactoryPluginContext $context): void
+            public function configureWorkerFactory(WorkerFactoryPluginContext $context, callable $next): void
             {
                 $this->order[] = 'configureWorkerFactory';
+                $next($context);
             }
 
-            public function configureWorker(WorkerPluginContext $context): void
+            public function configureWorker(WorkerPluginContext $context, callable $next): void
             {
                 $this->order[] = 'configureWorker';
+                $next($context);
             }
 
-            public function initializeWorker(WorkerInterface $worker): void
+            public function initializeWorker(WorkerInterface $worker, callable $next): void
             {
                 $this->order[] = 'initializeWorker';
+                $next($worker);
             }
         };
 
@@ -273,9 +282,10 @@ class WorkerFactoryPluginTestCase extends TestCase
                 return 'test.first';
             }
 
-            public function configureWorker(WorkerPluginContext $context): void
+            public function configureWorker(WorkerPluginContext $context, callable $next): void
             {
                 $this->order[] = 'first';
+                $next($context);
             }
         };
 
@@ -289,9 +299,10 @@ class WorkerFactoryPluginTestCase extends TestCase
                 return 'test.second';
             }
 
-            public function configureWorker(WorkerPluginContext $context): void
+            public function configureWorker(WorkerPluginContext $context, callable $next): void
             {
                 $this->order[] = 'second';
+                $next($context);
             }
         };
 
@@ -319,9 +330,10 @@ class WorkerFactoryPluginTestCase extends TestCase
                 return 'test.per-worker';
             }
 
-            public function configureWorker(WorkerPluginContext $context): void
+            public function configureWorker(WorkerPluginContext $context, callable $next): void
             {
                 $this->taskQueues[] = $context->getTaskQueue();
+                $next($context);
             }
         };
 
@@ -591,19 +603,22 @@ class WorkerFactoryPluginTestCase extends TestCase
                 return 'test.lifecycle';
             }
 
-            public function configureWorkerFactory(WorkerFactoryPluginContext $context): void
+            public function configureWorkerFactory(WorkerFactoryPluginContext $context, callable $next): void
             {
                 $this->order[] = 'configureWorkerFactory';
+                $next($context);
             }
 
-            public function configureWorker(WorkerPluginContext $context): void
+            public function configureWorker(WorkerPluginContext $context, callable $next): void
             {
                 $this->order[] = 'configureWorker';
+                $next($context);
             }
 
-            public function initializeWorker(WorkerInterface $worker): void
+            public function initializeWorker(WorkerInterface $worker, callable $next): void
             {
                 $this->order[] = 'initializeWorker';
+                $next($worker);
             }
 
             public function run(WorkerFactoryInterface $factory, callable $next): int

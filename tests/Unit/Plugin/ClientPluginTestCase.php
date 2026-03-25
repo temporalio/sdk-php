@@ -41,9 +41,10 @@ class ClientPluginTestCase extends TestCase
                 return 'test.spy';
             }
 
-            public function configureClient(ClientPluginContext $context): void
+            public function configureClient(ClientPluginContext $context, callable $next): void
             {
                 $this->called = true;
+                $next($context);
             }
         };
 
@@ -62,11 +63,12 @@ class ClientPluginTestCase extends TestCase
                 return 'test.namespace';
             }
 
-            public function configureClient(ClientPluginContext $context): void
+            public function configureClient(ClientPluginContext $context, callable $next): void
             {
                 $context->setClientOptions(
                     (new ClientOptions())->withNamespace('plugin-namespace'),
                 );
+                $next($context);
             }
         };
 
@@ -90,9 +92,10 @@ class ClientPluginTestCase extends TestCase
                 return 'test.converter';
             }
 
-            public function configureClient(ClientPluginContext $context): void
+            public function configureClient(ClientPluginContext $context, callable $next): void
             {
                 $context->setDataConverter($this->converter);
+                $next($context);
             }
         };
 
@@ -117,9 +120,10 @@ class ClientPluginTestCase extends TestCase
                 return 'test.interceptor';
             }
 
-            public function configureClient(ClientPluginContext $context): void
+            public function configureClient(ClientPluginContext $context, callable $next): void
             {
                 $context->addInterceptor($this->interceptor);
+                $next($context);
             }
         };
 
@@ -142,9 +146,10 @@ class ClientPluginTestCase extends TestCase
                 return 'test.first';
             }
 
-            public function configureClient(ClientPluginContext $context): void
+            public function configureClient(ClientPluginContext $context, callable $next): void
             {
                 $this->order[] = 'first';
+                $next($context);
             }
         };
 
@@ -158,9 +163,10 @@ class ClientPluginTestCase extends TestCase
                 return 'test.second';
             }
 
-            public function configureClient(ClientPluginContext $context): void
+            public function configureClient(ClientPluginContext $context, callable $next): void
             {
                 $this->order[] = 'second';
+                $next($context);
             }
         };
 

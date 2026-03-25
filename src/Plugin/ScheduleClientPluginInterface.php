@@ -25,6 +25,8 @@ interface ScheduleClientPluginInterface extends PluginInterface
      * Modify schedule client configuration before the client is created.
      *
      * Called in registration order (first plugin registered = first called).
+     *
+     * @param callable(ScheduleClientPluginContext): void $next Calls the next plugin or the final hook.
      */
-    public function configureScheduleClient(ScheduleClientPluginContext $context): void;
+    public function configureScheduleClient(ScheduleClientPluginContext $context, callable $next): void;
 }

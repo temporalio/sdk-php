@@ -18,8 +18,8 @@ namespace Temporal\Plugin;
  */
 trait ClientPluginTrait
 {
-    public function configureClient(ClientPluginContext $context): void
+    public function configureClient(ClientPluginContext $context, callable $next): void
     {
-        // no-op
+        $next($context);
     }
 }

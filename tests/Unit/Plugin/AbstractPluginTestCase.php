@@ -33,7 +33,7 @@ class AbstractPluginTestCase extends TestCase
         $context = new ClientPluginContext(new ClientOptions());
 
         $clone = clone $context;
-        $plugin->configureClient($context);
+        $plugin->configureClient($context, static fn() => null);
 
         self::assertSame($clone->getClientOptions(), $context->getClientOptions());
         self::assertSame($clone->getDataConverter(), $context->getDataConverter());
@@ -45,7 +45,7 @@ class AbstractPluginTestCase extends TestCase
         $context = new ScheduleClientPluginContext(new ClientOptions());
 
         $clone = clone $context;
-        $plugin->configureScheduleClient($context);
+        $plugin->configureScheduleClient($context, static fn() => null);
 
         self::assertSame($clone->getClientOptions(), $context->getClientOptions());
         self::assertSame($clone->getDataConverter(), $context->getDataConverter());
@@ -57,7 +57,7 @@ class AbstractPluginTestCase extends TestCase
         $context = new WorkerFactoryPluginContext();
 
         $clone = clone $context;
-        $plugin->configureWorkerFactory($context);
+        $plugin->configureWorkerFactory($context, static fn() => null);
 
         self::assertSame($clone->getDataConverter(), $context->getDataConverter());
     }
@@ -68,7 +68,7 @@ class AbstractPluginTestCase extends TestCase
         $context = new WorkerPluginContext('test-queue', WorkerOptions::new());
 
         $clone = clone $context;
-        $plugin->configureWorker($context);
+        $plugin->configureWorker($context, static fn() => null);
 
         self::assertSame($clone->getWorkerOptions(), $context->getWorkerOptions());
         self::assertSame($clone->getExceptionInterceptor(), $context->getExceptionInterceptor());
@@ -80,7 +80,7 @@ class AbstractPluginTestCase extends TestCase
         $worker = $this->createMock(WorkerInterface::class);
 
         // Should not throw
-        $plugin->initializeWorker($worker);
+        $plugin->initializeWorker($worker, static fn() => null);
         self::assertTrue(true);
     }
 }

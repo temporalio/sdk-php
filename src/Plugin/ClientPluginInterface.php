@@ -25,6 +25,8 @@ interface ClientPluginInterface extends PluginInterface
      * Modify client configuration before the client is created.
      *
      * Called in registration order (first plugin registered = first called).
+     *
+     * @param callable(ClientPluginContext): void $next Calls the next plugin or the final hook.
      */
-    public function configureClient(ClientPluginContext $context): void;
+    public function configureClient(ClientPluginContext $context, callable $next): void;
 }

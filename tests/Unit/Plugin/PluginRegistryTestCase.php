@@ -78,7 +78,7 @@ class PluginRegistryTestCase extends TestCase
                 return 'client-only';
             }
 
-            public function configureClient(ClientPluginContext $context): void {}
+            public function configureClient(ClientPluginContext $context, callable $next): void {}
         };
 
         $workerPlugin = new class implements WorkerPluginInterface {

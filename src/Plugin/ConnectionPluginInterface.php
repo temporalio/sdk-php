@@ -18,19 +18,15 @@ namespace Temporal\Plugin;
  * them to set API keys, gRPC metadata, TLS context, and other
  * connection-level options.
  */
-interface ConnectionPluginInterface
+interface ConnectionPluginInterface extends PluginInterface
 {
-    /**
-     * Unique name identifying this plugin (e.g., "my-org.cloud-auth").
-     * Used for deduplication and diagnostics.
-     */
-    public function getName(): string;
-
     /**
      * Modify the service client before it is used by the client.
      *
      * Use this hook to configure connection-level settings such as
      * API keys, gRPC metadata, auth tokens, or context options.
+     *
+     * @param callable(ConnectionPluginContext): void $next Calls the next plugin or the final hook.
      */
-    public function configureServiceClient(ConnectionPluginContext $context): void;
+    public function configureServiceClient(ConnectionPluginContext $context, callable $next): void;
 }

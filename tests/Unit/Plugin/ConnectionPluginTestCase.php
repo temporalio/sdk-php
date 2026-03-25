@@ -42,9 +42,10 @@ class ConnectionPluginTestCase extends TestCase
                 return 'test.connection';
             }
 
-            public function configureServiceClient(ConnectionPluginContext $context): void
+            public function configureServiceClient(ConnectionPluginContext $context, callable $next): void
             {
                 $this->called = true;
+                $next($context);
             }
         };
 
@@ -67,9 +68,10 @@ class ConnectionPluginTestCase extends TestCase
                 return 'test.connection';
             }
 
-            public function configureServiceClient(ConnectionPluginContext $context): void
+            public function configureServiceClient(ConnectionPluginContext $context, callable $next): void
             {
                 $this->called = true;
+                $next($context);
             }
         };
 
@@ -100,11 +102,12 @@ class ConnectionPluginTestCase extends TestCase
                 return 'test.auth';
             }
 
-            public function configureServiceClient(ConnectionPluginContext $context): void
+            public function configureServiceClient(ConnectionPluginContext $context, callable $next): void
             {
                 $context->setServiceClient(
                     $context->getServiceClient()->withAuthKey('my-api-key'),
                 );
+                $next($context);
             }
         };
 
@@ -140,7 +143,7 @@ class ConnectionPluginTestCase extends TestCase
                 return 'test.metadata';
             }
 
-            public function configureServiceClient(ConnectionPluginContext $context): void
+            public function configureServiceClient(ConnectionPluginContext $context, callable $next): void
             {
                 $client = $context->getServiceClient();
                 $ctx = $client->getContext();
@@ -149,6 +152,7 @@ class ConnectionPluginTestCase extends TestCase
                         $ctx->withMetadata(['x-custom-header' => ['value']] + $ctx->getMetadata()),
                     ),
                 );
+                $next($context);
             }
         };
 
@@ -173,9 +177,10 @@ class ConnectionPluginTestCase extends TestCase
                 return 'test.first';
             }
 
-            public function configureServiceClient(ConnectionPluginContext $context): void
+            public function configureServiceClient(ConnectionPluginContext $context, callable $next): void
             {
                 $this->order[] = 'first';
+                $next($context);
             }
         };
 
@@ -190,9 +195,10 @@ class ConnectionPluginTestCase extends TestCase
                 return 'test.second';
             }
 
-            public function configureServiceClient(ConnectionPluginContext $context): void
+            public function configureServiceClient(ConnectionPluginContext $context, callable $next): void
             {
                 $this->order[] = 'second';
+                $next($context);
             }
         };
 
@@ -216,14 +222,16 @@ class ConnectionPluginTestCase extends TestCase
                 return 'test.order';
             }
 
-            public function configureServiceClient(ConnectionPluginContext $context): void
+            public function configureServiceClient(ConnectionPluginContext $context, callable $next): void
             {
                 $this->order[] = 'connection';
+                $next($context);
             }
 
-            public function configureClient(ClientPluginContext $context): void
+            public function configureClient(ClientPluginContext $context, callable $next): void
             {
                 $this->order[] = 'client';
+                $next($context);
             }
         };
 
@@ -254,9 +262,10 @@ class ConnectionPluginTestCase extends TestCase
                 $this->ref = &$called;
             }
 
-            public function configureServiceClient(ConnectionPluginContext $context): void
+            public function configureServiceClient(ConnectionPluginContext $context, callable $next): void
             {
                 $this->ref = true;
+                $next($context);
             }
         };
 
@@ -280,15 +289,42 @@ class ConnectionPluginTestCase extends TestCase
                 return 'test.conn-only';
             }
 
-            public function configureServiceClient(ConnectionPluginContext $context): void
+            public function configureServiceClient(ConnectionPluginContext $context, callable $next): void
             {
                 $this->called = true;
+                $next($context);
             }
         };
 
         new WorkflowClient($this->mockServiceClient(), pluginRegistry: new PluginRegistry([$plugin]));
 
         self::assertTrue($called);
+    }
+
+    public function testConnectionPluginCanInterceptByWrappingNext(): void
+    {
+        $order = [];
+        $plugin = new class($order) implements ConnectionPluginInterface {
+            use ConnectionPluginTrait;
+
+            public function __construct(private array &$order) {}
+
+            public function getName(): string
+            {
+                return 'test.interceptor';
+            }
+
+            public function configureServiceClient(ConnectionPluginContext $context, callable $next): void
+            {
+                $this->order[] = 'before';
+                $next($context);
+                $this->order[] = 'after';
+            }
+        };
+
+        new WorkflowClient($this->mockServiceClient(), pluginRegistry: new PluginRegistry([$plugin]));
+
+        self::assertSame(['before', 'after'], $order);
     }
 
     private function mockServiceClient(): ServiceClientInterface

@@ -21,19 +21,19 @@ use Temporal\Worker\WorkerInterface;
  */
 trait WorkerPluginTrait
 {
-    public function configureWorkerFactory(WorkerFactoryPluginContext $context): void
+    public function configureWorkerFactory(WorkerFactoryPluginContext $context, callable $next): void
     {
-        // No-op by default
+        $next($context);
     }
 
-    public function configureWorker(WorkerPluginContext $context): void
+    public function configureWorker(WorkerPluginContext $context, callable $next): void
     {
-        // No-op by default
+        $next($context);
     }
 
-    public function initializeWorker(WorkerInterface $worker): void
+    public function initializeWorker(WorkerInterface $worker, callable $next): void
     {
-        // No-op by default
+        $next($worker);
     }
 
     public function run(WorkerFactoryInterface $factory, callable $next): int

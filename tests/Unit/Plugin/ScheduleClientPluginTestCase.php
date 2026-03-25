@@ -36,9 +36,10 @@ class ScheduleClientPluginTestCase extends TestCase
                 return 'test.spy';
             }
 
-            public function configureScheduleClient(ScheduleClientPluginContext $context): void
+            public function configureScheduleClient(ScheduleClientPluginContext $context, callable $next): void
             {
                 $this->called = true;
+                $next($context);
             }
         };
 
@@ -57,11 +58,12 @@ class ScheduleClientPluginTestCase extends TestCase
                 return 'test.namespace';
             }
 
-            public function configureScheduleClient(ScheduleClientPluginContext $context): void
+            public function configureScheduleClient(ScheduleClientPluginContext $context, callable $next): void
             {
                 $context->setClientOptions(
                     (new ClientOptions())->withNamespace('schedule-namespace'),
                 );
+                $next($context);
             }
         };
 
@@ -83,9 +85,10 @@ class ScheduleClientPluginTestCase extends TestCase
                 return 'test.converter';
             }
 
-            public function configureScheduleClient(ScheduleClientPluginContext $context): void
+            public function configureScheduleClient(ScheduleClientPluginContext $context, callable $next): void
             {
                 $context->setDataConverter($this->converter);
+                $next($context);
             }
         };
 
@@ -107,9 +110,10 @@ class ScheduleClientPluginTestCase extends TestCase
                 return 'test.first';
             }
 
-            public function configureScheduleClient(ScheduleClientPluginContext $context): void
+            public function configureScheduleClient(ScheduleClientPluginContext $context, callable $next): void
             {
                 $this->order[] = 'first';
+                $next($context);
             }
         };
 
@@ -123,9 +127,10 @@ class ScheduleClientPluginTestCase extends TestCase
                 return 'test.second';
             }
 
-            public function configureScheduleClient(ScheduleClientPluginContext $context): void
+            public function configureScheduleClient(ScheduleClientPluginContext $context, callable $next): void
             {
                 $this->order[] = 'second';
+                $next($context);
             }
         };
 
@@ -161,10 +166,11 @@ class ScheduleClientPluginTestCase extends TestCase
                 return 'test.inspector';
             }
 
-            public function configureScheduleClient(ScheduleClientPluginContext $context): void
+            public function configureScheduleClient(ScheduleClientPluginContext $context, callable $next): void
             {
                 $this->receivedOptions = $context->getClientOptions();
                 $this->receivedConverter = $context->getDataConverter();
+                $next($context);
             }
         };
 

@@ -46,24 +46,28 @@ class PluginPropagationTestCase extends TestCase
                 parent::__construct('test.propagation');
             }
 
-            public function configureClient(ClientPluginContext $context): void
+            public function configureClient(ClientPluginContext $context, callable $next): void
             {
                 $this->order[] = 'configureClient';
+                $next($context);
             }
 
-            public function configureWorkerFactory(WorkerFactoryPluginContext $context): void
+            public function configureWorkerFactory(WorkerFactoryPluginContext $context, callable $next): void
             {
                 $this->order[] = 'configureWorkerFactory';
+                $next($context);
             }
 
-            public function configureWorker(WorkerPluginContext $context): void
+            public function configureWorker(WorkerPluginContext $context, callable $next): void
             {
                 $this->order[] = 'configureWorker';
+                $next($context);
             }
 
-            public function initializeWorker(WorkerInterface $worker): void
+            public function initializeWorker(WorkerInterface $worker, callable $next): void
             {
                 $this->order[] = 'initializeWorker';
+                $next($worker);
             }
         };
 
@@ -99,9 +103,10 @@ class PluginPropagationTestCase extends TestCase
                 parent::__construct('test.from-client');
             }
 
-            public function configureWorker(WorkerPluginContext $context): void
+            public function configureWorker(WorkerPluginContext $context, callable $next): void
             {
                 $this->order[] = 'from-client';
+                $next($context);
             }
         };
 
@@ -115,9 +120,10 @@ class PluginPropagationTestCase extends TestCase
                 return 'test.from-factory';
             }
 
-            public function configureWorker(WorkerPluginContext $context): void
+            public function configureWorker(WorkerPluginContext $context, callable $next): void
             {
                 $this->order[] = 'from-factory';
+                $next($context);
             }
         };
 
@@ -206,9 +212,10 @@ class PluginPropagationTestCase extends TestCase
                 return 'test.schedule-combo';
             }
 
-            public function configureScheduleClient(ScheduleClientPluginContext $context): void
+            public function configureScheduleClient(ScheduleClientPluginContext $context, callable $next): void
             {
                 $this->called = true;
+                $next($context);
             }
         };
 

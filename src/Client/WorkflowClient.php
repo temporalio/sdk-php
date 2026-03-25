@@ -89,18 +89,21 @@ class WorkflowClient implements WorkflowClientInterface
 
         // Apply connection plugins (before client-level configuration)
         $connectionContext = new ConnectionPluginContext($serviceClient);
-        foreach ($this->pluginRegistry->getPlugins(ConnectionPluginInterface::class) as $plugin) {
-            $plugin->configureServiceClient($connectionContext);
-        }
+        $connectionPlugins = $this->pluginRegistry->getPlugins(ConnectionPluginInterface::class);
+        /** @see ConnectionPluginInterface::configureServiceClient() */
+        Pipeline::prepare($connectionPlugins)
+            ->with(static fn() => null, 'configureServiceClient')($connectionContext);
+
         $serviceClient = $connectionContext->getServiceClient();
 
         $pluginContext = new ClientPluginContext(
             clientOptions: $this->clientOptions,
             dataConverter: $this->converter,
         );
-        foreach ($this->pluginRegistry->getPlugins(ClientPluginInterface::class) as $plugin) {
-            $plugin->configureClient($pluginContext);
-        }
+        $clientPlugins = $this->pluginRegistry->getPlugins(ClientPluginInterface::class);
+        /** @see ClientPluginInterface::configureClient() */
+        Pipeline::prepare($clientPlugins)
+            ->with(static fn() => null, 'configureClient')($pluginContext);
 
         $this->clientOptions = $pluginContext->getClientOptions();
         $pluginConverter = $pluginContext->getDataConverter();

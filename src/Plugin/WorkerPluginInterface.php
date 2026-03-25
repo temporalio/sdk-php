@@ -25,15 +25,19 @@ interface WorkerPluginInterface extends PluginInterface
 {
     /**
      * Modify worker factory configuration before it is fully initialized.
+     *
+     * @param callable(WorkerFactoryPluginContext): void $next Calls the next plugin or the final hook.
      */
-    public function configureWorkerFactory(WorkerFactoryPluginContext $context): void;
+    public function configureWorkerFactory(WorkerFactoryPluginContext $context, callable $next): void;
 
     /**
      * Modify worker configuration before the worker is created.
      *
      * Task queue name is available via {@see WorkerPluginContext::getTaskQueue()}.
+     *
+     * @param callable(WorkerPluginContext): void $next Calls the next plugin or the final hook.
      */
-    public function configureWorker(WorkerPluginContext $context): void;
+    public function configureWorker(WorkerPluginContext $context, callable $next): void;
 
     /**
      * Called after a worker is created, allowing plugins to register workflows,
@@ -44,8 +48,10 @@ interface WorkerPluginInterface extends PluginInterface
      * because it is called before the worker starts polling.
      *
      * Task queue name is available via {@see WorkerInterface::getID()}.
+     *
+     * @param callable(WorkerInterface): void $next Calls the next plugin or the final hook.
      */
-    public function initializeWorker(WorkerInterface $worker): void;
+    public function initializeWorker(WorkerInterface $worker, callable $next): void;
 
     /**
      * Wraps the worker factory run lifecycle using chain-of-responsibility.

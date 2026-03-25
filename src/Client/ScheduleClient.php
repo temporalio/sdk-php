@@ -32,6 +32,7 @@ use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Internal\Mapper\ScheduleMapper;
+use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Plugin\ConnectionPluginContext;
 use Temporal\Plugin\ConnectionPluginInterface;
 use Temporal\Plugin\PluginRegistry;
@@ -64,18 +65,22 @@ final class ScheduleClient implements ScheduleClientInterface
 
         // Apply connection plugins (before client-level configuration)
         $connectionContext = new ConnectionPluginContext($serviceClient);
-        foreach ($this->pluginRegistry->getPlugins(ConnectionPluginInterface::class) as $plugin) {
-            $plugin->configureServiceClient($connectionContext);
-        }
+        $connectionPlugins = $this->pluginRegistry->getPlugins(ConnectionPluginInterface::class);
+        /** @see ConnectionPluginInterface::configureServiceClient() */
+        Pipeline::prepare($connectionPlugins)
+            ->with(static fn() => null, 'configureServiceClient')($connectionContext);
+
         $serviceClient = $connectionContext->getServiceClient();
 
         $pluginContext = new ScheduleClientPluginContext(
             clientOptions: $this->clientOptions,
             dataConverter: $this->converter,
         );
-        foreach ($this->pluginRegistry->getPlugins(ScheduleClientPluginInterface::class) as $plugin) {
-            $plugin->configureScheduleClient($pluginContext);
-        }
+        $schedulePlugins = $this->pluginRegistry->getPlugins(ScheduleClientPluginInterface::class);
+        /** @see ScheduleClientPluginInterface::configureScheduleClient() */
+        Pipeline::prepare($schedulePlugins)
+            ->with(static fn() => null, 'configureScheduleClient')($pluginContext);
+
         $this->clientOptions = $pluginContext->getClientOptions();
         $pluginConverter = $pluginContext->getDataConverter();
         if ($pluginConverter !== null) {

@@ -29,6 +29,7 @@ use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Internal\Events\EventEmitterTrait;
 use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Plugin\CompositePipelineProvider;
+use Temporal\Plugin\PluginInterface;
 use Temporal\Plugin\PluginRegistry;
 use Temporal\Plugin\WorkerFactoryPluginContext;
 use Temporal\Plugin\WorkerPluginContext;
@@ -130,9 +131,10 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         $factoryContext = new WorkerFactoryPluginContext(
             dataConverter: $dataConverter,
         );
-        foreach ($this->pluginRegistry->getPlugins(WorkerPluginInterface::class) as $plugin) {
-            $plugin->configureWorkerFactory($factoryContext);
-        }
+        $workerPlugins = $this->pluginRegistry->getPlugins(WorkerPluginInterface::class);
+        /** @see WorkerPluginInterface::configureWorkerFactory() */
+        Pipeline::prepare($workerPlugins)
+            ->with(static fn() => null, 'configureWorkerFactory')($factoryContext);
 
         $this->converter = $factoryContext->getDataConverter() ?? $dataConverter;
         $this->codec = $this->createCodec();
@@ -170,9 +172,10 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
             workerOptions: $options,
             exceptionInterceptor: $exceptionInterceptor,
         );
-        foreach ($this->pluginRegistry->getPlugins(WorkerPluginInterface::class) as $plugin) {
-            $plugin->configureWorker($workerContext);
-        }
+        $workerPlugins = $this->pluginRegistry->getPlugins(WorkerPluginInterface::class);
+        /** @see WorkerPluginInterface::configureWorker() */
+        Pipeline::prepare($workerPlugins)
+            ->with(static fn() => null, 'configureWorker')($workerContext);
 
         $options = $workerContext->getWorkerOptions();
 
@@ -199,9 +202,9 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         );
 
         // Call initializeWorker hooks (forward order)
-        foreach ($this->pluginRegistry->getPlugins(WorkerPluginInterface::class) as $plugin) {
-            $plugin->initializeWorker($worker);
-        }
+        /** @see WorkerPluginInterface::initializeWorker() */
+        Pipeline::prepare($workerPlugins)
+            ->with(static fn() => null, 'initializeWorker')($worker);
 
         $this->queues->add($worker);
 
