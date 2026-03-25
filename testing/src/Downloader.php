@@ -15,6 +15,7 @@ final class Downloader
     private Filesystem $filesystem;
     private HttpClientInterface $httpClient;
     private string $javaSdkUrl;
+    private string $workingDir;
 
     public function __construct(
         Filesystem $filesystem,
@@ -27,15 +28,23 @@ final class Downloader
             $javaSdkVersion === self::TAG_LATEST => self::TAG_LATEST,
             default => "tags/$javaSdkVersion",
         };
+
+        $workingDir = \getcwd();
+        if ($workingDir === false) {
+            throw new \RuntimeException('Failed to get current working directory.');
+        }
+
+        $this->workingDir = $workingDir;
     }
 
     public function download(SystemInfo $systemInfo): void
     {
         $asset = $this->getAsset($systemInfo);
+        /** @var string $assetUrl */
         $assetUrl = $asset['browser_download_url'];
         $pathToExtractedAsset = $this->downloadAsset($assetUrl);
 
-        $targetPath = \getcwd() . DIRECTORY_SEPARATOR . $systemInfo->temporalServerExecutable;
+        $targetPath = $this->workingDir . DIRECTORY_SEPARATOR . $systemInfo->temporalServerExecutable;
         $this->filesystem->copy($pathToExtractedAsset . DIRECTORY_SEPARATOR . $systemInfo->temporalServerExecutable, $targetPath);
         $this->filesystem->chmod($targetPath, 0755);
         $this->filesystem->remove($pathToExtractedAsset);
@@ -78,7 +87,7 @@ final class Downloader
     private function downloadAsset(string $assetUrl): string
     {
         $response = $this->httpClient->request('GET', $assetUrl);
-        $assetPath = \getcwd() . DIRECTORY_SEPARATOR . \basename($assetUrl);
+        $assetPath = $this->workingDir . DIRECTORY_SEPARATOR . \basename($assetUrl);
 
         if ($this->filesystem->exists($assetPath)) {
             $this->filesystem->remove($assetPath);
@@ -87,9 +96,9 @@ final class Downloader
         $this->filesystem->appendToFile($assetPath, $response->getContent());
 
         $phar = new \PharData($assetPath);
-        $extractedPath = \getcwd() . DIRECTORY_SEPARATOR . $phar->getFilename();
+        $extractedPath = $this->workingDir . DIRECTORY_SEPARATOR . $phar->getFilename();
         if (!$this->filesystem->exists($extractedPath)) {
-            $phar->extractTo(\getcwd());
+            $phar->extractTo($this->workingDir);
         }
         $this->filesystem->remove($phar->getPath());
 
