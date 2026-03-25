@@ -18,16 +18,15 @@ namespace Temporal\Plugin;
  * {@see WorkerPluginInterface::getName()} value. When a duplicate is detected,
  * an exception is thrown.
  *
- * @psalm-type TPlugin = (ConnectionPluginInterface|ClientPluginInterface|ScheduleClientPluginInterface|WorkerPluginInterface)
  * @internal
  */
 final class PluginRegistry
 {
-    /** @var array<string, TPlugin> */
+    /** @var array<string, PluginInterface> */
     private array $plugins = [];
 
     /**
-     * @param iterable<TPlugin> $plugins
+     * @param iterable<PluginInterface> $plugins
      */
     public function __construct(iterable $plugins = [])
     {
@@ -36,7 +35,7 @@ final class PluginRegistry
         }
     }
 
-    public function add(ConnectionPluginInterface|ClientPluginInterface|ScheduleClientPluginInterface|WorkerPluginInterface $plugin): void
+    public function add(PluginInterface $plugin): void
     {
         $name = $plugin->getName();
         if (isset($this->plugins[$name])) {
@@ -51,7 +50,7 @@ final class PluginRegistry
     /**
      * Merge another set of plugins. Throws on duplicate names.
      *
-     * @param iterable<TPlugin> $plugins
+     * @param iterable<PluginInterface> $plugins
      */
     public function merge(iterable $plugins): void
     {
@@ -63,7 +62,7 @@ final class PluginRegistry
     /**
      * Get all plugins implementing a given interface.
      *
-     * @template T of TPlugin
+     * @template T of PluginInterface
      * @param class-string<T> $interface
      * @return list<T>
      */
