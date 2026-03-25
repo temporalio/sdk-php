@@ -136,7 +136,7 @@ class PrefixPlugin implements ClientPluginInterface
         return 'prefix-plugin';
     }
 
-    public function configureClient(ClientPluginContext $context): void
+    public function configureClient(ClientPluginContext $context, callable $next): void
     {
         $context->addInterceptor(new PrefixInterceptor($this->prefix));
     }
@@ -154,7 +154,7 @@ class PrefixPlugin2 implements ClientPluginInterface
         return 'prefix-plugin-2';
     }
 
-    public function configureClient(ClientPluginContext $context): void
+    public function configureClient(ClientPluginContext $context, callable $next): void
     {
         $context->addInterceptor(new PrefixInterceptor($this->prefix));
     }
