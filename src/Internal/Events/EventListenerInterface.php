@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Temporal\Internal\Events;
 
 /**
- * @template-covariant T of string
+ * @template T of string
  */
 interface EventListenerInterface
 {
@@ -20,5 +20,5 @@ interface EventListenerInterface
      * @param T $event
      * @return $this
      */
-    public function once(string $event, callable $then): self;
+    public function once(string $event, callable $then): static;
 }

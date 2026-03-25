@@ -34,6 +34,7 @@ interface PayloadConverterInterface
      * @return mixed
      *
      * @throws DataConverterException
+     * @mutation-free
      */
     public function fromPayload(Payload $payload, Type $type);
 }

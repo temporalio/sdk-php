@@ -130,7 +130,6 @@ class RetryOptions extends Options
      *
      * @param mixed $interval parseable string, null, int|float in seconds, {@see \DateInterval}, or {@see Duration}
      * @return static
-     * @psalm-assert DateIntervalValue|null $interval
      */
     #[Pure]
     public function withInitialInterval(mixed $interval): self
@@ -162,7 +161,6 @@ class RetryOptions extends Options
      *
      * @param mixed $interval parseable string, null, int|float in seconds, {@see \DateInterval}, or {@see Duration}
      * @return static
-     * @psalm-assert DateIntervalValue|null $interval
      */
     #[Pure]
     public function withMaximumInterval(mixed $interval): self

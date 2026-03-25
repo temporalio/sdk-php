@@ -111,6 +111,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         ?ServiceCredentials $credentials = null,
     ) {
         $this->converter = $dataConverter;
+        $this->codec = $this->createCodec();
         $this->boot($credentials ?? ServiceCredentials::create());
     }
 
@@ -190,7 +191,6 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     public function run(?HostConnectionInterface $host = null): int
     {
         $host ??= RoadRunner::create();
-        $this->codec = $this->createCodec();
 
         while ($msg = $host->waitBatch()) {
             try {

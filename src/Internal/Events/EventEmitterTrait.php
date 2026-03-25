@@ -15,7 +15,7 @@ namespace Temporal\Internal\Events;
  * @mixin EventEmitterInterface
  * @mixin EventListenerInterface
  *
- * @template-covariant T of string
+ * @template T of string
  *
  * @template-implements EventEmitterInterface<T>
  * @template-implements EventListenerInterface<T>
@@ -23,11 +23,11 @@ namespace Temporal\Internal\Events;
 trait EventEmitterTrait
 {
     /**
-     * @var array<string, array<callable>>
+     * @var array<T, array<callable>>
      */
     protected array $once = [];
 
-    public function once(string $event, callable $then): self
+    public function once(string $event, callable $then): static
     {
         $this->once[$event][] = $then;
 
@@ -36,7 +36,10 @@ trait EventEmitterTrait
 
     public function emit(string $event, array $arguments = []): void
     {
-        while (($this->once[$event] ?? []) !== []) {
+        if (!\array_key_exists($event, $this->once)) {
+            return;
+        }
+        while (!empty($this->once[$event])) {
             $callback = \array_shift($this->once[$event]);
             $callback(...$arguments);
         }

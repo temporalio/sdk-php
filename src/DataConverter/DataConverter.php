@@ -14,6 +14,9 @@ namespace Temporal\DataConverter;
 use Temporal\Api\Common\V1\Payload;
 use Temporal\Exception\DataConverterException;
 
+/**
+ * @psalm-import-type TType from Type
+ */
 final class DataConverter implements DataConverterInterface
 {
     /**
@@ -40,7 +43,7 @@ final class DataConverter implements DataConverterInterface
     }
 
     /**
-     * @param string|\ReflectionClass|\ReflectionType|Type|null $type
+     * @param TType $type
      */
     public function fromPayload(Payload $payload, $type): mixed
     {

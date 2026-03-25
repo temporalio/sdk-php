@@ -19,6 +19,7 @@ use Temporal\Api\Common\V1\Payload;
  * @psalm-type TKey = array-key
  * @psalm-type TValue = mixed
  * @psalm-type TPayloadsCollection = \Traversable&\ArrayAccess<TKey, TValue>&\Countable
+ * @psalm-import-type TypeEnum from Type
  *
  * @implements \IteratorAggregate<TKey, TValue>
  */
@@ -27,7 +28,7 @@ class EncodedCollection implements \IteratorAggregate, \Countable
     private ?DataConverterInterface $converter = null;
 
     /**
-     * @var TPayloadsCollection|null
+     * @psalm-var TPayloadsCollection|null
      */
     private ?\ArrayAccess $payloads = null;
 
@@ -89,7 +90,7 @@ class EncodedCollection implements \IteratorAggregate, \Countable
 
     /**
      * @param array-key $name
-     * @param Type|string|null $type
+     * @param Type|TypeEnum|mixed $type
      */
     public function getValue(int|string $name, mixed $type = null): mixed
     {

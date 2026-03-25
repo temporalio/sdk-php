@@ -12,14 +12,13 @@ final class Command
     /** @var non-empty-string|null Temporal Address */
     public ?string $address = null;
 
-    /** @var non-empty-string|null */
     public ?string $tlsKey = null;
-
-    /** @var non-empty-string|null */
     public ?string $tlsCert = null;
+    private array $xdebug = [];
 
-    private array $xdebug;
-
+    /**
+     * @param non-empty-string|null $address
+     */
     public function __construct(
         ?string $address = null,
     ) {
@@ -28,9 +27,11 @@ final class Command
 
     public static function fromEnv(): self
     {
-        $self = new self(\getenv('TEMPORAL_ADDRESS') ?: '127.0.0.1:7233');
+        $address = \getenv('TEMPORAL_ADDRESS');
+        $self = new self((\is_string($address) && $address !== '') ? $address : '127.0.0.1:7233');
 
-        $self->namespace = \getenv('TEMPORAL_NAMESPACE') ?: 'default';
+        $namespace = \getenv('TEMPORAL_NAMESPACE');
+        $self->namespace = (\is_string($namespace) && $namespace !== '') ? $namespace : 'default';
         $self->xdebug = [
             'xdebug.mode' => \ini_get('xdebug.mode'),
             'xdebug.start_with_request' => \ini_get('xdebug.start_with_request'),
@@ -70,13 +71,17 @@ final class Command
                     break;
             }
         }
+        if (empty($address)) {
+            throw new \InvalidArgumentException('Address cannot be empty');
+        }
+        if (empty($namespace)) {
+            throw new \InvalidArgumentException('Namespace cannot be empty');
+        }
 
         $self = new self($address);
-
         $self->namespace = $namespace;
         $self->tlsCert = $tlsCert;
         $self->tlsKey = $tlsKey;
-
         return $self;
     }
 

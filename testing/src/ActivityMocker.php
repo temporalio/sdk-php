@@ -21,11 +21,17 @@ final class ActivityMocker
         $this->cache->clear();
     }
 
-    public function expectCompletion(string $activityMethodName, $value): void
+    /**
+     * @param non-empty-string $activityMethodName
+     */
+    public function expectCompletion(string $activityMethodName, mixed $value): void
     {
         $this->cache->saveCompletion($activityMethodName, $value);
     }
 
+    /**
+     * @param non-empty-string $activityMethodName
+     */
     public function expectFailure(string $activityMethodName, \Throwable $error): void
     {
         $this->cache->saveFailure($activityMethodName, $error);

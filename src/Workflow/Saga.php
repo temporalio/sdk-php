@@ -79,7 +79,7 @@ final class Saga
                         yield Workflow::asyncDetached($handler);
                     } catch (\Throwable $e) {
                         if ($sagaException === null) {
-                            $sagaException = new CompensationException($e->getMessage(), $e->getCode(), $e);
+                            $sagaException = new CompensationException($e->getMessage(), (int) $e->getCode(), $e);
                         }
 
                         if (!$this->continueWithError) {
