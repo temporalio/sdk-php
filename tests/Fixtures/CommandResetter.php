@@ -19,15 +19,4 @@ class CommandResetter extends Request
     {
         self::$lastID = 9000;
     }
-
-    protected function getNextID(): int
-    {
-        $next = ++static::$lastID;
-
-        if ($next >= \PHP_INT_MAX) {
-            $next = static::$lastID = 1;
-        }
-
-        return $next;
-    }
 }
