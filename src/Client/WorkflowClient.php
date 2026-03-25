@@ -88,22 +88,19 @@ class WorkflowClient implements WorkflowClientInterface
         $this->converter = $converter ?? DataConverter::createDefault();
 
         // Apply connection plugins (before client-level configuration)
-        $connectionContext = new ConnectionPluginContext($serviceClient);
         $connectionPlugins = $this->pluginRegistry->getPlugins(ConnectionPluginInterface::class);
-        /** @see ConnectionPluginInterface::configureServiceClient() */
-        Pipeline::prepare($connectionPlugins)
-            ->with(static fn() => null, 'configureServiceClient')($connectionContext);
-
-        $serviceClient = $connectionContext->getServiceClient();
+        $serviceClient = Pipeline::prepare($connectionPlugins)
+            /** @see ConnectionPluginInterface::configureServiceClient() */
+            ->with(static fn(ServiceClientInterface $serviceClient) => $serviceClient, 'configureServiceClient')($serviceClient);
 
         $pluginContext = new ClientPluginContext(
             clientOptions: $this->clientOptions,
             dataConverter: $this->converter,
         );
         $clientPlugins = $this->pluginRegistry->getPlugins(ClientPluginInterface::class);
-        /** @see ClientPluginInterface::configureClient() */
         Pipeline::prepare($clientPlugins)
-            ->with(static fn() => null, 'configureClient')($pluginContext);
+            /** @see ClientPluginInterface::configureClient() */
+            ->with(static fn(ClientPluginContext $pluginContext) => $pluginContext, 'configureClient')($pluginContext);
 
         $this->clientOptions = $pluginContext->getClientOptions();
         $pluginConverter = $pluginContext->getDataConverter();

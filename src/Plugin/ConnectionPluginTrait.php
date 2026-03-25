@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Plugin;
 
+use Temporal\Client\GRPC\ServiceClientInterface;
+
 /**
  * No-op defaults for {@see ConnectionPluginInterface}.
  *
@@ -18,8 +20,8 @@ namespace Temporal\Plugin;
  */
 trait ConnectionPluginTrait
 {
-    public function configureServiceClient(ConnectionPluginContext $context, callable $next): void
+    public function configureServiceClient(ServiceClientInterface $serviceClient, callable $next): ServiceClientInterface
     {
-        $next($context);
+        return $next($serviceClient);
     }
 }

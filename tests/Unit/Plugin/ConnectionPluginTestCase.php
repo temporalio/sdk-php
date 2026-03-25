@@ -13,7 +13,6 @@ use Temporal\Plugin\AbstractPlugin;
 use Temporal\Plugin\ClientPluginContext;
 use Temporal\Plugin\ClientPluginInterface;
 use Temporal\Plugin\ClientPluginTrait;
-use Temporal\Plugin\ConnectionPluginContext;
 use Temporal\Plugin\ConnectionPluginInterface;
 use Temporal\Plugin\ConnectionPluginTrait;
 use Temporal\Plugin\PluginRegistry;
@@ -42,10 +41,10 @@ class ConnectionPluginTestCase extends TestCase
                 return 'test.connection';
             }
 
-            public function configureServiceClient(ConnectionPluginContext $context, callable $next): void
+            public function configureServiceClient(ServiceClientInterface $serviceClient, callable $next): ServiceClientInterface
             {
                 $this->called = true;
-                $next($context);
+                return $next($serviceClient);
             }
         };
 
@@ -68,10 +67,10 @@ class ConnectionPluginTestCase extends TestCase
                 return 'test.connection';
             }
 
-            public function configureServiceClient(ConnectionPluginContext $context, callable $next): void
+            public function configureServiceClient(ServiceClientInterface $serviceClient, callable $next): ServiceClientInterface
             {
                 $this->called = true;
-                $next($context);
+                return $next($serviceClient);
             }
         };
 
@@ -102,12 +101,11 @@ class ConnectionPluginTestCase extends TestCase
                 return 'test.auth';
             }
 
-            public function configureServiceClient(ConnectionPluginContext $context, callable $next): void
+            public function configureServiceClient(ServiceClientInterface $serviceClient, callable $next): ServiceClientInterface
             {
-                $context->setServiceClient(
-                    $context->getServiceClient()->withAuthKey('my-api-key'),
+                return $next(
+                    $serviceClient->withAuthKey('my-api-key'),
                 );
-                $next($context);
             }
         };
 
@@ -143,16 +141,14 @@ class ConnectionPluginTestCase extends TestCase
                 return 'test.metadata';
             }
 
-            public function configureServiceClient(ConnectionPluginContext $context, callable $next): void
+            public function configureServiceClient(ServiceClientInterface $serviceClient, callable $next): ServiceClientInterface
             {
-                $client = $context->getServiceClient();
-                $ctx = $client->getContext();
-                $context->setServiceClient(
-                    $client->withContext(
+                $ctx = $serviceClient->getContext();
+                return $next(
+                    $serviceClient->withContext(
                         $ctx->withMetadata(['x-custom-header' => ['value']] + $ctx->getMetadata()),
                     ),
                 );
-                $next($context);
             }
         };
 
@@ -177,10 +173,10 @@ class ConnectionPluginTestCase extends TestCase
                 return 'test.first';
             }
 
-            public function configureServiceClient(ConnectionPluginContext $context, callable $next): void
+            public function configureServiceClient(ServiceClientInterface $serviceClient, callable $next): ServiceClientInterface
             {
                 $this->order[] = 'first';
-                $next($context);
+                return $next($serviceClient);
             }
         };
 
@@ -195,10 +191,10 @@ class ConnectionPluginTestCase extends TestCase
                 return 'test.second';
             }
 
-            public function configureServiceClient(ConnectionPluginContext $context, callable $next): void
+            public function configureServiceClient(ServiceClientInterface $serviceClient, callable $next): ServiceClientInterface
             {
                 $this->order[] = 'second';
-                $next($context);
+                return $next($serviceClient);
             }
         };
 
@@ -222,10 +218,10 @@ class ConnectionPluginTestCase extends TestCase
                 return 'test.order';
             }
 
-            public function configureServiceClient(ConnectionPluginContext $context, callable $next): void
+            public function configureServiceClient(ServiceClientInterface $serviceClient, callable $next): ServiceClientInterface
             {
                 $this->order[] = 'connection';
-                $next($context);
+                return $next($serviceClient);
             }
 
             public function configureClient(ClientPluginContext $context, callable $next): void
@@ -262,10 +258,10 @@ class ConnectionPluginTestCase extends TestCase
                 $this->ref = &$called;
             }
 
-            public function configureServiceClient(ConnectionPluginContext $context, callable $next): void
+            public function configureServiceClient(ServiceClientInterface $serviceClient, callable $next): ServiceClientInterface
             {
                 $this->ref = true;
-                $next($context);
+                return $next($serviceClient);
             }
         };
 
@@ -289,10 +285,10 @@ class ConnectionPluginTestCase extends TestCase
                 return 'test.conn-only';
             }
 
-            public function configureServiceClient(ConnectionPluginContext $context, callable $next): void
+            public function configureServiceClient(ServiceClientInterface $serviceClient, callable $next): ServiceClientInterface
             {
                 $this->called = true;
-                $next($context);
+                return $next($serviceClient);
             }
         };
 
@@ -314,11 +310,12 @@ class ConnectionPluginTestCase extends TestCase
                 return 'test.interceptor';
             }
 
-            public function configureServiceClient(ConnectionPluginContext $context, callable $next): void
+            public function configureServiceClient(ServiceClientInterface $serviceClient, callable $next): ServiceClientInterface
             {
                 $this->order[] = 'before';
-                $next($context);
+                $client = $next($serviceClient);
                 $this->order[] = 'after';
+                return $client;
             }
         };
 

@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Plugin;
 
+use Temporal\Client\GRPC\ServiceClientInterface;
+
 /**
  * Plugin interface for configuring the service client connection.
  *
@@ -26,7 +28,7 @@ interface ConnectionPluginInterface extends PluginInterface
      * Use this hook to configure connection-level settings such as
      * API keys, gRPC metadata, auth tokens, or context options.
      *
-     * @param callable(ConnectionPluginContext): void $next Calls the next plugin or the final hook.
+     * @param callable(ServiceClientInterface): void $next Calls the next plugin or the final hook.
      */
-    public function configureServiceClient(ConnectionPluginContext $context, callable $next): void;
+    public function configureServiceClient(ServiceClientInterface $serviceClient, callable $next): ServiceClientInterface;
 }
