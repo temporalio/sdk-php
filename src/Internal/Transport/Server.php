@@ -18,14 +18,12 @@ use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Internal\Transport\Request\UndefinedResponse;
 use Temporal\Plugin\PluginRegistry;
 use Temporal\Plugin\WorkerPluginInterface;
-use Temporal\Worker\DispatcherInterface;
 use Temporal\Worker\Transport\Command\Client\FailedClientResponse;
 use Temporal\Worker\Transport\Command\Client\SuccessClientResponse;
 use Temporal\Worker\Transport\Command\FailureResponseInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Temporal\Worker\Transport\Command\SuccessResponseInterface;
-use Temporal\Worker\WorkerInterface;
 
 /**
  * @psalm-import-type OnMessageHandler from ServerInterface
