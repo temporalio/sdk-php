@@ -126,7 +126,7 @@ final class Environment
         $this->temporalServerProcess->start();
 
         $deadline = \microtime(true) + (float) $commandTimeout;
-        while (!$temporalStarted && \microtime(true) < $deadline) {
+        while ($this->temporalServerProcess->isRunning() && !$temporalStarted && \microtime(true) < $deadline) {
             \usleep(10_000);
             $check = new Process([
                 $this->systemInfo->temporalCliExecutable,
@@ -205,7 +205,7 @@ final class Environment
         }
 
         $this->roadRunnerProcess = new Process(
-            command: $rrCommand ?? [$this->systemInfo->rrExecutable, 'serve'],
+            command: $rrCommand ?? [$this->systemInfo->rrExecutable, 'serve', '-c', $configFile],
             env: $envs,
         );
         $this->roadRunnerProcess->setTimeout($commandTimeout);
@@ -217,16 +217,16 @@ final class Environment
 
         // wait for roadrunner to start
         $deadline = \microtime(true) + (float) $commandTimeout;
-        while (!$roadRunnerStarted && \microtime(true) < $deadline) {
+        while ($this->roadRunnerProcess->isRunning() && !$roadRunnerStarted && \microtime(true) < $deadline) {
             \usleep(10_000);
-            $check = new Process([$this->systemInfo->rrExecutable, 'workers', '-c', $configFile]);
+            $check = new Process(array_map(static fn ($arg) => $arg === 'serve' ? 'workers' : $arg, $rrCommand));
             $check->run();
             if (\str_contains($check->getOutput(), 'Workers of')) {
                 $roadRunnerStarted = true;
             }
         }
 
-        if (!$roadRunnerStarted) {
+        if (!$roadRunnerStarted || !$this->roadRunnerProcess->isRunning()) {
             $this->io->error(\sprintf(
                 'Failed to start until RoadRunner is ready. Status: "%s". Stderr: "%s". Stdout: "%s".',
                 $this->roadRunnerProcess->getStatus(),
