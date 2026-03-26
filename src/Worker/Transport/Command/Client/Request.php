@@ -18,8 +18,6 @@ use Temporal\Interceptor\HeaderInterface;
 use Temporal\Worker\Transport\Command\Common\RequestTrait;
 use Temporal\Worker\Transport\Command\RequestInterface;
 
-\define(['REQUEST_START_ID'][0], (int) (\microtime(true) * 1_000_000.0));
-
 /**
  * Carries request to perform host action with payloads and failure as context. Can be cancelled if allows
  *
@@ -29,7 +27,7 @@ class Request implements RequestInterface
 {
     use RequestTrait;
 
-    protected static int $lastID = REQUEST_START_ID;
+    protected static int $lastID = 9000;
     protected int $id;
     protected ValuesInterface $payloads;
     protected HeaderInterface $header;
@@ -48,6 +46,14 @@ class Request implements RequestInterface
         $this->payloads = $payloads ?? EncodedValues::empty();
         $this->header = $header ?? Header::empty();
         $this->id = $this->getNextID();
+    }
+
+    /**
+     * @internal
+     */
+    public static function resetLastId(int $lastID): void
+    {
+        self::$lastID = $lastID;
     }
 
     public function getID(): int
@@ -76,3 +82,5 @@ class Request implements RequestInterface
         return static::$lastID;
     }
 }
+
+Request::resetLastId((int) (\microtime(true) * 1_000_000.0));
