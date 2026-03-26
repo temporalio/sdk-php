@@ -30,7 +30,16 @@ final class Paginator implements \IteratorAggregate, \Countable
         private readonly int $pageNumber,
         private ?\Closure $counter,
     ) {
-        $this->collection = $loader->current();
+        $current = $loader->current();
+        if (!\is_array($current)) {
+            throw new \InvalidArgumentException(
+                \sprintf(
+                    'Generator must return an array of items, %s returned.',
+                    \get_debug_type($current),
+                ),
+            );
+        }
+        $this->collection = $current;
     }
 
     /**

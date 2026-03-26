@@ -41,13 +41,15 @@ class BasicTest extends TestCase
                     StartWorkflowAction::new('Harness_Schedule_Basic')
                         ->withWorkflowId($workflowId)
                         ->withTaskQueue($feature->taskQueue)
-                        ->withInput(['arg1'])
-                )->withSpec(
+                        ->withInput(['arg1']),
+                )
+                ->withSpec(
                     ScheduleSpec::new()
-                        ->withIntervalList($interval)
-                )->withPolicies(
+                        ->withIntervalList($interval),
+                )
+                ->withPolicies(
                     SchedulePolicies::new()
-                        ->withOverlapPolicy(ScheduleOverlapPolicy::BufferOne)
+                        ->withOverlapPolicy(ScheduleOverlapPolicy::BufferOne),
                 ),
             options: ScheduleOptions::new()
                 ->withNamespace($runtime->namespace),
@@ -66,19 +68,22 @@ class BasicTest extends TestCase
 
             // Confirm simple list
             $found = false;
-            $findDeadline = \microtime(true) + 10;
-            find:
-            foreach ($scheduleClient->listSchedules() as $schedule) {
-                if ($schedule->scheduleId === $scheduleId) {
-                    $found = true;
-                    break;
+            $findDeadline = \microtime(true) + 2;
+            while (!$found) {
+                foreach ($scheduleClient->listSchedules() as $schedule) {
+                    if ($schedule->scheduleId === $scheduleId) {
+                        $found = true;
+                        break;
+                    }
+                }
+
+                if (!$found) {
+                    if (\microtime(true) >= $findDeadline) {
+                        throw new \Exception('Schedule not found');
+                    }
+                    \usleep(100_000);
                 }
             }
-            if (!$found and \microtime(true) < $findDeadline) {
-                goto find;
-            }
-
-            $found or throw new \Exception('Schedule not found');
 
             // Wait for first completion
             while ($handle->describe()->info->numActions < 1) {
@@ -93,14 +98,14 @@ class BasicTest extends TestCase
             $result = $workflowClient->newUntypedRunningWorkflowStub(
                 $lastAction->startWorkflowResult->getID(),
                 $lastAction->startWorkflowResult->getRunID(),
-                workflowType: 'Workflow'
+                workflowType: 'Workflow',
             )->getResult();
             self::assertSame('arg1', $result);
 
             // Update and change arg
             $handle->update(
                 $description->schedule->withAction(
-                    $action->withInput(['arg2'])
+                    $action->withInput(['arg2']),
                 ),
             );
             $numActions = $handle->describe()->info->numActions;
@@ -119,7 +124,7 @@ class BasicTest extends TestCase
             $result = $workflowClient->newUntypedRunningWorkflowStub(
                 $lastAction->startWorkflowResult->getID(),
                 $lastAction->startWorkflowResult->getRunID(),
-                workflowType: 'Workflow'
+                workflowType: 'Workflow',
             )->getResult();
             self::assertSame('arg2', $result);
         } finally {
