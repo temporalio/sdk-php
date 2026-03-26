@@ -15,6 +15,7 @@ use Temporal\Internal\Marshaller\MarshallerInterface;
 
 /**
  * @template-covariant TMarshalType of mixed
+ * @template TParseType of mixed
  */
 interface TypeInterface
 {
@@ -26,12 +27,12 @@ interface TypeInterface
     /**
      * @param mixed $value
      * @param mixed $current
-     * @return mixed
+     * @return TParseType
      */
     public function parse($value, $current);
 
     /**
-     * @param mixed $value
+     * @param TParseType $value
      * @return TMarshalType
      */
     public function serialize($value);
