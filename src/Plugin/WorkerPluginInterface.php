@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Plugin;
 
+use React\Promise\PromiseInterface;
+use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Worker\WorkerInterface;
 
@@ -77,4 +79,6 @@ interface WorkerPluginInterface extends PluginInterface
      * @param callable(WorkerFactoryInterface): int $next Calls the next plugin or the actual run loop.
      */
     public function run(WorkerFactoryInterface $factory, callable $next): int;
+
+    public function runWorker(callable $handler, ServerRequestInterface $request, array $headers, callable $next): PromiseInterface;
 }

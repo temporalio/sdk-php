@@ -545,7 +545,7 @@ class WorkerFactoryPluginTestCase extends TestCase
     {
         $innerCalled = false;
 
-        $outerPlugin = new class() implements WorkerPluginInterface {
+        $outerPlugin = new class implements WorkerPluginInterface {
             use WorkerPluginTrait;
 
             public function getName(): string

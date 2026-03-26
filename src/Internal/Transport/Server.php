@@ -13,14 +13,19 @@ namespace Temporal\Internal\Transport;
 
 use React\Promise\PromiseInterface;
 use Temporal\Internal\Exception\UndefinedRequestException;
+use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Internal\Transport\Request\UndefinedResponse;
+use Temporal\Plugin\PluginRegistry;
+use Temporal\Plugin\WorkerPluginInterface;
+use Temporal\Worker\DispatcherInterface;
 use Temporal\Worker\Transport\Command\Client\FailedClientResponse;
 use Temporal\Worker\Transport\Command\Client\SuccessClientResponse;
 use Temporal\Worker\Transport\Command\FailureResponseInterface;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Temporal\Worker\Transport\Command\SuccessResponseInterface;
+use Temporal\Worker\WorkerInterface;
 
 /**
  * @psalm-import-type OnMessageHandler from ServerInterface
@@ -34,13 +39,17 @@ final class Server implements ServerInterface
 
     private \Closure $onMessage;
     private QueueInterface $queue;
+    private Pipeline $interceptors;
 
     /**
      * @psalm-param OnMessageHandler $onMessage
      */
-    public function __construct(QueueInterface $queue, callable $onMessage)
+    public function __construct(QueueInterface $queue, callable $onMessage, PluginRegistry $pluginRegistry)
     {
         $this->queue = $queue;
+
+        $plugins = $pluginRegistry->getPlugins(WorkerPluginInterface::class);
+        $this->interceptors = Pipeline::prepare($plugins);
 
         $this->onMessage($onMessage);
     }
@@ -56,7 +65,11 @@ final class Server implements ServerInterface
     public function dispatch(ServerRequestInterface $request, array $headers): void
     {
         try {
-            $result = ($this->onMessage)($request, $headers);
+            $result = $this->interceptors->with(
+                static fn(callable $handler, ServerRequestInterface $request, array $headers): PromiseInterface => $handler($request, $headers),
+                /** @see WorkerPluginInterface::runWorker() */
+                'runWorker',
+            )($this->onMessage, $request, $headers);
         } catch (\Throwable $e) {
             $this->queue->push(new FailedClientResponse($request->getID(), $e));
 

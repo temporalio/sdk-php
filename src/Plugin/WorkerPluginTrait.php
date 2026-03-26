@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Temporal\Plugin;
 
+use React\Promise\PromiseInterface;
+use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Temporal\Worker\WorkerFactoryInterface;
 use Temporal\Worker\WorkerInterface;
 
@@ -39,5 +41,10 @@ trait WorkerPluginTrait
     public function run(WorkerFactoryInterface $factory, callable $next): int
     {
         return $next($factory);
+    }
+
+    public function runWorker(callable $handler, ServerRequestInterface $request, array $headers, callable $next): PromiseInterface
+    {
+        return $next($handler, $request, $headers);
     }
 }

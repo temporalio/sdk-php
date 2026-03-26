@@ -210,7 +210,7 @@ class WorkerFactoryMock implements WorkerFactoryInterface, LoopInterface
 
     private function createServer(): ServerInterface
     {
-        return new Server($this->responses, \Closure::fromCallable([$this, 'onRequest']));
+        return new Server($this->responses, \Closure::fromCallable([$this, 'onRequest']), $this->pluginRegistry);
     }
 
     private function createMarshaller(ReaderInterface $reader): MarshallerInterface

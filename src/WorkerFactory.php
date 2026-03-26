@@ -327,7 +327,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
 
     protected function createServer(): ServerInterface
     {
-        return new Server($this->responses, $this->onRequest(...));
+        return new Server($this->responses, $this->onRequest(...), $this->pluginRegistry);
     }
 
     /**
@@ -391,22 +391,22 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
             return $this->router->dispatch($request, $headers);
         }
 
-        $queue = $this->findTaskQueueOrFail(
+        $worker = $this->findWorkerByTaskQueue(
             $this->findTaskQueueNameOrFail($headers),
         );
 
-        return $queue->dispatch($request, $headers);
+        return $worker->dispatch($request, $headers);
     }
 
-    private function findTaskQueueOrFail(string $taskQueueName): WorkerInterface
+    private function findWorkerByTaskQueue(string $taskQueue): WorkerInterface
     {
-        $queue = $this->queues->find($taskQueueName);
+        $worker = $this->queues->find($taskQueue);
 
-        if ($queue === null) {
-            throw new \OutOfRangeException(\sprintf(self::ERROR_QUEUE_NOT_FOUND, $taskQueueName));
+        if ($worker === null) {
+            throw new \OutOfRangeException(\sprintf(self::ERROR_QUEUE_NOT_FOUND, $taskQueue));
         }
 
-        return $queue;
+        return $worker;
     }
 
     private function findTaskQueueNameOrFail(array $headers): string
