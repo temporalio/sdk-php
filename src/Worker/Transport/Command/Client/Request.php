@@ -48,6 +48,14 @@ class Request implements RequestInterface
         $this->id = $this->getNextID();
     }
 
+    /**
+     * @internal
+     */
+    public static function resetLastId(int $lastID): void
+    {
+        self::$lastID = $lastID;
+    }
+
     public function getID(): int
     {
         return $this->id;
@@ -65,12 +73,14 @@ class Request implements RequestInterface
 
     private function getNextID(): int
     {
-        $next = ++static::$lastID;
+        ++static::$lastID;
 
-        if ($next >= \PHP_INT_MAX) {
-            $next = static::$lastID = 1;
+        if (static::$lastID === \PHP_INT_MAX) {
+            static::$lastID = 1;
         }
 
-        return $next;
+        return static::$lastID;
     }
 }
+
+Request::resetLastId((int) (\microtime(true) * 1_000_000.0));
