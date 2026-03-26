@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Acceptance\Extra\Activity\ActivityMethod;
 
-use Temporal\Activity;
 use Temporal\Activity\ActivityMethod;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Exception\Client\WorkflowFailedException;
@@ -14,6 +13,8 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Activity\ActivityInterface;
+use Temporal\Activity\ActivityOptions;
 
 class ActivityMethodTest extends TestCase
 {
@@ -52,7 +53,6 @@ class ActivityMethodTest extends TestCase
     }
 }
 
-
 #[WorkflowInterface]
 class TestWorkflow
 {
@@ -61,7 +61,7 @@ class TestWorkflow
     {
         $activityStub = Workflow::newActivityStub(
             TestActivity::class,
-            Activity\ActivityOptions::new()->withScheduleToCloseTimeout(10),
+            ActivityOptions::new()->withScheduleToCloseTimeout(10),
         );
         $result = yield $activityStub->{$method}();
 
@@ -72,7 +72,7 @@ class TestWorkflow
     }
 }
 
-#[Activity\ActivityInterface(prefix: 'Extra_Activity_ActivityMethod.')]
+#[ActivityInterface(prefix: 'Extra_Activity_ActivityMethod.')]
 class TestActivity
 {
     #[ActivityMethod]

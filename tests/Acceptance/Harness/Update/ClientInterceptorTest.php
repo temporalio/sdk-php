@@ -19,6 +19,7 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\UpdateMethod;
 
 class ClientInterceptorTest extends TestCase
 {
@@ -51,7 +52,7 @@ class FeatureWorkflow
         return 'Hello, World!';
     }
 
-    #[Workflow\UpdateMethod('my_update')]
+    #[UpdateMethod('my_update')]
     public function myUpdate(int $arg): int
     {
         $this->done = true;

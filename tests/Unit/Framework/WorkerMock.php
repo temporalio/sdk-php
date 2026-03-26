@@ -13,6 +13,10 @@ use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Queue\QueueInterface;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Router;
+use Temporal\Internal\Transport\Router\DestroyWorkflow;
+use Temporal\Internal\Transport\Router\InvokeActivity;
+use Temporal\Internal\Transport\Router\InvokeSignal as InvokeSignalRoute;
+use Temporal\Internal\Transport\Router\StartWorkflow as StartWorkflowRoute;
 use Temporal\Internal\Transport\RouterInterface;
 use Temporal\Tests\Unit\Framework\Expectation\ActivityCall;
 use Temporal\Tests\Unit\Framework\Expectation\Timer;
@@ -200,10 +204,10 @@ final class WorkerMock implements WorkerInterface, DispatcherInterface
     private function createRouter(): RouterInterface
     {
         $router = new Router();
-        $router->add(new Router\StartWorkflow($this->services));
-        $router->add(new Router\InvokeActivity($this->services, Goridge::create(), $this->interceptorProvider));
-        $router->add(new Router\DestroyWorkflow($this->services->running, $this->services->loop));
-        $router->add(new Router\InvokeSignal($this->services->running));
+        $router->add(new StartWorkflowRoute($this->services));
+        $router->add(new InvokeActivity($this->services, Goridge::create(), $this->interceptorProvider));
+        $router->add(new DestroyWorkflow($this->services->running, $this->services->loop));
+        $router->add(new InvokeSignalRoute($this->services->running));
 
         return $router;
     }

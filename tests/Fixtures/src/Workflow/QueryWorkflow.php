@@ -13,20 +13,23 @@ namespace Temporal\Tests\Workflow;
 
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\QueryMethod;
+use Temporal\Workflow\SignalMethod;
+use Temporal\Workflow\WorkflowInterface;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class QueryWorkflow
 {
     private int $counter = 0;
 
-    #[Workflow\SignalMethod(name: "add")]
+    #[SignalMethod(name: "add")]
     public function add(
         int $value
     ) {
         $this->counter += $value;
     }
 
-    #[Workflow\QueryMethod(name: "get")]
+    #[QueryMethod(name: "get")]
     public function get(): int
     {
         return $this->counter;

@@ -16,6 +16,9 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\SignalMethod;
+use Temporal\Workflow\UpdateMethod;
+use Temporal\Workflow\UpdateValidatorMethod;
 
 class UpdateWithStartTest extends TestCase
 {
@@ -113,7 +116,7 @@ class TestWorkflow
      * @param non-empty-string $name
      * @return mixed
      */
-    #[Workflow\UpdateMethod(name: 'await')]
+    #[UpdateMethod(name: 'await')]
     public function add(string $name): mixed
     {
         $this->updateStarted = true;
@@ -122,13 +125,13 @@ class TestWorkflow
         return $this->awaits[$name];
     }
 
-    #[Workflow\UpdateValidatorMethod(forUpdate: 'await')]
+    #[UpdateValidatorMethod(forUpdate: 'await')]
     public function validateAdd(string $name): void
     {
         empty($name) and throw new \InvalidArgumentException('Name must not be empty');
     }
 
-    #[Workflow\SignalMethod]
+    #[SignalMethod]
     public function exit(): void
     {
         $this->exit = true;

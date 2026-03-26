@@ -10,8 +10,9 @@ use Temporal\Tests\DTO\A;
 use Temporal\Tests\DTO\B;
 use Temporal\DataConverter\Type;
 use Temporal\Activity\ActivityOptions;
+use Temporal\Workflow\WorkflowInterface;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class DynamicObjectReturnWorkflow
 {
     #[WorkflowMethod]

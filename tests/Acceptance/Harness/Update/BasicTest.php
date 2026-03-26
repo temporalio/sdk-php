@@ -11,6 +11,7 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\UpdateMethod;
 
 class BasicTest extends TestCase
 {
@@ -36,7 +37,7 @@ class FeatureWorkflow
         return 'Hello, world!';
     }
 
-    #[Workflow\UpdateMethod('my_update')]
+    #[UpdateMethod('my_update')]
     public function myUpdate()
     {
         $this->done = true;
