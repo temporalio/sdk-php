@@ -18,6 +18,8 @@ use Temporal\Internal\Declaration\Prototype\ActivityPrototype;
 use Temporal\Internal\Declaration\Prototype\WorkflowPrototype;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Repository\RepositoryInterface;
+use Temporal\Plugin\PluginInterface;
+use Temporal\Plugin\PluginRegistry;
 use Temporal\Worker\ServiceCredentials;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Temporal\Worker\WorkerInterface;
@@ -28,6 +30,7 @@ final class GetWorkerInfo extends Route
         private readonly RepositoryInterface $queues,
         private readonly MarshallerInterface $marshaller,
         private readonly ServiceCredentials $credentials,
+        private readonly PluginRegistry $pluginRegistry,
     ) {}
 
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
@@ -54,6 +57,10 @@ final class GetWorkerInfo extends Route
             'Name' => $activity->getID(),
         ];
 
+        $map = $this->map($this->pluginRegistry->getPlugins(PluginInterface::class), static fn(PluginInterface $plugin): array => [
+            'Name' => $plugin->getName(),
+            'Version' => null,
+        ]);
         return [
             'TaskQueue'  => $worker->getID(),
             'Options'    => $this->marshaller->marshal($worker->getOptions()),
@@ -62,6 +69,7 @@ final class GetWorkerInfo extends Route
             // ActivityInfo[]
             'Activities' => $this->map($worker->getActivities(), $activityMap),
             'PhpSdkVersion' => SdkVersion::getSdkVersion(),
+            'Plugins' => $map,
             'Flags' => (object) $this->prepareFlags(),
         ];
     }
