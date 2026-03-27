@@ -258,11 +258,6 @@
       <code><![CDATA[getID]]></code>
     </PossiblyNullReference>
   </file>
-  <file src="src/Exception/Client/MultyOperation/OperationStatus.php">
-    <InvalidArgument>
-      <code><![CDATA[$message->getDetails()]]></code>
-    </InvalidArgument>
-  </file>
   <file src="src/Exception/Client/ServiceClientException.php">
     <ImplementedReturnTypeMismatch>
       <code><![CDATA[RepeatedField]]></code>
