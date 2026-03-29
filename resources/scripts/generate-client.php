@@ -10,6 +10,7 @@
 use Grpc\BaseStub;
 use Laminas\Code\Generator;
 use Laminas\Code\Generator\MethodGenerator;
+use Temporal\Api\Operatorservice;
 use Temporal\Api\Workflowservice;
 use Temporal\Client\Common\ServerCapabilities;
 use Temporal\Client\GRPC\Connection\ConnectionInterface;
@@ -17,33 +18,34 @@ use Temporal\Client\GRPC\ContextInterface;
 
 require __DIR__ . '/../../vendor/autoload.php';
 
-echo "Compiling client...\n";
-
-echo "reading client schema: ";
-
-$r = new ReflectionClass(Workflowservice\V1\WorkflowServiceClient::class);
-$rBase = new ReflectionClass(BaseStub::class);
+echo "Compiling clients...\n";
 
 $ctxParam = Generator\ParameterGenerator::fromArray(
     [
-        'type' => \Temporal\Client\GRPC\ContextInterface::class,
+        'type' => '?' . ContextInterface::class,
         'name' => 'ctx',
         'defaultValue' => null,
-    ]
+    ],
 );
+$addressParam = Generator\ParameterGenerator::fromArray(['type' => 'string', 'name' => 'address']);
+$optionsParam = Generator\ParameterGenerator::fromArray(['type' => 'array', 'name' => 'options']);
 
-$methodDocBlock = function (ReflectionClass $r, string $method, string $arg, string $return) {
+$buildMethodDocBlock = static function (
+    ReflectionClass $serviceReflection,
+    string $method,
+    string $arg,
+    string $return,
+): string {
     $block = [];
 
-    // copy from existing doc block
-    $orig = $r->getMethod($method)->getDocComment();
-    foreach (explode("\n", $orig) as $line) {
-        $line = trim($line, "\n\r* ");
+    $original = $serviceReflection->getMethod($method)->getDocComment();
+    foreach (\explode("\n", (string) $original) as $line) {
+        $line = \trim($line, "\n\r* ");
         if ($line === '/') {
             continue;
         }
 
-        if (substr($line, 0, 1) === '@') {
+        if (\str_starts_with($line, '@')) {
             break;
         }
 
@@ -51,179 +53,286 @@ $methodDocBlock = function (ReflectionClass $r, string $method, string $arg, str
     }
 
     $block[] = '';
-    $block[] = sprintf('@param \\%s $arg', $arg);
-    $block[] = sprintf('@param ContextInterface|null $ctx');
-    $block[] = sprintf('@return \\%s', $return);
-    $block[] = sprintf('@throws ServiceClientException');
+    $block[] = \sprintf('@param \\%s $arg', $arg);
+    $block[] = '@param ContextInterface|null $ctx';
+    $block[] = \sprintf('@return \\%s', $return);
+    $block[] = '@throws ServiceClientException';
 
-    return join("\n", $block);
+    return \implode("\n", $block);
 };
 
-$methods = [];
+$baseStubReflection = new ReflectionClass(BaseStub::class);
+$buildRpcMap = static function (ReflectionClass $serviceReflection) use ($baseStubReflection): array {
+    $methods = [];
 
-// fetching available methods
+    foreach ($serviceReflection->getMethods() as $method) {
+        if ($baseStubReflection->hasMethod($method->getName())) {
+            continue;
+        }
 
-foreach ($r->getMethods() as $m) {
-    if ($rBase->hasMethod($m->getName())) {
-        continue;
+        $request = $method->getParameters()[0]->getType()?->getName();
+        $response = $request === null ? null : \substr($request, 0, -7) . 'Response';
+
+        \assert($request !== null);
+        \assert(\class_exists($request));
+        \assert(\is_string($response) && \class_exists($response));
+
+        $methods[$method->getName()] = [
+            'request' => $request,
+            'response' => $response,
+        ];
     }
 
-    $method = [
-        'request' => null,
-        'response' => null,
-    ];
+    return $methods;
+};
 
-    // simple heuristics
-    $method['request'] = $m->getParameters()[0]->getType()->getName();
-    $method['response'] = substr($method['request'], 0, -7) . 'Response';
+$addCommonInterfaceMethods = static function (Generator\InterfaceGenerator $interface) use ($ctxParam): void {
+    $method = new MethodGenerator('getContext');
+    $method->setReturnType(ContextInterface::class);
+    $interface->addMethodFromGenerator($method);
 
-    assert(class_exists($method['request']));
-    assert(class_exists($method['response']));
-
-    $methods[$m->getName()] = $method;
-}
-
-echo "[OK]\n";
-
-echo "generating interface: ";
-
-$interface = new Generator\InterfaceGenerator('ServiceClientInterface');
-
-
-// getContext(): ContextInterface
-$m = new MethodGenerator(
-    'getContext',
-    [],
-    MethodGenerator::FLAG_PUBLIC,
-);
-$m->setReturnType(ContextInterface::class);
-$interface->addMethodFromGenerator($m);
-// withContext(ContextInterface $context): static
-$m = new MethodGenerator(
-    'withContext',
-    [Generator\ParameterGenerator::fromArray(['type' => ContextInterface::class, 'name' => 'context'])],
-    MethodGenerator::FLAG_PUBLIC,
-);
-$m->setReturnType('static');
-$interface->addMethodFromGenerator($m);
-// withAuthKey(string $key): static
-$m = new MethodGenerator(
-    'withAuthKey',
-    [Generator\ParameterGenerator::fromArray(['type' => '\Stringable|string', 'name' => 'key'])],
-    MethodGenerator::FLAG_PUBLIC,
-);
-$m->setReturnType('static');
-$interface->addMethodFromGenerator($m);
-// public function getConnection(): ConnectionInterface
-$m = new MethodGenerator(
-    'getConnection',
-    [],
-    MethodGenerator::FLAG_PUBLIC,
-);
-$m->setReturnType(ConnectionInterface::class);
-$interface->addMethodFromGenerator($m);
-// Add Capability methods
-$m = new MethodGenerator(
-    'getServerCapabilities',
-    [],
-    MethodGenerator::FLAG_PUBLIC,
-);
-$m->setReturnType('?' . ServerCapabilities::class);
-$interface->addMethodFromGenerator($m);
-
-foreach ($methods as $method => $options) {
-    $m = new MethodGenerator($method);
-
-    $m->setDocBlock(($methodDocBlock)($r, $method, $options['request'], $options['response']));
-    $m->setParameters(
-        [
-            Generator\ParameterGenerator::fromArray(['type' => $options['request'], 'name' => 'arg']),
-            $ctxParam
-        ]
+    $method = new MethodGenerator(
+        'withContext',
+        [Generator\ParameterGenerator::fromArray(['type' => ContextInterface::class, 'name' => 'context'])],
     );
-    $m->setReturnType($options['response']);
+    $method->setReturnType('static');
+    $interface->addMethodFromGenerator($method);
 
-    $interface->addMethodFromGenerator($m);
-}
-
-$m = new MethodGenerator(
-    'close',
-    [],
-    MethodGenerator::FLAG_PUBLIC,
-    null,
-    'Close the communication channel associated with this stub.'
-);
-$m->setReturnType('void');
-$interface->addMethodFromGenerator($m);
-
-echo "[OK]\n";
-echo "writing interface: ";
-
-$file = new Generator\FileGenerator();
-$file->setNamespace('Temporal\\Client\\GRPC');
-$file->setClass($interface);
-$file->setUses(
-    [
-        'Temporal\Api\Workflowservice\V1',
-        'Temporal\Exception\Client\ServiceClientException',
-    ]
-);
-
-// write and shorten names
-file_put_contents(
-    __DIR__ . '/../../src/Client/GRPC/ServiceClientInterface.php',
-    str_replace(
-        ['\\Temporal\\Api\\Workflowservice\\', '\\Temporal\\Client\\GRPC\\ContextInterface'],
-        ['', 'ContextInterface'],
-        $file->generate()
-    )
-);
-echo "[OK]\n";
-
-
-echo "generating implementation: ";
-
-$impl = new Generator\ClassGenerator('ServiceClient');
-$impl->setExtendedClass('BaseClient');
-
-foreach ($methods as $method => $options) {
-    $m = new MethodGenerator($method);
-
-    $m->setDocBlock(($methodDocBlock)($r, $method, $options['request'], $options['response']));
-    $m->setParameters(
-        [
-            Generator\ParameterGenerator::fromArray(['type' => $options['request'], 'name' => 'arg']),
-            $ctxParam
-        ]
+    $method = new MethodGenerator(
+        'withAuthKey',
+        [Generator\ParameterGenerator::fromArray(['type' => '\Stringable|string', 'name' => 'key'])],
     );
-    $m->setReturnType($options['response']);
+    $method->setReturnType('static');
+    $interface->addMethodFromGenerator($method);
 
-    $m->setBody(sprintf('return $this->invoke("%s", $arg, $ctx);', $m->getName()));
+    $method = new MethodGenerator('getConnection');
+    $method->setReturnType(ConnectionInterface::class);
+    $interface->addMethodFromGenerator($method);
+};
 
-    $impl->addMethodFromGenerator($m);
+$buildCreateServiceClientMethod = static function (
+    string $serviceClientClass,
+) use ($addressParam, $optionsParam): MethodGenerator {
+    $method = new MethodGenerator(
+        'createServiceClient',
+        [$addressParam, $optionsParam],
+        MethodGenerator::FLAG_PROTECTED | MethodGenerator::FLAG_STATIC,
+    );
+    $method->setReturnType(BaseStub::class);
+    $method->setBody(\sprintf('return new %s($address, $options);', $serviceClientClass));
+
+    return $method;
+};
+
+$buildGetServerCapabilitiesInterfaceMethod = static function (): MethodGenerator {
+    $method = new MethodGenerator('getServerCapabilities');
+    $method->setReturnType('?' . ServerCapabilities::class);
+
+    return $method;
+};
+
+$buildGetServerCapabilitiesImplementationMethod = static function (): MethodGenerator {
+    $method = new MethodGenerator('getServerCapabilities');
+    $method->setReturnType('?' . ServerCapabilities::class);
+    $method->setBody(<<<'PHP'
+$connection = $this->getInternalConnection();
+if ($connection->capabilities !== null) {
+    return $connection->capabilities;
 }
 
-echo "[OK]\n";
+try {
+    $systemInfo = $this->getSystemInfo(new GetSystemInfoRequest());
+    $capabilities = $systemInfo->getCapabilities();
 
-echo "writing implementation: ";
+    if ($capabilities === null) {
+        return null;
+    }
 
-$file = new Generator\FileGenerator();
-$file->setNamespace('Temporal\\Client\\GRPC');
-$file->setClass($impl);
-$file->setUses(
+    return $connection->capabilities = new ServerCapabilities(
+        signalAndQueryHeader: $capabilities->getSignalAndQueryHeader(),
+        internalErrorDifferentiation: $capabilities->getInternalErrorDifferentiation(),
+        activityFailureIncludeHeartbeat: $capabilities->getActivityFailureIncludeHeartbeat(),
+        supportsSchedules: $capabilities->getSupportsSchedules(),
+        encodedFailureAttributes: $capabilities->getEncodedFailureAttributes(),
+        buildIdBasedVersioning: $capabilities->getBuildIdBasedVersioning(),
+        upsertMemo: $capabilities->getUpsertMemo(),
+        eagerWorkflowStart: $capabilities->getEagerWorkflowStart(),
+        sdkMetadata: $capabilities->getSdkMetadata(),
+        countGroupByExecutionStatus: $capabilities->getCountGroupByExecutionStatus(),
+        nexus: $capabilities->getNexus(),
+    );
+} catch (ServiceClientException $e) {
+    if ($e->getCode() === StatusCode::UNIMPLEMENTED) {
+        return null;
+    }
+
+    throw $e;
+}
+PHP);
+
+    return $method;
+};
+
+$buildSetServerCapabilitiesMethod = static function (): MethodGenerator {
+    $method = new MethodGenerator(
+        'setServerCapabilities',
+        [Generator\ParameterGenerator::fromArray(['type' => ServerCapabilities::class, 'name' => 'capabilities'])],
+    );
+    $method->setBody(<<<'PHP'
+\trigger_error(
+    'Method ' . __METHOD__ . ' is deprecated and will be removed in the next major release.',
+    \E_USER_DEPRECATED,
+);
+PHP);
+
+    return $method;
+};
+
+$clients = [
     [
-        'Temporal\Api\Workflowservice\V1',
-        'Temporal\Exception\Client\ServiceClientException',
-    ]
-);
+        'label' => 'workflow',
+        'serviceClass' => Workflowservice\V1\WorkflowServiceClient::class,
+        'apiNamespacePrefix' => '\Temporal\Api\Workflowservice\\',
+        'interfaceName' => 'ServiceClientInterface',
+        'implementationName' => 'ServiceClient',
+        'interfaceFile' => __DIR__ . '/../../src/Client/GRPC/ServiceClientInterface.php',
+        'implementationFile' => __DIR__ . '/../../src/Client/GRPC/ServiceClient.php',
+        'uses' => [
+            'interface' => [
+                'Temporal\Api\Workflowservice\V1',
+                'Temporal\Client\Common\ServerCapabilities',
+                'Temporal\Exception\Client\ServiceClientException',
+            ],
+            'implementation' => [
+                'Grpc\BaseStub',
+                'Temporal\Api\Workflowservice\V1',
+                'Temporal\Api\Workflowservice\V1\GetSystemInfoRequest',
+                'Temporal\Client\Common\ServerCapabilities',
+                'Temporal\Exception\Client\ServiceClientException',
+            ],
+        ],
+        'extraInterfaceMethods' => static fn(): array => [
+            $buildGetServerCapabilitiesInterfaceMethod(),
+        ],
+        'extraImplementationMethods' => static fn(): array => [
+            $buildCreateServiceClientMethod('V1\WorkflowServiceClient'),
+            $buildGetServerCapabilitiesImplementationMethod(),
+            $buildSetServerCapabilitiesMethod(),
+        ],
+    ],
+    [
+        'label' => 'operator',
+        'serviceClass' => Operatorservice\V1\OperatorServiceClient::class,
+        'apiNamespacePrefix' => '\Temporal\Api\Operatorservice\\',
+        'interfaceName' => 'OperatorClientInterface',
+        'implementationName' => 'OperatorClient',
+        'interfaceFile' => __DIR__ . '/../../src/Client/GRPC/OperatorClientInterface.php',
+        'implementationFile' => __DIR__ . '/../../src/Client/GRPC/OperatorClient.php',
+        'uses' => [
+            'interface' => [
+                'Temporal\Api\Operatorservice\V1',
+                'Temporal\Exception\Client\ServiceClientException',
+            ],
+            'implementation' => [
+                'Grpc\BaseStub',
+                'Temporal\Api\Operatorservice\V1',
+                'Temporal\Exception\Client\ServiceClientException',
+            ],
+        ],
+        'extraInterfaceMethods' => static fn(): array => [],
+        'extraImplementationMethods' => static fn(): array => [
+            $buildCreateServiceClientMethod('V1\OperatorServiceClient'),
+        ],
+    ],
+];
 
-// write and shorten names
-file_put_contents(
-    __DIR__ . '/../../src/Client/GRPC/ServiceClient.php',
-    str_replace(
-        ['\\Temporal\\Api\\Workflowservice\\', '\\Temporal\\Client\\GRPC\\ContextInterface'],
-        ['', 'ContextInterface'],
-        $file->generate()
-    )
-);
-echo "[OK]\n";
+foreach ($clients as $client) {
+    echo "reading {$client['label']} schema: ";
+    $serviceReflection = new ReflectionClass($client['serviceClass']);
+    $methods = $buildRpcMap($serviceReflection);
+    echo "[OK]\n";
+
+    echo "generating {$client['interfaceName']}: ";
+    $interface = new Generator\InterfaceGenerator($client['interfaceName']);
+    $addCommonInterfaceMethods($interface);
+
+    foreach (($client['extraInterfaceMethods'])() as $method) {
+        $interface->addMethodFromGenerator($method);
+    }
+
+    foreach ($methods as $name => $options) {
+        $method = new MethodGenerator($name);
+        $method->setDocBlock($buildMethodDocBlock($serviceReflection, $name, $options['request'], $options['response']));
+        $method->setParameters([
+            Generator\ParameterGenerator::fromArray(['type' => $options['request'], 'name' => 'arg']),
+            $ctxParam,
+        ]);
+        $method->setReturnType($options['response']);
+        $interface->addMethodFromGenerator($method);
+    }
+
+    $method = new MethodGenerator(
+        'close',
+        [],
+        MethodGenerator::FLAG_PUBLIC,
+        null,
+        'Close the communication channel associated with this stub.',
+    );
+    $method->setReturnType('void');
+    $interface->addMethodFromGenerator($method);
+    echo "[OK]\n";
+
+    echo "writing {$client['interfaceName']}: ";
+    $file = new Generator\FileGenerator();
+    $file->setNamespace('Temporal\\Client\\GRPC');
+    $file->setClass($interface);
+    $file->setUses($client['uses']['interface']);
+
+    \file_put_contents(
+        $client['interfaceFile'],
+        \str_replace(
+            [$client['apiNamespacePrefix'], '\\Temporal\\Client\\GRPC\\ContextInterface'],
+            ['', 'ContextInterface'],
+            $file->generate(),
+        ),
+    );
+    echo "[OK]\n";
+
+    echo "generating {$client['implementationName']}: ";
+    $implementation = new Generator\ClassGenerator($client['implementationName']);
+    $implementation->setExtendedClass('BaseClient');
+    $implementation->setImplementedInterfaces([$client['interfaceName']]);
+
+    foreach (($client['extraImplementationMethods'])() as $method) {
+        $implementation->addMethodFromGenerator($method);
+    }
+
+    foreach ($methods as $name => $options) {
+        $method = new MethodGenerator($name);
+        $method->setDocBlock($buildMethodDocBlock($serviceReflection, $name, $options['request'], $options['response']));
+        $method->setParameters([
+            Generator\ParameterGenerator::fromArray(['type' => $options['request'], 'name' => 'arg']),
+            $ctxParam,
+        ]);
+        $method->setReturnType($options['response']);
+        $method->setBody(\sprintf('return $this->invoke("%s", $arg, $ctx);', $name));
+        $implementation->addMethodFromGenerator($method);
+    }
+    echo "[OK]\n";
+
+    echo "writing {$client['implementationName']}: ";
+    $file = new Generator\FileGenerator();
+    $file->setNamespace('Temporal\\Client\\GRPC');
+    $file->setClass($implementation);
+    $file->setUses($client['uses']['implementation']);
+
+    \file_put_contents(
+        $client['implementationFile'],
+        \str_replace(
+            [$client['apiNamespacePrefix'], '\\Temporal\\Client\\GRPC\\ContextInterface'],
+            ['', 'ContextInterface'],
+            $file->generate(),
+        ),
+    );
+    echo "[OK]\n";
+}

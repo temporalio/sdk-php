@@ -12,12 +12,10 @@ declare(strict_types=1);
 namespace Temporal\Client\GRPC;
 
 use Carbon\CarbonInterval;
+use Grpc\BaseStub;
 use Grpc\UnaryCall;
-use Temporal\Api\Workflowservice\V1\GetSystemInfoRequest;
-use Temporal\Api\Workflowservice\V1\WorkflowServiceClient;
 use Temporal\Client\Common\BackoffThrottler;
 use Temporal\Client\Common\RpcRetryOptions;
-use Temporal\Client\Common\ServerCapabilities;
 use Temporal\Client\GRPC\Connection\Connection;
 use Temporal\Client\GRPC\Connection\ConnectionInterface;
 use Temporal\Exception\Client\CanceledException;
@@ -26,7 +24,7 @@ use Temporal\Exception\Client\TimeoutException;
 use Temporal\Interceptor\GrpcClientInterceptor;
 use Temporal\Internal\Interceptor\Pipeline;
 
-abstract class BaseClient implements ServiceClientInterface
+abstract class BaseClient
 {
     public const RETRYABLE_ERRORS = [
         StatusCode::RESOURCE_EXHAUSTED,
@@ -42,23 +40,23 @@ abstract class BaseClient implements ServiceClientInterface
     private \Stringable|string $apiKey = '';
 
     /**
-     * @param WorkflowServiceClient|\Closure(): WorkflowServiceClient $workflowService Service Client or its factory
+     * @param BaseStub|\Closure(): BaseStub $serviceClient Service Client or its factory
      *
      * @private Use static factory methods instead
      * @see self::create()
      * @see self::createSSL()
      */
-    final public function __construct(WorkflowServiceClient|\Closure $workflowService)
+    final public function __construct(BaseStub|\Closure $serviceClient)
     {
-        if ($workflowService instanceof WorkflowServiceClient) {
+        if ($serviceClient instanceof BaseStub) {
             \trigger_error(
-                'Creating a ServiceClient instance via constructor is deprecated. Use static factory methods instead.',
+                'Creating a gRPC client instance via constructor is deprecated. Use static factory methods instead.',
                 \E_USER_DEPRECATED,
             );
-            $workflowService = static fn(): WorkflowServiceClient => $workflowService;
+            $serviceClient = static fn(): BaseStub => $serviceClient;
         }
 
-        $this->connection = new Connection($workflowService);
+        $this->connection = new Connection($serviceClient);
         $this->context = Context::default();
     }
 
@@ -72,10 +70,12 @@ abstract class BaseClient implements ServiceClientInterface
             throw new \RuntimeException('The gRPC extension is required to use Temporal Client.');
         }
 
-        return new static(static fn(): WorkflowServiceClient => new WorkflowServiceClient(
-            $address,
-            ['credentials' => \Grpc\ChannelCredentials::createInsecure()],
-        ));
+        return new static(
+            static fn(): BaseStub => static::createServiceClient(
+                $address,
+                ['credentials' => \Grpc\ChannelCredentials::createInsecure()],
+            ),
+        );
     }
 
     /**
@@ -123,7 +123,7 @@ abstract class BaseClient implements ServiceClientInterface
             $options['grpc.ssl_target_name_override'] = $overrideServerName;
         }
 
-        return new static(static fn(): WorkflowServiceClient => new WorkflowServiceClient($address, $options));
+        return new static(static fn(): BaseStub => static::createServiceClient($address, $options));
     }
 
     public function getContext(): ContextInterface
@@ -175,57 +175,18 @@ abstract class BaseClient implements ServiceClientInterface
         return $clone;
     }
 
-    public function getServerCapabilities(): ?ServerCapabilities
-    {
-        if ($this->connection->capabilities !== null) {
-            return $this->connection->capabilities;
-        }
-
-        try {
-            $systemInfo = $this->getSystemInfo(new GetSystemInfoRequest());
-            $capabilities = $systemInfo->getCapabilities();
-
-            if ($capabilities === null) {
-                return null;
-            }
-
-            return $this->connection->capabilities = new ServerCapabilities(
-                signalAndQueryHeader: $capabilities->getSignalAndQueryHeader(),
-                internalErrorDifferentiation: $capabilities->getInternalErrorDifferentiation(),
-                activityFailureIncludeHeartbeat: $capabilities->getActivityFailureIncludeHeartbeat(),
-                supportsSchedules: $capabilities->getSupportsSchedules(),
-                encodedFailureAttributes: $capabilities->getEncodedFailureAttributes(),
-                buildIdBasedVersioning: $capabilities->getBuildIdBasedVersioning(),
-                upsertMemo: $capabilities->getUpsertMemo(),
-                eagerWorkflowStart: $capabilities->getEagerWorkflowStart(),
-                sdkMetadata: $capabilities->getSdkMetadata(),
-                countGroupByExecutionStatus: $capabilities->getCountGroupByExecutionStatus(),
-                nexus: $capabilities->getNexus(),
-            );
-        } catch (ServiceClientException $e) {
-            if ($e->getCode() === StatusCode::UNIMPLEMENTED) {
-                return null;
-            }
-
-            throw $e;
-        }
-    }
-
-    /**
-     * @deprecated
-     */
-    public function setServerCapabilities(ServerCapabilities $capabilities): void
-    {
-        \trigger_error(
-            'Method ' . __METHOD__ . ' is deprecated and will be removed in the next major release.',
-            \E_USER_DEPRECATED,
-        );
-    }
-
     /**
      * Note: Experimental
      */
     public function getConnection(): ConnectionInterface
+    {
+        return $this->connection;
+    }
+
+    /**
+     * @internal
+     */
+    final protected function getInternalConnection(): Connection
     {
         return $this->connection;
     }
@@ -253,6 +214,12 @@ abstract class BaseClient implements ServiceClientInterface
     }
 
     /**
+     * @param non-empty-string $address Temporal service address in format `host:port`
+     * @param array<array-key, mixed> $options
+     */
+    abstract protected static function createServiceClient(string $address, array $options): BaseStub;
+
+    /**
      * Call a gRPC method.
      * Used in {@see withInterceptorPipeline()}
      *
@@ -277,7 +244,7 @@ abstract class BaseClient implements ServiceClientInterface
                 }
 
                 /** @var UnaryCall $call */
-                $call = $this->connection->getWorkflowService()->{$method}($arg, $ctx->getMetadata(), $options);
+                $call = $this->connection->getClient()->{$method}($arg, $ctx->getMetadata(), $options);
                 [$result, $status] = $call->wait();
 
                 if ($status->code !== 0) {
