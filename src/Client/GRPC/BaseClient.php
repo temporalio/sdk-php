@@ -24,7 +24,7 @@ use Temporal\Exception\Client\TimeoutException;
 use Temporal\Interceptor\GrpcClientInterceptor;
 use Temporal\Internal\Interceptor\Pipeline;
 
-abstract class BaseClient
+abstract class BaseClient implements GrpcClientInterface
 {
     public const RETRYABLE_ERRORS = [
         StatusCode::RESOURCE_EXHAUSTED,

@@ -18,9 +18,6 @@ class OperatorClient extends BaseClient implements OperatorClientInterface
      * temporal.api.errordetails.v1.SystemWorkflowFailure in Error Details if
      * registration process fails,
      *
-     * @param V1\AddSearchAttributesRequest $arg
-     * @param ContextInterface|null $ctx
-     * @return V1\AddSearchAttributesResponse
      * @throws ServiceClientException
      */
     public function AddSearchAttributes(V1\AddSearchAttributesRequest $arg, ?ContextInterface $ctx = null): V1\AddSearchAttributesResponse
@@ -34,9 +31,6 @@ class OperatorClient extends BaseClient implements OperatorClientInterface
      * Returns NOT_FOUND status code if a Search Attribute with any of the specified
      * names is not registered
      *
-     * @param V1\RemoveSearchAttributesRequest $arg
-     * @param ContextInterface|null $ctx
-     * @return V1\RemoveSearchAttributesResponse
      * @throws ServiceClientException
      */
     public function RemoveSearchAttributes(V1\RemoveSearchAttributesRequest $arg, ?ContextInterface $ctx = null): V1\RemoveSearchAttributesResponse
@@ -47,9 +41,6 @@ class OperatorClient extends BaseClient implements OperatorClientInterface
     /**
      * ListSearchAttributes returns comprehensive information about search attributes.
      *
-     * @param V1\ListSearchAttributesRequest $arg
-     * @param ContextInterface|null $ctx
-     * @return V1\ListSearchAttributesResponse
      * @throws ServiceClientException
      */
     public function ListSearchAttributes(V1\ListSearchAttributesRequest $arg, ?ContextInterface $ctx = null): V1\ListSearchAttributesResponse
@@ -61,9 +52,6 @@ class OperatorClient extends BaseClient implements OperatorClientInterface
      * DeleteNamespace synchronously deletes a namespace and asynchronously reclaims
      * all namespace resources.
      *
-     * @param V1\DeleteNamespaceRequest $arg
-     * @param ContextInterface|null $ctx
-     * @return V1\DeleteNamespaceResponse
      * @throws ServiceClientException
      */
     public function DeleteNamespace(V1\DeleteNamespaceRequest $arg, ?ContextInterface $ctx = null): V1\DeleteNamespaceResponse
@@ -74,9 +62,6 @@ class OperatorClient extends BaseClient implements OperatorClientInterface
     /**
      * AddOrUpdateRemoteCluster adds or updates remote cluster.
      *
-     * @param V1\AddOrUpdateRemoteClusterRequest $arg
-     * @param ContextInterface|null $ctx
-     * @return V1\AddOrUpdateRemoteClusterResponse
      * @throws ServiceClientException
      */
     public function AddOrUpdateRemoteCluster(V1\AddOrUpdateRemoteClusterRequest $arg, ?ContextInterface $ctx = null): V1\AddOrUpdateRemoteClusterResponse
@@ -87,9 +72,6 @@ class OperatorClient extends BaseClient implements OperatorClientInterface
     /**
      * RemoveRemoteCluster removes remote cluster.
      *
-     * @param V1\RemoveRemoteClusterRequest $arg
-     * @param ContextInterface|null $ctx
-     * @return V1\RemoveRemoteClusterResponse
      * @throws ServiceClientException
      */
     public function RemoveRemoteCluster(V1\RemoveRemoteClusterRequest $arg, ?ContextInterface $ctx = null): V1\RemoveRemoteClusterResponse
@@ -100,9 +82,6 @@ class OperatorClient extends BaseClient implements OperatorClientInterface
     /**
      * ListClusters returns information about Temporal clusters.
      *
-     * @param V1\ListClustersRequest $arg
-     * @param ContextInterface|null $ctx
-     * @return V1\ListClustersResponse
      * @throws ServiceClientException
      */
     public function ListClusters(V1\ListClustersRequest $arg, ?ContextInterface $ctx = null): V1\ListClustersResponse
@@ -114,9 +93,6 @@ class OperatorClient extends BaseClient implements OperatorClientInterface
      * Get a registered Nexus endpoint by ID. The returned version can be used for
      * optimistic updates.
      *
-     * @param V1\GetNexusEndpointRequest $arg
-     * @param ContextInterface|null $ctx
-     * @return V1\GetNexusEndpointResponse
      * @throws ServiceClientException
      */
     public function GetNexusEndpoint(V1\GetNexusEndpointRequest $arg, ?ContextInterface $ctx = null): V1\GetNexusEndpointResponse
@@ -131,9 +107,6 @@ class OperatorClient extends BaseClient implements OperatorClientInterface
      * Returns the created endpoint with its initial version. You may use this version
      * for subsequent updates.
      *
-     * @param V1\CreateNexusEndpointRequest $arg
-     * @param ContextInterface|null $ctx
-     * @return V1\CreateNexusEndpointResponse
      * @throws ServiceClientException
      */
     public function CreateNexusEndpoint(V1\CreateNexusEndpointRequest $arg, ?ContextInterface $ctx = null): V1\CreateNexusEndpointResponse
@@ -152,9 +125,6 @@ class OperatorClient extends BaseClient implements OperatorClientInterface
      * need to increment the version yourself. The server will increment the version
      * for you after each update.
      *
-     * @param V1\UpdateNexusEndpointRequest $arg
-     * @param ContextInterface|null $ctx
-     * @return V1\UpdateNexusEndpointResponse
      * @throws ServiceClientException
      */
     public function UpdateNexusEndpoint(V1\UpdateNexusEndpointRequest $arg, ?ContextInterface $ctx = null): V1\UpdateNexusEndpointResponse
@@ -165,9 +135,6 @@ class OperatorClient extends BaseClient implements OperatorClientInterface
     /**
      * Delete an incoming Nexus service by ID.
      *
-     * @param V1\DeleteNexusEndpointRequest $arg
-     * @param ContextInterface|null $ctx
-     * @return V1\DeleteNexusEndpointResponse
      * @throws ServiceClientException
      */
     public function DeleteNexusEndpoint(V1\DeleteNexusEndpointRequest $arg, ?ContextInterface $ctx = null): V1\DeleteNexusEndpointResponse
@@ -184,9 +151,6 @@ class OperatorClient extends BaseClient implements OperatorClientInterface
      * service with an ID lexicographically
      * earlier than the previous page's last endpoint's ID may be missed.
      *
-     * @param V1\ListNexusEndpointsRequest $arg
-     * @param ContextInterface|null $ctx
-     * @return V1\ListNexusEndpointsResponse
      * @throws ServiceClientException
      */
     public function ListNexusEndpoints(V1\ListNexusEndpointsRequest $arg, ?ContextInterface $ctx = null): V1\ListNexusEndpointsResponse
