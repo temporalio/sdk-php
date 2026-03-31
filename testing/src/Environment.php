@@ -205,7 +205,7 @@ final class Environment
         }
 
         $this->roadRunnerProcess = new Process(
-            command: $rrCommand ?? [$this->systemInfo->rrExecutable, 'serve'],
+            command: $rrCommand ?? [$this->systemInfo->rrExecutable, 'serve', '-c', $configFile],
             env: $envs,
         );
         $this->roadRunnerProcess->setTimeout($commandTimeout);
