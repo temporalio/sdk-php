@@ -203,9 +203,11 @@ final class Environment
             ]);
             exit(1);
         }
+        
+        $rrCommand ??= [$this->systemInfo->rrExecutable, 'serve', '-c', $configFile]
 
         $this->roadRunnerProcess = new Process(
-            command: $rrCommand ?? [$this->systemInfo->rrExecutable, 'serve', '-c', $configFile],
+            command: $rrCommand,
             env: $envs,
         );
         $this->roadRunnerProcess->setTimeout($commandTimeout);
@@ -219,7 +221,7 @@ final class Environment
         $deadline = \microtime(true) + (float) $commandTimeout;
         while ($this->roadRunnerProcess->isRunning() && !$roadRunnerStarted && \microtime(true) < $deadline) {
             \usleep(10_000);
-            $check = new Process([$this->systemInfo->rrExecutable, 'workers', '-c', $configFile]);
+            $check = new Process(array_map(static fn ($arg) => $arg === 'serve' ? 'workers' : $arg, $rrCommand));
             $check->run();
             if (\str_contains($check->getOutput(), 'Workers of')) {
                 $roadRunnerStarted = true;
