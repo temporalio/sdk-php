@@ -443,6 +443,11 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         return new ActivityStub($this->services->marshaller, $options, $this->getHeader());
     }
 
+    /**
+     * @psalm-template T of object
+     * @param class-string<T> $class
+     * @return ActivityProxy<T>
+     */
     public function newActivityStub(
         string $class,
         ?ActivityOptionsInterface $options = null,

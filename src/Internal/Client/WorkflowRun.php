@@ -17,6 +17,10 @@ use Temporal\DataConverter\Type;
 use Temporal\Workflow\WorkflowExecution;
 use Temporal\Workflow\WorkflowRunInterface;
 
+/**
+ * @template ReturnType
+ * @implements WorkflowRunInterface<ReturnType>
+ */
 final class WorkflowRun implements WorkflowRunInterface
 {
     /**
