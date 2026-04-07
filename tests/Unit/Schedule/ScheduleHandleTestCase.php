@@ -19,6 +19,7 @@ use Temporal\Api\Workflowservice\V1\UpdateScheduleRequest;
 use Temporal\Api\Workflowservice\V1\UpdateScheduleResponse;
 use Temporal\Client\ClientOptions;
 use Temporal\Client\GRPC\ServiceClientInterface;
+use Temporal\Client\GRPC\StatusCode;
 use Temporal\Client\Schedule\BackfillPeriod;
 use PHPUnit\Framework\TestCase;
 use Temporal\Client\Schedule\Policy\ScheduleOverlapPolicy;
@@ -29,6 +30,7 @@ use Temporal\Client\Schedule\Update\ScheduleUpdateInput;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedCollection;
+use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\InvalidArgumentException;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
@@ -238,7 +240,7 @@ class ScheduleHandleTestCase extends TestCase
         $clientMock = $this->createMock(ServiceClientInterface::class);
         $clientMock->expects($this->once())
             ->method('DescribeSchedule')
-            ->willReturn((new DescribeScheduleResponse()));
+            ->willReturn((new DescribeScheduleResponse())->setConflictToken('describe-conflict-token'));
         $clientMock->expects($this->once())
             ->method('UpdateSchedule')
             ->with($this->callback(fn (UpdateScheduleRequest $request) => $testContext->request = $request or true))
@@ -250,13 +252,14 @@ class ScheduleHandleTestCase extends TestCase
             $sa = EncodedCollection::fromValues(['foo' => 'bar']);
             return ScheduleUpdate::new($schedule)
                 ->withSearchAttributes($sa);
-        }, 'test-conflict-token');
+        });
 
         $this->assertTrue(isset($testContext->request));
         $this->assertSame('default', $testContext->request->getNamespace());
         $this->assertSame('test-id', $testContext->request->getScheduleId());
         $this->assertSame('test-identity', $testContext->request->getIdentity());
-        $this->assertSame('test-conflict-token', $testContext->request->getConflictToken());
+        // Conflict token should come from describe(), not from the argument
+        $this->assertSame('describe-conflict-token', $testContext->request->getConflictToken());
         $this->assertNotNull($testContext->request->getRequestId());
         $this->assertNotNull($testContext->request->getSchedule());
         // Search attributes
@@ -265,6 +268,122 @@ class ScheduleHandleTestCase extends TestCase
             DataConverter::createDefault(),
         )->getValues();
         $this->assertSame(['foo' => 'bar'], $sa);
+    }
+
+    public function testUpdateWithClosureRetriesOnConflictTokenMismatch(): void
+    {
+        $testContext = new class {
+            public int $describeCount = 0;
+            public int $updateCount = 0;
+            public UpdateScheduleRequest $request;
+        };
+
+        $clientMock = $this->createMock(ServiceClientInterface::class);
+        $clientMock->expects($this->exactly(3))
+            ->method('DescribeSchedule')
+            ->willReturnCallback(function () use ($testContext) {
+                $testContext->describeCount++;
+                return (new DescribeScheduleResponse())
+                    ->setConflictToken('token-' . $testContext->describeCount);
+            });
+        $clientMock->expects($this->exactly(3))
+            ->method('UpdateSchedule')
+            ->willReturnCallback(function (UpdateScheduleRequest $request) use ($testContext) {
+                $testContext->updateCount++;
+                $testContext->request = $request;
+                // Fail first 2 attempts with conflict token mismatch
+                if ($testContext->updateCount < 3) {
+                    throw new ServiceClientException((object) [
+                        'code' => StatusCode::FAILED_PRECONDITION,
+                        'details' => 'mismatched conflict token',
+                        'metadata' => [],
+                    ]);
+                }
+                return new UpdateScheduleResponse();
+            });
+
+        $scheduleHandle = $this->createScheduleHandle(client: $clientMock);
+
+        $closureCallCount = 0;
+        $scheduleHandle->update(function (ScheduleUpdateInput $input) use (&$closureCallCount): ScheduleUpdate {
+            $closureCallCount++;
+            return ScheduleUpdate::new(Schedule::new());
+        });
+
+        $this->assertSame(3, $testContext->describeCount);
+        $this->assertSame(3, $testContext->updateCount);
+        $this->assertSame(3, $closureCallCount);
+        // Last request should have the token from the 3rd describe
+        $this->assertSame('token-3', $testContext->request->getConflictToken());
+    }
+
+    public function testUpdateWithClosureThrowsNonConflictError(): void
+    {
+        $clientMock = $this->createMock(ServiceClientInterface::class);
+        $clientMock->expects($this->once())
+            ->method('DescribeSchedule')
+            ->willReturn((new DescribeScheduleResponse())->setConflictToken('token'));
+        $clientMock->expects($this->once())
+            ->method('UpdateSchedule')
+            ->willThrowException(new ServiceClientException((object) [
+                'code' => StatusCode::NOT_FOUND,
+                'details' => 'schedule not found',
+                'metadata' => [],
+            ]));
+
+        $scheduleHandle = $this->createScheduleHandle(client: $clientMock);
+
+        $this->expectException(ServiceClientException::class);
+        $this->expectExceptionCode(StatusCode::NOT_FOUND);
+
+        $scheduleHandle->update(function (ScheduleUpdateInput $input): ScheduleUpdate {
+            return ScheduleUpdate::new(Schedule::new());
+        });
+    }
+
+    public function testUpdateWithClosureExhaustsRetries(): void
+    {
+        $clientMock = $this->createMock(ServiceClientInterface::class);
+        $clientMock->expects($this->exactly(10))
+            ->method('DescribeSchedule')
+            ->willReturn((new DescribeScheduleResponse())->setConflictToken('stale-token'));
+        $clientMock->expects($this->exactly(10))
+            ->method('UpdateSchedule')
+            ->willThrowException(new ServiceClientException((object) [
+                'code' => StatusCode::FAILED_PRECONDITION,
+                'details' => 'mismatched conflict token',
+                'metadata' => [],
+            ]));
+
+        $scheduleHandle = $this->createScheduleHandle(client: $clientMock);
+
+        $this->expectException(ServiceClientException::class);
+        $this->expectExceptionCode(StatusCode::FAILED_PRECONDITION);
+
+        $scheduleHandle->update(function (ScheduleUpdateInput $input): ScheduleUpdate {
+            return ScheduleUpdate::new(Schedule::new());
+        });
+    }
+
+    public function testUpdateWithDirectScheduleDoesNotRetryOnConflict(): void
+    {
+        $clientMock = $this->createMock(ServiceClientInterface::class);
+        $clientMock->expects($this->never())
+            ->method('DescribeSchedule');
+        $clientMock->expects($this->once())
+            ->method('UpdateSchedule')
+            ->willThrowException(new ServiceClientException((object) [
+                'code' => StatusCode::FAILED_PRECONDITION,
+                'details' => 'mismatched conflict token',
+                'metadata' => [],
+            ]));
+
+        $scheduleHandle = $this->createScheduleHandle(client: $clientMock);
+
+        $this->expectException(ServiceClientException::class);
+        $this->expectExceptionCode(StatusCode::FAILED_PRECONDITION);
+
+        $scheduleHandle->update(Schedule::new(), 'old-token');
     }
 
     public function testDescribe(): void

@@ -17,12 +17,14 @@ use Temporal\Api\Workflowservice\V1\UpdateScheduleRequest;
 use Temporal\Client\ClientOptions;
 use Temporal\Client\Common\ClientContextTrait;
 use Temporal\Client\GRPC\ServiceClientInterface;
+use Temporal\Client\GRPC\StatusCode;
 use Temporal\Client\Schedule\Info\ScheduleDescription;
 use Temporal\Client\Schedule\Policy\ScheduleOverlapPolicy;
 use Temporal\Client\Schedule\Update\ScheduleUpdate;
 use Temporal\Client\Schedule\Update\ScheduleUpdateInput;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverterInterface;
+use Temporal\Exception\Client\ServiceClientException;
 use Temporal\Exception\InvalidArgumentException;
 use Temporal\Internal\Mapper\ScheduleMapper;
 use Temporal\Internal\Marshaller\MarshallerInterface;
@@ -31,6 +33,11 @@ use Temporal\Internal\Marshaller\ProtoToArrayConverter;
 final class ScheduleHandle
 {
     use ClientContextTrait;
+
+    /**
+     * Maximum number of retry attempts for conflict token mismatches when using a closure updater.
+     */
+    private const CONFLICT_TOKEN_MAX_RETRIES = 10;
 
     public function __construct(
         ServiceClientInterface $client,
@@ -55,32 +62,9 @@ final class ScheduleHandle
     /**
      * Update the Schedule.
      *
-     * Examples:
-     *
-     * Add a search attribute to the schedule:
-     * ```
-     *  $handle->update(function (ScheduleUpdateInput $input): ScheduleUpdate {
-     *      return ScheduleUpdate::new($input->description->schedule)
-     *          ->withSearchAttributes($input->description->searchAttributes
-     *              ->withValue('foo', 'bar'),
-     *              ->withValue('bar', 42),
-     *          );
-     * });
-     * ```
-     *
-     * Pause a described schedule:
-     * ```
-     *  $description = $handle->describe();
-     *  $schedule = $description->schedule;
-     *  $handle->update(
-     *      $schedule
-     *          ->withState($schedule->state->withPaused(true)),
-     *      $description->conflictToken,
-     *  );
-     * ```
-     *
-     * NOTE: If two Update calls are made in parallel to the same Schedule there is the potential
-     * for a race condition. Use $conflictToken to avoid this.
+     * NOTE: When using a closure, the update will automatically retry (up to 10 times) if a conflict
+     * token mismatch occurs, re-fetching the schedule description each time. When passing a Schedule
+     * directly, no retry is performed and the caller is responsible for handling conflicts.
      *
      * @param Schedule|\Closure(ScheduleUpdateInput): ScheduleUpdate $schedule The new Schedule to update to or
      *        a closure that will be passed the current ScheduleDescription and should return a ScheduleUpdate.
@@ -93,37 +77,12 @@ final class ScheduleHandle
         Schedule|\Closure $schedule,
         ?string $conflictToken = null,
     ): void {
-        $request = (new UpdateScheduleRequest())
-            ->setScheduleId($this->id)
-            ->setNamespace($this->namespace)
-            ->setConflictToken((string) $conflictToken)
-            ->setIdentity($this->clientOptions->identity)
-            ->setRequestId(Uuid::v4());
-
         if ($schedule instanceof \Closure) {
-            $description = $this->describe();
-            $update = $schedule(new ScheduleUpdateInput($description));
-            $update instanceof ScheduleUpdate or throw new InvalidArgumentException(
-                'Closure for the schedule update method must return a ScheduleUpdate.',
-            );
-
-            $schedule = $update->schedule;
-
-            // Search attributes
-            if ($update->searchAttributes !== null) {
-                $update->searchAttributes->setDataConverter($this->converter);
-                $payloads = $update->searchAttributes->toPayloadArray();
-                $encodedSa = (new SearchAttributes())->setIndexedFields($payloads);
-                $request->setSearchAttributes($encodedSa);
-            }
+            $this->updateWithClosure($schedule);
+            return;
         }
 
-        $mapper = new ScheduleMapper($this->converter, $this->marshaller);
-        $scheduleMessage = $mapper->toMessage($schedule);
-        $request->setSchedule($scheduleMessage);
-
-
-        $this->client->UpdateSchedule($request);
+        $this->doUpdate($schedule, $conflictToken);
     }
 
     /**
@@ -248,6 +207,63 @@ final class ScheduleHandle
             ->setIdentity($this->clientOptions->identity);
 
         $this->client->DeleteSchedule($request);
+    }
+
+    private function updateWithClosure(\Closure $updater): void
+    {
+        for ($attempt = 0; $attempt < self::CONFLICT_TOKEN_MAX_RETRIES; $attempt++) {
+            $description = $this->describe();
+            $update = $updater(new ScheduleUpdateInput($description));
+            $update instanceof ScheduleUpdate or throw new InvalidArgumentException(
+                'Closure for the schedule update method must return a ScheduleUpdate.',
+            );
+
+            try {
+                $this->doUpdate($update->schedule, $description->conflictToken, $update);
+                return;
+            } catch (ServiceClientException $e) {
+                if ($e->getCode() !== StatusCode::FAILED_PRECONDITION
+                    || !\str_contains($e->getMessage(), 'conflict token')
+                ) {
+                    throw $e;
+                }
+
+                // Conflict token mismatch — retry with a fresh describe
+            }
+        }
+
+        throw new ServiceClientException((object) [
+            'code' => StatusCode::FAILED_PRECONDITION,
+            'details' => \sprintf(
+                'Schedule update conflict token mismatch after %d retries',
+                self::CONFLICT_TOKEN_MAX_RETRIES,
+            ),
+            'metadata' => [],
+        ]);
+    }
+
+    private function doUpdate(Schedule $schedule, ?string $conflictToken, ?ScheduleUpdate $update = null): void
+    {
+        $request = (new UpdateScheduleRequest())
+            ->setScheduleId($this->id)
+            ->setNamespace($this->namespace)
+            ->setConflictToken((string) $conflictToken)
+            ->setIdentity($this->clientOptions->identity)
+            ->setRequestId(Uuid::v4());
+
+        // Search attributes from closure-based update
+        if ($update?->searchAttributes !== null) {
+            $update->searchAttributes->setDataConverter($this->converter);
+            $payloads = $update->searchAttributes->toPayloadArray();
+            $encodedSa = (new SearchAttributes())->setIndexedFields($payloads);
+            $request->setSearchAttributes($encodedSa);
+        }
+
+        $mapper = new ScheduleMapper($this->converter, $this->marshaller);
+        $scheduleMessage = $mapper->toMessage($schedule);
+        $request->setSchedule($scheduleMessage);
+
+        $this->client->UpdateSchedule($request);
     }
 
     private function patch(SchedulePatch $patch): PatchScheduleRequest
