@@ -46,11 +46,10 @@ final class RRStarter
         ];
         $run->tlsKey === null or $rrCommand = [...$rrCommand, '-o', "tls.key={$run->tlsKey}"];
         $run->tlsCert === null or $rrCommand = [...$rrCommand, '-o', "tls.cert={$run->tlsCert}"];
-        $command = \implode(' ', $rrCommand);
 
         // echo "\e[1;36mStart RoadRunner with command:\e[0m {$command}\n";
         $this->environment->startRoadRunner(
-            rrCommand: $command,
+            rrCommand: $rrCommand,
             configFile: $this->runtime->rrConfigDir . DIRECTORY_SEPARATOR . '.rr.yaml',
         );
     }

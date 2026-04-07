@@ -136,9 +136,11 @@ final class Priority
      */
     public function withFairnessWeight(float $value): self
     {
-        $value < 0.001 or $value > 1000.0 and throw new \InvalidArgumentException(
-            'FairnessWeight must be in the range [0.001, 1000].',
-        );
+        if ($value < 0.001 || $value > 1000.0) {
+            throw new \InvalidArgumentException(
+                'FairnessWeight must be in the range [0.001, 1000].',
+            );
+        }
         $clone = clone $this;
         $clone->fairnessWeight = $value;
         return $clone;

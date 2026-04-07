@@ -38,6 +38,9 @@ class WorkerFactory extends \Temporal\WorkerFactory
         parent::__construct($dataConverter, $rpc, $credentials ?? ServiceCredentials::create());
     }
 
+    /**
+     * @psalm-suppress UnsafeInstantiation
+     */
     public static function create(
         ?DataConverterInterface $converter = null,
         ?RPCConnectionInterface $rpc = null,
@@ -63,7 +66,7 @@ class WorkerFactory extends \Temporal\WorkerFactory
         $worker = new WorkerMock(
             new Worker(
                 $taskQueue,
-                $options ?? WorkerOptions::new(),
+                $options,
                 ServiceContainer::fromWorkerFactory(
                     $this,
                     $exceptionInterceptor ?? ExceptionInterceptor::createDefault(),
