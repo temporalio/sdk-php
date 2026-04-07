@@ -65,6 +65,21 @@ final class Pipeline
     }
 
     /**
+     * Merge two pipelines into one. Interceptors from the first pipeline run before the second.
+     *
+     * @template T of object
+     *
+     * @param self<T, mixed> $first
+     * @param self<T, mixed> $second
+     *
+     * @return self<T, mixed>
+     */
+    public static function merge(self $first, self $second): self
+    {
+        return new self([...$first->interceptors, ...$second->interceptors]);
+    }
+
+    /**
      * @param non-empty-string $method Method name of the all interceptors.
      *
      * @return TCallable

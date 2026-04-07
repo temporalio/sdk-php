@@ -12,21 +12,19 @@ declare(strict_types=1);
 namespace Temporal\Plugin;
 
 use Temporal\Interceptor\PipelineProvider;
-use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Internal\Interceptor\Interceptor;
 use Temporal\Internal\Interceptor\Pipeline;
 
 /**
  * Pipeline provider that merges plugin-contributed interceptors with a base provider.
  *
- * If the base provider is a {@see SimplePipelineProvider}, interceptors are prepended directly.
- * For other providers, only plugin interceptors are used (base provider is replaced).
+ * Plugin interceptors are prepended before base provider interceptors,
+ * so they execute first in the pipeline chain.
  *
  * @internal
  */
 final class CompositePipelineProvider implements PipelineProvider
 {
-    private readonly PipelineProvider $delegate;
     private array $cache = [];
 
     /**
@@ -36,22 +34,18 @@ final class CompositePipelineProvider implements PipelineProvider
     public function __construct(
         private readonly array $pluginInterceptors,
         private readonly PipelineProvider $baseProvider,
-    ) {
-        $this->delegate = match (true) {
-            $pluginInterceptors === [] => $baseProvider,
-            $baseProvider instanceof SimplePipelineProvider => $baseProvider->withPrependedInterceptors($pluginInterceptors),
-            default => $this,
-        };
-    }
+    ) {}
 
     public function getPipeline(string $interceptorClass): Pipeline
     {
-        if ($this->delegate !== $this) {
-            return $this->delegate->getPipeline($interceptorClass);
-        }
-
         if (isset($this->cache[$interceptorClass])) {
             return $this->cache[$interceptorClass];
+        }
+
+        $basePipeline = $this->baseProvider->getPipeline($interceptorClass);
+
+        if ($this->pluginInterceptors === []) {
+            return $this->cache[$interceptorClass] = $basePipeline;
         }
 
         $filtered = \array_filter(
@@ -60,11 +54,9 @@ final class CompositePipelineProvider implements PipelineProvider
         );
 
         if ($filtered === []) {
-            return $this->cache[$interceptorClass] = $this->baseProvider->getPipeline($interceptorClass);
+            return $this->cache[$interceptorClass] = $basePipeline;
         }
 
-        // Use only plugin interceptors - the base pipeline is lost in this edge case.
-        // Users should either use plugins OR a custom PipelineProvider, not both.
-        return $this->cache[$interceptorClass] = Pipeline::prepare($filtered);
+        return $this->cache[$interceptorClass] = Pipeline::merge(Pipeline::prepare($filtered), $basePipeline);
     }
 }

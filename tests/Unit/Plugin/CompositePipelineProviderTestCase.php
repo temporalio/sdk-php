@@ -63,7 +63,7 @@ class CompositePipelineProviderTestCase extends TestCase
         $customProvider = new class implements PipelineProvider {
             public function getPipeline(string $interceptorClass): Pipeline
             {
-                return Pipeline::prepare([]);
+                return Pipeline::prepare([new TestOrderInterceptor('B')]);
             }
         };
 
@@ -74,7 +74,34 @@ class CompositePipelineProviderTestCase extends TestCase
         /** @see TestOrderInterceptor::handle() */
         $result = $pipeline->with(static fn(string $s) => $s, 'handle')('_');
 
-        self::assertSame('_P', $result);
+        // Plugin interceptor (P) runs before base provider interceptor (B)
+        self::assertSame('_PB', $result);
+    }
+
+    public function testCustomProviderInterceptorsNotLostWhenPluginsPresent(): void
+    {
+        // Regression: custom provider's interceptors must NOT be silently dropped
+        // when plugin interceptors are also present.
+        $customProvider = new class implements PipelineProvider {
+            public function getPipeline(string $interceptorClass): Pipeline
+            {
+                return Pipeline::prepare([
+                    new TestOrderInterceptor('C1'),
+                    new TestOrderInterceptor('C2'),
+                ]);
+            }
+        };
+
+        $composite = new CompositePipelineProvider(
+            [new TestOrderInterceptor('P1'), new TestOrderInterceptor('P2')],
+            $customProvider,
+        );
+
+        $pipeline = $composite->getPipeline(TestOrderInterceptor::class);
+        $result = $pipeline->with(static fn(string $s) => $s, 'handle')('_');
+
+        // All four interceptors must run: plugin first (P1, P2), then custom (C1, C2)
+        self::assertSame('_P1P2C1C2', $result);
     }
 
     public function testEmptyPluginInterceptorsWithCustomProvider(): void
