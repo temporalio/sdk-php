@@ -57,6 +57,7 @@ final class CompositePipelineProvider implements PipelineProvider
             return $this->cache[$interceptorClass] = $basePipeline;
         }
 
+        /** @psalm-suppress InvalidReturnStatement, InvalidArgument - interceptors are pre-filtered by $interceptorClass */
         return $this->cache[$interceptorClass] = Pipeline::merge(Pipeline::prepare($filtered), $basePipeline);
     }
 }
