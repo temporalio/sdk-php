@@ -734,12 +734,6 @@
       <code><![CDATA[($value * 1000000000) % 1000000000]]></code>
     </InvalidOperand>
   </file>
-  <file src="src/Internal/Marshaller/Type/EnumType.php">
-    <UndefinedMethod>
-      <code><![CDATA[$this->classFQCN::from($value)]]></code>
-      <code><![CDATA[$this->classFQCN::from($value['value'])]]></code>
-    </UndefinedMethod>
-  </file>
   <file src="src/Internal/Marshaller/Type/ObjectType.php">
     <InvalidPropertyAssignmentValue>
       <code><![CDATA[new \ReflectionClass($class ?? \stdClass::class)]]></code>

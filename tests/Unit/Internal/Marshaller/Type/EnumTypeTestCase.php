@@ -185,6 +185,60 @@ final class EnumTypeTestCase extends TestCase
         $this->assertSame(NullableType::class, $rule->type);
     }
 
+    public function testParseFloatScalarThrows(): void
+    {
+        $marshaller = $this->createMock(MarshallerInterface::class);
+        $type = new EnumType($marshaller, IntBackedEnum::class);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid Enum value');
+
+        $type->parse(1.5, null);
+    }
+
+    public function testParseBoolScalarThrows(): void
+    {
+        $marshaller = $this->createMock(MarshallerInterface::class);
+        $type = new EnumType($marshaller, IntBackedEnum::class);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid Enum value');
+
+        $type->parse(true, null);
+    }
+
+    public function testParseArrayWithNonStringNonIntValueThrows(): void
+    {
+        $marshaller = $this->createMock(MarshallerInterface::class);
+        $type = new EnumType($marshaller, StringBackedEnum::class);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid Enum value');
+
+        $type->parse(['value' => 1.5], null);
+    }
+
+    public function testParseArrayWithNonStringNameThrows(): void
+    {
+        $marshaller = $this->createMock(MarshallerInterface::class);
+        $type = new EnumType($marshaller, SimpleEnum::class);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid Enum value');
+
+        $type->parse(['name' => 123], null);
+    }
+
+    public function testParseArrayWithIntValueKey(): void
+    {
+        $marshaller = $this->createMock(MarshallerInterface::class);
+        $type = new EnumType($marshaller, IntBackedEnum::class);
+
+        $result = $type->parse(['value' => 1], null);
+
+        $this->assertSame(IntBackedEnum::One, $result);
+    }
+
     public function testMakeRuleReturnsNullForNonReflectionNamedType(): void
     {
         $property = $this->createMock(\ReflectionProperty::class);

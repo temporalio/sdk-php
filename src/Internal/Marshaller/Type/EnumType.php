@@ -62,30 +62,34 @@ class EnumType extends Type implements RuleFactoryInterface
             return $value;
         }
 
-        if (\is_scalar($value)) {
+        $class = $this->classFQCN;
+
+        if (\is_int($value) || \is_string($value)) {
             // check if classFQN is backed enum class
-            if (!\is_subclass_of($this->classFQCN, \BackedEnum::class, true)) {
+            if (!\is_a($class, \BackedEnum::class, true)) {
                 throw new \InvalidArgumentException(
                     'Unsupported enum value type. ',
                 );
             }
-            return $this->classFQCN::from($value);
+            /** @var TClass */
+            return $class::from($value);
         }
 
         if (\is_array($value)) {
             // Process the `value` key
-            if (\array_key_exists('value', $value)) {
+            if (\array_key_exists('value', $value) && (\is_int($value['value']) || \is_string($value['value']))) {
                 // check if classFQN is backed enum class
-                if (!\is_subclass_of($this->classFQCN, \BackedEnum::class)) {
+                if (!\is_a($class, \BackedEnum::class, true)) {
                     throw new \InvalidArgumentException(
                         'Unsupported enum value type. ',
                     );
                 }
-                return $this->classFQCN::from($value['value']);
+                /** @var TClass */
+                return $class::from($value['value']);
             }
 
             // Process the `name` key
-            if (\array_key_exists('name', $value)) {
+            if (\array_key_exists('name', $value) && \is_string($value['name'])) {
                 return (new \ReflectionClass($this->classFQCN))
                     ->getConstant($value['name']);
             }
