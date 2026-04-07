@@ -747,8 +747,6 @@ interface ServiceClientInterface extends \Temporal\Client\GRPC\GrpcClientInterfa
 
     /**
      * Describes a worker deployment.
-     * Experimental. This API might significantly change or be removed in a future
-     * release.
      * Deprecated. Replaced with `DescribeWorkerDeploymentVersion`.
      *
      * @throws ServiceClientException
@@ -757,8 +755,6 @@ interface ServiceClientInterface extends \Temporal\Client\GRPC\GrpcClientInterfa
 
     /**
      * Describes a worker deployment version.
-     * Experimental. This API might significantly change or be removed in a future
-     * release.
      *
      * @throws ServiceClientException
      */
@@ -768,8 +764,6 @@ interface ServiceClientInterface extends \Temporal\Client\GRPC\GrpcClientInterfa
      * Lists worker deployments in the namespace. Optionally can filter based on
      * deployment series
      * name.
-     * Experimental. This API might significantly change or be removed in a future
-     * release.
      * Deprecated. Replaced with `ListWorkerDeployments`.
      *
      * @throws ServiceClientException
@@ -788,8 +782,6 @@ interface ServiceClientInterface extends \Temporal\Client\GRPC\GrpcClientInterfa
      * cached value. In such a case, the `last_update_time` will inform you about the
      * actual
      * reachability calculation time.
-     * Experimental. This API might significantly change or be removed in a future
-     * release.
      * Deprecated. Replaced with `DrainageInfo` returned by
      * `DescribeWorkerDeploymentVersion`.
      *
@@ -799,8 +791,6 @@ interface ServiceClientInterface extends \Temporal\Client\GRPC\GrpcClientInterfa
 
     /**
      * Returns the current deployment (and its info) for a given deployment series.
-     * Experimental. This API might significantly change or be removed in a future
-     * release.
      * Deprecated. Replaced by `current_version` returned by
      * `DescribeWorkerDeployment`.
      *
@@ -812,8 +802,6 @@ interface ServiceClientInterface extends \Temporal\Client\GRPC\GrpcClientInterfa
      * Sets a deployment as the current deployment for its deployment series. Can
      * optionally update
      * the metadata of the deployment as well.
-     * Experimental. This API might significantly change or be removed in a future
-     * release.
      * Deprecated. Replaced by `SetWorkerDeploymentCurrentVersion`.
      *
      * @throws ServiceClientException
@@ -824,8 +812,6 @@ interface ServiceClientInterface extends \Temporal\Client\GRPC\GrpcClientInterfa
      * Set/unset the Current Version of a Worker Deployment. Automatically unsets the
      * Ramping
      * Version if it is the Version being set as Current.
-     * Experimental. This API might significantly change or be removed in a future
-     * release.
      *
      * @throws ServiceClientException
      */
@@ -833,8 +819,6 @@ interface ServiceClientInterface extends \Temporal\Client\GRPC\GrpcClientInterfa
 
     /**
      * Describes a Worker Deployment.
-     * Experimental. This API might significantly change or be removed in a future
-     * release.
      *
      * @throws ServiceClientException
      */
@@ -843,8 +827,6 @@ interface ServiceClientInterface extends \Temporal\Client\GRPC\GrpcClientInterfa
     /**
      * Deletes records of (an old) Deployment. A deployment can only be deleted if
      * it has no Version in it.
-     * Experimental. This API might significantly change or be removed in a future
-     * release.
      *
      * @throws ServiceClientException
      */
@@ -859,8 +841,6 @@ interface ServiceClientInterface extends \Temporal\Client\GRPC\GrpcClientInterfa
      * - It is not draining (see WorkerDeploymentVersionInfo.drainage_info). This
      * condition
      * can be skipped by passing `skip-drainage=true`.
-     * Experimental. This API might significantly change or be removed in a future
-     * release.
      *
      * @throws ServiceClientException
      */
@@ -870,8 +850,6 @@ interface ServiceClientInterface extends \Temporal\Client\GRPC\GrpcClientInterfa
      * Set/unset the Ramping Version of a Worker Deployment and its ramp percentage.
      * Can be used for
      * gradual ramp to unversioned workers too.
-     * Experimental. This API might significantly change or be removed in a future
-     * release.
      *
      * @throws ServiceClientException
      */
@@ -879,8 +857,6 @@ interface ServiceClientInterface extends \Temporal\Client\GRPC\GrpcClientInterfa
 
     /**
      * Lists all Worker Deployments that are tracked in the Namespace.
-     * Experimental. This API might significantly change or be removed in a future
-     * release.
      *
      * @throws ServiceClientException
      */
@@ -888,8 +864,6 @@ interface ServiceClientInterface extends \Temporal\Client\GRPC\GrpcClientInterfa
 
     /**
      * Updates the user-given metadata attached to a Worker Deployment Version.
-     * Experimental. This API might significantly change or be removed in a future
-     * release.
      *
      * @throws ServiceClientException
      */
