@@ -103,10 +103,23 @@ final class EnumTypeTestCase extends TestCase
         $marshaller = $this->createMock(MarshallerInterface::class);
         $type = new EnumType($marshaller, SimpleEnum::class);
 
-        // SimpleEnum is non-backed and doesn't have from(), calling from() triggers Error
-        $this->expectException(\Error::class);
+        // SimpleEnum is non-backed and doesn't have from()
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unsupported enum value type. ');
 
         $type->parse('Alpha', null);
+    }
+
+    public function testParseScalarOnNonBackedEnumThrowsError2(): void
+    {
+        $marshaller = $this->createMock(MarshallerInterface::class);
+        $type = new EnumType($marshaller, SimpleEnum::class);
+
+        // SimpleEnum is non-backed and doesn't have from()
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unsupported enum value type. ');
+
+        $type->parse(['value' => 'Alpha'], null);
     }
 
     public function testParseArrayWithoutValueOrNameThrows(): void

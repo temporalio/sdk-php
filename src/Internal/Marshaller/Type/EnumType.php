@@ -63,12 +63,24 @@ class EnumType extends Type implements RuleFactoryInterface
         }
 
         if (\is_scalar($value)) {
+            // check if classFQN is backed enum class
+            if (!\is_subclass_of($this->classFQCN, \BackedEnum::class, true)) {
+                throw new \InvalidArgumentException(
+                    'Unsupported enum value type. ',
+                );
+            }
             return $this->classFQCN::from($value);
         }
 
         if (\is_array($value)) {
             // Process the `value` key
             if (\array_key_exists('value', $value)) {
+                // check if classFQN is backed enum class
+                if (!\is_subclass_of($this->classFQCN, \BackedEnum::class)) {
+                    throw new \InvalidArgumentException(
+                        'Unsupported enum value type. ',
+                    );
+                }
                 return $this->classFQCN::from($value['value']);
             }
 
