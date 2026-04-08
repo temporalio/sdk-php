@@ -20,7 +20,8 @@ use Temporal\Internal\Support\Inheritance;
 
 /**
  * @psalm-import-type DateIntervalFormat from DateInterval
- * @extends Type<int|Duration>
+ * @psalm-import-type DateIntervalValue from DateInterval
+ * @extends Type<int|Duration, DateIntervalValue>
  */
 class DurationJsonType extends Type implements DetectableTypeInterface, RuleFactoryInterface
 {

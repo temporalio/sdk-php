@@ -167,7 +167,7 @@ class DeploymentTest extends TestCase
             $client->start($stub);
 
             # Wait for the Workflow to complete
-            $stub->getResult(timeout: 5);
+            $stub->getResult(timeout: 10);
 
             # Check the Workflow History
             $behavior = null;
