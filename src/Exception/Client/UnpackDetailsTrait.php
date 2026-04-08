@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Temporal\Exception\Client;
 
 use Google\Protobuf\Any;
-use Google\Protobuf\Internal\RepeatedField;
+use Google\Protobuf\RepeatedField;
 use GPBMetadata\Temporal\Api\Errordetails\V1\Message;
 
 /**

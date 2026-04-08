@@ -211,7 +211,7 @@ final class ChildWorkflowOptions extends Options
         $self = clone $this;
 
         if ($retry !== null && $self->diff->isPresent($self, 'retryOptions')) {
-            $self->retryOptions = $self->retryOptions->mergeWith($retry);
+            $self->retryOptions = $self->retryOptions?->mergeWith($retry);
         }
 
         if ($cron !== null && $self->diff->isPresent($self, 'cronSchedule')) {
