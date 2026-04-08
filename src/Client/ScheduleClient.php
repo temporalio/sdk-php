@@ -32,6 +32,11 @@ use Temporal\Common\Uuid;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Internal\Mapper\ScheduleMapper;
+use Temporal\Internal\Interceptor\Pipeline;
+use Temporal\Plugin\ConnectionPluginInterface;
+use Temporal\Plugin\PluginRegistry;
+use Temporal\Plugin\ScheduleClientPluginContext;
+use Temporal\Plugin\ScheduleClientPluginInterface;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Marshaller\MarshallerInterface;
@@ -45,14 +50,39 @@ final class ScheduleClient implements ScheduleClientInterface
     private DataConverterInterface $converter;
     private MarshallerInterface $marshaller;
     private ProtoToArrayConverter $protoConverter;
+    private PluginRegistry $pluginRegistry;
 
     public function __construct(
         ServiceClientInterface $serviceClient,
         ?ClientOptions $options = null,
         ?DataConverterInterface $converter = null,
+        ?PluginRegistry $pluginRegistry = null,
     ) {
         $this->clientOptions = $options ?? new ClientOptions();
         $this->converter = $converter ?? DataConverter::createDefault();
+        $this->pluginRegistry = $pluginRegistry ?? new PluginRegistry();
+
+        // Apply connection plugins (before client-level configuration)
+        $connectionPlugins = $this->pluginRegistry->getPlugins(ConnectionPluginInterface::class);
+        $serviceClient = Pipeline::prepare($connectionPlugins)
+            /** @see ConnectionPluginInterface::configureServiceClient() */
+            ->with(static fn(ServiceClientInterface $serviceClient) => $serviceClient, 'configureServiceClient')($serviceClient);
+
+        $pluginContext = new ScheduleClientPluginContext(
+            clientOptions: $this->clientOptions,
+            dataConverter: $this->converter,
+        );
+        $schedulePlugins = $this->pluginRegistry->getPlugins(ScheduleClientPluginInterface::class);
+        /** @see ScheduleClientPluginInterface::configureScheduleClient() */
+        Pipeline::prepare($schedulePlugins)
+            ->with(static fn() => null, 'configureScheduleClient')($pluginContext);
+
+        $this->clientOptions = $pluginContext->getClientOptions();
+        $pluginConverter = $pluginContext->getDataConverter();
+        if ($pluginConverter !== null) {
+            $this->converter = $pluginConverter;
+        }
+
         $this->marshaller = new Marshaller(
             new AttributeMapperFactory(new AttributeReader()),
         );
@@ -71,8 +101,9 @@ final class ScheduleClient implements ScheduleClientInterface
         ServiceClientInterface $serviceClient,
         ?ClientOptions $options = null,
         ?DataConverterInterface $converter = null,
+        ?PluginRegistry $pluginRegistry = null,
     ): ScheduleClientInterface {
-        return new self($serviceClient, $options, $converter);
+        return new self($serviceClient, $options, $converter, $pluginRegistry);
     }
 
     public function createSchedule(

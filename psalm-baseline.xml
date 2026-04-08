@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="6.14.3@d0b040a91f280f071c1abcb1b77ce3822058725a">
+<files psalm-version="6.16.0@7cf3e8b988edd75e0766963b0b9e671b220f5785">
   <file src="src/Activity/ActivityInterface.php">
     <DeprecatedClass>
       <code><![CDATA[NamedArgumentConstructor]]></code>
@@ -134,15 +134,9 @@
       <code><![CDATA[object]]></code>
       <code><![CDATA[object]]></code>
     </InvalidReturnType>
-    <LessSpecificReturnStatement>
-      <code><![CDATA[new self($serviceClient, $options, $converter, $interceptorProvider)]]></code>
-    </LessSpecificReturnStatement>
     <MissingParamType>
       <code><![CDATA[$workflow]]></code>
     </MissingParamType>
-    <MoreSpecificReturnType>
-      <code><![CDATA[static]]></code>
-    </MoreSpecificReturnType>
     <RedundantFunctionCall>
       <code><![CDATA[\sprintf]]></code>
       <code><![CDATA[\sprintf]]></code>
@@ -1367,6 +1361,8 @@
             $converter ?? DataConverter::createDefault(),
             $rpc ?? Goridge::create(),
             $credentials,
+            $pluginRegistry,
+            $client,
         )]]></code>
     </UnsafeInstantiation>
   </file>
@@ -1420,6 +1416,12 @@
       <code><![CDATA[$asset['browser_download_url']]]></code>
       <code><![CDATA[$response->toArray()['assets']]]></code>
     </PossiblyUndefinedStringArrayOffset>
+  </file>
+  <file src="testing/src/Environment.php">
+    <PossiblyNullReference>
+      <code><![CDATA[stop]]></code>
+      <code><![CDATA[stop]]></code>
+    </PossiblyNullReference>
   </file>
   <file src="testing/src/Replay/WorkflowReplayer.php">
     <UndefinedMethod>
