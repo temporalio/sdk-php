@@ -15,7 +15,7 @@ use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Marshaller\MarshallingRule;
 
 /**
- * @extends Type<array>
+ * @extends Type<array, array>
  */
 class ArrayType extends Type implements DetectableTypeInterface, RuleFactoryInterface
 {
@@ -57,7 +57,6 @@ class ArrayType extends Type implements DetectableTypeInterface, RuleFactoryInte
     }
 
     /**
-     * @psalm-assert array $value
      * @param mixed $value
      * @param array $current
      */

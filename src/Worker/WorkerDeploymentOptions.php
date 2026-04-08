@@ -12,8 +12,6 @@ use Temporal\Internal\Traits\CloneWith;
 
 /**
  * Options for configuring the Worker Versioning feature.
- *
- * @internal Experimental.
  */
 class WorkerDeploymentOptions
 {
