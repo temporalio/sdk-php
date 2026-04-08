@@ -92,6 +92,109 @@ final class DateIntervalTestCase extends TestCase
         self::assertSame(123_456, $i->microseconds);
     }
 
+    public function testParseWithFractionalHours(): void
+    {
+        $i = DateInterval::parse(1.5, DateInterval::FORMAT_HOURS);
+
+        $this->assertSame('0/1/30/0', $i->format('%d/%h/%i/%s'));
+    }
+
+    public function testParseWithFractionalDays(): void
+    {
+        $i = DateInterval::parse(1.5, DateInterval::FORMAT_DAYS);
+
+        $this->assertSame('1/12/0/0', $i->format('%d/%h/%i/%s'));
+    }
+
+    public function testParseWithFractionalWeeks(): void
+    {
+        $i = DateInterval::parse(0.5, DateInterval::FORMAT_WEEKS);
+
+        $this->assertSame('3/12/0/0', $i->format('%d/%h/%i/%s'));
+    }
+
+    public function testParseInvalidType(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unrecognized date time interval format');
+
+        DateInterval::parse(new \stdClass());
+    }
+
+    public function testParseInvalidFormat(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid date interval format');
+
+        DateInterval::parse(100, 'invalid_format');
+    }
+
+    public function testToDurationWithNullEmptyAndEmptyInterval(): void
+    {
+        $interval = new \DateInterval('PT0S');
+        $result = DateInterval::toDuration($interval, nullEmpty: true);
+
+        $this->assertNull($result);
+    }
+
+    public function testToDurationWithNullEmptyAndNonEmptyInterval(): void
+    {
+        $interval = new \DateInterval('PT5S');
+        $result = DateInterval::toDuration($interval, nullEmpty: true);
+
+        $this->assertNotNull($result);
+        $this->assertSame(5, $result->getSeconds());
+    }
+
+    public function testToDurationWithNull(): void
+    {
+        $result = DateInterval::toDuration(null);
+
+        $this->assertNull($result);
+    }
+
+    public function testParseOrNullReturnsNullForNull(): void
+    {
+        $this->assertNull(DateInterval::parseOrNull(null));
+    }
+
+    public function testParseOrNullReturnsIntervalForValue(): void
+    {
+        $result = DateInterval::parseOrNull(5, DateInterval::FORMAT_SECONDS);
+
+        $this->assertInstanceOf(\Carbon\CarbonInterval::class, $result);
+    }
+
+    public function testAssertReturnsTrueForString(): void
+    {
+        $this->assertTrue(DateInterval::assert('PT5S'));
+    }
+
+    public function testAssertReturnsTrueForInt(): void
+    {
+        $this->assertTrue(DateInterval::assert(5));
+    }
+
+    public function testAssertReturnsTrueForFloat(): void
+    {
+        $this->assertTrue(DateInterval::assert(1.5));
+    }
+
+    public function testAssertReturnsTrueForDateInterval(): void
+    {
+        $this->assertTrue(DateInterval::assert(new \DateInterval('PT5S')));
+    }
+
+    public function testAssertReturnsFalseForNull(): void
+    {
+        $this->assertFalse(DateInterval::assert(null));
+    }
+
+    public function testAssertReturnsFalseForArray(): void
+    {
+        $this->assertFalse(DateInterval::assert([]));
+    }
+
     #[DataProvider('provideIso8601DurationFormats')]
     public function testParseDetectsIso8601FormatCorrectly(string $interval, bool $shouldBeIso8601): void
     {
