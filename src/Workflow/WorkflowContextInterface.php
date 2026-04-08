@@ -20,6 +20,7 @@ use Temporal\Common\SearchAttributes\SearchAttributeUpdate;
 use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Internal\Support\DateInterval;
+use Temporal\Internal\Workflow\ActivityProxy;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Worker\Environment\EnvironmentInterface;
 use Temporal\Workflow;
@@ -281,7 +282,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      * @psalm-template T of object
      * @param class-string<T> $class
      *
-     * @return T
+     * @return ActivityProxy<T>
      */
     public function newActivityStub(
         string $class,

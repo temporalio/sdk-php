@@ -23,6 +23,7 @@ use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\Failure\CanceledFailure;
 use Temporal\Exception\OutOfContextException;
 use Temporal\Internal\Support\Facade;
+use Temporal\Internal\Workflow\ActivityProxy;
 use Temporal\Workflow\ActivityStubInterface;
 use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\ChildWorkflowOptions;
@@ -970,7 +971,7 @@ final class Workflow extends Facade
      *
      * @param class-string<T> $class
      *
-     * @return T
+     * @return ActivityProxy<T>
      * @throws OutOfContextException in the absence of the workflow execution context.
      */
     public static function newActivityStub(

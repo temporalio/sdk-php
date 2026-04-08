@@ -29,6 +29,8 @@ use Temporal\Workflow\WorkflowRunInterface;
  *
  * It can be used to start, signal, query, wait for completion and cancel a workflow
  * execution. Created through {@see WorkflowClient::newUntypedWorkflowStub()}.
+ * @template ReturnType
+ * @extends WorkflowRunInterface<ReturnType>
  */
 interface WorkflowStubInterface extends WorkflowRunInterface
 {
