@@ -14,6 +14,7 @@ namespace Temporal\Internal\Workflow;
 use React\Promise\Deferred;
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\DataConverter\Type;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Interceptor\Header;
 use Temporal\Interceptor\HeaderInterface;
@@ -29,6 +30,9 @@ use Temporal\Workflow\ChildWorkflowStubInterface;
 use Temporal\Workflow\ParentClosePolicy;
 use Temporal\Workflow\WorkflowExecution;
 
+/**
+ * @psalm-import-type TType from Type
+ */
 final class ChildWorkflowStub implements ChildWorkflowStubInterface
 {
     private Deferred $execution;

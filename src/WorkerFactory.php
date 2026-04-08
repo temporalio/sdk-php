@@ -19,6 +19,7 @@ use Spiral\Attributes\AnnotationReader;
 use Spiral\Attributes\AttributeReader;
 use Spiral\Attributes\Composite\SelectiveReader;
 use Spiral\Attributes\ReaderInterface;
+use Temporal\Client\WorkflowClient;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\Exception\ExceptionInterceptor;
@@ -26,6 +27,13 @@ use Temporal\Exception\ExceptionInterceptorInterface;
 use Temporal\Interceptor\PipelineProvider;
 use Temporal\Interceptor\SimplePipelineProvider;
 use Temporal\Internal\Events\EventEmitterTrait;
+use Temporal\Internal\Interceptor\Pipeline;
+use Temporal\Plugin\CompositePipelineProvider;
+use Temporal\Plugin\PluginInterface;
+use Temporal\Plugin\PluginRegistry;
+use Temporal\Plugin\WorkerFactoryPluginContext;
+use Temporal\Plugin\WorkerPluginContext;
+use Temporal\Plugin\WorkerPluginInterface;
 use Temporal\Internal\Marshaller\Mapper\AttributeMapperFactory;
 use Temporal\Internal\Marshaller\Marshaller;
 use Temporal\Internal\Marshaller\MarshallerInterface;
@@ -104,13 +112,37 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     protected MarshallerInterface $marshaller;
 
     protected EnvironmentInterface $env;
+    protected PluginRegistry $pluginRegistry;
 
     public function __construct(
         DataConverterInterface $dataConverter,
         protected RPCConnectionInterface $rpc,
         ?ServiceCredentials $credentials = null,
+        ?PluginRegistry $pluginRegistry = null,
+        ?WorkflowClient $client = null,
     ) {
-        $this->converter = $dataConverter;
+        $this->pluginRegistry = new PluginRegistry();
+        // Propagate worker plugins from the client first
+        if ($client !== null) {
+            $this->pluginRegistry->merge($client->getWorkerPlugins());
+        }
+
+        // Add factory plugins after client plugins
+        if ($pluginRegistry !== null) {
+            $this->pluginRegistry->merge($pluginRegistry->getPlugins(PluginInterface::class));
+        }
+
+        // Apply worker factory plugins
+        $factoryContext = new WorkerFactoryPluginContext(
+            dataConverter: $dataConverter,
+        );
+        $workerPlugins = $this->pluginRegistry->getPlugins(WorkerPluginInterface::class);
+        /** @see WorkerPluginInterface::configureWorkerFactory() */
+        Pipeline::prepare($workerPlugins)
+            ->with(static fn() => null, 'configureWorkerFactory')($factoryContext);
+
+        $this->converter = $factoryContext->getDataConverter() ?? $dataConverter;
+        $this->codec = $this->createCodec();
         $this->boot($credentials ?? ServiceCredentials::create());
     }
 
@@ -118,11 +150,15 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         ?DataConverterInterface $converter = null,
         ?RPCConnectionInterface $rpc = null,
         ?ServiceCredentials $credentials = null,
+        ?PluginRegistry $pluginRegistry = null,
+        ?WorkflowClient $client = null,
     ): static {
         return new static(
             $converter ?? DataConverter::createDefault(),
             $rpc ?? Goridge::create(),
             $credentials,
+            $pluginRegistry,
+            $client,
         );
     }
 
@@ -134,13 +170,33 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         ?LoggerInterface $logger = null,
     ): WorkerInterface {
         $options ??= WorkerOptions::new();
+
+        // Apply worker plugins
+        $workerContext = new WorkerPluginContext(
+            taskQueue: $taskQueue,
+            workerOptions: $options,
+            exceptionInterceptor: $exceptionInterceptor,
+        );
+        $workerPlugins = $this->pluginRegistry->getPlugins(WorkerPluginInterface::class);
+        /** @see WorkerPluginInterface::configureWorker() */
+        Pipeline::prepare($workerPlugins)
+            ->with(static fn() => null, 'configureWorker')($workerContext);
+
+        $options = $workerContext->getWorkerOptions();
+
+        // Merge plugin-contributed interceptors with user-provided ones
+        $provider = new CompositePipelineProvider(
+            $workerContext->getInterceptors(),
+            $interceptorProvider ?? new SimplePipelineProvider(),
+        );
+
         $worker = new Worker(
             $taskQueue,
             $options,
             ServiceContainer::fromWorkerFactory(
                 $this,
-                $exceptionInterceptor ?? ExceptionInterceptor::createDefault(),
-                $interceptorProvider ?? new SimplePipelineProvider(),
+                $workerContext->getExceptionInterceptor() ?? ExceptionInterceptor::createDefault(),
+                $provider,
                 new Logger(
                     $logger ?? new StderrLogger(),
                     $options->enableLoggingInReplay,
@@ -149,9 +205,20 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
             ),
             $this->rpc,
         );
+
+        // Call initializeWorker hooks (forward order)
+        /** @see WorkerPluginInterface::initializeWorker() */
+        Pipeline::prepare($workerPlugins)
+            ->with(static fn() => null, 'initializeWorker')($worker);
+
         $this->queues->add($worker);
 
         return $worker;
+    }
+
+    public function getPluginRegistry(): PluginRegistry
+    {
+        return $this->pluginRegistry;
     }
 
     public function getReader(): ReaderInterface
@@ -190,17 +257,22 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     public function run(?HostConnectionInterface $host = null): int
     {
         $host ??= RoadRunner::create();
-        $this->codec = $this->createCodec();
 
-        while ($msg = $host->waitBatch()) {
-            try {
-                $host->send($this->dispatch($msg->messages, $msg->context));
-            } catch (\Throwable $e) {
-                $host->error($e);
+        $plugins = $this->pluginRegistry->getPlugins(WorkerPluginInterface::class);
+        $pipeline = Pipeline::prepare($plugins);
+
+        return $pipeline->with(function () use ($host): int {
+            while ($msg = $host->waitBatch()) {
+                try {
+                    $host->send($this->dispatch($msg->messages, $msg->context));
+                } catch (\Throwable $e) {
+                    $host->error($e);
+                }
             }
-        }
 
-        return 0;
+            return 0;
+            /** @see WorkerPluginInterface::run() */
+        }, 'run')($this);
     }
 
     public function tick(): void
@@ -232,7 +304,12 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     protected function createRouter(ServiceCredentials $credentials): RouterInterface
     {
         $router = new Router();
-        $router->add(new Router\GetWorkerInfo($this->queues, $this->marshaller, $credentials));
+        $router->add(new Router\GetWorkerInfo(
+            $this->queues,
+            $this->marshaller,
+            $credentials,
+            $this->pluginRegistry,
+        ));
 
         return $router;
     }
@@ -250,7 +327,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
 
     protected function createServer(): ServerInterface
     {
-        return new Server($this->responses, $this->onRequest(...));
+        return new Server($this->responses, $this->onRequest(...), $this->pluginRegistry);
     }
 
     /**
@@ -314,22 +391,22 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
             return $this->router->dispatch($request, $headers);
         }
 
-        $queue = $this->findTaskQueueOrFail(
+        $worker = $this->findWorkerByTaskQueue(
             $this->findTaskQueueNameOrFail($headers),
         );
 
-        return $queue->dispatch($request, $headers);
+        return $worker->dispatch($request, $headers);
     }
 
-    private function findTaskQueueOrFail(string $taskQueueName): WorkerInterface
+    private function findWorkerByTaskQueue(string $taskQueue): WorkerInterface
     {
-        $queue = $this->queues->find($taskQueueName);
+        $worker = $this->queues->find($taskQueue);
 
-        if ($queue === null) {
-            throw new \OutOfRangeException(\sprintf(self::ERROR_QUEUE_NOT_FOUND, $taskQueueName));
+        if ($worker === null) {
+            throw new \OutOfRangeException(\sprintf(self::ERROR_QUEUE_NOT_FOUND, $taskQueue));
         }
 
-        return $queue;
+        return $worker;
     }
 
     private function findTaskQueueNameOrFail(array $headers): string

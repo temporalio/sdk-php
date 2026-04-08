@@ -7,6 +7,7 @@ namespace Temporal\Tests\Acceptance\Extra\Workflow\UserMetadata;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Activity\ActivityInterface;
 use Temporal\Activity\ActivityOptions;
+use Temporal\Activity\LocalActivityOptions;
 use Temporal\Api\Common\V1\Payload;
 use Temporal\Client\Schedule\Action\StartWorkflowAction;
 use Temporal\Client\Schedule\Schedule;
@@ -185,6 +186,39 @@ class UserMetadataTest extends TestCase
         }
     }
 
+    #[Test]
+    public function localActivityMetadata(
+        #[Stub('Extra_Workflow_UserMetadata')]
+        WorkflowStubInterface $stub,
+        WorkflowClientInterface $client,
+        DataConverterInterface $dataConverter,
+    ): void {
+        try {
+            /** @see TestWorkflow::executeLocalActivity() */
+            $fromActivity = (string) $stub
+                ->update('execute_local_activity', 'test local activity summary')
+                ->getValue(0);
+            self::assertSame('done', $fromActivity);
+
+            # Check that the local activity was executed and metadata was set
+            $found = false;
+            foreach ($client->getWorkflowHistory($stub->getExecution()) as $event) {
+                if ($event->hasMarkerRecordedEventAttributes()) {
+                    $payload = $event->getUserMetadata()?->getSummary();
+                    self::assertInstanceOf(Payload::class, $payload);
+                    $data = $dataConverter->fromPayload($payload, 'string');
+                    self::assertSame('test local activity summary', $data);
+                    $found = true;
+                    break;
+                }
+            }
+
+            self::assertTrue($found, 'Activity metadata not found in workflow history');
+        } finally {
+            self::terminate($stub);
+        }
+    }
+
     private static function terminate(WorkflowStubInterface $stub): void
     {
         try {
@@ -239,6 +273,18 @@ class TestWorkflow
         );
     }
 
+    #[Workflow\UpdateMethod('execute_local_activity')]
+    public function executeLocalActivity(string $summary)
+    {
+        /** @see TestActivity::execute() */
+        return yield Workflow::executeActivity(
+            'Extra_Workflow_UserMetadata.Local.execute',
+            options: LocalActivityOptions::new()
+                ->withScheduleToCloseTimeout(30)
+                ->withSummary($summary),
+        );
+    }
+
     #[Workflow\SignalMethod]
     public function exit(): void
     {
@@ -248,6 +294,15 @@ class TestWorkflow
 
 #[ActivityInterface('Extra_Workflow_UserMetadata.')]
 class TestActivity
+{
+    public function execute(): string
+    {
+        return 'done';
+    }
+}
+
+#[ActivityInterface('Extra_Workflow_UserMetadata.Local.')]
+class TestLocalActivity
 {
     public function execute(): string
     {

@@ -21,12 +21,14 @@ final class Environment
     private ?Process $temporalTestServerProcess = null;
     private ?Process $temporalServerProcess = null;
     private ?Process $roadRunnerProcess = null;
+    private bool $externalTemporalProcessActive = false;
 
     public function __construct(
         OutputInterface $output,
         private Downloader $downloader,
         private SystemInfo $systemInfo,
         ?Command $command = null,
+        private bool $allowExternalTemporalProcess = false,
     ) {
         $this->io = $output instanceof SymfonyStyle
             ? $output
@@ -37,19 +39,24 @@ final class Environment
     public static function create(?Command $command = null): self
     {
         $token = \getenv('GITHUB_TOKEN');
+        $allowExternalTemporalProcess = \getenv('ALLOW_EXTERNAL_TEMPORAL_PROCESS') === 'true';
 
         $systemInfo = SystemInfo::detect();
-        \is_string(\getenv('ROADRUNNER_BINARY')) and $systemInfo->rrExecutable = \getenv('ROADRUNNER_BINARY');
+        $roadRunnerBinary = \getenv('ROADRUNNER_BINARY');
+        if (\is_string($roadRunnerBinary)) {
+            $systemInfo->rrExecutable = $roadRunnerBinary;
+        }
 
         return new self(
             new TestOutputStyle(new ArgvInput(), new ConsoleOutput()),
             new Downloader(new Filesystem(), HttpClient::create([
                 'headers' => [
-                    'authorization' => $token ? 'token ' . $token : null,
+                    'authorization' => \is_string($token) ? 'token ' . $token : null,
                 ],
             ])),
             $systemInfo,
             $command,
+            $allowExternalTemporalProcess,
         );
     }
 
@@ -122,7 +129,7 @@ final class Environment
         $this->io->info('Running command: ' . $this->serializeProcess($this->temporalServerProcess));
         $this->temporalServerProcess->start();
 
-        $deadline = \microtime(true) + $commandTimeout;
+        $deadline = \microtime(true) + (float) $commandTimeout;
         while (!$temporalStarted && \microtime(true) < $deadline) {
             \usleep(10_000);
             $check = new Process([
@@ -139,17 +146,23 @@ final class Environment
         }
 
         if (!$temporalStarted || !$this->temporalServerProcess->isRunning()) {
-            $this->io->error([
-                \sprintf(
-                    'Error starting Temporal server: %s.',
-                    !$temporalStarted ? "Health check failed" : $this->temporalServerProcess->getErrorOutput(),
-                ),
-                \sprintf(
-                    'Command: `%s`.',
-                    $this->serializeProcess($this->temporalServerProcess),
-                ),
-            ]);
-            exit(1);
+            $errorOutput = $this->temporalServerProcess->getErrorOutput();
+            if (!$this->allowExternalTemporalProcess || !\str_contains($errorOutput, 'address already in use')) {
+                $this->io->error([
+                    \sprintf(
+                        'Error starting Temporal server: %s.',
+                        !$temporalStarted ? "Health check failed" : $errorOutput,
+                    ),
+                    \sprintf(
+                        'Command: `%s`.',
+                        $this->serializeProcess($this->temporalServerProcess),
+                    ),
+                ]);
+                exit(1);
+            }
+            $this->io->warning('Using external Temporal Server');
+
+            $this->externalTemporalProcessActive = true;
         }
         $this->io->info('Temporal server started.');
     }
@@ -162,7 +175,7 @@ final class Environment
             $this->io->info('Temporal test server downloaded.');
         }
 
-        $temporalPort = \parse_url($this->command->address, PHP_URL_PORT);
+        $temporalPort = \parse_url((string) $this->command->address, PHP_URL_PORT);
 
         $this->io->info('Starting Temporal test server... ');
         $this->temporalTestServerProcess = new Process(
@@ -174,17 +187,21 @@ final class Environment
         \sleep(1);
 
         if (!$this->temporalTestServerProcess->isRunning()) {
-            $this->io->error([
-                \sprintf(
-                    'Error starting Temporal Test server: %s.',
-                    $this->temporalTestServerProcess->getErrorOutput(),
-                ),
-                \sprintf(
-                    'Command: `%s`.',
-                    $this->serializeProcess($this->temporalTestServerProcess),
-                ),
-            ]);
-            exit(1);
+            $errorOutput = $this->temporalTestServerProcess->getErrorOutput();
+            if (!$this->allowExternalTemporalProcess || !\str_contains($errorOutput, 'address already in use')) {
+                $this->io->error([
+                    \sprintf(
+                        'Error starting Temporal Test server: %s.',
+                        $errorOutput,
+                    ),
+                    \sprintf(
+                        'Command: `%s`.',
+                        $this->serializeProcess($this->temporalTestServerProcess),
+                    ),
+                ]);
+                exit(1);
+            }
+            $this->io->warning('Using external Temporal Test Server');
         }
         $this->io->info('Temporal Test server started.');
     }
@@ -192,7 +209,7 @@ final class Environment
     /**
      * @param array<string, mixed> $envs
      */
-    public function startRoadRunner(?string $rrCommand = null, int $commandTimeout = 10, array $envs = [], string $configFile = '.rr.yaml'): void
+    public function startRoadRunner(?array $rrCommand = null, int $commandTimeout = 10, array $envs = [], string $configFile = '.rr.yaml'): void
     {
         if (!$this->isTemporalRunning() && !$this->isTemporalTestRunning()) {
             $this->io->error([
@@ -202,7 +219,7 @@ final class Environment
         }
 
         $this->roadRunnerProcess = new Process(
-            command: $rrCommand ? \explode(' ', $rrCommand) : [$this->systemInfo->rrExecutable, 'serve'],
+            command: $rrCommand ?? [$this->systemInfo->rrExecutable, 'serve'],
             env: $envs,
         );
         $this->roadRunnerProcess->setTimeout($commandTimeout);
@@ -213,7 +230,7 @@ final class Environment
         $this->roadRunnerProcess->start();
 
         // wait for roadrunner to start
-        $deadline = \microtime(true) + $commandTimeout;
+        $deadline = \microtime(true) + (float) $commandTimeout;
         while (!$roadRunnerStarted && \microtime(true) < $deadline) {
             \usleep(10_000);
             $check = new Process([$this->systemInfo->rrExecutable, 'workers', '-c', $configFile]);
@@ -256,6 +273,9 @@ final class Environment
 
         $process = new Process($command);
         $process->setTimeout($timeout);
+
+        $this->io->info('Executing Temporal Command: ' . $this->serializeProcess($process));
+
         $process->run();
     }
 
@@ -263,8 +283,7 @@ final class Environment
     {
         if ($this->isTemporalRunning()) {
             $this->io->info('Stopping Temporal server... ');
-            $this->temporalServerProcess->stop();
-            $this->temporalServerProcess = null;
+            $this->stopTemporalServerProcess();
             $this->io->info('Temporal server stopped.');
         }
     }
@@ -273,8 +292,7 @@ final class Environment
     {
         if ($this->isTemporalTestRunning()) {
             $this->io->info('Stopping Temporal Test server... ');
-            $this->temporalTestServerProcess->stop();
-            $this->temporalTestServerProcess = null;
+            $this->stopTemporalTestServerProcess();
             $this->io->info('Temporal Test server stopped.');
         }
     }
@@ -289,26 +307,60 @@ final class Environment
         }
     }
 
+    /**
+     * @psalm-assert Process $this->temporalServerProcess
+     */
     public function isTemporalRunning(): bool
     {
-        return $this->temporalServerProcess?->isRunning() === true;
+        return ($this->allowExternalTemporalProcess && $this->externalTemporalProcessActive) ||
+            $this->temporalServerProcess?->isRunning() === true;
     }
 
+    /**
+     * @psalm-assert Process $this->roadRunnerProcess
+     */
     public function isRoadRunnerRunning(): bool
     {
         return $this->roadRunnerProcess?->isRunning() === true;
     }
 
+    /**
+     * @psalm-assert Process $this->temporalTestServerProcess
+     */
     public function isTemporalTestRunning(): bool
     {
-        return $this->temporalTestServerProcess?->isRunning() === true;
+        return ($this->allowExternalTemporalProcess && $this->externalTemporalProcessActive) ||
+            $this->temporalTestServerProcess?->isRunning() === true;
     }
 
-    private function serializeProcess(?Process $temporalServerProcess): string|array
+    private function stopTemporalTestServerProcess(): void
     {
-        $reflection = new \ReflectionClass($temporalServerProcess);
+        if ($this->externalTemporalProcessActive) {
+            $this->externalTemporalProcessActive = false;
+            return;
+        }
+        $this->temporalTestServerProcess->stop();
+        $this->temporalTestServerProcess = null;
+    }
+
+    private function stopTemporalServerProcess(): void
+    {
+        if ($this->externalTemporalProcessActive) {
+            $this->externalTemporalProcessActive = false;
+            return;
+        }
+        $this->temporalServerProcess->stop();
+        $this->temporalServerProcess = null;
+    }
+
+    private function serializeProcess(?Process $process): string
+    {
+        if ($process === null) {
+            return 'process is not started';
+        }
+        $reflection = new \ReflectionClass($process);
         $reflectionProperty = $reflection->getProperty('commandline');
-        $commandLine = $reflectionProperty->getValue($temporalServerProcess);
+        $commandLine = $reflectionProperty->getValue($process);
         return \implode(' ', $commandLine);
     }
 }

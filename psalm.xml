@@ -17,6 +17,7 @@
 >
     <projectFiles>
         <directory name="src" />
+        <directory name="testing/src" />
         <ignoreFiles>
             <directory name="vendor" />
         </ignoreFiles>
@@ -24,10 +25,5 @@
     <issueHandlers>
         <MissingOverrideAttribute errorLevel="suppress" />
         <ClassMustBeFinal errorLevel="suppress" />
-        <DeprecatedClass>
-            <errorLevel type="suppress">
-                <referencedClass name="Google\Protobuf\Internal\RepeatedField" />
-            </errorLevel>
-        </DeprecatedClass>
     </issueHandlers>
 </psalm>
