@@ -14,6 +14,7 @@ use Temporal\Tests\Acceptance\App\Logger\LoggerFactory;
 use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\WorkflowInterface;
 
 class DestroyableTest extends TestCase
 {
@@ -30,7 +31,7 @@ class DestroyableTest extends TestCase
     }
 }
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class TestWorkflow implements Destroyable
 {
     private LoggerInterface $logger;

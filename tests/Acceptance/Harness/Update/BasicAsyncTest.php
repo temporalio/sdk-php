@@ -12,6 +12,8 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\UpdateMethod;
+use Temporal\Workflow\UpdateValidatorMethod;
 
 class BasicAsyncTest extends TestCase
 {
@@ -44,14 +46,14 @@ class FeatureWorkflow
         return $this->state;
     }
 
-    #[Workflow\UpdateMethod('my_update')]
+    #[UpdateMethod('my_update')]
     public function myUpdate(string $arg): string
     {
         $this->state = $arg;
         return 'update-result';
     }
 
-    #[Workflow\UpdateValidatorMethod('my_update')]
+    #[UpdateValidatorMethod('my_update')]
     public function myValidateUpdate(string $arg): void
     {
         $arg === 'bad-update-arg' and throw new \Exception('Invalid Update argument');

@@ -17,6 +17,9 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Activity\ActivityInterface;
+use Temporal\Activity\ActivityMethod;
+use Temporal\Activity\ActivityOptions;
 
 class ActivityPausedTest extends TestCase
 {
@@ -67,7 +70,7 @@ class TestWorkflow
     public function handle()
     {
         $stub = Workflow::newUntypedActivityStub(
-            Activity\ActivityOptions::new()->withScheduleToCloseTimeout('101 seconds'),
+            ActivityOptions::new()->withScheduleToCloseTimeout('101 seconds'),
         );
 
         /** @see TestActivity::sleep() */
@@ -82,10 +85,10 @@ class TestWorkflow
     }
 }
 
-#[Activity\ActivityInterface(prefix: 'Extra_Activity_ActivityPaused.')]
+#[ActivityInterface(prefix: 'Extra_Activity_ActivityPaused.')]
 class TestActivity
 {
-    #[Activity\ActivityMethod]
+    #[ActivityMethod]
     public function sleep(int $seconds): string
     {
         $start = \microtime(true);

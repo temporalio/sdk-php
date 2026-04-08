@@ -8,9 +8,10 @@ use Temporal\Workflow;
 use Temporal\Workflow\ChildWorkflowOptions;
 use Temporal\Workflow\ParentClosePolicy;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\WorkflowInterface;
 
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class ParentWithAbandonedChildWorkflow
 {
     #[WorkflowMethod]

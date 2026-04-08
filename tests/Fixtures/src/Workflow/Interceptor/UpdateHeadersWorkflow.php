@@ -13,8 +13,11 @@ namespace Temporal\Tests\Workflow\Interceptor;
 
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\QueryMethod;
+use Temporal\Workflow\UpdateMethod;
+use Temporal\Workflow\WorkflowInterface;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class UpdateHeadersWorkflow
 {
     private ?array $headers = null;
@@ -30,13 +33,13 @@ class UpdateHeadersWorkflow
         return $this->headers;
     }
 
-    #[Workflow\UpdateMethod]
+    #[UpdateMethod]
     public function update(): void
     {
         $this->updated = true;
     }
 
-    #[Workflow\QueryMethod]
+    #[QueryMethod]
     public function headers(): mixed
     {
         return $this->headers;

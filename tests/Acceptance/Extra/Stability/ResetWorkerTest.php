@@ -17,6 +17,9 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\ReturnType;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\QueryMethod;
+use Temporal\Workflow\SignalMethod;
+use Temporal\Workflow\WorkflowInterface;
 
 class ResetWorkerTest extends TestCase
 {
@@ -111,7 +114,7 @@ class ResetWorkerTest extends TestCase
     }
 }
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class TestWorkflow
 {
     private bool $exit = false;
@@ -125,14 +128,14 @@ class TestWorkflow
         return yield $isTimer ? 'Timer' : 'Signal';
     }
 
-    #[Workflow\QueryMethod('die')]
+    #[QueryMethod('die')]
     public function die(int $sleep = 2): void
     {
         \sleep($sleep);
         exit(1);
     }
 
-    #[Workflow\SignalMethod('exit')]
+    #[SignalMethod('exit')]
     public function signal()
     {
         yield Workflow::uuid7();

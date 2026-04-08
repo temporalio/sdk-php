@@ -12,6 +12,8 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\SignalMethod;
+use Temporal\Workflow\UpdateMethod;
 
 #[CoversFunction('Temporal\Workflow::upsertMemo')]
 class MemoTest extends TestCase
@@ -112,13 +114,13 @@ class TestWorkflow
         return Workflow::getInfo()->memo;
     }
 
-    #[Workflow\UpdateMethod]
+    #[UpdateMethod]
     public function setMemo(array $memo): void
     {
         Workflow::upsertMemo($memo);
     }
 
-    #[Workflow\SignalMethod]
+    #[SignalMethod]
     public function exit(): void
     {
         $this->exit = true;

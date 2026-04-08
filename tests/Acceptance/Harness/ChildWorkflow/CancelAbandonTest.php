@@ -16,6 +16,9 @@ use Temporal\Workflow;
 use Temporal\Workflow\CancellationScopeInterface;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\ChildWorkflowOptions;
+use Temporal\Workflow\ParentClosePolicy;
+use Temporal\Workflow\SignalMethod;
 
 class CancelAbandonTest extends TestCase
 {
@@ -140,9 +143,9 @@ class MainScopeWorkflow
         /** @see ChildWorkflow */
         $stub = Workflow::newUntypedChildWorkflowStub(
             'Harness_ChildWorkflow_CancelAbandon_Child',
-            Workflow\ChildWorkflowOptions::new()
+            ChildWorkflowOptions::new()
                 ->withWorkflowRunTimeout('20 seconds')
-                ->withParentClosePolicy(Workflow\ParentClosePolicy::Abandon),
+                ->withParentClosePolicy(ParentClosePolicy::Abandon),
         );
 
         yield $stub->start($input);
@@ -179,9 +182,9 @@ class InnerScopeCancelWorkflow
             /** @see ChildWorkflow */
             $stub = Workflow::newUntypedChildWorkflowStub(
                 'Harness_ChildWorkflow_CancelAbandon_Child',
-                Workflow\ChildWorkflowOptions::new()
+                ChildWorkflowOptions::new()
                     ->withWorkflowRunTimeout('20 seconds')
-                    ->withParentClosePolicy(Workflow\ParentClosePolicy::Abandon),
+                    ->withParentClosePolicy(ParentClosePolicy::Abandon),
             );
             yield $stub->start($input);
 
@@ -208,7 +211,7 @@ class InnerScopeCancelWorkflow
         }
     }
 
-    #[Workflow\SignalMethod('close')]
+    #[SignalMethod('close')]
     public function close(): void
     {
         $this->scope->cancel();
@@ -227,7 +230,7 @@ class ChildWorkflow
         return $input;
     }
 
-    #[Workflow\SignalMethod('exit')]
+    #[SignalMethod('exit')]
     public function exit(): void
     {
         $this->exit = true;

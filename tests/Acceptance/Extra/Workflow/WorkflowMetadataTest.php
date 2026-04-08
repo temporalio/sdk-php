@@ -12,6 +12,8 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\QueryMethod;
+use Temporal\Workflow\SignalMethod;
 
 class WorkflowMetadataTest extends TestCase
 {
@@ -46,13 +48,13 @@ class TestWorkflow
     /**
      * @return null|non-empty-string
      */
-    #[Workflow\QueryMethod]
+    #[QueryMethod]
     public function getCurrentDetails(): ?string
     {
         return Workflow::getCurrentDetails();
     }
 
-    #[Workflow\SignalMethod]
+    #[SignalMethod]
     public function exit(): void
     {
         $this->exit = true;

@@ -7,10 +7,23 @@ namespace Temporal\Tests\Unit\Schedule\Mapper;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Spiral\Attributes\AttributeReader;
+use Carbon\CarbonInterval;
 use Temporal\Api\Enums\V1\ScheduleOverlapPolicy;
 use Temporal\Api\Workflow\V1\NewWorkflowExecutionInfo;
-use Temporal\Client\Schedule;
-use Temporal\Api\Schedule\V1;
+use Temporal\Api\Schedule\V1\CalendarSpec as V1CalendarSpec;
+use Temporal\Api\Schedule\V1\IntervalSpec as V1IntervalSpec;
+use Temporal\Api\Schedule\V1\Schedule as V1Schedule;
+use Temporal\Api\Schedule\V1\ScheduleAction as V1ScheduleAction;
+use Temporal\Api\Schedule\V1\SchedulePolicies as V1SchedulePolicies;
+use Temporal\Api\Schedule\V1\ScheduleSpec as V1ScheduleSpec;
+use Temporal\Api\Schedule\V1\ScheduleState as V1ScheduleState;
+use Temporal\Client\Schedule\Action\StartWorkflowAction;
+use Temporal\Client\Schedule\Policy\ScheduleOverlapPolicy as ClientScheduleOverlapPolicy;
+use Temporal\Client\Schedule\Policy\SchedulePolicies;
+use Temporal\Client\Schedule\Schedule;
+use Temporal\Client\Schedule\Spec\CalendarSpec;
+use Temporal\Client\Schedule\Spec\ScheduleSpec;
+use Temporal\Client\Schedule\Spec\ScheduleState;
 use Temporal\Common\IdReusePolicy;
 use Temporal\Common\RetryOptions;
 use Temporal\DataConverter\DataConverter;
@@ -30,15 +43,15 @@ final class WorkflowExecutionInfoMapperTestCase extends TestCase
         $mapper = $this->createMapper();
 
         $schedule = $mapper->toMessage(
-            Schedule\Schedule::new()->withAction(
-                Schedule\Action\StartWorkflowAction::new('PingSite')
+            Schedule::new()->withAction(
+                StartWorkflowAction::new('PingSite')
                     ->withInput(['google.com'])
                     ->withTaskQueue('default')
                     ->withRetryPolicy(
                         RetryOptions::new()
                             ->withMaximumAttempts(3)
-                            ->withInitialInterval(\Carbon\CarbonInterval::seconds(10))
-                            ->withMaximumInterval(\Carbon\CarbonInterval::seconds(20)),
+                            ->withInitialInterval(CarbonInterval::seconds(10))
+                            ->withMaximumInterval(CarbonInterval::seconds(20)),
                     )
                     ->withHeader(['foo' => 'bar'])
                     ->withWorkflowExecutionTimeout('40m')
@@ -51,9 +64,9 @@ final class WorkflowExecutionInfoMapperTestCase extends TestCase
                         IdReusePolicy::AllowDuplicateFailedOnly,
                     ),
             )->withSpec(
-                Schedule\Spec\ScheduleSpec::new()
+                ScheduleSpec::new()
                     ->withCalendarList(
-                        Schedule\Spec\CalendarSpec::new()
+                        CalendarSpec::new()
                             ->withSecond(6)->withMinute('*/6')->withHour('*/5')
                             ->withDayOfWeek('*/2')->withDayOfMonth('*/4')->withMonth('*/3')
                             ->withComment('test comment'),
@@ -66,12 +79,12 @@ final class WorkflowExecutionInfoMapperTestCase extends TestCase
                     ->withTimezoneData('America/New_York')
                     ->withTimezoneName('Europe/London'),
             )->withPolicies(
-                Schedule\Policy\SchedulePolicies::new()
+                SchedulePolicies::new()
                     ->withCatchupWindow('10m')
                     ->withPauseOnFailure(true)
-                    ->withOverlapPolicy(Schedule\Policy\ScheduleOverlapPolicy::CancelOther),
+                    ->withOverlapPolicy(ClientScheduleOverlapPolicy::CancelOther),
             )->withState(
-                Schedule\Spec\ScheduleState::new()
+                ScheduleState::new()
                     ->withLimitedActions(true)
                     ->withRemainingActions(10)
                     ->withPaused(true)
@@ -79,16 +92,16 @@ final class WorkflowExecutionInfoMapperTestCase extends TestCase
             ),
         );
 
-        $this->assertInstanceOf(V1\Schedule::class, $schedule);
+        $this->assertInstanceOf(V1Schedule::class, $schedule);
         $spec = $schedule->getSpec();
         $state = $schedule->getState();
         $policies = $schedule->getPolicies();
-        $this->assertInstanceOf(V1\ScheduleSpec::class, $spec);
-        $this->assertInstanceOf(V1\ScheduleState::class, $state);
-        $this->assertInstanceOf(V1\SchedulePolicies::class, $policies);
+        $this->assertInstanceOf(V1ScheduleSpec::class, $spec);
+        $this->assertInstanceOf(V1ScheduleState::class, $state);
+        $this->assertInstanceOf(V1SchedulePolicies::class, $policies);
 
         // Test Action
-        $this->assertInstanceOf(V1\ScheduleAction::class, $schedule->getAction());
+        $this->assertInstanceOf(V1ScheduleAction::class, $schedule->getAction());
         $this->assertSame('start_workflow', $schedule->getAction()->getAction());
         $startWorkflow = $schedule->getAction()->getStartWorkflow();
         $this->assertInstanceOf(NewWorkflowExecutionInfo::class, $startWorkflow);
@@ -129,7 +142,7 @@ final class WorkflowExecutionInfoMapperTestCase extends TestCase
         // Test Spec
         // Calendar
         $dto = $spec->getCalendar()[0];
-        $this->assertInstanceOf(V1\CalendarSpec::class, $dto);
+        $this->assertInstanceOf(V1CalendarSpec::class, $dto);
         $this->assertEquals('test comment', $dto->getComment());
         $this->assertEquals(6, $dto->getSecond());
         $this->assertEquals('*/6', $dto->getMinute());
@@ -142,10 +155,10 @@ final class WorkflowExecutionInfoMapperTestCase extends TestCase
         $this->assertEquals('0 12 * * 1', $spec->getCronString()[1]);
         // Interval
         $dto = $spec->getInterval()[0];
-        $this->assertInstanceOf(V1\IntervalSpec::class, $dto);
+        $this->assertInstanceOf(V1IntervalSpec::class, $dto);
         $this->assertEquals(120, $dto->getInterval()->getSeconds());
         $dto = $spec->getInterval()[1];
-        $this->assertInstanceOf(V1\IntervalSpec::class, $dto);
+        $this->assertInstanceOf(V1IntervalSpec::class, $dto);
         $this->assertEquals(180, $dto->getInterval()->getSeconds());
         // StartTime and StopTime
         $this->assertEquals(172800, $spec->getStartTime()->getSeconds());
@@ -173,21 +186,21 @@ final class WorkflowExecutionInfoMapperTestCase extends TestCase
         $mapper = $this->createMapper();
 
         $schedule = $mapper->toMessage(
-            Schedule\Schedule::new()->withAction(
-                Schedule\Action\StartWorkflowAction::new('PingSite'),
+            Schedule::new()->withAction(
+                StartWorkflowAction::new('PingSite'),
             ),
         );
 
-        $this->assertInstanceOf(V1\Schedule::class, $schedule);
+        $this->assertInstanceOf(V1Schedule::class, $schedule);
         $spec = $schedule->getSpec();
         $state = $schedule->getState();
         $policies = $schedule->getPolicies();
-        $this->assertInstanceOf(V1\ScheduleSpec::class, $spec);
-        $this->assertInstanceOf(V1\ScheduleState::class, $state);
-        $this->assertInstanceOf(V1\SchedulePolicies::class, $policies);
+        $this->assertInstanceOf(V1ScheduleSpec::class, $spec);
+        $this->assertInstanceOf(V1ScheduleState::class, $state);
+        $this->assertInstanceOf(V1SchedulePolicies::class, $policies);
 
         // Test Action
-        $this->assertInstanceOf(V1\ScheduleAction::class, $schedule->getAction());
+        $this->assertInstanceOf(V1ScheduleAction::class, $schedule->getAction());
         $this->assertSame('start_workflow', $schedule->getAction()->getAction());
         $startWorkflow = $schedule->getAction()->getStartWorkflow();
         $this->assertInstanceOf(NewWorkflowExecutionInfo::class, $startWorkflow);

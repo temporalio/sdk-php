@@ -10,6 +10,8 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\UpdateMethod;
+use Temporal\Workflow\UpdateValidatorMethod;
 
 class ValidationReplayTest extends TestCase
 {
@@ -38,7 +40,7 @@ class FeatureWorkflow
         return static::$validations;
     }
 
-    #[Workflow\UpdateMethod('do_update')]
+    #[UpdateMethod('do_update')]
     public function doUpdate(): void
     {
         if (static::$validations === 0) {
@@ -54,7 +56,7 @@ class FeatureWorkflow
         $this->done = true;
     }
 
-    #[Workflow\UpdateValidatorMethod('do_update')]
+    #[UpdateValidatorMethod('do_update')]
     public function validateDoUpdate(): void
     {
         if (static::$validations > 1) {

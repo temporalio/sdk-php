@@ -13,8 +13,10 @@ namespace Temporal\Tests\Workflow;
 
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\WorkflowExecution;
+use Temporal\Workflow\WorkflowInterface;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class ChildStubWorkflow
 {
     #[WorkflowMethod(name: 'ChildStubWorkflow')]
@@ -32,7 +34,7 @@ class ChildStubWorkflow
         $result[] = yield $untyped->execute(['untyped']);
 
         $execution = yield $untyped->getExecution();
-        assert($execution instanceof Workflow\WorkflowExecution);
+        assert($execution instanceof WorkflowExecution);
 
         return $result;
     }
