@@ -11,7 +11,7 @@ use Temporal\Workflow\ChildWorkflowCancellationType as Policy;
  *
  * @see Policy
  *
- * @extends Type<bool>
+ * @extends Type<bool, int>
  * @internal
  */
 final class ChildWorkflowCancellationType extends Type

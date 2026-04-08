@@ -19,7 +19,7 @@ use Temporal\Internal\Support\DateTime;
 use Temporal\Internal\Support\Inheritance;
 
 /**
- * @extends Type<Timestamp|non-empty-string>
+ * @extends Type<Timestamp|string, mixed>
  */
 class DateTimeType extends Type implements DetectableTypeInterface, RuleFactoryInterface
 {

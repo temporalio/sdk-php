@@ -11,7 +11,6 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Unit\DTO\Type\EnumType;
 
-use Error;
 use Temporal\Internal\Marshaller\Type\EnumType;
 use Temporal\Tests\Unit\DTO\AbstractDTOMarshalling;
 use Temporal\Tests\Unit\DTO\Type\EnumType\Stub\EnumDto;
@@ -81,8 +80,8 @@ class EnumTestCase extends AbstractDTOMarshalling
             ], new EnumDto());
 
             $this->fail('Expected exception');
-        }catch (\Throwable $e) {
-            $this->assertInstanceOf(Error::class, $e->getPrevious());
+        } catch (\Throwable $e) {
+            $this->assertInstanceOf(\InvalidArgumentException::class, $e->getPrevious());
         }
     }
 
