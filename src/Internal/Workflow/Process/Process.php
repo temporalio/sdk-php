@@ -18,6 +18,7 @@ use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
 use Temporal\Exception\DestructMemorizedInstanceException;
 use Temporal\Exception\Failure\CanceledFailure;
+use Temporal\Interceptor\WorkflowInbound\InitInput;
 use Temporal\Interceptor\WorkflowInbound\QueryInput;
 use Temporal\Interceptor\WorkflowInbound\SignalInput;
 use Temporal\Interceptor\WorkflowInbound\UpdateInput;
@@ -213,6 +214,22 @@ class Process extends Scope implements ProcessInterface
             $instance->init($values);
 
             $context->setReadonly(false);
+
+            // Init interceptors
+            //
+            // Notify interceptors that a workflow instance has been initialized
+            $this->services->interceptorProvider
+                ->getPipeline(WorkflowInboundCallsInterceptor::class)
+                ->with(
+                    static function (InitInput $_input): void {
+                        // no-op: interceptors have been notified
+                    },
+                    /** @see WorkflowInboundCallsInterceptor::init() */
+                    'init',
+                )(new InitInput(
+                    $context->getInfo(),
+                    $context->getHeader(),
+                ));
 
             // Execute
             //
