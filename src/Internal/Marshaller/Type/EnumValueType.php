@@ -15,7 +15,7 @@ use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Marshaller\MarshallingRule;
 
 /**
- * @extends Type<int|string>
+ * @extends Type<int|string, \BackedEnum>
  */
 class EnumValueType extends Type implements RuleFactoryInterface
 {
@@ -55,7 +55,7 @@ class EnumValueType extends Type implements RuleFactoryInterface
 
     public function parse($value, $current)
     {
-        if (\is_object($value)) {
+        if ($value instanceof \BackedEnum) {
             return $value;
         }
 
