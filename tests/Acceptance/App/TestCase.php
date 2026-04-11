@@ -11,9 +11,15 @@ use Spiral\Core\Container;
 use Spiral\Core\Scope;
 use Temporal\Api\Enums\V1\EventType;
 use Temporal\Api\Failure\V1\Failure;
+use Temporal\Client\ClientOptions;
+use Temporal\Client\WorkflowClient;
 use Temporal\Client\WorkflowClientInterface;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Exception\TemporalException;
+use Temporal\Plugin\ClientPluginInterface;
+use Temporal\Plugin\PluginRegistry;
+use Temporal\Tests\Acceptance\App\Attribute\Worker;
+use Temporal\Tests\Acceptance\App\Feature\WorkerFactory;
 use Temporal\Tests\Acceptance\App\Logger\ClientLogger;
 use Temporal\Tests\Acceptance\App\Logger\LoggerFactory;
 use Temporal\Tests\Acceptance\App\Runtime\ContainerFacade;
@@ -45,14 +51,33 @@ abstract class TestCase extends \Temporal\Tests\TestCase
         $logger = LoggerFactory::createClientLogger($feature->taskQueue);
         $logger->clear();
 
+        // Build scope bindings
+        $bindings = [
+            Feature::class => $feature,
+            static::class => $this,
+            State::class => $runtime,
+            LoggerInterface::class => ClientLogger::class,
+            ClientLogger::class => $logger,
+        ];
+
+        // Auto-inject plugin-configured client from #[Worker(plugins: [...])] attribute
+        $workerAttr = WorkerFactory::findAttribute(static::class);
+        if ($workerAttr?->plugins !== null) {
+            $pluginRegistry = new PluginRegistry($workerAttr->plugins);
+            $clientPlugins = $pluginRegistry->getPlugins(ClientPluginInterface::class);
+            if ($clientPlugins !== []) {
+                $existingClient = $container->get(WorkflowClientInterface::class);
+                $pluginClient = WorkflowClient::create(
+                    serviceClient: $existingClient->getServiceClient(),
+                    options: (new ClientOptions())->withNamespace($runtime->namespace),
+                    pluginRegistry: new PluginRegistry($workerAttr->plugins),
+                );
+                $bindings[WorkflowClientInterface::class] = $pluginClient;
+            }
+        }
+
         return $container->runScope(
-            new Scope(name: 'feature', bindings: [
-                Feature::class => $feature,
-                static::class => $this,
-                State::class => $runtime,
-                LoggerInterface::class => ClientLogger::class,
-                ClientLogger::class => $logger,
-            ]),
+            new Scope(name: 'feature', bindings: $bindings),
             function (Container $container): mixed {
                 $reflection = new \ReflectionMethod($this, $this->name());
                 $args = $container->resolveArguments($reflection);
