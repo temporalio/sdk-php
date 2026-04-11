@@ -39,6 +39,16 @@ final class ScheduleHandle
      */
     private const CONFLICT_TOKEN_MAX_RETRIES = 10;
 
+    /**
+     * Substring matched against a {@see ServiceClientException} message to detect a conflict
+     * token mismatch returned by the CHASM scheduler. The full server error is
+     * `serviceerror.NewFailedPrecondition("mismatched conflict token")` — see
+     * `chasm/lib/scheduler/scheduler.go` (`ErrConflictTokenMismatch`) in temporalio/temporal.
+     * The legacy V1 signal-based scheduler silently drops the update instead and does not
+     * produce this error at all.
+     */
+    private const CONFLICT_TOKEN_ERROR_MARKER = 'conflict token';
+
     public function __construct(
         ServiceClientInterface $client,
         private readonly ClientOptions $clientOptions,
@@ -62,22 +72,77 @@ final class ScheduleHandle
     /**
      * Update the Schedule.
      *
-     * NOTE: When using a closure, the update will automatically retry (up to 10 times) if a conflict
-     * token mismatch occurs, re-fetching the schedule description each time. When passing a Schedule
-     * directly, no retry is performed and the caller is responsible for handling conflicts.
+     * There are two forms:
      *
-     * @param Schedule|\Closure(ScheduleUpdateInput): ScheduleUpdate $schedule The new Schedule to update to or
-     *        a closure that will be passed the current ScheduleDescription and should return a ScheduleUpdate.
-     * @param string|null $conflictToken Can be the value of {@see ScheduleDescription::$conflictToken},
-     *        which will cause this request to fail if the schedule has been modified
-     *        between the {@see self::describe()} and this Update.
-     *        If missing, the schedule will be updated unconditionally.
+     * - **Closure form** — the closure receives a {@see ScheduleUpdateInput} carrying the current
+     *   {@see ScheduleDescription} and must return a {@see ScheduleUpdate}. The SDK automatically
+     *   fetches a fresh description on every attempt and uses its conflict token, so concurrent
+     *   updates from other clients are retried transparently up to {@see self::CONFLICT_TOKEN_MAX_RETRIES}
+     *   times. If all retries are exhausted, a {@see ServiceClientException} with
+     *   {@see StatusCode::FAILED_PRECONDITION} is raised.
+     *
+     * - **Direct form** — a pre-built {@see Schedule} is sent as-is. The optional `$conflictToken`
+     *   argument is the opaque value from {@see ScheduleDescription::$conflictToken}; if supplied,
+     *   the server rejects the update when the schedule has been modified since the describe that
+     *   produced the token. No retry is performed; the caller handles conflicts.
+     *
+     * **IMPORTANT:** The closure may be invoked multiple times (once per retry), so it MUST be
+     * idempotent and free of side effects outside of returning the {@see ScheduleUpdate}.
+     * Do not increment counters, log business events, or mutate external state from inside it.
+     *
+     * Examples:
+     *
+     * Add a search attribute using the closure form (auto-retries on conflict):
+     * ```
+     * $handle->update(function (ScheduleUpdateInput $input): ScheduleUpdate {
+     *     return ScheduleUpdate::new($input->description->schedule)
+     *         ->withSearchAttributes(
+     *             $input->description->searchAttributes
+     *                 ->withValue('foo', 'bar')
+     *                 ->withValue('bar', 42),
+     *         );
+     * });
+     * ```
+     *
+     * Pause a described schedule with an explicit conflict token (no retry):
+     * ```
+     * $description = $handle->describe();
+     * $schedule    = $description->schedule;
+     * $handle->update(
+     *     $schedule->withState($schedule->state->withPaused(true)),
+     *     $description->conflictToken,
+     * );
+     * ```
+     *
+     * @param Schedule|\Closure(ScheduleUpdateInput): ScheduleUpdate $schedule The new Schedule to
+     *        update to, or an idempotent closure that will be called with the current
+     *        {@see ScheduleUpdateInput} and must return a {@see ScheduleUpdate}.
+     * @param string|null $conflictToken Only valid with the direct form. Can be the value of
+     *        {@see ScheduleDescription::$conflictToken}, causing the request to fail if the
+     *        schedule has been modified between the {@see self::describe()} and this update.
+     *        If missing, the schedule will be updated unconditionally. MUST be `null` when
+     *        `$schedule` is a closure — in the closure form the token is managed internally by
+     *        the retry loop; passing a non-null value throws {@see InvalidArgumentException}.
+     *
+     * @throws InvalidArgumentException When a non-null `$conflictToken` is passed together with a
+     *         closure `$schedule`.
+     * @throws ServiceClientException On a non-retryable server error, or after retries are
+     *         exhausted in the closure form.
      */
     public function update(
         Schedule|\Closure $schedule,
         ?string $conflictToken = null,
     ): void {
         if ($schedule instanceof \Closure) {
+            if ($conflictToken !== null) {
+                throw new InvalidArgumentException(
+                    'Passing a conflict token together with a closure updater is not supported: '
+                    . 'in closure form the token is fetched from describe() on every retry. '
+                    . 'Use the direct form `update(Schedule, ?string $conflictToken)` if you need '
+                    . 'to pin the update to a specific token.',
+                );
+            }
+
             $this->updateWithClosure($schedule);
             return;
         }
@@ -223,7 +288,7 @@ final class ScheduleHandle
                 return;
             } catch (ServiceClientException $e) {
                 if ($e->getCode() !== StatusCode::FAILED_PRECONDITION
-                    || !\str_contains($e->getMessage(), 'conflict token')
+                    || !\str_contains($e->getMessage(), self::CONFLICT_TOKEN_ERROR_MARKER)
                 ) {
                     throw $e;
                 }
