@@ -252,7 +252,7 @@ class ScheduleHandleTestCase extends TestCase
             $sa = EncodedCollection::fromValues(['foo' => 'bar']);
             return ScheduleUpdate::new($schedule)
                 ->withSearchAttributes($sa);
-        });
+        }, 'argument-conflict-token');
 
         $this->assertTrue(isset($testContext->request));
         $this->assertSame('default', $testContext->request->getNamespace());
