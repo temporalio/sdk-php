@@ -127,8 +127,10 @@ final class ActivityContext implements ActivityContextInterface, HeaderCarrier
                 ],
             );
 
-            $cancelled = (bool) ($response['canceled'] ?? false);
-            $paused = (bool) ($response['paused'] ?? false);
+            \is_object($response) and $response = (array) $response;
+
+            $cancelled = $this->readHeartbeatFlag($response, 'canceled', 'cancel_requested', 'cancelRequested');
+            $paused = $this->readHeartbeatFlag($response, 'paused', 'activity_paused', 'activityPaused');
 
             if ($cancelled || $paused) {
                 $this->cancellationDetails ??= new ActivityCancellationDetails(
@@ -170,5 +172,20 @@ final class ActivityContext implements ActivityContextInterface, HeaderCarrier
         $clone = clone $this;
         $clone->instance = \WeakReference::create($instance);
         return $clone;
+    }
+
+    private function readHeartbeatFlag(mixed $response, string ...$keys): bool
+    {
+        if (!\is_array($response)) {
+            return false;
+        }
+
+        foreach ($keys as $key) {
+            if (\array_key_exists($key, $response)) {
+                return (bool) $response[$key];
+            }
+        }
+
+        return false;
     }
 }
