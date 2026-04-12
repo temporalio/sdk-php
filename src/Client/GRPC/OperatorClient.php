@@ -4,8 +4,32 @@ declare(strict_types=1);
 
 namespace Temporal\Client\GRPC;
 
-use Temporal\Api\Operatorservice\V1;
+use Temporal\Api\Operatorservice\V1\AddOrUpdateRemoteClusterRequest;
+use Temporal\Api\Operatorservice\V1\AddOrUpdateRemoteClusterResponse;
+use Temporal\Api\Operatorservice\V1\AddSearchAttributesRequest;
+use Temporal\Api\Operatorservice\V1\AddSearchAttributesResponse;
+use Temporal\Api\Operatorservice\V1\CreateNexusEndpointRequest;
+use Temporal\Api\Operatorservice\V1\CreateNexusEndpointResponse;
+use Temporal\Api\Operatorservice\V1\DeleteNamespaceRequest;
+use Temporal\Api\Operatorservice\V1\DeleteNamespaceResponse;
+use Temporal\Api\Operatorservice\V1\DeleteNexusEndpointRequest;
+use Temporal\Api\Operatorservice\V1\DeleteNexusEndpointResponse;
+use Temporal\Api\Operatorservice\V1\GetNexusEndpointRequest;
+use Temporal\Api\Operatorservice\V1\GetNexusEndpointResponse;
+use Temporal\Api\Operatorservice\V1\ListClustersRequest;
+use Temporal\Api\Operatorservice\V1\ListClustersResponse;
+use Temporal\Api\Operatorservice\V1\ListNexusEndpointsRequest;
+use Temporal\Api\Operatorservice\V1\ListNexusEndpointsResponse;
+use Temporal\Api\Operatorservice\V1\ListSearchAttributesRequest;
+use Temporal\Api\Operatorservice\V1\ListSearchAttributesResponse;
+use Temporal\Api\Operatorservice\V1\RemoveRemoteClusterRequest;
+use Temporal\Api\Operatorservice\V1\RemoveRemoteClusterResponse;
+use Temporal\Api\Operatorservice\V1\RemoveSearchAttributesRequest;
+use Temporal\Api\Operatorservice\V1\RemoveSearchAttributesResponse;
+use Temporal\Api\Operatorservice\V1\UpdateNexusEndpointRequest;
+use Temporal\Api\Operatorservice\V1\UpdateNexusEndpointResponse;
 use Temporal\Exception\Client\ServiceClientException;
+use Temporal\Api\Operatorservice\V1\OperatorServiceClient;
 
 class OperatorClient extends BaseClient implements OperatorClientInterface
 {
@@ -20,7 +44,7 @@ class OperatorClient extends BaseClient implements OperatorClientInterface
      *
      * @throws ServiceClientException
      */
-    public function AddSearchAttributes(V1\AddSearchAttributesRequest $arg, ?ContextInterface $ctx = null): V1\AddSearchAttributesResponse
+    public function AddSearchAttributes(AddSearchAttributesRequest $arg, ?ContextInterface $ctx = null): AddSearchAttributesResponse
     {
         return $this->invoke("AddSearchAttributes", $arg, $ctx);
     }
@@ -33,7 +57,7 @@ class OperatorClient extends BaseClient implements OperatorClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RemoveSearchAttributes(V1\RemoveSearchAttributesRequest $arg, ?ContextInterface $ctx = null): V1\RemoveSearchAttributesResponse
+    public function RemoveSearchAttributes(RemoveSearchAttributesRequest $arg, ?ContextInterface $ctx = null): RemoveSearchAttributesResponse
     {
         return $this->invoke("RemoveSearchAttributes", $arg, $ctx);
     }
@@ -43,7 +67,7 @@ class OperatorClient extends BaseClient implements OperatorClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ListSearchAttributes(V1\ListSearchAttributesRequest $arg, ?ContextInterface $ctx = null): V1\ListSearchAttributesResponse
+    public function ListSearchAttributes(ListSearchAttributesRequest $arg, ?ContextInterface $ctx = null): ListSearchAttributesResponse
     {
         return $this->invoke("ListSearchAttributes", $arg, $ctx);
     }
@@ -54,7 +78,7 @@ class OperatorClient extends BaseClient implements OperatorClientInterface
      *
      * @throws ServiceClientException
      */
-    public function DeleteNamespace(V1\DeleteNamespaceRequest $arg, ?ContextInterface $ctx = null): V1\DeleteNamespaceResponse
+    public function DeleteNamespace(DeleteNamespaceRequest $arg, ?ContextInterface $ctx = null): DeleteNamespaceResponse
     {
         return $this->invoke("DeleteNamespace", $arg, $ctx);
     }
@@ -64,7 +88,7 @@ class OperatorClient extends BaseClient implements OperatorClientInterface
      *
      * @throws ServiceClientException
      */
-    public function AddOrUpdateRemoteCluster(V1\AddOrUpdateRemoteClusterRequest $arg, ?ContextInterface $ctx = null): V1\AddOrUpdateRemoteClusterResponse
+    public function AddOrUpdateRemoteCluster(AddOrUpdateRemoteClusterRequest $arg, ?ContextInterface $ctx = null): AddOrUpdateRemoteClusterResponse
     {
         return $this->invoke("AddOrUpdateRemoteCluster", $arg, $ctx);
     }
@@ -74,7 +98,7 @@ class OperatorClient extends BaseClient implements OperatorClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RemoveRemoteCluster(V1\RemoveRemoteClusterRequest $arg, ?ContextInterface $ctx = null): V1\RemoveRemoteClusterResponse
+    public function RemoveRemoteCluster(RemoveRemoteClusterRequest $arg, ?ContextInterface $ctx = null): RemoveRemoteClusterResponse
     {
         return $this->invoke("RemoveRemoteCluster", $arg, $ctx);
     }
@@ -84,7 +108,7 @@ class OperatorClient extends BaseClient implements OperatorClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ListClusters(V1\ListClustersRequest $arg, ?ContextInterface $ctx = null): V1\ListClustersResponse
+    public function ListClusters(ListClustersRequest $arg, ?ContextInterface $ctx = null): ListClustersResponse
     {
         return $this->invoke("ListClusters", $arg, $ctx);
     }
@@ -95,7 +119,7 @@ class OperatorClient extends BaseClient implements OperatorClientInterface
      *
      * @throws ServiceClientException
      */
-    public function GetNexusEndpoint(V1\GetNexusEndpointRequest $arg, ?ContextInterface $ctx = null): V1\GetNexusEndpointResponse
+    public function GetNexusEndpoint(GetNexusEndpointRequest $arg, ?ContextInterface $ctx = null): GetNexusEndpointResponse
     {
         return $this->invoke("GetNexusEndpoint", $arg, $ctx);
     }
@@ -109,7 +133,7 @@ class OperatorClient extends BaseClient implements OperatorClientInterface
      *
      * @throws ServiceClientException
      */
-    public function CreateNexusEndpoint(V1\CreateNexusEndpointRequest $arg, ?ContextInterface $ctx = null): V1\CreateNexusEndpointResponse
+    public function CreateNexusEndpoint(CreateNexusEndpointRequest $arg, ?ContextInterface $ctx = null): CreateNexusEndpointResponse
     {
         return $this->invoke("CreateNexusEndpoint", $arg, $ctx);
     }
@@ -127,7 +151,7 @@ class OperatorClient extends BaseClient implements OperatorClientInterface
      *
      * @throws ServiceClientException
      */
-    public function UpdateNexusEndpoint(V1\UpdateNexusEndpointRequest $arg, ?ContextInterface $ctx = null): V1\UpdateNexusEndpointResponse
+    public function UpdateNexusEndpoint(UpdateNexusEndpointRequest $arg, ?ContextInterface $ctx = null): UpdateNexusEndpointResponse
     {
         return $this->invoke("UpdateNexusEndpoint", $arg, $ctx);
     }
@@ -137,7 +161,7 @@ class OperatorClient extends BaseClient implements OperatorClientInterface
      *
      * @throws ServiceClientException
      */
-    public function DeleteNexusEndpoint(V1\DeleteNexusEndpointRequest $arg, ?ContextInterface $ctx = null): V1\DeleteNexusEndpointResponse
+    public function DeleteNexusEndpoint(DeleteNexusEndpointRequest $arg, ?ContextInterface $ctx = null): DeleteNexusEndpointResponse
     {
         return $this->invoke("DeleteNexusEndpoint", $arg, $ctx);
     }
@@ -153,13 +177,13 @@ class OperatorClient extends BaseClient implements OperatorClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ListNexusEndpoints(V1\ListNexusEndpointsRequest $arg, ?ContextInterface $ctx = null): V1\ListNexusEndpointsResponse
+    public function ListNexusEndpoints(ListNexusEndpointsRequest $arg, ?ContextInterface $ctx = null): ListNexusEndpointsResponse
     {
         return $this->invoke("ListNexusEndpoints", $arg, $ctx);
     }
 
     protected static function createGrpcStub(string $address, array $options): \Grpc\BaseStub
     {
-        return new V1\OperatorServiceClient($address, $options);
+        return new OperatorServiceClient($address, $options);
     }
 }

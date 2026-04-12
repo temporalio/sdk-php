@@ -10,8 +10,8 @@
 use Grpc\BaseStub;
 use Laminas\Code\Generator;
 use Laminas\Code\Generator\MethodGenerator;
-use Temporal\Api\Operatorservice;
-use Temporal\Api\Workflowservice;
+use Temporal\Api\Operatorservice\V1\OperatorServiceClient;
+use Temporal\Api\Workflowservice\V1\WorkflowServiceClient;
 use Temporal\Client\GRPC\GrpcClientInterface;
 use Temporal\Client\Common\ServerCapabilities;
 use Temporal\Client\GRPC\ContextInterface;
@@ -85,7 +85,7 @@ $buildRpcMap = static function (ReflectionClass $serviceReflection) use ($baseSt
 };
 
 $buildCreateServiceClientMethod = static function (
-    string $serviceClientClass,
+    string $serviceClientFqcn,
 ) use ($addressParam, $optionsParam): MethodGenerator {
     $method = new MethodGenerator(
         'createGrpcStub',
@@ -93,7 +93,7 @@ $buildCreateServiceClientMethod = static function (
         MethodGenerator::FLAG_PROTECTED | MethodGenerator::FLAG_STATIC,
     );
     $method->setReturnType('\Grpc\BaseStub');
-    $method->setBody(\sprintf('return new %s($address, $options);', $serviceClientClass));
+    $method->setBody(\sprintf('return new \\%s($address, $options);', $serviceClientFqcn));
 
     return $method;
 };
@@ -171,52 +171,44 @@ PHP);
 $clients = [
     [
         'label' => 'workflow',
-        'serviceClass' => Workflowservice\V1\WorkflowServiceClient::class,
-        'apiNamespacePrefix' => '\Temporal\Api\Workflowservice\\',
+        'serviceClass' => WorkflowServiceClient::class,
+        'apiNamespacePrefix' => '\\Temporal\\Api\\Workflowservice\\V1\\',
         'interfaceName' => 'ServiceClientInterface',
         'implementationName' => 'ServiceClient',
         'interfaceFile' => __DIR__ . '/../../src/Client/GRPC/ServiceClientInterface.php',
         'implementationFile' => __DIR__ . '/../../src/Client/GRPC/ServiceClient.php',
-        'uses' => [
+        'extraUses' => [
             'interface' => [
-                'Temporal\Api\Workflowservice\V1',
                 'Temporal\Client\Common\ServerCapabilities',
-                'Temporal\Exception\Client\ServiceClientException',
             ],
             'implementation' => [
-                'Temporal\Api\Workflowservice\V1',
                 'Temporal\Api\Workflowservice\V1\GetSystemInfoRequest',
                 'Temporal\Client\Common\ServerCapabilities',
-                'Temporal\Exception\Client\ServiceClientException',
             ],
         ],
         'extraInterfaceMethods' => static fn(): array => [$buildGetServerCapabilitiesInterfaceMethod()],
         'extraImplementationMethods' => static fn(): array => [
             $buildGetServerCapabilitiesImplementationMethod(),
             $buildSetServerCapabilitiesMethod(),
-            $buildCreateServiceClientMethod('V1\WorkflowServiceClient'),
+            $buildCreateServiceClientMethod(WorkflowServiceClient::class),
         ],
     ],
     [
         'label' => 'operator',
-        'serviceClass' => Operatorservice\V1\OperatorServiceClient::class,
-        'apiNamespacePrefix' => '\Temporal\Api\Operatorservice\\',
+        'serviceClass' => OperatorServiceClient::class,
+        'apiNamespacePrefix' => '\\Temporal\\Api\\Operatorservice\\V1\\',
         'interfaceName' => 'OperatorClientInterface',
         'implementationName' => 'OperatorClient',
         'interfaceFile' => __DIR__ . '/../../src/Client/GRPC/OperatorClientInterface.php',
         'implementationFile' => __DIR__ . '/../../src/Client/GRPC/OperatorClient.php',
-        'uses' => [
-            'interface' => [
-                'Temporal\Api\Operatorservice\V1',
-                'Temporal\Exception\Client\ServiceClientException',
-            ],
-            'implementation' => [
-                'Temporal\Api\Operatorservice\V1',
-                'Temporal\Exception\Client\ServiceClientException',
-            ],
+        'extraUses' => [
+            'interface' => [],
+            'implementation' => [],
         ],
         'extraInterfaceMethods' => static fn(): array => [],
-        'extraImplementationMethods' => static fn(): array => [$buildCreateServiceClientMethod('V1\OperatorServiceClient')],
+        'extraImplementationMethods' => static fn(): array => [
+            $buildCreateServiceClientMethod(OperatorServiceClient::class),
+        ],
     ],
 ];
 
@@ -227,6 +219,18 @@ foreach ($clients as $client) {
     $serviceReflection = new ReflectionClass($client['serviceClass']);
     $methods = $buildRpcMap($serviceReflection);
     echo "[OK]\n";
+
+    // Collect all RPC request/response class FQCNs for use-imports
+    $rpcClasses = [];
+    foreach ($methods as $options) {
+        $rpcClasses[] = $options['request'];
+        $rpcClasses[] = $options['response'];
+    }
+    $rpcClasses = \array_unique($rpcClasses);
+    \sort($rpcClasses);
+
+    // Common uses for all generated files
+    $commonUses = ['Temporal\Exception\Client\ServiceClientException'];
 
     echo "generating {$client['interfaceName']}: ";
     $interface = new Generator\InterfaceGenerator($client['interfaceName']);
@@ -254,7 +258,7 @@ foreach ($clients as $client) {
     $file->setNamespace('Temporal\\Client\\GRPC');
     $file->setDeclares([DeclareStatement::fromArray(['strict_types' => 1])]);
     $file->setClass($interface);
-    $file->setUses($client['uses']['interface']);
+    $file->setUses([...$rpcClasses, ...$commonUses, ...($client['extraUses']['interface'] ?? [])]);
 
     \file_put_contents(
         $client['interfaceFile'],
@@ -294,7 +298,7 @@ foreach ($clients as $client) {
     $file->setNamespace('Temporal\\Client\\GRPC');
     $file->setDeclares([DeclareStatement::fromArray(['strict_types' => 1])]);
     $file->setClass($implementation);
-    $file->setUses($client['uses']['implementation']);
+    $file->setUses([...$rpcClasses, ...$commonUses, ...($client['extraUses']['implementation'] ?? []), $client['serviceClass']]);
 
     \file_put_contents(
         $client['implementationFile'],

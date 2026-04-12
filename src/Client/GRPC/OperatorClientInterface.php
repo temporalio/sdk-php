@@ -4,7 +4,30 @@ declare(strict_types=1);
 
 namespace Temporal\Client\GRPC;
 
-use Temporal\Api\Operatorservice\V1;
+use Temporal\Api\Operatorservice\V1\AddOrUpdateRemoteClusterRequest;
+use Temporal\Api\Operatorservice\V1\AddOrUpdateRemoteClusterResponse;
+use Temporal\Api\Operatorservice\V1\AddSearchAttributesRequest;
+use Temporal\Api\Operatorservice\V1\AddSearchAttributesResponse;
+use Temporal\Api\Operatorservice\V1\CreateNexusEndpointRequest;
+use Temporal\Api\Operatorservice\V1\CreateNexusEndpointResponse;
+use Temporal\Api\Operatorservice\V1\DeleteNamespaceRequest;
+use Temporal\Api\Operatorservice\V1\DeleteNamespaceResponse;
+use Temporal\Api\Operatorservice\V1\DeleteNexusEndpointRequest;
+use Temporal\Api\Operatorservice\V1\DeleteNexusEndpointResponse;
+use Temporal\Api\Operatorservice\V1\GetNexusEndpointRequest;
+use Temporal\Api\Operatorservice\V1\GetNexusEndpointResponse;
+use Temporal\Api\Operatorservice\V1\ListClustersRequest;
+use Temporal\Api\Operatorservice\V1\ListClustersResponse;
+use Temporal\Api\Operatorservice\V1\ListNexusEndpointsRequest;
+use Temporal\Api\Operatorservice\V1\ListNexusEndpointsResponse;
+use Temporal\Api\Operatorservice\V1\ListSearchAttributesRequest;
+use Temporal\Api\Operatorservice\V1\ListSearchAttributesResponse;
+use Temporal\Api\Operatorservice\V1\RemoveRemoteClusterRequest;
+use Temporal\Api\Operatorservice\V1\RemoveRemoteClusterResponse;
+use Temporal\Api\Operatorservice\V1\RemoveSearchAttributesRequest;
+use Temporal\Api\Operatorservice\V1\RemoveSearchAttributesResponse;
+use Temporal\Api\Operatorservice\V1\UpdateNexusEndpointRequest;
+use Temporal\Api\Operatorservice\V1\UpdateNexusEndpointResponse;
 use Temporal\Exception\Client\ServiceClientException;
 
 interface OperatorClientInterface extends GrpcClientInterface
@@ -20,7 +43,7 @@ interface OperatorClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function AddSearchAttributes(V1\AddSearchAttributesRequest $arg, ?ContextInterface $ctx = null): V1\AddSearchAttributesResponse;
+    public function AddSearchAttributes(AddSearchAttributesRequest $arg, ?ContextInterface $ctx = null): AddSearchAttributesResponse;
 
     /**
      * RemoveSearchAttributes removes custom search attributes.
@@ -30,14 +53,14 @@ interface OperatorClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function RemoveSearchAttributes(V1\RemoveSearchAttributesRequest $arg, ?ContextInterface $ctx = null): V1\RemoveSearchAttributesResponse;
+    public function RemoveSearchAttributes(RemoveSearchAttributesRequest $arg, ?ContextInterface $ctx = null): RemoveSearchAttributesResponse;
 
     /**
      * ListSearchAttributes returns comprehensive information about search attributes.
      *
      * @throws ServiceClientException
      */
-    public function ListSearchAttributes(V1\ListSearchAttributesRequest $arg, ?ContextInterface $ctx = null): V1\ListSearchAttributesResponse;
+    public function ListSearchAttributes(ListSearchAttributesRequest $arg, ?ContextInterface $ctx = null): ListSearchAttributesResponse;
 
     /**
      * DeleteNamespace synchronously deletes a namespace and asynchronously reclaims
@@ -45,28 +68,28 @@ interface OperatorClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function DeleteNamespace(V1\DeleteNamespaceRequest $arg, ?ContextInterface $ctx = null): V1\DeleteNamespaceResponse;
+    public function DeleteNamespace(DeleteNamespaceRequest $arg, ?ContextInterface $ctx = null): DeleteNamespaceResponse;
 
     /**
      * AddOrUpdateRemoteCluster adds or updates remote cluster.
      *
      * @throws ServiceClientException
      */
-    public function AddOrUpdateRemoteCluster(V1\AddOrUpdateRemoteClusterRequest $arg, ?ContextInterface $ctx = null): V1\AddOrUpdateRemoteClusterResponse;
+    public function AddOrUpdateRemoteCluster(AddOrUpdateRemoteClusterRequest $arg, ?ContextInterface $ctx = null): AddOrUpdateRemoteClusterResponse;
 
     /**
      * RemoveRemoteCluster removes remote cluster.
      *
      * @throws ServiceClientException
      */
-    public function RemoveRemoteCluster(V1\RemoveRemoteClusterRequest $arg, ?ContextInterface $ctx = null): V1\RemoveRemoteClusterResponse;
+    public function RemoveRemoteCluster(RemoveRemoteClusterRequest $arg, ?ContextInterface $ctx = null): RemoveRemoteClusterResponse;
 
     /**
      * ListClusters returns information about Temporal clusters.
      *
      * @throws ServiceClientException
      */
-    public function ListClusters(V1\ListClustersRequest $arg, ?ContextInterface $ctx = null): V1\ListClustersResponse;
+    public function ListClusters(ListClustersRequest $arg, ?ContextInterface $ctx = null): ListClustersResponse;
 
     /**
      * Get a registered Nexus endpoint by ID. The returned version can be used for
@@ -74,7 +97,7 @@ interface OperatorClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function GetNexusEndpoint(V1\GetNexusEndpointRequest $arg, ?ContextInterface $ctx = null): V1\GetNexusEndpointResponse;
+    public function GetNexusEndpoint(GetNexusEndpointRequest $arg, ?ContextInterface $ctx = null): GetNexusEndpointResponse;
 
     /**
      * Create a Nexus endpoint. This will fail if an endpoint with the same name is
@@ -85,7 +108,7 @@ interface OperatorClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function CreateNexusEndpoint(V1\CreateNexusEndpointRequest $arg, ?ContextInterface $ctx = null): V1\CreateNexusEndpointResponse;
+    public function CreateNexusEndpoint(CreateNexusEndpointRequest $arg, ?ContextInterface $ctx = null): CreateNexusEndpointResponse;
 
     /**
      * Optimistically update a Nexus endpoint based on provided version as obtained via
@@ -100,14 +123,14 @@ interface OperatorClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function UpdateNexusEndpoint(V1\UpdateNexusEndpointRequest $arg, ?ContextInterface $ctx = null): V1\UpdateNexusEndpointResponse;
+    public function UpdateNexusEndpoint(UpdateNexusEndpointRequest $arg, ?ContextInterface $ctx = null): UpdateNexusEndpointResponse;
 
     /**
      * Delete an incoming Nexus service by ID.
      *
      * @throws ServiceClientException
      */
-    public function DeleteNexusEndpoint(V1\DeleteNexusEndpointRequest $arg, ?ContextInterface $ctx = null): V1\DeleteNexusEndpointResponse;
+    public function DeleteNexusEndpoint(DeleteNexusEndpointRequest $arg, ?ContextInterface $ctx = null): DeleteNexusEndpointResponse;
 
     /**
      * List all Nexus endpoints for the cluster, sorted by ID in ascending order. Set
@@ -120,5 +143,5 @@ interface OperatorClientInterface extends GrpcClientInterface
      *
      * @throws ServiceClientException
      */
-    public function ListNexusEndpoints(V1\ListNexusEndpointsRequest $arg, ?ContextInterface $ctx = null): V1\ListNexusEndpointsResponse;
+    public function ListNexusEndpoints(ListNexusEndpointsRequest $arg, ?ContextInterface $ctx = null): ListNexusEndpointsResponse;
 }
