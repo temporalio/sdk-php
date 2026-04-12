@@ -5,13 +5,37 @@ declare(strict_types=1);
 namespace Temporal\Tests\Unit\Client\GRPC;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
-use Temporal\Api\Operatorservice\V1;
+use Temporal\Api\Operatorservice\V1\AddOrUpdateRemoteClusterRequest;
+use Temporal\Api\Operatorservice\V1\AddOrUpdateRemoteClusterResponse;
+use Temporal\Api\Operatorservice\V1\AddSearchAttributesRequest;
+use Temporal\Api\Operatorservice\V1\AddSearchAttributesResponse;
+use Temporal\Api\Operatorservice\V1\CreateNexusEndpointRequest;
+use Temporal\Api\Operatorservice\V1\CreateNexusEndpointResponse;
+use Temporal\Api\Operatorservice\V1\DeleteNamespaceRequest;
+use Temporal\Api\Operatorservice\V1\DeleteNamespaceResponse;
+use Temporal\Api\Operatorservice\V1\DeleteNexusEndpointRequest;
+use Temporal\Api\Operatorservice\V1\DeleteNexusEndpointResponse;
+use Temporal\Api\Operatorservice\V1\GetNexusEndpointRequest;
+use Temporal\Api\Operatorservice\V1\GetNexusEndpointResponse;
+use Temporal\Api\Operatorservice\V1\ListClustersRequest;
+use Temporal\Api\Operatorservice\V1\ListClustersResponse;
+use Temporal\Api\Operatorservice\V1\ListNexusEndpointsRequest;
+use Temporal\Api\Operatorservice\V1\ListNexusEndpointsResponse;
+use Temporal\Api\Operatorservice\V1\ListSearchAttributesRequest;
+use Temporal\Api\Operatorservice\V1\ListSearchAttributesResponse;
 use Temporal\Api\Operatorservice\V1\OperatorServiceClient as ApiOperatorServiceClient;
+use Temporal\Api\Operatorservice\V1\RemoveRemoteClusterRequest;
+use Temporal\Api\Operatorservice\V1\RemoveRemoteClusterResponse;
+use Temporal\Api\Operatorservice\V1\RemoveSearchAttributesRequest;
+use Temporal\Api\Operatorservice\V1\RemoveSearchAttributesResponse;
+use Temporal\Api\Operatorservice\V1\UpdateNexusEndpointRequest;
+use Temporal\Api\Operatorservice\V1\UpdateNexusEndpointResponse;
 use Temporal\Client\GRPC\Connection\ConnectionState;
 use Temporal\Client\GRPC\ContextInterface;
+use Temporal\Client\GRPC\GrpcClientInterface;
 use Temporal\Client\GRPC\OperatorClient;
+use Temporal\Client\GRPC\OperatorClientInterface;
 use Temporal\Interceptor\GrpcClientInterceptor;
 use Temporal\Internal\Interceptor\Pipeline;
 use Temporal\Tests\TestCase;
@@ -23,7 +47,7 @@ final class OperatorClientTestCase extends TestCase
     {
         $captured = new class {
             public ?string $method = null;
-            public ?V1\DeleteNamespaceRequest $request = null;
+            public ?DeleteNamespaceRequest $request = null;
             public ?ContextInterface $context = null;
         };
 
@@ -52,12 +76,12 @@ final class OperatorClientTestCase extends TestCase
                     $this->captured->request = $arg;
                     $this->captured->context = $ctx;
 
-                    return (new V1\DeleteNamespaceResponse())->setDeletedNamespace('temporal-system-deleted');
+                    return (new DeleteNamespaceResponse())->setDeletedNamespace('temporal-system-deleted');
                 }
             }]),
         )->withAuthKey('test-key');
 
-        $response = $client->DeleteNamespace((new V1\DeleteNamespaceRequest())->setNamespace('test-namespace'));
+        $response = $client->DeleteNamespace((new DeleteNamespaceRequest())->setNamespace('test-namespace'));
 
         self::assertSame('DeleteNamespace', $captured->method);
         self::assertSame('test-namespace', $captured->request?->getNamespace());
@@ -69,154 +93,154 @@ final class OperatorClientTestCase extends TestCase
     public function addSearchAttributes(): void
     {
         [$captured, $client] = $this->createInterceptedClient(
-            static fn() => new V1\AddSearchAttributesResponse(),
+            static fn() => new AddSearchAttributesResponse(),
         );
 
-        $client->AddSearchAttributes(new V1\AddSearchAttributesRequest());
+        $client->AddSearchAttributes(new AddSearchAttributesRequest());
 
         self::assertSame('AddSearchAttributes', $captured->method);
-        self::assertInstanceOf(V1\AddSearchAttributesRequest::class, $captured->arg);
+        self::assertInstanceOf(AddSearchAttributesRequest::class, $captured->arg);
     }
 
     #[Test]
     public function removeSearchAttributes(): void
     {
         [$captured, $client] = $this->createInterceptedClient(
-            static fn() => new V1\RemoveSearchAttributesResponse(),
+            static fn() => new RemoveSearchAttributesResponse(),
         );
 
-        $client->RemoveSearchAttributes(new V1\RemoveSearchAttributesRequest());
+        $client->RemoveSearchAttributes(new RemoveSearchAttributesRequest());
 
         self::assertSame('RemoveSearchAttributes', $captured->method);
-        self::assertInstanceOf(V1\RemoveSearchAttributesRequest::class, $captured->arg);
+        self::assertInstanceOf(RemoveSearchAttributesRequest::class, $captured->arg);
     }
 
     #[Test]
     public function listSearchAttributes(): void
     {
         [$captured, $client] = $this->createInterceptedClient(
-            static fn() => new V1\ListSearchAttributesResponse(),
+            static fn() => new ListSearchAttributesResponse(),
         );
 
-        $client->ListSearchAttributes(new V1\ListSearchAttributesRequest());
+        $client->ListSearchAttributes(new ListSearchAttributesRequest());
 
         self::assertSame('ListSearchAttributes', $captured->method);
-        self::assertInstanceOf(V1\ListSearchAttributesRequest::class, $captured->arg);
+        self::assertInstanceOf(ListSearchAttributesRequest::class, $captured->arg);
     }
 
     #[Test]
     public function addOrUpdateRemoteCluster(): void
     {
         [$captured, $client] = $this->createInterceptedClient(
-            static fn() => new V1\AddOrUpdateRemoteClusterResponse(),
+            static fn() => new AddOrUpdateRemoteClusterResponse(),
         );
 
-        $client->AddOrUpdateRemoteCluster(new V1\AddOrUpdateRemoteClusterRequest());
+        $client->AddOrUpdateRemoteCluster(new AddOrUpdateRemoteClusterRequest());
 
         self::assertSame('AddOrUpdateRemoteCluster', $captured->method);
-        self::assertInstanceOf(V1\AddOrUpdateRemoteClusterRequest::class, $captured->arg);
+        self::assertInstanceOf(AddOrUpdateRemoteClusterRequest::class, $captured->arg);
     }
 
     #[Test]
     public function removeRemoteCluster(): void
     {
         [$captured, $client] = $this->createInterceptedClient(
-            static fn() => new V1\RemoveRemoteClusterResponse(),
+            static fn() => new RemoveRemoteClusterResponse(),
         );
 
-        $client->RemoveRemoteCluster(new V1\RemoveRemoteClusterRequest());
+        $client->RemoveRemoteCluster(new RemoveRemoteClusterRequest());
 
         self::assertSame('RemoveRemoteCluster', $captured->method);
-        self::assertInstanceOf(V1\RemoveRemoteClusterRequest::class, $captured->arg);
+        self::assertInstanceOf(RemoveRemoteClusterRequest::class, $captured->arg);
     }
 
     #[Test]
     public function listClusters(): void
     {
         [$captured, $client] = $this->createInterceptedClient(
-            static fn() => new V1\ListClustersResponse(),
+            static fn() => new ListClustersResponse(),
         );
 
-        $client->ListClusters(new V1\ListClustersRequest());
+        $client->ListClusters(new ListClustersRequest());
 
         self::assertSame('ListClusters', $captured->method);
-        self::assertInstanceOf(V1\ListClustersRequest::class, $captured->arg);
+        self::assertInstanceOf(ListClustersRequest::class, $captured->arg);
     }
 
     #[Test]
     public function getNexusEndpoint(): void
     {
         [$captured, $client] = $this->createInterceptedClient(
-            static fn() => new V1\GetNexusEndpointResponse(),
+            static fn() => new GetNexusEndpointResponse(),
         );
 
-        $client->GetNexusEndpoint(new V1\GetNexusEndpointRequest());
+        $client->GetNexusEndpoint(new GetNexusEndpointRequest());
 
         self::assertSame('GetNexusEndpoint', $captured->method);
-        self::assertInstanceOf(V1\GetNexusEndpointRequest::class, $captured->arg);
+        self::assertInstanceOf(GetNexusEndpointRequest::class, $captured->arg);
     }
 
     #[Test]
     public function createNexusEndpoint(): void
     {
         [$captured, $client] = $this->createInterceptedClient(
-            static fn() => new V1\CreateNexusEndpointResponse(),
+            static fn() => new CreateNexusEndpointResponse(),
         );
 
-        $client->CreateNexusEndpoint(new V1\CreateNexusEndpointRequest());
+        $client->CreateNexusEndpoint(new CreateNexusEndpointRequest());
 
         self::assertSame('CreateNexusEndpoint', $captured->method);
-        self::assertInstanceOf(V1\CreateNexusEndpointRequest::class, $captured->arg);
+        self::assertInstanceOf(CreateNexusEndpointRequest::class, $captured->arg);
     }
 
     #[Test]
     public function updateNexusEndpoint(): void
     {
         [$captured, $client] = $this->createInterceptedClient(
-            static fn() => new V1\UpdateNexusEndpointResponse(),
+            static fn() => new UpdateNexusEndpointResponse(),
         );
 
-        $client->UpdateNexusEndpoint(new V1\UpdateNexusEndpointRequest());
+        $client->UpdateNexusEndpoint(new UpdateNexusEndpointRequest());
 
         self::assertSame('UpdateNexusEndpoint', $captured->method);
-        self::assertInstanceOf(V1\UpdateNexusEndpointRequest::class, $captured->arg);
+        self::assertInstanceOf(UpdateNexusEndpointRequest::class, $captured->arg);
     }
 
     #[Test]
     public function deleteNexusEndpoint(): void
     {
         [$captured, $client] = $this->createInterceptedClient(
-            static fn() => new V1\DeleteNexusEndpointResponse(),
+            static fn() => new DeleteNexusEndpointResponse(),
         );
 
-        $client->DeleteNexusEndpoint(new V1\DeleteNexusEndpointRequest());
+        $client->DeleteNexusEndpoint(new DeleteNexusEndpointRequest());
 
         self::assertSame('DeleteNexusEndpoint', $captured->method);
-        self::assertInstanceOf(V1\DeleteNexusEndpointRequest::class, $captured->arg);
+        self::assertInstanceOf(DeleteNexusEndpointRequest::class, $captured->arg);
     }
 
     #[Test]
     public function listNexusEndpoints(): void
     {
         [$captured, $client] = $this->createInterceptedClient(
-            static fn() => new V1\ListNexusEndpointsResponse(),
+            static fn() => new ListNexusEndpointsResponse(),
         );
 
-        $client->ListNexusEndpoints(new V1\ListNexusEndpointsRequest());
+        $client->ListNexusEndpoints(new ListNexusEndpointsRequest());
 
         self::assertSame('ListNexusEndpoints', $captured->method);
-        self::assertInstanceOf(V1\ListNexusEndpointsRequest::class, $captured->arg);
+        self::assertInstanceOf(ListNexusEndpointsRequest::class, $captured->arg);
     }
 
     #[Test]
     public function customContextIsPassedToInterceptor(): void
     {
         [$captured, $client] = $this->createInterceptedClient(
-            static fn() => new V1\ListClustersResponse(),
+            static fn() => new ListClustersResponse(),
         );
 
         $ctx = $client->getContext()->withMetadata(['x-custom' => ['value']]);
-        $client->ListClusters(new V1\ListClustersRequest(), $ctx);
+        $client->ListClusters(new ListClustersRequest(), $ctx);
 
         self::assertSame(['value'], $captured->ctx->getMetadata()['x-custom'] ?? null);
     }
@@ -225,11 +249,11 @@ final class OperatorClientTestCase extends TestCase
     public function authKeyIsInjectedIntoContext(): void
     {
         [$captured, $client] = $this->createInterceptedClient(
-            static fn() => new V1\ListClustersResponse(),
+            static fn() => new ListClustersResponse(),
         );
 
         $client = $client->withAuthKey('operator-key');
-        $client->ListClusters(new V1\ListClustersRequest());
+        $client->ListClusters(new ListClustersRequest());
 
         self::assertSame(['Bearer operator-key'], $captured->ctx->getMetadata()['Authorization'] ?? null);
     }
@@ -238,10 +262,10 @@ final class OperatorClientTestCase extends TestCase
     public function withoutAuthKeyNoAuthorizationHeader(): void
     {
         [$captured, $client] = $this->createInterceptedClient(
-            static fn() => new V1\ListClustersResponse(),
+            static fn() => new ListClustersResponse(),
         );
 
-        $client->ListClusters(new V1\ListClustersRequest());
+        $client->ListClusters(new ListClustersRequest());
 
         self::assertArrayNotHasKey('Authorization', $captured->ctx->getMetadata());
     }
@@ -250,7 +274,7 @@ final class OperatorClientTestCase extends TestCase
     public function withContextReturnsNewImmutableInstance(): void
     {
         [, $client] = $this->createInterceptedClient(
-            static fn() => new V1\ListClustersResponse(),
+            static fn() => new ListClustersResponse(),
         );
 
         $ctx = $client->getContext()->withMetadata(['foo' => ['bar']]);
@@ -265,7 +289,7 @@ final class OperatorClientTestCase extends TestCase
     public function withAuthKeyReturnsNewImmutableInstance(): void
     {
         [, $client] = $this->createInterceptedClient(
-            static fn() => new V1\ListClustersResponse(),
+            static fn() => new ListClustersResponse(),
         );
 
         $client2 = $client->withAuthKey('key');
@@ -296,20 +320,20 @@ final class OperatorClientTestCase extends TestCase
     public function implementsGrpcClientInterface(): void
     {
         [, $client] = $this->createInterceptedClient(
-            static fn() => new V1\ListClustersResponse(),
+            static fn() => new ListClustersResponse(),
         );
 
-        self::assertInstanceOf(\Temporal\Client\GRPC\GrpcClientInterface::class, $client);
+        self::assertInstanceOf(GrpcClientInterface::class, $client);
     }
 
     #[Test]
     public function implementsOperatorClientInterface(): void
     {
         [, $client] = $this->createInterceptedClient(
-            static fn() => new V1\ListClustersResponse(),
+            static fn() => new ListClustersResponse(),
         );
 
-        self::assertInstanceOf(\Temporal\Client\GRPC\OperatorClientInterface::class, $client);
+        self::assertInstanceOf(OperatorClientInterface::class, $client);
     }
 
     /**
