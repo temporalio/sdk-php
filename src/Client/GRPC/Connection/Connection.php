@@ -12,7 +12,7 @@ use Temporal\Client\Common\ServerCapabilities;
  */
 final class Connection implements ConnectionInterface
 {
-    public ?ServerCapabilities $capabilities = null;
+    private ?ServerCapabilities $capabilities = null;
     private BaseStub $client;
 
     /**
@@ -24,7 +24,7 @@ final class Connection implements ConnectionInterface
      * @param \Closure(): BaseStub $clientFactory Service Client factory
      */
     public function __construct(
-        public \Closure $clientFactory,
+        private readonly \Closure $clientFactory,
     ) {
         $this->initClient();
     }
@@ -84,6 +84,16 @@ final class Connection implements ConnectionInterface
         $this->closed = true;
         $this->capabilities = null;
         $this->client->close();
+    }
+
+    public function getCapabilities(): ?ServerCapabilities
+    {
+        return $this->capabilities;
+    }
+
+    public function setCapabilities(?ServerCapabilities $capabilities): void
+    {
+        $this->capabilities = $capabilities;
     }
 
     /**

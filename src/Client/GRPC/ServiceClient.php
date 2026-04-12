@@ -1430,11 +1430,11 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
         return $this->invoke("DescribeWorker", $arg, $ctx);
     }
 
-    public function getServerCapabilities(): ?\Temporal\Client\Common\ServerCapabilities
+    public function getServerCapabilities(): ?ServerCapabilities
     {
         $connection = $this->getInternalConnection();
-        if ($connection->capabilities !== null) {
-            return $connection->capabilities;
+        if ($connection->getCapabilities() !== null) {
+            return $connection->getCapabilities();
         }
 
         try {
@@ -1445,7 +1445,7 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
                 return null;
             }
 
-            return $connection->capabilities = new ServerCapabilities(
+            $serverCapabilities = new ServerCapabilities(
                 signalAndQueryHeader: $capabilities->getSignalAndQueryHeader(),
                 internalErrorDifferentiation: $capabilities->getInternalErrorDifferentiation(),
                 activityFailureIncludeHeartbeat: $capabilities->getActivityFailureIncludeHeartbeat(),
@@ -1458,6 +1458,9 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
                 countGroupByExecutionStatus: $capabilities->getCountGroupByExecutionStatus(),
                 nexus: $capabilities->getNexus(),
             );
+            $connection->setCapabilities($serverCapabilities);
+
+            return $serverCapabilities;
         } catch (ServiceClientException $e) {
             if ($e->getCode() === StatusCode::UNIMPLEMENTED) {
                 return null;
@@ -1467,15 +1470,17 @@ class ServiceClient extends BaseClient implements ServiceClientInterface
         }
     }
 
-    public function setServerCapabilities(\Temporal\Client\Common\ServerCapabilities $capabilities): void
+    public function setServerCapabilities(ServerCapabilities $capabilities): void
     {
         \trigger_error(
             'Method ' . __METHOD__ . ' is deprecated and will be removed in the next major release.',
             \E_USER_DEPRECATED,
         );
+
+        $this->getInternalConnection()->setCapabilities($capabilities);
     }
 
-    protected static function createServiceClient(string $address, array $options): \Grpc\BaseStub
+    protected static function createGrpcStub(string $address, array $options): \Grpc\BaseStub
     {
         return new V1\WorkflowServiceClient($address, $options);
     }

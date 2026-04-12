@@ -71,7 +71,7 @@ abstract class BaseClient implements GrpcClientInterface
         }
 
         return new static(
-            static fn(): BaseStub => static::createServiceClient(
+            static fn(): BaseStub => static::createGrpcStub(
                 $address,
                 ['credentials' => \Grpc\ChannelCredentials::createInsecure()],
             ),
@@ -123,7 +123,7 @@ abstract class BaseClient implements GrpcClientInterface
             $options['grpc.ssl_target_name_override'] = $overrideServerName;
         }
 
-        return new static(static fn(): BaseStub => static::createServiceClient($address, $options));
+        return new static(static fn(): BaseStub => static::createGrpcStub($address, $options));
     }
 
     public function getContext(): ContextInterface
@@ -217,7 +217,7 @@ abstract class BaseClient implements GrpcClientInterface
      * @param non-empty-string $address Temporal service address in format `host:port`
      * @param array<array-key, mixed> $options
      */
-    abstract protected static function createServiceClient(string $address, array $options): BaseStub;
+    abstract protected static function createGrpcStub(string $address, array $options): BaseStub;
 
     /**
      * Call a gRPC method.
@@ -240,7 +240,7 @@ abstract class BaseClient implements GrpcClientInterface
                 $deadline = $ctx->getDeadline();
                 if ($deadline !== null) {
                     $diff = (new \DateTime())->diff($deadline);
-                    $options['timeout'] = CarbonInterval::instance($diff)->totalMicroseconds;
+                    $options['timeout'] = \max(0, (int) CarbonInterval::instance($diff)->totalMicroseconds);
                 }
 
                 /** @var UnaryCall $call */

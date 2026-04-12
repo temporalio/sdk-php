@@ -158,7 +158,7 @@ class OperatorClient extends BaseClient implements OperatorClientInterface
         return $this->invoke("ListNexusEndpoints", $arg, $ctx);
     }
 
-    protected static function createServiceClient(string $address, array $options): \Grpc\BaseStub
+    protected static function createGrpcStub(string $address, array $options): \Grpc\BaseStub
     {
         return new V1\OperatorServiceClient($address, $options);
     }

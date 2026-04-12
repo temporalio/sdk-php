@@ -7,7 +7,7 @@ namespace Temporal\Client\GRPC;
 use Temporal\Api\Operatorservice\V1;
 use Temporal\Exception\Client\ServiceClientException;
 
-interface OperatorClientInterface extends \Temporal\Client\GRPC\GrpcClientInterface
+interface OperatorClientInterface extends GrpcClientInterface
 {
     /**
      * AddSearchAttributes add custom search attributes.

@@ -88,7 +88,7 @@ $buildCreateServiceClientMethod = static function (
     string $serviceClientClass,
 ) use ($addressParam, $optionsParam): MethodGenerator {
     $method = new MethodGenerator(
-        'createServiceClient',
+        'createGrpcStub',
         [$addressParam, $optionsParam],
         MethodGenerator::FLAG_PROTECTED | MethodGenerator::FLAG_STATIC,
     );
@@ -110,8 +110,8 @@ $buildGetServerCapabilitiesImplementationMethod = static function (): MethodGene
     $method->setReturnType('?\Temporal\Client\Common\ServerCapabilities');
     $method->setBody(<<<'PHP'
 $connection = $this->getInternalConnection();
-if ($connection->capabilities !== null) {
-    return $connection->capabilities;
+if ($connection->getCapabilities() !== null) {
+    return $connection->getCapabilities();
 }
 
 try {
@@ -122,7 +122,7 @@ try {
         return null;
     }
 
-    return $connection->capabilities = new ServerCapabilities(
+    $serverCapabilities = new ServerCapabilities(
         signalAndQueryHeader: $capabilities->getSignalAndQueryHeader(),
         internalErrorDifferentiation: $capabilities->getInternalErrorDifferentiation(),
         activityFailureIncludeHeartbeat: $capabilities->getActivityFailureIncludeHeartbeat(),
@@ -135,6 +135,9 @@ try {
         countGroupByExecutionStatus: $capabilities->getCountGroupByExecutionStatus(),
         nexus: $capabilities->getNexus(),
     );
+    $connection->setCapabilities($serverCapabilities);
+
+    return $serverCapabilities;
 } catch (ServiceClientException $e) {
     if ($e->getCode() === StatusCode::UNIMPLEMENTED) {
         return null;
@@ -158,6 +161,8 @@ $buildSetServerCapabilitiesMethod = static function (): MethodGenerator {
     'Method ' . __METHOD__ . ' is deprecated and will be removed in the next major release.',
     \E_USER_DEPRECATED,
 );
+
+$this->getInternalConnection()->setCapabilities($capabilities);
 PHP);
 
     return $method;
@@ -254,8 +259,8 @@ foreach ($clients as $client) {
     \file_put_contents(
         $client['interfaceFile'],
         \str_replace(
-            [$client['apiNamespacePrefix'], '\\Temporal\\Client\\GRPC\\ContextInterface'],
-            ['', 'ContextInterface'],
+            [$client['apiNamespacePrefix'], '\\Temporal\\Client\\GRPC\\', '\\Temporal\\Client\\Common\\'],
+            ['', '', ''],
             $file->generate(),
         ),
     );
@@ -294,8 +299,8 @@ foreach ($clients as $client) {
     \file_put_contents(
         $client['implementationFile'],
         \str_replace(
-            [$client['apiNamespacePrefix'], '\\Temporal\\Client\\GRPC\\ContextInterface'],
-            ['', 'ContextInterface'],
+            [$client['apiNamespacePrefix'], '\\Temporal\\Client\\GRPC\\', '\\Temporal\\Client\\Common\\'],
+            ['', '', ''],
             $file->generate(),
         ),
     );

@@ -31,6 +31,8 @@ final class SearchAttributeTestInvoker
             if ($e->getCode() !== StatusCode::ALREADY_EXISTS) {
                 throw $e;
             }
+
+            echo "Search attributes already registered, skipping.\n";
         }
     }
 }

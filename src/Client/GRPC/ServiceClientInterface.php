@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace Temporal\Client\GRPC;
 
 use Temporal\Api\Workflowservice\V1;
+use Temporal\Client\Common\ServerCapabilities;
 use Temporal\Exception\Client\ServiceClientException;
 
-interface ServiceClientInterface extends \Temporal\Client\GRPC\GrpcClientInterface
+interface ServiceClientInterface extends GrpcClientInterface
 {
-    public function getServerCapabilities(): ?\Temporal\Client\Common\ServerCapabilities;
+    public function getServerCapabilities(): ?ServerCapabilities;
 
     /**
      * RegisterNamespace creates a new namespace which can be used as a container for
