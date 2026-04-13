@@ -20,6 +20,11 @@ use Temporal\Workflow\ChildWorkflowOptions;
 use Temporal\Workflow\ChildWorkflowStubInterface;
 use Temporal\Workflow\WorkflowContextInterface;
 
+/**
+ * @template-covariant T of object
+ * @mixin T
+ * @internal
+ */
 final class ChildWorkflowProxy extends Proxy
 {
     private const ERROR_UNDEFINED_WORKFLOW_METHOD =
