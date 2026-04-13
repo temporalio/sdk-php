@@ -191,7 +191,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @see Workflow::newContinueAsNewStub()
      *
-     * @psalm-template T of object
+     * @template T of object
      * @param class-string<T> $class
      * @return T
      */
@@ -216,7 +216,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @see Workflow::newChildWorkflowStub()
      *
-     * @psalm-template T of object
+     * @template T of object
      * @param class-string<T> $class
      *
      * @return T
@@ -242,7 +242,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @see Workflow::newExternalWorkflowStub()
      *
-     * @psalm-template T of object
+     * @template T of object
      * @param class-string<T> $class
      * @return T
      */
@@ -279,7 +279,7 @@ interface WorkflowContextInterface extends EnvironmentInterface
      *
      * @see Workflow::newActivityStub()
      *
-     * @psalm-template T of object
+     * @template T of object
      * @param class-string<T> $class
      *
      * @return ActivityProxy<T>

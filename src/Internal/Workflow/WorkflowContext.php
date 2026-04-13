@@ -444,7 +444,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     }
 
     /**
-     * @psalm-template T of object
+     * @template T of object
      * @param class-string<T> $class
      * @return ActivityProxy<T>
      */

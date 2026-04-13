@@ -676,7 +676,7 @@ final class Workflow extends Facade
      *  }
      * ```
      *
-     * @psalm-template T of object
+     * @template T of object
      *
      * @param class-string<T> $class
      * @return T
@@ -779,7 +779,7 @@ final class Workflow extends Facade
      *  }
      * ```
      *
-     * @psalm-template T of object
+     * @template T of object
      *
      * @param class-string<T> $class
      *
@@ -859,7 +859,7 @@ final class Workflow extends Facade
      *  }
      * ```
      *
-     * @psalm-template T of object
+     * @template T of object
      *
      * @param class-string<T> $class
      * @return T
@@ -967,7 +967,7 @@ final class Workflow extends Facade
      *  }
      * ```
      *
-     * @psalm-template T of object
+     * @template T of object
      *
      * @param class-string<T> $class
      *

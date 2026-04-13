@@ -92,7 +92,7 @@ interface WorkflowClientInterface extends ClientContextInterface
      * IMPORTANT! Stub is per workflow instance. So new stub should be created
      * for each new one.
      *
-     * @psalm-template T of object
+     * @template T of object
      * @param class-string<T> $class
      * @return WorkflowProxy<T>
      */
@@ -121,7 +121,7 @@ interface WorkflowClientInterface extends ClientContextInterface
     /**
      * Returns workflow stub associated with running workflow.
      *
-     * @psalm-template T of object
+     * @template T of object
      * @param class-string<T> $class
      * @param non-empty-string $workflowID
      * @return WorkflowProxy<T>
