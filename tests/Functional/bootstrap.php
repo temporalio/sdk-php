@@ -12,9 +12,7 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 $systemInfo = \Temporal\Testing\SystemInfo::detect();
 
 $environment = Environment::create();
-if (!$environment->isTemporalRunning()) {
-    $environment->startTemporalServer();
-}
+$environment->startTemporalServer();
 (new SearchAttributeTestInvoker())();
 $command = $environment->command;
 $environment->startRoadRunner(
