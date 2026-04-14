@@ -79,4 +79,12 @@ interface WorkerInterface extends Identifiable
      * @return iterable<ActivityPrototype>
      */
     public function getActivities(): iterable;
+
+    /**
+     * Register one or multiple Nexus service implementations to be served by this worker.
+     * Each implementation must be annotated with #[ServiceImpl].
+     *
+     * @return $this
+     */
+    public function registerNexusServiceImplementation(object ...$services): self;
 }

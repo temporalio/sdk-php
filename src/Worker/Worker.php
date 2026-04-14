@@ -12,13 +12,16 @@ declare(strict_types=1);
 namespace Temporal\Worker;
 
 use React\Promise\PromiseInterface;
+use Nexus\Sdk\Handler\ServiceImplInstance;
 use Temporal\Internal\Declaration\EntityNameValidator;
 use Temporal\Internal\Events\EventEmitterTrait;
 use Temporal\Internal\Events\EventListenerInterface;
+use Temporal\Internal\Nexus\NexusTaskHandler;
 use Temporal\Internal\Repository\RepositoryInterface;
 use Temporal\Internal\ServiceContainer;
 use Temporal\Internal\Transport\Router;
 use Temporal\Internal\Transport\RouterInterface;
+use Temporal\Nexus\PayloadSerializer;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 use Temporal\Worker\Transport\RPCConnectionInterface;
 
@@ -115,6 +118,16 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
         return $this->services->activities;
     }
 
+    public function registerNexusServiceImplementation(object ...$services): WorkerInterface
+    {
+        foreach ($services as $service) {
+            $instance = ServiceImplInstance::fromInstance($service);
+            $this->services->nexusServices->add($instance);
+        }
+
+        return $this;
+    }
+
     protected function createRouter(): RouterInterface
     {
         $router = new Router();
@@ -132,6 +145,19 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
         $router->add(new Router\DestroyWorkflow($this->services->running, $this->services->loop));
         $router->add(new Router\StackTrace($this->services->running));
 
+        // Nexus routes
+        $nexusHandler = $this->createNexusTaskHandler();
+        $router->add(new Router\StartNexusOperation($nexusHandler));
+        $router->add(new Router\CancelNexusOperation($nexusHandler));
+
         return $router;
+    }
+
+    private function createNexusTaskHandler(): NexusTaskHandler
+    {
+        return new NexusTaskHandler(
+            $this->services->nexusServices,
+            new PayloadSerializer($this->services->dataConverter),
+        );
     }
 }
