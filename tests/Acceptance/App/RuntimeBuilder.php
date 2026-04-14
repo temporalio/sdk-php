@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Acceptance\App;
 
+use Nexus\Sdk\Attribute\ServiceImpl;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Activity\ActivityInterface;
 use Temporal\DataConverter\PayloadConverterInterface;
@@ -30,6 +31,10 @@ final class RuntimeBuilder
                     # Register Activity
                     $class->getAttributes(ActivityInterface::class) === [] or $runtime
                         ->addActivity($feature, $classString);
+
+                    # Register Nexus Service
+                    $class->getAttributes(ServiceImpl::class) === [] or $runtime
+                        ->addNexusService($feature, $classString);
 
                     # Register Converters
                     $class->implementsInterface(PayloadConverterInterface::class) and $runtime

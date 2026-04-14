@@ -462,6 +462,50 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         );
     }
 
+    public function newNexusServiceStub(
+        string $class,
+        \Temporal\Workflow\NexusOperationOptions $options,
+    ): object {
+        $operations = \Temporal\Nexus\NexusOperationReader::getOperations($class);
+        $serviceName = \Temporal\Nexus\NexusOperationReader::getServiceName($class);
+
+        if ($options->service === '') {
+            $options = $options->withService($serviceName);
+        }
+
+        return new NexusServiceProxy(
+            $class,
+            $operations,
+            $options,
+            $this,
+            $this->callsInterceptor,
+        );
+    }
+
+    public function newUntypedNexusOperationStub(
+        \Temporal\Workflow\NexusOperationOptions $options,
+    ): \Temporal\Workflow\NexusOperationStubInterface {
+        return new NexusOperationStub($this->services->marshaller, $options, $this->getHeader());
+    }
+
+    public function executeNexusOperation(
+        string $operation,
+        array $args = [],
+        ?\Temporal\Workflow\NexusOperationOptions $options = null,
+        \Temporal\DataConverter\Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
+    ): \React\Promise\PromiseInterface {
+        $options ??= \Temporal\Workflow\NexusOperationOptions::new();
+
+        return $this->callsInterceptor->with(
+            fn(\Temporal\Interceptor\WorkflowOutboundCalls\ExecuteNexusOperationInput $input): \React\Promise\PromiseInterface => $this
+                ->newUntypedNexusOperationStub($input->options)
+                ->execute($input->operation, $input->args, $input->returnType),
+            'executeNexusOperation',
+        )(new \Temporal\Interceptor\WorkflowOutboundCalls\ExecuteNexusOperationInput(
+            $options->service, $operation, $args, $options, $returnType,
+        ));
+    }
+
     public function timer($interval, ?TimerOptions $options = null): PromiseInterface
     {
         $dateInterval = DateInterval::parse($interval, DateInterval::FORMAT_SECONDS);

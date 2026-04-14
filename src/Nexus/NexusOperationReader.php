@@ -1,0 +1,67 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Temporal\Nexus;
+
+use Nexus\Sdk\Attribute\Operation;
+use Nexus\Sdk\Attribute\Service;
+
+/**
+ * Reads #[Service] and #[Operation] attributes from a Nexus service interface.
+ */
+final class NexusOperationReader
+{
+    /**
+     * Read operation definitions from a #[Service] annotated interface.
+     *
+     * @param class-string $class
+     * @return array<string, array{name: string, method: string, returnType: string}>
+     */
+    public static function getOperations(string $class): array
+    {
+        $reflection = new \ReflectionClass($class);
+        $operations = [];
+
+        foreach ($reflection->getMethods() as $method) {
+            $attrs = $method->getAttributes(Operation::class);
+            if ($attrs === []) {
+                continue;
+            }
+
+            /** @var Operation $operation */
+            $operation = $attrs[0]->newInstance();
+            $name = $operation->name !== '' ? $operation->name : $method->getName();
+
+            $returnType = $method->getReturnType();
+            $returnTypeName = $returnType instanceof \ReflectionNamedType ? $returnType->getName() : 'mixed';
+
+            $operations[$method->getName()] = [
+                'name' => $name,
+                'method' => $method->getName(),
+                'returnType' => $returnTypeName,
+            ];
+        }
+
+        return $operations;
+    }
+
+    /**
+     * Get the service name from a #[Service] annotated interface.
+     *
+     * @param class-string $class
+     */
+    public static function getServiceName(string $class): string
+    {
+        $reflection = new \ReflectionClass($class);
+        $attrs = $reflection->getAttributes(Service::class);
+
+        if ($attrs === []) {
+            return $reflection->getShortName();
+        }
+
+        /** @var Service $service */
+        $service = $attrs[0]->newInstance();
+        return $service->name !== '' ? $service->name : $reflection->getShortName();
+    }
+}

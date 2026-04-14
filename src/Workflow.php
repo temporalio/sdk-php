@@ -1008,6 +1008,48 @@ final class Workflow extends Facade
     }
 
     /**
+     * Returns a typed proxy for a Nexus service interface.
+     * Method calls on the returned object will execute Nexus operations.
+     *
+     * @psalm-template T of object
+     * @param class-string<T> $class Nexus service interface annotated with #[Service]
+     * @return T
+     *
+     * @throws OutOfContextException in the absence of the workflow execution context.
+     */
+    public static function newNexusServiceStub(
+        string $class,
+        Workflow\NexusOperationOptions $options,
+    ): object {
+        return self::getCurrentContext()->newNexusServiceStub($class, $options);
+    }
+
+    /**
+     * Returns an untyped Nexus operation stub.
+     *
+     * @throws OutOfContextException in the absence of the workflow execution context.
+     */
+    public static function newUntypedNexusOperationStub(
+        Workflow\NexusOperationOptions $options,
+    ): Workflow\NexusOperationStubInterface {
+        return self::getCurrentContext()->newUntypedNexusOperationStub($options);
+    }
+
+    /**
+     * Execute a Nexus operation directly without a typed stub.
+     *
+     * @throws OutOfContextException in the absence of the workflow execution context.
+     */
+    public static function executeNexusOperation(
+        string $operation,
+        array $args = [],
+        ?Workflow\NexusOperationOptions $options = null,
+        DataConverter\Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
+    ): PromiseInterface {
+        return self::getCurrentContext()->executeNexusOperation($operation, $args, $options, $returnType);
+    }
+
+    /**
      * Returns a complete trace of the last calls (for debugging).
      *
      * @throws OutOfContextException in the absence of the workflow execution context.

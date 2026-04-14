@@ -102,6 +102,11 @@ try {
         $getWorker($feature)->registerActivityImplementations($container->make($activity));
     }
 
+    // Register Nexus Services
+    foreach ($runtime->nexusServices() as $feature => $nexusService) {
+        $getWorker($feature)->registerNexusServiceImplementation($container->make($nexusService));
+    }
+
     $container->get(WorkerFactoryInterface::class)->run();
 } catch (\Throwable $e) {
     td($e);

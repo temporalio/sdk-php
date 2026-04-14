@@ -299,6 +299,42 @@ interface WorkflowContextInterface extends EnvironmentInterface
     ): ActivityStubInterface;
 
     /**
+     * Returns a typed proxy for a Nexus service interface.
+     * Method calls on the returned object will execute Nexus operations.
+     *
+     * @see Workflow::newNexusServiceStub()
+     *
+     * @psalm-template T of object
+     * @param class-string<T> $class Nexus service interface annotated with #[Service]
+     * @return T
+     */
+    public function newNexusServiceStub(
+        string $class,
+        NexusOperationOptions $options,
+    ): object;
+
+    /**
+     * Returns an untyped Nexus operation stub.
+     *
+     * @see Workflow::newUntypedNexusOperationStub()
+     */
+    public function newUntypedNexusOperationStub(
+        NexusOperationOptions $options,
+    ): NexusOperationStubInterface;
+
+    /**
+     * Execute a Nexus operation directly without a typed stub.
+     *
+     * @see Workflow::executeNexusOperation()
+     */
+    public function executeNexusOperation(
+        string $operation,
+        array $args = [],
+        ?NexusOperationOptions $options = null,
+        Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
+    ): PromiseInterface;
+
+    /**
      * Moves to the next step if the expression evaluates to `true`.
      *
      * @see Workflow::await()
