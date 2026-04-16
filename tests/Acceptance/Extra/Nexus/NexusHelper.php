@@ -4,120 +4,110 @@ declare(strict_types=1);
 
 namespace Temporal\Tests\Acceptance\Extra\Nexus;
 
-use Symfony\Component\Process\Process;
+use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Temporal\Api\Nexus\V1\EndpointSpec;
+use Temporal\Api\Nexus\V1\EndpointTarget;
+use Temporal\Api\Nexus\V1\EndpointTarget\Worker as WorkerTarget;
+use Temporal\Api\Operatorservice\V1\CreateNexusEndpointRequest;
+use Temporal\Api\Operatorservice\V1\OperatorServiceClient;
+use Temporal\Tests\Acceptance\App\Runtime\State;
 
 /**
  * Shared helpers for Nexus acceptance tests.
+ *
+ * Endpoint management goes over gRPC OperatorService (no shelling out to `temporal` CLI).
+ * Nexus operation invocation goes over Symfony HttpClient (no raw curl).
  */
 final class NexusHelper
 {
     public const HTTP_PORT = 7243;
 
+    public function __construct(
+        private readonly OperatorServiceClient $operator,
+        private readonly HttpClientInterface $http,
+    ) {}
+
     /**
-     * Create a Nexus endpoint pointing to a worker task queue.
+     * Build a helper bound to the running test environment.
      */
-    public static function createEndpoint(string $name, string $namespace, string $taskQueue, string $address): bool
+    public static function for(State $state): self
     {
-        $temporal = \getenv('TEMPORAL_CLI') ?: './temporal';
+        $host = \parse_url("http://{$state->address}", PHP_URL_HOST) ?: '127.0.0.1';
 
-        $process = new Process([
-            $temporal,
-            'operator', 'nexus', 'endpoint', 'create',
-            '--name', $name,
-            '--target-namespace', $namespace,
-            '--target-task-queue', $taskQueue,
-            '--address', $address,
-        ]);
-        $process->setTimeout(10);
-
-        try {
-            $process->run();
-            return $process->isSuccessful();
-        } catch (\Throwable) {
-            return false;
-        }
+        return new self(
+            new OperatorServiceClient(
+                $state->address,
+                ['credentials' => \Grpc\ChannelCredentials::createInsecure()],
+            ),
+            HttpClient::createForBaseUri("http://{$host}:" . self::HTTP_PORT),
+        );
     }
 
     /**
-     * Resolve endpoint UUID by its name.
+     * Create a Nexus endpoint targeting the given worker task queue and return its server-assigned ID.
      */
-    public static function getEndpointId(string $name, string $address): ?string
+    public function createWorkerEndpoint(string $name, string $namespace, string $taskQueue): string
     {
-        $temporal = \getenv('TEMPORAL_CLI') ?: './temporal';
+        $request = (new CreateNexusEndpointRequest())
+            ->setSpec(
+                (new EndpointSpec())
+                    ->setName($name)
+                    ->setTarget(
+                        (new EndpointTarget())->setWorker(
+                            (new WorkerTarget())
+                                ->setNamespace($namespace)
+                                ->setTaskQueue($taskQueue),
+                        ),
+                    ),
+            );
 
-        $process = new Process([
-            $temporal,
-            'operator', 'nexus', 'endpoint', 'list',
-            '--address', $address,
-            '--output', 'json',
-        ]);
-        $process->setTimeout(10);
-        $process->run();
+        [$response, $status] = $this->operator->CreateNexusEndpoint($request)->wait();
 
-        if (!$process->isSuccessful()) {
-            return null;
+        if ($status->code !== \Grpc\STATUS_OK) {
+            throw new \RuntimeException(
+                "CreateNexusEndpoint failed (gRPC code {$status->code}): {$status->details}",
+            );
         }
 
-        try {
-            $data = \json_decode($process->getOutput(), true, 512, JSON_THROW_ON_ERROR);
-        } catch (\Throwable) {
-            return null;
-        }
-
-        if (!\is_array($data)) {
-            return null;
-        }
-
-        foreach ($data as $entry) {
-            $epName = $entry['endpoint']['spec']['name'] ?? $entry['spec']['name'] ?? null;
-            $epId = $entry['endpoint']['id'] ?? $entry['id'] ?? null;
-            if ($epName === $name && \is_string($epId)) {
-                return $epId;
-            }
-        }
-
-        return null;
+        return $response->getEndpoint()->getId();
     }
 
     /**
-     * Send a Nexus HTTP POST request.
+     * Convenience: create a worker endpoint with a unique generated name and return its ID.
+     */
+    public function setupEndpoint(string $namespace, string $taskQueue, string $prefix = 'test-nexus'): string
+    {
+        return $this->createWorkerEndpoint(self::uniqueEndpointName($prefix), $namespace, $taskQueue);
+    }
+
+    /**
+     * Send a Nexus HTTP POST request to a registered endpoint.
      *
-     * @param string $host Temporal server host
-     * @param string $endpointId Nexus endpoint UUID
-     * @param string $service Service name
-     * @param string $operation Operation name
      * @param mixed $body Body to JSON-encode
      * @param array<string, string> $extraHeaders Extra HTTP headers
-     * @return array{int, string|false} [http_code, response_body]
+     * @return array{int, string} [http_code, response_body]
      */
-    public static function postNexus(
-        string $host,
+    public function postOperation(
         string $endpointId,
         string $service,
         string $operation,
         mixed $body,
         array $extraHeaders = [],
     ): array {
-        $url = "http://{$host}:" . self::HTTP_PORT . "/nexus/endpoints/{$endpointId}/services/{$service}/{$operation}";
+        $response = $this->http->request(
+            'POST',
+            "/nexus/endpoints/{$endpointId}/services/{$service}/{$operation}",
+            [
+                'headers' => $extraHeaders,
+                'json' => $body,
+                // Total request budget: 30s. `timeout` (idle) defaults to 60s — server-side
+                // Nexus polls can stall for several seconds while the worker picks the task up.
+                'max_duration' => 30,
+            ],
+        );
 
-        $headers = ['Content-Type: application/json'];
-        foreach ($extraHeaders as $k => $v) {
-            $headers[] = "{$k}: {$v}";
-        }
-
-        $ch = \curl_init($url);
-        \curl_setopt_array($ch, [
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => \json_encode($body),
-            CURLOPT_HTTPHEADER => $headers,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 15,
-        ]);
-        $response = \curl_exec($ch);
-        $httpCode = (int) \curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        \curl_close($ch);
-
-        return [$httpCode, $response];
+        return [$response->getStatusCode(), $response->getContent(false)];
     }
 
     /**

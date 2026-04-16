@@ -46,20 +46,12 @@ class MultiOperationTest extends TestCase
         // Wait for worker to register
         $stub->getResult('string');
 
-        $taskQueue = 'Temporal\\Tests\\Acceptance\\Extra\\Nexus\\MultiOperation';
-        $endpointName = NexusHelper::uniqueEndpointName();
-        $host = \parse_url("http://{$state->address}", PHP_URL_HOST) ?? '127.0.0.1';
+        $helper = NexusHelper::for($state);
+        $endpointId = $helper->setupEndpoint(
+            $state->namespace,
+            'Temporal\\Tests\\Acceptance\\Extra\\Nexus\\MultiOperation',
+        );
 
-        if (!NexusHelper::createEndpoint($endpointName, $state->namespace, $taskQueue, $state->address)) {
-            self::markTestSkipped('Could not create Nexus endpoint');
-        }
-
-        $endpointId = NexusHelper::getEndpointId($endpointName, $state->address);
-        if ($endpointId === null) {
-            self::markTestSkipped('Could not resolve endpoint UUID');
-        }
-
-        // Test each operation
         $cases = [
             ['add', [3, 5], '8'],
             ['multiply', [4, 7], '28'],
@@ -70,9 +62,9 @@ class MultiOperationTest extends TestCase
         foreach ($cases as [$op, $body, $expectedFragment]) {
             // For ops with multiple args we just send the array
             $payload = \count($body) === 1 ? $body[0] : $body;
-            [$code, $resp] = NexusHelper::postNexus($host, $endpointId, 'MathService', $op, $payload);
+            [$code, $resp] = $helper->postOperation($endpointId, 'MathService', $op, $payload);
             self::assertSame(200, $code, "Operation {$op}: expected 200, got {$code}. Response: {$resp}");
-            self::assertStringContainsString($expectedFragment, (string) $resp, "Operation {$op}: missing expected fragment");
+            self::assertStringContainsString($expectedFragment, $resp, "Operation {$op}: missing expected fragment");
         }
     }
 }

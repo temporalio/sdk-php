@@ -45,22 +45,14 @@ class HeadersTest extends TestCase
     ): void {
         $stub->getResult('string');
 
-        $taskQueue = 'Temporal\\Tests\\Acceptance\\Extra\\Nexus\\Headers';
-        $endpointName = NexusHelper::uniqueEndpointName('test-nexus-hdr');
+        $helper = NexusHelper::for($state);
+        $endpointId = $helper->setupEndpoint(
+            $state->namespace,
+            'Temporal\\Tests\\Acceptance\\Extra\\Nexus\\Headers',
+            'test-nexus-hdr',
+        );
 
-        if (!NexusHelper::createEndpoint($endpointName, $state->namespace, $taskQueue, $state->address)) {
-            self::markTestSkipped('Could not create Nexus endpoint');
-        }
-
-        $endpointId = NexusHelper::getEndpointId($endpointName, $state->address);
-        if ($endpointId === null) {
-            self::markTestSkipped('Could not resolve endpoint UUID');
-        }
-
-        $host = \parse_url("http://{$state->address}", PHP_URL_HOST) ?? '127.0.0.1';
-
-        [$code, $resp] = NexusHelper::postNexus(
-            $host,
+        [$code, $resp] = $helper->postOperation(
             $endpointId,
             'HeaderEchoService',
             'echoHeader',
@@ -69,7 +61,7 @@ class HeadersTest extends TestCase
         );
 
         self::assertSame(200, $code, "Expected 200, got {$code}. Response: {$resp}");
-        self::assertStringContainsString('my-test-value', (string) $resp, 'Expected header value in response');
+        self::assertStringContainsString('my-test-value', $resp, 'Expected header value in response');
     }
 }
 

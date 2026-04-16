@@ -59,23 +59,16 @@ class CoexistenceTest extends TestCase
     ): void {
         $stub->getResult('string');
 
-        $taskQueue = 'Temporal\\Tests\\Acceptance\\Extra\\Nexus\\Coexistence';
-        $endpointName = NexusHelper::uniqueEndpointName('test-nexus-coexist');
+        $helper = NexusHelper::for($state);
+        $endpointId = $helper->setupEndpoint(
+            $state->namespace,
+            'Temporal\\Tests\\Acceptance\\Extra\\Nexus\\Coexistence',
+            'test-nexus-coexist',
+        );
 
-        if (!NexusHelper::createEndpoint($endpointName, $state->namespace, $taskQueue, $state->address)) {
-            self::markTestSkipped('Could not create Nexus endpoint');
-        }
-
-        $endpointId = NexusHelper::getEndpointId($endpointName, $state->address);
-        if ($endpointId === null) {
-            self::markTestSkipped('Could not resolve endpoint UUID');
-        }
-
-        $host = \parse_url("http://{$state->address}", PHP_URL_HOST) ?? '127.0.0.1';
-
-        [$code, $resp] = NexusHelper::postNexus($host, $endpointId, 'CoexistService', 'ping', 'pong');
+        [$code, $resp] = $helper->postOperation($endpointId, 'CoexistService', 'ping', 'pong');
         self::assertSame(200, $code, "Expected 200, got {$code}. Response: {$resp}");
-        self::assertStringContainsString('pong-pong', (string) $resp);
+        self::assertStringContainsString('pong-pong', $resp);
     }
 }
 

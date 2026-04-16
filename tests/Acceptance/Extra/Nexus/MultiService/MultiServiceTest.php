@@ -45,29 +45,22 @@ class MultiServiceTest extends TestCase
     ): void {
         $stub->getResult('string');
 
-        $taskQueue = 'Temporal\\Tests\\Acceptance\\Extra\\Nexus\\MultiService';
-        $endpointName = NexusHelper::uniqueEndpointName('test-nexus-multi');
-
-        if (!NexusHelper::createEndpoint($endpointName, $state->namespace, $taskQueue, $state->address)) {
-            self::markTestSkipped('Could not create Nexus endpoint');
-        }
-
-        $endpointId = NexusHelper::getEndpointId($endpointName, $state->address);
-        if ($endpointId === null) {
-            self::markTestSkipped('Could not resolve endpoint UUID');
-        }
-
-        $host = \parse_url("http://{$state->address}", PHP_URL_HOST) ?? '127.0.0.1';
+        $helper = NexusHelper::for($state);
+        $endpointId = $helper->setupEndpoint(
+            $state->namespace,
+            'Temporal\\Tests\\Acceptance\\Extra\\Nexus\\MultiService',
+            'test-nexus-multi',
+        );
 
         // Service A
-        [$codeA, $respA] = NexusHelper::postNexus($host, $endpointId, 'ServiceA', 'opA', 'foo');
+        [$codeA, $respA] = $helper->postOperation($endpointId, 'ServiceA', 'opA', 'foo');
         self::assertSame(200, $codeA, "ServiceA: expected 200, got {$codeA}. Response: {$respA}");
-        self::assertStringContainsString('A:foo', (string) $respA);
+        self::assertStringContainsString('A:foo', $respA);
 
         // Service B
-        [$codeB, $respB] = NexusHelper::postNexus($host, $endpointId, 'ServiceB', 'opB', 'bar');
+        [$codeB, $respB] = $helper->postOperation($endpointId, 'ServiceB', 'opB', 'bar');
         self::assertSame(200, $codeB, "ServiceB: expected 200, got {$codeB}. Response: {$respB}");
-        self::assertStringContainsString('B:bar', (string) $respB);
+        self::assertStringContainsString('B:bar', $respB);
     }
 }
 

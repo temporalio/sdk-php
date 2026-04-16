@@ -48,14 +48,14 @@ class ErrorsTest extends TestCase
     ): void {
         $stub->getResult('string');
 
-        $endpointId = $this->setupEndpoint($state);
-        $host = \parse_url("http://{$state->address}", PHP_URL_HOST) ?? '127.0.0.1';
+        $helper = NexusHelper::for($state);
+        $endpointId = $this->setupEndpoint($helper, $state->namespace);
 
-        [$code, $resp] = NexusHelper::postNexus($host, $endpointId, 'ErrorService', 'failOp', 'business-error');
+        [$code, $resp] = $helper->postOperation($endpointId, 'ErrorService', 'failOp', 'business-error');
 
         // OperationException → 4xx-class error; Temporal returns failure JSON
         self::assertNotSame(200, $code, "Expected error response, got 200. Body: {$resp}");
-        self::assertStringContainsString('business-error', (string) $resp, 'Failure message should be propagated');
+        self::assertStringContainsString('business-error', $resp, 'Failure message should be propagated');
     }
 
     #[Test]
@@ -66,10 +66,10 @@ class ErrorsTest extends TestCase
     ): void {
         $stub->getResult('string');
 
-        $endpointId = $this->setupEndpoint($state);
-        $host = \parse_url("http://{$state->address}", PHP_URL_HOST) ?? '127.0.0.1';
+        $helper = NexusHelper::for($state);
+        $endpointId = $this->setupEndpoint($helper, $state->namespace);
 
-        [$code, $resp] = NexusHelper::postNexus($host, $endpointId, 'ErrorService', 'handlerErrorOp', 'infra');
+        [$code, $resp] = $helper->postOperation($endpointId, 'ErrorService', 'handlerErrorOp', 'infra');
 
         // HandlerException → also error response from Temporal
         self::assertNotSame(200, $code, "Expected error response, got 200. Body: {$resp}");
@@ -83,29 +83,21 @@ class ErrorsTest extends TestCase
     ): void {
         $stub->getResult('string');
 
-        $endpointId = $this->setupEndpoint($state);
-        $host = \parse_url("http://{$state->address}", PHP_URL_HOST) ?? '127.0.0.1';
+        $helper = NexusHelper::for($state);
+        $endpointId = $this->setupEndpoint($helper, $state->namespace);
 
-        [$code, $resp] = NexusHelper::postNexus($host, $endpointId, 'ErrorService', 'nonExistentOp', 'whatever');
+        [$code, $resp] = $helper->postOperation($endpointId, 'ErrorService', 'nonExistentOp', 'whatever');
 
         self::assertNotSame(200, $code, "Expected error for unknown operation, got 200. Body: {$resp}");
     }
 
-    private function setupEndpoint(State $state): string
+    private function setupEndpoint(NexusHelper $helper, string $namespace): string
     {
-        $taskQueue = 'Temporal\\Tests\\Acceptance\\Extra\\Nexus\\Errors';
-        $endpointName = NexusHelper::uniqueEndpointName('test-nexus-err');
-
-        if (!NexusHelper::createEndpoint($endpointName, $state->namespace, $taskQueue, $state->address)) {
-            self::markTestSkipped('Could not create Nexus endpoint');
-        }
-
-        $id = NexusHelper::getEndpointId($endpointName, $state->address);
-        if ($id === null) {
-            self::markTestSkipped('Could not resolve endpoint UUID');
-        }
-
-        return $id;
+        return $helper->setupEndpoint(
+            $namespace,
+            'Temporal\\Tests\\Acceptance\\Extra\\Nexus\\Errors',
+            'test-nexus-err',
+        );
     }
 }
 
