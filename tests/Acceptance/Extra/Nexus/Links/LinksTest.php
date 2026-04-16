@@ -1,0 +1,206 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Temporal\Tests\Acceptance\Extra\Nexus\Links;
+
+use Nexus\Sdk\Attribute\Operation;
+use Nexus\Sdk\Attribute\OperationImpl;
+use Nexus\Sdk\Attribute\Service;
+use Nexus\Sdk\Attribute\ServiceImpl;
+use Nexus\Sdk\Handler\OperationContext;
+use Nexus\Sdk\Handler\OperationHandlerInterface;
+use Nexus\Sdk\Handler\OperationStartDetails;
+use Nexus\Sdk\Handler\SynchronousOperationHandler;
+use Nexus\Sdk\Link;
+use PHPUnit\Framework\Attributes\Test;
+use Temporal\Client\WorkflowStubInterface;
+use Temporal\Tests\Acceptance\App\Attribute\Stub;
+use Temporal\Tests\Acceptance\App\Attribute\Worker;
+use Temporal\Tests\Acceptance\App\Runtime\State;
+use Temporal\Tests\Acceptance\App\TestCase;
+use Temporal\Tests\Acceptance\Extra\Nexus\NexusHelper;
+use Temporal\Worker\WorkerOptions;
+use Temporal\Workflow\WorkflowInterface;
+use Temporal\Workflow\WorkflowMethod;
+
+/**
+ * Acceptance test: Links attached to OperationContext by the handler are
+ * propagated back to the Nexus caller in the response.
+ */
+#[Worker(options: [self::class, 'workerOptions'])]
+class LinksTest extends TestCase
+{
+    public static function workerOptions(): WorkerOptions
+    {
+        return WorkerOptions::new()
+            ->withMaxConcurrentActivityExecutionSize(10)
+            ->withMaxConcurrentNexusTaskExecutionSize(10)
+            ->withMaxConcurrentNexusTaskPollers(2);
+    }
+
+    #[Test]
+    public function handlerCanAttachSingleLinkAndSeeItBack(
+        State $state,
+        #[Stub('Extra_Nexus_Links_Bootstrap')]
+        WorkflowStubInterface $stub,
+    ): void {
+        $stub->getResult('string');
+
+        [$code, $resp] = $this->invoke($state, 'attachAndReportSingle', 'session-7');
+
+        self::assertSame(200, $code, "Expected 200, got {$code}. Body: {$resp}");
+        // Body carries a deterministic marker produced from links the handler saw
+        // via OperationContext::getLinks() right after its own addLinks() call.
+        self::assertStringContainsString('count=1', $resp);
+        self::assertStringContainsString('session-7', $resp);
+        self::assertStringContainsString('example.session', $resp);
+    }
+
+    #[Test]
+    public function handlerCanAttachMultipleLinksAndSeeThemBack(
+        State $state,
+        #[Stub('Extra_Nexus_Links_Bootstrap2')]
+        WorkflowStubInterface $stub,
+    ): void {
+        $stub->getResult('string');
+
+        [$code, $resp] = $this->invoke($state, 'attachAndReportMany', 'job-99');
+
+        self::assertSame(200, $code, "Expected 200, got {$code}. Body: {$resp}");
+        self::assertStringContainsString('count=2', $resp);
+        self::assertStringContainsString('primary-job-99', $resp);
+        self::assertStringContainsString('audit-job-99', $resp);
+    }
+
+    #[Test]
+    public function handlerStartsWithNoLinks(
+        State $state,
+        #[Stub('Extra_Nexus_Links_Bootstrap3')]
+        WorkflowStubInterface $stub,
+    ): void {
+        $stub->getResult('string');
+
+        [$code, $resp] = $this->invoke($state, 'reportNoLinks', 'x');
+
+        self::assertSame(200, $code, "Body: {$resp}");
+        self::assertStringContainsString('count=0', $resp);
+    }
+
+    /**
+     * @return array{int, string}
+     */
+    private function invoke(State $state, string $op, string $body): array
+    {
+        $helper = NexusHelper::for($state);
+        $endpointId = $helper->setupEndpoint(
+            $state->namespace,
+            'Temporal\\Tests\\Acceptance\\Extra\\Nexus\\Links',
+            'nexus-links',
+        );
+
+        return $helper->postOperation($endpointId, 'LinkService', $op, $body);
+    }
+}
+
+// ── Nexus service ────────────────────────────────────────────────────
+
+#[Service(name: 'LinkService')]
+interface LinkServiceInterface
+{
+    #[Operation]
+    public function attachAndReportSingle(string $suffix): string;
+
+    #[Operation]
+    public function attachAndReportMany(string $suffix): string;
+
+    #[Operation]
+    public function reportNoLinks(string $_ignored): string;
+}
+
+#[ServiceImpl(service: LinkServiceInterface::class)]
+class LinkServiceImpl
+{
+    #[OperationImpl]
+    public function attachAndReportSingle(): OperationHandlerInterface
+    {
+        return new SynchronousOperationHandler(
+            static function (OperationContext $ctx, OperationStartDetails $d, ?string $suffix): string {
+                $ctx->addLinks(new Link(
+                    "https://example.test/session/{$suffix}",
+                    'example.session',
+                ));
+                return self::reportLinks($ctx);
+            },
+        );
+    }
+
+    #[OperationImpl]
+    public function attachAndReportMany(): OperationHandlerInterface
+    {
+        return new SynchronousOperationHandler(
+            static function (OperationContext $ctx, OperationStartDetails $d, ?string $suffix): string {
+                $ctx->addLinks(
+                    new Link("https://example.test/primary/primary-{$suffix}", 'example.primary'),
+                    new Link("https://example.test/audit/audit-{$suffix}", 'example.audit'),
+                );
+                return self::reportLinks($ctx);
+            },
+        );
+    }
+
+    #[OperationImpl]
+    public function reportNoLinks(): OperationHandlerInterface
+    {
+        return new SynchronousOperationHandler(
+            static fn(OperationContext $ctx, OperationStartDetails $d, ?string $_in): string
+                => self::reportLinks($ctx),
+        );
+    }
+
+    /**
+     * Serializes the links currently attached to the given OperationContext into
+     * a compact string the test can assert on.
+     */
+    private static function reportLinks(OperationContext $ctx): string
+    {
+        $links = $ctx->getLinks();
+        $parts = [];
+        foreach ($links as $link) {
+            $parts[] = "{$link->uri}|{$link->type}";
+        }
+        return \sprintf('count=%d;links=[%s]', \count($links), \implode(';', $parts));
+    }
+}
+
+// ── Bootstrap workflows ──────────────────────────────────────────────
+
+#[WorkflowInterface]
+class LinksBootstrapWorkflow
+{
+    #[WorkflowMethod(name: 'Extra_Nexus_Links_Bootstrap')]
+    public function run(): string
+    {
+        return 'ready';
+    }
+}
+
+#[WorkflowInterface]
+class LinksBootstrapWorkflow2
+{
+    #[WorkflowMethod(name: 'Extra_Nexus_Links_Bootstrap2')]
+    public function run(): string
+    {
+        return 'ready';
+    }
+}
+
+#[WorkflowInterface]
+class LinksBootstrapWorkflow3
+{
+    #[WorkflowMethod(name: 'Extra_Nexus_Links_Bootstrap3')]
+    public function run(): string
+    {
+        return 'ready';
+    }
+}

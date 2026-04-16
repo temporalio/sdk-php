@@ -129,7 +129,7 @@ class ErrorServiceImpl
     {
         return new SynchronousOperationHandler(
             static function (OperationContext $ctx, OperationStartDetails $details, ?string $reason): string {
-                throw new HandlerException(ErrorType::Internal, "infra: {$reason}");
+                throw HandlerException::create(ErrorType::Internal, "infra: {$reason}");
             },
         );
     }

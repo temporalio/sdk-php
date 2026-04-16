@@ -196,7 +196,7 @@ final class NexusTaskHandler
             return \Temporal\DataConverter\EncodedValues::fromValues([$result->getAsyncOperationToken()]);
         } catch (OperationException $e) {
             throw $this->convertHandlerException(
-                new HandlerException(
+                HandlerException::create(
                     \Nexus\Sdk\Exception\ErrorType::Internal,
                     $e->getMessage(),
                     $e,

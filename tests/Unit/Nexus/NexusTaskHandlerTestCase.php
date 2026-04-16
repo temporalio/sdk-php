@@ -17,6 +17,7 @@ use Nexus\Sdk\Handler\OperationHandlerInterface;
 use Nexus\Sdk\Handler\OperationStartDetails;
 use Nexus\Sdk\Handler\OperationStartResult;
 use Nexus\Sdk\Handler\ServiceImplInstance;
+use Nexus\Sdk\Handler\SynchronousOperationFunctionInterface;
 use Nexus\Sdk\Handler\SynchronousOperationHandler;
 use Nexus\Sdk\Link;
 use Temporal\Api\Common\V1\Payload;
@@ -44,6 +45,29 @@ interface TestGreetingService
 
     #[Operation]
     public function cancelableOp(string $input): string;
+
+    #[Operation]
+    public function shoutViaFunctor(string $input): string;
+
+    #[Operation]
+    public function shoutViaFromFunction(string $input): string;
+
+    #[Operation]
+    public function shoutViaFromCallable(string $input): string;
+}
+
+/**
+ * @implements SynchronousOperationFunctionInterface<string, string>
+ */
+final class ShoutFunctor implements SynchronousOperationFunctionInterface
+{
+    public function __invoke(
+        OperationContext $context,
+        OperationStartDetails $details,
+        mixed $input,
+    ): mixed {
+        return \strtoupper((string) $input) . '!';
+    }
 }
 
 #[ServiceImpl(service: TestGreetingService::class)]
@@ -99,7 +123,7 @@ class TestGreetingServiceImpl
             public function cancel(OperationContext $context, OperationCancelDetails $details): void
             {
                 if ($details->operationToken === 'unknown') {
-                    throw new HandlerException(ErrorType::NotFound, 'Not found');
+                    throw HandlerException::create(ErrorType::NotFound, 'Not found');
                 }
             }
 
@@ -108,6 +132,31 @@ class TestGreetingServiceImpl
                 return new SynchronousOperationHandler($function);
             }
         };
+    }
+
+    #[OperationImpl]
+    public function shoutViaFunctor(): OperationHandlerInterface
+    {
+        // A named functor implementing SynchronousOperationFunctionInterface passed
+        // directly into the handler's constructor (union param accepts the interface).
+        return new SynchronousOperationHandler(new ShoutFunctor());
+    }
+
+    #[OperationImpl]
+    public function shoutViaFromFunction(): OperationHandlerInterface
+    {
+        // Explicit factory for functor-style creation.
+        return SynchronousOperationHandler::fromFunction(new ShoutFunctor());
+    }
+
+    #[OperationImpl]
+    public function shoutViaFromCallable(): OperationHandlerInterface
+    {
+        // Explicit factory for callable-style creation.
+        return SynchronousOperationHandler::fromCallable(
+            static fn(OperationContext $ctx, OperationStartDetails $d, ?string $input): string
+                => \strtoupper((string) $input) . '!',
+        );
     }
 }
 
@@ -260,6 +309,60 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         self::assertTrue($response->getStartOperation()->hasSyncSuccess());
     }
 
+    public function testSyncOperationViaFunctorConstructor(): void
+    {
+        $request = $this->buildStartRequest('TestGreetingService', 'shoutViaFunctor', 'hello');
+
+        $response = $this->handler->handleStartOperation($request);
+
+        self::assertTrue($response->hasStartOperation());
+        $startResp = $response->getStartOperation();
+        self::assertTrue($startResp->hasSyncSuccess());
+
+        self::assertSame('HELLO!', $this->decodeSyncStringResult($startResp));
+    }
+
+    public function testSyncOperationViaFromFunctionFactory(): void
+    {
+        $request = $this->buildStartRequest('TestGreetingService', 'shoutViaFromFunction', 'world');
+
+        $response = $this->handler->handleStartOperation($request);
+
+        self::assertTrue($response->hasStartOperation());
+        $startResp = $response->getStartOperation();
+        self::assertTrue($startResp->hasSyncSuccess());
+
+        self::assertSame('WORLD!', $this->decodeSyncStringResult($startResp));
+    }
+
+    public function testSyncOperationViaFromCallableFactory(): void
+    {
+        $request = $this->buildStartRequest('TestGreetingService', 'shoutViaFromCallable', 'quiet');
+
+        $response = $this->handler->handleStartOperation($request);
+
+        self::assertTrue($response->hasStartOperation());
+        $startResp = $response->getStartOperation();
+        self::assertTrue($startResp->hasSyncSuccess());
+
+        self::assertSame('QUIET!', $this->decodeSyncStringResult($startResp));
+    }
+
+    public function testFunctorAndCallableProduceIdenticalResults(): void
+    {
+        $callableResp = $this->handler->handleStartOperation(
+            $this->buildStartRequest('TestGreetingService', 'shoutViaFromCallable', 'same-input'),
+        );
+        $functorResp = $this->handler->handleStartOperation(
+            $this->buildStartRequest('TestGreetingService', 'shoutViaFromFunction', 'same-input'),
+        );
+
+        self::assertSame(
+            $this->decodeSyncStringResult($callableResp->getStartOperation()),
+            $this->decodeSyncStringResult($functorResp->getStartOperation()),
+        );
+    }
+
     public function testStartOperationWithLinks(): void
     {
         $link = new \Temporal\Api\Nexus\V1\Link();
@@ -302,6 +405,23 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         $request = new Request();
         $request->setStartOperation($startReq);
         return $request;
+    }
+
+    private function decodeSyncStringResult(
+        \Temporal\Api\Nexus\V1\StartOperationResponse $startResp,
+    ): string {
+        $payload = $startResp->getSyncSuccess()->getPayload();
+        self::assertNotNull($payload);
+
+        $result = $this->serializer->deserialize(
+            new \Nexus\Sdk\Serializer\Content(
+                $payload->getData(),
+                \iterator_to_array($payload->getMetadata()),
+            ),
+            'string',
+        );
+
+        return (string) $result;
     }
 
     private function buildCancelRequest(string $service, string $operation, string $token): Request
