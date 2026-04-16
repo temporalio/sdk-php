@@ -7,6 +7,11 @@ namespace Temporal\Tests\Unit\Exception;
 use Carbon\CarbonInterval;
 use Exception;
 use Google\Protobuf\Duration;
+use Nexus\Sdk\Exception\ErrorType as NexusErrorType;
+use Nexus\Sdk\Exception\HandlerException as NexusHandlerException;
+use Nexus\Sdk\Exception\OperationException as NexusOperationException;
+use Nexus\Sdk\Exception\RetryBehavior as NexusRetryBehavior;
+use Temporal\Api\Enums\V1\NexusHandlerErrorRetryBehavior;
 use Temporal\Api\Failure\V1\Failure;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\EncodedValues;
@@ -197,5 +202,108 @@ final class FailureConverterTestCase extends AbstractUnit
 
         self::assertInstanceOf(ApplicationFailure::class, $newException);
         $this->assertSame(ApplicationErrorCategory::Benign, $newException->getApplicationErrorCategory());
+    }
+
+    // ── Nexus: HandlerException → NexusHandlerFailureInfo ───────────────
+
+    public function testNexusHandlerExceptionProducesNexusHandlerFailureInfo(): void
+    {
+        $e = NexusHandlerException::create(
+            NexusErrorType::BadRequest,
+            'invalid payload',
+            null,
+            NexusRetryBehavior::NonRetryable,
+        );
+
+        $failure = FailureConverter::mapExceptionToFailure($e, DataConverter::createDefault());
+
+        self::assertTrue($failure->hasNexusHandlerFailureInfo(), 'Nexus handler info must be set');
+        $info = $failure->getNexusHandlerFailureInfo();
+        self::assertSame('BAD_REQUEST', $info->getType(), 'Spec-level error type wire value');
+        self::assertSame(
+            NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_NON_RETRYABLE,
+            $info->getRetryBehavior(),
+        );
+        self::assertSame('invalid payload', $failure->getMessage());
+    }
+
+    public function testNexusHandlerExceptionWithRetryableBehavior(): void
+    {
+        $e = NexusHandlerException::create(
+            NexusErrorType::Internal,
+            'transient storage error',
+            null,
+            NexusRetryBehavior::Retryable,
+        );
+
+        $failure = FailureConverter::mapExceptionToFailure($e, DataConverter::createDefault());
+
+        self::assertSame(
+            NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_RETRYABLE,
+            $failure->getNexusHandlerFailureInfo()->getRetryBehavior(),
+        );
+    }
+
+    public function testNexusHandlerExceptionUnspecifiedRetryBehaviorIsZero(): void
+    {
+        $e = NexusHandlerException::create(NexusErrorType::NotFound, 'missing');
+
+        $failure = FailureConverter::mapExceptionToFailure($e, DataConverter::createDefault());
+
+        self::assertSame(
+            NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_UNSPECIFIED,
+            $failure->getNexusHandlerFailureInfo()->getRetryBehavior(),
+        );
+    }
+
+    public function testNexusHandlerExceptionRawErrorTypePreserved(): void
+    {
+        // fromRawType is the wire-compat path for unknown error strings.
+        $e = NexusHandlerException::fromRawType('FUTURE_TYPE_X', 'unknown error');
+
+        $failure = FailureConverter::mapExceptionToFailure($e, DataConverter::createDefault());
+
+        self::assertSame('FUTURE_TYPE_X', $failure->getNexusHandlerFailureInfo()->getType());
+    }
+
+    // ── Nexus: OperationException → tagged ApplicationFailureInfo ──────
+
+    public function testNexusOperationExceptionFailedProducesTaggedApplicationFailure(): void
+    {
+        $e = NexusOperationException::failed('user rejected the request');
+
+        $failure = FailureConverter::mapExceptionToFailure($e, DataConverter::createDefault());
+
+        self::assertTrue($failure->hasApplicationFailureInfo(), 'Must use ApplicationFailureInfo for operation errors');
+        self::assertFalse($failure->hasNexusHandlerFailureInfo(), 'Must NOT emit NexusHandlerFailureInfo for operation errors');
+
+        $info = $failure->getApplicationFailureInfo();
+        self::assertSame(
+            FailureConverter::NEXUS_OPERATION_ERROR_TYPE_PREFIX . 'failed',
+            $info->getType(),
+            'RR distinguishes business errors by this exact prefix',
+        );
+        self::assertTrue($info->getNonRetryable(), 'Operation errors are terminal states');
+        self::assertSame('user rejected the request', $failure->getMessage());
+    }
+
+    public function testNexusOperationExceptionCanceledProducesTaggedApplicationFailure(): void
+    {
+        $e = NexusOperationException::canceled('user canceled');
+
+        $failure = FailureConverter::mapExceptionToFailure($e, DataConverter::createDefault());
+
+        $info = $failure->getApplicationFailureInfo();
+        self::assertSame(
+            FailureConverter::NEXUS_OPERATION_ERROR_TYPE_PREFIX . 'canceled',
+            $info->getType(),
+        );
+    }
+
+    public function testNexusOperationErrorPrefixMatchesWireContract(): void
+    {
+        // Keep the prefix stable — changing it breaks wire compat with
+        // roadrunner-temporal/aggregatedpool/nexus.go (see nexusOperationErrorTypePrefix).
+        self::assertSame('nexus.OperationError.', FailureConverter::NEXUS_OPERATION_ERROR_TYPE_PREFIX);
     }
 }

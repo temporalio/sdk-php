@@ -33,6 +33,17 @@ use Temporal\Api\Nexus\V1\UnsuccessfulOperationError;
  */
 final class NexusTaskHandler
 {
+    /**
+     * Payload metadata marker identifying how the returned payload should be
+     * interpreted by the RR Go side:
+     *  - value "async" — payload.data is the async operation token (string)
+     *  - absent        — payload is a regular sync result
+     *
+     * @internal Wire contract with roadrunner-temporal's aggregatedpool/nexus.go.
+     */
+    public const NEXUS_KIND_METADATA_KEY = '_rr_nexus_kind';
+    public const NEXUS_KIND_ASYNC = 'async';
+
     private ?ServiceHandler $serviceHandler = null;
 
     public function __construct(
@@ -167,58 +178,63 @@ final class NexusTaskHandler
 
     /**
      * Start operation directly from parsed context/details/input (used by InvokeNexusOperation route).
-     * Returns EncodedValues with the raw serialized payload for the Go codec.
+     *
+     * Returns the start result as a raw EncodedValues payload for the Go codec.
+     * Errors are propagated as the native Nexus SDK exceptions:
+     *  - HandlerException → FailureConverter sets NexusHandlerFailureInfo on the
+     *    Failure proto, RR picks up errorType + retryBehavior.
+     *  - OperationException → propagated as-is; FailureConverter preserves its
+     *    state (failed/canceled) so RR can emit a nexus.OperationError rather
+     *    than collapsing into nexus.HandlerError{Internal}.
+     *
+     * @throws HandlerException
+     * @throws OperationException
      */
     public function startOperationDirect(
         OperationContext $context,
         OperationStartDetails $details,
         HandlerInputContent $input,
     ): \Temporal\DataConverter\EncodedValues {
-        try {
-            $result = $this->getServiceHandler()->startOperation($context, $details, $input);
+        $result = $this->getServiceHandler()->startOperation($context, $details, $input);
 
-            if ($result->isSync()) {
-                $syncResult = $result->getSyncResult();
-                if ($syncResult !== null) {
-                    // Build a raw Payload with already-serialized data + metadata
-                    $payload = new \Temporal\Api\Common\V1\Payload();
-                    $payload->setData($syncResult->data);
-                    if ($syncResult->headers !== []) {
-                        $payload->setMetadata($syncResult->headers);
-                    }
-                    $payloads = new \Temporal\Api\Common\V1\Payloads(['payloads' => [$payload]]);
-                    return \Temporal\DataConverter\EncodedValues::fromPayloads($payloads, $this->dataConverter);
+        if ($result->isSync()) {
+            $syncResult = $result->getSyncResult();
+            if ($syncResult !== null) {
+                // Build a raw Payload with already-serialized data + metadata
+                $payload = new \Temporal\Api\Common\V1\Payload();
+                $payload->setData($syncResult->data);
+                if ($syncResult->headers !== []) {
+                    $payload->setMetadata($syncResult->headers);
                 }
-                return \Temporal\DataConverter\EncodedValues::fromValues([null]);
+                $payloads = new \Temporal\Api\Common\V1\Payloads(['payloads' => [$payload]]);
+                return \Temporal\DataConverter\EncodedValues::fromPayloads($payloads, $this->dataConverter);
             }
-
-            // Async: return token as the result
-            return \Temporal\DataConverter\EncodedValues::fromValues([$result->getAsyncOperationToken()]);
-        } catch (OperationException $e) {
-            throw $this->convertHandlerException(
-                HandlerException::create(
-                    \Nexus\Sdk\Exception\ErrorType::Internal,
-                    $e->getMessage(),
-                    $e,
-                ),
-            );
-        } catch (HandlerException $e) {
-            throw $this->convertHandlerException($e);
+            return \Temporal\DataConverter\EncodedValues::fromValues([null]);
         }
+
+        // Async: return an opaque payload carrying the operation token plus a
+        // well-known metadata marker so RR can distinguish it from a sync result.
+        // The token is spec-defined as a printable-ASCII string, safe as bytes.
+        $token = $result->getAsyncOperationToken();
+        $payload = new \Temporal\Api\Common\V1\Payload();
+        $payload->setData($token);
+        $payload->setMetadata([
+            self::NEXUS_KIND_METADATA_KEY => self::NEXUS_KIND_ASYNC,
+        ]);
+        $payloads = new \Temporal\Api\Common\V1\Payloads(['payloads' => [$payload]]);
+        return \Temporal\DataConverter\EncodedValues::fromPayloads($payloads, $this->dataConverter);
     }
 
     /**
      * Cancel operation directly from parsed context/details (used by CancelNexusOperation route).
+     *
+     * @throws HandlerException
      */
     public function cancelOperationDirect(
         OperationContext $context,
         OperationCancelDetails $details,
     ): void {
-        try {
-            $this->getServiceHandler()->cancelOperation($context, $details);
-        } catch (HandlerException $e) {
-            throw $this->convertHandlerException($e);
-        }
+        $this->getServiceHandler()->cancelOperation($context, $details);
     }
 
     private function getServiceHandler(): ServiceHandler
@@ -244,7 +260,8 @@ final class NexusTaskHandler
         $failure->setMessage($e->getMessage());
 
         $opError = new UnsuccessfulOperationError();
-        $opError->setOperationState(\strtolower($e->state->value));
+        // OperationState values are spec-mandated lowercase strings (running|succeeded|failed|canceled).
+        $opError->setOperationState($e->state->value);
         $opError->setFailure($failure);
 
         $startResp = new StartOperationResponse();

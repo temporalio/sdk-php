@@ -8,6 +8,8 @@ use Nexus\Sdk\Attribute\Operation;
 use Nexus\Sdk\Attribute\OperationImpl;
 use Nexus\Sdk\Attribute\Service;
 use Nexus\Sdk\Attribute\ServiceImpl;
+use Nexus\Sdk\Exception\ErrorType as NexusErrorType;
+use Nexus\Sdk\Exception\HandlerException as NexusHandlerException;
 use Nexus\Sdk\Exception\OperationException;
 use Nexus\Sdk\Handler\OperationCancelDetails;
 use Nexus\Sdk\Handler\OperationContext;
@@ -20,7 +22,7 @@ use React\Promise\Deferred;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
-use Temporal\Internal\Nexus\NexusHandlerErrorException;
+use Temporal\Internal\Nexus\NexusTaskHandler;
 use Temporal\Internal\Transport\Router\CancelNexusOperation;
 use Temporal\Internal\Transport\Router\InvokeNexusOperation;
 use Temporal\Nexus\PayloadSerializer;
@@ -185,23 +187,39 @@ final class IntegrationTestCase extends AbstractUnit
 
     // ── Async operation ──────────────────────────────────────────
 
-    public function testAsyncOperation(): void
+    public function testAsyncOperationReturnsTokenTaggedPayload(): void
     {
         $request = $this->makeInvokeRequest('EchoService', 'asyncEcho', 'test');
         $deferred = new Deferred();
         $this->invokeRoute->handle($request, [], $deferred);
-        $result = $this->awaitResult($deferred);
-        self::assertSame('async-token-test', $result);
+
+        $values = $this->awaitDeferred($deferred);
+
+        // Async start is delivered as a raw payload: data = operation token,
+        // metadata carries a well-known marker so RR emits HandlerStartOperationResultAsync.
+        $payloads = $values->toPayloads();
+        self::assertNotNull($payloads);
+        self::assertSame(1, $payloads->getPayloads()->count());
+
+        $payload = $payloads->getPayloads()[0];
+        self::assertSame('async-token-test', $payload->getData());
+
+        $meta = \iterator_to_array($payload->getMetadata());
+        self::assertArrayHasKey(NexusTaskHandler::NEXUS_KIND_METADATA_KEY, $meta);
+        self::assertSame(NexusTaskHandler::NEXUS_KIND_ASYNC, $meta[NexusTaskHandler::NEXUS_KIND_METADATA_KEY]);
     }
 
     // ── Operation error ──────────────────────────────────────────
 
-    public function testOperationFailure(): void
+    public function testOperationFailurePropagatesOperationException(): void
     {
+        // Business-level Nexus failure must bubble up as-is so RR can emit
+        // a nexus.OperationError (not a nexus.HandlerError with Internal).
         $request = $this->makeInvokeRequest('EchoService', 'failOp', 'reason');
         $deferred = new Deferred();
 
-        $this->expectException(NexusHandlerErrorException::class);
+        $this->expectException(OperationException::class);
+        $this->expectExceptionMessage('fail:reason');
         $this->invokeRoute->handle($request, [], $deferred);
         $this->awaitResult($deferred);
     }
@@ -215,9 +233,10 @@ final class IntegrationTestCase extends AbstractUnit
         try {
             $this->invokeRoute->handle($request, [], $deferred);
             $this->awaitResult($deferred);
-            self::fail('Expected NexusHandlerErrorException');
-        } catch (NexusHandlerErrorException $e) {
-            self::assertSame('NOT_FOUND', $e->handlerError->getErrorType());
+            self::fail('Expected HandlerException');
+        } catch (NexusHandlerException $e) {
+            self::assertSame(NexusErrorType::NotFound, $e->errorType);
+            self::assertSame('NOT_FOUND', $e->rawErrorType);
         }
     }
 
@@ -228,9 +247,9 @@ final class IntegrationTestCase extends AbstractUnit
         try {
             $this->invokeRoute->handle($request, [], $deferred);
             $this->awaitResult($deferred);
-            self::fail('Expected NexusHandlerErrorException');
-        } catch (NexusHandlerErrorException $e) {
-            self::assertSame('NOT_FOUND', $e->handlerError->getErrorType());
+            self::fail('Expected HandlerException');
+        } catch (NexusHandlerException $e) {
+            self::assertSame(NexusErrorType::NotFound, $e->errorType);
         }
     }
 
@@ -253,9 +272,9 @@ final class IntegrationTestCase extends AbstractUnit
         try {
             $this->cancelRoute->handle($request, [], $deferred);
             $this->awaitDeferred($deferred);
-            self::fail('Expected NexusHandlerErrorException');
-        } catch (NexusHandlerErrorException $e) {
-            self::assertSame('NOT_FOUND', $e->handlerError->getErrorType());
+            self::fail('Expected HandlerException');
+        } catch (NexusHandlerException $e) {
+            self::assertSame(NexusErrorType::NotFound, $e->errorType);
         }
     }
 

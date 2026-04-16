@@ -11,14 +11,19 @@ declare(strict_types=1);
 
 namespace Temporal\Exception\Failure;
 
+use Nexus\Sdk\Exception\HandlerException as NexusHandlerException;
+use Nexus\Sdk\Exception\OperationException as NexusOperationException;
+use Nexus\Sdk\Exception\RetryBehavior as NexusRetryBehavior;
 use Temporal\Api\Common\V1\ActivityType;
 use Temporal\Api\Common\V1\WorkflowExecution;
 use Temporal\Api\Common\V1\WorkflowType;
+use Temporal\Api\Enums\V1\NexusHandlerErrorRetryBehavior;
 use Temporal\Api\Failure\V1\ActivityFailureInfo;
 use Temporal\Api\Failure\V1\ApplicationFailureInfo;
 use Temporal\Api\Failure\V1\CanceledFailureInfo;
 use Temporal\Api\Failure\V1\ChildWorkflowExecutionFailureInfo;
 use Temporal\Api\Failure\V1\Failure;
+use Temporal\Api\Failure\V1\NexusHandlerFailureInfo;
 use Temporal\Api\Failure\V1\ServerFailureInfo;
 use Temporal\Api\Failure\V1\TerminatedFailureInfo;
 use Temporal\Api\Failure\V1\TimeoutFailureInfo;
@@ -29,6 +34,15 @@ use Temporal\Internal\Support\DateInterval;
 
 final class FailureConverter
 {
+    /**
+     * Tag inserted into {@see ApplicationFailureInfo::$type} so that RR can tell a
+     * Nexus handler-side OperationException apart from other application failures.
+     * The full type becomes e.g. "nexus.OperationError.failed".
+     *
+     * @internal Wire contract with roadrunner-temporal.
+     */
+    public const NEXUS_OPERATION_ERROR_TYPE_PREFIX = 'nexus.OperationError.';
+
     public static function mapFailureToException(Failure $failure, DataConverterInterface $converter): TemporalFailure
     {
         $e = self::createFailureException($failure, $converter);
@@ -148,6 +162,27 @@ final class FailureConverter
                 $failure->setCanceledFailureInfo(new CanceledFailureInfo());
                 break;
 
+            case $e instanceof NexusHandlerException:
+                $info = new NexusHandlerFailureInfo();
+                // Preserve the raw error-type string (SDK allows unknown raw types).
+                $info->setType($e->rawErrorType);
+                $info->setRetryBehavior(self::mapNexusRetryBehavior($e->retryBehavior));
+
+                $failure->setNexusHandlerFailureInfo($info);
+                break;
+
+            case $e instanceof NexusOperationException:
+                // Business-level Nexus operation failure (state=failed|canceled).
+                // Temporal proto does not yet ship a dedicated failure_info for
+                // handler-side operation errors, so we encode the state in a
+                // tagged ApplicationFailureInfo that RR knows how to decode.
+                $info = new ApplicationFailureInfo();
+                $info->setType(self::NEXUS_OPERATION_ERROR_TYPE_PREFIX . $e->state->value);
+                $info->setNonRetryable(true);
+
+                $failure->setApplicationFailureInfo($info);
+                break;
+
             default:
                 $info = new ApplicationFailureInfo();
                 $info->setType($e::class);
@@ -264,6 +299,18 @@ final class FailureConverter
             default:
                 throw new \InvalidArgumentException('Failure info not set');
         }
+    }
+
+    /**
+     * Translate a Nexus SDK RetryBehavior enum to the Temporal proto enum value.
+     */
+    private static function mapNexusRetryBehavior(NexusRetryBehavior $behavior): int
+    {
+        return match ($behavior) {
+            NexusRetryBehavior::Retryable => NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_RETRYABLE,
+            NexusRetryBehavior::NonRetryable => NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_NON_RETRYABLE,
+            NexusRetryBehavior::Unspecified => NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_UNSPECIFIED,
+        };
     }
 
     private static function generateStackTraceString(\Throwable $e, bool $skipInternal = true): string
