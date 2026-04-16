@@ -87,4 +87,11 @@ interface WorkerInterface extends Identifiable
      * @return $this
      */
     public function registerNexusServiceImplementation(object ...$services): self;
+
+    /**
+     * Returns list of registered Nexus service info for worker info reporting.
+     *
+     * @return list<array{name: string, operations: list<string>}>
+     */
+    public function getNexusServices(): array;
 }

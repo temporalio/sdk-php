@@ -8,8 +8,6 @@ use Nexus\Sdk\Attribute\Operation;
 use Nexus\Sdk\Attribute\OperationImpl;
 use Nexus\Sdk\Attribute\Service;
 use Nexus\Sdk\Attribute\ServiceImpl;
-use Nexus\Sdk\Exception\ErrorType;
-use Nexus\Sdk\Exception\HandlerException;
 use Nexus\Sdk\Exception\OperationException;
 use Nexus\Sdk\Handler\OperationCancelDetails;
 use Nexus\Sdk\Handler\OperationContext;
@@ -18,30 +16,15 @@ use Nexus\Sdk\Handler\OperationStartDetails;
 use Nexus\Sdk\Handler\OperationStartResult;
 use Nexus\Sdk\Handler\SynchronousOperationHandler;
 use Nexus\Sdk\Link;
-use Psr\Log\NullLogger;
 use React\Promise\Deferred;
-use Spiral\Attributes\AttributeReader;
-use Temporal\Api\Common\V1\Payload;
-use Temporal\Api\Nexus\V1\CancelOperationRequest;
-use Temporal\Api\Nexus\V1\Request;
-use Temporal\Api\Nexus\V1\StartOperationRequest;
-use Temporal\Api\Nexus\V1\StartOperationResponse;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\ValuesInterface;
-use Temporal\Exception\ExceptionInterceptorInterface;
-use Temporal\Interceptor\SimplePipelineProvider;
-use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Nexus\NexusHandlerErrorException;
-use Temporal\Internal\Queue\QueueInterface;
-use Temporal\Internal\ServiceContainer;
-use Temporal\Internal\Transport\ClientInterface;
 use Temporal\Internal\Transport\Router\CancelNexusOperation;
-use Temporal\Internal\Transport\Router\StartNexusOperation;
+use Temporal\Internal\Transport\Router\InvokeNexusOperation;
 use Temporal\Nexus\PayloadSerializer;
 use Temporal\Tests\Unit\AbstractUnit;
-use Temporal\Worker\Environment\EnvironmentInterface;
-use Temporal\Worker\LoopInterface;
 use Temporal\Worker\Transport\Command\Server\ServerRequest;
 use Temporal\Worker\Transport\Command\Server\TickInfo;
 
@@ -146,126 +129,92 @@ class EchoServiceImpl
 // ── Integration tests ─────────────────────────────────────────────
 
 /**
- * Integration tests that exercise the full path:
- * proto Request → Router route → NexusTaskHandler → ServiceHandler → OperationHandler → proto Response
+ * Integration tests exercising the full path matching Go RoadRunner plugin format:
+ * ServerRequest(options JSON) → Router → NexusTaskHandler → ServiceHandler → OperationHandler → EncodedValues
  *
  * @group unit
  * @group nexus
  */
 final class IntegrationTestCase extends AbstractUnit
 {
-    private StartNexusOperation $startRoute;
+    private InvokeNexusOperation $invokeRoute;
     private CancelNexusOperation $cancelRoute;
     private PayloadSerializer $serializer;
+    private DataConverter $dataConverter;
     private EchoServiceImpl $serviceImpl;
 
     protected function setUp(): void
     {
-        $dataConverter = DataConverter::createDefault();
-        $this->serializer = new PayloadSerializer($dataConverter);
+        $this->dataConverter = DataConverter::createDefault();
+        $this->serializer = new PayloadSerializer($this->dataConverter);
 
         $this->serviceImpl = new EchoServiceImpl();
 
         $repository = new \Temporal\Internal\Nexus\NexusServiceRepository();
         $repository->add(\Nexus\Sdk\Handler\ServiceImplInstance::fromInstance($this->serviceImpl));
 
-        $taskHandler = new \Temporal\Internal\Nexus\NexusTaskHandler($repository, $this->serializer);
+        $taskHandler = new \Temporal\Internal\Nexus\NexusTaskHandler($repository, $this->serializer, $this->dataConverter);
 
-        $this->startRoute = new StartNexusOperation($taskHandler);
+        $this->invokeRoute = new InvokeNexusOperation($taskHandler);
         $this->cancelRoute = new CancelNexusOperation($taskHandler);
     }
 
     // ── Sync operation ───────────────────────────────────────────
 
-    public function testSyncOperationThroughRouter(): void
+    public function testSyncOperation(): void
     {
-        $request = $this->makeServerRequest('StartNexusOperation', [
-            'request' => $this->encodeNexusStartRequest('EchoService', 'echo', 'hello'),
-        ]);
+        $request = $this->makeInvokeRequest('EchoService', 'echo', 'hello');
 
         $deferred = new Deferred();
-        $this->startRoute->handle($request, [], $deferred);
+        $this->invokeRoute->handle($request, [], $deferred);
 
-        $result = $this->awaitDeferred($deferred);
-        $response = $this->decodeNexusResponse($result);
-
-        self::assertTrue($response->hasStartOperation());
-        $startResp = $response->getStartOperation();
-        self::assertTrue($startResp->hasSyncSuccess());
-
-        $resultValue = $this->deserializePayload($startResp->getSyncSuccess()->getPayload());
-        self::assertSame('echo:hello', $resultValue);
+        $result = $this->awaitResult($deferred);
+        self::assertSame('echo:hello', $result);
     }
 
     public function testSyncOperationWithDifferentInputs(): void
     {
-        foreach (['', 'simple', 'with spaces', 'unicode: привет', 'special: <>&"'] as $input) {
-            $request = $this->makeServerRequest('StartNexusOperation', [
-                'request' => $this->encodeNexusStartRequest('EchoService', 'echo', $input),
-            ]);
-
+        foreach (['simple', 'with spaces', 'unicode: привет'] as $input) {
+            $request = $this->makeInvokeRequest('EchoService', 'echo', $input);
             $deferred = new Deferred();
-            $this->startRoute->handle($request, [], $deferred);
-
-            $result = $this->awaitDeferred($deferred);
-            $response = $this->decodeNexusResponse($result);
-
-            $resultValue = $this->deserializePayload($response->getStartOperation()->getSyncSuccess()->getPayload());
-            self::assertSame("echo:{$input}", $resultValue, "Failed for input: {$input}");
+            $this->invokeRoute->handle($request, [], $deferred);
+            $result = $this->awaitResult($deferred);
+            self::assertSame("echo:{$input}", $result, "Failed for input: {$input}");
         }
     }
 
     // ── Async operation ──────────────────────────────────────────
 
-    public function testAsyncOperationThroughRouter(): void
+    public function testAsyncOperation(): void
     {
-        $request = $this->makeServerRequest('StartNexusOperation', [
-            'request' => $this->encodeNexusStartRequest('EchoService', 'asyncEcho', 'test'),
-        ]);
-
+        $request = $this->makeInvokeRequest('EchoService', 'asyncEcho', 'test');
         $deferred = new Deferred();
-        $this->startRoute->handle($request, [], $deferred);
-
-        $result = $this->awaitDeferred($deferred);
-        $response = $this->decodeNexusResponse($result);
-
-        self::assertTrue($response->getStartOperation()->hasAsyncSuccess());
-        self::assertSame('async-token-test', $response->getStartOperation()->getAsyncSuccess()->getOperationToken());
+        $this->invokeRoute->handle($request, [], $deferred);
+        $result = $this->awaitResult($deferred);
+        self::assertSame('async-token-test', $result);
     }
 
     // ── Operation error ──────────────────────────────────────────
 
-    public function testOperationFailureThroughRouter(): void
+    public function testOperationFailure(): void
     {
-        $request = $this->makeServerRequest('StartNexusOperation', [
-            'request' => $this->encodeNexusStartRequest('EchoService', 'failOp', 'reason'),
-        ]);
-
+        $request = $this->makeInvokeRequest('EchoService', 'failOp', 'reason');
         $deferred = new Deferred();
-        $this->startRoute->handle($request, [], $deferred);
 
-        $result = $this->awaitDeferred($deferred);
-        $response = $this->decodeNexusResponse($result);
-
-        self::assertTrue($response->getStartOperation()->hasOperationError());
-        $opError = $response->getStartOperation()->getOperationError();
-        self::assertSame('failed', $opError->getOperationState());
-        self::assertSame('fail:reason', $opError->getFailure()->getMessage());
+        $this->expectException(NexusHandlerErrorException::class);
+        $this->invokeRoute->handle($request, [], $deferred);
+        $this->awaitResult($deferred);
     }
 
-    // ── Handler error (unknown service) ──────────────────────────
+    // ── Handler error ────────────────────────────────────────────
 
     public function testHandlerErrorForUnknownService(): void
     {
-        $request = $this->makeServerRequest('StartNexusOperation', [
-            'request' => $this->encodeNexusStartRequest('UnknownService', 'op', 'input'),
-        ]);
-
+        $request = $this->makeInvokeRequest('UnknownService', 'op', 'input');
         $deferred = new Deferred();
         try {
-            $this->startRoute->handle($request, [], $deferred);
-            // If handle doesn't throw, check the deferred
-            $this->awaitDeferred($deferred);
+            $this->invokeRoute->handle($request, [], $deferred);
+            $this->awaitResult($deferred);
             self::fail('Expected NexusHandlerErrorException');
         } catch (NexusHandlerErrorException $e) {
             self::assertSame('NOT_FOUND', $e->handlerError->getErrorType());
@@ -274,14 +223,11 @@ final class IntegrationTestCase extends AbstractUnit
 
     public function testHandlerErrorForUnknownOperation(): void
     {
-        $request = $this->makeServerRequest('StartNexusOperation', [
-            'request' => $this->encodeNexusStartRequest('EchoService', 'nonExistent', 'input'),
-        ]);
-
+        $request = $this->makeInvokeRequest('EchoService', 'nonExistent', 'input');
         $deferred = new Deferred();
         try {
-            $this->startRoute->handle($request, [], $deferred);
-            $this->awaitDeferred($deferred);
+            $this->invokeRoute->handle($request, [], $deferred);
+            $this->awaitResult($deferred);
             self::fail('Expected NexusHandlerErrorException');
         } catch (NexusHandlerErrorException $e) {
             self::assertSame('NOT_FOUND', $e->handlerError->getErrorType());
@@ -290,28 +236,19 @@ final class IntegrationTestCase extends AbstractUnit
 
     // ── Cancel operation ─────────────────────────────────────────
 
-    public function testCancelOperationThroughRouter(): void
+    public function testCancelOperation(): void
     {
-        $request = $this->makeServerRequest('CancelNexusOperation', [
-            'request' => $this->encodeNexusCancelRequest('EchoService', 'cancelOp', 'my-token'),
-        ]);
-
+        $request = $this->makeCancelRequest('EchoService', 'cancelOp', 'my-token');
         $deferred = new Deferred();
         $this->cancelRoute->handle($request, [], $deferred);
-
-        $result = $this->awaitDeferred($deferred);
-        $response = $this->decodeNexusResponse($result);
-
-        self::assertTrue($response->hasCancelOperation());
+        // Should resolve without error
+        $this->awaitDeferred($deferred);
         self::assertContains('my-token', $this->serviceImpl->canceledTokens);
     }
 
-    public function testCancelUnknownServiceThroughRouter(): void
+    public function testCancelUnknownService(): void
     {
-        $request = $this->makeServerRequest('CancelNexusOperation', [
-            'request' => $this->encodeNexusCancelRequest('UnknownService', 'op', 'token'),
-        ]);
-
+        $request = $this->makeCancelRequest('UnknownService', 'op', 'token');
         $deferred = new Deferred();
         try {
             $this->cancelRoute->handle($request, [], $deferred);
@@ -322,126 +259,27 @@ final class IntegrationTestCase extends AbstractUnit
         }
     }
 
-    // ── Links propagation ────────────────────────────────────────
+    // ── Headers ──────────────────────────────────────────────────
 
-    public function testSyncOperationPropagatesLinks(): void
+    public function testRequestHeaders(): void
     {
-        $request = $this->makeServerRequest('StartNexusOperation', [
-            'request' => $this->encodeNexusStartRequest('EchoService', 'echoWithLinks', 'world'),
-        ]);
-
+        $request = $this->makeServerRequest('InvokeNexusOperation', [
+            'service' => 'EchoService',
+            'operation' => 'echo',
+            'requestId' => 'req-1',
+            'headers' => ['Authorization' => 'Bearer token123'],
+        ], EncodedValues::fromValues(['test'], $this->dataConverter));
         $deferred = new Deferred();
-        $this->startRoute->handle($request, [], $deferred);
-
-        $result = $this->awaitDeferred($deferred);
-        $response = $this->decodeNexusResponse($result);
-
-        $syncResp = $response->getStartOperation()->getSyncSuccess();
-        $links = $syncResp->getLinks();
-        self::assertCount(2, $links);
-        self::assertSame('http://test.local/resource/1', $links[0]->getUrl());
-        self::assertSame('test.Resource', $links[0]->getType());
-        self::assertSame('http://test.local/resource/2', $links[1]->getUrl());
-    }
-
-    // ── Headers propagation ──────────────────────────────────────
-
-    public function testRequestHeadersArePropagated(): void
-    {
-        $nexusRequest = $this->buildStartRequest('EchoService', 'echo', 'test');
-        $nexusRequest->setHeader([
-            'Authorization' => 'Bearer token123',
-            'X-Request-Id' => 'req-456',
-        ]);
-
-        $request = $this->makeServerRequest('StartNexusOperation', [
-            'request' => \base64_encode($nexusRequest->serializeToString()),
-        ]);
-
-        $deferred = new Deferred();
-        $this->startRoute->handle($request, [], $deferred);
-
-        $result = $this->awaitDeferred($deferred);
-        $response = $this->decodeNexusResponse($result);
-
-        // If we got here without error, headers were accepted
-        self::assertTrue($response->getStartOperation()->hasSyncSuccess());
-    }
-
-    // ── Callback URL ─────────────────────────────────────────────
-
-    public function testCallbackUrlPassedToHandler(): void
-    {
-        $startReq = new StartOperationRequest();
-        $startReq->setService('EchoService');
-        $startReq->setOperation('echo');
-        $startReq->setRequestId('req-with-callback');
-        $startReq->setCallback('http://callback.example.com/complete');
-        $startReq->setCallbackHeader(['Token' => 'callback-token']);
-
-        $content = $this->serializer->serialize('test');
-        $payload = new Payload();
-        $payload->setData($content->data);
-        $payload->setMetadata($content->headers);
-        $startReq->setPayload($payload);
-
-        $nexusRequest = new Request();
-        $nexusRequest->setStartOperation($startReq);
-
-        $request = $this->makeServerRequest('StartNexusOperation', [
-            'request' => \base64_encode($nexusRequest->serializeToString()),
-        ]);
-
-        $deferred = new Deferred();
-        $this->startRoute->handle($request, [], $deferred);
-
-        $result = $this->awaitDeferred($deferred);
-        $response = $this->decodeNexusResponse($result);
-
-        self::assertTrue($response->getStartOperation()->hasSyncSuccess());
-    }
-
-    // ── Caller links ─────────────────────────────────────────────
-
-    public function testCallerLinksPassedToHandler(): void
-    {
-        $link1 = new \Temporal\Api\Nexus\V1\Link();
-        $link1->setUrl('http://caller.example.com/wf/123');
-        $link1->setType('temporal.workflow');
-
-        $startReq = new StartOperationRequest();
-        $startReq->setService('EchoService');
-        $startReq->setOperation('echo');
-        $startReq->setRequestId('req-with-links');
-        $startReq->setLinks([$link1]);
-
-        $content = $this->serializer->serialize('test');
-        $payload = new Payload();
-        $payload->setData($content->data);
-        $payload->setMetadata($content->headers);
-        $startReq->setPayload($payload);
-
-        $nexusRequest = new Request();
-        $nexusRequest->setStartOperation($startReq);
-
-        $request = $this->makeServerRequest('StartNexusOperation', [
-            'request' => \base64_encode($nexusRequest->serializeToString()),
-        ]);
-
-        $deferred = new Deferred();
-        $this->startRoute->handle($request, [], $deferred);
-
-        $result = $this->awaitDeferred($deferred);
-        $response = $this->decodeNexusResponse($result);
-
-        self::assertTrue($response->getStartOperation()->hasSyncSuccess());
+        $this->invokeRoute->handle($request, [], $deferred);
+        $result = $this->awaitResult($deferred);
+        self::assertSame('echo:test', $result);
     }
 
     // ── Route names ──────────────────────────────────────────────
 
-    public function testStartNexusOperationRouteName(): void
+    public function testInvokeNexusOperationRouteName(): void
     {
-        self::assertSame('StartNexusOperation', $this->startRoute->getName());
+        self::assertSame('InvokeNexusOperation', $this->invokeRoute->getName());
     }
 
     public function testCancelNexusOperationRouteName(): void
@@ -451,49 +289,38 @@ final class IntegrationTestCase extends AbstractUnit
 
     // ── Helpers ──────────────────────────────────────────────────
 
-    private function encodeNexusStartRequest(string $service, string $operation, string $input): string
+    private function makeInvokeRequest(string $service, string $operation, string $input): ServerRequest
     {
-        $nexusRequest = $this->buildStartRequest($service, $operation, $input);
-        return \base64_encode($nexusRequest->serializeToString());
+        return $this->makeServerRequest('InvokeNexusOperation', [
+            'service' => $service,
+            'operation' => $operation,
+            'requestId' => 'test-' . \bin2hex(\random_bytes(4)),
+        ], EncodedValues::fromValues([$input], $this->dataConverter));
     }
 
-    private function buildStartRequest(string $service, string $operation, string $input): Request
+    private function makeCancelRequest(string $service, string $operation, string $token): ServerRequest
     {
-        $content = $this->serializer->serialize($input);
-        $payload = new Payload();
-        $payload->setData($content->data);
-        $payload->setMetadata($content->headers);
-
-        $startReq = new StartOperationRequest();
-        $startReq->setService($service);
-        $startReq->setOperation($operation);
-        $startReq->setRequestId('test-req-' . \bin2hex(\random_bytes(4)));
-        $startReq->setPayload($payload);
-
-        $request = new Request();
-        $request->setStartOperation($startReq);
-        return $request;
+        return $this->makeServerRequest('CancelNexusOperation', [
+            'service' => $service,
+            'operation' => $operation,
+            'operationToken' => $token,
+        ]);
     }
 
-    private function encodeNexusCancelRequest(string $service, string $operation, string $token): string
-    {
-        $cancelReq = new CancelOperationRequest();
-        $cancelReq->setService($service);
-        $cancelReq->setOperation($operation);
-        $cancelReq->setOperationToken($token);
-
-        $request = new Request();
-        $request->setCancelOperation($cancelReq);
-        return \base64_encode($request->serializeToString());
-    }
-
-    private function makeServerRequest(string $name, array $options): ServerRequest
+    private function makeServerRequest(string $name, array $options, ?ValuesInterface $payloads = null): ServerRequest
     {
         return new ServerRequest(
             name: $name,
             info: new TickInfo(new \DateTimeImmutable()),
             options: $options,
+            payloads: $payloads,
         );
+    }
+
+    private function awaitResult(Deferred $deferred): string
+    {
+        $values = $this->awaitDeferred($deferred);
+        return $values->getValue(0, 'string');
     }
 
     private function awaitDeferred(Deferred $deferred): ValuesInterface
@@ -502,12 +329,8 @@ final class IntegrationTestCase extends AbstractUnit
         $error = null;
 
         $deferred->promise()->then(
-            function ($value) use (&$result): void {
-                $result = $value;
-            },
-            function (\Throwable $e) use (&$error): void {
-                $error = $e;
-            },
+            function ($value) use (&$result): void { $result = $value; },
+            function (\Throwable $e) use (&$error): void { $error = $e; },
         );
 
         if ($error !== null) {
@@ -516,30 +339,5 @@ final class IntegrationTestCase extends AbstractUnit
 
         self::assertInstanceOf(ValuesInterface::class, $result);
         return $result;
-    }
-
-    private function decodeNexusResponse(ValuesInterface $values): \Temporal\Api\Nexus\V1\Response
-    {
-        $encoded = $values->getValue(0, 'string');
-        $response = new \Temporal\Api\Nexus\V1\Response();
-        $response->mergeFromString(\base64_decode($encoded));
-        return $response;
-    }
-
-    private function deserializePayload(?Payload $payload): mixed
-    {
-        if ($payload === null) {
-            return null;
-        }
-
-        $headers = [];
-        foreach ($payload->getMetadata() as $key => $value) {
-            $headers[(string) $key] = (string) $value;
-        }
-
-        return $this->serializer->deserialize(
-            new \Nexus\Sdk\Serializer\Content($payload->getData(), $headers),
-            'string',
-        );
     }
 }

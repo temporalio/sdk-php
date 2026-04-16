@@ -71,6 +71,8 @@ final class GetWorkerInfo extends Route
             'PhpSdkVersion' => SdkVersion::getSdkVersion(),
             'Plugins' => $map,
             'Flags' => (object) $this->prepareFlags(),
+            // NexusServiceInfo[]
+            'nexusServices' => $worker->getNexusServices(),
         ];
     }
 

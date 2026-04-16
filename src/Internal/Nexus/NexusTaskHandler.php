@@ -38,6 +38,7 @@ final class NexusTaskHandler
     public function __construct(
         private readonly NexusServiceRepository $repository,
         private readonly SerializerInterface $serializer,
+        private readonly ?\Temporal\DataConverter\DataConverterInterface $dataConverter = null,
     ) {}
 
     public function handleStartOperation(Request $request): Response
@@ -159,6 +160,62 @@ final class NexusTaskHandler
             $response = new Response();
             $response->setCancelOperation(new CancelOperationResponse());
             return $response;
+        } catch (HandlerException $e) {
+            throw $this->convertHandlerException($e);
+        }
+    }
+
+    /**
+     * Start operation directly from parsed context/details/input (used by InvokeNexusOperation route).
+     * Returns EncodedValues with the raw serialized payload for the Go codec.
+     */
+    public function startOperationDirect(
+        OperationContext $context,
+        OperationStartDetails $details,
+        HandlerInputContent $input,
+    ): \Temporal\DataConverter\EncodedValues {
+        try {
+            $result = $this->getServiceHandler()->startOperation($context, $details, $input);
+
+            if ($result->isSync()) {
+                $syncResult = $result->getSyncResult();
+                if ($syncResult !== null) {
+                    // Build a raw Payload with already-serialized data + metadata
+                    $payload = new \Temporal\Api\Common\V1\Payload();
+                    $payload->setData($syncResult->data);
+                    if ($syncResult->headers !== []) {
+                        $payload->setMetadata($syncResult->headers);
+                    }
+                    $payloads = new \Temporal\Api\Common\V1\Payloads(['payloads' => [$payload]]);
+                    return \Temporal\DataConverter\EncodedValues::fromPayloads($payloads, $this->dataConverter);
+                }
+                return \Temporal\DataConverter\EncodedValues::fromValues([null]);
+            }
+
+            // Async: return token as the result
+            return \Temporal\DataConverter\EncodedValues::fromValues([$result->getAsyncOperationToken()]);
+        } catch (OperationException $e) {
+            throw $this->convertHandlerException(
+                new HandlerException(
+                    \Nexus\Sdk\Exception\ErrorType::Internal,
+                    $e->getMessage(),
+                    $e,
+                ),
+            );
+        } catch (HandlerException $e) {
+            throw $this->convertHandlerException($e);
+        }
+    }
+
+    /**
+     * Cancel operation directly from parsed context/details (used by CancelNexusOperation route).
+     */
+    public function cancelOperationDirect(
+        OperationContext $context,
+        OperationCancelDetails $details,
+    ): void {
+        try {
+            $this->getServiceHandler()->cancelOperation($context, $details);
         } catch (HandlerException $e) {
             throw $this->convertHandlerException($e);
         }

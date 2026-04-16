@@ -128,6 +128,18 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
         return $this;
     }
 
+    public function getNexusServices(): array
+    {
+        $result = [];
+        foreach ($this->services->nexusServices->getInstances() as $instance) {
+            $result[] = [
+                'name' => $instance->definition->name,
+                'operations' => \array_keys($instance->definition->operations),
+            ];
+        }
+        return $result;
+    }
+
     protected function createRouter(): RouterInterface
     {
         $router = new Router();
@@ -147,7 +159,7 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
 
         // Nexus routes
         $nexusHandler = $this->createNexusTaskHandler();
-        $router->add(new Router\StartNexusOperation($nexusHandler));
+        $router->add(new Router\InvokeNexusOperation($nexusHandler));
         $router->add(new Router\CancelNexusOperation($nexusHandler));
 
         return $router;
@@ -158,6 +170,7 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
         return new NexusTaskHandler(
             $this->services->nexusServices,
             new PayloadSerializer($this->services->dataConverter),
+            $this->services->dataConverter,
         );
     }
 }

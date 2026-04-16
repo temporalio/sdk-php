@@ -19,6 +19,11 @@ final class PayloadSerializer implements SerializerInterface
         private readonly DataConverterInterface $dataConverter,
     ) {}
 
+    public function getDataConverter(): DataConverterInterface
+    {
+        return $this->dataConverter;
+    }
+
     public function serialize(mixed $value): Content
     {
         $payload = $this->dataConverter->toPayload($value);

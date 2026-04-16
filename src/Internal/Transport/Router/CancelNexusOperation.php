@@ -4,13 +4,19 @@ declare(strict_types=1);
 
 namespace Temporal\Internal\Transport\Router;
 
+use Nexus\Sdk\Handler\OperationCancelDetails;
+use Nexus\Sdk\Handler\OperationContext;
 use React\Promise\Deferred;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Internal\Nexus\NexusHandlerErrorException;
 use Temporal\Internal\Nexus\NexusTaskHandler;
-use Temporal\Api\Nexus\V1\Request;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
+/**
+ * Handles "CancelNexusOperation" command from Go RoadRunner plugin.
+ *
+ * Go sends: options={service, operation, operationToken}
+ */
 final class CancelNexusOperation extends Route
 {
     public function __construct(
@@ -21,12 +27,20 @@ final class CancelNexusOperation extends Route
     {
         $options = $request->getOptions();
 
-        $nexusRequest = new Request();
-        $nexusRequest->mergeFromString(\base64_decode($options['request'] ?? ''));
+        $service = $options['service'] ?? '';
+        $operation = $options['operation'] ?? '';
+        $operationToken = $options['operationToken'] ?? '';
+
+        $context = OperationContext::create(
+            service: $service,
+            operation: $operation,
+        );
+
+        $details = new OperationCancelDetails(operationToken: $operationToken);
 
         try {
-            $response = $this->taskHandler->handleCancelOperation($nexusRequest);
-            $resolver->resolve(EncodedValues::fromValues([\base64_encode($response->serializeToString())]));
+            $this->taskHandler->cancelOperationDirect($context, $details);
+            $resolver->resolve(EncodedValues::fromValues([]));
         } catch (NexusHandlerErrorException $e) {
             $resolver->reject($e);
         } catch (\Throwable $e) {

@@ -60,9 +60,15 @@ class NexusRegistrationTest extends TestCase
             self::markTestSkipped('Could not create Nexus endpoint');
         }
 
-        // Step 2: POST to Temporal HTTP API (port 7243)
-        // Path: /nexus/endpoints/{endpoint}/services/{service}/{operation}
-        $url = "http://{$host}:7243/nexus/endpoints/{$endpointName}/services/GreetingService/greet";
+        // Step 2: Get endpoint UUID (Temporal HTTP API uses endpoint UUID, not name)
+        $endpointId = $this->getNexusEndpointId($endpointName, $state->address);
+        if ($endpointId === null) {
+            self::markTestSkipped('Could not resolve endpoint UUID');
+        }
+
+        // Step 3: POST to Temporal HTTP API (port 7243)
+        // Path: /nexus/endpoints/{endpoint-uuid}/services/{service}/{operation}
+        $url = "http://{$host}:7243/nexus/endpoints/{$endpointId}/services/GreetingService/greet";
 
         $ch = \curl_init($url);
         \curl_setopt_array($ch, [
@@ -81,14 +87,48 @@ class NexusRegistrationTest extends TestCase
         }
 
         // Step 3: Verify result
-        if ($httpCode === 500) {
-            self::markTestSkipped(
-                'Temporal returned 500 — RoadRunner Go plugin may not forward Nexus tasks to PHP workers yet',
-            );
-        }
-
         self::assertSame(200, $httpCode, "Expected HTTP 200, got {$httpCode}. Response: " . \substr((string)$response, 0, 500));
         self::assertStringContainsString('Hello, World!', (string) $response);
+    }
+
+    private function getNexusEndpointId(string $name, string $address): ?string
+    {
+        $temporal = \getenv('TEMPORAL_CLI') ?: './temporal';
+
+        $process = new \Symfony\Component\Process\Process([
+            $temporal,
+            'operator', 'nexus', 'endpoint', 'list',
+            '--address', $address,
+            '--output', 'json',
+        ]);
+        $process->setTimeout(10);
+        $process->run();
+
+        if (!$process->isSuccessful()) {
+            return null;
+        }
+
+        $output = $process->getOutput();
+        // Parse JSON array of endpoints
+        try {
+            $data = \json_decode($output, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if (!\is_array($data)) {
+            return null;
+        }
+
+        foreach ($data as $entry) {
+            $epName = $entry['endpoint']['spec']['name'] ?? $entry['spec']['name'] ?? null;
+            $epId = $entry['endpoint']['id'] ?? $entry['id'] ?? null;
+            if ($epName === $name && \is_string($epId)) {
+                return $epId;
+            }
+        }
+
+        return null;
     }
 
     private function createNexusEndpoint(string $name, string $namespace, string $taskQueue, string $address): bool

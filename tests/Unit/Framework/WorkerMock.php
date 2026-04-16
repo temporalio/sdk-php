@@ -195,6 +195,11 @@ final class WorkerMock implements WorkerInterface, DispatcherInterface
         return $this;
     }
 
+    public function getNexusServices(): array
+    {
+        return [];
+    }
+
     public function registerActivityFinalizer(\Closure $finalizer): WorkerInterface
     {
         $this->services->activities->addFinalizer($finalizer);
