@@ -65,7 +65,14 @@ final class NexusTaskHandler
 
         $links = [];
         foreach ($startReq->getLinks() as $protoLink) {
-            $links[] = new Link($protoLink->getUrl(), $protoLink->getType());
+            $url = (string) $protoLink->getUrl();
+            $type = (string) $protoLink->getType();
+            if ($url === '' || $type === '') {
+                // Skip malformed proto links rather than letting Link's stricter
+                // constructor abort the whole request.
+                continue;
+            }
+            $links[] = new Link($url, $type);
         }
 
         $callbackHeaders = [];
