@@ -120,8 +120,22 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
 
     public function registerNexusServiceImplementation(object ...$services): WorkerInterface
     {
-        foreach ($services as $service) {
+        $seenInCall = [];
+        foreach ($services as $index => $service) {
             $instance = ServiceImplInstance::fromInstance($service);
+            $name = $instance->definition->name;
+
+            if (isset($seenInCall[$name])) {
+                throw new \InvalidArgumentException(\sprintf(
+                    'registerNexusServiceImplementation: services at positions %d and %d '
+                    . 'both declare Nexus service "%s"',
+                    $seenInCall[$name],
+                    $index,
+                    $name,
+                ));
+            }
+            $seenInCall[$name] = $index;
+
             $this->services->nexusServices->add($instance);
         }
 

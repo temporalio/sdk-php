@@ -12,6 +12,7 @@ use Nexus\Sdk\Handler\OperationCancelDetails;
 use Nexus\Sdk\Handler\OperationContext;
 use Nexus\Sdk\Handler\OperationStartDetails;
 use Nexus\Sdk\Handler\ServiceHandler;
+use Nexus\Sdk\Header as NexusHeader;
 use Nexus\Sdk\Link;
 use Nexus\Sdk\Serializer\SerializerInterface;
 use Temporal\Api\Enums\V1\NexusHandlerErrorRetryBehavior;
@@ -76,6 +77,7 @@ final class NexusTaskHandler
             service: $startReq->getService(),
             operation: $startReq->getOperation(),
             headers: $headers,
+            deadline: self::deadlineFromHeaders($headers),
         );
 
         $details = new OperationStartDetails(
@@ -305,5 +307,37 @@ final class NexusTaskHandler
             $protoLinks[] = $protoLink;
         }
         return $protoLinks;
+    }
+
+    /**
+     * Build an absolute deadline from Nexus timeout headers.
+     *
+     * `Operation-Timeout` wins over `Request-Timeout` — the former is the outer
+     * budget including callbacks. Case-insensitive lookup. Malformed values are
+     * silently ignored so a bad header never drops an otherwise-valid request.
+     *
+     * @param array<string, string> $headers
+     */
+    public static function deadlineFromHeaders(array $headers): ?\DateTimeImmutable
+    {
+        // Normalize once; the proto-origin headers are not guaranteed lowercase.
+        $lc = [];
+        foreach ($headers as $k => $v) {
+            $lc[\strtolower((string) $k)] = (string) $v;
+        }
+
+        $value = $lc[\strtolower(NexusHeader::OPERATION_TIMEOUT)]
+            ?? $lc[\strtolower(NexusHeader::REQUEST_TIMEOUT)]
+            ?? null;
+
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        try {
+            return NexusHeader::deadlineFromTimeout($value);
+        } catch (\Nexus\Sdk\Exception\InvalidArgumentException) {
+            return null;
+        }
     }
 }

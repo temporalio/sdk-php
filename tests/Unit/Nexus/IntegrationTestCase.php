@@ -49,6 +49,14 @@ interface EchoServiceInterface
 
     #[Operation]
     public function echoWithLinks(string $input): string;
+
+    /** Reads caller-side links from $details->links and serialises them into the result. */
+    #[Operation]
+    public function reportCallerLinks(string $input): string;
+
+    /** Reports whether $ctx->deadline was populated and roughly how far in the future it is. */
+    #[Operation]
+    public function reportDeadline(string $input): string;
 }
 
 #[ServiceImpl(service: EchoServiceInterface::class)]
@@ -123,6 +131,34 @@ class EchoServiceImpl
                     new Link('http://test.local/resource/2', 'test.Resource'),
                 );
                 return "linked:{$input}";
+            },
+        );
+    }
+
+    #[OperationImpl]
+    public function reportCallerLinks(): OperationHandlerInterface
+    {
+        return new SynchronousOperationHandler(
+            static function (OperationContext $ctx, OperationStartDetails $details, ?string $_in): string {
+                $parts = [];
+                foreach ($details->links as $link) {
+                    $parts[] = "{$link->uri}|{$link->type}";
+                }
+                return \sprintf('caller-links:count=%d;items=[%s]', \count($details->links), \implode(';', $parts));
+            },
+        );
+    }
+
+    #[OperationImpl]
+    public function reportDeadline(): OperationHandlerInterface
+    {
+        return new SynchronousOperationHandler(
+            static function (OperationContext $ctx, OperationStartDetails $details, ?string $_in): string {
+                if ($ctx->deadline === null) {
+                    return 'deadline:none';
+                }
+                $delta = $ctx->deadline->getTimestamp() - (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->getTimestamp();
+                return "deadline:set;delta_seconds={$delta}";
             },
         );
     }
@@ -292,6 +328,151 @@ final class IntegrationTestCase extends AbstractUnit
         $this->invokeRoute->handle($request, [], $deferred);
         $result = $this->awaitResult($deferred);
         self::assertSame('echo:test', $result);
+    }
+
+    // ── Caller-side Nexus-Link propagation ───────────────────────
+
+    public function testCallerLinksPropagateFromOptionsToHandler(): void
+    {
+        $request = $this->makeServerRequest('InvokeNexusOperation', [
+            'service' => 'EchoService',
+            'operation' => 'reportCallerLinks',
+            'requestId' => 'links-1',
+            'links' => [
+                ['url' => 'https://caller.test/one', 'type' => 'example.one'],
+                ['url' => 'https://caller.test/two', 'type' => 'example.two'],
+            ],
+        ], EncodedValues::fromValues(['ignored'], $this->dataConverter));
+
+        $deferred = new Deferred();
+        $this->invokeRoute->handle($request, [], $deferred);
+        $result = $this->awaitResult($deferred);
+
+        self::assertStringContainsString('count=2', $result);
+        self::assertStringContainsString('https://caller.test/one|example.one', $result);
+        self::assertStringContainsString('https://caller.test/two|example.two', $result);
+    }
+
+    public function testMalformedCallerLinksAreSkipped(): void
+    {
+        $request = $this->makeServerRequest('InvokeNexusOperation', [
+            'service' => 'EchoService',
+            'operation' => 'reportCallerLinks',
+            'requestId' => 'links-2',
+            'links' => [
+                ['url' => 'https://ok.test/a', 'type' => 'ok'],
+                ['url' => 'https://missing-type.test/b'], // no type → skipped
+                ['type' => 'missing-url'],                // no url → skipped
+                'not-an-array',                           // wrong shape → skipped
+                ['url' => '', 'type' => 'empty-url'],    // empty url → skipped
+            ],
+        ], EncodedValues::fromValues(['x'], $this->dataConverter));
+
+        $deferred = new Deferred();
+        $this->invokeRoute->handle($request, [], $deferred);
+        $result = $this->awaitResult($deferred);
+
+        self::assertStringContainsString('count=1', $result, 'Only the well-formed link survives parsing');
+        self::assertStringContainsString('https://ok.test/a|ok', $result);
+    }
+
+    public function testAbsentLinksMeansEmptyList(): void
+    {
+        $request = $this->makeInvokeRequest('EchoService', 'reportCallerLinks', 'x');
+        $deferred = new Deferred();
+        $this->invokeRoute->handle($request, [], $deferred);
+        $result = $this->awaitResult($deferred);
+
+        self::assertStringContainsString('count=0', $result);
+    }
+
+    // ── Deadline from Nexus timeout headers ──────────────────────
+
+    public function testOperationTimeoutHeaderSetsDeadline(): void
+    {
+        $request = $this->makeServerRequest('InvokeNexusOperation', [
+            'service' => 'EchoService',
+            'operation' => 'reportDeadline',
+            'requestId' => 'dl-1',
+            'headers' => ['Operation-Timeout' => '30s'],
+        ], EncodedValues::fromValues(['x'], $this->dataConverter));
+
+        $deferred = new Deferred();
+        $this->invokeRoute->handle($request, [], $deferred);
+        $result = $this->awaitResult($deferred);
+
+        self::assertStringContainsString('deadline:set', $result);
+        // Delta should be ~30s. Give a generous window to absorb process+test latency.
+        self::assertMatchesRegularExpression('/delta_seconds=(2[5-9]|30|31)/', $result);
+    }
+
+    public function testRequestTimeoutUsedWhenOperationTimeoutAbsent(): void
+    {
+        $request = $this->makeServerRequest('InvokeNexusOperation', [
+            'service' => 'EchoService',
+            'operation' => 'reportDeadline',
+            'requestId' => 'dl-2',
+            'headers' => ['Request-Timeout' => '10s'],
+        ], EncodedValues::fromValues(['x'], $this->dataConverter));
+
+        $deferred = new Deferred();
+        $this->invokeRoute->handle($request, [], $deferred);
+        $result = $this->awaitResult($deferred);
+
+        self::assertStringContainsString('deadline:set', $result);
+        self::assertMatchesRegularExpression('/delta_seconds=([5-9]|1[0-1])/', $result);
+    }
+
+    public function testOperationTimeoutWinsOverRequestTimeout(): void
+    {
+        // Operation-Timeout is the outer budget, so it takes precedence.
+        $request = $this->makeServerRequest('InvokeNexusOperation', [
+            'service' => 'EchoService',
+            'operation' => 'reportDeadline',
+            'requestId' => 'dl-3',
+            'headers' => [
+                'Request-Timeout'   => '5s',
+                'Operation-Timeout' => '120s',
+            ],
+        ], EncodedValues::fromValues(['x'], $this->dataConverter));
+
+        $deferred = new Deferred();
+        $this->invokeRoute->handle($request, [], $deferred);
+        $result = $this->awaitResult($deferred);
+
+        self::assertMatchesRegularExpression('/delta_seconds=1(1[5-9]|2[01])/', $result);
+    }
+
+    public function testMalformedTimeoutHeaderIsSilentlyIgnored(): void
+    {
+        $request = $this->makeServerRequest('InvokeNexusOperation', [
+            'service' => 'EchoService',
+            'operation' => 'reportDeadline',
+            'requestId' => 'dl-4',
+            'headers' => ['Operation-Timeout' => 'garbage'],
+        ], EncodedValues::fromValues(['x'], $this->dataConverter));
+
+        $deferred = new Deferred();
+        $this->invokeRoute->handle($request, [], $deferred);
+        $result = $this->awaitResult($deferred);
+
+        self::assertStringContainsString('deadline:none', $result);
+    }
+
+    public function testCaseInsensitiveTimeoutHeaderLookup(): void
+    {
+        $request = $this->makeServerRequest('InvokeNexusOperation', [
+            'service' => 'EchoService',
+            'operation' => 'reportDeadline',
+            'requestId' => 'dl-5',
+            'headers' => ['operation-timeout' => '15s'], // already lowercase
+        ], EncodedValues::fromValues(['x'], $this->dataConverter));
+
+        $deferred = new Deferred();
+        $this->invokeRoute->handle($request, [], $deferred);
+        $result = $this->awaitResult($deferred);
+
+        self::assertStringContainsString('deadline:set', $result);
     }
 
     // ── Route names ──────────────────────────────────────────────
