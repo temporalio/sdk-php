@@ -193,7 +193,7 @@ final class IntegrationTestCase extends AbstractUnit
 
         $taskHandler = new \Temporal\Internal\Nexus\NexusTaskHandler($repository, $this->serializer, $this->dataConverter);
 
-        $this->invokeRoute = new InvokeNexusOperation($taskHandler);
+        $this->invokeRoute = new InvokeNexusOperation($taskHandler, new \Temporal\Internal\Nexus\NexusInvocationRegistry());
         $this->cancelRoute = new CancelNexusOperation($taskHandler);
     }
 

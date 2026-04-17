@@ -94,6 +94,12 @@ final class GetWorkerInfo extends Route
     {
         return [
             'ApiKey' => $this->credentials->apiKey,
+            // Advertises that this PHP worker handles the `CancelNexusOperationMethod`
+            // command (method-cancel for in-flight Nexus handlers). RoadRunner only
+            // emits that command if the flag is present — otherwise the worker would
+            // see an unknown command and fail. Stringified because RR flags are
+            // `map[string]string`.
+            'nexus_method_cancel' => 'true',
         ];
     }
 }

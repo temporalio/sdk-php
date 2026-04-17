@@ -5,25 +5,37 @@ declare(strict_types=1);
 namespace Temporal\Internal\Transport\Router;
 
 use Nexus\Sdk\Handler\HandlerInputContent;
+use Nexus\Sdk\Handler\MethodCanceller;
 use Nexus\Sdk\Handler\OperationContext;
 use Nexus\Sdk\Handler\OperationStartDetails;
 use Nexus\Sdk\Link;
 use React\Promise\Deferred;
 use Temporal\Internal\Nexus\NexusHandlerErrorException;
+use Temporal\Internal\Nexus\NexusInvocationRegistry;
 use Temporal\Internal\Nexus\NexusTaskHandler;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
 /**
  * Handles "InvokeNexusOperation" command from Go RoadRunner plugin.
  *
- * Go sends: options={service, operation, requestId, callback, callbackHeaders, headers, links}
+ * Go sends: options={service, operation, requestId, callback, callbackHeaders, headers, links, invocationId?}
  *           payloads=binary input payload
  * PHP responds: payloads=result payload (sync) or failure
+ *
+ * When `invocationId` is present (non-zero) a fresh {@see MethodCanceller}
+ * is created and registered in {@see NexusInvocationRegistry} so the
+ * `CancelNexusOperationMethod` route can trigger it. The canceller is
+ * removed in a `finally` block regardless of outcome.
+ *
+ * The `invocationId` key is optional so older RoadRunner builds keep
+ * working — the context simply gets no canceller and
+ * `$context->isMethodCancelled()` stays `false`.
  */
 final class InvokeNexusOperation extends Route
 {
     public function __construct(
         private readonly NexusTaskHandler $taskHandler,
+        private readonly NexusInvocationRegistry $invocations,
     ) {}
 
     public function handle(ServerRequestInterface $request, array $headers, Deferred $resolver): void
@@ -36,16 +48,27 @@ final class InvokeNexusOperation extends Route
         $callback = $options['callback'] ?? null;
         $callbackHeaders = $options['callbackHeaders'] ?? [];
         $requestHeaders = $options['headers'] ?? [];
+        // Correlates this invocation with a future CancelNexusOperationMethod.
+        // `0` means the RR side did not supply one — method-cancel is then a
+        // silent no-op, preserving compatibility with older RR builds.
+        $invocationId = (int) ($options['invocationId'] ?? 0);
 
         // Caller-side Nexus-Link headers parsed by RR and passed as structured
         // `{url, type}` objects. Malformed entries are skipped.
         $links = self::parseLinks($options['links'] ?? []);
+
+        $canceller = null;
+        if ($invocationId !== 0) {
+            $canceller = new MethodCanceller();
+            $this->invocations->register($invocationId, $canceller);
+        }
 
         $context = OperationContext::create(
             service: $service,
             operation: $operation,
             headers: $requestHeaders,
             deadline: NexusTaskHandler::deadlineFromHeaders($requestHeaders),
+            methodCanceller: $canceller,
         );
 
         $details = new OperationStartDetails(
@@ -78,6 +101,10 @@ final class InvokeNexusOperation extends Route
             $resolver->reject($e);
         } catch (\Throwable $e) {
             $resolver->reject($e);
+        } finally {
+            if ($invocationId !== 0) {
+                $this->invocations->unregister($invocationId);
+            }
         }
     }
 

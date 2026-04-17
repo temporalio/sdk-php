@@ -173,8 +173,10 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
 
         // Nexus routes
         $nexusHandler = $this->createNexusTaskHandler();
-        $router->add(new Router\InvokeNexusOperation($nexusHandler));
+        $invocations = $this->services->nexusInvocations;
+        $router->add(new Router\InvokeNexusOperation($nexusHandler, $invocations));
         $router->add(new Router\CancelNexusOperation($nexusHandler));
+        $router->add(new Router\CancelNexusOperationMethod($invocations));
 
         return $router;
     }
