@@ -20,6 +20,7 @@ final class NexusOperationStub implements NexusOperationStubInterface
 {
     /** @var MarshallerInterface<array> */
     private MarshallerInterface $marshaller;
+
     private NexusOperationOptions $options;
     private HeaderInterface $header;
 

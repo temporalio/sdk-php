@@ -1044,7 +1044,7 @@ final class Workflow extends Facade
         string $operation,
         array $args = [],
         ?Workflow\NexusOperationOptions $options = null,
-        DataConverter\Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
+        Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
     ): PromiseInterface {
         return self::getCurrentContext()->executeNexusOperation($operation, $args, $options, $returnType);
     }

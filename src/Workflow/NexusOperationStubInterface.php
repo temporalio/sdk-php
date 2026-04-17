@@ -39,8 +39,6 @@ interface NexusOperationStubInterface
      * the operation completes.
      *
      * @param non-empty-string $operation
-     * @param array $args
-     * @param Type|string|\ReflectionClass|\ReflectionType|null $returnType
      */
     public function start(
         string $operation,

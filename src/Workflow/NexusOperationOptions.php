@@ -45,13 +45,24 @@ final class NexusOperationOptions extends Options
      */
     public function withEndpoint(string $endpoint): self
     {
+        /** @psalm-suppress TypeDoesNotContainType — runtime guard for callers that silence psalm */
+        if ($endpoint === '') {
+            throw new \InvalidArgumentException('Nexus endpoint must be a non-empty string');
+        }
         $self = clone $this;
         $self->endpoint = $endpoint;
         return $self;
     }
 
+    /**
+     * @param non-empty-string $service
+     */
     public function withService(string $service): self
     {
+        /** @psalm-suppress TypeDoesNotContainType — runtime guard for callers that silence psalm */
+        if ($service === '') {
+            throw new \InvalidArgumentException('Nexus service must be a non-empty string');
+        }
         $self = clone $this;
         $self->service = $service;
         return $self;

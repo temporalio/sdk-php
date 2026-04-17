@@ -34,7 +34,6 @@ final class LinkParser
     /**
      * Parse a JSON-decoded list of `{url, type}` objects into `Link[]`.
      *
-     * @param mixed $raw
      * @return Link[]
      *
      * @throws NexusHandlerException when the payload or any entry is malformed
@@ -75,7 +74,7 @@ final class LinkParser
     /**
      * Parse Temporal proto `Link` messages into the SDK `Link[]`.
      *
-     * @param iterable<object> $protoLinks Anything with `getUrl()` / `getType()` (proto-generated or stub).
+     * @param iterable<object> $protoLinks Objects exposing `getUrl()` / `getType()` (proto-generated or stub).
      * @return Link[]
      *
      * @throws NexusHandlerException on any malformed entry
@@ -85,12 +84,8 @@ final class LinkParser
         $links = [];
         $index = 0;
         foreach ($protoLinks as $protoLink) {
-            $url = $protoLink instanceof \stdClass || \method_exists($protoLink, 'getUrl')
-                ? (string) $protoLink->getUrl()
-                : '';
-            $type = $protoLink instanceof \stdClass || \method_exists($protoLink, 'getType')
-                ? (string) $protoLink->getType()
-                : '';
+            $url = \method_exists($protoLink, 'getUrl') ? (string) $protoLink->getUrl() : '';
+            $type = \method_exists($protoLink, 'getType') ? (string) $protoLink->getType() : '';
             $links[] = self::buildLink(
                 url: $url,
                 type: $type,

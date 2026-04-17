@@ -149,6 +149,24 @@ final class LinkParserTestCase extends AbstractUnit
         }
     }
 
+    public function testFromProtoObjectWithoutGettersThrowsBadRequest(): void
+    {
+        // An object that has neither getUrl() nor getType() must not fatal
+        // with "call to undefined method"; it should surface as a strict
+        // validation error. Regression for an earlier `instanceof stdClass`
+        // short-circuit that caused a fatal on stdClass input.
+        $this->expectHandlerBadRequest('missing or empty "url"');
+        LinkParser::fromProto([new \stdClass()]);
+    }
+
+    public function testFromProtoObjectWithPartialGettersIsValidated(): void
+    {
+        // Only getUrl() defined → type falls back to '' and is rejected
+        // by buildLink's non-empty check.
+        $this->expectHandlerBadRequest('missing or empty "type"');
+        LinkParser::fromProto([new FakeUrlOnly('https://p/')]);
+    }
+
     private function expectHandlerBadRequest(string $messageFragment): void
     {
         $this->expectException(HandlerException::class);
@@ -176,5 +194,15 @@ final class FakeProtoLink
     public function getType(): string
     {
         return $this->type;
+    }
+}
+
+final class FakeUrlOnly
+{
+    public function __construct(private readonly string $url) {}
+
+    public function getUrl(): string
+    {
+        return $this->url;
     }
 }

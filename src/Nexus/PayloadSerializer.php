@@ -8,7 +8,6 @@ use Nexus\Sdk\Serializer\Content;
 use Nexus\Sdk\Serializer\SerializerInterface;
 use Temporal\Api\Common\V1\Payload;
 use Temporal\DataConverter\DataConverterInterface;
-use Temporal\DataConverter\EncodingKeys;
 
 /**
  * Bridges Nexus SDK serialization to Temporal DataConverter.

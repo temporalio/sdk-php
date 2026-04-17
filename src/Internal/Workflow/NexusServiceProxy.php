@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Temporal\Internal\Workflow;
 
 use React\Promise\PromiseInterface;
-use Temporal\DataConverter\Type;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteNexusOperationInput;
 use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
 use Temporal\Internal\Interceptor\Pipeline;
@@ -15,7 +14,8 @@ use Temporal\Workflow\WorkflowContextInterface;
 final class NexusServiceProxy extends Proxy
 {
     private const ERROR_UNDEFINED_OPERATION =
-        'The given stub class "%s" does not contain a Nexus operation method named "%s"';
+        'Nexus service "%s" has no operation method "%s". '
+        . 'Did you forget the #[Operation] attribute on the method?';
 
     /**
      * @param class-string $class

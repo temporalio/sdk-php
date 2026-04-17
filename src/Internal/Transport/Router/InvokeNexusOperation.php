@@ -10,7 +10,6 @@ use Nexus\Sdk\Handler\OperationContext;
 use Nexus\Sdk\Handler\OperationStartDetails;
 use React\Promise\Deferred;
 use Temporal\Internal\Nexus\LinkParser;
-use Temporal\Internal\Nexus\NexusHandlerErrorException;
 use Temporal\Internal\Nexus\NexusInvocationRegistry;
 use Temporal\Internal\Nexus\NexusTaskHandler;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
@@ -106,9 +105,10 @@ final class InvokeNexusOperation extends Route
 
             $result = $this->taskHandler->startOperationDirect($context, $details, $input);
             $resolver->resolve($result);
-        } catch (NexusHandlerErrorException $e) {
-            $resolver->reject($e);
         } catch (\Throwable $e) {
+            // NexusHandlerErrorException (wrapping a HandlerError proto) and
+            // plain throwables both route through the same rejection path —
+            // the RR transport inspects the exception type on the other side.
             $resolver->reject($e);
         } finally {
             if ($invocationId !== 0) {
@@ -116,5 +116,4 @@ final class InvokeNexusOperation extends Route
             }
         }
     }
-
 }

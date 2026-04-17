@@ -34,6 +34,7 @@ use Temporal\Interceptor\WorkflowOutboundCalls\ContinueAsNewInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteActivityInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteChildWorkflowInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteLocalActivityInput;
+use Temporal\Interceptor\WorkflowOutboundCalls\ExecuteNexusOperationInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\GetVersionInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\PanicInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\SideEffectInput;
@@ -41,6 +42,9 @@ use Temporal\Interceptor\WorkflowOutboundCalls\TimerInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\UpsertMemoInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\UpsertSearchAttributesInput;
 use Temporal\Interceptor\WorkflowOutboundCalls\UpsertTypedSearchAttributesInput;
+use Temporal\Nexus\NexusOperationReader;
+use Temporal\Workflow\NexusOperationOptions;
+use Temporal\Workflow\NexusOperationStubInterface;
 use Temporal\Interceptor\WorkflowOutboundCallsInterceptor;
 use Temporal\Interceptor\WorkflowOutboundRequestInterceptor;
 use Temporal\Internal\Declaration\EntityNameValidator;
@@ -464,10 +468,10 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
 
     public function newNexusServiceStub(
         string $class,
-        \Temporal\Workflow\NexusOperationOptions $options,
+        NexusOperationOptions $options,
     ): object {
-        $operations = \Temporal\Nexus\NexusOperationReader::getOperations($class);
-        $serviceName = \Temporal\Nexus\NexusOperationReader::getServiceName($class);
+        $operations = NexusOperationReader::getOperations($class);
+        $serviceName = NexusOperationReader::getServiceName($class);
 
         if ($options->service === '') {
             $options = $options->withService($serviceName);
@@ -483,26 +487,30 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     }
 
     public function newUntypedNexusOperationStub(
-        \Temporal\Workflow\NexusOperationOptions $options,
-    ): \Temporal\Workflow\NexusOperationStubInterface {
+        NexusOperationOptions $options,
+    ): NexusOperationStubInterface {
         return new NexusOperationStub($this->services->marshaller, $options, $this->getHeader());
     }
 
     public function executeNexusOperation(
         string $operation,
         array $args = [],
-        ?\Temporal\Workflow\NexusOperationOptions $options = null,
-        \Temporal\DataConverter\Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
-    ): \React\Promise\PromiseInterface {
-        $options ??= \Temporal\Workflow\NexusOperationOptions::new();
+        ?NexusOperationOptions $options = null,
+        Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
+    ): PromiseInterface {
+        $options ??= NexusOperationOptions::new();
 
         return $this->callsInterceptor->with(
-            fn(\Temporal\Interceptor\WorkflowOutboundCalls\ExecuteNexusOperationInput $input): \React\Promise\PromiseInterface => $this
+            fn(ExecuteNexusOperationInput $input): PromiseInterface => $this
                 ->newUntypedNexusOperationStub($input->options)
                 ->execute($input->operation, $input->args, $input->returnType),
             'executeNexusOperation',
-        )(new \Temporal\Interceptor\WorkflowOutboundCalls\ExecuteNexusOperationInput(
-            $options->service, $operation, $args, $options, $returnType,
+        )(new ExecuteNexusOperationInput(
+            $options->service,
+            $operation,
+            $args,
+            $options,
+            $returnType,
         ));
     }
 

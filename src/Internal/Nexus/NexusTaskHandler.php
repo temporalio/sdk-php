@@ -13,18 +13,24 @@ use Nexus\Sdk\Handler\OperationContext;
 use Nexus\Sdk\Handler\OperationStartDetails;
 use Nexus\Sdk\Handler\ServiceHandler;
 use Nexus\Sdk\Header as NexusHeader;
+use Nexus\Sdk\Internal\Headers;
 use Nexus\Sdk\Link;
 use Nexus\Sdk\Serializer\SerializerInterface;
+use Temporal\Api\Common\V1\Payload;
+use Temporal\Api\Common\V1\Payloads;
 use Temporal\Api\Enums\V1\NexusHandlerErrorRetryBehavior;
 use Temporal\Api\Nexus\V1\CancelOperationRequest;
 use Temporal\Api\Nexus\V1\CancelOperationResponse;
 use Temporal\Api\Nexus\V1\Failure;
 use Temporal\Api\Nexus\V1\HandlerError;
+use Temporal\Api\Nexus\V1\Link as ProtoLink;
 use Temporal\Api\Nexus\V1\Request;
 use Temporal\Api\Nexus\V1\Response;
 use Temporal\Api\Nexus\V1\StartOperationRequest;
 use Temporal\Api\Nexus\V1\StartOperationResponse;
 use Temporal\Api\Nexus\V1\UnsuccessfulOperationError;
+use Temporal\DataConverter\DataConverterInterface;
+use Temporal\DataConverter\EncodedValues;
 
 /**
  * Bridges Temporal's RoadRunner tasks to the Nexus SDK ServiceHandler.
@@ -43,6 +49,7 @@ final class NexusTaskHandler
      * @internal Wire contract with roadrunner-temporal's aggregatedpool/nexus.go.
      */
     public const NEXUS_KIND_METADATA_KEY = '_rr_nexus_kind';
+
     public const NEXUS_KIND_ASYNC = 'async';
 
     /**
@@ -57,13 +64,55 @@ final class NexusTaskHandler
      */
     public const NEXUS_LINKS_METADATA_KEY = '_rr_nexus_links';
 
+    /**
+     * Controls whether handler-side PHP traces (class, message, stack) are
+     * attached to the Nexus `Failure.details` JSON blob.
+     *
+     * ⚠ Traces may contain absolute filesystem paths and internal argument
+     * values — sensitive in cross-tenant / cross-cluster deployments where
+     * the Nexus caller is outside the trust boundary. Set to `false` in
+     * production to emit only the message.
+     *
+     * Default is `true` to preserve existing debuggability.
+     */
+    public static bool $includeTracebackInFailure = true;
+
     private ?ServiceHandler $serviceHandler = null;
 
     public function __construct(
         private readonly NexusServiceRepository $repository,
         private readonly SerializerInterface $serializer,
-        private readonly ?\Temporal\DataConverter\DataConverterInterface $dataConverter = null,
+        private readonly DataConverterInterface $dataConverter,
     ) {}
+
+    /**
+     * Build an absolute deadline from Nexus timeout headers.
+     *
+     * `Operation-Timeout` wins over `Request-Timeout` — the former is the outer
+     * budget including callbacks. Case-insensitive lookup. Malformed values are
+     * silently ignored so a bad header never drops an otherwise-valid request.
+     *
+     * @param array<string, string> $headers
+     */
+    public static function deadlineFromHeaders(array $headers): ?\DateTimeImmutable
+    {
+        // Headers off the wire are not guaranteed lowercase; normalize once so
+        // Header::get() (which assumes a lowercased map) behaves correctly.
+        $lc = Headers::normalize($headers);
+
+        $value = NexusHeader::get($lc, NexusHeader::OPERATION_TIMEOUT)
+            ?? NexusHeader::get($lc, NexusHeader::REQUEST_TIMEOUT);
+
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        try {
+            return NexusHeader::deadlineFromTimeout($value);
+        } catch (\Nexus\Sdk\Exception\InvalidArgumentException) {
+            return null;
+        }
+    }
 
     public function handleStartOperation(Request $request): Response
     {
@@ -119,7 +168,7 @@ final class NexusTaskHandler
                 $syncResp = new StartOperationResponse\Sync();
 
                 if ($syncResult !== null) {
-                    $resultPayload = new \Temporal\Api\Common\V1\Payload();
+                    $resultPayload = new Payload();
                     $resultPayload->setData($syncResult->data);
                     if ($syncResult->headers !== []) {
                         $resultPayload->setMetadata($syncResult->headers);
@@ -207,7 +256,7 @@ final class NexusTaskHandler
         OperationContext $context,
         OperationStartDetails $details,
         HandlerInputContent $input,
-    ): \Temporal\DataConverter\EncodedValues {
+    ): EncodedValues {
         $result = $this->getServiceHandler()->startOperation($context, $details, $input);
 
         // Handler-side links attached via $ctx->addLinks() need to reach the
@@ -219,7 +268,7 @@ final class NexusTaskHandler
         if ($result->isSync()) {
             $syncResult = $result->getSyncResult();
 
-            $payload = new \Temporal\Api\Common\V1\Payload();
+            $payload = new Payload();
             $metadata = [];
             if ($syncResult !== null) {
                 $payload->setData($syncResult->data);
@@ -232,15 +281,15 @@ final class NexusTaskHandler
                 $payload->setMetadata($metadata);
             }
 
-            $payloads = new \Temporal\Api\Common\V1\Payloads(['payloads' => [$payload]]);
-            return \Temporal\DataConverter\EncodedValues::fromPayloads($payloads, $this->dataConverter);
+            $payloads = new Payloads(['payloads' => [$payload]]);
+            return EncodedValues::fromPayloads($payloads, $this->dataConverter);
         }
 
         // Async: return an opaque payload carrying the operation token plus a
         // well-known metadata marker so RR can distinguish it from a sync result.
         // The token is spec-defined as a printable-ASCII string, safe as bytes.
         $token = $result->getAsyncOperationToken();
-        $payload = new \Temporal\Api\Common\V1\Payload();
+        $payload = new Payload();
         $payload->setData($token);
         $metadata = [
             self::NEXUS_KIND_METADATA_KEY => self::NEXUS_KIND_ASYNC,
@@ -249,8 +298,20 @@ final class NexusTaskHandler
             $metadata[self::NEXUS_LINKS_METADATA_KEY] = $linksJson;
         }
         $payload->setMetadata($metadata);
-        $payloads = new \Temporal\Api\Common\V1\Payloads(['payloads' => [$payload]]);
-        return \Temporal\DataConverter\EncodedValues::fromPayloads($payloads, $this->dataConverter);
+        $payloads = new Payloads(['payloads' => [$payload]]);
+        return EncodedValues::fromPayloads($payloads, $this->dataConverter);
+    }
+
+    /**
+     * Cancel operation directly from parsed context/details (used by CancelNexusOperation route).
+     *
+     * @throws HandlerException
+     */
+    public function cancelOperationDirect(
+        OperationContext $context,
+        OperationCancelDetails $details,
+    ): void {
+        $this->getServiceHandler()->cancelOperation($context, $details);
     }
 
     /**
@@ -278,15 +339,41 @@ final class NexusTaskHandler
     }
 
     /**
-     * Cancel operation directly from parsed context/details (used by CancelNexusOperation route).
+     * Pack a PHP exception's type, stack trace, and cause chain into a
+     * Nexus-spec {@see Failure}'s `details` field as JSON, and stamp the
+     * outermost exception class in `metadata["type"]`.
      *
-     * @throws HandlerException
+     * The Nexus Failure envelope intentionally exposes only
+     * `{message, metadata, details}` — to avoid losing debugging
+     * information we serialise the trace into `details`. Integrators that
+     * don't care can ignore the extra bytes; those that do can
+     * `json_decode()` them back into a flat array of
+     * `[{type, message, trace}, ...]` entries (outermost first).
      */
-    public function cancelOperationDirect(
-        OperationContext $context,
-        OperationCancelDetails $details,
-    ): void {
-        $this->getServiceHandler()->cancelOperation($context, $details);
+    private static function attachTracebackAsDetails(Failure $failure, \Throwable $e): void
+    {
+        $failure->setMetadata(['type' => $e::class]);
+
+        if (!self::$includeTracebackInFailure) {
+            // Stripped mode: keep the outer class name as type metadata but
+            // emit no details. The caller still receives the message via
+            // Failure.message, which is the minimum useful diagnostic.
+            return;
+        }
+
+        $chain = [];
+        $cursor = $e;
+        // Bounded walk guards against a pathological cyclic cause chain.
+        for ($depth = 0; $cursor !== null && $depth < 16; $depth++) {
+            $chain[] = [
+                'type' => $cursor::class,
+                'message' => $cursor->getMessage(),
+                'trace' => $cursor->getTraceAsString(),
+            ];
+            $cursor = $cursor->getPrevious();
+        }
+
+        $failure->setDetails(\json_encode($chain, \JSON_UNESCAPED_SLASHES | \JSON_THROW_ON_ERROR));
     }
 
     private function getServiceHandler(): ServiceHandler
@@ -350,80 +437,18 @@ final class NexusTaskHandler
     }
 
     /**
-     * Pack a PHP exception's type, stack trace, and cause chain into a
-     * Nexus-spec {@see Failure}'s `details` field as JSON, and stamp the
-     * outermost exception class in `metadata["type"]`.
-     *
-     * The Nexus Failure envelope intentionally exposes only
-     * `{message, metadata, details}` — to avoid losing debugging
-     * information we serialise the trace into `details`. Integrators that
-     * don't care can ignore the extra bytes; those that do can
-     * `json_decode()` them back into a flat array of
-     * `[{type, message, trace}, ...]` entries (outermost first).
-     */
-    private static function attachTracebackAsDetails(Failure $failure, \Throwable $e): void
-    {
-        $chain = [];
-        $cursor = $e;
-        // Bounded walk guards against a pathological cyclic cause chain.
-        for ($depth = 0; $cursor !== null && $depth < 16; $depth++) {
-            $chain[] = [
-                'type' => $cursor::class,
-                'message' => $cursor->getMessage(),
-                'trace' => $cursor->getTraceAsString(),
-            ];
-            $cursor = $cursor->getPrevious();
-        }
-
-        $failure->setMetadata(['type' => $e::class]);
-        $failure->setDetails(\json_encode($chain, \JSON_UNESCAPED_SLASHES | \JSON_THROW_ON_ERROR));
-    }
-
-    /**
      * @param Link[] $links
-     * @return \Temporal\Api\Nexus\V1\Link[]
+     * @return ProtoLink[]
      */
     private function convertLinksToProto(array $links): array
     {
         $protoLinks = [];
         foreach ($links as $link) {
-            $protoLink = new \Temporal\Api\Nexus\V1\Link();
+            $protoLink = new ProtoLink();
             $protoLink->setUrl($link->uri);
             $protoLink->setType($link->type);
             $protoLinks[] = $protoLink;
         }
         return $protoLinks;
-    }
-
-    /**
-     * Build an absolute deadline from Nexus timeout headers.
-     *
-     * `Operation-Timeout` wins over `Request-Timeout` — the former is the outer
-     * budget including callbacks. Case-insensitive lookup. Malformed values are
-     * silently ignored so a bad header never drops an otherwise-valid request.
-     *
-     * @param array<string, string> $headers
-     */
-    public static function deadlineFromHeaders(array $headers): ?\DateTimeImmutable
-    {
-        // Normalize once; the proto-origin headers are not guaranteed lowercase.
-        $lc = [];
-        foreach ($headers as $k => $v) {
-            $lc[\strtolower((string) $k)] = (string) $v;
-        }
-
-        $value = $lc[\strtolower(NexusHeader::OPERATION_TIMEOUT)]
-            ?? $lc[\strtolower(NexusHeader::REQUEST_TIMEOUT)]
-            ?? null;
-
-        if ($value === null || $value === '') {
-            return null;
-        }
-
-        try {
-            return NexusHeader::deadlineFromTimeout($value);
-        } catch (\Nexus\Sdk\Exception\InvalidArgumentException) {
-            return null;
-        }
     }
 }

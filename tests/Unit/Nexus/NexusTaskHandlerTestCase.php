@@ -177,7 +177,7 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         $repository = new NexusServiceRepository();
         $repository->add(ServiceImplInstance::fromInstance(new TestGreetingServiceImpl()));
 
-        $this->handler = new NexusTaskHandler($repository, $this->serializer);
+        $this->handler = new NexusTaskHandler($repository, $this->serializer, $dataConverter);
     }
 
     public function testStartSyncOperation(): void
@@ -236,6 +236,48 @@ final class NexusTaskHandlerTestCase extends AbstractUnit
         $opError = $startResp->getOperationError();
         self::assertSame('failed', $opError->getOperationState());
         self::assertSame('Something went wrong', $opError->getFailure()->getMessage());
+    }
+
+    public function testTracebackIsAttachedByDefault(): void
+    {
+        $request = $this->buildStartRequest('TestGreetingService', 'failingOp', 'input');
+
+        $response = $this->handler->handleStartOperation($request);
+        $failure = $response->getStartOperation()->getOperationError()->getFailure();
+
+        // Default: traceback is included as JSON in Failure.details.
+        self::assertNotSame('', $failure->getDetails());
+        $chain = \json_decode($failure->getDetails(), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($chain);
+        self::assertSame(OperationException::class, $chain[0]['type']);
+        self::assertSame('Something went wrong', $chain[0]['message']);
+
+        // Metadata carries the exception class regardless of the flag.
+        $meta = \iterator_to_array($failure->getMetadata());
+        self::assertSame(OperationException::class, $meta['type']);
+    }
+
+    public function testTracebackCanBeStrippedViaFlag(): void
+    {
+        $prior = NexusTaskHandler::$includeTracebackInFailure;
+        NexusTaskHandler::$includeTracebackInFailure = false;
+
+        try {
+            $request = $this->buildStartRequest('TestGreetingService', 'failingOp', 'input');
+            $response = $this->handler->handleStartOperation($request);
+            $failure = $response->getStartOperation()->getOperationError()->getFailure();
+
+            // Stripped mode: no trace details, but metadata['type'] still carries
+            // the outer exception class for minimal diagnostics.
+            self::assertSame('', $failure->getDetails());
+            $meta = \iterator_to_array($failure->getMetadata());
+            self::assertSame(OperationException::class, $meta['type']);
+
+            // Message still propagates — the minimum useful diagnostic.
+            self::assertSame('Something went wrong', $failure->getMessage());
+        } finally {
+            NexusTaskHandler::$includeTracebackInFailure = $prior;
+        }
     }
 
     public function testStartOperationWithUnknownService(): void

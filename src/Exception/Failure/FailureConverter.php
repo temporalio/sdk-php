@@ -24,6 +24,7 @@ use Temporal\Api\Failure\V1\CanceledFailureInfo;
 use Temporal\Api\Failure\V1\ChildWorkflowExecutionFailureInfo;
 use Temporal\Api\Failure\V1\Failure;
 use Temporal\Api\Failure\V1\NexusHandlerFailureInfo;
+use Temporal\Api\Failure\V1\NexusOperationFailureInfo;
 use Temporal\Api\Failure\V1\ServerFailureInfo;
 use Temporal\Api\Failure\V1\TerminatedFailureInfo;
 use Temporal\Api\Failure\V1\TimeoutFailureInfo;
@@ -293,6 +294,38 @@ final class FailureConverter
                     ),
                     $info->getNamespace(),
                     $info->getRetryState(),
+                    $previous,
+                );
+
+            case $failure->hasNexusHandlerFailureInfo():
+                $info = $failure->getNexusHandlerFailureInfo();
+                \assert($info instanceof NexusHandlerFailureInfo);
+
+                return new NexusHandlerFailure(
+                    $failure->getMessage(),
+                    $info->getType(),
+                    $info->getRetryBehavior(),
+                    $previous,
+                );
+
+            case $failure->hasNexusOperationExecutionFailureInfo():
+                $info = $failure->getNexusOperationExecutionFailureInfo();
+                \assert($info instanceof NexusOperationFailureInfo);
+
+                // `operation_token` is the canonical field; fall back to the
+                // deprecated `operation_id` so older servers still round-trip.
+                $token = $info->getOperationToken();
+                if ($token === '') {
+                    $token = $info->getOperationId();
+                }
+
+                return new NexusOperationFailure(
+                    $failure->getMessage(),
+                    (int) $info->getScheduledEventId(),
+                    $info->getEndpoint(),
+                    $info->getService(),
+                    $info->getOperation(),
+                    $token,
                     $previous,
                 );
 

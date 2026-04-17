@@ -72,6 +72,9 @@ final class GetWorkerInfo extends Route
             'Plugins' => $map,
             'Flags' => (object) $this->prepareFlags(),
             // NexusServiceInfo[]
+            // Key is lowerCamelCase to match the Go tag
+            // `json:"nexusServices,omitempty"` on the RR side — do NOT rename
+            // to PascalCase without a coordinated RR change.
             'nexusServices' => $worker->getNexusServices(),
         ];
     }

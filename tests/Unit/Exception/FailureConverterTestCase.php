@@ -13,11 +13,15 @@ use Nexus\Sdk\Exception\OperationException as NexusOperationException;
 use Nexus\Sdk\Exception\RetryBehavior as NexusRetryBehavior;
 use Temporal\Api\Enums\V1\NexusHandlerErrorRetryBehavior;
 use Temporal\Api\Failure\V1\Failure;
+use Temporal\Api\Failure\V1\NexusHandlerFailureInfo;
+use Temporal\Api\Failure\V1\NexusOperationFailureInfo;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\Exception\Failure\ApplicationErrorCategory;
 use Temporal\Exception\Failure\ApplicationFailure;
 use Temporal\Exception\Failure\FailureConverter;
+use Temporal\Exception\Failure\NexusHandlerFailure;
+use Temporal\Exception\Failure\NexusOperationFailure;
 use Temporal\Tests\Unit\AbstractUnit;
 
 final class FailureConverterTestCase extends AbstractUnit
@@ -305,5 +309,116 @@ final class FailureConverterTestCase extends AbstractUnit
         // Keep the prefix stable — changing it breaks wire compat with
         // roadrunner-temporal/aggregatedpool/nexus.go (see nexusOperationErrorTypePrefix).
         self::assertSame('nexus.OperationError.', FailureConverter::NEXUS_OPERATION_ERROR_TYPE_PREFIX);
+    }
+
+    // ── Nexus: inverse mapping (wire → typed exception) ────────────────
+
+    public function testNexusHandlerFailureInfoMapsToNexusHandlerFailure(): void
+    {
+        $info = new NexusHandlerFailureInfo();
+        $info->setType('BAD_REQUEST');
+        $info->setRetryBehavior(NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_NON_RETRYABLE);
+
+        $failure = new Failure();
+        $failure->setMessage('bad payload');
+        $failure->setNexusHandlerFailureInfo($info);
+
+        $exception = FailureConverter::mapFailureToException($failure, DataConverter::createDefault());
+
+        self::assertInstanceOf(NexusHandlerFailure::class, $exception);
+        self::assertSame('bad payload', $exception->getMessage());
+        self::assertSame('BAD_REQUEST', $exception->getType());
+        self::assertSame(
+            NexusHandlerErrorRetryBehavior::NEXUS_HANDLER_ERROR_RETRY_BEHAVIOR_NON_RETRYABLE,
+            $exception->getRetryBehavior(),
+        );
+    }
+
+    public function testNexusHandlerFailureRoundTrip(): void
+    {
+        // HandlerException → Failure → NexusHandlerFailure preserves the
+        // error-type string (round-trip wire compatibility).
+        $original = NexusHandlerException::fromRawType('CUSTOM_TYPE', 'boom');
+        $converter = DataConverter::createDefault();
+
+        $failure = FailureConverter::mapExceptionToFailure($original, $converter);
+        $restored = FailureConverter::mapFailureToException($failure, $converter);
+
+        self::assertInstanceOf(NexusHandlerFailure::class, $restored);
+        self::assertSame('CUSTOM_TYPE', $restored->getType());
+    }
+
+    public function testNexusOperationFailureInfoMapsToNexusOperationFailure(): void
+    {
+        $info = new NexusOperationFailureInfo();
+        $info->setScheduledEventId(42);
+        $info->setEndpoint('my-endpoint');
+        $info->setService('MyService');
+        $info->setOperation('doThing');
+        $info->setOperationToken('tok-xyz');
+
+        $failure = new Failure();
+        $failure->setMessage('operation failed');
+        $failure->setNexusOperationExecutionFailureInfo($info);
+
+        $exception = FailureConverter::mapFailureToException($failure, DataConverter::createDefault());
+
+        self::assertInstanceOf(NexusOperationFailure::class, $exception);
+        self::assertSame(42, $exception->getScheduledEventId());
+        self::assertSame('my-endpoint', $exception->getEndpoint());
+        self::assertSame('MyService', $exception->getService());
+        self::assertSame('doThing', $exception->getOperation());
+        self::assertSame('tok-xyz', $exception->getOperationToken());
+    }
+
+    public function testNexusOperationFailureInfoFallsBackToDeprecatedOperationId(): void
+    {
+        // Older servers populate only the deprecated `operation_id` field.
+        // The converter must fall back so callers always get a non-empty
+        // token for async operations.
+        $info = new NexusOperationFailureInfo();
+        $info->setOperationId('legacy-id');
+        // operation_token left empty
+
+        $failure = new Failure();
+        $failure->setMessage('legacy');
+        $failure->setNexusOperationExecutionFailureInfo($info);
+
+        $exception = FailureConverter::mapFailureToException($failure, DataConverter::createDefault());
+
+        self::assertInstanceOf(NexusOperationFailure::class, $exception);
+        self::assertSame('legacy-id', $exception->getOperationToken());
+    }
+
+    public function testNexusOperationFailurePreservesCauseChain(): void
+    {
+        // A NexusOperationFailureInfo typically wraps a cause describing the
+        // underlying handler error. The cause must propagate through the
+        // inverse mapping.
+        $cause = new Failure();
+        $cause->setMessage('handler said no');
+        $causeInfo = new \Temporal\Api\Failure\V1\ApplicationFailureInfo();
+        $causeInfo->setType(FailureConverter::NEXUS_OPERATION_ERROR_TYPE_PREFIX . 'failed');
+        $causeInfo->setNonRetryable(true);
+        $cause->setApplicationFailureInfo($causeInfo);
+
+        $info = new NexusOperationFailureInfo();
+        $info->setEndpoint('ep');
+        $info->setService('svc');
+        $info->setOperation('op');
+
+        $failure = new Failure();
+        $failure->setMessage('nexus op failure');
+        $failure->setNexusOperationExecutionFailureInfo($info);
+        $failure->setCause($cause);
+
+        $exception = FailureConverter::mapFailureToException($failure, DataConverter::createDefault());
+
+        self::assertInstanceOf(NexusOperationFailure::class, $exception);
+        self::assertInstanceOf(ApplicationFailure::class, $exception->getPrevious());
+        self::assertSame(
+            FailureConverter::NEXUS_OPERATION_ERROR_TYPE_PREFIX . 'failed',
+            $exception->getPrevious()->getType(),
+        );
     }
 }
