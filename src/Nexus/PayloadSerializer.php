@@ -28,12 +28,10 @@ final class PayloadSerializer implements SerializerInterface
         $payload = $this->dataConverter->toPayload($value);
         $data = $payload->getData();
 
-        $headers = [];
-        /** @var \ArrayAccess $meta */
-        $meta = $payload->getMetadata();
-        foreach ($meta as $key => $val) {
-            $headers[$key] = $val;
-        }
+        // Payload::getMetadata() returns a Google\Protobuf MapField which is
+        // IteratorAggregate but psalm sees only the ArrayAccess portion and
+        // flags direct iteration. `iterator_to_array` narrows to a plain array.
+        $headers = \iterator_to_array($payload->getMetadata());
 
         return new Content($data, $headers);
     }

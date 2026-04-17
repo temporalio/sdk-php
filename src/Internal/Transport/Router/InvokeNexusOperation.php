@@ -78,7 +78,7 @@ final class InvokeNexusOperation extends Route
         $payloads = $request->getPayloads();
         if ($payloads instanceof \Temporal\DataConverter\EncodedValues) {
             $protoPayloads = $payloads->toPayloads();
-            if ($protoPayloads !== null && $protoPayloads->getPayloads()->count() > 0) {
+            if ($protoPayloads->getPayloads()->count() > 0) {
                 $firstPayload = $protoPayloads->getPayloads()[0];
                 $inputData = $firstPayload->getData();
                 foreach ($firstPayload->getMetadata() as $k => $v) {

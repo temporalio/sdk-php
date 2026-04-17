@@ -34,6 +34,11 @@ final class ExecuteNexusOperationInput
         ?NexusOperationOptions $options = null,
         null|Type|string|\ReflectionClass|\ReflectionType $returnType = null,
     ): self {
+        // Values from `$this->*` were validated as non-empty by the
+        // constructor; callers wanting to replace them keep the same
+        // non-empty-string contract. Psalm cannot express this invariant
+        // across the `?:` narrowing, so suppress is the least-bad option.
+        /** @psalm-suppress ArgumentTypeCoercion */
         return new self(
             $service ?? $this->service,
             $operation ?? $this->operation,

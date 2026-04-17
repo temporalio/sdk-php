@@ -40,6 +40,22 @@ final class NexusServiceProxy extends Proxy
             );
         }
 
+        $service = $this->options->service;
+        $opName = $operation['name'];
+        // `newNexusServiceStub()` fills `service` from the #[Service] attribute
+        // when the caller leaves it blank; if both are missing we land here
+        // with '' and must fail fast rather than ship an empty wire value.
+        if ($service === '') {
+            throw new \InvalidArgumentException(
+                \sprintf('Nexus service name resolved to empty for stub class %s', $this->class),
+            );
+        }
+        if ($opName === '') {
+            throw new \InvalidArgumentException(
+                \sprintf('Nexus operation name resolved to empty for %s::%s()', $this->class, $method),
+            );
+        }
+
         $returnType = $operation['returnType'] === 'void' ? null : $operation['returnType'];
 
         return $this->callsInterceptor->with(
@@ -50,8 +66,8 @@ final class NexusServiceProxy extends Proxy
             'executeNexusOperation',
         )(
             new ExecuteNexusOperationInput(
-                $this->options->service,
-                $operation['name'],
+                $service,
+                $opName,
                 $args,
                 $this->options,
                 $returnType,

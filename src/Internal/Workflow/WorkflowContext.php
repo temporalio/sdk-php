@@ -466,6 +466,13 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         );
     }
 
+    /**
+     * @psalm-suppress InvalidReturnType, InvalidReturnStatement
+     *                 — NexusServiceProxy routes user calls through __call,
+     *                 emulating the `$class` interface at runtime. The
+     *                 template binding is a user-facing DX contract, not a
+     *                 structural guarantee psalm can verify.
+     */
     public function newNexusServiceStub(
         string $class,
         NexusOperationOptions $options,
@@ -500,13 +507,23 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
     ): PromiseInterface {
         $options ??= NexusOperationOptions::new();
 
+        $service = $options->service;
+        if ($service === '') {
+            throw new \InvalidArgumentException(
+                'Nexus service is empty; set it via NexusOperationOptions::withService() or use newNexusServiceStub() with a #[Service]-annotated interface',
+            );
+        }
+        if ($operation === '') {
+            throw new \InvalidArgumentException('Nexus operation name must be a non-empty string');
+        }
+
         return $this->callsInterceptor->with(
             fn(ExecuteNexusOperationInput $input): PromiseInterface => $this
                 ->newUntypedNexusOperationStub($input->options)
                 ->execute($input->operation, $input->args, $input->returnType),
             'executeNexusOperation',
         )(new ExecuteNexusOperationInput(
-            $options->service,
+            $service,
             $operation,
             $args,
             $options,
