@@ -32,6 +32,8 @@ class NexusOperationFailure extends TemporalFailure
         private readonly string $operationToken,
         ?\Throwable $previous = null,
     ) {
+        // Mirrors ChildWorkflowFailure/ActivityFailure: the rendered message
+        // is the identity tuple; the actual cause message lives on $previous.
         parent::__construct(
             self::buildMessage([
                 'endpoint' => $endpoint,
@@ -39,9 +41,8 @@ class NexusOperationFailure extends TemporalFailure
                 'operation' => $operation,
                 'operationToken' => $operationToken,
                 'scheduledEventId' => $scheduledEventId,
-                'originalMessage' => $message,
             ]),
-            null,
+            $message,
             $previous,
         );
     }

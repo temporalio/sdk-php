@@ -126,7 +126,7 @@ class EchoServiceImpl
     {
         return new SynchronousOperationHandler(
             function (OperationContext $ctx, OperationStartDetails $details, ?string $input): string {
-                $ctx->addLinks(
+                $ctx->links->add(
                     new Link('http://test.local/resource/1', 'test.Resource'),
                     new Link('http://test.local/resource/2', 'test.Resource'),
                 );
@@ -422,7 +422,7 @@ final class IntegrationTestCase extends AbstractUnit
 
     public function testHandlerAddedLinksAreSerializedIntoPayloadMetadata(): void
     {
-        // echoWithLinks handler calls $ctx->addLinks(...) and returns sync.
+        // echoWithLinks handler calls $ctx->links->add(...) and returns sync.
         // The RR route should bubble those links up through payload metadata
         // under the _rr_nexus_links key so Go can reconstruct nexus.Links.
         $request = $this->makeInvokeRequest('EchoService', 'echoWithLinks', 'hi');
@@ -447,7 +447,7 @@ final class IntegrationTestCase extends AbstractUnit
 
     public function testNoLinksMeansNoMetadataKey(): void
     {
-        // A plain sync handler without addLinks must NOT set _rr_nexus_links —
+        // A plain sync handler without links->add() must NOT set _rr_nexus_links —
         // otherwise every payload grows by ~20 bytes for an empty marker.
         $request = $this->makeInvokeRequest('EchoService', 'echo', 'hello');
         $deferred = new Deferred();

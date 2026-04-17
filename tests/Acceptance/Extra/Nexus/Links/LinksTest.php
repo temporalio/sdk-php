@@ -51,7 +51,7 @@ class LinksTest extends TestCase
 
         self::assertSame(200, $code, "Expected 200, got {$code}. Body: {$resp}");
         // Body carries a deterministic marker produced from links the handler saw
-        // via OperationContext::getLinks() right after its own addLinks() call.
+        // via OperationContext::$links->all() right after its own links->add() call.
         self::assertStringContainsString('count=1', $resp);
         self::assertStringContainsString('session-7', $resp);
         self::assertStringContainsString('example.session', $resp);
@@ -89,7 +89,7 @@ class LinksTest extends TestCase
 
     /**
      * End-to-end verification of the handler-response-Link wire:
-     * handler calls $ctx->addLinks(), sdk-php packs them into
+     * handler calls $ctx->links->add(), sdk-php packs them into
      * `_rr_nexus_links` payload metadata, RoadRunner extracts them and
      * calls nexus.AddHandlerLinks which puts them into the handler ctx;
      * Temporal Go SDK reads them via nexus.HandlerLinks(ctx) and emits
@@ -207,7 +207,7 @@ class LinkServiceImpl
     {
         return new SynchronousOperationHandler(
             static function (OperationContext $ctx, OperationStartDetails $d, ?string $suffix): string {
-                $ctx->addLinks(new Link(
+                $ctx->links->add(new Link(
                     "https://example.test/session/{$suffix}",
                     'example.session',
                 ));
@@ -221,7 +221,7 @@ class LinkServiceImpl
     {
         return new SynchronousOperationHandler(
             static function (OperationContext $ctx, OperationStartDetails $d, ?string $suffix): string {
-                $ctx->addLinks(
+                $ctx->links->add(
                     new Link("https://example.test/primary/primary-{$suffix}", 'example.primary'),
                     new Link("https://example.test/audit/audit-{$suffix}", 'example.audit'),
                 );
@@ -245,7 +245,7 @@ class LinkServiceImpl
      */
     private static function reportLinks(OperationContext $ctx): string
     {
-        $links = $ctx->getLinks();
+        $links = $ctx->links->all();
         $parts = [];
         foreach ($links as $link) {
             $parts[] = "{$link->uri}|{$link->type}";

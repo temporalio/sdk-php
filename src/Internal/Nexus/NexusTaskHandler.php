@@ -7,13 +7,15 @@ namespace Temporal\Internal\Nexus;
 use Nexus\Sdk\Exception\HandlerException;
 use Nexus\Sdk\Exception\OperationException;
 use Nexus\Sdk\Exception\RetryBehavior;
+use Nexus\Sdk\Handler\AsyncOperationStartResult;
 use Nexus\Sdk\Handler\HandlerInputContent;
+use Nexus\Sdk\Handler\HandlerResultContent;
 use Nexus\Sdk\Handler\OperationCancelDetails;
 use Nexus\Sdk\Handler\OperationContext;
 use Nexus\Sdk\Handler\OperationStartDetails;
 use Nexus\Sdk\Handler\ServiceHandler;
+use Nexus\Sdk\Handler\SyncOperationStartResult;
 use Nexus\Sdk\Header as NexusHeader;
-use Nexus\Sdk\Internal\Headers;
 use Nexus\Sdk\Link;
 use Nexus\Sdk\Serializer\SerializerInterface;
 use Temporal\Api\Common\V1\Payload;
@@ -54,7 +56,7 @@ final class NexusTaskHandler
 
     /**
      * Payload metadata marker carrying handler-side links (from
-     * `OperationContext::addLinks()`) as a JSON-encoded array of
+     * `OperationContext::$links->add()`) as a JSON-encoded array of
      * `[{"url": ..., "type": ...}, ...]`. RoadRunner's Nexus handler parses
      * this on decode, attaches the links to the nexus result
      * (sync or async), and strips the key from the payload metadata so it
@@ -97,8 +99,8 @@ final class NexusTaskHandler
     public static function deadlineFromHeaders(array $headers): ?\DateTimeImmutable
     {
         // Headers off the wire are not guaranteed lowercase; normalize once so
-        // Header::get() (which assumes a lowercased map) behaves correctly.
-        $lc = Headers::normalize($headers);
+        // NexusHeader::get() (which assumes a lowercased map) behaves correctly.
+        $lc = \array_change_key_case($headers, \CASE_LOWER);
 
         $value = NexusHeader::get($lc, NexusHeader::OPERATION_TIMEOUT)
             ?? NexusHeader::get($lc, NexusHeader::REQUEST_TIMEOUT);
@@ -133,7 +135,7 @@ final class NexusTaskHandler
             $callbackHeaders[(string) $key] = (string) $value;
         }
 
-        $context = OperationContext::create(
+        $context = new OperationContext(
             service: $startReq->getService(),
             operation: $startReq->getOperation(),
             headers: $headers,
@@ -163,30 +165,35 @@ final class NexusTaskHandler
 
             $startResp = new StartOperationResponse();
 
-            if ($result->isSync()) {
-                $syncResult = $result->getSyncResult();
+            if ($result instanceof SyncOperationStartResult) {
                 $syncResp = new StartOperationResponse\Sync();
 
-                if ($syncResult !== null) {
+                // ServiceHandler wraps the raw return value in HandlerResultContent
+                // (data + headers) before handing it to us — no extra serialization.
+                $content = $result->value;
+                if ($content instanceof HandlerResultContent) {
                     $resultPayload = new Payload();
-                    $resultPayload->setData($syncResult->data);
-                    if ($syncResult->headers !== []) {
-                        $resultPayload->setMetadata($syncResult->headers);
+                    $resultPayload->setData($content->data);
+                    if ($content->headers !== []) {
+                        $resultPayload->setMetadata($content->headers);
                     }
                     $syncResp->setPayload($resultPayload);
                 }
 
-                $contextLinks = $context->getLinks();
+                $contextLinks = $context->links->all();
                 if ($contextLinks !== []) {
                     $syncResp->setLinks($this->convertLinksToProto($contextLinks));
                 }
 
                 $startResp->setSyncSuccess($syncResp);
             } else {
+                \assert($result instanceof AsyncOperationStartResult);
+                // AsyncOperationStartResult's constructor validates the token
+                // is non-empty printable ASCII, so no extra guard needed here.
                 $asyncResp = new StartOperationResponse\Async();
-                $asyncResp->setOperationToken($result->getAsyncOperationToken());
+                $asyncResp->setOperationToken($result->operationToken);
 
-                $contextLinks = $context->getLinks();
+                $contextLinks = $context->links->all();
                 if ($contextLinks !== []) {
                     $asyncResp->setLinks($this->convertLinksToProto($contextLinks));
                 }
@@ -214,7 +221,7 @@ final class NexusTaskHandler
             $headers[(string) $key] = (string) $value;
         }
 
-        $context = OperationContext::create(
+        $context = new OperationContext(
             service: $cancelReq->getService(),
             operation: $cancelReq->getOperation(),
             headers: $headers,
@@ -222,6 +229,7 @@ final class NexusTaskHandler
 
         $token = $cancelReq->getOperationToken();
         if ($token === '') {
+            /** @psalm-suppress DeprecatedMethod — intentional back-compat fallback */
             $token = $cancelReq->getOperationId();
         }
 
@@ -259,20 +267,21 @@ final class NexusTaskHandler
     ): EncodedValues {
         $result = $this->getServiceHandler()->startOperation($context, $details, $input);
 
-        // Handler-side links attached via $ctx->addLinks() need to reach the
+        // Handler-side links attached via $ctx->links->add() need to reach the
         // Nexus caller. Since RR's InvokeNexusOperation route returns raw
         // EncodedValues (not the StartOperationResponse proto), we piggyback
         // them on the payload metadata with a reserved `_rr_nexus_*` key.
-        $linksJson = self::encodeLinksMetadata($context->getLinks());
+        $linksJson = self::encodeLinksMetadata($context->links->all());
 
-        if ($result->isSync()) {
-            $syncResult = $result->getSyncResult();
-
+        if ($result instanceof SyncOperationStartResult) {
             $payload = new Payload();
             $metadata = [];
-            if ($syncResult !== null) {
-                $payload->setData($syncResult->data);
-                $metadata = $syncResult->headers;
+            // ServiceHandler already serialized the return value into
+            // HandlerResultContent — we just forward its bytes + headers.
+            $content = $result->value;
+            if ($content instanceof HandlerResultContent) {
+                $payload->setData($content->data);
+                $metadata = $content->headers;
             }
             if ($linksJson !== null) {
                 $metadata[self::NEXUS_LINKS_METADATA_KEY] = $linksJson;
@@ -285,12 +294,13 @@ final class NexusTaskHandler
             return EncodedValues::fromPayloads($payloads, $this->dataConverter);
         }
 
+        \assert($result instanceof AsyncOperationStartResult);
         // Async: return an opaque payload carrying the operation token plus a
         // well-known metadata marker so RR can distinguish it from a sync result.
-        // The token is spec-defined as a printable-ASCII string, safe as bytes.
-        $token = $result->getAsyncOperationToken();
+        // AsyncOperationStartResult validates token shape at construction
+        // (printable ASCII, non-empty), safe to pass as payload bytes.
         $payload = new Payload();
-        $payload->setData($token);
+        $payload->setData($result->operationToken);
         $metadata = [
             self::NEXUS_KIND_METADATA_KEY => self::NEXUS_KIND_ASYNC,
         ];

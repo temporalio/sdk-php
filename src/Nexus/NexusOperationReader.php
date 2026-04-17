@@ -80,9 +80,10 @@ final class NexusOperationReader
         }
 
         $service = $attrs[0]->newInstance();
-        $name = $service->name !== '' ? $service->name : $reflection->getShortName();
-        \assert($name !== '', 'ReflectionClass::getShortName() cannot return an empty string');
-        return $name;
+        // `$service->name` is non-empty per its `!== ''` guard; `getShortName()`
+        // is non-empty for named classes — anonymous classes return
+        // `class@anonymous…` which is still non-empty.
+        return $service->name !== '' ? $service->name : $reflection->getShortName();
     }
 
     /**

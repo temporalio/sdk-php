@@ -316,6 +316,7 @@ final class FailureConverter
                 // deprecated `operation_id` so older servers still round-trip.
                 $token = $info->getOperationToken();
                 if ($token === '') {
+                    /** @psalm-suppress DeprecatedMethod — intentional back-compat fallback */
                     $token = $info->getOperationId();
                 }
 

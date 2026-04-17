@@ -50,11 +50,11 @@ final class NexusServiceProxy extends Proxy
             'executeNexusOperation',
         )(
             new ExecuteNexusOperationInput(
-                service: $this->options->service,
-                operation: $operation['name'],
-                args: $args,
-                options: $this->options,
-                returnType: $returnType,
+                $this->options->service,
+                $operation['name'],
+                $args,
+                $this->options,
+                $returnType,
             ),
         );
     }

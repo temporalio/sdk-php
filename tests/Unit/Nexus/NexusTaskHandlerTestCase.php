@@ -88,7 +88,7 @@ class TestGreetingServiceImpl
         return new class implements OperationHandlerInterface {
             public function start(OperationContext $context, OperationStartDetails $details, mixed $param): OperationStartResult
             {
-                $context->addLinks(new Link('http://example.com/workflow/123', 'temporal.workflow'));
+                $context->links->add(new Link('http://example.com/workflow/123', 'temporal.workflow'));
                 return OperationStartResult::async('op-token-123');
             }
 

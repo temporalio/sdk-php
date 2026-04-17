@@ -64,7 +64,7 @@ final class InvokeNexusOperation extends Route
             $this->invocations->register($invocationId, $canceller);
         }
 
-        $context = OperationContext::create(
+        $context = new OperationContext(
             service: $service,
             operation: $operation,
             headers: $requestHeaders,

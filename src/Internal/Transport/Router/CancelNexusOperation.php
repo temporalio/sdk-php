@@ -8,7 +8,6 @@ use Nexus\Sdk\Handler\OperationCancelDetails;
 use Nexus\Sdk\Handler\OperationContext;
 use React\Promise\Deferred;
 use Temporal\DataConverter\EncodedValues;
-use Temporal\Internal\Nexus\NexusHandlerErrorException;
 use Temporal\Internal\Nexus\NexusTaskHandler;
 use Temporal\Worker\Transport\Command\ServerRequestInterface;
 
@@ -31,7 +30,7 @@ final class CancelNexusOperation extends Route
         $operation = $options['operation'] ?? '';
         $operationToken = $options['operationToken'] ?? '';
 
-        $context = OperationContext::create(
+        $context = new OperationContext(
             service: $service,
             operation: $operation,
         );
@@ -41,9 +40,9 @@ final class CancelNexusOperation extends Route
         try {
             $this->taskHandler->cancelOperationDirect($context, $details);
             $resolver->resolve(EncodedValues::fromValues([]));
-        } catch (NexusHandlerErrorException $e) {
-            $resolver->reject($e);
         } catch (\Throwable $e) {
+            // NexusHandlerErrorException and plain throwables route through
+            // the same rejection path — the RR transport inspects the type.
             $resolver->reject($e);
         }
     }
