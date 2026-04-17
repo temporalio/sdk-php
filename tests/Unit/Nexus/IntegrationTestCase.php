@@ -386,6 +386,51 @@ final class IntegrationTestCase extends AbstractUnit
         self::assertStringContainsString('count=0', $result);
     }
 
+    // ── Handler-side links → _rr_nexus_links metadata ────────────
+
+    public function testHandlerAddedLinksAreSerializedIntoPayloadMetadata(): void
+    {
+        // echoWithLinks handler calls $ctx->addLinks(...) and returns sync.
+        // The RR route should bubble those links up through payload metadata
+        // under the _rr_nexus_links key so Go can reconstruct nexus.Links.
+        $request = $this->makeInvokeRequest('EchoService', 'echoWithLinks', 'hi');
+        $deferred = new Deferred();
+        $this->invokeRoute->handle($request, [], $deferred);
+
+        $values = $this->awaitDeferred($deferred);
+        $payloads = $values->toPayloads();
+        self::assertNotNull($payloads);
+        self::assertCount(1, $payloads->getPayloads());
+
+        $meta = $payloads->getPayloads()[0]->getMetadata();
+        self::assertTrue(isset($meta[NexusTaskHandler::NEXUS_LINKS_METADATA_KEY]));
+
+        $decoded = \json_decode((string) $meta[NexusTaskHandler::NEXUS_LINKS_METADATA_KEY], true);
+        self::assertIsArray($decoded);
+        self::assertCount(2, $decoded);
+        self::assertSame('http://test.local/resource/1', $decoded[0]['url']);
+        self::assertSame('test.Resource', $decoded[0]['type']);
+        self::assertSame('http://test.local/resource/2', $decoded[1]['url']);
+    }
+
+    public function testNoLinksMeansNoMetadataKey(): void
+    {
+        // A plain sync handler without addLinks must NOT set _rr_nexus_links —
+        // otherwise every payload grows by ~20 bytes for an empty marker.
+        $request = $this->makeInvokeRequest('EchoService', 'echo', 'hello');
+        $deferred = new Deferred();
+        $this->invokeRoute->handle($request, [], $deferred);
+
+        $values = $this->awaitDeferred($deferred);
+        $payloads = $values->toPayloads();
+        self::assertNotNull($payloads);
+        $meta = $payloads->getPayloads()[0]->getMetadata();
+        self::assertFalse(
+            isset($meta[NexusTaskHandler::NEXUS_LINKS_METADATA_KEY]),
+            '_rr_nexus_links must be omitted when the handler adds no links',
+        );
+    }
+
     // ── Deadline from Nexus timeout headers ──────────────────────
 
     public function testOperationTimeoutHeaderSetsDeadline(): void

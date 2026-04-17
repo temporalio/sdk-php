@@ -57,9 +57,15 @@ final class InvokeNexusOperation extends Route
         // `{url, type}` objects. Malformed entries are skipped.
         $links = self::parseLinks($options['links'] ?? []);
 
+        $deadline = NexusTaskHandler::deadlineFromHeaders($requestHeaders);
+
         $canceller = null;
         if ($invocationId !== 0) {
-            $canceller = new MethodCanceller();
+            // Passing the deadline to the canceller gives listeners the
+            // chance to fire on expiry (Java parity). The context-level
+            // deadline check in OperationContext::isMethodCancelled() is a
+            // backup for the no-canceller case.
+            $canceller = new MethodCanceller($deadline);
             $this->invocations->register($invocationId, $canceller);
         }
 
@@ -67,7 +73,7 @@ final class InvokeNexusOperation extends Route
             service: $service,
             operation: $operation,
             headers: $requestHeaders,
-            deadline: NexusTaskHandler::deadlineFromHeaders($requestHeaders),
+            deadline: $deadline,
             methodCanceller: $canceller,
         );
 

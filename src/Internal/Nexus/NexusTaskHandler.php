@@ -45,6 +45,18 @@ final class NexusTaskHandler
     public const NEXUS_KIND_METADATA_KEY = '_rr_nexus_kind';
     public const NEXUS_KIND_ASYNC = 'async';
 
+    /**
+     * Payload metadata marker carrying handler-side links (from
+     * `OperationContext::addLinks()`) as a JSON-encoded array of
+     * `[{"url": ..., "type": ...}, ...]`. RoadRunner's Nexus handler parses
+     * this on decode, attaches the links to the nexus result
+     * (sync or async), and strips the key from the payload metadata so it
+     * never leaks to the caller.
+     *
+     * @internal Wire contract with roadrunner-temporal's aggregatedpool/nexus.go.
+     */
+    public const NEXUS_LINKS_METADATA_KEY = '_rr_nexus_links';
+
     private ?ServiceHandler $serviceHandler = null;
 
     public function __construct(
@@ -206,19 +218,30 @@ final class NexusTaskHandler
     ): \Temporal\DataConverter\EncodedValues {
         $result = $this->getServiceHandler()->startOperation($context, $details, $input);
 
+        // Handler-side links attached via $ctx->addLinks() need to reach the
+        // Nexus caller. Since RR's InvokeNexusOperation route returns raw
+        // EncodedValues (not the StartOperationResponse proto), we piggyback
+        // them on the payload metadata with a reserved `_rr_nexus_*` key.
+        $linksJson = self::encodeLinksMetadata($context->getLinks());
+
         if ($result->isSync()) {
             $syncResult = $result->getSyncResult();
+
+            $payload = new \Temporal\Api\Common\V1\Payload();
+            $metadata = [];
             if ($syncResult !== null) {
-                // Build a raw Payload with already-serialized data + metadata
-                $payload = new \Temporal\Api\Common\V1\Payload();
                 $payload->setData($syncResult->data);
-                if ($syncResult->headers !== []) {
-                    $payload->setMetadata($syncResult->headers);
-                }
-                $payloads = new \Temporal\Api\Common\V1\Payloads(['payloads' => [$payload]]);
-                return \Temporal\DataConverter\EncodedValues::fromPayloads($payloads, $this->dataConverter);
+                $metadata = $syncResult->headers;
             }
-            return \Temporal\DataConverter\EncodedValues::fromValues([null]);
+            if ($linksJson !== null) {
+                $metadata[self::NEXUS_LINKS_METADATA_KEY] = $linksJson;
+            }
+            if ($metadata !== []) {
+                $payload->setMetadata($metadata);
+            }
+
+            $payloads = new \Temporal\Api\Common\V1\Payloads(['payloads' => [$payload]]);
+            return \Temporal\DataConverter\EncodedValues::fromPayloads($payloads, $this->dataConverter);
         }
 
         // Async: return an opaque payload carrying the operation token plus a
@@ -227,11 +250,39 @@ final class NexusTaskHandler
         $token = $result->getAsyncOperationToken();
         $payload = new \Temporal\Api\Common\V1\Payload();
         $payload->setData($token);
-        $payload->setMetadata([
+        $metadata = [
             self::NEXUS_KIND_METADATA_KEY => self::NEXUS_KIND_ASYNC,
-        ]);
+        ];
+        if ($linksJson !== null) {
+            $metadata[self::NEXUS_LINKS_METADATA_KEY] = $linksJson;
+        }
+        $payload->setMetadata($metadata);
         $payloads = new \Temporal\Api\Common\V1\Payloads(['payloads' => [$payload]]);
         return \Temporal\DataConverter\EncodedValues::fromPayloads($payloads, $this->dataConverter);
+    }
+
+    /**
+     * Serialize handler-side links for the `_rr_nexus_links` metadata channel.
+     *
+     * Returns `null` when the list is empty so we don't bloat payloads with
+     * an unnecessary `[]`. Encoded as a JSON array of `{url, type}` objects
+     * matching RoadRunner's `internal.NexusLink` struct.
+     *
+     * @param Link[] $links
+     */
+    private static function encodeLinksMetadata(array $links): ?string
+    {
+        if ($links === []) {
+            return null;
+        }
+        $out = [];
+        foreach ($links as $link) {
+            $out[] = ['url' => $link->uri, 'type' => $link->type];
+        }
+        // JSON_UNESCAPED_SLASHES keeps URLs readable; JSON_THROW_ON_ERROR
+        // surfaces pathological inputs as a handler error rather than
+        // silent data loss.
+        return \json_encode($out, \JSON_UNESCAPED_SLASHES | \JSON_THROW_ON_ERROR);
     }
 
     /**
@@ -265,8 +316,13 @@ final class NexusTaskHandler
 
     private function buildOperationErrorResponse(OperationException $e): Response
     {
+        // Nexus-spec Failure is a flat {message, metadata, details} envelope
+        // (not Temporal's Failure with its stack-trace/cause fields). Pack
+        // the PHP stack trace and cause chain into `details` as JSON so a
+        // Nexus caller can still recover them.
         $failure = new Failure();
         $failure->setMessage($e->getMessage());
+        self::attachTracebackAsDetails($failure, $e);
 
         $opError = new UnsuccessfulOperationError();
         // OperationState values are spec-mandated lowercase strings (running|succeeded|failed|canceled).
@@ -295,9 +351,40 @@ final class NexusTaskHandler
 
         $failure = new Failure();
         $failure->setMessage($e->getMessage());
+        self::attachTracebackAsDetails($failure, $e);
         $handlerError->setFailure($failure);
 
         return new NexusHandlerErrorException($handlerError, $e);
+    }
+
+    /**
+     * Pack a PHP exception's type, stack trace, and cause chain into a
+     * Nexus-spec {@see Failure}'s `details` field as JSON, and stamp the
+     * outermost exception class in `metadata["type"]`.
+     *
+     * The Nexus Failure envelope intentionally exposes only
+     * `{message, metadata, details}` — to avoid losing debugging
+     * information we serialise the trace into `details`. Integrators that
+     * don't care can ignore the extra bytes; those that do can
+     * `json_decode()` them back into a flat array of
+     * `[{type, message, trace}, ...]` entries (outermost first).
+     */
+    private static function attachTracebackAsDetails(Failure $failure, \Throwable $e): void
+    {
+        $chain = [];
+        $cursor = $e;
+        // Bounded walk guards against a pathological cyclic cause chain.
+        for ($depth = 0; $cursor !== null && $depth < 16; $depth++) {
+            $chain[] = [
+                'type' => $cursor::class,
+                'message' => $cursor->getMessage(),
+                'trace' => $cursor->getTraceAsString(),
+            ];
+            $cursor = $cursor->getPrevious();
+        }
+
+        $failure->setMetadata(['type' => $e::class]);
+        $failure->setDetails(\json_encode($chain, \JSON_UNESCAPED_SLASHES | \JSON_THROW_ON_ERROR));
     }
 
     /**
