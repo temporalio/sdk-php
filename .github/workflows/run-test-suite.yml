@@ -38,6 +38,9 @@ on:
       - 'psalm-baseline.xml'
       - '.editorconfig'
 
+permissions:
+  contents: read
+
 jobs:
   test:
     name: PHP${{ matrix.php }}${{ matrix.extensions-suffix }}, ${{ matrix.os }}, ${{ matrix.dependencies }} deps
