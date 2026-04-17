@@ -12,6 +12,7 @@ use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Transport\Request\ExecuteNexusOperation;
 use Temporal\Worker\Transport\Command\RequestInterface;
 use Temporal\Workflow;
+use Temporal\Workflow\NexusOperationHandle;
 use Temporal\Workflow\NexusOperationOptions;
 use Temporal\Workflow\NexusOperationStubInterface;
 
@@ -45,6 +46,14 @@ final class NexusOperationStub implements NexusOperationStubInterface
         array $args = [],
         Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
     ): PromiseInterface {
+        return $this->start($operation, $args, $returnType)->getResult();
+    }
+
+    public function start(
+        string $operation,
+        array $args = [],
+        Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
+    ): NexusOperationHandle {
         $request = new ExecuteNexusOperation(
             endpoint: $this->options->endpoint,
             service: $this->options->service,
@@ -54,7 +63,14 @@ final class NexusOperationStub implements NexusOperationStubInterface
             header: $this->header,
         );
 
-        return EncodedValues::decodePromise($this->request($request), $returnType);
+        // Wrap in NexusOperationHandle so workflows can start the operation,
+        // do other work, and await later. The current wire starts+waits
+        // atomically, so the promise only resolves on completion; future
+        // wire extensions can surface the operation token earlier without
+        // breaking this API.
+        return new NexusOperationHandle(
+            EncodedValues::decodePromise($this->request($request), $returnType),
+        );
     }
 
     protected function request(RequestInterface $request): PromiseInterface

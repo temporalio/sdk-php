@@ -8,8 +8,8 @@ use Nexus\Sdk\Handler\HandlerInputContent;
 use Nexus\Sdk\Handler\MethodCanceller;
 use Nexus\Sdk\Handler\OperationContext;
 use Nexus\Sdk\Handler\OperationStartDetails;
-use Nexus\Sdk\Link;
 use React\Promise\Deferred;
+use Temporal\Internal\Nexus\LinkParser;
 use Temporal\Internal\Nexus\NexusHandlerErrorException;
 use Temporal\Internal\Nexus\NexusInvocationRegistry;
 use Temporal\Internal\Nexus\NexusTaskHandler;
@@ -53,10 +53,6 @@ final class InvokeNexusOperation extends Route
         // silent no-op, preserving compatibility with older RR builds.
         $invocationId = (int) ($options['invocationId'] ?? 0);
 
-        // Caller-side Nexus-Link headers parsed by RR and passed as structured
-        // `{url, type}` objects. Malformed entries are skipped.
-        $links = self::parseLinks($options['links'] ?? []);
-
         $deadline = NexusTaskHandler::deadlineFromHeaders($requestHeaders);
 
         $canceller = null;
@@ -77,13 +73,6 @@ final class InvokeNexusOperation extends Route
             methodCanceller: $canceller,
         );
 
-        $details = new OperationStartDetails(
-            requestId: $requestId,
-            callbackUrl: $callback !== '' ? $callback : null,
-            callbackHeaders: $callbackHeaders,
-            links: $links,
-        );
-
         // Extract input from payloads — pass raw payload data + metadata to handler
         $inputData = '';
         $inputHeaders = [];
@@ -101,6 +90,20 @@ final class InvokeNexusOperation extends Route
         $input = new HandlerInputContent($inputData, $inputHeaders);
 
         try {
+            // Caller-side Nexus-Link headers parsed by RR and passed as
+            // structured `{url, type}` objects. Malformed payload →
+            // HandlerException(BadRequest) surfaces as HTTP 400 back to the
+            // Nexus caller (Java parity). Done inside the try so the
+            // rejection flows through the same promise path as handler errors.
+            $links = LinkParser::fromRaw($options['links'] ?? null);
+
+            $details = new OperationStartDetails(
+                requestId: $requestId,
+                callbackUrl: $callback !== '' ? $callback : null,
+                callbackHeaders: $callbackHeaders,
+                links: $links,
+            );
+
             $result = $this->taskHandler->startOperationDirect($context, $details, $input);
             $resolver->resolve($result);
         } catch (NexusHandlerErrorException $e) {
@@ -114,33 +117,4 @@ final class InvokeNexusOperation extends Route
         }
     }
 
-    /**
-     * Turn a raw JSON-decoded array of `{url, type}` entries into `Link[]`.
-     *
-     * Entries missing either field, or with empty values, are skipped. A
-     * non-array input returns an empty list.
-     *
-     * @param mixed $raw
-     * @return Link[]
-     */
-    private static function parseLinks(mixed $raw): array
-    {
-        if (!\is_array($raw)) {
-            return [];
-        }
-
-        $links = [];
-        foreach ($raw as $entry) {
-            if (!\is_array($entry)) {
-                continue;
-            }
-            $url = (string) ($entry['url'] ?? '');
-            $type = (string) ($entry['type'] ?? '');
-            if ($url === '' || $type === '') {
-                continue;
-            }
-            $links[] = new Link($url, $type);
-        }
-        return $links;
-    }
 }

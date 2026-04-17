@@ -353,27 +353,59 @@ final class IntegrationTestCase extends AbstractUnit
         self::assertStringContainsString('https://caller.test/two|example.two', $result);
     }
 
-    public function testMalformedCallerLinksAreSkipped(): void
+    public function testMalformedCallerLinkRejectsRequest(): void
     {
+        // Strict policy (Java parity): one bad link fails the whole invocation
+        // with HandlerException(BadRequest). The reason is that silently
+        // dropping links hides client bugs and lets callers assume their
+        // links reached the handler when they didn't.
         $request = $this->makeServerRequest('InvokeNexusOperation', [
             'service' => 'EchoService',
             'operation' => 'reportCallerLinks',
             'requestId' => 'links-2',
             'links' => [
                 ['url' => 'https://ok.test/a', 'type' => 'ok'],
-                ['url' => 'https://missing-type.test/b'], // no type → skipped
-                ['type' => 'missing-url'],                // no url → skipped
-                'not-an-array',                           // wrong shape → skipped
-                ['url' => '', 'type' => 'empty-url'],    // empty url → skipped
+                ['url' => 'https://missing-type.test/b'], // no type → reject
             ],
         ], EncodedValues::fromValues(['x'], $this->dataConverter));
 
         $deferred = new Deferred();
         $this->invokeRoute->handle($request, [], $deferred);
-        $result = $this->awaitResult($deferred);
 
-        self::assertStringContainsString('count=1', $result, 'Only the well-formed link survives parsing');
-        self::assertStringContainsString('https://ok.test/a|ok', $result);
+        $error = null;
+        $deferred->promise()->then(null, function (\Throwable $e) use (&$error): void {
+            $error = $e;
+        });
+        self::assertInstanceOf(\Nexus\Sdk\Exception\HandlerException::class, $error);
+        self::assertSame(
+            \Nexus\Sdk\Exception\ErrorType::BadRequest,
+            $error->errorType,
+        );
+        self::assertStringContainsString('missing or empty "type"', $error->getMessage());
+    }
+
+    public function testLinksPayloadWrongShapeRejectsRequest(): void
+    {
+        // A non-array links field is an outright client bug.
+        $request = $this->makeServerRequest('InvokeNexusOperation', [
+            'service' => 'EchoService',
+            'operation' => 'reportCallerLinks',
+            'requestId' => 'links-3',
+            'links' => 'not-a-list',
+        ], EncodedValues::fromValues(['x'], $this->dataConverter));
+
+        $deferred = new Deferred();
+        $this->invokeRoute->handle($request, [], $deferred);
+
+        $error = null;
+        $deferred->promise()->then(null, function (\Throwable $e) use (&$error): void {
+            $error = $e;
+        });
+        self::assertInstanceOf(\Nexus\Sdk\Exception\HandlerException::class, $error);
+        self::assertSame(
+            \Nexus\Sdk\Exception\ErrorType::BadRequest,
+            $error->errorType,
+        );
     }
 
     public function testAbsentLinksMeansEmptyList(): void

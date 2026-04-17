@@ -88,6 +88,87 @@ class LinksTest extends TestCase
     }
 
     /**
+     * End-to-end verification of the handler-response-Link wire:
+     * handler calls $ctx->addLinks(), sdk-php packs them into
+     * `_rr_nexus_links` payload metadata, RoadRunner extracts them and
+     * calls nexus.AddHandlerLinks which puts them into the handler ctx;
+     * Temporal Go SDK reads them via nexus.HandlerLinks(ctx) and emits
+     * `Nexus-Link` response headers back to the caller.
+     */
+    #[Test]
+    public function handlerLinksAppearInNexusLinkResponseHeader(
+        State $state,
+        #[Stub('Extra_Nexus_Links_Bootstrap4')]
+        WorkflowStubInterface $stub,
+    ): void {
+        $stub->getResult('string');
+
+        $helper = NexusHelper::for($state);
+        $endpointId = $helper->setupEndpoint(
+            $state->namespace,
+            'Temporal\\Tests\\Acceptance\\Extra\\Nexus\\Links',
+            'nexus-links-hdr',
+        );
+
+        [$code, $body, $headers] = $helper->postOperationFull(
+            $endpointId,
+            'LinkService',
+            'attachAndReportMany',
+            'order-42',
+        );
+
+        self::assertSame(200, $code, "Body: {$body}");
+        self::assertArrayHasKey('nexus-link', $headers, \sprintf(
+            'Nexus-Link response header missing; got: [%s]',
+            \implode(', ', \array_keys($headers)),
+        ));
+
+        // RFC 5988 Link headers — value format `<url>; type="T"`. The two
+        // links set by attachAndReportMany must both be present (some
+        // clients concatenate with comma, some emit separate values).
+        $linkValues = \implode("\n", (array) $headers['nexus-link']);
+        self::assertStringContainsString('primary-order-42', $linkValues);
+        self::assertStringContainsString('audit-order-42', $linkValues);
+        self::assertStringContainsString('example.primary', $linkValues);
+        self::assertStringContainsString('example.audit', $linkValues);
+    }
+
+    /**
+     * Strict parsing (LinkParser): a caller-supplied `Nexus-Link` with a
+     * missing required field must be rejected with HTTP 400, matching the
+     * Java reference SDK. Previously the sdk-php route silently dropped
+     * malformed entries.
+     */
+    #[Test]
+    public function malformedCallerNexusLinkReturns400(
+        State $state,
+        #[Stub('Extra_Nexus_Links_Bootstrap5')]
+        WorkflowStubInterface $stub,
+    ): void {
+        $stub->getResult('string');
+
+        $helper = NexusHelper::for($state);
+        $endpointId = $helper->setupEndpoint(
+            $state->namespace,
+            'Temporal\\Tests\\Acceptance\\Extra\\Nexus\\Links',
+            'nexus-links-bad',
+        );
+
+        // A Link header value without the mandatory `type` parameter.
+        // RoadRunner parses the raw `Nexus-Link` header, builds options.links,
+        // sdk-php's LinkParser then rejects with HandlerException(BadRequest).
+        [$code, $body] = $helper->postOperation(
+            $endpointId,
+            'LinkService',
+            'reportNoLinks',
+            'x',
+            ['Nexus-Link' => '<https://caller.test/orphan>'], // no `type="..."`
+        );
+
+        self::assertSame(400, $code, "Expected 400 BadRequest, got {$code}. Body: {$body}");
+    }
+
+    /**
      * @return array{int, string}
      */
     private function invoke(State $state, string $op, string $body): array
@@ -199,6 +280,26 @@ class LinksBootstrapWorkflow2
 class LinksBootstrapWorkflow3
 {
     #[WorkflowMethod(name: 'Extra_Nexus_Links_Bootstrap3')]
+    public function run(): string
+    {
+        return 'ready';
+    }
+}
+
+#[WorkflowInterface]
+class LinksBootstrapWorkflow4
+{
+    #[WorkflowMethod(name: 'Extra_Nexus_Links_Bootstrap4')]
+    public function run(): string
+    {
+        return 'ready';
+    }
+}
+
+#[WorkflowInterface]
+class LinksBootstrapWorkflow5
+{
+    #[WorkflowMethod(name: 'Extra_Nexus_Links_Bootstrap5')]
     public function run(): string
     {
         return 'ready';

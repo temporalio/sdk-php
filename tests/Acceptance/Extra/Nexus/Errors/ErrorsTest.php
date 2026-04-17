@@ -163,6 +163,44 @@ class ErrorsTest extends TestCase
         self::assertStringContainsString('bye', $resp, 'Failure message should be propagated');
     }
 
+    /**
+     * Verifies the failure cause/stack-trace forwarding (Fix 3).
+     *
+     * The handler throws a HandlerException whose cause is a runtime
+     * exception with a known marker in its message. sdk-php's
+     * NexusTaskHandler::attachTracebackAsDetails() must JSON-encode the
+     * cause chain into Nexus.Failure.details, so the response body
+     * surfaces both the outer exception type and the inner cause's
+     * message — instead of just the outer message (the pre-Fix-3
+     * behaviour).
+     */
+    #[Test]
+    public function handlerExceptionForwardsCauseChainInResponse(
+        State $state,
+        #[Stub('Extra_Nexus_Errors_Bootstrap8')]
+        WorkflowStubInterface $stub,
+    ): void {
+        $stub->getResult('string');
+
+        $helper = NexusHelper::for($state);
+        $endpointId = $this->setupEndpoint($helper, $state->namespace);
+
+        [$code, $resp] = $helper->postOperation(
+            $endpointId,
+            'ErrorService',
+            'failWithCause',
+            'outer-fail',
+        );
+
+        self::assertSame(500, $code, "Body: {$resp}");
+        // Outer message must always appear.
+        self::assertStringContainsString('outer-fail', $resp);
+        // Cause-chain marker — set in the handler. If our wire dropped the
+        // cause/stack-trace (the pre-Fix-3 behaviour), this string would
+        // not be in the response.
+        self::assertStringContainsString('CAUSE_CHAIN_MARKER', $resp);
+    }
+
     private function setupEndpoint(NexusHelper $helper, string $namespace): string
     {
         return $helper->setupEndpoint(
@@ -193,6 +231,9 @@ interface ErrorServiceInterface
 
     #[Operation]
     public function cancelOp(string $reason): string;
+
+    #[Operation]
+    public function failWithCause(string $reason): string;
 }
 
 #[ServiceImpl(service: ErrorServiceInterface::class)]
@@ -254,6 +295,25 @@ class ErrorServiceImpl
         return new SynchronousOperationHandler(
             static function (OperationContext $ctx, OperationStartDetails $details, ?string $reason): string {
                 throw OperationException::canceled($reason ?? 'canceled');
+            },
+        );
+    }
+
+    #[OperationImpl]
+    public function failWithCause(): OperationHandlerInterface
+    {
+        return new SynchronousOperationHandler(
+            static function (OperationContext $ctx, OperationStartDetails $details, ?string $reason): string {
+                // Two-level cause chain. The marker in the inner cause's
+                // message is what the acceptance test asserts to prove the
+                // chain reached the caller.
+                $inner = new \RuntimeException('CAUSE_CHAIN_MARKER: db unavailable');
+                $middle = new \LogicException("middle of {$reason}", 0, $inner);
+                throw HandlerException::create(
+                    ErrorType::Internal,
+                    $reason ?? 'unknown',
+                    cause: $middle,
+                );
             },
         );
     }
@@ -323,6 +383,16 @@ class ErrorsBootstrapWorkflow6
 class ErrorsBootstrapWorkflow7
 {
     #[WorkflowMethod(name: 'Extra_Nexus_Errors_Bootstrap7')]
+    public function run(): string
+    {
+        return 'ready';
+    }
+}
+
+#[WorkflowInterface]
+class ErrorsBootstrapWorkflow8
+{
+    #[WorkflowMethod(name: 'Extra_Nexus_Errors_Bootstrap8')]
     public function run(): string
     {
         return 'ready';

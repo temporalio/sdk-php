@@ -95,6 +95,27 @@ final class NexusHelper
         mixed $body,
         array $extraHeaders = [],
     ): array {
+        [$code, $respBody, ] = $this->postOperationFull($endpointId, $service, $operation, $body, $extraHeaders);
+        return [$code, $respBody];
+    }
+
+    /**
+     * Same as {@see self::postOperation()} but also returns response headers.
+     *
+     * Use when asserting on wire-level details like `Nexus-Link` or
+     * `Nexus-Operation-State` that don't appear in the body.
+     *
+     * @param mixed $body
+     * @param array<string, string> $extraHeaders
+     * @return array{int, string, array<string, list<string>>} [http_code, body, headers-lowercased-keys]
+     */
+    public function postOperationFull(
+        string $endpointId,
+        string $service,
+        string $operation,
+        mixed $body,
+        array $extraHeaders = [],
+    ): array {
         $response = $this->http->request(
             'POST',
             "/nexus/endpoints/{$endpointId}/services/{$service}/{$operation}",
@@ -107,7 +128,7 @@ final class NexusHelper
             ],
         );
 
-        return [$response->getStatusCode(), $response->getContent(false)];
+        return [$response->getStatusCode(), $response->getContent(false), $response->getHeaders(false)];
     }
 
     /**

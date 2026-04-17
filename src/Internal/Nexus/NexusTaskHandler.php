@@ -75,17 +75,9 @@ final class NexusTaskHandler
             $headers[(string) $key] = (string) $value;
         }
 
-        $links = [];
-        foreach ($startReq->getLinks() as $protoLink) {
-            $url = (string) $protoLink->getUrl();
-            $type = (string) $protoLink->getType();
-            if ($url === '' || $type === '') {
-                // Skip malformed proto links rather than letting Link's stricter
-                // constructor abort the whole request.
-                continue;
-            }
-            $links[] = new Link($url, $type);
-        }
+        // Strict parsing — any malformed link raises HandlerException(BadRequest),
+        // matching the Java reference and the RR route path.
+        $links = LinkParser::fromProto($startReq->getLinks());
 
         $callbackHeaders = [];
         foreach ($startReq->getCallbackHeader() as $key => $value) {
