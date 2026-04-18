@@ -24,6 +24,10 @@ use Temporal\Internal\Support\Reflection;
 use Temporal\Internal\Transport\CompletableResultInterface;
 use Temporal\Workflow\WorkflowContextInterface;
 
+/**
+ * @template-covariant T of object
+ * @mixin T
+ */
 final class ActivityProxy extends Proxy
 {
     /**
@@ -42,6 +46,7 @@ final class ActivityProxy extends Proxy
     private WorkflowContextInterface $ctx;
 
     /**
+     * @param class-string<T> $class
      * @param array<ActivityPrototype> $activities
      * @param Pipeline<WorkflowOutboundCallsInterceptor, PromiseInterface> $callsInterceptor
      */

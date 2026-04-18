@@ -14,7 +14,7 @@ namespace Temporal\Internal\Declaration\Reader;
 use Spiral\Attributes\ReaderInterface;
 
 /**
- * @psalm-template T of object
+ * @template T of object
  */
 abstract class Reader
 {
