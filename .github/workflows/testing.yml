@@ -11,6 +11,8 @@ concurrency:
 
 jobs:
   unit:
+    permissions:
+      contents: read
     name: Unit Testing
     uses: ./.github/workflows/run-test-suite.yml
     with:
@@ -18,6 +20,8 @@ jobs:
       test-command: composer test:unit
 
   functional:
+    permissions:
+      contents: read
     name: Functional Testing
     uses: ./.github/workflows/run-test-suite.yml
     with:
@@ -26,6 +30,8 @@ jobs:
       download-binaries: true
 
   acceptance-slow:
+    permissions:
+      contents: read
     name: Acceptance Testing (Slow)
     uses: ./.github/workflows/run-test-suite.yml
     with:
@@ -34,6 +40,8 @@ jobs:
       download-binaries: true
 
   acceptance-fast:
+    permissions:
+      contents: read
     name: Acceptance Testing (Fast)
     uses: ./.github/workflows/run-test-suite.yml
     with:

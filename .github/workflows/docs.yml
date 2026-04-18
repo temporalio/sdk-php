@@ -11,6 +11,9 @@ permissions:
 
 jobs:
   docs:
+    permissions:
+      contents: read
+      actions: write
     name: Generating API documentation
     runs-on: ubuntu-latest
     steps:

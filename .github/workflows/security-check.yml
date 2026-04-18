@@ -11,6 +11,8 @@ concurrency:
 
 jobs:
   security:
+    permissions:
+      contents: read
     name: Security Checks (PHP ${{ matrix.php }}, OS ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:

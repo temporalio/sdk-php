@@ -11,6 +11,8 @@ concurrency:
 
 jobs:
   psalm:
+    permissions:
+      contents: read
     name: Psalm Validation (PHP ${{ matrix.php }}, OS ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     continue-on-error: true
@@ -38,6 +40,8 @@ jobs:
         run: vendor/bin/psalm
 
   arch:
+    permissions:
+      contents: read
     name: Architecture tests
     runs-on: ${{ matrix.os }}
     continue-on-error: true
