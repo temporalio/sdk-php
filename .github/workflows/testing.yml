@@ -2,12 +2,17 @@ name: Testing
 
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
 concurrency:
   cancel-in-progress: ${{ !contains(github.ref, 'release/')}}
   group: tests-${{ github.workflow }}-${{ github.ref }}
 
 jobs:
   unit:
+    permissions:
+      contents: read
     name: Unit Testing
     uses: ./.github/workflows/run-test-suite.yml
     with:
@@ -15,6 +20,8 @@ jobs:
       test-command: composer test:unit
 
   functional:
+    permissions:
+      contents: read
     name: Functional Testing
     uses: ./.github/workflows/run-test-suite.yml
     with:
@@ -23,6 +30,8 @@ jobs:
       download-binaries: true
 
   acceptance-slow:
+    permissions:
+      contents: read
     name: Acceptance Testing (Slow)
     uses: ./.github/workflows/run-test-suite.yml
     with:
@@ -31,6 +40,8 @@ jobs:
       download-binaries: true
 
   acceptance-fast:
+    permissions:
+      contents: read
     name: Acceptance Testing (Fast)
     uses: ./.github/workflows/run-test-suite.yml
     with:
