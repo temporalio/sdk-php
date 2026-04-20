@@ -4,8 +4,9 @@ namespace Temporal\Tests\Workflow\NamedArguments;
 
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\WorkflowInterface;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class ExecuteChildNamedArgumentsWorkflow
 {
     #[WorkflowMethod]

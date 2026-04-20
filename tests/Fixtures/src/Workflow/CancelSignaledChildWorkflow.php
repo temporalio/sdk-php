@@ -14,13 +14,15 @@ namespace Temporal\Tests\Workflow;
 use React\Promise\Deferred;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\QueryMethod;
+use Temporal\Workflow\WorkflowInterface;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class CancelSignaledChildWorkflow
 {
     private array $status = [];
 
-    #[Workflow\QueryMethod(name: 'getStatus')]
+    #[QueryMethod(name: 'getStatus')]
     public function getStatus(): array
     {
         return $this->status;

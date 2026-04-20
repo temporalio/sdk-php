@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Temporal\Tests\Acceptance\Extra\Workflow\MutexRunLocked;
+namespace Temporal\Tests\Acceptance\Extra\MutexRunLocked;
 
 use PHPUnit\Framework\Attributes\Test;
 use React\Promise\PromiseInterface;
@@ -14,6 +14,9 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\Mutex;
+use Temporal\Workflow\ReturnType;
+use Temporal\Workflow\SignalMethod;
 
 class MutexRunLockedTest extends TestCase
 {
@@ -50,7 +53,7 @@ class MutexRunLockedTest extends TestCase
 #[WorkflowInterface]
 class TestWorkflow
 {
-    private Workflow\Mutex $mutex;
+    private Mutex $mutex;
     private PromiseInterface $promise;
     private bool $unblock = false;
     private bool $exit = false;
@@ -60,11 +63,11 @@ class TestWorkflow
 
     public function __construct()
     {
-        $this->mutex = new Workflow\Mutex();
+        $this->mutex = new Mutex();
     }
 
     #[WorkflowMethod(name: "Extra_Workflow_MutexRunLocked")]
-    #[Workflow\ReturnType(Type::TYPE_ARRAY)]
+    #[ReturnType(Type::TYPE_ARRAY)]
     public function handle(): \Generator
     {
         $exception = null;
@@ -89,19 +92,19 @@ class TestWorkflow
         return [$this->unlocked, $this->unblock, $result, $exception];
     }
 
-    #[Workflow\SignalMethod]
+    #[SignalMethod]
     public function unblock(): void
     {
         $this->unblock = true;
     }
 
-    #[Workflow\SignalMethod]
+    #[SignalMethod]
     public function cancel(): void
     {
         $this->promise->cancel();
     }
 
-    #[Workflow\SignalMethod]
+    #[SignalMethod]
     public function exit(): void
     {
         $this->exit = true;

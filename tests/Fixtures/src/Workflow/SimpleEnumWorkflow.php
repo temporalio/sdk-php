@@ -17,8 +17,9 @@ use Temporal\Tests\Activity\SimpleActivity;
 use Temporal\Tests\Unit\DTO\Type\EnumType\Stub\SimpleEnum;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\WorkflowInterface;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class SimpleEnumWorkflow
 {
     #[WorkflowMethod(name: 'SimpleEnumWorkflow')]

@@ -17,12 +17,14 @@ use Temporal\Workflow\WorkflowMethod;
 use Temporal\Tests\Activity\SimpleActivity;
 use Temporal\Tests\DTO\Message;
 use Temporal\Tests\DTO\User;
+use Temporal\Workflow\ReturnType;
+use Temporal\Workflow\WorkflowInterface;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class SimpleDTOWorkflow
 {
     #[WorkflowMethod(name: 'SimpleDTOWorkflow')]
-    #[Workflow\ReturnType(Message::class)]
+    #[ReturnType(Message::class)]
     public function handler(
         User $user
     ) {

@@ -18,8 +18,9 @@ use Temporal\Tests\DTO\Message;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
 use Temporal\Tests\Activity\SimpleActivity;
+use Temporal\Workflow\WorkflowInterface;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class ArrayOfObjectsWorkflow
 {
     #[WorkflowMethod(name: 'ArrayOfObjectsWorkflow')]

@@ -13,6 +13,9 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\QueryMethod;
+use Temporal\Workflow\SignalMethod;
+use Temporal\Workflow\UpdateMethod;
 
 class LoggerTest extends TestCase
 {
@@ -217,20 +220,20 @@ class TestWorkflow
         return true;
     }
 
-    #[Workflow\SignalMethod(name: 'logFromSignal')]
+    #[SignalMethod(name: 'logFromSignal')]
     public function logFromSignal(string $message): void
     {
         $logger = Workflow::getLogger();
         $logger->warning($message);
     }
 
-    #[Workflow\SignalMethod(name: 'exit')]
+    #[SignalMethod(name: 'exit')]
     public function exit(): void
     {
         $this->exit = true;
     }
 
-    #[Workflow\QueryMethod(name: 'logWithContext')]
+    #[QueryMethod(name: 'logWithContext')]
     public function logWithContext()
     {
         $logger = Workflow::getLogger();
@@ -242,7 +245,7 @@ class TestWorkflow
         return 'query executed';
     }
 
-    #[Workflow\UpdateMethod(name: 'logMultipleLevels')]
+    #[UpdateMethod(name: 'logMultipleLevels')]
     public function logMultipleLevels()
     {
         $logger = Workflow::getLogger();

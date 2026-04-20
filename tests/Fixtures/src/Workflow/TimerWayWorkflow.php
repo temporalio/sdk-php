@@ -13,8 +13,9 @@ namespace Temporal\Tests\Workflow;
 
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Workflow\WorkflowInterface;
 
-#[Workflow\WorkflowInterface]
+#[WorkflowInterface]
 class TimerWayWorkflow
 {
     #[WorkflowMethod(name: 'TimerWayWorkflow')]

@@ -14,6 +14,9 @@ use Temporal\Tests\Acceptance\App\TestCase;
 use Temporal\Workflow;
 use Temporal\Workflow\WorkflowInterface;
 use Temporal\Workflow\WorkflowMethod;
+use Temporal\Activity\ActivityInterface;
+use Temporal\Activity\ActivityMethod;
+use Temporal\Activity\ActivityOptions;
 
 class ActivityInfoTest extends TestCase
 {
@@ -51,7 +54,7 @@ class TestWorkflow
     {
         return Workflow::newActivityStub(
             TestActivity::class,
-            Activity\ActivityOptions::new()
+            ActivityOptions::new()
                 ->withRetryOptions(
                     RetryOptions::new()
                         ->withMaximumAttempts(20)
@@ -65,10 +68,10 @@ class TestWorkflow
     }
 }
 
-#[Activity\ActivityInterface(prefix: 'Extra_Activity_ActivityInfo.')]
+#[ActivityInterface(prefix: 'Extra_Activity_ActivityInfo.')]
 class TestActivity
 {
-    #[Activity\ActivityMethod]
+    #[ActivityMethod]
     public function retryOptions()
     {
         return Activity::getInfo()->retryOptions;
