@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Temporal\Client\GRPC\Connection;
 
-use Temporal\Api\Workflowservice\V1\WorkflowServiceClient;
+use Grpc\BaseStub;
 use Temporal\Client\Common\ServerCapabilities;
 
 /**
@@ -12,8 +12,8 @@ use Temporal\Client\Common\ServerCapabilities;
  */
 final class Connection implements ConnectionInterface
 {
-    public ?ServerCapabilities $capabilities = null;
-    private WorkflowServiceClient $workflowService;
+    private ?ServerCapabilities $capabilities = null;
+    private BaseStub $client;
 
     /**
      * True if ServiceClient wasn't created yet
@@ -21,17 +21,17 @@ final class Connection implements ConnectionInterface
     private bool $closed = true;
 
     /**
-     * @param \Closure(): WorkflowServiceClient $clientFactory Service Client factory
+     * @param \Closure(): BaseStub $clientFactory Service Client factory
      */
     public function __construct(
-        public \Closure $clientFactory,
+        private readonly \Closure $clientFactory,
     ) {
         $this->initClient();
     }
 
     public function isConnected(): bool
     {
-        return ConnectionState::from($this->workflowService->getConnectivityState(false)) === ConnectionState::Ready;
+        return ConnectionState::from($this->client->getConnectivityState(false)) === ConnectionState::Ready;
     }
 
     public function connect(float $timeout): void
@@ -56,7 +56,7 @@ final class Connection implements ConnectionInterface
             if ($isFiber) {
                 \Fiber::suspend();
             } else {
-                $this->workflowService->waitForReady(50);
+                $this->client->waitForReady(50);
             }
 
             $alive = \microtime(true) < $deadline;
@@ -83,16 +83,26 @@ final class Connection implements ConnectionInterface
 
         $this->closed = true;
         $this->capabilities = null;
-        $this->workflowService->close();
+        $this->client->close();
+    }
+
+    public function getCapabilities(): ?ServerCapabilities
+    {
+        return $this->capabilities;
+    }
+
+    public function setCapabilities(?ServerCapabilities $capabilities): void
+    {
+        $this->capabilities = $capabilities;
     }
 
     /**
-     * @return WorkflowServiceClient Shouldn't be cached
+     * @return BaseStub Shouldn't be cached
      */
-    public function getWorkflowService(): WorkflowServiceClient
+    public function getClient(): BaseStub
     {
         $this->initClient();
-        return $this->workflowService;
+        return $this->client;
     }
 
     public function __destruct()
@@ -102,7 +112,7 @@ final class Connection implements ConnectionInterface
 
     private function getState(bool $tryToConnect = false): ConnectionState
     {
-        return ConnectionState::from($this->workflowService->getConnectivityState($tryToConnect));
+        return ConnectionState::from($this->client->getConnectivityState($tryToConnect));
     }
 
     /**
@@ -114,7 +124,7 @@ final class Connection implements ConnectionInterface
             return;
         }
 
-        $this->workflowService = ($this->clientFactory)();
+        $this->client = ($this->clientFactory)();
         $this->closed = false;
     }
 
@@ -129,6 +139,6 @@ final class Connection implements ConnectionInterface
     private function waitForReady(float $timeout): bool
     {
         /** @psalm-suppress InvalidOperand */
-        return $this->workflowService->waitForReady((int) ($timeout * 1_000_000));
+        return $this->client->waitForReady((int) ($timeout * 1_000_000));
     }
 }

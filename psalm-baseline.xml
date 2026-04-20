@@ -924,10 +924,6 @@
     </ArgumentTypeCoercion>
   </file>
   <file src="src/Internal/Transport/Router/StartWorkflow.php">
-    <PossiblyFalseArgument>
-      <code><![CDATA[\json_encode($param)]]></code>
-      <code><![CDATA[\json_encode($param)]]></code>
-    </PossiblyFalseArgument>
     <UnnecessaryVarAnnotation>
       <code><![CDATA[Input]]></code>
     </UnnecessaryVarAnnotation>
@@ -1182,12 +1178,6 @@
     </PossiblyNullArgument>
   </file>
   <file src="src/Worker/Transport/Codec/ProtoCodec.php">
-    <LessSpecificReturnStatement>
-      <code><![CDATA[$frame->serializeToString()]]></code>
-    </LessSpecificReturnStatement>
-    <MoreSpecificReturnType>
-      <code><![CDATA[string]]></code>
-    </MoreSpecificReturnType>
     <PossiblyInvalidArgument>
       <code><![CDATA[$e->getCode()]]></code>
       <code><![CDATA[$e->getCode()]]></code>

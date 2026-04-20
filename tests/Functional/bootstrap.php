@@ -12,8 +12,9 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 $systemInfo = \Temporal\Testing\SystemInfo::detect();
 
 $environment = Environment::create();
-$environment->startTemporalTestServer();
+$environment->startTemporalServer();
 (new SearchAttributeTestInvoker())();
+$command = $environment->command;
 $environment->startRoadRunner(
     rrCommand: [
         $systemInfo->rrExecutable,
@@ -21,11 +22,15 @@ $environment->startRoadRunner(
         '-c', '.rr.silent.yaml',
         '-w', 'tests/Functional',
         '-o',
+        'temporal.namespace=' . $command->namespace,
+        '-o',
+        'temporal.address=' . $command->address,
+        '-o',
         'server.command=' . \implode(',', [
             PHP_BINARY,
-            ...$environment->command->getPhpBinaryArguments(),
+            ...$command->getPhpBinaryArguments(),
             'worker.php',
-            ...$environment->command->getCommandLineArguments(),
+            ...$command->getCommandLineArguments(),
         ]),
     ],
     configFile: 'tests/Functional/.rr.silent.yaml',

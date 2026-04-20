@@ -64,6 +64,18 @@ If you are using the SDK without integrations, the following sections of the doc
 - [How to connect a Temporal Client to a Temporal Service](https://docs.temporal.io/develop/php/temporal-clients#connect-to-a-dev-cluster)
 - [How to start a Workflow Execution](https://docs.temporal.io/develop/php/temporal-clients#start-workflow-execution)
 
+Administrative operator APIs are available through [`Temporal\Client\GRPC\OperatorClient`](https://php.temporal.io/):
+
+```php
+use Temporal\Api\Operatorservice\V1\DeleteNamespaceRequest;
+use Temporal\Client\GRPC\OperatorClient;
+
+$operatorClient = OperatorClient::create('127.0.0.1:7233');
+$response = $operatorClient->DeleteNamespace(
+    (new DeleteNamespaceRequest())->setNamespace('example-namespace'),
+);
+```
+
 > [!NOTE]
 > Check out [the repository with examples](https://github.com/temporalio/samples-php) of using the PHP SDK.
 
