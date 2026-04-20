@@ -22,6 +22,7 @@ use Temporal\Activity\LocalActivityOptions;
 use Temporal\Api\Sdk\V1\EnhancedStackTrace;
 use Temporal\Common\SearchAttributes\SearchAttributeKey;
 use Temporal\Common\SearchAttributes\SearchAttributeUpdate;
+use Temporal\Common\SideEffectOptions;
 use Temporal\Common\Uuid;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Type;
@@ -254,7 +255,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         )(new GetVersionInput($changeId, $minSupported, $maxSupported));
     }
 
-    public function sideEffect(callable $context): PromiseInterface
+    public function sideEffect(callable $context, ?SideEffectOptions $options = null): PromiseInterface
     {
         $value = null;
         $closure = $context(...);
@@ -265,7 +266,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
                     $closure,
                     /** @see WorkflowOutboundCallsInterceptor::sideEffect() */
                     'sideEffect',
-                )(new SideEffectInput($closure));
+                )(new SideEffectInput($closure, $options));
             }
         } catch (\Throwable $e) {
             return reject($e);
@@ -279,7 +280,10 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         }
 
         $last = fn(): PromiseInterface => EncodedValues::decodePromise(
-            $this->request(new SideEffect(EncodedValues::fromValues([$value]))),
+            $this->request(new SideEffect(
+                EncodedValues::fromValues([$value]),
+                $options === null ? [] : $this->services->marshaller->marshal($options),
+            )),
             $returnType,
         );
         return $last();
