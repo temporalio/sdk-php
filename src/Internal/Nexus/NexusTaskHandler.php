@@ -17,6 +17,7 @@ use Nexus\Sdk\Handler\ServiceHandler;
 use Nexus\Sdk\Handler\SyncOperationStartResult;
 use Nexus\Sdk\Header as NexusHeader;
 use Nexus\Sdk\Link;
+use Nexus\Sdk\LinkParser;
 use Nexus\Sdk\Serializer\SerializerInterface;
 use Temporal\Api\Common\V1\Payload;
 use Temporal\Api\Common\V1\Payloads;
@@ -31,8 +32,11 @@ use Temporal\Api\Nexus\V1\Response;
 use Temporal\Api\Nexus\V1\StartOperationRequest;
 use Temporal\Api\Nexus\V1\StartOperationResponse;
 use Temporal\Api\Nexus\V1\UnsuccessfulOperationError;
+use Temporal\Client\WorkflowClientInterface;
 use Temporal\DataConverter\DataConverterInterface;
 use Temporal\DataConverter\EncodedValues;
+use Temporal\Nexus\Nexus;
+use Temporal\Nexus\NexusOperationContext;
 
 /**
  * Bridges Temporal's RoadRunner tasks to the Nexus SDK ServiceHandler.
@@ -81,11 +85,92 @@ final class NexusTaskHandler
 
     private ?ServiceHandler $serviceHandler = null;
 
+    /**
+     * Worker-supplied environment used to build a {@see NexusOperationContext}
+     * around every operation dispatch. `null` until {@see self::withWorkerEnvironment()}
+     * is called — workers without a configured client (or unit tests
+     * exercising the handler directly) skip context publication; handlers
+     * that need it (e.g. `WorkflowRunOperation`) raise a clear error.
+     *
+     * @var array{string, string, WorkflowClientInterface}|null
+     */
+    private ?array $workerEnvironment = null;
+
     public function __construct(
         private readonly NexusServiceRepository $repository,
         private readonly SerializerInterface $serializer,
         private readonly DataConverterInterface $dataConverter,
     ) {}
+
+    /**
+     * Wire the worker's namespace, task queue and workflow client into the
+     * handler so each dispatched operation can reach them via
+     * {@see Nexus::getOperationContext()}. Idempotent — calling it again
+     * replaces the previous values.
+     */
+    public function withWorkerEnvironment(
+        string $namespace,
+        string $taskQueue,
+        WorkflowClientInterface $workflowClient,
+    ): self {
+        $this->workerEnvironment = [$namespace, $taskQueue, $workflowClient];
+        return $this;
+    }
+
+    /**
+     * Run `$dispatch` with a {@see NexusOperationContext} published on
+     * {@see Nexus} so handlers can read it via the static accessor.
+     *
+     * Pulls the previous value first and restores it in `finally` — re-entrant
+     * dispatches (Nexus middleware that itself invokes another handler) end up
+     * with the right outer context after the inner one returns.
+     *
+     * If the worker did not supply an environment we leave `Nexus::current`
+     * untouched: handlers that don't need a Temporal-aware context still work,
+     * and ones that do raise a meaningful error from `getOperationContext()`.
+     *
+     * @template T
+     * @param callable(): T $dispatch
+     * @return T
+     */
+    private function runWithContext(callable $dispatch): mixed
+    {
+        if ($this->workerEnvironment === null) {
+            return $dispatch();
+        }
+
+        [$namespace, $taskQueue, $client] = $this->workerEnvironment;
+        $context = new NexusOperationContext($namespace, $taskQueue, $client);
+
+        $previous = null;
+        try {
+            // Capture in a closure; the only legal way to read a
+            // private static field is through the same class — but
+            // `Nexus::setCurrent(null)` after our work nukes any
+            // outer context, so we save+restore explicitly.
+            $previous = self::peekCurrent();
+            Nexus::setCurrent($context);
+            return $dispatch();
+        } finally {
+            Nexus::setCurrent($previous);
+        }
+    }
+
+    /**
+     * Read the current value of {@see Nexus::current} without throwing if it
+     * is null. {@see Nexus::getOperationContext()} only knows how to throw,
+     * which is the right behaviour for handlers — but here we only need to
+     * remember the value for the `finally` restore, so we go through the
+     * `setCurrent`/get-via-throw dance.
+     */
+    private static function peekCurrent(): ?NexusOperationContext
+    {
+        try {
+            return Nexus::getOperationContext();
+        } catch (\LogicException) {
+            return null;
+        }
+    }
 
     /**
      * Build an absolute deadline from Nexus timeout headers.
@@ -161,7 +246,9 @@ final class NexusTaskHandler
         $input = new HandlerInputContent($inputData, $inputHeaders);
 
         try {
-            $result = $this->getServiceHandler()->startOperation($context, $details, $input);
+            $result = $this->runWithContext(
+                fn() => $this->getServiceHandler()->startOperation($context, $details, $input),
+            );
 
             $startResp = new StartOperationResponse();
 
@@ -188,10 +275,10 @@ final class NexusTaskHandler
                 $startResp->setSyncSuccess($syncResp);
             } else {
                 \assert($result instanceof AsyncOperationStartResult);
-                // AsyncOperationStartResult's constructor validates the token
-                // is non-empty printable ASCII, so no extra guard needed here.
+                // OperationInfo's constructor validates the token shape
+                // (non-empty printable ASCII), so no extra guard needed here.
                 $asyncResp = new StartOperationResponse\Async();
-                $asyncResp->setOperationToken($result->operationToken);
+                $asyncResp->setOperationToken($result->info->token);
 
                 $contextLinks = $context->links->all();
                 if ($contextLinks !== []) {
@@ -236,7 +323,9 @@ final class NexusTaskHandler
         $details = new OperationCancelDetails(operationToken: $token);
 
         try {
-            $this->getServiceHandler()->cancelOperation($context, $details);
+            $this->runWithContext(
+                fn() => $this->getServiceHandler()->cancelOperation($context, $details),
+            );
 
             $response = new Response();
             $response->setCancelOperation(new CancelOperationResponse());
@@ -265,7 +354,9 @@ final class NexusTaskHandler
         OperationStartDetails $details,
         HandlerInputContent $input,
     ): EncodedValues {
-        $result = $this->getServiceHandler()->startOperation($context, $details, $input);
+        $result = $this->runWithContext(
+            fn() => $this->getServiceHandler()->startOperation($context, $details, $input),
+        );
 
         // Handler-side links attached via $ctx->links->add() need to reach the
         // Nexus caller. Since RR's InvokeNexusOperation route returns raw
@@ -297,10 +388,10 @@ final class NexusTaskHandler
         \assert($result instanceof AsyncOperationStartResult);
         // Async: return an opaque payload carrying the operation token plus a
         // well-known metadata marker so RR can distinguish it from a sync result.
-        // AsyncOperationStartResult validates token shape at construction
+        // OperationInfo validates token shape at construction
         // (printable ASCII, non-empty), safe to pass as payload bytes.
         $payload = new Payload();
-        $payload->setData($result->operationToken);
+        $payload->setData($result->info->token);
         $metadata = [
             self::NEXUS_KIND_METADATA_KEY => self::NEXUS_KIND_ASYNC,
         ];
@@ -321,7 +412,9 @@ final class NexusTaskHandler
         OperationContext $context,
         OperationCancelDetails $details,
     ): void {
-        $this->getServiceHandler()->cancelOperation($context, $details);
+        $this->runWithContext(
+            fn() => $this->getServiceHandler()->cancelOperation($context, $details),
+        );
     }
 
     /**

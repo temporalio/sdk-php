@@ -13,6 +13,8 @@ namespace Temporal\Client;
 
 use Carbon\CarbonInterval;
 use JetBrains\PhpStorm\Pure;
+use Temporal\Api\Common\V1\Callback;
+use Temporal\Api\Common\V1\Callback\Nexus as NexusCallback;
 use Temporal\Api\Common\V1\Memo;
 use Temporal\Api\Common\V1\SearchAttributes;
 use Temporal\Common\CronSchedule;
@@ -192,6 +194,36 @@ final class WorkflowOptions extends Options
      */
     #[Marshal(name: 'VersioningOverride')]
     public ?VersioningOverride $versioningOverride = null;
+
+    /**
+     * Override for the gRPC `request_id` on `StartWorkflowExecutionRequest`.
+     *
+     * `null` (default) means a fresh UUID is generated per call. Set this when
+     * idempotency must follow an external request id — e.g. the `requestId`
+     * that Nexus passes to a `WorkflowRunOperation` handler so retries from
+     * the Nexus caller dedupe on the server.
+     *
+     * Not marshalled to Go — applied directly on the proto in
+     * {@see \Temporal\Internal\Client\WorkflowStarter::configureExecutionRequest()}.
+     *
+     * @since Nexus support
+     */
+    public ?string $requestId = null;
+
+    /**
+     * Completion callbacks to attach to the workflow at start time.
+     *
+     * Used by Nexus `WorkflowRunOperation` handlers to register the Nexus
+     * caller's callback URL on the started workflow so the Temporal server
+     * delivers the result back when the workflow completes. Empty by default.
+     *
+     * Not marshalled to Go — applied directly on the proto in
+     * {@see \Temporal\Internal\Client\WorkflowStarter::configureExecutionRequest()}.
+     *
+     * @var list<Callback>
+     * @since Nexus support
+     */
+    public array $completionCallbacks = [];
 
     /**
      * @throws \Exception
@@ -610,6 +642,73 @@ final class WorkflowOptions extends Options
     {
         $self = clone $this;
         $self->priority = $priority;
+        return $self;
+    }
+
+    /**
+     * Pin the gRPC `request_id` used to start the workflow.
+     *
+     * Pass `null` to restore the default behaviour (a fresh UUID per call).
+     * See {@see self::$requestId} for the use case (Nexus `WorkflowRunOperation`).
+     *
+     * @return $this
+     *
+     * @since Nexus support
+     */
+    #[Pure]
+    public function withRequestId(?string $requestId): self
+    {
+        $self = clone $this;
+        $self->requestId = $requestId;
+        return $self;
+    }
+
+    /**
+     * Append a Nexus completion callback. Mirrors the Go reference's
+     * `internal.SetCallbacksOnStartWorkflowOptions` — the callback is attached
+     * to the started workflow, so the Temporal server delivers the result to
+     * the supplied URL when the workflow completes.
+     *
+     * Multiple calls accumulate; pass an empty array to {@see self::withCompletionCallbacks()}
+     * to clear.
+     *
+     * @param non-empty-string $url Caller-supplied callback URL.
+     * @param array<string, string> $headers Extra headers (e.g. `Nexus-Operation-Token`).
+     * @return $this
+     *
+     * @since Nexus support
+     */
+    #[Pure]
+    public function withNexusCompletionCallback(string $url, array $headers = []): self
+    {
+        $nexus = new NexusCallback();
+        $nexus->setUrl($url);
+        if ($headers !== []) {
+            $nexus->setHeader($headers);
+        }
+
+        $callback = new Callback();
+        $callback->setNexus($nexus);
+
+        $self = clone $this;
+        $self->completionCallbacks = [...$this->completionCallbacks, $callback];
+        return $self;
+    }
+
+    /**
+     * Replace the full list of completion callbacks. Useful when callers
+     * already build the proto themselves (Internal callbacks, links, etc.).
+     *
+     * @param list<Callback> $callbacks
+     * @return $this
+     *
+     * @since Nexus support
+     */
+    #[Pure]
+    public function withCompletionCallbacks(array $callbacks): self
+    {
+        $self = clone $this;
+        $self->completionCallbacks = $callbacks;
         return $self;
     }
 }

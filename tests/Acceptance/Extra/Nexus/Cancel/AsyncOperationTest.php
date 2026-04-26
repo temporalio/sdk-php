@@ -13,6 +13,8 @@ use Nexus\Sdk\Handler\OperationContext;
 use Nexus\Sdk\Handler\OperationHandlerInterface;
 use Nexus\Sdk\Handler\OperationStartDetails;
 use Nexus\Sdk\Handler\OperationStartResult;
+use Nexus\Sdk\OperationInfo;
+use Nexus\Sdk\OperationState;
 use PHPUnit\Framework\Attributes\Test;
 use Temporal\Client\WorkflowStubInterface;
 use Temporal\Tests\Acceptance\App\Attribute\Stub;
@@ -130,7 +132,7 @@ class AsyncJobServiceImpl
                 // Generate a deterministic-ish token derived from requestId so the caller
                 // can correlate.
                 $token = 'job-' . \substr(\hash('sha1', $details->requestId . ':' . (string) $param), 0, 12);
-                return OperationStartResult::async($token);
+                return OperationStartResult::async(new OperationInfo($token, OperationState::Running));
             }
 
             public function cancel(

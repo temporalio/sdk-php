@@ -18,6 +18,8 @@ use Nexus\Sdk\Handler\OperationStartDetails;
 use Nexus\Sdk\Handler\OperationStartResult;
 use Nexus\Sdk\Handler\SynchronousOperationHandler;
 use Nexus\Sdk\Link;
+use Nexus\Sdk\OperationInfo;
+use Nexus\Sdk\OperationState;
 use React\Promise\Deferred;
 use Temporal\DataConverter\DataConverter;
 use Temporal\DataConverter\EncodedValues;
@@ -80,7 +82,7 @@ class EchoServiceImpl
         return new class implements OperationHandlerInterface {
             public function start(OperationContext $context, OperationStartDetails $details, mixed $param): OperationStartResult
             {
-                return OperationStartResult::async('async-token-' . $param);
+                return OperationStartResult::async(new OperationInfo('async-token-' . $param, OperationState::Running));
             }
             public function cancel(OperationContext $context, OperationCancelDetails $details): void {}
             public static function sync(callable $function): OperationHandlerInterface
@@ -108,7 +110,7 @@ class EchoServiceImpl
             public function __construct(private readonly EchoServiceImpl $impl) {}
             public function start(OperationContext $context, OperationStartDetails $details, mixed $param): OperationStartResult
             {
-                return OperationStartResult::async('cancel-token-' . $param);
+                return OperationStartResult::async(new OperationInfo('cancel-token-' . $param, OperationState::Running));
             }
             public function cancel(OperationContext $context, OperationCancelDetails $details): void
             {

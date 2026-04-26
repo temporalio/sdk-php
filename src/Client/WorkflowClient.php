@@ -160,6 +160,19 @@ class WorkflowClient implements WorkflowClientInterface
         return $this->client;
     }
 
+    /**
+     * Read access to the client-wide options bag.
+     *
+     * Used by {@see \Temporal\Worker\Worker} to learn the namespace it should
+     * advertise inside a {@see \Temporal\Nexus\NexusOperationContext} when a
+     * Nexus operation is dispatched. Public read-only accessor — pair with
+     * the existing builders on {@see ClientOptions} to mutate.
+     */
+    public function getClientOptions(): ClientOptions
+    {
+        return $this->clientOptions;
+    }
+
     public function start($workflow, ...$args): WorkflowRunInterface
     {
         if ($workflow instanceof WorkflowProxy && !$workflow->hasHandler()) {

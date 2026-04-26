@@ -13,6 +13,7 @@ namespace Temporal\Worker;
 
 use React\Promise\PromiseInterface;
 use Nexus\Sdk\Handler\ServiceImplInstance;
+use Temporal\Client\WorkflowClient;
 use Temporal\Internal\Declaration\EntityNameValidator;
 use Temporal\Internal\Events\EventEmitterTrait;
 use Temporal\Internal\Events\EventListenerInterface;
@@ -39,17 +40,27 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
     private ServiceContainer $services;
     private RPCConnectionInterface $rpc;
 
+    /**
+     * Optional client wired in by {@see \Temporal\WorkerFactory} when one was
+     * provided to `WorkerFactory::create()`. Used to build the
+     * {@see \Temporal\Nexus\NexusOperationContext} that Nexus operation handlers
+     * (notably `WorkflowRunOperation`) need to start workflows.
+     */
+    private ?WorkflowClient $workflowClient = null;
+
     public function __construct(
         string $taskQueue,
         WorkerOptions $options,
         ServiceContainer $serviceContainer,
         RPCConnectionInterface $rpc,
+        ?WorkflowClient $workflowClient = null,
     ) {
         EntityNameValidator::validateTaskQueue($taskQueue);
 
         $this->rpc = $rpc;
         $this->name = $taskQueue;
         $this->options = $options;
+        $this->workflowClient = $workflowClient;
 
         $this->services = $serviceContainer;
         $this->router = $this->createRouter();
@@ -183,10 +194,25 @@ class Worker implements WorkerInterface, EventListenerInterface, DispatcherInter
 
     private function createNexusTaskHandler(): NexusTaskHandler
     {
-        return new NexusTaskHandler(
+        $handler = new NexusTaskHandler(
             $this->services->nexusServices,
             new PayloadSerializer($this->services->dataConverter),
             $this->services->dataConverter,
         );
+
+        // Hand the worker's task queue + the factory-supplied client to the
+        // task handler so it can build a NexusOperationContext for every
+        // dispatch. Workers without a client (e.g. activity-only setups that
+        // never registered a Nexus service) skip this — handlers that need
+        // the context will surface a clear error via Nexus::getOperationContext().
+        if ($this->workflowClient !== null) {
+            $handler->withWorkerEnvironment(
+                $this->workflowClient->getClientOptions()->namespace,
+                $this->name,
+                $this->workflowClient,
+            );
+        }
+
+        return $handler;
     }
 }

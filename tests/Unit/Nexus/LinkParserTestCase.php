@@ -6,7 +6,7 @@ namespace Temporal\Tests\Unit\Nexus;
 
 use Nexus\Sdk\Exception\ErrorType;
 use Nexus\Sdk\Exception\HandlerException;
-use Temporal\Internal\Nexus\LinkParser;
+use Nexus\Sdk\LinkParser;
 use Temporal\Tests\Unit\AbstractUnit;
 
 /**

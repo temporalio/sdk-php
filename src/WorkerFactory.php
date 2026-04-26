@@ -114,6 +114,14 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
     protected EnvironmentInterface $env;
     protected PluginRegistry $pluginRegistry;
 
+    /**
+     * Workflow client kept around so workers can build a {@see \Temporal\Nexus\NexusOperationContext}
+     * for every Nexus operation dispatch. `null` when the factory was created
+     * without a client — Nexus `WorkflowRunOperation` handlers will then fail
+     * fast with a clear message.
+     */
+    protected ?WorkflowClient $workflowClient = null;
+
     public function __construct(
         DataConverterInterface $dataConverter,
         protected RPCConnectionInterface $rpc,
@@ -121,6 +129,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
         ?PluginRegistry $pluginRegistry = null,
         ?WorkflowClient $client = null,
     ) {
+        $this->workflowClient = $client;
         $this->pluginRegistry = new PluginRegistry();
         // Propagate worker plugins from the client first
         if ($client !== null) {
@@ -204,6 +213,7 @@ class WorkerFactory implements WorkerFactoryInterface, LoopInterface
                 ),
             ),
             $this->rpc,
+            $this->workflowClient,
         );
 
         // Call initializeWorker hooks (forward order)

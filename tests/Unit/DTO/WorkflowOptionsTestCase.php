@@ -57,7 +57,12 @@ class WorkflowOptionsTestCase extends AbstractDTOMarshalling
         ];
 
         $result = $this->marshal($dto);
-        unset($result['typedSearchAttributes']);
+        unset(
+            $result['typedSearchAttributes'],
+            // Nexus-specific overrides; not marshalled to Go.
+            $result['requestId'],
+            $result['completionCallbacks'],
+        );
 
         $this->assertSame($expected, $result);
     }

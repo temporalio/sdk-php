@@ -20,6 +20,8 @@ use Nexus\Sdk\Handler\ServiceImplInstance;
 use Nexus\Sdk\Handler\SynchronousOperationFunctionInterface;
 use Nexus\Sdk\Handler\SynchronousOperationHandler;
 use Nexus\Sdk\Link;
+use Nexus\Sdk\OperationInfo;
+use Nexus\Sdk\OperationState;
 use Temporal\Api\Common\V1\Payload;
 use Temporal\Api\Nexus\V1\CancelOperationRequest;
 use Temporal\Api\Nexus\V1\Request;
@@ -89,7 +91,7 @@ class TestGreetingServiceImpl
             public function start(OperationContext $context, OperationStartDetails $details, mixed $param): OperationStartResult
             {
                 $context->links->add(new Link('http://example.com/workflow/123', 'temporal.workflow'));
-                return OperationStartResult::async('op-token-123');
+                return OperationStartResult::async(new OperationInfo('op-token-123', OperationState::Running));
             }
 
             public function cancel(OperationContext $context, OperationCancelDetails $details): void {}
@@ -117,7 +119,7 @@ class TestGreetingServiceImpl
         return new class implements OperationHandlerInterface {
             public function start(OperationContext $context, OperationStartDetails $details, mixed $param): OperationStartResult
             {
-                return OperationStartResult::async('cancel-token-456');
+                return OperationStartResult::async(new OperationInfo('cancel-token-456', OperationState::Running));
             }
 
             public function cancel(OperationContext $context, OperationCancelDetails $details): void

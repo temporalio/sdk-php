@@ -323,7 +323,7 @@ final class WorkflowStarter
     ): StartWorkflowExecutionRequest|SignalWithStartWorkflowExecutionRequest {
         $options = $input->options;
 
-        $req->setRequestId(Uuid::v4())
+        $req->setRequestId($options->requestId ?? Uuid::v4())
             ->setIdentity($this->clientOptions->identity)
             ->setNamespace($this->clientOptions->namespace)
             ->setTaskQueue(new TaskQueue(['name' => $options->taskQueue]))
@@ -394,6 +394,14 @@ final class WorkflowStarter
 
         if ($req instanceof StartWorkflowExecutionRequest) {
             $req->setRequestEagerExecution($options->eagerStart);
+
+            // Completion callbacks are only valid on the start path —
+            // SignalWithStartWorkflowExecutionRequest does not carry the
+            // `completion_callbacks` field. Used by Nexus WorkflowRunOperation
+            // handlers to register the caller's callback URL on the workflow.
+            if ($options->completionCallbacks !== []) {
+                $req->setCompletionCallbacks($options->completionCallbacks);
+            }
         }
 
         if (!$input->arguments->isEmpty()) {
