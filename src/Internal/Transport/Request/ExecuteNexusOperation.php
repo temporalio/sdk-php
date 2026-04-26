@@ -22,6 +22,9 @@ final class ExecuteNexusOperation extends Request
      * @param non-empty-string $service Service name
      * @param non-empty-string $operation Operation name
      * @param RequestOptions $options
+     * @param array<string, string> $nexusHeaders Raw-string Nexus headers
+     *        forwarded to the handler via the wire — distinct from `$header`
+     *        (Temporal interceptor header, payload-typed values).
      */
     public function __construct(
         string $endpoint,
@@ -30,6 +33,7 @@ final class ExecuteNexusOperation extends Request
         ValuesInterface $args,
         array $options,
         HeaderInterface $header,
+        array $nexusHeaders = [],
     ) {
         parent::__construct(
             self::NAME,
@@ -38,6 +42,7 @@ final class ExecuteNexusOperation extends Request
                 'service' => $service,
                 'operation' => $operation,
                 'options' => $options,
+                'nexusHeaders' => $nexusHeaders,
             ],
             $args,
             header: $header,

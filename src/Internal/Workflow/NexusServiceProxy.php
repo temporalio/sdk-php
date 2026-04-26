@@ -61,7 +61,7 @@ final class NexusServiceProxy extends Proxy
         return $this->callsInterceptor->with(
             fn(ExecuteNexusOperationInput $input): PromiseInterface => $this->ctx
                 ->newUntypedNexusOperationStub($input->options)
-                ->execute($input->operation, $input->args, $input->returnType),
+                ->execute($input->operation, $input->args, $input->returnType, $input->nexusHeaders),
             /** @see WorkflowOutboundCallsInterceptor::executeNexusOperation() */
             'executeNexusOperation',
         )(

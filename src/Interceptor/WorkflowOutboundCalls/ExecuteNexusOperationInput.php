@@ -15,6 +15,10 @@ final class ExecuteNexusOperationInput
     /**
      * @param non-empty-string $service
      * @param non-empty-string $operation
+     * @param array<string, string> $nexusHeaders raw-string headers forwarded
+     *        on the Nexus operation wire (handler reads them from
+     *        OperationContext::$headers); separate from the Temporal
+     *        interceptor `Header` (payload-typed values).
      *
      * @no-named-arguments
      * @internal Don't use the constructor. Use {@see self::with()} instead.
@@ -25,6 +29,7 @@ final class ExecuteNexusOperationInput
         public readonly array $args,
         public readonly NexusOperationOptions $options,
         public readonly null|Type|string|\ReflectionClass|\ReflectionType $returnType,
+        public readonly array $nexusHeaders = [],
     ) {}
 
     public function with(
@@ -33,6 +38,7 @@ final class ExecuteNexusOperationInput
         ?array $args = null,
         ?NexusOperationOptions $options = null,
         null|Type|string|\ReflectionClass|\ReflectionType $returnType = null,
+        ?array $nexusHeaders = null,
     ): self {
         // Values from `$this->*` were validated as non-empty by the
         // constructor; callers wanting to replace them keep the same
@@ -45,6 +51,7 @@ final class ExecuteNexusOperationInput
             $args ?? $this->args,
             $options ?? $this->options,
             $returnType ?? $this->returnType,
+            $nexusHeaders ?? $this->nexusHeaders,
         );
     }
 }

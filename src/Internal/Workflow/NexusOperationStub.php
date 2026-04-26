@@ -48,14 +48,16 @@ final class NexusOperationStub implements NexusOperationStubInterface
         string $operation,
         array $args = [],
         Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
+        array $nexusHeaders = [],
     ): PromiseInterface {
-        return $this->start($operation, $args, $returnType)->getResult();
+        return $this->start($operation, $args, $returnType, $nexusHeaders)->getResult();
     }
 
     public function start(
         string $operation,
         array $args = [],
         Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
+        array $nexusHeaders = [],
     ): NexusOperationHandle {
         // Wire boundary validation — server-side would reject empty
         // endpoint/service/operation with an opaque "not found", so surface
@@ -84,6 +86,7 @@ final class NexusOperationStub implements NexusOperationStubInterface
             args: EncodedValues::fromValues($args),
             options: $this->marshaller->marshal($this->options),
             header: $this->header,
+            nexusHeaders: $nexusHeaders,
         );
 
         // Wrap in NexusOperationHandle so workflows can start the operation,

@@ -520,7 +520,7 @@ class WorkflowContext implements WorkflowContextInterface, HeaderCarrier, Destro
         return $this->callsInterceptor->with(
             fn(ExecuteNexusOperationInput $input): PromiseInterface => $this
                 ->newUntypedNexusOperationStub($input->options)
-                ->execute($input->operation, $input->args, $input->returnType),
+                ->execute($input->operation, $input->args, $input->returnType, $input->nexusHeaders),
             'executeNexusOperation',
         )(new ExecuteNexusOperationInput(
             $service,

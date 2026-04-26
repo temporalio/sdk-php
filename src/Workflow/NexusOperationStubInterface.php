@@ -22,27 +22,31 @@ interface NexusOperationStubInterface
      * @param non-empty-string $operation Operation name
      * @param array $args Operation arguments
      * @param Type|string|\ReflectionClass|\ReflectionType|null $returnType Expected return type
+     * @param array<string, string> $nexusHeaders Raw-string headers carried on
+     *        the Nexus wire and surfaced to the handler via OperationContext.
      */
     public function execute(
         string $operation,
         array $args = [],
         Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
+        array $nexusHeaders = [],
     ): PromiseInterface;
 
     /**
      * Start a Nexus operation and return a {@see NexusOperationHandle}
-     * that can be awaited later. Mirrors Java's
-     * `NexusOperationStub.start(...)`.
+     * that can be awaited later.
      *
      * Implementations that do not support the split are free to implement
      * this via `execute()` — the handle will simply resolve as soon as
      * the operation completes.
      *
      * @param non-empty-string $operation
+     * @param array<string, string> $nexusHeaders
      */
     public function start(
         string $operation,
         array $args = [],
         Type|string|\ReflectionClass|\ReflectionType|null $returnType = null,
+        array $nexusHeaders = [],
     ): NexusOperationHandle;
 }
