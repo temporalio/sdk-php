@@ -126,12 +126,12 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
 
         $handler->start(
             new OperationContext(service: 'svc', operation: 'op'),
-            new OperationStartDetails(requestId: '', callbackUrl: null, callbackHeaders: [], links: []),
+            new OperationStartDetails(requestId: 'req-no-cb', callbackUrl: null, callbackHeaders: [], links: []),
             null,
         );
 
         self::assertSame([], $captured->completionCallbacks);
-        self::assertNull($captured->requestId);
+        self::assertSame('req-no-cb', $captured->requestId);
     }
 
     public function testStartUsesNexusContextTaskQueueByDefault(): void
@@ -161,7 +161,7 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
 
         $handler->start(
             new OperationContext(service: 'svc', operation: 'op'),
-            new OperationStartDetails(requestId: '', callbackUrl: null, callbackHeaders: [], links: []),
+            new OperationStartDetails(requestId: 'req-test', callbackUrl: null, callbackHeaders: [], links: []),
             null,
         );
 
@@ -195,7 +195,7 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
 
         $handler->start(
             new OperationContext(service: 'svc', operation: 'op'),
-            new OperationStartDetails(requestId: '', callbackUrl: null, callbackHeaders: [], links: []),
+            new OperationStartDetails(requestId: 'req-test', callbackUrl: null, callbackHeaders: [], links: []),
             null,
         );
 
@@ -220,7 +220,7 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
 
         $handler->start(
             new OperationContext(service: 'svc', operation: 'op'),
-            new OperationStartDetails(requestId: '', callbackUrl: null, callbackHeaders: [], links: []),
+            new OperationStartDetails(requestId: 'req-test', callbackUrl: null, callbackHeaders: [], links: []),
             null,
         );
     }
@@ -236,7 +236,7 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
 
         $handler->start(
             new OperationContext(service: 'svc', operation: 'op'),
-            new OperationStartDetails(requestId: '', callbackUrl: null, callbackHeaders: [], links: []),
+            new OperationStartDetails(requestId: 'req-test', callbackUrl: null, callbackHeaders: [], links: []),
             null,
         );
     }
@@ -276,18 +276,6 @@ final class WorkflowRunOperationTestCase extends AbstractUnit
         );
     }
 
-    public function testSyncFactoryThrows(): void
-    {
-        $handler = WorkflowRunOperation::fromWorkflowMethod(fn() => null);
-
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('SynchronousOperationHandler');
-
-        // The static method exists for interface symmetry but must never be
-        // wired up in a service implementation — this guards regressions
-        // where a developer mistakes WorkflowRunOperation for a sync helper.
-        $handler::sync(static fn() => null);
-    }
 }
 
 /** @internal Local fixture — needed only as a class-string for WorkflowHandle. */

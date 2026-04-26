@@ -82,6 +82,22 @@ final class NexusHelper
     }
 
     /**
+     * Same as {@see self::setupEndpoint()} but returns both the server-assigned id
+     * (used by HTTP routes) and the human-readable name (used by SDK callers via
+     * {@see \Temporal\Workflow\NexusOperationOptions::withEndpoint()}).
+     *
+     * @return array{id: string, name: string}
+     */
+    public function setupEndpointWithName(string $namespace, string $taskQueue, string $prefix = 'test-nexus'): array
+    {
+        $name = self::uniqueEndpointName($prefix);
+        return [
+            'id' => $this->createWorkerEndpoint($name, $namespace, $taskQueue),
+            'name' => $name,
+        ];
+    }
+
+    /**
      * Send a Nexus HTTP POST request to a registered endpoint.
      *
      * @param mixed $body Body to JSON-encode

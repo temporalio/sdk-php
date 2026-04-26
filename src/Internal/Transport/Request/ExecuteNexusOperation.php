@@ -42,7 +42,8 @@ final class ExecuteNexusOperation extends Request
                 'service' => $service,
                 'operation' => $operation,
                 'options' => $options,
-                'nexusHeaders' => $nexusHeaders,
+                // Force `{}` over `[]` on the wire — Go side decodes as map[string]string.
+                'nexusHeaders' => $nexusHeaders === [] ? new \stdClass() : $nexusHeaders,
             ],
             $args,
             header: $header,

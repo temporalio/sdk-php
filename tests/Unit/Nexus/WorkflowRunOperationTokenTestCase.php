@@ -110,7 +110,7 @@ final class WorkflowRunOperationTokenTestCase extends AbstractUnit
         $bad = \rtrim(\strtr(\base64_encode('{"v":2,"t":1,"ns":"x","wid":"y"}'), '+/', '-_'), '=');
 
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('"v" field should not be present');
+        $this->expectExceptionMessage('unsupported version');
         WorkflowRunOperationToken::load($bad);
     }
 

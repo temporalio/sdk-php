@@ -62,14 +62,7 @@ try {
     }
     $converter = new DataConverter(...$converters);
     $container->bindSingleton(DataConverter::class, $converter);
-    $container->bindSingleton(WorkerFactoryInterface::class, WorkerFactory::create(converter: $converter));
 
-    $workerFactory =  $container->get(\Temporal\Tests\Acceptance\App\Feature\WorkerFactory::class);
-    $getWorker = static function (Feature $feature) use (&$workers, $workerFactory): WorkerInterface {
-        return $workers[$feature->taskQueue] ??= $workerFactory->createWorker($feature);
-    };
-
-    // Create client services
     $serviceClient = $runtime->command->tlsKey === null && $runtime->command->tlsCert === null
         ? ServiceClient::create($runtime->address)
         : ServiceClient::createSSL(
@@ -80,6 +73,16 @@ try {
     $options = (new ClientOptions())->withNamespace($runtime->namespace);
     $workflowClient = WorkflowClient::create(serviceClient: $serviceClient, options: $options, converter: $converter);
     $scheduleClient = ScheduleClient::create(serviceClient: $serviceClient, options: $options, converter: $converter);
+
+    $container->bindSingleton(
+        WorkerFactoryInterface::class,
+        WorkerFactory::create(converter: $converter, client: $workflowClient),
+    );
+
+    $workerFactory =  $container->get(\Temporal\Tests\Acceptance\App\Feature\WorkerFactory::class);
+    $getWorker = static function (Feature $feature) use (&$workers, $workerFactory): WorkerInterface {
+        return $workers[$feature->taskQueue] ??= $workerFactory->createWorker($feature);
+    };
 
     // Bind services
     $container->bindSingleton(State::class, $runtime);

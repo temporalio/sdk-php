@@ -32,7 +32,10 @@ final class InvokeNexusOperation extends Route
 
         $service = $options['service'] ?? '';
         $operation = $options['operation'] ?? '';
-        $requestId = $options['requestId'] ?? '';
+        // Generate a fallback when the wire did not supply one: OperationStartDetails
+        // requires a non-empty requestId. Real Nexus traffic always carries it; the
+        // fallback covers HTTP clients that elide the header.
+        $requestId = ($options['requestId'] ?? '') ?: \bin2hex(\random_bytes(8));
         $callback = $options['callback'] ?? null;
         $callbackHeaders = $options['callbackHeaders'] ?? [];
         $requestHeaders = $options['headers'] ?? [];

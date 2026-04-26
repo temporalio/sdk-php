@@ -84,10 +84,8 @@ final class WorkflowRunOperation
                     $options = $options->withNexusCompletionCallback($details->callbackUrl, $headers);
                 }
 
-                if ($details->requestId !== '') {
-                    // Pin requestId so retried Nexus starts dedupe server-side.
-                    $options = $options->withRequestId($details->requestId);
-                }
+                // Pin requestId so retried Nexus starts dedupe server-side.
+                $options = $options->withRequestId($details->requestId);
 
                 $stub = $client->newWorkflowStub($handle->workflowClass, $options);
                 $client->start($stub, ...$handle->args);
