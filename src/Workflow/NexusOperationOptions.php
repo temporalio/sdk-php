@@ -34,6 +34,15 @@ final class NexusOperationOptions extends Options
     #[Marshal(name: 'scheduleToCloseTimeout', type: DateIntervalType::class)]
     public \DateInterval $scheduleToCloseTimeout;
 
+    /**
+     * What to do with the Nexus operation when the caller is cancelled.
+     * One of the {@see NexusOperationCancellationType} integer constants.
+     * Defaults to {@see NexusOperationCancellationType::UNSPECIFIED} so the
+     * server falls back to its current default (`WaitCompleted`).
+     */
+    #[Marshal(name: 'cancellationType')]
+    public int $cancellationType = NexusOperationCancellationType::UNSPECIFIED;
+
     public function __construct()
     {
         $this->scheduleToCloseTimeout = \Carbon\CarbonInterval::seconds(0);
@@ -75,6 +84,13 @@ final class NexusOperationOptions extends Options
     {
         $self = clone $this;
         $self->scheduleToCloseTimeout = DateInterval::parse($timeout, DateInterval::FORMAT_SECONDS);
+        return $self;
+    }
+
+    public function withCancellationType(NexusOperationCancellationType|int $type): self
+    {
+        $self = clone $this;
+        $self->cancellationType = $type instanceof NexusOperationCancellationType ? $type->value : $type;
         return $self;
     }
 }

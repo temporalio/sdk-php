@@ -7,6 +7,8 @@ namespace Temporal\Internal\Workflow;
 use React\Promise\PromiseInterface;
 use Temporal\DataConverter\EncodedValues;
 use Temporal\DataConverter\Type;
+use Temporal\Exception\Failure\CanceledFailure;
+use Temporal\Exception\Failure\NexusOperationFailure;
 use Temporal\Interceptor\HeaderInterface;
 use Temporal\Internal\Marshaller\MarshallerInterface;
 use Temporal\Internal\Transport\Request\ExecuteNexusOperation;
@@ -90,8 +92,51 @@ final class NexusOperationStub implements NexusOperationStubInterface
         // wire extensions can surface the operation token earlier without
         // breaking this API.
         return new NexusOperationHandle(
-            EncodedValues::decodePromise($this->request($request), $returnType),
+            EncodedValues::decodePromise($this->normalizeFailure($this->request($request), $endpoint, $service, $operation), $returnType),
         );
+    }
+
+    /**
+     * Normalize the failure envelope so workflow code can rely on a single
+     * exception type — matches the Java SDK contract where every rejection
+     * of a Nexus operation future surfaces as `NexusOperationFailure` with
+     * the original cause attached as `$previous`.
+     *
+     * Server-originated failures (handler error, schedule_to_close timeout,
+     * cancel of a started op) already arrive wrapped via the
+     * NexusOperationFailureInfo proto and pass through unchanged. Locally
+     * resolved cases — Go SDK's `WaitRequested`/`TryCancel` early ack which
+     * surfaces a bare `CanceledFailure`, or PHP-side scope cancel before the
+     * request leaves RR — get wrapped here.
+     *
+     * `scheduledEventId` and `operationToken` are zero/empty for locally
+     * wrapped failures because they're server-side concepts not available
+     * on the caller path; consumers reading those fields should branch on
+     * the previous-exception type.
+     */
+    private function normalizeFailure(
+        PromiseInterface $promise,
+        string $endpoint,
+        string $service,
+        string $operation,
+    ): PromiseInterface {
+        return $promise->then(null, static function (\Throwable $e) use ($endpoint, $service, $operation): never {
+            if ($e instanceof NexusOperationFailure) {
+                throw $e;
+            }
+            $message = $e instanceof CanceledFailure
+                ? 'nexus operation cancelled'
+                : 'nexus operation completed unsuccessfully';
+            throw new NexusOperationFailure(
+                message: $message,
+                scheduledEventId: 0,
+                endpoint: $endpoint,
+                service: $service,
+                operation: $operation,
+                operationToken: '',
+                previous: $e,
+            );
+        });
     }
 
     protected function request(RequestInterface $request): PromiseInterface
